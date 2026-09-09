@@ -1,0 +1,2 @@
+ALTER TABLE projetos_crm
+  ADD COLUMN IF NOT EXISTS capa_position_y INTEGER NOT NULL DEFAULT 50;

@@ -1,0 +1,582 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Estudo de oportunidades de produto — Jards</title>
+  <style>
+    :root {
+      --bg: #f5f5f2;
+      --surface: #ffffff;
+      --surface-muted: #efefeb;
+      --text: #171714;
+      --muted: #686860;
+      --subtle: #8f8f86;
+      --line: #dcdcd5;
+      --accent: #684db0;
+      --accent-soft: #eee9fa;
+      --green: #2e6b50;
+      --green-soft: #e8f1ec;
+      --amber: #8a6728;
+      --amber-soft: #f6efdf;
+      --blue: #3b5f84;
+      --blue-soft: #e8eef4;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Google Sans", Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      font-size: 15px;
+      line-height: 1.55;
+    }
+
+    button { font: inherit; }
+
+    .page {
+      width: min(1240px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 44px 0 80px;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 850px;
+      margin-bottom: 12px;
+      font-size: clamp(34px, 5vw, 62px);
+      line-height: 1.02;
+      letter-spacing: -.045em;
+      font-weight: 650;
+    }
+
+    h2 {
+      margin-bottom: 12px;
+      font-size: 24px;
+      line-height: 1.2;
+      letter-spacing: -.02em;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 17px;
+      line-height: 1.25;
+    }
+
+    .lead {
+      max-width: 840px;
+      margin-bottom: 24px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .hero-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 28px;
+    }
+
+    .stats {
+      display: flex;
+      gap: 28px;
+      flex: 0 0 auto;
+      padding-bottom: 6px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .stat span { color: var(--subtle); font-size: 12px; }
+
+    .callout {
+      margin-top: 22px;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--amber);
+      border-radius: var(--radius);
+      background: var(--amber-soft);
+      color: #594721;
+    }
+
+    .callout strong { display: block; margin-bottom: 3px; }
+
+    section {
+      margin-top: 52px;
+      scroll-margin-top: 20px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(280px, .7fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .muted { color: var(--muted); }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 13px 15px;
+      border-bottom: 1px solid var(--line);
+      font-weight: 650;
+    }
+
+    .card-body { padding: 16px; }
+
+    .thesis { border-top: 4px solid var(--accent); }
+
+    .thesis .card-body p:first-child {
+      font-size: 18px;
+      font-weight: 650;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    th, td {
+      padding: 11px 13px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: var(--surface-muted);
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: .03em;
+      text-transform: uppercase;
+    }
+
+    tr:last-child td { border-bottom: 0; }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    .status::before {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      content: "";
+    }
+
+    .forte { color: var(--green); }
+    .parcial { color: var(--amber); }
+    .vazio { color: var(--blue); }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 14px;
+    }
+
+    .filters { display: flex; flex-wrap: wrap; gap: 7px; }
+
+    .filter {
+      padding: 7px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .filter:hover { background: var(--surface-muted); }
+
+    .filter.active {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .opportunity-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .opportunity[hidden] { display: none; }
+
+    .tag {
+      display: inline-flex;
+      padding: 3px 8px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .opportunity .job {
+      margin-bottom: 9px;
+      font-weight: 650;
+    }
+
+    .opportunity .why { color: var(--muted); }
+
+    .opportunity-columns {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(190px, .95fr);
+      gap: 18px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .label {
+      margin-bottom: 6px;
+      color: var(--subtle);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    ul { margin: 0; padding-left: 18px; }
+    li + li { margin-top: 4px; }
+
+    .meta p { margin-bottom: 12px; color: var(--muted); font-size: 13px; }
+
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+
+    .risk {
+      margin: 15px -16px -16px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      background: var(--surface-muted);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .waves {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .wave .card-head { align-items: flex-start; }
+    .wave ul { color: var(--muted); font-size: 13px; }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .mini-callout {
+      padding: 13px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .mini-callout + .mini-callout { margin-top: 9px; }
+    .mini-callout strong { display: block; margin-bottom: 3px; }
+    .mini-callout span { color: var(--muted); font-size: 13px; }
+
+    .criteria p {
+      margin: 0;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .criteria p:last-child { border-bottom: 0; }
+
+    footer {
+      margin-top: 52px;
+      padding-top: 18px;
+      border-top: 1px solid var(--line);
+      color: var(--subtle);
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .hero-row, .section-head { align-items: flex-start; flex-direction: column; }
+      .split, .bottom-grid { grid-template-columns: 1fr; }
+      .opportunity-grid { grid-template-columns: 1fr; }
+      .waves { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 620px) {
+      .page { width: min(100% - 24px, 1240px); padding-top: 26px; }
+      .stats { width: 100%; justify-content: space-between; gap: 12px; }
+      .opportunity-columns, .waves { grid-template-columns: 1fr; }
+      .table-wrap { overflow-x: auto; }
+      table { min-width: 680px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header>
+      <div class="hero-row">
+        <div>
+          <p class="eyebrow">Estudo de oportunidades · Jards</p>
+          <h1>Do CRM de captação ao sistema operacional do patrocínio</h1>
+          <p class="lead">A maior oportunidade não é adicionar mais um cadastro. É conectar estratégia, ativação, evidência e mensuração ao ciclo que a Jards já cobre — da descoberta à prestação de contas.</p>
+        </div>
+        <div class="stats" aria-label="Resumo do estudo">
+          <div class="stat"><strong>11</strong><span>obras analisadas</span></div>
+          <div class="stat"><strong>9</strong><span>oportunidades</span></div>
+          <div class="stat"><strong>4</strong><span>prioridades imediatas</span></div>
+        </div>
+      </div>
+      <div class="callout">
+        <strong>Limite importante da análise</strong>
+        Os arquivos formais de público, posicionamento, pilares e voz ainda estão como modelos vazios. O público foi inferido pelas rotas e pela documentação da aplicação: proponentes, equipes de captação e agências que operam patrocínios culturais e esportivos. Essa hipótese precisa ser validada antes do roadmap definitivo.
+      </div>
+    </header>
+
+    <section class="split">
+      <div>
+        <h2>Leitura executiva</h2>
+        <p class="muted">A Jards já tem boa cobertura do trabalho transacional: pesquisa, CRM, inscrições, negociações, projetos, propostas, contratos, atividades, documentos, orçamento e prestação de contas. O vazio competitivo está entre a venda e a prova de valor: planejar como o patrocínio será ativado, justificar o fit, organizar as evidências e medir o efeito.</p>
+        <p class="muted">Esse território cria um ciclo de dados proprietário: hipótese de fit → proposta → ativação → exposição → resultado → aprendizado para a próxima negociação.</p>
+      </div>
+      <article class="card thesis">
+        <div class="card-head">Tese de produto</div>
+        <div class="card-body">
+          <p>A Jards pode ser a camada de decisão e comprovação do patrocínio.</p>
+          <p class="muted">Não apenas “onde está a negociação?”, mas “por que faz sentido, como será ativada e o que provou valor?”.</p>
+        </div>
+      </article>
+    </section>
+
+    <section>
+      <h2>Cobertura atual versus lacunas</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Jornada</th><th>Cobertura observada</th><th>Situação</th></tr></thead>
+          <tbody>
+            <tr><td>Descoberta e pesquisa</td><td>Patrocinadores, notícias, contatos e empresas</td><td><span class="status forte">Forte</span></td></tr>
+            <tr><td>Captação</td><td>Negociações, inscrições, propostas, funis e follow-ups</td><td><span class="status forte">Forte</span></td></tr>
+            <tr><td>Planejamento operacional</td><td>Projetos, atividades, calendário, Gantt e orçamento</td><td><span class="status parcial">Parcial</span></td></tr>
+            <tr><td>Entrega contratual</td><td>Contratos, compromissos, documentos e prestação de contas</td><td><span class="status parcial">Parcial</span></td></tr>
+            <tr><td>Ativação de patrocínio</td><td>Sem fluxo unificado por patrocinador e cota</td><td><span class="status vazio">Vazio</span></td></tr>
+            <tr><td>Estratégia de fit e sinal</td><td>Sem avaliação explicável e reutilizável</td><td><span class="status vazio">Vazio</span></td></tr>
+            <tr><td>Mensuração de efeito</td><td>Resultados básicos, sem plano de medição ou atribuição</td><td><span class="status vazio">Vazio</span></td></tr>
+            <tr><td>Evidência e integridade</td><td>Documentos existem; alegações e fontes não são estruturadas</td><td><span class="status vazio">Vazio</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="features">
+      <div class="section-head">
+        <div><h2>Mapa priorizado de features</h2><p class="muted">Filtre por horizonte para explorar as propostas.</p></div>
+        <div class="filters" role="group" aria-label="Filtrar oportunidades">
+          <button class="filter active" data-filter="Todas">Todas</button>
+          <button class="filter" data-filter="Agora">Agora</button>
+          <button class="filter" data-filter="Depois">Depois</button>
+          <button class="filter" data-filter="Mais tarde">Mais tarde</button>
+        </div>
+      </div>
+
+      <div class="opportunity-grid">
+        <article class="card opportunity" data-phase="Agora">
+          <div class="card-head"><span>Plano de ativação do patrocínio</span><span class="tag">Agora</span></div>
+          <div class="card-body">
+            <p class="job">Transformar a cota vendida em execução coordenada, orçamento e comprovação.</p>
+            <p class="why">A Jards organiza captação, contrato, atividades, orçamento e prestação de contas, mas ainda não conecta esses elementos em um plano próprio do patrocinador.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Objetivos e públicos</li><li>Direito adquirido versus verba de ativação</li><li>Ações, canais, responsáveis e calendário</li><li>Entregáveis, evidências e status</li><li>Resumo por patrocinador, projeto e cota</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Atividades, Calendário, Orçamento, Contratos, Compromissos, Documentos e Prestação de contas.</p><p class="label">Base</p><p>Cornwell (2020); O’Reilly & Lafrance Horning (2013).</p><div class="chips"><span class="tag">Impacto muito alto</span><span class="tag">Esforço G</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> manter a ativação vinculada ao patrocínio, sem virar uma ferramenta genérica de campanhas.</div>
+          </div>
+        </article>
+
+        <article class="card opportunity" data-phase="Agora">
+          <div class="card-head"><span>Matriz de adequação marca–projeto</span><span class="tag">Agora</span></div>
+          <div class="card-body">
+            <p class="job">Explicar por que um patrocinador combina — ou não — com um projeto.</p>
+            <p class="why">Hoje pesquisa, projeto e negociação coexistem, mas falta uma leitura comparável de público, território, valores, categoria, objetivos e conflitos.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Critérios configuráveis e pesos simples</li><li>Evidências e justificativa por critério</li><li>Alertas de conflito e incoerência</li><li>Resumo utilizável no pitch e proposta</li><li>Pontuação sempre explicada</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Patrocinadores, Empresas, Projetos, Pitch, Propostas, Notícias e Documentos.</p><p class="label">Base</p><p>Carrillat et al. (2024); Bermúdez-González et al. (2026); Pradhan et al. (2020).</p><div class="chips"><span class="tag">Impacto muito alto</span><span class="tag">Esforço M</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> evitar falsa precisão. A nota organiza julgamento humano, não substitui decisão comercial.</div>
+          </div>
+        </article>
+
+        <article class="card opportunity" data-phase="Agora">
+          <div class="card-head"><span>Plano de mensuração e brand lift</span><span class="tag">Agora</span></div>
+          <div class="card-body">
+            <p class="job">Definir sucesso antes da execução e demonstrar resultado depois.</p>
+            <p class="why">A aplicação já registra resultados, mas não estrutura linha de base, exposição, lembrança, atribuição, falsos positivos e limites da medição.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Objetivo, KPI, meta, fonte e periodicidade</li><li>Linha de base e pós-ativação</li><li>Pesquisa de lembrança e reconhecimento</li><li>Exposição por canal</li><li>Relatório com ressalvas de atribuição</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Resultados, Relatórios, Atividades, Calendário, Propostas e Prestação de contas.</p><p class="label">Base</p><p>Madrigal & King (2025); Jahn & Cornwell (2026).</p><div class="chips"><span class="tag">Impacto muito alto</span><span class="tag">Esforço G</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> não prometer causalidade quando só houver correlação ou auto-relato.</div>
+          </div>
+        </article>
+
+        <article class="card opportunity" data-phase="Agora">
+          <div class="card-head"><span>Biblioteca de evidências do pitch</span><span class="tag">Agora</span></div>
+          <div class="card-body">
+            <p class="job">Reutilizar afirmações confiáveis sem perder fonte, contexto ou nível de certeza.</p>
+            <p class="why">O acervo editorial já trabalha com fichas, páginas, método e alertas; essa disciplina pode elevar propostas, pitches, relatórios e conteúdo.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Afirmação, tipo e fonte</li><li>Página ou trecho de apoio</li><li>Contexto, limite e confiança</li><li>Tags por projeto, patrocinador e tema</li><li>Inserção no pitch, proposta e relatório</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Pitch Workspace, Propostas, Documentos, Relatórios, Patrocinadores e Notícias.</p><p class="label">Base</p><p>Política de citações e fichas de evidência do acervo.</p><div class="chips"><span class="tag">Impacto alto</span><span class="tag">Esforço M</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> exigir confirmação humana antes de publicar ou enviar material externo.</div>
+          </div>
+        </article>
+
+        <article class="card opportunity" data-phase="Depois">
+          <div class="card-head"><span>Arquitetura de sinal do patrocínio</span><span class="tag">Depois</span></div>
+          <div class="card-body">
+            <p class="job">Traduzir o investimento em uma mensagem crível sobre capacidade, intenção e valores.</p>
+            <p class="why">Projetos podem ter bom fit e ainda comunicar mal. A feature organiza o que sinalizar, para quem, com qual prova e em qual contexto.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Objetivo de percepção</li><li>Sinal de capacidade ou intenção</li><li>Público, mensagem, prova e canal</li><li>Observabilidade e credibilidade</li><li>Saída para proposta e ativação</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Matriz de fit, Pitch, Propostas, Plano de ativação e Públicos.</p><p class="label">Base</p><p>Lin et al. (2026); Lin & Bruning (2024).</p><div class="chips"><span class="tag">Impacto alto</span><span class="tag">Esforço M</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> conceitos acadêmicos ficam nos bastidores; a linguagem deve ser comercial e prática.</div>
+          </div>
+        </article>
+
+        <article class="card opportunity" data-phase="Depois">
+          <div class="card-head"><span>Governança de sustentabilidade e alegações</span><span class="tag">Depois</span></div>
+          <div class="card-body">
+            <p class="job">Comprovar compromissos socioambientais sem gerar incoerência ou greenwashing.</p>
+            <p class="why">A Jards guarda documentos e relatórios de sustentabilidade, mas não liga cada alegação à prova, responsável, aprovação e risco.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Alegação, evidência, fonte e validade</li><li>Responsável e aprovação</li><li>Risco de incoerência</li><li>Checklist antes de publicar</li><li>Trilha de auditoria</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Documentos, Compromissos, Relatórios, Contratos, Notificações e Auditoria.</p><p class="label">Base</p><p>Walzel et al. (2024).</p><div class="chips"><span class="tag">Impacto alto</span><span class="tag">Esforço M</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> não apresentar a ferramenta como validação jurídica ou certificação ESG.</div>
+          </div>
+        </article>
+
+        <article class="card opportunity" data-phase="Depois">
+          <div class="card-head"><span>Mapa de públicos e stakeholders</span><span class="tag">Depois</span></div>
+          <div class="card-body">
+            <p class="job">Saber quem precisa ser mobilizado, influenciado, protegido ou ouvido.</p>
+            <p class="why">Contatos existem, mas não há visão de segmentos, comunidades, identidade, influência, sensibilidade e relação com a ativação.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Segmentos e comunidades</li><li>Influência, interesse e vínculo</li><li>Necessidades e sensibilidades</li><li>Contatos-chave e responsáveis</li><li>Conexão com fit e ativação</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Contatos, Empresas, Proponentes, Patrocinadores, Projetos e Atividades.</p><p class="label">Base</p><p>Bermúdez-González et al. (2026); Pradhan et al. (2020).</p><div class="chips"><span class="tag">Impacto alto</span><span class="tag">Esforço M</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> começar simples; um CRM de stakeholders complexo teria baixa adoção.</div>
+          </div>
+        </article>
+
+        <article class="card opportunity" data-phase="Mais tarde">
+          <div class="card-head"><span>Estúdio editorial de ativação</span><span class="tag">Mais tarde</span></div>
+          <div class="card-body">
+            <p class="job">Planejar e aprovar conteúdo de patrocinador com evidência, consistência e calendário.</p>
+            <p class="why">O material analisado já descreve um fluxo editorial maduro que poderia virar produto, mas é adjacente ao núcleo de captação e execução.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Pilares e ideias</li><li>Briefing por peça e plataforma</li><li>Tabela de evidências</li><li>Aprovação humana obrigatória</li><li>Calendário, ativos e métricas</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Atividades, Calendário, Documentos, Aprovações, Evidências e Resultados.</p><p class="label">Base</p><p>Pipeline editorial e modelos operacionais do acervo.</p><div class="chips"><span class="tag">Impacto alto</span><span class="tag">Esforço G</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> validar demanda antes de competir com ferramentas de social media management.</div>
+          </div>
+        </article>
+
+        <article class="card opportunity" data-phase="Mais tarde">
+          <div class="card-head"><span>Mapa de portfólio, saturação e conflitos</span><span class="tag">Mais tarde</span></div>
+          <div class="card-body">
+            <p class="job">Evitar exclusividades incompatíveis e perda de destaque em ecossistemas com muitos patrocinadores.</p>
+            <p class="why">Há controle pontual de relações, porém não uma leitura de categoria, concorrência, clutter, exclusividade e diluição por projeto.</p>
+            <div class="opportunity-columns">
+              <div><p class="label">MVP sugerido</p><ul><li>Categorias e concorrentes</li><li>Regras de exclusividade</li><li>Conflitos entre cotas e projetos</li><li>Densidade de marcas por ativo</li><li>Alertas antes de negociar</li></ul></div>
+              <div class="meta"><p class="label">Reaproveita</p><p>Contratos, Cotas, Patrocinadores, Empresas, Projetos e Negociações.</p><p class="label">Base</p><p>Jahn & Cornwell (2026); Cornwell (2020).</p><div class="chips"><span class="tag">Impacto alto</span><span class="tag">Esforço G</span></div></div>
+            </div>
+            <div class="risk"><strong>Cuidado:</strong> depende de boa classificação de categorias e contratos estruturados.</div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section>
+      <h2>Sequência segura de implementação</h2>
+      <div class="waves">
+        <article class="card wave"><div class="card-head"><span>Onda 0 · fundação</span><span class="tag">2–3 semanas</span></div><div class="card-body"><ul><li>Confirmar os perfis prioritários</li><li>Criar objetos: evidência, público, objetivo e indicador</li><li>Definir taxonomia mínima</li><li>Instrumentar uso e sucesso</li></ul></div></article>
+        <article class="card wave"><div class="card-head"><span>Onda 1 · valor comercial</span><span class="tag">6–8 semanas</span></div><div class="card-body"><ul><li>Matriz de adequação</li><li>Biblioteca de evidências</li><li>Primeiro plano de ativação</li><li>Integração com pitch e proposta</li></ul></div></article>
+        <article class="card wave"><div class="card-head"><span>Onda 2 · prova de entrega</span><span class="tag">6–10 semanas</span></div><div class="card-body"><ul><li>Plano de mensuração</li><li>Evidências de execução</li><li>Governança de alegações</li><li>Tarefas e aprovações</li></ul></div></article>
+        <article class="card wave"><div class="card-head"><span>Onda 3 · inteligência</span><span class="tag">com dados</span></div><div class="card-body"><ul><li>Mapa de públicos</li><li>Conflitos e saturação</li><li>Benchmarks de ativação</li><li>Recomendações explicáveis</li></ul></div></article>
+      </div>
+    </section>
+
+    <section class="bottom-grid">
+      <div>
+        <h2>O que não construir agora</h2>
+        <div class="mini-callout"><strong>IA que escolhe patrocinador sozinha</strong><span>Sem base histórica suficiente, uma recomendação opaca criaria confiança falsa.</span></div>
+        <div class="mini-callout"><strong>Benchmark preditivo de ROI</strong><span>Primeiro padronize ativação, exposição e resultados.</span></div>
+        <div class="mini-callout"><strong>Suite completa de social media</strong><span>O estúdio editorial é promissor, mas adjacente ao núcleo.</span></div>
+      </div>
+      <div>
+        <h2>Critérios de validação</h2>
+        <article class="card"><div class="card-body criteria"><p><strong>Adoção:</strong> equipes mantêm o plano sem suporte intensivo.</p><p><strong>Velocidade:</strong> menos tempo para pitch, proposta e relatório.</p><p><strong>Qualidade:</strong> entregas com evidência, responsável e status.</p><p><strong>Comercial:</strong> melhor resposta, avanço ou renovação.</p><p><strong>Confiança:</strong> menos alegações sem fonte e promessas não mensuráveis.</p></div></article>
+      </div>
+    </section>
+
+    <footer>
+      <strong>Base analisada.</strong> Acervo editorial de 30/08/2026, 11 fichas acadêmicas e documentação dos módulos de patrocinadores, empresas, negociações, inscrições, projetos, propostas, contratos, atividades, orçamento, resultados e prestação de contas. As referências orientam hipóteses de produto; afirmações públicas continuam exigindo checagem de página, método, contexto e limitações.
+    </footer>
+  </main>
+
+  <script>
+    const buttons = Array.from(document.querySelectorAll('.filter'));
+    const opportunities = Array.from(document.querySelectorAll('.opportunity'));
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const phase = button.dataset.filter;
+        buttons.forEach((item) => item.classList.toggle('active', item === button));
+        opportunities.forEach((item) => {
+          item.hidden = phase !== 'Todas' && item.dataset.phase !== phase;
+        });
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+"use client";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { ArrowLeft, LayoutGrid, DollarSign, FileText, CalendarDays, BookOpen, Ticket, Megaphone } from "lucide-react";
+import StatusBadge from "@/components/ui/StatusBadge";
+import { createClient } from "@/lib/supabase/client";
+import type { StatusPrestacao } from "@/lib/supabase/types";
+
+
+export default function PrestacaoLayout({ children }: { children: React.ReactNode }) {
+  const { id } = useParams<{ id: string }>();
+  const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+  const [titulo, setTitulo] = useState<string>("");
+  const [status, setStatus] = useState<StatusPrestacao | null>(null);
+
+  useEffect(() => {
+    (supabase as any)
+      .from("prestacoes_contas")
+      .select("titulo, status")
+      .eq("id", id)
+      .maybeSingle()
+      .then(({ data }: any) => {
+        if (data) { setTitulo(data.titulo); setStatus(data.status); }
+      });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+
+  const base = `/prestacoes/${id}`;
+  const tabs = [
+    { href: base,                    label: "Visão geral",  icon: LayoutGrid, exact: true },
+    { href: `${base}/orcamento`,     label: "Orçamento",   icon: DollarSign, exact: false },
+    { href: `${base}/comprovantes`,  label: "Comprovantes", icon: FileText,    exact: false },
+    { href: `${base}/atividades`,    label: "Atividades",   icon: CalendarDays, exact: false },
+    { href: `${base}/relatorio`,     label: "Relatório",    icon: BookOpen,    exact: false },
+    { href: `${base}/distribuicao`,  label: "Distribuição", icon: Ticket,      exact: false },
+    { href: `${base}/divulgacao`,    label: "Divulgação",   icon: Megaphone,   exact: false },
+  ];
+
+  function isActive(href: string, exact: boolean) {
+    return exact ? pathname === href : pathname.startsWith(href);
+  }
+
+  return (
+    <div className="min-h-full" style={{ background: "#F2F2F2" }}>
+      {/* Header fixo */}
+      <div className="bg-white border-b px-8 pt-6 pb-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <button
+          onClick={() => router.push("/prestacoes")}
+          className="flex items-center gap-1.5 text-[11px] text-black/40 hover:text-black/70 transition mb-3"
+        >
+          <ArrowLeft size={12} /> Prestações
+        </button>
+        <div className="flex items-center gap-3 mb-4">
+          <h1 className="font-bold text-[20px] text-[#0D0D0D] truncate">{titulo || "…"}</h1>
+          {status && <StatusBadge status={status} size="sm" />}
+        </div>
+        {/* Tabs */}
+        <div className="flex gap-0">
+          {tabs.map(({ href, label, icon: Icon, exact }) => {
+            const active = isActive(href, exact);
+            return (
+              <Link
+                key={href}
+                href={href}
+                className="flex items-center gap-1.5 px-4 py-2.5 text-[12px] font-medium border-b-2 transition-colors"
+                style={{
+                  borderColor: active ? "#7259B5" : "transparent",
+                  color: active ? "#7259B5" : "rgba(13,13,13,.45)",
+                }}
+              >
+                <Icon size={13} />
+                {label}
+              </Link>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Conteúdo */}
+      <div>{children}</div>
+    </div>
+  );
+}
