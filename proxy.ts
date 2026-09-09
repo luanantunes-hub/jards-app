@@ -89,11 +89,11 @@ export async function proxy(request: NextRequest) {
   const ip = getIp(request);
   const identity = user?.id ?? ip;
 
-  // Decide a rota inicial no servidor. Evita que o redirect do App Router
-  // renderize momentaneamente o fallback de página não encontrada.
-  if (pathname === "/") {
+  // Usuário logado na raiz vai direto pro dashboard. Deslogado segue para
+  // app/route.ts, que serve a landing page.
+  if (pathname === "/" && user) {
     const url = request.nextUrl.clone();
-    url.pathname = user ? "/dashboard" : "/login";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
@@ -153,6 +153,7 @@ export async function proxy(request: NextRequest) {
 
   // Rotas públicas que não precisam de auth
   const isPublicRoute =
+    pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/cadastro") ||
     pathname.startsWith("/confirmacao-email") ||
@@ -185,6 +186,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ttf|woff|woff2|otf|eot)$).*)",
   ],
 };

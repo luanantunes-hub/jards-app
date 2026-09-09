@@ -1,0 +1,1993 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <script>document.documentElement.classList.add('js')</script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jards | Inteligência e operação para patrocínios</title>
+  <meta name="description" content="A plataforma que conecta oportunidades, projetos, negociações, entregas e renovação em toda a jornada do patrocínio." />
+  <meta property="og:title" content="Jards | Inteligência e operação para patrocínios" />
+  <meta property="og:description" content="A plataforma que conecta oportunidades, projetos, negociações, entregas e renovação em toda a jornada do patrocínio." />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/assets/brand/modulos-conectados.jpeg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="assets/jards_logo-2.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans:    ['"Google Sans"','system-ui','sans-serif'],
+            display: ['"Google Sans"','system-ui','sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    @font-face { font-family:'Google Sans'; src:url('assets/fonts/GoogleSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('assets/fonts/GoogleSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('assets/fonts/GoogleSans-SemiBold.ttf') format('truetype'); font-weight:600; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('assets/fonts/GoogleSans-Bold.ttf') format('truetype'); font-weight:700 800; font-display:swap; }
+    h1, h2 { text-wrap: balance; }
+    p { text-wrap: pretty; }
+
+    :root {
+      --cream:  #FFFFFF;
+      --ink:    #282525;
+      --purple: #684DB0;
+      --accent-gradient: linear-gradient(90deg,#7B35E8 0%,#B875FF 38%,#9145F5 68%,#684DB0 100%);
+      --rose-bg:  #FFF0EE;
+      --rose-bdr: #FFD4CE;
+      --violet-bg:  #F2EEFF;
+      --violet-bdr: #D9CCFF;
+    }
+    body { font-family:'Google Sans',system-ui,sans-serif; background:var(--cream); color:var(--ink); overflow-x:hidden; }
+
+    /* ── Photo sections ── */
+    .photo-rio {
+      background: url('https://images.unsplash.com/photo-1483729558449-99ef09a8c325?w=1920&q=85&auto=format&fit=crop') center/cover no-repeat;
+      /* TROQUE PELA SUA FOTO: background-image:url('assets/foto_rio.jpg') */
+    }
+    .photo-lacerda {
+      background: #FFFFFF;
+    }
+
+    /* ── Cards da Base de dados: padrão dos editais da aplicação ── */
+    .sponsor-card {
+      background: linear-gradient(145deg,#fff 0%,#f7f7f6 100%);
+      border: 1px solid rgba(40,37,37,.08);
+      border-radius: 4px;
+      box-shadow: 0 1px 2px rgba(40,37,37,.025);
+      transition: box-shadow .2s ease, border-color .2s ease;
+      min-height: 204px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .sponsor-card:hover {
+      border-color: rgba(40,37,37,.12);
+      box-shadow: 0 10px 28px rgba(40,37,37,.08);
+    }
+    .card-header {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 14px 14px 10px;
+    }
+    .card-logo {
+      width: 44px; height: 44px; flex-shrink: 0;
+      object-fit: contain; border-radius: 4px;
+      border: 1px solid rgba(40,37,37,.08);
+      background: #fff; padding: 5px;
+    }
+    .card-head-copy { min-width: 0; flex: 1; }
+    .card-company { font-size: 14px; font-weight: 700; color: #282525; line-height: 1.2; }
+    .card-law {
+      display: inline-flex; align-items: center; min-height: 18px;
+      margin-top: 5px; padding: 0 6px; border-radius: 4px;
+      background: rgba(40,37,37,.055); color: rgba(40,37,37,.48);
+      font-size: 8px; font-weight: 700; letter-spacing: .055em; text-transform: uppercase;
+    }
+    .card-body {
+      flex: 1; padding: 2px 14px 12px;
+    }
+    .card-title { min-height: 30px; font-size: 11.5px; line-height: 1.35; color: rgba(40,37,37,.55); }
+    .card-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+    .card-meta-label { margin-bottom: 2px; color: rgba(40,37,37,.34); font-size: 8px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+    .card-meta-value { color: rgba(40,37,37,.62); font-size: 10.5px; font-weight: 500; font-variant-numeric: tabular-nums; }
+    .card-meta-value.is-strong { font-weight: 700; color: rgba(40,37,37,.72); }
+    .card-footer {
+      padding: 10px 14px 12px;
+      border-top: 1px solid rgba(40,37,37,.07);
+    }
+    .card-amount {
+      font-family: 'Google Sans', system-ui, sans-serif;
+      font-size: 14px; font-weight: 700; color: #282525; letter-spacing: -0.02em;
+      font-variant-numeric: tabular-nums;
+    }
+    .card-contact { font-size: 9.5px; color: rgba(40,37,37,.38); margin-top: 2px; }
+
+    /* ── Database table (BI Base de dados) ── */
+    .db-wrap { border-radius:16px; border:1px solid rgba(40,37,37,0.08); overflow:hidden; }
+    .db-table { width:100%; border-collapse:collapse; }
+    .db-table thead tr { background:#FFFFFF; border-bottom:1px solid rgba(40,37,37,0.08); }
+    .db-table th {
+      padding:9px 11px;
+      font-size:9px; font-weight:700; color:rgba(40,37,37,0.38);
+      text-transform:uppercase; letter-spacing:.07em;
+      text-align:left; white-space:nowrap;
+    }
+    .db-th-inner { display:flex; align-items:center; gap:5px; }
+    .db-table td { padding:8px 11px; vertical-align:middle; }
+    .db-row { border-top:1px solid rgba(40,37,37,0.05); transition:background .12s; cursor:pointer; }
+    .db-row:hover { background:rgba(40,37,37,0.03); }
+    .db-logo-box {
+      width:28px; height:28px; border-radius:6px; border:1px solid rgba(0,0,0,0.08);
+      background:white; display:flex; align-items:center; justify-content:center; overflow:hidden;
+    }
+    .db-logo-box img { width:20px; height:20px; object-fit:contain; }
+    .db-avatar {
+      width:28px; height:28px; border-radius:6px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:8.5px; font-weight:900; color:white; letter-spacing:-0.02em; flex-shrink:0;
+    }
+    .db-empresa { font-size:11.5px; font-weight:600; color:#282525; white-space:nowrap; }
+    .db-meta { font-size:11px; color:rgba(40,37,37,0.50); white-space:nowrap; }
+    .db-amount { font-family:'Google Sans',system-ui,sans-serif; font-size:11.5px; font-weight:700; color:#282525; white-space:nowrap; }
+    .ver-btn {
+      width:26px; height:26px; border-radius:4px;
+      display:flex; align-items:center; justify-content:center;
+      color:#7C3AED; background:transparent; border:none; cursor:pointer;
+      transition:background .15s, color .15s; padding:0;
+    }
+    .db-row:hover .ver-btn { background:#7C3AED; color:white; }
+
+    /* ── Cards de Editais ── */
+    .edital-card {
+      background: var(--violet-bg);
+      border: 1.5px solid var(--violet-bdr);
+      border-radius: 14px;
+      box-shadow: 0 2px 10px rgba(90,40,200,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      transition: box-shadow .2s ease, transform .2s ease;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .edital-card:hover {
+      box-shadow: 0 8px 32px rgba(90,40,200,0.20), 0 2px 8px rgba(90,40,200,0.09);
+      transform: translateY(-3px);
+    }
+    .edital-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px 10px;
+      background: rgba(255,255,255,0.78);
+      border-bottom: 1px solid rgba(90,40,200,0.09);
+    }
+    .edital-logo-box {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border-radius: 8px; border: 1px solid rgba(0,0,0,0.08);
+      background: white; display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .edital-logo-box img { width: 26px; height: 26px; object-fit: contain; }
+    .edital-logo-placeholder {
+      width: 36px; height: 36px; flex-shrink: 0;
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 900; color: white; letter-spacing: -0.03em;
+    }
+    .edital-status {
+      margin-left: auto; flex-shrink: 0;
+      font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
+      padding: 3px 8px; border-radius: 20px;
+    }
+    .edital-status.aberto  { background: #DCFCE7; color: #166534; }
+    .edital-status.fechado { background: #FEE2E2; color: #991B1B; }
+    .edital-body {
+      flex: 1; padding: 10px 14px 8px;
+      display: flex; flex-direction: column; gap: 5px;
+    }
+    .edital-name { font-size: 12px; font-weight: 700; color: #282525; line-height: 1.3; }
+    .edital-dates {
+      display: flex; align-items: center; gap: 5px;
+      font-size: 9.5px; color: rgba(40,37,37,0.50);
+    }
+    .edital-dot {
+      width: 6px; height: 6px; border-radius: 1px; flex-shrink: 0; display: inline-block;
+    }
+    .edital-dot.red   { background: #EF4444; }
+    .edital-dot.green { background: #22C55E; }
+    .edital-footer {
+      padding: 8px 14px 12px;
+      border-top: 1px solid rgba(90,40,200,0.09);
+      display: flex; gap: 7px;
+    }
+    .edital-btn-export {
+      flex: 1; font-size: 11px; font-weight: 600; font-family: 'Google Sans', sans-serif;
+      border: 1px solid rgba(0,0,0,0.15); border-radius: 4px; padding: 6px 0;
+      color: rgba(40,37,37,0.60); background: transparent; cursor: pointer;
+      transition: background .15s;
+    }
+    .edital-btn-export:hover { background: rgba(255,255,255,0.85); }
+    .edital-btn-access {
+      flex: 1; font-size: 11px; font-weight: 700; font-family: 'Google Sans', sans-serif;
+      border-radius: 4px; padding: 6px 0;
+      background: #282525; color: white; border: none; cursor: pointer;
+      transition: background .15s; display:flex; align-items:center; justify-content:center;
+    }
+    .edital-btn-access:hover { background: rgba(40,37,37,0.80); }
+    .edital-btn-access:active { transform: scale(0.97); }
+    .edital-btn-export:active { transform: scale(0.97); }
+    .ver-btn:active { transform: scale(0.90); }
+
+    /* ── Slot animado (BI) ── */
+    .bi-slot {
+      position: relative;
+      border-radius: 4px;
+      overflow: hidden;
+      min-height: 204px;
+    }
+    .bi-inner {
+      position: absolute;
+      inset: 0;
+      border-radius: 4px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      transition: opacity 0.38s cubic-bezier(.4,0,.2,1), transform 0.38s cubic-bezier(.4,0,.2,1);
+    }
+    .bi-sponsor {
+      background: linear-gradient(145deg,#fff 0%,#f7f7f6 100%);
+      border: 1px solid rgba(40,37,37,.08);
+      box-shadow: 0 1px 2px rgba(40,37,37,.025);
+      transition: opacity .38s cubic-bezier(.4,0,.2,1), transform .38s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .2s ease;
+    }
+    .bi-slot:hover .bi-sponsor { border-color: rgba(40,37,37,.12); box-shadow: 0 10px 28px rgba(40,37,37,.08); }
+    .bi-feature {
+      background: var(--cream);
+      border: 1.5px solid rgba(40,37,37,0.10);
+      padding: 16px;
+      justify-content: space-between;
+      opacity: 0;
+      transform: translateY(10px) scale(0.97);
+      pointer-events: none;
+    }
+    .bi-feature.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .bi-sponsor.hidden-card {
+      opacity: 0;
+      transform: translateY(-8px) scale(0.97);
+      pointer-events: none;
+    }
+
+    /* ── Accordion ── */
+    .acc-content {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1), opacity 0.28s ease;
+    }
+    .acc-content.open {
+      max-height: 500px;
+      opacity: 1;
+    }
+
+    /* ── Tabs ── */
+    .tab-panel { display:none; }
+    .tab-panel.active { display:block; }
+
+    /* ── Reveal ── */
+    section[id] { scroll-margin-top:96px; }
+    :focus-visible { outline:3px solid rgba(104,77,176,.45); outline-offset:3px; }
+    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#282525; color:#fff; font-size:13px; font-weight:700; transition:transform .18s ease; }
+    .skip-link:focus { transform:translateY(0); }
+    .reveal { opacity:1; transform:none; }
+    html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
+    html.js .reveal.in { opacity:1; transform:translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity:1; transform:none; transition:none; }
+    }
+    .brand-visual { position:relative; min-height:620px; overflow:hidden; background:#f3eee5; }
+    .brand-visual img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
+    .brand-visual::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(40,37,37,.84) 0%,rgba(40,37,37,.62) 38%,rgba(40,37,37,.08) 72%,transparent 100%); }
+    .brand-visual.is-light::after { background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.94) 38%,rgba(255,255,255,.18) 78%,transparent 100%); }
+    .brand-visual.is-senna { background:#181818; }
+    .brand-visual.is-senna::after { background:none; }
+    .brand-visual.is-senna img { object-position:center center; }
+    .brand-caption { position:absolute; z-index:2; left:max(24px,calc((100vw - 1152px)/2)); top:50%; max-width:560px; transform:translateY(-50%); }
+    .flow-grid { display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid rgba(40,37,37,.12); border-bottom:1px solid rgba(40,37,37,.12); }
+    .jards-flow-step { min-height:210px; padding:28px 24px; border-right:1px solid rgba(40,37,37,.12); }
+    .jards-flow-step:last-child { border-right:0; }
+    .flow-index { display:block; margin-bottom:28px; font-size:clamp(34px,3.4vw,48px); line-height:.9; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
+    .jards-flow-step strong { display:block; margin-bottom:10px; font-size:20px; }
+    .jards-flow-step p { color:rgba(40,37,37,.58); font-size:14px; line-height:1.6; }
+    .flow-journey-art { position:relative; height:clamp(120px,18vw,210px); margin-top:40px; overflow:hidden; }
+    .flow-journey-art img { position:absolute; top:50%; left:0; display:block; width:100%; height:auto; transform:translateY(-50%) scaleX(-1); pointer-events:none; user-select:none; }
+
+    /* ── Divider line ── */
+    hr.rule { border:none; border-top:1px solid rgba(40,37,37,.12); }
+
+    /* ── Hero image overlay ── */
+    .photo-overlay { background:linear-gradient(to right, rgba(0,0,0,.62) 0%, rgba(0,0,0,.25) 60%, transparent 100%); }
+
+    /* ── Large number ── */
+    .stat-num { font-family:'Google Sans',system-ui,sans-serif; font-weight:700; font-variant-numeric: tabular-nums; }
+
+    /* ── Product stories ── */
+    .section-space { padding-top:clamp(6rem,8vw,9rem); padding-bottom:clamp(6rem,8vw,9rem); }
+    .product-story { border-top:1px solid rgba(40,37,37,.10); }
+    .story-kicker { font-size:11px; font-weight:700; color:rgba(40,37,37,.38); letter-spacing:.12em; text-transform:uppercase; }
+    .story-list { display:grid; gap:14px; margin-top:28px; }
+    .story-list li { display:grid; grid-template-columns:34px 1fr; gap:13px; align-items:start; font-size:13px; line-height:1.55; color:rgba(40,37,37,.58); }
+    .story-list strong { color:#282525; font-weight:650; }
+    .story-index { display:block; font-size:22px; line-height:1; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; margin-top:1px; }
+
+    .product-art { background:#FAFAFA; border:1px solid rgba(40,37,37,.09); border-radius:16px; overflow:hidden; }
+    .pipeline-photo,.team-photo { position:relative; aspect-ratio:1; overflow:hidden; border-radius:4px; background:rgba(40,37,37,.035); box-shadow:0 20px 54px rgba(40,37,37,.10); }
+    .pipeline-photo img,.team-photo img { display:block; width:100%; height:100%; object-fit:cover; }
+    .pipeline-photo img { object-position:center 45%; }
+    .art-bar { height:42px; padding:0 14px; display:flex; align-items:center; gap:7px; background:white; border-bottom:1px solid rgba(40,37,37,.07); }
+    .art-dot { width:6px; height:6px; border-radius:50%; background:rgba(40,37,37,.13); }
+    .art-title { margin-left:5px; font-size:10px; font-weight:700; color:rgba(40,37,37,.48); }
+
+    .kanban-art { padding:14px; display:grid; grid-template-columns:repeat(4,minmax(116px,1fr)); gap:9px; overflow:hidden; }
+    .kanban-col { min-height:264px; }
+    .kanban-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; font-size:8px; font-weight:800; color:rgba(40,37,37,.42); letter-spacing:.04em; text-transform:uppercase; }
+    .kanban-count { font-family:'Google Sans',system-ui,sans-serif; color:rgba(40,37,37,.24); }
+    .deal-card { background:white; border:1px solid rgba(40,37,37,.08); border-radius:8px; padding:10px; margin-bottom:8px; min-height:76px; }
+    .deal-top { display:flex; align-items:center; gap:7px; margin-bottom:8px; }
+    .deal-logo { width:22px; height:22px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:7px; font-weight:800; color:white; flex-shrink:0; }
+    .deal-name { font-size:9px; font-weight:700; line-height:1.2; }
+    .deal-meta { display:flex; align-items:center; justify-content:space-between; font-size:7.5px; color:rgba(40,37,37,.38); }
+    .deal-value { font-family:'Google Sans',system-ui,sans-serif; font-weight:700; color:rgba(40,37,37,.68); }
+    .risk-line { height:2px; border-radius:2px; background:#D94A4A; margin-top:8px; }
+
+    .team-art { min-height:420px; position:relative; padding:20px; }
+    .team-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .team-card { background:white; border:1px solid rgba(40,37,37,.08); border-radius:9px; padding:14px; position:relative; z-index:2; }
+    .team-person { display:flex; align-items:center; gap:9px; margin-bottom:12px; }
+    .team-avatar { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; color:white; font-size:9px; font-weight:800; }
+    .team-name { font-size:10px; font-weight:700; }
+    .team-role { font-size:8px; color:rgba(40,37,37,.35); margin-top:1px; }
+    .team-stats { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+    .team-stat { padding-top:8px; border-top:1px solid rgba(40,37,37,.07); }
+    .team-stat b { display:block; font-family:'Google Sans',system-ui,sans-serif; font-size:13px; }
+    .team-stat span { display:block; font-size:7px; color:rgba(40,37,37,.35); }
+    .assignment-row { margin-top:12px; background:white; border:1px solid rgba(40,37,37,.08); border-radius:9px; padding:12px 14px; display:grid; grid-template-columns:1.25fr .9fr .9fr auto; align-items:center; gap:10px; font-size:8px; color:rgba(40,37,37,.44); }
+    .assignment-row strong { font-size:9px; color:#282525; }
+    .assignment-badge { justify-self:start; border:1px solid rgba(104,77,176,.24); color:#684DB0; padding:3px 6px; border-radius:4px; font-weight:700; white-space:nowrap; }
+
+    .platform-forces { position:relative; isolation:isolate; min-height:clamp(700px,108dvh,880px); display:flex; align-items:center; overflow:hidden; background:#F7F7F5; }
+    .platform-forces::before { content:""; position:absolute; inset:0; z-index:-3; background:#F7F7F5; }
+    .platform-forces::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.20; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
+    .platform-paper-shapes { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
+    .platform-paper-shape { position:absolute; display:block; border:1px solid rgba(255,255,255,.32); border-radius:42px; box-shadow:inset 0 1px 0 rgba(255,255,255,.40),0 28px 65px rgba(52,42,78,.055); }
+    .platform-paper-purple { left:-17vw; bottom:-39%; width:62vw; height:72%; background:rgba(104,77,176,.11); -webkit-mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); transform:rotate(-3deg); }
+    .platform-paper-red { top:-38%; right:-14vw; width:58vw; height:70%; background:rgba(217,74,74,.10); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:rotate(3deg); }
+    .feature-ledger { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr); width:100%; min-height:620px; overflow:hidden; border:1px solid rgba(40,37,37,.10); background:rgba(255,255,255,.88); box-shadow:0 24px 70px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.75); backdrop-filter:blur(18px) saturate(120%); -webkit-backdrop-filter:blur(18px) saturate(120%); }
+    .ledger-main { position:relative; display:flex; flex-direction:column; padding:58px 52px 46px; overflow:hidden; border-right:1px solid rgba(40,37,37,.10); }
+    .ledger-main::after { content:"01—05"; position:absolute; right:-16px; bottom:52px; color:rgba(104,77,176,.035); font-size:clamp(76px,9vw,132px); font-weight:800; line-height:.8; letter-spacing:-.09em; pointer-events:none; }
+    .ledger-kicker { position:relative; z-index:1; margin-bottom:22px; color:#684DB0; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    .ledger-main h2,.ledger-main>p { position:relative; z-index:1; }
+    .ledger-side { display:grid; grid-template-rows:repeat(4,1fr); counter-reset:ledger; }
+    .ledger-item { position:relative; display:grid; grid-template-columns:40px 1fr; align-content:center; column-gap:16px; padding:24px 34px; border-bottom:1px solid rgba(40,37,37,.10); counter-increment:ledger; transition:background-color .25s ease; }
+    .ledger-item:hover { background:rgba(104,77,176,.035); }
+    .ledger-item:last-child { border-bottom:0; }
+    .ledger-item::before { content:"0" counter(ledger); position:absolute; left:34px; top:50%; transform:translateY(-50%); color:#684DB0; background:var(--accent-gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; font-size:24px; font-weight:800; line-height:1; letter-spacing:-.06em; }
+    .ledger-item > * { grid-column:2; }
+    .ledger-num { font-family:'Google Sans',system-ui,sans-serif; font-size:10px; font-weight:700; letter-spacing:.08em; color:#684DB0; margin-bottom:10px; }
+    .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.05; margin-bottom:8px; }
+    .ledger-item p { max-width:38ch; font-size:12px; line-height:1.6; color:rgba(40,37,37,.50); }
+    .flow-row { position:relative; z-index:1; display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin-top:auto; padding-top:52px; }
+    .flow-row::before { content:""; position:absolute; top:60px; left:5px; right:8px; height:1px; background:rgba(104,77,176,.30); }
+    .flow-step { position:relative; padding:28px 10px 0 0; }
+    .flow-step::before { content:""; position:absolute; top:4px; left:0; width:9px; height:9px; border:2px solid #684DB0; border-radius:50%; background:#fff; }
+    .flow-step:last-child::after { content:"→"; position:absolute; top:-5px; right:2px; color:#684DB0; font-size:18px; line-height:1; }
+    .flow-step span { display:block; font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:rgba(40,37,37,.38); }
+    .flow-step strong { display:block; font-size:10px; margin-top:4px; }
+
+    @media (max-width: 767px) {
+      .kanban-art { grid-template-columns:repeat(4,150px); overflow-x:auto; }
+      .team-grid { grid-template-columns:1fr; }
+      .team-art { min-height:auto; }
+      .assignment-row { grid-template-columns:1fr 1fr; }
+      .platform-forces { min-height:auto; padding-top:56px; padding-bottom:56px; }
+      .platform-paper-purple { left:-78vw; bottom:-12%; width:142vw; height:48%; }
+      .platform-paper-red { top:-17%; right:-77vw; width:138vw; height:44%; }
+      .feature-ledger { grid-template-columns:1fr; min-height:0; }
+      .ledger-main { min-height:390px; padding:34px 24px 28px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
+      .ledger-main::after { display:none; }
+      .ledger-kicker { margin-bottom:16px; }
+      .ledger-main h2 { font-size:clamp(34px,9.4vw,48px) !important; }
+      .ledger-main>p { max-width:34ch; font-size:14px; }
+      .flow-row { display:flex; margin:28px -24px 0; padding:18px 24px 6px; gap:0; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+      .flow-row::-webkit-scrollbar,.ledger-side::-webkit-scrollbar { display:none; }
+      .flow-row::before { top:25px; left:28px; right:28px; }
+      .flow-step { flex:0 0 126px; padding:27px 12px 0 0; scroll-snap-align:start; }
+      .flow-step:last-child::after { top:-6px; right:8px; }
+      .ledger-side { display:flex; grid-template-rows:none; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+      .ledger-item { flex:0 0 min(78vw,290px); min-height:190px; align-content:start; padding:28px 24px; border-right:1px solid rgba(40,37,37,.10); border-bottom:0; scroll-snap-align:start; }
+      .ledger-item::before { left:24px; }
+      .ledger-item:last-child { border-right:0; }
+    }
+
+    .landing-nav-shell { margin-top:10px; border:1px solid rgba(40,37,37,.08); border-radius:4px; background:rgba(255,255,255,.76); backdrop-filter:blur(22px) saturate(150%); -webkit-backdrop-filter:blur(22px) saturate(150%); box-shadow:0 12px 44px rgba(104,77,176,.09),inset 0 1px 0 rgba(255,255,255,.8); }
+    .landing-hero { position:relative; isolation:isolate; overflow:hidden; min-height:100dvh; background:#F7F7F5; }
+    .landing-hero::before { content:""; position:absolute; inset:0; z-index:-3; background:#F7F7F5; }
+    .landing-hero::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.22; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
+    .hero-paper-shapes { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
+    .hero-paper-shape { position:absolute; display:block; border:1px solid rgba(255,255,255,.34); box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 28px 65px rgba(52,42,78,.08); }
+    .hero-paper-red { left:-13vw; bottom:-34vh; width:64vw; height:76vh; border-radius:42px; background:rgba(217,74,74,.15); -webkit-mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); transform:translate3d(0,0,0) rotate(-4deg); }
+    .hero-paper-purple { top:-30vh; right:-12vw; width:63vw; height:76vh; border-radius:42px; background:rgba(104,77,176,.14); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:translate3d(0,0,0) rotate(4deg); }
+    .pricing-pro-card { border:1px solid rgba(104,77,176,.34); background:#19151F; box-shadow:0 22px 60px rgba(52,42,78,.16),inset 0 1px 0 rgba(255,255,255,.06); }
+    .closing-cta { position:relative; isolation:isolate; overflow:hidden; background:#F7F7F5; }
+    .closing-cta::before,.closing-cta::after { content:""; position:absolute; z-index:-1; display:block; width:66vw; height:150%; border:1px solid rgba(255,255,255,.34); border-radius:42px; box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 28px 65px rgba(52,42,78,.07); pointer-events:none; }
+    .closing-cta::before { left:-18vw; bottom:-92%; background:rgba(217,74,74,.14); -webkit-mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); transform:rotate(-4deg); }
+    .closing-cta::after { top:-94%; right:-17vw; background:rgba(104,77,176,.14); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:rotate(4deg); }
+    @media (max-width:767px) { .closing-cta::before,.closing-cta::after { width:125vw; height:115%; } .closing-cta::before { left:-78vw; bottom:-66%; } .closing-cta::after { top:-68%; right:-80vw; } }
+    .blog-section { background:#fff; border-top:1px solid rgba(40,37,37,.08); }
+    .blog-head { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr); align-items:end; gap:48px; margin-bottom:52px; }
+    .blog-head h2 { max-width:12ch; margin-top:14px; font-size:clamp(38px,4.5vw,64px); font-weight:700; line-height:1.02; letter-spacing:-.05em; color:#282525; }
+    .blog-head-side { justify-self:end; max-width:34ch; }
+    .blog-head-side p { margin-bottom:22px; font-size:15px; line-height:1.65; color:rgba(40,37,37,.56); }
+    .blog-index-link { display:inline-flex; align-items:center; gap:9px; padding-bottom:4px; border-bottom:1px solid rgba(104,77,176,.42); color:#684DB0; font-size:14px; font-weight:700; transition:border-color .2s ease,gap .2s ease; }
+    .blog-index-link:hover { gap:13px; border-color:#684DB0; }
+    .blog-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr; border-top:1px solid rgba(40,37,37,.12); border-bottom:1px solid rgba(40,37,37,.12); }
+    .blog-story { display:flex; min-width:0; min-height:390px; flex-direction:column; padding:34px 28px 30px; color:#282525; border-right:1px solid rgba(40,37,37,.12); transition:background-color .25s ease; }
+    .blog-story:hover { background:rgba(104,77,176,.035); }
+    .blog-story:first-child { padding-left:0; }
+    .blog-story:last-child { padding-right:0; border-right:0; }
+    .blog-topic { display:block; margin-bottom:13px; color:#684DB0; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    .blog-story h3 { max-width:18ch; margin:0 0 16px; font-size:clamp(23px,2.2vw,34px); font-weight:700; line-height:1.08; letter-spacing:-.035em; }
+    .blog-story:not(:first-child) h3 { font-size:clamp(21px,1.75vw,27px); }
+    .blog-story p { max-width:38ch; margin-bottom:28px; color:rgba(40,37,37,.56); font-size:14px; line-height:1.65; }
+    .blog-read { display:flex; align-items:center; gap:9px; margin-top:auto; color:#282525; font-size:13px; font-weight:700; }
+    .blog-read::after { content:"→"; color:#684DB0; transition:transform .2s ease; }
+    .blog-story:hover .blog-read::after { transform:translateX(4px); }
+    @media (max-width:900px) {
+      .blog-head { grid-template-columns:1fr; gap:22px; }
+      .blog-head-side { justify-self:start; }
+      .blog-grid { grid-template-columns:1fr 1fr; }
+      .blog-story { min-height:390px; }
+      .blog-story:first-child { grid-column:1 / -1; min-height:0; padding-right:0; padding-bottom:36px; border-right:0; }
+      .blog-story:nth-child(2) { padding-left:0; }
+    }
+    @media (max-width:640px) {
+      .blog-head { margin-bottom:34px; }
+      .blog-head h2 { max-width:10ch; }
+      .blog-grid { display:flex; width:calc(100% + 24px); overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+      .blog-grid::-webkit-scrollbar { display:none; }
+      .blog-story,.blog-story:first-child { flex:0 0 min(84vw,340px); min-height:360px; padding:28px 20px 26px; border-right:1px solid rgba(40,37,37,.12); scroll-snap-align:start; }
+      .blog-story:first-child,.blog-story:nth-child(2) { padding-left:0; padding-right:20px; }
+      .blog-story:last-child { padding-right:20px; border-right:0; }
+      .blog-story h3,.blog-story:not(:first-child) h3 { font-size:25px; }
+    }
+    .site-footer { position:relative; overflow:hidden; padding:88px 24px 28px; border-top:1px solid rgba(40,37,37,.10); background:#F7F7F5; color:#282525; }
+    .site-footer-main { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); gap:64px; align-items:start; }
+    .footer-brand { min-height:390px; }
+    .footer-icon-stack { position:relative; display:block; width:430px; height:390px; }
+    .footer-icon { position:absolute; top:-78px; left:-96px; display:block; width:430px; height:430px; transform:rotate(-32deg); transform-origin:center; transition:transform .45s cubic-bezier(.2,.7,.2,1); }
+    .footer-icon-stack:hover .footer-icon { transform:rotate(-27deg) scale(1.02); }
+    .footer-column-title { margin-bottom:22px; color:rgba(40,37,37,.42); font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    .footer-nav,.footer-social-links { display:flex; flex-direction:column; align-items:flex-start; gap:13px; }
+    .footer-nav a,.footer-social-links a { color:#282525; font-size:15px; font-weight:650; line-height:1.25; transition:color .2s ease,transform .2s ease; }
+    .footer-social-links a { display:inline-flex; align-items:center; gap:9px; }
+    .footer-social-links i { font-size:21px; line-height:1; }
+    .footer-nav a:hover,.footer-social-links a:hover { color:#684DB0; transform:translateX(3px); }
+    .footer-social-note { max-width:22ch; margin-top:28px; color:rgba(40,37,37,.48); font-size:13px; line-height:1.6; }
+    .footer-social-illustration { display:block; width:min(260px,22vw); height:auto; margin:26px 0 10px -16px; }
+    .site-footer-bottom { position:relative; z-index:2; display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); align-items:center; gap:64px; padding-top:28px; border-top:1px solid rgba(40,37,37,.12); }
+    .site-footer-legal { display:flex; flex-wrap:wrap; gap:20px; }
+    .site-footer-bottom .site-footer-legal { grid-column:2; }
+    .site-footer-bottom>p { justify-self:end; }
+    .site-footer-bottom a,.site-footer-bottom p { color:rgba(40,37,37,.42); font-size:11px; font-weight:600; }
+    .site-footer-bottom a:hover { color:#684DB0; }
+    @media (max-width:800px) {
+      .site-footer { padding-top:64px; }
+      .site-footer-main { grid-template-columns:1fr 1fr; gap:48px 28px; }
+      .footer-brand { grid-column:1 / -1; }
+      .footer-brand { min-height:340px; }
+      .footer-icon-stack { width:350px; height:340px; }
+      .footer-icon { top:-64px; left:-82px; width:360px; height:360px; }
+      .footer-social-illustration { width:min(230px,42vw); margin-left:-10px; }
+      .site-footer-bottom { display:flex; align-items:flex-start; flex-direction:column; gap:14px; }
+    }
+    @media (max-width:430px) {
+      .site-footer-main { grid-template-columns:1fr; }
+      .footer-brand { grid-column:auto; }
+      .footer-brand { min-height:280px; }
+      .footer-icon-stack { width:280px; height:280px; }
+      .footer-icon { top:-54px; left:-72px; width:300px; height:300px; }
+      .footer-social-illustration { width:min(250px,78vw); margin-bottom:8px; }
+    }
+    .hero-layout { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); align-items:center; gap:40px; width:min(1480px,100%); min-height:100dvh; margin:auto; padding:112px 40px 72px; }
+    .hero-copy { min-width:0; text-align:left; }
+    .hero-copy h1 { max-width:100%; margin:0; font-size:clamp(52px,5.2vw,80px); font-weight:700; line-height:.98; letter-spacing:-.06em; color:#282525; text-wrap:balance; }
+    .hero-description { max-width:43ch; margin-top:24px; font-size:17px; line-height:1.65; color:#625f68; }
+    .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
+    .hero-actions a { white-space:nowrap; }
+    .hero-visual { position:relative; justify-self:end; min-width:0; width:90%; aspect-ratio:1424 / 960; }
+    .hero-anteater-detail { position:absolute; z-index:3; right:44px; bottom:0; width:clamp(190px,19vw,300px); height:auto; pointer-events:none; user-select:none; transform:translateY(7%); filter:drop-shadow(0 16px 18px rgba(52,42,78,.08)); }
+    .landing-hero { min-height:100dvh; }
+    /* Keep the device composition proportional within its column. */
+    .art-stage { position:absolute; top:0; left:0; width:1424px; height:960px; margin:0; transform:scale(var(--hero-art-scale,.5)); transform-origin:top left; }
+    @media (max-width:1023px) { .hero-layout { gap:28px; padding-right:24px; padding-left:24px; } .hero-copy h1 { font-size:clamp(48px,5.5vw,58px); } .hero-description { font-size:16px; } }
+    @media (max-width:767px) { .hero-layout { grid-template-columns:minmax(0,1fr); gap:42px; min-height:100dvh; padding:118px 24px 92px; } .hero-copy h1 { max-width:14ch; font-size:clamp(42px,11vw,52px); } .hero-visual { justify-self:center; width:94%; margin-top:2px; } .hero-anteater-detail { right:18px; width:min(44vw,210px); transform:translateY(4%); } .hero-paper-red { left:-72vw; bottom:27%; width:132vw; height:58vh; } .hero-paper-purple { top:44%; right:-70vw; width:140vw; height:54vh; } }
+    .art-desktop-frame { position:absolute; z-index:2; left:50%; top:108px; width:82%; padding:17px 11px 24px; transform:translateX(-50%); border:1px solid #777a7e; border-radius:22px 22px 12px 12px; background:linear-gradient(115deg,#303235,#17181a 28%,#222426 72%,#111214); box-shadow:inset 0 1px 0 #ededee,inset 2px 0 1px #a6a8ab,inset -2px 0 1px #55585c,0 0 0 1px #d1d2d4,0 36px 92px rgba(52,42,78,.22),0 8px 22px rgba(40,37,37,.16); }
+    .art-desktop-frame::before { position:absolute; top:5px; left:50%; width:6px; height:6px; transform:translateX(-50%); border:1px solid #40434a; border-radius:50%; background:radial-gradient(circle at 35% 30%,#648296 0 10%,#1a2b37 24%,#0d1014 60%); box-shadow:0 0 0 2px #141517; content:""; }
+    .art-desktop-frame::after { position:absolute; right:-4.5%; bottom:-11px; left:-4.5%; height:19px; border:1px solid #94979b; border-top-color:#f3f4f5; border-radius:2px 2px 50% 50% / 2px 2px 12px 12px; background:linear-gradient(90deg,rgba(52,56,62,.6),transparent 5% 95%,rgba(52,56,62,.6)),linear-gradient(180deg,#e7e8ea 0%,#c8cbcf 30%,#aaadb2 54%,#797d83 82%,#575b61 100%); box-shadow:inset 0 1px 0 #fff,0 2px 2px rgba(36,38,43,.22),0 12px 15px -8px rgba(36,38,43,.3); content:""; }
+    .art-laptop-notch { position:absolute; z-index:2; bottom:0; left:42%; width:16%; height:8px; border-radius:0 0 9px 9px; background:linear-gradient(90deg,#90949a,#b9bdc2 12% 88%,#90949a); box-shadow:inset 0 2px 3px rgba(32,35,39,.3),0 1px 0 rgba(255,255,255,.6); pointer-events:none; }
+    .art-workspace { position:relative; z-index:1; width:100%; overflow:hidden; border:1px solid rgba(40,37,37,.13); border-radius:9px 9px 3px 3px; background:#fff; text-align:left; }
+    .art-float { position:absolute; z-index:4; overflow:hidden; border:1px solid rgba(40,37,37,.12); border-radius:12px; background:rgba(255,255,255,.96); box-shadow:0 22px 58px rgba(52,42,78,.17),0 5px 16px rgba(40,37,37,.09); text-align:left; }
+    .art-report-card { z-index:1; top:20px; left:2.2%; width:270px; padding:17px 18px 15px; }
+    .art-report-head { display:flex; align-items:center; gap:8px; padding-bottom:12px; border-bottom:1px solid rgba(40,37,37,.09); font-size:11px; font-weight:700; }
+    .art-report-icon { display:grid; width:22px; height:22px; place-items:center; border:1px solid rgba(104,77,176,.28); border-radius:50%; color:#684DB0; font-size:11px; }
+    .art-report-bars { display:grid; grid-template-columns:repeat(4,1fr); align-items:end; gap:12px; height:112px; padding-top:17px; }
+    .art-report-bar { position:relative; display:flex; height:var(--bar); flex-direction:column; justify-content:flex-end; border-radius:3px 3px 0 0; background:linear-gradient(to top,#684DB0 0 56%,#a795db 56% 82%,#d8d0ef 82%); }
+    .art-report-bar b { position:absolute; top:-18px; left:50%; transform:translateX(-50%); color:#282525; font-size:10px; }
+    .art-report-months { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:7px; color:rgba(40,37,37,.36); font-size:8px; text-align:center; }
+    .art-mobile-preview { left:1.2%; bottom:10px; width:245px; overflow:visible; padding:7px; border:2px solid #666b73; border-radius:33px; background:linear-gradient(115deg,#3f4247,#121315 34%,#24262a 75%,#090a0c); box-shadow:inset 0 1px 0 #d4d7dc,inset 1px 0 0 #999ea6,inset -1px 0 0 #40454d,0 0 0 1px #202226,0 22px 58px rgba(52,42,78,.22),0 5px 16px rgba(40,37,37,.16); }
+    .art-mobile-preview::before { content:""; position:absolute; left:-4px; top:72px; width:3px; height:24px; border-radius:2px 0 0 2px; background:linear-gradient(90deg,#42474f,#a6abb2,#40454d); box-shadow:0 33px 0 #676d76; }
+    .art-mobile-preview::after { content:""; position:absolute; right:-4px; top:100px; width:3px; height:39px; border-radius:0 2px 2px 0; background:linear-gradient(90deg,#40454d,#a6abb2,#42474f); }
+    .art-mobile-screen { position:relative; overflow:hidden; min-height:388px; padding-top:15px; padding-bottom:16px; border:1px solid #111316; border-radius:25px; background:#fff; box-shadow:0 0 0 1px #08090a; }
+    .art-mobile-screen::before { content:""; position:absolute; top:5px; left:50%; width:47px; height:11px; transform:translateX(-50%); border:1px solid #101114; border-radius:9px; background:radial-gradient(circle at 85% 50%,#344c60 0 1px,#141c26 1.5px 2.5px,transparent 3px),linear-gradient(#17191c,#08090b); box-shadow:inset 0 1px 1px rgba(255,255,255,.1); }
+    .art-mobile-screen::after { content:""; position:absolute; bottom:6px; left:34%; width:32%; height:3px; border-radius:3px; background:#202226; }
+    .art-mobile-top { display:flex; align-items:center; justify-content:space-between; padding:12px; border-bottom:1px solid rgba(40,37,37,.08); font-size:8px; font-weight:650; }
+    .art-mobile-logo { width:45px; }
+    .art-mobile-body { padding:13px; }
+    .art-mobile-kicker { color:rgba(40,37,37,.36); font-size:7px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    .art-mobile-body h3 { margin:5px 0 2px; font-size:14px; font-weight:700; letter-spacing:-.025em; }
+    .art-mobile-body > p { color:rgba(40,37,37,.42); font-size:8px; }
+    .art-mobile-health { display:flex; align-items:center; justify-content:space-between; margin:14px 0; padding:10px; border:1px solid rgba(40,37,37,.09); border-radius:7px; }
+    .art-mobile-health span { color:rgba(40,37,37,.42); font-size:8px; }
+    .art-mobile-health strong { color:#2E8932; font-size:9px; }
+    .art-mobile-task { display:grid; grid-template-columns:17px 1fr auto; align-items:center; gap:7px; padding:10px 0; border-bottom:1px solid rgba(40,37,37,.07); }
+    .art-mobile-task i { display:grid; width:17px; height:17px; place-items:center; border:1px solid rgba(104,77,176,.25); border-radius:4px; color:#684DB0; font-size:8px; font-style:normal; }
+    .art-mobile-task b { font-size:8px; }
+    .art-mobile-task time { color:rgba(40,37,37,.38); font-size:7px; }
+    .art-mobile-action { display:block; margin-top:14px; padding:10px; border-radius:6px; color:#fff; background:#684DB0; font-size:9px; font-weight:700; text-align:center; }
+    .art-insight-card { right:1%; bottom:30px; width:330px; }
+    .art-insight-head { display:flex; align-items:center; justify-content:space-between; padding:14px 16px; border-bottom:1px solid rgba(40,37,37,.09); }
+    .art-insight-head strong { font-size:11px; }
+    .art-insight-head span { color:#684DB0; font-size:9px; font-weight:650; }
+    .art-insight-body { padding:16px; }
+    .art-insight-label { color:rgba(40,37,37,.37); font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    .art-insight-title { margin:7px 0 5px; font-size:14px; font-weight:700; }
+    .art-insight-copy { color:rgba(40,37,37,.47); font-size:9px; line-height:1.5; }
+    .art-insight-meta { display:flex; align-items:center; justify-content:space-between; margin-top:15px; padding-top:12px; border-top:1px solid rgba(40,37,37,.08); }
+    .art-insight-meta span { color:#B07A14; font-size:9px; font-weight:700; }
+    .art-insight-meta b { color:#684DB0; font-size:9px; }
+    @media (prefers-reduced-motion:no-preference) { .hero-paper-red { animation:hero-paper-red-in 1.15s cubic-bezier(.16,1,.3,1) both; } .hero-paper-purple { animation:hero-paper-purple-in 1.25s .06s cubic-bezier(.16,1,.3,1) both; } .art-report-card { animation:art-float-a 7s ease-in-out infinite; } .art-insight-card { animation:art-float-b 8s ease-in-out infinite; } }
+    @keyframes hero-paper-red-in { from { opacity:0; transform:translate3d(-30px,20px,0) rotate(-6deg); } to { opacity:1; transform:translate3d(0,0,0) rotate(-4deg); } }
+    @keyframes hero-paper-purple-in { from { opacity:0; transform:translate3d(32px,-20px,0) rotate(6deg); } to { opacity:1; transform:translate3d(0,0,0) rotate(4deg); } }
+    @keyframes art-float-a { 0%,100% { transform:translateY(0) rotate(-1deg); } 50% { transform:translateY(-7px) rotate(-1deg); } }
+    @keyframes art-float-b { 0%,100% { transform:translateY(0) rotate(1deg); } 50% { transform:translateY(6px) rotate(1deg); } }
+    .art-appbar { display:flex; align-items:center; justify-content:space-between; min-height:38px; padding:0 18px; border-bottom:1px solid rgba(40,37,37,.09); background:rgba(40,37,37,.018); }
+    .art-appbrand { display:flex; align-items:center; gap:8px; color:rgba(40,37,37,.45); font-size:9px; font-weight:600; }
+    .art-appbrand img { width:48px; height:auto; opacity:.88; }
+    .art-tools { display:flex; align-items:center; gap:12px; color:rgba(40,37,37,.3); font-size:9px; }
+    .art-user { display:grid; width:20px; height:20px; place-items:center; border-radius:50%; color:#fff; background:#684DB0; font-size:8px; font-weight:700; }
+    .art-entity-head { display:flex; align-items:center; justify-content:space-between; gap:18px; min-height:94px; padding:16px 20px; border-bottom:1px solid rgba(40,37,37,.09); }
+    .art-entity { display:flex; align-items:center; min-width:0; gap:13px; }
+    .art-identity { position:relative; width:58px; height:58px; flex:0 0 auto; }
+    .art-portrait { width:58px; height:58px; object-fit:cover; border:1px solid rgba(40,37,37,.09); border-radius:4px; background:#f4f4f2; }
+    .art-brand { position:absolute; right:-7px; bottom:-5px; width:26px; height:26px; padding:2px; border:1px solid rgba(40,37,37,.09); border-radius:4px; background:#fff; object-fit:contain; filter:grayscale(1); }
+    .art-entity-copy { min-width:0; }
+    .art-breadcrumb { display:block; margin-bottom:5px; color:rgba(40,37,37,.32); font-size:8px; font-weight:500; }
+    .art-title-line { display:flex; align-items:center; gap:9px; }
+    .art-entity-copy strong { overflow:hidden; font-size:17px; font-weight:650; letter-spacing:-.025em; text-overflow:ellipsis; white-space:nowrap; }
+    .art-entity-copy .art-status { display:inline-flex; align-items:center; height:21px; margin:0; padding:0 7px; border:0; border-radius:4px; color:#fff; background:#2E8932; font-size:8px; font-weight:700; line-height:1; text-transform:uppercase; }
+    .art-entity-copy > span { display:block; margin-top:5px; color:rgba(40,37,37,.4); font-size:10px; }
+    .art-actions { display:flex; align-items:center; gap:7px; flex:0 0 auto; }
+    .art-control { display:inline-flex; align-items:center; justify-content:center; min-height:31px; padding:0 10px; border:1px solid rgba(40,37,37,.11); border-radius:4px; color:rgba(40,37,37,.57); background:#fff; font-size:9px; font-weight:600; }
+    .art-control.is-primary { border-color:rgba(104,77,176,.32); color:#684DB0; }
+    .art-stats { display:grid; grid-template-columns:1.35fr 1fr 1fr 1fr; border-bottom:1px solid rgba(40,37,37,.09); }
+    .art-stat { min-height:59px; padding:12px 16px; border-right:1px solid rgba(40,37,37,.09); background:#fff; }
+    .art-stat:last-child { border-right:0; }
+    .art-stat-label { margin:0; color:rgba(40,37,37,.3); font-size:7.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    .art-stat-value { display:flex; align-items:center; gap:6px; margin:5px 0 0; color:#282525; font-size:11px; font-weight:650; }
+    .art-stat-value.is-purple { color:#684DB0; }
+    .art-stat-value.is-amber { color:#B07A14; }
+    .art-person { display:grid; width:18px; height:18px; place-items:center; border-radius:50%; color:#fff; background:#684DB0; font-size:7px; }
+    .art-tabs { display:flex; align-items:center; gap:24px; height:42px; padding:0 20px; border-bottom:1px solid rgba(40,37,37,.09); }
+    .art-tab { position:relative; display:flex; height:42px; align-items:center; color:rgba(40,37,37,.38); font-size:9px; font-weight:550; }
+    .art-tab.is-active { color:#684DB0; }
+    .art-tab.is-active::after { position:absolute; right:0; bottom:0; left:0; height:2px; background:#684DB0; content:""; }
+    .art-body { padding:16px; background:rgba(40,37,37,.018); }
+    .art-overview { display:grid; grid-template-columns:168px 1fr; overflow:hidden; border:1px solid rgba(40,37,37,.09); border-radius:4px; background:#fff; }
+    .art-score { display:flex; min-height:132px; flex-direction:column; align-items:center; justify-content:center; border-right:1px solid rgba(40,37,37,.09); }
+    .art-score-label { margin:0 0 1px; color:rgba(40,37,37,.3); font-size:7px; font-weight:600; }
+    .art-gauge { width:128px; height:64px; }
+    .art-score-title { margin:-2px 0 0; color:#684DB0; font-size:9px; font-weight:700; }
+    .art-score-copy { margin:2px 0 0; color:rgba(40,37,37,.3); font-size:7px; }
+    .art-metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:1px; background:rgba(40,37,37,.09); }
+    .art-metric { display:flex; min-height:132px; flex-direction:column; justify-content:center; padding:15px; background:#fff; }
+    .art-metric span { color:rgba(40,37,37,.3); font-size:8px; }
+    .art-metric strong { margin-top:8px; font-size:18px; font-weight:650; letter-spacing:-.025em; }
+    .art-metric:nth-child(1) strong { color:#684DB0; }
+    .art-metric:nth-child(2) strong { color:#D94A4A; }
+    .art-metric:nth-child(3) strong { color:#1A8B7A; }
+    .art-grid { display:grid; grid-template-columns:minmax(0,1fr) 238px; gap:12px; margin-top:12px; }
+    .art-panel { overflow:hidden; border:1px solid rgba(40,37,37,.09); border-radius:4px; background:#fff; }
+    .art-panel-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; padding:14px 16px 12px; border-bottom:1px solid rgba(40,37,37,.09); }
+    .art-eyebrow { margin:0; color:rgba(40,37,37,.3); font-size:7px; font-weight:700; letter-spacing:.1em; text-transform:uppercase; }
+    .art-panel-title { margin:4px 0 0; font-size:13px; font-weight:650; letter-spacing:-.015em; }
+    .art-panel-copy { margin:3px 0 0; color:rgba(40,37,37,.38); font-size:8px; }
+    .art-panel-actions { display:flex; gap:6px; }
+    .art-panel-tabs { display:flex; align-items:center; gap:18px; height:37px; padding:0 16px; border-bottom:1px solid rgba(40,37,37,.09); }
+    .art-panel-tab { position:relative; display:flex; height:37px; align-items:center; color:rgba(40,37,37,.37); font-size:8px; font-weight:550; }
+    .art-panel-tab.is-active { color:#684DB0; }
+    .art-panel-tab.is-active::after { position:absolute; right:0; bottom:0; left:0; height:2px; background:#684DB0; content:""; }
+    .art-followup { display:grid; grid-template-columns:20px minmax(0,1fr) auto; align-items:center; gap:10px; min-height:54px; padding:9px 16px; border-bottom:1px solid rgba(40,37,37,.06); }
+    .art-followup:last-child { border-bottom:0; }
+    .art-check { display:grid; width:20px; height:20px; place-items:center; border:1px solid rgba(40,37,37,.14); border-radius:4px; color:rgba(40,37,37,.22); font-size:10px; }
+    .art-followup strong { display:block; overflow:hidden; font-size:9.5px; font-weight:650; text-overflow:ellipsis; white-space:nowrap; }
+    .art-followup div span { display:block; margin-top:3px; color:rgba(40,37,37,.34); font-size:7.5px; }
+    .art-followup time { color:rgba(40,37,37,.43); font-size:7.5px; font-weight:550; }
+    .art-followup time.is-overdue { color:#D94A4A; }
+    .art-side { display:flex; flex-direction:column; gap:12px; }
+    .art-side-card { border:1px solid rgba(40,37,37,.09); border-radius:4px; background:#fff; }
+    .art-side-head { display:flex; align-items:center; justify-content:space-between; padding:11px 12px; border-bottom:1px solid rgba(40,37,37,.09); }
+    .art-side-head strong { font-size:8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+    .art-side-head span { color:#684DB0; font-size:7px; }
+    .art-deal { padding:12px; }
+    .art-deal-project { color:rgba(40,37,37,.34); font-size:7.5px; }
+    .art-deal-title { margin:4px 0 0; font-size:10px; font-weight:650; }
+    .art-deal-stage { display:flex; align-items:center; justify-content:space-between; margin-top:12px; color:rgba(40,37,37,.36); font-size:7px; }
+    .art-progress { height:5px; margin-top:5px; overflow:hidden; border-radius:4px; background:rgba(40,37,37,.07); }
+    .art-progress i { display:block; width:63%; height:100%; background:#684DB0; }
+    .art-money { display:flex; align-items:flex-end; justify-content:space-between; margin-top:12px; }
+    .art-money small { color:rgba(40,37,37,.34); font-size:7px; }
+    .art-money strong { color:#684DB0; font-size:12px; }
+    .art-contacts { padding:3px 12px; }
+    .art-contact { display:grid; grid-template-columns:28px minmax(0,1fr) auto; align-items:center; gap:8px; min-height:47px; border-bottom:1px solid rgba(40,37,37,.06); }
+    .art-contact:last-child { border-bottom:0; }
+    .art-avatar { display:grid; width:28px; height:28px; place-items:center; border:0; border-radius:4px; color:rgba(40,37,37,.58); background:linear-gradient(145deg,#fff 0%,rgba(40,37,37,.035) 32%,rgba(40,37,37,.12) 72%,#fff 100%); box-shadow:0 1px 2px rgba(40,37,37,.07); font-size:12px; font-weight:650; line-height:1; text-align:center; }
+    .art-contact div strong { display:block; font-size:8px; font-weight:650; }
+    .art-contact div span { display:block; margin-top:2px; color:rgba(40,37,37,.34); font-size:7px; }
+    .art-contact-score { color:#2E8932; font-size:7px; font-weight:700; }
+    .art-foot { display:flex; align-items:center; justify-content:space-between; min-height:34px; padding:0 16px; border-top:1px solid rgba(40,37,37,.09); color:rgba(40,37,37,.32); background:#fff; font-size:7.5px; }
+    .art-foot strong { color:#684DB0; font-weight:600; }
+    .landing-proof { border-top:1px solid rgba(40,37,37,.09); border-bottom:1px solid rgba(40,37,37,.09); }
+    .accent-gradient-text,
+    .stat-accent,
+    .flow-index,
+    .story-index {
+      color:#684DB0;
+      background:var(--accent-gradient);
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
+    .rounded-xl,.rounded-2xl,.rounded-lg { border-radius:4px !important; }
+    @media (max-width:767px) { .landing-nav-shell { margin:8px 8px 0; padding-left:14px; padding-right:10px; } .landing-nav-shell a[data-app-path="/login"] { display:none; } .landing-hero { min-height:auto; }                             .brand-visual { min-height:680px; } .brand-visual img { object-position:82% center; } .brand-visual::after { background:linear-gradient(180deg,rgba(40,37,37,.88) 0%,rgba(40,37,37,.66) 54%,rgba(40,37,37,.18) 100%); } .brand-visual.is-light::after { background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.92) 52%,rgba(255,255,255,.20) 100%); } .brand-caption { left:24px; right:24px; top:72px; transform:none; } .flow-grid { grid-template-columns:1fr; } .jards-flow-step { min-height:auto; border-right:0; border-bottom:1px solid rgba(40,37,37,.12); } .jards-flow-step:last-child { border-bottom:0; } .flow-index { margin-bottom:18px; } }
+    @media (max-width:767px) { .brand-visual.is-senna::after { background:none; } .brand-visual.is-senna img { object-position:78% center; } }
+
+  </style>
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+<!-- ════════════════════════ NAV ════════════════════════ -->
+<header class="fixed inset-x-0 top-0 z-50">
+  <div class="landing-nav-shell max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
+    <a href="#top" aria-label="Voltar ao início"><img src="assets/jards_logo-2.svg" alt="Jards" class="h-7" /></a>
+
+    <nav class="hidden md:flex items-center gap-8">
+      <a href="#bi"       class="text-sm font-medium text-black/50 hover:text-black transition-colors">Plataforma</a>
+      <a href="#produto-tabs" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Produto</a>
+      <a href="#operacao" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Parcerias</a>
+      <a href="#precos"   class="text-sm font-medium text-black/50 hover:text-black transition-colors">Preços</a>
+    </nav>
+
+    <div class="flex items-center gap-3">
+      <a href="/login" data-app-path="/login" class="text-sm font-semibold text-black/50 hover:text-black transition-colors px-3 py-2">Fazer login</a>
+      <a href="/cadastro" data-app-path="/cadastro" class="text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] active:scale-[0.97] transition-all rounded border border-[#684DB0]/30 px-4 py-2 flex items-center gap-1.5">
+        Começar grátis
+        <svg class="w-3.5 h-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo">
+
+<!-- ════════════════════════ HERO ════════════════════════ -->
+<section id="top" class="landing-hero">
+  <div class="hero-paper-shapes" aria-hidden="true">
+    <span class="hero-paper-shape hero-paper-red"></span>
+    <span class="hero-paper-shape hero-paper-purple"></span>
+  </div>
+  <div class="hero-layout">
+    <div class="hero-copy">
+    <p class="mb-6 text-[11px] font-semibold uppercase tracking-[.15em] text-[#684DB0]">Inteligência e operação para patrocínios</p>
+    <h1 class="font-display">
+      Projetos avançam quando tudo se conecta.
+    </h1>
+    <p class="hero-description">
+      A Jards reúne oportunidades, projetos, negociações, entregas e renovação em uma única operação.
+    </p>
+    <div class="hero-actions">
+      <a href="/cadastro" data-app-path="/cadastro" class="flex items-center gap-2 rounded border border-[#684DB0]/30 bg-white px-6 py-3 text-sm font-medium text-[#684DB0] transition-all hover:bg-black/[.04] active:scale-[.98]">
+        Começar grátis
+        <svg class="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+      </a>
+      <a href="#fluxo" class="px-4 py-3 text-sm font-medium text-black/45 transition-colors hover:text-black">Ver como funciona</a>
+    </div>
+
+    </div>
+    <div class="hero-visual">
+    <div class="art-stage" aria-label="Interface de gestão de parcerias do Jards">
+      <aside class="art-float art-report-card" aria-label="Resumo mensal de parcerias">
+        <div class="art-report-head"><span class="art-report-icon">↗</span><span>Parcerias em andamento</span></div>
+        <div class="art-report-bars" aria-hidden="true">
+          <span class="art-report-bar" style="--bar:68%"><b>18</b></span>
+          <span class="art-report-bar" style="--bar:82%"><b>23</b></span>
+          <span class="art-report-bar" style="--bar:74%"><b>21</b></span>
+          <span class="art-report-bar" style="--bar:94%"><b>27</b></span>
+        </div>
+        <div class="art-report-months"><span>Mai</span><span>Jun</span><span>Jul</span><span>Ago</span></div>
+      </aside>
+
+      <div class="art-desktop-frame">
+        <span class="art-laptop-notch" aria-hidden="true"></span>
+        <article class="art-workspace" aria-label="Página de operação e continuidade de uma parceria no Jards">
+        <div class="art-appbar">
+          <div class="art-appbrand"><img src="assets/jards_logo-2.svg" alt="" /><span>/ Clientes / Parceria</span></div>
+          <div class="art-tools"><span>Buscar</span><span>Ajuda</span><span>Notificações</span><span class="art-user">LA</span></div>
+        </div>
+        <header class="art-entity-head">
+          <div class="art-entity">
+            <div class="art-identity"><img class="art-portrait" src="assets/francesco.svg" alt="Francesco Matarazzo" /><img class="art-brand" src="assets/matarazzo.svg" alt="Marca das Indústrias Reunidas" /></div>
+            <div class="art-entity-copy"><small class="art-breadcrumb">Clientes / Indústrias Reunidas</small><div class="art-title-line"><strong>Indústrias Reunidas Fábricas Matarazzo</strong><span class="art-status">Parceria ativa</span></div><span>Cultura e patrimônio · São Paulo · ciclo 2026</span></div>
+          </div>
+          <div class="art-actions"><span class="art-control">Abrir contrato</span><span class="art-control is-primary">+ Nova entrega</span></div>
+        </header>
+        <section class="art-stats" aria-label="Resumo da negociação">
+          <div class="art-stat"><p class="art-stat-label">Negociação em foco</p><p class="art-stat-value">Projeto Ciccillo Matarazzo</p></div>
+          <div class="art-stat"><p class="art-stat-label">Valor solicitado</p><p class="art-stat-value is-purple">R$ 580.000</p></div>
+          <div class="art-stat"><p class="art-stat-label">Próxima entrega</p><p class="art-stat-value is-amber">Hoje, 16h</p></div>
+          <div class="art-stat"><p class="art-stat-label">Ponto focal</p><p class="art-stat-value"><span class="art-person">LA</span>Luan Antunes</p></div>
+        </section>
+        <nav class="art-tabs" aria-label="Áreas da conta"><span class="art-tab">Visão geral</span><span class="art-tab">Contrato</span><span class="art-tab is-active">Entregas</span><span class="art-tab">Renovação</span></nav>
+        <div class="art-body">
+          <section class="art-overview" aria-label="Saúde da parceria">
+            <div class="art-score">
+              <p class="art-score-label">Saúde da parceria</p>
+              <svg class="art-gauge" viewBox="0 0 160 78" role="img" aria-label="Parceria saudável">
+                <path d="M 32 68 A 48 48 0 0 1 39.4 43.1" fill="none" stroke="#684DB0" stroke-width="17" /><path d="M 41.2 39.8 A 48 48 0 0 1 62 23.5" fill="none" stroke="#684DB0" stroke-width="17" /><path d="M 65.4 21.5 A 48 48 0 0 1 92.4 21.6" fill="none" stroke="#684DB0" stroke-width="17" /><path d="M 96 22.8 A 48 48 0 0 1 117.9 38.1" fill="none" stroke="#684DB0" stroke-width="17" /><path d="M 120 41.1 A 48 48 0 0 1 127.9 64.7" fill="none" stroke="rgba(40,37,37,.075)" stroke-width="17" /><path d="M 76 65 L 105 42 L 83 71 Z" fill="#fff" stroke="#282525" stroke-width="2" stroke-linejoin="round" /><circle cx="80" cy="68" r="7" fill="#fff" stroke="#282525" stroke-width="2.25" /><circle cx="80" cy="68" r="2.25" fill="#282525" />
+              </svg>
+              <p class="art-score-title">Saudável</p><p class="art-score-copy">Operação em dia</p>
+            </div>
+            <div class="art-metrics"><div class="art-metric"><span>Entregas concluídas</span><strong>8</strong></div><div class="art-metric"><span>Em atenção</span><strong>1</strong></div><div class="art-metric"><span>Próximo marco</span><strong>12 set</strong></div></div>
+          </section>
+          <div class="art-grid">
+            <section class="art-panel">
+              <header class="art-panel-head"><div><p class="art-eyebrow">Plano de ativação</p><h2 class="art-panel-title">Entregas da parceria</h2><p class="art-panel-copy">Responsáveis, prazos e evidências no mesmo histórico.</p></div><div class="art-panel-actions"><span class="art-control">Evidência</span><span class="art-control is-primary">+ Entrega</span></div></header>
+              <nav class="art-panel-tabs"><span class="art-panel-tab is-active">Em andamento</span><span class="art-panel-tab">Concluídas</span><span class="art-panel-tab">Evidências</span></nav>
+              <div class="art-followup"><span class="art-check">✓</span><div><strong>Aprovar aplicação da marca nos materiais</strong><span>Comunicação · equipe do projeto</span></div><time>Hoje, 16h</time></div>
+              <div class="art-followup"><span class="art-check">✓</span><div><strong>Confirmar ação formativa para clientes</strong><span>Ativação · patrocinador</span></div><time>12 set</time></div>
+              <div class="art-followup"><span class="art-check">✓</span><div><strong>Anexar relatório parcial de execução</strong><span>Prestação · responsável financeiro</span></div><time class="is-overdue">Atenção</time></div>
+              <div class="art-followup"><span class="art-check">✓</span><div><strong>Preparar conversa sobre o próximo ciclo</strong><span>Renovação · liderança</span></div><time>30 set</time></div>
+            </section>
+            <aside class="art-side">
+              <section class="art-side-card"><header class="art-side-head"><strong>Parceria em foco</strong><span>Abrir</span></header><div class="art-deal"><span class="art-deal-project">Projeto Ciccillo Matarazzo</span><p class="art-deal-title">Patrocínio institucional 2026</p><div class="art-deal-stage"><span>Execução</span><strong>63%</strong></div><div class="art-progress"><i></i></div><div class="art-money"><small>Valor contratado</small><strong>R$ 580 mil</strong></div></div></section>
+              <section class="art-side-card"><header class="art-side-head"><strong>Próximos marcos</strong><span>Ver plano</span></header><div class="art-contacts"><div class="art-contact"><span class="art-avatar">12</span><div><strong>Ação com clientes</strong><span>Setembro</span></div><span class="art-contact-score">Em dia</span></div><div class="art-contact"><span class="art-avatar">30</span><div><strong>Conversa de renovação</strong><span>Setembro</span></div><span class="art-contact-score">Planejada</span></div></div></section>
+            </aside>
+          </div>
+        </div>
+        <footer class="art-foot"><span>Negociação + contrato + entregas + renovação em uma única leitura</span><strong>Interface do Jards</strong></footer>
+        </article>
+      </div>
+
+      <aside class="art-float art-mobile-preview" aria-label="Acompanhamento da parceria no celular">
+        <div class="art-mobile-screen">
+          <div class="art-mobile-top"><img class="art-mobile-logo" src="assets/jards_logo-2.svg" alt="Jards" /><span>09:41</span></div>
+          <div class="art-mobile-body">
+            <span class="art-mobile-kicker">Parceria em foco</span>
+            <h3>Projeto Ciccillo</h3>
+            <p>Indústrias Reunidas</p>
+            <div class="art-mobile-health"><span>Saúde da parceria</span><strong>Saudável</strong></div>
+            <div class="art-mobile-task"><i>✓</i><b>Aprovar marca</b><time>Hoje</time></div>
+            <div class="art-mobile-task"><i>✓</i><b>Confirmar ação</b><time>12 set</time></div>
+            <div class="art-mobile-task"><i>✓</i><b>Anexar evidência</b><time>18 set</time></div>
+            <span class="art-mobile-action">Abrir plano de ativação</span>
+          </div>
+        </div>
+      </aside>
+
+      <aside class="art-float art-insight-card" aria-label="Próxima ação recomendada">
+        <div class="art-insight-head"><strong>Próximo passo</strong><span>Ver parceria</span></div>
+        <div class="art-insight-body">
+          <span class="art-insight-label">Atenção da equipe</span>
+          <p class="art-insight-title">Reunir evidências da ação formativa</p>
+          <p class="art-insight-copy">O prazo está próximo. Responsável e documentos já estão conectados ao histórico.</p>
+          <div class="art-insight-meta"><span>Hoje, 16h</span><b>Projeto Ciccillo</b></div>
+        </div>
+      </aside>
+    </div>
+    </div>
+
+    <img class="hero-anteater-detail" src="assets/tamandua-telefone-transparent.png" alt="Tamanduá ao telefone" />
+  </div>
+</section>
+
+
+<!-- ════════════════════════ STATS ════════════════════════ -->
+<section class="landing-proof bg-[#FFFFFF]">
+  <div class="max-w-6xl mx-auto px-6">
+    <div class="grid grid-cols-1 sm:grid-cols-[.9fr_1.15fr_1fr]">
+      <div class="py-10 pr-8 sm:border-r border-black/10">
+        <div class="flex items-end gap-3 mb-3">
+          <p class="stat-num stat-accent text-5xl leading-none">7</p>
+          <p class="font-display text-lg font-semibold text-black leading-tight pb-1">etapas conectadas</p>
+        </div>
+        <p class="text-sm text-black/50 leading-relaxed max-w-[28ch]">Da prospecção à renovação, cada fase continua a anterior.</p>
+      </div>
+      <div class="py-10 sm:px-8 border-t sm:border-t-0 sm:border-r border-black/10">
+        <div class="flex items-end gap-3 mb-3">
+          <p class="stat-num stat-accent text-5xl leading-none">1</p>
+          <p class="font-display text-lg font-semibold text-black leading-tight pb-1">histórico compartilhado</p>
+        </div>
+        <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Projetos, negociações, atividades e entregas no mesmo contexto.</p>
+      </div>
+      <div class="py-10 sm:pl-8 border-t sm:border-t-0 border-black/10">
+        <p class="font-display text-[1.75rem] font-semibold text-black leading-[1.05] mb-4 max-w-[10ch]">Próximo passo visível</p>
+        <p class="text-sm text-black/50 leading-relaxed max-w-[32ch]">Responsáveis, prazos e alertas mantêm a equipe em movimento.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════ ATIVO DE MARCA ════════════════════════ -->
+<section class="brand-visual" aria-labelledby="contexto-titulo">
+  <img src="assets/brand/ambiente-criativo-jards-sem-caneta-tratado.png" alt="Profissional trabalhando no computador em um ambiente criativo cercado por projetos e materiais" />
+  <div class="brand-caption px-6">
+    <p class="font-display text-xs font-semibold tracking-[.14em] uppercase text-white/55 mb-5">Quando cada etapa vive em um lugar</p>
+    <h2 id="contexto-titulo" class="font-display font-bold text-white leading-[1.02]" style="font-size:clamp(36px,4.5vw,64px)">O contexto se perde na troca.</h2>
+    <p class="text-white/70 text-lg mt-6 max-w-lg leading-relaxed">Pesquisa, projetos, negociações e entregas isoladas quebram a continuidade de uma parceria.</p>
+    <a href="#fluxo" class="mt-8 inline-flex items-center gap-2 bg-white text-[#282525] font-medium text-sm rounded px-6 py-3 hover:bg-white/90 transition-colors">Ver o fluxo Jards →</a>
+  </div>
+</section>
+
+
+<!-- ════════════════════════ BI SECTION ════════════════════════ -->
+<section id="bi" class="section-space bg-white px-6">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="grid md:grid-cols-[1fr_1.1fr] gap-16 items-start">
+
+      <!-- Sponsor cards (slots animados que reagem ao accordion) -->
+      <div class="reveal">
+        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-6">Base de dados</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <!-- Slot 1: Vale ↔ feature (acc 2 & 4) -->
+          <div class="bi-slot" id="bi-slot-1">
+            <div class="bi-inner bi-sponsor" id="bi-s1-s">
+              <div class="card-header">
+                <img src="assets/vale-logo.png" alt="Vale" class="card-logo">
+                <div class="card-head-copy">
+                  <div class="card-company">Vale S.A.</div>
+                  <span class="card-law">Lei Rouanet</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <p class="card-title">Chamamento Cultural Vale</p>
+                <div class="card-meta-grid">
+                  <div><p class="card-meta-label">Abertura</p><p class="card-meta-value">08/05</p></div>
+                  <div><p class="card-meta-label">Fechamento</p><p class="card-meta-value is-strong">14/06</p></div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="card-amount">R$ 186.094.314,60</div>
+                <div class="card-contact">Edital e histórico conectados</div>
+              </div>
+            </div>
+            <div class="bi-inner bi-feature" id="bi-s1-f"></div>
+          </div>
+
+          <!-- Slot 2: Nubank ↔ feature (acc 1) -->
+          <div class="bi-slot" id="bi-slot-2">
+            <div class="bi-inner bi-sponsor" id="bi-s2-s">
+              <div class="card-header">
+                <img src="assets/nubank-logo.png" alt="Nubank" class="card-logo">
+                <div class="card-head-copy">
+                  <div class="card-company">Nubank</div>
+                  <span class="card-law">Lei do Esporte</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <p class="card-title">Oportunidades em acompanhamento</p>
+                <div class="card-meta-grid">
+                  <div><p class="card-meta-label">Abertura</p><p class="card-meta-value">Contínua</p></div>
+                  <div><p class="card-meta-label">Fechamento</p><p class="card-meta-value is-strong">A confirmar</p></div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="card-amount">R$ 111.763.075,23</div>
+                <div class="card-contact">Perfil de investimento</div>
+              </div>
+            </div>
+            <div class="bi-inner bi-feature" id="bi-s2-f"></div>
+          </div>
+
+          <!-- Slot 3: Petrobras (sempre visível) -->
+          <div class="sponsor-card">
+            <div class="card-header">
+              <img src="assets/petrobras.svg" alt="Petrobras" class="card-logo">
+              <div class="card-head-copy">
+                <div class="card-company">Petrobras</div>
+                <span class="card-law">Lei Rouanet</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <p class="card-title">Banco de Projetos</p>
+              <div class="card-meta-grid">
+                <div><p class="card-meta-label">Abertura</p><p class="card-meta-value">01/01</p></div>
+                <div><p class="card-meta-label">Fechamento</p><p class="card-meta-value is-strong">31/12</p></div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <div class="card-amount">R$ 248.000.000,00</div>
+              <div class="card-contact">Banco de projetos monitorado</div>
+            </div>
+          </div>
+
+          <!-- Slot 4: IRFM ↔ feature (acc 3) -->
+          <div class="bi-slot" id="bi-slot-4">
+            <div class="bi-inner bi-sponsor" id="bi-s4-s">
+              <div class="card-header">
+                <img src="assets/matarazzo.svg" alt="IRFM" class="card-logo">
+                <div class="card-head-copy">
+                  <div class="card-company">IRFM</div>
+                  <span class="card-law">Lei Rouanet</span>
+                </div>
+              </div>
+              <div class="card-body">
+                <p class="card-title">Ciccillo Matarazzo</p>
+                <div class="card-meta-grid">
+                  <div><p class="card-meta-label">Abertura</p><p class="card-meta-value">20/10</p></div>
+                  <div><p class="card-meta-label">Fechamento</p><p class="card-meta-value is-strong">30/05</p></div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <div class="card-amount">R$ 42.000.000,00</div>
+                <div class="card-contact">Parceria e oportunidades</div>
+              </div>
+            </div>
+            <div class="bi-inner bi-feature" id="bi-s4-f"></div>
+          </div>
+
+        </div><!-- /cards grid -->
+      </div>
+
+      <!-- Accordion -->
+      <div id="produto" class="reveal">
+        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-4">Uma plataforma contínua</p>
+        <h2 class="font-display font-bold leading-[1.04] mb-10" style="font-size:clamp(28px,3.2vw,44px)">
+          Da oportunidade à parceria<br/>que continua
+        </h2>
+
+        <!-- Acc 1 open by default -->
+        <div class="border-t border-black/10 py-5">
+          <button onclick="toggleAcc(this)" aria-expanded="true" class="w-full flex items-center justify-between text-left acc-open">
+            <span class="flex items-center gap-3 font-bold text-black text-sm">
+              <img src="assets/ph-user-circle.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              Encontre onde existe oportunidade
+            </span>
+            <span class="text-2xl text-black/30 font-light flex-shrink-0 ml-4 acc-icon">−</span>
+          </button>
+          <div class="acc-content open mt-3 pl-8">
+            <p class="text-black/60 text-sm leading-relaxed mb-4">Explore patrocinadores, editais, históricos de investimento e janelas de decisão para escolher onde concentrar energia.</p>
+            <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] border border-[#684DB0]/30 transition-colors rounded px-5 py-2.5">Começar grátis →</a>
+          </div>
+        </div>
+
+        <div class="border-t border-black/10 py-5">
+          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
+            <span class="flex items-center gap-3 font-bold text-black/40 text-sm">
+              <img src="assets/ph-map-pin.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              Estruture projetos para avançar
+            </span>
+            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
+          </button>
+          <div class="acc-content mt-3 pl-8">
+            <p class="text-black/60 text-sm leading-relaxed mb-4">Organize orçamento, documentos, pitch, cotas e respostas de editais sem reconstruir o projeto a cada conversa.</p>
+            <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] border border-[#684DB0]/30 transition-colors rounded px-5 py-2.5">Começar grátis →</a>
+          </div>
+        </div>
+
+        <div class="border-t border-black/10 py-5">
+          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
+            <span class="flex items-center gap-3 font-bold text-black/40 text-sm">
+              <img src="assets/ph-calendar-check.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              Conduza cada negociação
+            </span>
+            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
+          </button>
+          <div class="acc-content mt-3 pl-8">
+            <p class="text-black/60 text-sm leading-relaxed mb-4">Conecte proposta, atividade, responsável, valor e histórico. A equipe sempre sabe o que aconteceu e qual é o próximo passo.</p>
+            <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] border border-[#684DB0]/30 transition-colors rounded px-5 py-2.5">Começar grátis →</a>
+          </div>
+        </div>
+
+        <div class="border-t border-b border-black/10 py-5">
+          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
+            <span class="flex items-center gap-3 font-bold text-black/40 text-sm">
+              <img src="assets/ph-lightning.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              Entregue bem e prepare a renovação
+            </span>
+            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
+          </button>
+          <div class="acc-content mt-3 pl-8">
+            <p class="text-black/60 text-sm leading-relaxed mb-4">Transforme aprovações em clientes, contratos e entregas. Preserve evidências e a memória da parceria para construir o próximo ciclo.</p>
+            <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] border border-[#684DB0]/30 transition-colors rounded px-5 py-2.5">Começar grátis →</a>
+          </div>
+        </div>
+
+      </div><!-- /accordion -->
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════ FLUXO JARDS ════════════════════════ -->
+<section id="fluxo" class="bg-white">
+  <div class="brand-visual is-senna">
+    <img src="assets/senna-jornada-panoramica.jpeg" alt="Ayrton Senna em um carro de Fórmula 1 segurando a bandeira brasileira" />
+    <div class="brand-caption px-6">
+      <p class="text-xs font-bold text-[#B9A7EA] uppercase tracking-widest mb-5">Um sistema em movimento</p>
+      <h2 class="font-display font-bold text-white leading-[1.03]" style="font-size:clamp(36px,4.5vw,64px)">Uma jornada inteira.<br>Um só contexto.</h2>
+      <p class="text-white/70 text-base mt-6 max-w-md leading-relaxed">A Jards conecta o que acontece antes, durante e depois de cada patrocínio.</p>
+    </div>
+  </div>
+  <div class="max-w-6xl mx-auto px-6 py-20">
+    <div class="flow-grid">
+      <article class="jards-flow-step"><span class="flow-index">01</span><strong>Encontrar</strong><p>Mapeie patrocinadores, editais e oportunidades relevantes.</p></article>
+      <article class="jards-flow-step"><span class="flow-index">02</span><strong>Estruturar</strong><p>Reúna projetos, orçamentos, documentos, pitch e cotas.</p></article>
+      <article class="jards-flow-step"><span class="flow-index">03</span><strong>Negociar</strong><p>Conecte proposta, valor, responsável e próximo passo.</p></article>
+      <article class="jards-flow-step"><span class="flow-index">04</span><strong>Entregar</strong><p>Acompanhe contratos, ativações, prazos e evidências.</p></article>
+      <article class="jards-flow-step"><span class="flow-index">05</span><strong>Renovar</strong><p>Preserve contexto e confiança para construir o próximo ciclo.</p></article>
+    </div>
+    <div class="flow-journey-art reveal">
+      <img src="assets/jornada-corrida-s-transparente.png" alt="Tamanduá em um carro de corrida percorrendo uma pista em curvas" />
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════ PILARES DA PLATAFORMA ════════════════════════ -->
+<section id="plataforma-forcas" class="platform-forces section-space px-6">
+  <div class="platform-paper-shapes" aria-hidden="true">
+    <span class="platform-paper-shape platform-paper-purple"></span>
+    <span class="platform-paper-shape platform-paper-red"></span>
+  </div>
+  <div class="max-w-6xl mx-auto feature-ledger reveal">
+    <div class="ledger-main">
+      <p class="ledger-kicker">A plataforma por inteiro</p>
+      <h2 class="font-display font-bold leading-[1.04] mb-5" style="font-size:clamp(32px,4vw,56px)">
+        Uma plataforma.<br>Quatro forças trabalhando juntas.
+      </h2>
+      <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
+        A informação encontra a operação. A IA reduz o trabalho manual. A operação preserva a relação e cada parceria ganha continuidade.
+      </p>
+      <div class="flow-row" aria-label="Jornada conectada do patrocínio">
+        <div class="flow-step active"><span>Encontrar</span><strong>Oportunidades</strong></div>
+        <div class="flow-step active"><span>Estruturar</span><strong>Projetos</strong></div>
+        <div class="flow-step active"><span>Negociar</span><strong>Propostas</strong></div>
+        <div class="flow-step active"><span>Entregar</span><strong>Parcerias</strong></div>
+        <div class="flow-step active"><span>Renovar</span><strong>Ciclos</strong></div>
+      </div>
+    </div>
+    <div class="ledger-side">
+      <article class="ledger-item">
+        <p class="ledger-num">INTELIGÊNCIA</p>
+        <h3>Veja onde agir.</h3>
+        <p>Patrocinadores, editais, histórico de investimento e janelas de oportunidade.</p>
+      </article>
+      <article class="ledger-item">
+        <p class="ledger-num">INTELIGÊNCIA ARTIFICIAL</p>
+        <h3>Leia documentos e antecipe riscos.</h3>
+        <p>A IA extrai dados de comprovantes e orçamentos, organiza campos e sinaliza riscos para revisão da equipe.</p>
+      </article>
+      <article class="ledger-item">
+        <p class="ledger-num">OPERAÇÃO</p>
+        <h3>Faça o trabalho avançar.</h3>
+        <p>Projetos, negociações, atividades, propostas e prestação de contas no mesmo fluxo.</p>
+      </article>
+      <article class="ledger-item">
+        <p class="ledger-num">CONTINUIDADE</p>
+        <h3>Cuide do que foi construído.</h3>
+        <p>Clientes, contratos, entregas, memória relacional e renovação de cada parceria.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════ PRODUTO: ABAS ════════════════════════ -->
+<section id="produto-tabs" class="section-space bg-[#FFFFFF] px-6">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="grid md:grid-cols-2 gap-12 items-end mb-8">
+      <div class="reveal">
+        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-3">O produto em movimento</p>
+        <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(28px,3.2vw,44px)">
+          O trabalho inteiro<br/>cabe no mesmo fluxo.
+        </h2>
+      </div>
+      <p class="reveal text-black/55 text-[15px] leading-relaxed">
+        Conheça algumas das áreas que conectam inteligência de mercado, rotina comercial, projetos e relacionamento dentro da Jards.
+      </p>
+    </div>
+
+    <!-- Modules showcase ──────────────────────────────── -->
+    <style>
+      #ms *{box-sizing:border-box}
+      #ms{font-family:'Google Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+      .ms-menu-stage{margin-top:64px}
+      .ms-menu-illustration{display:block;width:clamp(240px,31vw,370px);height:auto;margin:0 18px -2px auto;pointer-events:none;user-select:none}
+      .ms-tabs{display:flex;width:100%;gap:4px;margin-bottom:44px;padding:5px;overflow-x:auto;border:1px solid rgba(40,37,37,.18);border-radius:12px;background:rgba(255,255,255,.84);box-shadow:0 10px 28px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.9);scrollbar-width:none}
+      .ms-tabs::-webkit-scrollbar{display:none}
+      .ms-tab{position:relative;flex:1 0 0;min-width:0;height:44px;padding:0 18px;font-size:13px;font-weight:500;color:rgba(40,37,37,.72);cursor:pointer;border:0;border-radius:8px;background:transparent;transition:color .24s cubic-bezier(.16,1,.3,1),background .24s cubic-bezier(.16,1,.3,1),transform .18s cubic-bezier(.16,1,.3,1);white-space:nowrap}
+      .ms-tab:hover{color:#282525;background:rgba(40,37,37,.035)}
+      .ms-tab:active{transform:scale(.985)}
+      .ms-tab:focus-visible{outline:2px solid rgba(104,77,176,.35);outline-offset:2px}
+      .ms-tab.on{color:#684DB0;background:#fff;font-weight:700;box-shadow:inset 0 0 0 1px #684DB0}
+      .ms-shell{display:flex;height:540px;overflow:hidden;border-radius:4px;border:1px solid rgba(40,37,37,.08);box-shadow:0 2px 4px rgba(0,0,0,.04),0 8px 40px rgba(0,0,0,.10)}
+      .ms-sb{width:56px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;border-right:1px solid rgba(40,37,37,.08);box-shadow:4px 0 24px rgba(0,0,0,.06)}
+      .ms-sb-logo{height:56px;display:flex;align-items:center;justify-content:center;padding:0;border-bottom:1px solid rgba(40,37,37,.07);flex-shrink:0}
+      .ms-sb-logo>span{display:none}
+      .ms-sb-user{padding:10px 8px;border-bottom:1px solid rgba(40,37,37,.07);flex-shrink:0}
+      .ms-sb-uinner{display:flex;align-items:center;justify-content:center;padding:6px 0;border-radius:4px}
+      .ms-sb-uinner>div:not(.ms-sb-av){display:none}
+      .ms-sb-av{width:28px;height:28px;border-radius:4px;background:#684DB0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0}
+      .ms-sb-nav{flex:1;padding:12px 8px;overflow:hidden}
+      .ms-sec-lbl{display:none}
+      .ms-nav-item{display:flex;align-items:center;justify-content:center;height:32px;padding:0;border-radius:4px;font-size:13px;font-weight:500;color:rgba(40,37,37,.40);white-space:nowrap;overflow:hidden;margin-bottom:2px;cursor:default}
+      .ms-nav-item.on{background:#1a1a1a;color:#fff}
+      .ms-nav-item svg{flex-shrink:0}
+      .ms-nav-text{display:none}
+      .ms-sb-bot{padding:8px;border-top:1px solid rgba(40,37,37,.07);flex-shrink:0}
+      .ms-main{flex:1;min-width:0;overflow:hidden;display:flex;flex-direction:column;background:#fff}
+      .ms-topbar{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:0 24px;border-bottom:1px solid rgba(40,37,37,.08);background:#fff}
+      .ms-top-icon{display:flex;width:30px;height:30px;align-items:center;justify-content:center;border-radius:4px;color:rgba(40,37,37,.35)}
+      .ms-org-avatar{display:flex;width:30px;height:30px;align-items:center;justify-content:center;border-radius:50%;background:#684DB0;color:#fff;font-size:10px;font-weight:700}
+      .ms-panel{display:none;flex-direction:column;height:100%;overflow:hidden}
+      .ms-panel.on{display:flex;animation:ms-panel-in .3s cubic-bezier(.16,1,.3,1) both}
+      @keyframes ms-panel-in{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+      .ms-ph{flex-shrink:0;padding:28px 32px 20px;border-bottom:1px solid rgba(40,37,37,.08)}
+      .ms-eyebrow{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(40,37,37,.30);margin-bottom:4px}
+      .ms-h1{font-family:'Google Sans',system-ui,sans-serif;font-size:26px;font-weight:700;letter-spacing:-.025em;color:#282525}
+      .ms-ph-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+      .ms-ph-actions{display:flex;align-items:center;gap:12px}
+      .ms-summary{display:flex;align-items:center;gap:10px;font-size:11px;color:rgba(40,37,37,.38);white-space:nowrap}
+      .ms-summary strong{color:#282525;font-variant-numeric:tabular-nums}
+      .ms-view-toggle{display:flex;height:34px;overflow:hidden;border:1px solid rgba(40,37,37,.12);border-radius:4px;background:#fff}
+      .ms-view-toggle span{display:flex;width:34px;align-items:center;justify-content:center;color:rgba(40,37,37,.35);border-left:1px solid rgba(40,37,37,.10)}
+      .ms-view-toggle span:first-child{border-left:0}
+      .ms-view-toggle .on{position:relative;z-index:1;color:#684DB0;box-shadow:inset 0 0 0 1px #684DB0}
+      .ms-obtn{display:flex;align-items:center;gap:6px;padding:0 14px;height:34px;background:#fff;border:1px solid rgba(40,37,37,.12);border-radius:4px;font-size:12px;font-weight:700;color:rgba(40,37,37,.65);white-space:nowrap;cursor:default}
+      .ms-tb{flex-shrink:0;display:flex;align-items:center;gap:8px;padding:10px 32px;border-bottom:1px solid rgba(40,37,37,.08)}
+      .ms-search{display:flex;align-items:center;gap:8px;height:34px;padding:0 12px;border:1px solid rgba(40,37,37,.12);border-radius:4px;background:#fff;min-width:200px}
+      .ms-search span{font-size:13px;color:rgba(40,37,37,.35)}
+      .ms-seg{display:flex;border:1px solid rgba(40,37,37,.12);border-radius:4px;overflow:hidden;height:34px}
+      .ms-seg-btn{padding:0 14px;font-size:12px;font-weight:600;color:rgba(40,37,37,.45);background:#fff;border:none;display:flex;align-items:center;white-space:nowrap;cursor:default}
+      .ms-seg-btn+.ms-seg-btn{border-left:1px solid rgba(40,37,37,.12)}
+      .ms-seg-btn.on{position:relative;z-index:1;background:#fff;color:#684DB0;box-shadow:inset 0 0 0 1px #684DB0}
+      .ms-body{flex:1;overflow:hidden}
+      /* edital cards */
+      .ms-ed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px 32px;overflow:hidden}
+      .ms-ed-card{border:1px solid rgba(40,37,37,.08);border-radius:4px;padding:18px;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)}
+      .ms-logo{border-radius:4px;border:1px solid rgba(40,37,37,.08);display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);flex-shrink:0;overflow:hidden}
+      .ms-logo img{display:block;width:78%;height:78%;object-fit:contain}
+      /* kanban */
+      .ms-kanban{display:flex;align-items:stretch;gap:12px;height:100%;padding:16px 20px;overflow-x:auto;overflow-y:hidden;background:rgba(13,13,13,.012);scrollbar-width:thin;scrollbar-color:rgba(13,13,13,.20) transparent}
+      .ms-k-column{display:flex;flex:0 0 240px;min-height:300px;flex-direction:column;overflow:hidden;border:1px solid rgba(13,13,13,.07);border-radius:4px;background:rgba(13,13,13,.018)}
+      .ms-kc-head{display:flex;min-height:54px;align-items:flex-start;justify-content:space-between;gap:10px;padding:11px 12px;border-bottom:1px solid rgba(13,13,13,.06);background:rgba(255,255,255,.82)}
+      .ms-kc-title{display:flex;min-width:0;align-items:center;gap:7px}
+      .ms-kc-dot{width:7px;height:7px;flex-shrink:0;border-radius:2px}
+      .ms-kc-label{overflow:hidden;font-size:12px;font-weight:600;color:rgba(13,13,13,.75);text-overflow:ellipsis;white-space:nowrap}
+      .ms-kc-meta{margin-top:3px;font-size:10px;font-weight:500;color:rgba(13,13,13,.35);font-variant-numeric:tabular-nums}
+      .ms-kc-add{display:flex;width:28px;height:28px;flex-shrink:0;align-items:center;justify-content:center;border:1px solid rgba(13,13,13,.10);border-radius:4px;background:#fff;color:rgba(13,13,13,.30);font-size:16px;line-height:1}
+      .ms-k-cards{display:flex;flex:1;flex-direction:column;gap:10px;padding:10px}
+      .ms-k-card{border:1px solid rgba(13,13,13,.08);border-radius:4px;padding:14px;background:#fff;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+      .ms-k-card:hover{transform:translateY(-1px);border-color:rgba(13,13,13,.15);box-shadow:0 8px 24px rgba(13,13,13,.055)}
+      /* table */
+      .ms-tbl{width:100%;border-collapse:collapse}
+      .ms-tbl thead tr{border-bottom:1px solid rgba(40,37,37,.07)}
+      .ms-tbl th{background:#F9F9F8;padding:10px 14px;text-align:left;font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:rgba(40,37,37,.35);white-space:nowrap}
+      .ms-tbl td{padding:11px 14px;border-bottom:1px solid rgba(40,37,37,.045);vertical-align:middle}
+      .ms-tbl tr:last-child td{border-bottom:none}
+      .ms-prio{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:10.5px;font-weight:600;color:rgba(13,13,13,.72)}
+      .ms-prio-icon{display:inline-flex;width:13px;height:13px;flex-shrink:0;align-items:center;justify-content:center;border-radius:3px;color:#fff}
+      .ms-prio-icon svg{display:block;width:9px;height:9px}
+      #ms-p3{background:#fff}
+      .ms-profile-head{padding:18px 26px 14px;border-bottom:1px solid rgba(13,13,13,.08)}
+      .ms-profile-back{display:flex;align-items:center;gap:5px;margin-bottom:13px;font-size:10px;font-weight:600;color:rgba(13,13,13,.30)}
+      .ms-profile-row{display:flex;align-items:center;justify-content:space-between;gap:18px}
+      .ms-profile-brand{display:flex;align-items:center;gap:13px;min-width:0}
+      .ms-profile-brand-copy{min-width:0}
+      .ms-profile-name{font-size:24px;font-weight:700;line-height:1.05;letter-spacing:-.025em;color:#282525}
+      .ms-profile-total{margin-top:4px;font-size:11px;color:rgba(13,13,13,.40)}
+      .ms-profile-total strong{color:rgba(13,13,13,.72);font-variant-numeric:tabular-nums}
+      .ms-profile-actions{display:flex;align-items:center;gap:6px;flex-shrink:0}
+      .ms-profile-tags{display:flex;align-items:center;gap:7px;margin-top:12px;flex-wrap:wrap}
+      .ms-profile-tag{display:flex;align-items:center;gap:5px;padding:4px 8px;border-radius:4px;background:rgba(13,13,13,.04);font-size:10px;color:rgba(13,13,13,.60)}
+      .ms-profile-tag small{font-size:8px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(13,13,13,.28)}
+      .ms-quarter{display:flex;gap:3px;margin-left:2px}
+      .ms-quarter span{padding:3px 7px;border-radius:4px;background:rgba(13,13,13,.055);font-size:9px;font-weight:700;color:rgba(13,13,13,.32)}
+      .ms-quarter .on{background:rgba(46,137,50,.08);color:#2E8932}
+      .ms-profile-body{display:grid;grid-template-columns:235px minmax(0,1fr);gap:14px;min-height:0;padding:14px 26px 20px;background:#F7F7F6;overflow:hidden}
+      .ms-profile-stack{display:flex;min-width:0;flex-direction:column;gap:10px}
+      .ms-profile-card{overflow:hidden;border:1px solid rgba(13,13,13,.08);border-radius:4px;background:#fff}
+      .ms-profile-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(13,13,13,.07)}
+      .ms-profile-card-title{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:rgba(13,13,13,.36)}
+      .ms-profile-copy{padding:11px 12px;font-size:10.5px;line-height:1.5;color:rgba(13,13,13,.55)}
+      .ms-profile-item{display:flex;align-items:center;gap:7px;padding:8px 12px;border-bottom:1px solid rgba(13,13,13,.05)}
+      .ms-profile-item:last-child{border-bottom:0}
+      .ms-profile-kind{padding:2px 5px;border:1px solid rgba(104,77,176,.30);border-radius:4px;font-size:8px;font-weight:700;color:#684DB0}
+      .ms-profile-item p{min-width:0;flex:1;overflow:hidden;font-size:10px;font-weight:500;color:rgba(13,13,13,.68);text-overflow:ellipsis;white-space:nowrap}
+      .ms-profile-status{font-size:8.5px;font-weight:600;color:#2E8932;white-space:nowrap}
+      .ms-investment{display:grid;grid-template-columns:1fr 142px;align-items:center;gap:12px;padding:10px 14px}
+      .ms-investment strong{display:block;font-size:19px;letter-spacing:-.025em;color:#282525;font-variant-numeric:tabular-nums}
+      .ms-investment span{display:block;margin-top:2px;font-size:9px;color:rgba(13,13,13,.34)}
+      .ms-profile-chart{width:100%;height:46px;overflow:visible}
+      .ms-contacts{width:100%;border-collapse:collapse}
+      .ms-contacts th{padding:7px 12px;background:#F9F9F8;text-align:left;font-size:8px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(13,13,13,.27)}
+      .ms-contacts td{padding:8px 12px;border-top:1px solid rgba(13,13,13,.05);font-size:9.5px;color:rgba(13,13,13,.48)}
+      .ms-contact-name{display:flex;align-items:center;gap:7px;font-size:10.5px;font-weight:600;color:rgba(13,13,13,.72)}
+      .ms-contact-avatar{display:flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:4px;background:linear-gradient(145deg,#f8f8fb,#d4d4dc);font-size:9px;font-weight:700;color:#777}
+      .ms-profile-edits{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:10px}
+      .ms-profile-edit{padding:9px 10px;border:1px solid rgba(13,13,13,.07);border-radius:4px;background:#fff}
+      .ms-profile-edit strong{display:block;overflow:hidden;font-size:10px;color:rgba(13,13,13,.72);text-overflow:ellipsis;white-space:nowrap}
+      .ms-profile-edit span{display:block;margin-top:4px;font-size:8.5px;color:rgba(13,13,13,.34)}
+      @media (max-width:767px){
+        #produto-tabs{padding-left:16px;padding-right:16px}
+        .ms-menu-stage{margin-top:46px}
+        .ms-menu-illustration{width:min(66vw,250px);margin-right:8px;margin-bottom:-1px}
+        #produto-tabs [role="tablist"]{justify-content:flex-start;overflow-x:auto;max-width:100%}
+        .ms-tabs{margin-bottom:32px}
+        .ms-tab{flex:0 0 128px;min-width:128px;padding:0 14px}
+        .ms-shell{height:540px;max-width:100%;overflow:hidden}
+        .ms-sb{display:none}
+        .ms-main{width:100%;max-width:100%}
+        .ms-ph{padding:20px 16px 14px}
+        .ms-tb{padding:10px 16px;overflow-x:auto;align-items:flex-start}
+        .ms-search{min-width:150px;max-width:180px}
+        .ms-obtn{max-width:132px;overflow:hidden;text-overflow:ellipsis}
+        .ms-ed-grid{grid-template-columns:repeat(2,minmax(220px,1fr));padding:14px 16px;overflow-x:auto}
+        .ms-kanban{padding:14px 16px}
+        .ms-k-column{flex-basis:244px}
+        .ms-body{overflow:auto}
+        .ms-tbl{min-width:720px}
+        .ms-profile-actions{display:none}
+        .ms-profile-body{grid-template-columns:1fr;padding:12px 16px 16px;overflow:auto}
+      }
+      @media (prefers-reduced-motion:reduce){.ms-panel.on{animation:none}.ms-tab{transition:none}}
+    </style>
+
+    <!-- Tab bar -->
+    <div class="ms-menu-stage reveal">
+      <img class="ms-menu-illustration" src="assets/illustration-anteater-writing-no-signature.png" alt="" aria-hidden="true" />
+      <div role="tablist" aria-label="Demonstrações do produto" class="ms-tabs">
+        <button id="ms-t0" role="tab" aria-controls="ms-p0" aria-selected="true" tabindex="0" class="ms-tab on" onclick="msSwitch(0,'Editais')">Oportunidades</button>
+        <button id="ms-t1" role="tab" aria-controls="ms-p1" aria-selected="false" tabindex="-1" class="ms-tab" onclick="msSwitch(1,'Negociações')">Negociações</button>
+        <button id="ms-t2" role="tab" aria-controls="ms-p2" aria-selected="false" tabindex="-1" class="ms-tab" onclick="msSwitch(2,'Atividades')">Atividades</button>
+        <button id="ms-t3" role="tab" aria-controls="ms-p3" aria-selected="false" tabindex="-1" class="ms-tab" onclick="msSwitch(3,'Patrocinadores')">Patrocinadores</button>
+      </div>
+    </div>
+
+    <!-- App shell -->
+    <div class="ms-shell reveal">
+
+      <!-- Sidebar -->
+      <aside class="ms-sb">
+        <div class="ms-sb-logo">
+          <svg width="20" height="20" viewBox="0 0 689 689"><path fill="#D94A4A" d="M0,168h194c-2,19-9,38-11,58C170,411,341,548,519,495v194H0V168Z"/><path fill="#684DB0" d="M675,338H355l-4-4V15C548-57,743,141,675,338Z"/></svg>
+          <span style="font-family:'Google Sans',system-ui,sans-serif;font-size:16px;font-weight:700;color:#282525">Jards</span>
+        </div>
+        <div class="ms-sb-user">
+          <div class="ms-sb-uinner">
+            <div class="ms-sb-av">L</div>
+            <div><p style="font-size:12px;font-weight:600;color:#282525">Luana</p><p style="font-size:10px;color:rgba(40,37,37,.35)">Plano Pro</p></div>
+          </div>
+        </div>
+        <nav class="ms-sb-nav" id="ms-nav"></nav>
+        <div class="ms-sb-bot">
+          <div class="ms-nav-item" title="Configurações"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-2.82 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+          <div class="ms-nav-item" title="Sair"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/></svg></div>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <div class="ms-main">
+        <div class="ms-topbar" aria-label="Barra superior da aplicação">
+          <span class="ms-top-icon" aria-label="Notificações">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+          </span>
+          <span class="ms-org-avatar" aria-label="Workspace Jards">J</span>
+        </div>
+
+        <!-- EDITAIS -->
+        <div role="tabpanel" aria-labelledby="ms-t0" class="ms-panel on" id="ms-p0">
+          <div class="ms-ph"><div class="ms-ph-row"><div class="ms-h1">Editais</div><button class="ms-obtn">Sugerir edital</button></div></div>
+          <div class="ms-tb">
+            <div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Buscar edital, empresa, estado…</span></div>
+            <div class="ms-seg" style="margin-left:auto"><span class="ms-seg-btn on">Abertos</span><span class="ms-seg-btn">Fechados</span></div>
+          </div>
+          <div class="ms-body"><div class="ms-ed-grid" id="ms-ed-grid"></div></div>
+        </div>
+
+        <!-- NEGOCIAÇÕES -->
+        <div role="tabpanel" aria-labelledby="ms-t1" class="ms-panel" id="ms-p1">
+          <div class="ms-ph">
+            <p class="ms-eyebrow">Pipeline comercial</p>
+            <div class="ms-ph-row"><div class="ms-h1">Negociações</div><div class="ms-ph-actions"><div class="ms-summary"><span><strong>7</strong> de 7</span><span><strong>R$ 1,28 mi</strong> no pipeline</span></div><div class="ms-view-toggle" aria-label="Visualização"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span><span class="on"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="18"/><rect x="14" y="3" width="7" height="18"/></svg></span><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 18h18M6 15l4-4 3 3 5-7"/></svg></span></div><button class="ms-obtn">+ Nova negociação</button></div></div>
+          </div>
+          <div class="ms-tb">
+            <div class="ms-search"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="opacity:.3;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Buscar empresa, projeto ou lei</span></div>
+            <button class="ms-obtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>Ciclo atual</button>
+            <div class="ms-seg"><span class="ms-seg-btn on">Todas</span><span class="ms-seg-btn">Abertas</span><span class="ms-seg-btn">Fechadas</span><span class="ms-seg-btn">Recentes</span></div>
+          </div>
+          <div class="ms-body"><div class="ms-kanban" id="ms-kanban"></div></div>
+        </div>
+
+        <!-- ATIVIDADES -->
+        <div role="tabpanel" aria-labelledby="ms-t2" class="ms-panel" id="ms-p2">
+          <div class="ms-ph">
+            <p class="ms-eyebrow">Gestão</p>
+            <div class="ms-ph-row"><div class="ms-h1">Atividades</div><button class="ms-obtn">+ Nova atividade</button></div>
+          </div>
+          <div class="ms-tb">
+            <div class="ms-seg"><span class="ms-seg-btn on">Lista</span><span class="ms-seg-btn">Calendário</span><span class="ms-seg-btn">Gantt</span><span class="ms-seg-btn">Carga da equipe</span></div>
+            <div class="ms-seg"><span class="ms-seg-btn on">A fazer</span><span class="ms-seg-btn">Histórico</span></div>
+            <div class="ms-seg"><span class="ms-seg-btn on">Todas</span><span class="ms-seg-btn">Email</span><span class="ms-seg-btn">Reunião</span><span class="ms-seg-btn">Tarefa</span></div>
+          </div>
+          <div class="ms-body" style="padding:0 0 0 32px">
+            <table class="ms-tbl">
+              <thead><tr><th></th><th>Atividade</th><th>Negociação</th><th>Empresa</th><th>Prazo</th><th>Prioridade</th><th>Resp.</th></tr></thead>
+              <tbody id="ms-ativ-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- PATROCINADORES -->
+        <div role="tabpanel" aria-labelledby="ms-t3" class="ms-panel" id="ms-p3">
+          <div class="ms-profile-head">
+            <div class="ms-profile-back"><span>←</span><span>Patrocinadores</span></div>
+            <div class="ms-profile-row">
+              <div class="ms-profile-brand">
+                <div class="ms-logo" style="width:50px;height:50px"><img src="assets/vale-logo.png" alt="Vale"></div>
+                <div class="ms-profile-brand-copy"><div class="ms-profile-name">Vale S.A.</div><p class="ms-profile-total">Total investido: <strong>R$ 186.094.314,60</strong></p></div>
+              </div>
+              <div class="ms-profile-actions"><button class="ms-obtn">+ Novo prospect</button><button class="ms-obtn">+ Nova inscrição</button><button class="ms-obtn">+ Nova captação</button></div>
+            </div>
+            <div class="ms-profile-tags">
+              <span class="ms-profile-tag"><small>Setor</small> Mineração</span>
+              <span class="ms-profile-tag"><small>Sede</small> Rio de Janeiro, RJ</span>
+              <div class="ms-quarter"><span class="on">T1</span><span class="on">T2</span><span>T3</span><span class="on">T4</span></div>
+            </div>
+          </div>
+          <div class="ms-profile-body">
+            <div class="ms-profile-stack">
+              <section class="ms-profile-card">
+                <div class="ms-profile-card-head"><span class="ms-profile-card-title">Sobre</span></div>
+                <p class="ms-profile-copy">Empresa global de mineração com atuação recorrente em cultura, patrimônio, educação e desenvolvimento territorial.</p>
+              </section>
+              <section class="ms-profile-card">
+                <div class="ms-profile-card-head"><span class="ms-profile-card-title">Negociações ativas</span><span style="font-size:9px;font-weight:700;color:rgba(13,13,13,.28)">3</span></div>
+                <div class="ms-profile-item"><span class="ms-profile-kind">NEG.</span><p>Programa Cultura e Território</p><span class="ms-profile-status">Proposta</span></div>
+                <div class="ms-profile-item"><span class="ms-profile-kind" style="border-color:rgba(45,114,176,.30);color:#2D72B0">EDITAL</span><p>Chamamento Cultural Vale</p><span class="ms-profile-status" style="color:#B07A14">Em análise</span></div>
+                <div class="ms-profile-item"><span class="ms-profile-kind">NEG.</span><p>Patrimônio em Movimento</p><span class="ms-profile-status">1º contato</span></div>
+              </section>
+            </div>
+            <div class="ms-profile-stack">
+              <section class="ms-profile-card">
+                <div class="ms-profile-card-head"><span class="ms-profile-card-title">Investimento anual</span><span style="font-size:9px;color:#684DB0">Ver histórico</span></div>
+                <div class="ms-investment"><div><strong>R$ 186,1 mi</strong><span>último ciclo consolidado · +14,8%</span></div><svg class="ms-profile-chart" viewBox="0 0 142 46" fill="none" aria-label="Evolução anual do investimento"><path d="M2 39L30 33L58 35L86 21L112 25L140 7" stroke="rgba(104,77,176,.18)" stroke-width="8" stroke-linecap="round"/><path d="M2 39L30 33L58 35L86 21L112 25L140 7" stroke="#684DB0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><circle cx="140" cy="7" r="3" fill="#fff" stroke="#684DB0" stroke-width="2"/></svg></div>
+              </section>
+              <section class="ms-profile-card">
+                <div class="ms-profile-card-head"><span class="ms-profile-card-title">Responsáveis pelo patrocínio</span><span style="font-size:9px;color:#684DB0">Ver contatos</span></div>
+                <table class="ms-contacts"><thead><tr><th>Nome</th><th>Cargo</th><th>Fonte</th><th>Rede</th></tr></thead><tbody><tr><td><span class="ms-contact-name"><span class="ms-contact-avatar">AM</span>Ana Martins</span></td><td>Gerente de Patrocínios</td><td>ADM</td><td style="color:#2D72B0">in</td></tr><tr><td><span class="ms-contact-name"><span class="ms-contact-avatar">RC</span>Rafael Costa</span></td><td>Relações Institucionais</td><td>Comunidade</td><td style="color:#2D72B0">in</td></tr></tbody></table>
+              </section>
+              <section class="ms-profile-card">
+                <div class="ms-profile-card-head"><span class="ms-profile-card-title">Editais e chamamentos</span><span style="font-size:9px;color:rgba(13,13,13,.30)">2 abertos</span></div>
+                <div class="ms-profile-edits"><div class="ms-profile-edit"><strong>Chamamento Cultural Vale</strong><span>Fecha em 14/06 · Lei Rouanet</span></div><div class="ms-profile-edit"><strong>Fundo Local de Cultura</strong><span>Fluxo contínuo · Minas Gerais</span></div></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div><!-- /app shell -->
+
+    <script>
+    (function(){
+      /* helpers */
+      var COMPANY_LOGOS=[
+        ['Itaú Cultural','https://www.google.com/s2/favicons?domain=itaucultural.org.br&sz=128'],
+        ['Itaú BBA','https://www.google.com/s2/favicons?domain=itau.com.br&sz=128'],
+        ['Itaú','https://www.google.com/s2/favicons?domain=itau.com.br&sz=128'],
+        ['Petrobras','assets/petrobras.svg'],
+        ['Bradesco','https://www.google.com/s2/favicons?domain=bradesco.com.br&sz=128'],
+        ['Natura','https://www.google.com/s2/favicons?domain=natura.com.br&sz=128'],
+        ['Ambev','https://commons.wikimedia.org/wiki/Special:Redirect/file/Ambev_logo_2015.svg'],
+        ['Vale','assets/vale-logo.png'],
+        ['TV Cultura','https://www.google.com/s2/favicons?domain=tvcultura.com.br&sz=128'],
+        ['Sabesp','https://www.google.com/s2/favicons?domain=sabesp.com.br&sz=128'],
+        ['Porto Seguro','https://www.google.com/s2/favicons?domain=portoseguro.com.br&sz=128'],
+        ['Embraer','https://www.google.com/s2/favicons?domain=embraer.com&sz=128'],
+        ['Interno','assets/jards_logo-2.svg']
+      ];
+      function logo(name,size){
+        var item=COMPANY_LOGOS.find(function(entry){return name.indexOf(entry[0])===0;});
+        if(item)return '<div class="ms-logo" style="width:'+size+'px;height:'+size+'px"><img src="'+item[1]+'" alt="Logo '+name+'" loading="lazy"></div>';
+        var ch=name.trim().charAt(0).toUpperCase();
+        var fs=Math.round(size*.38);
+        return '<div class="ms-logo" aria-label="'+name+'" style="width:'+size+'px;height:'+size+'px;font-size:'+fs+'px;color:#9e9ea8">'+ch+'</div>';
+      }
+      function lei(l){var m={Rouanet:'#684DB0',Audiovisual:'#1A8B7A',Esporte:'#2D72B0'};var c=m[l]||'rgba(40,37,37,.45)';return '<span style="font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:2px 6px;border:1px solid '+c+';border-radius:4px;background:transparent;color:'+c+'">'+l+'</span>';}
+      function prioridade(tipo){
+        var p={
+          alta:{label:'Alta',color:'#D94E4E',path:'<path d="M12 19V5"/><path d="m5 12 7-7 7 7"/>'},
+          media:{label:'Média',color:'#B07A14',path:'<path d="M5 12h14"/>'},
+          baixa:{label:'Baixa',color:'#888888',path:'<path d="M12 5v14"/><path d="m19 12-7 7-7-7"/>'}
+        }[tipo];
+        return '<span class="ms-prio"><span class="ms-prio-icon" style="background:'+p.color+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+p.path+'</svg></span><span>'+p.label+'</span></span>';
+      }
+
+      /* NAV */
+      var NAV=[
+        {s:'Gerenciamento',items:[{l:'Visão Geral',k:null},{l:'Atividades',k:'Atividades'},{l:'Projetos',k:null}]},
+        {s:'Oportunidades',items:[{l:'Patrocinadores',k:'Patrocinadores'},{l:'Editais',k:'Editais'}]},
+        {s:'Prospecções',items:[{l:'Empresas',k:null},{l:'Negociações',k:'Negociações'},{l:'Inscrições',k:null}]},
+        {s:'Relacionamento',items:[{l:'Proponentes',k:null},{l:'Captadores',k:null},{l:'Contatos',k:null},{l:'Clientes',k:null}]},
+      ];
+      function navIcon(label){
+        var paths={
+          'Visão Geral':'<path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/>',
+          'Atividades':'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/>',
+          'Projetos':'<path d="M3 6h6l2 2h10v11H3z"/>',
+          'Patrocinadores':'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18"/>',
+          'Editais':'<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+          'Empresas':'<path d="M4 21V6l8-3v18M12 8h8v13M8 9h.01M8 13h.01M8 17h.01"/>',
+          'Negociações':'<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
+          'Inscrições':'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
+          'Proponentes':'<path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/>',
+          'Captadores':'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+          'Contatos':'<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.12 4.18 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.68 2.8a2 2 0 0 1-.45 2.11L8.07 9.9a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.9.32 1.84.55 2.8.68A2 2 0 0 1 22 16.92z"/>',
+          'Clientes':'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V4h8v3M3 12h18"/>'
+        };
+        return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+paths[label]+'</svg>';
+      }
+      function renderNav(activeKey){
+        document.getElementById('ms-nav').innerHTML=NAV.map(function(g,gi){
+          return '<div style="margin-top:'+(gi>0?'16':'0')+'px"><p class="ms-sec-lbl">'+g.s+'</p>'+
+            g.items.map(function(it){return '<div class="ms-nav-item'+(it.k===activeKey?' on':'')+'" title="'+it.l+'">'+navIcon(it.l)+'<span class="ms-nav-text">'+it.l+'</span></div>';}).join('')+'</div>';
+        }).join('');
+      }
+      renderNav('Editais');
+
+      /* TAB SWITCH */
+      var msNavKeys=['Editais','Negociações','Atividades','Patrocinadores'];
+      var msActive=0;
+      var msTimer=null;
+      var msVisible=false;
+      var msInteracting=false;
+      var msReduceMotion=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var msTablist=document.querySelector('.ms-tabs');
+
+      function msStopAuto(){
+        if(msTimer){window.clearTimeout(msTimer);msTimer=null;}
+      }
+
+      function msScheduleAuto(){
+        msStopAuto();
+        if(msReduceMotion||!msVisible||msInteracting||document.hidden)return;
+        msTimer=window.setTimeout(function(){
+          var next=(msActive+1)%msNavKeys.length;
+          window.msSwitch(next,msNavKeys[next],true);
+        },5000);
+      }
+
+      window.msSwitch=function(idx,navKey,isAutomatic){
+        msActive=idx;
+        var buttons=document.querySelectorAll('.ms-tab');
+        buttons.forEach(function(b,i){
+          b.classList.toggle('on',i===idx);
+          b.setAttribute('aria-selected',i===idx?'true':'false');
+          b.tabIndex=i===idx?0:-1;
+        });
+        document.querySelectorAll('.ms-panel').forEach(function(p,i){p.classList.toggle('on',i===idx);});
+        renderNav(navKey);
+        if(isAutomatic&&buttons[idx]){
+          msTablist.scrollTo({left:buttons[idx].offsetLeft-(msTablist.clientWidth-buttons[idx].offsetWidth)/2,behavior:'smooth'});
+        }
+        msScheduleAuto();
+      };
+
+      msTablist.addEventListener('mouseenter',function(){msInteracting=true;msStopAuto();});
+      msTablist.addEventListener('mouseleave',function(){msInteracting=false;msScheduleAuto();});
+      msTablist.addEventListener('focusin',function(){msInteracting=true;msStopAuto();});
+      msTablist.addEventListener('focusout',function(){
+        window.setTimeout(function(){
+          msInteracting=msTablist.contains(document.activeElement);
+          msScheduleAuto();
+        },0);
+      });
+      msTablist.addEventListener('keydown',function(event){
+        var next=msActive;
+        if(event.key==='ArrowRight')next=(msActive+1)%msNavKeys.length;
+        else if(event.key==='ArrowLeft')next=(msActive-1+msNavKeys.length)%msNavKeys.length;
+        else if(event.key==='Home')next=0;
+        else if(event.key==='End')next=msNavKeys.length-1;
+        else return;
+        event.preventDefault();
+        window.msSwitch(next,msNavKeys[next],false);
+        document.querySelectorAll('.ms-tab')[next].focus();
+      });
+
+      if('IntersectionObserver' in window){
+        new IntersectionObserver(function(entries){
+          msVisible=entries[0].isIntersecting;
+          msVisible?msScheduleAuto():msStopAuto();
+        },{threshold:.35}).observe(msTablist);
+      }else{
+        msVisible=true;
+        msScheduleAuto();
+      }
+      document.addEventListener('visibilitychange',function(){document.hidden?msStopAuto():msScheduleAuto();});
+
+      /* EDITAIS */
+      var ED=[
+        {co:'Itaú Cultural',st:'SP',title:'Rumos Dança 2025-2026',urg:'urgente',ab:'15/04/25',fe:'05/09/25'},
+        {co:'Petrobras',st:'RJ',title:'Seleção Projetos Audiovisual 2025',urg:'soon',ab:'20/03/25',fe:'20/10/25'},
+        {co:'Bradesco',st:'SP',title:'Bolsa de Incentivo Cultural',urg:'open',ab:'01/07/25',fe:'30/11/25'},
+        {co:'Natura',st:'SP',title:'Programa Amazônia Viva: Arte',urg:'open',ab:'10/06/25',fe:'15/12/25'},
+        {co:'Ambev',st:'SP',title:'Bora: Música e Comunidades',urg:'urgente',ab:'01/08/25',fe:'10/09/25'},
+        {co:'Vale',st:'MG',title:'Fundo Local de Cultura 2025',urg:'soon',ab:'15/07/25',fe:'01/11/25'},
+      ];
+      var URG={urgente:['rgba(217,78,78,.10)','#D94A4A','Urgente'],soon:['rgba(176,122,20,.10)','#B07A14','Próximo'],open:['rgba(46,137,50,.10)','#2E8932','Aberto']};
+      document.getElementById('ms-ed-grid').innerHTML=ED.map(function(e){
+        var u=URG[e.urg];
+        return '<div class="ms-ed-card">'+
+          '<div style="display:flex;align-items:flex-start;margin-bottom:12px;gap:8px">'+
+            '<div style="display:flex;align-items:center;gap:10px">'+logo(e.co,44)+
+              '<div><p style="font-size:15px;font-weight:700;color:#282525">'+e.co+'</p><p style="font-size:11px;color:rgba(40,37,37,.35)">'+e.st+'</p></div></div>'+
+          '</div>'+
+          '<p style="font-size:12px;color:rgba(40,37,37,.50);line-height:1.45;margin-bottom:12px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+e.title+'</p>'+
+          '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:10px">'+
+            '<div><p style="font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:rgba(40,37,37,.35);margin-bottom:2px">Abertura</p><p style="font-weight:500;color:rgba(40,37,37,.60)">'+e.ab+'</p></div>'+
+            '<div><p style="font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:rgba(40,37,37,.35);margin-bottom:2px">Fechamento</p><p style="font-weight:700;color:'+(e.urg!=='open'?u[1]:'rgba(40,37,37,.60)')+'">'+e.fe+'</p></div>'+
+          '</div></div>';
+      }).join('');
+
+      /* KANBAN */
+      var KS={prospeccao:{l:'Prospecção',c:'rgba(13,13,13,.35)'},primeiro_contato:{l:'1º Contato',c:'#7259B5'},proposta_enviada:{l:'Proposta',c:'#2D72B0'},em_negociacao:{l:'Negociação',c:'#B07A14'}};
+      var KCOLS=[
+        {key:'prospeccao',total:'R$ 200k',cards:[{co:'TV Cultura',t:'Captação Rouanet: Série Documental',v:'R$ 80k'},{co:'Sabesp',t:'Programa Ambiental e Arte 2025',v:'R$ 120k'}]},
+        {key:'primeiro_contato',total:'R$ 250k',cards:[{co:'Porto Seguro',t:'Patrocínio Lei Esporte: Atletismo',v:'R$ 90k',dt:'22/09'},{co:'Embraer',t:'Arte e Inovação: Projeto Cultural',v:'R$ 160k'}]},
+        {key:'proposta_enviada',total:'R$ 480k',cards:[{co:'Itaú BBA',t:'Rouanet 2025: Ciclo de Shows Nacionais',v:'R$ 200k',dt:'30/09'},{co:'Petrobras',t:'Documentário Audiovisual 2025',v:'R$ 280k'}]},
+        {key:'em_negociacao',total:'R$ 350k',cards:[{co:'Ambev',t:'Rouanet: Turnê Nacional Música Brasileira',v:'R$ 350k',dt:'12/09'}]},
+      ];
+      document.getElementById('ms-kanban').innerHTML=KCOLS.map(function(col){
+        var s=KS[col.key];
+        return '<section class="ms-k-column" aria-label="'+s.l+': '+col.cards.length+' itens">'+
+          '<header class="ms-kc-head"><div style="min-width:0"><div class="ms-kc-title"><span class="ms-kc-dot" style="background:'+s.c+'"></span><span class="ms-kc-label">'+s.l+'</span></div><p class="ms-kc-meta">'+col.cards.length+' itens · '+col.total+'</p></div><span class="ms-kc-add" aria-hidden="true">+</span></header><div class="ms-k-cards">'+
+          col.cards.map(function(c){
+            return '<div class="ms-k-card">'+
+              '<div style="display:flex;align-items:center;margin-bottom:8px">'+
+                '<div style="display:flex;align-items:center;gap:6px">'+logo(c.co,18)+'<span style="font-size:10px;font-weight:600;color:rgba(40,37,37,.50)">'+c.co+'</span></div>'+
+              '</div>'+
+              '<p style="font-size:12.5px;font-weight:600;line-height:1.35;letter-spacing:-.01em;color:rgba(40,37,37,.85);margin-bottom:10px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">'+c.t+'</p>'+
+              '<div style="display:flex;align-items:center;justify-content:flex-end"><span style="font-size:12px;font-weight:600;color:rgba(40,37,37,.65)">'+c.v+'</span></div>'+
+              (c.dt?'<div style="margin-top:10px;padding-top:9px;border-top:1px solid rgba(13,13,13,.06);display:flex;justify-content:space-between;font-size:10px;font-weight:500;color:#B07A14"><span>Próximo contato</span><span>'+c.dt+'</span></div>':'')+
+            '</div>';
+          }).join('')+'</div></section>';
+      }).join('');
+
+      /* ATIVIDADES */
+      var ATIVS=[
+        {done:false,nome:'Enviar proposta Rouanet atualizada',tipo:'Email',neg:'Captação Itaú BBA',co:'Itaú BBA',prazo:'hoje',prio:'alta'},
+        {done:false,nome:'Reunião de alinhamento do projeto',tipo:'Reunião',neg:'Ambev: Turnê',co:'Ambev',prazo:'amanhã',prio:'media'},
+        {done:true,nome:'Follow-up sobre edital Rouanet',tipo:'Ligação',neg:'Petrobras Audio',co:'Petrobras',prazo:'ontem',prio:'baixa'},
+        {done:false,nome:'Conectar com dir. de patrocínio',tipo:'LinkedIn',neg:'Prosp. Porto Seg.',co:'Porto Seguro',prazo:'seg',prio:'media'},
+        {done:true,nome:'Confirmar reunião presencial',tipo:'Email',neg:'Proposta Embraer',co:'Embraer',prazo:'ontem',prio:'alta'},
+        {done:false,nome:'Preparar relatório de atividades',tipo:'Tarefa',neg:'-',co:'Interno',prazo:'sexta',prio:'baixa'},
+      ];
+      var DL={hoje:'#B07A14',amanhã:'rgba(40,37,37,.55)',sexta:'rgba(40,37,37,.55)',seg:'rgba(40,37,37,.55)',ontem:'rgba(40,37,37,.35)'};
+      document.getElementById('ms-ativ-body').innerHTML=ATIVS.map(function(a){
+        return '<tr>'+
+          '<td><div style="width:17px;height:17px;border-radius:50%;border:'+(a.done?'1.5px solid #2E8932':'1.5px solid rgba(40,37,37,.20)')+';background:'+(a.done?'rgba(46,137,50,.10)':'transparent')+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#2E8932">'+(a.done?'✓':'')+'</div></td>'+
+          '<td><p style="font-size:12.5px;font-weight:600;color:'+(a.done?'rgba(40,37,37,.30)':'rgba(40,37,37,.75)')+';text-decoration:'+(a.done?'line-through':'none')+'">'+a.nome+'</p><p style="font-size:10px;color:rgba(40,37,37,.30)">'+a.tipo+'</p></td>'+
+          '<td style="font-size:11.5px;font-weight:500;color:rgba(40,37,37,.55);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.neg+'</td>'+
+          '<td><div style="display:flex;align-items:center;gap:7px">'+logo(a.co,22)+'<span style="font-size:11.5px;font-weight:500;color:rgba(40,37,37,.60)">'+a.co+'</span></div></td>'+
+          '<td style="font-size:11.5px;font-weight:500;color:'+(DL[a.prazo]||'rgba(40,37,37,.50)')+';white-space:nowrap">'+a.prazo+'</td>'+
+          '<td>'+prioridade(a.prio)+'</td>'+
+          '<td style="font-size:11.5px;color:rgba(40,37,37,.55)">Luana M.</td>'+
+        '</tr>';
+      }).join('');
+
+    })();
+    </script>
+
+  </div>
+</section>
+
+
+<!-- ════════════════════════ TECNOLOGIA E PROXIMIDADE ════════════════════════ -->
+<section id="operacao" class="bg-white px-6">
+  <div class="section-space max-w-6xl mx-auto product-story">
+    <div class="grid md:grid-cols-[.72fr_1.28fr] gap-16 items-center">
+      <div class="reveal">
+        <p class="story-kicker mb-4">Tecnologia + proximidade</p>
+        <h2 class="font-display font-bold leading-[1.02]" style="font-size:clamp(32px,4vw,56px)">
+          Tecnologia que organiza. Relações que fazem acontecer.
+        </h2>
+        <p class="text-black/55 text-[15px] leading-relaxed mt-6 max-w-md">
+          Por trás de todo patrocínio existem pessoas construindo confiança, dividindo decisões e fazendo um projeto ganhar vida.
+        </p>
+        <ul class="story-list">
+          <li><span class="story-index">01</span><span><strong>Contexto compartilhado.</strong> Cada pessoa entende o que aconteceu e o que precisa acontecer agora.</span></li>
+          <li><span class="story-index">02</span><span><strong>Responsabilidade clara.</strong> Prazos, decisões e responsáveis permanecem visíveis durante toda a jornada.</span></li>
+          <li><span class="story-index">03</span><span><strong>Parcerias com continuidade.</strong> A história construída não desaparece quando a negociação termina.</span></li>
+        </ul>
+      </div>
+
+      <figure class="pipeline-photo reveal">
+        <img src="assets/jards-conexao-orelhoes-tratada.png" alt="Duas pessoas conversando em orelhões diante de um edifício rosa em São Paulo" />
+      </figure>
+    </div>
+  </div>
+</section>
+
+
+
+<!-- ════════════════════════ PRICING ════════════════════════ -->
+<section id="precos" class="section-space bg-[#FFFFFF] px-6">
+  <div class="max-w-6xl mx-auto">
+
+    <div class="max-w-6xl mx-auto mb-6">
+      <hr class="rule" />
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-10 items-end pt-12 mb-14">
+      <div class="reveal">
+        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Preços</p>
+        <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(32px,4vw,56px)">
+          Simples<br/>e transparente.
+        </h2>
+      </div>
+      <p class="reveal text-black/55 text-[15px] leading-relaxed">
+        Comece gratuitamente e pague quando fizer sentido para a sua operação de captação. Sem surpresas.
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-5">
+      <!-- Free -->
+      <div class="reveal bg-white rounded-2xl p-8 border border-black/8">
+        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-5">Gratuito</p>
+        <p class="font-display font-bold text-5xl text-black tracking-tight mb-1">R$ 0</p>
+        <p class="text-sm text-black/40 mb-6">para sempre</p>
+        <div class="h-px bg-black/8 mb-6"></div>
+        <ul class="space-y-3 mb-8 text-sm text-black/70">
+          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Oportunidades ilimitadas</li>
+          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Patrocinadores para explorar</li>
+          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>CRM essencial com uso limitado</li>
+          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Projetos e inscrições em um só lugar</li>
+        </ul>
+        <a href="/cadastro" data-app-path="/cadastro" class="block text-center text-sm font-bold text-black border border-black/15 rounded-xl py-3 hover:bg-black/[.03] transition-colors">Começar grátis</a>
+      </div>
+
+      <!-- Starter -->
+      <div class="reveal bg-white rounded-2xl p-8 border border-black/8">
+        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-5">Starter</p>
+        <p class="font-display font-bold text-5xl text-black tracking-tight mb-1">R$ 62,90</p>
+        <p class="text-sm text-black/40 mb-6">por mês</p>
+        <div class="h-px bg-black/8 mb-6"></div>
+        <ul class="space-y-3 mb-8 text-sm text-black/70">
+          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Captações ilimitadas</li>
+          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>100 créditos mensais</li>
+          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Operação comercial e atividades</li>
+          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Dashboard com KPIs e alertas</li>
+        </ul>
+        <a href="/cadastro?plano=starter" data-app-path="/cadastro?plano=starter" class="block text-center text-sm font-bold text-black border border-black/15 rounded-xl py-3 hover:bg-black/[.03] transition-colors">Começar grátis</a>
+      </div>
+
+      <!-- Pro -->
+      <div class="reveal pricing-pro-card rounded-2xl p-8 relative">
+        <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[11px] font-bold text-black bg-white rounded-full px-4 py-1.5 uppercase tracking-wide shadow-sm">Mais popular</span>
+        <p class="text-xs font-bold text-white/40 uppercase tracking-widest mb-5">Pro</p>
+        <p class="font-display font-bold text-5xl text-white tracking-tight mb-1">R$ 92,80</p>
+        <p class="text-sm text-white/40 mb-6">por mês</p>
+        <div class="h-px bg-white/10 mb-6"></div>
+        <ul class="space-y-3 mb-8 text-sm text-white/75">
+          <li class="flex gap-2.5"><span class="text-purple-400 font-bold">✓</span>Tudo do Starter</li>
+          <li class="flex gap-2.5"><span class="text-purple-400 font-bold">✓</span>200 créditos mensais</li>
+          <li class="flex gap-2.5"><span class="text-purple-400 font-bold">✓</span>Inteligência e histórico completos</li>
+          <li class="flex gap-2.5"><span class="text-purple-400 font-bold">✓</span>Clientes, entregas e renovação</li>
+        </ul>
+        <a href="/cadastro?plano=pro" data-app-path="/cadastro?plano=pro" class="block text-center text-sm font-bold text-black bg-white rounded-xl py-3 hover:bg-white/90 transition-colors">Começar grátis</a>
+      </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto mt-14">
+      <hr class="rule" />
+    </div>
+  </div>
+</section>
+
+
+<!-- ════════════════════════ CTA FINAL ════════════════════════ -->
+<section class="closing-cta section-space px-6" hidden data-temporarily-hidden="true">
+  <div class="max-w-3xl mx-auto text-center reveal">
+    <p class="font-display text-xs font-semibold tracking-[.14em] uppercase text-[#684DB0] mb-8">Toda a jornada conectada</p>
+    <h2 class="font-display font-bold text-[#282525] leading-[1.03] mb-5" style="font-size:clamp(36px,4.5vw,64px)">
+      Transforme oportunidades<br/>em parcerias que continuam.
+    </h2>
+    <p class="text-black/55 text-lg mb-10">Feito para quem encontra, viabiliza, executa e renova patrocínios de projetos.</p>
+    <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 font-bold text-white bg-[#684DB0] hover:bg-[#59409b] active:scale-[0.97] transition-all rounded-xl px-10 py-4 text-[15px]">
+      Começar grátis
+      <svg class="w-4 h-4" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+    </a>
+    <p class="text-black/35 text-sm mt-4">Sem cartão de crédito. Configure em poucos minutos.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════ CONTEÚDO / BLOG ════════════════════════ -->
+<section id="blog" class="blog-section section-space px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="blog-head">
+      <div class="reveal">
+        <p class="font-display text-xs font-semibold tracking-[.14em] uppercase text-[#684DB0]">Caderno Jards</p>
+        <h2 class="font-display">Ideias para fazer parcerias avançarem.</h2>
+      </div>
+      <div class="blog-head-side reveal">
+        <p>Conversas, repertório e caminhos práticos para quem conecta projetos, empresas e impacto.</p>
+        <a href="/blog" data-app-path="/blog" class="blog-index-link">Explorar todos os conteúdos <span aria-hidden="true">→</span></a>
+      </div>
+    </div>
+
+    <div id="blog-destaques" class="blog-grid" aria-label="Conteúdos em destaque">
+      <a href="/blog/mobilizacao-de-recursos" data-app-path="/blog/mobilizacao-de-recursos" class="blog-story reveal">
+        <span class="blog-topic">Captação</span>
+        <h3 class="font-display">O que muda quando começamos a falar em mobilização de recursos?</h3>
+        <p>Captar vai além do aporte. É criar movimento em torno de uma causa e aproximar quem pode fazê-la avançar.</p>
+        <span class="blog-read">Continuar lendo</span>
+      </a>
+
+      <a href="/blog/olhar-responsabilidade-social" data-app-path="/blog/olhar-responsabilidade-social" class="blog-story reveal">
+        <span class="blog-topic">Estratégia</span>
+        <h3 class="font-display">De onde vem o olhar de quem faz responsabilidade social?</h3>
+        <p>Três perspectivas que ajudam a transformar intenção em investimento social consistente.</p>
+        <span class="blog-read">Continuar lendo</span>
+      </a>
+
+      <a href="/blog/captacao-de-recursos-e-vendas-b2b" data-app-path="/blog/captacao-de-recursos-e-vendas-b2b" class="blog-story reveal">
+        <span class="blog-topic">Relacionamento</span>
+        <h3 class="font-display">O que a captação de recursos pode aprender com as vendas B2B?</h3>
+        <p>Contexto, cadência e próximos passos para construir conversas mais previsíveis sem perder a relação.</p>
+        <span class="blog-read">Continuar lendo</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ════════════════════════ FOOTER ════════════════════════ -->
+<footer id="rodape" class="site-footer">
+  <div class="max-w-6xl mx-auto">
+    <div class="site-footer-main">
+      <div class="footer-brand">
+        <a href="#top" class="footer-icon-stack" aria-label="Voltar ao início">
+          <img src="assets/jards-footer-symbol.svg" alt="" class="footer-icon" />
+        </a>
+      </div>
+
+      <nav aria-label="Navegação do rodapé">
+        <p class="footer-column-title">Navegue</p>
+        <div class="footer-nav">
+          <a href="#bi">Plataforma</a>
+          <a href="#produto-tabs">Produto</a>
+          <a href="#operacao">Parcerias</a>
+          <a href="#precos">Preços</a>
+          <a href="/blog" data-app-path="/blog">Blog</a>
+        </div>
+      </nav>
+
+      <div>
+        <p class="footer-column-title">Acompanhe a Jards</p>
+        <div class="footer-social-links">
+          <a href="https://www.linkedin.com/company/jardsapp/home/?viewAsMember=true" target="_blank" rel="noopener noreferrer"><i class="ph ph-linkedin-logo" aria-hidden="true"></i><span>LinkedIn</span></a>
+          <a href="https://www.instagram.com/jardsapp/" target="_blank" rel="noopener noreferrer"><i class="ph ph-instagram-logo" aria-hidden="true"></i><span>Instagram</span></a>
+        </div>
+        <p class="footer-social-note">Conteúdo sobre captação, patrocínios, impacto e continuidade.</p>
+        <img src="assets/tamandua-celular-footer.png" alt="Tamanduá segurando um celular" class="footer-social-illustration" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="site-footer-bottom">
+      <div class="site-footer-legal">
+        <a href="/privacidade" data-app-path="/privacidade">Política de Privacidade</a>
+        <a href="/termos" data-app-path="/termos">Termos de Uso</a>
+      </div>
+      <p>© 2026 Jards. Feito no Brasil.</p>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+  // ── Destinos da aplicação ──
+  // Em produção, landing e app compartilham a origem. Ao abrir este HTML
+  // diretamente no computador, os links apontam para o servidor local do Next.
+  const appOrigin = window.location.protocol === 'file:'
+    ? 'http://localhost:3000'
+    : window.location.origin;
+
+  document.querySelectorAll('[data-app-path]').forEach(function(link) {
+    link.href = appOrigin + link.dataset.appPath;
+  });
+
+  // ── BI: feature card dinâmica com animação de slot ──
+  const biConfig = [
+    { slot: 2, stat: '+2.000', title: 'Patrocinadores mapeados', sub: 'Histórico, incentivos, oportunidades e caminhos para começar.' },
+    { slot: 1, stat: null, title: 'Projetos prontos para avançar', sub: 'Orçamento, documentos, pitch, cotas e respostas organizados no mesmo lugar.' },
+    { slot: 4, stat: '7', title: 'Etapas próprias para patrocínio', sub: 'Da prospecção à renovação, com responsáveis, valores e próximos passos.' },
+    { slot: 1, stat: null, title: 'Parceria com continuidade', sub: 'Contratos, entregas, evidências e renovação preservam tudo o que foi construído.' },
+  ];
+  let biActiveSlot = null;
+
+  function renderBiContent(el, cfg) {
+    if (cfg.stat) {
+      el.innerHTML =
+        '<div class="accent-gradient-text" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
+        '<div>' +
+          '<div style="font-size:12px;font-weight:700;color:#282525;margin-bottom:4px;">' + cfg.title + '</div>' +
+          '<p style="font-size:9.5px;color:rgba(40,37,37,0.45);line-height:1.6;">' + cfg.sub + '</p>' +
+        '</div>';
+    } else {
+      el.innerHTML =
+        '<div></div>' +
+        '<div>' +
+          '<div style="font-size:13px;font-weight:700;color:#282525;margin-bottom:6px;">' + cfg.title + '</div>' +
+          '<p style="font-size:11px;color:rgba(40,37,37,0.55);line-height:1.55;">' + cfg.sub + '</p>' +
+        '</div>';
+    }
+  }
+
+  function updateBiFeature(idx) {
+    const cfg = biConfig[idx];
+    if (!cfg) return;
+    const newSlot = cfg.slot;
+
+    if (biActiveSlot !== null && biActiveSlot !== newSlot) {
+      const prevS = document.getElementById('bi-s' + biActiveSlot + '-s');
+      const prevF = document.getElementById('bi-s' + biActiveSlot + '-f');
+      if (prevF) prevF.classList.remove('visible');
+      if (prevS) prevS.classList.remove('hidden-card');
+    }
+
+    const sponsor = document.getElementById('bi-s' + newSlot + '-s');
+    const feature = document.getElementById('bi-s' + newSlot + '-f');
+    if (!sponsor || !feature) return;
+
+    if (biActiveSlot === newSlot) {
+      feature.style.opacity = '0.15';
+      feature.style.transform = 'scale(0.96)';
+      setTimeout(function() {
+        renderBiContent(feature, cfg);
+        feature.style.opacity = '';
+        feature.style.transform = '';
+      }, 200);
+    } else {
+      renderBiContent(feature, cfg);
+      requestAnimationFrame(function() {
+        sponsor.classList.add('hidden-card');
+        feature.classList.add('visible');
+      });
+    }
+    biActiveSlot = newSlot;
+  }
+
+  // ── Accordion ──
+  function toggleAcc(btn) {
+    const body = btn.nextElementSibling;
+    const icon = btn.querySelector('.acc-icon');
+    const isOpen = body.classList.contains('open');
+
+    document.querySelectorAll('.acc-content').forEach(b => b.classList.remove('open'));
+    document.querySelectorAll('.acc-icon').forEach(i => i.textContent = '+');
+    document.querySelectorAll('[onclick="toggleAcc(this)"]').forEach(b => b.setAttribute('aria-expanded','false'));
+    document.querySelectorAll('[onclick="toggleAcc(this)"] span:first-child').forEach(s => {
+      s.classList.remove('text-black'); s.classList.add('text-black/40');
+    });
+
+    if (!isOpen) {
+      body.classList.add('open');
+      btn.setAttribute('aria-expanded','true');
+      icon.textContent = '−';
+      btn.querySelector('span:first-child').classList.replace('text-black/40','text-black');
+      const idx = [...document.querySelectorAll('[onclick="toggleAcc(this)"]')].indexOf(btn);
+      updateBiFeature(idx);
+    }
+  }
+
+  // Inicializa: acc 1 ativo (idx 0)
+  updateBiFeature(0);
+
+  // ── Tabs ──
+  function switchTab(name) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.remove('text-black','bg-white','border-b-2','border-b-black');
+      b.classList.add('text-black/40');
+    });
+    document.getElementById('panel-' + name).classList.add('active');
+    const btn = document.getElementById('tab-btn-' + name);
+    btn.classList.add('text-black','bg-white','border-b-2','border-b-black');
+    btn.classList.remove('text-black/40');
+  }
+
+  function resetProductDemo() {
+    switchTab('contatos');
+    document.getElementById('produto-tabs').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function filterDemoEditais(status, button) {
+    document.querySelectorAll('#panel-editais .edital-card').forEach(function(card) {
+      card.style.display = status === 'todos' || card.dataset.status === status ? '' : 'none';
+    });
+    document.querySelectorAll('.demo-filter').forEach(function(item) {
+      item.style.borderColor = 'rgba(0,0,0,.15)';
+      item.style.color = 'rgba(40,37,37,.60)';
+      item.style.background = 'white';
+    });
+    button.style.borderColor = '#684DB0';
+    button.style.color = '#684DB0';
+    button.style.background = 'white';
+  }
+
+  function exportDemoEdital(button) {
+    const card = button.closest('.edital-card');
+    const organization = card.querySelector('.edital-header > div:nth-child(2) > div:first-child').textContent.trim();
+    const edital = card.querySelector('.edital-name').textContent.trim();
+    const status = card.dataset.status;
+    const dates = Array.from(card.querySelectorAll('.edital-dates span'))
+      .map(function(item) { return item.textContent.trim(); })
+      .filter(function(item) { return item && item !== '·'; });
+    const csv = [
+      ['Organização', 'Edital', 'Status', 'Abertura', 'Encerramento'],
+      [organization, edital, status, dates[0] || '', dates[1] || '']
+    ].map(function(row) {
+      return row.map(function(value) { return '"' + String(value).replaceAll('"', '""') + '"'; }).join(',');
+    }).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    const download = document.createElement('a');
+    download.href = url;
+    download.download = edital.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.csv';
+    download.click();
+    URL.revokeObjectURL(url);
+  }
+
+  const heroVisual = document.querySelector('.hero-visual');
+  if (heroVisual) {
+    const sizeHeroArt = () => heroVisual.style.setProperty('--hero-art-scale', heroVisual.clientWidth / 1424);
+    sizeHeroArt();
+    new ResizeObserver(sizeHeroArt).observe(heroVisual);
+  }
+
+  // ── Reveal on scroll ──
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }});
+  }, { threshold: 0.06 });
+  document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
