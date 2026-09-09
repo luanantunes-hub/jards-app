@@ -1568,7 +1568,7 @@
       }).join('');
 
       /* KANBAN */
-      var KS={prospeccao:{l:'Prospecção',c:'rgba(13,13,13,.35)'},primeiro_contato:{l:'1º Contato',c:'#7259B5'},proposta_enviada:{l:'Proposta',c:'#2D72B0'},em_negociacao:{l:'Negociação',c:'#B07A14'}};
+      var KS={prospeccao:{l:'Prospecção',c:'rgba(13,13,13,.35)',i:'magnifying-glass'},primeiro_contato:{l:'1º Contato',c:'#7259B5',i:'phone-call'},proposta_enviada:{l:'Proposta',c:'#2D72B0',i:'paper-plane-tilt'},em_negociacao:{l:'Negociação',c:'#B07A14',i:'handshake'}};
       var KCOLS=[
         {key:'prospeccao',total:'R$ 200k',cards:[{co:'TV Cultura',t:'Captação Rouanet: Série Documental',v:'R$ 80k'},{co:'Sabesp',t:'Programa Ambiental e Arte 2025',v:'R$ 120k'}]},
         {key:'primeiro_contato',total:'R$ 250k',cards:[{co:'Porto Seguro',t:'Patrocínio Lei Esporte: Atletismo',v:'R$ 90k',dt:'22/09'},{co:'Embraer',t:'Arte e Inovação: Projeto Cultural',v:'R$ 160k'}]},
@@ -1578,7 +1578,7 @@
       document.getElementById('ms-kanban').innerHTML=KCOLS.map(function(col){
         var s=KS[col.key];
         return '<section class="ms-k-column" aria-label="'+s.l+': '+col.cards.length+' itens">'+
-          '<header class="ms-kc-head"><div style="min-width:0"><div class="ms-kc-title"><span class="ms-kc-dot" style="background:'+s.c+'"></span><span class="ms-kc-label">'+s.l+'</span></div><p class="ms-kc-meta">'+col.cards.length+' itens · '+col.total+'</p></div><span class="ms-kc-add" aria-hidden="true">+</span></header><div class="ms-k-cards">'+
+          '<header class="ms-kc-head"><div style="min-width:0"><div class="ms-kc-title"><i class="ph ph-'+s.i+'" style="color:'+s.c+';font-size:12px;flex-shrink:0" aria-hidden="true"></i><span class="ms-kc-label">'+s.l+'</span></div><p class="ms-kc-meta">'+col.cards.length+' itens · '+col.total+'</p></div><span class="ms-kc-add" aria-hidden="true">+</span></header><div class="ms-k-cards">'+
           col.cards.map(function(c){
             return '<div class="ms-k-card">'+
               '<div style="display:flex;align-items:center;margin-bottom:8px">'+
