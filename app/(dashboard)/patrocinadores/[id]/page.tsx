@@ -15,13 +15,14 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
-import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
+import { ContatoExportadoModal } from "@/components/modals/ContatoExportadoModal";
 import { SugerirContribuicaoModal } from "@/components/modals/SugerirContribuicaoModal";
 import { ComentarioFeed } from "@/components/community/ComentarioFeed";
 import { EditalVotoCard } from "@/components/community/EditalVotoCard";
 import { AcessoContatosModal, type AcessoContatosModalVariant } from "@/components/modals/AcessoContatosModal";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
+import { useOrganizationId } from "@/contexts/OrganizationContext";
 import StatusBadge from "@/components/ui/StatusBadge";
 
 type RelatorioSustentabilidade = {
@@ -436,6 +437,7 @@ export default function PatrocinadorPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const supabase = createClient();
+  const organizationId = useOrganizationId();
   const { creditos, assinatura, loading: creditosLoading, desbloquearEmpresa } = useCreditos();
   const { confirmDelete } = useDeleteConfirm();
   const { etiquetas, etiquetasInscricao } = useEtiquetas();
@@ -464,7 +466,9 @@ export default function PatrocinadorPage() {
   const [inscricaoEdital, setInscricaoEdital] = useState<Edital | null>(null);
   const [showReportarErro, setShowReportarErro] = useState(false);
   const [showSugerirForm, setShowSugerirForm] = useState(false);
-  const [exportandoContato, setExportandoContato] = useState<{ nome: string; email: string | null; linkedin_url: string | null; cargo: string | null } | null>(null);
+  const [exportandoContatoId, setExportandoContatoId] = useState<string | null>(null);
+  const [contatoExportado, setContatoExportado] = useState<{ id: string; nome: string; empresaNome?: string } | null>(null);
+  const [erroExportar, setErroExportar] = useState<string | null>(null);
   const [sugerirForm, setSugerirForm] = useState({ nome: "", cargo: "", email: "", linkedin: "" });
   const [sugerirSaving, setSugerirSaving] = useState(false);
   const [responsaveisTab, setResponsaveisTab] = useState<"responsaveis" | "experiencias">("responsaveis");
@@ -677,6 +681,56 @@ export default function PatrocinadorPage() {
     });
   }
 
+  async function handleExportarContato(row: { id: string; nome: string; email: string | null; linkedin_url: string | null; cargo: string | null }) {
+    setErroExportar(null);
+    setExportandoContatoId(row.id);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setErroExportar("Usuário não autenticado."); setExportandoContatoId(null); return; }
+
+    const nomeEmpresa = empresa?.nome?.trim();
+    let empresaCrmIdFinal = empresaCrmId;
+    if (!empresaCrmIdFinal && nomeEmpresa) {
+      const { data: existente } = await (supabase as any)
+        .from("empresas_crm")
+        .select("id")
+        .eq("organization_id", organizationId)
+        .eq("empresa_pub_id", id)
+        .limit(1)
+        .maybeSingle();
+      if (existente?.id) {
+        empresaCrmIdFinal = existente.id;
+      } else {
+        const { data: novaEmpresa, error: erroEmpresa } = await (supabase as any)
+          .from("empresas_crm")
+          .insert({ nome: nomeEmpresa, account_id: user.id, organization_id: organizationId, empresa_pub_id: id })
+          .select("id")
+          .single();
+        if (erroEmpresa) { setErroExportar(erroEmpresa.message); setExportandoContatoId(null); return; }
+        empresaCrmIdFinal = novaEmpresa?.id ?? null;
+      }
+    }
+
+    const { data: novoContato, error } = await (supabase as any)
+      .from("contatos")
+      .insert({
+        account_id: user.id,
+        organization_id: organizationId,
+        nome: row.nome,
+        cargo: row.cargo || null,
+        email: row.email || null,
+        linkedin_url: row.linkedin_url || null,
+        empresa_crm_id: empresaCrmIdFinal,
+        origem: "jards",
+      })
+      .select("id")
+      .single();
+
+    setExportandoContatoId(null);
+    if (error || !novoContato) { setErroExportar(error?.message ?? "Não foi possível salvar o contato."); return; }
+    if (empresaCrmIdFinal && !empresaCrmId) setEmpresaCrmId(empresaCrmIdFinal);
+    setContatoExportado({ id: novoContato.id, nome: row.nome, empresaNome: nomeEmpresa });
+  }
+
   async function handleSugerir() {
     if (!sugerirForm.nome.trim()) return;
     setSugerirSaving(true);
@@ -777,15 +831,19 @@ export default function PatrocinadorPage() {
           onSaved={() => { setShowInscricaoModal(false); setInscricaoEdital(null); reloadActivity(); }}
         />
       )}
-      {exportandoContato && (
-        <NovoContatoModal
-          initialNome={exportandoContato.nome}
-          initialEmail={exportandoContato.email ?? undefined}
-          initialLinkedin={exportandoContato.linkedin_url ?? undefined}
-          initialCargo={exportandoContato.cargo ?? undefined}
-          onClose={() => setExportandoContato(null)}
-          onSaved={() => setExportandoContato(null)}
+      {contatoExportado && (
+        <ContatoExportadoModal
+          contatoId={contatoExportado.id}
+          nome={contatoExportado.nome}
+          empresaNome={contatoExportado.empresaNome}
+          onClose={() => setContatoExportado(null)}
         />
+      )}
+      {erroExportar && (
+        <div className="fixed bottom-5 right-5 z-50 flex max-w-[320px] items-start gap-2 rounded border border-[#D94E4E]/20 bg-white px-4 py-3 text-[12px] font-medium text-[#D94E4E] shadow-[0_12px_32px_rgba(13,13,13,.12)]">
+          <span className="min-w-0 flex-1">{erroExportar}</span>
+          <button type="button" onClick={() => setErroExportar(null)} aria-label="Fechar aviso" className="text-[#D94E4E]/60 hover:text-[#D94E4E]"><X size={13} /></button>
+        </div>
       )}
       {showReportarErro && empresa && (
         <SugerirContribuicaoModal
@@ -1266,12 +1324,14 @@ export default function PatrocinadorPage() {
                           </td>
                           <td className="px-5 py-3.5">
                             <button
-                              onClick={() => mostraContatos && setExportandoContato(r)}
-                              disabled={!mostraContatos}
+                              onClick={() => mostraContatos && void handleExportarContato(r)}
+                              disabled={!mostraContatos || exportandoContatoId === r.id}
                               className="w-7 h-7 flex items-center justify-center rounded border border-black/10 text-black/25 hover:text-[#7259B5] hover:border-[#7259B5]/30 hover:bg-[#7259B5]/5 transition disabled:opacity-30 disabled:pointer-events-none"
                               title={mostraContatos ? "Salvar nos contatos" : "Desbloqueie os contatos para exportar"}
                             >
-                              <UserPlus size={11} />
+                              {exportandoContatoId === r.id
+                                ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-black/15 border-t-black/50" />
+                                : <UserPlus size={11} />}
                             </button>
                           </td>
                           <td className="px-5 py-3.5">
@@ -1377,12 +1437,14 @@ export default function PatrocinadorPage() {
                           </td>
                           <td className="px-5 py-3.5">
                             <button
-                              onClick={() => mostraContatos && setExportandoContato(s)}
-                              disabled={!mostraContatos}
+                              onClick={() => mostraContatos && void handleExportarContato(s)}
+                              disabled={!mostraContatos || exportandoContatoId === s.id}
                               className="w-7 h-7 flex items-center justify-center rounded border border-black/10 text-black/25 hover:text-[#7259B5] hover:border-[#7259B5]/30 hover:bg-[#7259B5]/5 transition disabled:opacity-30 disabled:pointer-events-none"
                               title="Salvar nos contatos"
                             >
-                              <UserPlus size={11} />
+                              {exportandoContatoId === s.id
+                                ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-black/15 border-t-black/50" />
+                                : <UserPlus size={11} />}
                             </button>
                           </td>
                           <td className="px-5 py-3.5">
