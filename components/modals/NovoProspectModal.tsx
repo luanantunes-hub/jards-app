@@ -10,7 +10,7 @@ import type { OrigemOportunidade, CanalContato } from "@/lib/supabase/types";
 
 export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPubId, empresaCrmId, setorPreEmpresa, dominioPreEmpresa, cidadePreEmpresa, ufPreEmpresa }: {
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   nomePreEmpresa?: string;
   empresaPubId?: string;
   empresaCrmId?: string;
@@ -114,7 +114,7 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
     }
 
     setSaving(false);
-    onSaved(); onClose();
+    onSaved(crmId ?? undefined); onClose();
   }
 
   return (

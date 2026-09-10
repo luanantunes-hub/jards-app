@@ -68,7 +68,7 @@ const ORIGEM_OPTIONS = [
 
 export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId, proponentePreId, initialNome, initialEmail, initialLinkedin, initialCargo }: {
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   empresaPreId?: string;
   captadorPreId?: string;
   proponentePreId?: string;
@@ -173,7 +173,7 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
     setSaving(true); setErro(null);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado."); setSaving(false); return; }
-    const { error } = await (supabase as any).from("contatos").insert({
+    const { data, error } = await (supabase as any).from("contatos").insert({
       account_id: user.id,
       organization_id: organizationId,
       nome: nome.trim(),
@@ -188,10 +188,10 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
       canal_preferido: canalPreferido || null,
       origem: origem || null,
       responsavel_interno_id: responsavelInternoId || null,
-    });
+    }).select("id").single();
     setSaving(false);
     if (error) { setErro(error.message); return; }
-    onSaved(); onClose();
+    onSaved(data?.id as string | undefined); onClose();
   }
 
   return <div className="fixed inset-0 z-50 flex flex-col items-center bg-black/45" onClick={onClose}>

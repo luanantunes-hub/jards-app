@@ -175,7 +175,7 @@ function NovoContatoInline({
 /* ─── Modal principal ─────────────────────────────────────────────── */
 export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   empresaPreId?: string;
   nomePreEmpresa?: string;
   empresaPubId?: string;
@@ -482,7 +482,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
 
     setSaving(false);
     if (error) { setErro((error as Error).message); return; }
-    onSaved(); onClose();
+    onSaved(captacaoId ?? undefined); onClose();
   }
 
   /* ── Helpers de render ── */

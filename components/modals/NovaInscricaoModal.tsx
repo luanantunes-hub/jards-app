@@ -75,7 +75,7 @@ function DateField({ label, value, onChange }: { label: string; value: string; o
 
 export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPreId, empresaPubId, statusPre, potentialPre, tituloPre, leiPre, dataAberturaPre, dataFechamentoPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   nomePreEmpresa?: string;
   empresaPreId?: string;
   empresaPubId?: string;
@@ -350,12 +350,13 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
 
     const writePayload = { ...payload } as Record<string, unknown>;
     let error: { message: string } | null = null;
+    let savedId: string | null = editData?.id ?? null;
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const result = editData?.id
-        ? await (supabase as any).from("editais_user").update(writePayload).eq("id", editData.id)
-        : await (supabase as any).from("editais_user").insert({ account_id: user.id, organization_id: organizationId, ...writePayload });
+        ? await (supabase as any).from("editais_user").update(writePayload).eq("id", editData.id).select("id").single()
+        : await (supabase as any).from("editais_user").insert({ account_id: user.id, organization_id: organizationId, ...writePayload }).select("id").single();
       error = result.error;
-      if (!error) break;
+      if (!error) { savedId = result.data?.id ?? savedId; break; }
 
       let removedLegacyField = false;
       if (/potencial_fechamento/i.test(error.message) && "potencial_fechamento" in writePayload) {
@@ -371,7 +372,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
 
     setSaving(false);
     if (error) { setErro(error.message); return; }
-    onSaved();
+    onSaved(savedId ?? undefined);
     onClose();
   }
 

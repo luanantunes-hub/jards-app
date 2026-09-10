@@ -69,7 +69,7 @@ function parseDecimalBR(value: string) {
 
 export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }: {
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (id?: string) => void;
   editData?: EditDataProjeto;
   proponentePreId?: string;
 }) {
@@ -298,7 +298,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
     }
 
     setSaving(false);
-    onSaved();
+    onSaved(result.data?.id as string | undefined);
     onClose();
   }
 

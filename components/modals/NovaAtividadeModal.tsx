@@ -7,7 +7,22 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { PrioridadeSelect } from "@/components/ui/PrioridadeSelect";
+import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
+import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
+import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
+import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
+import { NovoProponenteModal } from "@/components/modals/NovoProponenteModal";
+import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import type { Prioridade, TipoAtividade } from "@/lib/supabase/types";
+
+const VINCULO_CREATE_LABEL: Partial<Record<VinculoTipo, string>> = {
+  captacao:   "Criar nova captação",
+  inscricao:  "Criar nova inscrição",
+  empresa:    "Criar nova empresa",
+  projeto:    "Criar novo projeto",
+  proponente: "Criar novo proponente",
+  contato:    "Criar novo contato",
+};
 
 const TIPO_OPTIONS: { key: TipoAtividade; label: string; Icon: React.ElementType; color: string }[] = [
   { key: "reuniao",  label: "Reunião",  Icon: Users,          color: "#7259B5" },
@@ -123,9 +138,14 @@ export function NovaAtividadeModal({
 
   // Dropdown state
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
-    async function loadData() {
+    loadData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId, supabase]);
+
+  async function loadData() {
       if (!organizationId) return;
 
       const [
@@ -204,9 +224,13 @@ export function NovaAtividadeModal({
             .map((m: any) => ({ id: m.user_id, label: m.full_name }))
         );
       }
-    }
-    loadData();
-  }, [organizationId, supabase]);
+  }
+
+  async function handleVinculoCreated(id?: string) {
+    await loadData();
+    if (id) setVinculoId(id);
+    setShowCreateModal(false);
+  }
 
   const vinculoOptions = ({
     captacao: captacoes, inscricao: inscricoes, empresa: empresas, projeto: projetos,
@@ -419,6 +443,8 @@ export function NovaAtividadeModal({
                   open={openDropdown === "vinculo"}
                   onToggle={() => setOpenDropdown(openDropdown === "vinculo" ? null : "vinculo")}
                   onClose={() => setOpenDropdown(null)}
+                  createLabel={VINCULO_CREATE_LABEL[vinculoTipo]}
+                  onCreateClick={VINCULO_CREATE_LABEL[vinculoTipo] ? () => { setOpenDropdown(null); setShowCreateModal(true); } : undefined}
                 />
               </div>
 
@@ -537,6 +563,25 @@ export function NovaAtividadeModal({
 
       {/* Backdrop */}
       <div className="flex-1" style={{ background: "rgba(0,0,0,.18)" }} />
+
+      {showCreateModal && vinculoTipo === "captacao" && (
+        <NovaCaptacaoModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
+      )}
+      {showCreateModal && vinculoTipo === "inscricao" && (
+        <NovaInscricaoModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
+      )}
+      {showCreateModal && vinculoTipo === "empresa" && (
+        <NovoProspectModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
+      )}
+      {showCreateModal && vinculoTipo === "projeto" && (
+        <NovoProjetoModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
+      )}
+      {showCreateModal && vinculoTipo === "proponente" && (
+        <NovoProponenteModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
+      )}
+      {showCreateModal && vinculoTipo === "contato" && (
+        <NovoContatoModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
+      )}
     </div>
   );
 }
@@ -550,6 +595,8 @@ function Dropdown({
   open,
   onToggle,
   onClose,
+  createLabel,
+  onCreateClick,
 }: {
   value: string | null;
   options: Opcao[];
@@ -558,6 +605,8 @@ function Dropdown({
   open: boolean;
   onToggle: () => void;
   onClose: () => void;
+  createLabel?: string;
+  onCreateClick?: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
 
@@ -621,6 +670,15 @@ function Dropdown({
                 {opt.id === value && <Check size={12} className="text-[#7259B5] flex-shrink-0" />}
               </button>
             ))
+          )}
+          {onCreateClick && createLabel && (
+            <button
+              onMouseDown={e => { e.preventDefault(); onCreateClick(); }}
+              className="w-full flex items-center gap-1.5 text-left px-3 py-2 text-[12px] font-semibold text-[#7259B5] hover:bg-[#7259B5]/5 transition border-t"
+              style={{ borderColor: "rgba(13,13,13,.06)" }}
+            >
+              <Plus size={12} /> {createLabel}
+            </button>
           )}
         </div>
       )}
