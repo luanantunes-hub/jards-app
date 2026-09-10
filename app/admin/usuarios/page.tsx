@@ -84,8 +84,8 @@ export default function AdminUsuariosPage() {
       });
       const data = await res.json();
       if (!res.ok) { setEntryError(data.error ?? "Erro ao gerar link"); setEntering(null); return; }
-      // Abre em nova aba para o admin não perder sua sessão
-      window.open(data.url, "_blank", "noopener");
+      const completeUrl = `/admin/impersonate/complete?token_hash=${encodeURIComponent(data.tokenHash)}&email=${encodeURIComponent(data.email)}`;
+      window.open(completeUrl, "_blank", "noopener");
     } catch (e) {
       setEntryError("Erro de rede. Tente novamente.");
     }

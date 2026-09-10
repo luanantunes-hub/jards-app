@@ -11,15 +11,17 @@ export function ImpersonationBanner() {
   const params = useSearchParams();
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
+  const [mismatch, setMismatch] = useState(false);
   const [exiting, setExiting] = useState(false);
 
   useEffect(() => {
     const impFlag  = params.get("_imp");
     const impEmail = params.get("_imp_email");
+    let claimedEmail: string | null = null;
 
     if (impFlag === "1" && impEmail) {
       try { sessionStorage.setItem(STORAGE_KEY, impEmail); } catch {}
-      setEmail(impEmail);
+      claimedEmail = impEmail;
       // Limpa os params da URL sem reload
       const url = new URL(window.location.href);
       url.searchParams.delete("_imp");
@@ -27,10 +29,23 @@ export function ImpersonationBanner() {
       window.history.replaceState({}, "", url.toString());
     } else {
       try {
-        const stored = sessionStorage.getItem(STORAGE_KEY);
-        if (stored) setEmail(stored);
+        claimedEmail = sessionStorage.getItem(STORAGE_KEY);
       } catch {}
     }
+
+    if (!claimedEmail) return;
+
+    // Confirma que a sessão real bate com o e-mail anunciado antes de exibir o aviso —
+    // a troca de sessão acontece em /admin/impersonate/complete e pode falhar silenciosamente.
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.email === claimedEmail) {
+        setEmail(claimedEmail);
+      } else {
+        setMismatch(true);
+        try { sessionStorage.removeItem(STORAGE_KEY); } catch {}
+      }
+    });
   }, [params]);
 
   async function handleExit() {
@@ -39,6 +54,18 @@ export function ImpersonationBanner() {
     const supabase = createClient();
     await supabase.auth.signOut();
     router.push("/admin/usuarios");
+  }
+
+  if (mismatch) {
+    return (
+      <div
+        className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center gap-2 px-5 py-2 text-[12px] font-semibold text-white"
+        style={{ background: "#D94E4E" }}
+      >
+        <Shield size={13} />
+        Não foi possível confirmar a sessão do usuário — você continua com a sua própria sessão.
+      </div>
+    );
   }
 
   if (!email) return null;

@@ -32,16 +32,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Usuário não encontrado" }, { status: 404 });
   }
 
-  const origin = req.headers.get("origin") ?? process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-  const redirectTo = `${origin}/dashboard?_imp=1&_imp_email=${encodeURIComponent(targetData.user.email)}`;
-
   const { data: link, error: linkErr } = await admin.auth.admin.generateLink({
     type: "magiclink",
     email: targetData.user.email,
-    options: { redirectTo },
   });
 
-  if (linkErr || !link?.properties?.action_link) {
+  if (linkErr || !link?.properties?.hashed_token) {
     return NextResponse.json({ error: linkErr?.message ?? "Erro ao gerar link" }, { status: 500 });
   }
 
@@ -55,5 +51,5 @@ export async function POST(req: NextRequest) {
     summary: "Acesso administrativo iniciado para um usuário",
   });
 
-  return NextResponse.json({ url: link.properties.action_link, email: targetData.user.email });
+  return NextResponse.json({ tokenHash: link.properties.hashed_token, email: targetData.user.email });
 }
