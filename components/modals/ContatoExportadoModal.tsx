@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 
 export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }: {
   contatoId: string;
@@ -41,9 +41,10 @@ export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }:
           <button
             type="button"
             onClick={() => router.push(`/contatos/${contatoId}`)}
-            className="rounded bg-[#7259B5] px-4 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#63499C] active:translate-y-px"
+            className="flex items-center gap-1.5 rounded border border-[#7259B5] px-4 py-2.5 text-[12px] font-bold text-[#7259B5] transition hover:bg-[#7259B5]/5 active:translate-y-px"
           >
             Ir até o contato
+            <ArrowRight size={13} />
           </button>
         </footer>
       </div>

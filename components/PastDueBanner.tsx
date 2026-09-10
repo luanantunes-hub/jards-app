@@ -30,8 +30,8 @@ export function PastDueBanner() {
       <AlertTriangle size={13} className="shrink-0" />
       <span>
         {dentroDaCarencia
-          ? <>Seu último pagamento falhou. Você ainda tem acesso por mais {assinatura.diasRestantesCarencia} {assinatura.diasRestantesCarencia === 1 ? "dia" : "dias"} — atualize a forma de pagamento.</>
-          : <>Seu pagamento está pendente e o acesso ao plano foi pausado. Atualize a forma de pagamento para reativar.</>}
+          ? <>Notamos que seu último pagamento não passou. Fica tranquilo — seu acesso continua por mais {assinatura.diasRestantesCarencia} {assinatura.diasRestantesCarencia === 1 ? "dia" : "dias"}, é só atualizar a forma de pagamento quando puder.</>
+          : <>Seu pagamento segue pendente e por isso pausamos o acesso ao plano. Atualize a forma de pagamento pra reativar quando quiser.</>}
       </span>
       <button
         onClick={handlePortal}
