@@ -1266,9 +1266,10 @@ export default function PatrocinadorPage() {
                           </td>
                           <td className="px-5 py-3.5">
                             <button
-                              onClick={() => setExportandoContato(r)}
-                              className="w-7 h-7 flex items-center justify-center rounded border border-black/10 text-black/25 hover:text-[#7259B5] hover:border-[#7259B5]/30 hover:bg-[#7259B5]/5 transition"
-                              title="Salvar nos contatos"
+                              onClick={() => mostraContatos && setExportandoContato(r)}
+                              disabled={!mostraContatos}
+                              className="w-7 h-7 flex items-center justify-center rounded border border-black/10 text-black/25 hover:text-[#7259B5] hover:border-[#7259B5]/30 hover:bg-[#7259B5]/5 transition disabled:opacity-30 disabled:pointer-events-none"
+                              title={mostraContatos ? "Salvar nos contatos" : "Desbloqueie os contatos para exportar"}
                             >
                               <UserPlus size={11} />
                             </button>
