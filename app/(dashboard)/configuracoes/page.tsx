@@ -88,6 +88,7 @@ export default function ConfiguracoesPage() {
   const [orgNome, setOrgNome] = useState("");
   const [orgAvatarUrl, setOrgAvatarUrl] = useState<string | null>(null);
   const [savingOrg, setSavingOrg] = useState(false);
+  const [cancelando, setCancelando] = useState(false);
 
   useEffect(() => {
     const requestedSection = new URLSearchParams(window.location.search).get("section");
@@ -260,6 +261,19 @@ const { data: perfilData } = await (supabase as any)
     window.dispatchEvent(new Event("jards:org-updated"));
     showSuccess("Organização atualizada");
     setSavingOrg(false);
+  }
+
+  async function handleCancelarAssinatura() {
+    setCancelando(true);
+    try {
+      const res = await fetch("/api/stripe/portal", { method: "POST" });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok || !body?.url) { setErro(body?.error ?? "Não foi possível abrir o portal de cancelamento."); setCancelando(false); return; }
+      window.location.href = body.url;
+    } catch {
+      setErro("Não foi possível abrir o portal de cancelamento.");
+      setCancelando(false);
+    }
   }
 
   async function uploadOrgAvatar(file: File) {
@@ -611,6 +625,19 @@ const { data: perfilData } = await (supabase as any)
               </span>
             </div>
           </div>
+
+          {assinatura?.plano && assinatura.plano !== "gratuito" && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={handleCancelarAssinatura}
+                disabled={cancelando}
+                className="text-[11px] font-medium text-black/30 transition hover:text-black/50 disabled:opacity-50"
+              >
+                {cancelando ? "Abrindo…" : "Cancelar assinatura"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
       </>

@@ -22,11 +22,15 @@ interface ConfigOrg {
   acesso_contatos: "admin_only" | "team_with_credits";
 }
 
+const CARENCIA_PAST_DUE_DIAS = 15;
+
 export interface AssinaturaInfo {
   plano: PlanTipo;
   ativa: boolean;
   status: "inactive" | "trialing" | "active" | "past_due" | "unpaid" | "paused" | "canceled" | "incomplete" | "incomplete_expired";
   periodoFim: string | null;
+  pastDueSince: string | null;
+  diasRestantesCarencia: number | null;
 }
 
 export interface ResultadoPesquisaEmpresa {
@@ -95,19 +99,30 @@ export function CreditosProvider({ children }: { children: ReactNode }) {
     if (user) {
       const { data: profileData } = await (supabase as any)
         .from("profiles")
-        .select("plano, periodo_fim, stripe_subscription_status")
+        .select("plano, periodo_fim, stripe_subscription_status, past_due_since")
         .eq("id", user.id)
         .maybeSingle();
 
       const plano = (profileData?.plano ?? "gratuito") as PlanTipo;
       const periodoFim = (profileData?.periodo_fim as string | null | undefined) ?? null;
+      const pastDueSince = (profileData?.past_due_since as string | null | undefined) ?? null;
       const status = (profileData?.stripe_subscription_status ?? "inactive") as AssinaturaInfo["status"];
       const periodoValido = !periodoFim || new Date(periodoFim).getTime() > Date.now();
+
+      // Espelha fn_org_assinatura_ativa: past_due tem 15 dias de carência
+      // contados de past_due_since, sem depender de periodo_fim (que já pode
+      // ter rolado para o período novo, cuja fatura foi a que falhou).
+      const diasEmAtraso = pastDueSince ? (Date.now() - new Date(pastDueSince).getTime()) / 86_400_000 : null;
+      const dentroDaCarencia = status === "past_due" && diasEmAtraso !== null && diasEmAtraso <= CARENCIA_PAST_DUE_DIAS;
+      const diasRestantesCarencia = dentroDaCarencia ? Math.max(0, Math.ceil(CARENCIA_PAST_DUE_DIAS - diasEmAtraso!)) : null;
+
       setAssinatura({
         plano,
-        ativa: plano !== "gratuito" && periodoValido && (status === "active" || status === "trialing"),
+        ativa: plano !== "gratuito" && ((periodoValido && (status === "active" || status === "trialing")) || dentroDaCarencia),
         status,
         periodoFim,
+        pastDueSince,
+        diasRestantesCarencia,
       });
     } else {
       setAssinatura(null);

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
+import { PastDueBanner } from "@/components/PastDueBanner";
 import {
   BarChart2,
   CalendarDays,
@@ -477,6 +478,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Suspense fallback={null}>
             <ImpersonationBanner />
           </Suspense>
+          <PastDueBanner />
           {children}
         </main>
       </div>
