@@ -15,9 +15,9 @@ const TIPO_LABEL: Record<EscopoTipo, string> = {
 };
 
 const MODO_OPCOES: { value: EscopoModo; label: string; descricao: string }[] = [
-  { value: "pedido", label: "Solicitação", descricao: "Pede acesso e espera aprovação de um admin." },
-  { value: "consulta", label: "Consulta", descricao: "Checa um item específico; se estiver livre, libera na hora, mas só mostra esse item." },
-  { value: "ver_tudo", label: "Ver tudo", descricao: "Lista completa, sem precisar perguntar item por item." },
+  { value: "pedido", label: "Solicitação", descricao: "Envia um pedido de acesso para aprovação de um administrador." },
+  { value: "consulta", label: "Consulta", descricao: "Verifica se um item específico está disponível e libera o acesso automaticamente, caso esteja." },
+  { value: "ver_tudo", label: "Ver tudo", descricao: "Mostra a lista completa, sem necessidade de solicitação." },
 ];
 
 function TooltipBotao({ texto, children }: { texto: string; children: React.ReactNode }) {
