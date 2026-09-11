@@ -136,6 +136,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [modulosUser, setModulosUser]       = useState<ModuloId[]>(["captacao"]);
   const [isSuperAdmin, setIsSuperAdmin]     = useState(false);
   const [org, setOrg]                       = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
+  const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
+  const [orgSwitcherOpen, setOrgSwitcherOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -145,12 +147,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       setUser(user);
       if (!user) return;
 
-      const { data: member } = await (supabase as any)
+      // EXPERIMENTAL (workspace de captador): busca todos os vínculos do
+      // usuário, não só o primeiro — necessário pro "acesso duplo" (conta
+      // própria + workspace limitado convidado em outra organização).
+      const { data: memberRows } = await (supabase as any)
         .from("organization_members")
-        .select("organization_id, modulos_acesso")
-        .eq("user_id", user.id)
-        .limit(1)
-        .single();
+        .select("organization_id, papel, modulos_acesso, organizations(nome, avatar_url)")
+        .eq("user_id", user.id);
+
+      const memberList = ((memberRows ?? []) as any[]).map(m => ({
+        organizationId: m.organization_id as string,
+        papel: m.papel as string,
+        modulosAcesso: (m.modulos_acesso ?? ["captacao"]) as ModuloId[],
+        nome: (m.organizations?.nome ?? "") as string,
+        avatarUrl: (m.organizations?.avatar_url ?? null) as string | null,
+      }));
+      setMemberships(memberList);
 
       const { data: profile } = await (supabase as any)
         .from("profiles")
@@ -160,18 +172,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       setIsSuperAdmin(profile?.jards_super_admin === true);
 
-      if (member) {
-        setOrganizationId(member.organization_id);
-        setModulosUser((member.modulos_acesso ?? ["captacao"]) as ModuloId[]);
+      if (memberList.length > 0) {
+        let escolhido = memberList[0];
+        try {
+          const salvo = localStorage.getItem("jards:org-atual");
+          const combina = salvo ? memberList.find(m => m.organizationId === salvo) : null;
+          escolhido = combina ?? memberList.find(m => m.papel !== "captador") ?? memberList[0];
+        } catch { /* localStorage indisponível — usa o padrão (primeiro não-captador) */ }
 
-        const { data: org } = await (supabase as any)
+        setOrganizationId(escolhido.organizationId);
+        setModulosUser(escolhido.modulosAcesso);
+        setOrg({ nome: escolhido.nome, avatar_url: escolhido.avatarUrl });
+
+        const { data: orgData } = await (supabase as any)
           .from("organizations")
           .select("modulos_ativos")
-          .eq("id", member.organization_id)
+          .eq("id", escolhido.organizationId)
           .single();
-        if (org) setModulosOrg((org.modulos_ativos ?? ["captacao"]) as ModuloId[]);
-      }
+        if (orgData) setModulosOrg((orgData.modulos_ativos ?? ["captacao"]) as ModuloId[]);
 
+        if (escolhido.papel === "captador" && !path.startsWith("/workspace-captador")) {
+          router.replace("/workspace-captador");
+        }
+      }
     }
 
     loadUser();
@@ -221,6 +244,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (nav.length > 0 && nav[0].items.length > 0) {
       router.push(nav[0].items[0].href);
     }
+  }
+
+  function trocarOrganizacao(alvo: typeof memberships[number]) {
+    try { localStorage.setItem("jards:org-atual", alvo.organizationId); } catch { /* localStorage indisponível — troca só nesta sessão */ }
+    setOrganizationId(alvo.organizationId);
+    setModulosUser(alvo.modulosAcesso);
+    setOrg({ nome: alvo.nome, avatar_url: alvo.avatarUrl });
+    setOrgSwitcherOpen(false);
+    router.push(alvo.papel === "captador" ? "/workspace-captador" : "/dashboard");
   }
 
   async function handleLogout() {
@@ -459,17 +491,58 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {/* Right actions */}
           <div className="flex items-center gap-3">
             {user && <NotificationBell userId={user.id} />}
-            <Link
-              href="/configuracoes"
-              title={org.nome || "Configurações"}
-              className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white overflow-hidden transition hover:brightness-95"
-            >
-              {org.avatar_url ? (
-                <img src={org.avatar_url} alt="" className="w-full h-full object-cover bg-white" />
-              ) : (
-                <span>{org.nome ? org.nome.charAt(0).toUpperCase() : "?"}</span>
-              )}
-            </Link>
+            {memberships.length > 1 ? (
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setOrgSwitcherOpen(v => !v)}
+                  title={org.nome || "Trocar organização"}
+                  className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white overflow-hidden transition hover:brightness-95"
+                >
+                  {org.avatar_url ? (
+                    <img src={org.avatar_url} alt="" className="w-full h-full object-cover bg-white" />
+                  ) : (
+                    <span>{org.nome ? org.nome.charAt(0).toUpperCase() : "?"}</span>
+                  )}
+                </button>
+                {orgSwitcherOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setOrgSwitcherOpen(false)} />
+                    <div className="absolute right-0 top-10 z-50 w-64 rounded border border-black/[.09] bg-white p-1.5 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
+                      <p className="px-2.5 pb-1.5 pt-1 text-[9px] font-bold uppercase tracking-widest text-black/30">Trocar organização</p>
+                      {memberships.map(m => (
+                        <button
+                          key={m.organizationId}
+                          type="button"
+                          onClick={() => trocarOrganizacao(m)}
+                          className={`flex w-full items-center gap-2.5 rounded px-2.5 py-2 text-left transition hover:bg-black/[.04] ${m.organizationId === organizationId ? "bg-black/[.03]" : ""}`}
+                        >
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#7259B5] text-[10px] font-bold text-white">
+                            {m.avatarUrl ? <img src={m.avatarUrl} alt="" className="h-full w-full object-cover" /> : (m.nome ? m.nome.charAt(0).toUpperCase() : "?")}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[12px] font-semibold text-black">{m.nome || "Sem nome"}</span>
+                            {m.papel === "captador" && <span className="text-[10px] font-medium text-black/40">Workspace de captador</span>}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            ) : (
+              <Link
+                href="/configuracoes"
+                title={org.nome || "Configurações"}
+                className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white overflow-hidden transition hover:brightness-95"
+              >
+                {org.avatar_url ? (
+                  <img src={org.avatar_url} alt="" className="w-full h-full object-cover bg-white" />
+                ) : (
+                  <span>{org.nome ? org.nome.charAt(0).toUpperCase() : "?"}</span>
+                )}
+              </Link>
+            )}
           </div>
         </header>
 
