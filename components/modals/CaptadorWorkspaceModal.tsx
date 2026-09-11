@@ -62,6 +62,7 @@ export function CaptadorWorkspaceModal({
   const [erro, setErro] = useState<string | null>(null);
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [contaExistente, setContaExistente] = useState<string | null>(null);
 
   function setEscopo(tipo: EscopoTipo, patch: Partial<EscopoConfig>) {
     setEscopos(current => current.map(e => e.tipo === tipo ? { ...e, ...patch } : e));
@@ -73,6 +74,10 @@ export function CaptadorWorkspaceModal({
     setSaving(true);
 
     let finalWorkspaceId = workspaceId;
+    // setState não atualiza o valor lido no mesmo ciclo — usa variáveis locais
+    // pra decidir se fecha o modal ou mostra uma das telas de resultado.
+    let novoInviteUrl: string | null = null;
+    let novaContaExistente: string | null = null;
 
     if (isNovo) {
       const res = await fetch("/api/members/invite", {
@@ -82,7 +87,8 @@ export function CaptadorWorkspaceModal({
       });
       const body = await res.json().catch(() => ({}));
       if (!res.ok) { setErro(body?.error ?? "Não foi possível convidar o captador."); setSaving(false); return; }
-      if (body?.manual && body?.invite_url) setInviteUrl(body.invite_url as string);
+      if (body?.manual && body?.invite_url) { novoInviteUrl = body.invite_url as string; setInviteUrl(novoInviteUrl); }
+      if (body?.status === "accepted") { novaContaExistente = email.trim(); setContaExistente(novaContaExistente); }
 
       const { data: novoWorkspace, error: erroWorkspace } = await (supabase as any)
         .from("captador_workspaces")
@@ -101,7 +107,8 @@ export function CaptadorWorkspaceModal({
     setSaving(false);
     if (erroEscopos) { setErro(erroEscopos.message); return; }
 
-    if (!inviteUrl) { onSaved(); onClose(); }
+    onSaved();
+    if (!novoInviteUrl && !novaContaExistente) onClose();
   }
 
   return (
@@ -121,7 +128,16 @@ export function CaptadorWorkspaceModal({
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]"><X size={15} className="text-black/40" /></button>
         </header>
 
-        {inviteUrl ? (
+        {contaExistente ? (
+          <main className="flex-1 space-y-4 px-5 py-6">
+            <p className="text-[13px] font-semibold text-black">Workspace configurado.</p>
+            <p className="text-[12px] text-black/50">
+              <strong className="font-semibold text-black/70">{contaExistente}</strong> já tinha uma conta no Jards, então não enviamos convite por e-mail — o acesso ao workspace já está liberado.
+              Se a pessoa não lembrar a senha, é só usar &quot;Esqueci minha senha&quot; na tela de login.
+            </p>
+            <button type="button" onClick={onClose} className="text-[12px] font-semibold text-[#7259B5]">Concluir</button>
+          </main>
+        ) : inviteUrl ? (
           <main className="flex-1 space-y-4 px-5 py-6">
             <p className="text-[13px] font-semibold text-black">Workspace configurado.</p>
             <p className="text-[12px] text-black/50">Esse captador já tinha um convite pendente — em vez de mandar outro e-mail, copie e envie esse link diretamente pra ele:</p>
@@ -135,7 +151,7 @@ export function CaptadorWorkspaceModal({
                 <Copy size={12} />{copiado ? "Copiado" : "Copiar"}
               </button>
             </div>
-            <button type="button" onClick={() => { onSaved(); onClose(); }} className="text-[12px] font-semibold text-[#7259B5]">Concluir</button>
+            <button type="button" onClick={onClose} className="text-[12px] font-semibold text-[#7259B5]">Concluir</button>
           </main>
         ) : (
           <>
