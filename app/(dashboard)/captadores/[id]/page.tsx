@@ -1,7 +1,8 @@
 "use client";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, Pencil, Shield, UserCheck, Building2, Check, FileStack } from "lucide-react";
+import { ArrowLeft, Mail, Pencil, Shield, UserCheck, Building2, Check, FileStack, Briefcase } from "lucide-react";
+import { CaptadorWorkspaceModal, type EscopoConfig } from "@/components/modals/CaptadorWorkspaceModal";
 import { createClient } from "@/lib/supabase/client";
 import { CAPTADOR_ICON_OPTIONS, type IdentityType } from "@/components/ui/ProjectIdentity";
 import { IdentityPickerPopup } from "@/components/ui/IdentityPickerPopup";
@@ -62,6 +63,8 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
   const [showEditModal, setShowEditModal] = useState(false);
   const [identitySaving, setIdentitySaving] = useState(false);
   const [pageTab, setPageTab] = useState<PageTab>("overview");
+  const [workspace, setWorkspace] = useState<{ id: string; escopos: EscopoConfig[] } | null>(null);
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -110,6 +113,14 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
     setNegociacoes([...(negExtRes.data ?? []), ...(negIntRes.data ?? [])] as CaptacaoRow[]);
     setInscricoes((inscRes.data ?? []) as EditalRow[]);
     setOverview(overviewRes.error ? null : overviewRes.data as CaptadorOverviewData);
+
+    const { data: workspaceRow } = await (supabase as any)
+      .from("captador_workspaces")
+      .select("id, captador_workspace_escopos(tipo, habilitado, modo)")
+      .eq("captador_id", id)
+      .maybeSingle();
+    setWorkspace(workspaceRow ? { id: workspaceRow.id, escopos: workspaceRow.captador_workspace_escopos } : null);
+
     setLoading(false);
   }, [id, supabase]);
 
@@ -203,6 +214,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
               {captador.email && (
                 <DetailHeaderAction label="Enviar e-mail" icon={Mail} href={`mailto:${captador.email}`} />
               )}
+              <DetailHeaderAction label={workspace ? "Configurar workspace" : "Criar workspace"} icon={Briefcase} onClick={() => setShowWorkspaceModal(true)} />
               <DetailHeaderAction label="Editar" icon={Pencil} onClick={() => setShowEditModal(true)} />
             </div>
           </div>
@@ -257,6 +269,17 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
           }}
           onClose={() => setShowEditModal(false)}
           onSaved={() => { setShowEditModal(false); void fetchData(); }}
+        />
+      )}
+      {showWorkspaceModal && (
+        <CaptadorWorkspaceModal
+          captadorId={captador.id}
+          organizationId={captador.organization_id}
+          captadorEmail={captador.email}
+          workspaceId={workspace?.id ?? null}
+          escoposIniciais={workspace?.escopos ?? null}
+          onClose={() => setShowWorkspaceModal(false)}
+          onSaved={() => void fetchData()}
         />
       )}
     </div>
