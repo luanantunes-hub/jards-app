@@ -496,7 +496,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <button
                   type="button"
                   onClick={() => setOrgSwitcherOpen(v => !v)}
-                  title={org.nome || "Trocar organização"}
+                  title={`Trocar organização (atual: ${org.nome || "—"})`}
+                  aria-label="Trocar organização"
                   className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white overflow-hidden transition hover:brightness-95"
                 >
                   {org.avatar_url ? (
