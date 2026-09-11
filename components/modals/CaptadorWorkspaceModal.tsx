@@ -15,10 +15,21 @@ const TIPO_LABEL: Record<EscopoTipo, string> = {
 };
 
 const MODO_OPCOES: { value: EscopoModo; label: string; descricao: string }[] = [
-  { value: "pedido", label: "Pedido", descricao: "Pede acesso e espera aprovação de um admin." },
+  { value: "pedido", label: "Solicitação", descricao: "Pede acesso e espera aprovação de um admin." },
   { value: "consulta", label: "Consulta", descricao: "Checa um item específico; se estiver livre, libera na hora, mas só mostra esse item." },
   { value: "ver_tudo", label: "Ver tudo", descricao: "Lista completa, sem precisar perguntar item por item." },
 ];
+
+function TooltipBotao({ texto, children }: { texto: string; children: React.ReactNode }) {
+  return (
+    <div className="group/tip relative">
+      {children}
+      <div className="pointer-events-none absolute bottom-full left-1/2 z-10 mb-1.5 w-max max-w-[170px] -translate-x-1/2 rounded bg-[#0D0D0D] px-2 py-1.5 text-center text-[10px] font-medium leading-snug text-white opacity-0 shadow-lg transition-opacity group-hover/tip:opacity-100">
+        {texto}
+      </div>
+    </div>
+  );
+}
 
 const ESCOPO_PADRAO: EscopoConfig[] = [
   { tipo: "empresas", habilitado: false, modo: "consulta" },
@@ -155,10 +166,9 @@ export function CaptadorWorkspaceModal({
                         role="switch"
                         aria-checked={escopo.habilitado}
                         aria-label={`${escopo.habilitado ? "Desativar" : "Ativar"} ${TIPO_LABEL[escopo.tipo]}`}
-                        className="relative h-6 w-11 shrink-0 rounded-full transition"
-                        style={{ background: escopo.habilitado ? "#2E8932" : "rgba(13,13,13,.15)" }}
+                        className={`inline-flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors ${escopo.habilitado ? "bg-[#2E8932]" : "bg-black/15"}`}
                       >
-                        <span className="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform" style={{ transform: escopo.habilitado ? "translateX(22px)" : "translateX(2px)" }} />
+                        <span className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${escopo.habilitado ? "translate-x-5" : "translate-x-0"}`} />
                       </button>
                     </div>
                     {escopo.habilitado && (
@@ -166,15 +176,15 @@ export function CaptadorWorkspaceModal({
                         {MODO_OPCOES.map(opcao => {
                           const selecionado = escopo.modo === opcao.value;
                           return (
-                            <button
-                              key={opcao.value}
-                              type="button"
-                              onClick={() => setEscopo(escopo.tipo, { modo: opcao.value })}
-                              title={opcao.descricao}
-                              className={`rounded border px-2.5 py-2 text-left text-[11px] font-semibold transition ${selecionado ? "border-[#7259B5] bg-[#7259B5]/5 text-[#7259B5]" : "border-black/10 text-black/45 hover:bg-black/[.03]"}`}
-                            >
-                              {opcao.label}
-                            </button>
+                            <TooltipBotao key={opcao.value} texto={opcao.descricao}>
+                              <button
+                                type="button"
+                                onClick={() => setEscopo(escopo.tipo, { modo: opcao.value })}
+                                className={`w-full rounded border px-2.5 py-2 text-left text-[11px] font-semibold transition ${selecionado ? "border-[#7259B5] bg-[#7259B5] text-white" : "border-[#7259B5] bg-white text-[#7259B5] hover:bg-[#7259B5]/5"}`}
+                              >
+                                {opcao.label}
+                              </button>
+                            </TooltipBotao>
                           );
                         })}
                       </div>
