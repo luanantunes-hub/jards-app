@@ -10,7 +10,6 @@ import {
   Camera, Building2, Lock,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { AlterarSenhaModal } from "@/components/modals/AlterarSenhaModal";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useCreditos } from "@/contexts/CreditosContext";
 import NovoMembroModal from "@/components/modals/NovoMembroModal";
@@ -90,7 +89,6 @@ export default function ConfiguracoesPage() {
   const [orgAvatarUrl, setOrgAvatarUrl] = useState<string | null>(null);
   const [savingOrg, setSavingOrg] = useState(false);
   const [cancelando, setCancelando] = useState(false);
-  const [showAlterarSenha, setShowAlterarSenha] = useState(false);
 
   useEffect(() => {
     const requestedSection = new URLSearchParams(window.location.search).get("section");
@@ -599,7 +597,7 @@ const { data: perfilData } = await (supabase as any)
             </div>
             <button
               type="button"
-              onClick={() => setShowAlterarSenha(true)}
+              onClick={() => router.push("/alterar-senha")}
               className="rounded border border-[#7259B5]/30 bg-white px-3 py-2 text-[11px] font-semibold text-[#7259B5] transition hover:bg-black/[.04]"
             >
               Alterar senha
@@ -607,10 +605,6 @@ const { data: perfilData } = await (supabase as any)
           </div>
         </div>
       </div>
-
-      {showAlterarSenha && (
-        <AlterarSenhaModal onClose={() => setShowAlterarSenha(false)} onSaved={() => showSuccess("Senha alterada")} />
-      )}
 
       <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
         <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
