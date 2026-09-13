@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Briefcase, Check, Plus, Search, Send, X } from "lucide-react";
+import { AlertTriangle, Briefcase, Check, Plus, Search, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 
@@ -36,8 +36,19 @@ const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: s
 };
 
 type LinhaEmpresa = { id: string; nome: string; status: string | null };
-type LinhaCaptacao = { id: string; titulo: string; status: string; empresaNome: string };
+type LinhaCaptacao = { id: string; titulo: string; status: string; empresaNome: string; atualizadoEm: string };
 type SheetState = { tipo: EscopoTipo; modo: EscopoModo };
+
+// resultado negativo = precisa de atenção; resultado positivo = concluída, fica discreta.
+// tudo que não é nem um nem outro (em negociação, aguardando etc.) é "em andamento".
+const NEGOCIACAO_NEGATIVO = new Set(["recusado"]);
+const NEGOCIACAO_POSITIVO = new Set(["aprovado"]);
+const INSCRICAO_NEGATIVO = new Set(["reprovado", "cancelado"]);
+const INSCRICAO_POSITIVO = new Set(["aprovado"]);
+
+function diasParado(atualizadoEm: string) {
+  return Math.max(0, Math.floor((Date.now() - new Date(atualizadoEm).getTime()) / 86_400_000));
+}
 
 function TriggerButton({ modo, onClick }: { modo: EscopoModo; onClick: () => void }) {
   return (
@@ -54,6 +65,69 @@ function TriggerButton({ modo, onClick }: { modo: EscopoModo; onClick: () => voi
 function StatusPedidoBadge({ status }: { status: PedidoStatus }) {
   const cfg = STATUS_PEDIDO[status];
   return <span className="shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide" style={{ color: cfg.cor, background: cfg.fundo }}>{cfg.label}</span>;
+}
+
+function ListaCaptacaoOrganizada({ linhas, vazio, negativos, positivos }: { linhas: LinhaCaptacao[]; vazio: string; negativos: Set<string>; positivos: Set<string> }) {
+  if (linhas.length === 0) return <p className="mt-3 text-[12px] text-black/35">{vazio}</p>;
+
+  const atencao = linhas.filter(l => negativos.has(l.status));
+  const concluidas = linhas.filter(l => positivos.has(l.status));
+  const andamento = linhas.filter(l => !negativos.has(l.status) && !positivos.has(l.status));
+
+  return (
+    <div className="mt-3 space-y-4">
+      {atencao.length > 0 && (
+        <div>
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <AlertTriangle size={12} className="text-[#B07A14]" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-[#B07A14]">Precisa de atenção</p>
+          </div>
+          <div className="divide-y divide-[#B07A14]/[.12] rounded border border-[#B07A14]/25 bg-[#B07A14]/[.06]">
+            {atencao.map(linha => (
+              <div key={linha.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-[12.5px] font-medium text-black/80">{linha.titulo}</p>
+                  <p className="truncate text-[11px] text-black/45">{linha.empresaNome} · parada há {diasParado(linha.atualizadoEm)} dias</p>
+                </div>
+                <span className="shrink-0 rounded bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#B07A14]">{linha.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {andamento.length > 0 && (
+        <div>
+          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Em andamento</p>
+          <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
+            {andamento.map(linha => (
+              <div key={linha.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                <div className="min-w-0">
+                  <p className="truncate text-[12.5px] font-medium text-black/80">{linha.titulo}</p>
+                  <p className="truncate text-[11px] text-black/40">{linha.empresaNome}</p>
+                </div>
+                <span className="shrink-0 rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{linha.status}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {concluidas.length > 0 && (
+        <div className="opacity-60">
+          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Concluídas</p>
+          <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
+            {concluidas.map(linha => (
+              <div key={linha.id} className="flex items-center justify-between gap-3 px-3 py-2">
+                <p className="truncate text-[12.5px] text-black/70">{linha.titulo}</p>
+                <span className="shrink-0 truncate text-[11px] text-black/40">{linha.empresaNome}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function TopSheet({ titulo, onClose, children, footer }: { titulo: string; onClose: () => void; children: React.ReactNode; footer: (close: () => void) => React.ReactNode }) {
@@ -289,11 +363,11 @@ export default function WorkspaceCaptadorPage() {
     const supabase = createClient();
     const { data } = await (supabase as any)
       .from("captacoes")
-      .select("id, titulo, status, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa_pub:empresas!empresa_id(nome)")
+      .select("id, titulo, status, updated_at, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa_pub:empresas!empresa_id(nome)")
       .eq("organization_id", orgId)
       .order("updated_at", { ascending: false });
     setNegociacoes(((data ?? []) as any[]).map(r => ({
-      id: r.id, titulo: r.titulo, status: r.status,
+      id: r.id, titulo: r.titulo, status: r.status, atualizadoEm: r.updated_at,
       empresaNome: r.empresa_crm?.nome ?? r.empresa_pub?.nome ?? "—",
     })));
   }
@@ -302,11 +376,11 @@ export default function WorkspaceCaptadorPage() {
     const supabase = createClient();
     const { data } = await (supabase as any)
       .from("editais_user")
-      .select("id, titulo, status, empresas_crm!empresa_crm_id(nome), empresas!empresa_pub_id(nome)")
+      .select("id, titulo, status, updated_at, empresas_crm!empresa_crm_id(nome), empresas!empresa_pub_id(nome)")
       .eq("organization_id", orgId)
       .order("updated_at", { ascending: false });
     setInscricoes(((data ?? []) as any[]).map(r => ({
-      id: r.id, titulo: r.titulo ?? "Sem título", status: r.status,
+      id: r.id, titulo: r.titulo ?? "Sem título", status: r.status, atualizadoEm: r.updated_at,
       empresaNome: r.empresas_crm?.nome ?? r.empresas?.nome ?? "—",
     })));
   }
@@ -356,23 +430,6 @@ export default function WorkspaceCaptadorPage() {
 
   const habilitados = (escopos ?? []).filter(e => e.habilitado);
 
-  function ListaCaptacao({ linhas, vazio }: { linhas: LinhaCaptacao[]; vazio: string }) {
-    if (linhas.length === 0) return <p className="mt-3 text-[12px] text-black/35">{vazio}</p>;
-    return (
-      <div className="mt-3 divide-y divide-black/[.06] rounded border border-black/[.08]">
-        {linhas.map(linha => (
-          <div key={linha.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-            <div className="min-w-0">
-              <p className="truncate text-[12.5px] font-medium text-black/80">{linha.titulo}</p>
-              <p className="truncate text-[11px] text-black/40">{linha.empresaNome}</p>
-            </div>
-            <span className="shrink-0 rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{linha.status}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-[720px] px-4 py-10 sm:px-6">
       <div className="flex items-center gap-3">
@@ -414,9 +471,9 @@ export default function WorkspaceCaptadorPage() {
                       </div>
                     )
                   ) : escopo.tipo === "negociacoes" ? (
-                    <ListaCaptacao linhas={negociacoes} vazio="Nenhuma negociação em andamento." />
+                    <ListaCaptacaoOrganizada linhas={negociacoes} vazio="Nenhuma negociação em andamento." negativos={NEGOCIACAO_NEGATIVO} positivos={NEGOCIACAO_POSITIVO} />
                   ) : (
-                    <ListaCaptacao linhas={inscricoes} vazio="Nenhuma inscrição em andamento." />
+                    <ListaCaptacaoOrganizada linhas={inscricoes} vazio="Nenhuma inscrição em andamento." negativos={INSCRICAO_NEGATIVO} positivos={INSCRICAO_POSITIVO} />
                   )
                 )}
 
