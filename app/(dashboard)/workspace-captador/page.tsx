@@ -123,7 +123,7 @@ export default function WorkspaceCaptadorPage() {
   return (
     <div className="mx-auto max-w-[720px] px-4 py-10 sm:px-6">
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded bg-[#7259B5]/10"><Briefcase size={20} className="text-[#7259B5]" /></div>
+        <div className="flex h-11 w-11 items-center justify-center rounded bg-black/[.05]"><Briefcase size={20} className="text-black" /></div>
         <div>
           <h1 className="text-[22px] font-bold text-black">Seu workspace</h1>
           <p className="text-[13px] text-black/45">Acesso limitado configurado pela organização que te convidou.</p>
