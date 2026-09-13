@@ -444,22 +444,15 @@ export default function WorkspaceCaptadorPage() {
   const [negociacoes, setNegociacoes] = useState<LinhaCaptacao[]>([]);
   const [inscricoes, setInscricoes] = useState<LinhaCaptacao[]>([]);
   const [sheetAberto, setSheetAberto] = useState<SheetState | null>(null);
-  const [captadorId, setCaptadorId] = useState<string | null>(null);
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoLinha[]>([]);
   const [atribuicaoAberta, setAtribuicaoAberta] = useState<AtribuicaoLinha | null>(null);
   const [tab, setTab] = useState("atribuicoes");
 
-  async function carregarAtribuicoes(orgId: string, captId: string) {
+  async function carregarAtribuicoes(wsId: string) {
     const supabase = createClient();
-    const { data } = await (supabase as any)
-      .from("atribuicoes")
-      .select("id, status, organization_id, empresas_crm!empresa_crm_id(nome)")
-      .eq("organization_id", orgId)
-      .eq("captador_user_id", captId)
-      .order("created_at", { ascending: false });
+    const { data } = await (supabase as any).rpc("fn_captador_minhas_atribuicoes", { p_workspace_id: wsId });
     setAtribuicoes(((data ?? []) as any[]).map(r => ({
-      id: r.id, status: r.status, organizationId: r.organization_id,
-      empresaNome: r.empresas_crm?.nome ?? "—",
+      id: r.id, status: r.status, organizationId: r.organizationId, empresaNome: r.empresaNome ?? "—",
     })));
   }
 
@@ -473,39 +466,25 @@ export default function WorkspaceCaptadorPage() {
     setPedidos((data ?? []) as Pedido[]);
   }
 
-  async function carregarEmpresas(orgId: string) {
+  async function carregarEmpresas(wsId: string) {
     const supabase = createClient();
-    const { data } = await (supabase as any)
-      .from("empresas_crm")
-      .select("id, nome, status")
-      .eq("organization_id", orgId)
-      .order("nome");
+    const { data } = await (supabase as any).rpc("fn_captador_listar_empresas", { p_workspace_id: wsId });
     setEmpresas((data ?? []) as LinhaEmpresa[]);
   }
 
-  async function carregarNegociacoes(orgId: string) {
+  async function carregarNegociacoes(wsId: string) {
     const supabase = createClient();
-    const { data } = await (supabase as any)
-      .from("captacoes")
-      .select("id, titulo, status, updated_at, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa_pub:empresas!empresa_id(nome)")
-      .eq("organization_id", orgId)
-      .order("updated_at", { ascending: false });
+    const { data } = await (supabase as any).rpc("fn_captador_listar_negociacoes", { p_workspace_id: wsId });
     setNegociacoes(((data ?? []) as any[]).map(r => ({
-      id: r.id, titulo: r.titulo, status: r.status, atualizadoEm: r.updated_at,
-      empresaNome: r.empresa_crm?.nome ?? r.empresa_pub?.nome ?? "—",
+      id: r.id, titulo: r.titulo, status: r.status, atualizadoEm: r.updatedAt, empresaNome: r.empresaNome ?? "—",
     })));
   }
 
-  async function carregarInscricoes(orgId: string) {
+  async function carregarInscricoes(wsId: string) {
     const supabase = createClient();
-    const { data } = await (supabase as any)
-      .from("editais_user")
-      .select("id, titulo, status, updated_at, empresas_crm!empresa_crm_id(nome), empresas!empresa_pub_id(nome)")
-      .eq("organization_id", orgId)
-      .order("updated_at", { ascending: false });
+    const { data } = await (supabase as any).rpc("fn_captador_listar_inscricoes", { p_workspace_id: wsId });
     setInscricoes(((data ?? []) as any[]).map(r => ({
-      id: r.id, titulo: r.titulo ?? "Sem título", status: r.status, atualizadoEm: r.updated_at,
-      empresaNome: r.empresas_crm?.nome ?? r.empresas?.nome ?? "—",
+      id: r.id, titulo: r.titulo, status: r.status, atualizadoEm: r.updatedAt, empresaNome: r.empresaNome ?? "—",
     })));
   }
 
@@ -526,9 +505,6 @@ export default function WorkspaceCaptadorPage() {
 
       if (!captador) { setNaoEncontrado(true); setCarregando(false); return; }
 
-      setCaptadorId(captador.id);
-      void carregarAtribuicoes(organizationId, captador.id);
-
       const { data: workspace } = await (supabase as any)
         .from("captador_workspaces")
         .select("id, captador_workspace_escopos(tipo, habilitado, modo)")
@@ -541,12 +517,13 @@ export default function WorkspaceCaptadorPage() {
       const escoposCarregados = (workspace.captador_workspace_escopos ?? []) as Escopo[];
       setEscopos(escoposCarregados);
       void carregarPedidos(workspace.id);
+      void carregarAtribuicoes(workspace.id);
 
       const verTudo = (tipo: EscopoTipo) => escoposCarregados.some(e => e.tipo === tipo && e.habilitado && e.modo === "ver_tudo");
 
-      if (verTudo("empresas")) await carregarEmpresas(organizationId);
-      if (verTudo("negociacoes")) await carregarNegociacoes(organizationId);
-      if (verTudo("inscricoes")) await carregarInscricoes(organizationId);
+      if (verTudo("empresas")) await carregarEmpresas(workspace.id);
+      if (verTudo("negociacoes")) await carregarNegociacoes(workspace.id);
+      if (verTudo("inscricoes")) await carregarInscricoes(workspace.id);
 
       setCarregando(false);
     }
@@ -674,11 +651,10 @@ export default function WorkspaceCaptadorPage() {
             variant={sheetAberto.modo === "ver_tudo" ? "ver_tudo" : "consulta"}
             onClose={() => setSheetAberto(null)}
             onCriado={() => {
-              if (!organizationId) return;
-              if (sheetAberto.tipo === "empresas") void carregarEmpresas(organizationId);
-              else if (sheetAberto.tipo === "negociacoes") void carregarNegociacoes(organizationId);
-              else void carregarInscricoes(organizationId);
-              if (captadorId) void carregarAtribuicoes(organizationId, captadorId);
+              if (sheetAberto.tipo === "empresas") void carregarEmpresas(workspaceId);
+              else if (sheetAberto.tipo === "negociacoes") void carregarNegociacoes(workspaceId);
+              else void carregarInscricoes(workspaceId);
+              void carregarAtribuicoes(workspaceId);
             }}
           />
         )
