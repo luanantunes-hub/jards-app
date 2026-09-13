@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Briefcase, Check, Plus, Search, Send, X } from "lucide-react";
+import { AlertTriangle, Briefcase, Check, ChevronRight, MessageCircle, Plus, Search, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 
@@ -38,6 +38,8 @@ const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: s
 type LinhaEmpresa = { id: string; nome: string; status: string | null };
 type LinhaCaptacao = { id: string; titulo: string; status: string; empresaNome: string; atualizadoEm: string };
 type SheetState = { tipo: EscopoTipo; modo: EscopoModo };
+type AtribuicaoLinha = { id: string; status: string; organizationId: string; empresaNome: string };
+type NotaAtribuicao = { id: string; autorEmail: string; nota: string; criadaEm: string };
 
 // resultado negativo = precisa de atenção; resultado positivo = concluída, fica discreta.
 // tudo que não é nem um nem outro (em negociação, aguardando etc.) é "em andamento".
@@ -127,6 +129,18 @@ function ListaCaptacaoOrganizada({ linhas, vazio, negativos, positivos }: { linh
         </div>
       )}
     </div>
+  );
+}
+
+function StatusAtribuicaoBadge({ status }: { status: string }) {
+  const ativa = status === "ativa";
+  return (
+    <span
+      className="shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+      style={ativa ? { color: "#2E8932", background: "#2E893214" } : { color: "rgba(0,0,0,.5)", background: "rgba(0,0,0,.04)" }}
+    >
+      {status}
+    </span>
   );
 }
 
@@ -327,6 +341,94 @@ function NovaSolicitacaoSheet({
   );
 }
 
+function AtribuicaoDetalheSheet({ atribuicao, onClose }: { atribuicao: AtribuicaoLinha; onClose: () => void }) {
+  const supabase = createClient();
+  const [notas, setNotas] = useState<NotaAtribuicao[] | null>(null);
+  const [texto, setTexto] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function carregar() {
+      const { data } = await (supabase as any)
+        .from("atribuicao_notas")
+        .select("id, autor_email, nota, created_at")
+        .eq("atribuicao_id", atribuicao.id)
+        .order("created_at", { ascending: true });
+      setNotas(((data ?? []) as any[]).map(n => ({ id: n.id, autorEmail: n.autor_email, nota: n.nota, criadaEm: n.created_at })));
+    }
+    void carregar();
+  }, [atribuicao.id]);
+
+  async function adicionar() {
+    if (!texto.trim()) return;
+    setEnviando(true);
+    setErro(null);
+    const { data: { user } } = await supabase.auth.getUser();
+    const { data, error } = await (supabase as any)
+      .from("atribuicao_notas")
+      .insert({
+        atribuicao_id: atribuicao.id,
+        organization_id: atribuicao.organizationId,
+        autor_id: user?.id,
+        autor_email: user?.email ?? "—",
+        nota: texto.trim(),
+      })
+      .select("id, autor_email, nota, created_at")
+      .single();
+    setEnviando(false);
+    if (error) { setErro(error.message); return; }
+    setNotas(prev => [...(prev ?? []), { id: data.id, autorEmail: data.autor_email, nota: data.nota, criadaEm: data.created_at }]);
+    setTexto("");
+  }
+
+  return (
+    <TopSheet
+      titulo={atribuicao.empresaNome}
+      onClose={onClose}
+      footer={(close: () => void) => (
+        <>
+          <button onClick={close} className="text-[12px] font-medium text-black/35 transition hover:text-black/55">Fechar</button>
+          <button
+            onClick={() => void adicionar()}
+            disabled={enviando || !texto.trim()}
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40"
+          >
+            <Send size={12} />{enviando ? "Enviando…" : "Adicionar nota"}
+          </button>
+        </>
+      )}
+    >
+      <div className="mb-2 flex items-center gap-2">
+        <StatusAtribuicaoBadge status={atribuicao.status} />
+      </div>
+
+      <div className="mb-4 max-h-64 space-y-3 overflow-y-auto">
+        {notas === null ? null : notas.length === 0 ? (
+          <p className="text-[12px] text-black/35">Nenhum acompanhamento registrado ainda.</p>
+        ) : (
+          notas.map(n => (
+            <div key={n.id} className="rounded border border-black/[.08] bg-black/[.015] px-3 py-2.5">
+              <p className="text-[12.5px] text-black/75">{n.nota}</p>
+              <p className="mt-1.5 text-[10.5px] text-black/35">{n.autorEmail} · {new Date(n.criadaEm).toLocaleDateString("pt-BR")}</p>
+            </div>
+          ))
+        )}
+      </div>
+
+      <label className="mb-1.5 block text-[11px] font-medium text-black/45">Novo acompanhamento</label>
+      <textarea
+        value={texto}
+        onChange={event => setTexto(event.target.value)}
+        placeholder="O que aconteceu, o que falta…"
+        rows={3}
+        className="w-full resize-none rounded border border-black/[.15] bg-white px-3 py-2 text-[13px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
+      />
+      {erro && <p className="mt-2 text-[11px] font-medium text-[#D94E4E]">{erro}</p>}
+    </TopSheet>
+  );
+}
+
 export default function WorkspaceCaptadorPage() {
   const organizationId = useOrganizationId();
   const [carregando, setCarregando] = useState(true);
@@ -338,6 +440,23 @@ export default function WorkspaceCaptadorPage() {
   const [negociacoes, setNegociacoes] = useState<LinhaCaptacao[]>([]);
   const [inscricoes, setInscricoes] = useState<LinhaCaptacao[]>([]);
   const [sheetAberto, setSheetAberto] = useState<SheetState | null>(null);
+  const [captadorId, setCaptadorId] = useState<string | null>(null);
+  const [atribuicoes, setAtribuicoes] = useState<AtribuicaoLinha[]>([]);
+  const [atribuicaoAberta, setAtribuicaoAberta] = useState<AtribuicaoLinha | null>(null);
+
+  async function carregarAtribuicoes(orgId: string, captId: string) {
+    const supabase = createClient();
+    const { data } = await (supabase as any)
+      .from("atribuicoes")
+      .select("id, status, organization_id, empresas_crm!empresa_crm_id(nome)")
+      .eq("organization_id", orgId)
+      .eq("captador_user_id", captId)
+      .order("created_at", { ascending: false });
+    setAtribuicoes(((data ?? []) as any[]).map(r => ({
+      id: r.id, status: r.status, organizationId: r.organization_id,
+      empresaNome: r.empresas_crm?.nome ?? "—",
+    })));
+  }
 
   async function carregarPedidos(wsId: string) {
     const supabase = createClient();
@@ -402,6 +521,9 @@ export default function WorkspaceCaptadorPage() {
 
       if (!captador) { setNaoEncontrado(true); setCarregando(false); return; }
 
+      setCaptadorId(captador.id);
+      void carregarAtribuicoes(organizationId, captador.id);
+
       const { data: workspace } = await (supabase as any)
         .from("captador_workspaces")
         .select("id, captador_workspace_escopos(tipo, habilitado, modo)")
@@ -439,6 +561,35 @@ export default function WorkspaceCaptadorPage() {
           <p className="text-[13px] text-black/45">Acesso limitado configurado pela organização que te convidou.</p>
         </div>
       </div>
+
+      {!naoEncontrado && (
+        <div className="mt-8">
+          <p className="mb-3 text-[13px] font-semibold text-black/70">Minhas atribuições</p>
+          {atribuicoes.length === 0 ? (
+            <p className="text-[13px] text-black/50">Você ainda não tem nenhuma empresa, negociação ou inscrição atribuída.</p>
+          ) : (
+            <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
+              {atribuicoes.map(a => (
+                <button
+                  key={a.id}
+                  type="button"
+                  onClick={() => setAtribuicaoAberta(a)}
+                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-black/[.02]"
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <MessageCircle size={13} className="shrink-0 text-black/25" />
+                    <p className="truncate text-[13px] font-medium text-black/80">{a.empresaNome}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <StatusAtribuicaoBadge status={a.status} />
+                    <ChevronRight size={14} className="text-black/25" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {naoEncontrado ? (
         <p className="mt-8 text-[13px] text-black/50">Não encontramos um workspace configurado pra você nesta organização.</p>
@@ -515,9 +666,14 @@ export default function WorkspaceCaptadorPage() {
               if (sheetAberto.tipo === "empresas") void carregarEmpresas(organizationId);
               else if (sheetAberto.tipo === "negociacoes") void carregarNegociacoes(organizationId);
               else void carregarInscricoes(organizationId);
+              if (captadorId) void carregarAtribuicoes(organizationId, captadorId);
             }}
           />
         )
+      )}
+
+      {atribuicaoAberta && (
+        <AtribuicaoDetalheSheet atribuicao={atribuicaoAberta} onClose={() => setAtribuicaoAberta(null)} />
       )}
     </div>
   );
