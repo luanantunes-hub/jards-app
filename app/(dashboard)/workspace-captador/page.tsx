@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AlertTriangle, Briefcase, Check, ChevronRight, MessageCircle, Plus, Search, Send, X } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { AlertTriangle, Briefcase, Building2, Check, ChevronRight, ClipboardList, MessageCircle, Plus, Search, Send, TrendingUp, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
 
 type EscopoTipo = "empresas" | "negociacoes" | "inscricoes";
 type EscopoModo = "pedido" | "consulta" | "ver_tudo";
@@ -15,6 +17,12 @@ const TIPO_LABEL: Record<EscopoTipo, string> = {
   empresas: "Empresas",
   negociacoes: "Negociações",
   inscricoes: "Inscrições",
+};
+
+const TIPO_ICON: Record<EscopoTipo, LucideIcon> = {
+  empresas: Building2,
+  negociacoes: TrendingUp,
+  inscricoes: ClipboardList,
 };
 
 const MODO_LABEL: Record<EscopoModo, string> = {
@@ -70,28 +78,26 @@ function StatusPedidoBadge({ status }: { status: PedidoStatus }) {
 }
 
 function ListaCaptacaoOrganizada({ linhas, vazio, negativos, positivos }: { linhas: LinhaCaptacao[]; vazio: string; negativos: Set<string>; positivos: Set<string> }) {
-  if (linhas.length === 0) return <p className="mt-3 text-[12px] text-black/35">{vazio}</p>;
+  if (linhas.length === 0) return <p className="text-[13px] text-black/40">{vazio}</p>;
 
   const atencao = linhas.filter(l => negativos.has(l.status));
   const concluidas = linhas.filter(l => positivos.has(l.status));
   const andamento = linhas.filter(l => !negativos.has(l.status) && !positivos.has(l.status));
 
   return (
-    <div className="mt-3 space-y-4">
+    <div className="space-y-6">
       {atencao.length > 0 && (
         <div>
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="mb-2.5 flex items-center gap-1.5">
             <AlertTriangle size={12} className="text-[#B07A14]" />
             <p className="text-[10px] font-bold uppercase tracking-widest text-[#B07A14]">Precisa de atenção</p>
           </div>
-          <div className="divide-y divide-[#B07A14]/[.12] rounded border border-[#B07A14]/25 bg-[#B07A14]/[.06]">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {atencao.map(linha => (
-              <div key={linha.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-[12.5px] font-medium text-black/80">{linha.titulo}</p>
-                  <p className="truncate text-[11px] text-black/45">{linha.empresaNome} · parada há {diasParado(linha.atualizadoEm)} dias</p>
-                </div>
-                <span className="shrink-0 rounded bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#B07A14]">{linha.status}</span>
+              <div key={linha.id} className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.06] p-3">
+                <p className="truncate text-[13px] font-medium text-black/80">{linha.titulo}</p>
+                <p className="mt-1 truncate text-[11px] text-black/45">{linha.empresaNome} · parada há {diasParado(linha.atualizadoEm)} dias</p>
+                <span className="mt-2 inline-block rounded bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#B07A14]">{linha.status}</span>
               </div>
             ))}
           </div>
@@ -100,15 +106,13 @@ function ListaCaptacaoOrganizada({ linhas, vazio, negativos, positivos }: { linh
 
       {andamento.length > 0 && (
         <div>
-          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Em andamento</p>
-          <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
+          <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Em andamento</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {andamento.map(linha => (
-              <div key={linha.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                <div className="min-w-0">
-                  <p className="truncate text-[12.5px] font-medium text-black/80">{linha.titulo}</p>
-                  <p className="truncate text-[11px] text-black/40">{linha.empresaNome}</p>
-                </div>
-                <span className="shrink-0 rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{linha.status}</span>
+              <div key={linha.id} className="rounded border border-black/[.08] p-3">
+                <p className="truncate text-[13px] font-medium text-black/80">{linha.titulo}</p>
+                <p className="mt-1 truncate text-[11px] text-black/40">{linha.empresaNome}</p>
+                <span className="mt-2 inline-block rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{linha.status}</span>
               </div>
             ))}
           </div>
@@ -117,12 +121,12 @@ function ListaCaptacaoOrganizada({ linhas, vazio, negativos, positivos }: { linh
 
       {concluidas.length > 0 && (
         <div className="opacity-60">
-          <p className="mb-1.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Concluídas</p>
-          <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
+          <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Concluídas</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {concluidas.map(linha => (
-              <div key={linha.id} className="flex items-center justify-between gap-3 px-3 py-2">
-                <p className="truncate text-[12.5px] text-black/70">{linha.titulo}</p>
-                <span className="shrink-0 truncate text-[11px] text-black/40">{linha.empresaNome}</span>
+              <div key={linha.id} className="rounded border border-black/[.08] p-3">
+                <p className="truncate text-[13px] text-black/70">{linha.titulo}</p>
+                <p className="mt-1 truncate text-[11px] text-black/40">{linha.empresaNome}</p>
               </div>
             ))}
           </div>
@@ -443,6 +447,7 @@ export default function WorkspaceCaptadorPage() {
   const [captadorId, setCaptadorId] = useState<string | null>(null);
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoLinha[]>([]);
   const [atribuicaoAberta, setAtribuicaoAberta] = useState<AtribuicaoLinha | null>(null);
+  const [tab, setTab] = useState("atribuicoes");
 
   async function carregarAtribuicoes(orgId: string, captId: string) {
     const supabase = createClient();
@@ -551,100 +556,107 @@ export default function WorkspaceCaptadorPage() {
   if (carregando) return null;
 
   const habilitados = (escopos ?? []).filter(e => e.habilitado);
+  const escopoAtivo = habilitados.find(e => e.tipo === tab);
+  const meusPedidosDoTab = escopoAtivo ? pedidos.filter(p => p.tipo === escopoAtivo.tipo) : [];
+
+  const tabs = [
+    { id: "atribuicoes", label: "Minhas atribuições", icon: Briefcase, count: atribuicoes.length },
+    ...habilitados.map(e => ({ id: e.tipo, label: TIPO_LABEL[e.tipo], icon: TIPO_ICON[e.tipo] })),
+  ];
 
   return (
-    <div className="mx-auto max-w-[720px] px-4 py-10 sm:px-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded bg-black/[.05]"><Briefcase size={20} className="text-black" /></div>
-        <div>
-          <h1 className="text-[22px] font-bold text-black">Seu workspace</h1>
-          <p className="text-[13px] text-black/45">Acesso limitado configurado pela organização que te convidou.</p>
+    <div className="min-h-full">
+      <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+        <div className="mx-auto flex max-w-[1280px] items-center gap-3 px-4 py-6 sm:px-6 lg:px-10">
+          <div className="flex h-11 w-11 items-center justify-center rounded bg-black/[.05]"><Briefcase size={20} className="text-black" /></div>
+          <div>
+            <h1 className="text-[22px] font-bold text-black">Seu workspace</h1>
+            <p className="text-[13px] text-black/45">Acesso limitado configurado pela organização que te convidou.</p>
+          </div>
         </div>
       </div>
 
-      {!naoEncontrado && (
-        <div className="mt-8">
-          <p className="mb-3 text-[13px] font-semibold text-black/70">Minhas atribuições</p>
-          {atribuicoes.length === 0 ? (
-            <p className="text-[13px] text-black/50">Você ainda não tem nenhuma empresa, negociação ou inscrição atribuída.</p>
-          ) : (
-            <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
-              {atribuicoes.map(a => (
-                <button
-                  key={a.id}
-                  type="button"
-                  onClick={() => setAtribuicaoAberta(a)}
-                  className="flex w-full items-center justify-between gap-3 px-3 py-3 text-left transition hover:bg-black/[.02]"
-                >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <MessageCircle size={13} className="shrink-0 text-black/25" />
-                    <p className="truncate text-[13px] font-medium text-black/80">{a.empresaNome}</p>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-2">
-                    <StatusAtribuicaoBadge status={a.status} />
-                    <ChevronRight size={14} className="text-black/25" />
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
       {naoEncontrado ? (
-        <p className="mt-8 text-[13px] text-black/50">Não encontramos um workspace configurado pra você nesta organização.</p>
-      ) : habilitados.length === 0 ? (
-        <p className="mt-8 text-[13px] text-black/50">Nenhum acesso foi habilitado ainda. Fale com quem te convidou.</p>
+        <DetailPageContent>
+          <p className="text-[13px] text-black/50">Não encontramos um workspace configurado pra você nesta organização.</p>
+        </DetailPageContent>
       ) : (
-        <div className="mt-8 space-y-3">
-          {habilitados.map(escopo => {
-            const meusPedidos = pedidos.filter(p => p.tipo === escopo.tipo);
-            return (
-              <div key={escopo.tipo} className="rounded border border-black/[.10] p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[14px] font-semibold text-black">{TIPO_LABEL[escopo.tipo]}</p>
-                    <p className="mt-1 text-[12px] text-black/45">{MODO_LABEL[escopo.modo]}</p>
+        <>
+          <DetailTabs ariaLabel="Seções do workspace" tabs={tabs} activeTab={tab} onChange={setTab} />
+
+          <DetailPageContent>
+            {tab === "atribuicoes" ? (
+              <div>
+                {atribuicoes.length === 0 ? (
+                  <p className="text-[13px] text-black/50">Você ainda não tem nenhuma empresa, negociação ou inscrição atribuída.</p>
+                ) : (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {atribuicoes.map(a => (
+                      <button
+                        key={a.id}
+                        type="button"
+                        onClick={() => setAtribuicaoAberta(a)}
+                        className="rounded border border-black/[.08] p-3.5 text-left transition hover:border-black/20 hover:bg-black/[.01]"
+                      >
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <MessageCircle size={13} className="shrink-0 text-black/25" />
+                            <p className="truncate text-[13px] font-medium text-black/80">{a.empresaNome}</p>
+                          </div>
+                          <ChevronRight size={14} className="shrink-0 text-black/25" />
+                        </div>
+                        <div className="mt-2.5"><StatusAtribuicaoBadge status={a.status} /></div>
+                      </button>
+                    ))}
                   </div>
-                  <TriggerButton modo={escopo.modo} onClick={() => setSheetAberto({ tipo: escopo.tipo, modo: escopo.modo })} />
+                )}
+                {habilitados.length === 0 && (
+                  <p className="mt-6 text-[13px] text-black/50">Nenhum acesso foi habilitado ainda. Fale com quem te convidou.</p>
+                )}
+              </div>
+            ) : escopoAtivo ? (
+              <div>
+                <div className="mb-6 flex items-start justify-between gap-3">
+                  <p className="text-[13px] text-black/45">{MODO_LABEL[escopoAtivo.modo]}</p>
+                  <TriggerButton modo={escopoAtivo.modo} onClick={() => setSheetAberto({ tipo: escopoAtivo.tipo, modo: escopoAtivo.modo })} />
                 </div>
 
-                {escopo.modo === "ver_tudo" && (
-                  escopo.tipo === "empresas" ? (
-                    empresas.length === 0 ? <p className="mt-3 text-[12px] text-black/35">Nenhuma empresa cadastrada ainda.</p> : (
-                      <div className="mt-3 divide-y divide-black/[.06] rounded border border-black/[.08]">
+                {escopoAtivo.modo === "ver_tudo" && (
+                  escopoAtivo.tipo === "empresas" ? (
+                    empresas.length === 0 ? <p className="text-[13px] text-black/40">Nenhuma empresa cadastrada ainda.</p> : (
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         {empresas.map(e => (
-                          <div key={e.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                            <p className="truncate text-[12.5px] font-medium text-black/80">{e.nome}</p>
-                            {e.status && <span className="shrink-0 rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{e.status}</span>}
+                          <div key={e.id} className="rounded border border-black/[.08] p-3.5">
+                            <p className="truncate text-[13px] font-medium text-black/80">{e.nome}</p>
+                            {e.status && <span className="mt-2 inline-block rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{e.status}</span>}
                           </div>
                         ))}
                       </div>
                     )
-                  ) : escopo.tipo === "negociacoes" ? (
+                  ) : escopoAtivo.tipo === "negociacoes" ? (
                     <ListaCaptacaoOrganizada linhas={negociacoes} vazio="Nenhuma negociação em andamento." negativos={NEGOCIACAO_NEGATIVO} positivos={NEGOCIACAO_POSITIVO} />
                   ) : (
                     <ListaCaptacaoOrganizada linhas={inscricoes} vazio="Nenhuma inscrição em andamento." negativos={INSCRICAO_NEGATIVO} positivos={INSCRICAO_POSITIVO} />
                   )
                 )}
 
-                {escopo.modo === "pedido" && meusPedidos.length > 0 && (
-                  <div className="mt-3 border-t border-black/[.07] pt-3">
-                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-black/30">Minhas solicitações</p>
-                    <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
-                      {meusPedidos.map(p => (
-                        <div key={p.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                          <p className="truncate text-[12.5px] font-medium text-black/80">{p.nome_busca}</p>
-                          <StatusPedidoBadge status={p.status} />
+                {escopoAtivo.modo === "pedido" && meusPedidosDoTab.length > 0 && (
+                  <div>
+                    <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Minhas solicitações</p>
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                      {meusPedidosDoTab.map(p => (
+                        <div key={p.id} className="rounded border border-black/[.08] p-3.5">
+                          <p className="truncate text-[13px] font-medium text-black/80">{p.nome_busca}</p>
+                          <div className="mt-2.5"><StatusPedidoBadge status={p.status} /></div>
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
               </div>
-            );
-          })}
-        </div>
+            ) : null}
+          </DetailPageContent>
+        </>
       )}
 
       {sheetAberto && workspaceId && (
