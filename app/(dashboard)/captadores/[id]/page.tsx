@@ -68,6 +68,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
   const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
   const [pedidosPendentes, setPedidosPendentes] = useState<{ id: string; tipo: string; nome_busca: string; created_at: string }[]>([]);
   const [decidindoPedido, setDecidindoPedido] = useState<string | null>(null);
+  const [erroPedido, setErroPedido] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -190,11 +191,19 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
 
   async function decidirPedido(pedidoId: string, status: "aprovado" | "recusado") {
     setDecidindoPedido(pedidoId);
-    const { data: { user } } = await supabase.auth.getUser();
-    await (supabase as any)
-      .from("captador_workspace_pedidos")
-      .update({ status, decidido_por: user?.id ?? null, decidido_em: new Date().toISOString() })
-      .eq("id", pedidoId);
+    setErroPedido(null);
+    if (status === "aprovado") {
+      // Aprovar cria a atribuição de verdade (busca ou cria a empresa) —
+      // por isso passa por uma função no banco, não um update direto.
+      const { error } = await (supabase as any).rpc("fn_aprovar_pedido_workspace", { p_pedido_id: pedidoId });
+      if (error) { setErroPedido(error.message); setDecidindoPedido(null); return; }
+    } else {
+      const { data: { user } } = await supabase.auth.getUser();
+      await (supabase as any)
+        .from("captador_workspace_pedidos")
+        .update({ status, decidido_por: user?.id ?? null, decidido_em: new Date().toISOString() })
+        .eq("id", pedidoId);
+    }
     setPedidosPendentes(current => current.filter(p => p.id !== pedidoId));
     setDecidindoPedido(null);
   }
@@ -271,6 +280,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
             {pedidosPendentes.length > 0 && (
               <div className="rounded border p-4" style={{ borderColor: "#B07A1440", background: "#B07A1408" }}>
                 <p className="text-[12px] font-bold text-black">Solicitações pendentes do workspace</p>
+                {erroPedido && <p className="mt-2 text-[11px] font-medium text-[#D94E4E]">{erroPedido}</p>}
                 <div className="mt-3 space-y-2">
                   {pedidosPendentes.map(pedido => (
                     <div key={pedido.id} className="flex items-center justify-between gap-3 rounded border border-black/[.08] bg-white px-3 py-2.5">
