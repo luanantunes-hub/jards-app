@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Briefcase, Check, Search, Send } from "lucide-react";
+import { Briefcase, Check, Plus, Search, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 
@@ -23,6 +23,12 @@ const MODO_LABEL: Record<EscopoModo, string> = {
   ver_tudo: "Ver tudo — lista completa",
 };
 
+const TRIGGER_LABEL: Record<EscopoModo, string> = {
+  pedido: "Nova solicitação",
+  consulta: "Consultar",
+  ver_tudo: "Adicionar",
+};
+
 const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: string }> = {
   pendente: { label: "Pendente", cor: "#B07A14", fundo: "#B07A1414" },
   aprovado: { label: "Aprovado", cor: "#2E8932", fundo: "#2E893214" },
@@ -31,13 +37,77 @@ const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: s
 
 type LinhaEmpresa = { id: string; nome: string; status: string | null };
 type LinhaCaptacao = { id: string; titulo: string; status: string; empresaNome: string };
+type SheetState = { tipo: EscopoTipo; modo: EscopoModo };
+
+function TriggerButton({ modo, onClick }: { modo: EscopoModo; onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex shrink-0 items-center gap-1.5 rounded bg-[#0D0D0D] px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-black/80 active:scale-[.98]"
+    >
+      <Plus size={13} />{TRIGGER_LABEL[modo]}
+    </button>
+  );
+}
 
 function StatusPedidoBadge({ status }: { status: PedidoStatus }) {
   const cfg = STATUS_PEDIDO[status];
   return <span className="shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide" style={{ color: cfg.cor, background: cfg.fundo }}>{cfg.label}</span>;
 }
 
-function ConsultaPainel({ workspaceId, tipo, variant = "consulta", onCriado }: { workspaceId: string; tipo: EscopoTipo; variant?: "consulta" | "ver_tudo"; onCriado?: () => void }) {
+function TopSheet({ titulo, onClose, children, footer }: { titulo: string; onClose: () => void; children: React.ReactNode; footer: (close: () => void) => React.ReactNode }) {
+  const [sheetVisible, setSheetVisible] = useState(false);
+
+  useEffect(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => setSheetVisible(true)));
+  }, []);
+
+  function close() {
+    setSheetVisible(false);
+    setTimeout(onClose, 260);
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50"
+      style={{ background: sheetVisible ? "rgba(0,0,0,.38)" : "rgba(0,0,0,0)", transition: "background 260ms ease" }}
+      onClick={close}
+    >
+      <div
+        className="absolute left-1/2 top-0 overflow-hidden rounded-b bg-white"
+        style={{
+          width: 440,
+          maxWidth: "92vw",
+          transform: sheetVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-100%)",
+          transition: "transform 260ms cubic-bezier(.32,.72,0,1)",
+        }}
+        onClick={event => event.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          <h3 className="text-[14px] font-semibold text-black/80">{titulo}</h3>
+          <button onClick={close} className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.05]">
+            <X size={14} className="text-black/40" />
+          </button>
+        </div>
+        <div className="px-6 py-5">{children}</div>
+        <div className="flex items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          {footer(close)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BuscarOuCriarSheet({
+  workspaceId, tipo, variant, onClose, onCriado,
+}: {
+  workspaceId: string;
+  tipo: EscopoTipo;
+  variant: "consulta" | "ver_tudo";
+  onClose: () => void;
+  onCriado?: () => void;
+}) {
   const supabase = createClient();
   const [nome, setNome] = useState("");
   const [buscando, setBuscando] = useState(false);
@@ -48,7 +118,6 @@ function ConsultaPainel({ workspaceId, tipo, variant = "consulta", onCriado }: {
     if (!nome.trim()) return;
     setBuscando(true);
     setErro(null);
-    setResultado(null);
     const { data, error } = await (supabase as any).rpc("fn_captador_consultar", {
       p_workspace_id: workspaceId,
       p_tipo: tipo,
@@ -60,61 +129,71 @@ function ConsultaPainel({ workspaceId, tipo, variant = "consulta", onCriado }: {
     if (data?.livre) onCriado?.();
   }
 
-  const rotuloBotao = variant === "ver_tudo" ? "Adicionar" : "Consultar";
-
   return (
-    <div className={variant === "ver_tudo" ? "mt-3 border-t border-black/[.07] pt-3" : "mt-3"}>
-      <div className="flex gap-2">
-        <input
-          value={nome}
-          onChange={event => { setNome(event.target.value); setResultado(null); setErro(null); }}
-          onKeyDown={event => { if (event.key === "Enter") void consultar(); }}
-          placeholder="Nome da empresa…"
-          className="h-9 min-w-0 flex-1 rounded border border-black/[.15] bg-white px-3 text-[12.5px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
-        />
-        <button
-          type="button"
-          onClick={() => void consultar()}
-          disabled={buscando || !nome.trim()}
-          className="flex items-center gap-1.5 rounded bg-[#0D0D0D] px-3.5 text-[12px] font-semibold text-white transition hover:bg-black/80 disabled:opacity-40"
-        >
-          <Search size={13} />{buscando ? "Consultando…" : rotuloBotao}
+    <TopSheet
+      titulo={`${variant === "ver_tudo" ? "Adicionar" : "Consultar"} — ${TIPO_LABEL[tipo]}`}
+      onClose={onClose}
+      footer={(close: () => void) => !resultado ? (
+        <>
+          <button onClick={close} className="text-[12px] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
+          <button
+            onClick={() => void consultar()}
+            disabled={buscando || !nome.trim()}
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40"
+          >
+            <Search size={12} />{buscando ? "Consultando…" : variant === "ver_tudo" ? "Adicionar" : "Consultar"}
+          </button>
+        </>
+      ) : (
+        <button onClick={close} className="rounded bg-[#0D0D0D] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-black/80 active:scale-[.98]">
+          Fechar
         </button>
-      </div>
-
-      {erro && <p className="mt-2 text-[11px] font-medium text-[#D94E4E]">{erro}</p>}
-
-      {resultado && (
-        resultado.livre ? (
-          <div className="mt-3 flex items-center gap-2 rounded border border-[#2E8932]/25 bg-[#2E8932]/[.06] px-3 py-2.5">
-            <Check size={14} className="shrink-0 text-[#2E8932]" />
-            <p className="text-[12px] font-medium text-black/70">
-              {variant === "ver_tudo"
-                ? <><strong className="text-black">{nome}</strong> foi adicionado.</>
-                : <><strong className="text-black">{nome}</strong> está livre — pode prosseguir. Já registramos o seu interesse.</>}
-            </p>
-          </div>
-        ) : (
-          <div className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2.5">
-            <p className="text-[12px] font-medium text-black/70">
-              <strong className="text-black">{resultado.encontrado?.empresa ?? resultado.encontrado?.nome ?? nome}</strong> já está em andamento{resultado.encontrado?.titulo ? ` (${resultado.encontrado.titulo})` : ""}.
-            </p>
-            {resultado.encontrado?.status && <p className="mt-0.5 text-[11px] uppercase tracking-wide text-black/40">{resultado.encontrado.status}</p>}
-          </div>
-        )
       )}
-    </div>
+    >
+      {!resultado ? (
+        <>
+          <label className="mb-1.5 block text-[11px] font-medium text-black/45">Nome</label>
+          <input
+            value={nome}
+            onChange={event => { setNome(event.target.value); setErro(null); }}
+            onKeyDown={event => { if (event.key === "Enter") void consultar(); }}
+            placeholder="Nome da empresa…"
+            autoFocus
+            className="h-10 w-full rounded border border-black/[.15] bg-white px-3 text-[13px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
+          />
+          {erro && <p className="mt-2 text-[11px] font-medium text-[#D94E4E]">{erro}</p>}
+        </>
+      ) : resultado.livre ? (
+        <div className="flex items-center gap-2.5 rounded border border-[#2E8932]/25 bg-[#2E8932]/[.06] px-3.5 py-3">
+          <Check size={16} className="shrink-0 text-[#2E8932]" />
+          <p className="text-[12.5px] font-medium text-black/70">
+            {variant === "ver_tudo"
+              ? <><strong className="text-black">{nome}</strong> foi adicionado.</>
+              : <><strong className="text-black">{nome}</strong> está livre — pode prosseguir. Já registramos o seu interesse.</>}
+          </p>
+        </div>
+      ) : (
+        <div className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3.5 py-3">
+          <p className="text-[12.5px] font-medium text-black/70">
+            <strong className="text-black">{resultado.encontrado?.empresa ?? resultado.encontrado?.nome ?? nome}</strong> já está em andamento{resultado.encontrado?.titulo ? ` (${resultado.encontrado.titulo})` : ""}.
+          </p>
+          {resultado.encontrado?.status && <p className="mt-1 text-[11px] uppercase tracking-wide text-black/40">{resultado.encontrado.status}</p>}
+        </div>
+      )}
+    </TopSheet>
   );
 }
 
-function PedidoPainel({ workspaceId, tipo, pedidos, onEnviado }: { workspaceId: string; tipo: EscopoTipo; pedidos: Pedido[]; onEnviado: () => void }) {
+function NovaSolicitacaoSheet({
+  workspaceId, tipo, onClose, onEnviado,
+}: { workspaceId: string; tipo: EscopoTipo; onClose: () => void; onEnviado: () => void }) {
   const supabase = createClient();
   const [nome, setNome] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
-  async function enviar() {
+  async function enviar(close: () => void) {
     if (!nome.trim()) return;
     setEnviando(true);
     setErro(null);
@@ -126,53 +205,51 @@ function PedidoPainel({ workspaceId, tipo, pedidos, onEnviado }: { workspaceId: 
     });
     setEnviando(false);
     if (error) { setErro(error.message); return; }
-    setNome(""); setMensagem("");
     onEnviado();
+    close();
   }
 
-  const meusPedidos = pedidos.filter(p => p.tipo === tipo);
-
   return (
-    <div className="mt-3 space-y-3">
-      <div className="space-y-2">
-        <input
-          value={nome}
-          onChange={event => setNome(event.target.value)}
-          placeholder="Nome da empresa ou edital…"
-          className="h-9 w-full rounded border border-black/[.15] bg-white px-3 text-[12.5px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
-        />
-        <textarea
-          value={mensagem}
-          onChange={event => setMensagem(event.target.value)}
-          placeholder="Mensagem (opcional)…"
-          rows={2}
-          className="w-full resize-none rounded border border-black/[.15] bg-white px-3 py-2 text-[12.5px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
-        />
-        {erro && <p className="text-[11px] font-medium text-[#D94E4E]">{erro}</p>}
-        <button
-          type="button"
-          onClick={() => void enviar()}
-          disabled={enviando || !nome.trim()}
-          className="flex items-center gap-1.5 rounded bg-[#0D0D0D] px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-black/80 disabled:opacity-40"
-        >
-          <Send size={12} />{enviando ? "Enviando…" : "Enviar solicitação"}
-        </button>
-      </div>
-
-      {meusPedidos.length > 0 && (
-        <div className="border-t border-black/[.07] pt-3">
-          <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-black/30">Minhas solicitações</p>
-          <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
-            {meusPedidos.map(p => (
-              <div key={p.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                <p className="truncate text-[12.5px] font-medium text-black/80">{p.nome_busca}</p>
-                <StatusPedidoBadge status={p.status} />
-              </div>
-            ))}
-          </div>
-        </div>
+    <TopSheet
+      titulo={`Nova solicitação — ${TIPO_LABEL[tipo]}`}
+      onClose={onClose}
+      footer={(close: () => void) => (
+        <>
+          <button onClick={close} className="text-[12px] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
+          <button
+            onClick={() => void enviar(close)}
+            disabled={enviando || !nome.trim()}
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40"
+          >
+            <Send size={12} />{enviando ? "Enviando…" : "Enviar solicitação"}
+          </button>
+        </>
       )}
-    </div>
+    >
+      <div className="space-y-3">
+        <div>
+          <label className="mb-1.5 block text-[11px] font-medium text-black/45">Nome</label>
+          <input
+            value={nome}
+            onChange={event => setNome(event.target.value)}
+            placeholder="Nome da empresa ou edital…"
+            autoFocus
+            className="h-10 w-full rounded border border-black/[.15] bg-white px-3 text-[13px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
+          />
+        </div>
+        <div>
+          <label className="mb-1.5 block text-[11px] font-medium text-black/45">Mensagem (opcional)</label>
+          <textarea
+            value={mensagem}
+            onChange={event => setMensagem(event.target.value)}
+            placeholder="Contexto para quem for aprovar…"
+            rows={3}
+            className="w-full resize-none rounded border border-black/[.15] bg-white px-3 py-2 text-[13px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
+          />
+        </div>
+        {erro && <p className="text-[11px] font-medium text-[#D94E4E]">{erro}</p>}
+      </div>
+    </TopSheet>
   );
 }
 
@@ -186,6 +263,7 @@ export default function WorkspaceCaptadorPage() {
   const [empresas, setEmpresas] = useState<LinhaEmpresa[]>([]);
   const [negociacoes, setNegociacoes] = useState<LinhaCaptacao[]>([]);
   const [inscricoes, setInscricoes] = useState<LinhaCaptacao[]>([]);
+  const [sheetAberto, setSheetAberto] = useState<SheetState | null>(null);
 
   async function carregarPedidos(wsId: string) {
     const supabase = createClient();
@@ -311,14 +389,20 @@ export default function WorkspaceCaptadorPage() {
         <p className="mt-8 text-[13px] text-black/50">Nenhum acesso foi habilitado ainda. Fale com quem te convidou.</p>
       ) : (
         <div className="mt-8 space-y-3">
-          {habilitados.map(escopo => (
-            <div key={escopo.tipo} className="rounded border border-black/[.10] p-4">
-              <p className="text-[14px] font-semibold text-black">{TIPO_LABEL[escopo.tipo]}</p>
-              <p className="mt-1 text-[12px] text-black/45">{MODO_LABEL[escopo.modo]}</p>
+          {habilitados.map(escopo => {
+            const meusPedidos = pedidos.filter(p => p.tipo === escopo.tipo);
+            return (
+              <div key={escopo.tipo} className="rounded border border-black/[.10] p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-[14px] font-semibold text-black">{TIPO_LABEL[escopo.tipo]}</p>
+                    <p className="mt-1 text-[12px] text-black/45">{MODO_LABEL[escopo.modo]}</p>
+                  </div>
+                  <TriggerButton modo={escopo.modo} onClick={() => setSheetAberto({ tipo: escopo.tipo, modo: escopo.modo })} />
+                </div>
 
-              {escopo.modo === "ver_tudo" ? (
-                <>
-                  {escopo.tipo === "empresas" ? (
+                {escopo.modo === "ver_tudo" && (
+                  escopo.tipo === "empresas" ? (
                     empresas.length === 0 ? <p className="mt-3 text-[12px] text-black/35">Nenhuma empresa cadastrada ainda.</p> : (
                       <div className="mt-3 divide-y divide-black/[.06] rounded border border-black/[.08]">
                         {empresas.map(e => (
@@ -333,28 +417,50 @@ export default function WorkspaceCaptadorPage() {
                     <ListaCaptacao linhas={negociacoes} vazio="Nenhuma negociação em andamento." />
                   ) : (
                     <ListaCaptacao linhas={inscricoes} vazio="Nenhuma inscrição em andamento." />
-                  )}
-                  {workspaceId && organizationId && (
-                    <ConsultaPainel
-                      workspaceId={workspaceId}
-                      tipo={escopo.tipo}
-                      variant="ver_tudo"
-                      onCriado={() => {
-                        if (escopo.tipo === "empresas") void carregarEmpresas(organizationId);
-                        else if (escopo.tipo === "negociacoes") void carregarNegociacoes(organizationId);
-                        else void carregarInscricoes(organizationId);
-                      }}
-                    />
-                  )}
-                </>
-              ) : escopo.modo === "consulta" ? (
-                workspaceId && <ConsultaPainel workspaceId={workspaceId} tipo={escopo.tipo} />
-              ) : (
-                workspaceId && <PedidoPainel workspaceId={workspaceId} tipo={escopo.tipo} pedidos={pedidos} onEnviado={() => void carregarPedidos(workspaceId)} />
-              )}
-            </div>
-          ))}
+                  )
+                )}
+
+                {escopo.modo === "pedido" && meusPedidos.length > 0 && (
+                  <div className="mt-3 border-t border-black/[.07] pt-3">
+                    <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-black/30">Minhas solicitações</p>
+                    <div className="divide-y divide-black/[.06] rounded border border-black/[.08]">
+                      {meusPedidos.map(p => (
+                        <div key={p.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                          <p className="truncate text-[12.5px] font-medium text-black/80">{p.nome_busca}</p>
+                          <StatusPedidoBadge status={p.status} />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
+      )}
+
+      {sheetAberto && workspaceId && (
+        sheetAberto.modo === "pedido" ? (
+          <NovaSolicitacaoSheet
+            workspaceId={workspaceId}
+            tipo={sheetAberto.tipo}
+            onClose={() => setSheetAberto(null)}
+            onEnviado={() => void carregarPedidos(workspaceId)}
+          />
+        ) : (
+          <BuscarOuCriarSheet
+            workspaceId={workspaceId}
+            tipo={sheetAberto.tipo}
+            variant={sheetAberto.modo === "ver_tudo" ? "ver_tudo" : "consulta"}
+            onClose={() => setSheetAberto(null)}
+            onCriado={() => {
+              if (!organizationId) return;
+              if (sheetAberto.tipo === "empresas") void carregarEmpresas(organizationId);
+              else if (sheetAberto.tipo === "negociacoes") void carregarNegociacoes(organizationId);
+              else void carregarInscricoes(organizationId);
+            }}
+          />
+        )
       )}
     </div>
   );
