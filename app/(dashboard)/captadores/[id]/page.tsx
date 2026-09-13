@@ -1,7 +1,7 @@
 "use client";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, Pencil, Shield, UserCheck, Building2, Check, FileStack, Briefcase } from "lucide-react";
+import { ArrowLeft, Mail, Pencil, Shield, UserCheck, Building2, Check, FileStack, Briefcase, X as XIcon } from "lucide-react";
 import { CaptadorWorkspaceModal, type EscopoConfig } from "@/components/modals/CaptadorWorkspaceModal";
 import { createClient } from "@/lib/supabase/client";
 import { CAPTADOR_ICON_OPTIONS, type IdentityType } from "@/components/ui/ProjectIdentity";
@@ -41,6 +41,7 @@ type AtribuicaoRow = {
 };
 
 const EXC_LABEL: Record<string, string> = { exclusividade_empresa: "Exclusiva", compartilhada: "Compartilhada" };
+const PEDIDO_TIPO_LABEL: Record<string, string> = { empresas: "Empresa", negociacoes: "Negociação", inscricoes: "Inscrição" };
 const STATUS_ATRIB: Record<string, { label: string; color: string }> = {
   ativa: { label: "Ativa", color: "#1A8B7A" },
   suspensa: { label: "Suspensa", color: "#B07A14" },
@@ -65,6 +66,8 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
   const [pageTab, setPageTab] = useState<PageTab>("overview");
   const [workspace, setWorkspace] = useState<{ id: string; escopos: EscopoConfig[] } | null>(null);
   const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
+  const [pedidosPendentes, setPedidosPendentes] = useState<{ id: string; tipo: string; nome_busca: string; created_at: string }[]>([]);
+  const [decidindoPedido, setDecidindoPedido] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -121,6 +124,18 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
       .maybeSingle();
     setWorkspace(workspaceRow ? { id: workspaceRow.id, escopos: workspaceRow.captador_workspace_escopos } : null);
 
+    if (workspaceRow) {
+      const { data: pedidosRow } = await (supabase as any)
+        .from("captador_workspace_pedidos")
+        .select("id, tipo, nome_busca, created_at")
+        .eq("workspace_id", workspaceRow.id)
+        .eq("status", "pendente")
+        .order("created_at", { ascending: true });
+      setPedidosPendentes(pedidosRow ?? []);
+    } else {
+      setPedidosPendentes([]);
+    }
+
     setLoading(false);
   }, [id, supabase]);
 
@@ -171,6 +186,17 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
     };
     image.onerror = () => URL.revokeObjectURL(objectUrl);
     image.src = objectUrl;
+  }
+
+  async function decidirPedido(pedidoId: string, status: "aprovado" | "recusado") {
+    setDecidindoPedido(pedidoId);
+    const { data: { user } } = await supabase.auth.getUser();
+    await (supabase as any)
+      .from("captador_workspace_pedidos")
+      .update({ status, decidido_por: user?.id ?? null, decidido_em: new Date().toISOString() })
+      .eq("id", pedidoId);
+    setPedidosPendentes(current => current.filter(p => p.id !== pedidoId));
+    setDecidindoPedido(null);
   }
 
   if (loading) return <CaptadorSkeleton />;
@@ -241,12 +267,49 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
         ) : pageTab === "atribuicoes" ? (
           <AtribuicoesList rows={atribuicoes} />
         ) : (
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-            <div className="w-full shrink-0 lg:w-[320px]">
-              <CaptadorRelationshipScorecard captadorId={captador.id} organizationId={captador.organization_id} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <CaptadorOverview data={overview} />
+          <div className="space-y-5">
+            {pedidosPendentes.length > 0 && (
+              <div className="rounded border p-4" style={{ borderColor: "#B07A1440", background: "#B07A1408" }}>
+                <p className="text-[12px] font-bold text-black">Solicitações pendentes do workspace</p>
+                <div className="mt-3 space-y-2">
+                  {pedidosPendentes.map(pedido => (
+                    <div key={pedido.id} className="flex items-center justify-between gap-3 rounded border border-black/[.08] bg-white px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-[12.5px] font-medium text-black/80">{pedido.nome_busca}</p>
+                        <p className="text-[10px] uppercase tracking-wide text-black/35">{PEDIDO_TIPO_LABEL[pedido.tipo] ?? pedido.tipo}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => void decidirPedido(pedido.id, "recusado")}
+                          disabled={decidindoPedido === pedido.id}
+                          className="flex h-7 w-7 items-center justify-center rounded border border-black/10 text-black/40 transition hover:border-[#D94E4E]/40 hover:text-[#D94E4E] disabled:opacity-40"
+                          title="Recusar"
+                        >
+                          <XIcon size={13} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void decidirPedido(pedido.id, "aprovado")}
+                          disabled={decidindoPedido === pedido.id}
+                          className="flex h-7 w-7 items-center justify-center rounded border border-[#2E8932]/30 text-[#2E8932] transition hover:bg-[#2E8932]/10 disabled:opacity-40"
+                          title="Aprovar"
+                        >
+                          <Check size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+              <div className="w-full shrink-0 lg:w-[320px]">
+                <CaptadorRelationshipScorecard captadorId={captador.id} organizationId={captador.organization_id} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CaptadorOverview data={overview} />
+              </div>
             </div>
           </div>
         )}
