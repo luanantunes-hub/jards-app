@@ -37,7 +37,7 @@ function StatusPedidoBadge({ status }: { status: PedidoStatus }) {
   return <span className="shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide" style={{ color: cfg.cor, background: cfg.fundo }}>{cfg.label}</span>;
 }
 
-function ConsultaPainel({ workspaceId, tipo }: { workspaceId: string; tipo: EscopoTipo }) {
+function ConsultaPainel({ workspaceId, tipo, variant = "consulta", onCriado }: { workspaceId: string; tipo: EscopoTipo; variant?: "consulta" | "ver_tudo"; onCriado?: () => void }) {
   const supabase = createClient();
   const [nome, setNome] = useState("");
   const [buscando, setBuscando] = useState(false);
@@ -57,10 +57,13 @@ function ConsultaPainel({ workspaceId, tipo }: { workspaceId: string; tipo: Esco
     setBuscando(false);
     if (error) { setErro(error.message); return; }
     setResultado(data);
+    if (data?.livre) onCriado?.();
   }
 
+  const rotuloBotao = variant === "ver_tudo" ? "Adicionar" : "Consultar";
+
   return (
-    <div className="mt-3">
+    <div className={variant === "ver_tudo" ? "mt-3 border-t border-black/[.07] pt-3" : "mt-3"}>
       <div className="flex gap-2">
         <input
           value={nome}
@@ -75,7 +78,7 @@ function ConsultaPainel({ workspaceId, tipo }: { workspaceId: string; tipo: Esco
           disabled={buscando || !nome.trim()}
           className="flex items-center gap-1.5 rounded bg-[#0D0D0D] px-3.5 text-[12px] font-semibold text-white transition hover:bg-black/80 disabled:opacity-40"
         >
-          <Search size={13} />{buscando ? "Consultando…" : "Consultar"}
+          <Search size={13} />{buscando ? "Consultando…" : rotuloBotao}
         </button>
       </div>
 
@@ -85,7 +88,11 @@ function ConsultaPainel({ workspaceId, tipo }: { workspaceId: string; tipo: Esco
         resultado.livre ? (
           <div className="mt-3 flex items-center gap-2 rounded border border-[#2E8932]/25 bg-[#2E8932]/[.06] px-3 py-2.5">
             <Check size={14} className="shrink-0 text-[#2E8932]" />
-            <p className="text-[12px] font-medium text-black/70"><strong className="text-black">{nome}</strong> está livre — pode prosseguir. Já registramos o seu interesse.</p>
+            <p className="text-[12px] font-medium text-black/70">
+              {variant === "ver_tudo"
+                ? <><strong className="text-black">{nome}</strong> foi adicionado.</>
+                : <><strong className="text-black">{nome}</strong> está livre — pode prosseguir. Já registramos o seu interesse.</>}
+            </p>
           </div>
         ) : (
           <div className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2.5">
@@ -190,6 +197,42 @@ export default function WorkspaceCaptadorPage() {
     setPedidos((data ?? []) as Pedido[]);
   }
 
+  async function carregarEmpresas(orgId: string) {
+    const supabase = createClient();
+    const { data } = await (supabase as any)
+      .from("empresas_crm")
+      .select("id, nome, status")
+      .eq("organization_id", orgId)
+      .order("nome");
+    setEmpresas((data ?? []) as LinhaEmpresa[]);
+  }
+
+  async function carregarNegociacoes(orgId: string) {
+    const supabase = createClient();
+    const { data } = await (supabase as any)
+      .from("captacoes")
+      .select("id, titulo, status, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa_pub:empresas!empresa_id(nome)")
+      .eq("organization_id", orgId)
+      .order("updated_at", { ascending: false });
+    setNegociacoes(((data ?? []) as any[]).map(r => ({
+      id: r.id, titulo: r.titulo, status: r.status,
+      empresaNome: r.empresa_crm?.nome ?? r.empresa_pub?.nome ?? "—",
+    })));
+  }
+
+  async function carregarInscricoes(orgId: string) {
+    const supabase = createClient();
+    const { data } = await (supabase as any)
+      .from("editais_user")
+      .select("id, titulo, status, empresas_crm!empresa_crm_id(nome), empresas!empresa_pub_id(nome)")
+      .eq("organization_id", orgId)
+      .order("updated_at", { ascending: false });
+    setInscricoes(((data ?? []) as any[]).map(r => ({
+      id: r.id, titulo: r.titulo ?? "Sem título", status: r.status,
+      empresaNome: r.empresas_crm?.nome ?? r.empresas?.nome ?? "—",
+    })));
+  }
+
   useEffect(() => {
     async function carregar() {
       if (!organizationId) return;
@@ -222,38 +265,9 @@ export default function WorkspaceCaptadorPage() {
 
       const verTudo = (tipo: EscopoTipo) => escoposCarregados.some(e => e.tipo === tipo && e.habilitado && e.modo === "ver_tudo");
 
-      if (verTudo("empresas")) {
-        const { data } = await (supabase as any)
-          .from("empresas_crm")
-          .select("id, nome, status")
-          .eq("organization_id", organizationId)
-          .order("nome");
-        setEmpresas((data ?? []) as LinhaEmpresa[]);
-      }
-
-      if (verTudo("negociacoes")) {
-        const { data } = await (supabase as any)
-          .from("captacoes")
-          .select("id, titulo, status, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa_pub:empresas!empresa_id(nome)")
-          .eq("organization_id", organizationId)
-          .order("updated_at", { ascending: false });
-        setNegociacoes(((data ?? []) as any[]).map(r => ({
-          id: r.id, titulo: r.titulo, status: r.status,
-          empresaNome: r.empresa_crm?.nome ?? r.empresa_pub?.nome ?? "—",
-        })));
-      }
-
-      if (verTudo("inscricoes")) {
-        const { data } = await (supabase as any)
-          .from("editais_user")
-          .select("id, titulo, status, empresas_crm!empresa_crm_id(nome), empresas!empresa_pub_id(nome)")
-          .eq("organization_id", organizationId)
-          .order("updated_at", { ascending: false });
-        setInscricoes(((data ?? []) as any[]).map(r => ({
-          id: r.id, titulo: r.titulo ?? "Sem título", status: r.status,
-          empresaNome: r.empresas_crm?.nome ?? r.empresas?.nome ?? "—",
-        })));
-      }
+      if (verTudo("empresas")) await carregarEmpresas(organizationId);
+      if (verTudo("negociacoes")) await carregarNegociacoes(organizationId);
+      if (verTudo("inscricoes")) await carregarInscricoes(organizationId);
 
       setCarregando(false);
     }
@@ -303,22 +317,36 @@ export default function WorkspaceCaptadorPage() {
               <p className="mt-1 text-[12px] text-black/45">{MODO_LABEL[escopo.modo]}</p>
 
               {escopo.modo === "ver_tudo" ? (
-                escopo.tipo === "empresas" ? (
-                  empresas.length === 0 ? <p className="mt-3 text-[12px] text-black/35">Nenhuma empresa cadastrada ainda.</p> : (
-                    <div className="mt-3 divide-y divide-black/[.06] rounded border border-black/[.08]">
-                      {empresas.map(e => (
-                        <div key={e.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
-                          <p className="truncate text-[12.5px] font-medium text-black/80">{e.nome}</p>
-                          {e.status && <span className="shrink-0 rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{e.status}</span>}
-                        </div>
-                      ))}
-                    </div>
-                  )
-                ) : escopo.tipo === "negociacoes" ? (
-                  <ListaCaptacao linhas={negociacoes} vazio="Nenhuma negociação em andamento." />
-                ) : (
-                  <ListaCaptacao linhas={inscricoes} vazio="Nenhuma inscrição em andamento." />
-                )
+                <>
+                  {escopo.tipo === "empresas" ? (
+                    empresas.length === 0 ? <p className="mt-3 text-[12px] text-black/35">Nenhuma empresa cadastrada ainda.</p> : (
+                      <div className="mt-3 divide-y divide-black/[.06] rounded border border-black/[.08]">
+                        {empresas.map(e => (
+                          <div key={e.id} className="flex items-center justify-between gap-3 px-3 py-2.5">
+                            <p className="truncate text-[12.5px] font-medium text-black/80">{e.nome}</p>
+                            {e.status && <span className="shrink-0 rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{e.status}</span>}
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  ) : escopo.tipo === "negociacoes" ? (
+                    <ListaCaptacao linhas={negociacoes} vazio="Nenhuma negociação em andamento." />
+                  ) : (
+                    <ListaCaptacao linhas={inscricoes} vazio="Nenhuma inscrição em andamento." />
+                  )}
+                  {workspaceId && organizationId && (
+                    <ConsultaPainel
+                      workspaceId={workspaceId}
+                      tipo={escopo.tipo}
+                      variant="ver_tudo"
+                      onCriado={() => {
+                        if (escopo.tipo === "empresas") void carregarEmpresas(organizationId);
+                        else if (escopo.tipo === "negociacoes") void carregarNegociacoes(organizationId);
+                        else void carregarInscricoes(organizationId);
+                      }}
+                    />
+                  )}
+                </>
               ) : escopo.modo === "consulta" ? (
                 workspaceId && <ConsultaPainel workspaceId={workspaceId} tipo={escopo.tipo} />
               ) : (
