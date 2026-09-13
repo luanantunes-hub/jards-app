@@ -265,6 +265,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const userAvatar  = getAvatar(user);
   const displayName = getDisplayName(user);
   const navGroups   = NAV_POR_MODULO[moduloAtivo];
+  // EXPERIMENTAL: dentro de uma organização onde o papel é "captador", o
+  // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
+  // organização que convidou (essas continuam existindo, só não fazem
+  // sentido pra alguém com acesso limitado a um único workspace).
+  const isWorkspaceCaptador = memberships.find(m => m.organizationId === organizationId)?.papel === "captador";
 
   return (
     <OrganizationContext.Provider value={{ organizationId }}>
@@ -318,35 +323,81 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* User pill */}
         <div className="px-2 py-2.5 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <Link
-            href="/configuracoes"
-            title={expanded ? "Configurações" : undefined}
-            className="flex rounded overflow-hidden transition hover:bg-black/[0.05]"
-            style={{
-              gap: expanded ? 10 : 0,
-              padding: expanded ? "6px 8px" : "6px 0",
-              justifyContent: expanded ? "flex-start" : "center",
-            }}
-          >
-            {userAvatar ? (
-              <img src={userAvatar} alt="" className="w-7 h-7 rounded object-cover bg-white flex-shrink-0" />
-            ) : (
-              <div className="w-7 h-7 rounded bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
-                {initial}
-              </div>
-            )}
-            {expanded && (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
-                <p className="text-[10px] text-black/35 truncate whitespace-nowrap">Plano Pro</p>
-              </div>
-            )}
-          </Link>
+          {isWorkspaceCaptador ? (
+            <div
+              className="flex rounded overflow-hidden"
+              style={{
+                gap: expanded ? 10 : 0,
+                padding: expanded ? "6px 8px" : "6px 0",
+                justifyContent: expanded ? "flex-start" : "center",
+              }}
+            >
+              {userAvatar ? (
+                <img src={userAvatar} alt="" className="w-7 h-7 rounded object-cover bg-white flex-shrink-0" />
+              ) : (
+                <div className="w-7 h-7 rounded bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
+                  {initial}
+                </div>
+              )}
+              {expanded && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
+                  <p className="text-[10px] text-black/35 truncate whitespace-nowrap">Captador externo</p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              href="/configuracoes"
+              title={expanded ? "Configurações" : undefined}
+              className="flex rounded overflow-hidden transition hover:bg-black/[0.05]"
+              style={{
+                gap: expanded ? 10 : 0,
+                padding: expanded ? "6px 8px" : "6px 0",
+                justifyContent: expanded ? "flex-start" : "center",
+              }}
+            >
+              {userAvatar ? (
+                <img src={userAvatar} alt="" className="w-7 h-7 rounded object-cover bg-white flex-shrink-0" />
+              ) : (
+                <div className="w-7 h-7 rounded bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
+                  {initial}
+                </div>
+              )}
+              {expanded && (
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
+                  <p className="text-[10px] text-black/35 truncate whitespace-nowrap">Plano Pro</p>
+                </div>
+              )}
+            </Link>
+          )}
         </div>
 
         {/* Nav */}
         <nav className="flex-1 px-2 py-3 overflow-y-auto overflow-x-hidden">
-          {navGroups.map(({ section, items }, gi) => (
+          {isWorkspaceCaptador ? (
+            <div>
+              <p className="px-2 mb-1.5 text-[10px] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap" style={{ height: expanded ? "auto" : 0, overflow: "hidden", opacity: expanded ? 1 : 0 }}>
+                Workspace
+              </p>
+              <Link
+                href="/workspace-captador"
+                title={!expanded ? "Meu workspace" : undefined}
+                className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden ${
+                  path === "/workspace-captador" ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+                }`}
+                style={{
+                  gap: expanded ? 10 : 0,
+                  padding: expanded ? "8px 10px" : "8px 0",
+                  justifyContent: expanded ? "flex-start" : "center",
+                }}
+              >
+                <Briefcase size={16} className="flex-shrink-0" />
+                {expanded && <span>Meu workspace</span>}
+              </Link>
+            </div>
+          ) : navGroups.map(({ section, items }, gi) => (
             <div key={section} className={gi > 0 ? "mt-4" : ""}>
               <div
                 style={{
@@ -390,7 +441,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Bottom */}
         <div className="px-2 py-2.5 border-t space-y-0.5 flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          {isSuperAdmin && (
+          {isSuperAdmin && !isWorkspaceCaptador && (
             <Link
               href="/admin"
               title={!expanded ? "Admin" : undefined}
@@ -406,6 +457,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {expanded && <span>Admin</span>}
             </Link>
           )}
+          {!isWorkspaceCaptador && (
           <Link
             href="/configuracoes"
             title={!expanded ? "Configurações" : undefined}
@@ -419,6 +471,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Settings size={16} className="flex-shrink-0" />
             {expanded && <span>Configurações</span>}
           </Link>
+          )}
           <button
             onClick={handleLogout}
             title={!expanded ? "Sair" : undefined}
