@@ -126,7 +126,7 @@ export default function EditaisAbertosPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [dSearch, setDSearch] = useState("");
-  const [sort, setSort] = useState<SortOpt>("prazo_asc");
+  const [sort, setSort] = useState<SortOpt>("aporte_desc");
   const [currentPage, setCurrentPage] = useState(0);
   const [showInscricaoModal, setShowInscricaoModal] = useState(false);
   const [selectedEdital, setSelectedEdital] = useState<EditalAberto | null>(null);
