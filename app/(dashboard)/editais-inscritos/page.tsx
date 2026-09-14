@@ -70,9 +70,9 @@ const EDITAIS_SELECT_NO_LEI = EDITAIS_SELECT.replace("lei, ", "");
 const EDITAIS_SELECT_LEGACY = EDITAIS_SELECT_NO_POTENTIAL.replace("lei, ", "");
 
 const INSCRICOES_COLUMNS = [
-  { id: "empresa",    label: "Empresa",      width: "minmax(180px,1fr)" },
-  { id: "edital",     label: "Edital",       width: "minmax(240px,1.6fr)" },
   { id: "projeto",    label: "Projeto",      width: "minmax(170px,1fr)" },
+  { id: "empresa",    label: "Empresa",      width: "minmax(180px,1fr)" },
+  { id: "edital",     label: "Edital",       width: "minmax(240px,1.6fr)", defaultHidden: true },
   { id: "lei",        label: "Tipo de patrocínio", width: "165px" },
   { id: "responsavel", label: "Responsável", width: "minmax(150px,1fr)" },
   { id: "adicionada", label: "Adicionado em", width: "130px" },
@@ -579,9 +579,9 @@ export default function EditaisInscritosPage() {
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
                     {([
-                      { label: "Edital", key: undefined },
-                      { label: "Empresa", key: "empresa" },
                       { label: "Projeto", key: "projeto" },
+                      { label: "Empresa", key: "empresa" },
+                      { label: "Edital", key: undefined },
                       { label: "Tipo de patrocínio", key: "lei" },
                       { label: "Responsável", key: "responsavel" },
                       { label: "Adicionado em", key: undefined },
@@ -632,11 +632,13 @@ export default function EditaisInscritosPage() {
 
                       return (
                         <tr key={e.id} onClick={() => router.push(`/editais-inscritos/${e.id}`)} className="hover:bg-black/[0.02] transition group cursor-pointer" style={{ borderBottom: i < filteredSorted.length - 1 ? "1px solid rgba(13,13,13,.05)" : "none" }}>
-                          <td className="px-5 py-3.5 max-w-[220px]">
-                            <div className="flex items-start gap-2">
-                              <FileCheck size={14} className="text-black/25 flex-shrink-0 mt-0.5" />
-                              <span className="font-medium text-black/70 leading-snug line-clamp-2 text-[13px]">{titulo}</span>
-                            </div>
+                          <td className="px-5 py-3.5 text-black/50 text-[12.5px] max-w-[220px]">
+                            {e.projetos_crm ? (
+                              <div className="flex items-center gap-1.5">
+                                <ProjectIdentity nome={e.projetos_crm.nome} tipo={e.projetos_crm.identidade_tipo} valor={e.projetos_crm.identidade_valor} logoUrl={e.projetos_crm.identidade_logo_url} cor={e.projetos_crm.identidade_cor} size="sm" />
+                                <span>{projeto}</span>
+                              </div>
+                            ) : <span>{projeto}</span>}
                           </td>
                           <td className="px-5 py-3.5">
                             <div className="flex items-center gap-2">
@@ -650,13 +652,11 @@ export default function EditaisInscritosPage() {
                               )}
                             </div>
                           </td>
-                          <td className="px-5 py-3.5 text-black/50 text-[12.5px] max-w-[220px]">
-                            {e.projetos_crm ? (
-                              <div className="flex items-center gap-1.5">
-                                <ProjectIdentity nome={e.projetos_crm.nome} tipo={e.projetos_crm.identidade_tipo} valor={e.projetos_crm.identidade_valor} logoUrl={e.projetos_crm.identidade_logo_url} cor={e.projetos_crm.identidade_cor} size="sm" />
-                                <span>{projeto}</span>
-                              </div>
-                            ) : <span>{projeto}</span>}
+                          <td className="px-5 py-3.5 max-w-[220px]">
+                            <div className="flex items-start gap-2">
+                              <FileCheck size={14} className="text-black/25 flex-shrink-0 mt-0.5" />
+                              <span className="font-medium text-black/70 leading-snug line-clamp-2 text-[13px]">{titulo}</span>
+                            </div>
                           </td>
                           <td className="px-5 py-3.5">
                             <button type="button" onClick={event => {

@@ -117,6 +117,7 @@ export function ColumnManager<Id extends string>({ columns, hidden, onToggle, on
   const [open, setOpen] = useState(false);
   const [dragging, setDragging] = useState<Id | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
   const [menuPos, setMenuPos] = useState<{ left: number; top: number } | null>(null);
   const MENU_WIDTH = 280;
 
@@ -131,7 +132,14 @@ export function ColumnManager<Id extends string>({ columns, hidden, onToggle, on
       });
     };
     updatePosition();
-    const close = (event: MouseEvent) => { if (!rootRef.current?.contains(event.target as Node)) setOpen(false); };
+    // O menu é renderizado via portal — fica fora da árvore do rootRef no DOM real,
+    // então "clicar fora" precisa checar as duas referências, senão qualquer
+    // mousedown dentro do próprio menu (ex.: começar a arrastar uma coluna) já
+    // conta como clique fora e fecha tudo antes do drag começar.
+    const close = (event: MouseEvent) => {
+      const target = event.target as Node;
+      if (!rootRef.current?.contains(target) && !menuRef.current?.contains(target)) setOpen(false);
+    };
     window.addEventListener("mousedown", close);
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
@@ -154,7 +162,7 @@ export function ColumnManager<Id extends string>({ columns, hidden, onToggle, on
       <Settings2 size={15} strokeWidth={1.6} className="transition-[stroke-width] group-hover:[stroke-width:2.5]" />
     </button>
     {open && menuPos && createPortal(
-      <div className="fixed z-50 rounded border border-black/[.09] bg-white p-2 shadow-[0_16px_45px_rgba(13,13,13,.12)]" style={{ left: menuPos.left, top: menuPos.top, width: MENU_WIDTH }}>
+      <div ref={menuRef} className="fixed z-50 rounded border border-black/[.09] bg-white p-2 shadow-[0_16px_45px_rgba(13,13,13,.12)]" style={{ left: menuPos.left, top: menuPos.top, width: MENU_WIDTH }}>
         <div className="flex items-center justify-between px-2 pb-2 pt-1"><p className="text-[13px] font-semibold text-black/70">Colunas da lista</p><button type="button" onClick={onReset} title="Restaurar padrão" className="flex h-8 w-8 items-center justify-center rounded text-black/30 hover:bg-black/[.04] hover:text-black/55"><RotateCcw size={13}/></button></div>
         <div className="max-h-[min(320px,calc(100dvh-490px))] overflow-y-auto">{columns.map(column => {
           const isHidden = hidden.includes(column.id);
