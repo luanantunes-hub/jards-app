@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { ChevronLeft, Check, AlertCircle, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -124,6 +124,53 @@ function EditalRow({ edital, onSave }: {
         {error ? <span title={error}><AlertCircle size={14} className="inline text-red-500" /></span>
           : saving ? <span className="text-[10px] text-black/30">salvando…</span>
           : saved ? <Check size={14} className="inline text-[#2E8932]" /> : null}
+      </td>
+    </tr>
+  );
+}
+
+function NovoEditalRow({ empresaId, onCriado }: { empresaId: string; onCriado: (edital: Edital) => void }) {
+  const [draft, setDraft] = useState({ titulo: "", data_abertura: "", data_fechamento: "", url_acesso: "" });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const criadoRef = useRef(false);
+
+  async function commit() {
+    if (criadoRef.current) return;
+    if (!draft.titulo && !draft.data_abertura && !draft.data_fechamento && !draft.url_acesso) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const response = await fetch(`/api/admin/patrocinadores/${empresaId}/editais`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          titulo: draft.titulo || null,
+          data_abertura: draft.data_abertura || null,
+          data_fechamento: draft.data_fechamento || null,
+          url_acesso: draft.url_acesso || null,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error ?? "Não foi possível criar");
+      criadoRef.current = true;
+      onCriado(result.edital as Edital);
+    } catch (e: any) {
+      setError(e?.message ?? "Erro ao criar");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+      <td><input className={cellCls} value={draft.titulo} onChange={(e) => setDraft((d) => ({ ...d, titulo: e.target.value }))} onBlur={commit} placeholder="Nome do edital…" /></td>
+      <td><input type="date" className={cellCls} value={draft.data_abertura} onChange={(e) => setDraft((d) => ({ ...d, data_abertura: e.target.value }))} onBlur={commit} /></td>
+      <td><input type="date" className={cellCls} value={draft.data_fechamento} onChange={(e) => setDraft((d) => ({ ...d, data_fechamento: e.target.value }))} onBlur={commit} /></td>
+      <td><input className={cellCls} value={draft.url_acesso} onChange={(e) => setDraft((d) => ({ ...d, url_acesso: e.target.value }))} onBlur={commit} placeholder="https://..." /></td>
+      <td className="w-10 whitespace-nowrap px-2 text-right">
+        {error ? <span title={error}><AlertCircle size={14} className="inline text-red-500" /></span>
+          : saving ? <span className="text-[10px] text-black/30">salvando…</span> : null}
       </td>
     </tr>
   );
@@ -409,28 +456,28 @@ export default function AdminPatrocinadorPage() {
         {/* Editais */}
         <section>
           <p className="text-[11px] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Editais</p>
-          {editais.length === 0 ? (
-            <p className="text-sm text-black/35">Nenhum edital cadastrado.</p>
-          ) : (
-            <div className="overflow-x-auto rounded" style={inputStyle}>
-              <table className="w-full text-left">
-                <thead>
-                  <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.10)" }}>
-                    <th className={theadCls}>Nome</th>
-                    <th className={theadCls}>Abertura</th>
-                    <th className={theadCls}>Fechamento</th>
-                    <th className={theadCls}>Link de acesso</th>
-                    <th className="w-10" />
-                  </tr>
-                </thead>
-                <tbody>
-                  {editais.map((e) => (
+          <div className="overflow-x-auto rounded" style={inputStyle}>
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.10)" }}>
+                  <th className={theadCls}>Nome</th>
+                  <th className={theadCls}>Abertura</th>
+                  <th className={theadCls}>Fechamento</th>
+                  <th className={theadCls}>Link de acesso</th>
+                  <th className="w-10" />
+                </tr>
+              </thead>
+              <tbody>
+                {editais.length === 0 ? (
+                  <NovoEditalRow empresaId={id} onCriado={(novo) => setEditais((prev) => [...prev, novo])} />
+                ) : (
+                  editais.map((e) => (
                     <EditalRow key={e.id} edital={e} onSave={salvarEdital} />
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
       </div>
     </div>
