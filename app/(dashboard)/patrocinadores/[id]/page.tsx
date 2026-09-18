@@ -413,9 +413,8 @@ function LineChart({ rows }: { rows: InvestimentoAnual[] }) {
 function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
 
-  const sorted  = [...rows].sort((a, b) => a.ano - b.ano);
-  const totals  = sorted.map((r) => r.valor || 0);
-  const labels  = sorted.map((r) => String(r.ano));
+  const totals  = INV_LABELS.map((lbl) => rows.find((r) => r.ano === Number(lbl))?.valor || 0);
+  const labels  = INV_LABELS;
   const max     = Math.max(...totals, 1);
   const nonZero = totals.filter((v) => v > 0);
   const minVal  = nonZero.length > 0 ? Math.min(...nonZero) : 0;
