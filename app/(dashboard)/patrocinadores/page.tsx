@@ -141,7 +141,7 @@ function LeiTabContent({ lei }: { lei: Lei }) {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: "#F9F9F8" }}>
-                {["", "Empresa", "Setor", "Estado", "Cidade", "Investimento"].map((label) => (
+                {["", "Empresa", "Ver", "Setor", "Estado", "Cidade", "Investimento"].map((label) => (
                   <th key={label} className="px-4 py-3 text-left">
                     <span className="text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">{label}</span>
                   </th>
@@ -152,22 +152,36 @@ function LeiTabContent({ lei }: { lei: Lei }) {
               {loading ? (
                 Array.from({ length: 10 }).map((_, i) => (
                   <tr key={i}>
-                    <td className="px-4 py-3" colSpan={6}><div className="h-6 bg-black/8 rounded animate-pulse" /></td>
+                    <td className="px-4 py-3" colSpan={7}><div className="h-6 bg-black/8 rounded animate-pulse" /></td>
                   </tr>
                 ))
               ) : linhas.length === 0 ? (
-                <tr><td colSpan={6} className="px-4 py-20 text-center text-sm text-black/35">Nenhuma empresa encontrada.</td></tr>
+                <tr><td colSpan={7} className="px-4 py-20 text-center text-sm text-black/35">Nenhuma empresa encontrada.</td></tr>
               ) : (
                 linhas.map((l) => (
                   <tr
                     key={l.empresa_id}
-                    className="hover:bg-black/[0.025] transition-colors cursor-pointer"
+                    className="hover:bg-black/[0.025] transition-colors cursor-pointer group"
                     onClick={() => router.push(`/patrocinadores/${l.empresa_id}?lei=${lei}`)}
                   >
                     <td className="px-4 py-3">
                       <CompanyLogo nome={l.empresas?.nome ?? ""} site={l.empresas?.site} logo_url={l.empresas?.logo_url} size={32} className="rounded border border-black/8" />
                     </td>
                     <td className="px-4 py-3"><span className="font-semibold text-[#0D0D0D] text-[13px]">{l.empresas?.nome}</span></td>
+                    <td className="px-4 py-3">
+                      <button
+                        className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150
+                          text-black/25 bg-transparent
+                          group-hover:bg-[#F2F2F2] group-hover:text-[#684DB0]"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          router.push(`/patrocinadores/${l.empresa_id}?lei=${lei}`);
+                        }}
+                        title="Ver perfil"
+                      >
+                        <Crosshair size={14} weight="bold" />
+                      </button>
+                    </td>
                     <td className="px-4 py-3 text-black/50 text-[12.5px]">{l.empresas?.setor ?? "—"}</td>
                     <td className="px-4 py-3 text-black/50 text-[12.5px] font-medium">{l.empresas?.estado ?? "—"}</td>
                     <td className="px-4 py-3 text-black/50 text-[12.5px]">{l.empresas?.cidade ?? "—"}</td>
