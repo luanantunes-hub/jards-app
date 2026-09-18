@@ -141,9 +141,20 @@ function LeiTabContent({ lei }: { lei: Lei }) {
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: "#F9F9F8" }}>
-                {["", "Empresa", "Ver", "Setor", "Estado", "Cidade", "Investimento"].map((label) => (
+                {[
+                  { label: "Logo", icon: <ImageIcon size={11} weight="bold" /> },
+                  { label: "Empresa", icon: <Buildings size={11} weight="bold" /> },
+                  { label: "Ver", icon: <Crosshair size={11} weight="bold" /> },
+                  { label: "Setor", icon: <Tag size={11} weight="bold" /> },
+                  { label: "Estado", icon: <MapPin size={11} weight="bold" /> },
+                  { label: "Cidade", icon: <House size={11} weight="bold" /> },
+                  { label: "Investimento", icon: <ChartBar size={11} weight="bold" /> },
+                ].map(({ label, icon }) => (
                   <th key={label} className="px-4 py-3 text-left">
-                    <span className="text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">{label}</span>
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
+                      <span className="text-black/30">{icon}</span>
+                      {label}
+                    </span>
                   </th>
                 ))}
               </tr>
