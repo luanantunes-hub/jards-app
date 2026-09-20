@@ -245,7 +245,6 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
 
                 {/* Identidade visual */}
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Identidade visual <span className="font-normal normal-case tracking-normal">· opcional</span></label>
                   <input
                     ref={fileRef}
                     type="file"

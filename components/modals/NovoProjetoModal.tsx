@@ -342,7 +342,6 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                 onChange={e => setNome(e.target.value)}
                 className="mb-4 w-full rounded border border-black/[.12] px-3 py-2.5 text-[13px] font-medium text-black outline-none placeholder:text-black/30 focus:border-black/25 transition"
               />
-              <label className="text-[11px] font-semibold text-black/50 mb-1.5 block">Identidade visual</label>
               <input ref={logoInputRef} type="file" accept="image/png,image/webp" className="hidden" onChange={e => handleLogoChange(e.target.files?.[0])} />
               <IdentityEditor
                 name={nome || "Projeto"}

@@ -197,7 +197,6 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
 
             {/* Identidade visual */}
             <div className="order-5 border-t border-black/[.07] pt-4">
-              <div className="mb-1.5 flex items-center justify-between"><label className="text-[12px] font-semibold text-black">Identidade visual</label><span className="text-[10px] font-medium text-black/25">Opcional</span></div>
               <input
                 ref={logoInputRef}
                 type="file"
