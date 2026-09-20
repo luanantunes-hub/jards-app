@@ -175,7 +175,7 @@ export function CalendarConnections() {
     return (
       <div className="p-4 rounded border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
         <div className="flex items-start gap-3">
-          <div className="w-9 h-9 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(13,13,13,.04)" }}>
+          <div className="w-9 h-9 rounded border border-black/20 bg-transparent flex items-center justify-center flex-shrink-0">
             <opts.Icon />
           </div>
           <div className="flex-1 min-w-0">
