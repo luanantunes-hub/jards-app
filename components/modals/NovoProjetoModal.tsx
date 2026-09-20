@@ -37,8 +37,6 @@ export type EditDataProjeto = {
   valor_garantido?: number;
   tags?: string[];
   visibilidade?: "equipe" | "restrita";
-  status_operacional?: "ativo" | "pausado" | "arquivado";
-  status_comercial?: "estruturando" | "pronto" | "em_captacao" | "captado" | "encerrado" | null;
 };
 
 type ProponenteOption = { id: string; nome: string; cidade: string | null; estado: string | null };
@@ -77,14 +75,13 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
   const organizationId = useOrganizationId();
   const [saving, setSaving] = useState(false);
   const [erro, setErro]     = useState<string | null>(null);
+  const savedProjectIdRef = useRef<string | null>(editData?.id ?? null);
 
   const [nome, setNome]           = useState(editData?.nome ?? "");
   const [descricao, setDescricao] = useState(editData?.descricao ?? "");
   const [valorAlvo, setValorAlvo] = useState(formatDecimalBR(editData?.valor_alvo));
   const [fase, setFase] = useState(editData?.fase ?? "planejamento");
   const [pontoFocalId, setPontoFocalId] = useState<string | null>(editData?.ponto_focal_id ?? null);
-  const [statusOperacional, setStatusOperacional] = useState(editData?.status_operacional ?? "ativo");
-  const [statusComercial, setStatusComercial] = useState<string>(editData?.status_comercial ?? "");
   const [tiposPatrocinio, setTiposPatrocinio] = useState<string[]>(editData?.tipos_patrocinio ?? []);
   const [tipoPatrocinioCustom, setTipoPatrocinioCustom] = useState("");
   const [incentivoEscopo, setIncentivoEscopo] = useState<"estadual" | "municipal" | null>(null);
@@ -256,8 +253,6 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
       valor_alvo:      valorAlvo ? parseDecimalBR(valorAlvo) : null,
       fase,
       ponto_focal_id: pontoFocalId,
-      status_operacional: statusOperacional,
-      status_comercial: statusComercial || null,
       mecanismo: editData?.mecanismo ?? null,
       tipos_patrocinio: tiposPatrocinio,
       data_inicio: dataInicio || null,
@@ -281,11 +276,12 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const sb = supabase as any;
-    const result = editData?.id
-      ? await sb.from("projetos_crm").update(payload).eq("id", editData.id).select("id").single()
+    const result = savedProjectIdRef.current
+      ? await sb.from("projetos_crm").update(payload).eq("id", savedProjectIdRef.current).select("id").single()
       : await sb.from("projetos_crm").insert({ account_id: user.id, organization_id: organizationId, ...payload }).select("id").single();
 
     if (result.error) { setSaving(false); setErro((result.error as Error).message); return; }
+    savedProjectIdRef.current = result.data.id as string;
 
     if (identidadeTipo === "logo" && logoFile && organizationId) {
       const projectId = result.data.id as string;
@@ -391,15 +387,22 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                   ]} />
                 </label>
               </div>
+              <div>
+                <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Responsável interno</span>
+                <Dropdown value={pontoFocalId ?? ""} onChange={value => setPontoFocalId(value || null)} options={[
+                  { value: "", label: "Sem responsável" },
+                  ...members.map(member => ({ value: member.id, label: member.full_name ?? "Membro" })),
+                ]} />
+              </div>
             </section>
 
-            {/* — Equipe — */}
+            {/* — Vínculo e gestão — */}
             <section className="px-6 py-5 space-y-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-black/25">Equipe</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-black/25">Vínculo com o proponente</p>
 
               {/* Proponente combobox */}
               <div ref={proponenteRef} className="relative">
-                <label className="text-[11px] font-semibold text-black/50 mb-1.5 block">Proponente</label>
+                <label className="text-[11px] font-semibold text-black/50 mb-1.5 block">Instituição proponente</label>
                 <div
                   className="flex cursor-text items-center gap-2 rounded border px-3 py-2.5 transition"
                   style={{ borderColor: proponenteOpen ? "rgba(13,13,13,.30)" : "rgba(13,13,13,.12)" }}
@@ -444,34 +447,6 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                 )}
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <label>
-                  <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Ponto focal</span>
-                  <Dropdown value={pontoFocalId ?? ""} onChange={v => setPontoFocalId(v || null)} options={[
-                    { value: "", label: "Sem ponto focal" },
-                    ...members.map(m => ({ value: m.id, label: m.full_name ?? "Membro" })),
-                  ]} />
-                </label>
-                <label>
-                  <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Status</span>
-                  <Dropdown value={statusOperacional} onChange={v => setStatusOperacional(v as typeof statusOperacional)} options={[
-                    { value: "ativo",     label: "Ativo" },
-                    { value: "pausado",   label: "Pausado" },
-                    { value: "arquivado", label: "Arquivado" },
-                  ]} />
-                </label>
-              </div>
-              <label>
-                <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Status comercial</span>
-                <Dropdown value={statusComercial} onChange={setStatusComercial} options={[
-                  { value: "",             label: "Não definido" },
-                  { value: "estruturando", label: "Estruturando" },
-                  { value: "pronto",       label: "Pronto para prospectar" },
-                  { value: "em_captacao",  label: "Em captação" },
-                  { value: "captado",      label: "Captado" },
-                  { value: "encerrado",    label: "Encerrado" },
-                ]} />
-              </label>
             </section>
 
             {/* — Patrocínio — */}
