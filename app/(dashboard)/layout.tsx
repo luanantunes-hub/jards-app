@@ -20,6 +20,7 @@ import {
   ClipboardCheck,
   Lock,
   Shield,
+  Sparkles,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -30,6 +31,7 @@ import { TaxonomiasComerciaisProvider } from "@/contexts/TaxonomiasComerciaisCon
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
+import type { PlanTipo } from "@/lib/supabase/types";
 
 // ─── Definição dos módulos ──────────────────────────────────────────────────
 
@@ -135,6 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [modulosOrg, setModulosOrg]         = useState<ModuloId[]>(["captacao"]);
   const [modulosUser, setModulosUser]       = useState<ModuloId[]>(["captacao"]);
   const [isSuperAdmin, setIsSuperAdmin]     = useState(false);
+  const [plan, setPlan]                     = useState<PlanTipo | null>(null);
   const [org, setOrg]                       = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
 
   useEffect(() => {
@@ -154,11 +157,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       const { data: profile } = await (supabase as any)
         .from("profiles")
-        .select("jards_super_admin")
+        .select("jards_super_admin, plano")
         .eq("id", user.id)
         .maybeSingle();
 
       setIsSuperAdmin(profile?.jards_super_admin === true);
+      setPlan((profile?.plano ?? null) as PlanTipo | null);
 
       if (member) {
         setOrganizationId(member.organization_id);
@@ -181,6 +185,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (!session?.user) {
         setOrganizationId(null);
         setIsSuperAdmin(false);
+        setPlan(null);
       }
     });
     return () => subscription.unsubscribe();
@@ -303,7 +308,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {expanded && (
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
-                <p className="text-[10px] text-black/35 truncate whitespace-nowrap">Plano Pro</p>
+                <p className="text-[10px] text-black/35 truncate whitespace-nowrap">
+                  {plan === "gratuito" ? "Plano gratuito" : plan === "basico" ? "Plano Básico" : plan === "profissional" ? "Plano Profissional" : "Jards"}
+                </p>
               </div>
             )}
           </Link>
@@ -351,6 +358,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
           ))}
+          {plan === "gratuito" && (
+            <Link
+              href="/meu-plano"
+              title={!expanded ? "Fazer upgrade" : undefined}
+              aria-label="Fazer upgrade"
+              className="mt-4 flex items-center overflow-hidden whitespace-nowrap rounded bg-[#7259B5] text-[13px] font-semibold text-white transition-colors hover:bg-[#5D489D]"
+              style={{
+                gap: expanded ? 10 : 0,
+                padding: expanded ? "9px 10px" : "9px 0",
+                justifyContent: expanded ? "flex-start" : "center",
+              }}
+            >
+              <Sparkles size={16} className="flex-shrink-0" aria-hidden="true" />
+              {expanded && <span>Fazer upgrade</span>}
+            </Link>
+          )}
         </nav>
 
         {/* Bottom */}
