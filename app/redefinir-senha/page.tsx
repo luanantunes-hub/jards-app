@@ -36,7 +36,7 @@ export default function RedefinirSenhaPage() {
     <div className="min-h-screen flex items-center justify-center p-8" style={{ background: "#FFFFFF" }}>
       <div className="w-full max-w-sm">
         <div className="mb-8">
-          <img src="/jards_logo-2.svg" alt="Jards" className="h-7" />
+          <img src="/jards-logo.svg" alt="Jards" className="h-7" />
         </div>
 
         {sent ? (

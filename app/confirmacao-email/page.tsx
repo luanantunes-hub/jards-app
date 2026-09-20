@@ -15,7 +15,7 @@ export default function ConfirmacaoEmailPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-white p-8">
       <section className="w-full max-w-sm text-center">
-        <img src="/jards_logo-2.svg" alt="Jards" className="mx-auto mb-10 h-7" />
+        <img src="/jards-logo.svg" alt="Jards" className="mx-auto mb-10 h-7" />
         {confirmed === null ? (
           <div className="mx-auto h-6 w-6 animate-spin rounded-full border-2 border-black/10 border-t-[#7259B5]" aria-label="Validando confirmação" />
         ) : confirmed === false ? (

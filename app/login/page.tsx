@@ -319,7 +319,7 @@ export default function LoginPage() {
       variant="compact"
     >
       <div className="mb-8">
-        <Image src="/jards_logo-2.svg" alt="Jards" width={96} height={28} priority className="h-7 w-auto" />
+        <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="h-7 w-auto" />
       </div>
       <p className="mb-3 text-[11px] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Continue seu trabalho</p>
       <h1 className="text-[clamp(2.2rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">Continue de onde parou.</h1>

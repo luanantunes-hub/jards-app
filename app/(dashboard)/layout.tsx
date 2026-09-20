@@ -275,12 +275,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }}
         >
           {expanded ? (
-            <img src="/jards_logo-2.svg" alt="Jards" className="h-5" />
+            <img src="/jards-logo.svg" alt="Jards" className="h-5" />
           ) : (
-            <svg width="22" height="22" viewBox="0 0 689.18 689.33" xmlns="http://www.w3.org/2000/svg">
-              <path fill="#D94E4E" d="M0,167.97h194.5c-2.57,19.43-9.49,38.28-10.91,57.98-13.39,185.36,157.2,321.71,335.07,268.89v194.5H0V167.97Z"/>
-              <path fill="#7259B5" d="M675.34,338.15h-320.11l-4.05-4.05V15.34c197.29-72.64,392.23,125.59,324.16,322.81Z"/>
-            </svg>
+            <img src="/jards-icon.svg" alt="Jards" className="h-7 w-7" />
           )}
         </div>
 

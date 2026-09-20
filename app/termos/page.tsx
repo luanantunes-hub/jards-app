@@ -16,7 +16,7 @@ export default function TermosPage() {
       <header className="sticky top-0 z-50 border-b border-black/8 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-5xl items-center gap-3 px-6">
           <Link href="/">
-            <Image src="/jards_logo-2.svg" alt="Jards" width={80} height={24} className="h-6 w-auto" priority />
+            <Image src="/jards-logo.svg" alt="Jards" width={75} height={24} className="h-6 w-auto" priority />
           </Link>
           <span className="h-5 w-px bg-black/12" />
           <span className="text-xs text-black/40">Termos de Uso</span>
