@@ -1,0 +1,97 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { Check, ExternalLink, Trash2, X } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
+type Followup = {
+  id: string;
+  titulo: string;
+  status: "pendente" | "concluido" | "cancelado";
+  previstoPara: string | null;
+  sourceLink?: string;
+};
+
+export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
+  followup: Followup;
+  onClose: () => void;
+  onChanged: () => void;
+}) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function complete() {
+    setSaving(true);
+    setError(null);
+    const { data, error: updateError } = await (createClient() as any)
+      .from("crm_followups")
+      .update({ status: "concluido", concluido_em: new Date().toISOString() })
+      .eq("id", followup.id)
+      .eq("status", "pendente")
+      .select("id, status")
+      .single();
+    setSaving(false);
+    if (updateError || data?.status !== "concluido") {
+      setError(updateError?.message ?? "Não foi possível concluir este follow-up. Atualize a lista e tente novamente.");
+      return;
+    }
+    onChanged();
+  }
+
+  async function remove() {
+    if (!window.confirm(`Excluir “${followup.titulo}”? Esta ação não pode ser desfeita.`)) return;
+    setSaving(true);
+    setError(null);
+    const { data, error: deleteError } = await (createClient() as any)
+      .from("crm_followups")
+      .delete()
+      .eq("id", followup.id)
+      .select("id")
+      .single();
+    setSaving(false);
+    if (deleteError || !data) {
+      setError(deleteError?.message ?? "Não foi possível excluir este follow-up. Atualize a lista e tente novamente.");
+      return;
+    }
+    onChanged();
+  }
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4" onClick={() => { if (!saving) onClose(); }}>
+      <div className="w-full max-w-md rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
+        <header className="flex items-start justify-between gap-4 border-b border-black/[.08] px-6 py-4">
+          <div>
+            <p className="text-[14px] font-bold text-black">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
+            <p className="mt-1 text-[12px] text-black/55">{followup.titulo}</p>
+          </div>
+          <button type="button" onClick={onClose} disabled={saving} aria-label="Fechar" className="text-black/35 hover:text-black/60 disabled:opacity-40"><X size={16} /></button>
+        </header>
+        <div className="space-y-4 px-6 py-5">
+          <p className="text-[11px] text-black/45">
+            {followup.status === "pendente" ? "Pendente" : followup.status === "concluido" ? "Concluído" : "Cancelado"}
+            {followup.previstoPara ? ` · Prazo ${new Date(followup.previstoPara).toLocaleDateString("pt-BR")}` : ""}
+          </p>
+          {followup.sourceLink ? (
+            <Link href={followup.sourceLink} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#7259B5] hover:underline">
+              Abrir vínculo <ExternalLink size={12} />
+            </Link>
+          ) : (
+            <p className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.05] px-3 py-2 text-[11px] text-black/55">
+              O vínculo original não está disponível. Você ainda pode concluir ou excluir este follow-up aqui.
+            </p>
+          )}
+          {error && <p role="alert" className="text-[11px] font-medium text-[#D94E4E]">{error}</p>}
+        </div>
+        <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-black/[.08] px-6 py-4">
+          <button type="button" onClick={() => void remove()} disabled={saving} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#D94E4E] hover:underline disabled:opacity-40"><Trash2 size={13} /> Excluir</button>
+          {followup.status === "pendente" && (
+            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[12px] font-semibold text-white disabled:opacity-40">
+              <Check size={14} /> {saving ? "Salvando..." : "Concluir sem interação"}
+            </button>
+          )}
+        </footer>
+      </div>
+    </div>
+  );
+}
