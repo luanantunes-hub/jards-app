@@ -6,10 +6,11 @@ import { ArrowLeft, ArrowRight, Check, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { formatCotaValor } from "@/lib/cotas";
 
 type AccountOption = { id: string; nome: string | null; empresa_crm_id: string; empresa_crm: { nome: string } | null };
 type ProjectOption = { id: string; nome: string };
-type CotaOption = { id: string; nome: string; valor: number; contrapartidas: string[] };
+type CotaOption = { id: string; nome: string; valor: number; valor_maximo: number | null; modelo: "nivel" | "produto"; produto_nome: string | null; contrapartidas: string[] };
 type ContractOption = { id: string; titulo: string | null; numero: string | null; valor: number };
 type CaptacaoOption = { id: string; titulo: string | null };
 type MemberOption = { user_id: string; papel: string; full_name: string | null; email: string | null };
@@ -81,7 +82,7 @@ export function NovoPlanoAtivacaoModal({ organizationId, initialContaId = "", in
 
   useEffect(() => {
     if (!projetoId) { setCotas([]); return; }
-    (supabase as any).from("cotas_patrocinio").select("id,nome,valor,contrapartidas").eq("projeto_id", projetoId).order("ordem")
+    (supabase as any).from("cotas_patrocinio").select("id,nome,valor,valor_maximo,modelo,produto_nome,contrapartidas").eq("projeto_id", projetoId).order("ordem")
       .then(({ data }: any) => setCotas(data ?? []));
   }, [projetoId, supabase]);
 
@@ -130,7 +131,7 @@ export function NovoPlanoAtivacaoModal({ organizationId, initialContaId = "", in
             <SelectField label="Conta do patrocinador" value={contaId} onChange={setContaId} required options={accounts.map(item => [item.id, item.nome || item.empresa_crm?.nome || "Conta"])} />
             <SelectField label="Projeto" value={projetoId} onChange={setProjetoId} required options={projects.map(item => [item.id, item.nome])} />
             <TextField label="Nome do plano" value={nome} onChange={setNome} required placeholder="Ex.: Ativação Cota Master 2027" className="sm:col-span-2" />
-            <SelectField label="Cota" value={cotaId} onChange={setCotaId} options={cotas.map(item => [item.id, `${item.nome} · ${money(item.valor)}`])} />
+            <SelectField label="Cota" value={cotaId} onChange={setCotaId} options={cotas.map(item => [item.id, `${item.nome}${item.modelo === "produto" && item.produto_nome ? ` · ${item.produto_nome}` : ""} · ${formatCotaValor(item)}`])} />
             <SelectField label="Contrato" value={contratoId} onChange={setContratoId} options={contracts.map(item => [item.id, item.titulo || item.numero || "Contrato"])} />
             <SelectField label="Negociação de origem" value={captacaoId} onChange={setCaptacaoId} options={captacoes.map(item => [item.id, item.titulo || "Negociação"])} />
             <SelectField label="Responsável" value={responsavelId} onChange={setResponsavelId} options={members.map(item => [item.user_id, item.full_name || item.email || "Membro"])} />
@@ -184,5 +185,3 @@ function SelectField({ label, value, onChange, options, required = false }: { la
     </div>
   );
 }
-
-function money(value: number) { return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value || 0); }

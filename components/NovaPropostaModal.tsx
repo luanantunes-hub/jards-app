@@ -4,13 +4,10 @@ import Link from "next/link";
 import { Coins, ExternalLink, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { formatCotaValor } from "@/lib/cotas";
 
-type CotaOption = { id: string; nome: string; valor: number };
+type CotaOption = { id: string; nome: string; valor: number; valor_maximo: number | null; modelo: "nivel" | "produto"; produto_nome: string | null };
 export type PropostaRow = { id: string; titulo: string; valor_proposto: number | null; cota_id: string | null; created_at: string };
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 export function NovaPropostaModal({
   parentField,
@@ -43,7 +40,7 @@ export function NovaPropostaModal({
 
   useEffect(() => {
     let active = true;
-    (supabase as any).from("cotas_patrocinio").select("id,nome,valor").eq("projeto_id", projetoId).order("ordem").then(({ data }: any) => {
+    (supabase as any).from("cotas_patrocinio").select("id,nome,valor,valor_maximo,modelo,produto_nome").eq("projeto_id", projetoId).order("ordem").then(({ data }: any) => {
       if (active) setCotas(data ?? []);
     });
     return () => { active = false; };
@@ -128,7 +125,7 @@ export function NovaPropostaModal({
                 value={cotaId}
                 onChange={selectCota}
                 placeholder="Construir sem cota-base"
-                options={cotas.map(c => ({ value: c.id, label: `${c.nome} · ${formatCurrency(c.valor)}` }))}
+                options={cotas.map(c => ({ value: c.id, label: `${c.nome}${c.modelo === "produto" && c.produto_nome ? ` · ${c.produto_nome}` : ""} · ${formatCotaValor(c)}` }))}
               />
               <p className="mt-1.5 text-[10px] text-black/35">Escolher uma cota pré-preenche o valor — pode ajustar livremente depois (proposta adaptada).</p>
             </div>

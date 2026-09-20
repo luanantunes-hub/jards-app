@@ -15,6 +15,7 @@ import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
+import { cotaTemDisponibilidade, formatCotaValor, valorForaDaFaixa } from "@/lib/cotas";
 
 const CRIAR_NOVA_COTA = "__criar_nova_cota__";
 
@@ -24,9 +25,13 @@ type CotaOption = {
   id: string;
   nome: string;
   valor: number;
+  valor_maximo: number | null;
+  modelo: "nivel" | "produto";
+  produto_nome: string | null;
   contrapartidas: string[];
   status: "disponivel" | "reservada" | "vendida";
   unidades: number;
+  unidades_ilimitadas: boolean;
   unidades_vendidas: number;
 };
 
@@ -122,6 +127,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   const projetoBoxRef = useRef<HTMLDivElement>(null);
   const projetoMenuPos = usePortalPosition(projetoBoxRef, projetoOpen);
   const [cotaId, setCotaId]               = useState(editData?.cota_id ?? "");
+  const [valorInput, setValorInput] = useState(editData?.valor != null ? editData.valor.toLocaleString("pt-BR", { useGrouping: false, minimumFractionDigits: 2 }) : "");
   const [status, setStatus]               = useState<StatusEdital>(editData?.status ?? statusPre ?? "interesse");
   const [potencialFechamento, setPotencialFechamento] = useState<PotencialFechamento>(editData?.potencial_fechamento ?? potentialPre ?? "medio");
   const [dataAbertura, setDataAbertura]   = useState(editData?.data_abertura ?? dataAberturaPre ?? "");
@@ -161,7 +167,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
     setLoadingCotas(true);
     (supabase as any)
       .from("cotas_patrocinio")
-      .select("id,nome,valor,contrapartidas,status,unidades,unidades_vendidas")
+      .select("id,nome,valor,valor_maximo,modelo,produto_nome,contrapartidas,status,unidades,unidades_ilimitadas,unidades_vendidas")
       .eq("projeto_id", projeto)
       .order("ordem")
       .then(({ data }: { data: CotaOption[] | null }) => {
@@ -192,12 +198,6 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   }, [projetoId, fetchCotas]);
 
   const cotaSelecionada = cotas.find(cota => cota.id === cotaId) ?? null;
-  const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(value);
-
   const responsavelBase = responsavelTipo === "agencia" ? agencias : membros;
   const responsavelFiltrados = responsavelBase.filter(r =>
     (r.label + (r.sublabel ?? "")).toLowerCase().includes(responsavelPesquisa.toLowerCase())
@@ -313,6 +313,10 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   async function handleSalvar() {
     setSaving(true);
     setErro(null);
+    const valorNegociado = valorInput.trim() ? Number(valorInput.replace(/\./g, "").replace(",", ".")) : null;
+    if (valorNegociado != null && (!Number.isFinite(valorNegociado) || valorNegociado < 0)) {
+      setErro("Informe um valor de inscrição válido."); setSaving(false); return;
+    }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado"); setSaving(false); return; }
 
@@ -335,7 +339,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
       cota_id:         cotaId         || null,
       titulo:          titulo.trim()  || null,
       lei:             lei            || null,
-      valor:           cotaSelecionada?.valor ?? editData?.valor ?? null,
+      valor:           valorNegociado ?? cotaSelecionada?.valor ?? editData?.valor ?? null,
       status,
       potencial_fechamento: potencialFechamento,
       data_abertura:   dataAbertura   || null,
@@ -556,6 +560,8 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                     return;
                   }
                   setCotaId(value);
+                  const selecionada = cotas.find(cota => cota.id === value);
+                  if (selecionada) setValorInput(selecionada.valor.toLocaleString("pt-BR", { useGrouping: false, minimumFractionDigits: 2 }));
                 }}
                 placeholder={!projetoId ? "Selecione um projeto primeiro" : loadingCotas ? "Carregando cotas…" : cotas.length === 0 ? "Nenhuma cota neste projeto" : "Selecionar cota"}
                 compact
@@ -565,8 +571,8 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                 options={[
                   ...cotas.map(cota => ({
                     value: cota.id,
-                    label: `${cota.nome} · ${formatCurrency(cota.valor)}`,
-                    disabled: cota.status === "vendida" && cota.id !== editData?.cota_id,
+                    label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
+                    disabled: !cotaTemDisponibilidade(cota) && cota.id !== editData?.cota_id,
                   })),
                   { value: CRIAR_NOVA_COTA, label: "+ Criar nova cota…", icon: <Plus size={12} /> },
                 ]}
@@ -574,9 +580,14 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
               {cotaSelecionada && (
                 <div className="mt-2 rounded border border-black/[.07] bg-black/[.018] px-3 py-2.5">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-[10px] font-medium text-black/35">Valor da inscrição</span>
-                    <span className="text-[12px] font-semibold tabular-nums text-black/70">{formatCurrency(cotaSelecionada.valor)}</span>
+                    <span className="text-[10px] font-medium text-black/35">Referência da cota</span>
+                    <span className="text-[12px] font-semibold tabular-nums text-black/70">{formatCotaValor(cotaSelecionada)}</span>
                   </div>
+                  <label className="mt-2 block text-[10px] font-medium text-black/45">Valor desta inscrição (R$)</label>
+                  <input inputMode="decimal" value={valorInput} onChange={event => setValorInput(event.target.value)}
+                    className="mt-1 w-full rounded border border-black/15 bg-white px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5]" />
+                  {valorForaDaFaixa(cotaSelecionada, valorInput.trim() ? Number(valorInput.replace(/\./g, "").replace(",", ".")) : null) &&
+                    <p className="mt-1.5 text-[10px] text-[#B07A14]">Fora da faixa sugerida; confira se outra cota é mais adequada.</p>}
                   <p className="mt-1.5 text-[10px] leading-4 text-black/40">
                     {cotaSelecionada.contrapartidas.length > 0
                       ? `${cotaSelecionada.contrapartidas.length} contrapartida${cotaSelecionada.contrapartidas.length === 1 ? "" : "s"} serão transformadas em entregas se a inscrição for aprovada.`

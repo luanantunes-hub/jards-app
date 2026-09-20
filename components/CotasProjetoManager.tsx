@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { CotaPatrocinio, StatusCotaPatrocinio, VendaPatrocinio } from "@/lib/supabase/types";
+import { formatCotaValor, formatMoney } from "@/lib/cotas";
 
 export type VendaPatrocinioComEmpresa = VendaPatrocinio & {
   empresa_crm: { nome: string } | null;
@@ -37,12 +38,17 @@ const STATUS_LABELS: Record<StatusCotaPatrocinio, { label: string; color: string
 
 type CotaFormData = {
   nome: string;
+  modelo: "nivel" | "produto";
+  produtoNome: string;
+  precoTipo: "fixo" | "faixa";
   valorCents: string;
+  valorMaximoCents: string;
   contrapartidas: string;
   unidades: number;
+  unidadesIlimitadas: boolean;
 };
 
-const EMPTY_FORM: CotaFormData = { nome: "", valorCents: "", contrapartidas: "", unidades: 1 };
+const EMPTY_FORM: CotaFormData = { nome: "", modelo: "nivel", produtoNome: "", precoTipo: "fixo", valorCents: "", valorMaximoCents: "", contrapartidas: "", unidades: 1, unidadesIlimitadas: false };
 
 export function CotasProjetoManager({
   projetoId,
@@ -78,9 +84,14 @@ export function CotasProjetoManager({
     setEditing(cota);
     setForm({
       nome: cota.nome,
+      modelo: cota.modelo ?? "nivel",
+      produtoNome: cota.produto_nome ?? "",
+      precoTipo: cota.valor_maximo == null ? "fixo" : "faixa",
       valorCents: initCents(cota.valor),
+      valorMaximoCents: initCents(cota.valor_maximo),
       contrapartidas: cota.contrapartidas.join("\n"),
       unidades: cota.unidades ?? 1,
+      unidadesIlimitadas: cota.unidades_ilimitadas ?? false,
     });
     setShowForm(true);
     setErro(null);
@@ -91,6 +102,17 @@ export function CotasProjetoManager({
     setErro(null);
     const nome = form.nome.trim();
     if (!nome) { setErro("Nome é obrigatório"); setSaving(false); return; }
+    const valor = Number(form.valorCents || 0) / 100;
+    const valorMaximo = form.precoTipo === "faixa" ? Number(form.valorMaximoCents || 0) / 100 : null;
+    if (form.precoTipo === "faixa" && (valor <= 0 || valorMaximo == null || valorMaximo <= valor)) {
+      setErro("Informe uma faixa com valor mínimo positivo e máximo maior que o mínimo."); setSaving(false); return;
+    }
+    if (form.modelo === "produto" && !form.produtoNome.trim()) {
+      setErro("Informe o produto ou componente desta cota."); setSaving(false); return;
+    }
+    if (!form.unidadesIlimitadas && form.unidades < (editing?.unidades_vendidas ?? 0)) {
+      setErro("O limite não pode ser menor que as unidades já vendidas."); setSaving(false); return;
+    }
 
     const contrapartidas = form.contrapartidas
       .split("\n")
@@ -101,9 +123,16 @@ export function CotasProjetoManager({
       projeto_id: projetoId,
       organization_id: organizationId,
       nome,
-      valor: form.valorCents ? parseInt(form.valorCents, 10) / 100 : 0,
+      valor,
+      valor_maximo: valorMaximo,
+      modelo: form.modelo,
+      produto_nome: form.modelo === "produto" ? form.produtoNome.trim() : null,
       contrapartidas,
       unidades: form.unidades,
+      unidades_ilimitadas: form.unidadesIlimitadas,
+      status: !form.unidadesIlimitadas && (editing?.unidades_vendidas ?? 0) >= form.unidades
+        ? "vendida"
+        : editing?.status === "reservada" ? "reservada" : "disponivel",
       ordem: editing?.ordem ?? cotas.length,
     };
 
@@ -132,17 +161,17 @@ export function CotasProjetoManager({
     });
   }
 
-  const totalValue = cotas.reduce((s, c) => s + c.valor * (c.unidades ?? 1), 0);
-  const totalUnidades = cotas.reduce((s, c) => s + (c.unidades ?? 1), 0);
+  const valorContratado = vendas.filter(v => v.cota_id && cotas.some(c => c.id === v.cota_id)).reduce((s, v) => s + Number(v.valor_vendido || 0), 0);
+  const unlimitedCount = cotas.filter(c => c.unidades_ilimitadas).length;
   const vendidas = cotas.reduce((s, c) => s + (c.unidades_vendidas ?? 0), 0);
-  const disponiveis = totalUnidades - vendidas;
+  const disponiveis = cotas.reduce((s, c) => s + (c.unidades_ilimitadas ? 0 : Math.max(0, (c.unidades ?? 1) - (c.unidades_vendidas ?? 0))), 0);
 
   return (
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-[11px] text-black/35">
-          {totalUnidades > 0 ? `${totalUnidades} cota${totalUnidades !== 1 ? "s" : ""}` : "Nenhuma cota"}
+          {cotas.length > 0 ? `${cotas.length} tipo${cotas.length !== 1 ? "s" : ""} de cota` : "Nenhuma cota"}
         </p>
         <button
           onClick={openNew}
@@ -176,6 +205,7 @@ export function CotasProjetoManager({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-[13px] font-semibold text-black">{cota.nome}</p>
+                    {cota.modelo === "produto" && <span className="text-[10px] font-medium text-[#7259B5]">{cota.produto_nome}</span>}
                     <span
                       className="text-[10px] font-bold px-2 py-0.5 rounded-full"
                       style={{ background: `${st.color}14`, color: st.color }}
@@ -191,17 +221,14 @@ export function CotasProjetoManager({
                 </div>
 
                 <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
-                  <span className="text-[13px] font-bold text-black/60">R$ {atm(cota.valor.toString())}</span>
-                  {(cota.unidades ?? 1) > 1 && (
+                  <span className="text-[13px] font-bold text-black/60">{formatCotaValor(cota)}</span>
+                  {cota.unidades_ilimitadas ? (
+                    <span className="text-[10px] text-black/30 tabular-nums">Ilimitada · {cota.unidades_vendidas ?? 0} vendida(s)</span>
+                  ) : (cota.unidades ?? 1) > 1 && (
                     <span className="text-[10px] text-black/30 tabular-nums">
                       {(cota.unidades_vendidas ?? 0) > 0
                         ? `${cota.unidades_vendidas}/${cota.unidades} vendida${cota.unidades_vendidas !== 1 ? "s" : ""}`
                         : `${cota.unidades} un.`}
-                    </span>
-                  )}
-                  {valorTotal && valorTotal > 0 && (
-                    <span className="text-[10px] text-black/25">
-                      {Math.round((cota.valor * (cota.unidades ?? 1)) / (valorTotal * 100) * 100)}%
                     </span>
                   )}
                 </div>
@@ -248,12 +275,12 @@ export function CotasProjetoManager({
         <div className="rounded border p-4 space-y-3" style={{ borderColor: "rgba(13,13,13,.08)", background: "rgba(13,13,13,.018)" }}>
           <div className="grid grid-cols-3 gap-3">
             <div>
-              <p className="text-[10px] font-semibold uppercase tracking-[.08em] text-black/35 mb-1">Total</p>
-              <p className="text-[15px] font-semibold text-black/75 tabular-nums">R$ {atm(totalValue.toString())}</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[.08em] text-black/35 mb-1">Vendido</p>
+              <p className="text-[15px] font-semibold text-black/75 tabular-nums">{formatMoney(valorContratado)}</p>
             </div>
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[.08em] text-[#2E8932]/70 mb-1">Disponíveis</p>
-              <p className="text-[15px] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{disponiveis}</p>
+              <p className="text-[15px] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{disponiveis}{unlimitedCount > 0 ? " + ilimitadas" : ""}</p>
             </div>
             <div>
               <p className="text-[10px] font-semibold uppercase tracking-[.08em] text-black/35 mb-1">Vendidas</p>
@@ -261,8 +288,8 @@ export function CotasProjetoManager({
             </div>
           </div>
           {valorTotal && valorTotal > 0 && (() => {
-            const pct = Math.min(100, Math.round((totalValue / (valorTotal * 100)) * 100));
-            const over = totalValue / 100 > valorTotal;
+            const pct = Math.min(100, Math.round((valorContratado / valorTotal) * 100));
+            const over = valorContratado > valorTotal;
             return (
               <div className="pt-1 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                 <div className="h-1.5 overflow-hidden rounded bg-black/[.07]">
@@ -272,8 +299,8 @@ export function CotasProjetoManager({
                   />
                 </div>
                 <p className="mt-1.5 text-[10px] text-black/35">
-                  {pct}% do orçamento coberto
-                  {over && <span className="ml-1 font-semibold text-[#D94E4E]">— excede o total</span>}
+                  {pct}% do alvo contratado nestas cotas
+                  {over && <span className="ml-1 font-semibold text-[#B07A14]">— acima da meta atual</span>}
                 </p>
               </div>
             );
@@ -319,7 +346,30 @@ export function CotasProjetoManager({
               </div>
 
               <div>
-                <label className="text-[12px] font-semibold text-black mb-1.5 block">Valor</label>
+                <label className="text-[12px] font-semibold text-black mb-1.5 block">Organização da cota</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([ ["nivel", "Nível de patrocínio"], ["produto", "Produto do projeto"] ] as const).map(([value, label]) => (
+                    <button key={value} type="button" onClick={() => setForm(f => ({ ...f, modelo: value }))}
+                      className={`rounded border px-3 py-2 text-[11px] font-semibold ${form.modelo === value ? "border-[#7259B5] text-[#7259B5]" : "border-black/15 text-black/45"}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                {form.modelo === "produto" && <input value={form.produtoNome} onChange={e => setForm(f => ({ ...f, produtoNome: e.target.value }))}
+                  placeholder="Ex: Palco principal, série, atividade…" className="mt-2 w-full rounded border border-black/15 px-3 py-2.5 text-[13px] text-black outline-none focus:border-[#7259B5]" />}
+              </div>
+
+              <div>
+                <label className="text-[12px] font-semibold text-black mb-1.5 block">Valor de referência</label>
+                <div className="mb-2 flex gap-2">
+                  {([ ["fixo", "Valor fixo"], ["faixa", "Faixa de valores"] ] as const).map(([value, label]) => (
+                    <button key={value} type="button" onClick={() => setForm(f => ({ ...f, precoTipo: value }))}
+                      className={`rounded border px-3 py-2 text-[11px] font-semibold ${form.precoTipo === value ? "border-[#7259B5] text-[#7259B5]" : "border-black/15 text-black/45"}`}>
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <span className="mb-1 block text-[10px] text-black/40">{form.precoTipo === "faixa" ? "Mínimo" : "Valor"}</span>
                 <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                   <span className="text-[13px] text-black/40 flex-shrink-0">R$</span>
                   <input
@@ -330,11 +380,27 @@ export function CotasProjetoManager({
                     className="w-full text-[13px] text-black outline-none bg-transparent"
                   />
                 </div>
+                {form.precoTipo === "faixa" && <>
+                  <span className="mb-1 mt-2 block text-[10px] text-black/40">Máximo</span>
+                  <div className="flex items-center gap-2 rounded border border-black/15 px-3 py-2.5">
+                    <span className="text-[13px] text-black/40">R$</span>
+                    <input value={atm(form.valorMaximoCents)} onChange={() => {}}
+                      onKeyDown={atmKey(setCents => setForm(f => ({ ...f, valorMaximoCents: setCents(f.valorMaximoCents) })))}
+                      placeholder="0,00" className="w-full bg-transparent text-[13px] text-black outline-none" />
+                  </div>
+                </>}
+                <p className="mt-1.5 text-[10px] text-black/35">O valor da proposta pode ser ajustado sem alterar esta referência.</p>
               </div>
 
               <div>
                 <label className="text-[12px] font-semibold text-black mb-1.5 block">Unidades disponíveis</label>
-                <div className="flex items-center gap-3">
+                <div className="mb-2 flex gap-2">
+                  <button type="button" onClick={() => setForm(f => ({ ...f, unidadesIlimitadas: false }))}
+                    className={`rounded border px-3 py-2 text-[11px] font-semibold ${!form.unidadesIlimitadas ? "border-[#7259B5] text-[#7259B5]" : "border-black/15 text-black/45"}`}>Quantidade definida</button>
+                  <button type="button" onClick={() => setForm(f => ({ ...f, unidadesIlimitadas: true }))}
+                    className={`rounded border px-3 py-2 text-[11px] font-semibold ${form.unidadesIlimitadas ? "border-[#7259B5] text-[#7259B5]" : "border-black/15 text-black/45"}`}>Ilimitada</button>
+                </div>
+                {!form.unidadesIlimitadas && <div className="flex items-center gap-3">
                   <button
                     type="button"
                     onClick={() => setForm(f => ({ ...f, unidades: Math.max(1, f.unidades - 1) }))}
@@ -354,7 +420,8 @@ export function CotasProjetoManager({
                     <Plus size={13} className="text-black/60" />
                   </button>
                   <span className="text-[11px] text-black/35">unidade{form.unidades !== 1 ? "s" : ""} desta cota disponíveis para venda</span>
-                </div>
+                </div>}
+                {form.unidadesIlimitadas && <p className="text-[11px] text-black/40">Novos patrocinadores poderão adquirir esta cota sem limite de unidades.</p>}
               </div>
 
               <div>
