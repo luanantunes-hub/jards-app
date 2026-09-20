@@ -37,6 +37,8 @@ export type EditDataProjeto = {
   valor_garantido?: number;
   tags?: string[];
   visibilidade?: "equipe" | "restrita";
+  status_operacional?: "ativo" | "pausado" | "arquivado";
+  status_comercial?: "estruturando" | "pronto" | "em_captacao" | "captado" | "encerrado" | null;
 };
 
 type ProponenteOption = { id: string; nome: string; cidade: string | null; estado: string | null };
