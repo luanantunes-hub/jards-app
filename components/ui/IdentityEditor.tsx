@@ -88,8 +88,8 @@ export function IdentityEditor({
         </div>
       </div>
 
-      <div className="flex min-w-0 flex-col gap-3 border-y border-black/[.09] py-3 sm:flex-row sm:items-center sm:gap-5">
-        <div className="flex min-w-0 items-center gap-2.5 sm:max-w-[42%] sm:border-r sm:border-black/[.09] sm:pr-5">
+      <div className="flex min-w-0 items-stretch gap-3 py-3 sm:gap-5">
+        <div className="flex w-[38%] min-w-0 shrink-0 items-center gap-2.5 border-r border-black/[.09] pr-3 sm:w-auto sm:max-w-[42%] sm:pr-5">
           <div
             className={`flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[6px] border ${logoMode ? "border-black/[.12]" : "border-current"}`}
             style={logoMode ? undefined : { color }}
@@ -108,7 +108,7 @@ export function IdentityEditor({
         </div>
 
         {logoMode ? (
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <button
               type="button"
               onClick={onLogoRequest}
@@ -120,7 +120,7 @@ export function IdentityEditor({
             <p className="text-[10px] leading-relaxed text-black/40">{logoHelp}</p>
           </div>
         ) : (
-          <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <div className="relative">
               <button
                 type="button"
