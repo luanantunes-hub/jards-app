@@ -26,3 +26,17 @@ test("exclusão de etapa transfere registros antes de removê-la em uma transaç
   assert.match(config, /rpc\("remover_etapa_funil"/);
   assert.match(config, /etiquetas\.length < 2/);
 });
+
+test("tipos de proponente padrão podem ser editados e removidos por organização", async () => {
+  const context = await readFile(path.join(root, "contexts/EtiquetasContext.tsx"), "utf8");
+  const config = await readFile(path.join(root, "components/EtiquetasConfig.tsx"), "utf8");
+  const migration = await readFile(path.join(root, "supabase/migrations/20260920000003_tipos_proponente_editaveis.sql"), "utf8");
+  assert.match(context, /default-proponente-oscip[^\n]*deletavel: true/);
+  assert.match(context, /DEFAULT_ETIQUETAS_PROPONENTE\.filter\(item => !hidden\.has\(`proponente:/);
+  assert.match(config, /deletavel: true,\s*\.\.\.patch/);
+  assert.match(config, /rpc\("remover_tipo_proponente"/);
+  assert.match(migration, /check \(entidade in \('captacao', 'inscricao', 'proponente'\)\)/);
+  assert.match(migration, /update public\.proponentes set tipo = null/);
+  assert.match(migration, /insert into public\.funil_etapas_removidas/);
+  assert.match(migration, /delete from public\.etiquetas/);
+});

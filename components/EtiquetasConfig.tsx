@@ -198,7 +198,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
           cor: padrao.cor,
           icone: padrao.icone,
           ordem: padrao.ordem,
-          deletavel: entidade !== "proponente",
+          deletavel: true,
           ...patch,
         }));
       }
@@ -224,12 +224,18 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
     }
     confirmDelete({
       title: `Excluir a etiqueta “${etiqueta.label}”?`,
-      description: entidade === "proponente" ? "Os proponentes que usam essa etiqueta ficarão sem tipo." : "Os registros que usam esta etiqueta poderão ficar sem classificação.",
+      description: "Os proponentes que usam essa etiqueta ficarão sem tipo.",
       onConfirm: async () => {
-        if (entidade === "proponente" && organizationId) {
-          await (supabase as any).from("proponentes").update({ tipo: null }).eq("organization_id", organizationId).eq("tipo", etiqueta.key);
+        if (!organizationId) return;
+        const { error } = await (supabase as any).rpc("remover_tipo_proponente", {
+          p_organization_id: organizationId,
+          p_source_key: etiqueta.key,
+        });
+        if (error) {
+          setErro(error.message || "Não foi possível excluir a etiqueta.");
+          return;
         }
-        await (supabase as any).from("etiquetas").delete().eq("id", id);
+        setErro("");
         await recarregar();
       },
     });

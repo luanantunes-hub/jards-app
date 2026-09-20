@@ -41,11 +41,11 @@ export const DEFAULT_ETIQUETAS_CAPTACAO: Etiqueta[] = [
 ];
 
 export const DEFAULT_ETIQUETAS_PROPONENTE: Etiqueta[] = [
-  { id: "default-proponente-oscip", key: "oscip", label: "OSCIP", cor: "#7259B5", icone: "Building2", ordem: 1, deletavel: false },
-  { id: "default-proponente-associacao", key: "associacao", label: "Associação", cor: "#2D72B0", icone: "Users", ordem: 2, deletavel: false },
-  { id: "default-proponente-empresa", key: "empresa", label: "Empresa", cor: "#1A8B7A", icone: "BriefcaseBusiness", ordem: 3, deletavel: false },
-  { id: "default-proponente-pessoa_fisica", key: "pessoa_fisica", label: "Pessoa física", cor: "#B07A14", icone: "User", ordem: 4, deletavel: false },
-  { id: "default-proponente-outro", key: "outro", label: "Outro", cor: "#888888", icone: "Tag", ordem: 5, deletavel: false },
+  { id: "default-proponente-oscip", key: "oscip", label: "OSCIP", cor: "#7259B5", icone: "Building2", ordem: 1, deletavel: true },
+  { id: "default-proponente-associacao", key: "associacao", label: "Associação", cor: "#2D72B0", icone: "Users", ordem: 2, deletavel: true },
+  { id: "default-proponente-empresa", key: "empresa", label: "Empresa", cor: "#1A8B7A", icone: "BriefcaseBusiness", ordem: 3, deletavel: true },
+  { id: "default-proponente-pessoa_fisica", key: "pessoa_fisica", label: "Pessoa física", cor: "#B07A14", icone: "User", ordem: 4, deletavel: true },
+  { id: "default-proponente-outro", key: "outro", label: "Outro", cor: "#888888", icone: "Tag", ordem: 5, deletavel: true },
 ];
 
 const Ctx = createContext<EtiquetasCtx>({ etiquetas: DEFAULT_ETIQUETAS_CAPTACAO, etiquetasInscricao: DEFAULT_ETIQUETAS_INSCRICAO, etiquetasProponente: DEFAULT_ETIQUETAS_PROPONENTE, loading: true, recarregar: async () => {} });
@@ -88,8 +88,8 @@ export function EtiquetasProvider({ children }: { children: React.ReactNode }) {
     const proponenteRows = rows.filter((item) => item.entidade === "proponente");
     const defaultKeys = new Set(DEFAULT_ETIQUETAS_PROPONENTE.map(item => item.key));
     setEtiquetasProponente([
-      ...DEFAULT_ETIQUETAS_PROPONENTE.map((padrao) => proponenteRows.find((item) => item.key === padrao.key) ?? padrao),
-      ...proponenteRows.filter(item => !defaultKeys.has(item.key)),
+      ...DEFAULT_ETIQUETAS_PROPONENTE.filter(item => !hidden.has(`proponente:${item.key}`)).map(padrao => ({ ...(proponenteRows.find(item => item.key === padrao.key) ?? padrao), deletavel: true })),
+      ...proponenteRows.filter(item => !defaultKeys.has(item.key) && !hidden.has(`proponente:${item.key}`)).map(item => ({ ...item, deletavel: true })),
     ]);
     setLoading(false);
   }, [organizationId]); // eslint-disable-line react-hooks/exhaustive-deps
