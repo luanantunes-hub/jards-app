@@ -128,7 +128,7 @@ function NovaOportunidadeSheet({ workspaceId, escopos, organizationId, onClose, 
   ) : <>
     <button type="button" onClick={close} className="text-[12px] text-black/50">Cancelar</button>
     <button type="button" onClick={() => void enviar(close)} disabled={enviando || titulo.trim().length < 2 || nome.trim().length < 2 || !etiqueta || !escopo || !!site.trim() && !siteNormalizado}
-      className="inline-flex items-center gap-1.5 rounded bg-[#171717] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-black/75 disabled:opacity-40">
+      className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#27752B] disabled:opacity-40">
       <Send size={12} />{enviando ? "Enviando…" : escopo?.modo === "pedido" ? "Enviar para avaliação" : "Consultar e iniciar"}
     </button>
   </>}>
