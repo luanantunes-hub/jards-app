@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
+import { TopSheet } from "@/components/ui/TopSheet";
 
 type Acao = {
   id: string;
@@ -37,6 +38,7 @@ export function WorkspaceCoordination({ atribuicaoId, isGestor, onChange }: {
   const [situacao, setSituacao] = useState("");
   const [novaAcao, setNovaAcao] = useState("");
   const [prazo, setPrazo] = useState("");
+  const [pedindoAcao, setPedindoAcao] = useState(false);
   const [respostas, setRespostas] = useState<Record<string, string>>({});
   const [editandoResultado, setEditandoResultado] = useState(false);
   const [resultado, setResultado] = useState("");
@@ -84,8 +86,10 @@ export function WorkspaceCoordination({ atribuicaoId, isGestor, onChange }: {
 
   const abertas = acoes.filter(acao => acao.status !== "resolvida");
   const resolvidas = acoes.filter(acao => acao.status === "resolvida");
+  const nomeDestinatario = destinatario === "captador" ? "o captador" : organizationName;
 
-  return <div className="space-y-5">
+  return <>
+  <div className="space-y-5">
     <div className="border-b border-black/[.08] pb-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="text-[11px] font-semibold uppercase tracking-wide text-black/45">Situação atual</h3>
@@ -120,14 +124,9 @@ export function WorkspaceCoordination({ atribuicaoId, isGestor, onChange }: {
           {acao.status === "respondida" && <button type="button" disabled={saving} onClick={() => void executar("fn_workspace_resolver_acao", { p_acao_id: acao.id }, () => {})} className="mt-2 inline-flex items-center gap-1 text-[11px] font-semibold text-black/55 hover:text-[#5F4AA8] disabled:opacity-40"><Check size={12} />Marcar resolvido</button>}
         </article>)}
       </div>
-      <div className="mt-3 space-y-2">
-        <label htmlFor={`nova-acao-${atribuicaoId}`} className="block text-[11px] font-medium text-black/55">Pedir uma ação a {destinatario === "captador" ? "o captador" : organizationName}</label>
-        <textarea id={`nova-acao-${atribuicaoId}`} value={novaAcao} onChange={e => setNovaAcao(e.target.value)} maxLength={2000} rows={2} placeholder="O que o outro lado precisa fazer?" className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[12px] outline-none focus:border-[#5F4AA8]" />
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <label className="text-[11px] text-black/50">Até <input type="date" value={prazo} onChange={e => setPrazo(e.target.value)} className="ml-1 h-8 rounded border border-black/[.15] bg-white px-2 text-[11px] text-black" /></label>
-          <button type="button" disabled={saving || !novaAcao.trim()} onClick={() => void executar("fn_workspace_criar_acao", { p_atribuicao_id: atribuicaoId, p_destinatario: destinatario, p_descricao: novaAcao.trim(), p_prazo: prazo || null }, () => { setNovaAcao(""); setPrazo(""); })} className="rounded bg-[#171717] px-3 py-2 text-[11px] font-semibold text-white disabled:opacity-40">Enviar pedido</button>
-        </div>
-      </div>
+      <button type="button" onClick={() => setPedindoAcao(true)} className="mt-3 text-[12px] font-semibold text-[#5F4AA8] hover:underline">
+        Pedir uma ação a {nomeDestinatario}
+      </button>
       {resolvidas.length > 0 && <details className="mt-4 text-[11px] text-black/55"><summary className="cursor-pointer">Resolvidos ({resolvidas.length})</summary><div className="mt-2 divide-y divide-black/[.08]">{resolvidas.map(acao => <div key={acao.id} className="py-2"><p className="font-medium text-black/65">{acao.descricao}</p>{acao.resposta && <p className="mt-1">{acao.resposta}</p>}</div>)}</div></details>}
     </div>
 
@@ -136,5 +135,21 @@ export function WorkspaceCoordination({ atribuicaoId, isGestor, onChange }: {
       {editandoResultado ? <div className="mt-2 space-y-2"><label htmlFor={`resultado-${atribuicaoId}`} className="sr-only">Resultado</label><textarea id={`resultado-${atribuicaoId}`} value={resultado} onChange={e => setResultado(e.target.value)} maxLength={2000} rows={3} placeholder="O que aconteceu?" className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[12px] outline-none focus:border-[#5F4AA8]" /><div className="flex gap-3"><button type="button" disabled={saving || !resultado.trim()} onClick={() => void executar("fn_workspace_registrar_resultado", { p_atribuicao_id: atribuicaoId, p_texto: resultado.trim() }, () => setEditandoResultado(false))} className="text-[12px] font-semibold text-[#5F4AA8] disabled:opacity-40">Salvar resultado</button><button type="button" onClick={() => setEditandoResultado(false)} className="text-[12px] text-black/45">Cancelar</button></div></div> : <p className="mt-2 whitespace-pre-wrap text-[12px] text-black/65">{coordenacao?.resultado || "Ainda não registrado."}</p>}
     </div>
     {erro && <p role="alert" className="text-[11px] font-medium text-[#B64545]">{erro}</p>}
-  </div>;
+  </div>
+  {pedindoAcao && <TopSheet titulo={`Pedir uma ação a ${nomeDestinatario}`} onClose={() => setPedindoAcao(false)} footer={close => <>
+    <button type="button" onClick={close} className="text-[12px] text-black/50">Cancelar</button>
+    <button type="button" disabled={saving || !novaAcao.trim()} onClick={() => void executar("fn_workspace_criar_acao", { p_atribuicao_id: atribuicaoId, p_destinatario: destinatario, p_descricao: novaAcao.trim(), p_prazo: prazo || null }, () => { setNovaAcao(""); setPrazo(""); close(); })} className="inline-flex items-center gap-1.5 rounded bg-[#171717] px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-40"><Send size={12}/>{saving ? "Enviando…" : "Enviar pedido"}</button>
+  </>}>
+    <div className="space-y-3">
+      <div>
+        <label htmlFor={`nova-acao-${atribuicaoId}`} className="mb-1.5 block text-[11px] font-medium text-black/55">O que {nomeDestinatario} precisa fazer?</label>
+        <textarea id={`nova-acao-${atribuicaoId}`} autoFocus value={novaAcao} onChange={e => setNovaAcao(e.target.value)} maxLength={2000} rows={4} placeholder="Reunião, documento, aprovação…" className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[13px] outline-none focus:border-[#5F4AA8]" />
+      </div>
+      <label className="block text-[11px] text-black/50">Prazo (opcional)
+        <input type="date" value={prazo} onChange={e => setPrazo(e.target.value)} className="mt-1 h-9 w-full rounded border border-black/[.15] bg-white px-2 text-[12px] text-black" />
+      </label>
+      {erro && <p role="alert" className="text-[11px] font-medium text-[#B64545]">{erro}</p>}
+    </div>
+  </TopSheet>}
+  </>;
 }

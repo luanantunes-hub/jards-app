@@ -3,14 +3,23 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, ChevronRight, Plus, Send, X } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AlertTriangle, ChevronRight, Plus, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId, useOrganizationName } from "@/contexts/OrganizationContext";
 import { DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { TopSheet } from "@/components/ui/TopSheet";
+import { KanbanBoard, KanbanColumn, KanbanCard, KanbanEmpty } from "@/components/kanban/KanbanPrimitives";
 import { listarPedidosWorkspace, type WorkspacePedido } from "@/components/captadores/WorkspaceConversation";
 import { useOpportunityLabels } from "@/components/captadores/OpportunityLabels";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { WORKSPACE_ETAPAS, workspaceEtapaLabel, type WorkspaceEtapa } from "@/components/captadores/WorkspaceStages";
+import { WORKSPACE_ETAPAS, type WorkspaceEtapa } from "@/components/captadores/WorkspaceStages";
+
+const ETAPA_COLUNA: Record<WorkspaceEtapa, { accent: string; iconName: string }> = {
+  a_iniciar: { accent: "#6B6B6B", iconName: "Circle" },
+  em_andamento: { accent: "#7259B5", iconName: "ArrowRight" },
+  aguardando_retorno: { accent: "#B07A14", iconName: "Clock" },
+};
 
 type EscopoTipo = "empresas" | "negociacoes" | "inscricoes";
 type EscopoModo = "pedido" | "consulta" | "ver_tudo";
@@ -139,49 +148,6 @@ function OportunidadeRow({ href, empresa, titulo, tipo, site, domain, trailing }
   </Link>;
 }
 
-function TopSheet({ titulo, onClose, children, footer }: { titulo: string; onClose: () => void; children: React.ReactNode; footer: (close: () => void) => React.ReactNode }) {
-  const [sheetVisible, setSheetVisible] = useState(false);
-
-  useEffect(() => {
-    requestAnimationFrame(() => requestAnimationFrame(() => setSheetVisible(true)));
-  }, []);
-
-  function close() {
-    setSheetVisible(false);
-    setTimeout(onClose, 260);
-  }
-
-  return (
-    <div
-      className="fixed inset-0 z-50"
-      style={{ background: sheetVisible ? "rgba(0,0,0,.38)" : "rgba(0,0,0,0)", transition: "background 260ms ease" }}
-      onClick={close}
-    >
-      <div
-        className="absolute left-1/2 top-0 flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white"
-        style={{
-          width: 440,
-          maxWidth: "92vw",
-          transform: sheetVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-100%)",
-          transition: "transform 260ms cubic-bezier(.32,.72,0,1)",
-        }}
-        onClick={event => event.stopPropagation()}
-      >
-        <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 className="text-[14px] font-semibold text-black/80">{titulo}</h3>
-          <button onClick={close} className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.05]">
-            <X size={14} className="text-black/40" />
-          </button>
-        </div>
-        <div className="min-h-0 overflow-y-auto px-6 py-5">{children}</div>
-        <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          {footer(close)}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function NovaOportunidadeSheet({ workspaceId, escopos, organizationId, onClose, onSaved }: {
   workspaceId: string;
   escopos: Escopo[];
@@ -275,6 +241,7 @@ function NovaOportunidadeSheet({ workspaceId, escopos, organizationId, onClose, 
   </TopSheet>;
 }
 export default function WorkspaceCaptadorPage() {
+  const router = useRouter();
   const organizationId = useOrganizationId();
   const organizationName = useOrganizationName() || "sua organização";
   const [carregando, setCarregando] = useState(true);
@@ -290,19 +257,18 @@ export default function WorkspaceCaptadorPage() {
   const [aba, setAba] = useState("resumo");
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoLinha[]>([]);
   const [acoesPendentes, setAcoesPendentes] = useState<{ id: string; atribuicao_id: string; descricao: string }[]>([]);
-  const [movendoEtapa, setMovendoEtapa] = useState<string | null>(null);
   const [erroEtapa, setErroEtapa] = useState<string | null>(null);
+  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [overEtapa, setOverEtapa] = useState<WorkspaceEtapa | null>(null);
 
   async function moverEtapa(atribuicaoId: string, etapa: WorkspaceEtapa) {
-    if (movendoEtapa) return;
-    setMovendoEtapa(atribuicaoId);
+    const anterior = atribuicoes;
     setErroEtapa(null);
+    setAtribuicoes(current => current.map(item => item.id === atribuicaoId ? { ...item, workspaceEtapa: etapa } : item));
     const { error } = await (createClient() as any).rpc("fn_workspace_definir_etapa", {
       p_atribuicao_id: atribuicaoId, p_etapa: etapa,
     });
-    setMovendoEtapa(null);
-    if (error) { setErroEtapa(error.message); return; }
-    setAtribuicoes(current => current.map(item => item.id === atribuicaoId ? { ...item, workspaceEtapa: etapa } : item));
+    if (error) { setAtribuicoes(anterior); setErroEtapa(error.message); }
   }
 
   async function carregarAtribuicoes(wsId: string) {
@@ -453,25 +419,42 @@ export default function WorkspaceCaptadorPage() {
                 </aside>
               </div>
             </div>}
-            {aba === "fluxo" && <div className="grid gap-4 lg:grid-cols-3">
+            {aba === "fluxo" && <KanbanBoard>
               {WORKSPACE_ETAPAS.map((etapa, indice) => {
                 const itens = atribuicoes.filter(a => a.status === "ativa" && (a.workspaceEtapa ?? "a_iniciar") === etapa.id);
-                return <section key={etapa.id} className="min-h-56 rounded border border-black/[.08] bg-white">
-                  <header className="flex items-center justify-between border-b border-black/[.07] px-4 py-3.5"><h2 className="text-[13px] font-semibold text-black/75">{etapa.label}</h2><span className="text-[11px] tabular-nums text-black/40">{itens.length}</span></header>
-                  <div className="space-y-2 p-3">
-                    {itens.map(item => { const pedido = pedidos.find(p => p.atribuicao_id === item.id); return <article key={item.id} className="rounded border border-black/[.08] bg-white">
-                      <OportunidadeRow href={`/workspace-captador/${item.id}`} empresa={item.empresaNome} titulo={pedido?.oportunidade_titulo || item.empresaNome} tipo={pedido && rotuloOportunidade(pedido)} site={item.empresaSite || pedido?.empresa_site} domain={item.empresaDomainKey}/>
-                      <div className="flex items-center justify-between px-3 py-2">
-                        <button type="button" disabled={indice === 0 || movendoEtapa === item.id} onClick={() => void moverEtapa(item.id, WORKSPACE_ETAPAS[indice - 1].id)} className="text-[11px] font-medium text-black/45 hover:text-black disabled:invisible">← Voltar</button>
-                        <span className="text-[10px] text-black/30">{workspaceEtapaLabel(item.workspaceEtapa)}</span>
-                        <button type="button" disabled={indice === WORKSPACE_ETAPAS.length - 1 || movendoEtapa === item.id} onClick={() => void moverEtapa(item.id, WORKSPACE_ETAPAS[indice + 1].id)} className="text-[11px] font-medium text-[#5F4AA8] hover:underline disabled:invisible">Avançar →</button>
+                const cor = ETAPA_COLUNA[etapa.id];
+                return <KanbanColumn key={etapa.id} label={etapa.label} count={itens.length} accent={cor.accent} iconName={cor.iconName}
+                  active={overEtapa === etapa.id && Boolean(draggingId)}
+                  onDragOver={event => { event.preventDefault(); setOverEtapa(etapa.id); }}
+                  onDragLeave={() => setOverEtapa(null)}
+                  onDrop={event => {
+                    event.preventDefault();
+                    const id = draggingId;
+                    setDraggingId(null); setOverEtapa(null);
+                    if (id && (atribuicoes.find(a => a.id === id)?.workspaceEtapa ?? "a_iniciar") !== etapa.id) void moverEtapa(id, etapa.id);
+                  }}
+                >
+                  {itens.length === 0 ? <KanbanEmpty label="Nenhuma oportunidade." /> : itens.map(item => {
+                    const pedido = pedidos.find(p => p.atribuicao_id === item.id);
+                    return <KanbanCard key={item.id} draggable dragging={draggingId === item.id}
+                      onClick={() => router.push(`/workspace-captador/${item.id}`)}
+                      onDragStart={() => setDraggingId(item.id)} onDragEnd={() => { setDraggingId(null); setOverEtapa(null); }}>
+                      <div className="flex items-center gap-2.5">
+                        <CompanyLogo nome={item.empresaNome} domain={item.empresaDomainKey} site={item.empresaSite || pedido?.empresa_site} size={32} className="shrink-0 border border-black/[.07]"/>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[12.5px] font-semibold text-black/80">{pedido?.oportunidade_titulo || item.empresaNome}</p>
+                          <p className="mt-0.5 truncate text-[11px] text-black/45">{item.empresaNome}{pedido ? ` · ${rotuloOportunidade(pedido)}` : ""}</p>
+                        </div>
                       </div>
-                    </article>; })}
-                    {itens.length === 0 && <p className="px-1 py-4 text-[12px] text-black/35">Nenhuma oportunidade.</p>}
-                  </div>
-                </section>;
+                      <div className="mt-2.5 flex items-center justify-between border-t border-black/[.06] pt-2">
+                        <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); void moverEtapa(item.id, WORKSPACE_ETAPAS[indice - 1].id); }} className="text-[11px] font-medium text-black/45 hover:text-black disabled:invisible">← Voltar</button>
+                        <button type="button" disabled={indice === WORKSPACE_ETAPAS.length - 1} onClick={event => { event.stopPropagation(); void moverEtapa(item.id, WORKSPACE_ETAPAS[indice + 1].id); }} className="text-[11px] font-medium text-[#5F4AA8] hover:underline disabled:invisible">Avançar →</button>
+                      </div>
+                    </KanbanCard>;
+                  })}
+                </KanbanColumn>;
               })}
-            </div>}
+            </KanbanBoard>}
             {aba === "historico" && <section className="overflow-hidden rounded border border-black/[.08] bg-white"><header className="border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Histórico</h2></header>
               {pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").length === 0 ? <p className="px-4 py-6 text-[12px] text-black/40">Nenhum registro.</p> : pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").map(p => <OportunidadeRow key={p.id} href={`/workspace-captador/${p.id}`} empresa={p.nome_busca} titulo={p.oportunidade_titulo || p.nome_busca} tipo={rotuloOportunidade(p)} site={p.empresa_site} trailing={<StatusPedidoBadge status={p.status}/>}/>)}
             </section>}
