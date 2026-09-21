@@ -2,18 +2,15 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Select } from "@/components/ui/Select";
 import { ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function CadastroPage() {
   const [fullName, setFullName] = useState("");
-  const [organizationName, setOrganizationName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmation, setConfirmation] = useState("");
-  const [whereFoundUs, setWhereFoundUs] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -42,8 +39,6 @@ export default function CadastroPage() {
         emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/confirmacao-email`,
         data: {
           full_name: fullName.trim(),
-          organization_name: organizationName.trim(),
-          onde_conheceu: whereFoundUs,
         },
       },
     });
@@ -88,7 +83,6 @@ export default function CadastroPage() {
       eyebrow="Comece com contexto, não do zero"
       title="Sua captação já nasce organizada."
       description="Crie seu workspace e conecte projetos, oportunidades, contatos e próximos passos desde o primeiro dia."
-      variant="editorial"
     >
       <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="mb-8 h-7 w-auto lg:hidden" />
 
@@ -106,29 +100,26 @@ export default function CadastroPage() {
           </section>
         ) : (
           <>
-            <a href="/login" className="mb-6 inline-flex items-center gap-1.5 text-xs text-black/40 transition hover:text-black">
+            <a href="/login" className="mb-4 inline-flex items-center gap-1.5 text-xs text-black/40 transition hover:text-black">
               <ArrowLeft size={13} /> Voltar ao login
             </a>
-            <p className="mb-3 text-[11px] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Crie seu workspace</p>
+            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Crie seu workspace</p>
             <h1 className="text-[clamp(2.15rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">Comece gratuitamente.</h1>
-            <p className="mb-6 mt-3 text-sm leading-6 text-black/50">Configure seu espaço e comece com o contexto organizado.</p>
+            <p className="mb-4 mt-2.5 text-sm leading-6 text-black/50">Configure seu espaço e comece com o contexto organizado.</p>
 
-            <button type="button" onClick={handleGoogle} disabled={loading} className="mb-5 flex w-full items-center justify-center gap-2.5 rounded-xl border border-black/12 bg-white py-3 text-sm font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.99] disabled:opacity-50">
+            <button type="button" onClick={handleGoogle} disabled={loading} className="mb-4 flex w-full items-center justify-center gap-2.5 rounded-xl border border-black/12 bg-white py-3 text-sm font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.99] disabled:opacity-50">
               <GoogleMark /> Cadastrar com Google
             </button>
 
-            <div className="mb-5 flex items-center gap-3" aria-hidden="true">
+            <div className="mb-4 flex items-center gap-3" aria-hidden="true">
               <span className="h-px flex-1 bg-black/8" />
               <span className="text-[11px] text-black/30">ou use seu e-mail</span>
               <span className="h-px flex-1 bg-black/8" />
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3.5">
+            <form onSubmit={handleSubmit} className="space-y-3">
               <Field label="Seu nome">
                 <input value={fullName} onChange={(event) => setFullName(event.target.value)} required autoComplete="name" placeholder="Nome e sobrenome" className={inputClass} />
-              </Field>
-              <Field label="Organização">
-                <input value={organizationName} onChange={(event) => setOrganizationName(event.target.value)} required autoComplete="organization" placeholder="Nome da empresa ou produtora" className={inputClass} />
               </Field>
               <Field label="E-mail">
                 <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} required autoComplete="email" placeholder="voce@empresa.com" className={inputClass} />
@@ -144,17 +135,6 @@ export default function CadastroPage() {
               <Field label="Confirmar senha">
                 <input type={showPassword ? "text" : "password"} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} required minLength={8} autoComplete="new-password" placeholder="Repita sua senha" className={inputClass} />
               </Field>
-              <Field label="Onde conheceu a gente?">
-                <Select value={whereFoundUs} onChange={(event) => setWhereFoundUs(event.target.value)} required className={inputClass}>
-                  <option value="" disabled>Selecione uma opção</option>
-                  <option value="indicacao">Indicação de alguém</option>
-                  <option value="google">Busca no Google</option>
-                  <option value="instagram">Instagram</option>
-                  <option value="linkedin">LinkedIn</option>
-                  <option value="evento">Evento ou encontro</option>
-                  <option value="outro">Outro lugar</option>
-                </Select>
-              </Field>
 
               {error && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-xs text-[#D94E4E]">{error}</p>}
 
@@ -163,16 +143,16 @@ export default function CadastroPage() {
               </button>
             </form>
 
-            <p className="mt-4 text-center text-[11px] text-black/40">Sem cartão. Seus dados ficam protegidos.</p>
+            <p className="mt-3 text-center text-[11px] text-black/40">Sem cartão. Seus dados ficam protegidos.</p>
 
-            <p className="mt-4 text-center text-[11px] leading-5 text-black/35">
+            <p className="mt-3 text-center text-[11px] leading-5 text-black/35">
               Ao criar uma conta, você concorda com os nossos{" "}
               <a href="/termos" className="text-black/45 underline hover:text-black/70">Termos de Uso</a>
               {" "}e a nossa{" "}
               <a href="/privacidade" className="text-black/45 underline hover:text-black/70">Política de Privacidade</a>.
             </p>
 
-            <p className="mt-3 text-center text-xs text-black/40">
+            <p className="mt-2.5 text-center text-xs text-black/40">
               Já possui uma conta? <a href="/login" className="font-semibold text-black hover:underline">Entrar</a>
             </p>
           </>
