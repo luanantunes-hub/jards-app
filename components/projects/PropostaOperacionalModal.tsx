@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { CotaPatrocinio, Proposta, StatusProposta } from "@/lib/supabase/types";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { formatCotaValor, valorForaDaFaixa } from "@/lib/cotas";
 
 type CaseOption = { id: string; titulo: string; complemento?: string | null };
 
@@ -166,9 +167,12 @@ export function PropostaOperacionalModal({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Cota-base</label><Dropdown value={cotaId} onChange={selectCota} options={[{ value: "", label: "Construir sem cota-base" }, ...cotas.map(item => ({ value: item.id, label: `${item.nome} · ${money(item.valor)}` }))]} /></div>
+            <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Cota-base</label><Dropdown value={cotaId} onChange={selectCota} options={[{ value: "", label: "Construir sem cota-base" }, ...cotas.map(item => ({ value: item.id, label: `${item.nome}${item.modelo === "produto" && item.produto_nome ? ` · ${item.produto_nome}` : ""} · ${formatCotaValor(item)}` }))]} /></div>
             <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Valor adaptado</label><div className="flex h-10 items-center rounded border border-black/[.12] px-3 focus-within:border-[#7259B5]/60"><span className="mr-2 text-[11px] text-black/30">R$</span><input inputMode="decimal" value={valor} onChange={event => setValor(event.target.value)} className="min-w-0 flex-1 bg-transparent text-[13px] outline-none" /></div></div>
           </div>
+          {cotaBase && valorForaDaFaixa(cotaBase, numericValue) && (
+            <p className="text-[11px] text-[#B07A14]">O valor está fora da faixa de {formatCotaValor(cotaBase)}. Confira se outra cota é mais adequada; você ainda pode salvar esta proposta.</p>
+          )}
 
           <div>
             <div className="mb-2 flex items-center justify-between"><label className="text-[11px] font-semibold text-black/55">Contrapartidas adaptadas</label><button type="button" onClick={() => setContrapartidas(items => [...items, ""])} className="flex items-center gap-1 text-[11px] font-semibold text-[#7259B5]"><Plus size={11} /> Adicionar</button></div>

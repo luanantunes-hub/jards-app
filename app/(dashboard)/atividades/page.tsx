@@ -1,6 +1,5 @@
 "use client";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Plus, Mail, Phone, Users, Calendar, MoreHorizontal, CheckSquare,
@@ -12,11 +11,13 @@ import { createClient } from "@/lib/supabase/client";
 import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { EditarAtividadeModal } from "@/components/modals/EditarAtividadeModal";
 import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeModal";
+import { GerenciarFollowupModal } from "@/components/modals/GerenciarFollowupModal";
 import PrioBadge from "@/components/ui/PrioBadge";
 import type { TipoAtividade, Prioridade } from "@/lib/supabase/types";
 import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
+import { followupSourceLink } from "@/lib/activities/followupSourceLink";
 
 const ATIVIDADES_COLUMNS = [
   { id: "concluida", label: "Concluída", width: "105px" }, { id: "atividade", label: "Atividade", width: "280px", hideable: false }, { id: "negociacao", label: "Negociação", width: "190px" }, { id: "empresa", label: "Empresa / contato", width: "220px" }, { id: "prazo", label: "Prazo", width: "120px" }, { id: "duracao", label: "Duração", width: "105px" }, { id: "prioridade", label: "Prioridade", width: "115px" }, { id: "responsavel", label: "Responsável", width: "170px" }, { id: "resultado", label: "Resultado", width: "150px" }, { id: "projeto", label: "Projeto", width: "180px" }, { id: "observacao", label: "Observação", width: "230px" },
@@ -56,6 +57,7 @@ type AtividadeRow = {
   source_kind?: "atividade" | "followup" | "workspace";
   source_id?: string;
   source_link?: string;
+  source_status?: "pendente" | "concluido" | "cancelado";
 };
 
 type Tab        = "pendentes" | "historico";
@@ -138,7 +140,7 @@ function followupsToActivities(rows: any[]): AtividadeRow[] {
     captacao_id: row.captacao_id,
     projeto: null,
     captador: null,
-    proponente: null,
+    proponente: row.proponente,
     captacao: row.captacao,
     contato: row.contato ? { ...row.contato, email: null, telefone: null } : null,
     responsavel_id: row.responsavel_id,
@@ -149,13 +151,8 @@ function followupsToActivities(rows: any[]): AtividadeRow[] {
     } : null,
     source_kind: "followup" as const,
     source_id: row.id,
-    source_link: row.captacao_id
-      ? `/captacoes/${row.captacao_id}?tab=relacionamento`
-      : row.conta_patrocinio_id
-        ? `/contas-patrocinio/${row.conta_patrocinio_id}?tab=relationship`
-        : row.empresa_crm_id
-          ? `/empresas-crm/${row.empresa_crm_id}?tab=relationship`
-          : "/atividades",
+    source_status: row.status,
+    source_link: followupSourceLink(row),
   }));
 }
 
@@ -1169,9 +1166,11 @@ const SELECT_FIELDS = `
 
 const FOLLOWUP_SELECT_FIELDS = `
   id, titulo, motivo, canal, previsto_para, concluido_em, resultado, status,
-  responsavel_id, captacao_id, empresa_crm_id, conta_patrocinio_id,
+  responsavel_id, captacao_id, empresa_crm_id, conta_patrocinio_id, proponente_id,
   responsavel:profiles!responsavel_id(id, full_name, avatar_url),
   empresa_crm:empresas_crm!empresa_crm_id(nome),
+  conta_patrocinio:contas_patrocinio!conta_patrocinio_id(nome),
+  proponente:proponentes!proponente_id(nome),
   captacao:captacoes!captacao_id(titulo, projeto:projetos_crm!projeto_id(nome), empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_id(nome)),
   contato:contatos!contato_id(nome)
 `;
@@ -1182,8 +1181,8 @@ const WORKSPACE_SELECT_FIELDS = `
 `;
 
 export default function AtividadesPage() {
-  const supabase = createClient();
   const router = useRouter();
+  const supabase = createClient();
 
   const [atividades,    setAtividades]       = useState<AtividadeRow[]>([]);
   const [allAtividades, setAllAtividades]    = useState<AtividadeRow[]>([]);
@@ -1200,6 +1199,7 @@ export default function AtividadesPage() {
   const [savingActivityId, setSavingActivityId] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState<string | null>(null);
   const [completingActivity, setCompletingActivity] = useState<AtividadeRow | null>(null);
+  const [managingFollowup, setManagingFollowup] = useState<AtividadeRow | null>(null);
 
   /* ── Lista fetch ── */
   const fetchData = useCallback(async () => {
@@ -1251,8 +1251,12 @@ export default function AtividadesPage() {
   async function toggleFeita(id: string, current: boolean) {
     if (savingActivityId) return;
     const agendaItem = [...atividades, ...allAtividades].find(item => item.id === id);
-    if (agendaItem?.source_kind === "followup" || agendaItem?.source_kind === "workspace") {
+    if (agendaItem?.source_kind === "workspace") {
       if (agendaItem.source_link) router.push(agendaItem.source_link);
+      return;
+    }
+    if (agendaItem?.source_kind === "followup") {
+      setManagingFollowup(agendaItem);
       return;
     }
     if (!current) {
@@ -1362,8 +1366,12 @@ export default function AtividadesPage() {
 
   function openAgendaItem(id: string) {
     const item = [...atividades, ...allAtividades].find(candidate => candidate.id === id);
-    if (item?.source_kind === "followup" || item?.source_kind === "workspace") {
+    if (item?.source_kind === "workspace") {
       if (item.source_link) router.push(item.source_link);
+      return;
+    }
+    if (item?.source_kind === "followup") {
+      setManagingFollowup(item);
       return;
     }
     setEditingId(id);
@@ -1414,6 +1422,23 @@ export default function AtividadesPage() {
             setAtividades(previous => previous.filter(item => item.id !== completingActivity.id));
             setAllAtividades(previous => previous.map(item => item.id === completingActivity.id ? { ...item, ...persisted } : item));
             setCompletingActivity(null);
+            void fetchData();
+            if (viewMode !== "lista") void fetchAll();
+          }}
+        />
+      )}
+      {managingFollowup?.source_id && (
+        <GerenciarFollowupModal
+          followup={{
+            id: managingFollowup.source_id,
+            titulo: managingFollowup.nome,
+            status: managingFollowup.source_status ?? "pendente",
+            previstoPara: managingFollowup.data_prevista,
+            sourceLink: managingFollowup.source_link,
+          }}
+          onClose={() => setManagingFollowup(null)}
+          onChanged={() => {
+            setManagingFollowup(null);
             void fetchData();
             if (viewMode !== "lista") void fetchAll();
           }}

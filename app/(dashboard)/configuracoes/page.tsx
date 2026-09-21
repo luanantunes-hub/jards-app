@@ -732,7 +732,7 @@ const { data: perfilData } = await (supabase as any)
                     background: config?.visibilidade_captacoes === "admin_only" ? "rgba(114,89,181,0.04)" : "white",
                   }}
                 >
-                  <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(220,38,38,0.08)" }}>
+                  <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#D94E4E66" }}>
                     <EyeOff size={14} style={{ color: "#D94E4E" }} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -753,7 +753,7 @@ const { data: perfilData } = await (supabase as any)
                     background: config?.visibilidade_captacoes === "team_shared" ? "rgba(114,89,181,0.04)" : "white",
                   }}
                 >
-                  <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(16,185,129,0.08)" }}>
+                  <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#1A8B7A66" }}>
                     <Eye size={14} style={{ color: "#1A8B7A" }} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -780,7 +780,7 @@ const { data: perfilData } = await (supabase as any)
                     background: config?.acesso_contatos === "admin_only" ? "rgba(114,89,181,0.04)" : "white",
                   }}
                 >
-                  <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(220,38,38,0.08)" }}>
+                  <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#D94E4E66" }}>
                     <Shield size={14} style={{ color: "#D94E4E" }} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -801,7 +801,7 @@ const { data: perfilData } = await (supabase as any)
                     background: config?.acesso_contatos === "team_with_credits" ? "rgba(114,89,181,0.04)" : "white",
                   }}
                 >
-                  <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(114,89,181,0.08)" }}>
+                  <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#7259B566" }}>
                     <CreditCard size={14} style={{ color: "#7259B5" }} />
                   </div>
                   <div className="flex-1 min-w-0">
@@ -965,10 +965,10 @@ const { data: perfilData } = await (supabase as any)
           <p className="mb-4 text-[11px] text-black/45">Essas etiquetas são os tipos exibidos no workspace. Você pode renomear, excluir ou criar outros.</p>
           <OpportunityLabelsConfig />
         </div>
-        {organizationId && <div><div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded bg-black/[.045]"><Handshake size={14} className="text-black/45"/></div><p className="text-[13px] font-bold text-black">Renovação de clientes</p></div><RenewalDecisionTreeConfig organizationId={organizationId}/></div>}
+        {organizationId && <div><div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded border border-black/20 bg-transparent"><Handshake size={14} className="text-black/55"/></div><p className="text-[13px] font-bold text-black">Renovação de clientes</p></div><RenewalDecisionTreeConfig organizationId={organizationId}/></div>}
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(26,139,122,0.08)" }}>
+            <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#1A8B7A66" }}>
               <MessageSquare size={14} style={{ color: "#1A8B7A" }} />
             </div>
             <p className="text-[13px] font-bold text-black">Canais e origem comercial</p>
@@ -978,7 +978,7 @@ const { data: perfilData } = await (supabase as any)
 
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(114,89,181,0.08)" }}>
+            <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#7259B566" }}>
               <Handshake size={14} style={{ color: "#7259B5" }} />
             </div>
             <p className="text-[13px] font-bold text-black">Funil de negociações</p>
@@ -988,7 +988,7 @@ const { data: perfilData } = await (supabase as any)
 
         <div>
           <div className="flex items-center gap-2 mb-4">
-            <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(45,114,176,0.08)" }}>
+            <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#2D72B066" }}>
               <FileCheck size={14} style={{ color: "#2D72B0" }} />
             </div>
             <p className="text-[13px] font-bold text-black">Funil de inscrições</p>
@@ -998,8 +998,8 @@ const { data: perfilData } = await (supabase as any)
 
         <div>
           <div className="mb-4 flex items-center gap-2">
-            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-black/[.045]">
-              <Building2 size={14} className="text-black/45" />
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-black/20 bg-transparent">
+              <Building2 size={14} className="text-black/55" />
             </div>
             <div>
               <p className="text-[13px] font-bold text-black">Tipos de proponente</p>

@@ -116,8 +116,8 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
       {/* Ícone */}
       <div className="relative flex-shrink-0" ref={iconBoxRef}>
         <button onClick={() => setShowIconPicker(v => !v)}
-          className="w-7 h-7 rounded flex items-center justify-center transition"
-          style={{ background: `${etiqueta.cor}18`, color: etiqueta.cor }}>
+          className="w-7 h-7 rounded border bg-transparent flex items-center justify-center transition"
+          style={{ borderColor: `${etiqueta.cor}66`, color: etiqueta.cor }}>
           {Icon ? <Icon size={14} strokeWidth={2.5} /> : <span className="text-[10px]">?</span>}
         </button>
         {showIconPicker && (
@@ -168,10 +168,15 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
   const etiquetas = entidade === "inscricao" ? etiquetasInscricao : entidade === "proponente" ? etiquetasProponente : etiquetasCaptacao;
   const [criando, setCriando] = useState(false);
   const [novaLabel, setNovaLabel] = useState("");
+  const [etapaParaExcluir, setEtapaParaExcluir] = useState<Etiqueta | null>(null);
+  const [destinoKey, setDestinoKey] = useState("");
+  const [excluindo, setExcluindo] = useState(false);
+  const [erro, setErro] = useState("");
 
   async function handleUpdate(id: string, patch: Partial<Etiqueta>) {
     if (!organizationId) return;
-    const isVirtualDefault = id.startsWith("default-inscricao-") || id.startsWith("default-proponente-");
+    const isVirtualDefault = id.startsWith("default-inscricao-") || id.startsWith("default-proponente-") || id.startsWith("default-captacao-");
+    let error: { message: string } | null = null;
     if (isVirtualDefault) {
       const padrao = etiquetas.find((item) => item.id === id);
       if (!padrao) return;
@@ -183,9 +188,9 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
         .eq("key", padrao.key)
         .maybeSingle();
       if (existente?.id) {
-        await (supabase as any).from("etiquetas").update(patch).eq("id", existente.id);
+        ({ error } = await (supabase as any).from("etiquetas").update(patch).eq("id", existente.id));
       } else {
-        await (supabase as any).from("etiquetas").insert({
+        ({ error } = await (supabase as any).from("etiquetas").insert({
           organization_id: organizationId,
           entidade,
           key: padrao.key,
@@ -193,37 +198,74 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
           cor: padrao.cor,
           icone: padrao.icone,
           ordem: padrao.ordem,
-          deletavel: false,
+          deletavel: true,
           ...patch,
-        });
+        }));
       }
     } else {
-      await (supabase as any).from("etiquetas").update(patch).eq("id", id);
+      ({ error } = await (supabase as any).from("etiquetas").update(patch).eq("id", id));
     }
-    recarregar();
+    setErro(error?.message ?? "");
+    await recarregar();
   }
 
   async function handleDelete(id: string) {
     const etiqueta = etiquetas.find(item => item.id === id);
     if (!etiqueta) return;
+    if (entidade !== "proponente") {
+      if (etiquetas.length < 2) {
+        setErro("O funil precisa manter ao menos uma etapa.");
+        return;
+      }
+      setErro("");
+      setDestinoKey(etiquetas.find(item => item.key !== etiqueta.key)?.key ?? "");
+      setEtapaParaExcluir(etiqueta);
+      return;
+    }
     confirmDelete({
       title: `Excluir a etiqueta “${etiqueta.label}”?`,
-      description: entidade === "proponente" ? "Os proponentes que usam essa etiqueta ficarão sem tipo." : "Os registros que usam esta etiqueta poderão ficar sem classificação.",
+      description: "Os proponentes que usam essa etiqueta ficarão sem tipo.",
       onConfirm: async () => {
-        if (entidade === "proponente" && organizationId) {
-          await (supabase as any).from("proponentes").update({ tipo: null }).eq("organization_id", organizationId).eq("tipo", etiqueta.key);
+        if (!organizationId) return;
+        const { error } = await (supabase as any).rpc("remover_tipo_proponente", {
+          p_organization_id: organizationId,
+          p_source_key: etiqueta.key,
+        });
+        if (error) {
+          setErro(error.message || "Não foi possível excluir a etiqueta.");
+          return;
         }
-        await (supabase as any).from("etiquetas").delete().eq("id", id);
+        setErro("");
         await recarregar();
       },
     });
+  }
+
+  async function confirmarExclusaoEtapa() {
+    if (!etapaParaExcluir || !organizationId || !destinoKey) return;
+    setExcluindo(true);
+    setErro("");
+    const { error } = await (supabase as any).rpc("remover_etapa_funil", {
+      p_organization_id: organizationId,
+      p_entidade: entidade,
+      p_source_key: etapaParaExcluir.key,
+      p_target_key: destinoKey,
+    });
+    setExcluindo(false);
+    if (error) {
+      setErro(error.message || "Não foi possível excluir a etapa.");
+      return;
+    }
+    setEtapaParaExcluir(null);
+    setDestinoKey("");
+    await recarregar();
   }
 
   async function handleCriar() {
     if (!novaLabel.trim() || !organizationId) return;
     setCriando(true);
     const maxOrdem = etiquetas.length > 0 ? Math.max(...etiquetas.map(e => e.ordem)) + 1 : 1;
-    await (supabase as any).from("etiquetas").insert({
+    const { error } = await (supabase as any).from("etiquetas").insert({
       organization_id: organizationId,
       entidade,
       key: `custom_${Date.now()}`,
@@ -233,9 +275,14 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
       ordem: maxOrdem,
       deletavel: true,
     });
-    setNovaLabel("");
     setCriando(false);
-    recarregar();
+    if (error) {
+      setErro(error.message || "Não foi possível criar a etapa.");
+      return;
+    }
+    setErro("");
+    setNovaLabel("");
+    await recarregar();
   }
 
   return (
@@ -246,7 +293,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
         ))}
 
         {/* Nova etiqueta */}
-        {(entidade === "captacao" || entidade === "proponente") && (
+        {(entidade === "captacao" || entidade === "inscricao" || entidade === "proponente") && (
         <div className="flex items-center gap-2 px-4 py-2.5 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <Plus size={13} className="text-black/30 flex-shrink-0" />
           <input
@@ -265,6 +312,25 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
         </div>
         )}
       </div>
+      {erro && <p role="alert" className="mt-2 text-[12px] text-red-600">{erro}</p>}
+      {etapaParaExcluir && (
+        <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/45 p-4" onClick={() => !excluindo && setEtapaParaExcluir(null)}>
+          <div role="dialog" aria-modal="true" aria-labelledby="excluir-etapa-titulo" className="w-full max-w-md rounded bg-white p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
+            <h2 id="excluir-etapa-titulo" className="text-[17px] font-bold text-black">Excluir “{etapaParaExcluir.label}”?</h2>
+            <p className="mt-2 text-[13px] leading-relaxed text-black/55">Os registros nesta etapa serão transferidos para a etapa escolhida antes da exclusão.</p>
+            <p className="mt-2 text-[12px] text-black/40">Essa mudança também pode alterar indicadores que dependem do status dos registros.</p>
+            <label htmlFor="destino-etapa" className="mt-5 block text-[12px] font-semibold text-black/70">Mover registros para</label>
+            <select id="destino-etapa" value={destinoKey} onChange={event => setDestinoKey(event.target.value)} className="mt-2 w-full rounded border border-black/15 bg-white px-3 py-2 text-[13px] text-black">
+              {etiquetas.filter(item => item.key !== etapaParaExcluir.key).map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
+            </select>
+            {erro && <p role="alert" className="mt-3 text-[12px] text-red-600">{erro}</p>}
+            <div className="mt-6 flex justify-end gap-3">
+              <button type="button" disabled={excluindo} onClick={() => setEtapaParaExcluir(null)} className="rounded px-4 py-2 text-[12px] font-semibold text-black/55 hover:bg-black/5">Cancelar</button>
+              <button type="button" disabled={excluindo || !destinoKey} onClick={confirmarExclusaoEtapa} className="rounded bg-red-600 px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50">{excluindo ? "Excluindo…" : "Mover e excluir"}</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

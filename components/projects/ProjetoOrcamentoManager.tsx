@@ -250,6 +250,7 @@ export function ProjetoOrcamentoManager({
     const pct = valorTotal && valorTotal > 0 ? cota.valor / valorTotal : 0;
     return { ...cota, pct };
   });
+  const haCotaFlexivel = cotas.some(cota => cota.valor_maximo != null || cota.unidades_ilimitadas || cota.modelo === "produto");
   const activeCota = cotaFilter ? cotaData.find(c => c.id === cotaFilter) : null;
 
   if (loading) return <div className="h-40 animate-pulse rounded bg-black/[.03]" />;
@@ -319,6 +320,8 @@ export function ProjetoOrcamentoManager({
         )}
       </div>
 
+      {haCotaFlexivel && <p className="text-[11px] text-black/40">O rateio por cota é uma simulação individual pelo valor de referência mínimo. Cotas por nível e por produto podem coexistir; seus valores não devem ser somados como receita projetada.</p>}
+
       {erro && <p className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.04] px-3 py-2 text-[11px] text-[#991B1B]">{erro}</p>}
 
       {/* Cabeçalho do filtro ativo */}
@@ -327,7 +330,7 @@ export function ProjetoOrcamentoManager({
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[.12em] text-[#7259B5]">{activeCota.nome}</p>
             <p className="mt-0.5 text-[12px] text-black/50">
-              {(activeCota.pct * 100).toFixed(1)}% do projeto · <span className="font-semibold">{fmt(activeCota.valor)}</span> por unidade
+              {(activeCota.pct * 100).toFixed(1)}% do projeto · <span className="font-semibold">{fmt(activeCota.valor)}</span> de referência por unidade
             </p>
           </div>
           <p className="text-[12px] font-bold tabular-nums text-[#7259B5]">{fmt(total * activeCota.pct)} nesta cota</p>

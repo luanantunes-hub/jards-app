@@ -1,9 +1,10 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Users, Newspaper, Inbox, ClipboardList, ChevronLeft } from "lucide-react";
+import { LayoutDashboard, Building2, Users, Newspaper, Inbox, ClipboardList, ChevronLeft } from "lucide-react";
 
 const NAV = [
+  { href: "/admin/dashboard",      label: "Dashboard",      icon: LayoutDashboard },
   { href: "/admin/patrocinadores", label: "Patrocinadores", icon: Building2 },
   { href: "/admin/usuarios",       label: "Usuários",       icon: Users      },
   { href: "/admin/blog",           label: "Blog",           icon: Newspaper  },

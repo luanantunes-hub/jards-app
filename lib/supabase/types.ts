@@ -266,9 +266,13 @@ export interface CotaPatrocinio {
   organization_id: string;
   nome: string;
   valor: number;
+  valor_maximo: number | null;
+  modelo: "nivel" | "produto";
+  produto_nome: string | null;
   contrapartidas: string[];
   ordem: number;
   unidades: number;
+  unidades_ilimitadas: boolean;
   unidades_vendidas: number;
   status: StatusCotaPatrocinio;
   captacao_id: string | null;

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ExternalLink, Layers, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CotaPatrocinio } from "@/lib/supabase/types";
+import { formatCotaValor } from "@/lib/cotas";
 import { PropostaOperacionalModal } from "@/components/projects/PropostaOperacionalModal";
 
 const STATUS_META: Record<CotaPatrocinio["status"], { label: string; color: string }> = {
@@ -11,10 +12,6 @@ const STATUS_META: Record<CotaPatrocinio["status"], { label: string; color: stri
   reservada: { label: "Reservada", color: "#B07A14" },
   vendida: { label: "Vendida", color: "#2E8932" },
 };
-
-function formatCurrency(value: number) {
-  return value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-}
 
 export function CotasReferenceTab({
   projetoId,
@@ -111,11 +108,13 @@ export function CotasReferenceTab({
                         </span>
                       )}
                     </div>
+                    {cota.modelo === "produto" && cota.produto_nome && <p className="mt-1 text-[11px] text-[#7259B5]">Produto: {cota.produto_nome}</p>}
+                    <p className="mt-1 text-[10px] text-black/35">{cota.unidades_ilimitadas ? `Ilimitada · ${cota.unidades_vendidas} vendida(s)` : `${Math.max(0, cota.unidades - cota.unidades_vendidas)} disponível(is) de ${cota.unidades}`}</p>
                     {cota.contrapartidas.length > 0 && (
                       <p className="mt-2 text-[11px] leading-relaxed text-black/40">{cota.contrapartidas.join(" · ")}</p>
                     )}
                   </div>
-                  <span className="shrink-0 text-[13px] font-semibold text-black/65">{formatCurrency(cota.valor)}</span>
+                  <span className="shrink-0 text-[13px] font-semibold text-black/65">{formatCotaValor(cota)}</span>
                 </div>
               </div>
             );

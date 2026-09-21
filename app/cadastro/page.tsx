@@ -90,7 +90,7 @@ export default function CadastroPage() {
       description="Crie seu workspace e conecte projetos, oportunidades, contatos e próximos passos desde o primeiro dia."
       variant="editorial"
     >
-      <Image src="/jards_logo-2.svg" alt="Jards" width={96} height={28} priority className="mb-8 h-7 w-auto lg:hidden" />
+      <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="mb-8 h-7 w-auto lg:hidden" />
 
         {sent ? (
           <section className="py-5 text-center">

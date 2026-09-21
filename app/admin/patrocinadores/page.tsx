@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, Building2, Check, X } from "lucide-react";
+import { Search, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
 
@@ -18,44 +18,59 @@ type Empresa = {
   aporte_estimado: number | null;
 };
 
+const PAGE_SIZE = 50;
+
+function escapeOrTerm(value: string) {
+  return value.replace(/[%,()]/g, "");
+}
+
 export default function AdminPatrocinadoresPage() {
   const router   = useRouter();
   const supabase = createClient();
   const [empresas, setEmpresas]   = useState<Empresa[]>([]);
+  const [total, setTotal]         = useState(0);
   const [loading, setLoading]     = useState(true);
   const [search, setSearch]       = useState("");
+  const [page, setPage]           = useState(0);
 
   useEffect(() => {
-    async function load() {
-      const { data } = await (supabase as any)
-        .from("empresas")
-        .select("id, nome, setor, cidade, estado, email_geral, telefone, logo_url, tem_detalhe, aporte_estimado")
-        .order("nome");
-      setEmpresas(data ?? []);
-      setLoading(false);
-    }
-    load();
-  }, []);
+    const handle = setTimeout(() => {
+      async function load() {
+        setLoading(true);
+        let query = (supabase as any)
+          .from("empresas")
+          .select("id, nome, setor, cidade, estado, email_geral, telefone, logo_url, tem_detalhe, aporte_estimado", { count: "exact" })
+          .order("nome")
+          .range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+        const term = escapeOrTerm(search.trim());
+        if (term) query = query.or(`nome.ilike.%${term}%,setor.ilike.%${term}%`);
+        const { data, count } = await query;
+        setEmpresas(data ?? []);
+        setTotal(count ?? 0);
+        setLoading(false);
+      }
+      load();
+    }, 250);
+    return () => clearTimeout(handle);
+  }, [page, search]);
 
-  const filtered = empresas.filter((e) =>
-    !search || e.nome?.toLowerCase().includes(search.toLowerCase()) ||
-    e.setor?.toLowerCase().includes(search.toLowerCase())
-  );
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-5 h-5 rounded-full border-2 border-[#7259B5] border-t-transparent animate-spin" />
-      </div>
-    );
+  function handleSearchChange(value: string) {
+    setSearch(value);
+    setPage(0);
   }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const rangeStart = total === 0 ? 0 : page * PAGE_SIZE + 1;
+  const rangeEnd = Math.min(total, page * PAGE_SIZE + PAGE_SIZE);
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-xl font-bold text-[#0D0D0D]">Patrocinadores</h1>
-          <p className="text-sm text-black/40 mt-0.5">{empresas.length} empresas cadastradas</p>
+          <p className="text-sm text-black/40 mt-0.5">
+            {total} {search.trim() ? "empresas encontradas" : "empresas cadastradas"}
+          </p>
         </div>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/30" />
@@ -64,7 +79,7 @@ export default function AdminPatrocinadoresPage() {
             style={{ border: "1px solid rgba(13,13,13,.10)", width: 220 }}
             placeholder="Buscar empresa…"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
           />
         </div>
       </div>
@@ -81,7 +96,7 @@ export default function AdminPatrocinadoresPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((e, i) => (
+            {empresas.map((e, i) => (
               <tr
                 key={e.id}
                 onClick={() => router.push(`/admin/patrocinadores/${e.id}`)}
@@ -110,10 +125,42 @@ export default function AdminPatrocinadoresPage() {
             ))}
           </tbody>
         </table>
-        {filtered.length === 0 && (
+        {!loading && empresas.length === 0 && (
           <div className="py-16 text-center text-sm text-black/35">Nenhum resultado</div>
         )}
+        {loading && (
+          <div className="py-16 text-center">
+            <div className="w-5 h-5 rounded-full border-2 border-[#7259B5] border-t-transparent animate-spin mx-auto" />
+          </div>
+        )}
       </div>
+
+      {!loading && total > 0 && (
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-black/40">
+            {rangeStart}–{rangeEnd} de {total}
+          </p>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+              className="flex items-center gap-1 px-3 py-1.5 rounded text-sm transition disabled:opacity-30"
+              style={{ border: "1px solid rgba(13,13,13,.10)" }}
+            >
+              <ChevronLeft size={14} /> Anterior
+            </button>
+            <span className="text-xs text-black/45 px-2">Página {page + 1} de {totalPages}</span>
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+              className="flex items-center gap-1 px-3 py-1.5 rounded text-sm transition disabled:opacity-30"
+              style={{ border: "1px solid rgba(13,13,13,.10)" }}
+            >
+              Próxima <ChevronRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

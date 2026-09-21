@@ -4,6 +4,7 @@ import { X, FileText, Eye, Copy, ExternalLink, Archive, Trash2 } from "lucide-re
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { Proposta, SlideCapa, SlideHistoria, SlideNumeros, SlideContato, CotaPatrocinio } from "@/lib/supabase/types";
+import { formatCotaValor, cotaTemDisponibilidade } from "@/lib/cotas";
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   rascunho:     { label: "Rascunho",   color: "rgba(13,13,13,.40)" },
@@ -371,11 +372,11 @@ export function PropostaWizard({
                 <div className="mt-4 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                   <p className="text-[10px] font-bold uppercase tracking-[.13em] text-black/30 mb-3">Cotas disponíveis</p>
                   <div className="space-y-2">
-                    {cotas.filter(c => c.status === "disponivel").map(c => (
+                    {cotas.filter(cotaTemDisponibilidade).map(c => (
                       <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded bg-black/[0.02]">
-                        <span className="text-[12px] font-semibold text-black">{c.nome}</span>
+                        <span className="text-[12px] font-semibold text-black">{c.nome}{c.modelo === "produto" && c.produto_nome ? ` · ${c.produto_nome}` : ""}</span>
                         <span className="text-[12px] font-bold text-[#7259B5]">
-                          R$ {c.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                          {formatCotaValor(c)}
                         </span>
                       </div>
                     ))}

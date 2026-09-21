@@ -25,7 +25,7 @@ export function AuthShell({ children, eyebrow, title, description, variant = "de
           </div>
         )}
 
-        <Image src="/jards_logo-2.svg" alt="Jards" width={104} height={30} priority className="relative z-10 h-7 w-auto" />
+        <Image src="/jards-logo.svg" alt="Jards" width={94} height={30} priority className="relative z-10 h-7 w-auto" />
 
         <div className="relative z-10 max-w-[42rem] py-12">
           <p className="mb-5 text-[11px] font-semibold uppercase tracking-[.14em] text-black/40">{eyebrow}</p>

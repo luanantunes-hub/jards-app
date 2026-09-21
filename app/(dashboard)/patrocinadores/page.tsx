@@ -24,6 +24,191 @@ import { PesquisaEmpresaModal } from "@/components/modals/PesquisaEmpresaModal";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
 import { useCreditos } from "@/contexts/CreditosContext";
 
+type Lei = "esporte" | "ancine";
+
+type EmpresaLei = {
+  empresa_id: string;
+  valor: number;
+  empresas: {
+    nome: string;
+    logo_url: string | null;
+    site: string | null;
+    setor: string | null;
+    cidade: string | null;
+    estado: string | null;
+  } | null;
+};
+
+function LeiTabContent({ lei }: { lei: Lei }) {
+  const router = useRouter();
+  const supabase = createClient();
+  const [linhas, setLinhas] = useState<EmpresaLei[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [total, setTotal] = useState(0);
+
+  const [search, setSearch] = useState("");
+  const [dSearch, setDSearch] = useState("");
+  const [estado, setEstado] = useState("");
+  const [setor, setSetor] = useState("");
+  const [setores, setSetores] = useState<string[]>([]);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDSearch(search), 300);
+    return () => clearTimeout(t);
+  }, [search]);
+
+  useEffect(() => {
+    supabase.from("empresas").select("setor").not("setor", "is", null).then(({ data }) => {
+      if (data) setSetores([...new Set((data as { setor: string | null }[]).map((r) => r.setor).filter((s): s is string => !!s))].sort());
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => { setPage(0); }, [lei, dSearch, estado, setor]);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      setLoading(true);
+      let q = supabase
+        .from("investimentos_por_lei")
+        .select("empresa_id, valor, empresas!inner(nome, logo_url, site, setor, cidade, estado)", { count: "exact" })
+        .eq("lei", lei)
+        .eq("ano", 2025);
+
+      const s = dSearch.trim();
+      if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`, { foreignTable: "empresas" });
+      if (estado) q = q.eq("empresas.estado", estado);
+      if (setor) q = q.eq("empresas.setor", setor);
+
+      const { data, count } = await q
+        .order("valor", { ascending: false })
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+      if (cancelled) return;
+      setLinhas((data ?? []) as any);
+      setTotal(count ?? 0);
+      setLoading(false);
+    }
+    void load();
+    return () => { cancelled = true; };
+  }, [lei, page, dSearch, estado, setor]);
+
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const hasFilters = !!(search || estado || setor);
+
+  return (
+    <div className="px-8 pb-8">
+      <div className="flex flex-wrap items-center gap-2 mb-5">
+        <div className="relative flex-1 min-w-[200px] max-w-[280px]">
+          <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar empresa, setor, cidade…"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
+            style={{ borderColor: "rgba(13,13,13,.12)" }}
+          />
+        </div>
+        <CustomDropdown
+          value={estado}
+          onChange={setEstado}
+          options={ESTADOS_BR.map((uf) => ({ value: uf, label: uf }))}
+          placeholder="Estado"
+          icon={<MapPin size={13} />}
+          compact
+          emphasized={false}
+        />
+        <CustomDropdown
+          value={setor}
+          onChange={setSetor}
+          options={setores.map((s) => ({ value: s, label: s }))}
+          placeholder="Setor"
+          icon={<Buildings size={13} />}
+          compact
+          emphasized={false}
+        />
+        {hasFilters && (
+          <FilterButton onClick={() => { setSearch(""); setEstado(""); setSetor(""); }}>
+            <X size={12} />
+            Limpar
+          </FilterButton>
+        )}
+      </div>
+
+      <div className="bg-white overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr style={{ background: "#F9F9F8" }}>
+                {[
+                  { label: "Logo", icon: <ImageIcon size={11} weight="bold" /> },
+                  { label: "Empresa", icon: <Buildings size={11} weight="bold" /> },
+                  { label: "Ver", icon: <Crosshair size={11} weight="bold" /> },
+                  { label: "Setor", icon: <Tag size={11} weight="bold" /> },
+                  { label: "Estado", icon: <MapPin size={11} weight="bold" /> },
+                  { label: "Cidade", icon: <House size={11} weight="bold" /> },
+                  { label: "Investimento", icon: <ChartBar size={11} weight="bold" /> },
+                ].map(({ label, icon }) => (
+                  <th key={label} className="px-4 py-3 text-left">
+                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
+                      <span className="text-black/30">{icon}</span>
+                      {label}
+                    </span>
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 10 }).map((_, i) => (
+                  <tr key={i}>
+                    <td className="px-4 py-3" colSpan={7}><div className="h-6 bg-black/8 rounded animate-pulse" /></td>
+                  </tr>
+                ))
+              ) : linhas.length === 0 ? (
+                <tr><td colSpan={7} className="px-4 py-20 text-center text-sm text-black/35">Nenhuma empresa encontrada.</td></tr>
+              ) : (
+                linhas.map((l) => (
+                  <tr
+                    key={l.empresa_id}
+                    className="hover:bg-black/[0.025] transition-colors cursor-pointer group"
+                    onClick={() => router.push(`/patrocinadores/${l.empresa_id}?lei=${lei}`)}
+                  >
+                    <td className="px-4 py-3">
+                      <CompanyLogo nome={l.empresas?.nome ?? ""} site={l.empresas?.site} logo_url={l.empresas?.logo_url} size={32} className="rounded border border-black/8" />
+                    </td>
+                    <td className="px-4 py-3"><span className="font-semibold text-[#0D0D0D] text-[13px]">{l.empresas?.nome}</span></td>
+                    <td className="px-4 py-3">
+                      <button
+                        className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150
+                          text-black/25 bg-transparent
+                          group-hover:bg-[#F2F2F2] group-hover:text-[#684DB0]"
+                        onClick={(ev) => {
+                          ev.stopPropagation();
+                          router.push(`/patrocinadores/${l.empresa_id}?lei=${lei}`);
+                        }}
+                        title="Ver perfil"
+                      >
+                        <Crosshair size={14} weight="bold" />
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-black/50 text-[12.5px]">{l.empresas?.setor ?? "—"}</td>
+                    <td className="px-4 py-3 text-black/50 text-[12.5px] font-medium">{l.empresas?.estado ?? "—"}</td>
+                    <td className="px-4 py-3 text-black/50 text-[12.5px]">{l.empresas?.cidade ?? "—"}</td>
+                    <td className="px-4 py-3"><span className="font-bold text-[#0D0D0D] text-[13px] tabular-nums">{fmt(l.valor)}</span></td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+        {!loading && <Pagination page={page} totalPages={totalPages} onChange={setPage} />}
+      </div>
+    </div>
+  );
+}
+
 const PAGE_SIZE = 25;
 
 const ESTADOS_BR = [
@@ -340,14 +525,7 @@ function PatrocinadoresContent() {
   ];
 
   return (
-    <div className="px-8 py-8 min-h-full" style={{ background: "#F2F2F2" }} ref={topRef}>
-      {/* Header */}
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <h1 className="font-bold text-[#0D0D0D] text-[28px]">Encontrar patrocinadores</h1>
-        </div>
-      </div>
-
+    <div className="px-8 pb-8" ref={topRef}>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-5">
         {/* Search */}
@@ -528,10 +706,42 @@ function PatrocinadoresContent() {
   );
 }
 
-export default function PatrocinadoresPage() {
+function AbaBotao({ active, onClick, icon, label, position }: { active: boolean; onClick: () => void; icon: string; label: string; position: "left" | "middle" | "right" }) {
   return (
-    <Suspense fallback={<div className="min-h-[360px] animate-pulse bg-black/[.015]" />}>
-      <PatrocinadoresContent />
-    </Suspense>
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex h-9 items-center gap-1.5 px-3.5 text-[12px] font-medium transition active:scale-[.98] ${
+        active ? "bg-[#0D0D0D] text-white" : "bg-white text-black/45 hover:bg-black/[.04] hover:text-black/65"
+      } ${position !== "right" ? "border-r border-black/10" : ""}`}
+    >
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={active ? `/aba-${icon}-white.svg` : `/aba-${icon}-color.svg`} alt="" className="h-5 w-5" />
+      {label}
+    </button>
+  );
+}
+
+export default function PatrocinadoresPage() {
+  const [aba, setAba] = useState("cultura");
+
+  return (
+    <div className="min-h-full" style={{ background: "#F2F2F2" }}>
+      <div className="px-8 pt-8 pb-6 flex items-end justify-between">
+        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Encontrar patrocinadores</h1>
+        <div className="flex overflow-hidden rounded border border-black/10">
+          <AbaBotao active={aba === "cultura"} position="left" onClick={() => setAba("cultura")} icon="cultura" label="Cultura" />
+          <AbaBotao active={aba === "esporte"} position="middle" onClick={() => setAba("esporte")} icon="esporte" label="Esporte" />
+          <AbaBotao active={aba === "cinema"} position="right" onClick={() => setAba("cinema")} icon="audiovisual" label="Audiovisual" />
+        </div>
+      </div>
+      {aba === "cultura" && (
+        <Suspense fallback={<div className="min-h-[360px] animate-pulse bg-black/[.015]" />}>
+          <PatrocinadoresContent />
+        </Suspense>
+      )}
+      {aba === "esporte" && <LeiTabContent lei="esporte" />}
+      {aba === "cinema" && <LeiTabContent lei="ancine" />}
+    </div>
   );
 }

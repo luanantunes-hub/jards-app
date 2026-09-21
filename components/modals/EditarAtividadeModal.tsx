@@ -217,8 +217,13 @@ export function EditarAtividadeModal({
   async function handleDelete() {
     if (!confirm("Excluir esta atividade? Esta ação não pode ser desfeita.")) return;
     setDeleting(true);
-    await (supabase as any).from("atividades").delete().eq("id", atividadeId);
+    setErro(null);
+    const { data, error } = await (supabase as any).from("atividades").delete().eq("id", atividadeId).select("id").single();
     setDeleting(false);
+    if (error || !data) {
+      setErro(error?.message ?? "Não foi possível excluir esta atividade.");
+      return;
+    }
     onDeleted?.();
     onClose();
   }

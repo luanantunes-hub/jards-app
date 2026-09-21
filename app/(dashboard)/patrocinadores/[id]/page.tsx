@@ -1,5 +1,5 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
@@ -410,6 +410,146 @@ function LineChart({ rows }: { rows: InvestimentoAnual[] }) {
   );
 }
 
+function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+
+  const totals  = INV_LABELS.map((lbl) => rows.find((r) => r.ano === Number(lbl))?.valor || 0);
+  const labels  = INV_LABELS;
+  const max     = Math.max(...totals, 1);
+  const nonZero = totals.filter((v) => v > 0);
+  const minVal  = nonZero.length > 0 ? Math.min(...nonZero) : 0;
+  const total   = totals.reduce((s, v) => s + v, 0);
+  const lastIdx = totals.length - 1;
+  const valLast = totals[lastIdx] ?? 0;
+  const valPrev = lastIdx > 0 ? totals[lastIdx - 1] : 0;
+  const diffPct = lastIdx > 0 && valPrev > 0 ? ((valLast - valPrev) / valPrev) * 100 : 0;
+
+  const W = 600, H = 200;
+  const PAD = { top: 20, right: 25, bottom: 26, left: 25 };
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+
+  const yMin   = minVal > 0 ? minVal * 0.78 : 0;
+  const yMax   = max * 1.08;
+  const yRange = yMax - yMin || 1;
+  const denom  = Math.max(totals.length - 1, 1);
+
+  const pts = totals.map((v, i) => ({
+    x: PAD.left + (i / denom) * plotW,
+    y: PAD.top + plotH - ((Math.max(v, yMin) - yMin) / yRange) * plotH,
+    v,
+    lbl: labels[i],
+  }));
+
+  const pathD = pts.reduce((d, pt, i) => {
+    if (i === 0) return `M ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+    const prev = pts[i - 1];
+    const cx   = ((prev.x + pt.x) / 2).toFixed(1);
+    return d + ` C ${cx} ${prev.y.toFixed(1)} ${cx} ${pt.y.toFixed(1)} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
+  }, "");
+
+  const bottom = (PAD.top + plotH).toFixed(1);
+  const areaD  = pts.length > 1 ? pathD + ` L ${pts[pts.length - 1].x.toFixed(1)} ${bottom} L ${pts[0].x.toFixed(1)} ${bottom} Z` : "";
+
+  const TICKS  = 4;
+  const yTicks = Array.from({ length: TICKS + 1 }, (_, i) => yMin + (i / TICKS) * yRange);
+
+  const TW = 72, TH = 28, TR = 3;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between px-5 pt-5 pb-2">
+        <p className="text-[10px] font-bold text-black/30 uppercase tracking-wide">Investimento Anual</p>
+        {total > 0 && diffPct !== 0 && (
+          <span
+            className="text-[10px] font-bold px-2 py-0.5 rounded"
+            style={{ background: diffPct >= 0 ? "#2E893214" : "#D94E4E14", color: diffPct >= 0 ? "#2E8932" : "#D94E4E" }}
+          >
+            {diffPct >= 0 ? "+" : ""}{diffPct.toFixed(2).replace(".", ",")}%
+          </span>
+        )}
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full block" onMouseLeave={() => setHoveredIdx(null)}>
+        <defs>
+          <linearGradient id="lgAreaInvLei" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%"   stopColor="#0D0D0D" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#0D0D0D" stopOpacity="0.01" />
+          </linearGradient>
+        </defs>
+        {yTicks.map((val, i) => {
+          if (i === 0) return null;
+          const y = PAD.top + plotH - ((val - yMin) / yRange) * plotH;
+          return (
+            <text
+              key={i}
+              x="10" y={(y - 3).toFixed(1)}
+              textAnchor="start" fontSize="5" fill="rgba(13,13,13,0.25)"
+              fontFamily="system-ui, sans-serif"
+            >
+              {fmtValorAxis(val)}
+            </text>
+          );
+        })}
+        <path d={areaD} fill="url(#lgAreaInvLei)" />
+        <path d={pathD} fill="none" stroke="#0D0D0D" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        {pts.map((pt, i) => pt.v > 0 && (
+          <circle
+            key={i}
+            cx={pt.x.toFixed(1)} cy={pt.y.toFixed(1)}
+            r={hoveredIdx === i ? "4.5" : "3"}
+            fill={hoveredIdx === i ? "#0D0D0D" : "white"}
+            stroke="#0D0D0D" strokeWidth="1.8"
+            style={{ cursor: "pointer", transition: "r 0.1s, fill 0.1s" }}
+          />
+        ))}
+        {pts.map((pt, i) => (
+          <rect
+            key={`hit-${i}`}
+            x={(pt.x - 14).toFixed(1)} y={(pt.y - 14).toFixed(1)}
+            width="28" height="28"
+            fill="transparent"
+            style={{ cursor: "pointer" }}
+            onMouseEnter={() => setHoveredIdx(i)}
+          />
+        ))}
+        {pts.map((pt, i) => (
+          <text
+            key={i} x={pt.x.toFixed(1)} y={(H - 4).toFixed(1)}
+            textAnchor="middle" fontSize="5.5" fill="rgba(13,13,13,0.3)"
+            fontFamily="system-ui, sans-serif" fontWeight="600"
+          >
+            {pt.lbl}
+          </text>
+        ))}
+        {hoveredIdx !== null && (() => {
+          const pt = pts[hoveredIdx];
+          const tx = Math.min(Math.max(pt.x - TW / 2, 2), W - TW - 2);
+          const ty = Math.max(pt.y - TH - 10, 2);
+          return (
+            <g pointerEvents="none">
+              <rect x={tx} y={ty} width={TW} height={TH} rx={TR} fill="white" stroke="rgba(13,13,13,0.1)" strokeWidth="0.6" />
+              <text
+                x={(tx + TW / 2).toFixed(1)} y={(ty + 10).toFixed(1)}
+                textAnchor="middle" fontSize="6" fill="rgba(13,13,13,0.35)"
+                fontFamily="system-ui, sans-serif" letterSpacing="0.3"
+              >
+                {pt.lbl}
+              </text>
+              <text
+                x={(tx + TW / 2).toFixed(1)} y={(ty + 21).toFixed(1)}
+                textAnchor="middle" fontSize="8.5" fill="#0D0D0D"
+                fontFamily="system-ui, sans-serif" fontWeight="600"
+              >
+                {fmtValorAxis(pt.v)}
+              </text>
+            </g>
+          );
+        })()}
+      </svg>
+    </div>
+  );
+}
+
 function TipologiaChart({ t }: { t: Tipologia }) {
   const values = TIPO_LABELS.map((k) => ({ key: k, v: (t[k] as number) || 0 }))
     .filter((x) => x.v > 0)
@@ -436,6 +576,9 @@ function TipologiaChart({ t }: { t: Tipologia }) {
 export default function PatrocinadorPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const leiParam = searchParams.get("lei");
+  const isLeiView = leiParam === "esporte" || leiParam === "ancine";
   const supabase = createClient();
   const organizationId = useOrganizationId();
   const { creditos, assinatura, loading: creditosLoading, desbloquearEmpresa } = useCreditos();
@@ -456,7 +599,13 @@ export default function PatrocinadorPage() {
   const [tipologia, setTipologia]         = useState<Tipologia | null>(null);
   const [investimentos, setInvestimentos] = useState<InvestimentoAnual[]>([]);
   const [trimestral, setTrimestral]       = useState<InvestimentoTrimestre | null>(null);
+  const [investimentosLei, setInvestimentosLei] = useState<{ ano: number; valor: number }[]>([]);
+  const [carteiraLei, setCarteiraLei]     = useState<{ descricao: string | null } | null>(null);
+  const anoRecenteLei = investimentosLei.length > 0 ? Math.max(...investimentosLei.map((r) => r.ano)) : null;
+  const valorRecenteLei = anoRecenteLei != null ? investimentosLei.find((r) => r.ano === anoRecenteLei)?.valor ?? null : null;
+  const investimentosLeiRecentes = investimentosLei.filter((r) => r.ano >= 2020);
   const [trimTab, setTrimTab]             = useState<"trimestral" | "sustentabilidade">("trimestral");
+  const effectiveTrimTab = isLeiView ? "sustentabilidade" : trimTab;
   const [desbloqueado, setDesbloqueado]   = useState(false);
   const [loading, setLoading]             = useState(true);
   const [unlocking, setUnlocking]         = useState(false);
@@ -591,7 +740,7 @@ export default function PatrocinadorPage() {
   useEffect(() => {
     async function fetchAll() {
       setLoading(true);
-      const [empRes, respRes, editRes, capRes, tipoRes, invRes, trimRes, desbRes] = await Promise.all([
+      const [empRes, respRes, editRes, capRes, tipoRes, invRes, trimRes, desbRes, invLeiRes, carteiraLeiRes] = await Promise.all([
         supabase.from("empresas").select("*").eq("id", id).single(),
         supabase.from("responsaveis").select("*").eq("empresa_id", id).order("ordem"),
         supabase.from("editais").select("*").eq("empresa_id", id).order("data_fechamento", { ascending: false }),
@@ -600,6 +749,8 @@ export default function PatrocinadorPage() {
         supabase.from("investimentos_anuais").select("*").eq("empresa_pub_id", id),
         supabase.from("investimentos_trimestres").select("*").eq("empresa_pub_id", id).maybeSingle(),
         supabase.from("desbloqueios").select("id").eq("empresa_pub_id", id).maybeSingle(),
+        supabase.from("investimentos_por_lei").select("ano, valor").eq("empresa_id", id).eq("lei", leiParam ?? "__none__"),
+        supabase.from("carteiras_por_lei").select("descricao").eq("empresa_id", id).eq("lei", leiParam ?? "__none__").maybeSingle(),
       ]);
       setEmpresa(empRes.data);
       const resp = respRes.data ?? [];
@@ -619,6 +770,8 @@ export default function PatrocinadorPage() {
       setTipologia(tipoRes.data);
       setInvestimentos(invRes.data ?? []);
       setTrimestral(trimRes.data);
+      setInvestimentosLei((invLeiRes.data ?? []) as { ano: number; valor: number }[]);
+      setCarteiraLei(carteiraLeiRes.data as { descricao: string | null } | null);
       setDesbloqueado(!!desbRes.data);
       setLoading(false);
     }
@@ -633,7 +786,7 @@ export default function PatrocinadorPage() {
     fetchSugestoes();
     void loadNoticias();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, loadNoticias]);
+  }, [id, leiParam, loadNoticias]);
 
   async function handleVoto(sugestaoId: string, valor: 1 | -1) {
     await (supabase as any).rpc("fn_votar_sugestao_contato", {
@@ -984,9 +1137,9 @@ export default function PatrocinadorPage() {
                   </a>
                 )}
               </div>
-              {empresa.aporte_estimado && (
+              {(isLeiView ? valorRecenteLei : empresa.aporte_estimado) && (
                 <p className="text-xs text-black/40">
-                  Total investido: <span className="font-bold text-black/70">{fmtValor(empresa.aporte_estimado)}</span>
+                  {isLeiView ? `Investimento em ${anoRecenteLei}` : "Total investido"}: <span className="font-bold text-black/70">{fmtValor(isLeiView ? valorRecenteLei : empresa.aporte_estimado)}</span>
                 </p>
               )}
             </div>
@@ -1029,19 +1182,21 @@ export default function PatrocinadorPage() {
               <span className="font-semibold text-black/60">{empresa.cidade}, {empresa.estado}</span>
             </div>
           )}
-          <div className="flex items-center gap-1 ml-1">
-            {trimestres.map(({ label, active }) => (
-              <span
-                key={label}
-                className="text-[10px] font-bold px-2 py-0.5 rounded"
-                style={active
-                  ? { background: "#2E893214", color: "#2E8932" }
-                  : { background: "rgba(13,13,13,.06)", color: "rgba(13,13,13,.35)" }}
-              >
-                {label}
-              </span>
-            ))}
-          </div>
+          {!isLeiView && (
+            <div className="flex items-center gap-1 ml-1">
+              {trimestres.map(({ label, active }) => (
+                <span
+                  key={label}
+                  className="text-[10px] font-bold px-2 py-0.5 rounded"
+                  style={active
+                    ? { background: "#2E893214", color: "#2E8932" }
+                    : { background: "rgba(13,13,13,.06)", color: "rgba(13,13,13,.35)" }}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -1053,10 +1208,10 @@ export default function PatrocinadorPage() {
 
           {/* ── Col 1: Sobre · Contato geral · Negociações ativas ── */}
           <div className="space-y-4">
-            {empresa.descricao && (
+            {(isLeiView ? carteiraLei?.descricao : empresa.descricao) && (
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-2">Sobre</p>
-                <p className="text-xs text-black/55 leading-relaxed">{empresa.descricao}</p>
+                <p className="text-xs text-black/55 leading-relaxed">{isLeiView ? carteiraLei?.descricao : empresa.descricao}</p>
               </div>
             )}
 
@@ -1199,10 +1354,18 @@ export default function PatrocinadorPage() {
           <div className="space-y-4">
 
             {/* 1. Investimento anual */}
-            {investimentos.length > 0 && (
-              <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <LineChart rows={investimentos} />
-              </div>
+            {isLeiView ? (
+              investimentosLeiRecentes.length > 0 && (
+                <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                  <LineChartLei rows={investimentosLeiRecentes} />
+                </div>
+              )
+            ) : (
+              investimentos.length > 0 && (
+                <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                  <LineChart rows={investimentos} />
+                </div>
+              )
             )}
 
             {/* 2. Responsáveis pelo Patrocínio */}
@@ -1592,18 +1755,18 @@ export default function PatrocinadorPage() {
               )}
             </div>
 
-            {/* 5. Investimento trimestral */}
-            {trimestral && (
+            {/* 5. Investimento trimestral (não se aplica à visão Esporte/Audiovisual) */}
+            {(isLeiView || trimestral) && (
               <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <div className="flex border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                  {TRIM_TABS.map((tab) => (
+                  {TRIM_TABS.filter((tab) => !isLeiView || tab !== "trimestral").map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setTrimTab(tab)}
                       className="px-5 py-3.5 text-[12px] font-semibold transition border-b-2"
                       style={{
-                        borderColor: trimTab === tab ? "#7259B5" : "transparent",
-                        color:       trimTab === tab ? "#7259B5" : "rgba(13,13,13,.35)",
+                        borderColor: effectiveTrimTab === tab ? "#7259B5" : "transparent",
+                        color:       effectiveTrimTab === tab ? "#7259B5" : "rgba(13,13,13,.35)",
                       }}
                     >
                       {TRIM_LABELS[tab]}
@@ -1611,7 +1774,7 @@ export default function PatrocinadorPage() {
                   ))}
                 </div>
                 <div className="p-5">
-                  {trimTab === "trimestral" ? (
+                  {effectiveTrimTab === "trimestral" && trimestral ? (
                     <TrimestralChart data={trimestral} />
                   ) : (
                     <div>
