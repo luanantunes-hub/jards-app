@@ -10,7 +10,7 @@ import { useOrganizationId, useOrganizationName } from "@/contexts/OrganizationC
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
 import { AtribuicaoConversa, PedidoConversa, listarPedidosWorkspace, type WorkspacePedido } from "@/components/captadores/WorkspaceConversation";
-import { WORKSPACE_ETAPAS, type WorkspaceEtapa } from "@/components/captadores/WorkspaceStages";
+import { useEtiquetas } from "@/contexts/EtiquetasContext";
 
 type Atribuicao = {
   id: string;
@@ -19,7 +19,7 @@ type Atribuicao = {
   empresaNome: string;
   empresaSite?: string | null;
   empresaDomainKey?: string | null;
-  workspaceEtapa?: WorkspaceEtapa;
+  workspaceEtapa?: string | null;
 };
 type ProximoPasso = { texto: string | null; data: string | null; aguardando: "captador" | "gestor" | null };
 type Coordenacao = { situacao: string | null; resultado: string | null };
@@ -46,6 +46,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
   const organizationId = useOrganizationId();
   const organizationName = useOrganizationName() || "Organização";
   const supabase = useMemo(() => createClient(), []);
+  const { etiquetas, etiquetasInscricao } = useEtiquetas();
   const [loading, setLoading] = useState(true);
   const [pedido, setPedido] = useState<WorkspacePedido | null>(null);
   const [atribuicao, setAtribuicao] = useState<Atribuicao | null>(null);
@@ -55,7 +56,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
   const [movendoEtapa, setMovendoEtapa] = useState(false);
   const [erroEtapa, setErroEtapa] = useState<string | null>(null);
 
-  async function moverEtapa(etapa: WorkspaceEtapa) {
+  async function moverEtapa(etapa: string) {
     if (!atribuicao || movendoEtapa) return;
     setMovendoEtapa(true);
     setErroEtapa(null);
@@ -149,10 +150,10 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
 
     <DetailPageContent>
       {tab === "resumo" && <div className="space-y-6">
-        {atribuicao?.status === "ativa" && <section className="rounded border border-black/[.08] bg-white px-5 py-4">
-          <h2 className="mb-3 text-[12px] font-semibold text-black/60">Andamento</h2>
-          <div className="flex flex-wrap gap-2">{WORKSPACE_ETAPAS.map(etapa => <button key={etapa.id} type="button" disabled={movendoEtapa} onClick={() => void moverEtapa(etapa.id)} aria-pressed={(atribuicao.workspaceEtapa ?? "a_iniciar") === etapa.id}
-            className={`rounded border px-3 py-2 text-[12px] font-medium transition disabled:opacity-50 ${(atribuicao.workspaceEtapa ?? "a_iniciar") === etapa.id ? "border-[#5F4AA8] bg-[#5F4AA8] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-black"}`}>{etapa.label}</button>)}</div>
+        {atribuicao?.status === "ativa" && (pedido?.tipo === "negociacoes" || pedido?.tipo === "inscricoes") && <section className="rounded border border-black/[.08] bg-white px-5 py-4">
+          <h2 className="mb-3 text-[12px] font-semibold text-black/60">Andamento <span className="font-normal text-black/35">— sugestão para {organizationName}</span></h2>
+          <div className="flex flex-wrap gap-2">{(pedido.tipo === "negociacoes" ? etiquetas : etiquetasInscricao).map(etapa => <button key={etapa.key} type="button" disabled={movendoEtapa} onClick={() => void moverEtapa(etapa.key)} aria-pressed={atribuicao.workspaceEtapa === etapa.key}
+            className={`rounded border px-3 py-2 text-[12px] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#5F4AA8] bg-[#5F4AA8] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-black"}`}>{etapa.label}</button>)}</div>
           {erroEtapa && <p role="alert" className="mt-2 text-[12px] text-[#B64545]">{erroEtapa}</p>}
         </section>}
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08] lg:grid-cols-4">

@@ -13,13 +13,7 @@ import { KanbanBoard, KanbanColumn, KanbanCard, KanbanEmpty } from "@/components
 import { listarPedidosWorkspace, type WorkspacePedido } from "@/components/captadores/WorkspaceConversation";
 import { useOpportunityLabels } from "@/components/captadores/OpportunityLabels";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { WORKSPACE_ETAPAS, type WorkspaceEtapa } from "@/components/captadores/WorkspaceStages";
-
-const ETAPA_COLUNA: Record<WorkspaceEtapa, { accent: string; iconName: string }> = {
-  a_iniciar: { accent: "#6B6B6B", iconName: "Circle" },
-  em_andamento: { accent: "#7259B5", iconName: "ArrowRight" },
-  aguardando_retorno: { accent: "#B07A14", iconName: "Clock" },
-};
+import { useEtiquetas, type Etiqueta } from "@/contexts/EtiquetasContext";
 
 type EscopoTipo = "empresas" | "negociacoes" | "inscricoes";
 type EscopoModo = "pedido" | "consulta" | "ver_tudo";
@@ -39,7 +33,7 @@ const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: s
 
 type LinhaEmpresa = { id: string; nome: string; status: string | null };
 type LinhaCaptacao = { id: string; titulo: string; status: string; empresaNome: string; atualizadoEm: string };
-type AtribuicaoLinha = { id: string; status: string; organizationId: string; empresaNome: string; empresaSite?: string | null; empresaDomainKey?: string | null; workspaceEtapa?: WorkspaceEtapa };
+type AtribuicaoLinha = { id: string; status: string; organizationId: string; empresaNome: string; empresaSite?: string | null; empresaDomainKey?: string | null; workspaceEtapa?: string | null };
 
 // resultado negativo = precisa de atenção; resultado positivo = concluída, fica discreta.
 // tudo que não é nem um nem outro (em negociação, aguardando etc.) é "em andamento".
@@ -240,10 +234,67 @@ function NovaOportunidadeSheet({ workspaceId, escopos, organizationId, onClose, 
     </div>}
   </TopSheet>;
 }
+
+function FunilKanban({ titulo, etapas, itens, pedidos, draggingId, setDraggingId, overEtapa, setOverEtapa, moverEtapa, router }: {
+  titulo: string;
+  etapas: Etiqueta[];
+  itens: AtribuicaoLinha[];
+  pedidos: Pedido[];
+  draggingId: string | null;
+  setDraggingId: (id: string | null) => void;
+  overEtapa: string | null;
+  setOverEtapa: (etapa: string | null) => void;
+  moverEtapa: (id: string, etapa: string) => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  if (etapas.length === 0) return null;
+  const chaveEfetiva = (item: AtribuicaoLinha) => item.workspaceEtapa ?? etapas[0].key;
+  return <div>
+    <h3 className="mb-3 text-[12px] font-semibold text-black/70">{titulo} <span className="font-normal tabular-nums text-black/40">{itens.length}</span></h3>
+    <KanbanBoard>
+      {etapas.map((etapa, indice) => {
+        const emEtapa = itens.filter(item => chaveEfetiva(item) === etapa.key);
+        return <KanbanColumn key={etapa.key} label={etapa.label} count={emEtapa.length} accent={etapa.cor} iconName={etapa.icone}
+          active={overEtapa === etapa.key && Boolean(draggingId)}
+          onDragOver={event => { event.preventDefault(); setOverEtapa(etapa.key); }}
+          onDragLeave={() => setOverEtapa(null)}
+          onDrop={event => {
+            event.preventDefault();
+            const id = draggingId;
+            setDraggingId(null); setOverEtapa(null);
+            const item = itens.find(candidate => candidate.id === id);
+            if (id && item && chaveEfetiva(item) !== etapa.key) moverEtapa(id, etapa.key);
+          }}
+        >
+          {emEtapa.length === 0 ? <KanbanEmpty label="Nenhuma oportunidade." /> : emEtapa.map(item => {
+            const pedido = pedidos.find(p => p.atribuicao_id === item.id);
+            return <KanbanCard key={item.id} draggable dragging={draggingId === item.id}
+              onClick={() => router.push(`/workspace-captador/${item.id}`)}
+              onDragStart={() => setDraggingId(item.id)} onDragEnd={() => { setDraggingId(null); setOverEtapa(null); }}>
+              <div className="flex items-center gap-2.5">
+                <CompanyLogo nome={item.empresaNome} domain={item.empresaDomainKey} site={item.empresaSite || pedido?.empresa_site} size={32} className="shrink-0 border border-black/[.07]"/>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[12.5px] font-semibold text-black/80">{pedido?.oportunidade_titulo || item.empresaNome}</p>
+                  <p className="mt-0.5 truncate text-[11px] text-black/45">{item.empresaNome}</p>
+                </div>
+              </div>
+              <div className="mt-2.5 flex items-center justify-between border-t border-black/[.06] pt-2">
+                <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice - 1].key); }} className="text-[11px] font-medium text-black/45 hover:text-black disabled:invisible">← Voltar</button>
+                <button type="button" disabled={indice === etapas.length - 1} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice + 1].key); }} className="text-[11px] font-medium text-[#5F4AA8] hover:underline disabled:invisible">Avançar →</button>
+              </div>
+            </KanbanCard>;
+          })}
+        </KanbanColumn>;
+      })}
+    </KanbanBoard>
+  </div>;
+}
+
 export default function WorkspaceCaptadorPage() {
   const router = useRouter();
   const organizationId = useOrganizationId();
   const organizationName = useOrganizationName() || "sua organização";
+  const { etiquetas, etiquetasInscricao } = useEtiquetas();
   const [carregando, setCarregando] = useState(true);
   const [workspaceId, setWorkspaceId] = useState<string | null>(null);
   const [escopos, setEscopos] = useState<Escopo[] | null>(null);
@@ -259,9 +310,9 @@ export default function WorkspaceCaptadorPage() {
   const [acoesPendentes, setAcoesPendentes] = useState<{ id: string; atribuicao_id: string; descricao: string }[]>([]);
   const [erroEtapa, setErroEtapa] = useState<string | null>(null);
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [overEtapa, setOverEtapa] = useState<WorkspaceEtapa | null>(null);
+  const [overEtapa, setOverEtapa] = useState<string | null>(null);
 
-  async function moverEtapa(atribuicaoId: string, etapa: WorkspaceEtapa) {
+  async function moverEtapa(atribuicaoId: string, etapa: string) {
     const anterior = atribuicoes;
     setErroEtapa(null);
     setAtribuicoes(current => current.map(item => item.id === atribuicaoId ? { ...item, workspaceEtapa: etapa } : item));
@@ -419,42 +470,16 @@ export default function WorkspaceCaptadorPage() {
                 </aside>
               </div>
             </div>}
-            {aba === "fluxo" && <KanbanBoard>
-              {WORKSPACE_ETAPAS.map((etapa, indice) => {
-                const itens = atribuicoes.filter(a => a.status === "ativa" && (a.workspaceEtapa ?? "a_iniciar") === etapa.id);
-                const cor = ETAPA_COLUNA[etapa.id];
-                return <KanbanColumn key={etapa.id} label={etapa.label} count={itens.length} accent={cor.accent} iconName={cor.iconName}
-                  active={overEtapa === etapa.id && Boolean(draggingId)}
-                  onDragOver={event => { event.preventDefault(); setOverEtapa(etapa.id); }}
-                  onDragLeave={() => setOverEtapa(null)}
-                  onDrop={event => {
-                    event.preventDefault();
-                    const id = draggingId;
-                    setDraggingId(null); setOverEtapa(null);
-                    if (id && (atribuicoes.find(a => a.id === id)?.workspaceEtapa ?? "a_iniciar") !== etapa.id) void moverEtapa(id, etapa.id);
-                  }}
-                >
-                  {itens.length === 0 ? <KanbanEmpty label="Nenhuma oportunidade." /> : itens.map(item => {
-                    const pedido = pedidos.find(p => p.atribuicao_id === item.id);
-                    return <KanbanCard key={item.id} draggable dragging={draggingId === item.id}
-                      onClick={() => router.push(`/workspace-captador/${item.id}`)}
-                      onDragStart={() => setDraggingId(item.id)} onDragEnd={() => { setDraggingId(null); setOverEtapa(null); }}>
-                      <div className="flex items-center gap-2.5">
-                        <CompanyLogo nome={item.empresaNome} domain={item.empresaDomainKey} site={item.empresaSite || pedido?.empresa_site} size={32} className="shrink-0 border border-black/[.07]"/>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-[12.5px] font-semibold text-black/80">{pedido?.oportunidade_titulo || item.empresaNome}</p>
-                          <p className="mt-0.5 truncate text-[11px] text-black/45">{item.empresaNome}{pedido ? ` · ${rotuloOportunidade(pedido)}` : ""}</p>
-                        </div>
-                      </div>
-                      <div className="mt-2.5 flex items-center justify-between border-t border-black/[.06] pt-2">
-                        <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); void moverEtapa(item.id, WORKSPACE_ETAPAS[indice - 1].id); }} className="text-[11px] font-medium text-black/45 hover:text-black disabled:invisible">← Voltar</button>
-                        <button type="button" disabled={indice === WORKSPACE_ETAPAS.length - 1} onClick={event => { event.stopPropagation(); void moverEtapa(item.id, WORKSPACE_ETAPAS[indice + 1].id); }} className="text-[11px] font-medium text-[#5F4AA8] hover:underline disabled:invisible">Avançar →</button>
-                      </div>
-                    </KanbanCard>;
-                  })}
-                </KanbanColumn>;
-              })}
-            </KanbanBoard>}
+            {aba === "fluxo" && (() => {
+              const ativas = atribuicoes.filter(a => a.status === "ativa");
+              const idsNegociacao = new Set(pedidos.filter(p => p.tipo === "negociacoes" && p.atribuicao_id).map(p => p.atribuicao_id));
+              const idsInscricao = new Set(pedidos.filter(p => p.tipo === "inscricoes" && p.atribuicao_id).map(p => p.atribuicao_id));
+              const props = { pedidos, draggingId, setDraggingId, overEtapa, setOverEtapa, moverEtapa, router };
+              return <div className="space-y-8">
+                <FunilKanban titulo="Negociações" etapas={etiquetas} itens={ativas.filter(a => idsNegociacao.has(a.id))} {...props} />
+                <FunilKanban titulo="Inscrições" etapas={etiquetasInscricao} itens={ativas.filter(a => idsInscricao.has(a.id))} {...props} />
+              </div>;
+            })()}
             {aba === "historico" && <section className="overflow-hidden rounded border border-black/[.08] bg-white"><header className="border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Histórico</h2></header>
               {pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").length === 0 ? <p className="px-4 py-6 text-[12px] text-black/40">Nenhum registro.</p> : pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").map(p => <OportunidadeRow key={p.id} href={`/workspace-captador/${p.id}`} empresa={p.nome_busca} titulo={p.oportunidade_titulo || p.nome_busca} tipo={rotuloOportunidade(p)} site={p.empresa_site} trailing={<StatusPedidoBadge status={p.status}/>}/>)}
             </section>}

@@ -14,7 +14,7 @@ import { DetailHeaderAction, DetailPageContent, DetailTabs } from "@/components/
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CaptadorOverview, type CaptadorOverviewData } from "@/components/captadores/CaptadorOverview";
 import { CaptadorRelationshipScorecard } from "@/components/relationship/DecisionScorecard";
-import { workspaceEtapaLabel } from "@/components/captadores/WorkspaceStages";
+import { useEtiquetas } from "@/contexts/EtiquetasContext";
 
 type CaptadorDetalhe = {
   id: string;
@@ -58,6 +58,7 @@ type PageTab = "overview" | "workspace" | "negociacoes" | "inscricoes" | "atribu
 export default function CaptadorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const supabase = useMemo(() => createClient(), []);
+  const { etiquetas, etiquetasInscricao } = useEtiquetas();
   const [captador, setCaptador] = useState<CaptadorDetalhe | null>(null);
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoRow[]>([]);
   const [negociacoes, setNegociacoes] = useState<CaptacaoRow[]>([]);
@@ -305,11 +306,16 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
                 )}
                 <h3 className="mb-3 mt-7 text-[12px] font-semibold text-black/70">Em andamento <span className="font-normal tabular-nums text-black/40">{atribuicoes.length}</span></h3>
                 <div className="divide-y divide-black/[.08] border-y border-black/[.08]">
-                  {atribuicoes.map(a => <button key={a.id} type="button" onClick={() => { setAtribuicaoSelecionada(a.id); setPedidoSelecionado(null); }}
-                    className={`block w-full py-3 text-left text-[13px] transition hover:text-[#5F4AA8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${atribuicaoSelecionada === a.id ? "font-semibold text-[#5F4AA8]" : "text-black/75"}`}>
-                    <span className="block">{a.empresa_crm?.nome ?? "Empresa"}</span>
-                    <span className="mt-0.5 block text-[11px] font-normal text-black/40">{workspaceEtapaLabel(a.workspace_etapa)}</span>
-                  </button>)}
+                  {atribuicoes.map(a => {
+                    const tipoFluxo = pedidosWorkspace.find(p => p.atribuicao_id === a.id)?.tipo;
+                    const lista = tipoFluxo === "negociacoes" ? etiquetas : tipoFluxo === "inscricoes" ? etiquetasInscricao : [];
+                    const sugestao = a.workspace_etapa ? (lista.find(item => item.key === a.workspace_etapa)?.label ?? a.workspace_etapa) : null;
+                    return <button key={a.id} type="button" onClick={() => { setAtribuicaoSelecionada(a.id); setPedidoSelecionado(null); }}
+                      className={`block w-full py-3 text-left text-[13px] transition hover:text-[#5F4AA8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${atribuicaoSelecionada === a.id ? "font-semibold text-[#5F4AA8]" : "text-black/75"}`}>
+                      <span className="block">{a.empresa_crm?.nome ?? "Empresa"}</span>
+                      {sugestao && <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-normal text-[#5F4AA8]"><span className="h-1 w-1 rounded-full bg-[#5F4AA8]"/>Sugestão do captador: {sugestao}</span>}
+                    </button>;
+                  })}
                   {atribuicoes.length === 0 && <p className="py-3 text-[12px] text-black/45">Nenhuma atribuição ainda.</p>}
                 </div>
               </div>
