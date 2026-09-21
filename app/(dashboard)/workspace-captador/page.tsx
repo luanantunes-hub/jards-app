@@ -8,6 +8,7 @@ import { ChevronRight, Plus, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId, useOrganizationName } from "@/contexts/OrganizationContext";
 import { DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { SegmentedControl } from "@/components/ui/FilterControls";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { KanbanBoard, KanbanColumn, KanbanCard, KanbanEmpty } from "@/components/kanban/KanbanPrimitives";
 import { listarPedidosWorkspace, type WorkspacePedido } from "@/components/captadores/WorkspaceConversation";
@@ -163,8 +164,7 @@ function NovaOportunidadeSheet({ workspaceId, escopos, organizationId, onClose, 
   </TopSheet>;
 }
 
-function FunilKanban({ titulo, etapas, itens, pedidos, draggingId, setDraggingId, overEtapa, setOverEtapa, moverEtapa, router }: {
-  titulo: string;
+function FunilKanban({ etapas, itens, pedidos, draggingId, setDraggingId, overEtapa, setOverEtapa, moverEtapa, router }: {
   etapas: Etiqueta[];
   itens: AtribuicaoLinha[];
   pedidos: Pedido[];
@@ -177,8 +177,7 @@ function FunilKanban({ titulo, etapas, itens, pedidos, draggingId, setDraggingId
 }) {
   if (etapas.length === 0) return null;
   const chaveEfetiva = (item: AtribuicaoLinha) => item.workspaceEtapa ?? etapas[0].key;
-  return <div>
-    <h3 className="mb-3 text-[12px] font-semibold text-black/70">{titulo} <span className="font-normal tabular-nums text-black/40">{itens.length}</span></h3>
+  return (
     <KanbanBoard>
       {etapas.map((etapa, indice) => {
         const emEtapa = itens.filter(item => chaveEfetiva(item) === etapa.key);
@@ -215,7 +214,7 @@ function FunilKanban({ titulo, etapas, itens, pedidos, draggingId, setDraggingId
         </KanbanColumn>;
       })}
     </KanbanBoard>
-  </div>;
+  );
 }
 
 export default function WorkspaceCaptadorPage() {
@@ -231,6 +230,7 @@ export default function WorkspaceCaptadorPage() {
   const [naoEncontrado, setNaoEncontrado] = useState(false);
   const [sheetAberto, setSheetAberto] = useState(false);
   const [aba, setAba] = useState("resumo");
+  const [fluxoAba, setFluxoAba] = useState<"negociacoes" | "inscricoes">("negociacoes");
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoLinha[]>([]);
   const [acoesPendentes, setAcoesPendentes] = useState<{ id: string; atribuicao_id: string; descricao: string }[]>([]);
   const [erroEtapa, setErroEtapa] = useState<string | null>(null);
@@ -369,10 +369,17 @@ export default function WorkspaceCaptadorPage() {
               const ativas = atribuicoes.filter(a => a.status === "ativa");
               const idsNegociacao = new Set(pedidos.filter(p => p.tipo === "negociacoes" && p.atribuicao_id).map(p => p.atribuicao_id));
               const idsInscricao = new Set(pedidos.filter(p => p.tipo === "inscricoes" && p.atribuicao_id).map(p => p.atribuicao_id));
+              const negociacoesAtivas = ativas.filter(a => idsNegociacao.has(a.id));
+              const inscricoesAtivas = ativas.filter(a => idsInscricao.has(a.id));
               const props = { pedidos, draggingId, setDraggingId, overEtapa, setOverEtapa, moverEtapa, router };
-              return <div className="space-y-8">
-                <FunilKanban titulo="Negociações" etapas={etiquetas} itens={ativas.filter(a => idsNegociacao.has(a.id))} {...props} />
-                <FunilKanban titulo="Inscrições" etapas={etiquetasInscricao} itens={ativas.filter(a => idsInscricao.has(a.id))} {...props} />
+              return <div className="space-y-5">
+                <SegmentedControl ariaLabel="Tipo de fluxo" value={fluxoAba} onChange={setFluxoAba} options={[
+                  { value: "negociacoes", label: `Negociações · ${negociacoesAtivas.length}` },
+                  { value: "inscricoes", label: `Inscrições · ${inscricoesAtivas.length}` },
+                ]}/>
+                {fluxoAba === "negociacoes"
+                  ? <FunilKanban etapas={etiquetas} itens={negociacoesAtivas} {...props} />
+                  : <FunilKanban etapas={etiquetasInscricao} itens={inscricoesAtivas} {...props} />}
               </div>;
             })()}
             {aba === "historico" && <section className="overflow-hidden rounded border border-black/[.08] bg-white"><header className="border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Histórico</h2></header>
