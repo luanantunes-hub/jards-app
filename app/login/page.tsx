@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff, ArrowRight, Mail, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { ObliqueStrategyCard } from "@/components/auth/ObliqueStrategyCard";
 
 function PasswordResetModal({
   email,
@@ -312,28 +313,23 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <AuthShell
-      eyebrow="Continue seu trabalho"
-      title="Continue de onde parou."
-      description="Seu workspace, projetos e negociações permanecem no mesmo contexto."
-      variant="compact"
-    >
-      <div className="mb-8">
+    <AuthShell asideContent={<ObliqueStrategyCard />} showAsideLogo={false}>
+      <a href="/" aria-label="Ir para a página inicial do Jards" className="mb-6 inline-block">
         <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="h-7 w-auto" />
-      </div>
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Continue seu trabalho</p>
-      <h1 className="text-[clamp(2.2rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">Continue de onde parou.</h1>
-      <p className="mb-7 mt-3 text-sm leading-6 text-black/50">Seu workspace, projetos e negociações permanecem no mesmo contexto.</p>
+      </a>
+      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Continue seu trabalho</p>
+      <h1 className="text-[clamp(2.2rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">Hoje é o dia.</h1>
+      <p className="mb-5 mt-2.5 text-sm leading-6 text-black/50">Seu workspace, projetos e negociações permanecem no mesmo contexto.</p>
 
       <Suspense fallback={<div className="space-y-4 animate-pulse"><div className="h-12 bg-black/5 rounded"/><div className="h-12 bg-black/5 rounded"/><div className="h-12 bg-black/5 rounded"/></div>}>
         <LoginForm />
       </Suspense>
 
-      <p className="mt-6 text-center text-xs text-black/40">
+      <p className="mt-5 text-center text-xs text-black/40">
         Ainda não usa o Jards? <a href="/cadastro" className="font-semibold text-black hover:underline">Criar uma conta</a>
       </p>
 
-      <p className="mt-5 text-center text-[11px] leading-5 text-black/35">
+      <p className="mt-4 text-center text-[11px] leading-5 text-black/35">
         <a href="/termos" className="hover:text-black/45 underline">Termos de Uso</a>
         {" · "}
         <a href="/privacidade" className="hover:text-black/45 underline">Política de Privacidade</a>
