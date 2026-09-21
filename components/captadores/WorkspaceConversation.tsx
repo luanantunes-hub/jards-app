@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- tabelas experimentais ainda não constam nos tipos gerados */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, MessageCircle, Send, X } from "lucide-react";
+import { Calendar, Check, Flag, MessageCircle, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
 import { WorkspaceCoordination } from "@/components/captadores/WorkspaceCoordination";
@@ -51,8 +51,38 @@ const STATUS: Record<WorkspacePedido["status"], string> = {
   recusado: "Recusado",
 };
 
+const STATUS_COR: Record<WorkspacePedido["status"], string> = {
+  pendente: "#B07A14",
+  aguardando_captador: "#5F4AA8",
+  aprovado: "#2E8932",
+  recusado: "#B64545",
+};
+
 function DataMensagem({ data }: { data: string }) {
   return <time dateTime={data}>{new Date(data).toLocaleString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}</time>;
+}
+
+function VazioSutil({ texto }: { texto: string }) {
+  return (
+    <div className="rounded border border-dashed px-3.5 py-3" style={{ borderColor: "rgba(13,13,13,.14)" }}>
+      <p className="text-[12.5px] text-black/35">{texto}</p>
+    </div>
+  );
+}
+
+function MensagemBubble({ autor, texto, data, destaque = false, rotulo }: {
+  autor: string; texto: string; data: string; destaque?: boolean; rotulo?: string;
+}) {
+  const inicial = autor.trim().charAt(0).toUpperCase() || "?";
+  return (
+    <div className="flex gap-2.5">
+      <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${destaque ? "bg-[#5F4AA8]" : "bg-black/25"}`}>{inicial}</div>
+      <div className="min-w-0 flex-1 rounded border bg-white px-3.5 py-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-black/80">{texto}</p>
+        <p className="mt-1.5 text-[11px] text-black/40">{rotulo ?? autor} · <DataMensagem data={data} /></p>
+      </div>
+    </div>
+  );
 }
 
 export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }: {
@@ -118,37 +148,36 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
   const aberto = pedido.status === "pendente" || pedido.status === "aguardando_captador";
 
   return (
-    <section aria-label={`Conversa sobre ${pedido.nome_busca}`} className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-black/[.08] pb-3">
+    <section aria-label={`Conversa sobre ${pedido.nome_busca}`} className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b pb-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="flex items-center gap-3">
-          {pedido.empresa_site && <CompanyLogo nome={pedido.nome_busca} site={pedido.empresa_site} size={36} className="shrink-0 border border-black/[.08]" />}
+          <CompanyLogo nome={pedido.nome_busca} site={pedido.empresa_site} size={40} className="shrink-0 border border-black/[.08]" />
           <div>
-          <p className="text-[15px] font-semibold text-[#171717]">{pedido.oportunidade_titulo || pedido.nome_busca}</p>
-          <p className="mt-0.5 text-[11px] text-black/45">{pedido.oportunidade_etiqueta?.nome ?? (pedido.tipo === "empresas" ? "Relacionamento" : pedido.tipo === "negociacoes" ? "Negociação" : "Edital")} · {pedido.nome_busca}</p>
+            <p className="text-[16px] font-semibold leading-tight text-[#171717]">{pedido.oportunidade_titulo || pedido.nome_busca}</p>
+            <p className="mt-1 text-[11.5px] text-black/45">{pedido.oportunidade_etiqueta?.nome ?? (pedido.tipo === "empresas" ? "Relacionamento" : pedido.tipo === "negociacoes" ? "Negociação" : "Edital")} · {pedido.nome_busca}</p>
           </div>
         </div>
-        <span className="rounded border border-black/[.1] px-2 py-1 text-[11px] font-medium text-black/60">
+        <span className="shrink-0 rounded border px-2.5 py-1 text-[11px] font-semibold" style={{ borderColor: STATUS_COR[pedido.status] + "40", color: STATUS_COR[pedido.status] }}>
           {isGestor && pedido.status === "aguardando_captador" ? "Aguardando captador" : pedido.status === "pendente" && !isGestor ? `Aguardando ${organizationName}` : STATUS[pedido.status]}
         </span>
       </div>
 
-      <div className="max-h-72 space-y-3 overflow-y-auto" aria-live="polite">
+      <div className="max-h-80 space-y-3 overflow-y-auto" aria-live="polite">
         {pedido.mensagem && (
-          <div className="border-l-2 border-[#5F4AA8] pl-3">
-            <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-black/75">{pedido.mensagem}</p>
-            <p className="mt-1 text-[11px] text-black/40">Mensagem inicial · <DataMensagem data={pedido.created_at} /></p>
-          </div>
+          <MensagemBubble autor="Mensagem inicial" rotulo="Mensagem inicial" texto={pedido.mensagem} data={pedido.created_at} destaque />
         )}
         {loading ? <p className="text-[12px] text-black/40">Carregando conversa…</p> : mensagens.length === 0 && !pedido.mensagem ? (
-          <p className="text-[12px] text-black/45">Ainda não há mensagens nesta oportunidade.</p>
+          <VazioSutil texto="Ainda não há mensagens nesta oportunidade." />
         ) : null}
         {mensagens.map(m => (
-          <div key={m.id} className="border-l-2 border-black/[.12] pl-3">
-            <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-black/75">{m.texto}</p>
-            <p className="mt-1 text-[11px] text-black/40">{m.autor_email} · <DataMensagem data={m.created_at} /></p>
-          </div>
+          <MensagemBubble key={m.id} autor={m.autor_email} texto={m.texto} data={m.created_at} />
         ))}
-        {pedido.status === "aprovado" && <p className="text-[11px] font-medium text-[#2E8932]">Aprovado. O acompanhamento continua na atribuição.</p>}
+        {pedido.status === "aprovado" && (
+          <div className="flex items-center gap-2 rounded border px-3.5 py-2.5" style={{ borderColor: "#2E893230", background: "#2E893208" }}>
+            <Check size={13} className="shrink-0 text-[#2E8932]" />
+            <p className="text-[12px] font-medium text-black/70">Aprovado. O acompanhamento continua na atribuição.</p>
+          </div>
+        )}
       </div>
 
       {aberto && (
@@ -163,7 +192,7 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
             rows={3}
             maxLength={4000}
             placeholder={isGestor ? "O que precisa esclarecer?" : "Escreva o contexto ou responda à pergunta…"}
-            className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[13px] outline-none focus:border-[#5F4AA8] focus:ring-2 focus:ring-[#5F4AA8]/10"
+            className="w-full resize-none rounded border border-black/[.15] px-3 py-2.5 text-[13px] outline-none focus:border-[#5F4AA8] focus:ring-2 focus:ring-[#5F4AA8]/10"
           />
           <button type="button" onClick={() => void enviar()} disabled={saving || !texto.trim()}
             className="inline-flex items-center gap-1.5 rounded bg-[#171717] px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5F4AA8] disabled:opacity-40">
@@ -173,7 +202,7 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
       )}
 
       {isGestor && aberto && (
-        <div className="border-t border-black/[.08] pt-3">
+        <div className="border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           {recusando ? (
             <div className="space-y-2">
               <label htmlFor={`pedido-motivo-${pedido.id}`} className="block text-[11px] font-medium text-black/55">Motivo da recusa</label>
@@ -274,20 +303,23 @@ export function AtribuicaoConversa({ id, organizationId, pedido, onSent, isGesto
   }
 
   return (
-    <section aria-label="Acompanhamento compartilhado" className="space-y-4">
-      {pedido && <div className="border-b border-black/[.08] pb-4">
+    <section aria-label="Acompanhamento compartilhado" className="space-y-5">
+      {pedido && <div className="border-b pb-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-black/40">Como esta oportunidade começou</p>
         <PedidoConversa pedido={pedido} isGestor={false} onChange={() => {}} />
       </div>}
       <WorkspaceCoordination atribuicaoId={id} isGestor={isGestor} onChange={() => { void carregar(); onSent?.(); }} />
-      {proximo && <div className="border-y border-black/[.08] py-3">
+      {proximo && <section className="rounded border p-4 sm:p-5" style={{
+        borderColor: proximo.texto ? "#5F4AA835" : "rgba(13,13,13,.08)",
+        background: proximo.texto ? "#5F4AA806" : "white",
+      }}>
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-black/40">Próximo passo</p>
+          <div className="flex items-center gap-2"><Flag size={13} strokeWidth={1.8} className="text-black/30" /><h3 className="text-[11px] font-semibold uppercase tracking-wide text-black/45">Próximo passo</h3></div>
           {!editarProximo && <button type="button" onClick={() => { setTextoProximo(proximo.texto ?? ""); setDataProximo(proximo.data ?? ""); setAguardando(proximo.aguardando ?? "captador"); setEditarProximo(true); }} className="text-[11px] font-semibold text-[#5F4AA8] hover:underline">{proximo.texto ? "Alterar" : "Definir"}</button>}
         </div>
-        {editarProximo ? <div className="mt-3 space-y-2">
+        {editarProximo ? <div className="mt-3 space-y-2.5">
           <label htmlFor={`proximo-${id}`} className="block text-[11px] text-black/55">O que precisa acontecer?</label>
-          <input id={`proximo-${id}`} value={textoProximo} onChange={event => setTextoProximo(event.target.value)} maxLength={500}
+          <input id={`proximo-${id}`} autoFocus value={textoProximo} onChange={event => setTextoProximo(event.target.value)} maxLength={500}
             className="h-10 w-full rounded border border-black/[.15] px-3 text-[13px] outline-none focus:border-[#5F4AA8]" />
           <div className="flex flex-wrap gap-2">
             <div className="text-[11px] text-black/55">Responsável
@@ -303,25 +335,25 @@ export function AtribuicaoConversa({ id, organizationId, pedido, onSent, isGesto
             <button type="button" onClick={() => void salvarProximo()} disabled={saving || !textoProximo.trim()} className="rounded bg-[#171717] px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-40">{saving ? "Salvando…" : "Salvar próximo passo"}</button>
             <button type="button" onClick={() => setEditarProximo(false)} className="px-2 py-2 text-[12px] text-black/50">Cancelar</button>
           </div>
-        </div> : proximo.texto ? <div className="mt-2">
-          <p className="text-[13px] font-medium text-black/80">{proximo.texto}</p>
-          <p className="mt-1 text-[11px] text-black/45">Com {proximo.aguardando === "gestor" ? organizationName : "o captador"}{proximo.data ? ` · até ${proximo.data.split("-").reverse().join("/")}` : ""}</p>
-        </div> : <p className="mt-2 text-[12px] text-black/45">Não definido.</p>}
-      </div>}
-      <div className="max-h-72 space-y-3 overflow-y-auto" aria-live="polite">
-        {loading ? <p className="text-[12px] text-black/40">Carregando acompanhamento…</p> : notas.length === 0 ? (
-          <p className="text-[12px] text-black/45">Nenhuma atualização.</p>
-        ) : notas.map(n => (
-          <div key={n.id} className="border-l-2 border-black/[.12] pl-3">
-            <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-black/75">{n.nota}</p>
-            <p className="mt-1 text-[11px] text-black/40">{n.autor_email} · <DataMensagem data={n.created_at} /></p>
-          </div>
-        ))}
+        </div> : proximo.texto ? <div className="mt-3">
+          <p className="text-[14px] font-semibold leading-snug text-black/80">{proximo.texto}</p>
+          <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-black/45"><Calendar size={11} />Com {proximo.aguardando === "gestor" ? organizationName : "o captador"}{proximo.data ? ` · até ${proximo.data.split("-").reverse().join("/")}` : ""}</p>
+        </div> : <div className="mt-3"><VazioSutil texto="Não definido." /></div>}
+      </section>}
+      <div>
+        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-black/40">Atualizações</p>
+        <div className="max-h-80 space-y-3 overflow-y-auto" aria-live="polite">
+          {loading ? <p className="text-[12px] text-black/40">Carregando acompanhamento…</p> : notas.length === 0 ? (
+            <VazioSutil texto="Nenhuma atualização ainda." />
+          ) : notas.map(n => (
+            <MensagemBubble key={n.id} autor={n.autor_email} texto={n.nota} data={n.created_at} />
+          ))}
+        </div>
       </div>
       <div className="space-y-2">
         <label htmlFor={`atribuicao-mensagem-${id}`} className="block text-[11px] font-medium text-black/55">Atualização para o outro lado</label>
         <textarea id={`atribuicao-mensagem-${id}`} value={texto} onChange={event => setTexto(event.target.value)} rows={3}
-          placeholder="O que aconteceu? Qual é o próximo passo?" className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[13px] outline-none focus:border-[#5F4AA8] focus:ring-2 focus:ring-[#5F4AA8]/10" />
+          placeholder="O que aconteceu? Qual é o próximo passo?" className="w-full resize-none rounded border border-black/[.15] px-3 py-2.5 text-[13px] outline-none focus:border-[#5F4AA8] focus:ring-2 focus:ring-[#5F4AA8]/10" />
         <button type="button" onClick={() => void enviar()} disabled={saving || !texto.trim()}
           className="inline-flex items-center gap-1.5 rounded bg-[#171717] px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5F4AA8] disabled:opacity-40">
           <Send size={13} />{saving ? "Enviando…" : "Registrar atualização"}
