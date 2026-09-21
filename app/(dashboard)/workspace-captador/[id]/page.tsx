@@ -4,7 +4,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Building2, MessageCircle, Target } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, MessageCircle, Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId, useOrganizationName } from "@/contexts/OrganizationContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -33,13 +33,6 @@ function dataCurta(value: string | null | undefined) {
   return new Date(value).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
-function Campo({ label, value }: { label: string; value: React.ReactNode }) {
-  return <div className="flex items-start justify-between gap-4 border-b border-black/[.07] py-3 last:border-b-0">
-    <dt className="text-[12px] text-black/45">{label}</dt>
-    <dd className="max-w-[65%] text-right text-[12px] font-medium text-black/75">{value}</dd>
-  </div>;
-}
-
 export default function CaptadorOportunidadePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -53,6 +46,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
   const [proximo, setProximo] = useState<ProximoPasso | null>(null);
   const [coordenacao, setCoordenacao] = useState<Coordenacao | null>(null);
   const [tab, setTab] = useState("resumo");
+  const [abrirPedidoTrigger, setAbrirPedidoTrigger] = useState(0);
   const [movendoEtapa, setMovendoEtapa] = useState(false);
   const [erroEtapa, setErroEtapa] = useState<string | null>(null);
 
@@ -129,14 +123,13 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
           <div className="flex min-w-0 items-center gap-4">
             <CompanyLogo nome={empresaNome} domain={atribuicao?.empresaDomainKey} site={site} size={56} className="shrink-0 border border-black/[.07]"/>
             <div className="min-w-0">
-              <p className="mb-1.5 text-[12px] text-black/45">{tipo} · {organizationName}</p>
               <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{empresaNome}</h1>
               {titulo && titulo !== empresaNome && <p className="mt-2 text-[13px] text-black/55">{titulo}</p>}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3 sm:pt-2">
-            <span className="rounded border border-black/[.12] px-3 py-2 text-[12px] font-medium text-black/70">{status}</span>
-            {atribuicao?.status === "ativa" && <button type="button" onClick={() => setTab("acompanhamento")} className="rounded border border-[#5F4AA8] px-3 py-2 text-[12px] font-medium text-[#5F4AA8] transition hover:bg-[#5F4AA8]/[.06]">Pedir à organização</button>}
+            {atribuicao?.status !== "ativa" && <span className="rounded border border-black/[.12] px-3 py-2 text-[12px] font-medium text-black/70">{status}</span>}
+            {atribuicao?.status === "ativa" && <button type="button" onClick={() => { setTab("acompanhamento"); setAbrirPedidoTrigger(t => t + 1); }} className="rounded border border-black/[.15] px-3 py-2 text-[12px] font-medium text-black/65 transition hover:border-black/30 hover:text-black">Solicitar à organização</button>}
             {site && <a href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" aria-label={`Abrir site de ${empresaNome}`} className="flex h-9 w-9 items-center justify-center rounded border border-black/[.12] text-black/50 transition hover:border-black/30 hover:text-black"><ArrowUpRight size={15}/></a>}
           </div>
         </div>
@@ -145,7 +138,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
 
     <DetailTabs ariaLabel="Seções da oportunidade" activeTab={tab} onChange={setTab} tabs={[
       { id: "resumo", label: "Resumo", icon: Target },
-      { id: "acompanhamento", label: atribuicao ? "Pedidos e conversa" : "Conversa", icon: MessageCircle },
+      { id: "acompanhamento", label: atribuicao ? "Solicitações" : "Conversa", icon: MessageCircle },
     ]}/>
 
     <DetailPageContent>
@@ -153,7 +146,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
         {atribuicao?.status === "ativa" && (pedido?.tipo === "negociacoes" || pedido?.tipo === "inscricoes") && <section className="rounded border border-black/[.08] bg-white px-5 py-4">
           <h2 className="mb-3 text-[12px] font-semibold text-black/60">Andamento <span className="font-normal text-black/35">— sugestão para {organizationName}</span></h2>
           <div className="flex flex-wrap gap-2">{(pedido.tipo === "negociacoes" ? etiquetas : etiquetasInscricao).map(etapa => <button key={etapa.key} type="button" disabled={movendoEtapa} onClick={() => void moverEtapa(etapa.key)} aria-pressed={atribuicao.workspaceEtapa === etapa.key}
-            className={`rounded border px-3 py-2 text-[12px] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#5F4AA8] bg-[#5F4AA8] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-black"}`}>{etapa.label}</button>)}</div>
+            className={`rounded border px-3 py-2 text-[12px] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#171717] bg-[#171717] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-black"}`}>{etapa.label}</button>)}</div>
           {erroEtapa && <p role="alert" className="mt-2 text-[12px] text-[#B64545]">{erroEtapa}</p>}
         </section>}
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08] lg:grid-cols-4">
@@ -162,28 +155,19 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
           ].map(([label, value]) => <div key={label} className="min-h-24 bg-white px-5 py-4"><p className="text-[11px] font-medium text-black/40">{label}</p><p className="mt-3 line-clamp-2 text-[17px] font-semibold leading-tight tracking-tight text-[#171717]">{value}</p></div>)}
         </section>
 
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="min-w-0 space-y-5">
-            <section className="rounded border border-black/[.08] bg-white p-5">
-              <div className="flex items-center justify-between gap-3"><h2 className="text-[15px] font-semibold text-black/80">Próximo passo</h2><button type="button" onClick={() => setTab("acompanhamento")} className="text-[12px] font-medium text-[#5F4AA8] hover:underline">{atribuicao ? "Abrir acompanhamento" : "Abrir conversa"}</button></div>
-              <p className="mt-4 text-[14px] font-medium text-black/75">{proximo?.texto || (pedido?.status === "pendente" ? "Aguardando avaliação" : pedido?.status === "aguardando_captador" ? "Responder à organização" : "—")}</p>
-              {proximo?.data && <p className="mt-1 text-[12px] text-black/45">Até {dataCurta(proximo.data)}</p>}
-            </section>
-            {(coordenacao?.situacao || pedido?.mensagem) && <section className="rounded border border-black/[.08] bg-white p-5"><h2 className="text-[15px] font-semibold text-black/80">{coordenacao?.situacao ? "Situação atual" : "Contexto"}</h2><p className="mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-black/65">{coordenacao?.situacao || pedido?.mensagem}</p></section>}
-          </div>
-          <aside className="self-start rounded border border-black/[.08] bg-white p-5">
-            <div className="flex items-center gap-2"><Building2 size={14} className="text-black/35"/><h2 className="text-[15px] font-semibold text-black/80">Dados da oportunidade</h2></div>
-            <dl className="mt-3"><Campo label="Empresa" value={empresaNome}/><Campo label="Oportunidade" value={titulo || "—"}/><Campo label="Tipo" value={tipo}/><Campo label="Site" value={site ? <a href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" className="break-all text-[#5F4AA8] hover:underline">{site.replace(/^https?:\/\//, "")}</a> : "—"}/></dl>
-          </aside>
+        <div className="space-y-5">
+          <section className="rounded border border-black/[.08] bg-white p-5">
+            <h2 className="text-[15px] font-semibold text-black/80">Próximo passo</h2>
+            <p className="mt-4 text-[14px] font-medium text-black/75">{proximo?.texto || (pedido?.status === "pendente" ? "Aguardando avaliação" : pedido?.status === "aguardando_captador" ? "Responder à organização" : "—")}</p>
+            {proximo?.data && <p className="mt-1 text-[12px] text-black/45">Até {dataCurta(proximo.data)}</p>}
+          </section>
+          {(coordenacao?.situacao || pedido?.mensagem) && <section className="rounded border border-black/[.08] bg-white p-5"><h2 className="text-[15px] font-semibold text-black/80">{coordenacao?.situacao ? "Situação atual" : "Contexto"}</h2><p className="mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-black/65">{coordenacao?.situacao || pedido?.mensagem}</p></section>}
         </div>
       </div>}
-      {tab === "acompanhamento" && <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="min-w-0 rounded border border-black/[.08] bg-white p-5">
-          {atribuicao ? <AtribuicaoConversa id={atribuicao.id} organizationId={atribuicao.organizationId} pedido={pedido} onSent={() => void carregar()}/>
-            : pedido && <PedidoConversa pedido={pedido} isGestor={false} onChange={() => void carregar()} onOpenAtribuicao={atribuicaoId => router.push(`/workspace-captador/${atribuicaoId}`)}/>}
-        </section>
-        <aside className="self-start rounded border border-black/[.08] bg-white p-5"><h2 className="text-[15px] font-semibold text-black/80">{empresaNome}</h2><dl className="mt-3"><Campo label="Tipo" value={tipo}/><Campo label="Status" value={status}/><Campo label="Organização" value={organizationName}/></dl></aside>
-      </div>}
+      {tab === "acompanhamento" && <section className="rounded border border-black/[.08] bg-white p-5">
+        {atribuicao ? <AtribuicaoConversa id={atribuicao.id} organizationId={atribuicao.organizationId} pedido={pedido} onSent={() => void carregar()} abrirPedidoTrigger={abrirPedidoTrigger}/>
+          : pedido && <PedidoConversa pedido={pedido} isGestor={false} onChange={() => void carregar()} onOpenAtribuicao={atribuicaoId => router.push(`/workspace-captador/${atribuicaoId}`)}/>}
+      </section>}
     </DetailPageContent>
   </div>;
 }

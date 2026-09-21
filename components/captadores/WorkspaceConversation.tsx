@@ -2,11 +2,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any -- tabelas experimentais ainda não constam nos tipos gerados */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Calendar, Check, Flag, MessageCircle, Send, X } from "lucide-react";
+import { Check, MessageCircle, Send, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
-import { WorkspaceCoordination } from "@/components/captadores/WorkspaceCoordination";
+import { WorkspaceCoordination, BotaoSalvar } from "@/components/captadores/WorkspaceCoordination";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 
 export type WorkspacePedido = {
   id: string;
@@ -53,7 +54,7 @@ const STATUS: Record<WorkspacePedido["status"], string> = {
 
 const STATUS_COR: Record<WorkspacePedido["status"], string> = {
   pendente: "#B07A14",
-  aguardando_captador: "#5F4AA8",
+  aguardando_captador: "#7259B5",
   aprovado: "#2E8932",
   recusado: "#B64545",
 };
@@ -76,7 +77,7 @@ function MensagemBubble({ autor, texto, data, destaque = false, rotulo }: {
   const inicial = autor.trim().charAt(0).toUpperCase() || "?";
   return (
     <div className="flex gap-2.5">
-      <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${destaque ? "bg-[#5F4AA8]" : "bg-black/25"}`}>{inicial}</div>
+      <div className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white ${destaque ? "bg-[#171717]" : "bg-black/25"}`}>{inicial}</div>
       <div className="min-w-0 flex-1 rounded border bg-white px-3.5 py-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <p className="whitespace-pre-wrap text-[13px] leading-relaxed text-black/80">{texto}</p>
         <p className="mt-1.5 text-[11px] text-black/40">{rotulo ?? autor} · <DataMensagem data={data} /></p>
@@ -192,10 +193,10 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
             rows={3}
             maxLength={4000}
             placeholder={isGestor ? "O que precisa esclarecer?" : "Escreva o contexto ou responda à pergunta…"}
-            className="w-full resize-none rounded border border-black/[.15] px-3 py-2.5 text-[13px] outline-none focus:border-[#5F4AA8] focus:ring-2 focus:ring-[#5F4AA8]/10"
+            className="w-full resize-none rounded border border-black/[.15] px-3 py-2.5 text-[13px] outline-none focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
           />
           <button type="button" onClick={() => void enviar()} disabled={saving || !texto.trim()}
-            className="inline-flex items-center gap-1.5 rounded bg-[#171717] px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5F4AA8] disabled:opacity-40">
+            className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">
             <Send size={13} /> {saving ? "Enviando…" : "Enviar mensagem"}
           </button>
         </div>
@@ -207,7 +208,7 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
             <div className="space-y-2">
               <label htmlFor={`pedido-motivo-${pedido.id}`} className="block text-[11px] font-medium text-black/55">Motivo da recusa</label>
               <textarea id={`pedido-motivo-${pedido.id}`} value={motivo} onChange={event => setMotivo(event.target.value)} rows={2} maxLength={4000}
-                className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[13px] outline-none focus:border-[#5F4AA8]" />
+                className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[13px] outline-none focus:border-[#7259B5]" />
               <div className="flex gap-2">
                 <button type="button" onClick={() => void decidir("recusar")} disabled={saving || !motivo.trim()} className="rounded border border-[#B64545]/40 px-3 py-2 text-[12px] font-semibold text-[#B64545] disabled:opacity-40">Confirmar recusa</button>
                 <button type="button" onClick={() => setRecusando(false)} className="px-3 py-2 text-[12px] text-black/50">Voltar</button>
@@ -223,7 +224,7 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
       )}
 
       {pedido.status === "aprovado" && pedido.atribuicao_id && onOpenAtribuicao && (
-        <button type="button" onClick={() => onOpenAtribuicao(pedido.atribuicao_id!)} className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#5F4AA8] hover:underline">
+        <button type="button" onClick={() => onOpenAtribuicao(pedido.atribuicao_id!)} className="inline-flex items-center gap-1.5 text-[12px] font-semibold text-[#7259B5] hover:underline">
           <MessageCircle size={13} />Abrir acompanhamento
         </button>
       )}
@@ -232,25 +233,21 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
   );
 }
 
-export function AtribuicaoConversa({ id, organizationId, pedido, onSent, isGestor = false }: {
+export function AtribuicaoConversa({ id, organizationId, pedido, onSent, isGestor = false, abrirPedidoTrigger }: {
   id: string;
   organizationId: string;
   pedido?: WorkspacePedido | null;
   onSent?: () => void;
   isGestor?: boolean;
+  abrirPedidoTrigger?: number;
 }) {
   const supabase = useMemo(() => createClient(), []);
-  const organizationName = useOrganizationName() || "sua organização";
   const [notas, setNotas] = useState<{ id: string; autor_email: string; nota: string; created_at: string }[]>([]);
   const [texto, setTexto] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [proximo, setProximo] = useState<{ texto: string | null; data: string | null; aguardando: "captador" | "gestor" | null } | null>(null);
-  const [editarProximo, setEditarProximo] = useState(false);
-  const [textoProximo, setTextoProximo] = useState("");
-  const [dataProximo, setDataProximo] = useState("");
-  const [aguardando, setAguardando] = useState<"captador" | "gestor">("captador");
+  const atualizacaoPop = useAnchoredPopover();
 
   const carregar = useCallback(async (silencioso = false) => {
     if (!silencioso) setLoading(true);
@@ -260,30 +257,11 @@ export function AtribuicaoConversa({ id, organizationId, pedido, onSent, isGesto
     setErro(error?.message ?? null);
     setLoading(false);
   }, [id, supabase]);
-  const carregarProximo = useCallback(async () => {
-    const { data } = await (supabase as any).rpc("fn_workspace_obter_proximo_passo", { p_atribuicao_id: id });
-    if (data) setProximo(data as typeof proximo);
-  }, [id, supabase]);
   useEffect(() => {
-    const initial = window.setTimeout(() => { void carregar(); void carregarProximo(); }, 0);
-    const timer = window.setInterval(() => { if (document.visibilityState === "visible") { void carregar(true); void carregarProximo(); } }, 20_000);
+    const initial = window.setTimeout(() => { void carregar(); }, 0);
+    const timer = window.setInterval(() => { if (document.visibilityState === "visible") void carregar(true); }, 20_000);
     return () => { window.clearTimeout(initial); window.clearInterval(timer); };
-  }, [carregar, carregarProximo]);
-
-  async function salvarProximo() {
-    if (!textoProximo.trim() || saving) return;
-    setSaving(true);
-    setErro(null);
-    const { error } = await (supabase as any).rpc("fn_workspace_definir_proximo_passo", {
-      p_atribuicao_id: id, p_texto: textoProximo.trim(),
-      p_data: dataProximo || null, p_aguardando: aguardando,
-    });
-    setSaving(false);
-    if (error) { setErro(error.message); return; }
-    setEditarProximo(false);
-    await Promise.all([carregarProximo(), carregar()]);
-    onSent?.();
-  }
+  }, [carregar]);
 
   async function enviar() {
     if (!texto.trim() || saving) return;
@@ -298,50 +276,24 @@ export function AtribuicaoConversa({ id, organizationId, pedido, onSent, isGesto
     setSaving(false);
     if (error) { setErro(error.message); return; }
     setTexto("");
+    atualizacaoPop.fechar();
     await carregar();
     onSent?.();
   }
 
   return (
-    <section aria-label="Acompanhamento compartilhado" className="space-y-5">
+    <section aria-label="Acompanhamento compartilhado" className="space-y-6">
       {pedido && <div className="border-b pb-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-black/40">Como esta oportunidade começou</p>
         <PedidoConversa pedido={pedido} isGestor={false} onChange={() => {}} />
       </div>}
-      <WorkspaceCoordination atribuicaoId={id} isGestor={isGestor} onChange={() => { void carregar(); onSent?.(); }} />
-      {proximo && <section className="rounded border p-4 sm:p-5" style={{
-        borderColor: proximo.texto ? "#5F4AA835" : "rgba(13,13,13,.08)",
-        background: proximo.texto ? "#5F4AA806" : "white",
-      }}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2"><Flag size={13} strokeWidth={1.8} className="text-black/30" /><h3 className="text-[11px] font-semibold uppercase tracking-wide text-black/45">Próximo passo</h3></div>
-          {!editarProximo && <button type="button" onClick={() => { setTextoProximo(proximo.texto ?? ""); setDataProximo(proximo.data ?? ""); setAguardando(proximo.aguardando ?? "captador"); setEditarProximo(true); }} className="text-[11px] font-semibold text-[#5F4AA8] hover:underline">{proximo.texto ? "Alterar" : "Definir"}</button>}
+      <WorkspaceCoordination atribuicaoId={id} isGestor={isGestor} onChange={() => { void carregar(); onSent?.(); }} abrirPedidoTrigger={abrirPedidoTrigger} />
+
+      <div className="border-t pt-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-black/40">Histórico</p>
+          <button type="button" onClick={event => atualizacaoPop.abrir(event, 360)} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[11px] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Nova atualização</button>
         </div>
-        {editarProximo ? <div className="mt-3 space-y-2.5">
-          <label htmlFor={`proximo-${id}`} className="block text-[11px] text-black/55">O que precisa acontecer?</label>
-          <input id={`proximo-${id}`} autoFocus value={textoProximo} onChange={event => setTextoProximo(event.target.value)} maxLength={500}
-            className="h-10 w-full rounded border border-black/[.15] px-3 text-[13px] outline-none focus:border-[#5F4AA8]" />
-          <div className="flex flex-wrap gap-2">
-            <div className="text-[11px] text-black/55">Responsável
-              <div className="mt-1 inline-flex overflow-hidden rounded border border-black/[.15] align-middle">
-                {(["captador", "gestor"] as const).map(opcao => <button key={opcao} type="button" onClick={() => setAguardando(opcao)} aria-pressed={aguardando === opcao}
-                  className={`px-3 py-2 text-[12px] transition ${aguardando === opcao ? "bg-[#171717] text-white" : "bg-white text-black/60 hover:bg-black/[.04]"}`}>{opcao === "captador" ? "Captador" : organizationName}</button>)}
-              </div>
-            </div>
-            <label className="text-[11px] text-black/55">Até <input type="date" value={dataProximo} onChange={event => setDataProximo(event.target.value)}
-              className="ml-1 h-9 rounded border border-black/[.15] bg-white px-2 text-[12px] text-black" /></label>
-          </div>
-          <div className="flex gap-2">
-            <button type="button" onClick={() => void salvarProximo()} disabled={saving || !textoProximo.trim()} className="rounded bg-[#171717] px-3 py-2 text-[12px] font-semibold text-white disabled:opacity-40">{saving ? "Salvando…" : "Salvar próximo passo"}</button>
-            <button type="button" onClick={() => setEditarProximo(false)} className="px-2 py-2 text-[12px] text-black/50">Cancelar</button>
-          </div>
-        </div> : proximo.texto ? <div className="mt-3">
-          <p className="text-[14px] font-semibold leading-snug text-black/80">{proximo.texto}</p>
-          <p className="mt-1.5 flex items-center gap-1.5 text-[11.5px] text-black/45"><Calendar size={11} />Com {proximo.aguardando === "gestor" ? organizationName : "o captador"}{proximo.data ? ` · até ${proximo.data.split("-").reverse().join("/")}` : ""}</p>
-        </div> : <div className="mt-3"><VazioSutil texto="Não definido." /></div>}
-      </section>}
-      <div>
-        <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-black/40">Atualizações</p>
         <div className="max-h-80 space-y-3 overflow-y-auto" aria-live="polite">
           {loading ? <p className="text-[12px] text-black/40">Carregando acompanhamento…</p> : notas.length === 0 ? (
             <VazioSutil texto="Nenhuma atualização ainda." />
@@ -350,15 +302,16 @@ export function AtribuicaoConversa({ id, organizationId, pedido, onSent, isGesto
           ))}
         </div>
       </div>
-      <div className="space-y-2">
-        <label htmlFor={`atribuicao-mensagem-${id}`} className="block text-[11px] font-medium text-black/55">Atualização para o outro lado</label>
-        <textarea id={`atribuicao-mensagem-${id}`} value={texto} onChange={event => setTexto(event.target.value)} rows={3}
-          placeholder="O que aconteceu? Qual é o próximo passo?" className="w-full resize-none rounded border border-black/[.15] px-3 py-2.5 text-[13px] outline-none focus:border-[#5F4AA8] focus:ring-2 focus:ring-[#5F4AA8]/10" />
-        <button type="button" onClick={() => void enviar()} disabled={saving || !texto.trim()}
-          className="inline-flex items-center gap-1.5 rounded bg-[#171717] px-3.5 py-2 text-[12px] font-semibold text-white transition hover:bg-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5F4AA8] disabled:opacity-40">
-          <Send size={13} />{saving ? "Enviando…" : "Registrar atualização"}
-        </button>
-      </div>
+      <AnchoredPopover pos={atualizacaoPop.pos} onClose={atualizacaoPop.fechar}>
+        <label htmlFor={`atribuicao-mensagem-${id}`} className="mb-1.5 block text-[11px] font-semibold text-black/55">Atualização para o outro lado</label>
+        <textarea id={`atribuicao-mensagem-${id}`} autoFocus value={texto} onChange={event => setTexto(event.target.value)} rows={4}
+          placeholder="O que aconteceu? Qual é o próximo passo?" className="w-full resize-none rounded border border-black/[.15] px-3 py-2.5 text-[13px] outline-none focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10" />
+        <div className="mt-2.5 flex items-center gap-3">
+          <BotaoSalvar disabled={saving || !texto.trim()} onClick={() => void enviar()}>{saving ? "Enviando…" : "Registrar atualização"}</BotaoSalvar>
+          <button type="button" onClick={atualizacaoPop.fechar} className="text-[12px] text-black/45 hover:text-black/65">Cancelar</button>
+        </div>
+        {erro && <p role="alert" className="mt-2 text-[11px] font-medium text-[#B64545]">{erro}</p>}
+      </AnchoredPopover>
       {erro && <p role="alert" className="text-[11px] font-medium text-[#B64545]">{erro}</p>}
     </section>
   );
