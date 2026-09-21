@@ -53,7 +53,7 @@ type AtividadeRow = {
   contato: { nome: string | null; email: string | null; telefone: string | null } | null;
   responsavel_id: string | null;
   responsavel: { id: string; full_name: string | null; avatar_url: string | null } | null;
-  source_kind?: "atividade" | "followup";
+  source_kind?: "atividade" | "followup" | "workspace";
   source_id?: string;
   source_link?: string;
 };
@@ -156,6 +156,39 @@ function followupsToActivities(rows: any[]): AtividadeRow[] {
         : row.empresa_crm_id
           ? `/empresas-crm/${row.empresa_crm_id}?tab=relationship`
           : "/atividades",
+  }));
+}
+
+function workspaceRequestsToActivities(rows: any[]): AtividadeRow[] {
+  return rows.map(row => ({
+    id: `workspace:${row.id}`,
+    nome: row.descricao,
+    tipo: "tarefa" as TipoAtividade,
+    prioridade: null,
+    data_inicio: null,
+    data_prevista: row.prazo,
+    data_realizada: row.resolvido_em,
+    hora_inicio: null,
+    hora_fim: null,
+    resultado: null,
+    feita: row.status === "resolvida",
+    nota: null,
+    tipo_custom: { nome: "Pedido do captador", icone: "tarefa" as TipoAtividade, cor: "#5F4AA8" },
+    empresa_crm: row.atribuicao?.empresa_crm ?? null,
+    empresa_crm_id: row.atribuicao?.empresa_crm_id ?? null,
+    captacao_id: null,
+    projeto: null,
+    captador: null,
+    proponente: null,
+    captacao: null,
+    contato: null,
+    responsavel_id: null,
+    responsavel: null,
+    source_kind: "workspace" as const,
+    source_id: row.id,
+    source_link: row.atribuicao?.captador_user_id
+      ? `/captadores/${row.atribuicao.captador_user_id}?workspace=${row.atribuicao_id}`
+      : "/captadores",
   }));
 }
 
@@ -1143,6 +1176,11 @@ const FOLLOWUP_SELECT_FIELDS = `
   contato:contatos!contato_id(nome)
 `;
 
+const WORKSPACE_SELECT_FIELDS = `
+  id, atribuicao_id, descricao, prazo, status, resolvido_em,
+  atribuicao:atribuicoes!atribuicao_id(captador_user_id, empresa_crm_id, empresa_crm:empresas_crm!empresa_crm_id(nome))
+`;
+
 export default function AtividadesPage() {
   const supabase = createClient();
   const router = useRouter();
@@ -1168,16 +1206,18 @@ export default function AtividadesPage() {
     setLoading(true);
     const q = (supabase as any).from("atividades").select(SELECT_FIELDS);
     const followupQuery = (supabase as any).from("crm_followups").select(FOLLOWUP_SELECT_FIELDS);
-    const [activityResult, followupResult] = await Promise.all([
+    const workspaceQuery = (supabase as any).from("workspace_acoes").select(WORKSPACE_SELECT_FIELDS).eq("destinatario", "organizacao");
+    const [activityResult, followupResult, workspaceResult] = await Promise.all([
       tab === "pendentes"
         ? q.eq("feita", false).order("data_prevista", { ascending: true, nullsFirst: false })
         : q.eq("feita", true).order("data_realizada", { ascending: false, nullsFirst: false }).limit(100),
       tab === "pendentes"
         ? followupQuery.eq("status", "pendente").order("previsto_para", { ascending: true })
         : followupQuery.in("status", ["concluido", "cancelado"]).order("concluido_em", { ascending: false, nullsFirst: false }).limit(100),
+      tab === "pendentes" ? workspaceQuery.neq("status", "resolvida") : workspaceQuery.eq("status", "resolvida").limit(100),
     ]);
     if (!activityResult.error && !followupResult.error) {
-      setAtividades([...(activityResult.data as AtividadeRow[] ?? []), ...followupsToActivities(followupResult.data ?? [])]
+      setAtividades([...(activityResult.data as AtividadeRow[] ?? []), ...followupsToActivities(followupResult.data ?? []), ...workspaceRequestsToActivities(workspaceResult.error ? [] : workspaceResult.data ?? [])]
         .sort((a, b) => String(scheduledDate(a) ?? "9999").localeCompare(String(scheduledDate(b) ?? "9999"))));
     }
     setLoading(false);
@@ -1187,12 +1227,13 @@ export default function AtividadesPage() {
   /* ── Calendar / Gantt fetch ── */
   const fetchAll = useCallback(async () => {
     setLoadingAll(true);
-    const [activityResult, followupResult] = await Promise.all([
+    const [activityResult, followupResult, workspaceResult] = await Promise.all([
       (supabase as any).from("atividades").select(SELECT_FIELDS).order("data_prevista", { ascending: true, nullsFirst: false }),
       (supabase as any).from("crm_followups").select(FOLLOWUP_SELECT_FIELDS).order("previsto_para", { ascending: true }),
+      (supabase as any).from("workspace_acoes").select(WORKSPACE_SELECT_FIELDS).eq("destinatario", "organizacao"),
     ]);
     if (!activityResult.error && !followupResult.error) {
-      setAllAtividades([...(activityResult.data as AtividadeRow[] ?? []), ...followupsToActivities(followupResult.data ?? [])]);
+      setAllAtividades([...(activityResult.data as AtividadeRow[] ?? []), ...followupsToActivities(followupResult.data ?? []), ...workspaceRequestsToActivities(workspaceResult.error ? [] : workspaceResult.data ?? [])]);
     }
     setLoadingAll(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1210,7 +1251,7 @@ export default function AtividadesPage() {
   async function toggleFeita(id: string, current: boolean) {
     if (savingActivityId) return;
     const agendaItem = [...atividades, ...allAtividades].find(item => item.id === id);
-    if (agendaItem?.source_kind === "followup") {
+    if (agendaItem?.source_kind === "followup" || agendaItem?.source_kind === "workspace") {
       if (agendaItem.source_link) router.push(agendaItem.source_link);
       return;
     }
@@ -1248,6 +1289,10 @@ export default function AtividadesPage() {
   async function updateActivityDates(id: string, dates: { data_inicio: string; data_prevista: string }): Promise<boolean> {
     setToggleError(null);
     const agendaItem = allAtividades.find(item => item.id === id);
+    if (agendaItem?.source_kind === "workspace") {
+      if (agendaItem.source_link) router.push(agendaItem.source_link);
+      return false;
+    }
     if (agendaItem?.source_kind === "followup" && agendaItem.source_id) {
       const previous = allAtividades;
       setAllAtividades(items => items.map(item => item.id === id ? { ...item, data_prevista: dates.data_prevista } : item));
@@ -1289,6 +1334,10 @@ export default function AtividadesPage() {
     const previous = allAtividades;
     const agendaItem = previous.find(item => item.id === id);
     if (!agendaItem) return false;
+    if (agendaItem.source_kind === "workspace") {
+      if (agendaItem.source_link) router.push(agendaItem.source_link);
+      return false;
+    }
 
     const nextResponsavel = responsavelId ? { id: responsavelId, full_name: responsavelName, avatar_url: avatarUrl } : null;
     setAllAtividades(current => current.map(item => item.id === id ? { ...item, responsavel_id: responsavelId, responsavel: nextResponsavel } : item));
@@ -1313,7 +1362,7 @@ export default function AtividadesPage() {
 
   function openAgendaItem(id: string) {
     const item = [...atividades, ...allAtividades].find(candidate => candidate.id === id);
-    if (item?.source_kind === "followup") {
+    if (item?.source_kind === "followup" || item?.source_kind === "workspace") {
       if (item.source_link) router.push(item.source_link);
       return;
     }

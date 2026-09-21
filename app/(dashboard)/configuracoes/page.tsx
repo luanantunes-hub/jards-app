@@ -15,6 +15,7 @@ import { useCreditos } from "@/contexts/CreditosContext";
 import NovoMembroModal from "@/components/modals/NovoMembroModal";
 import { CalendarConnections } from "@/components/CalendarConnections";
 import { EtiquetasConfig } from "@/components/EtiquetasConfig";
+import { OpportunityLabelsConfig } from "@/components/captadores/OpportunityLabels";
 import { TaxonomiasComerciaisConfig } from "@/components/TaxonomiasComerciaisConfig";
 import { RenewalDecisionTreeConfig } from "@/components/customer-success/RenewalDecisionTreeConfig";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
@@ -959,6 +960,11 @@ const { data: perfilData } = await (supabase as any)
       {/* Etiquetas de captação */}
       {activeSection === "funis" && (
       <div className="space-y-8">
+        <div>
+          <h2 className="mb-1 text-[13px] font-bold text-black">Tipos de oportunidade do captador</h2>
+          <p className="mb-4 text-[11px] text-black/45">Essas etiquetas são os tipos exibidos no workspace. Você pode renomear, excluir ou criar outros.</p>
+          <OpportunityLabelsConfig />
+        </div>
         {organizationId && <div><div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded bg-black/[.045]"><Handshake size={14} className="text-black/45"/></div><p className="text-[13px] font-bold text-black">Renovação de clientes</p></div><RenewalDecisionTreeConfig organizationId={organizationId}/></div>}
         <div>
           <div className="flex items-center gap-2 mb-4">

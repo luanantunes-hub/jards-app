@@ -177,7 +177,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         try {
           const salvo = localStorage.getItem("jards:org-atual");
           const combina = salvo ? memberList.find(m => m.organizationId === salvo) : null;
-          escolhido = combina ?? memberList.find(m => m.papel !== "captador") ?? memberList[0];
+          const captador = memberList.find(m => m.papel === "captador");
+          escolhido = path.startsWith("/workspace-captador") && captador
+            ? (combina?.papel === "captador" ? combina : captador)
+            : combina ?? memberList.find(m => m.papel !== "captador") ?? memberList[0];
         } catch { /* localStorage indisponível — usa o padrão (primeiro não-captador) */ }
 
         setOrganizationId(escolhido.organizationId);
@@ -272,7 +275,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isWorkspaceCaptador = memberships.find(m => m.organizationId === organizationId)?.papel === "captador";
 
   return (
-    <OrganizationContext.Provider value={{ organizationId }}>
+    <OrganizationContext.Provider value={{ organizationId, organizationName: org.nome }}>
       <DeleteConfirmProvider>
       <CreditosProvider>
       <EtiquetasProvider>
@@ -385,7 +388,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href="/workspace-captador"
                 title={!expanded ? "Meu workspace" : undefined}
                 className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden ${
-                  path === "/workspace-captador" ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+                  path.startsWith("/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
                 }`}
                 style={{
                   gap: expanded ? 10 : 0,
