@@ -32,7 +32,7 @@ const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: s
   recusado: { label: "Recusado", cor: "#D94E4E", fundo: "#D94E4E14" },
 };
 
-type AtribuicaoLinha = { id: string; status: string; organizationId: string; empresaNome: string; empresaSite?: string | null; empresaDomainKey?: string | null; workspaceEtapa?: string | null };
+type AtribuicaoLinha = { id: string; status: string; organizationId: string; empresaNome: string; empresaSite?: string | null; empresaDomainKey?: string | null; workspaceEtapa?: string | null; workspaceFunil?: string | null };
 
 function normalizarSite(valor: string): string | null {
   if (!valor.trim()) return null;
@@ -217,6 +217,26 @@ function FunilKanban({ etapas, itens, pedidos, draggingId, setDraggingId, overEt
   );
 }
 
+function OportunidadeSolta({ item, onIniciar, router }: {
+  item: AtribuicaoLinha;
+  onIniciar: (id: string, funil: "negociacoes" | "inscricoes") => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  return (
+    <div
+      onClick={() => router.push(`/workspace-captador/${item.id}`)}
+      className="flex min-h-16 cursor-pointer items-center gap-3 border-b border-black/[.07] px-4 py-3 transition hover:bg-black/[.025] last:border-b-0"
+    >
+      <CompanyLogo nome={item.empresaNome} domain={item.empresaDomainKey} site={item.empresaSite} size={36} className="shrink-0 border border-black/[.07]"/>
+      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-black/80">{item.empresaNome}</span>
+      <div className="flex shrink-0 items-center gap-1.5" onClick={event => event.stopPropagation()}>
+        <button type="button" onClick={() => onIniciar(item.id, "negociacoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[11px] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Negociação</button>
+        <button type="button" onClick={() => onIniciar(item.id, "inscricoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[11px] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Inscrição</button>
+      </div>
+    </div>
+  );
+}
+
 export default function WorkspaceCaptadorPage() {
   const router = useRouter();
   const organizationId = useOrganizationId();
@@ -230,7 +250,7 @@ export default function WorkspaceCaptadorPage() {
   const [naoEncontrado, setNaoEncontrado] = useState(false);
   const [sheetAberto, setSheetAberto] = useState(false);
   const [aba, setAba] = useState("resumo");
-  const [fluxoAba, setFluxoAba] = useState<"negociacoes" | "inscricoes">("negociacoes");
+  const [fluxoAba, setFluxoAba] = useState<"negociacoes" | "inscricoes" | "soltas">("negociacoes");
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoLinha[]>([]);
   const [acoesPendentes, setAcoesPendentes] = useState<{ id: string; atribuicao_id: string; descricao: string }[]>([]);
   const [erroEtapa, setErroEtapa] = useState<string | null>(null);
@@ -247,13 +267,23 @@ export default function WorkspaceCaptadorPage() {
     if (error) { setAtribuicoes(anterior); setErroEtapa(error.message); }
   }
 
+  async function iniciarFluxo(atribuicaoId: string, funil: "negociacoes" | "inscricoes") {
+    const anterior = atribuicoes;
+    setErroEtapa(null);
+    setAtribuicoes(current => current.map(item => item.id === atribuicaoId ? { ...item, workspaceFunil: funil, workspaceEtapa: null } : item));
+    const { error } = await (createClient() as any).rpc("fn_workspace_iniciar_fluxo", {
+      p_atribuicao_id: atribuicaoId, p_funil: funil,
+    });
+    if (error) { setAtribuicoes(anterior); setErroEtapa(error.message); }
+  }
+
   async function carregarAtribuicoes(wsId: string) {
     const supabase = createClient();
     const { data } = await (supabase as any).rpc("fn_captador_minhas_atribuicoes", { p_workspace_id: wsId });
     const novas = ((data ?? []) as any[]).map(r => ({
       id: r.id, status: r.status, organizationId: r.organizationId, empresaNome: r.empresaNome ?? "—",
       empresaSite: r.empresaSite ?? null, empresaDomainKey: r.empresaDomainKey ?? null,
-      workspaceEtapa: r.workspaceEtapa ?? "a_iniciar",
+      workspaceEtapa: r.workspaceEtapa ?? null, workspaceFunil: r.workspaceFunil ?? null,
     }));
     setAtribuicoes(novas);
     if (novas.length === 0) { setAcoesPendentes([]); return; }
@@ -369,17 +399,22 @@ export default function WorkspaceCaptadorPage() {
               const ativas = atribuicoes.filter(a => a.status === "ativa");
               const idsNegociacao = new Set(pedidos.filter(p => p.tipo === "negociacoes" && p.atribuicao_id).map(p => p.atribuicao_id));
               const idsInscricao = new Set(pedidos.filter(p => p.tipo === "inscricoes" && p.atribuicao_id).map(p => p.atribuicao_id));
-              const negociacoesAtivas = ativas.filter(a => idsNegociacao.has(a.id));
-              const inscricoesAtivas = ativas.filter(a => idsInscricao.has(a.id));
+              const negociacoesAtivas = ativas.filter(a => a.workspaceFunil === "negociacoes" || (!a.workspaceFunil && idsNegociacao.has(a.id)));
+              const inscricoesAtivas = ativas.filter(a => a.workspaceFunil === "inscricoes" || (!a.workspaceFunil && idsInscricao.has(a.id)));
+              const soltas = ativas.filter(a => !a.workspaceFunil && !idsNegociacao.has(a.id) && !idsInscricao.has(a.id));
               const props = { pedidos, draggingId, setDraggingId, overEtapa, setOverEtapa, moverEtapa, router };
               return <div className="space-y-5">
                 <SegmentedControl ariaLabel="Tipo de fluxo" value={fluxoAba} onChange={setFluxoAba} options={[
                   { value: "negociacoes", label: `Negociações · ${negociacoesAtivas.length}` },
                   { value: "inscricoes", label: `Inscrições · ${inscricoesAtivas.length}` },
+                  ...(soltas.length > 0 ? [{ value: "soltas" as const, label: `A organizar · ${soltas.length}` }] : []),
                 ]}/>
-                {fluxoAba === "negociacoes"
-                  ? <FunilKanban etapas={etiquetas} itens={negociacoesAtivas} {...props} />
-                  : <FunilKanban etapas={etiquetasInscricao} itens={inscricoesAtivas} {...props} />}
+                {fluxoAba === "negociacoes" && <FunilKanban etapas={etiquetas} itens={negociacoesAtivas} {...props} />}
+                {fluxoAba === "inscricoes" && <FunilKanban etapas={etiquetasInscricao} itens={inscricoesAtivas} {...props} />}
+                {fluxoAba === "soltas" && <section className="overflow-hidden rounded border border-black/[.08] bg-white">
+                  <p className="border-b border-black/[.07] px-4 py-3 text-[12px] text-black/45">Ainda sem funil — escolha onde cada uma deve entrar.</p>
+                  {soltas.map(item => <OportunidadeSolta key={item.id} item={item} onIniciar={iniciarFluxo} router={router} />)}
+                </section>}
               </div>;
             })()}
             {aba === "historico" && <section className="overflow-hidden rounded border border-black/[.08] bg-white"><header className="border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Histórico</h2></header>
