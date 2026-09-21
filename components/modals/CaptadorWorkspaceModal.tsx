@@ -6,13 +6,12 @@ import { Briefcase, Copy, Mail, Save, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export type EscopoTipo = "empresas" | "negociacoes" | "inscricoes";
-export type EscopoModo = "pedido" | "consulta" | "ver_tudo";
+export type EscopoModo = "pedido" | "consulta";
 export type EscopoConfig = { tipo: EscopoTipo; habilitado: boolean; modo: EscopoModo };
 
 const MODO_OPCOES: { value: EscopoModo; label: string; descricao: string }[] = [
   { value: "pedido", label: "Com aprovação", descricao: "O captador propõe uma oportunidade. Você decide antes de atribuí-la." },
   { value: "consulta", label: "Consulta e avanço", descricao: "O captador verifica uma oportunidade. Se estiver livre, ela é atribuída automaticamente." },
-  { value: "ver_tudo", label: "Visão aberta", descricao: "O captador vê a lista deste tipo e pode adicionar oportunidades livres." },
 ];
 
 function TooltipBotao({ texto, children }: { texto: string; children: React.ReactNode }) {
@@ -167,7 +166,7 @@ export function CaptadorWorkspaceModal({
                 </div>
                 {habilitado && <div>
                   <p className="mb-2 text-[11px] font-semibold text-black/55">Como novas oportunidades entram</p>
-                  <div className="grid gap-2 sm:grid-cols-3">
+                  <div className="grid gap-2 sm:grid-cols-2">
                     {MODO_OPCOES.map(opcao => <TooltipBotao key={opcao.value} texto={opcao.descricao}>
                       <button type="button" onClick={() => setModo(opcao.value)} aria-pressed={modo === opcao.value}
                         className={`w-full rounded border px-2.5 py-2 text-left text-[11px] font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${modo === opcao.value ? "border-[#171717] bg-[#171717] text-white" : "border-black/[.14] bg-white text-black/60 hover:border-black/30"}`}>

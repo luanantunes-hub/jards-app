@@ -4,7 +4,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertTriangle, ChevronRight, Plus, Send } from "lucide-react";
+import { ChevronRight, Plus, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId, useOrganizationName } from "@/contexts/OrganizationContext";
 import { DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
@@ -16,7 +16,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { useEtiquetas, type Etiqueta } from "@/contexts/EtiquetasContext";
 
 type EscopoTipo = "empresas" | "negociacoes" | "inscricoes";
-type EscopoModo = "pedido" | "consulta" | "ver_tudo";
+type EscopoModo = "pedido" | "consulta";
 type Escopo = { tipo: EscopoTipo; habilitado: boolean; modo: EscopoModo };
 type PedidoStatus = WorkspacePedido["status"];
 type Pedido = WorkspacePedido;
@@ -31,20 +31,7 @@ const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: s
   recusado: { label: "Recusado", cor: "#D94E4E", fundo: "#D94E4E14" },
 };
 
-type LinhaEmpresa = { id: string; nome: string; status: string | null };
-type LinhaCaptacao = { id: string; titulo: string; status: string; empresaNome: string; atualizadoEm: string };
 type AtribuicaoLinha = { id: string; status: string; organizationId: string; empresaNome: string; empresaSite?: string | null; empresaDomainKey?: string | null; workspaceEtapa?: string | null };
-
-// resultado negativo = precisa de atenção; resultado positivo = concluída, fica discreta.
-// tudo que não é nem um nem outro (em negociação, aguardando etc.) é "em andamento".
-const NEGOCIACAO_NEGATIVO = new Set(["recusado"]);
-const NEGOCIACAO_POSITIVO = new Set(["aprovado"]);
-const INSCRICAO_NEGATIVO = new Set(["reprovado", "cancelado"]);
-const INSCRICAO_POSITIVO = new Set(["aprovado"]);
-
-function diasParado(atualizadoEm: string) {
-  return Math.max(0, Math.floor((Date.now() - new Date(atualizadoEm).getTime()) / 86_400_000));
-}
 
 function normalizarSite(valor: string): string | null {
   if (!valor.trim()) return null;
@@ -59,65 +46,6 @@ function StatusPedidoBadge({ status }: { status: PedidoStatus }) {
   const organizationName = useOrganizationName() || "sua organização";
   const cfg = STATUS_PEDIDO[status];
   return <span className="shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide" style={{ color: cfg.cor, background: cfg.fundo }}>{status === "aguardando_captador" ? `Responder a ${organizationName}` : cfg.label}</span>;
-}
-
-function ListaCaptacaoOrganizada({ linhas, vazio, negativos, positivos }: { linhas: LinhaCaptacao[]; vazio: string; negativos: Set<string>; positivos: Set<string> }) {
-  if (linhas.length === 0) return <p className="text-[13px] text-black/40">{vazio}</p>;
-
-  const atencao = linhas.filter(l => negativos.has(l.status));
-  const concluidas = linhas.filter(l => positivos.has(l.status));
-  const andamento = linhas.filter(l => !negativos.has(l.status) && !positivos.has(l.status));
-
-  return (
-    <div className="space-y-6">
-      {atencao.length > 0 && (
-        <div>
-          <div className="mb-2.5 flex items-center gap-1.5">
-            <AlertTriangle size={12} className="text-[#B07A14]" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-[#B07A14]">Precisa de atenção</p>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {atencao.map(linha => (
-              <div key={linha.id} className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.06] p-3">
-                <p className="truncate text-[13px] font-medium text-black/80">{linha.titulo}</p>
-                <p className="mt-1 truncate text-[11px] text-black/45">{linha.empresaNome} · parada há {diasParado(linha.atualizadoEm)} dias</p>
-                <span className="mt-2 inline-block rounded bg-white px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-[#B07A14]">{linha.status}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {andamento.length > 0 && (
-        <div>
-          <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Em andamento</p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {andamento.map(linha => (
-              <div key={linha.id} className="rounded border border-black/[.08] p-3">
-                <p className="truncate text-[13px] font-medium text-black/80">{linha.titulo}</p>
-                <p className="mt-1 truncate text-[11px] text-black/40">{linha.empresaNome}</p>
-                <span className="mt-2 inline-block rounded bg-black/[.04] px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-black/50">{linha.status}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {concluidas.length > 0 && (
-        <div className="opacity-60">
-          <p className="mb-2.5 text-[10px] font-bold uppercase tracking-widest text-black/30">Concluídas</p>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {concluidas.map(linha => (
-              <div key={linha.id} className="rounded border border-black/[.08] p-3">
-                <p className="truncate text-[13px] text-black/70">{linha.titulo}</p>
-                <p className="mt-1 truncate text-[11px] text-black/40">{linha.empresaNome}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
 }
 
 function StatusAtribuicaoBadge({ status }: { status: string }) {
@@ -301,9 +229,6 @@ export default function WorkspaceCaptadorPage() {
   const [pedidos, setPedidos] = useState<Pedido[]>([]);
   const [erroPedidos, setErroPedidos] = useState<string | null>(null);
   const [naoEncontrado, setNaoEncontrado] = useState(false);
-  const [empresas, setEmpresas] = useState<LinhaEmpresa[]>([]);
-  const [negociacoes, setNegociacoes] = useState<LinhaCaptacao[]>([]);
-  const [inscricoes, setInscricoes] = useState<LinhaCaptacao[]>([]);
   const [sheetAberto, setSheetAberto] = useState(false);
   const [aba, setAba] = useState("resumo");
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoLinha[]>([]);
@@ -346,28 +271,6 @@ export default function WorkspaceCaptadorPage() {
     return novos;
   }
 
-  async function carregarEmpresas(wsId: string) {
-    const supabase = createClient();
-    const { data } = await (supabase as any).rpc("fn_captador_listar_empresas", { p_workspace_id: wsId });
-    setEmpresas((data ?? []) as LinhaEmpresa[]);
-  }
-
-  async function carregarNegociacoes(wsId: string) {
-    const supabase = createClient();
-    const { data } = await (supabase as any).rpc("fn_captador_listar_negociacoes", { p_workspace_id: wsId });
-    setNegociacoes(((data ?? []) as any[]).map(r => ({
-      id: r.id, titulo: r.titulo, status: r.status, atualizadoEm: r.updatedAt, empresaNome: r.empresaNome ?? "—",
-    })));
-  }
-
-  async function carregarInscricoes(wsId: string) {
-    const supabase = createClient();
-    const { data } = await (supabase as any).rpc("fn_captador_listar_inscricoes", { p_workspace_id: wsId });
-    setInscricoes(((data ?? []) as any[]).map(r => ({
-      id: r.id, titulo: r.titulo, status: r.status, atualizadoEm: r.updatedAt, empresaNome: r.empresaNome ?? "—",
-    })));
-  }
-
   useEffect(() => {
     async function carregar() {
       if (!organizationId) return;
@@ -399,12 +302,6 @@ export default function WorkspaceCaptadorPage() {
       void carregarPedidos(workspace.id);
       void carregarAtribuicoes(workspace.id);
 
-      const verTudo = (tipo: EscopoTipo) => escoposCarregados.some(e => e.tipo === tipo && e.habilitado && e.modo === "ver_tudo");
-
-      if (verTudo("empresas")) await carregarEmpresas(workspace.id);
-      if (verTudo("negociacoes")) await carregarNegociacoes(workspace.id);
-      if (verTudo("inscricoes")) await carregarInscricoes(workspace.id);
-
       setCarregando(false);
     }
     void carregar();
@@ -412,7 +309,6 @@ export default function WorkspaceCaptadorPage() {
 
   if (carregando) return <DetailPageContent><div className="animate-pulse space-y-5"><div className="h-8 w-1/3 rounded bg-black/[.07]"/><div className="h-24 rounded bg-black/[.04]"/><div className="h-44 rounded bg-black/[.04]"/></div></DetailPageContent>;
 
-  const habilitados = (escopos ?? []).filter(e => e.habilitado);
   const esperandoResposta = pedidos.filter(p => p.status === "aguardando_captador");
   const aguardandoGestor = pedidos.filter(p => p.status === "pendente");
 
@@ -436,7 +332,6 @@ export default function WorkspaceCaptadorPage() {
             { id: "resumo", label: "Resumo", count: atribuicoes.length + esperandoResposta.length + aguardandoGestor.length },
             { id: "fluxo", label: "Fluxo", count: atribuicoes.filter(a => a.status === "ativa").length },
             { id: "historico", label: "Histórico", count: pedidos.filter(p => p.status === "recusado").length },
-            ...(habilitados.some(e => e.modo === "ver_tudo") ? [{ id: "carteira", label: "Carteira" }] : []),
           ]}/>
           <DetailPageContent>
             {erroPedidos && <p role="alert" className="mb-4 text-[12px] text-[#B64545]">Oportunidades indisponíveis.</p>}
@@ -483,11 +378,6 @@ export default function WorkspaceCaptadorPage() {
             {aba === "historico" && <section className="overflow-hidden rounded border border-black/[.08] bg-white"><header className="border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Histórico</h2></header>
               {pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").length === 0 ? <p className="px-4 py-6 text-[12px] text-black/40">Nenhum registro.</p> : pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").map(p => <OportunidadeRow key={p.id} href={`/workspace-captador/${p.id}`} empresa={p.nome_busca} titulo={p.oportunidade_titulo || p.nome_busca} tipo={rotuloOportunidade(p)} site={p.empresa_site} trailing={<StatusPedidoBadge status={p.status}/>}/>)}
             </section>}
-            {aba === "carteira" && <div className="space-y-6">
-              {habilitados.some(e => e.tipo === "empresas" && e.modo === "ver_tudo") && <section className="rounded border border-black/[.08] bg-white p-5"><h2 className="mb-4 text-[15px] font-semibold text-black/80">Empresas</h2>{empresas.length ? empresas.map(e => <p key={e.id} className="border-t border-black/[.08] py-3 text-[12px] text-black/70">{e.nome}</p>) : <p className="text-[12px] text-black/40">Nenhuma empresa.</p>}</section>}
-              {habilitados.some(e => e.tipo === "negociacoes" && e.modo === "ver_tudo") && <section className="rounded border border-black/[.08] bg-white p-5"><h2 className="mb-4 text-[15px] font-semibold text-black/80">Negociações</h2><ListaCaptacaoOrganizada linhas={negociacoes} vazio="Nenhuma negociação." negativos={NEGOCIACAO_NEGATIVO} positivos={NEGOCIACAO_POSITIVO}/></section>}
-              {habilitados.some(e => e.tipo === "inscricoes" && e.modo === "ver_tudo") && <section className="rounded border border-black/[.08] bg-white p-5"><h2 className="mb-4 text-[15px] font-semibold text-black/80">Inscrições</h2><ListaCaptacaoOrganizada linhas={inscricoes} vazio="Nenhuma inscrição." negativos={INSCRICAO_NEGATIVO} positivos={INSCRICAO_POSITIVO}/></section>}
-            </div>}
           </DetailPageContent>
         </>
       )}
@@ -497,8 +387,6 @@ export default function WorkspaceCaptadorPage() {
           onClose={() => setSheetAberto(false)} onSaved={() => {
             void carregarPedidos(workspaceId);
             void carregarAtribuicoes(workspaceId);
-            if (habilitados.some(e => e.tipo === "negociacoes" && e.modo === "ver_tudo")) void carregarNegociacoes(workspaceId);
-            if (habilitados.some(e => e.tipo === "inscricoes" && e.modo === "ver_tudo")) void carregarInscricoes(workspaceId);
           }} />
       )}
 
