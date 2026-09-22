@@ -1,7 +1,9 @@
 "use client";
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Mail, Pencil, Shield, UserCheck, Building2, Check, FileStack } from "lucide-react";
+import { ArrowLeft, Mail, Pencil, Shield, UserCheck, Building2, Check, FileStack, Briefcase, MessageCircle } from "lucide-react";
+import { CaptadorWorkspaceModal, type EscopoConfig } from "@/components/modals/CaptadorWorkspaceModal";
+import { AtribuicaoConversa, PedidoConversa, listarPedidosWorkspace, type WorkspacePedido } from "@/components/captadores/WorkspaceConversation";
 import { createClient } from "@/lib/supabase/client";
 import { CAPTADOR_ICON_OPTIONS, type IdentityType } from "@/components/ui/ProjectIdentity";
 import { IdentityPickerPopup } from "@/components/ui/IdentityPickerPopup";
@@ -12,6 +14,7 @@ import { DetailHeaderAction, DetailPageContent, DetailTabs } from "@/components/
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CaptadorOverview, type CaptadorOverviewData } from "@/components/captadores/CaptadorOverview";
 import { CaptadorRelationshipScorecard } from "@/components/relationship/DecisionScorecard";
+import { useEtiquetas } from "@/contexts/EtiquetasContext";
 
 type CaptadorDetalhe = {
   id: string;
@@ -35,11 +38,13 @@ type AtribuicaoRow = {
   tipo: string;
   status: string;
   dias_sem_avanco: number | null;
+  workspace_etapa?: string | null;
   empresa_crm: { id: string; nome: string; domain_key: string | null; site: string | null } | null;
   projeto: { id: string; nome: string } | null;
 };
 
 const EXC_LABEL: Record<string, string> = { exclusividade_empresa: "Exclusiva", compartilhada: "Compartilhada" };
+const PEDIDO_TIPO_LABEL: Record<string, string> = { empresas: "Relacionamento", negociacoes: "Negociação", inscricoes: "Edital" };
 const STATUS_ATRIB: Record<string, { label: string; color: string }> = {
   ativa: { label: "Ativa", color: "#1A8B7A" },
   suspensa: { label: "Suspensa", color: "#B07A14" },
@@ -48,11 +53,12 @@ const STATUS_ATRIB: Record<string, { label: string; color: string }> = {
   cancelada: { label: "Cancelada", color: "rgba(13,13,13,.40)" },
 };
 
-type PageTab = "overview" | "negociacoes" | "inscricoes" | "atribuicoes";
+type PageTab = "overview" | "workspace" | "negociacoes" | "inscricoes" | "atribuicoes";
 
 export default function CaptadorDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const supabase = useMemo(() => createClient(), []);
+  const { etiquetas, etiquetasInscricao } = useEtiquetas();
   const [captador, setCaptador] = useState<CaptadorDetalhe | null>(null);
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoRow[]>([]);
   const [negociacoes, setNegociacoes] = useState<CaptacaoRow[]>([]);
@@ -62,6 +68,20 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
   const [showEditModal, setShowEditModal] = useState(false);
   const [identitySaving, setIdentitySaving] = useState(false);
   const [pageTab, setPageTab] = useState<PageTab>("overview");
+  const [workspace, setWorkspace] = useState<{ id: string; escopos: EscopoConfig[] } | null>(null);
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
+  const [pedidosWorkspace, setPedidosWorkspace] = useState<WorkspacePedido[]>([]);
+  const [erroWorkspace, setErroWorkspace] = useState<string | null>(null);
+  const [pedidoSelecionado, setPedidoSelecionado] = useState<string | null>(null);
+  const [atribuicaoSelecionada, setAtribuicaoSelecionada] = useState<string | null>(null);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const atribuicaoId = new URLSearchParams(window.location.search).get("workspace");
+      if (atribuicaoId) { setPageTab("workspace"); setAtribuicaoSelecionada(atribuicaoId); setPedidoSelecionado(null); }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -83,7 +103,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
     const [atribRes, negExtRes, negIntRes, inscRes, overviewRes] = await Promise.all([
       (supabase as any)
         .from("atribuicoes")
-        .select("id,tipo,status,dias_sem_avanco,empresa_crm:empresas_crm!empresa_crm_id(id,nome,domain_key,site),projeto:projetos_crm!projeto_id(id,nome)")
+        .select("id,tipo,status,dias_sem_avanco,workspace_etapa,empresa_crm:empresas_crm!empresa_crm_id(id,nome,domain_key,site),projeto:projetos_crm!projeto_id(id,nome)")
         .eq("captador_user_id", id)
         .order("created_at", { ascending: false }),
       (supabase as any)
@@ -106,10 +126,32 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
       (supabase as any).rpc("fn_captador_overview", { p_captador_id: id }),
     ]);
 
-    setAtribuicoes((atribRes.data ?? []) as AtribuicaoRow[]);
+    const atribuicoesResult = atribRes.error?.code === "42703"
+      ? await (supabase as any).from("atribuicoes")
+          .select("id,tipo,status,dias_sem_avanco,empresa_crm:empresas_crm!empresa_crm_id(id,nome,domain_key,site),projeto:projetos_crm!projeto_id(id,nome)")
+          .eq("captador_user_id", id).order("created_at", { ascending: false })
+      : atribRes;
+    setAtribuicoes((atribuicoesResult.data ?? []) as AtribuicaoRow[]);
     setNegociacoes([...(negExtRes.data ?? []), ...(negIntRes.data ?? [])] as CaptacaoRow[]);
     setInscricoes((inscRes.data ?? []) as EditalRow[]);
     setOverview(overviewRes.error ? null : overviewRes.data as CaptadorOverviewData);
+
+    const { data: workspaceRow } = await (supabase as any)
+      .from("captador_workspaces")
+      .select("id, captador_workspace_escopos(tipo, habilitado, modo)")
+      .eq("captador_id", id)
+      .maybeSingle();
+    setWorkspace(workspaceRow ? { id: workspaceRow.id, escopos: workspaceRow.captador_workspace_escopos } : null);
+
+    if (workspaceRow) {
+      const { pedidos, error: erroPedidos } = await listarPedidosWorkspace(supabase, workspaceRow.id);
+      setPedidosWorkspace(pedidos);
+      setErroWorkspace(erroPedidos);
+    } else {
+      setPedidosWorkspace([]);
+      setErroWorkspace(null);
+    }
+
     setLoading(false);
   }, [id, supabase]);
 
@@ -162,6 +204,23 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
     image.src = objectUrl;
   }
 
+  async function atualizarPedidos() {
+    if (!workspace) return;
+    const { pedidos, error } = await listarPedidosWorkspace(supabase, workspace.id);
+    setPedidosWorkspace(pedidos);
+    setErroWorkspace(error);
+    const { data: atribuicoesComEtapa, error: erroAtribuicoes } = await (supabase as any).from("atribuicoes")
+      .select("id,tipo,status,dias_sem_avanco,workspace_etapa,empresa_crm:empresas_crm!empresa_crm_id(id,nome,domain_key,site),projeto:projetos_crm!projeto_id(id,nome)")
+      .eq("captador_user_id", id).order("created_at", { ascending: false });
+    let novasAtribuicoes = atribuicoesComEtapa;
+    if (erroAtribuicoes?.code === "42703") {
+      ({ data: novasAtribuicoes } = await (supabase as any).from("atribuicoes")
+        .select("id,tipo,status,dias_sem_avanco,empresa_crm:empresas_crm!empresa_crm_id(id,nome,domain_key,site),projeto:projetos_crm!projeto_id(id,nome)")
+        .eq("captador_user_id", id).order("created_at", { ascending: false }));
+    }
+    setAtribuicoes((novasAtribuicoes ?? []) as AtribuicaoRow[]);
+  }
+
   if (loading) return <CaptadorSkeleton />;
   if (!captador) return <CaptadorNotFound />;
 
@@ -203,6 +262,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
               {captador.email && (
                 <DetailHeaderAction label="Enviar e-mail" icon={Mail} href={`mailto:${captador.email}`} />
               )}
+              <DetailHeaderAction label={workspace ? "Configurar workspace" : "Criar workspace"} icon={Briefcase} onClick={() => setShowWorkspaceModal(true)} />
               <DetailHeaderAction label="Editar" icon={Pencil} onClick={() => setShowEditModal(true)} />
             </div>
           </div>
@@ -215,6 +275,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
         onChange={value => setPageTab(value as PageTab)}
         tabs={[
           { id: "overview", label: "Visão geral", icon: UserCheck },
+          ...(workspace ? [{ id: "workspace", label: "Trabalho conjunto", icon: MessageCircle, count: pedidosWorkspace.filter(p => p.status === "pendente").length }] : []),
           { id: "negociacoes", label: "Negociações", icon: Building2, count: negociacoes.length },
           { id: "inscricoes", label: "Inscrições", icon: FileStack, count: inscricoes.length },
           { id: "atribuicoes", label: "Atribuições", icon: Shield, count: atribuicoes.length },
@@ -222,19 +283,75 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
       />
 
       <DetailPageContent>
-        {pageTab === "negociacoes" ? (
+        {pageTab === "workspace" && workspace ? (
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-[19px] font-semibold tracking-tight text-[#171717]">Oportunidades com {captador.nome}</h2>
+              <p className="mt-1 text-[13px] text-black/50">Pedidos, respostas e acompanhamento compartilhado.</p>
+              {erroWorkspace && <p role="alert" className="mt-2 text-[12px] text-[#B64545]">Não foi possível carregar os pedidos: {erroWorkspace}</p>}
+            </div>
+            <div className="grid gap-8 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
+              <div>
+                <h3 className="mb-3 text-[12px] font-semibold text-black/70">Pedidos <span className="font-normal tabular-nums text-black/40">{pedidosWorkspace.length}</span></h3>
+                {pedidosWorkspace.length === 0 ? <p className="text-[12px] text-black/45">Ainda não há pedidos. O captador pode iniciar um pela própria área.</p> : (
+                  <div className="divide-y divide-black/[.08] border-y border-black/[.08]">
+                    {pedidosWorkspace.map(p => (
+                      <button key={p.id} type="button" onClick={() => { setPedidoSelecionado(p.id); setAtribuicaoSelecionada(null); }}
+                        className={`w-full py-3 text-left transition hover:text-[#5F4AA8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${pedidoSelecionado === p.id ? "text-[#5F4AA8]" : "text-black/80"}`}>
+                        <span className="block truncate text-[13px] font-medium">{p.oportunidade_titulo || p.nome_busca}</span>
+                        <span className="mt-1 block text-[11px] text-black/40">{p.oportunidade_etiqueta?.nome ?? PEDIDO_TIPO_LABEL[p.tipo]} · {p.nome_busca} · {p.status === "pendente" ? "Pede sua decisão" : p.status === "aguardando_captador" ? "Aguardando captador" : p.status === "aprovado" ? "Aprovado" : "Recusado"}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <h3 className="mb-3 mt-7 text-[12px] font-semibold text-black/70">Em andamento <span className="font-normal tabular-nums text-black/40">{atribuicoes.length}</span></h3>
+                <div className="divide-y divide-black/[.08] border-y border-black/[.08]">
+                  {atribuicoes.map(a => {
+                    const tipoFluxo = pedidosWorkspace.find(p => p.atribuicao_id === a.id)?.tipo;
+                    const lista = tipoFluxo === "negociacoes" ? etiquetas : tipoFluxo === "inscricoes" ? etiquetasInscricao : [];
+                    const sugestao = a.workspace_etapa ? (lista.find(item => item.key === a.workspace_etapa)?.label ?? a.workspace_etapa) : null;
+                    return <button key={a.id} type="button" onClick={() => { setAtribuicaoSelecionada(a.id); setPedidoSelecionado(null); }}
+                      className={`block w-full py-3 text-left text-[13px] transition hover:text-[#5F4AA8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${atribuicaoSelecionada === a.id ? "font-semibold text-[#5F4AA8]" : "text-black/75"}`}>
+                      <span className="block">{a.empresa_crm?.nome ?? "Empresa"}</span>
+                      {sugestao && <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-normal text-[#5F4AA8]"><span className="h-1 w-1 rounded-full bg-[#5F4AA8]"/>Sugestão do captador: {sugestao}</span>}
+                    </button>;
+                  })}
+                  {atribuicoes.length === 0 && <p className="py-3 text-[12px] text-black/45">Nenhuma atribuição ainda.</p>}
+                </div>
+              </div>
+              <div className="min-h-72 border-l border-black/[.08] pl-0 lg:pl-7">
+                {pedidoSelecionado ? (
+                  <PedidoConversa key={pedidoSelecionado} pedido={pedidosWorkspace.find(p => p.id === pedidoSelecionado)!} isGestor onChange={() => void atualizarPedidos()}
+                    onOpenAtribuicao={atribuicaoId => { setPedidoSelecionado(null); setAtribuicaoSelecionada(atribuicaoId); }} />
+                ) : atribuicaoSelecionada ? (
+                  <AtribuicaoConversa key={atribuicaoSelecionada} id={atribuicaoSelecionada} organizationId={captador.organization_id} isGestor
+                    pedido={pedidosWorkspace.find(p => p.atribuicao_id === atribuicaoSelecionada)} />
+                ) : <div className="py-8 text-center text-[13px] text-black/40">Selecione um pedido ou uma oportunidade para acompanhar a conversa.</div>}
+              </div>
+            </div>
+          </div>
+        ) : pageTab === "negociacoes" ? (
           <NegotiationsTable rows={negociacoes} hideNegotiationColumn />
         ) : pageTab === "inscricoes" ? (
           <InscricoesTable rows={inscricoes} />
         ) : pageTab === "atribuicoes" ? (
           <AtribuicoesList rows={atribuicoes} />
         ) : (
-          <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-            <div className="w-full shrink-0 lg:w-[320px]">
-              <CaptadorRelationshipScorecard captadorId={captador.id} organizationId={captador.organization_id} />
-            </div>
-            <div className="min-w-0 flex-1">
-              <CaptadorOverview data={overview} />
+          <div className="space-y-5">
+            {pedidosWorkspace.some(p => p.status === "pendente") && (
+              <button type="button" onClick={() => { setPageTab("workspace"); setPedidoSelecionado(pedidosWorkspace.find(p => p.status === "pendente")?.id ?? null); }}
+                className="flex w-full items-center justify-between gap-3 border-y border-[#B07A14]/25 py-3 text-left transition hover:text-[#5F4AA8]">
+                <span className="text-[13px] font-semibold">{pedidosWorkspace.filter(p => p.status === "pendente").length} pedido(s) aguardando sua decisão</span>
+                <span className="text-[12px] font-medium">Abrir conversa →</span>
+              </button>
+            )}
+            <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
+              <div className="w-full shrink-0 lg:w-[320px]">
+                <CaptadorRelationshipScorecard captadorId={captador.id} organizationId={captador.organization_id} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <CaptadorOverview data={overview} />
+              </div>
             </div>
           </div>
         )}
@@ -257,6 +374,17 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
           }}
           onClose={() => setShowEditModal(false)}
           onSaved={() => { setShowEditModal(false); void fetchData(); }}
+        />
+      )}
+      {showWorkspaceModal && (
+        <CaptadorWorkspaceModal
+          captadorId={captador.id}
+          organizationId={captador.organization_id}
+          captadorEmail={captador.email}
+          workspaceId={workspace?.id ?? null}
+          escoposIniciais={workspace?.escopos ?? null}
+          onClose={() => setShowWorkspaceModal(false)}
+          onSaved={() => void fetchData()}
         />
       )}
     </div>

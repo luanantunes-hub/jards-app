@@ -13,6 +13,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
 import { NovoProponenteModal, type EditDataProponente } from "@/components/modals/NovoProponenteModal";
+import { ProponenteWorkspaceModal } from "@/components/modals/ProponenteWorkspaceModal";
 import { DetailHeaderAction, DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { TipoProponente } from "@/lib/supabase/types";
@@ -42,6 +43,7 @@ type ProponenteDetail = {
   identidade_valor: string | null;
   identidade_logo_url: string | null;
   identidade_cor: string | null;
+  user_id: string | null;
 };
 
 type ProjetoRow = {
@@ -187,6 +189,7 @@ export default function ProponenteDetailPage() {
   const [clientes, setClientes] = useState<ClienteRow[]>([]);
   const [loading, setLoading]       = useState(true);
   const [showEdit, setShowEdit]     = useState(false);
+  const [showWorkspaceModal, setShowWorkspaceModal] = useState(false);
   const [pageTab, setPageTab]       = useState<PageTab>("overview");
   const [relationshipSection, setRelationshipSection] = useState<RelationshipSection>("relationship");
 
@@ -204,7 +207,7 @@ export default function ProponenteDetailPage() {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const [{ data: pData }, { data: prData }, { data: cData }, { data: capData }, { data: allCap }] = await Promise.all([
-      supabase.from("proponentes").select("id, account_id, nome, cnpj, tipo, cidade, estado, email, telefone, site, descricao, created_at, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor").eq("id", id).single(),
+      supabase.from("proponentes").select("id, account_id, nome, cnpj, tipo, cidade, estado, email, telefone, site, descricao, created_at, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor, user_id").eq("id", id).single(),
       (supabase as any).from("projetos_crm").select("id, nome, fase, status_comercial, valor_alvo, valor_garantido, areas_culturais, status_operacional, mecanismo").eq("proponente_id", id).order("created_at", { ascending: false }),
       (supabase as any).from("contatos").select("id, nome, cargo, email, telefone, linkedin_url").eq("proponente_id", id).order("nome", { ascending: true }),
       (supabase as any).from("captador_proponente").select("id, captador_id, status, data_inicio, captador:captadores(nome, agencia, email)").eq("proponente_id", id).order("created_at", { ascending: false }),
@@ -389,6 +392,16 @@ export default function ProponenteDetailPage() {
       {showEdit && (
         <NovoProponenteModal editData={editData} onClose={() => setShowEdit(false)} onSaved={() => { setShowEdit(false); fetchAll(); }}/>
       )}
+      {showWorkspaceModal && organizationId && (
+        <ProponenteWorkspaceModal
+          proponenteId={proponente.id}
+          organizationId={organizationId}
+          proponenteEmail={proponente.email}
+          jaTemAcesso={!!proponente.user_id}
+          onClose={() => setShowWorkspaceModal(false)}
+          onSaved={() => void fetchAll()}
+        />
+      )}
 
       {/* Header */}
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
@@ -421,7 +434,10 @@ export default function ProponenteDetailPage() {
                 )}
               </div>
             </div>
-            <DetailHeaderAction label="Editar" icon={Pencil} onClick={() => setShowEdit(true)} />
+            <div className="flex flex-wrap gap-2 lg:justify-end">
+              <DetailHeaderAction label={proponente.user_id ? "Acesso concedido" : "Dar acesso ao proponente"} icon={FolderOpen} onClick={() => setShowWorkspaceModal(true)} />
+              <DetailHeaderAction label="Editar" icon={Pencil} onClick={() => setShowEdit(true)} />
+            </div>
           </div>
         </div>
       </header>

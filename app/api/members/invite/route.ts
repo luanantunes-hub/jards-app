@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-type MemberRole = "admin" | "colaborador" | "leitor" | "captador";
+type MemberRole = "admin" | "colaborador" | "leitor" | "captador" | "proponente";
 
 function adminClient() {
   return createClient(
@@ -39,12 +39,20 @@ export async function POST(req: NextRequest) {
     email?: string;
     role?: MemberRole;
     captador_id?: string;
+    proponente_id?: string;
   } | null;
   const organizationId = body?.organization_id ?? "";
   const email = body?.email?.trim().toLowerCase() ?? "";
   const role = body?.role ?? "colaborador";
   const captadorId = body?.captador_id ?? "";
-  if (!organizationId || !/^\S+@\S+\.\S+$/.test(email) || !["admin", "colaborador", "leitor", "captador"].includes(role) || (role === "captador" && !captadorId)) {
+  const proponenteId = body?.proponente_id ?? "";
+  if (
+    !organizationId ||
+    !/^\S+@\S+\.\S+$/.test(email) ||
+    !["admin", "colaborador", "leitor", "captador", "proponente"].includes(role) ||
+    (role === "captador" && !captadorId) ||
+    (role === "proponente" && !proponenteId)
+  ) {
     return NextResponse.json({ error: "Convite inválido" }, { status: 400 });
   }
 
@@ -54,11 +62,19 @@ export async function POST(req: NextRequest) {
   if (requesterError) return NextResponse.json({ error: requesterError.message }, { status: 500 });
   if (requester?.papel !== "admin") return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
 
-  const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin}/api/auth/callback?next=${role === "captador" ? "/captadores" : "/configuracoes"}`;
+  const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin}/api/auth/callback?next=${
+    role === "captador" ? "/workspace-captador" : role === "proponente" ? "/workspace-proponente" : "/configuracoes"
+  }`;
 
   async function linkCaptador(userId: string) {
     if (role !== "captador") return null;
     const { error } = await admin.from("captadores").update({ user_id: userId }).eq("id", captadorId).eq("organization_id", organizationId);
+    return error;
+  }
+
+  async function linkProponente(userId: string) {
+    if (role !== "proponente") return null;
+    const { error } = await admin.from("proponentes").update({ user_id: userId }).eq("id", proponenteId).eq("organization_id", organizationId);
     return error;
   }
 
@@ -77,6 +93,8 @@ export async function POST(req: NextRequest) {
     if (pendingInvitation.invited_user_id) {
       const captadorLinkError = await linkCaptador(pendingInvitation.invited_user_id);
       if (captadorLinkError) return NextResponse.json({ error: captadorLinkError.message }, { status: 500 });
+      const proponenteLinkError = await linkProponente(pendingInvitation.invited_user_id);
+      if (proponenteLinkError) return NextResponse.json({ error: proponenteLinkError.message }, { status: 500 });
     }
     const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({
       type: "invite",
@@ -109,6 +127,8 @@ export async function POST(req: NextRequest) {
 
     const captadorLinkError = await linkCaptador(existingProfile.id);
     if (captadorLinkError) return NextResponse.json({ error: captadorLinkError.message }, { status: 500 });
+    const proponenteLinkError = await linkProponente(existingProfile.id);
+    if (proponenteLinkError) return NextResponse.json({ error: proponenteLinkError.message }, { status: 500 });
 
     // Registro historico do convite/adicao; nao reserva outro assento.
     await admin.from("organization_invitations").insert({
@@ -153,6 +173,10 @@ export async function POST(req: NextRequest) {
   const captadorLinkError = await linkCaptador(data.user.id);
   if (captadorLinkError) {
     return NextResponse.json({ error: "O convite foi enviado, mas não foi possível vincular o acesso à agência." }, { status: 500 });
+  }
+  const proponenteLinkError = await linkProponente(data.user.id);
+  if (proponenteLinkError) {
+    return NextResponse.json({ error: "O convite foi enviado, mas não foi possível vincular o acesso ao proponente." }, { status: 500 });
   }
 
   return NextResponse.json({ ok: true, status: "pending", email });
