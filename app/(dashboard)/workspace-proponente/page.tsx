@@ -1,0 +1,142 @@
+"use client";
+/* eslint-disable @typescript-eslint/no-explicit-any -- RPC experimental ainda não consta nos tipos gerados */
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Calendar, FolderOpen, TrendingUp, Zap, FileText, Check } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
+
+type ProjetoResumo = {
+  id: string;
+  nome: string;
+  fase: "planejamento" | "captacao" | "execucao" | "prestacao" | "concluido";
+  statusComercial: string | null;
+  valorAlvo: number | null;
+  valorGarantido: number;
+  identidadeTipo: "padrao" | "icone" | "emoji" | "logo";
+  identidadeValor: string | null;
+  identidadeLogoUrl: string | null;
+  identidadeCor: string | null;
+  proponenteId: string;
+  proponenteNome: string;
+  negociacoesCount: number;
+  inscricoesCount: number;
+  createdAt: string;
+};
+
+const FASES: Record<string, { label: string; color: string; Icon: typeof Calendar }> = {
+  planejamento: { label: "Planejamento", color: "#888888", Icon: Calendar },
+  captacao:     { label: "Captação",     color: "#7259B5", Icon: TrendingUp },
+  execucao:     { label: "Execução",     color: "#2D72B0", Icon: Zap },
+  prestacao:    { label: "Prestação",    color: "#B07A14", Icon: FileText },
+  concluido:    { label: "Concluído",    color: "#2E8932", Icon: Check },
+};
+
+function fmtValor(v: number | null): string {
+  if (v == null) return "—";
+  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
+  return `R$ ${v.toLocaleString("pt-BR")}`;
+}
+
+export default function WorkspaceProponenteListPage() {
+  const [projetos, setProjetos] = useState<ProjetoResumo[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.rpc("fn_proponente_meus_projetos").then(({ data, error }) => {
+      if (error) { setErro(error.message); setLoading(false); return; }
+      const rows = ((data ?? []) as any[]).map(p => ({
+        id: p.id, nome: p.nome, fase: p.fase, statusComercial: p.statusComercial,
+        valorAlvo: p.valorAlvo, valorGarantido: p.valorGarantido ?? 0,
+        identidadeTipo: p.identidadeTipo ?? "padrao", identidadeValor: p.identidadeValor,
+        identidadeLogoUrl: p.identidadeLogoUrl, identidadeCor: p.identidadeCor,
+        proponenteId: p.proponenteId, proponenteNome: p.proponenteNome,
+        negociacoesCount: p.negociacoesCount ?? 0, inscricoesCount: p.inscricoesCount ?? 0,
+        createdAt: p.createdAt,
+      })) as ProjetoResumo[];
+      setProjetos(rows);
+      setLoading(false);
+    });
+  }, []);
+
+  const proponentesUnicos = new Set(projetos.map(p => p.proponenteId)).size;
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-[1280px] px-4 pt-8 sm:px-6 lg:px-10">
+        <div className="h-8 w-64 bg-black/8 rounded animate-pulse mb-2" />
+        <div className="h-4 w-48 bg-black/8 rounded animate-pulse" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-full">
+      <div className="border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-8 sm:px-6 lg:px-10 lg:pt-10">
+          <h1 className="text-[28px] font-semibold leading-[1.04] tracking-[-.04em] text-[#0D0D0D] sm:text-[32px]">Meus projetos</h1>
+          <p className="mt-2 text-[14px] text-black/45">
+            {proponentesUnicos > 1 ? `Projetos de ${proponentesUnicos} proponentes vinculados a você.` : "Acompanhe o andamento das negociações e inscrições de cada projeto."}
+          </p>
+        </div>
+      </div>
+
+      <main className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-10">
+        {erro && <p role="alert" className="mb-4 text-[12px] font-medium text-[#D94E4E]">{erro}</p>}
+
+        {projetos.length === 0 ? (
+          <div className="rounded border px-6 py-14 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>
+            <FolderOpen size={22} className="mx-auto text-black/15" />
+            <p className="mt-3 text-[13px] font-medium text-black/40">Nenhum projeto vinculado ainda.</p>
+            <p className="mt-1 text-[12px] text-black/30">Assim que um projeto seu for cadastrado, ele aparece aqui.</p>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {projetos.map(projeto => {
+              const faseMeta = FASES[projeto.fase] ?? FASES.planejamento;
+              const progress = projeto.valorAlvo ? Math.min(100, Math.round((projeto.valorGarantido / projeto.valorAlvo) * 100)) : 0;
+              return (
+                <Link
+                  key={projeto.id}
+                  href={`/workspace-proponente/${projeto.id}`}
+                  className="group rounded border bg-white p-5 transition hover:bg-black/[.015] active:scale-[.995]"
+                  style={{ borderColor: "rgba(13,13,13,.08)" }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <ProjectIdentity nome={projeto.nome} tipo={projeto.identidadeTipo} valor={projeto.identidadeValor} logoUrl={projeto.identidadeLogoUrl} cor={projeto.identidadeCor} size="sm" />
+                    <span className="flex shrink-0 items-center gap-1 rounded border bg-white px-2 py-1 text-[10px] font-medium" style={{ borderColor: faseMeta.color + "47", color: faseMeta.color }}>
+                      <faseMeta.Icon size={10} />{faseMeta.label}
+                    </span>
+                  </div>
+                  <p className="mt-3 truncate text-[14px] font-semibold text-black/80 group-hover:text-black">{projeto.nome}</p>
+                  {proponentesUnicos > 1 && <p className="mt-0.5 truncate text-[11px] text-black/35">{projeto.proponenteNome}</p>}
+
+                  {projeto.valorAlvo ? (
+                    <div className="mt-4">
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <span className="text-[11px] text-black/40">{fmtValor(projeto.valorGarantido)} de {fmtValor(projeto.valorAlvo)}</span>
+                        <span className="text-[11px] font-bold text-black/50">{progress}%</span>
+                      </div>
+                      <div className="h-1.5 overflow-hidden rounded bg-black/[.06]">
+                        <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${progress}%` }} />
+                      </div>
+                    </div>
+                  ) : <div className="mt-4 h-1.5" />}
+
+                  <div className="mt-4 flex items-center gap-3 border-t pt-3 text-[11px] text-black/35" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                    <span>{projeto.negociacoesCount} negociaç{projeto.negociacoesCount === 1 ? "ão" : "ões"}</span>
+                    <span>·</span>
+                    <span>{projeto.inscricoesCount} inscriç{projeto.inscricoesCount === 1 ? "ão" : "ões"}</span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  );
+}

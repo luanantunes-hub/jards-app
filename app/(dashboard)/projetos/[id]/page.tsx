@@ -23,6 +23,7 @@ import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
+import { ProjetoSolicitacoes } from "@/components/proponentes/ProjetoSolicitacoes";
 
 type Projeto = {
   id: string;
@@ -156,8 +157,8 @@ function fmtDate(d: string | null): string {
 }
 
 
-type TabKey = "overview" | "captacao" | "orcamento" | "documentos" | "proposta" | "pitch" | "textos";
-const TAB_KEYS: TabKey[] = ["overview", "captacao", "orcamento", "documentos", "proposta", "pitch", "textos"];
+type TabKey = "overview" | "captacao" | "orcamento" | "documentos" | "proposta" | "pitch" | "textos" | "proponente";
+const TAB_KEYS: TabKey[] = ["overview", "captacao", "orcamento", "documentos", "proposta", "pitch", "textos", "proponente"];
 
 export default function ProjetoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -780,6 +781,9 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
         <TabBtn active={tab === "textos"} onClick={() => setTab("textos")} icon={<AlignLeft size={12} />}>
           Textos
         </TabBtn>
+        <TabBtn active={tab === "proponente"} onClick={() => setTab("proponente")} icon={<Users size={12} />}>
+          Proponente
+        </TabBtn>
        </nav>
       </div>
 
@@ -788,6 +792,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
        <main className="mx-auto w-full max-w-[1280px] px-4 py-7 sm:px-6 sm:py-9 lg:px-10 lg:py-10">
         {tab === "pitch" && <PitchWorkspace projectId={projeto.id} projectName={projeto.nome} />}
         {tab === "textos" && <TextosManager projetoId={projeto.id} />}
+        {tab === "proponente" && <ProjetoSolicitacoes projetoId={projeto.id} isOrganizacao proponenteNome={projeto.proponente_nome || "o proponente"} />}
         {tab === "overview" && (() => {
           const faltante = Math.max(0, (projeto.valor_alvo ?? 0) - valorCaptadoDisplay - (projeto.valor_garantido ?? 0));
           const progress = projeto.valor_alvo ? Math.min(100, Math.round(((valorCaptadoDisplay + (projeto.valor_garantido ?? 0)) / projeto.valor_alvo) * 100)) : 0;
