@@ -6,7 +6,7 @@ import test from "node:test";
 const root = process.cwd();
 
 test("captador só move para etapas do funil real da organização, não um enum fixo", async () => {
-  const migration = await readFile(path.join(root, "supabase/migrations/20260921000001_captador_kanban_funil_real.sql"), "utf8");
+  const migration = await readFile(path.join(root, "supabase/migrations/20260921021843_captador_kanban_funil_real.sql"), "utf8");
   assert.match(migration, /fn_workspace_papel\(p_atribuicao_id\) <> 'captador'/);
   assert.match(migration, /v_status <> 'ativa'/);
   assert.match(migration, /from public\.captador_workspace_pedidos/);
@@ -16,7 +16,7 @@ test("captador só move para etapas do funil real da organização, não um enum
 });
 
 test("somente o captador move uma atribuição ativa", async () => {
-  const migration = await readFile(path.join(root, "supabase/migrations/20260920000009_captador_kanban.sql"), "utf8");
+  const migration = await readFile(path.join(root, "supabase/migrations/20260921011410_captador_kanban.sql"), "utf8");
   assert.match(migration, /fn_workspace_papel\(p_atribuicao_id\) <> 'captador'/);
   assert.match(migration, /v_status <> 'ativa'/);
 });
