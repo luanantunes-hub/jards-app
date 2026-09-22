@@ -367,10 +367,10 @@
     .platform-paper-red { top:-38%; right:-14vw; width:58vw; height:70%; background:rgba(217,74,74,.10); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:rotate(3deg); }
     .feature-ledger { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr); width:100%; min-height:620px; overflow:hidden; border:1px solid rgba(40,37,37,.10); background:rgba(255,255,255,.88); box-shadow:0 24px 70px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.75); backdrop-filter:blur(18px) saturate(120%); -webkit-backdrop-filter:blur(18px) saturate(120%); }
     .ledger-main { position:relative; display:flex; flex-direction:column; padding:58px 52px 46px; overflow:hidden; border-right:1px solid rgba(40,37,37,.10); }
-    .ledger-main::after { content:"01—05"; position:absolute; right:-16px; bottom:52px; color:rgba(104,77,176,.035); font-size:clamp(76px,9vw,132px); font-weight:800; line-height:.8; letter-spacing:-.09em; pointer-events:none; }
+    .ledger-main::after { content:"01—03"; position:absolute; right:-16px; bottom:52px; color:rgba(104,77,176,.035); font-size:clamp(76px,9vw,132px); font-weight:800; line-height:.8; letter-spacing:-.09em; pointer-events:none; }
     .ledger-kicker { position:relative; z-index:1; margin-bottom:22px; color:#684DB0; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
     .ledger-main h2,.ledger-main>p { position:relative; z-index:1; }
-    .ledger-side { display:grid; grid-template-rows:repeat(4,1fr); counter-reset:ledger; }
+    .ledger-side { display:grid; grid-template-rows:repeat(3,1fr); counter-reset:ledger; }
     .ledger-item { position:relative; display:grid; grid-template-columns:40px 1fr; align-content:center; column-gap:16px; padding:24px 34px; border-bottom:1px solid rgba(40,37,37,.10); counter-increment:ledger; transition:background-color .25s ease; }
     .ledger-item:hover { background:rgba(104,77,176,.035); }
     .ledger-item:last-child { border-bottom:0; }
@@ -768,7 +768,7 @@
               <nav class="art-panel-tabs"><span class="art-panel-tab is-active">Em andamento</span><span class="art-panel-tab">Concluídas</span><span class="art-panel-tab">Evidências</span></nav>
               <div class="art-followup"><span class="art-check">✓</span><div><strong>Aprovar aplicação da marca nos materiais</strong><span>Comunicação · equipe do projeto</span></div><time>Hoje, 16h</time></div>
               <div class="art-followup"><span class="art-check">✓</span><div><strong>Confirmar ação formativa para clientes</strong><span>Ativação · patrocinador</span></div><time>12 set</time></div>
-              <div class="art-followup"><span class="art-check">✓</span><div><strong>Anexar relatório parcial de execução</strong><span>Prestação · responsável financeiro</span></div><time class="is-overdue">Atenção</time></div>
+              <div class="art-followup"><span class="art-check">✓</span><div><strong>Publicar registro fotográfico da ativação</strong><span>Evidências · equipe do projeto</span></div><time class="is-overdue">Atenção</time></div>
               <div class="art-followup"><span class="art-check">✓</span><div><strong>Preparar conversa sobre o próximo ciclo</strong><span>Renovação · liderança</span></div><time>30 set</time></div>
             </section>
             <aside class="art-side">
@@ -1070,10 +1070,10 @@
     <div class="ledger-main">
       <p class="ledger-kicker">A plataforma por inteiro</p>
       <h2 class="font-display font-bold leading-[1.04] mb-5" style="font-size:clamp(32px,4vw,56px)">
-        Uma plataforma.<br>Quatro forças trabalhando juntas.
+        Uma plataforma.<br>Três forças trabalhando juntas.
       </h2>
       <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
-        A informação encontra a operação. A IA reduz o trabalho manual. A operação preserva a relação e cada parceria ganha continuidade.
+        A informação encontra a operação. A operação preserva a relação e cada parceria ganha continuidade.
       </p>
       <div class="flow-row" aria-label="Jornada conectada do patrocínio">
         <div class="flow-step active"><span>Encontrar</span><strong>Oportunidades</strong></div>
@@ -1090,14 +1090,9 @@
         <p>Patrocinadores, editais, histórico de investimento e janelas de oportunidade.</p>
       </article>
       <article class="ledger-item">
-        <p class="ledger-num">INTELIGÊNCIA ARTIFICIAL</p>
-        <h3>Leia documentos e antecipe riscos.</h3>
-        <p>A IA extrai dados de comprovantes e orçamentos, organiza campos e sinaliza riscos para revisão da equipe.</p>
-      </article>
-      <article class="ledger-item">
         <p class="ledger-num">OPERAÇÃO</p>
         <h3>Faça o trabalho avançar.</h3>
-        <p>Projetos, negociações, atividades, propostas e prestação de contas no mesmo fluxo.</p>
+        <p>Empresas, projetos, negociações, inscrições e atividades no mesmo fluxo.</p>
       </article>
       <article class="ledger-item">
         <p class="ledger-num">CONTINUIDADE</p>
@@ -1634,6 +1629,7 @@
           <li><span class="story-index">01</span><span><strong>Contexto compartilhado.</strong> Cada pessoa entende o que aconteceu e o que precisa acontecer agora.</span></li>
           <li><span class="story-index">02</span><span><strong>Responsabilidade clara.</strong> Prazos, decisões e responsáveis permanecem visíveis durante toda a jornada.</span></li>
           <li><span class="story-index">03</span><span><strong>Parcerias com continuidade.</strong> A história construída não desaparece quando a negociação termina.</span></li>
+          <li><span class="story-index">04</span><span><strong>Relacionamento com nome e rosto.</strong> Contatos, proponentes e captadores guardam papel de decisão, histórico e força do relacionamento.</span></li>
         </ul>
       </div>
 
