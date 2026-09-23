@@ -3,14 +3,14 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, Globe, Mail,
+  ArrowLeft, ArrowLeftRight, Globe, Mail,
   Phone, ExternalLink, Plus, Coins,
   ChevronUp, ChevronDown, UserPlus, X, Pencil, ThumbsUp, ThumbsDown, Copy, Check,
   Upload, FileText, Trash2, Newspaper, RefreshCw,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useCreditos } from "@/contexts/CreditosContext";
-import type { Empresa, Responsavel, Edital, Tipologia, InvestimentoAnual, InvestimentoTrimestre, StatusCaptacao, ContatoSugestao } from "@/lib/supabase/types";
+import type { Empresa, Responsavel, Edital, Tipologia, InvestimentoTrimestre, StatusCaptacao, ContatoSugestao } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
@@ -117,7 +117,6 @@ const TIPO_PT: Record<string, string> = {
   impacto: "Impacto", visibilidade: "Visibilidade", institucional: "Institucional",
 };
 
-const INV_ANOS: (keyof InvestimentoAnual)[] = ["ano_2020","ano_2021","ano_2022","ano_2023","ano_2024","ano_2025"];
 const INV_LABELS = ["2020","2021","2022","2023","2024","2025"];
 
 function colorFrom(nome: string) {
@@ -269,143 +268,6 @@ function TrimestralChart({ data }: { data: InvestimentoTrimestre }) {
           );
         })}
       </div>
-    </div>
-  );
-}
-
-function LineChart({ rows }: { rows: InvestimentoAnual[] }) {
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
-
-  const totals    = INV_ANOS.map((k) => rows.reduce((s, r) => s + ((r[k] as number) || 0), 0));
-  const max       = Math.max(...totals, 1);
-  const nonZero   = totals.filter(v => v > 0);
-  const minVal    = nonZero.length > 0 ? Math.min(...nonZero) : 0;
-  const total     = totals.reduce((s, v) => s + v, 0);
-  const val2024   = totals[4];
-  const val2025   = totals[5];
-  const diffPct   = val2024 > 0 ? ((val2025 - val2024) / val2024) * 100 : 0;
-
-  const W = 600, H = 200;
-  const PAD = { top: 20, right: 25, bottom: 26, left: 25 };
-  const plotW = W - PAD.left - PAD.right;
-  const plotH = H - PAD.top - PAD.bottom;
-
-  const yMin   = minVal > 0 ? minVal * 0.78 : 0;
-  const yMax   = max * 1.08;
-  const yRange = yMax - yMin || 1;
-
-  const pts = totals.map((v, i) => ({
-    x: PAD.left + (i / (totals.length - 1)) * plotW,
-    y: PAD.top + plotH - ((Math.max(v, yMin) - yMin) / yRange) * plotH,
-    v,
-    lbl: INV_LABELS[i],
-  }));
-
-  const pathD = pts.reduce((d, pt, i) => {
-    if (i === 0) return `M ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
-    const prev = pts[i - 1];
-    const cx   = ((prev.x + pt.x) / 2).toFixed(1);
-    return d + ` C ${cx} ${prev.y.toFixed(1)} ${cx} ${pt.y.toFixed(1)} ${pt.x.toFixed(1)} ${pt.y.toFixed(1)}`;
-  }, "");
-
-  const bottom = (PAD.top + plotH).toFixed(1);
-  const areaD  = pathD + ` L ${pts[pts.length - 1].x.toFixed(1)} ${bottom} L ${pts[0].x.toFixed(1)} ${bottom} Z`;
-
-  const TICKS  = 4;
-  const yTicks = Array.from({ length: TICKS + 1 }, (_, i) => yMin + (i / TICKS) * yRange);
-
-  const TW = 72, TH = 28, TR = 3;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between px-5 pt-5 pb-2">
-        <p className="text-[10px] font-bold text-black/30 uppercase tracking-wide">Investimento Anual</p>
-        {total > 0 && diffPct !== 0 && (
-          <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded"
-            style={{ background: diffPct >= 0 ? "#2E893214" : "#D94E4E14", color: diffPct >= 0 ? "#2E8932" : "#D94E4E" }}
-          >
-            {diffPct >= 0 ? "+" : ""}{diffPct.toFixed(2).replace(".", ",")}%
-          </span>
-        )}
-      </div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full block" onMouseLeave={() => setHoveredIdx(null)}>
-        <defs>
-          <linearGradient id="lgAreaInv" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#0D0D0D" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#0D0D0D" stopOpacity="0.01" />
-          </linearGradient>
-        </defs>
-        {yTicks.map((val, i) => {
-          if (i === 0) return null;
-          const y = PAD.top + plotH - ((val - yMin) / yRange) * plotH;
-          return (
-            <text
-              key={i}
-              x="10" y={(y - 3).toFixed(1)}
-              textAnchor="start" fontSize="5" fill="rgba(13,13,13,0.25)"
-              fontFamily="system-ui, sans-serif"
-            >
-              {fmtValorAxis(val)}
-            </text>
-          );
-        })}
-        <path d={areaD} fill="url(#lgAreaInv)" />
-        <path d={pathD} fill="none" stroke="#0D0D0D" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        {pts.map((pt, i) => pt.v > 0 && (
-          <circle
-            key={i}
-            cx={pt.x.toFixed(1)} cy={pt.y.toFixed(1)}
-            r={hoveredIdx === i ? "4.5" : "3"}
-            fill={hoveredIdx === i ? "#0D0D0D" : "white"}
-            stroke="#0D0D0D" strokeWidth="1.8"
-            style={{ cursor: "pointer", transition: "r 0.1s, fill 0.1s" }}
-          />
-        ))}
-        {pts.map((pt, i) => (
-          <rect
-            key={`hit-${i}`}
-            x={(pt.x - 14).toFixed(1)} y={(pt.y - 14).toFixed(1)}
-            width="28" height="28"
-            fill="transparent"
-            style={{ cursor: "pointer" }}
-            onMouseEnter={() => setHoveredIdx(i)}
-          />
-        ))}
-        {pts.map((pt, i) => (
-          <text
-            key={i} x={pt.x.toFixed(1)} y={(H - 4).toFixed(1)}
-            textAnchor="middle" fontSize="5.5" fill="rgba(13,13,13,0.3)"
-            fontFamily="system-ui, sans-serif" fontWeight="600"
-          >
-            {pt.lbl}
-          </text>
-        ))}
-        {hoveredIdx !== null && (() => {
-          const pt = pts[hoveredIdx];
-          const tx = Math.min(Math.max(pt.x - TW / 2, 2), W - TW - 2);
-          const ty = Math.max(pt.y - TH - 10, 2);
-          return (
-            <g pointerEvents="none">
-              <rect x={tx} y={ty} width={TW} height={TH} rx={TR} fill="white" stroke="rgba(13,13,13,0.1)" strokeWidth="0.6" />
-              <text
-                x={(tx + TW / 2).toFixed(1)} y={(ty + 10).toFixed(1)}
-                textAnchor="middle" fontSize="6" fill="rgba(13,13,13,0.35)"
-                fontFamily="system-ui, sans-serif" letterSpacing="0.3"
-              >
-                {pt.lbl}
-              </text>
-              <text
-                x={(tx + TW / 2).toFixed(1)} y={(ty + 21).toFixed(1)}
-                textAnchor="middle" fontSize="8.5" fill="#0D0D0D"
-                fontFamily="system-ui, sans-serif" fontWeight="600"
-              >
-                {fmtValorAxis(pt.v)}
-              </text>
-            </g>
-          );
-        })()}
-      </svg>
     </div>
   );
 }
@@ -578,7 +440,11 @@ export default function PatrocinadorPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const leiParam = searchParams.get("lei");
-  const isLeiView = leiParam === "esporte" || leiParam === "ancine";
+  const isLeiView = leiParam === "esporte" || leiParam === "ancine" || leiParam === "saude";
+  // Qual lei buscar pro gráfico de investimento anual — inclui "cultura" como padrão (aba sem
+  // ?lei=), diferente de isLeiView (que só controla os blocos que ainda usam os campos legados
+  // empresa.aporte_estimado/descricao, não migrados nesta rodada).
+  const leiParaGrafico: "cultura" | "esporte" | "ancine" | "saude" = leiParam === "esporte" || leiParam === "ancine" || leiParam === "saude" ? leiParam : "cultura";
   const supabase = createClient();
   const organizationId = useOrganizationId();
   const { creditos, assinatura, loading: creditosLoading, desbloquearEmpresa } = useCreditos();
@@ -597,7 +463,6 @@ export default function PatrocinadorPage() {
   const [editaisUser, setEditaisUser]     = useState<EditaiUserItem[]>([]);
   const [empresaCrmId, setEmpresaCrmId]   = useState<string | null>(null);
   const [tipologia, setTipologia]         = useState<Tipologia | null>(null);
-  const [investimentos, setInvestimentos] = useState<InvestimentoAnual[]>([]);
   const [trimestral, setTrimestral]       = useState<InvestimentoTrimestre | null>(null);
   const [investimentosLei, setInvestimentosLei] = useState<{ ano: number; valor: number }[]>([]);
   const [carteiraLei, setCarteiraLei]     = useState<{ descricao: string | null } | null>(null);
@@ -740,16 +605,15 @@ export default function PatrocinadorPage() {
   useEffect(() => {
     async function fetchAll() {
       setLoading(true);
-      const [empRes, respRes, editRes, capRes, tipoRes, invRes, trimRes, desbRes, invLeiRes, carteiraLeiRes] = await Promise.all([
+      const [empRes, respRes, editRes, capRes, tipoRes, trimRes, desbRes, invLeiRes, carteiraLeiRes] = await Promise.all([
         supabase.from("empresas").select("*").eq("id", id).single(),
         supabase.from("responsaveis").select("*").eq("empresa_id", id).order("ordem"),
         supabase.from("editais").select("*").eq("empresa_id", id).order("data_fechamento", { ascending: false }),
         supabase.from("captacoes").select("id, titulo, status, valor_solicitado, lei, empresa_crm_id, projeto:projetos_crm!projeto_id(nome)").eq("empresa_id", id).order("created_at", { ascending: false }),
         supabase.from("tipologias").select("*").eq("empresa_pub_id", id).maybeSingle(),
-        supabase.from("investimentos_anuais").select("*").eq("empresa_pub_id", id),
         supabase.from("investimentos_trimestres").select("*").eq("empresa_pub_id", id).maybeSingle(),
         supabase.from("desbloqueios").select("id").eq("empresa_pub_id", id).maybeSingle(),
-        supabase.from("investimentos_por_lei").select("ano, valor").eq("empresa_id", id).eq("lei", leiParam ?? "__none__"),
+        supabase.from("investimentos_por_lei").select("ano, valor").eq("empresa_id", id).eq("lei", leiParaGrafico),
         supabase.from("carteiras_por_lei").select("descricao").eq("empresa_id", id).eq("lei", leiParam ?? "__none__").maybeSingle(),
       ]);
       setEmpresa(empRes.data);
@@ -768,7 +632,6 @@ export default function PatrocinadorPage() {
         .order("created_at", { ascending: false });
       setEditaisUser(euData ?? []);
       setTipologia(tipoRes.data);
-      setInvestimentos(invRes.data ?? []);
       setTrimestral(trimRes.data);
       setInvestimentosLei((invLeiRes.data ?? []) as { ano: number; valor: number }[]);
       setCarteiraLei(carteiraLeiRes.data as { descricao: string | null } | null);
@@ -1139,7 +1002,7 @@ export default function PatrocinadorPage() {
               </div>
               {(isLeiView ? valorRecenteLei : empresa.aporte_estimado) && (
                 <p className="text-xs text-black/40">
-                  {isLeiView ? `Investimento em ${anoRecenteLei}` : "Total investido"}: <span className="font-bold text-black/70">{fmtValor(isLeiView ? valorRecenteLei : empresa.aporte_estimado)}</span>
+                  Total investido: <span className="font-bold text-black/70">{fmtValor(isLeiView ? valorRecenteLei : empresa.aporte_estimado)}</span>
                 </p>
               )}
             </div>
@@ -1166,6 +1029,13 @@ export default function PatrocinadorPage() {
             >
               <Plus size={12} /> Nova captação
             </button>
+            <Link
+              href={`/comparativo?empresas=${empresa.id}`}
+              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
+              style={{ borderColor: "rgba(13,13,13,.12)" }}
+            >
+              <ArrowLeftRight size={12} /> Comparar
+            </Link>
           </div>
         </div>
         {/* Tags row */}
@@ -1354,18 +1224,10 @@ export default function PatrocinadorPage() {
           <div className="space-y-4">
 
             {/* 1. Investimento anual */}
-            {isLeiView ? (
-              investimentosLeiRecentes.length > 0 && (
-                <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                  <LineChartLei rows={investimentosLeiRecentes} />
-                </div>
-              )
-            ) : (
-              investimentos.length > 0 && (
-                <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                  <LineChart rows={investimentos} />
-                </div>
-              )
+            {investimentosLeiRecentes.length > 0 && (
+              <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                <LineChartLei rows={investimentosLeiRecentes} />
+              </div>
             )}
 
             {/* 2. Responsáveis pelo Patrocínio */}

@@ -14,6 +14,7 @@ import {
   CaretUp,
   CaretDown,
   X,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
@@ -24,7 +25,7 @@ import { PesquisaEmpresaModal } from "@/components/modals/PesquisaEmpresaModal";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
 import { useCreditos } from "@/contexts/CreditosContext";
 
-type Lei = "esporte" | "ancine";
+type Lei = "esporte" | "ancine" | "saude";
 
 type EmpresaLei = {
   empresa_id: string;
@@ -52,6 +53,7 @@ function LeiTabContent({ lei }: { lei: Lei }) {
   const [estado, setEstado] = useState("");
   const [setor, setSetor] = useState("");
   const [setores, setSetores] = useState<string[]>([]);
+  const [incompletas, setIncompletas] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDSearch(search), 300);
@@ -65,7 +67,7 @@ function LeiTabContent({ lei }: { lei: Lei }) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { setPage(0); }, [lei, dSearch, estado, setor]);
+  useEffect(() => { setPage(0); }, [lei, dSearch, estado, setor, incompletas]);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +83,7 @@ function LeiTabContent({ lei }: { lei: Lei }) {
       if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`, { foreignTable: "empresas" });
       if (estado) q = q.eq("empresas.estado", estado);
       if (setor) q = q.eq("empresas.setor", setor);
+      if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null", { foreignTable: "empresas" });
 
       const { data, count } = await q
         .order("valor", { ascending: false })
@@ -92,10 +95,10 @@ function LeiTabContent({ lei }: { lei: Lei }) {
     }
     void load();
     return () => { cancelled = true; };
-  }, [lei, page, dSearch, estado, setor]);
+  }, [lei, page, dSearch, estado, setor, incompletas]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const hasFilters = !!(search || estado || setor);
+  const hasFilters = !!(search || estado || setor || incompletas);
 
   return (
     <div className="px-8 pb-8">
@@ -128,8 +131,12 @@ function LeiTabContent({ lei }: { lei: Lei }) {
           compact
           emphasized={false}
         />
+        <FilterButton active={incompletas} onClick={() => setIncompletas((v) => !v)}>
+          <WarningCircle size={12} />
+          Perfil incompleto
+        </FilterButton>
         {hasFilters && (
-          <FilterButton onClick={() => { setSearch(""); setEstado(""); setSetor(""); }}>
+          <FilterButton onClick={() => { setSearch(""); setEstado(""); setSetor(""); setIncompletas(false); }}>
             <X size={12} />
             Limpar
           </FilterButton>
@@ -303,6 +310,7 @@ function PatrocinadoresContent() {
   const [estado, setEstado] = useState(() => searchParams.get("uf") ?? "");
   const [setor, setSetor] = useState(() => searchParams.get("setor") ?? "");
   const [trimestre, setTrimestre] = useState<Trimestre | null>(() => (searchParams.get("tri") as Trimestre) ?? null);
+  const [incompletas, setIncompletas] = useState(() => searchParams.get("inc") === "1");
   const [sortCol, setSortCol] = useState<SortCol>(() => (searchParams.get("sort") as SortCol) ?? "aporte_estimado");
   const [sortDir, setSortDir] = useState<"asc" | "desc">(() => (searchParams.get("dir") as "asc" | "desc") ?? "desc");
   const [setores, setSetores] = useState<string[]>([]);
@@ -312,11 +320,6 @@ function PatrocinadoresContent() {
   const [pesquisaConcluida, setPesquisaConcluida] = useState(false);
   const [pesquisaJaSolicitada, setPesquisaJaSolicitada] = useState(false);
   const [pesquisaErro, setPesquisaErro] = useState<string | null>(null);
-  const [welcomePlan, setWelcomePlan] = useState<PaidPlan | null>(() => {
-    if (searchParams.get("welcome") !== "paid") return null;
-    const plan = searchParams.get("plan");
-    return plan === "basico" || plan === "profissional" ? plan : null;
-  });
 
   useEffect(() => {
     let active = true;
@@ -354,13 +357,14 @@ function PatrocinadoresContent() {
     if (estado)    params.set("uf", estado);
     if (setor)     params.set("setor", setor);
     if (trimestre) params.set("tri", trimestre);
+    if (incompletas) params.set("inc", "1");
     if (sortCol !== "aporte_estimado") params.set("sort", sortCol);
     if (sortDir !== "desc") params.set("dir", sortDir);
     if (page > 0)  params.set("p", String(page));
     const qs = params.toString();
     router.replace(`/patrocinadores${qs ? `?${qs}` : ""}`, { scroll: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dSearch, estado, setor, trimestre, sortCol, sortDir, page]);
+  }, [dSearch, estado, setor, trimestre, incompletas, sortCol, sortDir, page]);
 
   // Debounce search 300ms
   useEffect(() => {
@@ -398,6 +402,7 @@ function PatrocinadoresContent() {
     if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`);
     if (estado) q = q.eq("estado", estado);
     if (setor) q = q.eq("setor", setor);
+    if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null");
     if (trimestre === "T1") q = q.eq("trimestre_1", true);
     if (trimestre === "T2") q = q.eq("trimestre_2", true);
     if (trimestre === "T3") q = q.eq("trimestre_3", true);
@@ -428,7 +433,7 @@ function PatrocinadoresContent() {
     fetchData();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dSearch, estado, setor, trimestre, sortCol, sortDir]);
+  }, [dSearch, estado, setor, trimestre, incompletas, sortCol, sortDir]);
 
   async function goToPage(n: number) {
     setLoading(true);
@@ -456,16 +461,8 @@ function PatrocinadoresContent() {
     setEstado("");
     setSetor("");
     setTrimestre(null);
+    setIncompletas(false);
   }
-
-  const closeWelcome = useCallback(() => {
-    setWelcomePlan(null);
-    const params = new URLSearchParams(window.location.search);
-    params.delete("welcome");
-    params.delete("plan");
-    const query = params.toString();
-    router.replace(`/patrocinadores${query ? `?${query}` : ""}`, { scroll: false });
-  }, [router]);
 
   function abrirEmpresa(empresa: Empresa) {
     if (empresa.tem_detalhe) {
@@ -504,7 +501,7 @@ function PatrocinadoresContent() {
     setPesquisaConcluida(true);
   }
 
-  const hasFilters = !!(search || estado || setor || trimestre);
+  const hasFilters = !!(search || estado || setor || trimestre || incompletas);
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const SortIcon = ({ col }: { col: SortCol }) =>
@@ -569,6 +566,12 @@ function PatrocinadoresContent() {
           ariaLabel="Filtrar patrocinadores por trimestre"
           options={(["T1", "T2", "T3", "T4"] as Trimestre[]).map((value) => ({ value, label: value }))}
         />
+
+        {/* Botão de controle: perfil incompleto (sem setor, cidade, estado ou site) */}
+        <FilterButton active={incompletas} onClick={() => setIncompletas((v) => !v)}>
+          <WarningCircle size={12} />
+          Perfil incompleto
+        </FilterButton>
 
         {/* Botão de controle auxiliar: limpar filtros */}
         {hasFilters && (
@@ -700,26 +703,50 @@ function PatrocinadoresContent() {
           onStart={iniciarPesquisa}
         />
       )}
-
-      <BoasVindasPlanoModal plano={welcomePlan} onClose={closeWelcome} />
     </div>
   );
 }
 
-function AbaBotao({ active, onClick, icon, label, position }: { active: boolean; onClick: () => void; icon: string; label: string; position: "left" | "middle" | "right" }) {
+function AbaBotao({ active, onClick, label, position }: { active: boolean; onClick: () => void; label: string; position: "left" | "middle" | "right" }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-9 items-center gap-1.5 px-3.5 text-[12px] font-medium transition active:scale-[.98] ${
-        active ? "bg-[#0D0D0D] text-white" : "bg-white text-black/45 hover:bg-black/[.04] hover:text-black/65"
-      } ${position !== "right" ? "border-r border-black/10" : ""}`}
+      className={`relative flex h-9 items-center gap-1.5 px-3.5 text-[12px] font-medium transition active:scale-[.98] border ${
+        position === "left" ? "rounded-l" : "-ml-px"
+      } ${position === "right" ? "rounded-r" : ""} ${
+        active
+          ? "z-10 border-[#684DB0] bg-white text-[#684DB0]"
+          : "border-black/10 bg-white text-black/45 hover:bg-black/[.04] hover:text-black/65"
+      }`}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={active ? `/aba-${icon}-white.svg` : `/aba-${icon}-color.svg`} alt="" className="h-5 w-5" />
       {label}
     </button>
   );
+}
+
+// Modal de boas-vindas pós-pagamento (?welcome=paid&plan=...) — independente da aba ativa,
+// por isso fica fora dos LeiTabContent/PatrocinadoresContent de cada aba.
+function WelcomeModalGate() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [welcomePlan, setWelcomePlan] = useState<PaidPlan | null>(() => {
+    if (searchParams.get("welcome") !== "paid") return null;
+    const plan = searchParams.get("plan");
+    return plan === "basico" || plan === "profissional" ? plan : null;
+  });
+
+  const closeWelcome = useCallback(() => {
+    setWelcomePlan(null);
+    const params = new URLSearchParams(window.location.search);
+    params.delete("welcome");
+    params.delete("plan");
+    const query = params.toString();
+    router.replace(`/patrocinadores${query ? `?${query}` : ""}`, { scroll: false });
+  }, [router]);
+
+  return <BoasVindasPlanoModal plano={welcomePlan} onClose={closeWelcome} />;
 }
 
 export default function PatrocinadoresPage() {
@@ -729,12 +756,17 @@ export default function PatrocinadoresPage() {
     <div className="min-h-full" style={{ background: "#F2F2F2" }}>
       <div className="px-8 pt-8 pb-6 flex items-end justify-between">
         <h1 className="font-bold text-[#0D0D0D] text-[28px]">Encontrar patrocinadores</h1>
-        <div className="flex overflow-hidden rounded border border-black/10">
-          <AbaBotao active={aba === "cultura"} position="left" onClick={() => setAba("cultura")} icon="cultura" label="Cultura" />
-          <AbaBotao active={aba === "esporte"} position="middle" onClick={() => setAba("esporte")} icon="esporte" label="Esporte" />
-          <AbaBotao active={aba === "cinema"} position="right" onClick={() => setAba("cinema")} icon="audiovisual" label="Audiovisual" />
+        <div className="flex">
+          <AbaBotao active={aba === "cultura"} position="left" onClick={() => setAba("cultura")} label="Cultura" />
+          <AbaBotao active={aba === "esporte"} position="middle" onClick={() => setAba("esporte")} label="Esporte" />
+          <AbaBotao active={aba === "cinema"} position="middle" onClick={() => setAba("cinema")} label="Audiovisual" />
+          <AbaBotao active={aba === "saude"} position="right" onClick={() => setAba("saude")} label="Saúde" />
         </div>
       </div>
+      {/* Cultura usa PatrocinadoresContent, não LeiTabContent: a listagem ainda ordena/exibe por
+          empresas.aporte_estimado/descricao (schema original do produto), não por
+          carteiras_por_lei como esporte/ancine/saude — só o histórico anual (o gráfico da
+          página de detalhe) foi migrado pra investimentos_por_lei (lei='cultura'). */}
       {aba === "cultura" && (
         <Suspense fallback={<div className="min-h-[360px] animate-pulse bg-black/[.015]" />}>
           <PatrocinadoresContent />
@@ -742,6 +774,10 @@ export default function PatrocinadoresPage() {
       )}
       {aba === "esporte" && <LeiTabContent lei="esporte" />}
       {aba === "cinema" && <LeiTabContent lei="ancine" />}
+      {aba === "saude" && <LeiTabContent lei="saude" />}
+      <Suspense fallback={null}>
+        <WelcomeModalGate />
+      </Suspense>
     </div>
   );
 }

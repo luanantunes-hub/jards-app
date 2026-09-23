@@ -21,6 +21,7 @@ import {
   Lock,
   Shield,
   Sparkles,
+  ArrowLeftRight,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -56,6 +57,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       section: "Oportunidades",
       items: [
         { label: "Patrocinadores", href: "/patrocinadores",  icon: Briefcase },
+        { label: "Comparativo",    href: "/comparativo",     icon: ArrowLeftRight },
         { label: "Editais",        href: "/editais-abertos", icon: FileStack },
       ],
     },
