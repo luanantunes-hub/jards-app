@@ -33,11 +33,13 @@ const MAX_EMPRESAS = 5;
 // Teto de dedução do IRPJ por lei (% do imposto devido) — Receita Federal.
 // Cultura (Rouanet) e Ancine compartilham o MESMO teto de 4%, não são blocos independentes —
 // por isso calcularPotencial soma os dois antes de aplicar o percentual.
-// Esporte: 2% pra projeto geral, até 4% se for inclusão social — os limites não se somam
-// (Solução Cosit nº 4/2026), o teto máximo é 4%. Como não classificamos o projeto, usamos o
-// teto máximo (4%) — pode superestimar o espaço de quem só faz projeto geral.
+// Esporte: 2% pra projeto geral (Decreto 12.861/2026 — sobe pra 3% em 2028) é o único pedaço
+// de verdade independente. O bônus de até 4% pra inclusão social NÃO é um teto próprio do
+// esporte — é o MESMO teto global de 4% que cultura/ancine já dividem (Solução Cosit nº
+// 4/2026). Como não classificamos o projeto, usamos o valor conservador (2%, o geral) em vez
+// do teto máximo — evita prometer espaço que só existiria se fosse inclusão social.
 // Saúde soma dois programas de 1% cada (Pronon + Pronas/PCD).
-const TETO_PCT: Record<Lei, number> = { cultura: 4, ancine: 4, esporte: 4, saude: 2 };
+const TETO_PCT: Record<Lei, number> = { cultura: 4, ancine: 4, esporte: 2, saude: 2 };
 
 type ViewMode = "tabela" | "cartao";
 const VIEW_MODES = ["tabela", "cartao"] as const;
@@ -87,7 +89,7 @@ function PotencialTag({ lei, potencial, valorEfetivo }: { lei: Lei; potencial: n
     return (
       <div
         className="flex flex-col items-end gap-0.5"
-        title={`Espaço estimado até o teto legal de dedução${lei === "esporte" ? " (considerando o teto máximo de 4%, projetos de inclusão social)" : ""}`}
+        title={`Espaço estimado até o teto legal de dedução${lei === "esporte" ? " (considerando o teto de 2% de projeto geral — pode ser maior, até 4%, se for inclusão social)" : ""}`}
       >
         <div className="flex items-center gap-1 whitespace-nowrap text-[12px] font-semibold" style={{ color: "#2E8932" }}>
           <Unlock size={10} strokeWidth={2.5} className="shrink-0" />
@@ -243,7 +245,7 @@ function ComparativoContent() {
   return (
     <div className="min-h-full bg-white">
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <div className="mx-auto max-w-[1520px] px-4 pb-7 pt-8 sm:px-6 lg:px-10 lg:pb-9">
+        <div className="mx-auto max-w-[1280px] px-4 pb-7 pt-8 sm:px-6 lg:px-10 lg:pb-9">
           <h1 className="max-w-2xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">
             Comparativo de investimento
           </h1>
@@ -319,7 +321,7 @@ function ComparativoContent() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1520px] px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-10">
         {selecionadas.length === 0 ? (
           <div
             className="flex flex-col items-center justify-center gap-8 rounded border bg-white py-20 text-center"
