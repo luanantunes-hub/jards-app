@@ -998,6 +998,17 @@ const { data: perfilData } = await (supabase as any)
 
         <div>
           <div className="mb-4 flex items-center gap-2">
+            <div className="flex h-8 w-8 items-center justify-center rounded border border-[#7259B5]/40 text-[#7259B5]"><Building2 size={14} /></div>
+            <div>
+              <p className="text-[13px] font-bold text-black">Maturidade do proponente</p>
+              <p className="mt-0.5 text-[10px] text-black/30">Edite, exclua ou acrescente etiquetas para classificar a estrutura da instituição.</p>
+            </div>
+          </div>
+          <EtiquetasConfig entidade="proponente_maturidade" />
+        </div>
+
+        <div>
+          <div className="mb-4 flex items-center gap-2">
             <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded border border-black/20 bg-transparent">
               <Building2 size={14} className="text-black/55" />
             </div>

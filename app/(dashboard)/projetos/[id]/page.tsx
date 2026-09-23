@@ -29,6 +29,7 @@ type Projeto = {
   id: string;
   account_id: string;
   organization_id: string;
+  proponente_id: string | null;
   nome: string;
   descricao: string | null;
   valor_alvo: number | null;
@@ -45,7 +46,6 @@ type Projeto = {
   ponto_focal_id: string | null; mecanismo: string | null; tipos_patrocinio: string[]; data_inicio: string | null; data_fim: string | null;
   cidade: string | null; estado: string | null; abrangencia: string | null; areas_culturais: string[];
   valor_garantido: number; tags: string[]; visibilidade: "equipe" | "restrita"; status_operacional: "ativo" | "pausado" | "arquivado";
-  status_comercial: "estruturando" | "pronto" | "em_captacao" | "captado" | "encerrado" | null;
   ponto_focal: { full_name: string | null } | null;
   created_at: string;
 };
@@ -591,7 +591,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             nome:              projeto.nome,
             descricao:         projeto.descricao,
             valor_alvo:        projeto.valor_alvo,
-            proponente_id:     null,
+            proponente_id:     projeto.proponente_id,
             proponente_nome:   projeto.proponente_nome,
             proponente_cidade: projeto.proponente_cidade,
             proponente_estado: projeto.proponente_estado,
@@ -603,8 +603,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             tipos_patrocinio: projeto.tipos_patrocinio,
             data_inicio: projeto.data_inicio, data_fim: projeto.data_fim, cidade: projeto.cidade, estado: projeto.estado,
             abrangencia: projeto.abrangencia, areas_culturais: projeto.areas_culturais, valor_garantido: projeto.valor_garantido,
-            tags: projeto.tags, visibilidade: projeto.visibilidade, status_operacional: projeto.status_operacional,
-            status_comercial: projeto.status_comercial,
+            tags: projeto.tags, visibilidade: projeto.visibilidade,
           }}
           onClose={() => setEditing(false)}
           onSaved={fetchAll}
@@ -716,11 +715,6 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                 )}
                 {projeto.status_operacional === "arquivado" && (
                   <span className="rounded border border-black/[.10] bg-white px-2 py-1 text-[10px] font-medium text-black/40">Arquivado</span>
-                )}
-                {projeto.status_comercial && projeto.status_comercial !== "estruturando" && (
-                  <span className="text-[11px] text-black/30">
-                    · {{pronto:"Pronto p/ captar",em_captacao:"Em captação",captado:"Captado",encerrado:"Encerrado"}[projeto.status_comercial] ?? ""}
-                  </span>
                 )}
               </div>
               <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{projeto.nome}</h1>

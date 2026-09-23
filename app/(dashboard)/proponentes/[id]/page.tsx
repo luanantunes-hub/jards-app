@@ -16,6 +16,7 @@ import { NovoProponenteModal, type EditDataProponente } from "@/components/modal
 import { ProponenteWorkspaceModal } from "@/components/modals/ProponenteWorkspaceModal";
 import { DetailHeaderAction, DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import type { TipoProponente } from "@/lib/supabase/types";
 import { IdentityPickerPopup } from "@/components/ui/IdentityPickerPopup";
 import { PROPONENTE_ICON_OPTIONS } from "@/components/ui/ProjectIdentity";
@@ -32,6 +33,7 @@ type ProponenteDetail = {
   nome: string;
   cnpj: string | null;
   tipo: TipoProponente | null;
+  maturidade: string | null;
   cidade: string | null;
   estado: string | null;
   email: string | null;
@@ -50,7 +52,6 @@ type ProjetoRow = {
   id: string;
   nome: string;
   fase: "planejamento" | "captacao" | "execucao" | "prestacao" | "concluido";
-  status_comercial: "estruturando" | "pronto" | "em_captacao" | "captado" | "encerrado" | null;
   valor_alvo: number | null;
   valor_garantido: number;
   areas_culturais: string[];
@@ -126,15 +127,6 @@ const FASE_COLOR: Record<string, { bg: string; text: string }> = {
   concluido:    { bg: "#2E893214",          text: "#2E8932" },
 };
 
-const STATUS_COM: Record<string, { label: string; bg: string; text: string }> = {
-  estruturando: { label: "Estruturando", bg: "rgba(13,13,13,.07)",  text: "rgba(13,13,13,.45)" },
-  pronto:       { label: "Pronto",       bg: "#2D72B014",           text: "#2D72B0" },
-  em_captacao:  { label: "Em captação",  bg: "#7259B514",           text: "#7259B5" },
-  captado:      { label: "Captado",      bg: "#2E893214",           text: "#2E8932" },
-  encerrado:    { label: "Encerrado",    bg: "rgba(13,13,13,.07)",  text: "rgba(13,13,13,.35)" },
-};
-const STATUS_COM_CYCLE = ["estruturando", "pronto", "em_captacao", "captado", "encerrado"] as const;
-
 const CAPTADOR_STATUS_COLOR: Record<string, string> = {
   ativo:     "#2E8932",
   encerrado: "rgba(13,13,13,.35)",
@@ -177,6 +169,7 @@ export default function ProponenteDetailPage() {
   const { id }        = useParams<{ id: string }>();
   const router        = useRouter();
   const organizationId = useOrganizationId();
+  const { etiquetasMaturidadeProponente } = useEtiquetas();
 
   const [proponente, setProponente] = useState<ProponenteDetail | null>(null);
   const [projetos, setProjetos]     = useState<ProjetoRow[]>([]);
@@ -199,16 +192,13 @@ export default function ProponenteDetailPage() {
   const [vincularData, setVincularData]   = useState("");
   const [vincularSaving, setVincularSaving] = useState(false);
 
-  // Inline status_comercial
-  const [savingScId, setSavingScId]       = useState<string | null>(null);
-
   const [identitySaving, setIdentitySaving] = useState(false);
 
   const fetchAll = useCallback(async () => {
     setLoading(true);
     const [{ data: pData }, { data: prData }, { data: cData }, { data: capData }, { data: allCap }] = await Promise.all([
-      supabase.from("proponentes").select("id, account_id, nome, cnpj, tipo, cidade, estado, email, telefone, site, descricao, created_at, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor, user_id").eq("id", id).single(),
-      (supabase as any).from("projetos_crm").select("id, nome, fase, status_comercial, valor_alvo, valor_garantido, areas_culturais, status_operacional, mecanismo").eq("proponente_id", id).order("created_at", { ascending: false }),
+      supabase.from("proponentes").select("id, account_id, nome, cnpj, tipo, maturidade, cidade, estado, email, telefone, site, descricao, created_at, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor, user_id").eq("id", id).single(),
+      (supabase as any).from("projetos_crm").select("id, nome, fase, valor_alvo, valor_garantido, areas_culturais, status_operacional, mecanismo").eq("proponente_id", id).order("created_at", { ascending: false }),
       (supabase as any).from("contatos").select("id, nome, cargo, email, telefone, linkedin_url").eq("proponente_id", id).order("nome", { ascending: true }),
       (supabase as any).from("captador_proponente").select("id, captador_id, status, data_inicio, captador:captadores(nome, agencia, email)").eq("proponente_id", id).order("created_at", { ascending: false }),
       organizationId
@@ -336,15 +326,6 @@ export default function ProponenteDetailPage() {
     fetchAll();
   }
 
-  async function cycleStatusComercial(projeto: ProjetoRow) {
-    setSavingScId(projeto.id);
-    const idx = projeto.status_comercial ? STATUS_COM_CYCLE.indexOf(projeto.status_comercial) : -1;
-    const next: string | null = idx === STATUS_COM_CYCLE.length - 1 ? null : STATUS_COM_CYCLE[idx + 1] ?? "estruturando";
-    await (supabase as any).from("projetos_crm").update({ status_comercial: next }).eq("id", projeto.id);
-    setProjetos(prev => prev.map(p => p.id === projeto.id ? { ...p, status_comercial: next as ProjetoRow["status_comercial"] } : p));
-    setSavingScId(null);
-  }
-
   if (loading) {
     return (
       <div className="flex flex-col h-full">
@@ -380,7 +361,7 @@ export default function ProponenteDetailPage() {
 
   const editData: EditDataProponente = {
     id: proponente.id, nome: proponente.nome, cnpj: proponente.cnpj,
-    tipo: proponente.tipo, cidade: proponente.cidade, estado: proponente.estado,
+    tipo: proponente.tipo, maturidade: proponente.maturidade, cidade: proponente.cidade, estado: proponente.estado,
     email: proponente.email, telefone: proponente.telefone, site: proponente.site,
     descricao: proponente.descricao,
     identidade_tipo: proponente.identidade_tipo, identidade_valor: proponente.identidade_valor,
@@ -426,6 +407,10 @@ export default function ProponenteDetailPage() {
               />
               <div className="min-w-0">
                 <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{proponente.nome}</h1>
+                {proponente.maturidade && (() => {
+                  const item = etiquetasMaturidadeProponente.find(etiqueta => etiqueta.key === proponente.maturidade);
+                  return item ? <span className="mt-2 inline-flex rounded border px-2 py-1 text-[10px] font-semibold" style={{ color: item.cor, borderColor: `${item.cor}55` }}>Maturidade: {item.label}</span> : null;
+                })()}
                 {(proponente.cidade || proponente.estado) && (
                   <p className="mt-2 flex items-center gap-1 text-[14px] text-black/45">
                     <MapPin size={11} />
@@ -457,7 +442,7 @@ export default function ProponenteDetailPage() {
 
       <DetailPageContent>
         {pageTab === "projetos" ? (
-          <ProjetosView projetos={projetos} savingScId={savingScId} onCycleStatus={cycleStatusComercial} onOpen={projectId => router.push(`/projetos/${projectId}`)} />
+          <ProjetosView projetos={projetos} onOpen={projectId => router.push(`/projetos/${projectId}`)} />
         ) : pageTab === "documentos" ? (
           <DocumentosView documentos={documentos} onOpen={async documento => {
             const { data, error } = await supabase.storage.from("documentos").createSignedUrl(documento.url, 3600);
@@ -678,10 +663,8 @@ function SectionHeading({ eyebrow, title, count }: { eyebrow: string; title: str
   );
 }
 
-function ProjetosView({ projetos, savingScId, onCycleStatus, onOpen }: {
+function ProjetosView({ projetos, onOpen }: {
   projetos: ProjetoRow[];
-  savingScId: string | null;
-  onCycleStatus: (projeto: ProjetoRow) => Promise<void>;
   onOpen: (id: string) => void;
 }) {
   return (
@@ -694,18 +677,16 @@ function ProjetosView({ projetos, savingScId, onCycleStatus, onOpen }: {
           <table className="w-full min-w-[900px] border-collapse text-left">
             <thead>
               <tr className="border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                {["Projeto", "Fase", "Status comercial", "Áreas", "Valor alvo", "Garantido"].map(label => <th key={label} className="px-5 py-3 text-[10px] font-medium text-black/30">{label}</th>)}
+                {["Projeto", "Fase", "Áreas", "Valor alvo", "Garantido"].map(label => <th key={label} className="px-5 py-3 text-[10px] font-medium text-black/30">{label}</th>)}
               </tr>
             </thead>
             <tbody className="divide-y divide-black/[.06]">
               {projetos.map(project => {
                 const fase = FASE_COLOR[project.fase] ?? FASE_COLOR.planejamento;
-                const commercialStatus = project.status_comercial ? STATUS_COM[project.status_comercial] : null;
                 return (
                   <tr key={project.id} onClick={() => onOpen(project.id)} className="group cursor-pointer transition hover:bg-black/[.018]">
                     <td className="max-w-[260px] px-5 py-4"><p className="truncate text-[13px] font-semibold text-black/75">{project.nome}</p>{project.mecanismo && <p className="mt-0.5 truncate text-[10px] text-black/30">{project.mecanismo}</p>}</td>
                     <td className="px-5 py-4"><span className="rounded px-1.5 py-0.5 text-[10px] font-medium" style={{ background: fase.bg, color: fase.text }}>{FASE_LABEL[project.fase]}</span></td>
-                    <td className="px-5 py-4" onClick={event => { event.stopPropagation(); void onCycleStatus(project); }}><button disabled={savingScId === project.id} className="rounded px-1.5 py-0.5 text-[10px] font-medium transition hover:opacity-70 disabled:opacity-40" style={commercialStatus ? { background: commercialStatus.bg, color: commercialStatus.text } : { background: "rgba(13,13,13,.05)", color: "rgba(13,13,13,.3)" }}>{savingScId === project.id ? "…" : commercialStatus?.label ?? "Definir"}</button></td>
                     <td className="max-w-[210px] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded bg-[#7259B5]/[.08] px-1.5 py-0.5 text-[9px] font-medium text-[#7259B5]">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[9px] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
                     <td className="px-5 py-4 text-[12px] tabular-nums text-black/50">{fmtValor(project.valor_alvo)}</td>
                     <td className="px-5 py-4 text-[12px] font-medium tabular-nums text-[#2E8932]">{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
