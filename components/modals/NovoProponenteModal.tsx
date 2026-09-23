@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { X, Building2, Hash, Globe, Mail, Phone, AlignLeft, Save, Check, UserPlus, FolderPlus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -10,12 +10,14 @@ import type { IdentityType } from "@/components/ui/ProjectIdentity";
 import { IdentityEditor } from "@/components/ui/IdentityEditor";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
+import { Dropdown } from "@/components/ui/Dropdown";
 
 export type EditDataProponente = {
   id: string;
   nome: string;
   cnpj: string | null;
   tipo: TipoProponente | null;
+  maturidade?: string | null;
   cidade: string | null;
   estado: string | null;
   email: string | null;
@@ -47,7 +49,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
   const supabase = createClient();
   const router = useRouter();
   const organizationId = useOrganizationId();
-  const { etiquetasProponente } = useEtiquetas();
+  const { etiquetasProponente, etiquetasMaturidadeProponente } = useEtiquetas();
   const [saving, setSaving] = useState(false);
   const [erro, setErro]     = useState<string | null>(null);
   const [savedProponente, setSavedProponente] = useState<{ id: string; nome: string } | null>(null);
@@ -56,6 +58,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
   const [nome, setNome]         = useState(editData?.nome ?? "");
   const [cnpj, setCnpj]         = useState(editData?.cnpj ?? "");
   const [tipo, setTipo]         = useState<TipoProponente | "">(editData?.tipo ?? "");
+  const [maturidade, setMaturidade] = useState(editData?.maturidade ?? "");
   const [cidade, setCidade]     = useState(editData?.cidade ?? "");
   const [estado, setEstado]     = useState(editData?.estado ?? "");
   const [email, setEmail]       = useState(editData?.email ?? "");
@@ -68,6 +71,15 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
   const [logoPreview, setLogoPreview] = useState<string | null>(editData?.identidade_logo_url ?? null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!editData?.id || editData.maturidade !== undefined) return;
+    let active = true;
+    supabase.from("proponentes").select("maturidade").eq("id", editData.id).maybeSingle()
+      .then(({ data }: { data: { maturidade: string | null } | null }) => { if (active) setMaturidade(data?.maturidade ?? ""); });
+    return () => { active = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editData?.id]);
 
   async function handleSalvar() {
     if (!nome.trim()) { setErro("Nome é obrigatório"); return; }
@@ -90,6 +102,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
       nome_key:     normalizeKey(nome.trim()),
       cnpj:         cnpj.trim()     || null,
       tipo:         tipo             || null,
+      maturidade: maturidade || null,
       cidade:       cidade.trim()   || null,
       estado:       estado.trim()   || null,
       email:        email.trim()    || null,
@@ -244,6 +257,15 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="order-2">
+              <label className="mb-1.5 block text-[12px] font-semibold text-black">Maturidade institucional</label>
+              <p className="mb-2 text-[11px] text-black/40">Nível de estrutura do proponente para executar e captar recursos.</p>
+              <Dropdown value={maturidade} onChange={setMaturidade} options={[
+                { value: "", label: "Não avaliado" },
+                ...etiquetasMaturidadeProponente.map(item => ({ value: item.key, label: item.label })),
+              ]} />
             </div>
 
             {/* Documento */}

@@ -17,6 +17,7 @@ type EtiquetasCtx = {
   etiquetas: Etiqueta[];
   etiquetasInscricao: Etiqueta[];
   etiquetasProponente: Etiqueta[];
+  etiquetasMaturidadeProponente: Etiqueta[];
   loading: boolean;
   recarregar: () => Promise<void>;
 };
@@ -48,7 +49,14 @@ export const DEFAULT_ETIQUETAS_PROPONENTE: Etiqueta[] = [
   { id: "default-proponente-outro", key: "outro", label: "Outro", cor: "#888888", icone: "Tag", ordem: 5, deletavel: true },
 ];
 
-const Ctx = createContext<EtiquetasCtx>({ etiquetas: DEFAULT_ETIQUETAS_CAPTACAO, etiquetasInscricao: DEFAULT_ETIQUETAS_INSCRICAO, etiquetasProponente: DEFAULT_ETIQUETAS_PROPONENTE, loading: true, recarregar: async () => {} });
+export const DEFAULT_ETIQUETAS_MATURIDADE_PROPONENTE: Etiqueta[] = [
+  { id: "default-proponente_maturidade-em_estruturacao", key: "em_estruturacao", label: "Em estruturação", cor: "#B07A14", icone: "Hammer", ordem: 1, deletavel: true },
+  { id: "default-proponente_maturidade-em_desenvolvimento", key: "em_desenvolvimento", label: "Em desenvolvimento", cor: "#2D72B0", icone: "TrendingUp", ordem: 2, deletavel: true },
+  { id: "default-proponente_maturidade-estruturado", key: "estruturado", label: "Estruturado", cor: "#1A8B7A", icone: "Building2", ordem: 3, deletavel: true },
+  { id: "default-proponente_maturidade-consolidado", key: "consolidado", label: "Consolidado", cor: "#7259B5", icone: "Award", ordem: 4, deletavel: true },
+];
+
+const Ctx = createContext<EtiquetasCtx>({ etiquetas: DEFAULT_ETIQUETAS_CAPTACAO, etiquetasInscricao: DEFAULT_ETIQUETAS_INSCRICAO, etiquetasProponente: DEFAULT_ETIQUETAS_PROPONENTE, etiquetasMaturidadeProponente: DEFAULT_ETIQUETAS_MATURIDADE_PROPONENTE, loading: true, recarregar: async () => {} });
 
 export function EtiquetasProvider({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
@@ -56,6 +64,7 @@ export function EtiquetasProvider({ children }: { children: React.ReactNode }) {
   const [etiquetas, setEtiquetas] = useState<Etiqueta[]>(DEFAULT_ETIQUETAS_CAPTACAO);
   const [etiquetasInscricao, setEtiquetasInscricao] = useState<Etiqueta[]>(DEFAULT_ETIQUETAS_INSCRICAO);
   const [etiquetasProponente, setEtiquetasProponente] = useState<Etiqueta[]>(DEFAULT_ETIQUETAS_PROPONENTE);
+  const [etiquetasMaturidadeProponente, setEtiquetasMaturidadeProponente] = useState<Etiqueta[]>(DEFAULT_ETIQUETAS_MATURIDADE_PROPONENTE);
   const [loading, setLoading] = useState(true);
 
   const recarregar = useCallback(async () => {
@@ -66,7 +75,7 @@ export function EtiquetasProvider({ children }: { children: React.ReactNode }) {
       .from("etiquetas")
       .select("id, entidade, key, label, cor, icone, ordem, deletavel")
       .eq("organization_id", organizationId)
-      .in("entidade", ["captacao", "inscricao", "proponente"])
+      .in("entidade", ["captacao", "inscricao", "proponente", "proponente_maturidade"])
       .order("ordem"),
       (supabase as any).from("funil_etapas_removidas").select("entidade, key").eq("organization_id", organizationId),
     ]);
@@ -91,12 +100,18 @@ export function EtiquetasProvider({ children }: { children: React.ReactNode }) {
       ...DEFAULT_ETIQUETAS_PROPONENTE.filter(item => !hidden.has(`proponente:${item.key}`)).map(padrao => ({ ...(proponenteRows.find(item => item.key === padrao.key) ?? padrao), deletavel: true })),
       ...proponenteRows.filter(item => !defaultKeys.has(item.key) && !hidden.has(`proponente:${item.key}`)).map(item => ({ ...item, deletavel: true })),
     ]);
+    const maturidadeRows = rows.filter(item => item.entidade === "proponente_maturidade");
+    const maturidadeDefaultKeys = new Set(DEFAULT_ETIQUETAS_MATURIDADE_PROPONENTE.map(item => item.key));
+    setEtiquetasMaturidadeProponente([
+      ...DEFAULT_ETIQUETAS_MATURIDADE_PROPONENTE.filter(item => !hidden.has(`proponente_maturidade:${item.key}`)).map(padrao => ({ ...(maturidadeRows.find(item => item.key === padrao.key) ?? padrao), deletavel: true })),
+      ...maturidadeRows.filter(item => !maturidadeDefaultKeys.has(item.key) && !hidden.has(`proponente_maturidade:${item.key}`)).map(item => ({ ...item, deletavel: true })),
+    ]);
     setLoading(false);
   }, [organizationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => { recarregar(); }, [recarregar]);
 
-  return <Ctx.Provider value={{ etiquetas, etiquetasInscricao, etiquetasProponente, loading, recarregar }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ etiquetas, etiquetasInscricao, etiquetasProponente, etiquetasMaturidadeProponente, loading, recarregar }}>{children}</Ctx.Provider>;
 }
 
 export function useEtiquetas() { return useContext(Ctx); }

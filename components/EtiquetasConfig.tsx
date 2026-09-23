@@ -160,12 +160,12 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
   );
 }
 
-export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captacao" | "inscricao" | "proponente" }) {
+export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captacao" | "inscricao" | "proponente" | "proponente_maturidade" }) {
   const supabase = createClient();
   const organizationId = useOrganizationId();
-  const { etiquetas: etiquetasCaptacao, etiquetasInscricao, etiquetasProponente, recarregar } = useEtiquetas();
+  const { etiquetas: etiquetasCaptacao, etiquetasInscricao, etiquetasProponente, etiquetasMaturidadeProponente, recarregar } = useEtiquetas();
   const { confirmDelete } = useDeleteConfirm();
-  const etiquetas = entidade === "inscricao" ? etiquetasInscricao : entidade === "proponente" ? etiquetasProponente : etiquetasCaptacao;
+  const etiquetas = entidade === "inscricao" ? etiquetasInscricao : entidade === "proponente" ? etiquetasProponente : entidade === "proponente_maturidade" ? etiquetasMaturidadeProponente : etiquetasCaptacao;
   const [criando, setCriando] = useState(false);
   const [novaLabel, setNovaLabel] = useState("");
   const [etapaParaExcluir, setEtapaParaExcluir] = useState<Etiqueta | null>(null);
@@ -175,7 +175,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
 
   async function handleUpdate(id: string, patch: Partial<Etiqueta>) {
     if (!organizationId) return;
-    const isVirtualDefault = id.startsWith("default-inscricao-") || id.startsWith("default-proponente-") || id.startsWith("default-captacao-");
+    const isVirtualDefault = id.startsWith("default-");
     let error: { message: string } | null = null;
     if (isVirtualDefault) {
       const padrao = etiquetas.find((item) => item.id === id);
@@ -212,7 +212,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
   async function handleDelete(id: string) {
     const etiqueta = etiquetas.find(item => item.id === id);
     if (!etiqueta) return;
-    if (entidade !== "proponente") {
+    if (entidade !== "proponente" && entidade !== "proponente_maturidade") {
       if (etiquetas.length < 2) {
         setErro("O funil precisa manter ao menos uma etapa.");
         return;
@@ -224,13 +224,13 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
     }
     confirmDelete({
       title: `Excluir a etiqueta “${etiqueta.label}”?`,
-      description: "Os proponentes que usam essa etiqueta ficarão sem tipo.",
+      description: entidade === "proponente" ? "Os proponentes que usam essa etiqueta ficarão sem tipo." : "Os proponentes que usam essa etiqueta ficarão sem maturidade definida.",
       onConfirm: async () => {
         if (!organizationId) return;
-        const { error } = await (supabase as any).rpc("remover_tipo_proponente", {
-          p_organization_id: organizationId,
-          p_source_key: etiqueta.key,
-        });
+        const args = { p_organization_id: organizationId, p_source_key: etiqueta.key };
+        const { error } = entidade === "proponente"
+          ? await (supabase as any).rpc("remover_tipo_proponente", args)
+          : await (supabase as any).rpc("remover_maturidade_proponente", args);
         if (error) {
           setErro(error.message || "Não foi possível excluir a etiqueta.");
           return;
@@ -293,7 +293,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
         ))}
 
         {/* Nova etiqueta */}
-        {(entidade === "captacao" || entidade === "inscricao" || entidade === "proponente") && (
+        {(
         <div className="flex items-center gap-2 px-4 py-2.5 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <Plus size={13} className="text-black/30 flex-shrink-0" />
           <input
