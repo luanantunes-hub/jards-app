@@ -68,22 +68,34 @@ const fmt = (v: number) => {
   return `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}`;
 };
 
+// Esporte tem teto incerto pra nós (2% geral ou 4% inclusão social — não classificamos o
+// projeto). Pra estimar a capacidade fiscal da empresa (a "base segura" abaixo), ele entra
+// SEMPRE pela hipótese de 4%, não pelos 2% que ele mesmo exibe (TETO_PCT.esporte) — dividir
+// por um teto maior dá a base implícita MENOR, a única forma de nunca inflar artificialmente
+// o potencial mostrado em Cultura/Saúde quando é o Esporte que domina a comparação. Se
+// usássemos 2% aqui, um investimento grande em esporte "geral" pareceria provar uma
+// capacidade fiscal maior do que a empresa de fato tem — e todo o resto herdaria esse erro.
+const TETO_ESPORTE_BASE = 4;
+
 // Estima qual bloco de leis está "no teto" (maior base de IRPJ implícita: valor ÷ teto%) e,
 // a partir dele, quanto de espaço em R$ ainda cabe nos demais — sem precisar saber o IRPJ
 // real. Cultura e Ancine entram somados, já que compartilham o mesmo teto de 4%.
 function calcularPotencial(valoresEmpresa: Partial<Record<Lei, number>>): Record<Lei, Potencial> {
   const culturaAncine = (valoresEmpresa.cultura ?? 0) + (valoresEmpresa.ancine ?? 0);
-  const valorPorBloco: Record<Lei, number> = {
-    cultura: culturaAncine,
-    ancine: culturaAncine,
-    esporte: valoresEmpresa.esporte ?? 0,
-    saude: valoresEmpresa.saude ?? 0,
-  };
-  const bases = LEIS.map(({ key }) => valorPorBloco[key] / TETO_PCT[key]);
-  const baseEstimada = Math.max(0, ...bases);
+  const esporte = valoresEmpresa.esporte ?? 0;
+  const saude = valoresEmpresa.saude ?? 0;
+
+  const baseSegura = Math.max(
+    culturaAncine / TETO_PCT.cultura,
+    saude / TETO_PCT.saude,
+    esporte / TETO_ESPORTE_BASE,
+    0,
+  );
+
+  const valorPorBloco: Record<Lei, number> = { cultura: culturaAncine, ancine: culturaAncine, esporte, saude };
   const resultado = {} as Record<Lei, Potencial>;
-  LEIS.forEach(({ key }, i) => {
-    const potencial = bases[i] >= baseEstimada ? 0 : TETO_PCT[key] * baseEstimada - valorPorBloco[key];
+  LEIS.forEach(({ key }) => {
+    const potencial = Math.max(0, TETO_PCT[key] * baseSegura - valorPorBloco[key]);
     resultado[key] = { valorEfetivo: valorPorBloco[key], potencial };
   });
   return resultado;
