@@ -26,6 +26,15 @@ const LEIS: { key: Lei; label: string }[] = [
 
 const MAX_EMPRESAS = 5;
 
+// Classes literais (não construídas via template string) pra o Tailwind JIT conseguir
+// encontrar cada uma no código-fonte — usado pelo grid de cartões em ComparativoCartoes.
+const GRID_COLS: Record<number, string> = {
+  1: "sm:grid-cols-1",
+  2: "sm:grid-cols-2",
+  3: "sm:grid-cols-3",
+  4: "sm:grid-cols-4",
+};
+
 // Todos os valores são do ANO CORRENTE (2025), igual à página Patrocinadores — não o acumulado
 // histórico. O teto do IRPJ é um limite anual, então comparar contra um acumulado de vários
 // anos daria um "potencial" sem sentido.
@@ -499,16 +508,20 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
     setMenuAberto(null);
   }
 
+  // Grid com número de colunas = qtd. de empresas (até 4) — cada card encolhe conforme mais
+  // são adicionadas, sempre cabendo até 4 por linha (a 5ª quebra pra uma segunda linha).
+  const colsClass = GRID_COLS[Math.min(selecionadas.length, 4)] ?? "sm:grid-cols-4";
+
   return (
     <>
-    <div className="flex flex-wrap gap-5">
+    <div className={`grid grid-cols-1 gap-5 ${colsClass}`}>
       {selecionadas.map((e) => {
         const cor = colorFrom(e.nome);
         const total = LEIS.reduce((acc, { key }) => acc + (valores[e.id]?.[key] ?? 0), 0);
         return (
           <div
             key={e.id}
-            className="relative w-full basis-full sm:basis-auto max-w-[440px] flex-1 min-w-0 sm:min-w-[340px] cursor-default rounded border p-7 transition hover:shadow-md"
+            className="relative cursor-default rounded border p-7 transition hover:shadow-md"
             style={{
               borderColor: "rgba(13,13,13,.08)",
               borderTop: `3px solid ${cor}`,
