@@ -649,7 +649,7 @@ export default function PatrocinadorPage() {
       setCarteiraLei(carteiraLeiRes.data as { descricao: string | null } | null);
       const projetosData = ((projetosIncentivoRes.data ?? []) as unknown as { projeto: { id: string; nome: string; lei: string; site_url: string | null } | null }[])
         .map(r => r.projeto)
-        .filter((p): p is { id: string; nome: string; lei: string; site_url: string | null } => !!p && p.lei === leiParam)
+        .filter((p): p is { id: string; nome: string; lei: string; site_url: string | null } => !!p && p.lei === leiParaGrafico)
         .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
       setProjetosIncentivo(projetosData);
       setDesbloqueado(!!desbRes.data);
