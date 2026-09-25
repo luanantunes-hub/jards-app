@@ -1694,8 +1694,9 @@ export default function PatrocinadorPage() {
                               <span className={`font-semibold leading-snug transition text-black ${tamanhoNome}`}>{p.nome}</span>
                             </>
                           );
+                          const href = p.site_url && (/^https?:\/\//i.test(p.site_url) ? p.site_url : `https://${p.site_url}`);
                           return p.site_url ? (
-                            <a key={p.id} href={p.site_url} target="_blank" rel="noopener noreferrer" className="group rounded border p-2.5 flex items-center gap-3 transition hover:bg-black/[.03]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                            <a key={p.id} href={href} target="_blank" rel="noopener noreferrer" className="group rounded border p-2.5 flex items-center gap-3 transition hover:bg-black/[.03]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                               {conteudo}
                             </a>
                           ) : (

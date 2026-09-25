@@ -106,14 +106,14 @@ export function categoriaDoProjeto(nome: string, lei: string, projetoId: string)
 const CINZA_METALICO = "#8E8E93";
 
 export function ProjetoCategoriaIlustracao({ categoria, projetoId, size = 44 }: { categoria: ProjetoCategoria; projetoId: string; size?: number }) {
-  const { Icons, cor } = categoria;
+  const { Icons } = categoria;
   const IconCmp = Icons[hash(projetoId, 17) % Icons.length];
   const corte = 25 + (hash(projetoId, 31) % 45);
   return (
     <div className="rounded overflow-hidden flex-shrink-0 relative" style={{ width: size, height: size, background: CINZA_METALICO + "14" }}>
       <div className="absolute inset-0" style={{ background: CINZA_METALICO + "26", clipPath: `polygon(100% 0, 100% 100%, ${corte}% 100%)` }} />
       <div className="absolute inset-0 flex items-center justify-center">
-        <IconCmp size={Math.round(size * 0.48)} color={cor} weight="duotone" />
+        <IconCmp size={Math.round(size * 0.48)} color="#0D0D0D" weight="duotone" />
       </div>
     </div>
   );
