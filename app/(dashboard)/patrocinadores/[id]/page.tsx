@@ -1,12 +1,13 @@
 "use client";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft, ArrowLeftRight, Globe, Mail,
-  Phone, ExternalLink, Plus, Coins,
+  Phone, ExternalLink, Coins,
   ChevronUp, ChevronDown, UserPlus, X, Pencil, ThumbsUp, ThumbsDown, Copy, Check,
   Upload, FileText, Trash2, Newspaper, RefreshCw,
+  MoreHorizontal, Briefcase, ClipboardList, UsersRound,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useCreditos } from "@/contexts/CreditosContext";
@@ -24,6 +25,7 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { ProjetoCategoriaIlustracao, categoriaDoProjeto } from "@/components/ui/ProjetoCategoriaIlustracao";
 
 type RelatorioSustentabilidade = {
   id: string;
@@ -180,10 +182,11 @@ const MESES = [
   { key: "dezembro",  label: "Dez", q: 4 },
 ] as const;
 
-const TRIM_TABS = ["trimestral", "sustentabilidade"] as const;
+const TRIM_TABS = ["trimestral", "sustentabilidade", "projetos"] as const;
 const TRIM_LABELS: Record<string, string> = {
   trimestral: "Investimento Trimestral",
   sustentabilidade: "Relatório de Sustentabilidade",
+  projetos: "Projetos Patrocinados",
 };
 
 const TRIM_NAMES = ["Primeiro Trimestre", "Segundo Trimestre", "Terceiro Trimestre", "Quarto Trimestre"];
@@ -466,11 +469,15 @@ export default function PatrocinadorPage() {
   const [trimestral, setTrimestral]       = useState<InvestimentoTrimestre | null>(null);
   const [investimentosLei, setInvestimentosLei] = useState<{ ano: number; valor: number }[]>([]);
   const [carteiraLei, setCarteiraLei]     = useState<{ descricao: string | null } | null>(null);
+  const [projetosIncentivo, setProjetosIncentivo] = useState<{ id: string; nome: string; lei: string; site_url: string | null }[]>([]);
   const anoRecenteLei = investimentosLei.length > 0 ? Math.max(...investimentosLei.map((r) => r.ano)) : null;
   const valorRecenteLei = anoRecenteLei != null ? investimentosLei.find((r) => r.ano === anoRecenteLei)?.valor ?? null : null;
   const investimentosLeiRecentes = investimentosLei.filter((r) => r.ano >= 2020);
-  const [trimTab, setTrimTab]             = useState<"trimestral" | "sustentabilidade">("trimestral");
-  const effectiveTrimTab = isLeiView ? "sustentabilidade" : trimTab;
+  const temProjetosEstruturados = leiParam === "esporte" || leiParam === "ancine" || leiParam === "saude" || leiParam === "cultura";
+  const [trimTab, setTrimTab] = useState<"trimestral" | "sustentabilidade" | "projetos">(() =>
+    temProjetosEstruturados ? "projetos" : isLeiView ? "sustentabilidade" : "trimestral"
+  );
+  const effectiveTrimTab = trimTab;
   const [desbloqueado, setDesbloqueado]   = useState(false);
   const [loading, setLoading]             = useState(true);
   const [unlocking, setUnlocking]         = useState(false);
@@ -478,6 +485,8 @@ export default function PatrocinadorPage() {
   const [showInscricaoModal, setShowInscricaoModal] = useState(false);
   const [showProspectModal, setShowProspectModal] = useState(false);
   const [inscricaoEdital, setInscricaoEdital] = useState<Edital | null>(null);
+  const [menuAcoesAberto, setMenuAcoesAberto] = useState(false);
+  const menuAcoesRef = useRef<HTMLDivElement>(null);
   const [showReportarErro, setShowReportarErro] = useState(false);
   const [showSugerirForm, setShowSugerirForm] = useState(false);
   const [exportandoContatoId, setExportandoContatoId] = useState<string | null>(null);
@@ -605,7 +614,7 @@ export default function PatrocinadorPage() {
   useEffect(() => {
     async function fetchAll() {
       setLoading(true);
-      const [empRes, respRes, editRes, capRes, tipoRes, trimRes, desbRes, invLeiRes, carteiraLeiRes] = await Promise.all([
+      const [empRes, respRes, editRes, capRes, tipoRes, trimRes, desbRes, invLeiRes, carteiraLeiRes, projetosIncentivoRes] = await Promise.all([
         supabase.from("empresas").select("*").eq("id", id).single(),
         supabase.from("responsaveis").select("*").eq("empresa_id", id).order("ordem"),
         supabase.from("editais").select("*").eq("empresa_id", id).order("data_fechamento", { ascending: false }),
@@ -615,6 +624,7 @@ export default function PatrocinadorPage() {
         supabase.from("desbloqueios").select("id").eq("empresa_pub_id", id).maybeSingle(),
         supabase.from("investimentos_por_lei").select("ano, valor").eq("empresa_id", id).eq("lei", leiParaGrafico),
         supabase.from("carteiras_por_lei").select("descricao").eq("empresa_id", id).eq("lei", leiParam ?? "__none__").maybeSingle(),
+        (supabase as any).from("projeto_incentivo_patrocinios").select("projeto:projetos_incentivo(id, nome, lei, site_url)").eq("empresa_id", id),
       ]);
       setEmpresa(empRes.data);
       const resp = respRes.data ?? [];
@@ -635,6 +645,11 @@ export default function PatrocinadorPage() {
       setTrimestral(trimRes.data);
       setInvestimentosLei((invLeiRes.data ?? []) as { ano: number; valor: number }[]);
       setCarteiraLei(carteiraLeiRes.data as { descricao: string | null } | null);
+      const projetosData = ((projetosIncentivoRes.data ?? []) as unknown as { projeto: { id: string; nome: string; lei: string; site_url: string | null } | null }[])
+        .map(r => r.projeto)
+        .filter((p): p is { id: string; nome: string; lei: string; site_url: string | null } => !!p && p.lei === leiParam)
+        .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+      setProjetosIncentivo(projetosData);
       setDesbloqueado(!!desbRes.data);
       setLoading(false);
     }
@@ -650,6 +665,15 @@ export default function PatrocinadorPage() {
     void loadNoticias();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, leiParam, loadNoticias]);
+
+  useEffect(() => {
+    if (!menuAcoesAberto) return;
+    function onClickFora(ev: MouseEvent) {
+      if (menuAcoesRef.current && !menuAcoesRef.current.contains(ev.target as Node)) setMenuAcoesAberto(false);
+    }
+    document.addEventListener("mousedown", onClickFora);
+    return () => document.removeEventListener("mousedown", onClickFora);
+  }, [menuAcoesAberto]);
 
   async function handleVoto(sugestaoId: string, valor: 1 | -1) {
     await (supabase as any).rpc("fn_votar_sugestao_contato", {
@@ -1008,27 +1032,6 @@ export default function PatrocinadorPage() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => setShowProspectModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-black bg-white border rounded hover:bg-black/[.04] transition"
-              style={{ borderColor: "rgba(13,13,13,.12)" }}
-            >
-              <Plus size={12} /> Novo prospect
-            </button>
-            <button
-              onClick={() => { setInscricaoEdital(null); setShowInscricaoModal(true); }}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
-              style={{ borderColor: "rgba(13,13,13,.12)" }}
-            >
-              <Plus size={12} /> Nova inscrição
-            </button>
-            <button
-              onClick={() => setShowCaptacaoModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
-              style={{ borderColor: "rgba(13,13,13,.12)" }}
-            >
-              <Plus size={12} /> Nova captação
-            </button>
             <Link
               href={`/comparativo?empresas=${empresa.id}`}
               className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
@@ -1036,6 +1039,45 @@ export default function PatrocinadorPage() {
             >
               <ArrowLeftRight size={12} /> Comparar
             </Link>
+            <div ref={menuAcoesRef} className="relative">
+              <button
+                type="button"
+                onClick={() => setMenuAcoesAberto((v) => !v)}
+                aria-label="Mais ações"
+                className="flex h-9 w-9 items-center justify-center bg-white border rounded hover:bg-black/[.04] transition"
+                style={{ borderColor: "rgba(13,13,13,.12)" }}
+              >
+                <MoreHorizontal size={16} className="text-black/50" />
+              </button>
+              {menuAcoesAberto && (
+                <div
+                  className="absolute right-0 top-10 z-20 w-[190px] rounded border bg-white py-1 shadow-[0_12px_32px_rgba(13,13,13,.12)]"
+                  style={{ borderColor: "rgba(13,13,13,.08)" }}
+                >
+                  <button
+                    type="button"
+                    onClick={() => { setMenuAcoesAberto(false); setShowProspectModal(true); }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                  >
+                    <Briefcase size={13} className="text-black/40" /> Novo prospect
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMenuAcoesAberto(false); setInscricaoEdital(null); setShowInscricaoModal(true); }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                  >
+                    <ClipboardList size={13} className="text-black/40" /> Nova inscrição
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMenuAcoesAberto(false); setShowCaptacaoModal(true); }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                  >
+                    <UsersRound size={13} className="text-black/40" /> Nova captação
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
         {/* Tags row */}
@@ -1621,7 +1663,7 @@ export default function PatrocinadorPage() {
             {(isLeiView || trimestral) && (
               <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <div className="flex border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                  {TRIM_TABS.filter((tab) => !isLeiView || tab !== "trimestral").map((tab) => (
+                  {TRIM_TABS.filter((tab) => (tab !== "trimestral" || !isLeiView) && (tab !== "projetos" || temProjetosEstruturados)).map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setTrimTab(tab)}
@@ -1638,6 +1680,32 @@ export default function PatrocinadorPage() {
                 <div className="p-5">
                   {effectiveTrimTab === "trimestral" && trimestral ? (
                     <TrimestralChart data={trimestral} />
+                  ) : effectiveTrimTab === "projetos" ? (
+                    projetosIncentivo.length > 0 ? (
+                      <div className="max-h-[400px] overflow-y-auto grid sm:grid-cols-3 gap-2.5 pr-1">
+                        {projetosIncentivo.map((p) => {
+                          const categoria = categoriaDoProjeto(p.nome, p.lei, p.id);
+                          const tamanhoNome = p.nome.length > 90 ? "text-[8px] line-clamp-4" : p.nome.length > 60 ? "text-[9px] line-clamp-3" : p.nome.length > 40 ? "text-[10px] line-clamp-3" : "text-[11px] line-clamp-2";
+                          const conteudo = (
+                            <>
+                              <ProjetoCategoriaIlustracao categoria={categoria} projetoId={p.id} size={44} />
+                              <span className={`font-semibold leading-snug transition ${tamanhoNome} ${p.site_url ? "text-black group-hover:text-[#7259B5]" : "text-black"}`}>{p.nome}</span>
+                            </>
+                          );
+                          return p.site_url ? (
+                            <a key={p.id} href={p.site_url} target="_blank" rel="noopener noreferrer" className="group rounded border p-2.5 flex items-center gap-3 transition hover:border-[#7259B5]/30" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                              {conteudo}
+                            </a>
+                          ) : (
+                            <div key={p.id} className="rounded border p-2.5 flex items-center gap-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                              {conteudo}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-black/35 text-center py-6">Nenhum projeto identificado para esta lei.</p>
+                    )
                   ) : (
                     <div>
                       {/* Upload area */}
