@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Shield, UserCheck } from "lucide-react";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { NovoClienteModal } from "@/components/modals/NovoClienteModal";
@@ -178,6 +179,7 @@ function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; o
 }
 
 export default function EmpresasCrmPage() {
+  const router = useRouter();
   const supabase = createClient();
   const organizationId = useOrganizationId();
 
@@ -418,7 +420,7 @@ export default function EmpresasCrmPage() {
                 filtered.map((e, i) => (
                   <tr
                     key={e.id}
-                    onClick={() => setSelectedEmpresa(e)}
+                    onClick={() => router.push(`/empresas-crm/${e.id}`)}
                     className="hover:bg-black/[0.02] transition group cursor-pointer"
                     style={{ borderBottom: i < filtered.length - 1 ? "1px solid rgba(13,13,13,.05)" : "none" }}
                   >
