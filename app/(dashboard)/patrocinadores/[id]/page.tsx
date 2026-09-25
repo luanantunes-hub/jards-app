@@ -473,7 +473,9 @@ export default function PatrocinadorPage() {
   const anoRecenteLei = investimentosLei.length > 0 ? Math.max(...investimentosLei.map((r) => r.ano)) : null;
   const valorRecenteLei = anoRecenteLei != null ? investimentosLei.find((r) => r.ano === anoRecenteLei)?.valor ?? null : null;
   const investimentosLeiRecentes = investimentosLei.filter((r) => r.ano >= 2020);
-  const temProjetosEstruturados = leiParam === "esporte" || leiParam === "ancine" || leiParam === "saude" || leiParam === "cultura";
+  // leiParaGrafico já resolve null (aba Cultura não passa ?lei=) pra "cultura" — usar leiParam
+  // puro aqui fazia a aba nunca aparecer vindo da Cultura, o caminho mais comum.
+  const temProjetosEstruturados = leiParaGrafico === "esporte" || leiParaGrafico === "ancine" || leiParaGrafico === "saude" || leiParaGrafico === "cultura";
   const [trimTab, setTrimTab] = useState<"trimestral" | "sustentabilidade" | "projetos">(() =>
     temProjetosEstruturados ? "projetos" : isLeiView ? "sustentabilidade" : "trimestral"
   );
