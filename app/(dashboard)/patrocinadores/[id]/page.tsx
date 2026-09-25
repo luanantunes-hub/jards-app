@@ -1691,11 +1691,11 @@ export default function PatrocinadorPage() {
                           const conteudo = (
                             <>
                               <ProjetoCategoriaIlustracao categoria={categoria} projetoId={p.id} size={44} />
-                              <span className={`font-semibold leading-snug transition ${tamanhoNome} ${p.site_url ? "text-black group-hover:text-[#7259B5]" : "text-black"}`}>{p.nome}</span>
+                              <span className={`font-semibold leading-snug transition text-black ${tamanhoNome}`}>{p.nome}</span>
                             </>
                           );
                           return p.site_url ? (
-                            <a key={p.id} href={p.site_url} target="_blank" rel="noopener noreferrer" className="group rounded border p-2.5 flex items-center gap-3 transition hover:border-[#7259B5]/30" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                            <a key={p.id} href={p.site_url} target="_blank" rel="noopener noreferrer" className="group rounded border p-2.5 flex items-center gap-3 transition hover:bg-black/[.03]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                               {conteudo}
                             </a>
                           ) : (
