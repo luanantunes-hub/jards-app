@@ -13,7 +13,6 @@ import { ListContent, ListPageHeader, ListSearch, ListSummary, ListTableSurface,
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
-import { CompanyQuickPanel } from "@/components/company/CompanyQuickPanel";
 
 type ViewMode = "lista" | "matriz";
 const VIEW_MODES = ["lista", "matriz"] as const;
@@ -190,7 +189,6 @@ export default function EmpresasCrmPage() {
   const [tipoFilter, setTipoFilter] = useState<string>("todos");
   const [showNovoProspect, setShowNovoProspect] = useState(false);
   const [showNovoCliente, setShowNovoCliente] = useState(false);
-  const [selectedEmpresa, setSelectedEmpresa] = useState<EmpresaViewRow | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:empresas:view", VIEW_MODES, "lista");
 
@@ -370,7 +368,7 @@ export default function EmpresasCrmPage() {
       </ListToolbar>
 
       <ListContent className="md:pr-0">{viewMode === "matriz" ? (
-        <CompanyMatrixView empresas={filtered} onOpen={id => setSelectedEmpresa(empresas.find(empresa => empresa.id === id) ?? null)}/>
+        <CompanyMatrixView empresas={filtered} onOpen={id => router.push(`/empresas-crm/${id}`)}/>
       ) : (
         <ListTableSurface className="rounded-r-none border-r-0">
           <ManagedTable storageKey="empresas-crm-v6" definitions={EMPRESAS_COLUMNS} className="w-full">
@@ -641,7 +639,6 @@ export default function EmpresasCrmPage() {
           onSaved={() => { setShowNovoCliente(false); setRefreshKey(k => k + 1); }}
         />
       )}
-      {selectedEmpresa && <CompanyQuickPanel key={selectedEmpresa.id} company={selectedEmpresa} onClose={() => setSelectedEmpresa(null)} />}
     </div>
   );
 }
