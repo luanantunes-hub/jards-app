@@ -14,7 +14,6 @@ import {
   CaretUp,
   CaretDown,
   X,
-  WarningCircle,
 } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
@@ -131,10 +130,6 @@ function LeiTabContent({ lei }: { lei: Lei }) {
           compact
           emphasized={false}
         />
-        <FilterButton active={incompletas} onClick={() => setIncompletas((v) => !v)}>
-          <WarningCircle size={12} />
-          Perfil incompleto
-        </FilterButton>
         {hasFilters && (
           <FilterButton onClick={() => { setSearch(""); setEstado(""); setSetor(""); setIncompletas(false); }}>
             <X size={12} />
@@ -566,12 +561,6 @@ function PatrocinadoresContent() {
           ariaLabel="Filtrar patrocinadores por trimestre"
           options={(["T1", "T2", "T3", "T4"] as Trimestre[]).map((value) => ({ value, label: value }))}
         />
-
-        {/* Botão de controle: perfil incompleto (sem setor, cidade, estado ou site) */}
-        <FilterButton active={incompletas} onClick={() => setIncompletas((v) => !v)}>
-          <WarningCircle size={12} />
-          Perfil incompleto
-        </FilterButton>
 
         {/* Botão de controle auxiliar: limpar filtros */}
         {hasFilters && (
