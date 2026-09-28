@@ -14,6 +14,7 @@ import {
   CaretUp,
   CaretDown,
   X,
+  WarningCircle,
 } from "@phosphor-icons/react";
 import { createClient } from "@/lib/supabase/client";
 import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
@@ -39,7 +40,7 @@ type EmpresaLei = {
   } | null;
 };
 
-function LeiTabContent({ lei }: { lei: Lei }) {
+function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean }) {
   const router = useRouter();
   const supabase = createClient();
   const [linhas, setLinhas] = useState<EmpresaLei[]>([]);
@@ -130,6 +131,12 @@ function LeiTabContent({ lei }: { lei: Lei }) {
           compact
           emphasized={false}
         />
+        {isSuperAdmin && (
+          <FilterButton active={incompletas} onClick={() => setIncompletas((v) => !v)}>
+            <WarningCircle size={12} />
+            Perfil incompleto
+          </FilterButton>
+        )}
         {hasFilters && (
           <FilterButton onClick={() => { setSearch(""); setEstado(""); setSetor(""); setIncompletas(false); }}>
             <X size={12} />
@@ -287,7 +294,7 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   );
 }
 
-function PatrocinadoresContent() {
+function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
@@ -562,6 +569,14 @@ function PatrocinadoresContent() {
           options={(["T1", "T2", "T3", "T4"] as Trimestre[]).map((value) => ({ value, label: value }))}
         />
 
+        {/* Botão de controle: perfil incompleto (sem setor, cidade, estado ou site) — visível só para superadmin */}
+        {isSuperAdmin && (
+          <FilterButton active={incompletas} onClick={() => setIncompletas((v) => !v)}>
+            <WarningCircle size={12} />
+            Perfil incompleto
+          </FilterButton>
+        )}
+
         {/* Botão de controle auxiliar: limpar filtros */}
         {hasFilters && (
           <FilterButton onClick={clearFilters}>
@@ -740,6 +755,24 @@ function WelcomeModalGate() {
 
 export default function PatrocinadoresPage() {
   const [aba, setAba] = useState("cultura");
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    const supabase = createClient();
+    async function loadSuperAdmin() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user || !active) return;
+      const { data: profile } = await (supabase as any)
+        .from("profiles")
+        .select("jards_super_admin")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (active) setIsSuperAdmin(profile?.jards_super_admin === true);
+    }
+    void loadSuperAdmin();
+    return () => { active = false; };
+  }, []);
 
   return (
     <div className="min-h-full" style={{ background: "#F2F2F2" }}>
@@ -758,12 +791,12 @@ export default function PatrocinadoresPage() {
           página de detalhe) foi migrado pra investimentos_por_lei (lei='cultura'). */}
       {aba === "cultura" && (
         <Suspense fallback={<div className="min-h-[360px] animate-pulse bg-black/[.015]" />}>
-          <PatrocinadoresContent />
+          <PatrocinadoresContent isSuperAdmin={isSuperAdmin} />
         </Suspense>
       )}
-      {aba === "esporte" && <LeiTabContent lei="esporte" />}
-      {aba === "cinema" && <LeiTabContent lei="ancine" />}
-      {aba === "saude" && <LeiTabContent lei="saude" />}
+      {aba === "esporte" && <LeiTabContent lei="esporte" isSuperAdmin={isSuperAdmin} />}
+      {aba === "cinema" && <LeiTabContent lei="ancine" isSuperAdmin={isSuperAdmin} />}
+      {aba === "saude" && <LeiTabContent lei="saude" isSuperAdmin={isSuperAdmin} />}
       <Suspense fallback={null}>
         <WelcomeModalGate />
       </Suspense>
