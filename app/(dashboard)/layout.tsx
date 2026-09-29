@@ -22,6 +22,7 @@ import {
   Shield,
   Sparkles,
   ArrowLeftRight,
+  Video,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -50,6 +51,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       items: [
         { label: "Visão Geral",  href: "/dashboard",    icon: BarChart2    },
         { label: "Atividades",   href: "/atividades",   icon: CalendarDays },
+        { label: "Reuniões",     href: "/reunioes",     icon: Video        },
         { label: "Projetos",     href: "/projetos",     icon: FolderOpen   },
       ],
     },
