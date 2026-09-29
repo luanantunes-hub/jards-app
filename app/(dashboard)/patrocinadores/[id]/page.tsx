@@ -26,7 +26,6 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { ProjetoCategoriaIlustracao, categoriaDoProjeto } from "@/components/ui/ProjetoCategoriaIlustracao";
-import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 
 type RelatorioSustentabilidade = {
   id: string;
@@ -471,10 +470,6 @@ export default function PatrocinadorPage() {
   const [investimentosLei, setInvestimentosLei] = useState<{ ano: number; valor: number }[]>([]);
   const [carteiraLei, setCarteiraLei]     = useState<{ descricao: string | null } | null>(null);
   const [projetosIncentivo, setProjetosIncentivo] = useState<{ id: string; nome: string; lei: string; site_url: string | null; vinculoId: string; valor: number | null }[]>([]);
-  const { pos: valorPopoverPos, abrir: abrirValorPopover, fechar: fecharValorPopover } = useAnchoredPopover();
-  const [editandoValorId, setEditandoValorId] = useState<string | null>(null);
-  const [valorInput, setValorInput] = useState("");
-  const [salvandoValor, setSalvandoValor] = useState(false);
   const anoRecenteLei = investimentosLei.length > 0 ? Math.max(...investimentosLei.map((r) => r.ano)) : null;
   const valorRecenteLei = anoRecenteLei != null ? investimentosLei.find((r) => r.ano === anoRecenteLei)?.valor ?? null : null;
   const investimentosLeiRecentes = investimentosLei.filter((r) => r.ano >= 2020);
@@ -681,19 +676,6 @@ export default function PatrocinadorPage() {
     document.addEventListener("mousedown", onClickFora);
     return () => document.removeEventListener("mousedown", onClickFora);
   }, [menuAcoesAberto]);
-
-  async function salvarValorProjeto(vinculoId: string) {
-    const bruto = valorInput.trim();
-    const num = bruto === "" ? null : Number(bruto.replace(/\./g, "").replace(",", "."));
-    if (bruto !== "" && (num === null || Number.isNaN(num))) return;
-    setSalvandoValor(true);
-    const { error } = await (supabase as any).from("projeto_incentivo_patrocinios").update({ valor: num }).eq("id", vinculoId);
-    setSalvandoValor(false);
-    if (error) return;
-    setProjetosIncentivo(prev => prev.map(p => p.vinculoId === vinculoId ? { ...p, valor: num } : p));
-    fecharValorPopover();
-    setEditandoValorId(null);
-  }
 
   async function handleVoto(sugestaoId: string, valor: 1 | -1) {
     await (supabase as any).rpc("fn_votar_sugestao_contato", {
@@ -1711,19 +1693,9 @@ export default function PatrocinadorPage() {
                               <ProjetoCategoriaIlustracao categoria={categoria} projetoId={p.id} size={44} />
                               <div className="min-w-0 flex-1">
                                 <span className={`block font-semibold leading-snug transition text-black ${tamanhoNome}`}>{p.nome}</span>
-                                <button
-                                  type="button"
-                                  onClick={event => {
-                                    event.preventDefault();
-                                    event.stopPropagation();
-                                    setEditandoValorId(p.vinculoId);
-                                    setValorInput(p.valor ? String(p.valor).replace(".", ",") : "");
-                                    abrirValorPopover(event, 220);
-                                  }}
-                                  className="mt-1 text-[10px] font-semibold text-black/35 hover:text-black/60 transition"
-                                >
-                                  {p.valor ? fmtValor(p.valor) : "+ valor"}
-                                </button>
+                                {p.valor ? (
+                                  <span className="mt-1 block text-[10px] font-semibold text-black/35">{fmtValor(p.valor)}</span>
+                                ) : null}
                               </div>
                             </>
                           );
@@ -1853,40 +1825,6 @@ export default function PatrocinadorPage() {
           </div>
         </div>
       </div>
-
-      {editandoValorId && (
-        <AnchoredPopover pos={valorPopoverPos} onClose={() => { fecharValorPopover(); setEditandoValorId(null); }}>
-          <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-2">Valor do aporte</p>
-          <input
-            type="text"
-            inputMode="decimal"
-            autoFocus
-            value={valorInput}
-            onChange={event => setValorInput(event.target.value)}
-            onKeyDown={event => { if (event.key === "Enter") salvarValorProjeto(editandoValorId); }}
-            placeholder="0,00"
-            className="w-full rounded border px-3 py-2 text-sm outline-none focus:border-[#7259B5]/40"
-            style={{ borderColor: "rgba(13,13,13,.12)" }}
-          />
-          <div className="mt-3 flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => { fecharValorPopover(); setEditandoValorId(null); }}
-              className="rounded px-3 py-1.5 text-[12px] font-medium text-black/50 hover:text-black transition"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              disabled={salvandoValor}
-              onClick={() => salvarValorProjeto(editandoValorId)}
-              className="rounded bg-[#2E8932] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#26752A] transition disabled:opacity-50"
-            >
-              {salvandoValor ? "Salvando…" : "Salvar"}
-            </button>
-          </div>
-        </AnchoredPopover>
-      )}
     </div>
   );
 }
