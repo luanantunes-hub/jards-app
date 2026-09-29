@@ -393,12 +393,18 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   }, []);
 
   function buildQuery(pageIndex: number) {
+    // !inner só traz empresa que tenha linha em investimentos_por_lei pra lei='cultura' — mesmo
+    // padrão de filtro que esporte/ancine/saude (LeiTabContent) já usam, só que aqui partindo
+    // de empresas (não de investimentos_por_lei) porque ordenação/exibição ainda usam
+    // empresas.aporte_estimado, não o valor da tabela unificada.
     let q = supabase
       .from("empresas")
       .select(
-        "id, nome, setor, cidade, estado, site, logo_url, aporte_estimado, trimestre_1, trimestre_2, trimestre_3, trimestre_4, tem_detalhe",
+        "id, nome, setor, cidade, estado, site, logo_url, aporte_estimado, trimestre_1, trimestre_2, trimestre_3, trimestre_4, tem_detalhe, investimentos_por_lei!inner(lei, ano)",
         { count: "exact" }
-      );
+      )
+      .eq("investimentos_por_lei.lei", "cultura")
+      .eq("investimentos_por_lei.ano", 2025);
 
     const s = dSearch.trim();
     if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`);
@@ -468,7 +474,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
   function abrirEmpresa(empresa: Empresa) {
     if (empresa.tem_detalhe) {
-      router.push(`/patrocinadores/${empresa.id}`);
+      router.push(`/patrocinadores/${empresa.id}?lei=cultura`);
       return;
     }
 
