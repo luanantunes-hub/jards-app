@@ -484,12 +484,28 @@ function ComparativoContent() {
 
             {viewMode === "tabela" && (
               <div>
-                {LEIS.map(({ key, label }, i) => (
-                  <div key={key} className={`py-8 ${i > 0 ? "border-t" : ""}`} style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                    <h2 className="mb-5 text-[11px] font-bold uppercase tracking-[.08em] text-black/35">{label}</h2>
-                    <div className="flex flex-col gap-5">{renderLeiRows(key)}</div>
+                {/* Cultura e Ancine compartilham o mesmo teto de 4% — uma caixa só (só
+                    borda, sem fundo) as separa das demais leis, que ficam soltas. */}
+                <div className="mb-8 rounded border p-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                  <div>
+                    <h2 className="mb-5 text-[11px] font-bold uppercase tracking-[.08em] text-black/35">Cultura</h2>
+                    <div className="flex flex-col gap-5">{renderLeiRows("cultura")}</div>
                   </div>
-                ))}
+                  <div className="mt-6">
+                    <h2 className="mb-5 text-[11px] font-bold uppercase tracking-[.08em] text-black/35">Ancine</h2>
+                    <div className="flex flex-col gap-5">{renderLeiRows("ancine")}</div>
+                  </div>
+                </div>
+
+                <div className="pb-8">
+                  <h2 className="mb-5 text-[11px] font-bold uppercase tracking-[.08em] text-black/35">Esporte</h2>
+                  <div className="flex flex-col gap-5">{renderLeiRows("esporte")}</div>
+                </div>
+
+                <div className="border-t pb-8 pt-8" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                  <h2 className="mb-5 text-[11px] font-bold uppercase tracking-[.08em] text-black/35">Saúde</h2>
+                  <div className="flex flex-col gap-5">{renderLeiRows("saude")}</div>
+                </div>
 
                 <div className="flex flex-col gap-3 border-t py-6 sm:flex-row sm:items-center sm:gap-6" style={{ borderColor: "rgba(13,13,13,.1)" }}>
                   <div className="w-full shrink-0 text-[11px] font-bold uppercase tracking-[.08em] text-black/45 sm:w-[22%]">
@@ -636,9 +652,11 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
+            <div className="mb-4 flex flex-col gap-4 rounded border p-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               {linha("cultura", "Cultura")}
               {linha("ancine", "Ancine")}
+            </div>
+            <div className="flex flex-col gap-4">
               {linha("esporte", "Esporte")}
               {linha("saude", "Saúde")}
             </div>
