@@ -122,7 +122,7 @@ function PotencialTag({ lei, potencial, valorEfetivo, potencialSemCultura }: { l
           <ArrowRight size={10} strokeWidth={2.5} className="shrink-0" />
           +{fmt(potencialSemCultura)}
         </div>
-        <span className="text-[8px] font-bold uppercase tracking-wider text-black/30">Sem cultura</span>
+        <span className="text-[8px] font-bold uppercase tracking-wider text-black/30">Potencial realocado</span>
       </div>
     );
   }
