@@ -486,7 +486,7 @@ function ComparativoContent() {
               <div>
                 {/* Cultura e Ancine compartilham o mesmo teto de 4% — uma caixa só (só
                     borda, sem fundo) as separa das demais leis, que ficam soltas. */}
-                <div className="mb-8 rounded border p-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                <div className="mb-8 rounded border px-2 py-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <div>
                     <h2 className="mb-5 text-[11px] font-bold uppercase tracking-[.08em] text-black/35">Cultura</h2>
                     <div className="flex flex-col gap-5">{renderLeiRows("cultura")}</div>
@@ -652,7 +652,7 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
               </div>
             </div>
 
-            <div className="mb-4 flex flex-col gap-4 rounded border p-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+            <div className="mb-4 flex flex-col gap-4 rounded border px-1.5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               {linha("cultura", "Cultura")}
               {linha("ancine", "Ancine")}
             </div>
