@@ -432,10 +432,14 @@ function ComparativoContent() {
               <div>
                 {LEIS.map(({ key, label }, i) => {
                   const max = maxPorLei(key);
+                  // Cultura e Ancine compartilham o mesmo teto de 4% — ficam juntas, sem
+                  // divisória entre elas, pra comunicar isso visualmente (sem texto).
+                  const coladoNaAnterior = key === "ancine";
+                  const padding = key === "cultura" ? "pt-8 pb-3" : key === "ancine" ? "pt-3 pb-8" : "py-8";
                   return (
                     <div
                       key={key}
-                      className={`py-8 ${i > 0 ? "border-t" : ""}`}
+                      className={`${padding} ${i > 0 && !coladoNaAnterior ? "border-t" : ""}`}
                       style={{ borderColor: "rgba(13,13,13,.07)" }}
                     >
                       <h2 className="mb-5 text-[11px] font-bold uppercase tracking-[.08em] text-black/35">{label}</h2>
@@ -596,12 +600,15 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
               </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-              {LEIS.map(({ key, label }) => {
+            <div className="flex flex-col">
+              {LEIS.map(({ key, label }, i) => {
                 const valor = valores[e.id]?.[key] ?? 0;
                 const { valorEfetivo, potencial } = potenciais[e.id]?.[key] ?? { valorEfetivo: 0, potencial: 0 };
+                // Cultura e Ancine compartilham o mesmo teto de 4% — gap menor entre elas,
+                // normal entre as demais, pra agrupar visualmente sem precisar de texto.
+                const gap = key === "cultura" ? "mb-2" : i === LEIS.length - 1 ? "" : "mb-4";
                 return (
-                  <div key={key}>
+                  <div key={key} className={gap}>
                     <div className="mb-1.5 flex items-center justify-between">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-black/40">{label}</span>
                       <span className="text-[15px] font-semibold tabular-nums text-black/80">{loading ? "…" : fmt(valor)}</span>
