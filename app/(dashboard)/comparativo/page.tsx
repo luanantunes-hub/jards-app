@@ -14,7 +14,7 @@ import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 type EmpresaOption = { id: string; nome: string; site: string | null; logo_url: string | null };
 type Lei = "cultura" | "ancine" | "esporte" | "saude";
 type Valores = Record<string, Partial<Record<Lei, number>>>;
-type Potencial = { valorEfetivo: number; potencial: number; potencialSemCultura?: number };
+type Potencial = { valorEfetivo: number; potencial: number; potencialRealocado?: number };
 type Crescimento = { taxaAnual: number; confianca: "individual" | "parcial" | "setor" };
 
 const LEIS: { key: Lei; label: string }[] = [
@@ -81,8 +81,9 @@ const TETO_ESPORTE_BASE = 4;
 // a partir dele, quanto de espaço em R$ ainda cabe nos demais — sem precisar saber o IRPJ
 // real. Cultura e Ancine entram somados, já que compartilham o mesmo teto de 4%.
 function calcularPotencial(valoresEmpresa: Partial<Record<Lei, number>>): Record<Lei, Potencial> {
-  const ancine = valoresEmpresa.ancine ?? 0;
-  const culturaAncine = (valoresEmpresa.cultura ?? 0) + ancine;
+  const culturaValor = valoresEmpresa.cultura ?? 0;
+  const ancineValor = valoresEmpresa.ancine ?? 0;
+  const culturaAncine = culturaValor + ancineValor;
   const esporte = valoresEmpresa.esporte ?? 0;
   const saude = valoresEmpresa.saude ?? 0;
 
@@ -99,28 +100,33 @@ function calcularPotencial(valoresEmpresa: Partial<Record<Lei, number>>): Record
     const potencial = Math.max(0, TETO_PCT[key] * baseSegura - valorPorBloco[key]);
     resultado[key] = { valorEfetivo: valorPorBloco[key], potencial };
   });
-  // Quanto sobraria só pro Ancine se a Cultura cedesse todo o espaço que ocupa no teto
-  // compartilhado (Cultura investimento → 0). Mais útil justamente quando o bloco combinado
-  // já está no teto (potencial normal = 0) — sem isso, pareceria que não sobra nada pro
-  // Ancine, escondendo o espaço que existiria numa realocação.
-  resultado.ancine.potencialSemCultura = Math.max(0, TETO_PCT.ancine * baseSegura - ancine);
+  // Dentro do bloco combinado, quem investe MENOS dos dois ganha o indicador de realocação
+  // (quanto teria se o outro cedesse todo o espaço que ocupa) — não é sempre a Cultura: se o
+  // Ancine é quem consome o teto compartilhado, é a Cultura que fica com pouco investimento
+  // e deveria mostrar o realocado, não o contrário.
+  if (culturaValor <= ancineValor) {
+    resultado.cultura.potencialRealocado = Math.max(0, TETO_PCT.cultura * baseSegura - culturaValor);
+  } else {
+    resultado.ancine.potencialRealocado = Math.max(0, TETO_PCT.ancine * baseSegura - ancineValor);
+  }
   return resultado;
 }
 
 // Cada selo é número + legenda curta embaixo (mesmo padrão de "TOTAL 2025"), pra ser lido sem
 // precisar decorar ícone ou cor — e cada um fica plantado num canto diferente da linha (ver
 // pontos de uso), pra não parecerem duas variações da mesma coisa.
-function PotencialTag({ lei, potencial, valorEfetivo, potencialSemCultura }: { lei: Lei; potencial: number; valorEfetivo: number; potencialSemCultura?: number }) {
-  if (lei === "ancine") {
-    if (!potencialSemCultura || potencialSemCultura <= 0) return null;
+function PotencialTag({ lei, potencial, valorEfetivo, potencialRealocado }: { lei: Lei; potencial: number; valorEfetivo: number; potencialRealocado?: number }) {
+  if (potencialRealocado !== undefined) {
+    if (potencialRealocado <= 0) return null;
+    const outra = lei === "cultura" ? "Ancine" : "Cultura";
     return (
       <div
         className="flex flex-col items-end gap-0.5"
-        title="Espaço estimado pro Ancine se a Cultura cedesse todo o espaço que ocupa no teto compartilhado (realocação, não soma com o potencial da Cultura)"
+        title={`Espaço estimado se ${outra} cedesse todo o espaço que ocupa no teto compartilhado (realocação, não soma com o potencial normal)`}
       >
         <div className="flex items-center gap-1 whitespace-nowrap text-[12px] font-semibold" style={{ color: "#2E8932" }}>
           <ArrowRight size={10} strokeWidth={2.5} className="shrink-0" />
-          +{fmt(potencialSemCultura)}
+          +{fmt(potencialRealocado)}
         </div>
         <span className="text-[8px] font-bold uppercase tracking-wider text-black/30">Potencial realocado</span>
       </div>
@@ -287,7 +293,7 @@ function ComparativoContent() {
     const max = maxPorLei(key);
     return selecionadas.map((e) => {
       const valor = valores[e.id]?.[key] ?? 0;
-      const { valorEfetivo, potencial, potencialSemCultura } = potenciais[e.id]?.[key] ?? { valorEfetivo: 0, potencial: 0 };
+      const { valorEfetivo, potencial, potencialRealocado } = potenciais[e.id]?.[key] ?? { valorEfetivo: 0, potencial: 0 };
       const pct = Math.round((valor / max) * 100);
       return (
         <div key={e.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
@@ -308,7 +314,7 @@ function ComparativoContent() {
             {!loadingValores && metricaExtra !== "nenhuma" && (
               <div className="mt-1.5 flex justify-end">
                 {metricaExtra === "crescimento" && <CrescimentoTag crescimento={crescimentos[e.id]?.[key]} valor={valor} />}
-                {metricaExtra === "potencial" && <PotencialTag lei={key} potencial={potencial} valorEfetivo={valorEfetivo} potencialSemCultura={potencialSemCultura} />}
+                {metricaExtra === "potencial" && <PotencialTag lei={key} potencial={potencial} valorEfetivo={valorEfetivo} potencialRealocado={potencialRealocado} />}
               </div>
             )}
           </div>
@@ -548,7 +554,7 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
         const total = LEIS.reduce((acc, { key }) => acc + (valores[e.id]?.[key] ?? 0), 0);
         const linha = (key: Lei, label: string) => {
           const valor = valores[e.id]?.[key] ?? 0;
-          const { valorEfetivo, potencial, potencialSemCultura } = potenciais[e.id]?.[key] ?? { valorEfetivo: 0, potencial: 0 };
+          const { valorEfetivo, potencial, potencialRealocado } = potenciais[e.id]?.[key] ?? { valorEfetivo: 0, potencial: 0 };
           return (
             <div key={key}>
               <div className="mb-1.5 flex items-center justify-between">
@@ -564,7 +570,7 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
               {!loading && metricaExtra !== "nenhuma" && (
                 <div className="mt-1.5 flex justify-end">
                   {metricaExtra === "crescimento" && <CrescimentoTag crescimento={crescimentos[e.id]?.[key]} valor={valor} />}
-                  {metricaExtra === "potencial" && <PotencialTag lei={key} potencial={potencial} valorEfetivo={valorEfetivo} potencialSemCultura={potencialSemCultura} />}
+                  {metricaExtra === "potencial" && <PotencialTag lei={key} potencial={potencial} valorEfetivo={valorEfetivo} potencialRealocado={potencialRealocado} />}
                 </div>
               )}
             </div>
