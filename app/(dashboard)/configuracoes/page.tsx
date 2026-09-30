@@ -14,6 +14,7 @@ import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useCreditos } from "@/contexts/CreditosContext";
 import NovoMembroModal from "@/components/modals/NovoMembroModal";
 import { CalendarConnections } from "@/components/CalendarConnections";
+import { McpConnectionCard } from "@/components/McpConnectionCard";
 import { EtiquetasConfig } from "@/components/EtiquetasConfig";
 import { OpportunityLabelsConfig } from "@/components/captadores/OpportunityLabels";
 import { TaxonomiasComerciaisConfig } from "@/components/TaxonomiasComerciaisConfig";
@@ -518,7 +519,7 @@ const { data: perfilData } = await (supabase as any)
       {activeSection === "ferramentas" && (
         <>
           <CalendarConnections />
-
+          <McpConnectionCard />
         </>
       )}
 
