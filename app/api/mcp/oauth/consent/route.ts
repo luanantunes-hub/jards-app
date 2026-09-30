@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OAUTH_CODE_TTL_MS, generateOpaqueToken, isAllowedRedirectUri, normalizeScope } from "@/lib/mcp/oauth";
+import { userHasPaidOrg } from "@/lib/mcp/auth";
 
 /** Processa o botão Permitir/Negar da tela de consentimento OAuth. */
 export async function POST(req: NextRequest) {
@@ -32,8 +33,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(callback, { status: 303 });
   }
 
-  const { raw, hash } = generateOpaqueToken("jards_oauth_code_");
   const admin = createAdminClient();
+  if (!(await userHasPaidOrg(admin, user.id))) {
+    callback.searchParams.set("error", "access_denied");
+    callback.searchParams.set("error_description", "Assinatura necessária");
+    return NextResponse.redirect(callback, { status: 303 });
+  }
+
+  const { raw, hash } = generateOpaqueToken("jards_oauth_code_");
   const { error } = await admin.from("oauth_authorization_codes").insert({
     code_hash: hash,
     user_id: user.id,

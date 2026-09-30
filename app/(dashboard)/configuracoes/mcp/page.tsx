@@ -1,8 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Trash2, Copy, Check } from "lucide-react";
 import { Select } from "@/components/ui/Select";
+import { useCreditos } from "@/contexts/CreditosContext";
+import { AcessoContatosModal } from "@/components/modals/AcessoContatosModal";
 
 interface ChaveMcp {
   id: string;
@@ -17,6 +20,8 @@ interface ChaveMcp {
 }
 
 export default function ConfiguracoesMcpPage() {
+  const router = useRouter();
+  const { assinatura, loading: loadingAssinatura } = useCreditos();
   const [chaves, setChaves] = useState<ChaveMcp[]>([]);
   const [label, setLabel] = useState("");
   const [scope, setScope] = useState<"read" | "write">("read");
@@ -78,6 +83,18 @@ export default function ConfiguracoesMcpPage() {
   }
 
   const chavesAtivas = chaves.filter((c) => !c.revoked_at);
+
+  if (loadingAssinatura) return null;
+
+  if (!assinatura?.ativa) {
+    return (
+      <AcessoContatosModal
+        variant="mcp_gpt"
+        onClose={() => router.push("/configuracoes?section=ferramentas")}
+        onPrimary={() => router.push("/meu-plano?acao=assinar")}
+      />
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">

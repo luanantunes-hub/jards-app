@@ -1,7 +1,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAllowedRedirectUri, normalizeScope } from "@/lib/mcp/oauth";
+import { userHasPaidOrg } from "@/lib/mcp/auth";
 import { AuthorizeConsent } from "./AuthorizeConsent";
+import { OAuthPaywall } from "./OAuthPaywall";
 
 interface PageProps {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -55,6 +57,11 @@ export default async function OAuthAuthorizePage({ searchParams }: PageProps) {
   }
 
   const admin = createAdminClient();
+
+  if (!(await userHasPaidOrg(admin, user.id))) {
+    return <OAuthPaywall />;
+  }
+
   const { data: memberships } = await admin
     .from("organization_members")
     .select("organizations(nome)")

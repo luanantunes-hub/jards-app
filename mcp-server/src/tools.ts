@@ -35,16 +35,37 @@ function textResult(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
+const PLANO_NECESSARIO_MSG =
+  "Assinatura necessária. O acesso ao Jards via MCP está disponível nos planos pagos — assine em /meu-plano.";
+
+/** Reaproveita fn_org_assinatura_ativa — a mesma checagem que já protege créditos/contatos no app web. */
+async function orgTemAssinaturaAtiva(organizationId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("fn_org_assinatura_ativa", { p_organization_id: organizationId });
+  return !error && data === true;
+}
+
 /** Resolve a organização-alvo: usa a informada, ou a única de que o usuário é membro. */
 async function resolveOrgId(organizationId?: string): Promise<string> {
-  if (organizationId) return organizationId;
   const { data, error } = await supabase.from("organization_members").select("organization_id");
   if (error) throw new Error(error.message);
   const orgs = [...new Set((data ?? []).map((r) => r.organization_id))];
-  if (orgs.length === 1) return orgs[0];
-  if (orgs.length === 0) throw new Error("Usuário não pertence a nenhuma organização.");
+
+  if (organizationId) {
+    if (!orgs.includes(organizationId)) throw new Error("Usuário não pertence a essa organização.");
+    if (!(await orgTemAssinaturaAtiva(organizationId))) throw new Error(PLANO_NECESSARIO_MSG);
+    return organizationId;
+  }
+
+  const pagas: string[] = [];
+  for (const id of orgs) if (await orgTemAssinaturaAtiva(id)) pagas.push(id);
+
+  if (pagas.length === 1) return pagas[0];
+  if (pagas.length === 0) {
+    if (orgs.length === 0) throw new Error("Usuário não pertence a nenhuma organização.");
+    throw new Error(PLANO_NECESSARIO_MSG);
+  }
   throw new Error(
-    `Usuário pertence a ${orgs.length} organizações — informe organization_id. Use listar_minhas_organizacoes.`
+    `Usuário pertence a ${pagas.length} organizações com plano pago — informe organization_id. Use listar_minhas_organizacoes.`
   );
 }
 
@@ -458,6 +479,17 @@ export async function callTool(name: string, args: Record<string, unknown>) {
   const tool = tools.find((t) => t.name === name);
   if (!tool) throw new Error(`Ferramenta desconhecida: ${name}`);
   await ensureAuthenticated();
+
+  // Gate de plano no ponto de entrada: MCP é recurso pago. Cobre também as
+  // ferramentas que não passam por resolveOrgId (identidade, base pública).
+  const { data: memberships, error: membershipError } = await supabase
+    .from("organization_members")
+    .select("organization_id");
+  if (membershipError) throw new Error(membershipError.message);
+  const orgs = [...new Set((memberships ?? []).map((m) => m.organization_id))];
+  const algumaPaga = (await Promise.all(orgs.map(orgTemAssinaturaAtiva))).some(Boolean);
+  if (!algumaPaga) throw new Error(PLANO_NECESSARIO_MSG);
+
   const parsed = z.object(tool.schema).parse(args ?? {});
   const data = await tool.handler(parsed);
   return textResult(data);

@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import { ArrowRight, CalendarDays, X } from "lucide-react";
 
-export type AcessoContatosModalVariant = "sem_creditos" | "sem_plano";
+export type AcessoContatosModalVariant = "sem_creditos" | "sem_plano" | "mcp_gpt";
 
 type AcessoContatosModalProps = {
   variant: AcessoContatosModalVariant;
@@ -21,6 +21,33 @@ function proximaRenovacao() {
   });
 }
 
+const CONTEUDO: Record<
+  AcessoContatosModalVariant,
+  { eyebrow: string; titulo: string; descricao: string; botao: string }
+> = {
+  sem_creditos: {
+    eyebrow: "Créditos do ciclo",
+    titulo: "Seus créditos acabaram por enquanto.",
+    descricao:
+      "Seu plano continua ativo. Os créditos serão renovados no início do próximo mês. Se precisar continuar agora, você pode comprar créditos adicionais.",
+    botao: "Comprar créditos",
+  },
+  sem_plano: {
+    eyebrow: "Acesso aos contatos",
+    titulo: "Assine para acessar os contatos-chave.",
+    descricao:
+      "O acesso aos contatos verificados está disponível nos planos ativos do Jards. Assine para receber créditos mensais e liberar empresas quando precisar.",
+    botao: "Assinar um plano",
+  },
+  mcp_gpt: {
+    eyebrow: "Claude e ChatGPT",
+    titulo: "Assine para conectar o Jards ao Claude e ao ChatGPT.",
+    descricao:
+      "A integração via MCP e a Custom GPT do Jards estão disponíveis nos planos ativos. Assine para consultar seus projetos, propostas e contatos direto de um assistente de IA.",
+    botao: "Assinar um plano",
+  },
+};
+
 export function AcessoContatosModal({
   variant,
   onClose,
@@ -28,6 +55,7 @@ export function AcessoContatosModal({
 }: AcessoContatosModalProps) {
   const semCreditos = variant === "sem_creditos";
   const accent = semCreditos ? "#B07A14" : "#7259B5";
+  const conteudo = CONTEUDO[variant];
 
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
@@ -86,25 +114,21 @@ export function AcessoContatosModal({
             className="text-[10px] font-semibold uppercase tracking-[.12em]"
             style={{ color: accent }}
           >
-            {semCreditos ? "Créditos do ciclo" : "Acesso aos contatos"}
+            {conteudo.eyebrow}
           </p>
 
           <h2
             id="acesso-contatos-title"
             className="mt-2 max-w-[390px] text-[22px] font-semibold leading-[1.2] tracking-[-.025em] text-[#0D0D0D]"
           >
-            {semCreditos
-              ? "Seus créditos acabaram por enquanto."
-              : "Assine para acessar os contatos-chave."}
+            {conteudo.titulo}
           </h2>
 
           <p
             id="acesso-contatos-description"
             className="mt-3 max-w-[410px] text-[13px] leading-6 text-black/50"
           >
-            {semCreditos
-              ? "Seu plano continua ativo. Os créditos serão renovados no início do próximo mês. Se precisar continuar agora, você pode comprar créditos adicionais."
-              : "O acesso aos contatos verificados está disponível nos planos ativos do Jards. Assine para receber créditos mensais e liberar empresas quando precisar."}
+            {conteudo.descricao}
           </p>
 
           {semCreditos && (
@@ -137,7 +161,7 @@ export function AcessoContatosModal({
               className="inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded border bg-white px-4 text-[12px] font-medium transition hover:bg-black/[.04] active:scale-[.98]"
               style={{ borderColor: `${accent}45`, color: accent }}
             >
-              {semCreditos ? "Comprar créditos" : "Assinar um plano"}
+              {conteudo.botao}
               <ArrowRight size={13} strokeWidth={2} />
             </button>
           </div>

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { generateApiKey } from "@/lib/mcp/auth";
+import { generateApiKey, userHasPaidOrg } from "@/lib/mcp/auth";
 
 function adminClient() {
   return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -42,6 +42,14 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  const admin0 = adminClient();
+  if (!(await userHasPaidOrg(admin0, user.id))) {
+    return NextResponse.json(
+      { error: "Assinatura necessária. O acesso via MCP/ChatGPT está disponível nos planos pagos do Jards.", upgrade_url: "/meu-plano?acao=assinar" },
+      { status: 402 }
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
   const label = typeof body.label === "string" && body.label.trim() ? body.label.trim() : null;
