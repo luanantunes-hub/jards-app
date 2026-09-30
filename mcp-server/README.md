@@ -91,19 +91,30 @@ obrigatório informar (use `listar_minhas_organizacoes` para descobrir os IDs).
 
 ## Uso em um Custom GPT (ChatGPT)
 
-ChatGPT não fala MCP — Custom GPTs usam "Actions" via OpenAPI/REST. Isso já existe:
-rotas REST em `app/api/mcp/*` (no app Next.js, não aqui), autenticadas por uma chave
-de API pessoal gerada em `/configuracoes/mcp`, e o schema publicado em
-`/api/mcp/openapi.json`. Cada chave tem escopo (`somente leitura` ou
-`leitura + criação`) e prazo de validade — veja `app/api/mcp/README` (seção abaixo)
-ou a própria página de configurações para o passo a passo.
+ChatGPT não fala MCP — Custom GPTs usam "Actions" via OpenAPI/REST. Isso já existe no
+app Next.js (não aqui): rotas REST em `app/api/mcp/*` e o schema publicado em
+`/api/mcp/openapi.json`. Duas formas de autenticar, veja `/configuracoes/mcp` no app
+para o passo a passo de cada uma:
 
-**Atenção ao compartilhar a GPT**: uma Custom GPT com Action configurada guarda UMA
-chave, usada por qualquer pessoa que utilizar aquela GPT — não existe "cada usuário
-com a própria credencial" nesse modo. Nunca publique/compartilhe a GPT com sua chave
-configurada; cada pessoa do time deve criar a própria GPT com a própria chave. A
-alternativa correta para uso em equipe seria trocar para OAuth por usuário na Action
-— ainda não implementado, avise se quiser.
+1. **OAuth (recomendado para GPT compartilhada com o time)** — cada pessoa autoriza
+   com a própria conta Jards na tela `/oauth/authorize` na primeira vez que usa a GPT;
+   ninguém herda o acesso de outra pessoa. Requer configurar no ambiente:
+   - `OAUTH_CHATGPT_CLIENT_ID` / `OAUTH_CHATGPT_CLIENT_SECRET` — gere com
+     `openssl rand -hex 24` cada; esses mesmos valores vão no campo Client ID/Secret
+     da aba OAuth da Action no GPT builder.
+   - Authorization URL: `{domínio}/oauth/authorize` · Token URL:
+     `{domínio}/api/mcp/oauth/token`.
+   - Fluxo: código de autorização de uso único (10 min) → access token de 1h
+     (armazenado como mais uma linha em `mcp_api_keys`, `source = 'oauth'`) + refresh
+     token de 90 dias com rotação a cada uso.
+
+2. **Chave manual (API Key/Bearer)** — para uso individual, numa GPT que a própria
+   pessoa criou e não compartilha. Cada chave tem escopo (`somente leitura` ou
+   `leitura + criação`) e prazo de validade, gerados em `/configuracoes/mcp`.
+
+**Se for usar chave manual**: uma Custom GPT com Action em modo API Key guarda UMA
+chave, usada por qualquer pessoa que utilizar aquela GPT. Nunca publique/compartilhe
+uma GPT configurada dessa forma — é exatamente o problema que o modo OAuth resolve.
 
 ## Limitações conhecidas
 

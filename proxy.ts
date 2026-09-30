@@ -13,6 +13,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/calendar", 30],
   ["/api/email", 30],
   ["/api/mcp/keys", 10],
+  ["/api/mcp/oauth/token", 20],
+  ["/api/mcp/oauth/consent", 20],
   ["/api/mcp", 60],
   ["/api/", 60],
 ];
@@ -169,9 +171,11 @@ export async function proxy(request: NextRequest) {
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {
+    const nextPath = pathname + request.nextUrl.search;
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.searchParams.set("next", pathname);
+    url.search = "";
+    url.searchParams.set("next", nextPath);
     return NextResponse.redirect(url);
   }
 

@@ -87,9 +87,10 @@ export default function ConfiguracoesMcpPage() {
         acesso apenas às organizações das quais você é membro — o mesmo que você já vê logado no Jards.
       </p>
       <p className="mt-2 rounded border border-[#B07A14]/25 bg-[#B07A14]/5 p-3 text-sm text-[#8a5f0f]">
-        Importante se for usar no ChatGPT: a chave fica guardada na sua Custom GPT e é compartilhada por qualquer
-        pessoa que usar essa mesma GPT. Não publique nem compartilhe a GPT configurada com sua chave — cada pessoa do
-        time deve criar a própria GPT com a própria chave.
+        Se for usar no ChatGPT com a Custom GPT do Jards já configurada com <strong>OAuth</strong> (recomendado —
+        veja o card abaixo), cada pessoa do time entra com a própria conta ao autorizar, sem precisar gerar chave
+        aqui. Gere uma chave manual só se for usar em outro assistente (ex. Claude Desktop) ou numa GPT própria sem
+        OAuth — nesse caso, nunca compartilhe a GPT configurada com sua chave.
       </p>
 
       <div className="mt-8 rounded border border-black/10 bg-white p-4">
@@ -210,12 +211,40 @@ export default function ConfiguracoesMcpPage() {
         )}
       </div>
 
-      <div className="mt-8 rounded border border-black/10 bg-black/[0.02] p-4 text-sm text-black/70">
-        <p className="font-medium text-black">Configurar no Custom GPT</p>
+      <div className="mt-8 rounded border border-[#684DB0]/25 bg-[#684DB0]/5 p-4 text-sm text-black/70">
+        <p className="font-medium text-black">Opção recomendada — Custom GPT do time com OAuth</p>
+        <p className="mt-1">
+          Uma única GPT compartilhada, onde cada pessoa autoriza com a própria conta Jards (sem chave manual, sem
+          risco de herdar o acesso de outra pessoa). Configuração feita uma vez por quem cria a GPT:
+        </p>
         <ol className="mt-2 list-decimal space-y-1 pl-4">
-          <li>Crie uma GPT em Explorar GPTs → Criar, aba Configurar → Actions → Criar nova ação.</li>
+          <li>Explorar GPTs → Criar → aba Configurar → Actions → Criar nova ação.</li>
           <li>
-            Importe o schema pela URL: <code className="text-xs">{"{seu domínio}"}/api/mcp/openapi.json</code>
+            Importe o schema: <code className="text-xs">{"{seu domínio}"}/api/mcp/openapi.json</code>
+          </li>
+          <li>
+            Em autenticação, escolha <strong>OAuth</strong> e preencha:
+            <ul className="mt-1 list-disc space-y-0.5 pl-4">
+              <li>
+                Authorization URL: <code className="text-xs">{"{seu domínio}"}/oauth/authorize</code>
+              </li>
+              <li>
+                Token URL: <code className="text-xs">{"{seu domínio}"}/api/mcp/oauth/token</code>
+              </li>
+              <li>Client ID / Client Secret: os valores de OAUTH_CHATGPT_CLIENT_ID / OAUTH_CHATGPT_CLIENT_SECRET do ambiente</li>
+              <li>Scope: <code className="text-xs">read</code> ou <code className="text-xs">write</code></li>
+            </ul>
+          </li>
+          <li>Ao usar a GPT pela primeira vez, cada pessoa autoriza com a própria conta na tela de consentimento.</li>
+        </ol>
+      </div>
+
+      <div className="mt-4 rounded border border-black/10 bg-black/[0.02] p-4 text-sm text-black/70">
+        <p className="font-medium text-black">Alternativa — GPT pessoal com chave manual</p>
+        <ol className="mt-2 list-decimal space-y-1 pl-4">
+          <li>Crie sua própria GPT (não compartilhe) em Explorar GPTs → Criar, aba Configurar → Actions.</li>
+          <li>
+            Importe o schema: <code className="text-xs">{"{seu domínio}"}/api/mcp/openapi.json</code>
           </li>
           <li>Em autenticação, escolha API Key / Bearer e cole a chave gerada acima.</li>
         </ol>
