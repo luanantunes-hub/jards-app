@@ -105,3 +105,4 @@ $function$;
 -- Só o service role chama esta variante (o Next resolve p_user_id a partir da
 -- API key já validada) — não expõe para clients autenticados via anon key.
 REVOKE ALL ON FUNCTION public.fn_desbloquear_empresa_as(uuid, uuid, uuid) FROM PUBLIC, authenticated, anon;
+GRANT EXECUTE ON FUNCTION public.fn_desbloquear_empresa_as(uuid, uuid, uuid) TO service_role;
