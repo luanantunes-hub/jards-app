@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { X, Link2 } from "lucide-react";
+import { X, Link2, Copy, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { validarUrlSite } from "@/lib/sites-bloqueados";
 
@@ -15,6 +15,15 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
   const [url, setUrl] = useState(siteAtual ?? "");
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState(false);
+
+  async function handleCopiar() {
+    try {
+      await navigator.clipboard.writeText(projetoNome);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 1500);
+    } catch {}
+  }
 
   async function handleSalvar() {
     const resultado = validarUrlSite(url);
@@ -60,7 +69,6 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
             </div>
             <div className="min-w-0">
               <h2 className="text-[15px] font-bold text-black">Site do projeto</h2>
-              <p className="truncate text-[11px] text-black/35">{projetoNome}</p>
             </div>
           </div>
           <button onClick={onClose} className="flex h-8 w-8 shrink-0 items-center justify-center rounded transition hover:bg-black/[.06]">
@@ -74,6 +82,18 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
               {erro}
             </div>
           )}
+          <div className="flex items-start gap-2 rounded bg-black/[.04] px-3 py-2.5">
+            <p className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-black">{projetoNome}</p>
+            <button
+              type="button"
+              onClick={handleCopiar}
+              title="Copiar nome do projeto"
+              aria-label="Copiar nome do projeto"
+              className="flex h-6 w-6 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.06] hover:text-black/60"
+            >
+              {copiado ? <Check size={13} className="text-[#2E8932]" /> : <Copy size={13} />}
+            </button>
+          </div>
           <label>
             <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Endereço do site</span>
             <div className="rounded border bg-white px-3" style={{ borderColor: "rgba(13,13,13,.15)" }}>
