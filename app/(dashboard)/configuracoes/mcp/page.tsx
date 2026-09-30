@@ -6,6 +6,7 @@ import { Trash2, Copy, Check } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { useCreditos } from "@/contexts/CreditosContext";
 import { AcessoContatosModal } from "@/components/modals/AcessoContatosModal";
+import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
 
 interface ChaveMcp {
   id: string;
@@ -98,7 +99,15 @@ export default function ConfiguracoesMcpPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <h1 className="text-xl font-semibold tracking-tight">Acesso por API (MCP / ChatGPT)</h1>
+      <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
+        <span className="flex h-7 w-7 items-center justify-center rounded border border-black/15 bg-white">
+          <ClaudeMark size={15} />
+        </span>
+        <span className="flex h-7 w-7 items-center justify-center rounded border border-black/15 bg-white">
+          <OpenAIMark size={14} />
+        </span>
+        Acesso por API (MCP / ChatGPT)
+      </h1>
       <p className="mt-2 text-sm text-black/60">
         Gere uma chave pessoal para usar os dados do Jards em um assistente externo (Claude, Custom GPT). A chave dá
         acesso apenas às organizações das quais você é membro — o mesmo que você já vê logado no Jards.
@@ -229,7 +238,10 @@ export default function ConfiguracoesMcpPage() {
       </div>
 
       <div className="mt-8 rounded border border-[#684DB0]/25 bg-[#684DB0]/5 p-4 text-sm text-black/70">
-        <p className="font-medium text-black">Opção recomendada — Custom GPT do time com OAuth</p>
+        <p className="flex items-center gap-2 font-medium text-black">
+          <OpenAIMark size={14} />
+          Opção recomendada — Custom GPT do time com OAuth
+        </p>
         <p className="mt-1">
           Uma única GPT compartilhada, onde cada pessoa autoriza com a própria conta Jards (sem chave manual, sem
           risco de herdar o acesso de outra pessoa). Configuração feita uma vez por quem cria a GPT:
@@ -257,7 +269,10 @@ export default function ConfiguracoesMcpPage() {
       </div>
 
       <div className="mt-4 rounded border border-black/10 bg-black/[0.02] p-4 text-sm text-black/70">
-        <p className="font-medium text-black">Alternativa — GPT pessoal com chave manual</p>
+        <p className="flex items-center gap-2 font-medium text-black">
+          <OpenAIMark size={14} />
+          Alternativa — GPT pessoal com chave manual
+        </p>
         <ol className="mt-2 list-decimal space-y-1 pl-4">
           <li>Crie sua própria GPT (não compartilhe) em Explorar GPTs → Criar, aba Configurar → Actions.</li>
           <li>

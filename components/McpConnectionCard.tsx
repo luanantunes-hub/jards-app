@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bot, ChevronRight } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { useCreditos } from "@/contexts/CreditosContext";
 import { AcessoContatosModal } from "@/components/modals/AcessoContatosModal";
+import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
 
 interface ChaveMcp {
   id: string;
@@ -59,8 +60,13 @@ export function McpConnectionCard() {
         style={{ borderColor: "rgba(13,13,13,.10)" }}
       >
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded border border-black/20 bg-transparent flex items-center justify-center flex-shrink-0">
-            <Bot size={16} className="text-[#684DB0]" />
+          <div className="relative w-9 h-9 flex-shrink-0">
+            <div className="absolute left-0 top-0 w-6 h-6 rounded border border-black/20 bg-white flex items-center justify-center">
+              <ClaudeMark size={13} />
+            </div>
+            <div className="absolute right-0 bottom-0 w-6 h-6 rounded border border-black/20 bg-white flex items-center justify-center text-black">
+              <OpenAIMark size={12} />
+            </div>
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-[13px] font-semibold text-black">Claude e ChatGPT (MCP)</p>

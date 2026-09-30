@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { ArrowRight, CalendarDays, X } from "lucide-react";
+import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
 
 export type AcessoContatosModalVariant = "sem_creditos" | "sem_plano" | "mcp_gpt";
 
@@ -111,9 +112,15 @@ export function AcessoContatosModal({
 
         <div className="px-6 pb-6 pt-5 sm:px-7 sm:pb-7">
           <p
-            className="text-[10px] font-semibold uppercase tracking-[.12em]"
+            className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[.12em]"
             style={{ color: accent }}
           >
+            {variant === "mcp_gpt" && (
+              <span className="flex items-center gap-1">
+                <ClaudeMark size={12} />
+                <OpenAIMark size={11} />
+              </span>
+            )}
             {conteudo.eyebrow}
           </p>
 
