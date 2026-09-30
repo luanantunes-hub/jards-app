@@ -17,6 +17,7 @@ import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { ContatoExportadoModal } from "@/components/modals/ContatoExportadoModal";
+import { AdicionarSiteProjetoModal } from "@/components/modals/AdicionarSiteProjetoModal";
 import { SugerirContribuicaoModal } from "@/components/modals/SugerirContribuicaoModal";
 import { ComentarioFeed } from "@/components/community/ComentarioFeed";
 import { EditalVotoCard } from "@/components/community/EditalVotoCard";
@@ -470,6 +471,8 @@ export default function PatrocinadorPage() {
   const [investimentosLei, setInvestimentosLei] = useState<{ ano: number; valor: number }[]>([]);
   const [carteiraLei, setCarteiraLei]     = useState<{ descricao: string | null } | null>(null);
   const [projetosIncentivo, setProjetosIncentivo] = useState<{ id: string; nome: string; lei: string; site_url: string | null; vinculoId: string; valor: number | null }[]>([]);
+  const [sitesUsuario, setSitesUsuario] = useState<Record<string, string>>({});
+  const [projetoSiteModal, setProjetoSiteModal] = useState<{ id: string; nome: string } | null>(null);
   const anoRecenteLei = investimentosLei.length > 0 ? Math.max(...investimentosLei.map((r) => r.ano)) : null;
   const valorRecenteLei = anoRecenteLei != null ? investimentosLei.find((r) => r.ano === anoRecenteLei)?.valor ?? null : null;
   const investimentosLeiRecentes = investimentosLei.filter((r) => r.ano >= 2020);
@@ -626,7 +629,7 @@ export default function PatrocinadorPage() {
         supabase.from("desbloqueios").select("id").eq("empresa_pub_id", id).maybeSingle(),
         supabase.from("investimentos_por_lei").select("ano, valor").eq("empresa_id", id).eq("lei", leiParaGrafico),
         supabase.from("carteiras_por_lei").select("descricao").eq("empresa_id", id).eq("lei", leiParam ?? "__none__").maybeSingle(),
-        (supabase as any).from("projeto_incentivo_patrocinios").select("id, valor, projeto:projetos_incentivo(id, nome, lei, site_url)").eq("empresa_id", id),
+        (supabase as any).from("projeto_incentivo_patrocinios").select("id, valor, projeto:projetos_incentivo(id, nome, lei, codigo, site_url)").eq("empresa_id", id),
       ]);
       setEmpresa(empRes.data);
       const resp = respRes.data ?? [];
@@ -647,11 +650,41 @@ export default function PatrocinadorPage() {
       setTrimestral(trimRes.data);
       setInvestimentosLei((invLeiRes.data ?? []) as { ano: number; valor: number }[]);
       setCarteiraLei(carteiraLeiRes.data as { descricao: string | null } | null);
-      const projetosData = ((projetosIncentivoRes.data ?? []) as unknown as { id: string; valor: number | null; projeto: { id: string; nome: string; lei: string; site_url: string | null } | null }[])
-        .filter((r): r is { id: string; valor: number | null; projeto: { id: string; nome: string; lei: string; site_url: string | null } } => !!r.projeto && r.projeto.lei === leiParaGrafico)
-        .map(r => ({ ...r.projeto, vinculoId: r.id, valor: r.valor }))
+      const ANO_MINIMO_PROJETOS = 2022;
+      type ProjetoRow = { id: string; nome: string; lei: string; codigo: string; site_url: string | null };
+      const anoDoProjeto = (lei: string, codigo: string): number | null => {
+        if (lei === "ancine") {
+          const m = codigo.match(/SALIC (\d{2})/);
+          if (!m) return null;
+          const yy = Number(m[1]);
+          return (yy > 50 ? 1900 : 2000) + yy;
+        }
+        if (lei === "saude") {
+          const m = codigo.match(/\/(\d{4})/);
+          if (m) return Number(m[1]);
+          const digitos = codigo.replace(/\D/g, "");
+          return digitos.length === 17 ? Number(digitos.slice(11, 15)) : null;
+        }
+        const yy = codigo.replace(/\D/g, "").slice(0, 2);
+        return yy ? 2000 + Number(yy) : null;
+      };
+      const projetosData = ((projetosIncentivoRes.data ?? []) as unknown as { id: string; valor: number | null; projeto: ProjetoRow | null }[])
+        .filter((r): r is { id: string; valor: number | null; projeto: ProjetoRow } => !!r.projeto && r.projeto.lei === leiParaGrafico)
+        .filter((r) => { const ano = anoDoProjeto(r.projeto.lei, r.projeto.codigo); return ano === null || ano >= ANO_MINIMO_PROJETOS; })
+        .map(r => ({ id: r.projeto.id, nome: r.projeto.nome, lei: r.projeto.lei, site_url: r.projeto.site_url, vinculoId: r.id, valor: r.valor }))
         .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
       setProjetosIncentivo(projetosData);
+      const idsSemSite = projetosData.filter((pr) => !pr.site_url).map((pr) => pr.id);
+      if (idsSemSite.length > 0 && organizationId) {
+        const { data: sitesData } = await (supabase as any)
+          .from("projeto_incentivo_sites_usuario")
+          .select("projeto_id, url")
+          .eq("organization_id", organizationId)
+          .in("projeto_id", idsSemSite);
+        setSitesUsuario(Object.fromEntries(((sitesData ?? []) as { projeto_id: string; url: string }[]).map((r) => [r.projeto_id, r.url])));
+      } else {
+        setSitesUsuario({});
+      }
       setDesbloqueado(!!desbRes.data);
       setLoading(false);
     }
@@ -850,6 +883,20 @@ export default function PatrocinadorPage() {
           ufPreEmpresa={empresa?.estado ?? undefined}
           empresaPubId={id}
           empresaCrmId={empresaCrmId ?? undefined}
+        />
+      )}
+      {projetoSiteModal && organizationId && (
+        <AdicionarSiteProjetoModal
+          projetoId={projetoSiteModal.id}
+          projetoNome={projetoSiteModal.nome}
+          organizationId={organizationId}
+          siteAtual={sitesUsuario[projetoSiteModal.id] ?? null}
+          onClose={() => setProjetoSiteModal(null)}
+          onSaved={(url) => setSitesUsuario((prev) => {
+            const next = { ...prev };
+            if (url) next[projetoSiteModal.id] = url; else delete next[projetoSiteModal.id];
+            return next;
+          })}
         />
       )}
       {showCaptacaoModal && (
@@ -1699,15 +1746,36 @@ export default function PatrocinadorPage() {
                               </div>
                             </>
                           );
-                          const href = p.site_url ? (/^https?:\/\//i.test(p.site_url) ? p.site_url : `https://${p.site_url}`) : undefined;
-                          return p.site_url ? (
-                            <a key={p.id} href={href} target="_blank" rel="noopener noreferrer" className="group rounded border p-2.5 flex items-center gap-3 transition hover:bg-black/[.03]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                          const siteEfetivo = p.site_url ?? sitesUsuario[p.id] ?? null;
+                          const href = siteEfetivo ? (/^https?:\/\//i.test(siteEfetivo) ? siteEfetivo : `https://${siteEfetivo}`) : undefined;
+                          if (siteEfetivo) {
+                            return (
+                              <div key={p.id} className="group/card relative">
+                                <a href={href} target="_blank" rel="noopener noreferrer" className="group rounded border p-2.5 flex items-center gap-3 transition hover:bg-black/[.03]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                                  {conteudo}
+                                </a>
+                                {!p.site_url && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setProjetoSiteModal({ id: p.id, nome: p.nome })}
+                                    className="absolute right-1.5 top-1.5 hidden rounded px-1.5 py-0.5 text-[10px] font-medium text-black/35 transition hover:bg-black/[.06] hover:text-black/55 group-hover/card:block"
+                                  >
+                                    Editar
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          }
+                          return (
+                            <button
+                              key={p.id}
+                              type="button"
+                              onClick={() => setProjetoSiteModal({ id: p.id, nome: p.nome })}
+                              className="group rounded border p-2.5 flex items-center gap-3 text-left transition hover:bg-black/[.03]"
+                              style={{ borderColor: "rgba(13,13,13,.08)" }}
+                            >
                               {conteudo}
-                            </a>
-                          ) : (
-                            <div key={p.id} className="rounded border p-2.5 flex items-center gap-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                              {conteudo}
-                            </div>
+                            </button>
                           );
                         })}
                       </div>
