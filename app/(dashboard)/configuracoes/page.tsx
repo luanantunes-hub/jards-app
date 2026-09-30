@@ -21,6 +21,8 @@ import { RenewalDecisionTreeConfig } from "@/components/customer-success/Renewal
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { Select } from "@/components/ui/Select";
 
+const MOSTRAR_VISIBILIDADE_EQUIPE = false;
+
 /* -------------------------------------------------------------------------- */
 /*                                  TYPES                                     */
 /* -------------------------------------------------------------------------- */
@@ -711,8 +713,8 @@ const { data: perfilData } = await (supabase as any)
         </form>
       )}
 
-      {/* Visibilidade (admin only) */}
-      {activeSection === "equipe" && isAdmin && (
+      {/* Visibilidade (admin only) — oculta por enquanto; os valores salvos continuam valendo */}
+      {MOSTRAR_VISIBILIDADE_EQUIPE && activeSection === "equipe" && isAdmin && (
         <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
           <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <Eye size={14} className="text-black/30" />
