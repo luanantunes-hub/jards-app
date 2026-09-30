@@ -101,6 +101,22 @@
     .mcp-msg-user { align-self:flex-end; background:#684DB0; color:#fff; }
     .mcp-msg-ai { align-self:flex-start; background:rgba(40,37,37,.04); color:#282525; }
     .mcp-msg-ai strong { display:block; margin-bottom:4px; color:#684DB0; font-weight:700; }
+
+    /* ── Demo da cobertura de leis: linhas entram, cursor clica, abre o perfil ── */
+    #leis-painel { container-type:inline-size; }
+    .lp-row { position:relative; background:#fff; transition:background-color .2s ease; }
+    .lp-perfil { position:absolute; inset:0; z-index:3; display:flex; flex-direction:column; padding:14px 18px 16px; background:#fff; border-radius:3px; overflow:hidden; visibility:hidden; opacity:0; }
+    .lp-perfil.is-open { visibility:visible; }
+    .lp-perfil-body { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(0,1fr); grid-template-rows:minmax(0,1fr); gap:12px; flex:1; min-height:0; }
+    .lp-bloqueado { display:block; height:8px; border-radius:4px; background:rgba(13,13,13,.16); filter:blur(2.5px); }
+    .lp-cursor { position:absolute; left:0; top:0; z-index:7; width:22px; height:22px; pointer-events:none; opacity:0; transform-origin:3px 2px; filter:drop-shadow(0 2px 3px rgba(13,13,13,.3)); }
+    .lp-ripple { position:absolute; z-index:6; width:36px; height:36px; margin:-18px 0 0 -18px; border-radius:50%; border:2px solid rgba(104,77,176,.45); background:rgba(104,77,176,.1); pointer-events:none; }
+    .lp-logo-voando { position:absolute; z-index:5; box-sizing:border-box; display:flex; align-items:center; justify-content:center; padding:4px; background:#fff; border:1px solid rgba(13,13,13,.08); border-radius:4px; pointer-events:none; }
+    .lp-logo-voando img { width:100%; height:100%; object-fit:contain; }
+    @container (max-width:540px) {
+      .lp-perfil-body { grid-template-columns:minmax(0,1fr); }
+      .lp-perfil-contatos, .lp-perfil-comparar { display:none !important; }
+    }
     .card-body {
       flex: 1; padding: 2px 14px 12px;
     }
@@ -1058,13 +1074,17 @@
     </div>
 
     <div class="grid md:grid-cols-[1.15fr_.85fr] gap-6 items-stretch">
-      <!-- Lista de patrocinadores, no padrão real do app -->
-      <div class="reveal rounded border overflow-hidden" style="border-color:rgba(13,13,13,.08)">
-        <div class="flex items-center justify-between px-5 py-3" style="background:#F9F9F8;border-bottom:1px solid rgba(13,13,13,.07)">
+      <!-- Lista de patrocinadores, no padrão real do app, com demo animada do perfil -->
+      <div id="leis-painel" class="relative rounded border" style="border-color:rgba(13,13,13,.08);z-index:2">
+        <div class="relative flex items-center justify-between px-5 py-3" style="background:#F9F9F8;border-bottom:1px solid rgba(13,13,13,.07);border-radius:3px 3px 0 0;z-index:2">
           <span class="text-[10px] font-bold text-black/35 uppercase tracking-wider">Empresa</span>
           <span class="text-[10px] font-bold text-black/35 uppercase tracking-wider">Investimento</span>
         </div>
-        <div id="leis-lista-rows"></div>
+        <div id="leis-lista-rows" class="relative" style="z-index:1"></div>
+        <div id="leis-perfil" class="lp-perfil" aria-hidden="true"></div>
+        <div id="leis-cursor" class="lp-cursor" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2v15.5l4.1-3.9 2.7 6.2 2.9-1.3-2.7-6H15.5z" fill="#0D0D0D" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        </div>
       </div>
 
       <!-- Leis cobertas, grudadas verticalmente e clicáveis -->
@@ -1103,32 +1123,32 @@
   var LOGODEV_TOKEN = 'pk_A2QRZaI_S5urxuYmsI6baQ';
   var EMPRESAS_POR_LEI = {
     cultura: [
-      {nome:'Petrobras', dominio:'petrobras.com.br', setor:'Energia', uf:'RJ', valor:'R$ 248M'},
-      {nome:'Vale', dominio:'vale.com', setor:'Mineração', uf:'MG', valor:'R$ 186M'},
-      {nome:'Natura', dominio:'natura.com.br', setor:'Cosméticos', uf:'SP', valor:'R$ 68M'},
-      {nome:'Bradesco', dominio:'bradesco.com.br', setor:'Serviços financeiros', uf:'SP', valor:'R$ 45M'},
-      {nome:'Itaú', dominio:'itau.com.br', setor:'Serviços financeiros', uf:'SP', valor:'R$ 38M'}
+      {nome:'Petrobras', dominio:'petrobras.com.br', setor:'Energia', uf:'RJ', valorM:248},
+      {nome:'Vale', dominio:'vale.com', setor:'Mineração', uf:'MG', valorM:186},
+      {nome:'Natura', dominio:'natura.com.br', setor:'Cosméticos', uf:'SP', valorM:68},
+      {nome:'Bradesco', dominio:'bradesco.com.br', setor:'Serviços financeiros', uf:'SP', valorM:45},
+      {nome:'Itaú', dominio:'itau.com.br', setor:'Serviços financeiros', uf:'SP', valorM:38}
     ],
     esporte: [
-      {nome:'Nubank', dominio:'nubank.com.br', setor:'Serviços financeiros', uf:'SP', valor:'R$ 111M'},
-      {nome:'Ambev', dominio:'ambev.com.br', setor:'Bebidas', uf:'SP', valor:'R$ 95M'},
-      {nome:'Vivo', dominio:'vivo.com.br', setor:'Telecomunicações', uf:'SP', valor:'R$ 72M'},
-      {nome:'Embraer', dominio:'embraer.com', setor:'Aeroespacial', uf:'SP', valor:'R$ 54M'},
-      {nome:'Gerdau', dominio:'gerdau.com', setor:'Siderurgia', uf:'RS', valor:'R$ 40M'}
+      {nome:'Nubank', dominio:'nubank.com.br', setor:'Serviços financeiros', uf:'SP', valorM:111},
+      {nome:'Ambev', dominio:'ambev.com.br', setor:'Bebidas', uf:'SP', valorM:95},
+      {nome:'Vivo', dominio:'vivo.com.br', setor:'Telecomunicações', uf:'SP', valorM:72},
+      {nome:'Embraer', dominio:'embraer.com', setor:'Aeroespacial', uf:'SP', valorM:54},
+      {nome:'Gerdau', dominio:'gerdau.com', setor:'Siderurgia', uf:'RS', valorM:40}
     ],
     audiovisual: [
-      {nome:'Claro', dominio:'claro.com.br', setor:'Telecomunicações', uf:'RJ', valor:'R$ 88M'},
-      {nome:'Suzano', dominio:'suzano.com.br', setor:'Papel e celulose', uf:'SP', valor:'R$ 63M'},
-      {nome:'JBS', dominio:'jbs.com.br', setor:'Alimentos', uf:'SP', valor:'R$ 51M'},
-      {nome:'Localiza', dominio:'localiza.com', setor:'Mobilidade', uf:'MG', valor:'R$ 35M'},
-      {nome:'Klabin', dominio:'klabin.com.br', setor:'Papel e celulose', uf:'SP', valor:'R$ 29M'}
+      {nome:'Claro', dominio:'claro.com.br', setor:'Telecomunicações', uf:'RJ', valorM:88},
+      {nome:'Suzano', dominio:'suzano.com.br', setor:'Papel e celulose', uf:'SP', valorM:63},
+      {nome:'JBS', dominio:'jbs.com.br', setor:'Alimentos', uf:'SP', valorM:51},
+      {nome:'Localiza', dominio:'localiza.com', setor:'Mobilidade', uf:'MG', valorM:35},
+      {nome:'Klabin', dominio:'klabin.com.br', setor:'Papel e celulose', uf:'SP', valorM:29}
     ],
     saude: [
-      {nome:'Fleury', dominio:'fleury.com.br', setor:'Saúde', uf:'SP', valor:'R$ 22M'},
-      {nome:'Hapvida', dominio:'hapvida.com.br', setor:'Saúde', uf:'CE', valor:'R$ 18M'},
-      {nome:'Rede D\'Or', dominio:'rededorsaoluiz.com.br', setor:'Saúde', uf:'RJ', valor:'R$ 15M'},
-      {nome:'Dasa', dominio:'dasa.com.br', setor:'Saúde', uf:'SP', valor:'R$ 12M'},
-      {nome:'Raia Drogasil', dominio:'raiadrogasil.com.br', setor:'Varejo farmacêutico', uf:'SP', valor:'R$ 9M'}
+      {nome:'Fleury', dominio:'fleury.com.br', setor:'Saúde', uf:'SP', valorM:22},
+      {nome:'Hapvida', dominio:'hapvida.com.br', setor:'Saúde', uf:'CE', valorM:18},
+      {nome:'Rede D\'Or', dominio:'rededorsaoluiz.com.br', setor:'Saúde', uf:'RJ', valorM:15},
+      {nome:'Dasa', dominio:'dasa.com.br', setor:'Saúde', uf:'SP', valorM:12},
+      {nome:'Raia Drogasil', dominio:'raiadrogasil.com.br', setor:'Varejo farmacêutico', uf:'SP', valorM:9}
     ]
   };
   var META_LEI = {
@@ -1137,48 +1157,347 @@
     audiovisual: {label:'Audiovisual', cor:'#D94A4A'},
     saude: {label:'Saúde', cor:'#1A8B7A'}
   };
+  var PADROES_SERIE = [[.16,.18,.17,.22,.27],[.12,.16,.19,.25,.28],[.17,.19,.21,.20,.23]];
+  var ANOS = ['2020','2021','2022','2023','2024'];
+  var CARGOS = ['Patrocínios','Marketing','Comunicação'];
+  var LARGURAS = [72, 56, 64];
 
-  function logoUrl(dominio){
-    return 'https://img.logo.dev/' + dominio + '?token=' + LOGODEV_TOKEN + '&size=64&format=png';
+  var painel = document.getElementById('leis-painel');
+  var lista = document.getElementById('leis-lista-rows');
+  var perfil = document.getElementById('leis-perfil');
+  var cursor = document.getElementById('leis-cursor');
+  if(!painel || !lista || !perfil || !cursor) return;
+
+  var semAnimacao = !painel.animate || (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  var leiAtual = 'cultura';
+  var execucao = 0;
+  var animacoes = [];
+  var demoIniciada = false;
+  var logosPrecarregados = false;
+
+  function logoUrl(dominio, tamanho){
+    return 'https://img.logo.dev/' + dominio + '?token=' + LOGODEV_TOKEN + '&size=' + tamanho + '&format=png';
+  }
+  function fmtValor(m){ return 'R$ ' + m + 'M'; }
+  function esperar(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  function animar(el, quadros, opcoes){ var a = el.animate(quadros, opcoes); animacoes.push(a); return a; }
+  function terminou(a){ return a.finished.then(function(){}, function(){}); }
+  function noPainel(el, fx, fy){
+    var p = painel.getBoundingClientRect(), r = el.getBoundingClientRect();
+    return { x: r.left - p.left + r.width * fx, y: r.top - p.top + r.height * fy };
+  }
+  function translate(x, y){ return 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)'; }
+
+  function precarregarLogos(){
+    if(logosPrecarregados) return;
+    logosPrecarregados = true;
+    Object.keys(EMPRESAS_POR_LEI).forEach(function(lei){
+      EMPRESAS_POR_LEI[lei].forEach(function(e, i){
+        new Image().src = logoUrl(e.dominio, 64);
+        if(i === 0) new Image().src = logoUrl(e.dominio, 128);
+      });
+    });
   }
 
-  function renderLista(lei){
-    var empresas = EMPRESAS_POR_LEI[lei];
-    var meta = META_LEI[lei];
-    var container = document.getElementById('leis-lista-rows');
-    if(!container || !empresas) return;
-    container.innerHTML = empresas.map(function(e, i){
-      var borda = i < empresas.length - 1 ? 'border-bottom:1px solid rgba(13,13,13,.06)' : '';
-      return '<div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="' + borda + '">' +
+  function renderLista(lei, visivel){
+    var empresas = EMPRESAS_POR_LEI[lei], meta = META_LEI[lei];
+    lista.innerHTML = empresas.map(function(e, i){
+      var ultima = i === empresas.length - 1;
+      var estilo = (ultima ? 'border-radius:0 0 3px 3px;' : 'border-bottom:1px solid rgba(13,13,13,.06);') + (visivel ? '' : 'opacity:0;');
+      return '<div class="lp-row flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02]" style="' + estilo + '">' +
         '<div class="flex items-center gap-3 min-w-0">' +
-          '<div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="' + logoUrl(e.dominio) + '" alt="" class="w-full h-full object-contain" loading="lazy" /></div>' +
+          '<div class="lp-row-logo w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="' + logoUrl(e.dominio, 64) + '" alt="" class="w-full h-full object-contain" /></div>' +
           '<div class="min-w-0">' +
-            '<p class="font-semibold text-[#0D0D0D] text-[13px] truncate">' + e.nome + '</p>' +
+            '<p class="lp-row-nome font-semibold text-[#0D0D0D] text-[13px] truncate">' + e.nome + '</p>' +
             '<p class="text-black/40 text-[11px]">' + e.setor + ' · ' + e.uf + '</p>' +
           '</div>' +
         '</div>' +
         '<div class="text-right flex-shrink-0">' +
-          '<p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">' + e.valor + '</p>' +
+          '<p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">' + fmtValor(e.valorM) + '</p>' +
           '<span class="text-[9px] font-bold uppercase tracking-wide" style="color:' + meta.cor + '">' + meta.label + '</span>' +
         '</div>' +
       '</div>';
     }).join('');
   }
 
-  window.selecionarLei = function(lei, btn){
-    document.querySelectorAll('.lei-card-btn').forEach(function(b){
-      b.style.borderLeftColor = 'transparent';
-      b.style.background = 'linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)';
+  function serieDe(e){
+    var h = 0;
+    for(var i = 0; i < e.nome.length; i++) h += e.nome.charCodeAt(i);
+    return PADROES_SERIE[h % PADROES_SERIE.length].map(function(w){ return e.valorM * w; });
+  }
+
+  function tag(rotulo, valor){
+    return '<span class="flex items-center gap-1.5 text-[11px] bg-black/[0.04] px-2.5 py-1 rounded">' +
+      '<span class="text-[9px] font-bold uppercase tracking-wide text-black/30">' + rotulo + '</span>' +
+      '<span class="font-semibold text-black/60">' + valor + '</span></span>';
+  }
+
+  // Réplica compacta de /patrocinadores/[id]: cabeçalho, tags, investimento anual e responsáveis bloqueados
+  function montarPerfil(e, meta){
+    var serie = serieDe(e);
+    var variacao = (serie[4] - serie[3]) / serie[3] * 100;
+    var pill = (variacao >= 0 ? '+' : '') + variacao.toFixed(2).replace('.', ',') + '%';
+    var contatos = CARGOS.map(function(cargo, i){
+      return '<div class="flex items-center gap-2.5 px-3.5 py-2.5"' + (i < CARGOS.length - 1 ? ' style="border-bottom:1px solid rgba(13,13,13,.05)"' : '') + '>' +
+        '<span class="w-6 h-6 rounded flex-shrink-0" style="background:linear-gradient(145deg,#f8f8fb 0%,#d4d4dc 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.06)"></span>' +
+        '<div class="min-w-0 flex-1"><span class="lp-bloqueado" style="width:' + LARGURAS[i] + '%"></span><p class="text-[10px] text-black/35 mt-1">' + cargo + '</p></div>' +
+      '</div>';
+    }).join('');
+    perfil.innerHTML =
+      '<div data-p class="flex items-center gap-1.5 text-[11px] font-semibold text-black/30 mb-3"><i class="ph ph-arrow-left text-[12px]"></i>Patrocinadores</div>' +
+      '<div class="flex items-center justify-between gap-3 mb-3">' +
+        '<div class="flex items-center gap-3 min-w-0">' +
+          '<div class="lp-perfil-logo w-12 h-12 rounded border border-black/8 bg-white p-1 flex-shrink-0 flex items-center justify-center"><img src="' + logoUrl(e.dominio, 128) + '" alt="" class="w-full h-full object-contain" /></div>' +
+          '<div data-p class="min-w-0">' +
+            '<div class="flex items-center gap-2"><p class="font-bold text-[#0D0D0D] text-[20px] leading-tight truncate">' + e.nome + '</p><i class="ph ph-globe text-[13px] text-black/25"></i></div>' +
+            '<p class="text-[11px] text-black/40 mt-0.5">Total investido: <span class="font-bold text-black/70">' + fmtValor(e.valorM) + '</span></p>' +
+          '</div>' +
+        '</div>' +
+        '<span data-p class="lp-perfil-comparar flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold bg-white border rounded flex-shrink-0" style="border-color:rgba(13,13,13,.12)"><i class="ph ph-arrows-left-right text-[12px]"></i>Comparar</span>' +
+      '</div>' +
+      '<div data-p class="flex items-center gap-2 flex-wrap pb-3">' + tag('Setor', e.setor) + tag('Estado', e.uf) +
+        '<span class="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded" style="background:' + meta.cor + '14;color:' + meta.cor + '">' + meta.label + '</span>' +
+      '</div>' +
+      '<div class="-mx-[18px] mb-3" style="border-top:1px solid rgba(13,13,13,.08)"></div>' +
+      '<div class="lp-perfil-body">' +
+        '<div data-p class="rounded border flex flex-col min-h-0" style="border-color:rgba(13,13,13,.08)">' +
+          '<div class="flex items-center justify-between px-3.5 pt-3"><p class="text-[9px] font-bold text-black/30 uppercase tracking-wide">Investimento anual</p>' +
+          '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded" style="background:#2E893214;color:#2E8932">' + pill + '</span></div>' +
+          '<div class="lp-perfil-grafico flex-1 min-h-0"></div>' +
+        '</div>' +
+        '<div data-p class="lp-perfil-contatos rounded border flex flex-col min-h-0 overflow-hidden" style="border-color:rgba(13,13,13,.08)">' +
+          '<div class="flex items-center justify-between gap-2 px-3.5 border-b" style="border-color:rgba(13,13,13,.07)">' +
+            '<span class="relative text-[11px] font-semibold py-2.5" style="color:#7259B5">Responsáveis<span class="absolute inset-x-0 bottom-0 h-0.5" style="background:#7259B5"></span></span>' +
+            '<span class="flex items-center gap-1 text-[10px] font-bold px-2 py-1 bg-white border rounded" style="border-color:rgba(13,13,13,.12)"><i class="ph ph-coins text-[11px]"></i>Ver contatos</span>' +
+          '</div>' +
+          '<div class="flex-1 min-h-0">' + contatos + '</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // Mesmo traçado do LineChartLei do app: curva suave, área em degradê e pontos brancos
+  function desenharGrafico(e, atraso){
+    var caixa = perfil.querySelector('.lp-perfil-grafico');
+    if(!caixa) return;
+    var w = caixa.clientWidth, h = caixa.clientHeight;
+    if(w < 40 || h < 40) return;
+    var serie = serieDe(e);
+    var pad = { t: 14, r: 16, b: 22, l: 16 };
+    var pw = w - pad.l - pad.r, ph = h - pad.t - pad.b;
+    var max = Math.max.apply(null, serie), min = Math.min.apply(null, serie);
+    var yMin = min * 0.78, faixa = (max * 1.08 - yMin) || 1;
+    var pts = serie.map(function(v, i){
+      return { x: pad.l + i / (serie.length - 1) * pw, y: pad.t + ph - (v - yMin) / faixa * ph };
     });
-    var cor = META_LEI[lei].cor;
-    btn.style.borderLeftColor = cor;
-    btn.style.background = 'linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)';
-    renderLista(lei);
+    var d = pts.reduce(function(acc, pt, i){
+      if(i === 0) return 'M ' + pt.x.toFixed(1) + ' ' + pt.y.toFixed(1);
+      var pr = pts[i - 1], cx = ((pr.x + pt.x) / 2).toFixed(1);
+      return acc + ' C ' + cx + ' ' + pr.y.toFixed(1) + ' ' + cx + ' ' + pt.y.toFixed(1) + ' ' + pt.x.toFixed(1) + ' ' + pt.y.toFixed(1);
+    }, '');
+    var base = (pad.t + ph).toFixed(1);
+    var area = d + ' L ' + pts[pts.length - 1].x.toFixed(1) + ' ' + base + ' L ' + pts[0].x.toFixed(1) + ' ' + base + ' Z';
+    caixa.innerHTML = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block">' +
+      '<defs><linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0D0D0D" stop-opacity=".12"/><stop offset="100%" stop-color="#0D0D0D" stop-opacity=".01"/></linearGradient></defs>' +
+      '<path class="lp-g-area" d="' + area + '" fill="url(#lpArea)"/>' +
+      '<path class="lp-g-linha" d="' + d + '" fill="none" stroke="#0D0D0D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      pts.map(function(pt){ return '<circle class="lp-g-ponto" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="#fff" stroke="#0D0D0D" stroke-width="1.8" style="transform-box:fill-box;transform-origin:center"/>'; }).join('') +
+      pts.map(function(pt, i){ return '<text x="' + pt.x.toFixed(1) + '" y="' + (h - 7) + '" text-anchor="middle" font-size="9" font-weight="600" fill="rgba(13,13,13,.3)" font-family="Google Sans, system-ui, sans-serif">' + ANOS[i] + '</text>'; }).join('') +
+    '</svg>';
+    var linha = caixa.querySelector('.lp-g-linha');
+    var comprimento = linha.getTotalLength();
+    linha.style.strokeDasharray = comprimento + 'px';
+    animar(linha, [{ strokeDashoffset: comprimento + 'px' }, { strokeDashoffset: '0px' }], { duration: 1000, delay: atraso, easing: 'cubic-bezier(.45,0,.2,1)', fill: 'backwards' });
+    animar(caixa.querySelector('.lp-g-area'), [{ opacity: 0 }, { opacity: 1 }], { duration: 500, delay: atraso + 600, easing: 'ease-out', fill: 'backwards' });
+    caixa.querySelectorAll('.lp-g-ponto').forEach(function(c, i){
+      animar(c, [{ transform: 'scale(0)' }, { transform: 'scale(1)' }], { duration: 260, delay: atraso + 180 + i * 180, easing: 'cubic-bezier(.34,1.56,.64,1)', fill: 'backwards' });
+    });
+  }
+
+  function limpar(){
+    animacoes.forEach(function(a){ a.cancel(); });
+    animacoes = [];
+    painel.querySelectorAll('.lp-ripple, .lp-logo-voando').forEach(function(el){ el.remove(); });
+    cursor.style.opacity = '0';
+    lista.style.opacity = '';
+    lista.style.overflow = '';
+  }
+
+  function fecharPerfil(id){
+    if(!perfil.classList.contains('is-open')) return;
+    if(perfil.style.opacity === '0'){ perfil.classList.remove('is-open'); return; }
+    perfil.style.opacity = '0';
+    terminou(animar(perfil, [{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: 'ease-out' })).then(function(){
+      if(id === execucao) perfil.classList.remove('is-open');
+    });
+  }
+
+  // "esquerda": linhas chegam de fora da tela; "cima": caem por baixo do cabeçalho, de baixo pra cima
+  function entrarLinhas(modo){
+    var id = execucao;
+    var linhas = Array.prototype.slice.call(lista.children);
+    var p = painel.getBoundingClientRect();
+    var altura = lista.getBoundingClientRect().height;
+    lista.style.overflow = modo === 'cima' ? 'hidden' : 'visible';
+    var anims = linhas.map(function(linha, i){
+      linha.style.opacity = '';
+      if(modo === 'esquerda'){
+        return animar(linha, [
+          { transform: 'translateX(' + (-(p.left + p.width + 40)) + 'px)', opacity: 0, boxShadow: '0 16px 32px -12px rgba(52,42,78,.28)' },
+          { opacity: 1, offset: .18 },
+          { transform: 'translateX(0)', opacity: 1, boxShadow: '0 0 0 0 rgba(52,42,78,0)' }
+        ], { duration: 980, delay: i * 95, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
+      }
+      return animar(linha, [
+        { transform: 'translateY(' + (-(altura + 8)) + 'px)', opacity: 0 },
+        { opacity: 1, offset: .25 },
+        { transform: 'translateY(0)', opacity: 1 }
+      ], { duration: 760, delay: (linhas.length - 1 - i) * 95, easing: 'cubic-bezier(.3,1.15,.55,1)', fill: 'backwards' });
+    });
+    return Promise.all(anims.map(terminou)).then(function(){
+      if(id === execucao) lista.style.overflow = '';
+    });
+  }
+
+  function moverCursor(de, para){
+    var ctrl = { x: (de.x + para.x) / 2 + (para.y - de.y) * 0.2, y: (de.y + para.y) / 2 - (para.x - de.x) * 0.2 };
+    var quadros = [];
+    for(var k = 0; k <= 12; k++){
+      var t = k / 12, u = 1 - t;
+      quadros.push({
+        transform: translate(u * u * de.x + 2 * u * t * ctrl.x + t * t * para.x, u * u * de.y + 2 * u * t * ctrl.y + t * t * para.y),
+        opacity: k === 0 ? 0 : 1,
+        offset: t
+      });
+    }
+    cursor.style.transform = translate(para.x, para.y);
+    cursor.style.opacity = '1';
+    return terminou(animar(cursor, quadros, { duration: 950, easing: 'cubic-bezier(.45,.05,.2,1)' }));
+  }
+
+  function clicar(ponto, linha){
+    linha.style.backgroundColor = 'rgba(104,77,176,.09)';
+    animar(cursor, [
+      { transform: translate(ponto.x, ponto.y) + ' scale(1)' },
+      { transform: translate(ponto.x, ponto.y) + ' scale(.84)', offset: .45 },
+      { transform: translate(ponto.x, ponto.y) + ' scale(1)' }
+    ], { duration: 240, easing: 'ease-out' });
+    var onda = document.createElement('span');
+    onda.className = 'lp-ripple';
+    onda.style.left = ponto.x + 'px';
+    onda.style.top = ponto.y + 'px';
+    painel.appendChild(onda);
+    terminou(animar(onda, [{ transform: 'scale(.2)', opacity: 1 }, { transform: 'scale(1.5)', opacity: 0 }], { duration: 560, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'forwards' })).then(function(){ onda.remove(); });
+  }
+
+  // O logo da linha voa até o cabeçalho do perfil, passando do tamanho final antes de assentar (o "zoom")
+  function abrirPerfil(linha, e){
+    var logoLinha = linha.querySelector('.lp-row-logo');
+    var logoPerfil = perfil.querySelector('.lp-perfil-logo');
+    perfil.classList.add('is-open');
+    perfil.style.opacity = '1';
+    logoPerfil.style.opacity = '0';
+    var p = painel.getBoundingClientRect(), o = logoLinha.getBoundingClientRect(), d = logoPerfil.getBoundingClientRect();
+    var voando = document.createElement('div');
+    voando.className = 'lp-logo-voando';
+    voando.style.left = (d.left - p.left) + 'px';
+    voando.style.top = (d.top - p.top) + 'px';
+    voando.style.width = d.width + 'px';
+    voando.style.height = d.height + 'px';
+    voando.innerHTML = '<img src="' + logoUrl(e.dominio, 128) + '" alt="">';
+    painel.appendChild(voando);
+    var dx = (o.left + o.width / 2) - (d.left + d.width / 2);
+    var dy = (o.top + o.height / 2) - (d.top + d.height / 2);
+    var escala = o.width / d.width;
+    animar(perfil, [{ opacity: 0 }, { opacity: 1 }], { duration: 320, easing: 'ease-out' });
+    lista.style.opacity = '0';
+    animar(lista, [{ opacity: 1 }, { opacity: 0 }], { duration: 240, easing: 'ease-out' });
+    var voo = animar(voando, [
+      { transform: translate(dx, dy) + ' scale(' + escala.toFixed(3) + ')', boxShadow: '0 0 0 0 rgba(52,42,78,0)' },
+      { transform: translate(0, 0) + ' scale(1.34)', boxShadow: '0 18px 36px -10px rgba(52,42,78,.32)', offset: .62 },
+      { transform: translate(0, 0) + ' scale(1)', boxShadow: '0 0 0 0 rgba(52,42,78,0)' }
+    ], { duration: 900, easing: 'cubic-bezier(.3,.7,.2,1)', fill: 'forwards' });
+    terminou(voo).then(function(){ logoPerfil.style.opacity = ''; voando.remove(); });
+    perfil.querySelectorAll('[data-p]').forEach(function(el, i){
+      animar(el, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 440, delay: 200 + i * 65, easing: 'cubic-bezier(.16,1,.3,1)', fill: 'backwards' });
+    });
+    desenharGrafico(e, 560);
+  }
+
+  function sairCursor(ponto){
+    var destino = translate(ponto.x + 26, ponto.y + 34);
+    cursor.style.transform = destino;
+    cursor.style.opacity = '0';
+    animar(cursor, [
+      { transform: translate(ponto.x, ponto.y), opacity: 1 },
+      { transform: destino, opacity: 0 }
+    ], { duration: 520, delay: 380, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'backwards' });
+  }
+
+  async function executarDemo(modo, origem){
+    if(!demoIniciada) setTimeout(precarregarLogos, 1200);
+    demoIniciada = true;
+    var minha = ++execucao;
+    function vivo(){ return minha === execucao; }
+    limpar();
+    var empresa = EMPRESAS_POR_LEI[leiAtual][0], meta = META_LEI[leiAtual];
+    new Image().src = logoUrl(empresa.dominio, 128);
+    fecharPerfil(minha);
+    renderLista(leiAtual, false);
+    await entrarLinhas(modo);
+    if(!vivo()) return;
+    await esperar(240);
+    if(!vivo()) return;
+
+    var linha = lista.children[0];
+    var nome = linha && linha.querySelector('.lp-row-nome');
+    if(!nome) return;
+    var alvo = noPainel(nome, 0, .5);
+    alvo.x += Math.min(nome.getBoundingClientRect().width * .4, 34);
+    var p = painel.getBoundingClientRect();
+    var inicio = origem ? noPainel(origem, .5, .5) : { x: p.width * .8, y: p.height + 44 };
+    if(origem) inicio.x -= 30;
+
+    await moverCursor(inicio, alvo);
+    if(!vivo()) return;
+    linha.style.backgroundColor = 'rgba(104,77,176,.05)';
+    montarPerfil(empresa, meta);
+    await esperar(300);
+    if(!vivo()) return;
+    clicar(alvo, linha);
+    await esperar(160);
+    if(!vivo()) return;
+    abrirPerfil(linha, empresa);
+    sairCursor(alvo);
+  }
+
+  window.selecionarLei = function(lei, btn){
+    leiAtual = lei;
+    document.querySelectorAll('.lei-card-btn').forEach(function(b){ b.style.borderLeftColor = 'transparent'; });
+    btn.style.borderLeftColor = META_LEI[lei].cor;
+    if(semAnimacao){ renderLista(lei, true); return; }
+    executarDemo('cima', btn);
   };
 
-  renderLista('cultura');
-  var primeiro = document.querySelector('.lei-card-btn[data-lei="cultura"]');
-  if(primeiro) primeiro.style.borderLeftColor = META_LEI.cultura.cor;
+  var btnInicial = document.querySelector('.lei-card-btn[data-lei="cultura"]');
+  if(btnInicial) btnInicial.style.borderLeftColor = META_LEI.cultura.cor;
+  // Monta o perfil escondido já no carregamento, para o Tailwind gerar as classes antes da primeira medição
+  montarPerfil(EMPRESAS_POR_LEI.cultura[0], META_LEI.cultura);
+
+  if(semAnimacao){
+    renderLista(leiAtual, true);
+    return;
+  }
+  renderLista(leiAtual, false);
+  if('IntersectionObserver' in window){
+    var observador = new IntersectionObserver(function(entradas){
+      if(!entradas.some(function(en){ return en.isIntersecting; })) return;
+      observador.disconnect();
+      if(!demoIniciada) executarDemo('esquerda', null);
+    }, { threshold: 0.45 });
+    observador.observe(painel);
+  } else {
+    executarDemo('esquerda', null);
+  }
 })();
 </script>
 
