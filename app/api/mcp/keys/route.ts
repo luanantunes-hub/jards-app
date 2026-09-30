@@ -31,7 +31,7 @@ export async function GET() {
   const admin = adminClient();
   const { data, error } = await admin
     .from("mcp_api_keys")
-    .select("id,key_prefix,label,created_at,last_used_at,revoked_at")
+    .select("id,key_prefix,label,scope,expires_at,created_at,last_used_at,revoked_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -45,13 +45,19 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json().catch(() => ({}));
   const label = typeof body.label === "string" && body.label.trim() ? body.label.trim() : null;
+  const scope = body.scope === "write" ? "write" : "read";
+
+  // Prazo obrigatório, com teto de 1 ano — chave sem validade é o tipo de coisa
+  // que fica esquecida ativa para sempre. Padrão 90 dias se nada for informado.
+  const expiresInDays = Math.min(Math.max(Number(body.expires_in_days) || 90, 1), 365);
+  const expiresAt = new Date(Date.now() + expiresInDays * 86_400_000).toISOString();
 
   const { raw, hash, prefix } = generateApiKey();
   const admin = adminClient();
   const { data, error } = await admin
     .from("mcp_api_keys")
-    .insert({ user_id: user.id, key_hash: hash, key_prefix: prefix, label })
-    .select("id,key_prefix,label,created_at")
+    .insert({ user_id: user.id, key_hash: hash, key_prefix: prefix, label, scope, expires_at: expiresAt })
+    .select("id,key_prefix,label,scope,expires_at,created_at")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

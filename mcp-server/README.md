@@ -91,16 +91,27 @@ obrigatório informar (use `listar_minhas_organizacoes` para descobrir os IDs).
 
 ## Uso em um Custom GPT (ChatGPT)
 
-ChatGPT não fala MCP — Custom GPTs usam "Actions" via OpenAPI/REST. Ainda não existe
-esse wrapper neste repositório. Caminho recomendado: rotas REST em `app/api/mcp/*`
-que reusem `src/tools.ts`, autenticadas com a sessão normal do usuário no Jards (não
-com e-mail/senha soltos), e um `openapi.json` publicado para o Custom GPT. Avise se
-quiser que eu implemente.
+ChatGPT não fala MCP — Custom GPTs usam "Actions" via OpenAPI/REST. Isso já existe:
+rotas REST em `app/api/mcp/*` (no app Next.js, não aqui), autenticadas por uma chave
+de API pessoal gerada em `/configuracoes/mcp`, e o schema publicado em
+`/api/mcp/openapi.json`. Cada chave tem escopo (`somente leitura` ou
+`leitura + criação`) e prazo de validade — veja `app/api/mcp/README` (seção abaixo)
+ou a própria página de configurações para o passo a passo.
+
+**Atenção ao compartilhar a GPT**: uma Custom GPT com Action configurada guarda UMA
+chave, usada por qualquer pessoa que utilizar aquela GPT — não existe "cada usuário
+com a própria credencial" nesse modo. Nunca publique/compartilhe a GPT com sua chave
+configurada; cada pessoa do time deve criar a própria GPT com a própria chave. A
+alternativa correta para uso em equipe seria trocar para OAuth por usuário na Action
+— ainda não implementado, avise se quiser.
 
 ## Limitações conhecidas
 
-- Login por senha fica guardado em texto puro na config do Claude Desktop — é
-  aceitável para uso individual local, mas não deveria ser distribuído em massa
-  sem trocar para um esquema de token de longa duração.
-- Não há revogação por ferramenta: quem tem a config ativa tem todo o acesso que a
-  própria conta Jards já tem (igual ao app web).
+- Login por senha (deste servidor MCP, para Claude) fica guardado em texto puro na
+  config do Claude Desktop — aceitável para uso individual local, mas não deveria
+  ser distribuído em massa sem trocar para um esquema de token de longa duração.
+- Não há revogação por ferramenta neste servidor: quem tem a config ativa tem todo
+  o acesso que a própria conta Jards já tem (igual ao app web). No wrapper REST
+  (`app/api/mcp/*`) já existe escopo (leitura/escrita) e expiração por chave.
+- Os limitadores de taxa do wrapper REST são em memória, por instância do servidor
+  — não são um teto exato sob múltiplas instâncias, mas contêm abuso e scripts.

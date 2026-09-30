@@ -1,15 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { authenticateMcpRequest, isErrorResponse, resolveOrgId } from "@/lib/mcp/auth";
+import { authenticateMcpRequest, isErrorResponse, requireWriteScope, resolveOrgId } from "@/lib/mcp/auth";
 
 /**
  * Ver os contatos de uma empresa consome 1 crédito da organização, na primeira
  * vez (mesma regra do app — fn_desbloquear_empresa_as). Se já estava
- * desbloqueada, não cobra de novo.
+ * desbloqueada, não cobra de novo. Por gastar crédito (efeito colateral,
+ * não leitura pura), exige chave com escopo de escrita.
  */
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await authenticateMcpRequest(req);
   if (isErrorResponse(ctx)) return ctx;
+  const scopeError = requireWriteScope(ctx);
+  if (scopeError) return scopeError;
 
   const searchParams = req.nextUrl.searchParams;
   const orgId = resolveOrgId(ctx, searchParams.get("organization_id"));

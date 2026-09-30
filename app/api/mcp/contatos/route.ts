@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { authenticateMcpRequest, isErrorResponse, resolveOrgId } from "@/lib/mcp/auth";
+import { authenticateMcpRequest, isErrorResponse, requireWriteScope, resolveOrgId } from "@/lib/mcp/auth";
 
 export async function POST(req: NextRequest) {
   const ctx = await authenticateMcpRequest(req);
   if (isErrorResponse(ctx)) return ctx;
+  const scopeError = requireWriteScope(ctx);
+  if (scopeError) return scopeError;
 
   const body = await req.json().catch(() => ({}));
   const orgId = resolveOrgId(ctx, body.organization_id ?? null);

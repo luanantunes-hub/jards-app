@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
             buscaParam,
             limiteParam,
           ],
-          responses: { "200": { description: "OK" }, "402": { description: "Sem créditos disponíveis" } },
+          responses: { "200": { description: "OK" }, "402": { description: "Sem créditos disponíveis" }, "403": { description: "Chave é somente leitura" } },
         },
       },
       "/contatos": {
@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
               },
             },
           },
-          responses: { "201": { description: "Criado" } },
+          responses: { "201": { description: "Criado" }, "403": { description: "Chave é somente leitura" } },
         },
       },
       "/propostas": {
@@ -164,7 +164,7 @@ export async function GET(req: NextRequest) {
               },
             },
           },
-          responses: { "201": { description: "Criado" } },
+          responses: { "201": { description: "Criado" }, "403": { description: "Chave é somente leitura" } },
         },
       },
       "/captadores": {

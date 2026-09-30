@@ -6,6 +6,8 @@ import { isRateLimited } from "@/lib/mcp/rateLimit";
 const MAX_REQUESTS_PER_KEY_PER_MIN = 60;
 const MAX_FAILED_AUTH_PER_IP_PER_MIN = 20;
 
+export type McpKeyScope = "read" | "write";
+
 function getIp(req: NextRequest): string {
   return (
     req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
@@ -28,6 +30,7 @@ export function generateApiKey(): { raw: string; hash: string; prefix: string } 
 export interface McpAuthContext {
   userId: string;
   organizationIds: string[];
+  scope: McpKeyScope;
 }
 
 /**
@@ -55,13 +58,16 @@ export async function authenticateMcpRequest(
   const keyHash = hashApiKey(rawKey);
   const { data: key, error } = await admin
     .from("mcp_api_keys")
-    .select("id,user_id,revoked_at")
+    .select("id,user_id,revoked_at,expires_at,scope")
     .eq("key_hash", keyHash)
     .maybeSingle();
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!key || key.revoked_at) {
     return NextResponse.json({ error: "Chave inválida ou revogada" }, { status: 401 });
+  }
+  if (key.expires_at && new Date(key.expires_at).getTime() <= Date.now()) {
+    return NextResponse.json({ error: "Chave expirada — gere uma nova em /configuracoes/mcp" }, { status: 401 });
   }
 
   // Limite por chave — independe de IP, então funciona igual atrás do egress
@@ -72,13 +78,38 @@ export async function authenticateMcpRequest(
 
   void admin.from("mcp_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id);
 
+  // Trilha de auditoria — "quem acessou o quê, quando". Fire-and-forget: não
+  // atrasa a resposta nem derruba a requisição se a gravação falhar.
+  void admin.from("mcp_api_key_usage").insert({
+    key_id: key.id,
+    user_id: key.user_id,
+    method: req.method,
+    path: req.nextUrl.pathname,
+    ip,
+  });
+
   const { data: memberships, error: membershipError } = await admin
     .from("organization_members")
     .select("organization_id")
     .eq("user_id", key.user_id);
   if (membershipError) return NextResponse.json({ error: membershipError.message }, { status: 500 });
 
-  return { userId: key.user_id, organizationIds: (memberships ?? []).map((m) => m.organization_id) };
+  return {
+    userId: key.user_id,
+    organizationIds: (memberships ?? []).map((m) => m.organization_id),
+    scope: (key.scope as McpKeyScope) ?? "read",
+  };
+}
+
+/** Bloqueia ferramentas de escrita para chaves geradas como somente-leitura (mínimo privilégio). */
+export function requireWriteScope(ctx: McpAuthContext): NextResponse | null {
+  if (ctx.scope !== "write") {
+    return NextResponse.json(
+      { error: "Esta chave é somente leitura. Gere uma chave com escopo de escrita em /configuracoes/mcp para criar registros." },
+      { status: 403 }
+    );
+  }
+  return null;
 }
 
 export function resolveOrgId(ctx: McpAuthContext, requested: string | null): string | NextResponse {
