@@ -1,13 +1,26 @@
 import { z } from "zod";
-import { supabase } from "./supabase.js";
+import { ensureAuthenticated, supabase } from "./supabase.js";
 
 /**
- * O client usa a service role key (bypassa RLS), então toda consulta/escrita aqui
- * precisa ser explicitamente filtrada/gravada por organization_id — nunca exponha
- * uma ferramenta nova sobre uma tabela multi-tenant sem esse filtro.
+ * Este servidor autentica como o usuário real (ver supabase.ts) e usa a anon
+ * key — nunca service role. Toda leitura/escrita passa pelo RLS do Supabase,
+ * que já restringe:
+ *   - dados de CRM (projetos, propostas, tarefas, contatos) à(s)
+ *     organização(ões) de que o usuário é membro;
+ *   - contatos, ao consumo de crédito via fn_desbloquear_empresa (a mesma
+ *     função usada pelo app web).
+ * Editais e a base pública de empresas/patrocinadores não são escopados por
+ * organização — são compartilhados entre todos os usuários, de propósito.
  */
 
-const orgIdParam = z.string().uuid().describe("ID da organização (organizations.id) cujos dados serão acessados");
+const orgIdParam = z
+  .string()
+  .uuid()
+  .optional()
+  .describe(
+    "ID da organização (organizations.id). Opcional se o usuário pertence a apenas uma organização — " +
+      "use listar_minhas_organizacoes para descobrir o ID."
+  );
 const limitParam = z.number().int().min(1).max(100).default(20).describe("Máximo de resultados (padrão 20, máx 100)");
 const searchParam = z.string().trim().min(1).optional().describe("Termo de busca (contém, case-insensitive)");
 
@@ -22,34 +35,39 @@ function textResult(data: unknown) {
   return { content: [{ type: "text" as const, text: JSON.stringify(data, null, 2) }] };
 }
 
-/**
- * `account_id` é uma coluna legada (pré multi-organização) ainda NOT NULL em
- * algumas tabelas. Dentro de uma mesma organização todo registro compartilha o
- * mesmo account_id, então resolvemos por amostragem em vez de pedir esse campo
- * ao usuário da ferramenta.
- */
-async function resolveAccountId(organizationId: string): Promise<string> {
-  const { data, error } = await supabase
-    .from("contatos")
-    .select("account_id")
-    .eq("organization_id", organizationId)
-    .limit(1)
-    .maybeSingle();
+/** Resolve a organização-alvo: usa a informada, ou a única de que o usuário é membro. */
+async function resolveOrgId(organizationId?: string): Promise<string> {
+  if (organizationId) return organizationId;
+  const { data, error } = await supabase.from("organization_members").select("organization_id");
   if (error) throw new Error(error.message);
-  if (!data?.account_id) {
-    throw new Error(
-      "Não foi possível resolver account_id para essa organização (nenhum contato existente). Crie o primeiro registro pelo app."
-    );
-  }
-  return data.account_id;
+  const orgs = [...new Set((data ?? []).map((r) => r.organization_id))];
+  if (orgs.length === 1) return orgs[0];
+  if (orgs.length === 0) throw new Error("Usuário não pertence a nenhuma organização.");
+  throw new Error(
+    `Usuário pertence a ${orgs.length} organizações — informe organization_id. Use listar_minhas_organizacoes.`
+  );
 }
 
 export const tools: ToolDef[] = [
-  // ── Leitura ────────────────────────────────────────────────────────────
+  // ── Identidade ─────────────────────────────────────────────────────────
+  {
+    name: "listar_minhas_organizacoes",
+    description: "Lista as organizações de que o usuário autenticado é membro (id, nome, papel).",
+    schema: {},
+    handler: async () => {
+      const { data, error } = await supabase
+        .from("organization_members")
+        .select("papel,organizations(id,nome)");
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  },
+
+  // ── CRM (escopado por organização via RLS) ───────────────────────────────
   {
     name: "listar_projetos",
     description:
-      "Lista projetos do CRM (projetos_crm) de uma organização: nome, fase, status, valores, proponente, cidade/estado.",
+      "Lista projetos do CRM (projetos_crm) da organização do usuário: nome, fase, status, valores, proponente, cidade/estado.",
     schema: {
       organization_id: orgIdParam,
       busca: searchParam,
@@ -60,12 +78,13 @@ export const tools: ToolDef[] = [
       limite: limitParam,
     },
     handler: async ({ organization_id, busca, fase, limite }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       let query = supabase
         .from("projetos_crm")
         .select(
           "id,nome,descricao,fase,status_operacional,status_comercial,valor_alvo,valor_total,valor_garantido,proponente_nome,cidade,estado,data_inicio,data_fim,updated_at"
         )
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .order("updated_at", { ascending: false })
         .limit(limite as number);
       if (busca) query = query.ilike("nome", `%${busca}%`);
@@ -83,10 +102,11 @@ export const tools: ToolDef[] = [
       projeto_id: z.string().uuid().describe("ID do projeto (projetos_crm.id)"),
     },
     handler: async ({ organization_id, projeto_id }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       const { data, error } = await supabase
         .from("projetos_crm")
         .select("*")
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .eq("id", projeto_id)
         .single();
       if (error) throw new Error(error.message);
@@ -94,9 +114,9 @@ export const tools: ToolDef[] = [
     },
   },
   {
-    name: "listar_empresas",
+    name: "listar_empresas_crm",
     description:
-      "Lista empresas do CRM (empresas_crm) — patrocinadores e potenciais patrocinadores de uma organização.",
+      "Lista empresas do CRM da organização do usuário (empresas_crm) — patrocinadores e prospects já trabalhados pela equipe.",
     schema: {
       organization_id: orgIdParam,
       busca: searchParam,
@@ -104,10 +124,11 @@ export const tools: ToolDef[] = [
       limite: limitParam,
     },
     handler: async ({ organization_id, busca, tipo, limite }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       let query = supabase
         .from("empresas_crm")
         .select("id,nome,setor,site,tipo,status,localizacao,ja_patrocina_cultura,ja_patrocina_esporte,updated_at")
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .order("updated_at", { ascending: false })
         .limit(limite as number);
       if (busca) query = query.ilike("nome", `%${busca}%`);
@@ -120,44 +141,51 @@ export const tools: ToolDef[] = [
   {
     name: "listar_contatos",
     description:
-      "Traz contatos do CRM de uma organização — pessoas ligadas a empresas, proponentes ou captadores, com cargo, e-mail, telefone e papel de decisão.",
+      "Traz contatos do CRM ligados a uma empresa. IMPORTANTE: ver contatos de uma empresa pela primeira vez consome 1 " +
+      "crédito da organização (mesma regra do app — fn_desbloquear_empresa); se a empresa já estiver desbloqueada, é de graça.",
     schema: {
       organization_id: orgIdParam,
+      empresa_crm_id: z.string().uuid().describe("Empresa cujos contatos serão desbloqueados/consultados"),
       busca: searchParam,
-      empresa_crm_id: z.string().uuid().optional().describe("Filtra contatos de uma empresa específica"),
-      apenas_ativos: z.boolean().default(true).describe("Se true (padrão), oculta contatos marcados como inativos na empresa"),
       limite: limitParam,
     },
-    handler: async ({ organization_id, busca, empresa_crm_id, apenas_ativos, limite }) => {
+    handler: async ({ organization_id, empresa_crm_id, busca, limite }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
+      const { data: desbloqueio, error: desbloqueioError } = await supabase.rpc("fn_desbloquear_empresa", {
+        p_organization_id: orgId,
+        p_empresa_id: empresa_crm_id,
+      });
+      if (desbloqueioError) throw new Error(desbloqueioError.message);
+
       let query = supabase
         .from("contatos")
         .select(
-          "id,nome,cargo,email,telefone,telefone_2,linkedin_url,empresa_crm_id,proponente_id,captador_id,papel_decisao,sentimento,score,ativo_na_empresa,ultima_interacao,updated_at"
+          "id,nome,cargo,email,telefone,telefone_2,linkedin_url,papel_decisao,sentimento,score,ativo_na_empresa,ultima_interacao,updated_at"
         )
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
+        .eq("empresa_crm_id", empresa_crm_id)
         .order("updated_at", { ascending: false })
         .limit(limite as number);
       if (busca) query = query.ilike("nome", `%${busca}%`);
-      if (empresa_crm_id) query = query.eq("empresa_crm_id", empresa_crm_id);
-      if (apenas_ativos) query = query.eq("ativo_na_empresa", true);
       const { data, error } = await query;
       if (error) throw new Error(error.message);
-      return data;
+      return { desbloqueio, contatos: data };
     },
   },
   {
     name: "listar_propostas",
-    description: "Lista propostas comerciais (propostas) de uma organização, opcionalmente filtradas por projeto.",
+    description: "Lista propostas comerciais da organização do usuário, opcionalmente filtradas por projeto.",
     schema: {
       organization_id: orgIdParam,
       projeto_id: z.string().uuid().optional().describe("Filtra propostas de um projeto específico"),
       limite: limitParam,
     },
     handler: async ({ organization_id, projeto_id, limite }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       let query = supabase
         .from("propostas")
         .select("id,projeto_id,titulo,status,valor_proposto,total_visualizacoes,created_at,updated_at")
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .order("updated_at", { ascending: false })
         .limit(limite as number);
       if (projeto_id) query = query.eq("projeto_id", projeto_id);
@@ -168,7 +196,7 @@ export const tools: ToolDef[] = [
   },
   {
     name: "listar_tarefas",
-    description: "Lista tarefas comerciais de uma organização, opcionalmente filtradas por responsável.",
+    description: "Lista tarefas comerciais da organização do usuário, opcionalmente filtradas por responsável.",
     schema: {
       organization_id: orgIdParam,
       responsavel_id: z.string().uuid().optional(),
@@ -176,10 +204,11 @@ export const tools: ToolDef[] = [
       limite: limitParam,
     },
     handler: async ({ organization_id, responsavel_id, apenas_pendentes, limite }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       let query = supabase
         .from("tarefas")
         .select("id,titulo,tipo,status,data_prazo,data_conclusao,responsavel_id,captacao_id,created_at")
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .order("data_prazo", { ascending: true, nullsFirst: false })
         .limit(limite as number);
       if (responsavel_id) query = query.eq("responsavel_id", responsavel_id);
@@ -191,17 +220,14 @@ export const tools: ToolDef[] = [
   },
   {
     name: "listar_captadores",
-    description: "Lista captadores de uma organização.",
-    schema: {
-      organization_id: orgIdParam,
-      busca: searchParam,
-      limite: limitParam,
-    },
+    description: "Lista captadores da organização do usuário.",
+    schema: { organization_id: orgIdParam, busca: searchParam, limite: limitParam },
     handler: async ({ organization_id, busca, limite }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       let query = supabase
         .from("captadores")
         .select("id,nome,email,status,updated_at")
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .order("updated_at", { ascending: false })
         .limit(limite as number);
       if (busca) query = query.ilike("nome", `%${busca}%`);
@@ -212,20 +238,50 @@ export const tools: ToolDef[] = [
   },
   {
     name: "listar_proponentes",
-    description: "Lista proponentes de uma organização.",
-    schema: {
-      organization_id: orgIdParam,
-      busca: searchParam,
-      limite: limitParam,
-    },
+    description: "Lista proponentes da organização do usuário.",
+    schema: { organization_id: orgIdParam, busca: searchParam, limite: limitParam },
     handler: async ({ organization_id, busca, limite }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       let query = supabase
         .from("proponentes")
         .select("id,nome,cidade,estado,updated_at")
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .order("updated_at", { ascending: false })
         .limit(limite as number);
       if (busca) query = query.ilike("nome", `%${busca}%`);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  },
+
+  // ── Base pública compartilhada (não escopada por organização) ───────────
+  {
+    name: "listar_patrocinadores_publicos",
+    description:
+      "Consulta a base pública de empresas/patrocinadores do Jards (não é a carteira da sua organização — é a base " +
+      "compartilhada entre todos os clientes, usada para prospecção).",
+    schema: { busca: searchParam, limite: limitParam },
+    handler: async ({ busca, limite }) => {
+      let query = supabase.from("empresas").select("id,nome,site,cidade,estado,segmento").limit(limite as number);
+      if (busca) query = query.ilike("nome", `%${busca}%`);
+      const { data, error } = await query;
+      if (error) throw new Error(error.message);
+      return data;
+    },
+  },
+  {
+    name: "listar_editais",
+    description: "Lista editais públicos cadastrados no Jards (base compartilhada, não escopada por organização).",
+    schema: { busca: searchParam, apenas_ativos: z.boolean().default(true), limite: limitParam },
+    handler: async ({ busca, apenas_ativos, limite }) => {
+      let query = supabase
+        .from("editais")
+        .select("id,titulo,data_abertura,data_fechamento,url_acesso,ativo")
+        .order("data_fechamento", { ascending: true })
+        .limit(limite as number);
+      if (busca) query = query.ilike("titulo", `%${busca}%`);
+      if (apenas_ativos) query = query.eq("ativo", true);
       const { data, error } = await query;
       if (error) throw new Error(error.message);
       return data;
@@ -236,16 +292,17 @@ export const tools: ToolDef[] = [
   {
     name: "avaliar_carteira_empresa",
     description:
-      "Avalia a carteira de uma empresa a partir dos projetos que ela já apoiou (vendas_patrocinio): lista cada projeto patrocinado com valor investido e data, além de totais, ticket médio, áreas culturais recorrentes e há quanto tempo não patrocina — útil para decidir próxima abordagem.",
-    schema: {
-      organization_id: orgIdParam,
-      empresa_crm_id: z.string().uuid().describe("ID da empresa (empresas_crm.id) a avaliar"),
-    },
+      "Avalia a carteira de uma empresa a partir dos projetos que ela já apoiou (vendas_patrocinio): lista cada projeto " +
+      "patrocinado com valor investido e data, além de totais, ticket médio, áreas culturais recorrentes e há quanto " +
+      "tempo não patrocina — útil para decidir a próxima abordagem.",
+    schema: { organization_id: orgIdParam, empresa_crm_id: z.string().uuid().describe("ID da empresa (empresas_crm.id) a avaliar") },
     handler: async ({ organization_id, empresa_crm_id }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
+
       const { data: empresa, error: empresaError } = await supabase
         .from("empresas_crm")
         .select("id,nome,setor,tipo,ja_patrocina_cultura,ja_patrocina_esporte")
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .eq("id", empresa_crm_id)
         .single();
       if (empresaError) throw new Error(empresaError.message);
@@ -253,17 +310,17 @@ export const tools: ToolDef[] = [
       const { data: vendas, error: vendasError } = await supabase
         .from("vendas_patrocinio")
         .select("id,projeto_id,valor_vendido,quantidade,vendida_em")
-        .eq("organization_id", organization_id)
+        .eq("organization_id", orgId)
         .eq("empresa_crm_id", empresa_crm_id)
         .order("vendida_em", { ascending: false });
       if (vendasError) throw new Error(vendasError.message);
 
       const projetoIds = [...new Set((vendas ?? []).map((v) => v.projeto_id))];
-      let projetosPorId = new Map<string, { id: string; nome: string; fase: string; areas_culturais: string[]; cidade: string | null }>();
+      let projetosPorId = new Map<string, { id: string; nome: string; fase: string; areas_culturais: string[] }>();
       if (projetoIds.length > 0) {
         const { data: projetos, error: projetosError } = await supabase
           .from("projetos_crm")
-          .select("id,nome,fase,areas_culturais,cidade")
+          .select("id,nome,fase,areas_culturais")
           .in("id", projetoIds);
         if (projetosError) throw new Error(projetosError.message);
         projetosPorId = new Map((projetos ?? []).map((p) => [p.id, p]));
@@ -288,9 +345,9 @@ export const tools: ToolDef[] = [
         .sort((a, b) => b[1] - a[1])
         .map(([area, vezes]) => ({ area, vezes }));
 
-      const ultimaPatrocinio = historico[0]?.vendida_em ?? null;
-      const diasDesdeUltimo = ultimaPatrocinio
-        ? Math.floor((Date.now() - new Date(ultimaPatrocinio).getTime()) / 86_400_000)
+      const ultimoPatrocinio = historico[0]?.vendida_em ?? null;
+      const diasDesdeUltimo = ultimoPatrocinio
+        ? Math.floor((Date.now() - new Date(ultimoPatrocinio).getTime()) / 86_400_000)
         : null;
 
       return {
@@ -301,7 +358,7 @@ export const tools: ToolDef[] = [
           valor_total_investido: valorTotal,
           ticket_medio: historico.length > 0 ? valorTotal / historico.length : 0,
           areas_culturais_recorrentes: areasRecorrentes,
-          ultimo_patrocinio_em: ultimaPatrocinio,
+          ultimo_patrocinio_em: ultimoPatrocinio,
           dias_desde_ultimo_patrocinio: diasDesdeUltimo,
         },
         historico_patrocinios: historico,
@@ -311,14 +368,16 @@ export const tools: ToolDef[] = [
   {
     name: "resumo_organizacao",
     description:
-      "Visão geral para análise rápida: quantidade de projetos por fase, propostas por status, tarefas pendentes e valor total captado — ponto de partida para perguntas analíticas sobre a organização.",
+      "Visão geral para análise rápida da organização do usuário: quantidade de projetos por fase, propostas por " +
+      "status, tarefas por status e valor total captado.",
     schema: { organization_id: orgIdParam },
     handler: async ({ organization_id }) => {
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       const [projetos, propostas, tarefas, vendas] = await Promise.all([
-        supabase.from("projetos_crm").select("fase,status_comercial,valor_total").eq("organization_id", organization_id),
-        supabase.from("propostas").select("status").eq("organization_id", organization_id),
-        supabase.from("tarefas").select("status").eq("organization_id", organization_id),
-        supabase.from("vendas_patrocinio").select("valor_vendido").eq("organization_id", organization_id),
+        supabase.from("projetos_crm").select("fase,status_comercial,valor_total").eq("organization_id", orgId),
+        supabase.from("propostas").select("status").eq("organization_id", orgId),
+        supabase.from("tarefas").select("status").eq("organization_id", orgId),
+        supabase.from("vendas_patrocinio").select("valor_vendido").eq("organization_id", orgId),
       ]);
       for (const r of [projetos, propostas, tarefas, vendas]) {
         if (r.error) throw new Error(r.error.message);
@@ -360,10 +419,10 @@ export const tools: ToolDef[] = [
       notas: z.string().trim().optional(),
     },
     handler: async ({ organization_id, ...campos }) => {
-      const account_id = await resolveAccountId(organization_id as string);
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       const { data, error } = await supabase
         .from("contatos")
-        .insert({ organization_id, account_id, ...campos })
+        .insert({ organization_id: orgId, ...campos })
         .select()
         .single();
       if (error) throw new Error(error.message);
@@ -383,10 +442,10 @@ export const tools: ToolDef[] = [
       captacao_id: z.string().uuid().optional(),
     },
     handler: async ({ organization_id, ...campos }) => {
-      const account_id = await resolveAccountId(organization_id as string);
+      const orgId = await resolveOrgId(organization_id as string | undefined);
       const { data, error } = await supabase
         .from("tarefas")
-        .insert({ organization_id, account_id, ...campos })
+        .insert({ organization_id: orgId, ...campos })
         .select()
         .single();
       if (error) throw new Error(error.message);
@@ -398,6 +457,7 @@ export const tools: ToolDef[] = [
 export async function callTool(name: string, args: Record<string, unknown>) {
   const tool = tools.find((t) => t.name === name);
   if (!tool) throw new Error(`Ferramenta desconhecida: ${name}`);
+  await ensureAuthenticated();
   const parsed = z.object(tool.schema).parse(args ?? {});
   const data = await tool.handler(parsed);
   return textResult(data);

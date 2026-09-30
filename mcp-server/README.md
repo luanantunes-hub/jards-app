@@ -1,12 +1,30 @@
 # Jards MCP Server
 
-Servidor MCP (Model Context Protocol) somente leitura para os dados do Jards no Supabase:
-projetos, empresas (patrocinadores), propostas, tarefas, captadores e proponentes.
+Servidor MCP (Model Context Protocol) para os dados do Jards no Supabase: projetos,
+empresas (CRM), contatos, propostas, tarefas, captadores, proponentes, editais e a
+base pública de patrocinadores.
 
-## Por que fica fora do app Next.js
+## Autenticação — cada usuário só vê o que já vê no app
 
-É um processo separado (stdio), não uma rota do Next — roda localmente no computador de
-quem está usando o Claude, não no servidor web do Jards.
+O servidor **nunca usa a service role key**. Ele se autentica no Supabase com a anon
+key + e-mail/senha da própria conta Jards da pessoa (`JARDS_USER_EMAIL` /
+`JARDS_USER_PASSWORD`), exatamente como o app web faz. A partir daí:
+
+- Todo acesso passa pelo **Row Level Security (RLS)** do banco — as mesmas policies
+  que restringem o app web. Dados de CRM (`projetos_crm`, `propostas`, `tarefas`,
+  `contatos`, `empresas_crm`, `captadores`, `proponentes`) ficam automaticamente
+  restritos às organizações das quais o usuário é membro.
+- **Editais e a base pública de patrocinadores** (`editais`, `empresas`) não são
+  escopados por organização — são compartilhados entre todos os clientes do Jards, de
+  propósito, então qualquer usuário autenticado pode consultá-los.
+- **Ver contatos de uma empresa consome crédito** da organização, na primeira vez —
+  a ferramenta `listar_contatos` chama a função `fn_desbloquear_empresa`, a mesma
+  RPC que o app usa no modal de desbloqueio. Se a empresa já estiver desbloqueada,
+  não cobra de novo. Sem créditos disponíveis, a chamada falha com o mesmo erro do
+  app ("Sem créditos disponíveis...").
+
+Ou seja: não existe um "modo admin" escondido — quem configura o MCP com a própria
+conta só consegue fazer, via Claude, o que já consegue fazer logado no Jards.
 
 ## Configuração
 
@@ -16,17 +34,21 @@ npm install
 npm run build
 ```
 
-Variáveis de ambiente necessárias (mesmas do projeto principal):
+Variáveis de ambiente necessárias:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `JARDS_USER_EMAIL` — e-mail da conta Jards da pessoa
+- `JARDS_USER_PASSWORD` — senha dessa conta
 
-A service role key ignora RLS, então **toda ferramenta exige `organization_id`** e filtra
-explicitamente por ele — nunca adicione uma ferramenta nova sem esse filtro.
+> Se o login do Jards for só por magic link/SSO (sem senha), essa pessoa precisa
+> primeiro definir uma senha na própria conta (ou avise que eu troco a autenticação
+> do MCP para usar um refresh token de sessão em vez de senha).
 
 ## Uso no Claude Desktop / Claude Code
 
-Adicione ao `claude_desktop_config.json` (ou via `claude mcp add`):
+Cada pessoa configura com **as próprias credenciais** — nunca compartilhe uma config
+com `JARDS_USER_EMAIL`/`JARDS_USER_PASSWORD` de outra pessoa.
 
 ```json
 {
@@ -36,49 +58,49 @@ Adicione ao `claude_desktop_config.json` (ou via `claude mcp add`):
       "args": ["/caminho/absoluto/para/jards-app/mcp-server/dist/index.js"],
       "env": {
         "NEXT_PUBLIC_SUPABASE_URL": "https://SEU_PROJETO.supabase.co",
-        "SUPABASE_SERVICE_ROLE_KEY": "..."
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY": "...",
+        "JARDS_USER_EMAIL": "voce@suaempresa.com",
+        "JARDS_USER_PASSWORD": "..."
       }
     }
   }
 }
 ```
 
-Reinicie o Claude Desktop/Code. As ferramentas ficam disponíveis na conversa:
+Reinicie o Claude Desktop/Code. Ferramentas disponíveis:
 
-**Leitura:** `listar_projetos`, `obter_projeto`, `listar_empresas`, `listar_contatos`,
-`listar_propostas`, `listar_tarefas`, `listar_captadores`, `listar_proponentes`.
+**Identidade:** `listar_minhas_organizacoes`.
 
-**Análise:** `avaliar_carteira_empresa` (monta a carteira de uma empresa a partir dos
+**CRM (escopado por organização, via RLS):** `listar_projetos`, `obter_projeto`,
+`listar_empresas_crm`, `listar_contatos` (consome crédito), `listar_propostas`,
+`listar_tarefas`, `listar_captadores`, `listar_proponentes`.
+
+**Base pública compartilhada (sem escopo de organização):** `listar_editais`,
+`listar_patrocinadores_publicos`.
+
+**Análise:** `avaliar_carteira_empresa` (carteira de uma empresa a partir dos
 projetos que ela já patrocinou — histórico, valor total, ticket médio, áreas
-recorrentes, tempo desde o último patrocínio) e `resumo_organizacao` (visão geral:
-projetos por fase, propostas por status, tarefas pendentes, valor total captado).
+recorrentes, tempo desde o último patrocínio) e `resumo_organizacao` (projetos por
+fase, propostas por status, tarefas por status, valor total captado).
 
 **Criação:** `criar_contato` e `criar_tarefa`.
 
-Todas exigem `organization_id`. As ferramentas de criação resolvem automaticamente o
-`account_id` legado a partir da organização — não precisa ser informado.
+`organization_id` é opcional em todas as ferramentas de CRM: se o usuário pertence a
+uma única organização, é resolvido automaticamente; se pertence a mais de uma, é
+obrigatório informar (use `listar_minhas_organizacoes` para descobrir os IDs).
 
 ## Uso em um Custom GPT (ChatGPT)
 
-ChatGPT não fala MCP nativamente — Custom GPTs usam "Actions" via OpenAPI/REST. As
-opções são:
+ChatGPT não fala MCP — Custom GPTs usam "Actions" via OpenAPI/REST. Ainda não existe
+esse wrapper neste repositório. Caminho recomendado: rotas REST em `app/api/mcp/*`
+que reusem `src/tools.ts`, autenticadas com a sessão normal do usuário no Jards (não
+com e-mail/senha soltos), e um `openapi.json` publicado para o Custom GPT. Avise se
+quiser que eu implemente.
 
-1. **Reaproveitar a mesma lógica** criando rotas REST em `app/api/mcp/*` no Next.js que
-   chamem as mesmas funções de `src/tools.ts` (extraídas para um pacote compartilhado),
-   protegidas por uma API key própria (não a service role), e publicar um `openapi.json`
-   com esses endpoints para o Custom GPT.
-2. Ou usar um gateway MCP→REST (ex. um proxy que expõe cada tool MCP como endpoint HTTP)
-   na frente deste mesmo servidor.
+## Limitações conhecidas
 
-Esse wrapper REST ainda não existe neste repositório — avise se quiser que eu implemente
-a opção 1 (rotas em `app/api/mcp/*` + `openapi.json`), que é a mais simples de manter em
-sincronia com este servidor MCP.
-
-## Segurança
-
-- A service role key nunca deve sair da máquina local / do ambiente do Claude.
-- Ferramentas de criação (`criar_contato`, `criar_tarefa`) escrevem no banco real —
-  quem tiver esse MCP configurado consegue criar registros na organização informada.
-  Não há checagem de "este usuário pertence a esta organização": o controle de acesso
-  hoje é "quem tem a service role key e o `organization_id`", então trate as
-  credenciais com o mesmo cuidado de um acesso admin.
+- Login por senha fica guardado em texto puro na config do Claude Desktop — é
+  aceitável para uso individual local, mas não deveria ser distribuído em massa
+  sem trocar para um esquema de token de longa duração.
+- Não há revogação por ferramenta: quem tem a config ativa tem todo o acesso que a
+  própria conta Jards já tem (igual ao app web).
