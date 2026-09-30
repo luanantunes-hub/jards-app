@@ -43,9 +43,20 @@ Adicione ao `claude_desktop_config.json` (ou via `claude mcp add`):
 }
 ```
 
-Reinicie o Claude Desktop/Code. As ferramentas `listar_projetos`, `obter_projeto`,
-`listar_empresas`, `listar_propostas`, `listar_tarefas`, `listar_captadores` e
-`listar_proponentes` ficam disponíveis na conversa.
+Reinicie o Claude Desktop/Code. As ferramentas ficam disponíveis na conversa:
+
+**Leitura:** `listar_projetos`, `obter_projeto`, `listar_empresas`, `listar_contatos`,
+`listar_propostas`, `listar_tarefas`, `listar_captadores`, `listar_proponentes`.
+
+**Análise:** `avaliar_carteira_empresa` (monta a carteira de uma empresa a partir dos
+projetos que ela já patrocinou — histórico, valor total, ticket médio, áreas
+recorrentes, tempo desde o último patrocínio) e `resumo_organizacao` (visão geral:
+projetos por fase, propostas por status, tarefas pendentes, valor total captado).
+
+**Criação:** `criar_contato` e `criar_tarefa`.
+
+Todas exigem `organization_id`. As ferramentas de criação resolvem automaticamente o
+`account_id` legado a partir da organização — não precisa ser informado.
 
 ## Uso em um Custom GPT (ChatGPT)
 
@@ -66,6 +77,8 @@ sincronia com este servidor MCP.
 ## Segurança
 
 - A service role key nunca deve sair da máquina local / do ambiente do Claude.
-- Todas as ferramentas são **somente leitura**. Ferramentas de escrita (criar tarefa,
-  registrar atividade etc.) podem ser adicionadas depois, mas exigem mais cuidado com
-  permissões por usuário.
+- Ferramentas de criação (`criar_contato`, `criar_tarefa`) escrevem no banco real —
+  quem tiver esse MCP configurado consegue criar registros na organização informada.
+  Não há checagem de "este usuário pertence a esta organização": o controle de acesso
+  hoje é "quem tem a service role key e o `organization_id`", então trate as
+  credenciais com o mesmo cuidado de um acesso admin.
