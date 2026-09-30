@@ -32,7 +32,7 @@ export function NovoClienteModal({ onClose, onSaved }: {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado"); setSaving(false); return; }
 
-    const { error } = await (supabase as any)
+    const { data: empresa, error } = await (supabase as any)
       .from("empresas_crm")
       .insert({
         nome: nome.trim(),
@@ -41,9 +41,26 @@ export function NovoClienteModal({ onClose, onSaved }: {
         tipo: "cliente_ativo",
         account_id: user.id,
         organization_id: organizationId,
-      });
+      })
+      .select("id")
+      .single();
 
-    if (error) { setErro(error.message); setSaving(false); return; }
+    if (error || !empresa) { setErro(error?.message ?? "Erro ao criar empresa"); setSaving(false); return; }
+
+    // Cliente sem conta de patrocínio não aparece na tela Clientes.
+    const { error: erroConta } = await (supabase as any).from("contas_patrocinio").insert({
+      account_id: user.id,
+      organization_id: organizationId,
+      empresa_crm_id: empresa.id,
+      nome: null,
+      status: "ativa",
+    });
+    if (erroConta) {
+      await (supabase as any).from("empresas_crm").delete().eq("id", empresa.id);
+      setErro(erroConta.message);
+      setSaving(false);
+      return;
+    }
 
     setSaving(false);
     onSaved(); onClose();

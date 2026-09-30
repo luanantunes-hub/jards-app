@@ -496,6 +496,26 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
   async function updateTipo(newTipo: "prospect" | "cliente_ativo" | "ex_cliente") {
     setSaving(true);
     await (supabase as any).from("empresas_crm").update({ tipo: newTipo }).eq("id", empresa.id);
+    if (newTipo === "cliente_ativo") {
+      // Marcar como cliente precisa criar a conta de patrocínio, senão a empresa não aparece em Clientes.
+      const { data: contaExistente } = await (supabase as any).from("contas_patrocinio").select("id").eq("empresa_crm_id", empresa.id).limit(1).maybeSingle();
+      if (!contaExistente) {
+        const { error: erroConta } = await (supabase as any).from("contas_patrocinio").insert({
+          account_id: empresa.account_id,
+          organization_id: empresa.organization_id,
+          empresa_crm_id: empresa.id,
+          nome: null,
+          status: "ativa",
+        });
+        if (erroConta) {
+          await (supabase as any).from("empresas_crm").update({ tipo: empresa.tipo }).eq("id", empresa.id);
+          setSaving(false);
+          setOpen(false);
+          window.alert(erroConta.message);
+          return;
+        }
+      }
+    }
     setTipo(newTipo);
     setSaving(false);
     setOpen(false);
