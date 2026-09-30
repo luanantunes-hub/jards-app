@@ -1,6 +1,18 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isRateLimited } from "@/lib/mcp/rateLimit";
+
+const MAX_REQUESTS_PER_KEY_PER_MIN = 60;
+const MAX_FAILED_AUTH_PER_IP_PER_MIN = 20;
+
+function getIp(req: NextRequest): string {
+  return (
+    req.headers.get("x-forwarded-for")?.split(",")[0].trim() ??
+    req.headers.get("x-real-ip") ??
+    "unknown"
+  );
+}
 
 export const MCP_KEY_PREFIX = "jards_mcp_";
 
@@ -26,6 +38,13 @@ export interface McpAuthContext {
 export async function authenticateMcpRequest(
   req: NextRequest
 ): Promise<McpAuthContext | NextResponse> {
+  const ip = getIp(req);
+
+  // Barato e antes de tocar o banco: contém tentativas de adivinhar uma chave.
+  if (isRateLimited(`mcp-auth-fail:${ip}`, MAX_FAILED_AUTH_PER_IP_PER_MIN)) {
+    return NextResponse.json({ error: "Muitas tentativas de autenticação. Aguarde um momento." }, { status: 429 });
+  }
+
   const authHeader = req.headers.get("authorization") ?? "";
   const rawKey = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
   if (!rawKey) {
@@ -43,6 +62,12 @@ export async function authenticateMcpRequest(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   if (!key || key.revoked_at) {
     return NextResponse.json({ error: "Chave inválida ou revogada" }, { status: 401 });
+  }
+
+  // Limite por chave — independe de IP, então funciona igual atrás do egress
+  // compartilhado de um provedor de LLM (ex. ChatGPT) sem punir outras chaves.
+  if (isRateLimited(`mcp-key:${key.id}`, MAX_REQUESTS_PER_KEY_PER_MIN)) {
+    return NextResponse.json({ error: "Limite de requisições da chave excedido. Aguarde um momento." }, { status: 429 });
   }
 
   void admin.from("mcp_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id);

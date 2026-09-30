@@ -12,6 +12,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/patrocinadores", 10],
   ["/api/calendar", 30],
   ["/api/email", 30],
+  ["/api/mcp/keys", 10],
+  ["/api/mcp", 60],
   ["/api/", 60],
 ];
 
