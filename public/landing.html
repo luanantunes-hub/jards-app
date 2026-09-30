@@ -1064,105 +1064,123 @@
           <span class="text-[10px] font-bold text-black/35 uppercase tracking-wider">Empresa</span>
           <span class="text-[10px] font-bold text-black/35 uppercase tracking-wider">Investimento</span>
         </div>
-        <div>
-          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.06)">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/petrobras.svg" alt="" class="w-full h-full object-contain" /></div>
-              <div class="min-w-0">
-                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">Petrobras</p>
-                <p class="text-black/40 text-[11px]">Energia · RJ</p>
-              </div>
-            </div>
-            <div class="text-right flex-shrink-0">
-              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 248M</p>
-              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#684DB0">Rouanet</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.06)">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/vale-logo.png" alt="" class="w-full h-full object-contain" /></div>
-              <div class="min-w-0">
-                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">Vale</p>
-                <p class="text-black/40 text-[11px]">Mineração · MG</p>
-              </div>
-            </div>
-            <div class="text-right flex-shrink-0">
-              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 186M</p>
-              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#684DB0">Rouanet</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.06)">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/nubank-logo.png" alt="" class="w-full h-full object-contain" /></div>
-              <div class="min-w-0">
-                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">Nubank</p>
-                <p class="text-black/40 text-[11px]">Serviços financeiros · SP</p>
-              </div>
-            </div>
-            <div class="text-right flex-shrink-0">
-              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 111M</p>
-              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#2D72B0">Esporte</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.06)">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/natura-logo.svg" alt="" class="w-full h-full object-contain" /></div>
-              <div class="min-w-0">
-                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">Natura</p>
-                <p class="text-black/40 text-[11px]">Cosméticos · SP</p>
-              </div>
-            </div>
-            <div class="text-right flex-shrink-0">
-              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 68M</p>
-              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#684DB0">Rouanet</span>
-            </div>
-          </div>
-          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors">
-            <div class="flex items-center gap-3 min-w-0">
-              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/matarazzo.svg" alt="" class="w-full h-full object-contain" /></div>
-              <div class="min-w-0">
-                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">IRFM</p>
-                <p class="text-black/40 text-[11px]">Indústria · SP</p>
-              </div>
-            </div>
-            <div class="text-right flex-shrink-0">
-              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 42M</p>
-              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#684DB0">Rouanet</span>
-            </div>
-          </div>
-        </div>
+        <div id="leis-lista-rows"></div>
       </div>
 
-      <!-- Leis cobertas, grudadas verticalmente -->
+      <!-- Leis cobertas, grudadas verticalmente e clicáveis -->
       <div class="reveal flex flex-col rounded border overflow-hidden" style="border-color:rgba(13,13,13,.08)">
-        <div class="flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
+        <button type="button" class="lei-card-btn flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors text-left w-full" style="border-bottom:1px solid rgba(13,13,13,.08);border-left:3px solid transparent;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" data-lei="cultura" onclick="selecionarLei('cultura',this)">
           <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#684DB0">
             <img src="assets/icons/icon-piano.png" alt="" width="34" height="34" style="object-fit:contain" />
           </div>
           <h3 class="font-display font-bold text-lg">Cultura</h3>
-        </div>
-        <div class="flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
+        </button>
+        <button type="button" class="lei-card-btn flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors text-left w-full" style="border-bottom:1px solid rgba(13,13,13,.08);border-left:3px solid transparent;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" data-lei="esporte" onclick="selecionarLei('esporte',this)">
           <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#2D72B0">
             <img src="assets/icons/icon-ball.png" alt="" width="34" height="34" style="object-fit:contain" />
           </div>
           <h3 class="font-display font-bold text-lg">Esporte</h3>
-        </div>
-        <div class="flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
+        </button>
+        <button type="button" class="lei-card-btn flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors text-left w-full" style="border-bottom:1px solid rgba(13,13,13,.08);border-left:3px solid transparent;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" data-lei="audiovisual" onclick="selecionarLei('audiovisual',this)">
           <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#D94A4A">
             <img src="assets/icons/icon-chat.png" alt="" width="34" height="34" style="object-fit:contain" />
           </div>
           <h3 class="font-display font-bold text-lg">Audiovisual</h3>
-        </div>
-        <div class="flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors" style="background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
+        </button>
+        <button type="button" class="lei-card-btn flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors text-left w-full" style="border-left:3px solid transparent;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" data-lei="saude" onclick="selecionarLei('saude',this)">
           <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#1A8B7A">
             <img src="assets/icons/icon-stethoscope.png" alt="" width="34" height="34" style="object-fit:contain" />
           </div>
           <h3 class="font-display font-bold text-lg">Saúde e outras</h3>
-        </div>
+        </button>
       </div>
     </div>
   </div>
 </section>
+
+<script>
+(function(){
+  var LOGODEV_TOKEN = 'pk_A2QRZaI_S5urxuYmsI6baQ';
+  var EMPRESAS_POR_LEI = {
+    cultura: [
+      {nome:'Petrobras', dominio:'petrobras.com.br', setor:'Energia', uf:'RJ', valor:'R$ 248M'},
+      {nome:'Vale', dominio:'vale.com', setor:'Mineração', uf:'MG', valor:'R$ 186M'},
+      {nome:'Natura', dominio:'natura.com.br', setor:'Cosméticos', uf:'SP', valor:'R$ 68M'},
+      {nome:'Bradesco', dominio:'bradesco.com.br', setor:'Serviços financeiros', uf:'SP', valor:'R$ 45M'},
+      {nome:'Itaú', dominio:'itau.com.br', setor:'Serviços financeiros', uf:'SP', valor:'R$ 38M'}
+    ],
+    esporte: [
+      {nome:'Nubank', dominio:'nubank.com.br', setor:'Serviços financeiros', uf:'SP', valor:'R$ 111M'},
+      {nome:'Ambev', dominio:'ambev.com.br', setor:'Bebidas', uf:'SP', valor:'R$ 95M'},
+      {nome:'Vivo', dominio:'vivo.com.br', setor:'Telecomunicações', uf:'SP', valor:'R$ 72M'},
+      {nome:'Embraer', dominio:'embraer.com', setor:'Aeroespacial', uf:'SP', valor:'R$ 54M'},
+      {nome:'Gerdau', dominio:'gerdau.com', setor:'Siderurgia', uf:'RS', valor:'R$ 40M'}
+    ],
+    audiovisual: [
+      {nome:'Claro', dominio:'claro.com.br', setor:'Telecomunicações', uf:'RJ', valor:'R$ 88M'},
+      {nome:'Suzano', dominio:'suzano.com.br', setor:'Papel e celulose', uf:'SP', valor:'R$ 63M'},
+      {nome:'JBS', dominio:'jbs.com.br', setor:'Alimentos', uf:'SP', valor:'R$ 51M'},
+      {nome:'Localiza', dominio:'localiza.com', setor:'Mobilidade', uf:'MG', valor:'R$ 35M'},
+      {nome:'Klabin', dominio:'klabin.com.br', setor:'Papel e celulose', uf:'SP', valor:'R$ 29M'}
+    ],
+    saude: [
+      {nome:'Fleury', dominio:'fleury.com.br', setor:'Saúde', uf:'SP', valor:'R$ 22M'},
+      {nome:'Hapvida', dominio:'hapvida.com.br', setor:'Saúde', uf:'CE', valor:'R$ 18M'},
+      {nome:'Rede D\'Or', dominio:'rededorsaoluiz.com.br', setor:'Saúde', uf:'RJ', valor:'R$ 15M'},
+      {nome:'Dasa', dominio:'dasa.com.br', setor:'Saúde', uf:'SP', valor:'R$ 12M'},
+      {nome:'Raia Drogasil', dominio:'raiadrogasil.com.br', setor:'Varejo farmacêutico', uf:'SP', valor:'R$ 9M'}
+    ]
+  };
+  var META_LEI = {
+    cultura: {label:'Rouanet', cor:'#684DB0'},
+    esporte: {label:'Esporte', cor:'#2D72B0'},
+    audiovisual: {label:'Audiovisual', cor:'#D94A4A'},
+    saude: {label:'Personalizada', cor:'#1A8B7A'}
+  };
+
+  function logoUrl(dominio){
+    return 'https://img.logo.dev/' + dominio + '?token=' + LOGODEV_TOKEN + '&size=64&format=png';
+  }
+
+  function renderLista(lei){
+    var empresas = EMPRESAS_POR_LEI[lei];
+    var meta = META_LEI[lei];
+    var container = document.getElementById('leis-lista-rows');
+    if(!container || !empresas) return;
+    container.innerHTML = empresas.map(function(e, i){
+      var borda = i < empresas.length - 1 ? 'border-bottom:1px solid rgba(13,13,13,.06)' : '';
+      return '<div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="' + borda + '">' +
+        '<div class="flex items-center gap-3 min-w-0">' +
+          '<div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="' + logoUrl(e.dominio) + '" alt="" class="w-full h-full object-contain" loading="lazy" /></div>' +
+          '<div class="min-w-0">' +
+            '<p class="font-semibold text-[#0D0D0D] text-[13px] truncate">' + e.nome + '</p>' +
+            '<p class="text-black/40 text-[11px]">' + e.setor + ' · ' + e.uf + '</p>' +
+          '</div>' +
+        '</div>' +
+        '<div class="text-right flex-shrink-0">' +
+          '<p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">' + e.valor + '</p>' +
+          '<span class="text-[9px] font-bold uppercase tracking-wide" style="color:' + meta.cor + '">' + meta.label + '</span>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  window.selecionarLei = function(lei, btn){
+    document.querySelectorAll('.lei-card-btn').forEach(function(b){
+      b.style.borderLeftColor = 'transparent';
+      b.style.background = 'linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)';
+    });
+    var cor = META_LEI[lei].cor;
+    btn.style.borderLeftColor = cor;
+    btn.style.background = 'linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)';
+    renderLista(lei);
+  };
+
+  renderLista('cultura');
+  var primeiro = document.querySelector('.lei-card-btn[data-lei="cultura"]');
+  if(primeiro) primeiro.style.borderLeftColor = META_LEI.cultura.cor;
+})();
+</script>
 
 
 <!-- ════════════════════════ FLUXO JARDS ════════════════════════ -->
