@@ -1050,42 +1050,115 @@
 <!-- ════════════════════════ LEIS DE INCENTIVO ════════════════════════ -->
 <section id="leis-incentivo" class="section-space bg-white px-6">
   <div class="max-w-6xl mx-auto">
-    <div class="grid md:grid-cols-2 gap-12 items-end mb-10">
-      <div class="reveal">
-        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Cobertura de leis</p>
-        <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(28px,3.2vw,44px)">
-          Uma base para cada<br/>lei de incentivo.
-        </h2>
-      </div>
-      <p class="reveal text-black/55 text-[15px] leading-relaxed">
-        Patrocinadores, editais e histórico organizados por lei.
-      </p>
+    <div class="mb-10 reveal">
+      <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Cobertura de leis</p>
+      <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(28px,3.2vw,44px)">
+        Uma base para cada<br/>lei de incentivo.
+      </h2>
     </div>
 
-    <div class="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-      <div class="rounded border p-5 hover:shadow-md transition cursor-default reveal flex items-center gap-3.5" style="border-color:rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#684DB0">
-          <img src="assets/icons/icon-piano.png" alt="" width="34" height="34" style="object-fit:contain" />
+    <div class="grid md:grid-cols-[1.15fr_.85fr] gap-6 items-stretch">
+      <!-- Lista de patrocinadores, no padrão real do app -->
+      <div class="reveal rounded border overflow-hidden" style="border-color:rgba(13,13,13,.08)">
+        <div class="flex items-center justify-between px-5 py-3" style="background:#F9F9F8;border-bottom:1px solid rgba(13,13,13,.07)">
+          <span class="text-[10px] font-bold text-black/35 uppercase tracking-wider">Empresa</span>
+          <span class="text-[10px] font-bold text-black/35 uppercase tracking-wider">Investimento</span>
         </div>
-        <h3 class="font-display font-bold text-lg">Cultura</h3>
+        <div>
+          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.06)">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/petrobras.svg" alt="" class="w-full h-full object-contain" /></div>
+              <div class="min-w-0">
+                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">Petrobras</p>
+                <p class="text-black/40 text-[11px]">Energia · RJ</p>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 248M</p>
+              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#684DB0">Rouanet</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.06)">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/vale-logo.png" alt="" class="w-full h-full object-contain" /></div>
+              <div class="min-w-0">
+                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">Vale</p>
+                <p class="text-black/40 text-[11px]">Mineração · MG</p>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 186M</p>
+              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#684DB0">Rouanet</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.06)">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/nubank-logo.png" alt="" class="w-full h-full object-contain" /></div>
+              <div class="min-w-0">
+                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">Nubank</p>
+                <p class="text-black/40 text-[11px]">Serviços financeiros · SP</p>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 111M</p>
+              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#2D72B0">Esporte</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors" style="border-bottom:1px solid rgba(13,13,13,.06)">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/natura-logo.svg" alt="" class="w-full h-full object-contain" /></div>
+              <div class="min-w-0">
+                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">Natura</p>
+                <p class="text-black/40 text-[11px]">Cosméticos · SP</p>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 68M</p>
+              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#684DB0">Rouanet</span>
+            </div>
+          </div>
+          <div class="flex items-center justify-between gap-3 px-5 py-3.5 hover:bg-black/[0.02] transition-colors">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="assets/matarazzo.svg" alt="" class="w-full h-full object-contain" /></div>
+              <div class="min-w-0">
+                <p class="font-semibold text-[#0D0D0D] text-[13px] truncate">IRFM</p>
+                <p class="text-black/40 text-[11px]">Indústria · SP</p>
+              </div>
+            </div>
+            <div class="text-right flex-shrink-0">
+              <p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">R$ 42M</p>
+              <span class="text-[9px] font-bold uppercase tracking-wide" style="color:#684DB0">Rouanet</span>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="rounded border p-5 hover:shadow-md transition cursor-default reveal flex items-center gap-3.5" style="border-color:rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#2D72B0">
-          <img src="assets/icons/icon-ball.png" alt="" width="34" height="34" style="object-fit:contain" />
+
+      <!-- Leis cobertas, empilhadas -->
+      <div class="flex flex-col gap-3">
+        <div class="rounded border p-5 hover:shadow-md transition cursor-default reveal flex items-center gap-3.5 flex-1" style="border-color:rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
+          <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#684DB0">
+            <img src="assets/icons/icon-piano.png" alt="" width="34" height="34" style="object-fit:contain" />
+          </div>
+          <h3 class="font-display font-bold text-lg">Cultura</h3>
         </div>
-        <h3 class="font-display font-bold text-lg">Esporte</h3>
-      </div>
-      <div class="rounded border p-5 hover:shadow-md transition cursor-default reveal flex items-center gap-3.5" style="border-color:rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#D94A4A">
-          <img src="assets/icons/icon-chat.png" alt="" width="34" height="34" style="object-fit:contain" />
+        <div class="rounded border p-5 hover:shadow-md transition cursor-default reveal flex items-center gap-3.5 flex-1" style="border-color:rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
+          <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#2D72B0">
+            <img src="assets/icons/icon-ball.png" alt="" width="34" height="34" style="object-fit:contain" />
+          </div>
+          <h3 class="font-display font-bold text-lg">Esporte</h3>
         </div>
-        <h3 class="font-display font-bold text-lg">Audiovisual</h3>
-      </div>
-      <div class="rounded border p-5 hover:shadow-md transition cursor-default reveal flex items-center gap-3.5" style="border-color:rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
-        <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#1A8B7A">
-          <img src="assets/icons/icon-stethoscope.png" alt="" width="34" height="34" style="object-fit:contain" />
+        <div class="rounded border p-5 hover:shadow-md transition cursor-default reveal flex items-center gap-3.5 flex-1" style="border-color:rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
+          <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#D94A4A">
+            <img src="assets/icons/icon-chat.png" alt="" width="34" height="34" style="object-fit:contain" />
+          </div>
+          <h3 class="font-display font-bold text-lg">Audiovisual</h3>
         </div>
-        <h3 class="font-display font-bold text-lg">Saúde e outras</h3>
+        <div class="rounded border p-5 hover:shadow-md transition cursor-default reveal flex items-center gap-3.5 flex-1" style="border-color:rgba(13,13,13,.08);background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)">
+          <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#1A8B7A">
+            <img src="assets/icons/icon-stethoscope.png" alt="" width="34" height="34" style="object-fit:contain" />
+          </div>
+          <h3 class="font-display font-bold text-lg">Saúde e outras</h3>
+        </div>
       </div>
     </div>
   </div>
