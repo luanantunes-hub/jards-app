@@ -7,7 +7,7 @@ import {
   Phone, ExternalLink, Coins,
   ChevronUp, ChevronDown, UserPlus, X, Pencil, ThumbsUp, ThumbsDown, Copy, Check,
   Upload, FileText, Trash2, Newspaper, RefreshCw,
-  MoreHorizontal, Briefcase, ClipboardList, UsersRound,
+  MoreHorizontal, Briefcase, ClipboardList, UsersRound, ArrowUpRight, CircleHelp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useCreditos } from "@/contexts/CreditosContext";
@@ -1751,8 +1751,9 @@ export default function PatrocinadorPage() {
                           if (siteEfetivo) {
                             return (
                               <div key={p.id} className="group/card relative">
-                                <a href={href} target="_blank" rel="noopener noreferrer" className="group rounded border p-2.5 flex items-center gap-3 transition hover:bg-black/[.03]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                                <a href={href} target="_blank" rel="noopener noreferrer" className="group relative rounded border p-2.5 flex items-center gap-3 transition hover:bg-black/[.03]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                                   {conteudo}
+                                  <ArrowUpRight size={14} aria-label="Abre o site" className="absolute bottom-2 right-2 hidden text-[#2E8932] group-hover:block" />
                                 </a>
                                 {!p.site_url && (
                                   <button
@@ -1771,10 +1772,11 @@ export default function PatrocinadorPage() {
                               key={p.id}
                               type="button"
                               onClick={() => setProjetoSiteModal({ id: p.id, nome: p.nome })}
-                              className="group rounded border p-2.5 flex items-center gap-3 text-left transition hover:bg-black/[.03]"
+                              className="group relative rounded border p-2.5 flex items-center gap-3 text-left transition hover:bg-black/[.03]"
                               style={{ borderColor: "rgba(13,13,13,.08)" }}
                             >
                               {conteudo}
+                              <CircleHelp size={14} aria-label="Sem site: clique para adicionar" className="absolute bottom-2 right-2 hidden text-[#D94A4A] group-hover:block" />
                             </button>
                           );
                         })}
