@@ -8,6 +8,7 @@ São extrações assistidas: antes de virar regra no sistema, cada número deve 
 |---|---|---|
 | [rouanet-modulo-ii-execucao.md](./rouanet-modulo-ii-execucao.md) | Manual do Proponente – Módulo II – Monitoramento e Execução (MinC, v3, ago/2026) | Cultura |
 | [rouanet-modulo-iii-avaliacao.md](./rouanet-modulo-iii-avaliacao.md) | Manual do Proponente – Módulo III – Avaliação de Resultados (MinC, 2026) | Cultura |
+| [lie-federal-2026-oficial.md](./lie-federal-2026-oficial.md) | **LC 222/2025, Decreto 12.861/2026, Portaria MESP 10/2026 e Portaria 424/2020, texto integral**, e os modelos oficiais (formulário PCP/PCF 2026 descrito célula a célula, RCO, carimbo, GRU, remanejamento, PDLIE, defeso); 53 checagens | Esporte (federal) |
 | [rouanet-in29-texto-integral.md](./rouanet-in29-texto-integral.md) | **IN MinC 29/2026 e IN 34/2026, texto integral** (gov.br/cultura e DOU): parâmetros conferidos artigo por artigo e 61 checagens | Cultura |
 | [rouanet-in29-manual-olivieri.md](./rouanet-in29-manual-olivieri.md) | Manual IN 29 (escritório Olivieri, fev/2026) | Cultura |
 | [rouanet-marcas-2026-e-defeso.md](./rouanet-marcas-2026-e-defeso.md) | Manual de Uso da Marca do PRONAC, jan/2026 e versão defeso jun/2026 | Cultura |
