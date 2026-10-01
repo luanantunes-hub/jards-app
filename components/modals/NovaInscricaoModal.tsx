@@ -148,9 +148,11 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   useEffect(() => {
     supabase.from("empresas_crm").select("id, nome").order("nome").limit(200)
       .then(({ data }) => setEmpresas(data ?? []));
-    supabase.from("projetos_crm").select("id, nome").order("nome").limit(100)
-      .then(({ data }) => setProjetos(data ?? []));
     if (organizationId) {
+      // Restrito à organização atual — projetos_crm não isola por RLS (só por dono),
+      // então sem esse filtro apareciam projetos de outras organizações do mesmo usuário.
+      supabase.from("projetos_crm").select("id, nome").eq("organization_id", organizationId).order("nome").limit(100)
+        .then(({ data }) => setProjetos(data ?? []));
       (supabase as any).from("captadores").select("id, nome, agencia").eq("organization_id", organizationId).or("ativo.eq.true,ativo.is.null").order("nome").limit(100)
         .then(({ data }: { data: { id: string; nome: string; agencia: string | null }[] | null }) =>
           setAgencias((data ?? []).map((a) => ({ id: a.id, label: a.agencia || a.nome, sublabel: a.agencia ? a.nome : undefined })))
@@ -169,6 +171,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
       .from("cotas_patrocinio")
       .select("id,nome,valor,valor_maximo,modelo,produto_nome,contrapartidas,status,unidades,unidades_ilimitadas,unidades_vendidas")
       .eq("projeto_id", projeto)
+      .eq("organization_id", organizationId)
       .order("ordem")
       .then(({ data }: { data: CotaOption[] | null }) => {
         const next = data ?? [];
@@ -177,7 +180,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
         setLoadingCotas(false);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [organizationId]);
 
   useEffect(() => {
     if (!projetoId) {
