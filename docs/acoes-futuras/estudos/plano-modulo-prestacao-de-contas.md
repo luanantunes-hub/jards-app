@@ -3,6 +3,7 @@
 > Estudo de 01/10/2026. Proposta para discussão; nada aqui foi implementado.
 > Fontes: os manuais da pasta "prestação de contas" do Drive, os textos oficiais lidos na íntegra (IN MinC 29/2026, LC 222/2025, Decreto 12.861/2026, Portaria MESP 10/2026, Anexo LXXXVI-A da PRC 5/2017, IN ANCINE 159/2021 e os modelos oficiais), pesquisa de mercado e de dados abertos, e um mapeamento do código atual. Regras incertas aparecem marcadas com [?].
 > As extrações detalhadas, com página citada em cada regra, estão em [`prestacao-de-contas-fontes/`](./prestacao-de-contas-fontes/README.md).
+> A execução, PR a PR, está no [plano de implementação](./plano-implementacao-prestacao-de-contas.md).
 
 ## 0. Resumo
 
@@ -741,7 +742,7 @@ Estimativas em semanas de uma pessoa full-stack.
 - Assistente de IA ancorado na norma e no projeto.
 - Regimes estaduais e municipais (ProAC, Pro-Mac, FIA, Fundo do Idoso), com o agente vigiando os diários locais pelo Querido Diário, e relatório ao patrocinador para patrocínio direto.
 
-**Total das fases 0 a 9: cerca de 33 semanas.** Com duas pessoas, depois da fase 2 uma segue com objeto, envio e piloto (fases 3 e 4) enquanto a outra faz carteira, cobrança e agente (fases 5 e 6); as fases 7, 8 e 9 podem correr em paralelo.
+**Total das fases 0 a 9: cerca de 33 semanas** (o [plano de implementação](./plano-implementacao-prestacao-de-contas.md) revisou as fases 0 e 1 depois do levantamento do código e chegou a cerca de 36). Com duas pessoas, depois da fase 2 uma segue com objeto, envio e piloto (fases 3 e 4) enquanto a outra faz carteira, cobrança e agente (fases 5 e 6); as fases 7, 8 e 9 podem correr em paralelo.
 
 ---
 
