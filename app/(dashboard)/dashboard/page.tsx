@@ -12,6 +12,7 @@ import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer"
 import { useDashboardPreferences } from "@/components/dashboard/useDashboardPreferences";
 import type { DashboardModuleId } from "@/components/dashboard/dashboardModules";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
+import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
@@ -48,6 +49,18 @@ type Evento = {
   tipo: "edital" | "followup";
   titulo: string;
   sub: string;
+};
+
+type TempoEstagio = { mediana_dias: number; amostras: number };
+
+type TipoRanking = "equipe" | "externo";
+
+type RankingCaptador = {
+  captador_id: string;
+  nome: string;
+  ciclos_fechados: number;
+  mediana_dias: number;
+  taxa_aprovacao: number;
 };
 
 type ChannelMetric = {
@@ -122,6 +135,11 @@ function fmtEventDate(iso: string): { mes: string; dia: string } {
   const [, m, d] = iso.split("T")[0].split("-");
   const meses = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
   return { mes: meses[parseInt(m) - 1], dia: d };
+}
+
+function fmtDias(dias: number): string {
+  if (dias < 1) return "<1 d";
+  return `${Math.round(dias)} d`;
 }
 
 function daysUntil(iso: string): number {
@@ -290,6 +308,50 @@ export default function DashboardPage() {
   const [eventos,    setEventos]    = useState<Evento[]>([]);
   const [channelMetrics, setChannelMetrics] = useState<ChannelMetric[]>([]);
   const [channelView, setChannelView] = useState<"tabela" | "funil">("tabela");
+
+  const organizationId = useOrganizationId();
+  const [tempoPorEstagio, setTempoPorEstagio] = useState<Record<string, TempoEstagio>>({});
+  const [ranking, setRanking] = useState<Record<TipoRanking, RankingCaptador[]>>({ equipe: [], externo: [] });
+  const [rankingView, setRankingView] = useState<TipoRanking>("equipe");
+  const [velocidadeLoading, setVelocidadeLoading] = useState(true);
+
+  // Velocidade do funil vem de RPCs agregadas no banco (histórico de status é
+  // grande demais para buscar inteiro, e o ranking é visível pra toda a org
+  // sem expor as captações em si).
+  useEffect(() => {
+    if (!organizationId) return;
+    let ativo = true;
+    (async () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rpc = (supabase as any).rpc.bind(supabase);
+      const [tempoRes, equipeRes, externoRes] = await Promise.all([
+        rpc("fn_dashboard_tempo_por_estagio", { p_organization_id: organizationId }),
+        rpc("fn_dashboard_ranking_captadores", { p_organization_id: organizationId, p_tipo: "equipe" }),
+        rpc("fn_dashboard_ranking_captadores", { p_organization_id: organizationId, p_tipo: "externo" }),
+      ]);
+      if (!ativo) return;
+
+      const tempos: Record<string, TempoEstagio> = {};
+      for (const row of (tempoRes.data ?? []) as Array<{ status: string; mediana_dias: number; amostras: number }>) {
+        tempos[row.status] = { mediana_dias: Number(row.mediana_dias), amostras: Number(row.amostras) };
+      }
+      const normalizar = (rows: unknown): RankingCaptador[] =>
+        ((rows ?? []) as RankingCaptador[])
+          .map((r) => ({
+            ...r,
+            ciclos_fechados: Number(r.ciclos_fechados),
+            mediana_dias: Number(r.mediana_dias),
+            taxa_aprovacao: Number(r.taxa_aprovacao),
+          }))
+          .sort((a, b) => a.mediana_dias - b.mediana_dias);
+
+      setTempoPorEstagio(tempos);
+      setRanking({ equipe: normalizar(equipeRes.data), externo: normalizar(externoRes.data) });
+      setVelocidadeLoading(false);
+    })();
+    return () => { ativo = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [organizationId]);
 
   useEffect(() => {
     async function fetchAll() {
@@ -692,6 +754,7 @@ export default function DashboardPage() {
             <div className="px-6 py-5 flex flex-col gap-3.5">
               {funnel.map(({ status, label, count, valor, color }) => {
                 const pct = Math.round((valor / globalMax) * 100);
+                const tempo = tempoPorEstagio[status];
                 return (
                   <div key={status} className="flex items-center gap-3">
                     <span className="text-[11px] text-black/45 w-[132px] flex-shrink-0 whitespace-nowrap">
@@ -707,6 +770,12 @@ export default function DashboardPage() {
                         }}
                       />
                     </div>
+                    <span
+                      className="text-[11px] text-black/30 w-[42px] text-right flex-shrink-0 tabular-nums"
+                      title={tempo ? `Tempo mediano neste estágio · ${tempo.amostras} ${tempo.amostras === 1 ? "passagem" : "passagens"}` : "Ainda sem passagens concluídas por este estágio"}
+                    >
+                      {tempo ? `~${fmtDias(tempo.mediana_dias)}` : "—"}
+                    </span>
                     <span className="text-[11px] text-black/25 w-5 text-right flex-shrink-0">{count}</span>
                     <span className="text-[11px] font-semibold text-black/55 w-[58px] text-right flex-shrink-0">
                       {valor > 0 ? fmtValor(valor) : "—"}
@@ -725,11 +794,18 @@ export default function DashboardPage() {
                     style={{ width: `${aprovadoBarPct}%`, background: "#2E8932", opacity: 0.7 }}
                   />
                 </div>
+                <span className="w-[42px] flex-shrink-0" aria-hidden="true" />
                 <span className="text-[11px] text-black/25 w-5 text-right flex-shrink-0">{aprovadoCount}</span>
                 <span className="text-[11px] font-semibold w-[58px] text-right flex-shrink-0 text-[#2E8932]">
                   {aprovadoValor > 0 ? fmtValor(aprovadoValor) : "—"}
                 </span>
               </div>
+
+              {Object.keys(tempoPorEstagio).length > 0 && (
+                <p className="text-[10px] text-black/30">
+                  ~ dias: tempo mediano que as captações passam em cada estágio
+                </p>
+              )}
             </div>
           </div>
         ))}
@@ -963,6 +1039,71 @@ export default function DashboardPage() {
                   );
                 })}
               </div>
+            </>
+          )}
+        </div>
+      ))}
+
+      {/* Velocidade por captador */}
+      {dashboardPreferences.isEnabled("captadoresRanking") && (velocidadeLoading ? <div className="mt-4" style={{ order: modulePosition("captadoresRanking") }}><BlockSkeleton h={220} /></div> : (
+        <div className="mt-4 bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("captadoresRanking") }}>
+          <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+            <div>
+              <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Velocidade</p>
+              <p className="text-[13px] font-semibold text-[#0D0D0D]">Velocidade por captador</p>
+            </div>
+            <SegmentedControl
+              ariaLabel="Tipo de captador"
+              value={rankingView}
+              onChange={setRankingView}
+              options={[
+                { value: "equipe", label: "Equipe" },
+                { value: "externo", label: "Externos" },
+              ]}
+            />
+          </div>
+
+          {ranking[rankingView].length === 0 ? (
+            <p className="px-5 py-10 text-xs text-black/25 text-center">
+              {rankingView === "equipe"
+                ? "O ranking aparece quando captações com responsável chegarem a aprovado ou recusado"
+                : "O ranking aparece quando captações com captador externo chegarem a aprovado ou recusado"}
+            </p>
+          ) : (
+            <>
+              <div className="hidden sm:grid grid-cols-[1fr_repeat(3,104px)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25">Captador</span>
+                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center">Ciclos fechados</span>
+                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center">Tempo mediano</span>
+                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Aprovação</span>
+              </div>
+              <div className="divide-y divide-black/[.06]">
+                {ranking[rankingView].map((item) => (
+                  <div key={item.captador_id} className="grid grid-cols-3 sm:grid-cols-[1fr_repeat(3,104px)] items-center gap-3 sm:gap-4 px-5 py-3.5">
+                    <div className="col-span-3 sm:col-span-1 min-w-0">
+                      <p className="truncate text-[12px] font-semibold text-[#0D0D0D]">{item.nome}</p>
+                      {item.ciclos_fechados < 5 && (
+                        <p className="mt-0.5 text-[10px] text-[#D94E4E]">amostra pequena</p>
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Ciclos</p>
+                      <p className="text-[13px] font-semibold text-black/65 tabular-nums">{item.ciclos_fechados}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Tempo</p>
+                      <p className="text-[13px] font-semibold text-black/65 tabular-nums">{fmtDias(item.mediana_dias)}</p>
+                    </div>
+                    <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                      <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Aprovação</p>
+                      <p className="text-[15px] font-bold text-[#7259B5] tabular-nums">{Math.round(item.taxa_aprovacao * 100)}%</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="px-5 py-3 border-t text-[10px] text-black/30" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                Ciclo = da abertura (ou retomada) da captação até aprovado/recusado. Ordenado pelo tempo mediano.
+              </p>
             </>
           )}
         </div>

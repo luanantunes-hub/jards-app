@@ -6,6 +6,7 @@ export const DASHBOARD_MODULES = [
   { id: "recentActivities", label: "Atividades recentes", description: "Últimas interações registradas no CRM", defaultEnabled: false },
   { id: "upcomingEvents", label: "Agenda comercial", description: "Follow-ups e editais dos próximos 30 dias", defaultEnabled: false },
   { id: "channelEffectiveness", label: "Eficácia dos canais", description: "Taxas de resposta, reunião e conversão por canal de contato", defaultEnabled: false },
+  { id: "captadoresRanking", label: "Velocidade por captador", description: "Tempo mediano de ciclo e taxa de aprovação por captador", defaultEnabled: false },
 ] as const;
 
 export type DashboardModuleId = (typeof DASHBOARD_MODULES)[number]["id"];
