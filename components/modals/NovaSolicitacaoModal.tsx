@@ -58,6 +58,10 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
 
   useEffect(() => {
     if (!open) return;
+    setAtribuicaoId(null);
+    setDestinatarioId(null);
+    setMotivo("");
+    setErro(null);
     loadData();
   }, [open]);
 
@@ -69,11 +73,18 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
     const { data: orgIds } = await supabase.rpc("auth_org_ids");
     const orgId = orgIds?.[0];
 
+    // captador_user_id referencia captadores(id), não auth.users(id) — resolve
+    // o captador vinculado a este usuário antes de filtrar as atribuições.
+    let captadorQuery = (supabase as any).from("captadores").select("id").eq("user_id", user.id);
+    if (orgId) captadorQuery = captadorQuery.eq("organization_id", orgId);
+    const { data: captador } = await captadorQuery.maybeSingle();
+    if (!captador) { setAtribuicoes([]); return; }
+
     // Load my attributions (ativa status)
     let query = supabase
       .from("atribuicoes")
       .select("id, empresa_crm_id, tipo, data_inicio, captador_user_id, empresas:empresa_crm_id(nome)")
-      .eq("captador_user_id", user.id)
+      .eq("captador_user_id", captador.id)
       .eq("status", "ativa");
 
     if (orgId) query = query.eq("organization_id", orgId);
@@ -144,6 +155,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
 
     const { data: orgIds } = await supabase.rpc("auth_org_ids");
     const orgId = orgIds?.[0];
+    if (!orgId) { setErro("Organização não encontrada"); setSaving(false); return; }
 
     const { error } = await (supabase as any).from("solicitacoes_transferencia").insert({
       account_id: user.id,
