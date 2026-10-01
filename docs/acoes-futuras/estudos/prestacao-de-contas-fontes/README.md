@@ -15,6 +15,14 @@ São extrações assistidas: antes de virar regra no sistema, cada número deve 
 | [rouanet-manual-vale-2021-obsoleto.md](./rouanet-manual-vale-2021-obsoleto.md) | Manual de Projetos Culturais (Instituto Cultural Vale, 2021, IN 02/2019) — obsoleto, só histórico | Cultura |
 | [saude-pronon-pronas-manual-2019.md](./saude-pronon-pronas-manual-2019.md) | Manual de análise contábil e financeira PRONON e PRONAS/PCD (MS/FNS, 2019) | Saúde |
 
+### Mercado, referências e dados abertos
+
+| Arquivo | Tema |
+|---|---|
+| [mercado-brasil.md](./mercado-brasil.md) | Cerca de 20 produtos no Brasil (plataformas de patrocinador, ferramentas de proponente e consultoria, gestão de OSC, horizontais, sistemas oficiais), lacunas, recomendações e riscos |
+| [mercado-internacional.md](./mercado-internacional.md) | 23 produtos e órgãos no exterior (grants, contabilidade de fundos, contabilidade de produção audiovisual, despesas e conciliação, fundos públicos da UE e do Reino Unido), 12 padrões e 14 antipadrões |
+| [materiais-referencia-e-dados-abertos.md](./materiais-referencia-e-dados-abertos.md) | 23 materiais de referência (TCU, CGU, MROSC, Marco do Fomento, ANCINE, CFC, 2 CFR 200, UE), 26 glosas frequentes com a checagem correspondente e APIs testadas (Salic, Transferegov, ANCINE, CNPJ, sanções, Banco Central) |
+
 ### Pesquisa na web
 
 Neste ambiente, o acesso direto a páginas foi bloqueado para quase todos os domínios e a cota de buscas acabou durante a pesquisa. O conteúdo abaixo veio de resumos do buscador; nenhum texto normativo foi lido na íntegra. Cada arquivo indica a confiança de cada regra e o que conferir primeiro.

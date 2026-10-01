@@ -12,11 +12,12 @@ Decisões centrais:
 
 1. **Regime normativo como dado versionado.** Cada prestação aponta para um *regime* (ex.: `rouanet_in29_2026`, `ancine_in159_2021`, `pie_sc_in04_2025`). O regime guarda os parâmetros (prazos, tetos, meios de pagamento, documentos exigidos, checklist de envio, modelos de saída). As checagens são funções em código, testadas, que o regime liga e parametriza. Nada de "20%" escrito em componente React.
 2. **O extrato bancário é a espinha dorsal.** Todas as quatro áreas exigem a mesma coisa no fundo: cada débito da conta do projeto precisa ter um documento fiscal válido, ligado a um item aprovado do orçamento, pago ao próprio credor. O módulo passa a ser construído em cima de contas → lançamentos → pagamentos → despesas → itens.
-3. **O Jards é a mesa de trabalho, não o sistema oficial.** Salic, STR/ANCINE, Transferegov e o sistema da LIE não têm API pública para escrita. O Jards organiza, valida e gera o pacote no formato de cada sistema; a pessoa lança ou envia lá. A situação oficial (ex.: E75, E24, diligência aberta) é registrada no Jards.
+3. **O Jards é a mesa de trabalho, não o sistema oficial.** Nenhum sistema oficial aceita escrita por API. O Jards organiza, valida e gera o pacote no formato de cada sistema; a pessoa lança ou envia lá. Mas há APIs públicas de **leitura** que funcionam (Salic, Transferegov para a saúde, dados abertos da ANCINE, CNPJ e sanções): o Jards importa o projeto e confere o que já foi lançado (seção 5).
 4. **Alertas apoiam, não julgam.** O próprio manual de avaliação do MinC diz que apontamentos automáticos passam por análise humana. Cada checagem tem severidade (bloqueia envio, alerta de glosa, exige justificativa) e sempre aceita justificativa registrada.
 5. **Antes de qualquer funcionalidade, uma fase de fundação**: versionar o schema que hoje só existe no banco remoto, isolar por organização, corrigir o armazenamento e a função de IA sem autorização.
+6. **Posicionamento:** nenhum concorrente cobre, do lado do proponente e da consultoria, regras por lei despesa a despesa, conciliação pelo extrato e saída no formato oficial ao mesmo tempo. O concorrente mais próximo (PROJETE) ainda está em desenvolvimento. O Jards já tem o CRM de captação e as ativações do patrocinador e pode fechar o ciclo até a renovação (seção 4).
 
-Ordem sugerida: Fundação → Rouanet completo (piloto em cultura) → ANCINE → Esporte (LIE federal) → Saúde (PRONON/PRONAS). Estimativa: cerca de 23 semanas de uma pessoa full-stack (≈ 4 meses com duas), detalhada na seção 12.
+Ordem sugerida: Fundação → Rouanet completo (piloto em cultura) → carteira e patrocinador → ANCINE → Esporte (LIE federal) → Saúde (PRONON/PRONAS). Estimativa: cerca de 26 semanas de uma pessoa full-stack (≈ 4 a 5 meses com duas), detalhada na seção 14.
 
 ---
 
@@ -124,9 +125,90 @@ A estrutura de abas, o upload com leitura por IA, o fluxo de evidências de ativ
 
 ---
 
-## 4. Arquitetura
+## 4. Mercado e posicionamento
 
-### 4.1 Regime normativo
+Pesquisa de cerca de 20 produtos no Brasil e 23 no exterior, em `prestacao-de-contas-fontes/mercado-brasil.md` e `mercado-internacional.md`.
+
+### 4.1 Quem já está no mercado brasileiro
+
+| Grupo | Exemplos | O que fazem | O que não fazem |
+|---|---|---|---|
+| Plataformas do patrocinador | Prosas, Simbi, Incentiv, Bússola Investimento Social, Bee The Change, Incentivo Certo | Seleção, metas, contrapartidas, indicadores ESG, aprovação de logomarca pela empresa | Despesa, conciliação e regras por lei; o cliente é o patrocinador |
+| Ferramentas do proponente e da consultoria | **PROJETE** (Projetus), **IncentiVou Manager**, Plataforma Valorize | PROJETE promete despesa ligada a comprovante e meta, multi-lei (em desenvolvimento, 400+ organizações). IncentiVou junta CRM, comissões, trilha de auditoria e dossiê, só para a LIE | Conciliação começando pelo extrato, exportação no formato oficial, cobertura multi-lei pronta |
+| Audiovisual | 2Movie, Profilme | Orçamento e cost report no plano de contas da ANCINE | Regras e checklist da IN 159 [?] |
+| Gestão de OSC | Bússola Financeiro (2026), HYB, Gestor de Convênios | Orçamento por projeto e fonte, conciliação (Open Finance), checagem de regularidade em bases públicas | Regras de cada lei de incentivo |
+| Horizontais | Qive, VExpenses, Espresso, Paytrack, Nibo, Omie, Conta Azul, Dynadok | OCR, captura de NF por CNPJ, conciliação, detecção de duplicidade | Nada específico de projeto incentivado |
+| Sistemas oficiais | Salic (aba Compliance, API de leitura), ANCINE (STR, BB Gestão Ágil, assistente Cine Bot), Transferegov | Recebem a prestação e já cruzam lançamentos com o extrato do BB | Lentos, rígidos, um por lei; passivo de cerca de 30 mil prestações sem análise no MinC e na ANCINE (TCU, Acórdão 726/2026) |
+
+### 4.2 Referências internacionais que valem copiar
+
+| Padrão | De onde vem | Como fica no Jards |
+|---|---|---|
+| Orçamento "vivo": aprovado → remanejado → comprometido → pago → saldo | Instrumentl Spenddown, GreenSlate, Fluxx | Colunas da árvore de orçamento (seção 6.4) |
+| Conciliação em três vias (extrato, documento, pagamento) que só casa sozinha com um único candidato | Expensify, Ramp, Hubdoc, SmartyGrants | Tela de conciliação com "por que casou" (seção 6.3) |
+| Regra que cita a norma, com três desfechos e decisão final humana | Ramp Policy Agent, Arachne (Comissão Europeia) | Conforme / Revisar / Não conforme, e "não calculável" quando falta dado (seção 8) |
+| Fila de "não atribuído" resolvida na própria linha | GreenSlate (Tax Credit Summary), Pleo | Painel de pendências e percentual de prontidão (seção 10) |
+| Remanejamento como pedido com estados; administrativo × formal | Fluxx, GreenSlate (EFC Change Report) | Seção 6.4 |
+| Pacote de envio com checklist, nomenclatura e manifesto; pré-pacote no meio da execução | Screen Australia, Entertainment Partners, Horizon Europe | Seção 6.8 |
+| Períodos travados e "cada número leva à sua fonte" | Euna/AmpliFund, DataSnipper, Pleo | Retrato imutável a cada envio (seção 12) |
+| Evidência com data e local capturados na origem | Banco Mundial (GEMS), Good Grants | Biblioteca de evidências por meta (seção 6.5) |
+| Painel de carteira por papel | GreenSlate (Incentives Dashboard), EMDESK | Visão para consultorias (seção 6.9) |
+| Acesso de convidado (contador, auditor, patrocinador) | Entertainment Partners (Moneypenny), GreenSlate | Seção 6.9 |
+
+### 4.3 Lacunas e posicionamento
+
+Ninguém resolve bem, do lado do proponente e da consultoria:
+
+1. regras de cada lei aplicadas despesa por despesa, **antes** do envio;
+2. conciliação começando pelo extrato da conta do projeto;
+3. saída no formato do sistema oficial (RP/DE/DO da ANCINE, formulário PCP/PCF da LIE, Planilha II da saúde, espelho do Salic);
+4. gestão de diligências e glosas anos depois do envio, quando a equipe já mudou;
+5. visão de carteira para consultorias com dezenas de projetos de clientes diferentes;
+6. relatório ao patrocinador emitido pelo proponente (hoje cada patrocinador tem sua plataforma e o proponente redigita);
+7. o ciclo inteiro em um lugar: captação → contrato → contrapartidas → execução → prestação → renovação.
+
+**Posicionamento:** o Jards já tem CRM de captação, contas de patrocínio, ativações e entregas. O módulo fecha o ciclo: do extrato ao dossiê, multi-lei, para o proponente e para a consultoria, e devolve ao patrocinador a prova da contrapartida — o que alimenta a renovação no CRM.
+
+### 4.4 O que evitar
+
+- Chamar monitoramento de impacto de "prestação de contas" (o proponente percebe a diferença).
+- Alerta sem explicação, sem fonte e sem ação; IA que dá "nível de risco" sem citar a regra (é o que a função `extrair-comprovante` faz hoje).
+- Conciliação automática "otimista", com mais de um candidato.
+- Depender de uma única integração bancária ou fiscal sem importação manual de reserva.
+- Formulário longo sem salvamento automático; relatório que obriga a exportar para Excel para conferir.
+- Jargão contábil como linguagem principal (termos oficiais como rótulo secundário).
+- Pedir à pessoa que digite o que já é público (Pronac, valores, incentivadores).
+- Cobrar cada módulo ou dimensão à parte.
+
+---
+
+## 5. Dados abertos e integrações
+
+Não há API de **escrita** em nenhum sistema oficial, mas há APIs de **leitura** que funcionam (testadas em 01/10/2026). Detalhes e exemplos de resposta em `prestacao-de-contas-fontes/materiais-referencia-e-dados-abertos.md`.
+
+| Fonte | Acesso | O que traz | Uso no Jards | Fase |
+|---|---|---|---|---|
+| **API Salic** (`api.salic.cultura.gov.br/api/v1`) | público, sem chave | Por Pronac: captações, **pagamentos já lançados** (fornecedor, CNPJ/CPF, documento, forma, data, valor, item da planilha), execução por item, readequações, prorrogações, situação, plano de distribuição, marcas | Criar a prestação a partir do Pronac; sincronizar diariamente; conferir o que foi lançado no Salic contra nota e extrato; alertar mudança de situação. Sem extrato e sem os PDFs | 1 |
+| **Transferegov — API Gestão de Parcerias** | público, sem chave | PRONON e PRONAS: proposta, plano, contas no BB e **linhas de extrato** | Conciliação da saúde sem integração bancária. A LIE não está nessa API | 7 |
+| **ANCINE — dados abertos** | CSV diário | Situação, captação por artigo, prestação de contas, TCE | Preencher e acompanhar projetos audiovisuais | 5 |
+| **TCU (certidões) e CGU (CEIS, CNEP, CEPIM)** | público | Sanções e impedimentos por CNPJ | Checagem de fornecedor sancionado | 2 |
+| **BrasilAPI, Minha Receita, CNPJá; IBGE** | público | Situação cadastral, data de abertura, CNAE principal e **secundários**, quadro societário | Fornecedor inapto, CNAE incompatível, partes relacionadas (sócios em comum) | 2 |
+| **Banco Central (SGS, PTAX)** | público | IPCA, Selic, poupança, taxa legal, câmbio | Atualizar devoluções (poupança na Rouanet, Selic na ANCINE); converter invoices | 4 |
+| **BrasilAPI feriados** | público | Feriados nacionais | Prazos em dias úteis | 1 |
+| **NF-e (Distribuição DF-e) e NFS-e Nacional (ADN)** | certificado digital ICP-Brasil do proponente | Notas emitidas contra o CNPJ do proponente | Captura automática das notas (opcional, com o certificado do cliente). As consultas públicas têm captcha: não automatizar | 8 |
+| **Extrato bancário** (API do BB, CNAB 240 da Caixa, Open Finance via agregador) | contrato PJ, certificado ou agregador | Lançamentos da conta | Extrato automático no futuro; a importação de OFX, CSV e PDF continua sempre disponível | 8 |
+
+Cuidados:
+
+- A API do Salic devolve **CPFs de fornecedores sem máscara**: guardar só para projetos do próprio cliente e mascarar na interface.
+- **CNPJ alfanumérico** vale desde julho de 2026: validadores de CNPJ e de chave de nota precisam aceitá-lo.
+- Os dados públicos têm falhas (pagamento com data futura, CNPJ vazio, CNPJ como número sem zeros): toda importação passa por checagem de qualidade.
+
+---
+
+## 6. Arquitetura
+
+### 6.1 Regime normativo
 
 - **Catálogo global** `prestacao_regimes`, mantido pela equipe Jards (super admin). Cada registro é uma versão: código, área, mecanismo, esfera (federal, estadual, municipal), UF/município, órgão, sistema oficial, norma de referência, vigência, `parametros` (jsonb validado por schema Zod no código), `checagens` (lista de códigos com severidade e parâmetros), `checklist_envio`, `modelos_saida` e `fontes` (documento e página de cada regra).
 - **Cada prestação guarda o regime e a versão** usados. Uma nova norma não muda prestações em andamento sem uma ação explícita e auditada (a IN 29/2026 se aplica a projetos em andamento; nesse caso o super admin migra em lote, com registro).
@@ -134,13 +216,13 @@ A estrutura de abas, o upload com leitura por IA, o fluxo de evidências de ativ
 - **Regimes da v1**: `rouanet_in29_2026`, `ancine_in159_2021` (+ `ancine_in150_2019` para projetos antigos), `pie_sc_in04_2025`, `lie_lc222_2026` (+ `lie_portaria424_2020` para projetos submetidos até 31/12/2025), `pronon_pronas_prc5_2017` (+ `_1550_2014`, `_875_2013` e `_lxxxvi_a_2025` quando houver o texto). Um regime `generico` cobre patrocínio direto e leis ainda não modeladas, sem checagens normativas.
 - **Parâmetro "a confirmar".** Valores que vieram só de fonte secundária ficam marcados no catálogo. A tela mostra o aviso e a checagem nunca bloqueia; no máximo alerta.
 
-### 4.2 Unidade de prestação
+### 6.2 Unidade de prestação
 
 - Uma prestação = **um projeto × uma fonte × um identificador oficial** (Pronac, SALIC/processo ANCINE, SIPAR, nº do projeto na LIE). A ANCINE exige prestação separada por fonte, mesmo para a mesma obra.
 - Um projeto (`projetos_crm`) pode ter várias prestações; uma prestação recebe **vários aportes** (hoje há um único `captacao_id`).
 - Prestações da mesma obra e do mesmo objeto (ANCINE) ficam agrupadas para a concentração por fornecedor e para o prazo que vence por último.
 
-### 4.3 Núcleo financeiro
+### 6.3 Núcleo financeiro
 
 ```
 conta bancária ─1:N─► lançamento (extrato importado)
@@ -149,26 +231,36 @@ despesa ─N:1─► fornecedor (PF, PJ, MEI, estrangeiro; partes relacionadas; 
 ```
 
 - **O extrato manda.** Débito sem pagamento conciliado é pendência; pagamento sem débito correspondente também.
-- Conciliação por valor, data, número do documento de pagamento (normalizado sem "." e ",", como o Salic exige) e CPF/CNPJ do favorecido.
+- **Conciliação em três vias** (linha do extrato, documento fiscal, comprovante de pagamento) por valor, data, número do documento de pagamento (normalizado sem "." e ",", como o Salic exige) e CPF/CNPJ do favorecido.
+- **Casamento automático só quando é inequívoco:** valor igual, data dentro da tolerância do regime, CNPJ igual e **um único candidato**. Com dois ou mais candidatos, vira sugestão para a pessoa escolher. Cada casamento mostra o motivo ("mesmo valor, mesmo CNPJ, 2 dias de diferença").
+- Estados de cada linha do extrato: conciliado, sugerido, divergente (valor ou data), sem documento; e de cada documento: sem pagamento. Ações em lote com desfazer.
 - Retenções (ISS, INSS, IRRF) ficam na despesa e geram linhas próprias quando o regime exige (ANCINE lança o tributo em nome do credor, na rubrica do fato gerador).
 - Rendimentos, tarifas, IOF, transferências entre contas, aportes e devoluções são categorias de lançamento, cada uma com regra por regime (ex.: ANCINE glosa tarifas que não sejam de manutenção).
 
-### 4.4 Orçamento versionado
+### 6.4 Orçamento versionado
 
 - Versões: solicitada, aprovada para captar, adequada, homologada, readequada (as cinco do Salic), com uma ativa.
 - Árvore genérica de nós (`produto`, `etapa`, `meta`, `grupo`, `local`, `item`), porque cada regime tem uma hierarquia: Rouanet usa Fonte → Produto → Etapa → UF → Município → Item; a ANCINE usa rubricas de desenvolvimento, produção, pós e comercialização; LIE e saúde usam plano de trabalho com metas e etapas.
 - Cada item tem **grupo de custo** (administração, divulgação/acessibilidade, captação, gerenciamento, agenciamento, elaboração, recolhimentos, execução), que alimenta os tetos.
-- **Alterações** (remanejamento, complementação, redução, inclusão, termo aditivo) são registros com status e data de aprovação. O motor checa os limites do regime e, quando o regime exige, se a aprovação veio **antes** da despesa.
+- **Colunas da árvore:** aprovado, remanejado (±), vigente, **comprometido** (contratos firmados ainda não pagos), pago, saldo, % executado e % do teto do regime quando o grupo tem limite. Cada linha mostra as pendências daquele item (sem comprovante, sem conciliação, regra violada).
+- **Alterações** (remanejamento, complementação, redução, inclusão, termo aditivo) são pedidos com estados (rascunho, solicitado, aprovado, negado) e data de aprovação. Ao montar o pedido, o sistema calcula na hora o quanto foi movido contra o limite do regime:
+  - dentro do limite → **administrativo**: aplica com justificativa e entra no relatório;
+  - acima do limite → **formal**: gera a minuta do pedido ao órgão e fica "aguardando órgão" até o upload da aprovação.
+- O motor checa, quando o regime exige, se a aprovação veio **antes** da despesa. Uma linha do tempo mostra as versões do orçamento com a diferença por item.
 
-### 4.5 Objeto e evidências
+### 6.5 Objeto e evidências
 
 Metas com previsto × realizado e justificativa; locais de realização (realizado, não realizado com justificativa, realizado com outras fontes); atividades (já existem); evidências tipadas (foto, vídeo, link, lista de presença, declaração, clipping, borderô, print, relatório de exibição, CPB); plano de distribuição; bens permanentes com cotação, inventário e destinação; peças de divulgação com aprovação e marcas.
 
-### 4.6 Pós-envio
+- Cada evidência é ligada a meta, atividade, local e data. Data e localização da foto são lidas do arquivo e conferidas com a vigência e o local da atividade.
+- **Cobertura por meta** ("Meta 3: 4 de 6 oficinas com evidência") alimenta a prontidão e o relatório do objeto.
+- **Rastreabilidade nos dois sentidos:** "o que comprova a meta 2?" e "a que meta serve a nota 4471?".
+
+### 6.6 Pós-envio
 
 Diligências com prazo calculado, glosas com data-base, decisões, recursos, devoluções (GRU), parcelamentos (ANCINE) e marcação de inadimplência ou inabilitação, que afeta todos os projetos do proponente.
 
-### 4.7 Integração com o resto do Jards
+### 6.7 Integração com o resto do Jards
 
 | Objeto existente | Uso no módulo |
 |---|---|
@@ -180,7 +272,7 @@ Diligências com prazo calculado, glosas com data-base, decisões, recursos, dev
 | `notification_events` | Alertas de prazo e de verificações bloqueantes |
 | `documentos` + bucket `documentos` | Todos os arquivos, com `prestacao_id` e caminho `{orgId}/prestacoes/{id}/...` |
 
-### 4.8 Saídas para os sistemas oficiais
+### 6.8 Saídas para os sistemas oficiais
 
 Sem API de escrita, o Jards gera:
 
@@ -188,24 +280,31 @@ Sem API de escrita, o Jards gera:
 - **ANCINE**: planilhas RP, DE e DO no layout do STR e GRU por fonte. O DE já tem layout conhecido (cabeçalho com título, SALIC, proponente, tipo de conta, banco, agência e conta; colunas Data, Histórico, Fomento, Outros Depósitos, Transferências, Aplicações/Resgates, Pagamentos, Despesas Bancárias e Saldo calculado). A RP tem as colunas principais (item orçamentário, credor, CPF/CNPJ só com números, histórico idêntico ao do DE, data do pagamento, tipo e número do documento fiscal, data de emissão, valor). O DO depende do modelo oficial.
 - **LIE federal**: dossiê da prestação final (ofício do responsável legal, execução desde o início somando as parciais, relatório de cumprimento dos objetivos, extratos, documentos, lista de beneficiários, relatório fotográfico); prestação parcial sob demanda.
 - **Saúde**: relação de pagamentos, Planilha II de conciliação, Tabela 1 de rendimentos, informações compiladas, relação de bens com inventário.
-- **Todos**: dossiê ZIP com índice e relatório PDF da prestação.
+- **Todos**: pacote com checklist do destino, arquivos renomeados no padrão exigido, validação de formato e tamanho, **manifesto** (lista de arquivos com hash) e relatório PDF da prestação. Um **pré-pacote** pode ser gerado a qualquer momento para mostrar o que falta hoje. Cada envio gera uma versão travada (seção 12).
 
-Importações: extrato (OFX, CSV e PDF do Banco do Brasil), XML de NF-e/NFS-e e orçamento aprovado (CSV, XLSX, PDF).
+Importações: extrato (OFX, CSV e PDF do Banco do Brasil), XML de NF-e/NFS-e, orçamento aprovado (CSV, XLSX, PDF) e dados públicos do projeto (seção 5).
+
+### 6.9 Carteira, patrocinador e convidados
+
+- **Carteira para consultorias e captadores:** lista e quadro de todas as prestações dos clientes, com próximo prazo, % de prontidão, valor em risco (soma dos achados "não conforme" e "revisar"), captado × executado e responsável. Papéis distintos: o cliente envia, o consultor revisa, o responsável aprova e envia.
+- **Relatório do patrocinador emitido pelo proponente:** link somente leitura por patrocinador, com marcos, contrapartidas entregues (reaproveitando `ativacao_evidencias`), fotos e execução resumida; relatório periódico gerado automaticamente; aceite do patrocinador registrado e levado ao CRM para a renovação.
+- **Convidados:** acesso por convite, com escopo por seção e data de expiração, para contador (que assina declarações), auditor e patrocinador. O convidado comenta e marca itens como "verificado"; tudo entra no histórico.
+- **Captura por vários canais:** um e-mail (e, depois, WhatsApp) por projeto para receber notas e recibos, que caem na fila de conciliação; regras por CNPJ de fornecedor (item padrão, retenções); resumo semanal por responsável ("faltam 7 comprovantes no projeto X").
 
 ---
 
-## 5. Modelo de dados
+## 7. Modelo de dados
 
 Convenções: `organization_id not null` em toda tabela por organização; RLS por organização e papel; `created_at`, `updated_at`, `created_by`; valores em `numeric(15,2)`; enums como `text` com `check`, seguindo o restante do schema.
 
-### 5.1 Catálogo (global)
+### 7.1 Catálogo (global)
 
 | Tabela | Colunas principais |
 |---|---|
 | `prestacao_regimes` | `codigo`, `nome`, `area` (cultura, esporte, audiovisual, saude, outro), `mecanismo` (chave de `tipos_patrocinio`/`captacoes.lei`), `esfera`, `uf`, `municipio`, `orgao`, `sistema_oficial`, `norma_referencia`, `versao`, `vigente_desde`, `vigente_ate`, `status` (rascunho, publicado, obsoleto), `parametros jsonb`, `checagens jsonb`, `checklist_envio jsonb`, `modelos_saida jsonb`, `fontes jsonb` |
 | `calendario_regulatorio` | `tipo` (defeso_eleitoral, feriado), `esfera`, `uf`, `municipio`, `inicio`, `fim`, `descricao`, `fonte`. Alimenta a contagem de dias úteis e o defeso (2026: 04/07 a 04/10, ou 25/10 onde houver 2º turno) |
 
-### 5.2 Prestação e financeiro
+### 7.2 Prestação e financeiro
 
 | Tabela | Colunas principais |
 |---|---|
@@ -218,7 +317,7 @@ Convenções: `organization_id not null` em toda tabela por organização; RLS p
 | `prestacao_despesas` (evolui `prestacao_comprovantes`) | `item_id`, `fornecedor_id`, `tipo_documento` (nfe, nfse, cupom, recibo, rpa, rpci, invoice, folha, guia, fatura, boleto, apolice, nota_debito), `numero`, `serie`, `chave_acesso`, `data_emissao`, `data_fato_gerador`, `valor_bruto`, `iss`, `inss`, `irrf`, `outras_retencoes`, `valor_liquido`, `descricao`, `moeda` + `cambio`, `identificacao_projeto` (presente, declaração, ausente), `reembolso`, `status` (rascunho, em_revisao, aceita, lancada_oficial, glosada), `justificativa`, `extracao_ia jsonb` |
 | `prestacao_pagamentos` | `despesa_id`, `lancamento_id`, `forma` (pix, ted, doc, boleto, cheque, saque, cartao, cambio), `data`, `valor`, `favorecido_documento`, `numero_documento_pagamento` |
 
-### 5.3 Orçamento
+### 7.3 Orçamento
 
 | Tabela | Colunas principais |
 |---|---|
@@ -226,7 +325,7 @@ Convenções: `organization_id not null` em toda tabela por organização; RLS p
 | `prestacao_orcamento_nos` (substitui `prestacao_itens`, mantido como view durante a transição) | `versao_id`, `parent_id`, `tipo` (produto, etapa, meta, grupo, local, item), `codigo`, `nome`, `uf`, `municipio`, `grupo_custo`, `unidade`, `quantidade`, `ocorrencias`, `valor_unitario`, `valor_total`, `fonte`, `ordem` |
 | `prestacao_alteracoes` | `tipo` (remanejamento, complementacao, reducao, inclusao, exclusao, termo_aditivo, prorrogacao, transferencia), `status` (rascunho, solicitada, aprovada, negada), `solicitada_em`, `aprovada_em`, `ato`, `justificativa`, `diff jsonb` |
 
-### 5.4 Objeto, divulgação e bens
+### 7.4 Objeto, divulgação e bens
 
 | Tabela | Colunas principais |
 |---|---|
@@ -238,7 +337,7 @@ Convenções: `organization_id not null` em toda tabela por organização; RLS p
 | `prestacao_pecas` (substitui `prestacao_divulgacao`) | `tipo`, `dimensoes`, `data_veiculacao`, `aprovacao_status`, `aprovacao_data`, `aprovacao_protocolo` (Salic, e-mail da ASCOM, ANCINE), `versao_manual` (padrão, defeso), `marcas jsonb` (ordem e papel de cada marca), `texto_creditos`, `evidencia_veiculacao_id`, `compromisso_id` |
 | `prestacao_bens` | `despesa_id`, `descricao`, `tipo` (movel, imovel, obra_arte, equipamento), `numero_inventario`, `cotacoes` (até 3 documentos), `destinacao`, `beneficiario_documento`, `termo_doacao_id`, `aceite_id`, dados do cartório (imóveis) |
 
-### 5.5 Pós-envio, verificações e auditoria
+### 7.5 Pós-envio, verificações e auditoria
 
 | Tabela | Colunas principais |
 |---|---|
@@ -255,17 +354,21 @@ Papéis por prestação (`prestacao_membros` ou papel na organização): **prepa
 
 ---
 
-## 6. Motor de checagens
+## 8. Motor de checagens
 
-### 6.1 Como funciona
+### 8.1 Como funciona
 
 - Cada checagem é uma função TypeScript pura em `lib/prestacao/checagens/`, com código estável (ex.: `FORNECEDOR_CONCENTRACAO`), que recebe o estado da prestação e os parâmetros do regime e devolve achados.
 - Severidades: **bloqueio** (impede marcar como pronta para envio), **alerta** (risco de glosa ou ressalva), **justificativa** (precisa de texto ou anexo), **info**.
 - Roda no servidor a cada gravação relevante (rota de API ou função no banco que enfileira) e grava em `prestacao_verificacoes`. Resolver, justificar ou dispensar fica registrado com autor e data.
-- Cada achado mostra a **fonte** (norma e página do manual), copiada do catálogo do regime.
-- Testes por regime com casos montados a partir dos manuais (seção 13).
+- Cada achado mostra a **fonte** (norma, artigo ou página do manual, com o trecho citado), copiada do catálogo do regime.
+- **Resultado de cada verificação:** *Conforme*, *Revisar* ou *Não conforme*, sempre com "por quê" em uma frase, "fonte" e "dados usados". Quando falta dado, o resultado é **"não calculável"** e diz o que falta ("falta o CPF do prestador") — nunca um conforme silencioso.
+- Na dúvida, o motor tende a "revisar"; a decisão final é humana. Aceitar uma exceção exige justificativa escrita, que entra no relatório e no histórico.
+- **Fila de pendências:** uma tabela por item do orçamento com as colunas "sem item", "sem comprovante", "sem conciliação", "regra pendente" e "sem evidência de meta", com contagem e valor, ação na própria linha e filtro "só pendentes" para zerar o projeto numa sessão. O **percentual de prontidão** é o indicador principal da visão geral.
+- Um painel mostra onde as violações se concentram e quanto a equipe discorda das sugestões automáticas, para calibrar as regras.
+- Testes por regime com casos montados a partir dos manuais (seção 15).
 
-### 6.2 Catálogo inicial
+### 8.2 Catálogo inicial
 
 As listas completas, com página citada, estão nos arquivos de fontes (Rouanet: 59 + 49 + 39 checagens; ANCINE: 38; LIE: 34; saúde: 22 + 22; marcas: 22 + 9). Abaixo, as que entram na primeira versão, com o regime que as liga.
 
@@ -285,6 +388,8 @@ As listas completas, com página citada, estão nos arquivos de fontes (Rouanet:
 | `EXTRATO_LACUNA` | Mês sem extrato entre abertura e último pagamento | bloqueio | todos |
 | `TARIFA_GLOSAVEL` | Tarifa (exceto manutenção), juros, multa, IOF | alerta | ANCINE |
 | `SALDO_FINAL` | Saldo diferente de zero no envio sem GRU registrada | bloqueio | todos |
+| `SALDO_PARADO` | Saldo sem aplicação financeira por mais de 30 dias | alerta | todos |
+| `DADO_IMPORTADO` | Dado público importado com falha (data de pagamento futura, CNPJ vazio ou sem zeros à esquerda) | info | Rouanet, saúde |
 | `RENDIMENTO_LIMITE` | Captado + rendimentos acima do aprovado | bloqueio | Rouanet |
 | **Documento fiscal** | | | |
 | `DOC_FORA_VIGENCIA` | Emissão antes do marco inicial ou depois do fim da execução | alerta (ressalva na Rouanet) / bloqueio (saúde) | todos |
@@ -294,12 +399,18 @@ As listas completas, com página citada, estão nos arquivos de fontes (Rouanet:
 | `DOC_PJ_SEM_NF` | Fornecedor PJ com recibo ou fatura sem dispensa legal anexada | justificativa | Rouanet, ANCINE |
 | `DOC_RETENCOES` | Serviço sem ISS, INSS ou IRRF quando aplicável | alerta | todos |
 | `DOC_EMISSAO_POS_DEBITO` | Emissão mais de 30 dias após o débito | alerta | ANCINE |
-| `NFE_CHAVE_REPETIDA` | Chave de NF-e já usada em outro projeto | bloqueio | todos |
+| `NFE_CHAVE_REPETIDA` | Chave de NF-e já usada no projeto ou em outro projeto da carteira | bloqueio | todos |
+| `DOC_CHAVE_INVALIDA` | Chave de NF-e (44 dígitos) ou NFS-e (50 posições) com dígito verificador ou CNPJ do emitente diferente do fornecedor | bloqueio | todos |
+| `PAGAMENTO_ANTECIPADO` | Débito anterior à emissão do documento e à entrega do serviço | alerta | todos |
 | `RPA_CAMPOS` | RPA sem nome, CPF, endereço, data, assinatura, retenções ou SALIC | bloqueio | Rouanet, ANCINE |
 | **Limites e partes relacionadas** | | | |
 | `FORNECEDOR_CONCENTRACAO` | Soma por fornecedor ou grupo acima do teto (base e faixas do regime) | alerta / bloqueio | Rouanet, ANCINE |
 | `PROPONENTE_PARTES_RELACIONADAS` | Proponente e partes relacionadas acima de 20% (30% PF/MEI) | alerta | Rouanet |
 | `CONFLITO_INTERESSE` | Fornecedor ligado ao patrocinador ou doador | bloqueio | LIE |
+| `FORNECEDOR_SITUACAO` | CNPJ inapto ou baixado na data do documento, ou aberto pouco antes do contrato | alerta | todos |
+| `FORNECEDOR_SANCIONADO` | Fornecedor no CEIS, CNEP, CEPIM ou inidôneo do TCU | alerta | todos |
+| `FORNECEDOR_CNAE` | CNAE principal **e secundários** incompatíveis com o item | alerta | todos |
+| `PARTES_RELACIONADAS_QSA` | Sócio em comum entre fornecedor e proponente (quadro societário público) | alerta | todos |
 | `TETO_GRUPO_CUSTO` | Administração, divulgação, captação, gerenciamento, agenciamento, elaboração, atividade-meio acima do teto (sobre valor do projeto, captado, orçamento total ou de produção, conforme o regime) | alerta | todos |
 | `BANCO_CONTA` | Conta fora do banco exigido (BB; BB ou Caixa na LIE) ou titular diferente do proponente | bloqueio | todos |
 | `CONTRAPARTIDA_MINIMA` | Contrapartida abaixo de 5% | alerta | ANCINE |
@@ -328,7 +439,7 @@ As listas completas, com página citada, estão nos arquivos de fontes (Rouanet:
 
 ---
 
-## 7. Prazos e calendário
+## 9. Prazos e calendário
 
 - Cada prazo do regime é **marco + quantidade + unidade (corridos ou úteis) + regra de contagem**. Os dias úteis usam `calendario_regulatorio` (feriados nacionais, estaduais e municipais).
 - Prazos iniciais:
@@ -350,28 +461,29 @@ As listas completas, com página citada, estão nos arquivos de fontes (Rouanet:
 
 ---
 
-## 8. Experiência do usuário
+## 10. Experiência do usuário
 
-### 8.1 Lista `/prestacoes`
+### 10.1 Lista `/prestacoes`
 
 Padrão de `docs/LISTAS_PADRAO_OURO.md`: cabeçalho com resumo (em execução, prazo em até 30 dias, vencidas, com bloqueios), filtros por área, regime, status e responsável, busca e tabela com colunas configuráveis (`ColumnManager`): projeto, identificador oficial, regime, próximo prazo, % comprovado, saldo em conta, verificações abertas. Alternativa em cartões no celular. Botão principal preto "Nova prestação".
 
-### 8.2 Criação guiada
+### 10.2 Criação guiada
 
-1. Escolher o projeto (ou criar a partir da tela do projeto).
+1. Escolher o projeto (ou criar a partir da tela do projeto). Na Rouanet, informar o Pronac preenche o resto pela API do Salic (seção 5).
 2. Área e mecanismo → regime sugerido pela data de aprovação, com a versão visível.
 3. Identificador oficial, proponente e fonte.
 4. Marcos: aprovação, liberação ou termo, início e fim da execução (ou conclusão do objeto).
 5. Contas bancárias.
 6. Orçamento aprovado: importar CSV, XLSX ou PDF (a importação por IA já existe) e revisar a árvore.
 7. Aportes: vincular captações aprovadas.
+8. Opcional: enviar a portaria, o termo de compromisso ou o contrato de patrocínio; a IA propõe prazos, vigência, contas, limites e periodicidade de relatórios, e a pessoa confirma campo a campo antes de virarem calendário e regras.
 
-### 8.3 Área de trabalho `/prestacoes/[id]`
+### 10.3 Área de trabalho `/prestacoes/[id]`
 
 Abas, com `DetailTabs` e cabeçalho com status, regime, prazo e ação principal:
 
-1. **Visão geral**: contagem regressiva do prazo, captado × aprovado, saldo das contas, % comprovado, porte, verificações por severidade, checklist de envio do regime e próximos prazos.
-2. **Orçamento**: versão ativa em árvore com aprovado, comprovado, saldo e % por item e por grupo de custo; tetos do regime; alterações com o limite visível antes de salvar.
+1. **Visão geral**: **% de prontidão** em destaque, contagem regressiva do prazo, captado × aprovado, saldo das contas, % comprovado, porte, fila de pendências, checklist de envio do regime e próximos prazos.
+2. **Orçamento**: árvore com aprovado, remanejado, vigente, comprometido, pago, saldo e % do teto; ao clicar num item, uma sheet lateral mostra os lançamentos; pedidos de alteração com o limite calculado antes de salvar.
 3. **Financeiro**:
    - *Contas e extratos*: importar extrato, ver lançamentos e categorias.
    - *Despesas*: envio em lote, leitura do documento, revisão campo a campo e vínculo ao item.
@@ -384,25 +496,37 @@ Abas, com `DetailTabs` e cabeçalho com status, regime, prazo e ação principal
 8. **Após o envio**: diligências, glosas, decisão, recursos, devoluções e parcelamentos.
 9. **Histórico**: auditoria completa.
 
+Padrões transversais:
+
+- **Explicação na própria linha:** todo alerta tem "por quê" (regra e artigo) e "como resolver" (ação). Nada de alerta sem ação.
+- **Estados com texto e ícone**, não só cor (exigência do `DESIGN.md`).
+- **Linguagem de gestor**, com o termo oficial como rótulo secundário ("Relação de Pagamentos (RP)").
+- **Estados vazios que ensinam:** "Importe o extrato de março para começar a conciliação".
+- **Salvamento automático** em formulários longos; aceite em lote com desfazer; atalhos de teclado na conciliação.
+- **Cada número leva à sua fonte:** valores do relatório, da relação de pagamentos e do balancete abrem o comprovante com o campo de origem destacado.
+
 Regras do `DESIGN.md`: salvar em verde à direita no rodapé; roxo só para seleção; nada de `<select>` nativo; exclusões pelo diálogo global de confirmação (hoje várias exclusões não confirmam); erros junto ao formulário; algarismos tabulares nos valores; skeleton no carregamento.
 
-### 8.4 Celular
+### 10.4 Celular
 
-Registro de evidência pelo celular (foto com data, local e vínculo à atividade), consulta de prazos e pendências. A conciliação e o orçamento ficam para tela grande.
+Celular primeiro na captura: foto de nota ou recibo (com leitura do QR da NFC-e), foto de evidência com data, local e vínculo à atividade, lista de presença por QR ou assinatura, consulta de prazos e pendências. A conciliação e o orçamento ficam para tela grande.
 
 ---
 
-## 9. Inteligência artificial
+## 11. Inteligência artificial
 
 - **Leitura de documento v2**: XML de NF-e/NFS-e é lido sem IA. PDF e imagem usam o modelo atual, com prompt específico do regime. Campos novos: CPF/CNPJ do emitente e do tomador, número, série, chave de acesso, retenções, presença do identificador do projeto e descrição. A IA **sugere**, a pessoa confirma; nada é aceito automaticamente.
 - **Extrato em PDF** → lançamentos.
 - **Sugestão de conciliação** por valor, data, favorecido e número.
 - **Rascunho do Relatório de Execução do Objeto** a partir de metas, atividades, locais e evidências, editável.
+- **Leitura de obrigações** da portaria, do termo ou do contrato de patrocínio (prazos, vigência, limites, relatórios), sempre confirmada campo a campo pela pessoa.
+- **Assistente ancorado na norma e no projeto:** responde "por que esta nota está em revisar?" citando a regra do catálogo e os dados usados. Diferente do assistente genérico que a ANCINE lançou (Cine Bot), ele conhece o estado da prestação.
+- **Motivos de glosa ligados ao catálogo:** a função `extrair-comprovante` deixa de devolver "risco" e motivos em texto livre; cada motivo aponta para um código de checagem, com o dispositivo normativo.
 - **Correções na função existente**: validar o token de quem chama e `can_access_prestacao` antes de baixar o arquivo; aceitar só caminhos da organização; registrar custo e modelo usado por chamada.
 
 ---
 
-## 10. Segurança, LGPD e guarda
+## 12. Segurança, LGPD e guarda
 
 - RLS por `organization_id` e papel em todas as tabelas novas e alteradas; `can_access_prestacao` deixa de depender de projeto ou captação.
 - Status, aceite de despesa e registro de envio por funções no banco com checagem de papel e escrita atômica no log.
@@ -410,24 +534,33 @@ Registro de evidência pelo celular (foto com data, local e vínculo à atividad
 - **LGPD**: listas de presença e declarações com CPF ficam como arquivo; quando estruturadas, o CPF é mascarado e só o hash é usado para busca. Em PRONON/PRONAS, **nenhum dado clínico de paciente** entra no sistema: só contagens agregadas e documentos exigidos.
 - **Guarda**: após o envio, despesas e arquivos ficam travados contra exclusão até a data do regime (Rouanet: 5 anos do fim da vigência; saúde: 5 anos após a aprovação; LIE e ANCINE a confirmar). Correções viram nova versão, não sobrescrita.
 - Bloqueio de rota para o módulo, com as colunas `modulos_ativos` e `modulos_acesso` criadas por migration e administradas na tela de admin. Até a liberação pública, só super admin.
+- **Períodos travados:** ao registrar um envio (parcial ou final), forma-se um retrato imutável dos lançamentos, documentos e relatórios enviados; reabrir exige pedido com motivo e fica no histórico. Isso protege a memória do projeto para análises que chegam anos depois (o passivo do MinC e da ANCINE passa de 30 mil prestações).
+- **Dados de terceiros importados:** CPFs de fornecedores vindos da API do Salic são guardados só para projetos do cliente e mascarados na interface.
+- **CNPJ alfanumérico** aceito em todos os validadores.
+- Instituições maiores (hospitais, em PRONON/PRONAS) vão pedir hospedagem no Brasil e políticas formais de segurança; registrar onde os dados ficam e quem acessa.
 
 ---
 
-## 11. Riscos
+## 13. Riscos
 
 | Risco | Mitigação |
 |---|---|
 | A norma muda no meio do projeto | Regimes versionados, migração explícita e auditada, fonte em cada regra |
 | Fontes incompletas (LIE federal, saúde) | Fases dessas áreas só começam com o manual oficial em mãos; até lá, regime `generico` |
-| Sem API dos sistemas oficiais; dados divergirem | Espelho com campos na ordem da tela oficial; registro manual da situação oficial; importação de exportações oficiais quando existirem |
+| Sem API de escrita nos sistemas oficiais; dados divergirem | Espelho com campos na ordem da tela oficial; sincronização de leitura (API do Salic, Transferegov, dados da ANCINE) para comparar o que foi lançado; registro da situação oficial |
 | Responsabilidade por orientação errada | Alertas como apoio, fonte citada, justificativa sempre possível, aviso de que a análise é do órgão |
 | Dados pessoais de beneficiários e pacientes | Minimização, mascaramento, arquivos privados, sem dado clínico |
 | Escopo crescer sem fim | v1 limitada a cinco regimes; novos estados e municípios entram como configuração depois |
 | Volume (projetos com milhares de lançamentos) | Índices por prestação e conta, paginação, verificações incrementais |
+| O PROJETE (Projetus) lançar antes, com 400+ organizações | Entregar o que ele não promete: conciliação pelo extrato, exportação no formato oficial, carteira e ligação com o CRM |
+| Plataformas do patrocinador exigirem que a prestação seja feita nelas | Relatório do patrocinador emitido pelo Jards; exportações no formato dessas plataformas |
+| O sistema oficial absorver a conciliação (Salic Compliance, BB Gestão Ágil) | O valor do Jards fica antes do envio (validação, dossiê, carteira) e depois (diligências, histórico, renovação) |
+| Integração bancária ou fiscal instável | Importação manual (OFX, CSV, PDF, XML) sempre disponível |
+| Preço baixo de ferramentas horizontais e de IA de captação | Vender redução de risco de glosa e horas de equipe, com métrica visível ("R$ X validados, Y pendências evitadas") |
 
 ---
 
-## 12. Sequência de entrega
+## 14. Sequência de entrega
 
 Estimativas em semanas de uma pessoa full-stack.
 
@@ -443,57 +576,67 @@ Estimativas em semanas de uma pessoa full-stack.
 ### Fase 1 — Núcleo multi-regime e Rouanet (3 semanas)
 
 - `prestacao_regimes`, `calendario_regulatorio` e o regime `rouanet_in29_2026`.
-- Criação guiada, marcos, prazos calculados, tarefas e notificações.
-- Orçamento versionado em árvore, com grupos de custo e alterações.
-- Nova visão geral e lista no padrão.
+- Criação guiada; importação do projeto pela API do Salic a partir do Pronac, com sincronização diária.
+- Marcos, prazos calculados (dias úteis com feriados), tarefas e notificações.
+- Orçamento versionado em árvore, com grupos de custo, coluna "comprometido" e pedidos de alteração (administrativo × formal).
+- Nova visão geral com % de prontidão e lista no padrão.
 
 ### Fase 2 — Financeiro (4 semanas)
 
-- Contas, importação de extrato, lançamentos.
-- Fornecedores e partes relacionadas; despesas v2 e pagamentos.
-- Tela de conciliação com sugestões.
-- Motor de checagens com as checagens financeiras e de documento da Rouanet; tela de pendências.
-- Leitura de documento v2 (XML sem IA; PDF/imagem com IA).
+- Contas, importação de extrato (OFX, CSV, PDF), lançamentos.
+- Fornecedores com consulta pública de CNPJ (situação, CNAE, sócios) e de sanções (TCU, CGU); despesas v2 e pagamentos.
+- Conciliação em três vias com casamento automático só quando inequívoco.
+- Motor de checagens (conforme / revisar / não conforme / não calculável) com as checagens financeiras e de documento da Rouanet; fila de pendências.
+- Leitura de documento v2 (XML sem IA; PDF/imagem com IA; motivos ligados ao catálogo).
 
 ### Fase 3 — Objeto e divulgação (3 semanas)
 
-- Metas, locais, evidências, distribuição (regras da IN 29) e bens.
+- Metas, locais, evidências com data e local, cobertura por meta, distribuição (regras da IN 29) e bens.
 - Peças de divulgação com marcas, aprovação e defeso.
 
 ### Fase 4 — Envio e piloto em cultura (3 semanas)
 
-- Checklist de envio da Rouanet, espelho Salic, rascunho do relatório do objeto, GRU.
+- Checklist de envio da Rouanet, espelho Salic, rascunho do relatório do objeto, GRU com atualização pela poupança.
+- Pacote com manifesto e pré-pacote; retrato travado a cada envio.
 - Pós-envio: diligências, glosas, decisões, recursos e devoluções.
 - Piloto com projetos Rouanet reais.
 
-### Fase 5 — Audiovisual / ANCINE (3 semanas)
+### Fase 5 — Carteira, patrocinador e convidados (3 semanas)
+
+- Painel de carteira para consultorias, com papéis (cliente envia, consultor revisa, responsável envia).
+- Relatório do patrocinador emitido pelo proponente, ligado às ativações e ao CRM.
+- Acesso de convidado (contador, auditor, patrocinador) e captura por e-mail; resumo semanal de pendências.
+
+### Fase 6 — Audiovisual / ANCINE (3 semanas)
 
 - Regimes `ancine_in159_2021` e `ancine_in150_2019`; prestação por fonte e agrupamento por obra.
 - Matriz de reembolso, tetos de gerenciamento, agenciamento e colocação, contrapartida, concentração por obra.
-- Planilhas RP, DE e DO (depende do manual de planilhas do STR); GRU por fonte; calculadora de débito e simulador de parcelamento.
-- Checklist do objeto por modalidade (CPB, Central de Conteúdo, depósito legal, jogos).
+- Planilhas RP, DE e DO no layout do STR; GRU por fonte; calculadora de débito (multa, Selic, mora) e simulador de parcelamento.
+- Checklist do objeto por modalidade (CPB, Central de Conteúdo, depósito legal, jogos); acompanhamento pelos dados abertos da ANCINE.
 
-### Fase 6 — Esporte / LIE federal (2 semanas, depende da Portaria MESP 10/2026 em mãos)
+### Fase 7 — Esporte / LIE federal (2 semanas)
 
-- `lie_lc222_2026` e `lie_portaria424_2020`: conta no BB ou na Caixa, atividade-meio ≤ 15%, vedações da LC 222, até 2 remanejamentos, prestação parcial sob demanda e final em 60 dias, nível da prática (formação, excelência, toda a vida) com teto de captação, grade horária de RH × frequência × pagamentos, lista de beneficiários com perfil, marcas da LIE com versão de defeso.
+- `lie_lc222_2026` e `lie_portaria424_2020`: conta no BB ou na Caixa, atividade-meio ≤ 15%, vedações da LC 222, remanejamentos, prestação parcial sob demanda e final em 60 dias, nível da prática (formação, excelência, toda a vida) com teto de captação, grade horária de RH × frequência × pagamentos, lista de beneficiários com perfil, marcas da LIE com versão de defeso.
+- Geração do formulário oficial de prestação parcial e final (PCP/PCF) e orientação de recolhimento.
 
-### Fase 7 — Saúde (3 semanas, depende do texto da Portaria 8.031/2025)
+### Fase 8 — Saúde (3 semanas)
 
 - Regimes por portaria (875, 1550, PRC 5 e Anexo LXXXVI-A).
 - Prestação anual até 30/04, auditoria independente, Planilha II, Tabela 1, relação de bens com inventário, recibos aos doadores (em 2026, só empresas do lucro real deduzem, até 1% do IR).
-- Registro de produção no CMD (substituiu o CIHA) e operação no Transferegov.
+- Extrato e dados do projeto pela API de parcerias do Transferegov; registro de produção no CMD (substituiu o CIHA).
 
-### Fase 8 — Expansão contínua
+### Fase 9 — Expansão contínua
 
 - Tela de admin para criar e publicar regimes sem deploy de código (parâmetros e checklists; novas checagens continuam em código).
+- Captura automática de NF-e e NFS-e com o certificado digital do cliente; extrato automático (API do BB, CNAB da Caixa, Open Finance via agregador); captura por WhatsApp.
+- Assistente de IA ancorado na norma e no projeto.
 - Regimes estaduais e municipais (ProAC, Pro-Mac, FIA, Fundo do Idoso) e relatório ao patrocinador para patrocínio direto.
-- Integração bancária (Open Finance) para extrato automático.
 
-**Total das fases 0 a 7: cerca de 23 semanas.** As fases 5, 6 e 7 podem correr em paralelo com duas pessoas depois da fase 2.
+**Total das fases 0 a 8: cerca de 26 semanas.** As fases 6, 7 e 8 podem correr em paralelo com duas pessoas depois da fase 2.
 
 ---
 
-## 13. Testes
+## 15. Testes
 
 - **Unitários por checagem** (`tests/prestacao/*.test.ts`, com o `tsx --test` já usado): casos positivos e negativos montados a partir dos exemplos dos manuais (ex.: complementação de R$ 100 mil com R$ 50 mil captados; agenciamento de R$ 100 mil autorizados e R$ 80 mil captados = teto de R$ 8 mil; ação formativa de 600 pessoas = 60).
 - **Prazos**: dias corridos e úteis com feriados, marcos de cada regime e o "prazo que vence por último" da ANCINE.
@@ -504,7 +647,7 @@ Estimativas em semanas de uma pessoa full-stack.
 
 ---
 
-## 14. Critérios de sucesso do piloto (cultura)
+## 16. Critérios de sucesso do piloto (cultura)
 
 - 3 projetos Rouanet reais em execução, de organizações diferentes.
 - 100% dos débitos da conta de movimento conciliados antes do prazo final.
@@ -514,7 +657,7 @@ Estimativas em semanas de uma pessoa full-stack.
 
 ---
 
-## 15. Arquivos previstos
+## 17. Arquivos previstos
 
 ### Criar
 
@@ -544,14 +687,16 @@ Estimativas em semanas de uma pessoa full-stack.
 
 ---
 
-## 16. Decisões em aberto
+## 18. Decisões em aberto
 
-1. **Prioridade entre áreas.** Sugestão: cultura → audiovisual → esporte → saúde, pela qualidade das fontes e pela base de clientes.
+1. **Prioridade entre áreas.** Sugestão: cultura → carteira e patrocinador → audiovisual → esporte → saúde, pela qualidade das fontes, pela base de clientes e pela concorrência.
 2. **Quem opera.** Proponente direto, consultoria/captador gerindo vários proponentes, ou os dois. Isso muda papéis, a "carteira" por proponente e o que o patrocinador vê.
 3. **Plano comercial.** Se o módulo entra em todos os planos ou é cobrado à parte.
 4. **Busca das fontes da seção 1** (LIE, saúde, IN 29 integral, manual STR).
 5. **Estados e municípios.** Se algum programa estadual ou municipal usado pelos clientes (ProAC, Pro-Mac, ICMS, ISS) entra antes da fase 8.
 6. **Visão do patrocinador.** Se o patrocinador recebe um relatório ou acesso de leitura à prestação.
+7. **Quem paga o software.** Se a assinatura pode entrar no orçamento do projeto como custo administrativo, conforme cada lei (na LIE, dentro dos 15% de atividade-meio; na Rouanet, dentro dos 15% administrativos), ou se é custo da consultoria.
+8. **Certificado digital do cliente.** Se o Jards vai guardar o certificado do proponente para capturar notas automaticamente (exige cuidado de segurança) ou se isso fica para depois.
 
 ---
 
