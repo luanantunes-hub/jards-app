@@ -2,16 +2,30 @@
 <html lang="pt-BR" class="scroll-smooth">
 <head>
   <script>document.documentElement.classList.add('js')</script>
+  <script src="/consentimento.js" defer></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Jards | Inteligência e operação para patrocínios</title>
   <meta name="description" content="A plataforma que conecta oportunidades, projetos, negociações, entregas e renovação em toda a jornada do patrocínio." />
+  <link rel="canonical" href="https://jards.com.br/" />
   <meta property="og:title" content="Jards | Inteligência e operação para patrocínios" />
   <meta property="og:description" content="A plataforma que conecta oportunidades, projetos, negociações, entregas e renovação em toda a jornada do patrocínio." />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="/assets/brand/modulos-conectados.jpeg" />
+  <meta property="og:url" content="https://jards.com.br/" />
+  <meta property="og:site_name" content="Jards" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:image" content="https://jards.com.br/assets/brand/modulos-conectados.jpeg" />
+  <meta property="og:image:width" content="960" />
+  <meta property="og:image:height" content="1200" />
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="icon" href="assets/jards-icon-final.svg" type="image/svg+xml" />
+  <meta name="twitter:title" content="Jards | Inteligência e operação para patrocínios" />
+  <meta name="twitter:description" content="A plataforma que conecta oportunidades, projetos, negociações, entregas e renovação em toda a jornada do patrocínio." />
+  <meta name="twitter:image" content="https://jards.com.br/assets/brand/modulos-conectados.jpeg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+  <link rel="icon" href="/assets/jards-icon-final.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -93,14 +107,54 @@
 
     /* ── Mockup de conversa (conector MCP) ── */
     .mcp-chat { background: linear-gradient(165deg,#fff,#F7F4EF); border: 1px solid rgba(13,13,13,.10); border-radius: 4px; box-shadow: 0 22px 44px -12px rgba(52,42,78,.18), 0 6px 14px -6px rgba(52,42,78,.10); overflow: hidden; }
-    .mcp-chat-head { display:flex; align-items:center; gap:7px; padding:14px 18px; border-bottom:1px solid rgba(40,37,37,.08); }
-    .mcp-chat-dot { width:7px; height:7px; border-radius:50%; background:rgba(40,37,37,.15); }
-    .mcp-chat-name { margin-left:5px; font-size:12.5px; font-weight:700; color:#282525; }
-    .mcp-chat-body { padding:24px 20px 26px; display:flex; flex-direction:column; gap:14px; }
-    .mcp-msg { font-size:13.5px; line-height:1.55; border-radius:4px; padding:12px 14px; max-width:86%; }
-    .mcp-msg-user { align-self:flex-end; background:#684DB0; color:#fff; }
-    .mcp-msg-ai { align-self:flex-start; background:rgba(40,37,37,.04); color:#282525; }
-    .mcp-msg-ai strong { display:block; margin-bottom:4px; color:#684DB0; font-weight:700; }
+    .mcp-chat-head { display:flex; align-items:center; gap:7px; padding:12px 50px 12px 16px; border-bottom:1px solid rgba(40,37,37,.08); }
+    .mcp-chat-dot { width:7px; height:7px; border-radius:50%; background:rgba(40,37,37,.15); flex-shrink:0; }
+    .mcp-tabs { display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-left:8px; padding:3px; border-radius:6px; background:rgba(13,13,13,.05); }
+    .mcp-tab { display:flex; align-items:center; justify-content:center; gap:6px; padding:5px 12px; border-radius:4px; font-size:12px; font-weight:600; color:rgba(13,13,13,.58); transition:background-color .25s ease, color .25s ease, box-shadow .25s ease; }
+    .mcp-tab img { width:15px; height:15px; object-fit:contain; filter:grayscale(1); opacity:.5; transition:filter .25s ease, opacity .25s ease; }
+    .mcp-tab.is-on { background:#fff; color:#282525; box-shadow:0 1px 3px rgba(13,13,13,.12); }
+    .mcp-tab.is-on img { filter:none; opacity:1; }
+    .mcp-conectado { display:flex; align-items:center; gap:5px; margin-left:auto; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.6); white-space:nowrap; }
+    .mcp-conectado::before { content:""; width:6px; height:6px; border-radius:50%; background:#2E8932; }
+    .mcp-chat-body { height:292px; padding:20px 18px; display:flex; flex-direction:column; justify-content:flex-end; gap:12px; overflow:hidden; transition:opacity .22s ease; }
+    .mcp-msg { font-size:13.5px; line-height:1.55; }
+    .mcp-msg-user { align-self:flex-end; max-width:82%; padding:9px 13px; border-radius:12px 12px 4px 12px; background:rgba(13,13,13,.06); color:#282525; }
+    .mcp-tool { align-self:flex-start; display:flex; align-items:center; gap:7px; margin-left:32px; padding:5px 10px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.6); }
+    .mcp-tool-icone { width:12px; height:12px; flex-shrink:0; border-radius:50%; border:1.5px solid rgba(13,13,13,.18); border-top-color:#684DB0; animation:mcp-gira .8s linear infinite; }
+    .mcp-tool svg { width:12px; height:12px; flex-shrink:0; }
+    .mcp-tool.is-ok { color:rgba(13,13,13,.62); }
+    .mcp-ai { align-self:flex-start; display:flex; gap:10px; max-width:94%; color:#282525; }
+    .mcp-ai-avatar { width:22px; height:22px; flex-shrink:0; margin-top:1px; object-fit:contain; }
+    .mcp-ai strong { display:block; margin-bottom:3px; color:#684DB0; font-weight:700; }
+    .mcp-input { display:flex; align-items:center; gap:10px; margin:0 14px 14px; padding:9px 9px 9px 13px; border:1px solid rgba(13,13,13,.11); border-radius:10px; background:#fff; }
+    .mcp-input-texto { flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:clip; font-size:13px; color:#282525; }
+    .mcp-input-texto.is-vazio { color:rgba(13,13,13,.35); }
+    .mcp-caret { display:inline-block; width:1.5px; height:15px; margin-left:1px; vertical-align:-3px; background:#282525; animation:mcp-pisca 1s steps(1) infinite; }
+    .mcp-enviar { display:flex; align-items:center; justify-content:center; width:28px; height:28px; flex-shrink:0; border-radius:50%; background:rgba(13,13,13,.12); color:#fff; transition:background-color .2s ease, transform .15s ease; }
+    .mcp-enviar.is-pronto { background:#282525; }
+    .mcp-enviar.is-apertado { transform:scale(.86); }
+    .mcp-entra { animation:mcp-entra .32s cubic-bezier(.16,1,.3,1) both; }
+    .mcp-plat { display:flex; align-items:flex-start; gap:10px; padding:11px 12px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; }
+    .mcp-plat img { width:28px; height:28px; flex-shrink:0; object-fit:contain; }
+    .mcp-figura { position:relative; }
+    .mcp-pausar { position:absolute; top:10px; right:12px; z-index:1; display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:4px; color:rgba(13,13,13,.6); transition:background-color .2s ease, color .2s ease; }
+    .mcp-pausar:hover { background:rgba(13,13,13,.06); color:#282525; }
+    .mcp-pausar:focus-visible { outline:2px solid rgba(104,77,176,.5); outline-offset:1px; }
+    .mcp-pausar .icone-retomar, .mcp-pausar[aria-pressed="true"] .icone-pausar { display:none; }
+    .mcp-pausar[aria-pressed="true"] .icone-retomar { display:block; }
+    .mcp-chat.is-pausado .mcp-tool-icone, .mcp-chat.is-pausado .mcp-caret { animation-play-state:paused; }
+    .mcp-chat-body.is-estatico { height:auto; justify-content:flex-start; }
+    .mcp-chat-body.is-estatico + .mcp-input { display:none; }
+    @media (max-width:400px) {
+      .mcp-chat-dot { display:none; }
+      .mcp-tabs { margin-left:0; }
+      .mcp-tab { padding:5px 8px; }
+      .mcp-conectado { font-size:0; gap:0; }
+    }
+    @keyframes mcp-gira { to { transform:rotate(360deg); } }
+    @keyframes mcp-pisca { 50% { opacity:0; } }
+    @keyframes mcp-entra { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion: reduce) { .mcp-tool-icone, .mcp-caret { animation:none; } .mcp-entra { animation:none; } }
 
     /* ── Demo da cobertura de leis: linhas entram, cursor clica, abre o perfil ── */
     #leis-painel { container-type:inline-size; }
@@ -314,7 +368,7 @@
     html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
     html.js .reveal.in { opacity:1; transform:translateY(0); }
     @media (prefers-reduced-motion: reduce) {
-      .reveal { opacity:1; transform:none; transition:none; }
+      .reveal, html.js .reveal, html.js .reveal.in { opacity:1; transform:none; transition:none; }
     }
     .brand-visual { position:relative; min-height:620px; overflow:hidden; background:#f3eee5; }
     .brand-visual img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
@@ -511,6 +565,9 @@
     .site-footer-bottom>p { justify-self:end; }
     .site-footer-bottom a,.site-footer-bottom p { color:rgba(40,37,37,.42); font-size:11px; font-weight:600; }
     .site-footer-bottom a:hover { color:#684DB0; }
+    .site-footer-cookies { padding:0; border:0; background:none; color:rgba(40,37,37,.42); font:inherit; font-size:11px; font-weight:600; cursor:pointer; }
+    .site-footer-cookies:hover { color:#684DB0; }
+    .site-footer-cookies:focus-visible { outline:2px solid #7259B5; outline-offset:2px; border-radius:2px; }
     @media (max-width:800px) {
       .site-footer { padding-top:64px; }
       .site-footer-main { grid-template-columns:1fr 1fr; gap:48px 28px; }
@@ -1504,7 +1561,7 @@
 <!-- ════════════════════════ FLUXO JARDS ════════════════════════ -->
 <section id="fluxo" class="bg-white">
   <div class="brand-visual is-senna">
-    <img src="assets/senna-jornada-panoramica.jpeg" alt="Ayrton Senna em um carro de Fórmula 1 segurando a bandeira brasileira" />
+    <img src="assets/senna-jornada-panoramica.jpeg" alt="Piloto de Fórmula 1 na pista segurando a bandeira do Brasil" />
     <div class="brand-caption px-6">
       <p class="text-xs font-bold text-[#B9A7EA] uppercase tracking-widest mb-5">Um sistema em movimento</p>
       <h2 class="font-display font-bold text-white leading-[1.03]" style="font-size:clamp(36px,4.5vw,64px)">Uma jornada inteira.<br>Um só contexto.</h2>
@@ -2110,40 +2167,219 @@
 <!-- ════════════════════════ CONECTOR MCP ════════════════════════ -->
 <section id="conector-ia" class="section-space bg-[#FAF9F7] px-6">
   <div class="max-w-6xl mx-auto">
-    <div class="grid md:grid-cols-[1fr_1fr] gap-16 items-center">
-      <div class="reveal">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div class="reveal min-w-0">
         <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-4">Conector MCP</p>
         <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(32px,4vw,56px)">
-          Pergunte ao Claude.<br>Ele já conhece o Jards.
+          Claude e ChatGPT.<br>Os dados vêm do seu Jards.
         </h2>
         <p class="text-black/55 text-[15px] leading-relaxed mt-6 max-w-md">
-          Conecte o Claude ou o ChatGPT à sua conta Jards e pergunte direto — sem copiar e colar entre abas. O assistente consulta o CRM de verdade, com os mesmos dados que você vê no app.
+          Conecte sua conta Jards e pergunte. O assistente consulta o CRM ao vivo, sem copiar e colar.
         </p>
         <ul class="space-y-3 mt-8 text-sm text-black/70 max-w-md">
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold">✓</span>Projetos, propostas, tarefas, captadores e proponentes, direto na conversa</li>
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold">✓</span>Histórico completo de um patrocinador — valor investido, áreas recorrentes, há quanto tempo não patrocina</li>
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold">✓</span>Resumo analítico da organização: projetos por fase, propostas por status, valor captado</li>
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold">✓</span>Cria contatos e tarefas sem sair da conversa</li>
+          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Lê projetos, propostas, tarefas, captadores, proponentes e empresas</li>
+          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Avalia uma empresa: histórico, total investido, áreas recorrentes, último aporte</li>
+          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Traz contatos de uma patrocinadora (1 crédito, como no app)</li>
+          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Resume a organização: projetos por fase, propostas por status, total captado</li>
+          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Cria contatos e tarefas pela conversa</li>
         </ul>
-        <div class="flex flex-wrap items-center gap-2.5 mt-8">
-          <span class="law-tag" style="background:rgba(104,77,176,.10);color:#684DB0">Claude Desktop e Code</span>
-          <span class="law-tag" style="background:rgba(45,114,176,.10);color:#2D72B0">ChatGPT · Custom GPT</span>
-        </div>
-        <p class="text-black/35 text-xs mt-4 max-w-md">Acesso só às organizações de que você faz parte — o mesmo controle de permissões do app.</p>
-      </div>
-
-      <div class="reveal">
-        <div class="mcp-chat">
-          <div class="mcp-chat-head"><span class="mcp-chat-dot"></span><span class="mcp-chat-dot"></span><span class="mcp-chat-dot"></span><span class="mcp-chat-name">Claude · conectado ao Jards</span></div>
-          <div class="mcp-chat-body">
-            <div class="mcp-msg mcp-msg-user">Quanto a Ambev já investiu com a gente, e em quê?</div>
-            <div class="mcp-msg mcp-msg-ai"><strong>3 patrocínios desde 2023 · R$ 420 mil</strong>Concentrados em Cultura urbana e Música. Nenhum patrocínio ativo nos últimos 8 meses — pode ser hora de retomar contato.</div>
+        <div class="grid grid-cols-2 gap-3 mt-8 max-w-md">
+          <div class="mcp-plat">
+            <img src="assets/icons/logo-claude.png" alt="" />
+            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">Claude</p><p class="text-[11px] leading-snug text-black/60">Servidor MCP local · Desktop ou Code</p></div>
+          </div>
+          <div class="mcp-plat">
+            <img src="assets/icons/logo-chatgpt.png" alt="" />
+            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">ChatGPT</p><p class="text-[11px] leading-snug text-black/60">Custom GPT · login ou chave de API</p></div>
           </div>
         </div>
+        <p class="text-black/60 text-xs mt-4 max-w-md">Nos planos pagos. Acesso só às organizações de que você é membro. Editais e patrocinadores: base pública do Jards.</p>
       </div>
+
+      <figure class="reveal min-w-0 mcp-figura">
+        <figcaption class="sr-only" id="mcp-transcricao">Exemplo de conversa com o ChatGPT e o Claude conectados ao Jards.</figcaption>
+        <button type="button" class="mcp-pausar" id="mcp-pausar" aria-pressed="false" aria-label="Pausar animação">
+          <svg class="icone-pausar" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1.5" width="2.6" height="9" rx=".8" fill="currentColor"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".8" fill="currentColor"/></svg>
+          <svg class="icone-retomar" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4c0 .5.5.8.9.5l6.4-4.2a.6.6 0 0 0 0-1L3.9 1.3c-.4-.3-.9 0-.9.5z" fill="currentColor"/></svg>
+        </button>
+        <div class="mcp-chat" id="mcp-chat" aria-hidden="true">
+          <div class="mcp-chat-head">
+            <span class="mcp-chat-dot"></span><span class="mcp-chat-dot"></span><span class="mcp-chat-dot"></span>
+            <div class="mcp-tabs">
+              <span class="mcp-tab is-on" data-assistente="chatgpt"><img src="assets/icons/logo-chatgpt.png" alt="" />ChatGPT</span>
+              <span class="mcp-tab" data-assistente="claude"><img src="assets/icons/logo-claude.png" alt="" />Claude</span>
+            </div>
+            <span class="mcp-conectado">Jards</span>
+          </div>
+          <div class="mcp-chat-body" id="mcp-chat-body"></div>
+          <div class="mcp-input">
+            <span class="mcp-input-texto is-vazio" id="mcp-input-texto">Pergunte ao ChatGPT</span>
+            <span class="mcp-enviar" id="mcp-enviar" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 11.5V2.5M7 2.5L3 6.5M7 2.5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </div>
+      </figure>
     </div>
   </div>
 </section>
+
+
+<script>
+(function(){
+  var LOGOS = { chatgpt: 'assets/icons/logo-chatgpt.png', claude: 'assets/icons/logo-claude.png' };
+  var NOMES = { chatgpt: 'ChatGPT', claude: 'Claude' };
+  // Uma leitura (carteira da empresa) e uma escrita (criar tarefa), uma em cada assistente
+  var CONVERSAS = [
+    { assistente: 'chatgpt', pergunta: 'A Ambev combina com o nosso projeto de esporte?', ferramenta: 'Jards · carteira da empresa', destaque: 'R$ 95M investidos · Esporte, SP', resposta: 'Esporte é a área recorrente dela, e o último aporte foi há 8 meses: boa janela para apresentar o projeto.' },
+    { assistente: 'claude', pergunta: 'Cria uma tarefa: enviar a proposta à Ambev até sexta', ferramenta: 'Jards · criar tarefa', destaque: 'Tarefa criada · prazo sexta', resposta: '“Enviar proposta à Ambev” já está nas suas tarefas no Jards. Ficou gravada no CRM, não só nesta conversa.' }
+  ];
+  var CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#2E8932"/><path d="M3.4 6.2l1.8 1.8 3.6-3.8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  var chat = document.getElementById('mcp-chat');
+  var corpo = document.getElementById('mcp-chat-body');
+  var campo = document.getElementById('mcp-input-texto');
+  var enviar = document.getElementById('mcp-enviar');
+  var pausar = document.getElementById('mcp-pausar');
+  var transcricao = document.getElementById('mcp-transcricao');
+  if(!chat || !corpo || !campo || !enviar || !pausar) return;
+  var abas = chat.querySelectorAll('.mcp-tab');
+  var movimento = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var visivel = false, pausado = false, rodando = false;
+
+  if(transcricao){
+    transcricao.textContent = 'Exemplo de conversa com os assistentes conectados ao Jards. ' + CONVERSAS.map(function(c){
+      return 'No ' + NOMES[c.assistente] + ', a pessoa pede: “' + c.pergunta + '”. O ' + NOMES[c.assistente] + ' usa ' + c.ferramenta + ' e responde: ' + c.destaque + '. ' + c.resposta;
+    }).join(' ');
+  }
+
+  function dormir(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  async function esperar(ms){ await dormir(ms); while(pausado) await dormir(150); }
+  async function quandoVisivel(){ while(!visivel || pausado) await dormir(300); }
+  function el(tag, classe){ var e = document.createElement(tag); if(classe) e.className = classe; return e; }
+
+  function ativarAba(assistente){
+    abas.forEach(function(t){ t.classList.toggle('is-on', !assistente || t.dataset.assistente === assistente); });
+  }
+  function esvaziarCampo(assistente){
+    campo.classList.add('is-vazio');
+    campo.textContent = 'Pergunte ao ' + NOMES[assistente];
+    campo.scrollLeft = 0;
+    enviar.classList.remove('is-pronto');
+  }
+  function balaoUsuario(c){ var u = el('div', 'mcp-msg mcp-msg-user'); u.textContent = c.pergunta; return u; }
+  function linhaFerramenta(c, pronta){
+    var t = el('div', 'mcp-tool' + (pronta ? ' is-ok' : ''));
+    if(pronta){ t.innerHTML = CHECK; t.appendChild(document.createTextNode(c.ferramenta)); }
+    else { t.appendChild(el('span', 'mcp-tool-icone')); t.appendChild(document.createTextNode('Acessando o Jards…')); }
+    return t;
+  }
+  function resposta(c, texto){
+    var r = el('div', 'mcp-msg mcp-ai');
+    var avatar = el('img', 'mcp-ai-avatar'); avatar.src = LOGOS[c.assistente]; avatar.alt = '';
+    var bloco = el('div'), forte = el('strong'), corpoTexto = el('span');
+    forte.textContent = c.destaque; corpoTexto.textContent = texto;
+    bloco.appendChild(forte); bloco.appendChild(corpoTexto);
+    r.appendChild(avatar); r.appendChild(bloco);
+    return r;
+  }
+  function entrar(no){ no.classList.add('mcp-entra'); corpo.appendChild(no); return no; }
+
+  // Movimento reduzido: as duas conversas prontas, sem alternar nem digitar
+  function mostrarEstatico(){
+    corpo.classList.add('is-estatico');
+    corpo.style.opacity = '';
+    corpo.innerHTML = '';
+    ativarAba(null);
+    CONVERSAS.forEach(function(c){
+      corpo.appendChild(balaoUsuario(c));
+      corpo.appendChild(linhaFerramenta(c, true));
+      corpo.appendChild(resposta(c, c.resposta));
+    });
+    pausar.hidden = true;
+  }
+
+  async function tocar(c){
+    corpo.style.opacity = '0';
+    await esperar(240);
+    corpo.innerHTML = '';
+    corpo.style.opacity = '';
+    ativarAba(c.assistente);
+    esvaziarCampo(c.assistente);
+    await esperar(650);
+
+    campo.classList.remove('is-vazio');
+    campo.textContent = '';
+    var digitado = document.createTextNode('');
+    campo.appendChild(digitado);
+    campo.appendChild(el('span', 'mcp-caret'));
+    enviar.classList.add('is-pronto');
+    for(var i = 1; i <= c.pergunta.length; i++){
+      digitado.nodeValue = c.pergunta.slice(0, i);
+      campo.scrollLeft = campo.scrollWidth;
+      await esperar(c.pergunta.charAt(i - 1) === ' ' ? 60 : 34);
+    }
+    await esperar(320);
+    enviar.classList.add('is-apertado');
+    await esperar(150);
+    enviar.classList.remove('is-apertado');
+    esvaziarCampo(c.assistente);
+    entrar(balaoUsuario(c));
+
+    await esperar(550);
+    var ferramenta = entrar(linhaFerramenta(c, false));
+    await esperar(1200);
+    ferramenta.replaceWith(linhaFerramenta(c, true));
+
+    await esperar(350);
+    var r = entrar(resposta(c, ''));
+    var alvo = r.querySelector('span');
+    var palavras = c.resposta.split(' ');
+    for(var k = 1; k <= palavras.length; k++){
+      alvo.textContent = palavras.slice(0, k).join(' ');
+      await esperar(62);
+    }
+    await esperar(3400);
+  }
+
+  async function ciclo(){
+    if(rodando) return;
+    rodando = true;
+    corpo.classList.remove('is-estatico');
+    pausar.hidden = false;
+    for(var i = 0; !movimento.matches; i++){
+      await quandoVisivel();
+      if(movimento.matches) break;
+      await tocar(CONVERSAS[i % CONVERSAS.length]);
+    }
+    rodando = false;
+    mostrarEstatico();
+  }
+
+  pausar.addEventListener('click', function(){
+    pausado = !pausado;
+    pausar.setAttribute('aria-pressed', String(pausado));
+    pausar.setAttribute('aria-label', pausado ? 'Retomar animação' : 'Pausar animação');
+    chat.classList.toggle('is-pausado', pausado);
+  });
+
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(entradas){
+      visivel = entradas.some(function(e){ return e.isIntersecting; });
+    }, { threshold: 0.35 }).observe(chat);
+  } else {
+    visivel = true;
+  }
+
+  if(movimento.addEventListener){
+    movimento.addEventListener('change', function(){
+      if(movimento.matches){ if(!rodando) mostrarEstatico(); }
+      else ciclo();
+    });
+  }
+
+  if(movimento.matches) mostrarEstatico();
+  else ciclo();
+})();
+</script>
 
 
 <!-- ════════════════════════ PRICING ════════════════════════ -->
@@ -2314,6 +2550,7 @@
       <div class="site-footer-legal">
         <a href="/privacidade" data-app-path="/privacidade">Política de Privacidade</a>
         <a href="/termos" data-app-path="/termos">Termos de Uso</a>
+        <button type="button" class="site-footer-cookies" data-preferencias-cookies>Preferências de cookies</button>
       </div>
       <p>© 2026 Jards. Feito no Brasil.</p>
     </div>

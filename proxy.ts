@@ -129,6 +129,10 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/p/") ||
         pathname === "/login" ||
         pathname === "/" ||
+        pathname === "/robots.txt" ||
+        pathname === "/sitemap.xml" ||
+        pathname === "/termos" ||
+        pathname === "/privacidade" ||
         pathname.startsWith("/redefinir-senha") ||
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
@@ -167,7 +171,11 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/p/") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
-    pathname === "/favicon.ico";
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/termos" ||
+    pathname === "/privacidade";
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {
@@ -192,6 +200,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ttf|woff|woff2|otf|eot)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ttf|woff|woff2|otf|eot)$).*)",
   ],
 };
