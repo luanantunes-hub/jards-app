@@ -69,22 +69,34 @@ export function NovoPlanoAtivacaoModal({ organizationId, initialContaId = "", in
 
   useEffect(() => {
     const selected = accounts.find(item => item.id === contaId);
-    if (!selected || !projetoId) { setCaptacoes([]); return; }
+    if (!selected || !projetoId) { setCaptacoes([]); setCaptacaoId(""); return; }
     (supabase as any).from("captacoes").select("id,titulo").eq("organization_id", organizationId).eq("empresa_crm_id", selected.empresa_crm_id).eq("projeto_id", projetoId).order("created_at", { ascending: false })
-      .then(({ data }: any) => setCaptacoes(data ?? []));
+      .then(({ data }: any) => {
+        const next = data ?? [];
+        setCaptacoes(next);
+        setCaptacaoId(current => current && next.some((item: CaptacaoOption) => item.id === current) ? current : "");
+      });
   }, [accounts, contaId, organizationId, projetoId, supabase]);
 
   useEffect(() => {
-    if (!contaId) { setContracts([]); return; }
-    (supabase as any).from("contratos").select("id,titulo,numero,valor").eq("conta_patrocinio_id", contaId).in("status", ["assinado", "vigente", "renovado"]).order("created_at", { ascending: false })
-      .then(({ data }: any) => setContracts(data ?? []));
-  }, [contaId, supabase]);
+    if (!contaId) { setContracts([]); setContratoId(""); return; }
+    (supabase as any).from("contratos").select("id,titulo,numero,valor").eq("organization_id", organizationId).eq("conta_patrocinio_id", contaId).in("status", ["assinado", "vigente", "renovado"]).order("created_at", { ascending: false })
+      .then(({ data }: any) => {
+        const next = data ?? [];
+        setContracts(next);
+        setContratoId(current => current && next.some((item: ContractOption) => item.id === current) ? current : "");
+      });
+  }, [contaId, organizationId, supabase]);
 
   useEffect(() => {
-    if (!projetoId) { setCotas([]); return; }
-    (supabase as any).from("cotas_patrocinio").select("id,nome,valor,valor_maximo,modelo,produto_nome,contrapartidas").eq("projeto_id", projetoId).order("ordem")
-      .then(({ data }: any) => setCotas(data ?? []));
-  }, [projetoId, supabase]);
+    if (!projetoId) { setCotas([]); setCotaId(""); return; }
+    (supabase as any).from("cotas_patrocinio").select("id,nome,valor,valor_maximo,modelo,produto_nome,contrapartidas").eq("organization_id", organizationId).eq("projeto_id", projetoId).order("ordem")
+      .then(({ data }: any) => {
+        const next = data ?? [];
+        setCotas(next);
+        setCotaId(current => current && next.some((item: CotaOption) => item.id === current) ? current : "");
+      });
+  }, [projetoId, organizationId, supabase]);
 
   useEffect(() => {
     const cota = cotas.find(item => item.id === cotaId);
