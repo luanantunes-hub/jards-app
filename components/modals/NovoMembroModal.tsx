@@ -7,6 +7,7 @@ import { BoasVindasEquipeModal } from "@/components/modals/BoasVindasEquipeModal
 
 interface NovoMembroModalProps {
   open: boolean;
+  organizationId?: string | null;
   onClose: () => void;
   onSaved: () => void | Promise<void>;
 }
@@ -52,9 +53,9 @@ const money = (value: number) => value.toLocaleString("pt-BR", {
   currency: "BRL",
 });
 
-export default function NovoMembroModal({ open, onClose, onSaved }: NovoMembroModalProps) {
+export default function NovoMembroModal({ open, organizationId: organizationIdProp, onClose, onSaved }: NovoMembroModalProps) {
   const [mode, setMode] = useState<"invite" | "buy">("invite");
-  const [organizationId, setOrganizationId] = useState<string | null>(null);
+  const [organizationId, setOrganizationId] = useState<string | null>(organizationIdProp ?? null);
   const [summary, setSummary] = useState<SeatSummary | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -88,9 +89,16 @@ export default function NovoMembroModal({ open, onClose, onSaved }: NovoMembroMo
       setManualInviteUrl(null);
       setCopied(false);
       setCelebrationQuantity(null);
-      const supabase = createClient();
-      const { data } = await supabase.rpc("auth_org_ids");
-      const orgId = (data as unknown as string[] | null)?.[0] ?? null;
+      // Usa a organização ativa recebida do chamador — auth_org_ids() devolve
+      // todas as organizações do usuário, não só a que está na tela, e esse
+      // modal convida membros e cobra assentos, então pegar a organização
+      // errada tem consequência real (convite ou cobrança no lugar errado).
+      let orgId = organizationIdProp ?? null;
+      if (!orgId) {
+        const supabase = createClient();
+        const { data } = await supabase.rpc("auth_org_ids");
+        orgId = (data as unknown as string[] | null)?.[0] ?? null;
+      }
       if (!active) return;
       if (!orgId) {
         setError("Organização não encontrada");
@@ -101,7 +109,7 @@ export default function NovoMembroModal({ open, onClose, onSaved }: NovoMembroMo
     }
     initialize();
     return () => { active = false; };
-  }, [open, loadSummary]);
+  }, [open, loadSummary, organizationIdProp]);
 
   async function buySeats() {
     if (!organizationId) return;
@@ -164,6 +172,7 @@ export default function NovoMembroModal({ open, onClose, onSaved }: NovoMembroMo
     if (saving) return;
     setMode("invite");
     setEmail("");
+    setRole("colaborador");
     setQuantity(3);
     setError(null);
     setSuccess(null);
