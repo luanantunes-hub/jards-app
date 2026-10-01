@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Trash2, Copy, Check } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, Trash2, Copy, Check } from "lucide-react";
 import { Select } from "@/components/ui/Select";
 import { useCreditos } from "@/contexts/CreditosContext";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { AcessoContatosModal } from "@/components/modals/AcessoContatosModal";
 import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
 
@@ -22,6 +24,7 @@ interface ChaveMcp {
 
 export default function ConfiguracoesMcpPage() {
   const router = useRouter();
+  const { confirmDelete } = useDeleteConfirm();
   const { assinatura, loading: loadingAssinatura } = useCreditos();
   const [chaves, setChaves] = useState<ChaveMcp[]>([]);
   const [label, setLabel] = useState("");
@@ -71,9 +74,22 @@ export default function ConfiguracoesMcpPage() {
     await carregar();
   }
 
-  async function revogar(id: string) {
-    await fetch(`/api/mcp/keys?id=${id}`, { method: "DELETE" });
-    await carregar();
+  function revogar(id: string) {
+    confirmDelete({
+      title: "Revogar esta chave?",
+      description: "Assistentes que usam esta chave perdem o acesso ao Jards imediatamente. Esta ação não pode ser desfeita.",
+      confirmLabel: "Revogar",
+      pendingLabel: "Revogando…",
+      illustration: false,
+      onConfirm: async () => {
+        const res = await fetch(`/api/mcp/keys?id=${encodeURIComponent(id)}`, { method: "DELETE" });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? "Não foi possível revogar a chave. Tente novamente.");
+        }
+        await carregar();
+      },
+    });
   }
 
   async function copiar() {
@@ -99,6 +115,9 @@ export default function ConfiguracoesMcpPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
+      <Link href="/configuracoes" className="mb-6 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65">
+        <ArrowLeft size={14} aria-hidden="true" /> Configurações
+      </Link>
       <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
         <span className="flex h-7 w-7 items-center justify-center rounded border border-black/15 bg-white">
           <ClaudeMark size={15} />
@@ -106,7 +125,7 @@ export default function ConfiguracoesMcpPage() {
         <span className="flex h-7 w-7 items-center justify-center rounded border border-black/15 bg-white">
           <OpenAIMark size={14} />
         </span>
-        Acesso por API (MCP / ChatGPT)
+        Claude e ChatGPT (MCP)
       </h1>
       <p className="mt-2 text-sm text-black/60">
         Gere uma chave pessoal para usar os dados do Jards em um assistente externo (Claude, Custom GPT). A chave dá

@@ -7,14 +7,17 @@ import { PastDueBanner } from "@/components/PastDueBanner";
 import {
   BarChart2,
   CalendarDays,
-  Briefcase,
-  UsersRound,
-  PhoneCall,
-  Globe,
+  BriefcaseBusiness,
+  ContactRound,
+  FilePenLine,
   FileStack,
   FolderOpen,
   Building2,
-  UserCheck,
+  Handshake,
+  Landmark,
+  LayoutDashboard,
+  Radar,
+  UserRoundCheck,
   Settings,
   LogOut,
   ClipboardCheck,
@@ -33,6 +36,7 @@ import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
+import { correspondeRota, itemAtivoDoMenu, tituloDaPagina } from "@/lib/navigation/rotas";
 
 // ─── Definição dos módulos ──────────────────────────────────────────────────
 
@@ -48,7 +52,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
     {
       section: "Gerenciamento",
       items: [
-        { label: "Visão Geral",  href: "/dashboard",    icon: BarChart2    },
+        { label: "Visão geral",  href: "/dashboard",    icon: BarChart2    },
         { label: "Atividades",   href: "/atividades",   icon: CalendarDays },
         { label: "Projetos",     href: "/projetos",     icon: FolderOpen   },
       ],
@@ -56,7 +60,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
     {
       section: "Oportunidades",
       items: [
-        { label: "Patrocinadores", href: "/patrocinadores",  icon: Briefcase },
+        { label: "Patrocinadores", href: "/patrocinadores",  icon: Radar },
         { label: "Comparativo",    href: "/comparativo",     icon: ArrowLeftRight },
         { label: "Editais",        href: "/editais-abertos", icon: FileStack },
       ],
@@ -64,18 +68,18 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
     {
       section: "Prospecções",
       items: [
-        { label: "Empresas",    href: "/empresas-crm",      icon: Briefcase  },
-        { label: "Negociações", href: "/captacoes",         icon: UsersRound },
-        { label: "Inscrições",  href: "/editais-inscritos", icon: Globe      },
+        { label: "Empresas",    href: "/empresas-crm",      icon: Building2         },
+        { label: "Negociações", href: "/captacoes",         icon: BriefcaseBusiness },
+        { label: "Inscrições",  href: "/editais-inscritos", icon: FilePenLine       },
       ],
     },
     {
       section: "Relacionamento",
       items: [
-        { label: "Proponentes", href: "/proponentes",       icon: Building2 },
-        { label: "Captadores",  href: "/captadores",        icon: UserCheck },
-        { label: "Contatos",    href: "/contatos",          icon: PhoneCall },
-        { label: "Clientes",     href: "/contas-patrocinio", icon: Briefcase },
+        { label: "Proponentes", href: "/proponentes",       icon: Landmark       },
+        { label: "Captadores",  href: "/captadores",        icon: Handshake      },
+        { label: "Contatos",    href: "/contatos",          icon: ContactRound   },
+        { label: "Clientes",    href: "/contas-patrocinio", icon: UserRoundCheck },
       ],
     },
   ],
@@ -225,6 +229,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setModuloAtivo(modulo);
   }, [path]);
 
+  // Todas as rotas internas são client components; o título da aba vem daqui.
+  useEffect(() => {
+    document.title = tituloDaPagina(path);
+  }, [path]);
+
+  useEffect(() => {
+    if (!orgSwitcherOpen) return;
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setOrgSwitcherOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [orgSwitcherOpen]);
+
   // Busca nome/avatar da organização e reage a atualizações salvas em configurações
   const loadOrg = useCallback(async (orgId: string) => {
     const supabase = createClient();
@@ -275,6 +293,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const userAvatar  = getAvatar(user);
   const displayName = getDisplayName(user);
   const navGroups   = NAV_POR_MODULO[moduloAtivo];
+  const menuPath    = itemAtivoDoMenu(path);
   // EXPERIMENTAL: dentro de uma organização onde o papel é "captador", o
   // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
   // organização que convidou (essas continuam existindo, só não fazem
@@ -309,6 +328,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         }}
         onMouseEnter={() => setExpanded(true)}
         onMouseLeave={() => setExpanded(false)}
+        onFocus={() => setExpanded(true)}
+        onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setExpanded(false); }}
       >
         {/* Logo */}
         <div
@@ -393,8 +414,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 href="/workspace-captador"
                 title={!expanded ? "Meu workspace" : undefined}
-                className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden ${
-                  path.startsWith("/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+                aria-current={correspondeRota(path, "/workspace-captador") ? "page" : undefined}
+                className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                  correspondeRota(path, "/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
                 }`}
                 style={{
                   gap: expanded ? 10 : 0,
@@ -402,7 +424,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   justifyContent: expanded ? "flex-start" : "center",
                 }}
               >
-                <Briefcase size={16} className="flex-shrink-0" />
+                <LayoutDashboard size={16} className="flex-shrink-0" aria-hidden="true" />
                 {expanded && <span>Meu workspace</span>}
               </Link>
             </div>
@@ -423,13 +445,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
               <div className="space-y-0.5">
                 {items.map(({ label, href, icon: Icon }) => {
-                  const active = path === href || path.startsWith(href + "/");
+                  const active = correspondeRota(menuPath, href);
                   return (
                     <Link
                       key={href}
                       href={href}
                       title={!expanded ? label : undefined}
-                      className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden ${
+                      aria-label={!expanded ? label : undefined}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
                         active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
                       }`}
                       style={{
@@ -438,7 +462,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         justifyContent: expanded ? "flex-start" : "center",
                       }}
                     >
-                      <Icon size={16} className="flex-shrink-0" />
+                      <Icon size={16} className="flex-shrink-0" aria-hidden="true" />
                       {expanded && <span>{label}</span>}
                     </Link>
                   );
@@ -451,7 +475,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/meu-plano"
               title={!expanded ? "Fazer upgrade" : undefined}
               aria-label="Fazer upgrade"
-              className="mt-4 flex items-center overflow-hidden whitespace-nowrap rounded bg-[#7259B5] text-[13px] font-semibold text-white transition-colors hover:bg-[#5D489D]"
+              className="mt-4 flex items-center overflow-hidden whitespace-nowrap rounded bg-[#7259B5] text-[13px] font-semibold text-white transition-colors hover:bg-[#5D489D] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               style={{
                 gap: expanded ? 10 : 0,
                 padding: expanded ? "9px 10px" : "9px 0",
@@ -470,7 +494,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link
               href="/admin"
               title={!expanded ? "Admin" : undefined}
-              className="flex items-center rounded text-[13px] font-medium transition whitespace-nowrap overflow-hidden"
+              aria-label={!expanded ? "Admin" : undefined}
+              className="flex items-center rounded text-[13px] font-medium transition whitespace-nowrap overflow-hidden hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
               style={{
                 gap: expanded ? 10 : 0,
                 padding: expanded ? "8px 10px" : "8px 0",
@@ -486,7 +511,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <Link
             href="/configuracoes"
             title={!expanded ? "Configurações" : undefined}
-            className="flex items-center rounded text-[13px] font-medium text-black/35 hover:text-[#0D0D0D] hover:bg-black/[0.05] transition whitespace-nowrap overflow-hidden"
+            aria-label={!expanded ? "Configurações" : undefined}
+            aria-current={correspondeRota(path, "/configuracoes") ? "page" : undefined}
+            className={`flex items-center rounded text-[13px] font-medium transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+              correspondeRota(path, "/configuracoes") ? "bg-black/[0.05] text-[#0D0D0D]" : "text-black/35 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+            }`}
             style={{
               gap: expanded ? 10 : 0,
               padding: expanded ? "8px 10px" : "8px 0",
@@ -498,9 +527,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </Link>
           )}
           <button
+            type="button"
             onClick={handleLogout}
             title={!expanded ? "Sair" : undefined}
-            className="w-full flex items-center rounded text-[13px] font-medium text-black/35 hover:text-red-500 hover:bg-black/[0.05] transition whitespace-nowrap overflow-hidden"
+            aria-label={!expanded ? "Sair" : undefined}
+            className="w-full flex items-center rounded text-[13px] font-medium text-black/35 hover:text-[#D94E4E] hover:bg-black/[0.05] transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
             style={{
               gap: expanded ? 10 : 0,
               padding: expanded ? "8px 10px" : "8px 0",
@@ -518,7 +549,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         {/* Top bar */}
         <header
-          className="flex-shrink-0 flex items-center justify-end px-8 border-b"
+          className="flex-shrink-0 flex items-center justify-end px-4 md:px-8 border-b"
           style={{ height: 56, background: "#FFFFFF", borderColor: "rgba(13,13,13,.08)" }}
         >
           {/* Module switcher — oculto temporariamente até a liberação pública de Prestação */}
@@ -576,6 +607,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   onClick={() => setOrgSwitcherOpen(v => !v)}
                   title={`Trocar organização (atual: ${org.nome || "—"})`}
                   aria-label="Trocar organização"
+                  aria-haspopup="menu"
+                  aria-expanded={orgSwitcherOpen}
                   className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white overflow-hidden transition hover:brightness-95"
                 >
                   {org.avatar_url ? (
@@ -587,12 +620,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {orgSwitcherOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setOrgSwitcherOpen(false)} />
-                    <div className="absolute right-0 top-10 z-50 w-64 rounded border border-black/[.09] bg-white p-1.5 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
+                    <div role="menu" aria-label="Organizações" className="absolute right-0 top-10 z-50 w-64 rounded border border-black/[.09] bg-white p-1.5 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
                       <p className="px-2.5 pb-1.5 pt-1 text-[9px] font-bold uppercase tracking-widest text-black/30">Trocar organização</p>
                       {memberships.map(m => (
                         <button
                           key={m.organizationId}
                           type="button"
+                          role="menuitemradio"
+                          aria-checked={m.organizationId === organizationId}
                           onClick={() => trocarOrganizacao(m)}
                           className={`flex w-full items-center gap-2.5 rounded px-2.5 py-2 text-left transition hover:bg-black/[.04] ${m.organizationId === organizationId ? "bg-black/[.03]" : ""}`}
                         >
@@ -613,6 +648,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <Link
                 href="/configuracoes"
                 title={org.nome || "Configurações"}
+                aria-label={org.nome ? `${org.nome} — configurações` : "Configurações"}
                 className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white overflow-hidden transition hover:brightness-95"
               >
                 {org.avatar_url ? (
