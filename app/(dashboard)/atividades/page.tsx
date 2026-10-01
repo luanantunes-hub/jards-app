@@ -757,7 +757,7 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
               </label>
               <div className="pb-0.5 text-[10px] text-[#D94E4E]">Acima de {draftThresholds.attentionMax}: sobrecarga</div>
               <button type="button" onClick={() => { setDraftThresholds(DEFAULT_THRESHOLDS); setThresholdError(null); }} className="h-9 rounded border border-black/10 bg-white px-3 text-[11px] font-medium text-black/40 transition hover:bg-black/[.04]">Restaurar padrão</button>
-              <button type="button" disabled={savingThresholds} onClick={() => void saveThresholds(draftThresholds)} className="h-9 rounded border border-[#7259B5]/35 bg-white px-3 text-[11px] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">{savingThresholds ? "Salvando..." : "Salvar limites"}</button>
+              <button type="button" disabled={savingThresholds} onClick={() => void saveThresholds(draftThresholds)} className="h-9 rounded border border-[#7259B5]/35 bg-white px-3 text-[11px] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">{savingThresholds ? "Salvando…" : "Salvar limites"}</button>
             </div>
           </div>
           {thresholdError && <p role="alert" className="mt-3 text-[10px] text-[#D94E4E]">{thresholdError}</p>}
@@ -903,7 +903,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
   const groupMap = new Map<string, { label: string; items: AtividadeRow[] }>();
   filtered.forEach(a => {
     const key   = a.captacao?.titulo ?? "__none";
-    const label = a.captacao?.titulo ?? "Sem captação";
+    const label = a.captacao?.titulo ?? "Sem negociação";
     if (!groupMap.has(key)) groupMap.set(key, { label, items: [] });
     groupMap.get(key)!.items.push(a);
   });
@@ -1535,7 +1535,7 @@ export default function AtividadesPage() {
       {viewMode === "calendario" && (
         loadingAll
           ? <div className="bg-white rounded border py-20 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-xs text-black/30">Carregando...</p>
+              <p className="text-xs text-black/30">Carregando…</p>
             </div>
           : <CalendarioView atividades={allAtividades} tipoFilter={tipoFilter} onEdit={openAgendaItem} onNew={(d) => { setNovaPrefillDate(d); setShowNovaAtividade(true); }} />
       )}
@@ -1543,7 +1543,7 @@ export default function AtividadesPage() {
       {viewMode === "gantt" && (
         loadingAll
           ? <div className="bg-white rounded border py-20 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-xs text-black/30">Carregando...</p>
+              <p className="text-xs text-black/30">Carregando…</p>
             </div>
           : <GanttView
               atividades={allAtividades}
@@ -1556,7 +1556,7 @@ export default function AtividadesPage() {
       {viewMode === "carga" && (
         loadingAll
           ? <div className="bg-white rounded border py-20 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-xs text-black/30">Carregando...</p>
+              <p className="text-xs text-black/30">Carregando…</p>
             </div>
           : <CargaEquipeView atividades={allAtividades} tipoFilter={tipoFilter} onEdit={openAgendaItem} onReassign={updateActivityResponsible} />
       )}

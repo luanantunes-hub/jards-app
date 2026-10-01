@@ -118,14 +118,14 @@ export default function PrestacoesList() {
               {filtroStatus === "todos" ? "Nenhuma prestação cadastrada" : "Nenhuma prestação com este status"}
             </p>
             {filtroStatus === "todos" && (
-              <p className="text-[11px] text-black/25 mt-1">Crie uma prestação vinculando a uma captação aprovada</p>
+              <p className="text-[11px] text-black/25 mt-1">Crie uma prestação vinculando a uma negociação aprovada</p>
             )}
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead>
               <tr style={{ background: "#F9F9F8" }}>
-                {["Título", "Captação", "Status", "Prazo", "Aprovado", "Realizado"].map(col => (
+                {["Título", "Negociação", "Status", "Prazo", "Aprovado", "Realizado"].map(col => (
                   <th
                     key={col}
                     className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-black/35 border-b"

@@ -222,7 +222,7 @@ export default function PrestacaoDetalhe() {
       {/* Avançar status */}
       <div className="flex justify-between items-center mb-6">
         <div className="text-[11px] text-black/40">
-          {prestacao.captacao && <span>Captação: {prestacao.captacao.titulo ?? "—"}</span>}
+          {prestacao.captacao && <span>Negociação: {prestacao.captacao.titulo ?? "—"}</span>}
           {prestacao.projeto && <span className="ml-2">· Projeto: {prestacao.projeto.nome}</span>}
         </div>
 
@@ -415,7 +415,7 @@ export default function PrestacaoDetalhe() {
               </p>
             )}
             {prestacao.captacao && (
-              <p className="text-[10px] text-black/30 mt-0.5">Captação: {prestacao.captacao.titulo ?? "—"}</p>
+              <p className="text-[10px] text-black/30 mt-0.5">Negociação: {prestacao.captacao.titulo ?? "—"}</p>
             )}
             <div className="mt-3 pt-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[9px] font-semibold uppercase tracking-wide text-black/30 mb-2">Período de execução</p>

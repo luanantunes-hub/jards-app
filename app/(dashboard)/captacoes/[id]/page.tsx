@@ -607,11 +607,11 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     return (
       <div className="px-8 py-8 max-w-6xl">
         <Link href="/captacoes" className="inline-flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-black transition mb-6">
-          <ArrowLeft size={13} /> Captações
+          <ArrowLeft size={13} /> Negociações
         </Link>
         <div className="text-center py-20">
-          <p className="text-[15px] font-semibold text-black/40 mb-1">Captação não encontrada</p>
-          <p className="text-sm text-black/25">Esta captação pode ter sido removida.</p>
+          <p className="text-[15px] font-semibold text-black/40 mb-1">Negociação não encontrada</p>
+          <p className="text-sm text-black/25">Esta negociação pode ter sido removida.</p>
         </div>
       </div>
     );
@@ -668,7 +668,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           href="/captacoes"
           className="mb-7 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65"
         >
-          <ArrowLeft size={13} /> Captações
+          <ArrowLeft size={13} /> Negociações
         </Link>
 
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -861,7 +861,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               contacts={contatos.map(({ id, nome, cargo }) => ({ id, nome, cargo }))}
             />
           ) : (
-            <div className="rounded border bg-white px-5 py-12 text-center text-sm text-black/35" style={{ borderColor: "rgba(13,13,13,.08)" }}>Esta captação precisa estar associada a uma organização para usar o relacionamento.</div>
+            <div className="rounded border bg-white px-5 py-12 text-center text-sm text-black/35" style={{ borderColor: "rgba(13,13,13,.08)" }}>Esta negociação precisa estar associada a uma organização para usar o relacionamento.</div>
           )
         ) : activeTab === "cotas" ? (
           <CotasReferenceTab
@@ -930,7 +930,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             {/* Timeline */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Timeline</h2>
+                <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Histórico</h2>
                 <span className="text-[11px] text-black/25 font-medium">{timelineEvents.length} eventos</span>
               </div>
 
@@ -1120,7 +1120,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               {uploadandoDoc && (
                 <div className="bg-[#7259B5]/5 border border-[#7259B5]/20 rounded p-3 mb-3 flex items-center gap-3">
                   <RefreshCw size={14} className="text-[#7259B5] animate-spin" />
-                  <span className="text-[12px] text-[#7259B5] font-medium">Enviando arquivo...</span>
+                  <span className="text-[12px] text-[#7259B5] font-medium">Enviando arquivo…</span>
                 </div>
               )}
 
@@ -1374,7 +1374,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-[10px] text-black/40 mb-1 block">Valor Solicitado (R$)</label>
+                <label className="text-[10px] text-black/40 mb-1 block">Valor solicitado (R$)</label>
                 <input
                   type="number"
                   value={editValorSolicitado}
@@ -1385,7 +1385,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 />
               </div>
               <div>
-                <label className="text-[10px] text-black/40 mb-1 block">Valor Aprovado (R$)</label>
+                <label className="text-[10px] text-black/40 mb-1 block">Valor aprovado (R$)</label>
                 <input
                   type="number"
                   value={editValorAprovado}
@@ -1400,7 +1400,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 disabled={salvandoFinanceiro}
                 className="w-full px-3 py-2 text-[11px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
               >
-                {salvandoFinanceiro ? "Salvando..." : "Salvar"}
+                {salvandoFinanceiro ? "Salvando…" : "Salvar"}
               </button>
             </div>
           </div>

@@ -494,7 +494,7 @@ export default function BlogEditorPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-black/50 mb-1">Image Alt Tag</label>
+            <label className="block text-xs font-medium text-black/50 mb-1">Texto alternativo da imagem</label>
             <input
               className={inputCls}
               style={inputStyle}

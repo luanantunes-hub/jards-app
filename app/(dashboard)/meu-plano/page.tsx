@@ -63,7 +63,7 @@ const PLANS: PlanDef[] = [
     icon: Zap,
     cor: "#7259B5",
     features: [
-      "Captações ilimitadas",
+      "Negociações ilimitadas",
       "100 créditos mensais",
       "Operação comercial e atividades",
       "Dashboard com KPIs e alertas",
@@ -218,7 +218,7 @@ function MeuPlanoInner() {
     <div className="px-8 py-8 max-w-5xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Meu Plano</h1>
+        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Meu plano</h1>
       </div>
 
       {/* Alerts */}

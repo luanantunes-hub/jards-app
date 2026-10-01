@@ -750,7 +750,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
       <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}>
        <nav aria-label="Seções do projeto" className="mx-auto flex max-w-[1280px] items-center gap-1.5 overflow-x-auto px-4 py-3 sm:px-6 lg:px-10">
         <TabBtn active={tab === "overview"} onClick={() => setTab("overview")} icon={<Eye size={12} />}>
-          Resumo
+          Visão geral
         </TabBtn>
         <TabBtn active={tab === "captacao"} onClick={() => setTab("captacao")} icon={<BarChart2 size={12} />}>
           Captação
@@ -911,7 +911,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             {/* Quick stats */}
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded border bg-black/[.025] px-4 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[10px] font-medium text-black/35">Captações ativas</p>
+                <p className="text-[10px] font-medium text-black/35">Negociações ativas</p>
                 <p className="mt-1.5 text-[22px] font-semibold text-black/70 tabular-nums">{captacoes.filter(item => !["aprovado","recusado"].includes(item.status)).length}</p>
               </div>
               <div className="rounded border bg-black/[.025] px-4 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>

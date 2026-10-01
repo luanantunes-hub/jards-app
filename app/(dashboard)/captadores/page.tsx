@@ -594,7 +594,7 @@ export default function CaptadoresPage() {
               <button onClick={() => { setEditData(null); setShowAtribuicaoModal(true); }}
                 className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
                 style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                <Plus size={14} /> Nova Atribuição
+                <Plus size={14} /> Nova atribuição
               </button>
             )}
           </div>
@@ -651,14 +651,14 @@ export default function CaptadoresPage() {
               <div className="rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)", background: "white" }}>
                 <div className="flex items-center gap-2 mb-4">
                   <Activity size={14} className="text-[#7259B5]" />
-                  <span className="text-[12px] font-bold text-black">Meu Painel</span>
+                  <span className="text-[12px] font-bold text-black">Meu painel</span>
                 </div>
                 <div className="grid grid-cols-4 gap-4">
                   {[
                     { label:"Score", value: `${metricas.score_atividade}`, sub:"/100", color: getScoreColor(metricas.score_atividade) },
                     { label:"Ativas", value: `${metricas.captações_ativas}`, sub: `${metricas.captações_ganhas} ganhas · ${metricas.captações_perdidas} perdidas`, color:"#7259B5" },
                     { label:"Em Risco", value: `${metricas.empresas_em_risco}`, sub:`${metricas.dias_sem_avanco}d sem avanço`, color: getRiskColor(metricas.dias_sem_avanco) },
-                    { label:"Minhas Empresas", value: `${metricas.empresas_atribuidas}`, sub:`${metricas.total_captações} captações total`, color:"#0D0D0D" },
+                    { label:"Minhas Empresas", value: `${metricas.empresas_atribuidas}`, sub:`${metricas.total_captações} negociações no total`, color:"#0D0D0D" },
                   ].map(m => (
                     <div key={m.label}>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-black/30 mb-1">{m.label}</p>

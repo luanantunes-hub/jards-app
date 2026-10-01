@@ -188,7 +188,7 @@ export function ProjetoOrcamentoManager({
   function exportCsv(cota: CotaPatrocinio & { pct: number }) {
     const q = (s: string) => '"' + s.replace(/"/g, '""') + '"';
     const pctLabel = (cota.pct * 100).toFixed(1) + '%';
-    const header = [q('Rubrica'), q('Descricao'), q('Valor Total (R$)'), q(cota.nome + ' (' + pctLabel + ') (R$)')].join(',');
+    const header = [q('Rubrica'), q('Descrição'), q('Valor Total (R$)'), q(cota.nome + ' (' + pctLabel + ') (R$)')].join(',');
     const rows = itens.map(item => {
       const cotaVal = item.valor * cota.pct;
       return [q(item.rubrica), q(item.descricao ?? ''), q(item.valor.toFixed(2)), q(cotaVal.toFixed(2))].join(',');
@@ -448,7 +448,7 @@ function ItemModal({ editing, saving, onChange, onClose, onSave }: { editing: Dr
       <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-black/55">Descrição</span><input value={editing.descricao ?? ""} onChange={event => onChange({ ...editing, descricao: event.target.value })} placeholder="Detalhamento opcional" className="w-full rounded border border-black/[.12] px-3 py-2.5 text-[13px] outline-none focus:border-[#7259B5]" /></label>
       <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-black/55">Valor (R$)</span><input type="number" min="0" step="0.01" value={editing.valor ?? 0} onChange={event => onChange({ ...editing, valor: Number(event.target.value) })} className="w-full rounded border border-black/[.12] px-3 py-2.5 text-[13px] tabular-nums outline-none focus:border-[#7259B5]" /></label>
     </div>
-    <div className="mt-6 flex justify-end gap-3"><button onClick={onClose} className="px-2 py-2 text-[12px] text-black/35 hover:text-black/55">Cancelar</button><button type="button" disabled={saving || !editing.rubrica?.trim()} onClick={onSave} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:opacity-90 active:scale-[.98] disabled:opacity-40">{saving ? "Salvando..." : <><Check size={12} /> Salvar</>}</button></div>
+    <div className="mt-6 flex justify-end gap-3"><button onClick={onClose} className="px-2 py-2 text-[12px] text-black/35 hover:text-black/55">Cancelar</button><button type="button" disabled={saving || !editing.rubrica?.trim()} onClick={onSave} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:opacity-90 active:scale-[.98] disabled:opacity-40">{saving ? "Salvando…" : <><Check size={12} /> Salvar</>}</button></div>
   </Modal>;
 }
 

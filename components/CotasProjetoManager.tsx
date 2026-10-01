@@ -451,7 +451,7 @@ export function CotasProjetoManager({
                 disabled={saving}
                 className="px-4 py-2 text-xs font-semibold bg-[#2E8932] text-white border border-[#2E8932] rounded hover:bg-[#26752A] transition disabled:opacity-40"
               >
-                {saving ? "Salvando..." : editing ? "Salvar" : "Criar cota"}
+                {saving ? "Salvando…" : editing ? "Salvar" : "Criar cota"}
               </button>
             </div>
           </div>

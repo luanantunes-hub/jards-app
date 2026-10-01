@@ -88,7 +88,7 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
         </div>
       )}
       {loading ? (
-        <p className="py-12 text-center text-xs text-black/30">Carregando...</p>
+        <p className="py-12 text-center text-xs text-black/30">Carregando…</p>
       ) : notas.length === 0 ? (
         <div className="py-14 text-center"><p className="text-sm font-medium text-black/30">Nada registrado aqui ainda</p></div>
       ) : (

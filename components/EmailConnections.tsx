@@ -132,7 +132,7 @@ export function EmailConnections() {
     <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
       <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <Mail size={14} className="text-black/30" />
-        <span className="text-[12px] font-bold text-black">Email</span>
+        <span className="text-[12px] font-bold text-black">E-mail</span>
         <span className="ml-auto text-[11px] text-black/35">Gmail · conta pessoal</span>
       </div>
 
@@ -167,7 +167,7 @@ export function EmailConnections() {
                 ) : (
                   <p className="text-[11px] text-black/40 mt-0.5">
                     {googleConfigured
-                      ? "Sincronize emails com captações e contatos"
+                      ? "Sincronize e-mails com negociações e contatos"
                       : "Credenciais do servidor ainda não configuradas"}
                   </p>
                 )}

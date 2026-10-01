@@ -348,7 +348,7 @@ export default function ProponenteDetailPage() {
     return (
       <div className="flex flex-col h-full items-center justify-center gap-3">
         <p className="text-black/40 text-sm">Proponente não encontrado.</p>
-        <Link href="/proponentes" className="text-xs text-black/40 hover:text-black/70 underline transition">Voltar para Proponentes</Link>
+        <Link href="/proponentes" className="text-xs text-black/40 hover:text-black/70 underline transition">Voltar para proponentes</Link>
       </div>
     );
   }

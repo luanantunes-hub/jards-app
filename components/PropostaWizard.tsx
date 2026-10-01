@@ -487,7 +487,7 @@ export function PropostaWizard({
               className="px-4 py-2 text-xs font-semibold text-black/40 border rounded hover:bg-black/5 transition disabled:opacity-50"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             >
-              {saving ? "Salvando..." : "Salvar rascunho"}
+              {saving ? "Salvando…" : "Salvar rascunho"}
             </button>
             {status === "rascunho" && (
               <button

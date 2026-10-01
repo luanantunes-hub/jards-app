@@ -202,7 +202,7 @@ function classifyPortfolio(account: Omit<ContaRow, "portfolio_lane" | "portfolio
   return {
     portfolio_lane: "acompanhar" as const,
     portfolio_reason: account.status !== "ativa"
-      ? STATUS_LABEL[account.status]?.label ?? "Conta sem atividade"
+      ? STATUS_LABEL[account.status]?.label ?? "Cliente sem atividade"
       : account.health_readings === 0
         ? "Saúde ainda não avaliada"
         : nextActivity?.data
@@ -489,7 +489,7 @@ export default function ContasPatrocinioPage() {
       {/* Lista e carteira operacional compartilham busca e filtros */}
       <ListContent className={viewMode === "carteira" ? "" : "md:pr-0"}>{viewMode === "carteira" ? (
         filtered.length === 0 && !loading ? (
-          <div className="py-24 text-center"><Building2 size={28} className="mx-auto mb-2 text-black/15"/><p className="text-sm font-medium text-black/35">{contas.length === 0 ? "Nenhuma conta criada" : "Nenhum resultado para os filtros"}</p></div>
+          <div className="py-24 text-center"><Building2 size={28} className="mx-auto mb-2 text-black/15"/><p className="text-sm font-medium text-black/35">{contas.length === 0 ? "Nenhum cliente cadastrado" : "Nenhum resultado para os filtros"}</p></div>
         ) : <CustomerPortfolio accounts={filtered} loading={loading} onOpen={id => router.push(`/contas-patrocinio/${id}`)}/>
       ) : <ListTableSurface className="!overflow-visible rounded-r-none border-r-0">
         <ManagedTable storageKey="contas-patrocinio-v2" definitions={CONTAS_COLUMNS} className="w-full">
@@ -522,7 +522,7 @@ export default function ContasPatrocinioPage() {
                 <td colSpan={11} className="px-5 py-12 text-center">
                   <Building2 size={28} className="mx-auto text-black/15 mb-2" />
                   <p className="text-sm text-black/35 font-medium">
-                    {contas.length === 0 ? "Nenhuma conta criada" : "Nenhum resultado para a busca"}
+                    {contas.length === 0 ? "Nenhum cliente cadastrado" : "Nenhum resultado para a busca"}
                   </p>
                 </td>
               </tr>

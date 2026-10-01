@@ -644,7 +644,7 @@ export default function CaptacoesPage() {
         <PotentialKanban
           items={filteredCaptacoes}
           loading={loading}
-          emptyLabel="Sem captações"
+          emptyLabel="Sem negociações"
           onMove={movePotential}
           onAdd={potential => { setPrePotential(potential); setShowModal(true); }}
           getValue={captacao => captacao.valor_solicitado}

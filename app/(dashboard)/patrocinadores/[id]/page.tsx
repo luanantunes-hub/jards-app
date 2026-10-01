@@ -7,7 +7,7 @@ import {
   Phone, ExternalLink, Coins,
   ChevronUp, ChevronDown, UserPlus, X, Pencil, ThumbsUp, ThumbsDown, Copy, Check,
   Upload, FileText, Trash2, Newspaper, RefreshCw,
-  MoreHorizontal, Briefcase, ClipboardList, UsersRound, ArrowUpRight, CircleHelp,
+  MoreHorizontal, Building2, BriefcaseBusiness, FilePenLine, ArrowUpRight, CircleHelp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useCreditos } from "@/contexts/CreditosContext";
@@ -1111,21 +1111,21 @@ export default function PatrocinadorPage() {
                     onClick={() => { setMenuAcoesAberto(false); setShowProspectModal(true); }}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
-                    <Briefcase size={13} className="text-black/40" /> Novo prospect
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setMenuAcoesAberto(false); setInscricaoEdital(null); setShowInscricaoModal(true); }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
-                  >
-                    <ClipboardList size={13} className="text-black/40" /> Nova inscrição
+                    <Building2 size={13} className="text-black/40" aria-hidden="true" /> Novo prospect
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMenuAcoesAberto(false); setShowCaptacaoModal(true); }}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
-                    <UsersRound size={13} className="text-black/40" /> Nova captação
+                    <BriefcaseBusiness size={13} className="text-black/40" aria-hidden="true" /> Nova negociação
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setMenuAcoesAberto(false); setInscricaoEdital(null); setShowInscricaoModal(true); }}
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                  >
+                    <FilePenLine size={13} className="text-black/40" aria-hidden="true" /> Nova inscrição
                   </button>
                 </div>
               )}
@@ -1381,7 +1381,7 @@ export default function PatrocinadorPage() {
                 <table className="w-full text-sm">
                   <thead>
                     <tr style={{ background: "#F9F9F8", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
-                      {["Nome", "Cargo", "Fonte", "Rede", "Exportar", "Votos", "Email"].map((h) => (
+                      {["Nome", "Cargo", "Fonte", "Rede", "Exportar", "Votos", "E-mail"].map((h) => (
                         <th key={h} className="px-5 py-3 text-left text-[10px] font-bold text-black/30 uppercase tracking-wider">{h}</th>
                       ))}
                     </tr>

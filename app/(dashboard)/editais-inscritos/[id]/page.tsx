@@ -909,7 +909,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             {/* Timeline */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[11px] font-bold uppercase tracking-[.12em] text-black/35">Timeline</h2>
+                <h2 className="text-[11px] font-bold uppercase tracking-[.12em] text-black/35">Histórico</h2>
                 <span className="text-[11px] text-black/25 font-medium">{timeline.length} eventos</span>
               </div>
 

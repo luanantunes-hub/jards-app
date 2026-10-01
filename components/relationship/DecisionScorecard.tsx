@@ -309,7 +309,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
                     onSelect={rating => void updateCriterion(item.id, { nota: rating as 1 | 2 | 3 | 4 | 5 })}
                   />
                 </div>
-                {savingId === item.id && <span className="mt-2 block text-right text-[9px] text-black/25" aria-live="polite">Salvando...</span>}
+                {savingId === item.id && <span className="mt-2 block text-right text-[9px] text-black/25" aria-live="polite">Salvando…</span>}
               </div>
             ))}
           </div>

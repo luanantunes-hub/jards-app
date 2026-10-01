@@ -20,7 +20,7 @@ const VIEW_OPTIONS = [
 ] as const;
 
 const PROJETOS_COLUMNS = [
-  { id: "projeto", label: "Projeto", width: "250px", hideable: false }, { id: "proponente", label: "Proponente", width: "190px" }, { id: "fase", label: "Fase", width: "125px" }, { id: "objetivo", label: "Objetivo", width: "125px" }, { id: "captado", label: "Captado", width: "125px" }, { id: "progresso", label: "Progresso", width: "150px" }, { id: "captacoes", label: "Captações", width: "105px" }, { id: "inscricoes", label: "Inscrições", width: "105px" }, { id: "prazo", label: "Próximo prazo", width: "145px" }, { id: "focal", label: "Ponto focal", width: "170px" }, { id: "atualizacao", label: "Atualização", width: "140px" }, { id: "acoes", label: "Ações", width: "80px" },
+  { id: "projeto", label: "Projeto", width: "250px", hideable: false }, { id: "proponente", label: "Proponente", width: "190px" }, { id: "fase", label: "Fase", width: "125px" }, { id: "objetivo", label: "Objetivo", width: "125px" }, { id: "captado", label: "Captado", width: "125px" }, { id: "progresso", label: "Progresso", width: "150px" }, { id: "captacoes", label: "Negociações", width: "105px" }, { id: "inscricoes", label: "Inscrições", width: "105px" }, { id: "prazo", label: "Próximo prazo", width: "145px" }, { id: "focal", label: "Ponto focal", width: "170px" }, { id: "atualizacao", label: "Atualização", width: "140px" }, { id: "acoes", label: "Ações", width: "80px" },
 ] as const satisfies readonly ColumnDefinition[];
 
 type ProjetoRow = {
@@ -303,7 +303,7 @@ export default function ProjetosPage() {
               <FolderOpen size={22} className="text-black/25" />
             </div>
             <p className="text-[15px] font-semibold text-black/40 mb-1">Nenhum projeto ainda</p>
-            <p className="text-sm text-black/25 mb-5">Crie projetos para organizar suas captações e inscrições</p>
+            <p className="text-sm text-black/25 mb-5">Crie projetos para organizar suas negociações e inscrições</p>
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
@@ -332,7 +332,7 @@ export default function ProjetosPage() {
               <ManagedTable storageKey="projetos" definitions={PROJETOS_COLUMNS} className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
-                    {["Projeto", "Proponente", "Fase", "Objetivo", "Captado", "Progresso", "Captações", "Inscrições", "Próximo prazo", "Ponto focal", "Atualização", ""].map((h) => (
+                    {["Projeto", "Proponente", "Fase", "Objetivo", "Captado", "Progresso", "Negociações", "Inscrições", "Próximo prazo", "Ponto focal", "Atualização", ""].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
                         {h}
                       </th>
