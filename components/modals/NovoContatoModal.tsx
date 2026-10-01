@@ -133,15 +133,20 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
   useEffect(() => {
     if (vinculoTipo !== "proponente" && vinculoTipo !== "captador") return;
     if (!entityOpen && entityQuery === entityNome) return;
+    if (!organizationId) return;
     const table = vinculoTipo === "proponente" ? "proponentes" : "captadores";
     const timer = setTimeout(async () => {
-      const request = (supabase as any).from(table).select("id,nome").order("nome").limit(8);
+      // Restrito à organização atual — captadores/proponentes são visíveis em
+      // todas as organizações de que o usuário participa (RLS por
+      // membership/dono, não pela organização ativa na tela), então sem esse
+      // filtro o dropdown misturava resultados de outras organizações.
+      const request = (supabase as any).from(table).select("id,nome").eq("organization_id", organizationId).order("nome").limit(8);
       if (entityQuery.trim()) request.ilike("nome", `%${entityQuery.trim()}%`);
       const { data } = await request;
       setEntityOptions(data ?? []);
     }, 200);
     return () => clearTimeout(timer);
-  }, [entityQuery, entityOpen, entityNome, vinculoTipo]);
+  }, [entityQuery, entityOpen, entityNome, vinculoTipo, organizationId]);
 
   useEffect(() => {
     function closeEntityMenu(event: MouseEvent) {
@@ -159,8 +164,10 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
   async function handleCriarEmpresa() {
     if (!novaEmpresaNome.trim()) return;
     setCriandoEmpresaLoading(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) { setCriandoEmpresaLoading(false); setErro("Usuário não autenticado"); return; }
     const { data, error } = await (supabase as any).from("empresas_crm")
-      .insert({ nome: novaEmpresaNome.trim(), organization_id: organizationId }).select("id,nome").single();
+      .insert({ nome: novaEmpresaNome.trim(), organization_id: organizationId, account_id: user.id }).select("id,nome").single();
     setCriandoEmpresaLoading(false);
     if (error || !data) { setErro(error?.message ?? "Não foi possível criar a empresa."); return; }
     setEmpresas(current => [...current, data].sort((a, b) => a.nome.localeCompare(b.nome)));
