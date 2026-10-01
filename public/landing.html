@@ -52,7 +52,6 @@
       --cream:  #FFFFFF;
       --ink:    #282525;
       --purple: #684DB0;
-      --accent-gradient: linear-gradient(90deg,#7B35E8 0%,#B875FF 38%,#9145F5 68%,#684DB0 100%);
       --rose-bg:  #FFF0EE;
       --rose-bdr: #FFD4CE;
       --violet-bg:  #F2EEFF;
@@ -71,7 +70,7 @@
 
     /* ── Cards da Base de dados: padrão dos editais da aplicação ── */
     .sponsor-card {
-      background: linear-gradient(145deg,#fff 0%,#f7f7f6 100%);
+      background: linear-gradient(145deg,#fff 0%,#F7F7F5 100%);
       border: 1px solid rgba(40,37,37,.08);
       border-radius: 4px;
       box-shadow: 0 1px 2px rgba(40,37,37,.025);
@@ -106,7 +105,7 @@
     .law-tag { display: inline-flex; align-items: center; min-height: 20px; padding: 0 8px; border-radius: 4px; font-size: 9px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
 
     /* ── Mockup de conversa (conector MCP) ── */
-    .mcp-chat { background: linear-gradient(165deg,#fff,#F7F4EF); border: 1px solid rgba(13,13,13,.10); border-radius: 4px; box-shadow: 0 22px 44px -12px rgba(52,42,78,.18), 0 6px 14px -6px rgba(52,42,78,.10); overflow: hidden; }
+    .mcp-chat { background: linear-gradient(165deg,#fff,#F7F7F5); border: 1px solid rgba(13,13,13,.10); border-radius: 4px; box-shadow: 0 22px 44px -12px rgba(52,42,78,.18), 0 6px 14px -6px rgba(52,42,78,.10); overflow: hidden; }
     .mcp-chat-head { display:flex; align-items:center; gap:7px; padding:12px 50px 12px 16px; border-bottom:1px solid rgba(40,37,37,.08); }
     .mcp-chat-dot { width:7px; height:7px; border-radius:50%; background:rgba(40,37,37,.15); flex-shrink:0; }
     .mcp-tabs { display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-left:8px; padding:3px; border-radius:6px; background:rgba(13,13,13,.05); }
@@ -220,29 +219,29 @@
     .ver-btn {
       width:26px; height:26px; border-radius:4px;
       display:flex; align-items:center; justify-content:center;
-      color:#7C3AED; background:transparent; border:none; cursor:pointer;
+      color:#684DB0; background:transparent; border:none; cursor:pointer;
       transition:background .15s, color .15s; padding:0;
     }
-    .db-row:hover .ver-btn { background:#7C3AED; color:white; }
+    .db-row:hover .ver-btn { background:#684DB0; color:white; }
 
     /* ── Cards de Editais ── */
     .edital-card {
       background: var(--violet-bg);
       border: 1.5px solid var(--violet-bdr);
       border-radius: 14px;
-      box-shadow: 0 2px 10px rgba(90,40,200,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 10px rgba(104,77,176,0.07), 0 1px 2px rgba(0,0,0,0.04);
       transition: box-shadow .2s ease, transform .2s ease;
       display: flex; flex-direction: column; overflow: hidden;
     }
     .edital-card:hover {
-      box-shadow: 0 8px 32px rgba(90,40,200,0.20), 0 2px 8px rgba(90,40,200,0.09);
+      box-shadow: 0 8px 32px rgba(104,77,176,0.20), 0 2px 8px rgba(104,77,176,0.09);
       transform: translateY(-3px);
     }
     .edital-header {
       display: flex; align-items: center; gap: 10px;
       padding: 12px 14px 10px;
       background: rgba(255,255,255,0.78);
-      border-bottom: 1px solid rgba(90,40,200,0.09);
+      border-bottom: 1px solid rgba(104,77,176,0.09);
     }
     .edital-logo-box {
       width: 36px; height: 36px; flex-shrink: 0;
@@ -279,7 +278,7 @@
     .edital-dot.green { background: #22C55E; }
     .edital-footer {
       padding: 8px 14px 12px;
-      border-top: 1px solid rgba(90,40,200,0.09);
+      border-top: 1px solid rgba(104,77,176,0.09);
       display: flex; gap: 7px;
     }
     .edital-btn-export {
@@ -317,7 +316,7 @@
       transition: opacity 0.38s cubic-bezier(.4,0,.2,1), transform 0.38s cubic-bezier(.4,0,.2,1);
     }
     .bi-sponsor {
-      background: linear-gradient(145deg,#fff 0%,#f7f7f6 100%);
+      background: linear-gradient(145deg,#fff 0%,#F7F7F5 100%);
       border: 1px solid rgba(40,37,37,.08);
       box-shadow: 0 1px 2px rgba(40,37,37,.025);
       transition: opacity .38s cubic-bezier(.4,0,.2,1), transform .38s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .2s ease;
@@ -362,7 +361,7 @@
     /* ── Reveal ── */
     section[id] { scroll-margin-top:96px; }
     :focus-visible { outline:3px solid rgba(104,77,176,.45); outline-offset:3px; }
-    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#282525; color:#fff; font-size:13px; font-weight:700; transition:transform .18s ease; }
+    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#0D0D0D; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
     .skip-link:focus { transform:translateY(0); }
     .reveal { opacity:1; transform:none; }
     html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
@@ -374,9 +373,6 @@
     .brand-visual img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
     .brand-visual::after { content:""; position:absolute; inset:0; background:linear-gradient(90deg,rgba(40,37,37,.84) 0%,rgba(40,37,37,.62) 38%,rgba(40,37,37,.08) 72%,transparent 100%); }
     .brand-visual.is-light::after { background:linear-gradient(90deg,#fff 0%,rgba(255,255,255,.94) 38%,rgba(255,255,255,.18) 78%,transparent 100%); }
-    .brand-visual.is-senna { background:#181818; }
-    .brand-visual.is-senna::after { background:none; }
-    .brand-visual.is-senna img { object-position:center center; }
     .brand-caption { position:absolute; z-index:2; left:max(24px,calc((100vw - 1152px)/2)); top:50%; max-width:560px; transform:translateY(-50%); }
     .flow-grid { display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid rgba(40,37,37,.12); border-bottom:1px solid rgba(40,37,37,.12); }
     .jards-flow-step { min-height:210px; padding:28px 24px; border-right:1px solid rgba(40,37,37,.12); }
@@ -386,6 +382,24 @@
     .jards-flow-step p { color:rgba(40,37,37,.58); font-size:14px; line-height:1.6; }
     .flow-journey-art { position:relative; height:clamp(120px,18vw,210px); margin-top:40px; overflow:hidden; }
     .flow-journey-art img { position:absolute; top:50%; left:0; display:block; width:100%; height:auto; transform:translateY(-50%) scaleX(-1); pointer-events:none; user-select:none; }
+    /* Alternativa: fluxo sem foto, pista como protagonista.
+       A arte tem 2163×727 px e o traço ocupa as linhas 246–515 (37% da altura).
+       A pista fica maior que o contêiner, encostada à direita, e sangra pela esquerda. */
+    .alt-fluxo { overflow:hidden; }
+    .alt-fluxo .flow-journey-art { height:auto; aspect-ratio:2163 / 363; margin:56px 0 48px; overflow:visible; }
+    .alt-fluxo .flow-journey-art img { top:0; right:-1.3%; left:auto; width:135%; max-width:none; transform:translateY(-33.84%) scaleX(-1); }
+    /* A pista esmaece na borda esquerda da janela, em vez de terminar num fragmento cortado.
+       --pista-corte é a distância (em % da largura da imagem) entre a ponta visual esquerda da imagem
+       e o centro do contêiner: (0,5 + 0,337) / 1,35 ≈ 62% no desktop; (0,5 + 1,575) / 2,6 ≈ 79,8% no celular.
+       Menos 50vw, cai na borda esquerda da janela. O gradiente vai "to left" porque a imagem está espelhada.
+       Os primeiros --pista-margem px ficam totalmente transparentes, para nenhum pedaço de curva sobrar colado na borda. */
+    .alt-fluxo { --pista-corte:62%; --pista-margem:24px; --pista-fade:160px; }
+    .alt-fluxo .flow-journey-art img {
+      -webkit-mask-image:linear-gradient(to left, transparent calc(var(--pista-corte) - 50vw + var(--pista-margem)), #000 calc(var(--pista-corte) - 50vw + var(--pista-margem) + var(--pista-fade)));
+      mask-image:linear-gradient(to left, transparent calc(var(--pista-corte) - 50vw + var(--pista-margem)), #000 calc(var(--pista-corte) - 50vw + var(--pista-margem) + var(--pista-fade)));
+    }
+    .alt-fluxo .jards-flow-step:first-child { padding-left:0; }
+    .alt-fluxo .jards-flow-step:last-child { padding-right:0; }
 
     /* ── Divider line ── */
     hr.rule { border:none; border-top:1px solid rgba(40,37,37,.12); }
@@ -399,13 +413,11 @@
     /* ── Product stories ── */
     .section-space { padding-top:clamp(6rem,8vw,9rem); padding-bottom:clamp(6rem,8vw,9rem); }
     .product-story { border-top:1px solid rgba(40,37,37,.10); }
-    .story-kicker { font-size:11px; font-weight:700; color:rgba(40,37,37,.38); letter-spacing:.12em; text-transform:uppercase; }
     .story-list { display:grid; gap:14px; margin-top:28px; }
-    .story-list li { display:grid; grid-template-columns:34px 1fr; gap:13px; align-items:start; font-size:13px; line-height:1.55; color:rgba(40,37,37,.58); }
+    .story-list li { font-size:14px; line-height:1.6; color:rgba(40,37,37,.58); }
     .story-list strong { color:#282525; font-weight:650; }
-    .story-index { display:block; font-size:22px; line-height:1; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; margin-top:1px; }
 
-    .product-art { background:#FAFAFA; border:1px solid rgba(40,37,37,.09); border-radius:16px; overflow:hidden; }
+    .product-art { background:#F7F7F5; border:1px solid rgba(40,37,37,.09); border-radius:16px; overflow:hidden; }
     .pipeline-photo,.team-photo { position:relative; aspect-ratio:1; overflow:hidden; border-radius:4px; background:rgba(40,37,37,.035); box-shadow:0 20px 54px rgba(40,37,37,.10); }
     .pipeline-photo img,.team-photo img { display:block; width:100%; height:100%; object-fit:cover; }
     .pipeline-photo img { object-position:center 45%; }
@@ -447,27 +459,16 @@
     .platform-paper-shape { position:absolute; display:block; border:1px solid rgba(255,255,255,.32); border-radius:42px; box-shadow:inset 0 1px 0 rgba(255,255,255,.40),0 28px 65px rgba(52,42,78,.055); }
     .platform-paper-purple { left:-17vw; bottom:-39%; width:62vw; height:72%; background:rgba(104,77,176,.11); -webkit-mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); transform:rotate(-3deg); }
     .platform-paper-red { top:-38%; right:-14vw; width:58vw; height:70%; background:rgba(217,74,74,.10); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:rotate(3deg); }
-    .feature-ledger { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr); width:100%; min-height:620px; overflow:hidden; border:1px solid rgba(40,37,37,.10); background:rgba(255,255,255,.88); box-shadow:0 24px 70px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.75); backdrop-filter:blur(18px) saturate(120%); -webkit-backdrop-filter:blur(18px) saturate(120%); }
-    .ledger-main { position:relative; display:flex; flex-direction:column; padding:58px 52px 46px; overflow:hidden; border-right:1px solid rgba(40,37,37,.10); }
-    .ledger-main::after { content:"01—03"; position:absolute; right:-16px; bottom:52px; color:rgba(104,77,176,.035); font-size:clamp(76px,9vw,132px); font-weight:800; line-height:.8; letter-spacing:-.09em; pointer-events:none; }
-    .ledger-kicker { position:relative; z-index:1; margin-bottom:22px; color:#684DB0; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
-    .ledger-main h2,.ledger-main>p { position:relative; z-index:1; }
-    .ledger-side { display:grid; grid-template-rows:repeat(3,1fr); counter-reset:ledger; }
-    .ledger-item { position:relative; display:grid; grid-template-columns:40px 1fr; align-content:center; column-gap:16px; padding:24px 34px; border-bottom:1px solid rgba(40,37,37,.10); counter-increment:ledger; transition:background-color .25s ease; }
+    .feature-ledger { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr); width:100%; overflow:hidden; border:1px solid rgba(40,37,37,.10); background:rgba(255,255,255,.88); box-shadow:0 24px 70px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.75); backdrop-filter:blur(18px) saturate(120%); -webkit-backdrop-filter:blur(18px) saturate(120%); }
+    /* sem a linha do tempo (o fluxo já conta a jornada) e sem numerais: o texto fica centrado na altura das três forças */
+    .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(40,37,37,.10); }
+    .ledger-side { display:grid; grid-template-rows:repeat(3,auto); }
+    .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(40,37,37,.10); transition:background-color .25s ease; }
     .ledger-item:hover { background:rgba(104,77,176,.035); }
     .ledger-item:last-child { border-bottom:0; }
-    .ledger-item::before { content:"0" counter(ledger); position:absolute; left:34px; top:50%; transform:translateY(-50%); color:#684DB0; background:var(--accent-gradient); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; font-size:24px; font-weight:800; line-height:1; letter-spacing:-.06em; }
-    .ledger-item > * { grid-column:2; }
-    .ledger-num { font-family:'Google Sans',system-ui,sans-serif; font-size:10px; font-weight:700; letter-spacing:.08em; color:#684DB0; margin-bottom:10px; }
-    .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.05; margin-bottom:8px; }
-    .ledger-item p { max-width:38ch; font-size:12px; line-height:1.6; color:rgba(40,37,37,.50); }
-    .flow-row { position:relative; z-index:1; display:grid; grid-template-columns:repeat(5,1fr); gap:0; margin-top:auto; padding-top:52px; }
-    .flow-row::before { content:""; position:absolute; top:60px; left:5px; right:8px; height:1px; background:rgba(104,77,176,.30); }
-    .flow-step { position:relative; padding:28px 10px 0 0; }
-    .flow-step::before { content:""; position:absolute; top:4px; left:0; width:9px; height:9px; border:2px solid #684DB0; border-radius:50%; background:#fff; }
-    .flow-step:last-child::after { content:"→"; position:absolute; top:-5px; right:2px; color:#684DB0; font-size:18px; line-height:1; }
-    .flow-step span { display:block; font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.07em; color:rgba(40,37,37,.38); }
-    .flow-step strong { display:block; font-size:10px; margin-top:4px; }
+    .ledger-item .ledger-num { margin-bottom:10px; font-size:11px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:rgba(40,37,37,.48); }
+    .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.1; letter-spacing:-.015em; margin-bottom:8px; }
+    .ledger-item p { max-width:40ch; font-size:13px; line-height:1.6; color:rgba(40,37,37,.55); }
 
     @media (max-width: 767px) {
       .kanban-art { grid-template-columns:repeat(4,150px); overflow-x:auto; }
@@ -477,21 +478,12 @@
       .platform-forces { min-height:auto; padding-top:56px; padding-bottom:56px; }
       .platform-paper-purple { left:-78vw; bottom:-12%; width:142vw; height:48%; }
       .platform-paper-red { top:-17%; right:-77vw; width:138vw; height:44%; }
-      .feature-ledger { grid-template-columns:1fr; min-height:0; }
-      .ledger-main { min-height:390px; padding:34px 24px 28px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
-      .ledger-main::after { display:none; }
-      .ledger-kicker { margin-bottom:16px; }
-      .ledger-main h2 { font-size:clamp(34px,9.4vw,48px) !important; }
+      .feature-ledger { grid-template-columns:1fr; }
+      .ledger-main { padding:34px 24px 32px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
       .ledger-main>p { max-width:34ch; font-size:14px; }
-      .flow-row { display:flex; margin:28px -24px 0; padding:18px 24px 6px; gap:0; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
-      .flow-row::-webkit-scrollbar,.ledger-side::-webkit-scrollbar { display:none; }
-      .flow-row::before { top:25px; left:28px; right:28px; }
-      .flow-step { flex:0 0 126px; padding:27px 12px 0 0; scroll-snap-align:start; }
-      .flow-step:last-child::after { top:-6px; right:8px; }
-      .ledger-side { display:flex; grid-template-rows:none; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
-      .ledger-item { flex:0 0 min(78vw,290px); min-height:190px; align-content:start; padding:28px 24px; border-right:1px solid rgba(40,37,37,.10); border-bottom:0; scroll-snap-align:start; }
-      .ledger-item::before { left:24px; }
-      .ledger-item:last-child { border-right:0; }
+      /* as três forças empilhadas, sem carrossel */
+      .ledger-side { grid-template-rows:none; }
+      .ledger-item { padding:28px 24px; }
     }
 
     .landing-nav-shell { margin-top:10px; border:1px solid rgba(40,37,37,.08); border-radius:4px; background:rgba(255,255,255,.76); backdrop-filter:blur(22px) saturate(150%); -webkit-backdrop-filter:blur(22px) saturate(150%); box-shadow:0 12px 44px rgba(104,77,176,.09),inset 0 1px 0 rgba(255,255,255,.8); }
@@ -508,12 +500,11 @@
     .closing-cta::before { left:-18vw; bottom:-92%; background:rgba(217,74,74,.14); -webkit-mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); transform:rotate(-4deg); }
     .closing-cta::after { top:-94%; right:-17vw; background:rgba(104,77,176,.14); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:rotate(4deg); }
     @media (max-width:767px) { .closing-cta::before,.closing-cta::after { width:125vw; height:115%; } .closing-cta::before { left:-78vw; bottom:-66%; } .closing-cta::after { top:-68%; right:-80vw; } }
-    .blog-section { background:#fff; border-top:1px solid rgba(40,37,37,.08); }
-    .blog-head { display:grid; grid-template-columns:minmax(0,1.3fr) minmax(260px,.7fr); align-items:end; gap:48px; margin-bottom:52px; }
+    .blog-section { background:#fff; }
+    .blog-head { margin-bottom:52px; }
     .blog-head h2 { max-width:12ch; margin-top:14px; font-size:clamp(38px,4.5vw,64px); font-weight:700; line-height:1.02; letter-spacing:-.05em; color:#282525; }
-    .blog-head-side { justify-self:end; max-width:34ch; }
     .blog-head-side p { margin-bottom:22px; font-size:15px; line-height:1.65; color:rgba(40,37,37,.56); }
-    .blog-index-link { display:inline-flex; align-items:center; gap:9px; padding-bottom:4px; border-bottom:1px solid rgba(104,77,176,.42); color:#684DB0; font-size:14px; font-weight:700; transition:border-color .2s ease,gap .2s ease; }
+    .blog-index-link { display:inline-flex; align-items:center; gap:9px; padding-bottom:4px; border-bottom:1px solid rgba(104,77,176,.42); color:#684DB0; font-size:14px; font-weight:500; transition:border-color .2s ease,gap .2s ease; }
     .blog-index-link:hover { gap:13px; border-color:#684DB0; }
     .blog-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr; border-top:1px solid rgba(40,37,37,.12); border-bottom:1px solid rgba(40,37,37,.12); }
     .blog-story { display:flex; min-width:0; min-height:390px; flex-direction:column; padding:34px 28px 30px; color:#282525; border-right:1px solid rgba(40,37,37,.12); transition:background-color .25s ease; }
@@ -524,12 +515,10 @@
     .blog-story h3 { max-width:18ch; margin:0 0 16px; font-size:clamp(23px,2.2vw,34px); font-weight:700; line-height:1.08; letter-spacing:-.035em; }
     .blog-story:not(:first-child) h3 { font-size:clamp(21px,1.75vw,27px); }
     .blog-story p { max-width:38ch; margin-bottom:28px; color:rgba(40,37,37,.56); font-size:14px; line-height:1.65; }
-    .blog-read { display:flex; align-items:center; gap:9px; margin-top:auto; color:#282525; font-size:13px; font-weight:700; }
-    .blog-read::after { content:"→"; color:#684DB0; transition:transform .2s ease; }
-    .blog-story:hover .blog-read::after { transform:translateX(4px); }
+    .blog-read { display:flex; align-items:center; gap:9px; margin-top:auto; color:#282525; font-size:13px; font-weight:500; }
+    .blog-read .ph { color:#684DB0; font-size:14px; transition:transform .2s ease; }
+    .blog-story:hover .blog-read .ph { transform:translateX(4px); }
     @media (max-width:900px) {
-      .blog-head { grid-template-columns:1fr; gap:22px; }
-      .blog-head-side { justify-self:start; }
       .blog-grid { grid-template-columns:1fr 1fr; }
       .blog-story { min-height:390px; }
       .blog-story:first-child { grid-column:1 / -1; min-height:0; padding-right:0; padding-bottom:36px; border-right:0; }
@@ -545,7 +534,7 @@
       .blog-story:last-child { padding-right:20px; border-right:0; }
       .blog-story h3,.blog-story:not(:first-child) h3 { font-size:25px; }
     }
-    .site-footer { position:relative; overflow:hidden; padding:88px 24px 28px; border-top:1px solid rgba(40,37,37,.10); background:#F7F7F5; color:#282525; }
+    .site-footer { position:relative; overflow:hidden; padding:88px 24px 28px; background:#F7F7F5; color:#282525; }
     .site-footer-main { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); gap:64px; align-items:start; }
     .footer-brand { min-height:390px; }
     .footer-icon-stack { position:relative; display:block; width:430px; height:390px; }
@@ -735,19 +724,174 @@
     .art-foot { display:flex; align-items:center; justify-content:space-between; min-height:34px; padding:0 16px; border-top:1px solid rgba(40,37,37,.09); color:rgba(40,37,37,.32); background:#fff; font-size:7.5px; }
     .art-foot strong { color:#684DB0; font-weight:600; }
     .landing-proof { border-top:1px solid rgba(40,37,37,.09); border-bottom:1px solid rgba(40,37,37,.09); }
-    .accent-gradient-text,
     .stat-accent,
-    .flow-index,
-    .story-index {
-      color:#684DB0;
-      background:var(--accent-gradient);
-      -webkit-background-clip:text;
-      background-clip:text;
-      -webkit-text-fill-color:transparent;
-    }
+    .flow-index { color:var(--alt-purple); }
     .rounded-xl,.rounded-2xl,.rounded-lg { border-radius:4px !important; }
-    @media (max-width:767px) { .landing-nav-shell { margin:8px 8px 0; padding-left:14px; padding-right:10px; } .landing-nav-shell a[data-app-path="/login"] { display:none; } .landing-hero { min-height:auto; }                             .brand-visual { min-height:680px; } .brand-visual img { object-position:82% center; } .brand-visual::after { background:linear-gradient(180deg,rgba(40,37,37,.88) 0%,rgba(40,37,37,.66) 54%,rgba(40,37,37,.18) 100%); } .brand-visual.is-light::after { background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.92) 52%,rgba(255,255,255,.20) 100%); } .brand-caption { left:24px; right:24px; top:72px; transform:none; } .flow-grid { grid-template-columns:1fr; } .jards-flow-step { min-height:auto; border-right:0; border-bottom:1px solid rgba(40,37,37,.12); } .jards-flow-step:last-child { border-bottom:0; } .flow-index { margin-bottom:18px; } }
-    @media (max-width:767px) { .brand-visual.is-senna::after { background:none; } .brand-visual.is-senna img { object-position:78% center; } }
+    @media (max-width:767px) { .landing-nav-shell { margin:8px 8px 0; padding-left:14px; padding-right:10px; } .landing-hero { min-height:auto; }                             .brand-visual { min-height:680px; } .brand-visual img { object-position:82% center; } .brand-visual::after { background:linear-gradient(180deg,rgba(40,37,37,.88) 0%,rgba(40,37,37,.66) 54%,rgba(40,37,37,.18) 100%); } .brand-visual.is-light::after { background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.92) 52%,rgba(255,255,255,.20) 100%); } .brand-caption { left:24px; right:24px; top:72px; transform:none; } }
+
+    /* ── Alternativa: tokens ── */
+    :root {
+      --alt-ink: #0D0D0D;
+      --alt-ink-hover: #2B2828;
+      --alt-purple: #684DB0;
+      --alt-purple-focus: #7259B5;
+      --alt-purple-on-dark: #CFC3F0;
+      --alt-surface: #F7F7F5;
+      --alt-radius: 4px;
+      --alt-container: 1152px;
+      --alt-h2-chapter: clamp(40px, 4.45vw, 64px);
+      --alt-h2-section: clamp(34px, 3.6vw, 52px);
+      /* coluna da direita dos cabeçalhos divididos (fluxo, preços, blog): mesma largura, mesmo x */
+      --alt-split-side: clamp(260px, 30vw, 360px);
+      /* slot fixo do numeral/ícone na faixa de prova: os rótulos começam no mesmo x nas três colunas */
+      --alt-proof-mark: 40px;
+    }
+
+    /* Rolagem das âncoras sem animação quando o sistema pede movimento reduzido
+       (html.scroll-smooth vence a classe .scroll-smooth do Tailwind) */
+    @media (prefers-reduced-motion: reduce) { html.scroll-smooth { scroll-behavior:auto; } }
+
+    /* CTA principal único ("Começar grátis") e variantes */
+    .alt-cta { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 18px; border:1px solid transparent; border-radius:var(--alt-radius); background:var(--alt-ink); color:#fff; font-size:14px; font-weight:500; line-height:1; white-space:nowrap; text-decoration:none; cursor:pointer; transition:background-color .18s ease, border-color .18s ease, color .18s ease, transform .12s ease; }
+    .alt-cta:hover { background:var(--alt-ink-hover); }
+    .alt-cta:active { transform:translateY(1px); }
+    .alt-cta:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; }
+    .alt-cta .ph, .alt-link .ph { font-size:16px; line-height:1; }
+    .alt-cta--header { height:40px; }
+    .alt-cta--block { display:flex; width:100%; }
+    /* sobre foto ou fundo escuro */
+    .alt-cta--light { background:#fff; color:var(--alt-ink); }
+    .alt-cta--light:hover { background:#ECEBE8; }
+    .alt-cta--light:focus-visible { outline-color:var(--alt-purple-on-dark); }
+    /* contorno: plano Gratuito */
+    .alt-cta--outline { background:transparent; color:var(--alt-ink); border-color:rgba(13,13,13,.18); }
+    .alt-cta--outline:hover { background:rgba(13,13,13,.04); border-color:rgba(13,13,13,.32); }
+    /* secundário: texto com seta, sem borda e sem fundo */
+    .alt-link { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0; border:0; background:none; color:var(--alt-ink); font-size:14px; font-weight:500; line-height:1.2; white-space:nowrap; text-decoration:none; cursor:pointer; transition:color .18s ease; }
+    .alt-link .ph { transition:transform .18s ease; }
+    .alt-link:hover .ph { transform:translateX(3px); }
+    .alt-link:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; border-radius:var(--alt-radius); }
+    .hero-actions { gap:12px 28px; }
+    /* textos sobre foto: mesma borda esquerda do contêiner (50% evita o desvio da barra de rolagem que 100vw inclui) */
+    .brand-caption { left:max(24px, calc(50% - (var(--alt-container) / 2))); max-width:640px; }
+
+    /* Títulos h2 em dois níveis: capítulo (sobre foto) e seção */
+    h2.alt-h2 { font-weight:700; letter-spacing:-.035em; line-height:1.04; text-wrap:balance; }
+    h2.alt-h2--chapter { font-size:var(--alt-h2-chapter); }
+    h2.alt-h2--section { font-size:var(--alt-h2-section); }
+    .blog-head h2.alt-h2 { margin-top:0; }
+    /* Linha de h2 em bloco próprio: o text-wrap:balance herdado equilibra cada linha (o <br> impedia) */
+    .alt-h2-line { display:block; }
+
+    /* Cabeçalho dividido: título à esquerda, texto de apoio numa coluna de largura fixa à direita */
+    .alt-split-head { display:grid; grid-template-columns:minmax(0,1fr) var(--alt-split-side); align-items:end; gap:48px; }
+    .alt-split-head .alt-h2 { margin:0; }
+    .alt-split-lede { color:rgba(40,37,37,.56); font-size:15px; line-height:1.65; }
+    @media (max-width:767px) { .alt-split-head { grid-template-columns:minmax(0,1fr); gap:18px; } }
+
+    /* Kicker único acima de cada h2 */
+    .alt-kicker { display:block; margin:0 0 16px; font-size:12px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:var(--alt-purple); }
+    .alt-kicker--on-dark { color:var(--alt-purple-on-dark); }
+    .ledger-main > .alt-kicker { max-width:none; font-size:12px; }
+
+    /* Um roxo só: numerais sólidos, ícone da faixa de prova e check único */
+    .alt-proof-icon { display:block; flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); height:var(--alt-proof-mark); color:var(--alt-purple); }
+    .alt-proof-mark { flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); }
+    .alt-check { flex:0 0 auto; width:16px; height:16px; margin-top:2px; color:var(--alt-purple); }
+    .pricing-pro-card .alt-check { color:var(--alt-purple-on-dark); }
+
+    /* Uma superfície neutra só */
+    .alt-surface { background:var(--alt-surface); }
+
+    /* Grade: texto do hero alinhado ao contêiner de 1152px (o mockup continua sangrando à direita) */
+    @media (min-width:1024px) {
+      .hero-layout { padding-left:max(24px, calc(min(50%, 740px) - (var(--alt-container) / 2))); }
+    }
+
+    @media (prefers-reduced-motion: reduce) { .alt-cta, .alt-link, .alt-link .ph { transition:none; } }
+
+    /* ── Alternativa: estrutura e mobile ── */
+
+    /* Header: "Entrar" visível no celular, mesmo destino do "Fazer login" */
+    .alt-nav-login { display:inline-flex; align-items:center; min-height:40px; padding:0 12px; border-radius:var(--alt-radius); color:rgba(13,13,13,.55); font-size:14px; font-weight:500; white-space:nowrap; transition:color .18s ease; }
+    .alt-nav-login:hover { color:var(--alt-ink); }
+    .alt-nav-login:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; }
+    @media (max-width:767px) { .alt-nav-login { padding:0 10px; } }
+
+    /* Abas roláveis: o JS marca o lado que ainda tem conteúdo e só esse lado esmaece */
+    .alt-scroll-x { overflow-x:auto; scrollbar-width:none; overscroll-behavior-x:contain; }
+    .alt-scroll-x::-webkit-scrollbar { display:none; }
+    .alt-scroll-x.is-fade-r { -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent); }
+    .alt-scroll-x.is-fade-l { -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px); mask-image:linear-gradient(90deg,transparent,#000 40px); }
+    .alt-scroll-x.is-fade-l.is-fade-r { -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); }
+
+    /* BI: kicker e h2 no topo; acordeão à esquerda, cartões à direita */
+    .bi-head { max-width:760px; margin-bottom:56px; }
+    .bi-head .alt-h2 { margin:0; }
+    .bi-layout { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.08fr); gap:64px; align-items:start; }
+    .bi-destaque { display:none; }
+    @media (max-width:767px) {
+      .bi-head { margin-bottom:32px; }
+      .bi-layout { grid-template-columns:minmax(0,1fr); gap:40px; }
+      /* no celular: o +2.000 (biConfig[0], montado pelo script) vira linha de destaque e ficam só os 2 cartões.
+         O item 1 do acordeão acende a linha (borda roxa), já que o slot 2 está oculto aqui */
+      #bi-slot-2, .bi-cards .sponsor-card { display:none; }
+      .bi-destaque { display:flex; align-items:center; gap:16px; margin-bottom:20px; padding:6px 0 6px 16px; border-left:3px solid rgba(13,13,13,.10); transition:border-color .2s ease; }
+      .bi-destaque.is-active { border-left-color:var(--alt-purple); }
+      .bi-destaque:empty { display:none; }
+      .bi-destaque .stat-num { flex:0 0 auto; font-size:40px; line-height:1; letter-spacing:-.02em; }
+      .bi-destaque strong { display:block; color:var(--alt-ink); font-size:14px; font-weight:600; line-height:1.35; }
+      .bi-destaque span { display:block; margin-top:2px; color:rgba(40,37,37,.55); font-size:13px; line-height:1.5; }
+    }
+
+    /* Leis: seletor ao lado da tabela no desktop; no celular, abas roláveis acima dela */
+    .leis-seletor { position:relative; display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(13,13,13,.08); border-radius:var(--alt-radius); }
+    /* a seção fica sobre a superfície cinza: tabela e botões brancos para não se fundirem com o fundo */
+    #leis-painel { background:#fff; }
+    .lei-card-btn { display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:20px; border:0; border-left:3px solid transparent; background:#fff; color:var(--alt-ink); text-align:left; cursor:pointer; transition:border-color .18s ease, background-color .18s ease; }
+    .lei-card-btn + .lei-card-btn { border-top:1px solid rgba(13,13,13,.08); }
+    .lei-card-btn:hover { background:#FAFAF9; }
+    .lei-card-btn.is-active { border-left-color:var(--lei-cor); }
+    .lei-card-btn:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:-2px; }
+    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:44px; height:44px; overflow:hidden; border-radius:50%; background:var(--lei-cor); }
+    .lei-icone img { width:34px; height:34px; object-fit:contain; }
+    .lei-nome { font-size:18px; font-weight:600; line-height:1.3; }
+    @media (max-width:767px) {
+      .leis-seletor { order:-1; flex-direction:row; gap:4px; border:0; border-bottom:1px solid rgba(13,13,13,.10); border-radius:0; overflow:hidden; overflow-x:auto; }
+      .lei-card-btn { flex:0 0 auto; width:auto; gap:8px; min-height:44px; padding:8px 12px 10px; border-left:0; border-bottom:2px solid transparent; background:none; color:rgba(13,13,13,.55); }
+      .lei-card-btn + .lei-card-btn { border-top:0; }
+      .lei-card-btn:hover { background:none; color:var(--alt-ink); }
+      .lei-card-btn.is-active { border-bottom-color:var(--lei-cor); color:var(--alt-ink); }
+      .lei-icone { width:24px; height:24px; }
+      .lei-icone img { width:19px; height:19px; }
+      .lei-nome { font-size:14px; font-weight:500; white-space:nowrap; }
+    }
+
+    /* Fluxo no celular: passos em 2 colunas compactas e pista larga, sangrando */
+    @media (max-width:767px) {
+      .alt-fluxo { --pista-corte:79.8%; --pista-margem:8px; --pista-fade:72px; }
+      .alt-fluxo .flow-journey-art { aspect-ratio:2163 / 699; margin:28px 0 24px; }
+      .alt-fluxo .flow-journey-art img { right:-2.5%; width:260%; }
+      .flow-grid { grid-template-columns:1fr 1fr; }
+      .jards-flow-step { min-height:0; padding:20px 16px 22px 0; border-right:0; border-bottom:1px solid rgba(40,37,37,.12); }
+      .jards-flow-step:nth-child(odd) { border-right:1px solid rgba(40,37,37,.12); }
+      .jards-flow-step:nth-child(even) { padding-left:16px; padding-right:0; }
+      .alt-fluxo .jards-flow-step:last-child { grid-column:1 / -1; border-right:0; border-bottom:0; }
+      .flow-index { margin-bottom:12px; font-size:30px; }
+      .jards-flow-step strong { margin-bottom:6px; font-size:17px; }
+      .jards-flow-step p { font-size:13px; line-height:1.55; }
+    }
+
+    /* Operação: coluna de texto de ~520px para o h2 não quebrar em 5 linhas */
+    .alt-operacao-grid { display:grid; grid-template-columns:minmax(0,1fr); gap:48px; align-items:center; }
+    @media (min-width:768px) { .alt-operacao-grid { grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:64px; } }
+    @media (min-width:1024px) { .alt-operacao-grid { grid-template-columns:minmax(0,520px) minmax(0,1fr); } }
+
+    /* Produto: cabeçalho numa coluna só, para o tamanduá deitar sobre a barra de abas à direita */
+    .ms-head { max-width:560px; }
+    .ms-head-lede { max-width:46ch; margin-top:20px; color:rgba(40,37,37,.55); font-size:15px; line-height:1.65; }
+
+    @media (prefers-reduced-motion: reduce) { .alt-nav-login, .lei-card-btn, .bi-destaque { transition:none; } }
 
   </style>
 </head>
@@ -766,11 +910,11 @@
       <a href="#precos"   class="text-sm font-medium text-black/50 hover:text-black transition-colors">Preços</a>
     </nav>
 
-    <div class="flex items-center gap-3">
-      <a href="/login" data-app-path="/login" class="text-sm font-semibold text-black/50 hover:text-black transition-colors px-3 py-2">Fazer login</a>
-      <a href="/cadastro" data-app-path="/cadastro" class="text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] active:scale-[0.97] transition-all rounded border border-[#684DB0]/30 px-4 py-2 flex items-center gap-1.5">
+    <div class="flex items-center gap-1 md:gap-3">
+      <a href="/login" data-app-path="/login" class="alt-nav-login"><span class="md:hidden">Entrar</span><span class="hidden md:inline">Fazer login</span></a>
+      <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--header">
         Começar grátis
-        <svg class="w-3.5 h-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+        <i class="ph ph-arrow-right" aria-hidden="true"></i>
       </a>
     </div>
   </div>
@@ -786,7 +930,7 @@
   </div>
   <div class="hero-layout">
     <div class="hero-copy">
-    <p class="mb-6 text-[11px] font-semibold uppercase tracking-[.15em] text-[#684DB0]">Inteligência e operação para patrocínios</p>
+    <p class="alt-kicker mb-6">Inteligência e operação para patrocínios</p>
     <h1 class="font-display">
       Projetos avançam quando tudo se conecta.
     </h1>
@@ -794,11 +938,11 @@
       A Jards reúne oportunidades, projetos, negociações, entregas e renovação em uma única operação.
     </p>
     <div class="hero-actions">
-      <a href="/cadastro" data-app-path="/cadastro" class="flex items-center gap-2 rounded border border-[#684DB0]/30 bg-white px-6 py-3 text-sm font-medium text-[#684DB0] transition-all hover:bg-black/[.04] active:scale-[.98]">
+      <a href="/cadastro" data-app-path="/cadastro" class="alt-cta">
         Começar grátis
-        <svg class="h-3.5 w-3.5" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+        <i class="ph ph-arrow-right" aria-hidden="true"></i>
       </a>
-      <a href="#fluxo" class="px-4 py-3 text-sm font-medium text-black/45 transition-colors hover:text-black">Ver como funciona</a>
+      <a href="#fluxo" class="alt-link">Ver como funciona <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
     </div>
 
     </div>
@@ -900,26 +1044,29 @@
 
 
 <!-- ════════════════════════ STATS ════════════════════════ -->
-<section class="landing-proof bg-[#FFFFFF]">
-  <div class="max-w-6xl mx-auto px-6">
-    <div class="grid grid-cols-1 sm:grid-cols-[.9fr_1.15fr_1fr]">
-      <div class="py-10 pr-8 sm:border-r border-black/10">
+<section class="landing-proof bg-[#FFFFFF] px-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 sm:grid-cols-3">
+      <div class="py-10 sm:pr-8 sm:border-r border-black/10">
         <div class="flex items-end gap-3 mb-3">
-          <p class="stat-num stat-accent text-5xl leading-none">7</p>
-          <p class="font-display text-lg font-semibold text-black leading-tight pb-1">etapas conectadas</p>
+          <p class="stat-num stat-accent alt-proof-mark text-5xl leading-none">7</p>
+          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">etapas conectadas</p>
         </div>
-        <p class="text-sm text-black/50 leading-relaxed max-w-[28ch]">Da prospecção à renovação, cada fase continua a anterior.</p>
+        <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Da prospecção à renovação, cada fase continua a anterior.</p>
       </div>
       <div class="py-10 sm:px-8 border-t sm:border-t-0 sm:border-r border-black/10">
         <div class="flex items-end gap-3 mb-3">
-          <p class="stat-num stat-accent text-5xl leading-none">1</p>
-          <p class="font-display text-lg font-semibold text-black leading-tight pb-1">histórico compartilhado</p>
+          <p class="stat-num stat-accent alt-proof-mark text-5xl leading-none">1</p>
+          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">histórico compartilhado</p>
         </div>
         <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Projetos, negociações, atividades e entregas no mesmo contexto.</p>
       </div>
       <div class="py-10 sm:pl-8 border-t sm:border-t-0 border-black/10">
-        <p class="font-display text-[1.75rem] font-semibold text-black leading-[1.05] mb-4 max-w-[10ch]">Próximo passo visível</p>
-        <p class="text-sm text-black/50 leading-relaxed max-w-[32ch]">Responsáveis, prazos e alertas mantêm a equipe em movimento.</p>
+        <div class="flex items-end gap-3 mb-3">
+          <svg class="alt-proof-icon" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,112.49l-48,48a12,12,0,0,1-17-17L195,116H128a84.09,84.09,0,0,0-84,84,12,12,0,0,1-24,0A108.12,108.12,0,0,1,128,92h67L167.51,64.48a12,12,0,0,1,17-17l48,48A12,12,0,0,1,232.49,112.49Z"/></svg>
+          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">Próximo passo visível</p>
+        </div>
+        <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Responsáveis, prazos e alertas mantêm a equipe em movimento.</p>
       </div>
     </div>
   </div>
@@ -929,11 +1076,11 @@
 <!-- ════════════════════════ ATIVO DE MARCA ════════════════════════ -->
 <section class="brand-visual" aria-labelledby="contexto-titulo">
   <img src="assets/brand/ambiente-criativo-jards-sem-caneta-tratado.png" alt="Profissional trabalhando no computador em um ambiente criativo cercado por projetos e materiais" />
-  <div class="brand-caption px-6">
-    <p class="font-display text-xs font-semibold tracking-[.14em] uppercase text-white/55 mb-5">Quando cada etapa vive em um lugar</p>
-    <h2 id="contexto-titulo" class="font-display font-bold text-white leading-[1.02]" style="font-size:clamp(36px,4.5vw,64px)">O contexto nunca se perde.</h2>
+  <div class="brand-caption">
+    <p class="alt-kicker alt-kicker--on-dark">Quando cada etapa vive em um lugar</p>
+    <h2 id="contexto-titulo" class="alt-h2 alt-h2--chapter font-display text-white">O contexto nunca se perde.</h2>
     <p class="text-white/70 text-lg mt-6 max-w-lg leading-relaxed">Pesquisa, projetos, negociações e entregas seguem no mesmo lugar, do primeiro contato à renovação.</p>
-    <a href="#fluxo" class="mt-8 inline-flex items-center gap-2 bg-white text-[#282525] font-medium text-sm rounded px-6 py-3 hover:bg-white/90 transition-colors">Ver o fluxo Jards →</a>
+    <a href="#fluxo" class="alt-cta alt-cta--light mt-8">Ver o fluxo Jards <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
   </div>
 </section>
 
@@ -942,11 +1089,80 @@
 <section id="bi" class="section-space bg-white px-6">
   <div class="max-w-6xl mx-auto">
 
-    <div class="grid md:grid-cols-[1fr_1.1fr] gap-16 items-start">
+    <div class="bi-head reveal">
+      <p class="alt-kicker">Uma plataforma contínua</p>
+      <h2 class="alt-h2 alt-h2--section font-display">
+        Da oportunidade à parceria<br/>que continua
+      </h2>
+    </div>
+
+    <div class="bi-layout">
+
+      <!-- Accordion -->
+      <div id="produto" class="bi-acc reveal">
+        <!-- Acc 1 open by default -->
+        <div class="border-t border-black/10 py-5">
+          <button onclick="toggleAcc(this)" aria-expanded="true" class="w-full flex items-center justify-between text-left acc-open">
+            <span class="flex items-center gap-3 font-semibold text-black text-sm">
+              <img src="assets/ph-user-circle.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              Encontre onde existe oportunidade
+            </span>
+            <span class="text-2xl text-black/30 font-light flex-shrink-0 ml-4 acc-icon">−</span>
+          </button>
+          <div class="acc-content open mt-3 pl-8">
+            <p class="text-black/60 text-sm leading-relaxed mb-4">Explore patrocinadores, editais, históricos de investimento e janelas de decisão para escolher onde concentrar energia.</p>
+            <a href="/cadastro" data-app-path="/cadastro" class="alt-link">Começar grátis <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+          </div>
+        </div>
+
+        <div class="border-t border-black/10 py-5">
+          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
+            <span class="flex items-center gap-3 font-semibold text-black/40 text-sm">
+              <img src="assets/ph-map-pin.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              Estruture projetos para avançar
+            </span>
+            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
+          </button>
+          <div class="acc-content mt-3 pl-8" inert>
+            <p class="text-black/60 text-sm leading-relaxed mb-4">Organize orçamento, documentos, pitch, cotas e respostas de editais sem reconstruir o projeto a cada conversa.</p>
+            <a href="/cadastro" data-app-path="/cadastro" class="alt-link">Começar grátis <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+          </div>
+        </div>
+
+        <div class="border-t border-black/10 py-5">
+          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
+            <span class="flex items-center gap-3 font-semibold text-black/40 text-sm">
+              <img src="assets/ph-calendar-check.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              Conduza cada negociação
+            </span>
+            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
+          </button>
+          <div class="acc-content mt-3 pl-8" inert>
+            <p class="text-black/60 text-sm leading-relaxed mb-4">Conecte proposta, atividade, responsável, valor e histórico. A equipe sempre sabe o que aconteceu e qual é o próximo passo.</p>
+            <a href="/cadastro" data-app-path="/cadastro" class="alt-link">Começar grátis <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+          </div>
+        </div>
+
+        <div class="border-t border-b border-black/10 py-5">
+          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
+            <span class="flex items-center gap-3 font-semibold text-black/40 text-sm">
+              <img src="assets/ph-lightning.svg" alt="" class="w-5 h-5 flex-shrink-0" />
+              Entregue bem e prepare a renovação
+            </span>
+            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
+          </button>
+          <div class="acc-content mt-3 pl-8" inert>
+            <p class="text-black/60 text-sm leading-relaxed mb-4">Transforme aprovações em clientes, contratos e entregas. Preserve evidências e a memória da parceria para construir o próximo ciclo.</p>
+            <a href="/cadastro" data-app-path="/cadastro" class="alt-link">Começar grátis <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+          </div>
+        </div>
+
+      </div><!-- /accordion -->
 
       <!-- Sponsor cards (slots animados que reagem ao accordion) -->
-      <div class="reveal">
-        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-6">Base de dados</p>
+      <div class="bi-cards reveal">
+        <!-- No celular, o destaque do slot 2 aparece como linha própria; o conteúdo vem de biConfig[0] no script -->
+        <div class="bi-destaque" id="bi-destaque"></div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
@@ -1050,82 +1266,17 @@
         </div><!-- /cards grid -->
       </div>
 
-      <!-- Accordion -->
-      <div id="produto" class="reveal">
-        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-4">Uma plataforma contínua</p>
-        <h2 class="font-display font-bold leading-[1.04] mb-10" style="font-size:clamp(28px,3.2vw,44px)">
-          Da oportunidade à parceria<br/>que continua
-        </h2>
-
-        <!-- Acc 1 open by default -->
-        <div class="border-t border-black/10 py-5">
-          <button onclick="toggleAcc(this)" aria-expanded="true" class="w-full flex items-center justify-between text-left acc-open">
-            <span class="flex items-center gap-3 font-bold text-black text-sm">
-              <img src="assets/ph-user-circle.svg" alt="" class="w-5 h-5 flex-shrink-0" />
-              Encontre onde existe oportunidade
-            </span>
-            <span class="text-2xl text-black/30 font-light flex-shrink-0 ml-4 acc-icon">−</span>
-          </button>
-          <div class="acc-content open mt-3 pl-8">
-            <p class="text-black/60 text-sm leading-relaxed mb-4">Explore patrocinadores, editais, históricos de investimento e janelas de decisão para escolher onde concentrar energia.</p>
-            <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] border border-[#684DB0]/30 transition-colors rounded px-5 py-2.5">Começar grátis →</a>
-          </div>
-        </div>
-
-        <div class="border-t border-black/10 py-5">
-          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
-            <span class="flex items-center gap-3 font-bold text-black/40 text-sm">
-              <img src="assets/ph-map-pin.svg" alt="" class="w-5 h-5 flex-shrink-0" />
-              Estruture projetos para avançar
-            </span>
-            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
-          </button>
-          <div class="acc-content mt-3 pl-8">
-            <p class="text-black/60 text-sm leading-relaxed mb-4">Organize orçamento, documentos, pitch, cotas e respostas de editais sem reconstruir o projeto a cada conversa.</p>
-            <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] border border-[#684DB0]/30 transition-colors rounded px-5 py-2.5">Começar grátis →</a>
-          </div>
-        </div>
-
-        <div class="border-t border-black/10 py-5">
-          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
-            <span class="flex items-center gap-3 font-bold text-black/40 text-sm">
-              <img src="assets/ph-calendar-check.svg" alt="" class="w-5 h-5 flex-shrink-0" />
-              Conduza cada negociação
-            </span>
-            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
-          </button>
-          <div class="acc-content mt-3 pl-8">
-            <p class="text-black/60 text-sm leading-relaxed mb-4">Conecte proposta, atividade, responsável, valor e histórico. A equipe sempre sabe o que aconteceu e qual é o próximo passo.</p>
-            <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] border border-[#684DB0]/30 transition-colors rounded px-5 py-2.5">Começar grátis →</a>
-          </div>
-        </div>
-
-        <div class="border-t border-b border-black/10 py-5">
-          <button onclick="toggleAcc(this)" aria-expanded="false" class="w-full flex items-center justify-between text-left">
-            <span class="flex items-center gap-3 font-bold text-black/40 text-sm">
-              <img src="assets/ph-lightning.svg" alt="" class="w-5 h-5 flex-shrink-0" />
-              Entregue bem e prepare a renovação
-            </span>
-            <span class="text-2xl text-black/20 font-light flex-shrink-0 ml-4 acc-icon">+</span>
-          </button>
-          <div class="acc-content mt-3 pl-8">
-            <p class="text-black/60 text-sm leading-relaxed mb-4">Transforme aprovações em clientes, contratos e entregas. Preserve evidências e a memória da parceria para construir o próximo ciclo.</p>
-            <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 text-sm font-medium text-[#684DB0] bg-white hover:bg-black/[.04] border border-[#684DB0]/30 transition-colors rounded px-5 py-2.5">Começar grátis →</a>
-          </div>
-        </div>
-
-      </div><!-- /accordion -->
     </div>
   </div>
 </section>
 
 
 <!-- ════════════════════════ LEIS DE INCENTIVO ════════════════════════ -->
-<section id="leis-incentivo" class="section-space bg-white px-6" style="padding-top:0">
+<section id="leis-incentivo" class="section-space alt-surface px-6">
   <div class="max-w-6xl mx-auto">
     <div class="mb-10 reveal">
-      <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Cobertura de leis</p>
-      <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(28px,3.2vw,44px)">
+      <p class="alt-kicker">Cobertura de leis</p>
+      <h2 class="alt-h2 alt-h2--section font-display">
         Uma base para cada<br/>lei de incentivo.
       </h2>
     </div>
@@ -1144,31 +1295,23 @@
         </div>
       </div>
 
-      <!-- Leis cobertas, grudadas verticalmente e clicáveis -->
-      <div class="reveal flex flex-col rounded border overflow-hidden" style="border-color:rgba(13,13,13,.08)">
-        <button type="button" class="lei-card-btn flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors text-left w-full" style="border-bottom:1px solid rgba(13,13,13,.08);border-left:3px solid transparent;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" data-lei="cultura" onclick="selecionarLei('cultura',this)">
-          <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#684DB0">
-            <img src="assets/icons/icon-piano.png" alt="" width="34" height="34" style="object-fit:contain" />
-          </div>
-          <h3 class="font-display font-bold text-lg">Cultura</h3>
+      <!-- Leis cobertas: coluna ao lado da tabela no desktop, abas roláveis acima dela no celular -->
+      <div class="leis-seletor alt-scroll-x reveal" role="group" aria-label="Lei de incentivo">
+        <button type="button" class="lei-card-btn is-active" style="--lei-cor:#684DB0" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
+          <span class="lei-icone"><img src="assets/icons/icon-piano.png" alt="" width="34" height="34" /></span>
+          <span class="lei-nome font-display">Cultura</span>
         </button>
-        <button type="button" class="lei-card-btn flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors text-left w-full" style="border-bottom:1px solid rgba(13,13,13,.08);border-left:3px solid transparent;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" data-lei="esporte" onclick="selecionarLei('esporte',this)">
-          <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#2D72B0">
-            <img src="assets/icons/icon-ball.png" alt="" width="34" height="34" style="object-fit:contain" />
-          </div>
-          <h3 class="font-display font-bold text-lg">Esporte</h3>
+        <button type="button" class="lei-card-btn" style="--lei-cor:#2D72B0" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
+          <span class="lei-icone"><img src="assets/icons/icon-ball.png" alt="" width="34" height="34" /></span>
+          <span class="lei-nome font-display">Esporte</span>
         </button>
-        <button type="button" class="lei-card-btn flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors text-left w-full" style="border-bottom:1px solid rgba(13,13,13,.08);border-left:3px solid transparent;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" data-lei="audiovisual" onclick="selecionarLei('audiovisual',this)">
-          <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#D94A4A">
-            <img src="assets/icons/icon-chat.png" alt="" width="34" height="34" style="object-fit:contain" />
-          </div>
-          <h3 class="font-display font-bold text-lg">Audiovisual</h3>
+        <button type="button" class="lei-card-btn" style="--lei-cor:#D94A4A" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
+          <span class="lei-icone"><img src="assets/icons/icon-chat.png" alt="" width="34" height="34" /></span>
+          <span class="lei-nome font-display">Audiovisual</span>
         </button>
-        <button type="button" class="lei-card-btn flex items-center gap-3.5 p-5 flex-1 hover:bg-black/[0.02] transition-colors text-left w-full" style="border-left:3px solid transparent;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" data-lei="saude" onclick="selecionarLei('saude',this)">
-          <div class="w-11 h-11 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0" style="background:#1A8B7A">
-            <img src="assets/icons/icon-stethoscope.png" alt="" width="34" height="34" style="object-fit:contain" />
-          </div>
-          <h3 class="font-display font-bold text-lg">Saúde</h3>
+        <button type="button" class="lei-card-btn" style="--lei-cor:#1A8B7A" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
+          <span class="lei-icone"><img src="assets/icons/icon-stethoscope.png" alt="" width="34" height="34" /></span>
+          <span class="lei-nome font-display">Saúde</span>
         </button>
       </div>
     </div>
@@ -1526,16 +1669,29 @@
     sairCursor(alvo);
   }
 
+  // A cor da lei ativa vem de --lei-cor: borda esquerda no desktop, sublinhado nas abas do celular
+  function marcarLei(btn){
+    document.querySelectorAll('.lei-card-btn').forEach(function(b){
+      var ativo = b === btn;
+      b.classList.toggle('is-active', ativo);
+      b.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+    });
+  }
+
   window.selecionarLei = function(lei, btn){
     leiAtual = lei;
-    document.querySelectorAll('.lei-card-btn').forEach(function(b){ b.style.borderLeftColor = 'transparent'; });
-    btn.style.borderLeftColor = META_LEI[lei].cor;
+    marcarLei(btn);
+    // No celular as leis viram abas roláveis: centraliza a escolhida
+    var trilho = btn.parentElement;
+    if(trilho && trilho.scrollWidth > trilho.clientWidth && trilho.scrollTo){
+      trilho.scrollTo({ left: btn.offsetLeft - (trilho.clientWidth - btn.offsetWidth) / 2, behavior: semAnimacao ? 'auto' : 'smooth' });
+    }
     if(semAnimacao){ renderLista(lei, true); return; }
     executarDemo('cima', btn);
   };
 
   var btnInicial = document.querySelector('.lei-card-btn[data-lei="cultura"]');
-  if(btnInicial) btnInicial.style.borderLeftColor = META_LEI.cultura.cor;
+  if(btnInicial) marcarLei(btnInicial);
   // Monta o perfil escondido já no carregamento, para o Tailwind gerar as classes antes da primeira medição
   montarPerfil(EMPRESAS_POR_LEI.cultura[0], META_LEI.cultura);
 
@@ -1559,25 +1715,24 @@
 
 
 <!-- ════════════════════════ FLUXO JARDS ════════════════════════ -->
-<section id="fluxo" class="bg-white">
-  <div class="brand-visual is-senna">
-    <img src="assets/senna-jornada-panoramica.jpeg" alt="Piloto de Fórmula 1 na pista segurando a bandeira do Brasil" />
-    <div class="brand-caption px-6">
-      <p class="text-xs font-bold text-[#B9A7EA] uppercase tracking-widest mb-5">Um sistema em movimento</p>
-      <h2 class="font-display font-bold text-white leading-[1.03]" style="font-size:clamp(36px,4.5vw,64px)">Uma jornada inteira.<br>Um só contexto.</h2>
-      <p class="text-white/70 text-base mt-6 max-w-md leading-relaxed">A Jards conecta o que acontece antes, durante e depois de cada patrocínio.</p>
+<section id="fluxo" class="alt-fluxo section-space bg-white px-6" aria-labelledby="fluxo-titulo">
+  <div class="max-w-6xl mx-auto">
+    <div class="alt-split-head reveal">
+      <div>
+        <p class="alt-kicker">Um sistema em movimento</p>
+        <h2 id="fluxo-titulo" class="alt-h2 alt-h2--chapter font-display">Da primeira busca à renovação.</h2>
+      </div>
+      <p class="alt-split-lede">A Jards conecta o que acontece antes, durante e depois de cada patrocínio.</p>
     </div>
-  </div>
-  <div class="max-w-6xl mx-auto px-6 py-20">
+    <div class="flow-journey-art reveal">
+      <img src="assets/jornada-corrida-s-transparente.png" alt="Tamanduá em um carro de corrida percorrendo uma pista em curvas" />
+    </div>
     <div class="flow-grid">
       <article class="jards-flow-step"><span class="flow-index">01</span><strong>Encontrar</strong><p>Mapeie patrocinadores, editais e oportunidades relevantes.</p></article>
       <article class="jards-flow-step"><span class="flow-index">02</span><strong>Estruturar</strong><p>Reúna projetos, orçamentos, documentos, pitch e cotas.</p></article>
       <article class="jards-flow-step"><span class="flow-index">03</span><strong>Negociar</strong><p>Conecte proposta, valor, responsável e próximo passo.</p></article>
       <article class="jards-flow-step"><span class="flow-index">04</span><strong>Entregar</strong><p>Acompanhe contratos, ativações, prazos e evidências.</p></article>
       <article class="jards-flow-step"><span class="flow-index">05</span><strong>Renovar</strong><p>Preserve contexto e confiança para construir o próximo ciclo.</p></article>
-    </div>
-    <div class="flow-journey-art reveal">
-      <img src="assets/jornada-corrida-s-transparente.png" alt="Tamanduá em um carro de corrida percorrendo uma pista em curvas" />
     </div>
   </div>
 </section>
@@ -1591,20 +1746,14 @@
   </div>
   <div class="max-w-6xl mx-auto feature-ledger reveal">
     <div class="ledger-main">
-      <p class="ledger-kicker">A plataforma por inteiro</p>
-      <h2 class="font-display font-bold leading-[1.04] mb-5" style="font-size:clamp(32px,4vw,56px)">
-        Uma plataforma.<br>Três forças trabalhando juntas.
+      <p class="alt-kicker">A plataforma por inteiro</p>
+      <h2 class="alt-h2 alt-h2--section font-display mb-5">
+        <span class="alt-h2-line">Uma plataforma.</span>
+        <span class="alt-h2-line">Três forças trabalhando juntas.</span>
       </h2>
       <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
         A informação encontra a operação. A operação preserva a relação e cada parceria ganha continuidade.
       </p>
-      <div class="flow-row" aria-label="Jornada conectada do patrocínio">
-        <div class="flow-step active"><span>Encontrar</span><strong>Oportunidades</strong></div>
-        <div class="flow-step active"><span>Estruturar</span><strong>Projetos</strong></div>
-        <div class="flow-step active"><span>Negociar</span><strong>Propostas</strong></div>
-        <div class="flow-step active"><span>Entregar</span><strong>Parcerias</strong></div>
-        <div class="flow-step active"><span>Renovar</span><strong>Ciclos</strong></div>
-      </div>
     </div>
     <div class="ledger-side">
       <article class="ledger-item">
@@ -1631,14 +1780,12 @@
 <section id="produto-tabs" class="section-space bg-[#FFFFFF] px-6">
   <div class="max-w-6xl mx-auto">
 
-    <div class="grid md:grid-cols-2 gap-12 items-end mb-8">
-      <div class="reveal">
-        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-3">O produto em movimento</p>
-        <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(28px,3.2vw,44px)">
-          O trabalho inteiro<br/>cabe no mesmo fluxo.
-        </h2>
-      </div>
-      <p class="reveal text-black/55 text-[15px] leading-relaxed">
+    <div class="ms-head reveal">
+      <p class="alt-kicker">O produto em movimento</p>
+      <h2 class="alt-h2 alt-h2--section font-display">
+        O trabalho inteiro<br/>cabe no mesmo fluxo.
+      </h2>
+      <p class="ms-head-lede">
         Conheça algumas das áreas que conectam inteligência de mercado, rotina comercial, projetos e relacionamento dentro da Jards.
       </p>
     </div>
@@ -1647,15 +1794,22 @@
     <style>
       #ms *{box-sizing:border-box}
       #ms{font-family:'Google Sans',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-      .ms-menu-stage{margin-top:64px}
-      .ms-menu-illustration{display:block;width:clamp(240px,31vw,370px);height:auto;margin:0 18px -2px auto;pointer-events:none;user-select:none}
-      .ms-tabs{display:flex;width:100%;gap:4px;margin-bottom:44px;padding:5px;overflow-x:auto;border:1px solid rgba(40,37,37,.18);border-radius:12px;background:rgba(255,255,255,.84);box-shadow:0 10px 28px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.9);scrollbar-width:none}
+      .ms-menu-stage{position:relative;margin:40px 0 44px}
+      .ms-menu-illustration{display:block;width:clamp(240px,31vw,370px);height:auto;margin:0 18px -5px auto;pointer-events:none;user-select:none}
+      /* desktop: 64px entre o cabeçalho e a barra; o tamanduá deita sobre a barra, à direita do texto */
+      @media (min-width:1024px){
+        .ms-menu-stage{margin-top:64px}
+        .ms-menu-illustration{position:absolute;right:24px;bottom:calc(100% - 5px);z-index:1;width:clamp(260px,24vw,340px);margin:0}
+      }
+      /* a moldura fica fixa; só as abas rolam (e esmaecem na borda) */
+      .ms-tabs-frame{padding:1px;border:1px solid rgba(40,37,37,.18);border-radius:4px;background:rgba(255,255,255,.84);box-shadow:0 10px 28px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.9)}
+      .ms-tabs{display:flex;width:100%;gap:4px;padding:4px;overflow-x:auto;scrollbar-width:none}
       .ms-tabs::-webkit-scrollbar{display:none}
-      .ms-tab{position:relative;flex:1 0 0;min-width:0;height:44px;padding:0 18px;font-size:13px;font-weight:500;color:rgba(40,37,37,.72);cursor:pointer;border:0;border-radius:8px;background:transparent;transition:color .24s cubic-bezier(.16,1,.3,1),background .24s cubic-bezier(.16,1,.3,1),transform .18s cubic-bezier(.16,1,.3,1);white-space:nowrap}
+      .ms-tab{position:relative;flex:1 0 0;min-width:0;height:44px;padding:0 18px;font-size:13px;font-weight:500;color:rgba(40,37,37,.72);cursor:pointer;border:0;border-radius:4px;background:transparent;transition:color .24s cubic-bezier(.16,1,.3,1),background .24s cubic-bezier(.16,1,.3,1),transform .18s cubic-bezier(.16,1,.3,1);white-space:nowrap}
       .ms-tab:hover{color:#282525;background:rgba(40,37,37,.035)}
       .ms-tab:active{transform:scale(.985)}
       .ms-tab:focus-visible{outline:2px solid rgba(104,77,176,.35);outline-offset:2px}
-      .ms-tab.on{color:#684DB0;background:#fff;font-weight:700;box-shadow:inset 0 0 0 1px #684DB0}
+      .ms-tab.on{color:#684DB0;background:#fff;font-weight:500;box-shadow:inset 0 0 0 1px #684DB0}
       .ms-shell{display:flex;height:540px;overflow:hidden;border-radius:4px;border:1px solid rgba(40,37,37,.08);box-shadow:0 2px 4px rgba(0,0,0,.04),0 8px 40px rgba(0,0,0,.10)}
       .ms-sb{width:56px;flex-shrink:0;display:flex;flex-direction:column;overflow:hidden;background:#fff;border-right:1px solid rgba(40,37,37,.08);box-shadow:4px 0 24px rgba(0,0,0,.06)}
       .ms-sb-logo{height:56px;display:flex;align-items:center;justify-content:center;padding:0;border-bottom:1px solid rgba(40,37,37,.07);flex-shrink:0}
@@ -1700,7 +1854,7 @@
       .ms-body{flex:1;overflow:hidden}
       /* edital cards */
       .ms-ed-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;padding:16px 32px;overflow:hidden}
-      .ms-ed-card{border:1px solid rgba(40,37,37,.08);border-radius:4px;padding:18px;background:linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)}
+      .ms-ed-card{border:1px solid rgba(40,37,37,.08);border-radius:4px;padding:18px;background:linear-gradient(145deg,#ffffff 0%,#F7F7F5 100%)}
       .ms-logo{border-radius:4px;border:1px solid rgba(40,37,37,.08);display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.04);flex-shrink:0;overflow:hidden}
       .ms-logo img{display:block;width:78%;height:78%;object-fit:contain}
       /* kanban */
@@ -1740,7 +1894,7 @@
       .ms-quarter{display:flex;gap:3px;margin-left:2px}
       .ms-quarter span{padding:3px 7px;border-radius:4px;background:rgba(13,13,13,.055);font-size:9px;font-weight:700;color:rgba(13,13,13,.32)}
       .ms-quarter .on{background:rgba(46,137,50,.08);color:#2E8932}
-      .ms-profile-body{display:grid;grid-template-columns:235px minmax(0,1fr);gap:14px;min-height:0;padding:14px 26px 20px;background:#F7F7F6;overflow:hidden}
+      .ms-profile-body{display:grid;grid-template-columns:235px minmax(0,1fr);gap:14px;min-height:0;padding:14px 26px 20px;background:#F7F7F5;overflow:hidden}
       .ms-profile-stack{display:flex;min-width:0;flex-direction:column;gap:10px}
       .ms-profile-card{overflow:hidden;border:1px solid rgba(13,13,13,.08);border-radius:4px;background:#fff}
       .ms-profile-card-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-bottom:1px solid rgba(13,13,13,.07)}
@@ -1765,12 +1919,10 @@
       .ms-profile-edit strong{display:block;overflow:hidden;font-size:10px;color:rgba(13,13,13,.72);text-overflow:ellipsis;white-space:nowrap}
       .ms-profile-edit span{display:block;margin-top:4px;font-size:8.5px;color:rgba(13,13,13,.34)}
       @media (max-width:767px){
-        #produto-tabs{padding-left:16px;padding-right:16px}
-        .ms-menu-stage{margin-top:46px}
-        .ms-menu-illustration{width:min(66vw,250px);margin-right:8px;margin-bottom:-1px}
+        .ms-menu-stage{margin:28px 0 32px}
+        .ms-menu-illustration{width:min(56vw,220px);margin-right:8px}
         #produto-tabs [role="tablist"]{justify-content:flex-start;overflow-x:auto;max-width:100%}
-        .ms-tabs{margin-bottom:32px}
-        .ms-tab{flex:0 0 128px;min-width:128px;padding:0 14px}
+        .ms-tab{flex:0 0 auto;min-width:0;padding:0 16px}
         .ms-shell{height:540px;max-width:100%;overflow:hidden}
         .ms-sb{display:none}
         .ms-main{width:100%;max-width:100%}
@@ -1792,11 +1944,13 @@
     <!-- Tab bar -->
     <div class="ms-menu-stage reveal">
       <img class="ms-menu-illustration" src="assets/illustration-anteater-writing-no-signature.png" alt="" aria-hidden="true" />
-      <div role="tablist" aria-label="Demonstrações do produto" class="ms-tabs">
+      <div class="ms-tabs-frame">
+      <div role="tablist" aria-label="Demonstrações do produto" class="ms-tabs alt-scroll-x">
         <button id="ms-t0" role="tab" aria-controls="ms-p0" aria-selected="true" tabindex="0" class="ms-tab on" onclick="msSwitch(0,'Editais')">Oportunidades</button>
         <button id="ms-t1" role="tab" aria-controls="ms-p1" aria-selected="false" tabindex="-1" class="ms-tab" onclick="msSwitch(1,'Negociações')">Negociações</button>
         <button id="ms-t2" role="tab" aria-controls="ms-p2" aria-selected="false" tabindex="-1" class="ms-tab" onclick="msSwitch(2,'Atividades')">Atividades</button>
         <button id="ms-t3" role="tab" aria-controls="ms-p3" aria-selected="false" tabindex="-1" class="ms-tab" onclick="msSwitch(3,'Patrocinadores')">Patrocinadores</button>
+      </div>
       </div>
     </div>
 
@@ -2139,20 +2293,20 @@
 <!-- ════════════════════════ TECNOLOGIA E PROXIMIDADE ════════════════════════ -->
 <section id="operacao" class="bg-white px-6">
   <div class="section-space max-w-6xl mx-auto product-story">
-    <div class="grid md:grid-cols-[.72fr_1.28fr] gap-16 items-center">
+    <div class="alt-operacao-grid">
       <div class="reveal">
-        <p class="story-kicker mb-4">Tecnologia + proximidade</p>
-        <h2 class="font-display font-bold leading-[1.02]" style="font-size:clamp(32px,4vw,56px)">
+        <p class="alt-kicker">Tecnologia + proximidade</p>
+        <h2 class="alt-h2 alt-h2--section font-display">
           Tecnologia que organiza. Relações que fazem acontecer.
         </h2>
         <p class="text-black/55 text-[15px] leading-relaxed mt-6 max-w-md">
           Por trás de todo patrocínio existem pessoas construindo confiança, dividindo decisões e fazendo um projeto ganhar vida.
         </p>
         <ul class="story-list">
-          <li><span class="story-index">01</span><span><strong>Contexto compartilhado.</strong> Cada pessoa entende o que aconteceu e o que precisa acontecer agora.</span></li>
-          <li><span class="story-index">02</span><span><strong>Responsabilidade clara.</strong> Prazos, decisões e responsáveis permanecem visíveis durante toda a jornada.</span></li>
-          <li><span class="story-index">03</span><span><strong>Parcerias com continuidade.</strong> A história construída não desaparece quando a negociação termina.</span></li>
-          <li><span class="story-index">04</span><span><strong>Relacionamento com nome e rosto.</strong> Contatos, proponentes e captadores guardam papel de decisão, histórico e força do relacionamento.</span></li>
+          <li><strong>Contexto compartilhado.</strong> Cada pessoa entende o que aconteceu e o que precisa acontecer agora.</li>
+          <li><strong>Responsabilidade clara.</strong> Prazos, decisões e responsáveis permanecem visíveis durante toda a jornada.</li>
+          <li><strong>Parcerias com continuidade.</strong> A história construída não desaparece quando a negociação termina.</li>
+          <li><strong>Relacionamento com nome e rosto.</strong> Contatos, proponentes e captadores guardam papel de decisão, histórico e força do relacionamento.</li>
         </ul>
       </div>
 
@@ -2165,23 +2319,24 @@
 
 
 <!-- ════════════════════════ CONECTOR MCP ════════════════════════ -->
-<section id="conector-ia" class="section-space bg-[#FAF9F7] px-6">
+<section id="conector-ia" class="section-space alt-surface px-6">
   <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
       <div class="reveal min-w-0">
-        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-4">Conector MCP</p>
-        <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(32px,4vw,56px)">
-          Claude e ChatGPT.<br>Os dados vêm do seu Jards.
+        <p class="alt-kicker">Conector MCP</p>
+        <h2 class="alt-h2 alt-h2--section font-display">
+          <span class="alt-h2-line">Claude e ChatGPT.</span>
+          <span class="alt-h2-line">Os dados vêm do seu&nbsp;Jards.</span>
         </h2>
         <p class="text-black/55 text-[15px] leading-relaxed mt-6 max-w-md">
           Conecte sua conta Jards e pergunte. O assistente consulta o CRM ao vivo, sem copiar e colar.
         </p>
         <ul class="space-y-3 mt-8 text-sm text-black/70 max-w-md">
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Lê projetos, propostas, tarefas, captadores, proponentes e empresas</li>
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Avalia uma empresa: histórico, total investido, áreas recorrentes, último aporte</li>
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Traz contatos de uma patrocinadora (1 crédito, como no app)</li>
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Resume a organização: projetos por fase, propostas por status, total captado</li>
-          <li class="flex gap-2.5"><span class="text-[#684DB0] font-bold" aria-hidden="true">✓</span>Cria contatos e tarefas pela conversa</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Lê projetos, propostas, tarefas, captadores, proponentes e empresas</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Avalia uma empresa: histórico, total investido, áreas recorrentes, último aporte</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Traz contatos de uma patrocinadora (1 crédito, como no app)</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Resume a organização: projetos por fase, propostas por status, total captado</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Cria contatos e tarefas pela conversa</li>
         </ul>
         <div class="grid grid-cols-2 gap-3 mt-8 max-w-md">
           <div class="mcp-plat">
@@ -2386,88 +2541,80 @@
 <section id="precos" class="section-space bg-[#FFFFFF] px-6">
   <div class="max-w-6xl mx-auto">
 
-    <div class="max-w-6xl mx-auto mb-6">
-      <hr class="rule" />
-    </div>
-
-    <div class="grid md:grid-cols-2 gap-10 items-end pt-12 mb-14">
+    <div class="alt-split-head mb-14">
       <div class="reveal">
-        <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-3">Preços</p>
-        <h2 class="font-display font-bold leading-[1.04]" style="font-size:clamp(32px,4vw,56px)">
+        <p class="alt-kicker">Preços</p>
+        <h2 class="alt-h2 alt-h2--section font-display">
           Simples<br/>e transparente.
         </h2>
       </div>
-      <p class="reveal text-black/55 text-[15px] leading-relaxed">
+      <p class="reveal alt-split-lede">
         Comece gratuitamente e pague quando fizer sentido para a sua operação de captação. Sem surpresas.
       </p>
     </div>
 
-    <div class="grid md:grid-cols-3 gap-5">
+    <div class="grid md:grid-cols-3 gap-8 md:gap-5">
       <!-- Free -->
-      <div class="reveal bg-white rounded-2xl p-8 border border-black/8">
+      <div class="reveal bg-white rounded p-8 border border-black/8">
         <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-5">Gratuito</p>
         <p class="font-display font-bold text-5xl text-black tracking-tight mb-1">R$ 0</p>
         <p class="text-sm text-black/40 mb-6">para sempre</p>
         <div class="h-px bg-black/8 mb-6"></div>
         <ul class="space-y-3 mb-8 text-sm text-black/70">
-          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Oportunidades ilimitadas</li>
-          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Patrocinadores para explorar</li>
-          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>CRM essencial com uso limitado</li>
-          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Projetos e inscrições em um só lugar</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Oportunidades ilimitadas</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Patrocinadores para explorar</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>CRM essencial com uso limitado</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Projetos e inscrições em um só lugar</li>
         </ul>
-        <a href="/cadastro" data-app-path="/cadastro" class="block text-center text-sm font-bold text-black border border-black/15 rounded-xl py-3 hover:bg-black/[.03] transition-colors">Começar grátis</a>
+        <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--outline alt-cta--block">Começar grátis <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
       </div>
 
       <!-- Starter -->
-      <div class="reveal bg-white rounded-2xl p-8 border border-black/8">
+      <div class="reveal bg-white rounded p-8 border border-black/8">
         <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-5">Starter</p>
         <p class="font-display font-bold text-5xl text-black tracking-tight mb-1">R$ 62,90</p>
         <p class="text-sm text-black/40 mb-6">por mês</p>
         <div class="h-px bg-black/8 mb-6"></div>
         <ul class="space-y-3 mb-8 text-sm text-black/70">
-          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Captações ilimitadas</li>
-          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>100 créditos mensais</li>
-          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Operação comercial e atividades</li>
-          <li class="flex gap-2.5"><span class="text-purple-600 font-bold">✓</span>Dashboard com KPIs e alertas</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Captações ilimitadas</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>100 créditos mensais</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Operação comercial e atividades</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Dashboard com KPIs e alertas</li>
         </ul>
-        <a href="/cadastro?plano=starter" data-app-path="/cadastro?plano=starter" class="block text-center text-sm font-bold text-black border border-black/15 rounded-xl py-3 hover:bg-black/[.03] transition-colors">Começar grátis</a>
+        <a href="/cadastro?plano=starter" data-app-path="/cadastro?plano=starter" class="alt-cta alt-cta--block">Começar grátis <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
       </div>
 
       <!-- Pro -->
-      <div class="reveal pricing-pro-card rounded-2xl p-8 relative">
+      <div class="reveal pricing-pro-card rounded p-8 relative">
         <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[11px] font-bold text-black bg-white rounded-full px-4 py-1.5 uppercase tracking-wide shadow-sm">Mais popular</span>
         <p class="text-xs font-bold text-white/40 uppercase tracking-widest mb-5">Pro</p>
         <p class="font-display font-bold text-5xl text-white tracking-tight mb-1">R$ 92,80</p>
         <p class="text-sm text-white/40 mb-6">por mês</p>
         <div class="h-px bg-white/10 mb-6"></div>
         <ul class="space-y-3 mb-8 text-sm text-white/75">
-          <li class="flex gap-2.5"><span class="text-purple-400 font-bold">✓</span>Tudo do Starter</li>
-          <li class="flex gap-2.5"><span class="text-purple-400 font-bold">✓</span>200 créditos mensais</li>
-          <li class="flex gap-2.5"><span class="text-purple-400 font-bold">✓</span>Inteligência e histórico completos</li>
-          <li class="flex gap-2.5"><span class="text-purple-400 font-bold">✓</span>Clientes, entregas e renovação</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Tudo do Starter</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>200 créditos mensais</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Inteligência e histórico completos</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Clientes, entregas e renovação</li>
         </ul>
-        <a href="/cadastro?plano=pro" data-app-path="/cadastro?plano=pro" class="block text-center text-sm font-bold text-black bg-white rounded-xl py-3 hover:bg-white/90 transition-colors">Começar grátis</a>
+        <a href="/cadastro?plano=pro" data-app-path="/cadastro?plano=pro" class="alt-cta alt-cta--light alt-cta--block">Começar grátis <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
       </div>
-    </div>
-
-    <div class="max-w-6xl mx-auto mt-14">
-      <hr class="rule" />
     </div>
   </div>
 </section>
 
 
 <!-- ════════════════════════ CTA FINAL ════════════════════════ -->
-<section class="closing-cta section-space px-6" hidden data-temporarily-hidden="true">
+<section class="closing-cta section-space px-6" aria-labelledby="fechamento-titulo">
   <div class="max-w-3xl mx-auto text-center reveal">
-    <p class="font-display text-xs font-semibold tracking-[.14em] uppercase text-[#684DB0] mb-8">Toda a jornada conectada</p>
-    <h2 class="font-display font-bold text-[#282525] leading-[1.03] mb-5" style="font-size:clamp(36px,4.5vw,64px)">
-      Transforme oportunidades<br/>em parcerias que continuam.
+    <p class="alt-kicker">Toda a jornada conectada</p>
+    <h2 id="fechamento-titulo" class="alt-h2 alt-h2--section font-display text-[#282525] mb-5">
+      Transforme oportunidades <br/>em parcerias que continuam.
     </h2>
     <p class="text-black/55 text-lg mb-10">Feito para quem encontra, viabiliza, executa e renova patrocínios de projetos.</p>
-    <a href="/cadastro" data-app-path="/cadastro" class="inline-flex items-center gap-2 font-bold text-white bg-[#684DB0] hover:bg-[#59409b] active:scale-[0.97] transition-all rounded-xl px-10 py-4 text-[15px]">
+    <a href="/cadastro" data-app-path="/cadastro" class="alt-cta">
       Começar grátis
-      <svg class="w-4 h-4" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 7h10M7 2l5 5-5 5"/></svg>
+      <i class="ph ph-arrow-right" aria-hidden="true"></i>
     </a>
     <p class="text-black/35 text-sm mt-4">Sem cartão de crédito. Configure em poucos minutos.</p>
   </div>
@@ -2476,14 +2623,14 @@
 <!-- ════════════════════════ CONTEÚDO / BLOG ════════════════════════ -->
 <section id="blog" class="blog-section section-space px-6">
   <div class="max-w-6xl mx-auto">
-    <div class="blog-head">
+    <div class="blog-head alt-split-head">
       <div class="reveal">
-        <p class="font-display text-xs font-semibold tracking-[.14em] uppercase text-[#684DB0]">Caderno Jards</p>
-        <h2 class="font-display">Ideias para fazer parcerias avançarem.</h2>
+        <p class="alt-kicker">Caderno Jards</p>
+        <h2 class="alt-h2 alt-h2--section font-display">Ideias para fazer parcerias avançarem.</h2>
       </div>
       <div class="blog-head-side reveal">
         <p>Conversas, repertório e caminhos práticos para quem conecta projetos, empresas e impacto.</p>
-        <a href="/blog" data-app-path="/blog" class="blog-index-link">Explorar todos os conteúdos <span aria-hidden="true">→</span></a>
+        <a href="/blog" data-app-path="/blog" class="blog-index-link">Explorar todos os conteúdos <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
       </div>
     </div>
 
@@ -2492,21 +2639,21 @@
         <span class="blog-topic">Captação</span>
         <h3 class="font-display">O que muda quando começamos a falar em mobilização de recursos?</h3>
         <p>Captar vai além do aporte. É criar movimento em torno de uma causa e aproximar quem pode fazê-la avançar.</p>
-        <span class="blog-read">Continuar lendo</span>
+        <span class="blog-read">Continuar lendo <i class="ph ph-arrow-right" aria-hidden="true"></i></span>
       </a>
 
       <a href="/blog/olhar-responsabilidade-social" data-app-path="/blog/olhar-responsabilidade-social" class="blog-story reveal">
         <span class="blog-topic">Estratégia</span>
         <h3 class="font-display">De onde vem o olhar de quem faz responsabilidade social?</h3>
         <p>Três perspectivas que ajudam a transformar intenção em investimento social consistente.</p>
-        <span class="blog-read">Continuar lendo</span>
+        <span class="blog-read">Continuar lendo <i class="ph ph-arrow-right" aria-hidden="true"></i></span>
       </a>
 
       <a href="/blog/captacao-de-recursos-e-vendas-b2b" data-app-path="/blog/captacao-de-recursos-e-vendas-b2b" class="blog-story reveal">
         <span class="blog-topic">Relacionamento</span>
         <h3 class="font-display">O que a captação de recursos pode aprender com as vendas B2B?</h3>
         <p>Contexto, cadência e próximos passos para construir conversas mais previsíveis sem perder a relação.</p>
-        <span class="blog-read">Continuar lendo</span>
+        <span class="blog-read">Continuar lendo <i class="ph ph-arrow-right" aria-hidden="true"></i></span>
       </a>
     </div>
   </div>
@@ -2579,10 +2726,25 @@
   ];
   let biActiveSlot = null;
 
+  // Linha de destaque do celular (onde o slot 2 fica oculto): mesma fonte que o card do slot 2
+  const biDestaque = document.getElementById('bi-destaque');
+  if (biDestaque && biConfig[0]) {
+    const destaqueNum = document.createElement('p');
+    destaqueNum.className = 'stat-num stat-accent';
+    destaqueNum.textContent = biConfig[0].stat;
+    const destaqueTexto = document.createElement('p');
+    const destaqueTitulo = document.createElement('strong');
+    destaqueTitulo.textContent = biConfig[0].title;
+    const destaqueSub = document.createElement('span');
+    destaqueSub.textContent = biConfig[0].sub;
+    destaqueTexto.append(destaqueTitulo, destaqueSub);
+    biDestaque.append(destaqueNum, destaqueTexto);
+  }
+
   function renderBiContent(el, cfg) {
     if (cfg.stat) {
       el.innerHTML =
-        '<div class="accent-gradient-text" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
+        '<div class="stat-accent" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
         '<div>' +
           '<div style="font-size:12px;font-weight:700;color:#282525;margin-bottom:4px;">' + cfg.title + '</div>' +
           '<p style="font-size:9.5px;color:rgba(40,37,37,0.45);line-height:1.6;">' + cfg.sub + '</p>' +
@@ -2601,6 +2763,8 @@
     const cfg = biConfig[idx];
     if (!cfg) return;
     const newSlot = cfg.slot;
+    // no celular o item 1 reage na linha de destaque (o slot 2 está oculto); no desktop ela não aparece
+    if (biDestaque) biDestaque.classList.toggle('is-active', idx === 0);
 
     if (biActiveSlot !== null && biActiveSlot !== newSlot) {
       const prevS = document.getElementById('bi-s' + biActiveSlot + '-s');
@@ -2637,7 +2801,8 @@
     const icon = btn.querySelector('.acc-icon');
     const isOpen = body.classList.contains('open');
 
-    document.querySelectorAll('.acc-content').forEach(b => b.classList.remove('open'));
+    // itens fechados ficam inertes: o link "Começar grátis" escondido não recebe foco pelo Tab
+    document.querySelectorAll('.acc-content').forEach(b => { b.classList.remove('open'); b.setAttribute('inert', ''); });
     document.querySelectorAll('.acc-icon').forEach(i => i.textContent = '+');
     document.querySelectorAll('[onclick="toggleAcc(this)"]').forEach(b => b.setAttribute('aria-expanded','false'));
     document.querySelectorAll('[onclick="toggleAcc(this)"] span:first-child').forEach(s => {
@@ -2646,6 +2811,7 @@
 
     if (!isOpen) {
       body.classList.add('open');
+      body.removeAttribute('inert');
       btn.setAttribute('aria-expanded','true');
       icon.textContent = '−';
       btn.querySelector('span:first-child').classList.replace('text-black/40','text-black');
@@ -2657,66 +2823,26 @@
   // Inicializa: acc 1 ativo (idx 0)
   updateBiFeature(0);
 
-  // ── Tabs ──
-  function switchTab(name) {
-    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab-btn').forEach(b => {
-      b.classList.remove('text-black','bg-white','border-b-2','border-b-black');
-      b.classList.add('text-black/40');
-    });
-    document.getElementById('panel-' + name).classList.add('active');
-    const btn = document.getElementById('tab-btn-' + name);
-    btn.classList.add('text-black','bg-white','border-b-2','border-b-black');
-    btn.classList.remove('text-black/40');
-  }
-
-  function resetProductDemo() {
-    switchTab('contatos');
-    document.getElementById('produto-tabs').scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-
-  function filterDemoEditais(status, button) {
-    document.querySelectorAll('#panel-editais .edital-card').forEach(function(card) {
-      card.style.display = status === 'todos' || card.dataset.status === status ? '' : 'none';
-    });
-    document.querySelectorAll('.demo-filter').forEach(function(item) {
-      item.style.borderColor = 'rgba(0,0,0,.15)';
-      item.style.color = 'rgba(40,37,37,.60)';
-      item.style.background = 'white';
-    });
-    button.style.borderColor = '#684DB0';
-    button.style.color = '#684DB0';
-    button.style.background = 'white';
-  }
-
-  function exportDemoEdital(button) {
-    const card = button.closest('.edital-card');
-    const organization = card.querySelector('.edital-header > div:nth-child(2) > div:first-child').textContent.trim();
-    const edital = card.querySelector('.edital-name').textContent.trim();
-    const status = card.dataset.status;
-    const dates = Array.from(card.querySelectorAll('.edital-dates span'))
-      .map(function(item) { return item.textContent.trim(); })
-      .filter(function(item) { return item && item !== '·'; });
-    const csv = [
-      ['Organização', 'Edital', 'Status', 'Abertura', 'Encerramento'],
-      [organization, edital, status, dates[0] || '', dates[1] || '']
-    ].map(function(row) {
-      return row.map(function(value) { return '"' + String(value).replaceAll('"', '""') + '"'; }).join(',');
-    }).join('\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
-    const download = document.createElement('a');
-    download.href = url;
-    download.download = edital.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '.csv';
-    download.click();
-    URL.revokeObjectURL(url);
-  }
-
   const heroVisual = document.querySelector('.hero-visual');
   if (heroVisual) {
     const sizeHeroArt = () => heroVisual.style.setProperty('--hero-art-scale', heroVisual.clientWidth / 1424);
     sizeHeroArt();
     new ResizeObserver(sizeHeroArt).observe(heroVisual);
   }
+
+  // ── Abas roláveis: esmaece só o lado que ainda tem conteúdo ──
+  document.querySelectorAll('.alt-scroll-x').forEach(function(trilho) {
+    const atualizar = function() {
+      const max = trilho.scrollWidth - trilho.clientWidth;
+      trilho.classList.toggle('is-fade-l', max > 1 && trilho.scrollLeft > 1);
+      trilho.classList.toggle('is-fade-r', max > 1 && trilho.scrollLeft < max - 1);
+    };
+    trilho.addEventListener('scroll', atualizar, { passive: true });
+    if ('ResizeObserver' in window) new ResizeObserver(atualizar).observe(trilho);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(atualizar);
+    window.addEventListener('load', atualizar);
+    atualizar();
+  });
 
   // ── Reveal on scroll ──
   const io = new IntersectionObserver(entries => {
