@@ -29,6 +29,15 @@ const TIPOS: { value: TipoExclusividade; label: string; desc: string; color: str
   { value: "compartilhada",         label: "Compartilhada", desc: "Vários captadores atuam em contextos distintos.",                        color: "#1A8B7A", Icon: UserCheck },
 ];
 
+// Tipos que existem no banco mas não têm um card nesta tela — mostrados só
+// como indicação, pra não parecer que nenhum tipo está selecionado.
+const OUTROS_TIPOS_LABEL: Partial<Record<TipoExclusividade, string>> = {
+  livre: "Livre",
+  exclusividade_projeto: "Exclusividade por projeto",
+  time_lock: "Time lock",
+  relacao_pessoal: "Relação pessoal",
+};
+
 function FieldLabel({ children }: { children: React.ReactNode }) {
   return <label className="mb-1.5 flex items-center text-[12px] font-semibold text-black">{children}</label>;
 }
@@ -66,43 +75,54 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
   const titleId = useId();
   useModalDismiss(onClose);
 
+  async function resolverOrgId(): Promise<string | null> {
+    if (organizationId) return organizationId;
+    const { data: ids } = await supabase.rpc("auth_org_ids");
+    return (ids as unknown as string[] | null)?.[0] ?? null;
+  }
+
   // Search empresas
   useEffect(() => {
     if (empresaBusca.length < 2) { setEmpresas([]); return; }
     const timer = setTimeout(async () => {
+      const orgId = await resolverOrgId();
+      if (!orgId) return;
       const { data } = await supabase
         .from("empresas_crm")
         .select("id, nome, domain_key, site")
+        .eq("organization_id", orgId)
         .ilike("nome", `%${empresaBusca}%`)
         .limit(8);
       setEmpresas((data as any) ?? []);
     }, 300);
     return () => clearTimeout(timer);
-  }, [empresaBusca, supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [empresaBusca, supabase, organizationId]);
 
-  // Search projetos
+  // Search projetos — restrito à organização atual, já que projetos_crm
+  // isola por dono (account_id) e não por organização via RLS.
   useEffect(() => {
     if (projetoBusca.length < 2) { setProjetos([]); return; }
     const timer = setTimeout(async () => {
-      const { data } = await supabase
+      const orgId = await resolverOrgId();
+      if (!orgId) return;
+      const { data } = await (supabase as any)
         .from("projetos_crm")
         .select("id, nome")
+        .eq("organization_id", orgId)
         .ilike("nome", `%${projetoBusca}%`)
         .limit(8);
       setProjetos((data as any) ?? []);
     }, 300);
     return () => clearTimeout(timer);
-  }, [projetoBusca, supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projetoBusca, supabase, organizationId]);
 
   // Search captadores (agencies from captadores table)
   useEffect(() => {
     if (captadorBusca.length < 2) { setCaptadores([]); return; }
     const timer = setTimeout(async () => {
-      let orgId = organizationId;
-      if (!orgId) {
-        const { data: ids } = await supabase.rpc("auth_org_ids");
-        orgId = (ids as unknown as string[] | null)?.[0] ?? null;
-      }
+      const orgId = await resolverOrgId();
       if (!orgId) return;
       const { data } = await (supabase as any)
         .from("captadores")
@@ -132,11 +152,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
     setSalvando(true);
     setErro(null);
 
-    let orgId = organizationId;
-    if (!orgId) {
-      const { data: ids } = await supabase.rpc("auth_org_ids");
-      orgId = (ids as unknown as string[] | null)?.[0] ?? null;
-    }
+    const orgId = await resolverOrgId();
     if (!orgId) { setErro("Organização não encontrada"); setSalvando(false); return; }
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -196,7 +212,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
               <div className="flex items-center gap-2 rounded border bg-black/[.02] px-3 py-2.5" style={fieldStyle}>
                 <CompanyLogo nome={empresaSelecionada.nome} domain={empresaSelecionada.domain_key} site={empresaSelecionada.site} size={24} className="flex-shrink-0" />
                 <span className="flex-1 text-[13px] font-medium text-black">{empresaSelecionada.nome}</span>
-                <button type="button" onClick={() => setEmpresaSelecionada(null)} className="text-black/30 hover:text-black/60"><X size={12} /></button>
+                <button type="button" onClick={() => { setEmpresaSelecionada(null); setProjetoSelecionado(null); setProjetoBusca(""); setProjetos([]); }} className="text-black/30 hover:text-black/60"><X size={12} /></button>
               </div>
             ) : (
               <div ref={empresaBoxRef} className="relative">
@@ -215,7 +231,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
                       <button
                         key={e.id}
                         type="button"
-                        onMouseDown={ev => { ev.preventDefault(); setEmpresaSelecionada(e); setEmpresaBusca(""); setEmpresas([]); }}
+                        onMouseDown={ev => { ev.preventDefault(); setEmpresaSelecionada(e); setEmpresaBusca(""); setEmpresas([]); setProjetoSelecionado(null); setProjetoBusca(""); setProjetos([]); }}
                         className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12px] text-black/70 transition hover:bg-black/[.04]"
                       >
                         <CompanyLogo nome={e.nome} domain={e.domain_key} site={e.site} size={24} className="flex-shrink-0" />
@@ -307,6 +323,11 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
           {/* Tipo */}
           <div className="mb-4">
             <FieldLabel>Tipo</FieldLabel>
+            {OUTROS_TIPOS_LABEL[tipo] && (
+              <p className="mb-2 text-[11px] text-black/45">
+                Tipo atual: <span className="font-semibold text-black/70">{OUTROS_TIPOS_LABEL[tipo]}</span> — escolher uma opção abaixo substitui esse valor.
+              </p>
+            )}
             <div className="grid grid-cols-2 gap-2">
               {TIPOS.map(t => {
                 const active = tipo === t.value;

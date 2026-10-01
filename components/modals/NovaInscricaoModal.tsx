@@ -264,15 +264,17 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
     setProjetoOpen(false);
   }
 
-  async function handleNovoProjetoCompletoSalvo() {
+  async function handleNovoProjetoCompletoSalvo(novoProjetoId?: string) {
     setShowNovoProjeto(false);
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!novoProjetoId) return;
+    // Usa o id que o próprio modal de criação já devolve, em vez de "adivinhar"
+    // o projeto mais recente da conta — duas criações quase simultâneas
+    // (duas abas, duplo clique) podiam fazer a consulta por recência pegar o
+    // projeto errado, além de não filtrar por organização.
     const { data } = await (supabase as any)
       .from("projetos_crm")
       .select("id, nome")
-      .eq("account_id", user?.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
+      .eq("id", novoProjetoId)
       .maybeSingle();
     if (!data) return;
     setProjetos(prev => prev.some(p => p.id === data.id) ? prev : [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));

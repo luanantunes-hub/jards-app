@@ -151,14 +151,18 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Buscar proponentes
+  // Buscar proponentes — restrito à organização atual (auth_org_ids() devolve
+  // todas as orgs do usuário, não só a ativa; sem esse filtro apareciam
+  // proponentes de outras organizações do mesmo usuário).
   useEffect(() => {
     const q = proponenteQuery.trim();
     if (!proponenteOpen && q === proponenteNome) return;
+    if (!organizationId) return;
     const timer = setTimeout(async () => {
       const query = supabase
         .from("proponentes")
         .select("id, nome, cidade, estado")
+        .eq("organization_id", organizationId)
         .order("nome")
         .limit(8);
       if (q) query.ilike("nome_key", `%${q.toLowerCase()}%`);
@@ -167,7 +171,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
     }, 200);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [proponenteQuery, proponenteOpen]);
+  }, [proponenteQuery, proponenteOpen, organizationId]);
 
   function selectProponente(p: ProponenteOption) {
     setProponenteId(p.id);
@@ -277,6 +281,11 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
       identidade_tipo: identidadeTipo,
       identidade_valor: identidadeTipo === "icone" || identidadeTipo === "emoji" ? identidadeValor || null : null,
       identidade_cor: identidadeTipo === "icone" ? identidadeCor : null,
+      // Mantém a URL atual só quando o tipo continua "logo" (o bloco abaixo
+      // sobrescreve se houver arquivo novo); qualquer outro tipo limpa o
+      // campo, para não deixar uma URL de logo obsoleta associada a um
+      // projeto que já não usa logo como identidade.
+      ...(identidadeTipo === "logo" ? {} : { identidade_logo_url: null }),
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -292,10 +301,10 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
       const projectId = result.data.id as string;
       const path = `${organizationId}/${projectId}/logo.png`;
       const { error: uploadError } = await supabase.storage.from("projetos-identidade").upload(path, logoFile, { upsert: true, contentType: "image/png" });
-      if (uploadError) { setSaving(false); setErro(uploadError.message); return; }
+      if (uploadError) { setSaving(false); setErro(`Projeto salvo, mas não foi possível salvar o logotipo: ${uploadError.message}`); return; }
       const { data: publicUrl } = supabase.storage.from("projetos-identidade").getPublicUrl(path);
       const { error: logoError } = await sb.from("projetos_crm").update({ identidade_logo_url: publicUrl.publicUrl }).eq("id", projectId);
-      if (logoError) { setSaving(false); setErro(logoError.message); return; }
+      if (logoError) { setSaving(false); setErro(`Projeto salvo, mas não foi possível salvar o logotipo: ${logoError.message}`); return; }
     }
 
     setSaving(false);

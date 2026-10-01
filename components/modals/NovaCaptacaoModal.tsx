@@ -270,12 +270,16 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   }
 
   useEffect(() => {
-    (supabase as any).from("empresas_crm").select("id, nome").order("nome").limit(200)
-      .then(({ data }: any) => setEmpresas(data ?? []));
-    (supabase as any).from("projetos_crm").select("id, nome").order("nome").limit(100)
-      .then(({ data }: any) => setProjetos(data ?? []));
-
     if (organizationId) {
+      // Restrito à organização atual — projetos_crm isola só por dono (account_id)
+      // via RLS, não por organização, então sem esse filtro apareciam projetos de
+      // outras organizações do mesmo usuário (mesmo caso já corrigido em
+      // NovaInscricaoModal). empresas_crm filtrado pelo mesmo padrão por defesa.
+      (supabase as any).from("empresas_crm").select("id, nome").eq("organization_id", organizationId).order("nome").limit(200)
+        .then(({ data }: any) => setEmpresas(data ?? []));
+      (supabase as any).from("projetos_crm").select("id, nome").eq("organization_id", organizationId).order("nome").limit(100)
+        .then(({ data }: any) => setProjetos(data ?? []));
+
       fetchOrganizationMembers(organizationId)
         .then(data => setMembros(data.map(m => ({
           user_id: m.user_id,
@@ -312,25 +316,56 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     } else setBlindagem(null);
   }
 
-  async function checkExclusividade(eId: string, pId?: string | null, responsavelId: string | null = captadorId) {
+  // atribuicoes.captador_user_id referencia captadores(id), não auth.users(id)
+  // (ver migration 20260913000003_fix_captador_user_id_fk.sql). Resolve o id
+  // comparável no espaço de captadores antes de checar contra a exclusividade:
+  // "externa" já grava um captadores.id direto; "interna" grava o auth.users.id
+  // do membro, então precisa achar a linha de captadores vinculada a ele (pode
+  // não existir — nem todo membro interno tem um captador associado).
+  async function resolverCaptadorIdParaExclusividade(
+    overrideCaptadorId?: string | null,
+    overrideCaptadorExternoId?: string | null,
+    overrideCaptacaoTipo?: "interna" | "externa",
+  ): Promise<string | null> {
+    const tipo = overrideCaptacaoTipo ?? captacaoTipo;
+    if (tipo === "externa") {
+      return (overrideCaptadorExternoId !== undefined ? overrideCaptadorExternoId : captadorExternoId) || null;
+    }
+    const uid = overrideCaptadorId !== undefined ? overrideCaptadorId : captadorId;
+    if (!uid) return null;
+    const { data } = await (supabase as any).from("captadores").select("id").eq("user_id", uid).maybeSingle();
+    return data?.id ?? null;
+  }
+
+  async function checkExclusividade(
+    eId: string,
+    pId?: string | null,
+    overrideCaptadorId?: string | null,
+    overrideCaptadorExternoId?: string | null,
+    overrideCaptacaoTipo?: "interna" | "externa",
+  ) {
     if (!eId) { setExclusividade(null); return; }
     const { data } = await (supabase as any).rpc("verificar_exclusividade", { p_empresa_crm_id: eId, p_projeto_id: pId || null });
     if (data && data.length > 0) {
       const exc = data[0];
-      const m = membros.find(m => m.user_id === exc.captador_user_id);
-      if (exc.captador_user_id !== responsavelId) {
-        setExclusividade({ tipo: exc.tipo, captadorNome: m?.nome ?? "outro captador", dataFim: exc.data_fim, diasSemAvanco: exc.dias_sem_avanco });
+      const meuCaptadorId = await resolverCaptadorIdParaExclusividade(overrideCaptadorId, overrideCaptadorExternoId, overrideCaptacaoTipo);
+      if (exc.captador_user_id !== meuCaptadorId) {
+        const nome = captadoresExt.find(c => c.id === exc.captador_user_id)?.nome ?? "outro captador";
+        setExclusividade({ tipo: exc.tipo, captadorNome: nome, dataFim: exc.data_fim, diasSemAvanco: exc.dias_sem_avanco });
       } else setExclusividade(null);
     } else setExclusividade(null);
   }
 
   async function loadContatosEmpresa(empresaCrmId: string) {
-    if (!empresaCrmId) { setContatosEmpresa([]); return; }
+    if (!empresaCrmId) { setContatosEmpresa([]); setContatoEmpresaId(null); return; }
     const { data } = await (supabase as any)
       .from("contatos").select("id, nome, cargo, email")
       .eq("empresa_crm_id", empresaCrmId).order("nome");
     const result = data ?? [];
     setContatosEmpresa(result);
+    // O contato selecionado pode ser de outra empresa (campo dependente trocando
+    // de pai) — mantém só se ainda existir na lista desta empresa.
+    setContatoEmpresaId(current => current && result.some((c: ContatoItem) => c.id === current) ? current : null);
     if (result.length === 0) setShowNovoContato(true);
   }
 
@@ -363,6 +398,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     if (!data) return;
     setEmpresas(prev => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
     setEmpresaId(data.id); setEmpresaSearch(data.nome); setEmpresaOpen(false);
+    loadContatosEmpresa(data.id);
   }
 
   async function handleSalvar() {
@@ -565,10 +601,10 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   style={{ borderColor: empresaOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
                   <Building2 size={13} className="flex-shrink-0 text-black/35" />
                   <input type="text" placeholder="Buscar ou criar…" value={empresaSearch}
-                    onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); }}
+                    onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
                     onFocus={() => setEmpresaOpen(true)} onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
                     className="min-w-0 flex-1 bg-transparent text-[13px] text-black outline-none" />
-                  {empresaSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
+                  {empresaSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
                 </div>
                 {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
                   <PortalMenu position={empresaMenuPos}>
@@ -613,7 +649,10 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                 {projetoOpen && (projetosFiltrados.length > 0 || (projetoSearch.trim() && !hasExactMatchProjeto)) && (
                   <PortalMenu position={projetoMenuPos}>
                     {projetosFiltrados.map(projeto => (
-                      <button key={projeto.id} type="button" onMouseDown={event => { event.preventDefault(); setProjetoId(projeto.id); setProjetoSearch(projeto.nome); setProjetoOpen(false); }}
+                      <button key={projeto.id} type="button" onMouseDown={event => {
+                        event.preventDefault(); setProjetoId(projeto.id); setProjetoSearch(projeto.nome); setProjetoOpen(false);
+                        if (empresaId) checkExclusividade(empresaId, projeto.id);
+                      }}
                         className="w-full px-3 py-2 text-left text-[13px] text-black transition hover:bg-black/[.04]">
                         {projeto.nome}
                       </button>
@@ -706,7 +745,10 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   <FieldLabel>Responsável pela captação</FieldLabel>
                   <div className="mb-2 flex w-fit overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.12)" }}>
                     {(["interna", "externa"] as const).map(tipo => (
-                      <button key={tipo} type="button" onClick={() => setCaptacaoTipo(tipo)}
+                      <button key={tipo} type="button" onClick={() => {
+                        setCaptacaoTipo(tipo);
+                        if (empresaId) checkExclusividade(empresaId, projetoId, undefined, undefined, tipo);
+                      }}
                         className="border-r px-3 py-1.5 text-[10px] font-semibold last:border-r-0"
                         style={captacaoTipo === tipo
                           ? { background: "#0D0D0D", color: "white", borderColor: "#0D0D0D" }
@@ -727,7 +769,11 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                     }} className="[&>button]:w-full" compact icon={<Users size={13} />} placeholder="Não atribuído"
                       options={[{ value: "", label: "Não atribuído" }, ...membros.map(membro => ({ value: membro.user_id, label: membro.nome }))]} />
                   ) : (
-                    <CustomDropdown value={captadorExternoId ?? ""} onChange={value => setCaptadorExternoId(value || null)}
+                    <CustomDropdown value={captadorExternoId ?? ""} onChange={value => {
+                      const nextExternoId = value || null;
+                      setCaptadorExternoId(nextExternoId);
+                      if (empresaId) checkExclusividade(empresaId, projetoId, undefined, nextExternoId);
+                    }}
                       className="[&>button]:w-full" compact icon={<Briefcase size={13} />} placeholder="Não atribuído"
                       options={[{ value: "", label: "Não atribuído" }, ...captadoresExt.map(captador => ({ value: captador.id, label: captador.agencia ? `${captador.nome} · ${captador.agencia}` : captador.nome }))]} />
                   )}
