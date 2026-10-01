@@ -39,13 +39,14 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
   const [erro, setErro]     = useState<string | null>(null);
 
   useEffect(() => {
-    supabase.from("empresas_crm").select("setor").not("setor", "is", null)
+    if (!organizationId) return;
+    supabase.from("empresas_crm").select("setor").eq("organization_id", organizationId).not("setor", "is", null)
       .then(({ data }) => {
         const unique = [...new Set(((data ?? []) as any[]).map(r => r.setor as string).filter(Boolean))].sort();
         setSetoresExistentes(unique);
       });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [organizationId]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -73,15 +74,31 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado"); setSaving(false); return; }
 
-    // Reusa o empresas_crm existente ou cria um novo
-    let crmId = empresaCrmId ?? null;
-    if (!crmId) {
-      const localizacao = cidadeNome.trim() && cidadeUF.trim()
-        ? `${cidadeNome.trim()}-${cidadeUF.trim().toUpperCase()}`
-        : cidadeNome.trim() || null;
+    const localizacao = cidadeNome.trim() && cidadeUF.trim()
+      ? `${cidadeNome.trim()}-${cidadeUF.trim().toUpperCase()}`
+      : cidadeNome.trim() || null;
+    const empresaFields = { nome: nome.trim(), setor: setor.trim() || null, domain_key: dominio.trim() || null, localizacao };
+
+    // Reusa o empresas_crm existente (gravando as edições feitas na tela) ou cria um novo.
+    // Confirma antes que o id recebido pertence mesmo à organização ativa —
+    // o chamador pode ter resolvido esse id sem filtrar por organização, e
+    // cair aqui com o id de uma empresa de outra organização do usuário.
+    let crmId: string | null = null;
+    if (empresaCrmId) {
+      const { data: empresaValida } = await (supabase as any)
+        .from("empresas_crm").select("id").eq("id", empresaCrmId).eq("organization_id", organizationId).maybeSingle();
+      crmId = empresaValida?.id ?? null;
+    }
+    if (crmId) {
+      const { error: erroEmpresa } = await (supabase as any)
+        .from("empresas_crm")
+        .update(empresaFields)
+        .eq("id", crmId);
+      if (erroEmpresa) { setErro(erroEmpresa.message); setSaving(false); return; }
+    } else {
       const { data: empresa, error: erroEmpresa } = await (supabase as any)
         .from("empresas_crm")
-        .insert({ nome: nome.trim(), setor: setor.trim() || null, domain_key: dominio.trim() || null, localizacao, account_id: user.id, organization_id: organizationId })
+        .insert({ ...empresaFields, account_id: user.id, organization_id: organizationId })
         .select("id")
         .single();
 
@@ -97,6 +114,7 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
       organization_id: organizationId,
       empresa_id: empresaPubId ?? null,
       empresa_crm_id: crmId,
+      captador_id: user.id,
       status: "prospeccao" as const,
       meio_contato: null,
       origem_oportunidade: origem,
@@ -105,15 +123,16 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
       proxima_prospeccao: null,
     };
 
-    const captResult = await (supabase as any).from("captacoes").insert(captacaoPayload);
+    let captResult = await (supabase as any).from("captacoes").insert(captacaoPayload);
     if (captResult.error && /(origem_oportunidade|canal_planejado)/i.test(captResult.error.message)) {
       const legacyPayload = { ...captacaoPayload } as Record<string, unknown>;
       delete legacyPayload.origem_oportunidade;
       delete legacyPayload.canal_planejado;
-      await (supabase as any).from("captacoes").insert(legacyPayload);
+      captResult = await (supabase as any).from("captacoes").insert(legacyPayload);
     }
 
     setSaving(false);
+    if (captResult.error) { setErro(captResult.error.message); return; }
     onSaved(crmId ?? undefined); onClose();
   }
 
