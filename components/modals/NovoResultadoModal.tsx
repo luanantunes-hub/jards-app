@@ -1,12 +1,13 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { X, Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { Dropdown } from "@/components/ui/Dropdown";
 import type { CotaPatrocinio, Proposta } from "@/lib/supabase/types";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 export type EditDataResultado = {
   id: string;
@@ -29,7 +30,7 @@ function atmKey(setCents: (fn: (p: string) => string) => void) {
   return (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Backspace") { e.preventDefault(); setCents(p => p.slice(0, -1)); }
     else if (/^\d$/.test(e.key)) { e.preventDefault(); setCents(p => p.length < 13 ? p + e.key : p); }
-    else if (!["Tab","ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) e.preventDefault();
+    else if (!["Tab","Escape","ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) e.preventDefault();
   };
 }
 function money(v: number) {
@@ -55,6 +56,8 @@ export function NovoResultadoModal({
   const organizationId = useOrganizationId();
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   const [cotaId, setCotaId] = useState("");
   const [propostaId, setPropostaId] = useState("");
@@ -119,22 +122,25 @@ export function NovoResultadoModal({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="bg-white rounded w-full flex flex-col border border-black/[.09] shadow-xl overflow-hidden"
         style={{ maxWidth: 420, maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 className="text-[14px] font-semibold text-black/80">
+        <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <h2 id={titleId} className="text-[14px] font-semibold text-black/80">
             {editData ? "Editar captação" : "Registrar captação"}
           </h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.05] transition">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.05] transition">
             <X size={14} className="text-black/40" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6 space-y-5">
           {/* Cota */}
           {!editData && (
             <div>
@@ -190,19 +196,19 @@ export function NovoResultadoModal({
           </div>
 
           {erro && (
-            <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{erro}</p>
+            <p role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{erro}</p>
           )}
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={onClose} className="text-[12px] font-medium text-black/35 hover:text-black/55 transition">
             Cancelar
           </button>
           <button
             onClick={handleSalvar}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
           </button>

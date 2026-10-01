@@ -1,9 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Check, CheckCircle2, Copy, CreditCard, Eye, Handshake, Mail, Minus, Plus, ShieldCheck, UserPlus, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { BoasVindasEquipeModal } from "@/components/modals/BoasVindasEquipeModal";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 interface NovoMembroModalProps {
   open: boolean;
@@ -173,6 +174,9 @@ export default function NovoMembroModal({ open, onClose, onSaved }: NovoMembroMo
     onClose();
   }
 
+  const titleId = useId();
+  useModalDismiss(close, { enabled: open && celebrationQuantity === null });
+
   if (!open) return null;
 
   if (celebrationQuantity !== null) {
@@ -191,23 +195,23 @@ export default function NovoMembroModal({ open, onClose, onSaved }: NovoMembroMo
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={close}>
-      <div className="flex max-h-[90vh] w-full max-w-[560px] flex-col overflow-hidden rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
-        <div className="flex items-center justify-between border-b px-6 pb-4 pt-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[560px] flex-col overflow-hidden rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
+        <div className="flex shrink-0 items-center justify-between border-b px-6 pb-4 pt-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-[#7259B5]/[.08]">
               <Users size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 className="text-[15px] font-bold text-black">Equipe e usuários extras</h2>
+              <h2 id={titleId} className="text-[15px] font-bold text-black">Equipe e usuários extras</h2>
               <p className="text-[11px] text-black/40">Compre a capacidade e depois envie os convites.</p>
             </div>
           </div>
-          <button onClick={close} className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/5" aria-label="Fechar">
+          <button type="button" onClick={close} className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/5" aria-label="Fechar">
             <X size={15} className="text-black/40" />
           </button>
         </div>
 
-        <div className="overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 overflow-y-auto p-6">
           <div className="mb-5 grid grid-cols-3 overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.09)" }}>
             {[
               [summary?.total ?? "—", "Contratados"],
@@ -235,7 +239,7 @@ export default function NovoMembroModal({ open, onClose, onSaved }: NovoMembroMo
             </button>
           </div>
 
-          {error && <div className="mb-4 rounded bg-[#D94E4E]/[.08] px-3 py-2.5 text-[12px] font-medium text-[#D94E4E]">{error}</div>}
+          {error && <div role="alert" className="mb-4 rounded bg-[#D94E4E]/[.08] px-3 py-2.5 text-[12px] font-medium text-[#D94E4E]">{error}</div>}
           {success && <div className="mb-4 rounded bg-[#2E8932]/[.08] px-3 py-2.5 text-[12px] font-medium text-[#2E8932]"><div className="flex items-center gap-2"><CheckCircle2 size={14} />{success}</div>{manualInviteUrl && <button onClick={async () => { await navigator.clipboard.writeText(manualInviteUrl); setCopied(true); }} className="mt-2 flex items-center gap-1.5 rounded border border-[#2E8932]/30 bg-white px-3 py-2 text-[11px] font-semibold text-[#2E8932] transition hover:bg-black/[.04]"><Copy size={12} />{copied ? "Link copiado" : "Copiar link do convite"}</button>}</div>}
 
           {mode === "invite" ? (
@@ -305,12 +309,12 @@ export default function NovoMembroModal({ open, onClose, onSaved }: NovoMembroMo
           )}
         </div>
 
-        <div className="flex items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={close} className="px-4 py-2 text-[12px] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
           {mode === "invite" ? (
-            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || (summary?.available ?? 0) < 1} className="rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-semibold text-white transition hover:bg-[#26772A] disabled:opacity-40">{saving ? "Enviando…" : "Enviar convite"}</button>
+            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || (summary?.available ?? 0) < 1} className="rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
           ) : (
-            <button onClick={buySeats} disabled={saving || loading} className="rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-semibold text-white transition hover:bg-[#26772A] disabled:opacity-40">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
+            <button onClick={buySeats} disabled={saving || loading} className="rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
           )}
         </div>
       </div>

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CalendarClock, GitBranch, RefreshCw, Save, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { RenewalDecisionSheet, type RenewalEvaluationState } from "@/components/customer-success/RenewalDecisionSheet";
 import { DEFAULT_RENEWAL_DECISION_TREE, OUTCOME_LABELS, cloneDecisionTree, type RenewalDecisionNode, type RenewalDecisionOutcome } from "@/lib/customer-success/renewalDecisionTree";
 
@@ -149,12 +150,7 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
     setError(null);
   }, [open, initialContractId, contracts, plans, tree, contractAgencies]);
 
-  useEffect(() => {
-    if (!open) return;
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
-    document.addEventListener("keydown", closeOnEscape);
-    return () => document.removeEventListener("keydown", closeOnEscape);
-  }, [open, onClose]);
+  useModalDismiss(onClose, { enabled: open });
 
   function selectContract(value: string) {
     setContractId(value);
@@ -250,7 +246,7 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
             <FieldLabel label="Nota para a negociação"><textarea value={note} onChange={event => setNote(event.target.value)} rows={4} placeholder="Contexto e abordagem para o próximo ciclo" className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[12px] leading-5 text-black/70 outline-none focus:border-black/30" /></FieldLabel>
             <FieldLabel label="Riscos"><textarea value={risks} onChange={event => setRisks(event.target.value)} rows={4} placeholder="Objeções, orçamento ou mudanças de cenário" className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[12px] leading-5 text-black/70 outline-none focus:border-black/30" /></FieldLabel>
           </div>
-          {error && <p className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2 text-[11px] text-[#D94E4E]">{error}</p>}
+          {error && <p role="alert" className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2 text-[11px] text-[#D94E4E]">{error}</p>}
         </div>
 
         <footer className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-black/[.07] bg-white px-5 py-4 sm:px-6">

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import {
   X, Save, Building2, Plus, FolderOpen,
 } from "lucide-react";
@@ -10,6 +10,7 @@ import { NovoProponenteModal } from "@/components/modals/NovoProponenteModal";
 import { PROJECT_ICON_COLORS, PROJECT_ICON_OPTIONS } from "@/components/ui/ProjectIdentity";
 import { IdentityEditor } from "@/components/ui/IdentityEditor";
 import { BRAZIL_STATES, SPONSORSHIP_TYPE_OPTIONS, sponsorshipTypeLabel } from "@/lib/projects/sponsorship";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 export type EditDataProjeto = {
   id: string;
@@ -77,6 +78,8 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
   const organizationId = useOrganizationId();
   const [saving, setSaving] = useState(false);
   const [erro, setErro]     = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
   const savedProjectIdRef = useRef<string | null>(editData?.id ?? null);
 
   const [nome, setNome]           = useState(editData?.nome ?? "");
@@ -309,6 +312,9 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
         aria-hidden={showNovoProponente || undefined}
       >
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
           className="bg-white rounded shadow-2xl w-full flex flex-col"
           style={{ maxWidth: 600, maxHeight: "calc(100vh - 48px)" }}
           onClick={e => e.stopPropagation()}
@@ -319,15 +325,15 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
               <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
                 <FolderOpen size={16} />
               </span>
-              <h2 className="text-[15px] font-bold text-black">{editData ? "Editar projeto" : "Novo projeto"}</h2>
+              <h2 id={titleId} className="text-[15px] font-bold text-black">{editData ? "Editar projeto" : "Novo projeto"}</h2>
             </div>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
+            <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
               <X size={15} className="text-black/40" />
             </button>
           </header>
 
           {/* Body */}
-          <main className="flex-1 overflow-y-auto">
+          <main className="min-h-0 flex-1 overflow-y-auto">
 
             {/* — Identidade + Nome — */}
             <section className="px-6 py-5 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
@@ -515,7 +521,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     <div className="flex justify-end">
                       <button type="button" onClick={addIncentivoLocal}
                         disabled={!incentivoNome.trim() || !incentivoEstado || (incentivoEscopo === "municipal" && !incentivoCidade.trim())}
-                        className="rounded bg-[#2E8932] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#267529] disabled:opacity-35">
+                        className="rounded bg-[#2E8932] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">
                         Adicionar
                       </button>
                     </div>
@@ -539,13 +545,13 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
 
           {/* Footer */}
           <footer className="flex flex-shrink-0 items-center justify-between border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            {erro ? <p className="mr-4 min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+            {erro ? <p role="alert" className="mr-4 min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
             <div className="ml-auto flex flex-shrink-0 items-center gap-2">
               <button onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">
                 Cancelar
               </button>
               <button onClick={handleSalvar} disabled={saving}
-                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#267529] active:translate-y-px disabled:opacity-60">
+                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
                 <Save size={12} /> {saving ? "Salvando…" : "Salvar projeto"}
               </button>
             </div>

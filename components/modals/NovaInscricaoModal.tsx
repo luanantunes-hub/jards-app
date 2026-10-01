@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useId, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import {
   X, Building2, FolderOpen, Layers, Plus,
@@ -16,6 +16,7 @@ import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { cotaTemDisponibilidade, formatCotaValor, valorForaDaFaixa } from "@/lib/cotas";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 const CRIAR_NOVA_COTA = "__criar_nova_cota__";
 
@@ -110,6 +111,8 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   const [loadingCotas, setLoadingCotas] = useState(false);
   const [saving, setSaving]       = useState(false);
   const [erro, setErro]           = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   const [empresaId, setEmpresaId]         = useState(editData?.empresa_crm_id ?? empresaPreId ?? "");
   const [empresaSearch, setEmpresaSearch] = useState(editData?.empresa_crm_nome ?? nomePreEmpresa ?? "");
@@ -390,27 +393,30 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="flex w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-b bg-white"
         style={{ maxWidth: 980, maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-7 pt-6 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-between px-7 pt-6 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
               <FolderOpen size={16} className="text-black/50" />
             </div>
-            <h2 className="text-[15px] font-bold text-black">{editData ? "Editar inscrição" : "Nova inscrição"}</h2>
+            <h2 id={titleId} className="text-[15px] font-bold text-black">{editData ? "Editar inscrição" : "Nova inscrição"}</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={15} className="text-black/40" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 overflow-hidden">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
           {/* Col 1 — dados */}
-          <div className="min-w-0 space-y-4 overflow-y-auto p-6" style={{ flex: "0 0 56%" }}>
+          <div className="min-w-0 shrink-0 space-y-4 p-6 md:flex-[0_0_56%] md:overflow-y-auto">
             {/* Patrocinador — combobox */}
             <div className="relative">
               <label className="text-[12px] font-semibold text-black mb-1.5 block">Patrocinador</label>
@@ -675,10 +681,10 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
           </div>
 
           {/* Divider */}
-          <div style={{ width: 1, background: "rgba(13,13,13,.07)", flexShrink: 0 }} />
+          <div className="h-px shrink-0 md:h-auto md:w-px" style={{ background: "rgba(13,13,13,.07)" }} />
 
           {/* Col 2 — decisão e cronograma */}
-          <div className="space-y-5 overflow-y-auto p-6" style={{ flex: "0 0 44%" }}>
+          <div className="min-w-0 shrink-0 space-y-5 p-6 md:flex-[0_0_44%] md:overflow-y-auto">
             <section>
               <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-black/30">Definição comercial</p>
               <div>
@@ -750,8 +756,8 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between px-7 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          {erro && <p className="text-xs text-[#D94E4E] font-medium">{erro}</p>}
+        <div className="flex shrink-0 items-center justify-between px-7 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          {erro && <p role="alert" className="text-xs text-[#D94E4E] font-medium">{erro}</p>}
           {!erro && <div />}
           <div className="flex items-center gap-3">
             <button onClick={onClose} className="px-4 py-2.5 text-[12px] font-semibold text-black/35 hover:text-black/55 transition">
@@ -760,7 +766,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
             <button
               onClick={handleSalvar}
               disabled={saving}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-[12px] font-bold bg-[#2E8932] text-white rounded hover:bg-[#2E8932]/90 transition disabled:opacity-60"
+              className="flex items-center gap-1.5 px-5 py-2.5 text-[12px] font-bold bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
             </button>

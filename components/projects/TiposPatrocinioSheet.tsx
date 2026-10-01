@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { SPONSORSHIP_TYPE_OPTIONS, BRAZIL_STATES } from "@/lib/projects/sponsorship";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 const FEDERAL_TYPES = SPONSORSHIP_TYPE_OPTIONS as unknown as { value: string; label: string }[];
 
@@ -27,6 +28,8 @@ export function TiposPatrocinioSheet({
   const [estadualState, setEstadualState] = useState("");
   const [addingMunicipal, setAddingMunicipal] = useState(false);
   const [municipalName, setMunicipalName] = useState("");
+  const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
 
   useEffect(() => {
     requestAnimationFrame(() => requestAnimationFrame(() => setSheetVisible(true)));
@@ -36,6 +39,8 @@ export function TiposPatrocinioSheet({
     setSheetVisible(false);
     setTimeout(onClose, 260);
   }
+
+  useModalDismiss(close);
 
   function toggleFederal(value: string) {
     setSelected(prev =>
@@ -68,8 +73,10 @@ export function TiposPatrocinioSheet({
 
   async function save() {
     setSaving(true);
-    await (supabase as any).from("projetos_crm").update({ tipos_patrocinio: selected }).eq("id", projetoId);
+    setErro(null);
+    const { error } = await (supabase as any).from("projetos_crm").update({ tipos_patrocinio: selected }).eq("id", projetoId);
     setSaving(false);
+    if (error) { setErro("Não foi possível salvar os tipos de patrocínio. Tente novamente."); return; }
     onSaved();
     close();
   }
@@ -84,25 +91,28 @@ export function TiposPatrocinioSheet({
       onClick={close}
     >
       <div
-        className="absolute top-0 left-1/2 overflow-hidden rounded-b bg-white"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="absolute inset-x-0 top-0 mx-auto flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white"
         style={{
           width: 520,
           maxWidth: "92vw",
-          transform: sheetVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-100%)",
+          transform: sheetVisible ? "none" : "translateY(-100%)",
           transition: "transform 260ms cubic-bezier(.32,.72,0,1)",
         }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 className="text-[14px] font-semibold text-black/80">Patrocínio</h3>
-          <button onClick={close} className="flex h-8 w-8 items-center justify-center rounded hover:bg-black/[.05] transition">
+        <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          <h3 id={titleId} className="text-[14px] font-semibold text-black/80">Patrocínio</h3>
+          <button type="button" onClick={close} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded hover:bg-black/[.05] transition">
             <X size={14} className="text-black/40" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="space-y-6 px-6 py-5">
+        <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
           {/* Federal */}
           <div>
             <p className="mb-3 text-[10px] font-semibold uppercase tracking-[.1em] text-black/35">Federais e direto</p>
@@ -139,7 +149,7 @@ export function TiposPatrocinioSheet({
                   return (
                     <span key={key} className="flex items-center gap-1.5 rounded border border-black/[.12] bg-black/[.025] px-2.5 py-1 text-[11px] text-black/60">
                       {kind === "estadual" ? `Estadual · ${val}` : `Municipal · ${val}`}
-                      <button onClick={() => removeLocal(key)} className="text-black/30 transition hover:text-black/60">
+                      <button type="button" onClick={() => removeLocal(key)} aria-label={`Remover ${kind === "estadual" ? "estadual" : "municipal"} ${val}`} className="text-black/30 transition hover:text-black/60">
                         <X size={10} />
                       </button>
                     </span>
@@ -208,14 +218,15 @@ export function TiposPatrocinioSheet({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        {erro && <p role="alert" className="shrink-0 px-6 pb-3 text-[12px] text-[#B23A3A]">{erro}</p>}
+        <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           <button onClick={close} className="text-[12px] font-medium text-black/35 transition hover:text-black/55">
             Cancelar
           </button>
           <button
             onClick={() => void save()}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Check size={12} /> {saving ? "Salvando…" : "Salvar"}
           </button>
