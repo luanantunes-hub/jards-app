@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Política de Privacidade — Jards",
   description: "Como a Jards coleta, usa e protege seus dados.",
 };
 
-const UPDATED = "29 de agosto de 2026";
+const UPDATED = "30 de setembro de 2026";
 
 export default function PrivacidadePage() {
   return (
@@ -60,7 +61,7 @@ export default function PrivacidadePage() {
             <p>Para gerenciar o pipeline de captação você pode inserir informações sobre patrocinadores, contatos, projetos, captações, atividades, documentos e comissões. Esses dados pertencem à sua organização.</p>
 
             <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">2.3 Dados técnicos</h3>
-            <p>Registramos automaticamente endereço IP, logs de sessão e histórico de alterações de campos críticos para segurança e auditoria. Esses dados não são usados para publicidade.</p>
+            <p>Registramos automaticamente endereço IP, logs de sessão e histórico de alterações de campos críticos para segurança e auditoria. Esses dados não são usados para publicidade. Nas páginas públicas do site, e só com o seu consentimento, também coletamos estatísticas de navegação pelo Google Analytics e pelo Google Ads (ver §10).</p>
           </Section>
 
           <Section id="s3" num="3" title="Integrações Google — Gmail e Agenda">
@@ -107,7 +108,7 @@ export default function PrivacidadePage() {
           </Section>
 
           <Section id="s5" num="5" title="Como usamos os dados">
-            <p>Usamos seus dados para prestar o serviço de CRM contratado, autenticar usuários, sincronizar integrações autorizadas, processar pagamentos, enviar notificações sobre o serviço e prevenir fraudes. <strong>Nunca usamos seus dados para publicidade de terceiros, nem os vendemos.</strong></p>
+            <p>Usamos seus dados para prestar o serviço de CRM contratado, autenticar usuários, sincronizar integrações autorizadas, processar pagamentos, enviar notificações sobre o serviço, prevenir fraudes e, com o seu consentimento, medir o uso das páginas públicas do site e o resultado das nossas campanhas. <strong>Nunca usamos seus dados para publicidade de terceiros, nem os vendemos.</strong></p>
           </Section>
 
           <Section id="s6" num="6" title="Compartilhamento de dados">
@@ -116,6 +117,7 @@ export default function PrivacidadePage() {
               <li><strong>Supabase</strong> — banco de dados, autenticação e armazenamento (EUA, us-east-2)</li>
               <li><strong>Stripe</strong> — processamento de pagamentos (EUA / global)</li>
               <li><strong>Google LLC</strong> — APIs de Gmail e Agenda, somente quando autorizado (EUA / global)</li>
+              <li><strong>Google LLC — Google Analytics e Google Ads</strong> — estatísticas de visitas às páginas públicas do site e medição das nossas campanhas, somente com o seu consentimento (EUA / global)</li>
               <li><strong>Microsoft</strong> — API do Outlook/Agenda, somente quando autorizado (EUA / global)</li>
             </ul>
             <p>Podemos divulgar dados quando exigido por lei ou ordem judicial.</p>
@@ -126,7 +128,7 @@ export default function PrivacidadePage() {
           </Section>
 
           <Section id="s8" num="8" title="Retenção de dados">
-            <p>Dados de conta e CRM são mantidos enquanto a organização estiver ativa e excluídos em até 30 dias após solicitação. Tokens OAuth são excluídos imediatamente ao desconectar a integração. Logs de auditoria são mantidos por 24 meses. Dados de pagamento são mantidos por 5 anos por obrigação fiscal.</p>
+            <p>Dados de conta e CRM são mantidos enquanto a organização estiver ativa e excluídos em até 30 dias após solicitação. Tokens OAuth são excluídos imediatamente ao desconectar a integração. Logs de auditoria são mantidos por 24 meses. Dados de pagamento são mantidos por 5 anos por obrigação fiscal. Dados de navegação coletados pelo Google Analytics ficam retidos, no nível de evento, por no máximo 14 meses.</p>
           </Section>
 
           <Section id="s9" num="9" title="Seus direitos (LGPD)">
@@ -138,7 +140,29 @@ export default function PrivacidadePage() {
           </Section>
 
           <Section id="s10" num="10" title="Cookies">
-            <p>Usamos apenas cookies essenciais: sessão de autenticação (HttpOnly, SameSite=Lax) e estado OAuth temporário (duração de 10 minutos, excluído após o fluxo). <strong>Não usamos cookies de rastreamento, analytics comportamental ou publicidade.</strong></p>
+            <p><strong>Essenciais.</strong> Sessão de autenticação (SameSite=Lax) e estado OAuth temporário (duração de 10 minutos, excluído após o fluxo). Sem eles a plataforma não funciona, por isso não dependem de consentimento.</p>
+            <p>
+              <strong>Análise (opcionais).</strong> Nas páginas públicas do site — página inicial, blog, Termos de Uso e esta
+              Política — usamos o Google Analytics para medir as visitas e entender quais conteúdos são úteis. A mesma tag
+              do Google envia ao Google Ads o registro das visitas, para medir o resultado das nossas campanhas. Nada disso é
+              carregado antes de você aceitar no aviso de cookies; se você recusar ou não responder, o Google Analytics e o
+              Google Ads não recebem nada. Quando ativo, o Google Analytics grava os cookies <code>_ga</code> e{" "}
+              <code>_ga_*</code> (duração de até 2 anos) com um identificador aleatório do navegador e registra páginas
+              visitadas, origem da visita, tipo de dispositivo e localização aproximada; o Google Ads recebe a página
+              visitada, a origem e esse identificador. Não enviamos nome, e-mail nem dados do CRM; dos endereços, seguem só a
+              página e os parâmetros de campanha (utm e gclid), e da origem da visita, só o domínio. Não gravamos cookies de
+              publicidade, e a personalização de anúncios e os sinais do Google ficam desativados. Nada disso é usado dentro
+              da plataforma nem nas páginas de propostas.
+            </p>
+            <p>
+              A base legal é o seu consentimento (art. 7º, I, da LGPD). Sua escolha fica salva neste navegador, e você pode
+              mudá-la quando quiser em{" "}
+              <button type="button" data-preferencias-cookies className="text-[#7259B5] hover:underline">
+                Preferências de cookies
+              </button>
+              . Se recusar depois de ter aceitado, apagamos os cookies do Google Analytics deste navegador.
+            </p>
+            <p><strong>Não usamos cookies de publicidade.</strong></p>
           </Section>
 
           <Section id="s11" num="11" title="Menores de idade">
@@ -163,9 +187,12 @@ export default function PrivacidadePage() {
             <Link href="/termos" className="hover:text-black/60">Termos de Uso</Link>
             {" · "}
             <Link href="/privacidade" className="hover:text-black/60">Política de Privacidade</Link>
+            {" · "}
+            <button type="button" data-preferencias-cookies className="hover:text-black/60">Preferências de cookies</button>
           </p>
         </div>
       </main>
+      <Script src="/consentimento.js" strategy="afterInteractive" />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 <html lang="pt-BR" class="scroll-smooth">
 <head>
   <script>document.documentElement.classList.add('js')</script>
+  <script src="/consentimento.js" defer></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Jards | Inteligência e operação para patrocínios</title>
@@ -564,6 +565,9 @@
     .site-footer-bottom>p { justify-self:end; }
     .site-footer-bottom a,.site-footer-bottom p { color:rgba(40,37,37,.42); font-size:11px; font-weight:600; }
     .site-footer-bottom a:hover { color:#684DB0; }
+    .site-footer-cookies { padding:0; border:0; background:none; color:rgba(40,37,37,.42); font:inherit; font-size:11px; font-weight:600; cursor:pointer; }
+    .site-footer-cookies:hover { color:#684DB0; }
+    .site-footer-cookies:focus-visible { outline:2px solid #7259B5; outline-offset:2px; border-radius:2px; }
     @media (max-width:800px) {
       .site-footer { padding-top:64px; }
       .site-footer-main { grid-template-columns:1fr 1fr; gap:48px 28px; }
@@ -2546,6 +2550,7 @@
       <div class="site-footer-legal">
         <a href="/privacidade" data-app-path="/privacidade">Política de Privacidade</a>
         <a href="/termos" data-app-path="/termos">Termos de Uso</a>
+        <button type="button" class="site-footer-cookies" data-preferencias-cookies>Preferências de cookies</button>
       </div>
       <p>© 2026 Jards. Feito no Brasil.</p>
     </div>

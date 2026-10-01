@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+import Script from "next/script";
 
 export const metadata: Metadata = {
   title: "Termos de Uso — Jards",
@@ -211,9 +212,12 @@ export default function TermosPage() {
             <Link href="/termos" className="hover:text-black/60">Termos de Uso</Link>
             {" · "}
             <Link href="/privacidade" className="hover:text-black/60">Política de Privacidade</Link>
+            {" · "}
+            <button type="button" data-preferencias-cookies className="hover:text-black/60">Preferências de cookies</button>
           </p>
         </div>
       </main>
+      <Script src="/consentimento.js" strategy="afterInteractive" />
     </div>
   );
 }
