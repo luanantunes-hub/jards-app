@@ -25,6 +25,7 @@ import {
   Shield,
   Sparkles,
   ArrowLeftRight,
+  Menu,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -36,7 +37,8 @@ import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
-import { correspondeRota, itemAtivoDoMenu, tituloDaPagina } from "@/lib/navigation/rotas";
+import { correspondeRota, itemAtivoDoMenu } from "@/lib/navigation/rotas";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 // ─── Definição dos módulos ──────────────────────────────────────────────────
 
@@ -147,6 +149,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [org, setOrg]                       = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
   const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
   const [orgSwitcherOpen, setOrgSwitcherOpen] = useState(false);
+  const [mobileOpen, setMobileOpen]         = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -227,12 +230,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     const modulo = detectarModulo(path);
     setModuloAtivo(modulo);
+    setMobileOpen(false);
   }, [path]);
 
-  // Todas as rotas internas são client components; o título da aba vem daqui.
-  useEffect(() => {
-    document.title = tituloDaPagina(path);
-  }, [path]);
+  useModalDismiss(() => setMobileOpen(false), { enabled: mobileOpen });
 
   useEffect(() => {
     if (!orgSwitcherOpen) return;
@@ -293,6 +294,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const userAvatar  = getAvatar(user);
   const displayName = getDisplayName(user);
   const navGroups   = NAV_POR_MODULO[moduloAtivo];
+  // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
+  const isExpanded  = expanded || mobileOpen;
   const menuPath    = itemAtivoDoMenu(path);
   // EXPERIMENTAL: dentro de uma organização onde o papel é "captador", o
   // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
@@ -317,11 +320,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       )}
 
       {/* Sidebar */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-20 bg-black/30 md:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />
+      )}
       <aside
-        className="fixed top-0 left-0 bottom-0 flex flex-col overflow-hidden z-30"
+        id="menu-principal"
+        aria-label="Menu principal"
+        className={`fixed top-0 left-0 bottom-0 flex flex-col overflow-hidden z-30 motion-reduce:transition-none ${mobileOpen ? "" : "max-md:-translate-x-full"}`}
         style={{
-          width: expanded ? EXPANDED_W : COLLAPSED_W,
-          transition: "width 220ms cubic-bezier(0.4,0,0.2,1)",
+          width: isExpanded ? EXPANDED_W : COLLAPSED_W,
+          transition: "width 220ms cubic-bezier(0.4,0,0.2,1), transform 220ms cubic-bezier(0.4,0,0.2,1)",
           background: "#FFFFFF",
           borderRight: "1px solid rgba(13,13,13,.08)",
           boxShadow: "4px 0 24px rgba(0,0,0,0.06)",
@@ -330,19 +338,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         onMouseLeave={() => setExpanded(false)}
         onFocus={() => setExpanded(true)}
         onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setExpanded(false); }}
+        onClick={event => { if ((event.target as HTMLElement).closest("a")) setMobileOpen(false); }}
       >
         {/* Logo */}
         <div
           className="flex items-center flex-shrink-0 border-b overflow-hidden"
           style={{
             height: 56,
-            paddingLeft: expanded ? 20 : 0,
-            justifyContent: expanded ? "flex-start" : "center",
+            paddingLeft: isExpanded ? 20 : 0,
+            justifyContent: isExpanded ? "flex-start" : "center",
             borderColor: "rgba(13,13,13,.07)",
             transition: "padding 220ms cubic-bezier(0.4,0,0.2,1)",
           }}
         >
-          {expanded ? (
+          {isExpanded ? (
             <img src="/jards-logo.svg" alt="Jards" className="h-5" />
           ) : (
             <img src="/jards-icon.svg" alt="Jards" className="h-7 w-7" />
@@ -355,9 +364,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div
               className="flex rounded overflow-hidden"
               style={{
-                gap: expanded ? 10 : 0,
-                padding: expanded ? "6px 8px" : "6px 0",
-                justifyContent: expanded ? "flex-start" : "center",
+                gap: isExpanded ? 10 : 0,
+                padding: isExpanded ? "6px 8px" : "6px 0",
+                justifyContent: isExpanded ? "flex-start" : "center",
               }}
             >
               {userAvatar ? (
@@ -367,7 +376,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {initial}
                 </div>
               )}
-              {expanded && (
+              {isExpanded && (
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
                   <p className="text-[10px] text-black/35 truncate whitespace-nowrap">Captador externo</p>
@@ -377,12 +386,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ) : (
             <Link
               href="/configuracoes"
-              title={expanded ? "Configurações" : undefined}
+              title={isExpanded ? "Configurações" : undefined}
               className="flex rounded overflow-hidden transition hover:bg-black/[0.05]"
               style={{
-                gap: expanded ? 10 : 0,
-                padding: expanded ? "6px 8px" : "6px 0",
-                justifyContent: expanded ? "flex-start" : "center",
+                gap: isExpanded ? 10 : 0,
+                padding: isExpanded ? "6px 8px" : "6px 0",
+                justifyContent: isExpanded ? "flex-start" : "center",
               }}
             >
               {userAvatar ? (
@@ -392,7 +401,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {initial}
                 </div>
               )}
-              {expanded && (
+              {isExpanded && (
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
                   <p className="text-[10px] text-black/35 truncate whitespace-nowrap">
@@ -408,35 +417,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="flex-1 px-2 py-3 overflow-y-auto overflow-x-hidden">
           {isWorkspaceCaptador ? (
             <div>
-              <p className="px-2 mb-1.5 text-[10px] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap" style={{ height: expanded ? "auto" : 0, overflow: "hidden", opacity: expanded ? 1 : 0 }}>
+              <p className="px-2 mb-1.5 text-[10px] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap" style={{ height: isExpanded ? "auto" : 0, overflow: "hidden", opacity: isExpanded ? 1 : 0 }}>
                 Workspace
               </p>
               <Link
                 href="/workspace-captador"
-                title={!expanded ? "Meu workspace" : undefined}
+                title={!isExpanded ? "Meu workspace" : undefined}
                 aria-current={correspondeRota(path, "/workspace-captador") ? "page" : undefined}
                 className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
                   correspondeRota(path, "/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
                 }`}
                 style={{
-                  gap: expanded ? 10 : 0,
-                  padding: expanded ? "8px 10px" : "8px 0",
-                  justifyContent: expanded ? "flex-start" : "center",
+                  gap: isExpanded ? 10 : 0,
+                  padding: isExpanded ? "8px 10px" : "8px 0",
+                  justifyContent: isExpanded ? "flex-start" : "center",
                 }}
               >
                 <LayoutDashboard size={16} className="flex-shrink-0" aria-hidden="true" />
-                {expanded && <span>Meu workspace</span>}
+                {isExpanded && <span>Meu workspace</span>}
               </Link>
             </div>
           ) : navGroups.map(({ section, items }, gi) => (
             <div key={section} className={gi > 0 ? "mt-4" : ""}>
               <div
                 style={{
-                  height: expanded ? "auto" : 0,
+                  height: isExpanded ? "auto" : 0,
                   overflow: "hidden",
-                  opacity: expanded ? 1 : 0,
+                  opacity: isExpanded ? 1 : 0,
                   transition: "opacity 150ms",
-                  marginBottom: expanded ? 6 : 0,
+                  marginBottom: isExpanded ? 6 : 0,
                 }}
               >
                 <p className="px-2 text-[10px] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap">
@@ -450,20 +459,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <Link
                       key={href}
                       href={href}
-                      title={!expanded ? label : undefined}
-                      aria-label={!expanded ? label : undefined}
+                      title={!isExpanded ? label : undefined}
+                      aria-label={!isExpanded ? label : undefined}
                       aria-current={active ? "page" : undefined}
                       className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
                         active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
                       }`}
                       style={{
-                        gap: expanded ? 10 : 0,
-                        padding: expanded ? "8px 10px" : "8px 0",
-                        justifyContent: expanded ? "flex-start" : "center",
+                        gap: isExpanded ? 10 : 0,
+                        padding: isExpanded ? "8px 10px" : "8px 0",
+                        justifyContent: isExpanded ? "flex-start" : "center",
                       }}
                     >
                       <Icon size={16} className="flex-shrink-0" aria-hidden="true" />
-                      {expanded && <span>{label}</span>}
+                      {isExpanded && <span>{label}</span>}
                     </Link>
                   );
                 })}
@@ -473,17 +482,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {plan === "gratuito" && (
             <Link
               href="/meu-plano"
-              title={!expanded ? "Fazer upgrade" : undefined}
+              title={!isExpanded ? "Fazer upgrade" : undefined}
               aria-label="Fazer upgrade"
               className="mt-4 flex items-center overflow-hidden whitespace-nowrap rounded bg-[#7259B5] text-[13px] font-semibold text-white transition-colors hover:bg-[#5D489D] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               style={{
-                gap: expanded ? 10 : 0,
-                padding: expanded ? "9px 10px" : "9px 0",
-                justifyContent: expanded ? "flex-start" : "center",
+                gap: isExpanded ? 10 : 0,
+                padding: isExpanded ? "9px 10px" : "9px 0",
+                justifyContent: isExpanded ? "flex-start" : "center",
               }}
             >
               <Sparkles size={16} className="flex-shrink-0" aria-hidden="true" />
-              {expanded && <span>Fazer upgrade</span>}
+              {isExpanded && <span>Fazer upgrade</span>}
             </Link>
           )}
         </nav>
@@ -493,65 +502,78 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           {isSuperAdmin && !isWorkspaceCaptador && (
             <Link
               href="/admin"
-              title={!expanded ? "Admin" : undefined}
-              aria-label={!expanded ? "Admin" : undefined}
+              title={!isExpanded ? "Admin" : undefined}
+              aria-label={!isExpanded ? "Admin" : undefined}
               className="flex items-center rounded text-[13px] font-medium transition whitespace-nowrap overflow-hidden hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
               style={{
-                gap: expanded ? 10 : 0,
-                padding: expanded ? "8px 10px" : "8px 0",
-                justifyContent: expanded ? "flex-start" : "center",
+                gap: isExpanded ? 10 : 0,
+                padding: isExpanded ? "8px 10px" : "8px 0",
+                justifyContent: isExpanded ? "flex-start" : "center",
                 color: "rgba(114,89,181,.70)",
               }}
             >
               <Shield size={16} className="flex-shrink-0" />
-              {expanded && <span>Admin</span>}
+              {isExpanded && <span>Admin</span>}
             </Link>
           )}
           {!isWorkspaceCaptador && (
           <Link
             href="/configuracoes"
-            title={!expanded ? "Configurações" : undefined}
-            aria-label={!expanded ? "Configurações" : undefined}
+            title={!isExpanded ? "Configurações" : undefined}
+            aria-label={!isExpanded ? "Configurações" : undefined}
             aria-current={correspondeRota(path, "/configuracoes") ? "page" : undefined}
             className={`flex items-center rounded text-[13px] font-medium transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
               correspondeRota(path, "/configuracoes") ? "bg-black/[0.05] text-[#0D0D0D]" : "text-black/35 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
             }`}
             style={{
-              gap: expanded ? 10 : 0,
-              padding: expanded ? "8px 10px" : "8px 0",
-              justifyContent: expanded ? "flex-start" : "center",
+              gap: isExpanded ? 10 : 0,
+              padding: isExpanded ? "8px 10px" : "8px 0",
+              justifyContent: isExpanded ? "flex-start" : "center",
             }}
           >
             <Settings size={16} className="flex-shrink-0" />
-            {expanded && <span>Configurações</span>}
+            {isExpanded && <span>Configurações</span>}
           </Link>
           )}
           <button
             type="button"
             onClick={handleLogout}
-            title={!expanded ? "Sair" : undefined}
-            aria-label={!expanded ? "Sair" : undefined}
+            title={!isExpanded ? "Sair" : undefined}
+            aria-label={!isExpanded ? "Sair" : undefined}
             className="w-full flex items-center rounded text-[13px] font-medium text-black/35 hover:text-[#D94E4E] hover:bg-black/[0.05] transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
             style={{
-              gap: expanded ? 10 : 0,
-              padding: expanded ? "8px 10px" : "8px 0",
-              justifyContent: expanded ? "flex-start" : "center",
+              gap: isExpanded ? 10 : 0,
+              padding: isExpanded ? "8px 10px" : "8px 0",
+              justifyContent: isExpanded ? "flex-start" : "center",
             }}
           >
             <LogOut size={16} className="flex-shrink-0" />
-            {expanded && <span>Sair</span>}
+            {isExpanded && <span>Sair</span>}
           </button>
         </div>
       </aside>
 
       {/* Main */}
-      <div className="flex flex-col h-full overflow-hidden" style={{ paddingLeft: COLLAPSED_W }}>
+      <div className="flex flex-col h-full overflow-hidden md:pl-14">
 
         {/* Top bar */}
         <header
           className="flex-shrink-0 flex items-center justify-end px-4 md:px-8 border-b"
           style={{ height: 56, background: "#FFFFFF", borderColor: "rgba(13,13,13,.08)" }}
         >
+          <div className="mr-auto flex items-center gap-2 md:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Abrir menu"
+              aria-controls="menu-principal"
+              aria-expanded={mobileOpen}
+              className="-ml-2 flex h-10 w-10 items-center justify-center rounded text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+            >
+              <Menu size={18} aria-hidden="true" />
+            </button>
+            <img src="/jards-icon.svg" alt="Jards" className="h-6 w-6" />
+          </div>
           {/* Module switcher — até a liberação pública de Prestação, visível só para super admin */}
           {isSuperAdmin && !isWorkspaceCaptador && (
           <div className="mr-auto flex items-center gap-1 p-1 rounded" style={{ background: "rgba(13,13,13,.05)" }}>

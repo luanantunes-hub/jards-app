@@ -224,7 +224,7 @@ function TrimestralChart({ data }: { data: InvestimentoTrimestre }) {
   return (
     <div className="space-y-6">
       {/* Quarter summary — name + big number + trend arrow */}
-      <div className="grid grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
         {qData.map((q, i) => (
           <div key={i}>
             <p className="text-[10px] font-medium text-black/30 mb-2">{q.name}</p>
@@ -1043,12 +1043,12 @@ export default function PatrocinadorPage() {
       </>
 
       {/* ── Hero header ── */}
-      <div className="px-8 pt-6 pb-0 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      <div className="px-4 pt-6 pb-0 border-b md:px-8" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <Link href="/patrocinadores" className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-black/30 hover:text-black transition mb-5">
           <ArrowLeft size={12} /> Patrocinadores
         </Link>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-4">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 items-center gap-4">
             <CompanyLogo
               nome={empresa.nome}
               site={empresa.site}
@@ -1058,7 +1058,7 @@ export default function PatrocinadorPage() {
             />
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h1 className="font-bold text-[#0D0D0D] text-[28px] leading-tight">{empresa.nome}</h1>
+                <h1 className="min-w-0 break-words text-[28px] font-bold leading-tight tracking-[-.025em] text-[#0D0D0D]">{empresa.nome}</h1>
                 {empresa.site && (
                   <a
                     href={empresa.site.startsWith("http") ? empresa.site : `https://${empresa.site}`}
@@ -1080,10 +1080,10 @@ export default function PatrocinadorPage() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link
               href={`/comparativo?empresas=${empresa.id}`}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
+              className="flex h-9 items-center gap-1.5 rounded border bg-white px-3.5 text-[12px] font-medium text-black transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             >
-              <ArrowLeftRight size={12} /> Comparar
+              <ArrowLeftRight size={12} aria-hidden="true" /> Comparar
             </Link>
             <div ref={menuAcoesRef} className="relative">
               <button
@@ -1159,10 +1159,10 @@ export default function PatrocinadorPage() {
       </div>
 
       {/* ── Body ── */}
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 md:px-8 md:py-6">
 
         {/* 2-col grid: info+CRM | charts+contacts+editais */}
-        <div className="grid xl:grid-cols-[280px_1fr] gap-6 items-start">
+        <div className="grid grid-cols-1 gap-6 items-start xl:grid-cols-[280px_minmax(0,1fr)]">
 
           {/* ── Col 1: Sobre · Contato geral · Negociações ativas ── */}
           <div className="space-y-4">
@@ -1897,29 +1897,23 @@ export default function PatrocinadorPage() {
 }
 
 function PageSkeleton() {
+  // Mesma estrutura da página final: cabeçalho e grade 280px | conteúdo.
   return (
-    <div className="px-8 py-8 w-full animate-pulse">
-      <div className="h-3.5 w-28 bg-black/8 rounded mb-6" />
-      <div className="flex gap-4 mb-6">
-        <div className="w-14 h-14 rounded bg-black/8" />
-        <div className="space-y-2">
-          <div className="h-6 w-52 bg-black/8 rounded" />
-          <div className="h-3 w-36 bg-black/8 rounded" />
-          <div className="flex gap-1.5">
-            {[0,1,2,3].map(i => <div key={i} className="h-4 w-8 rounded bg-black/8" />)}
+    <div className="w-full animate-pulse" aria-busy="true" aria-label="Carregando patrocinador">
+      <div className="border-b px-4 pb-5 pt-6 md:px-8" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="mb-5 h-3.5 w-28 rounded bg-black/[.06]" />
+        <div className="flex gap-4">
+          <div className="h-14 w-14 rounded bg-black/[.06]" />
+          <div className="space-y-2">
+            <div className="h-6 w-52 max-w-full rounded bg-black/[.06]" />
+            <div className="h-3 w-36 rounded bg-black/[.05]" />
+            <div className="flex gap-1.5">{[0, 1, 2, 3].map(i => <div key={i} className="h-4 w-8 rounded bg-black/[.05]" />)}</div>
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        {[0,1,2].map(i => <div key={i} className="h-20 rounded bg-black/8" />)}
-      </div>
-      <div className="grid xl:grid-cols-[220px_1fr_300px] gap-6">
-        <div className="h-48 rounded bg-black/8" />
-        <div className="space-y-4">
-          <div className="h-48 rounded bg-black/8" />
-          <div className="h-48 rounded bg-black/8" />
-        </div>
-        <div className="h-64 rounded bg-black/8" />
+      <div className="grid grid-cols-1 gap-6 px-4 py-5 md:px-8 md:py-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="space-y-4">{[0, 1, 2].map(i => <div key={i} className="h-40 rounded bg-black/[.04]" />)}</div>
+        <div className="space-y-4">{[0, 1].map(i => <div key={i} className="h-64 rounded bg-black/[.04]" />)}</div>
       </div>
     </div>
   );

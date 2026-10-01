@@ -3,15 +3,15 @@ import test from "node:test";
 import { correspondeRota, itemAtivoDoMenu, tituloDaPagina } from "../lib/navigation/rotas";
 
 test("título da aba usa o nome da seção do menu", () => {
-  assert.equal(tituloDaPagina("/captacoes"), "Negociações · Jards");
-  assert.equal(tituloDaPagina("/captacoes/123"), "Negociações · Jards");
-  assert.equal(tituloDaPagina("/contas-patrocinio"), "Clientes · Jards");
-  assert.equal(tituloDaPagina("/dashboard"), "Visão geral · Jards");
+  assert.equal(tituloDaPagina("/captacoes"), "Negociações — Jards");
+  assert.equal(tituloDaPagina("/captacoes/123"), "Negociações — Jards");
+  assert.equal(tituloDaPagina("/contas-patrocinio"), "Clientes — Jards");
+  assert.equal(tituloDaPagina("/dashboard"), "Visão geral — Jards");
 });
 
 test("o prefixo mais específico vence", () => {
-  assert.equal(tituloDaPagina("/configuracoes/mcp"), "Claude e ChatGPT (MCP) · Jards");
-  assert.equal(tituloDaPagina("/configuracoes"), "Configurações · Jards");
+  assert.equal(tituloDaPagina("/configuracoes/mcp"), "Claude e ChatGPT (MCP) — Jards");
+  assert.equal(tituloDaPagina("/configuracoes"), "Configurações — Jards");
 });
 
 test("rota desconhecida cai no nome do produto", () => {

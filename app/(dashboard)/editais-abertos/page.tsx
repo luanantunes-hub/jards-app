@@ -2,6 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Search, AlertCircle, ArrowUpDown, X, ChevronLeft, ChevronRight, ChevronsRight, Download, UserPlus, ChevronUp, ChevronDown, ThumbsUp, ThumbsDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { SegmentedControl } from "@/components/ui/FilterControls";
+import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
@@ -382,7 +384,7 @@ export default function EditaisAbertosPage() {
   );
 
   return (
-    <div className="px-8 py-8" ref={topRef}>
+    <div className="px-4 py-6 md:px-8 md:py-8" ref={topRef}>
       {showInscricaoModal && selectedEdital && (
         <NovaInscricaoModal
           tituloPre={selectedEdital.titulo ?? ""}
@@ -396,15 +398,12 @@ export default function EditaisAbertosPage() {
         />
       )}
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Editais</h1>
-        <button
-          onClick={() => setShowSugerirForm(v => !v)}
-          className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border rounded hover:bg-black/[.04] transition"
-          style={{ borderColor: "rgba(13,13,13,.12)", color: "rgba(13,13,13,.65)" }}
-        >
-          <UserPlus size={13} /> Sugerir edital
-        </button>
+      <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
+          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D]">Editais</h1>
+        </div>
+        <PrimaryListAction onClick={() => setShowSugerirForm(v => !v)}><UserPlus size={13} aria-hidden="true" /> Sugerir edital</PrimaryListAction>
       </div>
 
       {/* Right-side floating panel */}
@@ -575,37 +574,17 @@ export default function EditaisAbertosPage() {
       </div>
 
       {/* Status filters */}
-      <div className="flex items-center justify-between mb-5">
-        {/* Abertos + Fechados grudados */}
-        <div className="flex items-center rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.12)" }}>
-          {(["abertos", "fechados"] as const).map((f, i) => (
-            <button
-              key={f}
-              onClick={() => setStatusFilter(f)}
-              className="px-3.5 py-1.5 text-[12px] font-semibold transition"
-              style={{
-                background: statusFilter === f ? "#0D0D0D" : "#fff",
-                color: statusFilter === f ? "#fff" : "rgba(13,13,13,.45)",
-                borderRight: i === 0 ? "1px solid rgba(13,13,13,.12)" : undefined,
-              }}
-            >
-              {f === "abertos" ? "Abertos" : "Fechados"}
-            </button>
-          ))}
-        </div>
-
-        {/* Recentes isolado à direita */}
-        <button
-          onClick={() => setStatusFilter(statusFilter === "recentes" ? "abertos" : "recentes")}
-          className="px-3.5 py-1.5 text-[12px] font-semibold rounded border transition"
-          style={{
-            borderColor: "rgba(13,13,13,.12)",
-            background: statusFilter === "recentes" ? "#0D0D0D" : "#fff",
-            color: statusFilter === "recentes" ? "#fff" : "rgba(13,13,13,.45)",
-          }}
-        >
-          Recentes
-        </button>
+      <div className="mb-5">
+        <SegmentedControl
+          value={statusFilter}
+          onChange={setStatusFilter}
+          ariaLabel="Situação dos editais"
+          options={[
+            { value: "abertos", label: "Abertos" },
+            { value: "fechados", label: "Fechados" },
+            { value: "recentes", label: "Recentes" },
+          ]}
+        />
       </div>
 
       {/* Cards */}

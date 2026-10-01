@@ -15,6 +15,7 @@ import { GerenciarFollowupModal } from "@/components/modals/GerenciarFollowupMod
 import PrioBadge from "@/components/ui/PrioBadge";
 import type { TipoAtividade, Prioridade } from "@/lib/supabase/types";
 import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
+import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { followupSourceLink } from "@/lib/activities/followupSourceLink";
@@ -1398,7 +1399,7 @@ export default function AtividadesPage() {
   ];
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
       {showNovaAtividade && (
         <NovaAtividadeModal
           onClose={() => { setShowNovaAtividade(false); setNovaPrefillDate(undefined); }}
@@ -1445,15 +1446,13 @@ export default function AtividadesPage() {
         />
       )}
 
-      {/* Header */}
-      <div className="flex items-end justify-between mb-6">
-        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Atividades</h1>
-        <button
-          onClick={() => setShowNovaAtividade(true)}
-          className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
-        >
-          <Plus size={13} /> Nova atividade
-        </button>
+      {/* Header — mesma tipografia do ListPageHeader; a página rola inteira */}
+      <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Rotina comercial</p>
+          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D]">Atividades</h1>
+        </div>
+        <PrimaryListAction onClick={() => setShowNovaAtividade(true)}><Plus size={13} aria-hidden="true" /> Nova atividade</PrimaryListAction>
       </div>
 
       {/* Stats (only lista + pendentes) */}
@@ -1616,7 +1615,7 @@ function AtividadesTable({ atividades, loading, tab, savingActivityId, onToggle,
   };
   const Header = ({ label, column }: { label: string; column?: ActivitySortKey }) => <button type="button" disabled={!column} onClick={() => column && changeSort(column)} className="flex items-center gap-1 whitespace-nowrap text-[10px] font-medium uppercase tracking-[.08em] text-black/35 disabled:cursor-default">{label}{column && <ArrowUpDown size={10} className={sortKey === column ? "text-[#7259B5]" : "text-black/20"} />}</button>;
 
-  return <div className="-mr-8 rounded rounded-r-none border border-r-0 bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}><ManagedTable storageKey="atividades" definitions={ATIVIDADES_COLUMNS} className="w-full border-collapse text-sm">
+  return <div className="-mr-4 rounded rounded-r-none border border-r-0 bg-white md:-mr-8" style={{ borderColor: "rgba(13,13,13,.08)" }}><ManagedTable storageKey="atividades" definitions={ATIVIDADES_COLUMNS} className="w-full border-collapse text-sm">
     <thead className="sticky top-0 z-20 bg-[#F9F9F8]"><tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
       <th className="bg-[#F9F9F8] px-4 py-3 text-left"><Header label="Concluída" /></th>
       <th className="bg-[#F9F9F8] px-4 py-3 text-left"><Header label="Atividade" column="nome" /></th>

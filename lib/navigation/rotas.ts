@@ -1,6 +1,7 @@
 /**
  * Títulos de aba e seção ativa do menu lateral para as rotas pós-login.
- * Mantido puro (sem React) para ser testável.
+ * Mantido puro (sem React) para ser testável e importável pelos layouts de
+ * servidor de cada seção, que publicam o título como metadata.
  */
 
 const TITULOS: [prefixo: string, titulo: string][] = [
@@ -53,5 +54,6 @@ export function tituloDaPagina(path: string): string {
   const encontrado = TITULOS
     .filter(([prefixo]) => correspondeRota(path, prefixo))
     .sort((a, b) => b[0].length - a[0].length)[0];
-  return encontrado ? `${encontrado[1]} · Jards` : "Jards";
+  // Mesmo formato das páginas públicas ("Entrar — Jards", "Blog — Jards").
+  return encontrado ? `${encontrado[1]} — Jards` : "Jards";
 }

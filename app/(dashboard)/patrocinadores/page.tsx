@@ -101,7 +101,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   const hasFilters = !!(search || estado || setor || incompletas);
 
   return (
-    <div className="px-8 pb-8">
+    <div className="px-4 pb-8 md:px-8">
       <div className="flex flex-wrap items-center gap-2 mb-5">
         <div className="relative flex-1 min-w-[200px] max-w-[280px]">
           <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30" />
@@ -109,7 +109,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar empresa, setor, cidade…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -145,7 +145,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
         )}
       </div>
 
-      <div className="bg-white overflow-hidden">
+      <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -537,7 +537,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   ];
 
   return (
-    <div className="px-8 pb-8" ref={topRef}>
+    <div className="px-4 pb-8 md:px-8" ref={topRef}>
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-5">
         {/* Search */}
@@ -547,7 +547,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar empresa, setor, cidade…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -600,7 +600,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       </div>
 
       {/* Table */}
-      <div className="bg-white overflow-hidden">
+      <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -724,24 +724,6 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   );
 }
 
-function AbaBotao({ active, onClick, label, position }: { active: boolean; onClick: () => void; label: string; position: "left" | "middle" | "right" }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`relative flex h-9 items-center gap-1.5 px-3.5 text-[12px] font-medium transition active:scale-[.98] border ${
-        position === "left" ? "rounded-l" : "-ml-px"
-      } ${position === "right" ? "rounded-r" : ""} ${
-        active
-          ? "z-10 border-[#684DB0] bg-white text-[#684DB0]"
-          : "border-black/10 bg-white text-black/45 hover:bg-black/[.04] hover:text-black/65"
-      }`}
-    >
-      {label}
-    </button>
-  );
-}
-
 // Modal de boas-vindas pós-pagamento (?welcome=paid&plan=...) — independente da aba ativa,
 // por isso fica fora dos LeiTabContent/PatrocinadoresContent de cada aba.
 function WelcomeModalGate() {
@@ -788,15 +770,23 @@ export default function PatrocinadoresPage() {
   }, []);
 
   return (
-    <div className="min-h-full" style={{ background: "#F2F2F2" }}>
-      <div className="px-8 pt-8 pb-6 flex items-end justify-between">
-        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Encontrar patrocinadores</h1>
-        <div className="flex">
-          <AbaBotao active={aba === "cultura"} position="left" onClick={() => setAba("cultura")} label="Cultura" />
-          <AbaBotao active={aba === "esporte"} position="middle" onClick={() => setAba("esporte")} label="Esporte" />
-          <AbaBotao active={aba === "cinema"} position="middle" onClick={() => setAba("cinema")} label="Audiovisual" />
-          <AbaBotao active={aba === "saude"} position="right" onClick={() => setAba("saude")} label="Saúde" />
+    <div className="min-h-full bg-white">
+      <div className="flex flex-col gap-4 px-4 pb-5 pt-6 md:px-8 md:pt-8 lg:flex-row lg:items-end lg:justify-between">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
+          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D] [text-wrap:balance]">Encontrar patrocinadores</h1>
         </div>
+        <SegmentedControl
+          value={aba}
+          onChange={setAba}
+          ariaLabel="Área de incentivo"
+          options={[
+            { value: "cultura", label: "Cultura" },
+            { value: "esporte", label: "Esporte" },
+            { value: "cinema", label: "Audiovisual" },
+            { value: "saude", label: "Saúde" },
+          ]}
+        />
       </div>
       {/* Cultura usa PatrocinadoresContent, não LeiTabContent: a listagem ainda ordena/exibe por
           empresas.aporte_estimado/descricao (schema original do produto), não por
