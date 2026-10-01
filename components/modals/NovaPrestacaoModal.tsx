@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { X, ClipboardCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
+import { useOrganizationId } from "@/contexts/OrganizationContext";
 
 type CaptacaoOption = { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null };
 type ProjetoOption  = { id: string; nome: string };
@@ -17,6 +18,7 @@ const inputStyle = { borderColor: "rgba(13,13,13,.12)" };
 
 export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
   const supabase = createClient();
+  const organizationId = useOrganizationId();
 
   const [titulo, setTitulo] = useState("");
   const [captacaoId, setCaptacaoId] = useState("");
@@ -25,14 +27,21 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
   const [valorAprovado, setValorAprovado] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
 
   const [captacoes, setCaptacoes] = useState<CaptacaoOption[]>([]);
   const [projetos, setProjetos] = useState<ProjetoOption[]>([]);
 
   useEffect(() => {
+    if (!organizationId) return;
+    // Restrito à organização atual — captações e projetos são visíveis em
+    // todas as organizações de que o usuário participa (RLS por membership,
+    // não pela organização ativa na tela), então sem esse filtro dava pra
+    // vincular a prestação a um projeto/captação de outra organização.
     supabase
       .from("captacoes")
       .select("id, titulo, lei, valor_solicitado")
+      .eq("organization_id", organizationId)
       .eq("status", "aprovado")
       .order("titulo")
       .then(({ data }) => setCaptacoes((data as CaptacaoOption[]) ?? []));
@@ -40,21 +49,25 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
     (supabase as any)
       .from("projetos_crm")
       .select("id, nome")
+      .eq("organization_id", organizationId)
       .order("nome")
       .then(({ data }: any) => setProjetos((data as ProjetoOption[]) ?? []));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [organizationId]);
 
-  // Ao selecionar captação, pré-preenche valor
+  // Ao selecionar captação, pré-preenche valor — inclusive limpando quando a
+  // captação é desmarcada ou não tem valor_solicitado, pra não deixar o valor
+  // de uma captação anterior "grudado" sem relação com a seleção atual.
   function handleCaptacaoChange(id: string) {
     setCaptacaoId(id);
     const cap = captacoes.find(c => c.id === id);
-    if (cap?.valor_solicitado) setValorAprovado(String(cap.valor_solicitado));
+    setValorAprovado(cap?.valor_solicitado ? String(cap.valor_solicitado) : "");
   }
 
   async function handleSubmit() {
     if (!titulo.trim()) return;
     setSaving(true);
+    setErro(null);
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -69,7 +82,8 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
     });
 
     setSaving(false);
-    if (!error) onSaved();
+    if (error) { setErro(error.message); return; }
+    onSaved();
   }
 
   return (
@@ -186,7 +200,9 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        <div className="flex items-center justify-between gap-4 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          {erro ? <p className="min-w-0 text-[12px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+          <div className="ml-auto flex shrink-0 items-center gap-3">
           <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-black/35 hover:text-black/55 transition">
             Cancelar
           </button>
@@ -199,6 +215,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
             {saving && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
             Criar prestação
           </button>
+          </div>
         </div>
       </div>
     </div>
