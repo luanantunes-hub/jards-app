@@ -1,10 +1,13 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import {
   X, Mail, Phone, Users, Calendar, MoreHorizontal, CheckSquare,
   ChevronDown, Check, CalendarDays, Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { PrioridadeSelect } from "@/components/ui/PrioridadeSelect";
 import type { Prioridade, TipoAtividade } from "@/lib/supabase/types";
@@ -31,7 +34,7 @@ function vinculoOpcao(id: string, d: { titulo?: string | null; projeto?: string 
 }
 
 const VINCULO_OPTIONS: { key: VinculoTipo; label: string; color: string }[] = [
-  { key: "captacao",   label: "Captação",   color: "#7259B5" },
+  { key: "captacao",   label: "Negociação", color: "#7259B5" },
   { key: "inscricao",  label: "Inscrição",  color: "#2D72B0" },
   { key: "empresa",    label: "Empresa",    color: "#1A8B7A" },
   { key: "projeto",    label: "Projeto",    color: "#B07A14" },
@@ -52,6 +55,7 @@ export function EditarAtividadeModal({
   onDeleted?: () => void;
 }) {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
 
   const [loadingAtividade, setLoadingAtividade] = useState(true);
@@ -87,6 +91,8 @@ export function EditarAtividadeModal({
   const [tiposPersonalizados, setTiposPersonalizados] = useState<TipoPersonalizado[]>([]);
 
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   // Load the activity + dropdown data
   useEffect(() => {
@@ -214,18 +220,22 @@ export function EditarAtividadeModal({
     onClose();
   }
 
-  async function handleDelete() {
-    if (!confirm("Excluir esta atividade? Esta ação não pode ser desfeita.")) return;
-    setDeleting(true);
-    setErro(null);
-    const { data, error } = await (supabase as any).from("atividades").delete().eq("id", atividadeId).select("id").single();
-    setDeleting(false);
-    if (error || !data) {
-      setErro(error?.message ?? "Não foi possível excluir esta atividade.");
-      return;
-    }
-    onDeleted?.();
-    onClose();
+  function handleDelete() {
+    confirmDelete({
+      title: "Excluir esta atividade?",
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setDeleting(true);
+        setErro(null);
+        try {
+          await excluirPorId(supabase, "atividades", atividadeId);
+        } finally {
+          setDeleting(false);
+        }
+        onDeleted?.();
+        onClose();
+      },
+    });
   }
 
   return (
@@ -238,20 +248,23 @@ export function EditarAtividadeModal({
 
       {/* Drawer */}
       <div
-        className="bg-white h-full overflow-hidden flex flex-col shadow-2xl"
-        style={{ width: 640, borderLeft: "1px solid rgba(13,13,13,.08)" }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white h-full w-[640px] max-w-[92vw] overflow-hidden flex flex-col shadow-2xl"
+        style={{ borderLeft: "1px solid rgba(13,13,13,.08)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 className="text-[14px] font-bold text-black">Editar atividade</h2>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition">
+        <div className="flex shrink-0 items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <h2 id={titleId} className="text-[14px] font-bold text-black">Editar atividade</h2>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={14} className="text-black/40" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="flex-1 overflow-hidden px-6 py-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
           {loadingAtividade ? (
             <div className="grid grid-cols-2 gap-x-6 gap-y-4">
               {[100, 60, 100, 80, 100, 100, 80, 100].map((w, i) => (
@@ -264,7 +277,7 @@ export function EditarAtividadeModal({
           ) : (
             <>
               {erro && (
-                <div className="text-[12px] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
+                <div role="alert" className="text-[12px] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
                   {erro}
                 </div>
               )}
@@ -343,7 +356,7 @@ export function EditarAtividadeModal({
                     <Dropdown
                       value={vinculoId}
                       options={vinculoOptions}
-                      placeholder={`Selecionar ${VINCULO_OPTIONS.find(o => o.key === vinculoTipo)?.label.toLowerCase()}...`}
+                      placeholder={`Selecionar ${VINCULO_OPTIONS.find(o => o.key === vinculoTipo)?.label.toLowerCase()}…`}
                       onChange={setVinculoId}
                       open={openDropdown === "vinculo"}
                       onToggle={() => setOpenDropdown(openDropdown === "vinculo" ? null : "vinculo")}
@@ -452,14 +465,14 @@ export function EditarAtividadeModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between gap-2 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-between gap-2 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button
             onClick={handleDelete}
             disabled={deleting || loadingAtividade}
             className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#D94E4E]/70 hover:text-[#D94E4E] hover:bg-[#D94E4E]/6 rounded transition disabled:opacity-40"
           >
             <Trash2 size={12} />
-            {deleting ? "Excluindo..." : "Excluir"}
+            {deleting ? "Excluindo…" : "Excluir"}
           </button>
           <div className="flex items-center gap-2">
             <button
@@ -471,9 +484,9 @@ export function EditarAtividadeModal({
             <button
               onClick={handleSave}
               disabled={saving || loadingAtividade || !nome.trim()}
-              className="rounded border border-[#2E8932] bg-[#2E8932] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#26772B] disabled:opacity-40"
+              className="rounded border border-[#2E8932] bg-[#2E8932] px-4 py-2 text-xs font-medium text-white transition hover:border-[#26752A] hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              {saving ? "Salvando..." : "Salvar alterações"}
+              {saving ? "Salvando…" : "Salvar alterações"}
             </button>
           </div>
         </div>
@@ -495,21 +508,43 @@ function Dropdown({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    function handleScroll(e: Event) {
+      if (!ref.current?.contains(e.target as Node)) onClose();
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+      document.addEventListener("scroll", handleScroll, true);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("scroll", handleScroll, true);
+    };
   }, [open, onClose]);
+
+  function handleToggle() {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!open && rect) {
+      const spaceBelow = window.innerHeight - rect.bottom - 4;
+      setMenuStyle(spaceBelow >= Math.min(192, rect.top - 4)
+        ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
+        : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+    }
+    onToggle();
+  }
 
   const selected = options.find(o => o.id === value);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" onKeyDown={e => { if (open && e.key === "Escape") { e.preventDefault(); onClose(); } }}>
       <button
-        onClick={onToggle}
+        type="button"
+        onClick={handleToggle}
         className="w-full flex items-center justify-between border rounded px-3 py-2.5 text-[13px] text-left transition hover:border-[#7259B5]/40"
         style={{ borderColor: open ? "#7259B5" : "rgba(13,13,13,.15)", color: selected ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
       >
@@ -521,7 +556,7 @@ function Dropdown({
         <ChevronDown size={14} className={`text-black/30 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border rounded shadow-lg max-h-48 overflow-y-auto" style={{ borderColor: "rgba(13,13,13,.1)" }}>
+        <div className="fixed z-[999] bg-white border rounded shadow-lg max-h-48 overflow-y-auto" style={{ ...menuStyle, borderColor: "rgba(13,13,13,.1)" }}>
           {value && (
             <button onClick={() => { onChange(null); onClose(); }}
               className="w-full text-left px-3 py-2 text-[12px] text-[#D94E4E] hover:bg-[#D94E4E]/5 transition border-b"

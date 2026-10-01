@@ -6,7 +6,7 @@ test("página de detalhe do projeto: navega por todas as abas", async ({ page })
   await page.goto(`/projetos/${ID}`);
   await expect(page.getByRole("button", { name: "Editar", exact: true })).toBeVisible();
 
-  for (const tab of ["Resumo", "Captação", "Cotas", "Orçamento", "Documentos", "Pitch", "Textos"]) {
+  for (const tab of ["Visão geral", "Captação", "Cotas", "Orçamento", "Documentos", "Pitch", "Textos"]) {
     await page.getByRole("button", { name: tab }).first().click();
   }
 });

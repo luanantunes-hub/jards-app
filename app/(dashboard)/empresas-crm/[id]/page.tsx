@@ -37,7 +37,7 @@ import { RelationshipWorkspace } from "@/components/relationship/RelationshipWor
 import { RelationshipScoreGauge } from "@/components/ui/RelationshipScoreGauge";
 import { NegotiationsTable, type CaptacaoRow } from "@/components/company/NegotiationsTable";
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
-import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import type { EmpresaCrm } from "@/lib/supabase/types";
 
@@ -124,8 +124,8 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
     if (new URLSearchParams(window.location.search).get("tab") === "relationship") setPageTab("relationship");
   }, []);
 
-  if (loading) return <DetailSkeleton />;
-  if (!empresa) return <NotFound />;
+  if (loading) return <DetailPageSkeleton />;
+  if (!empresa) return <DetailNotFound title="Empresa não encontrada" description="Ela pode ter sido removida ou você não tem acesso a ela." backHref="/empresas-crm" backLabel="Empresas" />;
 
   const openNegotiations = negotiations.filter(item => !CLOSED_STATUSES.has(item.status));
   const openNotices = notices.filter(item => !EDITAL_CLOSED_STATUSES.has(item.status));
@@ -178,7 +178,7 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
       </div>
     </header>
 
-    <DetailTabs ariaLabel="Seções da empresa" activeTab={pageTab} onChange={value => setPageTab(value as PageTab)} tabs={[{id:"overview",label:"Resumo",icon:Target},{id:"negotiations",label:"Negociações",icon:BriefcaseBusiness,count:negotiations.length},{id:"inscricoes",label:"Inscrições",icon:FileStack,count:notices.length},{id:"relationship",label:"Relacionamento",icon:Users}]} />
+    <DetailTabs ariaLabel="Seções da empresa" activeTab={pageTab} onChange={value => setPageTab(value as PageTab)} tabs={[{id:"overview",label:"Visão geral",icon:Target},{id:"negotiations",label:"Negociações",icon:BriefcaseBusiness,count:negotiations.length},{id:"inscricoes",label:"Inscrições",icon:FileStack,count:notices.length},{id:"relationship",label:"Relacionamento",icon:Users}]} />
 
     <DetailPageContent>
       {pageTab === "overview" && <CommercialOverview empresa={empresa} companyId={id} contacts={contacts} negotiations={openNegotiations} projects={projects} notices={notices} clientAccount={clientAccount} atribuicao={atribuicao} pipelineValue={pipelineValue} nextStep={nextStep} nextOpening={nextOpening} nextContactDate={nextContactDate} openOpportunitiesCount={openNegotiations.length + openNotices.length} staleCount={staleCount} timelineSources={timelineSources} setTimelineSources={setTimelineSources} onNewNegotiation={() => setShowNegotiation(true)} onGoToRelationship={() => setPageTab("relationship")} onDataChanged={() => void fetchData()} onEditLocalizacao={() => setShowEditLocalizacao(true)}/>}
@@ -243,7 +243,7 @@ function CommercialOverview({empresa,companyId,contacts,negotiations,projects,no
       </div>
 
       <aside className="space-y-4">
-        {clientAccount && <Link href={`/contas-patrocinio/${clientAccount.id}`} className="block rounded border bg-white p-4 transition hover:bg-black/[.025]" style={{borderColor:"#2E893240"}}><div className="flex items-center justify-between"><div className="flex items-center gap-2"><Building2 size={14} className="text-[#2E8932]"/><p className="text-[12px] font-semibold text-black/65">Parceria ativa</p></div><ArrowUpRight size={13} className="text-[#2E8932]"/></div><p className="mt-2 text-[11px] leading-relaxed text-black/45">Acesse contratos, entregas, saúde e renovação no workspace do Cliente.</p></Link>}
+        {clientAccount && <Link href={`/contas-patrocinio/${clientAccount.id}`} className="block rounded border bg-white p-4 transition hover:bg-black/[.025]" style={{borderColor:"#2E893240"}}><div className="flex items-center justify-between"><div className="flex items-center gap-2"><Building2 size={14} className="text-[#2E8932]"/><p className="text-[12px] font-semibold text-black/65">Parceria ativa</p></div><ArrowUpRight size={13} className="text-[#2E8932]"/></div><p className="mt-2 text-[11px] leading-relaxed text-black/45">Acesse contratos, entregas, saúde e renovação na página do cliente.</p></Link>}
         <DetailSidebarCard title="Contatos-chave" icon={Users} count={contacts.length}>{contacts.length ? <div className="space-y-2">{contacts.slice(0,6).map(contact => <div key={contact.id} className="flex items-center gap-3 py-1.5"><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-gradient-to-br from-white via-black/[.035] to-black/[.10] text-[15px] font-semibold text-black/45">{contact.nome.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black/75">{contact.nome}</p><p className="truncate text-[10px] text-black/45">{contact.cargo || "Cargo não informado"}</p></div>{contact.email && <a href={`mailto:${contact.email}`} className="text-black/25 hover:text-[#7259B5]" aria-label={`Enviar e-mail para ${contact.nome}`}><Mail size={13}/></a>}</div>)}</div> : <EmptySide copy="Nenhum contato vinculado à empresa."/>}</DetailSidebarCard>
         <DetailSidebarCard title="Contexto comercial" icon={FolderOpen} count={projects.length + notices.length}><div className="space-y-3"><ContextLine icon={FolderOpen} label="Projetos relacionados" value={String(projects.length)}/><ContextLine icon={FileStack} label="Editais relacionados" value={String(notices.length)}/><ContextLine icon={Users} label="Contatos mapeados" value={String(contacts.length)}/></div></DetailSidebarCard>
       </aside>
@@ -476,6 +476,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
   const supabase = createClient();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
   const [tipo, setTipo] = useState(empresa.tipo);
   const boxRef = useRef<HTMLDivElement>(null);
   const menuPos = usePortalPosition(boxRef, open);
@@ -495,7 +496,13 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
 
   async function updateTipo(newTipo: "prospect" | "cliente_ativo" | "ex_cliente") {
     setSaving(true);
-    await (supabase as any).from("empresas_crm").update({ tipo: newTipo }).eq("id", empresa.id);
+    setErro(null);
+    const { error: erroTipo } = await (supabase as any).from("empresas_crm").update({ tipo: newTipo }).eq("id", empresa.id);
+    if (erroTipo) {
+      setSaving(false);
+      setErro("Não foi possível alterar o tipo da empresa. Tente novamente.");
+      return;
+    }
     if (newTipo === "cliente_ativo") {
       // Marcar como cliente precisa criar a conta de patrocínio, senão a empresa não aparece em Clientes.
       const { data: contaExistente } = await (supabase as any).from("contas_patrocinio").select("id").eq("empresa_crm_id", empresa.id).limit(1).maybeSingle();
@@ -510,8 +517,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
         if (erroConta) {
           await (supabase as any).from("empresas_crm").update({ tipo: empresa.tipo }).eq("id", empresa.id);
           setSaving(false);
-          setOpen(false);
-          window.alert(erroConta.message);
+          setErro(`Não foi possível criar o cliente: ${erroConta.message}`);
           return;
         }
       }
@@ -525,8 +531,9 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
   return (
     <div className="relative" ref={boxRef}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => { setErro(null); setOpen(!open); }}
         disabled={saving}
+        aria-expanded={open}
         className="inline-flex items-center gap-1.5 rounded border bg-white px-2.5 py-1 text-[11px] font-semibold transition hover:bg-black/[.04] disabled:opacity-60"
         style={{borderColor: currentColor + "66", color: currentColor}}
       >
@@ -559,6 +566,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
               );
             })}
           </div>
+          {erro && <p role="alert" className="border-t border-black/[.06] px-3 py-2 text-[11px] leading-snug text-[#B23A3A]">{erro}</p>}
         </PortalMenu>
       )}
     </div>
@@ -583,5 +591,3 @@ function NextStepRow({label,title,subtitle,actionLabel,onAction,href}:{label:str
 }
 function ContextLine({icon:Icon,label,value}:{icon:typeof Target;label:string;value:string}) { return <div className="flex items-center gap-2.5"><Icon size={13} className="text-black/25"/><span className="flex-1 text-[11px] text-black/45">{label}</span><span className="text-[12px] font-semibold tabular-nums text-black/65">{value}</span></div>; }
 function EmptySide({copy}:{copy:string}) { return <p className="py-4 text-center text-[11px] leading-relaxed text-black/30">{copy}</p>; }
-function DetailSkeleton() { return <div className="animate-pulse px-4 py-6 md:px-8"><div className="h-4 w-24 rounded bg-black/8"/><div className="mt-6 h-16 w-full max-w-2xl rounded bg-black/8"/><div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({length:4}).map((_,index)=><div key={index} className="h-28 rounded bg-black/8"/>)}</div><div className="mt-5 h-80 rounded bg-black/8"/></div>; }
-function NotFound() { return <div className="px-4 py-8 text-center md:px-8"><Building2 size={30} className="mx-auto text-black/15"/><p className="mt-4 text-sm font-medium text-black/35">Empresa não encontrada</p><Link href="/empresas-crm" className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#7259B5]"><ArrowLeft size={12}/>Voltar para empresas</Link></div>; }

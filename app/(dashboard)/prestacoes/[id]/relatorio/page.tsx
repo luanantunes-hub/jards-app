@@ -110,7 +110,7 @@ export default function RelatorioPage() {
                   <thead>
                     <tr style={{ background: "#F9F9F8" }}>
                       {["Etapa / Rubrica", "Qtde. aprovada", "Qtde. executada", "%", "Vl. aprovado", "Vl. executado", "%", "Saldo a executar"].map((h, index) => (
-                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[9px] font-bold uppercase tracking-wide text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
+                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -176,7 +176,7 @@ export default function RelatorioPage() {
                         <thead>
                           <tr style={{ background: "#F9F9F8" }}>
                             {["Item", "Qtde. aprovada", "Qtde. executada", "%", "Vl. aprovado", "Vl. executado", "%", "Saldo"].map((h, index) => (
-                              <th key={`${h}-${index}`} className="px-4 py-2 text-left text-[9px] font-bold uppercase tracking-wide text-black/25 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.06)" }}>{h}</th>
+                              <th key={`${h}-${index}`} className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/25 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.06)" }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -220,7 +220,7 @@ export default function RelatorioPage() {
                   <thead>
                     <tr style={{ background: "#F9F9F8" }}>
                       {["Rubrica", "Qtde. comprovantes", "Vl. total comprovado", "Vl. aprovado", "Saldo"].map((h, index) => (
-                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[9px] font-bold uppercase tracking-wide text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
+                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -269,7 +269,7 @@ export default function RelatorioPage() {
                   <thead>
                     <tr style={{ background: "#F9F9F8" }}>
                       {["Data", "Rubrica", "Descrição / Documento", "Tipo", "Origem", "Valor"].map((h, index) => (
-                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[9px] font-bold uppercase tracking-wide text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
+                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>

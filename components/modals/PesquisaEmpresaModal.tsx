@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
 import Image from "next/image";
 import { MagnifyingGlass, X } from "@phosphor-icons/react";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type PesquisaEmpresaModalProps = {
   empresaNome: string;
@@ -25,13 +25,7 @@ export function PesquisaEmpresaModal({
   onClose,
   onStart,
 }: PesquisaEmpresaModalProps) {
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape" && !loading) onClose();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [loading, onClose]);
+  useModalDismiss(() => { if (!loading) onClose(); });
 
   return (
     <div
@@ -108,7 +102,7 @@ export function PesquisaEmpresaModal({
                 >
                   <span className="flex items-center gap-2 px-4">
                     <MagnifyingGlass size={14} weight="bold" />
-                    {loading ? "Priorizando..." : "Começar busca"}
+                    {loading ? "Priorizando…" : "Começar busca"}
                   </span>
                   <span className="flex min-h-11 items-center border-l border-[#7259B5]/20 px-3 tabular-nums">(-1)</span>
                 </button>

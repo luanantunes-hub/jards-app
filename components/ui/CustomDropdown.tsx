@@ -55,7 +55,7 @@ export function CustomDropdown({
   useEffect(() => {
     if (!isOpen) return;
     updateMenuPosition();
-    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setIsOpen(false); };
+    const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") { event.preventDefault(); setIsOpen(false); } };
     window.addEventListener("resize", updateMenuPosition);
     window.addEventListener("scroll", updateMenuPosition, true);
     document.addEventListener("keydown", closeOnEscape);

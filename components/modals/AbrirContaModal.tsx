@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { X, Building2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type Props = {
   empresaCrmId: string;
@@ -15,12 +16,16 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
   const [nome, setNome] = useState("");
   const [notas, setNotas] = useState("");
   const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   async function handleSave() {
     setSaving(true);
+    setErro(null);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSaving(false); return; }
+    if (!user) { setErro("Sessão expirada. Entre novamente para continuar."); setSaving(false); return; }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: orgData } = await (supabase as any)
@@ -40,15 +45,21 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
       status: "ativa",
     });
 
-    if (!error) {
-      onSaved();
+    if (error) {
+      setErro("Não foi possível criar o cliente. Tente novamente.");
+      setSaving(false);
+      return;
     }
+    onSaved();
     setSaving(false);
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="bg-white rounded shadow-2xl w-full max-w-md p-6"
         style={{ borderColor: "rgba(13,13,13,.08)" }}
         onClick={(e) => e.stopPropagation()}
@@ -59,11 +70,11 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
               <Building2 size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 className="text-[15px] font-bold text-[#0D0D0D]">Criar cliente</h2>
+              <h2 id={titleId} className="text-[15px] font-bold text-[#0D0D0D]">Criar cliente</h2>
               <p className="text-[12px] text-black/40">{empresaNome}</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-black/5 transition">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-black/5 transition">
             <X size={16} className="text-black/40" />
           </button>
         </div>
@@ -93,6 +104,8 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
           </div>
         </div>
 
+        {erro && <p role="alert" className="mt-4 text-[12px] text-[#B23A3A]">{erro}</p>}
+
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={onClose}
@@ -103,7 +116,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 px-5 py-2 text-[13px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
+            className="flex items-center gap-1.5 px-5 py-2 text-[13px] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? (
               <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

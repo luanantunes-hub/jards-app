@@ -9,6 +9,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import type { StatusEdital } from "@/lib/supabase/types";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -178,7 +179,7 @@ function CampoItem({
         </button>
         <button
           onClick={handleDelete}
-          className="flex items-center gap-1.5 text-[10.5px] font-semibold text-black/30 hover:text-red-500 transition"
+          className="flex items-center gap-1.5 text-[10.5px] font-semibold text-black/30 hover:text-[#D94E4E] transition"
         >
           <Trash2 size={10} /> Deletar
         </button>
@@ -240,6 +241,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
   const [reordering, setReordering] = useState(false);
   const [panelError, setPanelError] = useState<string | null>(null);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  useModalDismiss(() => onClose?.(), { enabled: !embedded });
 
   const fetchRegistros = useCallback(async () => {
     setLoading(true);
@@ -278,6 +280,8 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
       setSugestoes([]);
     }, 240);
   }
+
+  useModalDismiss(closeBusca, { enabled: showBusca });
 
   // Debounced search
   useEffect(() => {
@@ -350,7 +354,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
       style={embedded ? undefined : { background: "rgba(0,0,0,.4)" }}
       onClick={e => { if (!embedded && e.target === e.currentTarget) onClose?.(); }}
     >
-      <div className={embedded
+      <div role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} aria-label={embedded ? undefined : "Conteúdo preenchido"} className={embedded
         ? "bg-white w-full flex flex-col rounded border overflow-hidden"
         : "bg-white w-full max-w-[680px] flex flex-col h-full shadow-2xl overflow-hidden"
       } style={embedded ? { borderColor: "rgba(13,13,13,.08)" } : undefined}>
@@ -364,7 +368,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
                 <h2 className="mt-1 text-[17px] font-bold text-black">Conteúdo preenchido</h2>
               </div>
             ) : (
-              <button onClick={onClose} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/60 transition">
+              <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/60 transition">
                 <X size={14} />
               </button>
             )}
@@ -399,9 +403,9 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
 
         {/* Conteúdo preenchido */}
         <div className={`${embedded ? "px-6 py-6" : "flex-1 overflow-y-auto px-6 py-5"}`}>
-          {panelError && !showBusca && <div className="mb-4 flex items-start gap-2 rounded border border-[#D94E4E]/20 px-3 py-2.5 text-[11px] text-[#D94E4E]"><AlertCircle size={13} className="mt-0.5 shrink-0"/>{panelError}</div>}
+          {panelError && !showBusca && <div role="alert" className="mb-4 flex items-start gap-2 rounded border border-[#D94E4E]/20 px-3 py-2.5 text-[11px] text-[#D94E4E]"><AlertCircle size={13} className="mt-0.5 shrink-0"/>{panelError}</div>}
           {loading ? (
-            <div className="py-10 text-center text-xs text-black/30">Carregando...</div>
+            <div className="py-10 text-center text-xs text-black/30">Carregando…</div>
           ) : registros.length === 0 ? (
             <div className="py-20 text-center">
               <Plus size={28} className="text-black/10 mx-auto mb-3" />
@@ -448,6 +452,8 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
           onClick={closeBusca}
         >
           <section
+            role="dialog"
+            aria-modal="true"
             aria-label="Novo conteúdo"
             className={`flex h-full w-full max-w-[520px] flex-col rounded-l bg-white shadow-2xl transition-transform duration-200 ease-out ${buscaVisible ? "translate-x-0" : "translate-x-full"}`}
             onClick={event => event.stopPropagation()}
@@ -469,7 +475,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
                   placeholder="Buscar ou criar campo…"
                   className="w-full rounded border border-black/[.14] bg-white py-3 pl-9 pr-10 text-[13px] text-black outline-none transition placeholder:text-black/30 focus:border-black/30 focus:ring-2 focus:ring-black/[.05]"
                   onKeyDown={event => {
-                    if (event.key === "Escape") closeBusca();
+                    if (event.key === "Escape") { event.preventDefault(); closeBusca(); }
                     if (event.key === "Enter" && sugestoes.length === 0 && searchText.trim()) void createAndAdd();
                   }}
                 />
@@ -511,7 +517,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
               </div>
 
               {!inscricao.projeto_id && <div className="mt-3 flex items-center gap-1.5 text-[11px] text-black/35"><AlertCircle size={12}/>Sem projeto, o campo será usado somente nesta inscrição.</div>}
-              {panelError && <div className="mt-3 flex items-start gap-1.5 rounded border border-[#D94E4E]/20 px-3 py-2 text-[11px] leading-relaxed text-[#D94E4E]"><AlertCircle size={12} className="mt-0.5 shrink-0"/>{panelError}</div>}
+              {panelError && <div role="alert" className="mt-3 flex items-start gap-1.5 rounded border border-[#D94E4E]/20 px-3 py-2 text-[11px] leading-relaxed text-[#D94E4E]"><AlertCircle size={12} className="mt-0.5 shrink-0"/>{panelError}</div>}
             </div>
           </section>
         </div>

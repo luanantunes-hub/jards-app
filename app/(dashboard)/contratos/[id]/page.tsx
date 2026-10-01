@@ -5,6 +5,9 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, CalendarDays, ChevronDown, Download, FileText, Handshake, Paperclip, Pencil, RefreshCw, Trash2, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound } from "@/components/ui/DetailPagePrimitives";
+import { excluirDocumento } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
 
 type Contract = {
@@ -29,6 +32,7 @@ function date(value: string | null) { return value ? new Date(`${value.split("T"
 export default function ContractPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [contract, setContract] = useState<Contract | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
@@ -81,7 +85,7 @@ export default function ContractPage({ params }: { params: Promise<{ id: string 
     setUploading(false);
   }
   async function open(document: DocumentRow) { const result = await supabase.storage.from("documentos").createSignedUrl(document.url, 3600); if (result.error) setError(result.error.message); else if (result.data?.signedUrl) window.open(result.data.signedUrl, "_blank", "noopener,noreferrer"); }
-  async function remove(document: DocumentRow) { if (!confirm(`Excluir “${document.nome}”?`)) return; const storage = await supabase.storage.from("documentos").remove([document.url]); if (storage.error) { setError(storage.error.message); return; } const result = await (supabase as any).from("documentos").delete().eq("id", document.id); if (result.error) setError(result.error.message); else await load(); }
+  function remove(document: DocumentRow) { confirmDelete({ title: `Excluir o documento “${document.nome}”?`, description: "O arquivo deixa de estar disponível para toda a equipe.", onConfirm: async () => { await excluirDocumento(supabase, document); await load(); } }); }
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); const data = new FormData(event.currentTarget); const raw = String(data.get("valor") ?? "").replace(/\./g, "").replace(",", ".");
     const result = await (supabase as any).from("contratos").update({ titulo:String(data.get("titulo")||"").trim()||null, numero:String(data.get("numero")||"").trim()||null, valor:Number(raw||0), status:data.get("status"), data_assinatura:data.get("data_assinatura")||null, data_inicio:data.get("data_inicio")||null, data_fim:data.get("data_fim")||null, proxima_renovacao:data.get("proxima_renovacao")||null, renovacao_automatica:data.get("renovacao_automatica")==="true", notas:String(data.get("notas")||"").trim()||null, rascunho_automatico:false }).eq("id", id);
@@ -103,7 +107,7 @@ export default function ContractPage({ params }: { params: Promise<{ id: string 
   }
 
   if (loading) return <div className="mx-auto max-w-[1280px] animate-pulse px-4 py-10 sm:px-6 lg:px-10"><div className="h-5 w-28 rounded bg-black/[.06]"/><div className="mt-8 h-28 rounded bg-black/[.04]"/><div className="mt-6 h-80 rounded bg-black/[.04]"/></div>;
-  if (!contract || !account) return <div className="mx-auto max-w-[1280px] px-4 py-16 text-center text-sm text-black/40">{error || "Contrato não encontrado."}</div>;
+  if (!contract || !account) return <DetailNotFound title="Contrato não encontrado" description={error && error !== "Contrato não encontrado." ? error : undefined} backHref="/contas-patrocinio" backLabel="Clientes" />;
   const companyName = account.empresa_crm?.nome || account.nome || "Cliente";
 
   return <div className="min-h-full">
@@ -114,7 +118,7 @@ export default function ContractPage({ params }: { params: Promise<{ id: string 
     <main className="mx-auto grid max-w-[1280px] gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[minmax(0,1fr)_320px] lg:px-10 lg:py-10">
       {error && <p className="rounded border border-[#D94E4E]/20 px-3 py-2 text-[11px] text-[#D94E4E] lg:col-span-2">{error}</p>}
       <div className="space-y-6">
-        <section className="overflow-hidden rounded border border-black/[.08] bg-white"><SectionHeader icon={Paperclip} title="Documento do contrato" action={<><input ref={fileRef} type="file" className="hidden" onChange={e=>{const f=e.target.files?.[0];if(f)void upload(f);e.target.value="";}}/><button onClick={()=>fileRef.current?.click()} disabled={uploading} className="inline-flex items-center gap-1.5 rounded border border-[#7259B5]/25 bg-white px-3 py-2 text-[11px] font-medium text-[#7259B5] hover:bg-black/[.04] disabled:opacity-40"><Upload size={12}/>{uploading?"Enviando…":"Adicionar arquivo"}</button></>}/>{documents.length?<div className="divide-y divide-black/[.06]">{documents.map(document=><div key={document.id} className="group flex items-center gap-3 px-5 py-4"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/35"><FileText size={15}/></span><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black/70">{document.nome}</p><p className="mt-1 text-[10px] text-black/25">{document.arquivo_nome||"Arquivo"} · {formatSize(document.tamanho)} · {new Date(document.created_at).toLocaleDateString("pt-BR")}</p></div><button onClick={()=>void open(document)} className="rounded p-2 text-black/25 hover:bg-black/[.04] hover:text-[#7259B5]" title="Abrir"><Download size={13}/></button><button onClick={()=>void remove(document)} className="rounded p-2 text-black/20 opacity-0 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100" title="Excluir"><Trash2 size={13}/></button></div>)}</div>:<Empty text="Este registro ainda não possui arquivo."/>}</section>
+        <section className="overflow-hidden rounded border border-black/[.08] bg-white"><SectionHeader icon={Paperclip} title="Documento do contrato" action={<><input ref={fileRef} type="file" className="hidden" onChange={e=>{const f=e.target.files?.[0];if(f)void upload(f);e.target.value="";}}/><button onClick={()=>fileRef.current?.click()} disabled={uploading} className="inline-flex items-center gap-1.5 rounded border border-[#7259B5]/25 bg-white px-3 py-2 text-[11px] font-medium text-[#7259B5] hover:bg-black/[.04] disabled:opacity-40"><Upload size={12}/>{uploading?"Enviando…":"Adicionar arquivo"}</button></>}/>{documents.length?<div className="divide-y divide-black/[.06]">{documents.map(document=><div key={document.id} className="group flex items-center gap-3 px-5 py-4"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/35"><FileText size={15}/></span><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black/70">{document.nome}</p><p className="mt-1 text-[10px] text-black/25">{document.arquivo_nome||"Arquivo"} · {formatSize(document.tamanho)} · {new Date(document.created_at).toLocaleDateString("pt-BR")}</p></div><button onClick={()=>void open(document)} className="rounded p-2 text-black/25 hover:bg-black/[.04] hover:text-[#7259B5]" title="Abrir"><Download size={13}/></button><button onClick={()=>void remove(document)} className="rounded p-2 text-black/20 opacity-0 hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] group-hover:opacity-100" title="Excluir"><Trash2 size={13}/></button></div>)}</div>:<Empty text="Este registro ainda não possui arquivo."/>}</section>
         <section className="overflow-hidden rounded border border-black/[.08] bg-white"><SectionHeader icon={FileText} title="Observações"/><div className="min-h-28 p-5 text-[13px] leading-6 text-black/55">{contract.notas||<span className="text-black/25">Nenhuma observação registrada.</span>}</div></section>
         <section className="overflow-hidden rounded border border-black/[.08] bg-white"><SectionHeader icon={FileText} title="Entregas deste contrato"/>{deliveries.length?<div className="divide-y divide-black/[.06]">{deliveries.map(item=><Link key={item.id} href={`/entregas/${item.id}`} className="group flex items-center gap-3 px-5 py-4 hover:bg-black/[.018]"><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black/65">{item.titulo}</p><p className="mt-1 text-[10px] text-black/30">{item.status.replaceAll("_"," ")} · {item.prazo?date(item.prazo):"Sem prazo"}</p></div><ArrowUpRight size={13} className="text-black/20 group-hover:text-[#7259B5]"/></Link>)}</div>:<Empty text="Nenhuma entrega vinculada."/>}</section>
       </div>

@@ -319,7 +319,7 @@ export default function OrcamentoPage() {
               <thead>
                 <tr style={{ background: "#F9F9F8" }}>
                   {["Rubrica", "Aprovado", "Realizado", "% exec.", "Tolerância", ""].map(col => (
-                    <th key={col} className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wide text-black/30 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                    <th key={col} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                       {col}
                     </th>
                   ))}
@@ -530,7 +530,7 @@ export default function OrcamentoPage() {
                         <thead>
                           <tr style={{ background: "rgba(13,13,13,.02)" }}>
                             {previewCols.map(c => (
-                              <th key={c.idx} className="px-3 py-1.5 text-left text-[9px] font-bold uppercase tracking-wide text-black/30 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>{c.label}</th>
+                              <th key={c.idx} className="px-3 py-1.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>{c.label}</th>
                             ))}
                           </tr>
                         </thead>
@@ -591,7 +591,7 @@ export default function OrcamentoPage() {
                 <thead className="sticky top-0 bg-white">
                   <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                     {["Rubrica", "Descrição", "Valor aprovado", "Tolerância"].map(h => (
-                      <th key={h} className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-wide text-black/30">{h}</th>
+                      <th key={h} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
                     ))}
                   </tr>
                 </thead>

@@ -18,7 +18,7 @@ test("cria um novo projeto", async ({ page }) => {
   }
 
   await page.goto("/projetos");
-  await page.getByRole("button", { name: "Novo projeto" }).click();
+  await page.getByRole("button", { name: "Novo projeto" }).first().click();
   await page.getByPlaceholder("Nome do projeto").fill(nome);
   await page.getByRole("button", { name: "Salvar projeto" }).click();
 

@@ -243,7 +243,7 @@ export function CompanyTimeline({
     <div>
       {showHeader && (
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Timeline</h2>
+          <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Histórico</h2>
           <span className="text-[11px] text-black/25 font-medium">{events.length} eventos</span>
         </div>
       )}

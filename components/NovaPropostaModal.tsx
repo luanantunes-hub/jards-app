@@ -1,10 +1,11 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { Coins, ExternalLink, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { formatCotaValor } from "@/lib/cotas";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type CotaOption = { id: string; nome: string; valor: number; valor_maximo: number | null; modelo: "nivel" | "produto"; produto_nome: string | null };
 export type PropostaRow = { id: string; titulo: string; valor_proposto: number | null; cota_id: string | null; created_at: string };
@@ -37,6 +38,9 @@ export function NovaPropostaModal({
   const [cotaId, setCotaId] = useState(proposta?.cota_id ?? "");
   const [valorInput, setValorInput] = useState(proposta?.valor_proposto != null ? String(proposta.valor_proposto) : "");
   const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   useEffect(() => {
     let active = true;
@@ -56,6 +60,7 @@ export function NovaPropostaModal({
   async function salvar() {
     if (!valorInput.trim()) return;
     setSalvando(true);
+    setErro(null);
     const valor = parseFloat(valorInput.replace(/\./g, "").replace(",", "."));
 
     if (proposta) {
@@ -64,16 +69,15 @@ export function NovaPropostaModal({
         valor_proposto: Number.isFinite(valor) ? valor : null,
       }).eq("id", proposta.id);
       setSalvando(false);
-      if (!error) {
-        onCreated();
-        if (Number.isFinite(valor)) onSavedValor?.(valor);
-        onClose();
-      }
+      if (error) { setErro("Não foi possível salvar a proposta. Tente novamente."); return; }
+      onCreated();
+      if (Number.isFinite(valor)) onSavedValor?.(valor);
+      onClose();
       return;
     }
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user || !organizationId) { setSalvando(false); return; }
+    if (!user || !organizationId) { setErro("Sessão ou organização não encontrada. Atualize a página e tente novamente."); setSalvando(false); return; }
     const { error } = await (supabase as any).from("propostas").insert({
       account_id: user.id,
       organization_id: organizationId,
@@ -85,23 +89,22 @@ export function NovaPropostaModal({
       status: "enviada",
     });
     setSalvando(false);
-    if (!error) {
-      onCreated();
-      onClose();
-    }
+    if (error) { setErro("Não foi possível criar a proposta. Tente novamente."); return; }
+    onCreated();
+    onClose();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
               <Coins size={16} className="text-black/50" />
             </div>
-            <h2 className="text-[15px] font-bold text-black">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
+            <h2 id={titleId} className="text-[15px] font-bold text-black">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={15} className="text-black/40" />
           </button>
         </div>
@@ -145,12 +148,14 @@ export function NovaPropostaModal({
             />
           </div>
 
+          {erro && <p role="alert" className="text-[12px] text-[#B23A3A]">{erro}</p>}
+
           <button
             onClick={salvar}
             disabled={salvando || !valorInput.trim()}
-            className="w-full px-3 py-2 text-[11px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
+            className="w-full px-3 py-2 text-[11px] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {salvando ? "Salvando..." : "Salvar"}
+            {salvando ? "Salvando…" : "Salvar"}
           </button>
           <Link href={`/projetos/${projetoId}`} className="flex items-center justify-center gap-1.5 text-[10px] font-medium text-black/35 hover:text-[#7259B5] transition">
             Gerenciar cotas do projeto <ExternalLink size={9} />

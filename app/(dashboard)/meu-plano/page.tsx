@@ -63,7 +63,7 @@ const PLANS: PlanDef[] = [
     icon: Zap,
     cor: "#7259B5",
     features: [
-      "Captações ilimitadas",
+      "Negociações ilimitadas",
       "100 créditos mensais",
       "Operação comercial e atividades",
       "Dashboard com KPIs e alertas",
@@ -103,7 +103,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
     <div>
       <div className="flex justify-between text-xs mb-1.5">
         <span className="font-semibold text-black/60">{label}</span>
-        <span className={`font-bold ${over ? "text-red-600" : "text-black/50"}`}>
+        <span className={`font-bold ${over ? "text-[#B23A3A]" : "text-black/50"}`}>
           {used} / {limit === null ? "∞" : limit}
         </span>
       </div>
@@ -218,7 +218,7 @@ function MeuPlanoInner() {
     <div className="px-8 py-8 max-w-5xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Meu Plano</h1>
+        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Meu plano</h1>
       </div>
 
       {/* Alerts */}
@@ -247,11 +247,11 @@ function MeuPlanoInner() {
         </div>
       )}
       {profile && ["past_due", "unpaid", "paused", "incomplete", "incomplete_expired"].includes(profile.stripe_subscription_status) && (
-        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded px-5 py-4 mb-6">
-          <AlertCircle size={18} className="text-red-600 flex-shrink-0" />
+        <div className="flex items-center gap-3 bg-[#D94E4E]/[.06] border border-[#D94E4E]/25 rounded px-5 py-4 mb-6">
+          <AlertCircle size={18} className="text-[#B23A3A] flex-shrink-0" />
           <div>
-            <p className="text-sm font-bold text-red-900">Assinatura temporariamente suspensa</p>
-            <p className="text-xs text-red-700 mt-0.5">Regularize o pagamento no portal para restaurar o plano e renovar os créditos automaticamente.</p>
+            <p className="text-sm font-bold text-[#7A2626]">Assinatura temporariamente suspensa</p>
+            <p className="text-xs text-[#B23A3A] mt-0.5">Regularize o pagamento no portal para restaurar o plano e renovar os créditos automaticamente.</p>
           </div>
         </div>
       )}

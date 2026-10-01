@@ -18,7 +18,7 @@ import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
 import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RegistrosPanel } from "@/components/modals/RegistrosPanel";
-import { DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { DetailPageContent, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PropostaValuePanel } from "@/components/PropostaValuePanel";
 import { CotasReferenceTab } from "@/components/CotasReferenceTab";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
@@ -367,42 +367,10 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     await fetchData();
   }
 
-  /* ── Loading ── */
-  if (loading) {
-    return (
-      <div className="px-8 py-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-4 w-28 bg-black/5 rounded" />
-          <div className="h-8 w-72 bg-black/5 rounded" />
-          <div className="h-4 w-44 bg-black/5 rounded" />
-          <div className="flex gap-8 mt-8">
-            {[1,2,3,4].map(i => <div key={i} className="h-14 w-32 bg-black/5 rounded" />)}
-          </div>
-          <div className="flex gap-6 mt-6">
-            <div className="flex-1 space-y-4">
-              {[1,2,3].map(i => <div key={i} className="h-24 bg-black/5 rounded" />)}
-            </div>
-            <div className="w-[260px] space-y-4">
-              {[1,2,3].map(i => <div key={i} className="h-32 bg-black/5 rounded" />)}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DetailPageSkeleton />;
 
   if (!inscricao) {
-    return (
-      <div className="px-8 py-8">
-        <Link href="/editais-inscritos" className="inline-flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-black transition mb-6">
-          <ArrowLeft size={13} /> Inscrições
-        </Link>
-        <div className="text-center py-20">
-          <p className="text-[15px] font-semibold text-black/40 mb-1">Inscrição não encontrada</p>
-          <p className="text-sm text-black/25">Esta inscrição pode ter sido removida.</p>
-        </div>
-      </div>
-    );
+    return <DetailNotFound title="Inscrição não encontrada" description="Ela pode ter sido removida ou você não tem acesso a ela." backHref="/editais-inscritos" backLabel="Inscrições" />;
   }
 
   const titulo  = inscricao.titulo ?? inscricao.editais?.titulo ?? "Sem título";
@@ -909,7 +877,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             {/* Timeline */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[11px] font-bold uppercase tracking-[.12em] text-black/35">Timeline</h2>
+                <h2 className="text-[11px] font-bold uppercase tracking-[.12em] text-black/35">Histórico</h2>
                 <span className="text-[11px] text-black/25 font-medium">{timeline.length} eventos</span>
               </div>
 

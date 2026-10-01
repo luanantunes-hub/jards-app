@@ -5,6 +5,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, FileSpreadsheet, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { CotaPatrocinio, ProjetoOrcamentoItem } from "@/lib/supabase/types";
 import { Select } from "@/components/ui/Select";
@@ -89,6 +91,7 @@ export function ProjetoOrcamentoManager({
   valorTotal?: number;
 }) {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
   const importRef = useRef<HTMLInputElement>(null);
   const [itens, setItens] = useState<ItemWithRateios[]>([]);
@@ -170,18 +173,22 @@ export function ProjetoOrcamentoManager({
     onChanged?.();
   }
 
-  async function deleteItem(item: ItemWithRateios) {
-    if (!window.confirm('Excluir a rubrica "' + item.rubrica + '"?')) return;
-    const { error } = await (supabase as any).from('projeto_orcamento_itens').delete().eq('id', item.id);
-    if (error) { setErro(error.message); return; }
-    await fetchItems();
-    onChanged?.();
+  function deleteItem(item: ItemWithRateios) {
+    confirmDelete({
+      title: `Excluir a rubrica “${item.rubrica}”?`,
+      description: "Os rateios desta rubrica entre as cotas também são removidos.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "projeto_orcamento_itens", item.id);
+        await fetchItems();
+        onChanged?.();
+      },
+    });
   }
 
   function exportCsv(cota: CotaPatrocinio & { pct: number }) {
     const q = (s: string) => '"' + s.replace(/"/g, '""') + '"';
     const pctLabel = (cota.pct * 100).toFixed(1) + '%';
-    const header = [q('Rubrica'), q('Descricao'), q('Valor Total (R$)'), q(cota.nome + ' (' + pctLabel + ') (R$)')].join(',');
+    const header = [q('Rubrica'), q('Descrição'), q('Valor Total (R$)'), q(cota.nome + ' (' + pctLabel + ') (R$)')].join(',');
     const rows = itens.map(item => {
       const cotaVal = item.valor * cota.pct;
       return [q(item.rubrica), q(item.descricao ?? ''), q(item.valor.toFixed(2)), q(cotaVal.toFixed(2))].join(',');
@@ -349,16 +356,16 @@ export function ProjetoOrcamentoManager({
             <table className="w-max min-w-full text-[12px]">
               <thead className="border-b bg-black/[.02]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 <tr>
-                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-black/35">Rubrica</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-black/35">Descrição</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-black/35">Valor total</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/35">Rubrica</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/35">Descrição</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-[.08em] text-black/35">Valor total</th>
                   {activeCota ? (
-                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wide" style={{ color: "#7259B5" }}>
+                    <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-[.08em]" style={{ color: "#7259B5" }}>
                       {activeCota.nome} ({(activeCota.pct * 100).toFixed(1)}%)
                     </th>
                   ) : valorTotal && valorTotal > 0 && cotaData.length > 0 ? (
                     cotaData.map(cota => (
-                      <th key={cota.id} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-black/35">
+                      <th key={cota.id} className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-[.08em] text-black/35">
                         {cota.nome} <span className="font-normal text-black/25">({(cota.pct * 100).toFixed(1)}%)</span>
                       </th>
                     ))
@@ -386,7 +393,7 @@ export function ProjetoOrcamentoManager({
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-0.5">
                         <button title="Editar" onClick={() => openEdit(item)} className="rounded p-1.5 text-black/25 transition hover:bg-black/5 hover:text-black/60"><Pencil size={12} /></button>
-                        <button title="Excluir" onClick={() => void deleteItem(item)} className="rounded p-1.5 text-black/20 transition hover:bg-[#D94E4E]/10 hover:text-[#D94E4E]"><Trash2 size={12} /></button>
+                        <button title="Excluir" aria-label={`Excluir a rubrica ${item.rubrica}`} onClick={() => deleteItem(item)} className="rounded p-1.5 text-black/20 transition hover:bg-[#D94E4E]/10 hover:text-[#D94E4E]"><Trash2 size={12} /></button>
                       </div>
                     </td>
                   </tr>
@@ -441,7 +448,7 @@ function ItemModal({ editing, saving, onChange, onClose, onSave }: { editing: Dr
       <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-black/55">Descrição</span><input value={editing.descricao ?? ""} onChange={event => onChange({ ...editing, descricao: event.target.value })} placeholder="Detalhamento opcional" className="w-full rounded border border-black/[.12] px-3 py-2.5 text-[13px] outline-none focus:border-[#7259B5]" /></label>
       <label className="block"><span className="mb-1.5 block text-[11px] font-semibold text-black/55">Valor (R$)</span><input type="number" min="0" step="0.01" value={editing.valor ?? 0} onChange={event => onChange({ ...editing, valor: Number(event.target.value) })} className="w-full rounded border border-black/[.12] px-3 py-2.5 text-[13px] tabular-nums outline-none focus:border-[#7259B5]" /></label>
     </div>
-    <div className="mt-6 flex justify-end gap-3"><button onClick={onClose} className="px-2 py-2 text-[12px] text-black/35 hover:text-black/55">Cancelar</button><button type="button" disabled={saving || !editing.rubrica?.trim()} onClick={onSave} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:opacity-90 active:scale-[.98] disabled:opacity-40">{saving ? "Salvando..." : <><Check size={12} /> Salvar</>}</button></div>
+    <div className="mt-6 flex justify-end gap-3"><button onClick={onClose} className="px-2 py-2 text-[12px] text-black/35 hover:text-black/55">Cancelar</button><button type="button" disabled={saving || !editing.rubrica?.trim()} onClick={onSave} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:opacity-90 active:scale-[.98] disabled:opacity-40">{saving ? "Salvando…" : <><Check size={12} /> Salvar</>}</button></div>
   </Modal>;
 }
 

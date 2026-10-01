@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { X, Building2, Save, MessageSquare, ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
@@ -7,6 +7,7 @@ import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import type { OrigemOportunidade, CanalContato } from "@/lib/supabase/types";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPubId, empresaCrmId, setorPreEmpresa, dominioPreEmpresa, cidadePreEmpresa, ufPreEmpresa }: {
   onClose: () => void;
@@ -37,6 +38,8 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
   const [canal, setCanal]   = useState<CanalContato | null>(null);
   const [saving, setSaving] = useState(false);
   const [erro, setErro]     = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   useEffect(() => {
     supabase.from("empresas_crm").select("setor").not("setor", "is", null)
@@ -120,16 +123,16 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center"
       style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div className="flex w-full max-w-[480px] flex-col overflow-hidden rounded-b bg-white"
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[96dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-b bg-white"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
         onClick={e => e.stopPropagation()}>
 
-        <header className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <header className="flex shrink-0 items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5">
               <Building2 size={16} className="text-black/50" />
             </div>
-            <h2 className="text-[15px] font-bold text-black">Novo prospect</h2>
+            <h2 id={titleId} className="text-[15px] font-bold text-black">Novo prospect</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
@@ -137,7 +140,7 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
           </button>
         </header>
 
-        <main className="px-5 py-5">
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <SectionLabel>Empresa</SectionLabel>
           <div className="mb-4">
             <FieldLabel>Nome *</FieldLabel>
@@ -254,12 +257,12 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
           </section>
         </main>
 
-        <footer className="flex items-center justify-between gap-4 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          {erro ? <p className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          {erro ? <p role="alert" className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSalvar} disabled={saving}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26732A] active:translate-y-px disabled:opacity-60">
+              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
               <Save size={12} /> {saving ? "Salvando…" : "Criar prospect"}
             </button>
           </div>

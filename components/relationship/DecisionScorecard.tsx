@@ -4,6 +4,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Plus, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedScoreArc } from "@/components/ui/SegmentedScoreArc";
 
 export type DecisionCriterion = {
@@ -129,6 +131,7 @@ type RelationshipScorecardProps = {
 
 function RelationshipScorecard({ entityId, organizationId, table, foreignKey, starterCriteria, starterActionLabel, placeholder }: RelationshipScorecardProps) {
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const [criteria, setCriteria] = useState<DecisionCriterion[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -218,15 +221,15 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
     }
   }
 
-  async function removeCriterion(id: string) {
-    if (!window.confirm("Excluir este critério do scorecard?")) return;
-    const previous = criteria;
-    setCriteria(items => items.filter(item => item.id !== id));
-    const { error: deleteError } = await (supabase as any).from(table).delete().eq("id", id);
-    if (deleteError) {
-      setCriteria(previous);
-      setError(deleteError.message);
-    }
+  function removeCriterion(id: string) {
+    confirmDelete({
+      title: "Excluir este critério do scorecard?",
+      description: "A nota ponderada é recalculada sem ele.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, table, id);
+        setCriteria(items => items.filter(item => item.id !== id));
+      },
+    });
   }
 
   return (
@@ -284,8 +287,8 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
                   />
                   <button
                     type="button"
-                    onClick={() => void removeCriterion(item.id)}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-black/20 opacity-60 transition hover:bg-red-50 hover:text-red-500 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200 group-hover:opacity-100 active:scale-[.94]"
+                    onClick={() => removeCriterion(item.id)}
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-black/20 opacity-60 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D94E4E]/25 group-hover:opacity-100 active:scale-[.94]"
                     aria-label={`Excluir ${item.nome}`}
                   >
                     <Trash2 size={11} strokeWidth={1.8} />
@@ -306,7 +309,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
                     onSelect={rating => void updateCriterion(item.id, { nota: rating as 1 | 2 | 3 | 4 | 5 })}
                   />
                 </div>
-                {savingId === item.id && <span className="mt-2 block text-right text-[9px] text-black/25" aria-live="polite">Salvando...</span>}
+                {savingId === item.id && <span className="mt-2 block text-right text-[9px] text-black/25" aria-live="polite">Salvando…</span>}
               </div>
             ))}
           </div>
@@ -331,7 +334,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
           </div>
         )}
 
-        {error && <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] leading-relaxed text-red-700" role="alert">{error}</p>}
+        {error && <p className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2.5 text-[10px] leading-relaxed text-[#B23A3A]" role="alert">{error}</p>}
       </div>
     </section>
   );

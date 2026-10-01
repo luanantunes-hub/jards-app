@@ -1,4 +1,5 @@
-import type { LucideIcon } from "lucide-react";
+import Link from "next/link";
+import { ArrowLeft, type LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 
 type DetailTab = {
@@ -100,5 +101,48 @@ export function DetailSidebarCard({ title, icon: Icon, count, action, variant = 
       </div>
       {children}
     </section>
+  );
+}
+
+/** Link de volta para a lista da seção, no mesmo formato em todas as páginas de detalhe. */
+export function DetailBackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link href={href} className="inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+      <ArrowLeft size={14} aria-hidden="true" /> {label}
+    </Link>
+  );
+}
+
+/** Esqueleto de carregamento com a mesma largura e cabeçalho da página final. */
+export function DetailPageSkeleton({ sidebar = true }: { sidebar?: boolean }) {
+  return (
+    <div className="min-h-full" aria-busy="true" aria-label="Carregando">
+      <div className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+        <div className="mx-auto max-w-[1280px] animate-pulse space-y-4 px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+          <div className="h-4 w-24 rounded bg-black/[.06]" />
+          <div className="h-10 w-72 max-w-full rounded bg-black/[.06]" />
+          <div className="h-4 w-48 rounded bg-black/[.05]" />
+        </div>
+      </div>
+      <div className={`mx-auto grid max-w-[1280px] animate-pulse gap-6 px-4 py-7 sm:px-6 lg:px-10 ${sidebar ? "lg:grid-cols-[minmax(0,1fr)_300px]" : ""}`}>
+        <div className="space-y-4">{[0, 1, 2].map(index => <div key={index} className="h-32 rounded bg-black/[.04]" />)}</div>
+        {sidebar && <div className="hidden space-y-4 lg:block">{[0, 1].map(index => <div key={index} className="h-40 rounded bg-black/[.04]" />)}</div>}
+      </div>
+    </div>
+  );
+}
+
+/** Registro inexistente, removido ou sem acesso: explica e devolve à lista. */
+export function DetailNotFound({ title, description, backHref, backLabel }: { title: string; description?: string; backHref: string; backLabel: string }) {
+  return (
+    <div className="min-h-full">
+      <div className="mx-auto max-w-[1280px] px-4 pt-6 sm:px-6 lg:px-10 lg:pt-9">
+        <DetailBackLink href={backHref} label={backLabel} />
+        <div className="py-20 text-center">
+          <p className="text-[15px] font-semibold text-black/45">{title}</p>
+          <p className="mt-1.5 text-[13px] text-black/30">{description ?? "O registro pode ter sido removido ou você não tem acesso a ele."}</p>
+        </div>
+      </div>
+    </div>
   );
 }

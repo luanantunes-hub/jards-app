@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Check, RotateCcw, Settings2, X } from "lucide-react";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { OUTCOME_LABELS, nextDecision, type RenewalDecisionAnswers, type RenewalDecisionNode, type RenewalDecisionOutcome } from "@/lib/customer-success/renewalDecisionTree";
 
 type EvaluationState = {
@@ -83,6 +84,7 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
   const currentId = value.currentNodeId ?? (value.status === "nao_avaliada" ? tree[0]?.id : null);
   const viewportRef = useRef<HTMLElement>(null);
   const focusId = value.outcome ? `outcome:${value.outcome}` : currentId;
+  useModalDismiss(onClose, { enabled: open });
 
   useEffect(() => {
     if (!open || !focusId) return;

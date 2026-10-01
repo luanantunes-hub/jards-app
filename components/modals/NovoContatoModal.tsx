@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import {
   Briefcase, Building2, ChevronDown, Link, Mail, MessageCircle,
   Phone, Plus, Save, ShieldCheck, Sparkles, User, UserRound, X,
@@ -9,6 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type EmpresaCRM = { id: string; nome: string };
 type SearchOpt = { id: string; nome: string };
@@ -81,6 +82,8 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
   const organizationId = useOrganizationId();
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
   const [showMore, setShowMore] = useState(false);
   const [nome, setNome] = useState(initialNome ?? "");
   const [cargo, setCargo] = useState(initialCargo ?? "");
@@ -195,20 +198,20 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
   }
 
   return <div className="fixed inset-0 z-50 flex flex-col items-center bg-black/45" onClick={onClose}>
-    <div className="flex max-h-[calc(100dvh-20px)] w-full max-w-[560px] flex-col overflow-hidden rounded-b border-x border-b border-black/[.07] bg-white shadow-[0_16px_45px_rgba(13,13,13,.15)]" onClick={event => event.stopPropagation()}>
+    <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[calc(100dvh-20px)] w-full max-w-[560px] flex-col overflow-hidden rounded-b border-x border-b border-black/[.07] bg-white shadow-[0_16px_45px_rgba(13,13,13,.15)]" onClick={event => event.stopPropagation()}>
       <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-5 py-4">
-        <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><User size={16} className="text-black/50" /></div><div><h2 className="text-[15px] font-bold text-black">Novo contato</h2><p className="mt-0.5 text-[10px] text-black/35">Cadastre quem participa da relação comercial</p></div></div>
+        <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><User size={16} className="text-black/50" /></div><div><h2 id={titleId} className="text-[15px] font-bold text-black">Novo contato</h2><p className="mt-0.5 text-[10px] text-black/35">Cadastre quem participa da relação comercial</p></div></div>
         <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]"><X size={15} className="text-black/40" /></button>
       </header>
 
-      <main className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+      <main className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5">
         <section className="space-y-4">
           <p className="text-[9px] font-bold uppercase tracking-widest text-black/30">Informações principais</p>
           <Field icon={User} label="Nome completo" value={nome} onChange={setNome} placeholder="Nome do contato" required />
           <div>
             <div className="mb-1.5 flex items-center justify-between"><label className="flex items-center gap-1.5 text-[12px] font-semibold text-black"><Building2 size={12} className="text-black/35" />Vínculo</label>{vinculoTipo === "empresa_crm" && !criandoEmpresa && <button type="button" onClick={() => setCriandoEmpresa(true)} className="flex items-center gap-1 text-[11px] font-medium text-black/40 transition hover:text-black"><Plus size={11}/>Nova empresa</button>}</div>
             <div className="mb-2 flex items-center rounded bg-white p-px">{VINCULO_OPTS.map((option, index) => { const selected = vinculoTipo === option.value; return <button key={option.value} type="button" onClick={() => changeVinculo(option.value)} className={`relative h-9 flex-1 border text-[11px] font-medium transition first:rounded-l last:rounded-r ${index > 0 ? "-ml-px" : ""} ${selected ? "z-10 border-[#7259B5] text-[#7259B5]" : "border-black/10 text-black/40 hover:bg-black/[.03]"}`}>{option.label}</button>; })}</div>
-            {vinculoTipo === "empresa_crm" && (criandoEmpresa ? <div className="flex gap-2"><input autoFocus value={novaEmpresaNome} onChange={event => setNovaEmpresaNome(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void handleCriarEmpresa(); if (event.key === "Escape") setCriandoEmpresa(false); }} placeholder="Nome da nova empresa" className="h-10 min-w-0 flex-1 rounded border border-black/[.15] px-3 text-[13px] outline-none focus:border-[#7259B5]"/><button type="button" onClick={() => void handleCriarEmpresa()} disabled={criandoEmpresaLoading || !novaEmpresaNome.trim()} className="rounded border border-black/10 px-3 text-[11px] font-semibold disabled:opacity-40">{criandoEmpresaLoading ? "Criando…" : "Criar"}</button><button type="button" onClick={() => { setCriandoEmpresa(false); setNovaEmpresaNome(""); }} aria-label="Cancelar nova empresa" className="flex h-10 w-10 items-center justify-center rounded text-black/35 hover:bg-black/[.04]"><X size={13}/></button></div> : <CustomDropdown value={empresaId} onChange={setEmpresaId} options={empresas.map(empresa => ({ value: empresa.id, label: empresa.nome }))} placeholder="Selecionar empresa…" icon={<Building2 size={13}/>} compact portalZIndex={100} className="w-full [&>button]:h-10 [&>button]:w-full"/>)}
+            {vinculoTipo === "empresa_crm" && (criandoEmpresa ? <div className="flex gap-2"><input autoFocus value={novaEmpresaNome} onChange={event => setNovaEmpresaNome(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void handleCriarEmpresa(); if (event.key === "Escape") { event.preventDefault(); setCriandoEmpresa(false); } }} placeholder="Nome da nova empresa" className="h-10 min-w-0 flex-1 rounded border border-black/[.15] px-3 text-[13px] outline-none focus:border-[#7259B5]"/><button type="button" onClick={() => void handleCriarEmpresa()} disabled={criandoEmpresaLoading || !novaEmpresaNome.trim()} className="rounded border border-black/10 px-3 text-[11px] font-semibold disabled:opacity-40">{criandoEmpresaLoading ? "Criando…" : "Criar"}</button><button type="button" onClick={() => { setCriandoEmpresa(false); setNovaEmpresaNome(""); }} aria-label="Cancelar nova empresa" className="flex h-10 w-10 items-center justify-center rounded text-black/35 hover:bg-black/[.04]"><X size={13}/></button></div> : <CustomDropdown value={empresaId} onChange={setEmpresaId} options={empresas.map(empresa => ({ value: empresa.id, label: empresa.nome }))} placeholder="Selecionar empresa…" icon={<Building2 size={13}/>} compact portalZIndex={100} className="w-full [&>button]:h-10 [&>button]:w-full"/>)}
             {(vinculoTipo === "proponente" || vinculoTipo === "captador") && <div ref={entityRef} className="relative"><div className="flex h-10 items-center gap-2 rounded border border-black/[.15] px-3 focus-within:border-[#7259B5]"><Building2 size={13} className="text-black/35"/><input value={entityQuery} onChange={event => { setEntityQuery(event.target.value); setEntityId(""); setEntityNome(""); setEntityOpen(true); }} onFocus={() => setEntityOpen(true)} placeholder={vinculoTipo === "proponente" ? "Buscar proponente…" : "Buscar captador…"} className="min-w-0 flex-1 bg-transparent text-[12px] outline-none"/></div>{entityOpen && <PortalMenu position={entityMenuPos}>{entityOptions.length ? entityOptions.map(option => <button key={option.id} type="button" onMouseDown={event => { event.preventDefault(); setEntityId(option.id); setEntityNome(option.nome); setEntityQuery(option.nome); setEntityOpen(false); }} className="block w-full px-3 py-2 text-left text-[12px] font-medium hover:bg-black/[.04]">{option.nome}</button>) : <p className="px-3 py-2 text-[11px] text-black/30">Nenhum resultado</p>}</PortalMenu>}</div>}
           </div>
           <Field icon={Briefcase} label="Cargo" value={cargo} onChange={setCargo} placeholder="Ex.: Gerente de Marketing" />
@@ -224,7 +227,7 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
         <section className="border-t border-black/[.07] pt-3"><button type="button" onClick={() => setShowMore(value => !value)} aria-expanded={showMore} className="flex w-full items-center justify-between rounded px-1 py-2 text-[12px] font-semibold text-black/50 transition hover:text-black/75"><span>Mais opções</span><ChevronDown size={13} className={`transition-transform ${showMore ? "rotate-180" : ""}`}/></button>{showMore && <div className="mt-2 grid gap-4 pb-1 sm:grid-cols-2"><Field icon={Link} label="LinkedIn" value={linkedin} onChange={setLinkedin} placeholder="linkedin.com/in/…"/><div><label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-black"><Sparkles size={12} className="text-black/35"/>Origem</label><CustomDropdown value={origem} onChange={setOrigem} options={ORIGEM_OPTIONS} compact placement="top" portalZIndex={100} className="w-full [&>button]:h-10 [&>button]:w-full"/></div></div>}</section>
       </main>
 
-      <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-black/[.08] px-5 py-3.5">{erro ? <p role="alert" className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div/>}<div className="ml-auto flex shrink-0 items-center gap-2"><button type="button" onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button><button type="button" onClick={() => void handleSalvar()} disabled={saving || !nome.trim()} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#27752B] active:translate-y-px disabled:opacity-50"><Save size={12}/>{saving ? "Salvando…" : "Salvar contato"}</button></div></footer>
+      <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-black/[.08] px-5 py-3.5">{erro ? <p role="alert" className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div/>}<div className="ml-auto flex shrink-0 items-center gap-2"><button type="button" onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button><button type="button" onClick={() => void handleSalvar()} disabled={saving || !nome.trim()} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"><Save size={12}/>{saving ? "Salvando…" : "Salvar contato"}</button></div></footer>
     </div>
   </div>;
 }

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import {
   X, Save, Building2, Plus, FolderOpen,
 } from "lucide-react";
@@ -10,6 +10,7 @@ import { NovoProponenteModal } from "@/components/modals/NovoProponenteModal";
 import { PROJECT_ICON_COLORS, PROJECT_ICON_OPTIONS } from "@/components/ui/ProjectIdentity";
 import { IdentityEditor } from "@/components/ui/IdentityEditor";
 import { BRAZIL_STATES, SPONSORSHIP_TYPE_OPTIONS, sponsorshipTypeLabel } from "@/lib/projects/sponsorship";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 export type EditDataProjeto = {
   id: string;
@@ -77,6 +78,8 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
   const organizationId = useOrganizationId();
   const [saving, setSaving] = useState(false);
   const [erro, setErro]     = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
   const savedProjectIdRef = useRef<string | null>(editData?.id ?? null);
 
   const [nome, setNome]           = useState(editData?.nome ?? "");
@@ -148,14 +151,18 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Buscar proponentes
+  // Buscar proponentes — restrito à organização atual (auth_org_ids() devolve
+  // todas as orgs do usuário, não só a ativa; sem esse filtro apareciam
+  // proponentes de outras organizações do mesmo usuário).
   useEffect(() => {
     const q = proponenteQuery.trim();
     if (!proponenteOpen && q === proponenteNome) return;
+    if (!organizationId) return;
     const timer = setTimeout(async () => {
       const query = supabase
         .from("proponentes")
         .select("id, nome, cidade, estado")
+        .eq("organization_id", organizationId)
         .order("nome")
         .limit(8);
       if (q) query.ilike("nome_key", `%${q.toLowerCase()}%`);
@@ -164,7 +171,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
     }, 200);
     return () => clearTimeout(timer);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [proponenteQuery, proponenteOpen]);
+  }, [proponenteQuery, proponenteOpen, organizationId]);
 
   function selectProponente(p: ProponenteOption) {
     setProponenteId(p.id);
@@ -274,6 +281,11 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
       identidade_tipo: identidadeTipo,
       identidade_valor: identidadeTipo === "icone" || identidadeTipo === "emoji" ? identidadeValor || null : null,
       identidade_cor: identidadeTipo === "icone" ? identidadeCor : null,
+      // Mantém a URL atual só quando o tipo continua "logo" (o bloco abaixo
+      // sobrescreve se houver arquivo novo); qualquer outro tipo limpa o
+      // campo, para não deixar uma URL de logo obsoleta associada a um
+      // projeto que já não usa logo como identidade.
+      ...(identidadeTipo === "logo" ? {} : { identidade_logo_url: null }),
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -289,10 +301,10 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
       const projectId = result.data.id as string;
       const path = `${organizationId}/${projectId}/logo.png`;
       const { error: uploadError } = await supabase.storage.from("projetos-identidade").upload(path, logoFile, { upsert: true, contentType: "image/png" });
-      if (uploadError) { setSaving(false); setErro(uploadError.message); return; }
+      if (uploadError) { setSaving(false); setErro(`Projeto salvo, mas não foi possível salvar o logotipo: ${uploadError.message}`); return; }
       const { data: publicUrl } = supabase.storage.from("projetos-identidade").getPublicUrl(path);
       const { error: logoError } = await sb.from("projetos_crm").update({ identidade_logo_url: publicUrl.publicUrl }).eq("id", projectId);
-      if (logoError) { setSaving(false); setErro(logoError.message); return; }
+      if (logoError) { setSaving(false); setErro(`Projeto salvo, mas não foi possível salvar o logotipo: ${logoError.message}`); return; }
     }
 
     setSaving(false);
@@ -309,6 +321,9 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
         aria-hidden={showNovoProponente || undefined}
       >
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
           className="bg-white rounded shadow-2xl w-full flex flex-col"
           style={{ maxWidth: 600, maxHeight: "calc(100vh - 48px)" }}
           onClick={e => e.stopPropagation()}
@@ -319,15 +334,15 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
               <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
                 <FolderOpen size={16} />
               </span>
-              <h2 className="text-[15px] font-bold text-black">{editData ? "Editar projeto" : "Novo projeto"}</h2>
+              <h2 id={titleId} className="text-[15px] font-bold text-black">{editData ? "Editar projeto" : "Novo projeto"}</h2>
             </div>
-            <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
+            <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
               <X size={15} className="text-black/40" />
             </button>
           </header>
 
           {/* Body */}
-          <main className="flex-1 overflow-y-auto">
+          <main className="min-h-0 flex-1 overflow-y-auto">
 
             {/* — Identidade + Nome — */}
             <section className="px-6 py-5 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
@@ -515,7 +530,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     <div className="flex justify-end">
                       <button type="button" onClick={addIncentivoLocal}
                         disabled={!incentivoNome.trim() || !incentivoEstado || (incentivoEscopo === "municipal" && !incentivoCidade.trim())}
-                        className="rounded bg-[#2E8932] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#267529] disabled:opacity-35">
+                        className="rounded bg-[#2E8932] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">
                         Adicionar
                       </button>
                     </div>
@@ -539,13 +554,13 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
 
           {/* Footer */}
           <footer className="flex flex-shrink-0 items-center justify-between border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            {erro ? <p className="mr-4 min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+            {erro ? <p role="alert" className="mr-4 min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
             <div className="ml-auto flex flex-shrink-0 items-center gap-2">
               <button onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">
                 Cancelar
               </button>
               <button onClick={handleSalvar} disabled={saving}
-                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#267529] active:translate-y-px disabled:opacity-60">
+                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
                 <Save size={12} /> {saving ? "Salvando…" : "Salvar projeto"}
               </button>
             </div>

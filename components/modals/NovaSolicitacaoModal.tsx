@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import { X, ArrowRightLeft, Building2, User, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 /* -------------------------------------------------------------------------- */
 /*                                  TYPES                                     */
@@ -48,6 +49,8 @@ interface NovaSolicitacaoModalProps {
 export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSolicitacaoModalProps) {
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose, { enabled: open });
 
   const [atribuicoes, setAtribuicoes] = useState<AtribuicaoParaTransferencia[]>([]);
   const [membros, setMembros] = useState<Membro[]>([]);
@@ -182,28 +185,31 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="bg-white rounded shadow-2xl w-full overflow-hidden flex flex-col"
         style={{ maxWidth: 520, maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded flex items-center justify-center" style={{ background: "rgba(114,89,181,0.08)" }}>
               <ArrowRightLeft size={16} style={{ color: "#7259B5" }} />
             </div>
-            <h2 className="text-[15px] font-bold text-black">Solicitar Transferência</h2>
+            <h2 id={titleId} className="text-[15px] font-bold text-black">Solicitar transferência</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/5 transition">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/5 transition">
             <X size={15} className="text-black/40" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-4 overflow-y-auto">
+        <div className="min-h-0 flex-1 p-6 space-y-4 overflow-y-auto">
           {/* Erro */}
           {erro && (
-            <div className="px-3 py-2 rounded text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+            <div role="alert" className="px-3 py-2 rounded text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
               {erro}
             </div>
           )}
@@ -217,7 +223,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
               className="w-full px-3 py-2 text-[13px] border rounded bg-white outline-none"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             >
-              <option value="">Selecione...</option>
+              <option value="">Selecione…</option>
               {atribuicoes.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.empresa_nome} — {TIPO_EXCLUSAO_LABELS[a.tipo_exclusividade] ?? a.tipo_exclusividade}
@@ -269,7 +275,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button
             onClick={onClose}
             className="px-4 py-2 text-[12px] font-medium text-black/35 hover:text-black/55 transition"
@@ -279,9 +285,9 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
           <button
             onClick={handleSalvar}
             disabled={saving || !atribuicaoId || !destinatarioId || !motivo.trim()}
-            className="px-5 py-2 text-[12px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
+            className="px-5 py-2 text-[12px] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {saving ? "Enviando..." : "Enviar Solicitação"}
+            {saving ? "Enviando…" : "Enviar solicitação"}
           </button>
         </div>
       </div>

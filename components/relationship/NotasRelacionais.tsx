@@ -80,7 +80,7 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
               Cancelar
             </button>
             <button type="button" onClick={() => void criarNota()} disabled={!novoTitulo.trim() || creating}
-              className="rounded bg-[#2E8932] px-3 text-[11px] font-bold text-white transition hover:bg-[#26732A] disabled:opacity-40">
+              className="rounded bg-[#2E8932] px-3 text-[11px] font-bold text-white transition hover:bg-[#26752A] disabled:opacity-40">
               Criar
             </button>
           </div>
@@ -88,7 +88,7 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
         </div>
       )}
       {loading ? (
-        <p className="py-12 text-center text-xs text-black/30">Carregando...</p>
+        <p className="py-12 text-center text-xs text-black/30">Carregando…</p>
       ) : notas.length === 0 ? (
         <div className="py-14 text-center"><p className="text-sm font-medium text-black/30">Nada registrado aqui ainda</p></div>
       ) : (

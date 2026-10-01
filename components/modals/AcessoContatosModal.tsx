@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import Image from "next/image";
 import { ArrowRight, CalendarDays, X } from "lucide-react";
 import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 export type AcessoContatosModalVariant = "sem_creditos" | "sem_plano" | "mcp_gpt";
 
@@ -58,20 +59,15 @@ export function AcessoContatosModal({
   const accent = semCreditos ? "#B07A14" : "#7259B5";
   const conteudo = CONTEUDO[variant];
 
+  useModalDismiss(onClose);
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div

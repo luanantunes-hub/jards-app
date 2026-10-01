@@ -1,8 +1,9 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useId } from "react";
 import { X, ClipboardCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type CaptacaoOption = { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null };
 type ProjetoOption  = { id: string; nome: string };
@@ -25,6 +26,9 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
   const [valorAprovado, setValorAprovado] = useState("");
   const [observacoes, setObservacoes] = useState("");
   const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   const [captacoes, setCaptacoes] = useState<CaptacaoOption[]>([]);
   const [projetos, setProjetos] = useState<ProjetoOption[]>([]);
@@ -55,6 +59,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
   async function handleSubmit() {
     if (!titulo.trim()) return;
     setSaving(true);
+    setErro(null);
 
     const { data: { user } } = await supabase.auth.getUser();
 
@@ -69,12 +74,16 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
     });
 
     setSaving(false);
-    if (!error) onSaved();
+    if (error) { setErro("Não foi possível criar a prestação de contas. Tente novamente."); return; }
+    onSaved();
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="bg-white rounded shadow-2xl w-full max-w-lg"
         onClick={e => e.stopPropagation()}
       >
@@ -84,9 +93,9 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
             <div className="w-7 h-7 rounded flex items-center justify-center" style={{ background: "#7259B514" }}>
               <ClipboardCheck size={14} className="text-[#7259B5]" />
             </div>
-            <h2 className="text-[14px] font-semibold text-[#0D0D0D]">Nova prestação de contas</h2>
+            <h2 id={titleId} className="text-[14px] font-semibold text-[#0D0D0D]">Nova prestação de contas</h2>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-black/5 transition text-black/35 hover:text-black/55">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-black/5 transition text-black/35 hover:text-black/55">
             <X size={15} />
           </button>
         </div>
@@ -109,7 +118,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
           {/* Captação */}
           <div>
             <label className="block text-[10px] font-bold uppercase tracking-wide text-black/40 mb-1.5">
-              Captação aprovada
+              Negociação aprovada
             </label>
             <Select
               value={captacaoId}
@@ -117,13 +126,13 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
               className={inputCls}
               style={{ ...inputStyle, color: captacaoId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
             >
-              <option value="">Selecionar captação</option>
+              <option value="">Selecionar negociação</option>
               {captacoes.map(c => (
                 <option key={c.id} value={c.id}>{c.titulo ?? "Sem título"} {c.lei ? `(${c.lei})` : ""}</option>
               ))}
             </Select>
             {captacoes.length === 0 && (
-              <p className="text-[10px] text-black/30 mt-1">Nenhuma captação com status "aprovado" encontrada.</p>
+              <p className="text-[10px] text-black/30 mt-1">Nenhuma negociação com status “aprovado” encontrada.</p>
             )}
           </div>
 
@@ -183,6 +192,8 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
               style={inputStyle}
             />
           </div>
+
+          {erro && <p role="alert" className="text-[12px] text-[#B23A3A]">{erro}</p>}
         </div>
 
         {/* Footer */}
@@ -193,8 +204,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
           <button
             onClick={handleSubmit}
             disabled={saving || !titulo.trim()}
-            className="flex items-center gap-1.5 px-5 py-2 text-[13px] font-semibold text-white rounded transition hover:opacity-90 disabled:opacity-40"
-            style={{ background: "#7259B5" }}
+            className="flex items-center gap-1.5 px-5 py-2 text-[13px] font-semibold text-white rounded bg-[#2E8932] transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
             Criar prestação

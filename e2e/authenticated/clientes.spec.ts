@@ -5,10 +5,10 @@ test("cria um novo cliente com uma empresa nova", async ({ page }) => {
   const nomeEmpresa = e2eName("Empresa Cliente");
 
   await page.goto("/contas-patrocinio");
-  await page.getByRole("button", { name: "Novo cliente" }).click();
+  await page.getByRole("button", { name: "Novo cliente" }).first().click();
   await page.getByPlaceholder("Buscar ou criar empresa…").fill(nomeEmpresa);
   await page.getByText(`Criar "${nomeEmpresa}"`).click();
-  await page.getByRole("button", { name: "Abrir conta" }).click();
+  await page.getByRole("button", { name: "Criar cliente" }).click();
 
   await expect(page.getByText(nomeEmpresa)).toBeVisible({ timeout: 10_000 });
 

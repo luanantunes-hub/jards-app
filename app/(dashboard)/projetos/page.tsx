@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, FolderOpen, Trash2, List, Columns3, CalendarDays, UserRound, Calendar, TrendingUp, Zap, FileText, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
@@ -18,7 +20,7 @@ const VIEW_OPTIONS = [
 ] as const;
 
 const PROJETOS_COLUMNS = [
-  { id: "projeto", label: "Projeto", width: "250px", hideable: false }, { id: "proponente", label: "Proponente", width: "190px" }, { id: "fase", label: "Fase", width: "125px" }, { id: "objetivo", label: "Objetivo", width: "125px" }, { id: "captado", label: "Captado", width: "125px" }, { id: "progresso", label: "Progresso", width: "150px" }, { id: "captacoes", label: "Captações", width: "105px" }, { id: "inscricoes", label: "Inscrições", width: "105px" }, { id: "prazo", label: "Próximo prazo", width: "145px" }, { id: "focal", label: "Ponto focal", width: "170px" }, { id: "atualizacao", label: "Atualização", width: "140px" }, { id: "acoes", label: "Ações", width: "80px" },
+  { id: "projeto", label: "Projeto", width: "250px", hideable: false }, { id: "proponente", label: "Proponente", width: "190px" }, { id: "fase", label: "Fase", width: "125px" }, { id: "objetivo", label: "Objetivo", width: "125px" }, { id: "captado", label: "Captado", width: "125px" }, { id: "progresso", label: "Progresso", width: "150px" }, { id: "captacoes", label: "Negociações", width: "105px" }, { id: "inscricoes", label: "Inscrições", width: "105px" }, { id: "prazo", label: "Próximo prazo", width: "145px" }, { id: "focal", label: "Ponto focal", width: "170px" }, { id: "atualizacao", label: "Atualização", width: "140px" }, { id: "acoes", label: "Ações", width: "80px" },
 ] as const satisfies readonly ColumnDefinition[];
 
 type ProjetoRow = {
@@ -162,6 +164,7 @@ function ProjectsPortfolioView({ projetos, onOpen }: { projetos: ProjetoRow[]; o
 
 export default function ProjetosPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
   const [projetos, setProjetos] = useState<ProjetoRow[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -172,15 +175,15 @@ export default function ProjetosPage() {
   const [faseFilter, setFaseFilter] = useState<"todas" | ProjetoRow["fase_codigo"]>("todas");
   const [showArquivados, setShowArquivados] = useState(false);
 
-  async function handleDelete(id: string, nome: string) {
-    if (!confirm(`Excluir projeto "${nome}"? Esta ação não pode ser desfeita.`)) return;
-    const snapshot = projetos;
-    setProjetos(prev => prev.filter(p => p.id !== id));
-    const { error } = await supabase.from("projetos_crm").delete().eq("id", id);
-    if (error) {
-      setProjetos(snapshot);
-      alert("Não foi possível excluir o projeto: " + error.message);
-    }
+  function handleDelete(id: string, nome: string) {
+    confirmDelete({
+      title: `Excluir o projeto “${nome}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "projetos_crm", id, { vinculado: "Este projeto ainda tem negociações, inscrições ou contratos vinculados. Arquive o projeto ou remova esses vínculos antes de excluí-lo." });
+        setProjetos(prev => prev.filter(p => p.id !== id));
+      },
+    });
   }
 
   async function fetchData() {
@@ -300,7 +303,7 @@ export default function ProjetosPage() {
               <FolderOpen size={22} className="text-black/25" />
             </div>
             <p className="text-[15px] font-semibold text-black/40 mb-1">Nenhum projeto ainda</p>
-            <p className="text-sm text-black/25 mb-5">Crie projetos para organizar suas captações e inscrições</p>
+            <p className="text-sm text-black/25 mb-5">Crie projetos para organizar suas negociações e inscrições</p>
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
@@ -329,8 +332,8 @@ export default function ProjetosPage() {
               <ManagedTable storageKey="projetos" definitions={PROJETOS_COLUMNS} className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
-                    {["Projeto", "Proponente", "Fase", "Objetivo", "Captado", "Progresso", "Captações", "Inscrições", "Próximo prazo", "Ponto focal", "Atualização", ""].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
+                    {["Projeto", "Proponente", "Fase", "Objetivo", "Captado", "Progresso", "Negociações", "Inscrições", "Próximo prazo", "Ponto focal", "Atualização", ""].map((h) => (
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -445,10 +448,10 @@ export default function ProjetosPage() {
 
                         {/* Ações */}
                         <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                             <button
                               onClick={e => { e.stopPropagation(); handleDelete(p.id, p.nome); }}
-                              className="p-1.5 rounded hover:bg-red-50 text-black/20 hover:text-red-500 transition"
+                              className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition"
                               title="Excluir"
                             >
                               <Trash2 size={13} />

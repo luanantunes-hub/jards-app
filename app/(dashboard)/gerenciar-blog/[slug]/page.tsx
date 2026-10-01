@@ -7,6 +7,8 @@ import {
   Check, AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { Select } from "@/components/ui/Select";
 
 // ─── Block types ────────────────────────────────────────────────────────────
@@ -82,7 +84,7 @@ function BlockEditor({
       onBlur={(e) => (e.currentTarget.style.borderColor = "transparent")}
     >
       {/* Move handle */}
-      <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-1 opacity-0 group-hover:opacity-100 transition">
+      <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
         <button
           onClick={onMoveUp}
           disabled={isFirst}
@@ -178,9 +180,9 @@ function BlockEditor({
       {/* Delete */}
       <button
         onClick={onDelete}
-        className="flex-shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 transition hover:bg-red-50"
+        className="flex-shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition hover:bg-[#D94E4E]/[.06]"
       >
-        <Trash2 size={13} className="text-red-400" />
+        <Trash2 size={13} className="text-[#D94E4E]/75" />
       </button>
     </div>
   );
@@ -192,6 +194,7 @@ export default function BlogEditorPage() {
   const router   = useRouter();
   const { slug: id } = useParams<{ slug: string }>();
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
 
   const [titulo, setTitulo]           = useState("");
   const [slug, setSlug]               = useState("");
@@ -293,11 +296,20 @@ export default function BlogEditorPage() {
     });
   };
 
-  async function handleDelete() {
-    if (!confirm("Apagar este post permanentemente?")) return;
-    setDeleting(true);
-    await (supabase as any).from("blog_posts").delete().eq("id", id);
-    router.push("/gerenciar-blog");
+  function handleDelete() {
+    confirmDelete({
+      title: "Excluir este post?",
+      description: "O post sai do blog público e não pode ser recuperado.",
+      onConfirm: async () => {
+        setDeleting(true);
+        try {
+          await excluirPorId(supabase, "blog_posts", id);
+        } finally {
+          setDeleting(false);
+        }
+        router.push("/gerenciar-blog");
+      },
+    });
   }
 
   const inputCls = "w-full px-3 py-2 rounded text-sm outline-none transition bg-white placeholder:text-black/25 focus:ring-1 focus:ring-[#7259B5]/30";
@@ -327,7 +339,7 @@ export default function BlogEditorPage() {
 
         <div className="flex items-center gap-2">
           {error && (
-            <span className="flex items-center gap-1 text-xs text-red-500">
+            <span className="flex items-center gap-1 text-xs text-[#D94E4E]">
               <AlertCircle size={12} /> {error}
             </span>
           )}
@@ -359,7 +371,7 @@ export default function BlogEditorPage() {
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="px-3 py-1.5 rounded text-sm transition hover:bg-red-50"
+            className="px-3 py-1.5 rounded text-sm transition hover:bg-[#D94E4E]/[.06]"
             style={{ color: "#D94E4E", border: "1px solid rgba(217,78,78,.20)" }}
           >
             <Trash2 size={13} />
@@ -482,7 +494,7 @@ export default function BlogEditorPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-black/50 mb-1">Image Alt Tag</label>
+            <label className="block text-xs font-medium text-black/50 mb-1">Texto alternativo da imagem</label>
             <input
               className={inputCls}
               style={inputStyle}

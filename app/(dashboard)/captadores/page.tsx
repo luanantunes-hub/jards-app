@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import PrioBadge from "@/components/ui/PrioBadge";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import AdicionarCaptadorModal from "@/components/modals/AdicionarCaptadorModal";
 import { ProjectIdentity, CAPTADOR_ICON_OPTIONS } from "@/components/ui/ProjectIdentity";
@@ -19,6 +21,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { calculateWeightedScore, CompactDecisionScoreRing } from "@/components/relationship/DecisionScorecard";
 import { ColumnManager, useColumnManager, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { ListPageHeader, ListSummary, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 
 /* -------------------------------------------------------------------------- */
 /*                                  TYPES                                     */
@@ -174,7 +177,7 @@ function SortableTeamHeader({
     <button
       type="button"
       onClick={() => onSort(sortKey)}
-      className={`group inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-black/35 transition hover:text-black/60 ${align === "right" ? "justify-self-end" : ""}`}
+      className={`group inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[.08em] text-black/35 transition hover:text-black/60 ${align === "right" ? "justify-self-end" : ""}`}
       aria-label={`Ordenar ${label} ${active && direction === "asc" ? "do maior para o menor" : "do menor para o maior"}`}
     >
       <span>{label}</span>
@@ -240,7 +243,7 @@ function CaptadoresList({
       <div className="flex items-center justify-end gap-1 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
         {captador.email && <a href={`mailto:${captador.email}`} onClick={event => event.stopPropagation()} className="flex h-7 w-7 items-center justify-center rounded text-black/25 transition hover:bg-black/[.04] hover:text-black/60" title="Enviar e-mail"><Mail size={13} /></a>}
         <button type="button" onClick={event => { event.stopPropagation(); onEdit(captador); }} className="flex h-7 w-7 items-center justify-center rounded text-black/25 transition hover:bg-black/[.04] hover:text-black/60" title="Editar captador"><Pencil size={13} /></button>
-        <button type="button" onClick={event => { event.stopPropagation(); onDelete(captador.id, captador.nome); }} className="flex h-7 w-7 items-center justify-center rounded text-black/20 transition hover:bg-red-50 hover:text-red-500" title="Excluir captador"><Trash2 size={13} /></button>
+        <button type="button" onClick={event => { event.stopPropagation(); onDelete(captador.id, captador.nome); }} className="flex h-7 w-7 items-center justify-center rounded text-black/20 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E]" title="Excluir captador"><Trash2 size={13} /></button>
       </div>
     );
   }
@@ -282,6 +285,7 @@ function CaptadoresList({
 
 export default function CaptadoresPage() {
   const supabase       = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router         = useRouter();
   const organizationId = useOrganizationId();
   const [activeTab, setActiveTab] = useState<Tab>("equipe");
@@ -414,10 +418,15 @@ export default function CaptadoresPage() {
     setLoadingEquipe(false);
   }, [organizationId, supabase]);
 
-  async function handleDeleteCaptador(id: string, nome: string) {
-    if (!confirm(`Excluir captador "${nome}"? Esta ação não pode ser desfeita.`)) return;
-    setCaptadores(prev => prev.filter(c => c.id !== id));
-    await supabase.from("captadores").delete().eq("id", id);
+  function handleDeleteCaptador(id: string, nome: string) {
+    confirmDelete({
+      title: `Excluir o captador “${nome}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "captadores", id, { vinculado: "Este captador ainda tem negociações ou atribuições vinculadas. Reatribua esses registros antes de excluí-lo." });
+        setCaptadores(prev => prev.filter(c => c.id !== id));
+      },
+    });
   }
 
   /* ---- Fetch Métricas ---- */
@@ -522,91 +531,54 @@ export default function CaptadoresPage() {
     <div className="flex flex-col h-full">
 
       {/* ── Header ── */}
-      <div className="flex-shrink-0 px-8 pt-8 pb-5 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="font-bold text-[#0D0D0D] text-[28px]">Captadores</h1>
-          </div>
-          <div className="flex items-center gap-3">
-            {/* Visualizações da equipe */}
-            {activeTab === "equipe" && !loadingEquipe && captadores.length > 0 && (
-              <div className="flex items-center border rounded overflow-hidden" style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                <button
-                  onClick={() => setTeamView("list")}
-                  className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition"
-                  style={{ background: teamView === "list" ? "#0D0D0D" : "transparent", color: teamView === "list" ? "white" : "rgba(13,13,13,.4)" }}
-                >
-                  <List size={12} /> Lista
-                </button>
-                <button
-                  onClick={() => setTeamView("cards")}
-                  className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition border-l"
-                  style={{ background: teamView === "cards" ? "#0D0D0D" : "transparent", color: teamView === "cards" ? "white" : "rgba(13,13,13,.4)", borderColor: "rgba(13,13,13,.12)" }}
-                >
-                  <LayoutGrid size={12} /> Cards
-                </button>
-              </div>
-            )}
+      <ListPageHeader
+        eyebrow="Rede de captação"
+        title="Captadores"
+        summary={activeTab === "equipe" && !loadingEquipe
+          ? <ListSummary strong={captadoresFiltrados.length}>{captadoresFiltrados.length === 1 ? "agência" : "agências"}</ListSummary>
+          : activeTab === "atribuicoes" && !loadingAtribuicoes
+            ? <ListSummary strong={atribuicoes.length}>{atribuicoes.length === 1 ? "atribuição" : "atribuições"}</ListSummary>
+            : null}
+        actions={<>
+          {activeTab === "equipe" && !loadingEquipe && captadores.length > 0 && (
+            <SegmentedControl
+              value={teamView}
+              onChange={setTeamView}
+              ariaLabel="Visualização da equipe"
+              options={[{ value: "list", label: "Lista", icon: List }, { value: "cards", label: "Cards", icon: LayoutGrid }] as const}
+            />
+          )}
+          {activeTab === "atribuicoes" && !loadingAtribuicoes && atribuicoes.length > 0 && (
+            <SegmentedControl
+              value={assignmentView}
+              onChange={setAssignmentView}
+              ariaLabel="Visualização das atribuições"
+              options={[{ value: "list", label: "Lista", icon: List }, { value: "cluster", label: "Cluster", icon: Network }] as const}
+            />
+          )}
+          {activeTab === "equipe" && (
+            <PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Nova agência</PrimaryListAction>
+          )}
+          {activeTab === "atribuicoes" && (
+            <PrimaryListAction onClick={() => { setEditData(null); setShowAtribuicaoModal(true); }}><Plus size={13} aria-hidden="true" /> Nova atribuição</PrimaryListAction>
+          )}
+        </>}
+      />
 
-            {/* Visualizações das atribuições */}
-            {activeTab === "atribuicoes" && !loadingAtribuicoes && atribuicoes.length > 0 && (
-              <div className="flex items-center overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                <button
-                  onClick={() => setAssignmentView("list")}
-                  className="flex items-center gap-1.5 px-3 py-2 text-[11px] font-semibold transition"
-                  style={{ background: assignmentView === "list" ? "#0D0D0D" : "transparent", color: assignmentView === "list" ? "white" : "rgba(13,13,13,.4)" }}
-                >
-                  <List size={12} /> Lista
-                </button>
-                <button
-                  onClick={() => setAssignmentView("cluster")}
-                  className="flex items-center gap-1.5 border-l px-3 py-2 text-[11px] font-semibold transition"
-                  style={{ background: assignmentView === "cluster" ? "#0D0D0D" : "transparent", color: assignmentView === "cluster" ? "white" : "rgba(13,13,13,.4)", borderColor: "rgba(13,13,13,.12)" }}
-                >
-                  <Network size={12} /> Cluster
-                </button>
-              </div>
-            )}
-
-            {activeTab === "equipe" && !loadingEquipe && (
-              <span className="text-sm text-black/40">
-                <span className="font-bold text-black">{captadoresFiltrados.length}</span> {captadoresFiltrados.length === 1 ? "agência" : "agências"}
-              </span>
-            )}
-            {activeTab === "equipe" && (
-              <button
-                onClick={() => setShowModal(true)}
-                className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium bg-white border rounded hover:bg-black/5 transition"
-                style={{ borderColor: "rgba(13,13,13,.12)" }}
-              >
-                <Plus size={14} /> Nova agência
-              </button>
-            )}
-            {activeTab === "atribuicoes" && (
-              <button onClick={() => { setEditData(null); setShowAtribuicaoModal(true); }}
-                className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
-                style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                <Plus size={14} /> Nova Atribuição
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex items-center gap-1 mt-6 -mb-px">
-          {TABS.map(({ key, label, icon: Icon }) => (
-            <button key={key} onClick={() => setActiveTab(key)}
-              className="flex items-center gap-2 px-4 py-2.5 text-[13px] font-medium border-b-2 transition"
-              style={{ borderColor: activeTab === key ? "#7259B5" : "transparent", color: activeTab === key ? "#7259B5" : "rgba(13,13,13,.4)" }}>
-              <Icon size={14} />
-              {label}
-            </button>
-          ))}
-        </div>
+      {/* Tabs */}
+      <div role="tablist" aria-label="Seções de captadores" className="flex shrink-0 items-center gap-1 overflow-x-auto border-b px-4 md:px-8" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        {TABS.map(({ key, label, icon: Icon }) => (
+          <button key={key} type="button" role="tab" aria-selected={activeTab === key} onClick={() => setActiveTab(key)}
+            className="-mb-px flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-[13px] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+            style={{ borderColor: activeTab === key ? "#7259B5" : "transparent", color: activeTab === key ? "#7259B5" : "rgba(13,13,13,.4)" }}>
+            <Icon size={14} aria-hidden="true" />
+            {label}
+          </button>
+        ))}
       </div>
 
       {/* ── Tab content ── */}
-      <div className="flex-1 overflow-x-hidden overflow-y-auto px-8 py-6">
+      <div className="flex-1 overflow-x-hidden overflow-y-auto px-4 py-5 md:px-8 md:py-6">
 
         {/* ═══ EQUIPE ═══ */}
         {activeTab === "equipe" && (
@@ -643,14 +615,14 @@ export default function CaptadoresPage() {
               <div className="rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)", background: "white" }}>
                 <div className="flex items-center gap-2 mb-4">
                   <Activity size={14} className="text-[#7259B5]" />
-                  <span className="text-[12px] font-bold text-black">Meu Painel</span>
+                  <span className="text-[12px] font-bold text-black">Meu painel</span>
                 </div>
-                <div className="grid grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                   {[
                     { label:"Score", value: `${metricas.score_atividade}`, sub:"/100", color: getScoreColor(metricas.score_atividade) },
                     { label:"Ativas", value: `${metricas.captações_ativas}`, sub: `${metricas.captações_ganhas} ganhas · ${metricas.captações_perdidas} perdidas`, color:"#7259B5" },
                     { label:"Em Risco", value: `${metricas.empresas_em_risco}`, sub:`${metricas.dias_sem_avanco}d sem avanço`, color: getRiskColor(metricas.dias_sem_avanco) },
-                    { label:"Minhas Empresas", value: `${metricas.empresas_atribuidas}`, sub:`${metricas.total_captações} captações total`, color:"#0D0D0D" },
+                    { label:"Minhas Empresas", value: `${metricas.empresas_atribuidas}`, sub:`${metricas.total_captações} negociações no total`, color:"#0D0D0D" },
                   ].map(m => (
                     <div key={m.label}>
                       <p className="text-[10px] font-bold uppercase tracking-widest text-black/30 mb-1">{m.label}</p>
@@ -684,7 +656,7 @@ export default function CaptadoresPage() {
                 <button onClick={() => setShowModal(true)}
                   className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                  <Plus size={14} /> Adicionar Agência
+                  <Plus size={14} /> Adicionar agência
                 </button>
               </div>
             ) : captadoresFiltrados.length === 0 && !loadingEquipe ? (
@@ -698,7 +670,7 @@ export default function CaptadoresPage() {
             ) : teamView === "cards" ? (
 
               /* Etiqueta estrutural: Lista CRM — captadores em cartões */
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {loadingEquipe
                   ? Array.from({ length: 6 }).map((_, i) => (
                     <div key={i} className="rounded border p-5 animate-pulse" style={{ borderColor: "rgba(13,13,13,.07)", background: "linear-gradient(145deg, #ffffff 0%, #f7f7f6 100%)" }}>
@@ -774,7 +746,7 @@ export default function CaptadoresPage() {
                             {c.email && (
                               <a
                                 href={`mailto:${c.email}`}
-                                className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                                 style={{ borderColor: "rgba(13,13,13,.15)" }}
                                 onClick={ev => ev.stopPropagation()}
                               >
@@ -782,14 +754,14 @@ export default function CaptadoresPage() {
                               </a>
                             )}
                             <button
-                              className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 transition-all duration-150"
+                              className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                               style={{ borderColor: "rgba(13,13,13,.15)" }}
                               onClick={ev => { ev.stopPropagation(); setEditingCaptador(c); }}
                             >
                               <Pencil size={11} /> Editar
                             </button>
                             <button
-                              className="inline-flex items-center gap-1.5 text-red-400 hover:text-red-600 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border border-red-200 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                              className="inline-flex items-center gap-1.5 text-[#D94E4E]/75 hover:text-[#D94E4E] text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border border-[#D94E4E]/25 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                               onClick={ev => { ev.stopPropagation(); handleDeleteCaptador(c.id, c.nome); }}
                             >
                               <Trash2 size={11} /> Excluir
@@ -901,9 +873,9 @@ export default function CaptadoresPage() {
                 />
               </div>
             ) : (
-              <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="grid grid-cols-[2fr_1.2fr_1fr_1fr_0.8fr_0.8fr_0.6fr] gap-4 px-5 py-3 border-b bg-black/[0.02]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                  {["Empresa","Captador","Exclusividade","Projeto","Status","Último Avanço","Ações"].map(h => (
+              <div className="bg-white rounded border overflow-x-auto" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                <div className="grid min-w-[860px] grid-cols-[2fr_1.2fr_1fr_1fr_0.8fr_0.8fr_0.6fr] gap-4 px-5 py-3 border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                  {["Empresa","Captador","Exclusividade","Projeto","Status","Último avanço","Ações"].map(h => (
                     <span key={h} className={`text-[10px] font-medium uppercase tracking-[.08em] text-black/35 ${h==="Ações"?"text-right":""}`}>{h}</span>
                   ))}
                 </div>
@@ -917,7 +889,7 @@ export default function CaptadoresPage() {
                       tabIndex={a.empresa_crm_id ? 0 : undefined}
                       onClick={() => { if (a.empresa_crm_id) router.push(`/empresas-crm/${a.empresa_crm_id}`); }}
                       onKeyDown={event => { if (a.empresa_crm_id && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); router.push(`/empresas-crm/${a.empresa_crm_id}`); } }}
-                      className={`grid grid-cols-[2fr_1.2fr_1fr_1fr_0.8fr_0.8fr_0.6fr] items-center gap-4 border-b px-5 py-4 transition last:border-b-0 hover:bg-black/[0.015] ${a.empresa_crm_id ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/30" : ""}`}
+                      className={`grid min-w-[860px] grid-cols-[2fr_1.2fr_1fr_1fr_0.8fr_0.8fr_0.6fr] items-center gap-4 border-b px-5 py-4 transition last:border-b-0 hover:bg-black/[0.015] ${a.empresa_crm_id ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/30" : ""}`}
                       style={{ borderColor: "rgba(13,13,13,.04)" }}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -943,8 +915,8 @@ export default function CaptadoresPage() {
                         <span className={`text-[12px] ${emRisco?"text-[#B07A14] font-semibold":"text-black/40"}`}>{formatDias(a.dias_sem_avanco)}</span>
                       </div>
                       <div className="flex items-center justify-end">
-                        <button onClick={(event) => { event.stopPropagation(); setEditData(a); setShowAtribuicaoModal(true); }} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/70 transition">
-                          <ArrowUpDown size={13} />
+                        <button type="button" aria-label="Editar atribuição" title="Editar atribuição" onClick={(event) => { event.stopPropagation(); setEditData(a); setShowAtribuicaoModal(true); }} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/70 transition focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                          <Pencil size={13} aria-hidden="true" />
                         </button>
                       </div>
                     </div>

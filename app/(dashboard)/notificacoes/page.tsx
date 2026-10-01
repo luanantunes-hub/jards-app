@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
+import { SegmentedControl } from "@/components/ui/FilterControls";
 
 type NotificationItem = {
   id: string;
@@ -235,14 +236,21 @@ export default function NotificacoesPage() {
   }
 
   if (loading) {
-    return <div className="flex h-64 items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-black/15 border-t-black/60" /></div>;
+    return (
+      <div className="mx-auto max-w-4xl animate-pulse px-4 py-6 md:px-8 md:py-8" aria-busy="true" aria-label="Carregando notificações">
+        <div className="h-3 w-24 rounded bg-black/[.06]" />
+        <div className="mt-2 h-7 w-48 rounded bg-black/[.06]" />
+        <div className="mt-8 space-y-2">{Array.from({ length: 5 }).map((_, index) => <div key={index} className="h-[76px] rounded border border-black/[.06] bg-black/[.02]" />)}</div>
+      </div>
+    );
   }
 
   return (
-    <div className="mx-auto max-w-4xl px-8 py-10">
-      <div className="flex items-start justify-between gap-6">
+    <div className="mx-auto max-w-4xl px-4 py-6 md:px-8 md:py-8">
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:gap-6">
         <div>
-          <h1 className="text-[22px] font-bold text-black">Notificações</h1>
+          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Central</p>
+          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D]">Notificações</h1>
           <p className="mt-1 text-[13px] text-black/40">
             {unread > 0 ? `${unread} não lida${unread === 1 ? "" : "s"}` : "Tudo em dia"}
           </p>
@@ -266,21 +274,15 @@ export default function NotificacoesPage() {
       {error && <div className="mt-6 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.05] px-4 py-3 text-[11px] text-[#A33A3A]">{error}</div>}
 
       <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-b border-black/[.08] pb-3">
-        <div className="flex items-center gap-2">
-          {(["todas", "nao_lidas"] as Filter[]).map(value => (
-            <button
-              type="button"
-              key={value}
-              onClick={() => setFilter(value)}
-              className="rounded px-3 py-1.5 text-[11px] font-semibold transition"
-              style={filter === value ? { background: "#7259B5", color: "white" } : { background: "rgba(13,13,13,.05)", color: "rgba(13,13,13,.48)" }}
-            >
-              {value === "todas" ? "Todas" : "Não lidas"}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          value={filter}
+          onChange={setFilter}
+          ariaLabel="Filtrar notificações"
+          options={[{ value: "todas", label: "Todas" }, { value: "nao_lidas", label: "Não lidas" }] as { value: Filter; label: string }[]}
+        />
         {categories.length > 1 && (
           <Select
+            block={false}
             aria-label="Filtrar por módulo"
             value={category}
             onChange={event => setCategory(event.target.value)}

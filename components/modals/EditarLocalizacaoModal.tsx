@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { X, MapPin, Plus, Save } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { EmpresaCrm } from "@/lib/supabase/types";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type Props = {
   empresa: EmpresaCrm;
@@ -37,6 +38,8 @@ export function EditarLocalizacaoModal({ empresa, onClose, onSaved }: Props) {
 
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   const cidadePreview = cidadeNome.trim() && cidadeUF.trim()
     ? `${cidadeNome.trim()}-${cidadeUF.trim().toUpperCase()}`
@@ -70,23 +73,26 @@ export function EditarLocalizacaoModal({ empresa, onClose, onSaved }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
       <div
-        className="flex w-full max-w-[480px] flex-col overflow-hidden rounded-b bg-white"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="flex max-h-[96dvh] w-full max-w-[480px] flex-col overflow-hidden rounded-b bg-white"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
         onClick={e => e.stopPropagation()}
       >
-        <header className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <header className="flex shrink-0 items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5">
               <MapPin size={16} className="text-black/50" />
             </div>
-            <h2 className="text-[15px] font-bold text-black">Localização e cidades</h2>
+            <h2 id={titleId} className="text-[15px] font-bold text-black">Localização e cidades</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />
           </button>
         </header>
 
-        <main className="px-5 py-5">
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
           <div className="mb-5">
             <FieldLabel>Sede</FieldLabel>
             <div className="flex gap-1.5">
@@ -145,7 +151,7 @@ export function EditarLocalizacaoModal({ empresa, onClose, onSaved }: Props) {
                   className={`w-16 text-center uppercase ${fieldClass}`}
                   style={fieldStyle}
                 />
-                <button type="button" onClick={addCidade} disabled={!cidadePreview}
+                <button type="button" onClick={addCidade} disabled={!cidadePreview} aria-label="Adicionar cidade"
                   className="flex w-10 items-center justify-center rounded border border-black/10 text-black/40 transition hover:bg-black/[.04] disabled:opacity-30">
                   <Plus size={14} />
                 </button>
@@ -157,15 +163,15 @@ export function EditarLocalizacaoModal({ empresa, onClose, onSaved }: Props) {
           </section>
         </main>
 
-        <footer className="flex items-center justify-between gap-4 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          {erro ? <p className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          {erro ? <p role="alert" className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <button type="button" onClick={onClose}
               className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">
               Cancelar
             </button>
             <button type="button" onClick={handleSalvar} disabled={saving}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26732A] active:translate-y-px disabled:opacity-60">
+              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
               <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
             </button>
           </div>

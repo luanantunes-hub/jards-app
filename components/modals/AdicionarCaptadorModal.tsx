@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import { X, UserPlus, Pencil, Check, Plus, User, ArrowUp, Minus, ArrowDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
@@ -8,6 +8,7 @@ import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import { CAPTADOR_ICON_OPTIONS, IDENTITY_COLORS } from "@/components/ui/ProjectIdentity";
 import type { IdentityType } from "@/components/ui/ProjectIdentity";
 import { IdentityEditor } from "@/components/ui/IdentityEditor";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type Prioridade = "alta" | "media" | "baixa";
 
@@ -181,24 +182,22 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
     onSaved(); onClose(); resetState();
   }
 
+  const titleId = useId();
+  useModalDismiss(handleClose, { enabled: open });
+
   if (!open) return null;
 
   return (
     <>
-      {showContatoModal && savedId && (
-        <NovoContatoModal
-          onClose={() => setShowContatoModal(false)}
-          onSaved={() => { setShowContatoModal(false); fetchContatos(savedId); }}
-          captadorPreId={savedId}
-        />
-      )}
-
       <div
-        className="fixed inset-0 z-40 flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4"
         style={{ background: "rgba(0,0,0,.45)" }}
         onClick={handleClose}
       >
         <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={titleId}
           className="bg-white rounded shadow-2xl w-full overflow-hidden flex flex-col"
           style={{ maxWidth: 560, maxHeight: "90vh" }}
           onClick={e => e.stopPropagation()}
@@ -209,11 +208,11 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
               <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
                 {isEdit ? <Pencil size={15} /> : <UserPlus size={16} />}
               </div>
-              <h2 className="text-[15px] font-bold text-black">
-                {isEdit ? "Editar Agência" : step === "form" ? "Adicionar Agência" : "Agência Cadastrada"}
+              <h2 id={titleId} className="text-[15px] font-bold text-black">
+                {isEdit ? "Editar agência" : step === "form" ? "Adicionar agência" : "Agência cadastrada"}
               </h2>
             </div>
-            <button onClick={handleClose} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/5 transition">
+            <button type="button" onClick={handleClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/5 transition">
               <X size={15} className="text-black/40" />
             </button>
           </div>
@@ -380,7 +379,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
               <button
                 onClick={handleSalvar}
                 disabled={saving || !nome.trim()}
-                className="rounded bg-[#2E8932] px-5 py-2 text-[12px] font-medium text-white transition hover:bg-[#26772B] disabled:opacity-35"
+                className="rounded bg-[#2E8932] px-5 py-2 text-[12px] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-35 disabled:cursor-not-allowed"
               >
                 {saving ? "Salvando…" : isEdit ? "Salvar alterações" : "Cadastrar agência"}
               </button>
@@ -388,6 +387,14 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
           </div>
         </div>
       </div>
+
+      {showContatoModal && savedId && (
+        <NovoContatoModal
+          onClose={() => setShowContatoModal(false)}
+          onSaved={() => { setShowContatoModal(false); fetchContatos(savedId); }}
+          captadorPreId={savedId}
+        />
+      )}
     </>
   );
 }

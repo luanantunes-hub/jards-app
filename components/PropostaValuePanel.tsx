@@ -211,7 +211,7 @@ export function PropostaValuePanel({
         <button disabled={salvandoDesfecho} onClick={() => setShowNegociarProposta(true)} className="rounded px-2 py-1.5 text-[11px] font-semibold text-[#7259B5] transition hover:bg-[#7259B5]/10 disabled:opacity-40">Negociar</button>
         <button disabled={salvandoDesfecho} onClick={handleRecusar} className="rounded px-2 py-1.5 text-[11px] font-semibold text-[#D94E4E] transition hover:bg-[#D94E4E]/10 disabled:opacity-40">Recusar</button>
       </div>
-      {erroDesfecho && <p className="mt-1 max-w-sm text-[10px] font-medium text-red-600">{erroDesfecho}</p>}
+      {erroDesfecho && <p className="mt-1 max-w-sm text-[10px] font-medium text-[#B23A3A]">{erroDesfecho}</p>}
       {showNegociarProposta && (
         <PropostaOperacionalModal
           projetoId={projetoId}

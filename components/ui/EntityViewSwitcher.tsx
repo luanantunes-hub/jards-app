@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ElementType } from "react";
+import { SegmentedControl } from "@/components/ui/FilterControls";
 
 export type EntityViewOption<T extends string> = {
   value: T;
@@ -30,6 +31,11 @@ export function usePersistedViewMode<T extends string>(
   return [value, update] as const;
 }
 
+/**
+ * Alternador Lista/Kanban/Mapa… das páginas de entidade. Usa o mesmo controle
+ * segmentado dos filtros, para que "selecionado" tenha uma única aparência
+ * (contorno roxo, como pede o DESIGN.md) em todo o produto.
+ */
 export function EntityViewSwitcher<T extends string>({
   value,
   onChange,
@@ -41,29 +47,5 @@ export function EntityViewSwitcher<T extends string>({
   options: readonly EntityViewOption<T>[];
   ariaLabel?: string;
 }) {
-  return (
-    <div
-      className="inline-flex h-9 items-center rounded border border-black/10 bg-white p-0.5"
-      role="group"
-      aria-label={ariaLabel}
-    >
-      {options.map(({ value: optionValue, label, icon: Icon }) => {
-        const active = value === optionValue;
-        return (
-          <button
-            key={optionValue}
-            type="button"
-            aria-pressed={active}
-            onClick={() => onChange(optionValue)}
-            className={`flex h-8 items-center gap-1.5 whitespace-nowrap rounded px-2.5 text-[11px] font-semibold transition active:scale-[.98] ${
-              active ? "bg-[#0D0D0D] text-white" : "text-black/45 hover:bg-black/[.04] hover:text-black/70"
-            }`}
-          >
-            <Icon size={12} strokeWidth={1.8} />
-            {label}
-          </button>
-        );
-      })}
-    </div>
-  );
+  return <SegmentedControl value={value} onChange={onChange} options={options} ariaLabel={ariaLabel} />;
 }

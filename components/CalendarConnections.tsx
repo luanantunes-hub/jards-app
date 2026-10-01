@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState, type JSX } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, CalendarDays, Check, Unplug } from "lucide-react";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { CalendarProvider } from "@/lib/supabase/types";
 import { Select } from "@/components/ui/Select";
 
@@ -44,6 +45,7 @@ function MicrosoftMark() {
 export function CalendarConnections() {
   const router = useRouter();
   const organizationId = useOrganizationId();
+  const { confirmDelete } = useDeleteConfirm();
 
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState<CalendarProvider | null>(null);
@@ -104,22 +106,31 @@ export function CalendarConnections() {
     window.location.href = `/api/calendar/${provider}/start${q}`;
   }
 
-  async function disconnect(provider: CalendarProvider) {
-    if (!confirm("Desconectar esta conta de calendário?")) return;
-    setBusy(provider);
-    setErro(null);
-    const res = await fetch("/api/calendar/disconnect", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ provider }),
+  function disconnect(provider: CalendarProvider) {
+    confirmDelete({
+      title: "Desconectar esta conta de calendário?",
+      description: "As atividades deixam de ser sincronizadas com esta agenda. Os eventos já criados permanecem nela.",
+      confirmLabel: "Desconectar",
+      pendingLabel: "Desconectando…",
+      illustration: false,
+      onConfirm: async () => {
+        setBusy(provider);
+        setErro(null);
+        try {
+          const res = await fetch("/api/calendar/disconnect", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ provider }),
+          });
+          const json = await res.json().catch(() => ({})) as { error?: string };
+          if (!res.ok) throw new Error(json.error ?? "Falha ao desconectar");
+          setSucesso(provider === "google" ? "Google desconectado" : "Microsoft desconectada");
+          await load();
+        } finally {
+          setBusy(null);
+        }
+      },
     });
-    const json = await res.json() as { error?: string };
-    if (!res.ok) setErro(json.error ?? "Falha ao desconectar");
-    else {
-      setSucesso(provider === "google" ? "Google desconectado" : "Microsoft desconectada");
-      await load();
-    }
-    setBusy(null);
   }
 
   async function loadCalendars(provider: CalendarProvider) {

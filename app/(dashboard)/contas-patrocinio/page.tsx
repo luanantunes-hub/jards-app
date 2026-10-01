@@ -3,15 +3,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Building2, Clock, AlertTriangle, Trash2, List, PanelsTopLeft,
-  HeartPulse, RefreshCw, TrendingUp, Eye, CalendarDays, UserRound, Plus,
+  HeartPulse, RefreshCw, TrendingUp, Eye, CalendarDays, UserRound, UserRoundCheck, Plus, Search,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { NovaContaClienteModal } from "@/components/modals/NovaContaClienteModal";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import type { ContaPatrocinio, SaudeConta } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
-import { ListContent, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar } from "@/components/list/ListPagePrimitives";
+import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 
 type ViewMode = "lista" | "carteira";
@@ -200,7 +202,7 @@ function classifyPortfolio(account: Omit<ContaRow, "portfolio_lane" | "portfolio
   return {
     portfolio_lane: "acompanhar" as const,
     portfolio_reason: account.status !== "ativa"
-      ? STATUS_LABEL[account.status]?.label ?? "Conta sem atividade"
+      ? STATUS_LABEL[account.status]?.label ?? "Cliente sem atividade"
       : account.health_readings === 0
         ? "Saúde ainda não avaliada"
         : nextActivity?.data
@@ -268,6 +270,7 @@ function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]
 
 export default function ContasPatrocinioPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
 
   const [contas, setContas] = useState<ContaRow[]>([]);
@@ -428,24 +431,21 @@ export default function ContasPatrocinioPage() {
     emRisco:  contas.filter(c => c.portfolio_lane === "intervir").length,
   };
 
-  async function handleDelete(conta: ContaRow) {
+  function handleDelete(conta: ContaRow) {
     const nome = conta.nome || conta.empresa_crm?.nome || "este cliente";
-    if (!confirm(`Excluir "${nome}"? Contratos e planos de ativação vinculados também serão removidos. Esta ação não pode ser desfeita.`)) return;
-
-    setDeletingId(conta.id);
-    const { data, error } = await supabase
-      .from("contas_patrocinio")
-      .delete()
-      .eq("id", conta.id)
-      .select("id")
-      .maybeSingle();
-    setDeletingId(null);
-
-    if (error || !data) {
-      alert(error?.message || "Não foi possível excluir o cliente. Verifique suas permissões e tente novamente.");
-      return;
-    }
-    setContas(current => current.filter(item => item.id !== conta.id));
+    confirmDelete({
+      title: `Excluir o cliente “${nome}”?`,
+      description: "Contratos e planos de ativação vinculados também serão removidos. Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setDeletingId(conta.id);
+        try {
+          await excluirPorId(supabase, "contas_patrocinio", conta.id);
+        } finally {
+          setDeletingId(null);
+        }
+        setContas(current => current.filter(item => item.id !== conta.id));
+      },
+    });
   }
 
   return (
@@ -489,23 +489,25 @@ export default function ContasPatrocinioPage() {
       {/* Lista e carteira operacional compartilham busca e filtros */}
       <ListContent className={viewMode === "carteira" ? "" : "md:pr-0"}>{viewMode === "carteira" ? (
         filtered.length === 0 && !loading ? (
-          <div className="py-24 text-center"><Building2 size={28} className="mx-auto mb-2 text-black/15"/><p className="text-sm font-medium text-black/35">{contas.length === 0 ? "Nenhuma conta criada" : "Nenhum resultado para os filtros"}</p></div>
+          contas.length === 0
+            ? <ListEmptyState icon={UserRoundCheck} title="Nenhum cliente cadastrado" description="Clientes surgem de negociações aprovadas ou podem ser cadastrados diretamente." action={<PrimaryListAction onClick={() => setShowNovoCliente(true)}><Plus size={13} aria-hidden="true" /> Novo cliente</PrimaryListAction>} />
+            : <ListEmptyState icon={Search} title="Nenhum cliente corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setStatusFilter("todas"); setSpecialFilter("todas"); }} />
         ) : <CustomerPortfolio accounts={filtered} loading={loading} onOpen={id => router.push(`/contas-patrocinio/${id}`)}/>
       ) : <ListTableSurface className="!overflow-visible rounded-r-none border-r-0">
         <ManagedTable storageKey="contas-patrocinio-v2" definitions={CONTAS_COLUMNS} className="w-full">
           <thead>
             <tr className="border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Empresa</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Status</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Saúde</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Responsável</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Contratos</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Valor Total</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Próx. Renovação</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Última interação</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Adicionado em</th>
-              <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Atualizado em</th>
-              <th className="px-5 py-3 text-left text-[11px] font-bold uppercase tracking-wide text-black/35">Ações</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Empresa</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Status</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Saúde</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Responsável</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Contratos</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Valor Total</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Próx. Renovação</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Última interação</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Adicionado em</th>
+              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Atualizado em</th>
+              <th className="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/35">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -519,11 +521,10 @@ export default function ContasPatrocinioPage() {
               ))
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-5 py-12 text-center">
-                  <Building2 size={28} className="mx-auto text-black/15 mb-2" />
-                  <p className="text-sm text-black/35 font-medium">
-                    {contas.length === 0 ? "Nenhuma conta criada" : "Nenhum resultado para a busca"}
-                  </p>
+                <td colSpan={11}>
+                  {contas.length === 0
+                    ? <ListEmptyState icon={UserRoundCheck} title="Nenhum cliente cadastrado" description="Clientes surgem de negociações aprovadas ou podem ser cadastrados diretamente." action={<PrimaryListAction onClick={() => setShowNovoCliente(true)}><Plus size={13} aria-hidden="true" /> Novo cliente</PrimaryListAction>} />
+                    : <ListEmptyState icon={Search} title="Nenhum cliente corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setStatusFilter("todas"); setSpecialFilter("todas"); }} />}
                 </td>
               </tr>
             ) : (
@@ -633,7 +634,7 @@ export default function ContasPatrocinioPage() {
                         type="button"
                         disabled={deletingId === c.id}
                         onClick={(event) => { event.stopPropagation(); void handleDelete(c); }}
-                        className="flex h-7 w-7 items-center justify-center rounded text-black/25 opacity-100 transition hover:bg-red-50 hover:text-red-500 disabled:cursor-wait disabled:opacity-30 md:opacity-0 md:group-hover:opacity-100"
+                        className="flex h-7 w-7 items-center justify-center rounded text-black/25 opacity-100 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] disabled:cursor-wait disabled:opacity-30 md:opacity-0 md:group-hover:opacity-100"
                         title="Excluir cliente"
                         aria-label={`Excluir ${c.nome || c.empresa_crm?.nome || "cliente"}`}
                       >

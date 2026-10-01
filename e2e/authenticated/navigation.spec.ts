@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 const PAGES: { path: string; heading: string }[] = [
-  { path: "/dashboard", heading: "Painel" },
+  { path: "/dashboard", heading: "Visão geral" },
   { path: "/atividades", heading: "Atividades" },
   { path: "/projetos", heading: "Projetos" },
   { path: "/patrocinadores", heading: "Patrocinadores" },

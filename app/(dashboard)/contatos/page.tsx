@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   Plus, Mail, Phone, X, ArrowUpDown, Trash2,
-  List, UsersRound, ShieldCheck, Radio, Wrench, CalendarX2,
+  List, UsersRound, ShieldCheck, Radio, Wrench, CalendarX2, ContactRound, Search,
 } from "lucide-react";
 
 function LinkedinIcon({ size = 13 }: { size?: number }) {
@@ -15,13 +15,15 @@ function LinkedinIcon({ size = 13 }: { size?: number }) {
   );
 }
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import type { OrigemContato } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
-import { ListContent, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 
 type ViewMode = "lista" | "stakeholders";
@@ -234,6 +236,7 @@ function StakeholdersView({ contatos }: { contatos: ContatoRow[] }) {
 
 export default function ContatosPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
 
   const [contatos, setContatos] = useState<ContatoRow[]>([]);
@@ -309,10 +312,15 @@ export default function ContatosPage() {
 
   const hasFilters = search || origem !== "todos" || roleFilter !== "todos" || withoutInteraction;
 
-  async function handleDelete(id: string, nome: string) {
-    if (!confirm(`Excluir contato "${nome}"? Esta ação não pode ser desfeita.`)) return;
-    setContatos(prev => prev.filter(c => c.id !== id));
-    await supabase.from("contatos").delete().eq("id", id);
+  function handleDelete(id: string, nome: string) {
+    confirmDelete({
+      title: `Excluir o contato “${nome}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "contatos", id);
+        setContatos(prev => prev.filter(c => c.id !== id));
+      },
+    });
   }
 
   async function refetch() {
@@ -404,7 +412,7 @@ export default function ContatosPage() {
                 {["Nome", "Empresa", "Cargo", "Papel", "Relacionamento", "Última interação", "Contato", "Origem", "Adicionado em", "Atualizado em", ""].map((h) => (
                   <th
                     key={h}
-                    className="px-6 py-3 text-left text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap"
+                    className="px-6 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap"
                   >
                     {h === "Nome" ? <SortableContactHeader label="NOME" sortKey="nome" sort={sort} onChange={setSort} />
                       : h === "Empresa" ? <SortableContactHeader label="EMPRESA" sortKey="empresa" sort={sort} onChange={setSort} />
@@ -419,8 +427,12 @@ export default function ContatosPage() {
                 Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-5 py-20 text-center text-sm text-black/35">
-                    Nenhum contato encontrado
+                  <td colSpan={11}>
+                    {contatos.length === 0 ? (
+                      <ListEmptyState icon={ContactRound} title="Nenhum contato cadastrado" description="Cadastre as pessoas com quem você negocia para acompanhar influência, interações e próximos passos." action={<PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Novo contato</PrimaryListAction>} />
+                    ) : (
+                      <ListEmptyState icon={Search} title="Nenhum contato corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setOrigem("todos"); setRoleFilter("todos"); setWithoutInteraction(false); }} />
+                    )}
                   </td>
                 </tr>
               ) : (
@@ -521,10 +533,10 @@ export default function ContatosPage() {
 
                       {/* Ações */}
                       <td className="px-6 py-3.5">
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                           <button
                             onClick={e => { e.stopPropagation(); handleDelete(c.id, c.nome ?? "—"); }}
-                            className="p-1.5 rounded hover:bg-red-50 text-black/20 hover:text-red-500 transition"
+                            className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition"
                             title="Excluir"
                           >
                             <Trash2 size={13} />

@@ -12,6 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useCreditos } from "@/contexts/CreditosContext";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import NovoMembroModal from "@/components/modals/NovoMembroModal";
 import { CalendarConnections } from "@/components/CalendarConnections";
 import { McpConnectionCard } from "@/components/McpConnectionCard";
@@ -75,6 +76,7 @@ export default function ConfiguracoesPage() {
   const router = useRouter();
   const organizationId = useOrganizationId();
   const { creditos, config, assinatura, loading: loadingCreditos, recarregar } = useCreditos();
+  const { confirmDelete } = useDeleteConfirm();
 
   const [loading, setLoading] = useState(true);
   const [membros, setMembros] = useState<MembroOrg[]>([]);
@@ -339,21 +341,32 @@ const { data: perfilData } = await (supabase as any)
     setSalvando(false);
   }
 
-  async function handleRemoverMembro(userId: string) {
+  function handleRemoverMembro(userId: string) {
     if (!organizationId) return;
-    if (!confirm("Remover este membro da organização?")) return;
-    setSalvando(true);
-    setErro(null);
-    const response = await fetch(`/api/members/${encodeURIComponent(userId)}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ organization_id: organizationId }),
+    confirmDelete({
+      title: "Remover este membro da organização?",
+      description: "A pessoa perde o acesso imediatamente. Os registros criados por ela continuam na organização.",
+      confirmLabel: "Remover",
+      pendingLabel: "Removendo…",
+      illustration: false,
+      onConfirm: async () => {
+        setSalvando(true);
+        setErro(null);
+        try {
+          const response = await fetch(`/api/members/${encodeURIComponent(userId)}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ organization_id: organizationId }),
+          });
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(body.error ?? "Não foi possível remover o membro");
+          showSuccess("Membro removido");
+          await loadMembers();
+        } finally {
+          setSalvando(false);
+        }
+      },
     });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) { setErro(body.error ?? "Não foi possível remover o membro"); }
-    else { showSuccess("Membro removido"); }
-    if (response.ok) await loadMembers();
-    setSalvando(false);
   }
 
   async function handleAlterarPapel(userId: string, novoPapel: string) {
@@ -613,7 +626,7 @@ const { data: perfilData } = await (supabase as any)
       <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
         <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <CreditCard size={14} className="text-black/30" />
-          <span className="text-[12px] font-bold text-black">Plano & Créditos</span>
+          <span className="text-[12px] font-bold text-black">Plano e créditos</span>
           <span className="ml-auto text-[11px] font-semibold px-2 py-0.5 rounded" style={{ background: "#7259B515", color: "#7259B5" }}>
             {PLANO_LABEL[assinatura?.plano ?? "gratuito"] ?? assinatura?.plano ?? "Gratuito"}
           </span>
@@ -719,12 +732,12 @@ const { data: perfilData } = await (supabase as any)
         <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
           <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <Eye size={14} className="text-black/30" />
-            <span className="text-[12px] font-bold text-black">Visibilidade da Equipe</span>
+            <span className="text-[12px] font-bold text-black">Visibilidade da equipe</span>
           </div>
           <div className="p-6 space-y-6">
             {/* Captações */}
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-widest text-black/30 mb-3">Quem vê as captações?</p>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-black/30 mb-3">Quem vê as negociações?</p>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   onClick={() => handleUpdateVisibilidade("admin_only")}
@@ -742,7 +755,7 @@ const { data: perfilData } = await (supabase as any)
                     <p className="text-[12px] font-semibold" style={{ color: config?.visibilidade_captacoes === "admin_only" ? "#7259B5" : "#0D0D0D" }}>
                       Só seus próprios
                     </p>
-                    <p className="text-[10px] text-black/40 mt-0.5">Captador vê apenas suas captações</p>
+                    <p className="text-[10px] text-black/40 mt-0.5">Captador vê apenas suas negociações</p>
                   </div>
                   {config?.visibilidade_captacoes === "admin_only" && <Check size={14} style={{ color: "#7259B5" }} className="flex-shrink-0 mt-1" />}
                 </button>
@@ -821,12 +834,12 @@ const { data: perfilData } = await (supabase as any)
       </div>
       )}
 
-      {/* Contribuições Pendentes (admin only) */}
+      {/* Contribuições pendentes (admin only) */}
       {activeSection === "equipe" && isAdmin && contribuicoesPendentes.length > 0 && (
         <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
           <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <MessageSquare size={14} className="text-black/30" />
-            <span className="text-[12px] font-bold text-black">Contribuições Pendentes</span>
+            <span className="text-[12px] font-bold text-black">Contribuições pendentes</span>
             <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#B07A14]/10 text-[#B07A14]">
               {contribuicoesPendentes.length}
             </span>
@@ -890,7 +903,7 @@ const { data: perfilData } = await (supabase as any)
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <div className="flex items-center gap-2">
             <Users size={14} className="text-black/30" />
-            <span className="text-[12px] font-bold text-black">Membros da Equipe</span>
+            <span className="text-[12px] font-bold text-black">Membros da equipe</span>
             <span className="text-[10px] text-black/30 font-medium ml-1">({membros.length})</span>
           </div>
           {isAdmin && (
