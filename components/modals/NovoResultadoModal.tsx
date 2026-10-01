@@ -196,7 +196,7 @@ export function NovoResultadoModal({
           </div>
 
           {erro && (
-            <p role="alert" className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{erro}</p>
+            <p role="alert" className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] text-[#B23A3A]">{erro}</p>
           )}
         </div>
 

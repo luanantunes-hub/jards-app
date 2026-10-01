@@ -179,7 +179,7 @@ function CampoItem({
         </button>
         <button
           onClick={handleDelete}
-          className="flex items-center gap-1.5 text-[10.5px] font-semibold text-black/30 hover:text-red-500 transition"
+          className="flex items-center gap-1.5 text-[10.5px] font-semibold text-black/30 hover:text-[#D94E4E] transition"
         >
           <Trash2 size={10} /> Deletar
         </button>

@@ -311,7 +311,7 @@ function WorkflowContactPicker({ def, contacts, saving, onCancel, onConfirm }: {
 
         <footer className="flex items-center justify-end gap-2 border-t px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={onCancel} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
-          <button disabled={saving} onClick={() => onConfirm(contactId || null)} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26732A] active:translate-y-px disabled:opacity-60">
+          <button disabled={saving} onClick={() => onConfirm(contactId || null)} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60">
             <Save size={12} /> {saving ? "Criando…" : "Confirmar"}
           </button>
         </footer>
@@ -413,7 +413,7 @@ function EntryForm(props: { kind: FormKind; editing: boolean; title:string; deta
           {props.error ? <p className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{props.error}</p> : <div />}
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <button onClick={props.onCancel} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
-            <button disabled={!props.title.trim()||props.saving} onClick={props.onSave} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26732A] active:translate-y-px disabled:opacity-60">
+            <button disabled={!props.title.trim()||props.saving} onClick={props.onSave} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60">
               <Save size={12} /> {props.saving ? "Salvando…" : "Salvar"}
             </button>
           </div>

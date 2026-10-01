@@ -80,7 +80,7 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
               Cancelar
             </button>
             <button type="button" onClick={() => void criarNota()} disabled={!novoTitulo.trim() || creating}
-              className="rounded bg-[#2E8932] px-3 text-[11px] font-bold text-white transition hover:bg-[#26732A] disabled:opacity-40">
+              className="rounded bg-[#2E8932] px-3 text-[11px] font-bold text-white transition hover:bg-[#26752A] disabled:opacity-40">
               Criar
             </button>
           </div>
