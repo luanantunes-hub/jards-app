@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { X, Target } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 function formatDecimalBR(value: string | number | null | undefined) {
   if (value === null || value === undefined || value === "") return "";
@@ -35,6 +36,8 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
   const [valor, setValor] = useState(formatDecimalBR(valorAtual));
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   async function handleSalvar() {
     setSaving(true); setErro(null);
@@ -50,23 +53,23 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div className="w-full overflow-hidden rounded bg-white shadow-2xl" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white shadow-2xl" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
               <Target size={15} />
             </div>
-            <h2 className="text-[15px] font-bold text-black">Editar objetivo</h2>
+            <h2 id={titleId} className="text-[15px] font-bold text-black">Editar objetivo</h2>
           </div>
-          <button onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />
           </button>
         </div>
 
         <div className="space-y-3 px-5 py-5">
           {erro && (
-            <div className="rounded px-3 py-2 text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+            <div role="alert" className="rounded px-3 py-2 text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
               {erro}
             </div>
           )}
@@ -93,7 +96,7 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
           <button
             onClick={handleSalvar}
             disabled={saving}
-            className="rounded bg-[#2E8932] px-5 py-2 text-[12px] font-medium text-white transition hover:bg-[#26772B] disabled:opacity-40"
+            className="rounded bg-[#2E8932] px-5 py-2 text-[12px] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? "Salvando…" : "Salvar"}
           </button>

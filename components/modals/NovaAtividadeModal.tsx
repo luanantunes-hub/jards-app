@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import {
   X, Plus, Mail, Phone, Users, Calendar, MoreHorizontal,
   ChevronDown, Check, CalendarDays, CheckSquare,
@@ -14,9 +14,10 @@ import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { NovoProponenteModal } from "@/components/modals/NovoProponenteModal";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import type { Prioridade, TipoAtividade } from "@/lib/supabase/types";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 const VINCULO_CREATE_LABEL: Partial<Record<VinculoTipo, string>> = {
-  captacao:   "Criar nova captação",
+  captacao:   "Criar nova negociação",
   inscricao:  "Criar nova inscrição",
   empresa:    "Criar nova empresa",
   projeto:    "Criar novo projeto",
@@ -46,7 +47,7 @@ function vinculoOpcao(id: string, d: { titulo?: string | null; projeto?: string 
 }
 
 const VINCULO_OPTIONS: { key: VinculoTipo; label: string; color: string }[] = [
-  { key: "captacao",   label: "Captação",   color: "#7259B5" },
+  { key: "captacao",   label: "Negociação", color: "#7259B5" },
   { key: "inscricao",  label: "Inscrição",  color: "#2D72B0" },
   { key: "empresa",    label: "Empresa",    color: "#1A8B7A" },
   { key: "projeto",    label: "Projeto",    color: "#B07A14" },
@@ -89,6 +90,8 @@ export function NovaAtividadeModal({
   const [visible, setVisible] = useState(false);
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   useEffect(() => {
     requestAnimationFrame(() => requestAnimationFrame(() => setVisible(true)));
@@ -336,34 +339,37 @@ export function NovaAtividadeModal({
     >
       {/* Panel — grudado no topo */}
       <div
-        className="bg-white overflow-hidden rounded-b flex flex-col w-full max-w-[720px]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        className="bg-white overflow-hidden rounded-b flex max-h-[96dvh] flex-col w-full max-w-[720px]"
         style={{
           borderBottom: "1px solid rgba(13,13,13,.08)",
           boxShadow: "0 8px 32px rgba(0,0,0,.10)",
           borderLeft: "1px solid rgba(13,13,13,.06)",
           borderRight: "1px solid rgba(13,13,13,.06)",
-          transform: visible ? "translateY(0)" : "translateY(-100%)",
+          transform: visible ? "none" : "translateY(-100%)",
           transition: "transform 260ms cubic-bezier(.32,.72,0,1)",
         }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-8 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-between px-8 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded bg-black/5 flex items-center justify-center">
               <Plus size={14} className="text-black/50" />
             </div>
-            <h2 className="text-[14px] font-bold text-black">Nova atividade</h2>
+            <h2 id={titleId} className="text-[14px] font-bold text-black">Nova atividade</h2>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={14} className="text-black/40" />
           </button>
         </div>
 
         {/* Body — 2 colunas */}
-        <div className="px-8 pt-5 pb-4">
+        <div className="min-h-0 flex-1 overflow-y-auto px-8 pt-5 pb-4">
           {erro && (
-            <div className="text-[12px] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
+            <div role="alert" className="text-[12px] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
               {erro}
             </div>
           )}
@@ -464,7 +470,7 @@ export function NovaAtividadeModal({
                 <Dropdown
                   value={vinculoId}
                   options={vinculoOptions}
-                  placeholder={`Selecionar ${VINCULO_OPTIONS.find(o => o.key === vinculoTipo)?.label.toLowerCase()}...`}
+                  placeholder={`Selecionar ${VINCULO_OPTIONS.find(o => o.key === vinculoTipo)?.label.toLowerCase()}…`}
                   onChange={setVinculoId}
                   open={openDropdown === "vinculo"}
                   onToggle={() => setOpenDropdown(openDropdown === "vinculo" ? null : "vinculo")}
@@ -576,13 +582,13 @@ export function NovaAtividadeModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-8 py-3.5 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-end gap-3 px-8 py-3.5 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={onClose} className="text-xs font-semibold text-black/35 hover:text-black/55 transition">
             Cancelar
           </button>
           <button onClick={handleSave} disabled={saving || !nome.trim()}
-            className="rounded border border-[#2E8932] bg-[#2E8932] px-4 py-2 text-xs font-medium text-white transition hover:bg-[#26772B] disabled:opacity-40">
-            {saving ? "Salvando..." : "Criar atividade"}
+            className="rounded border border-[#2E8932] bg-[#2E8932] px-4 py-2 text-xs font-medium text-white transition hover:border-[#26752A] hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">
+            {saving ? "Salvando…" : "Criar atividade"}
           </button>
         </div>
       </div>
@@ -635,21 +641,43 @@ function Dropdown({
   onCreateClick?: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     }
-    if (open) document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    function handleScroll(e: Event) {
+      if (!ref.current?.contains(e.target as Node)) onClose();
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+      document.addEventListener("scroll", handleScroll, true);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("scroll", handleScroll, true);
+    };
   }, [open, onClose]);
+
+  function handleToggle() {
+    const rect = ref.current?.getBoundingClientRect();
+    if (!open && rect) {
+      const spaceBelow = window.innerHeight - rect.bottom - 4;
+      setMenuStyle(spaceBelow >= Math.min(192, rect.top - 4)
+        ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
+        : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
+    }
+    onToggle();
+  }
 
   const selected = options.find(o => o.id === value);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" onKeyDown={e => { if (open && e.key === "Escape") { e.preventDefault(); onClose(); } }}>
       <button
-        onClick={onToggle}
+        type="button"
+        onClick={handleToggle}
         className="w-full flex items-center justify-between border rounded px-3 py-2.5 text-[13px] text-left transition hover:border-[#7259B5]/40"
         style={{
           borderColor: open ? "#7259B5" : "rgba(13,13,13,.15)",
@@ -668,7 +696,7 @@ function Dropdown({
       </button>
 
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border rounded shadow-lg max-h-48 overflow-y-auto" style={{ borderColor: "rgba(13,13,13,.1)" }}>
+        <div className="fixed z-[999] bg-white border rounded shadow-lg max-h-48 overflow-y-auto" style={{ ...menuStyle, borderColor: "rgba(13,13,13,.1)" }}>
           {value && (
             <button
               onClick={() => { onChange(null); onClose(); }}

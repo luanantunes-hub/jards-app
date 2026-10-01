@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { UserPlus, X } from "@phosphor-icons/react";
 import { useEffect, useRef } from "react";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type Props = {
   quantity: number;
@@ -16,21 +17,16 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
     ? "1 usuário extra disponível"
     : `${quantity} usuários extras disponíveis`;
 
+  useModalDismiss(onClose);
+
   useEffect(() => {
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     actionRef.current?.focus();
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
-      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [onClose]);
+  }, []);
 
   return (
     <div
@@ -78,7 +74,7 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
             ref={actionRef}
             type="button"
             onClick={onInvite}
-            className="mt-7 inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded bg-[#2E8932] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#27772B] focus:outline-none focus:ring-2 focus:ring-[#2E8932]/30 focus:ring-offset-2 active:scale-[.99] sm:w-fit"
+            className="mt-7 inline-flex w-full items-center justify-center gap-2 whitespace-nowrap rounded bg-[#2E8932] px-5 py-3 text-sm font-bold text-white transition hover:bg-[#26752A] focus:outline-none focus:ring-2 focus:ring-[#2E8932]/30 focus:ring-offset-2 active:scale-[.99] sm:w-fit"
           >
             <UserPlus size={16} weight="bold" />
             Convidar membros

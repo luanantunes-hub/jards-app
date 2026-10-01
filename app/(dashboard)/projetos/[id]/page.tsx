@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AlignLeft, ArrowLeft, Check, ChevronDown, FolderOpen, Pencil, Plus, Calendar, BarChart2, TrendingUp, Users, FileText, Eye, ImageIcon, ImagePlus, FileSpreadsheet, BriefcaseBusiness, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { EditarObjetivoModal } from "@/components/modals/EditarObjetivoModal";
 import { NovoResultadoModal, type EditDataResultado } from "@/components/modals/NovoResultadoModal";
@@ -388,23 +389,10 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
   useEffect(() => { fetchAll(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) {
-    return (
-      <div className="px-8 pt-8">
-        <div className="h-5 w-32 bg-black/8 rounded animate-pulse mb-6" />
-        <div className="h-8 w-64 bg-black/8 rounded animate-pulse mb-2" />
-        <div className="h-4 w-48 bg-black/8 rounded animate-pulse" />
-      </div>
-    );
-  }
+  if (loading) return <DetailPageSkeleton />;
 
   if (!projeto) {
-    return (
-      <div className="px-8 pt-8 text-center">
-        <p className="text-[14px] text-black/40">Projeto não encontrado.</p>
-        <Link href="/projetos" className="mt-2 inline-block text-[14px] text-black/40 hover:text-black/60 transition">← Voltar</Link>
-      </div>
-    );
+    return <DetailNotFound title="Projeto não encontrado" backHref="/projetos" backLabel="Projetos" />;
   }
 
   const captadoAprovado = captacoes
@@ -750,7 +738,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
       <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}>
        <nav aria-label="Seções do projeto" className="mx-auto flex max-w-[1280px] items-center gap-1.5 overflow-x-auto px-4 py-3 sm:px-6 lg:px-10">
         <TabBtn active={tab === "overview"} onClick={() => setTab("overview")} icon={<Eye size={12} />}>
-          Resumo
+          Visão geral
         </TabBtn>
         <TabBtn active={tab === "captacao"} onClick={() => setTab("captacao")} icon={<BarChart2 size={12} />}>
           Captação
@@ -911,7 +899,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             {/* Quick stats */}
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded border bg-black/[.025] px-4 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[10px] font-medium text-black/35">Captações ativas</p>
+                <p className="text-[10px] font-medium text-black/35">Negociações ativas</p>
                 <p className="mt-1.5 text-[22px] font-semibold text-black/70 tabular-nums">{captacoes.filter(item => !["aprovado","recusado"].includes(item.status)).length}</p>
               </div>
               <div className="rounded border bg-black/[.025] px-4 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>

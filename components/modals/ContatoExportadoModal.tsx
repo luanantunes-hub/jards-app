@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowRight, Check } from "lucide-react";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }: {
   contatoId: string;
@@ -10,6 +11,7 @@ export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }:
   onClose: () => void;
 }) {
   const router = useRouter();
+  useModalDismiss(onClose);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 px-3" onClick={onClose}>

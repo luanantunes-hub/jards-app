@@ -631,11 +631,14 @@ export default function DashboardPage() {
   const modulePosition = (id: DashboardModuleId) => dashboardPreferences.preferences.find((item) => item.id === id)?.position ?? 99;
 
   return (
-    <div className="px-8 py-8">
+    <div className="px-4 py-6 md:px-8 md:py-8">
 
       {/* Header */}
       <div className="mb-7 flex items-start justify-between gap-4">
-        <h1 className="font-bold text-[#0D0D0D] text-[26px]">Painel</h1>
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Gerenciamento</p>
+          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D]">Visão geral</h1>
+        </div>
         <DashboardCustomizer open={customizerOpen} onOpenChange={setCustomizerOpen} preferences={dashboardPreferences.preferences} onToggle={dashboardPreferences.toggle} onMove={dashboardPreferences.move} onReset={dashboardPreferences.reset} />
       </div>
 
@@ -803,23 +806,23 @@ export default function DashboardPage() {
 
               {Object.keys(tempoPorEstagio).length > 0 && (
                 <p className="text-[10px] text-black/30">
-                  ~ dias: tempo mediano que as captações passam em cada estágio
+                  ~ dias: tempo mediano que as negociações passam em cada estágio
                 </p>
               )}
             </div>
           </div>
         ))}
 
-        {/* Captações estagnadas */}
+        {/* Negociações estagnadas */}
         {dashboardPreferences.isEnabled("risks") && (loading ? <BlockSkeleton h={250} /> : (
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Atenção</p>
-              <p className="text-[13px] font-semibold text-[#0D0D0D]">Captações estagnadas</p>
+              <p className="text-[13px] font-semibold text-[#0D0D0D]">Negociações estagnadas</p>
             </div>
 
             {stagnant.length === 0 ? (
-              <p className="px-5 py-12 text-xs text-black/25 text-center">Nenhuma captação estagnada</p>
+              <p className="px-5 py-12 text-xs text-black/25 text-center">Nenhuma negociação estagnada</p>
             ) : (
               <div className="divide-y divide-black/[.06]">
                 {stagnant.map((c) => {
@@ -1066,8 +1069,8 @@ export default function DashboardPage() {
           {ranking[rankingView].length === 0 ? (
             <p className="px-5 py-10 text-xs text-black/25 text-center">
               {rankingView === "equipe"
-                ? "O ranking aparece quando captações com responsável chegarem a aprovado ou recusado"
-                : "O ranking aparece quando captações com captador externo chegarem a aprovado ou recusado"}
+                ? "O ranking aparece quando negociações com responsável chegarem a aprovado ou recusado"
+                : "O ranking aparece quando negociações com captador externo chegarem a aprovado ou recusado"}
             </p>
           ) : (
             <>
@@ -1102,7 +1105,7 @@ export default function DashboardPage() {
                 ))}
               </div>
               <p className="px-5 py-3 border-t text-[10px] text-black/30" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                Ciclo = da abertura (ou retomada) da captação até aprovado/recusado. Ordenado pelo tempo mediano.
+                Ciclo = da abertura (ou retomada) da negociação até aprovado/recusado. Ordenado pelo tempo mediano.
               </p>
             </>
           )}

@@ -4,6 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, File, FileArchive, FileImage, FileSpreadsheet, FileText, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirDocumento } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { Select } from "@/components/ui/Select";
 
@@ -56,6 +58,7 @@ function DocumentIcon({ type, name }: { type: string | null; name: string }) {
 
 export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: { projetoId: string; captacoes: CaptacaoOption[]; inscricoes: InscricaoOption[] }) {
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [documentos, setDocumentos] = useState<ProjetoDocumento[]>([]);
@@ -155,13 +158,15 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
     if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
-  async function removeDocument(documento: ProjetoDocumento) {
-    if (!confirm(`Excluir “${documento.nome}”?`)) return;
-    const { error: storageError } = await supabase.storage.from("documentos").remove([documento.url]);
-    if (storageError) { setErro(storageError.message); return; }
-    const { error } = await (supabase as any).from("documentos").delete().eq("id", documento.id);
-    if (error) { setErro(error.message); return; }
-    await load();
+  function removeDocument(documento: ProjetoDocumento) {
+    confirmDelete({
+      title: `Excluir o documento “${documento.nome}”?`,
+      description: "O arquivo deixa de estar disponível para toda a equipe.",
+      onConfirm: async () => {
+        await excluirDocumento(supabase, documento);
+        await load();
+      },
+    });
   }
 
   const filtered = documentos.filter(item => `${item.nome} ${item.arquivo_nome ?? ""} ${item.categoria ?? ""}`.toLowerCase().includes(busca.toLowerCase()));
@@ -182,7 +187,7 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
         </div>
       )}
 
-      {erro && !showModal && <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{erro}</p>}
+      {erro && !showModal && <p className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] text-[#B23A3A]">{erro}</p>}
 
       {loading ? (
         <div className="space-y-2">{[1, 2, 3].map(item => <div key={item} className="h-16 animate-pulse rounded bg-black/[.035]" />)}</div>
@@ -205,7 +210,7 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
                   <p className="mt-0.5 truncate text-[10px] text-black/30">{category} · {formatSize(documento.tamanho)} · {formatDate(documento.created_at)}{captacao ? ` · ${captacao.empresaNome || captacao.titulo}` : inscricao ? ` · ${inscricao.titulo}` : " · Projeto"}</p>
                 </div>
                 <button onClick={() => void openDocument(documento)} title="Abrir" className="rounded p-2 text-black/25 transition hover:bg-[#7259B5]/10 hover:text-[#7259B5]"><Download size={13} /></button>
-                <button onClick={() => void removeDocument(documento)} title="Excluir" className="rounded p-2 text-black/20 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"><Trash2 size={13} /></button>
+                <button onClick={() => void removeDocument(documento)} title="Excluir" className="rounded p-2 text-black/20 opacity-0 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] group-hover:opacity-100"><Trash2 size={13} /></button>
               </div>
             );
           })}
@@ -226,7 +231,7 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
               {contextKind === "inscricao" && <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Inscrição</label><Select value={inscricaoId} onChange={event => setInscricaoId(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[12px] outline-none"><option value="">Selecione</option>{inscricoes.map(item => <option key={item.id} value={item.id}>{item.titulo}{item.complemento ? ` · ${item.complemento}` : ""}</option>)}</Select></div>}
               <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Descrição</label><textarea value={descricao} onChange={event => setDescricao(event.target.value)} rows={3} className="w-full resize-none rounded border border-black/[.12] px-3 py-2.5 text-[13px] outline-none focus:border-[#7259B5]/50" /></div>
               <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Arquivo</label><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-20 w-full items-center justify-center gap-2 rounded border border-dashed border-black/[.14] px-4 text-[12px] text-black/40 transition hover:bg-black/[.02]"><Upload size={15} /> {file ? file.name : "Selecionar arquivo"}</button><input ref={inputRef} type="file" className="hidden" onChange={event => { const selected = event.target.files?.[0]; if (selected) chooseFile(selected); }} /><p className="mt-1.5 text-[10px] text-black/25">Qualquer formato, até 50 MB.</p></div>
-              {erro && <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{erro}</p>}
+              {erro && <p className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] text-[#B23A3A]">{erro}</p>}
             </div>
             <div className="flex items-center justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button onClick={closeModal} className="text-[12px] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button onClick={() => void save()} disabled={saving || !file || !titulo.trim()} className="rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></div>
           </div>

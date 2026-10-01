@@ -1,13 +1,16 @@
 "use client";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { Check, FileCheck2, Plus, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { CotaPatrocinio, Proposta, StatusProposta } from "@/lib/supabase/types";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { formatCotaValor, valorForaDaFaixa } from "@/lib/cotas";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type CaseOption = { id: string; titulo: string; complemento?: string | null };
 
@@ -55,6 +58,7 @@ export function PropostaOperacionalModal({
   onSaved: () => void;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
   const initialKind = fixedCase?.kind ?? (proposta?.edital_user_id ? "edital" : "negociacao");
   const [titulo, setTitulo] = useState(proposta?.titulo ?? `${projetoNome} — adaptação comercial`);
@@ -67,6 +71,8 @@ export function PropostaOperacionalModal({
   const [status, setStatus] = useState(proposta?.status === "aceita" || proposta?.status === "arquivada" ? proposta.status : "rascunho");
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   const cotaBase = cotas.find(item => item.id === cotaId) ?? null;
   const selectedOptions = caseKind === "negociacao" ? captacoes : inscricoes;
@@ -127,23 +133,28 @@ export function PropostaOperacionalModal({
     onClose();
   }
 
-  async function remove() {
-    if (!proposta || !confirm("Excluir esta adaptação comercial?")) return;
-    const { error } = await (supabase as any).from("propostas").delete().eq("id", proposta.id);
-    if (error) { setErro(error.message); return; }
-    onSaved();
-    onClose();
+  function remove() {
+    if (!proposta) return;
+    confirmDelete({
+      title: "Excluir esta adaptação comercial?",
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "propostas", proposta.id);
+        onSaved();
+        onClose();
+      },
+    });
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>
-      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded border border-black/[.09] bg-white shadow-xl" onClick={event => event.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-black/[.07] px-6 py-4">
-          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 className="text-[14px] font-semibold text-black/80">{proposta ? "Editar adaptação" : "Nova adaptação comercial"}</h2><p className="mt-0.5 text-[10px] text-black/30">Uso interno</p></div></div>
-          <button onClick={onClose} className="rounded p-2 text-black/30 hover:bg-black/[.05]"><X size={14} /></button>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded border border-black/[.09] bg-white shadow-xl" onClick={event => event.stopPropagation()}>
+        <div className="flex shrink-0 items-center justify-between border-b border-black/[.07] px-6 py-4">
+          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 id={titleId} className="text-[14px] font-semibold text-black/80">{proposta ? "Editar adaptação" : "Nova adaptação comercial"}</h2><p className="mt-0.5 text-[10px] text-black/30">Uso interno</p></div></div>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="rounded p-2 text-black/30 hover:bg-black/[.05]"><X size={14} /></button>
         </div>
 
-        <div className="flex-1 space-y-5 overflow-y-auto p-6">
+        <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6">
           <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Título interno</label><input value={titulo} onChange={event => setTitulo(event.target.value)} className="h-10 w-full rounded border border-black/[.12] px-3 text-[13px] outline-none focus:border-[#7259B5]/60" /></div>
 
           <div>
@@ -176,7 +187,7 @@ export function PropostaOperacionalModal({
 
           <div>
             <div className="mb-2 flex items-center justify-between"><label className="text-[11px] font-semibold text-black/55">Contrapartidas adaptadas</label><button type="button" onClick={() => setContrapartidas(items => [...items, ""])} className="flex items-center gap-1 text-[11px] font-semibold text-[#7259B5]"><Plus size={11} /> Adicionar</button></div>
-            <div className="space-y-2">{contrapartidas.length === 0 ? <button type="button" onClick={() => setContrapartidas([""])} className="w-full rounded border border-dashed border-black/[.12] py-5 text-[11px] text-black/35">Adicionar contrapartida</button> : contrapartidas.map((item, index) => <div key={index} className="flex gap-2"><input value={item} onChange={event => setContrapartidas(items => items.map((current, position) => position === index ? event.target.value : current))} className="h-9 min-w-0 flex-1 rounded border border-black/[.12] px-3 text-[12px] outline-none focus:border-[#7259B5]/60" /><button type="button" onClick={() => setContrapartidas(items => items.filter((_, position) => position !== index))} className="rounded p-2 text-black/20 hover:bg-red-50 hover:text-red-500"><X size={12} /></button></div>)}</div>
+            <div className="space-y-2">{contrapartidas.length === 0 ? <button type="button" onClick={() => setContrapartidas([""])} className="w-full rounded border border-dashed border-black/[.12] py-5 text-[11px] text-black/35">Adicionar contrapartida</button> : contrapartidas.map((item, index) => <div key={index} className="flex gap-2"><input value={item} onChange={event => setContrapartidas(items => items.map((current, position) => position === index ? event.target.value : current))} className="h-9 min-w-0 flex-1 rounded border border-black/[.12] px-3 text-[12px] outline-none focus:border-[#7259B5]/60" /><button type="button" onClick={() => setContrapartidas(items => items.filter((_, position) => position !== index))} aria-label="Remover contrapartida" className="rounded p-2 text-black/20 hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E]"><X size={12} /></button></div>)}</div>
           </div>
 
           {cotaBase && (valueDelta !== 0 || added.length > 0 || removed.length > 0) && (
@@ -185,10 +196,10 @@ export function PropostaOperacionalModal({
 
           <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Decisões e ressalvas</label><textarea value={observacoes} onChange={event => setObservacoes(event.target.value)} rows={4} placeholder="Registre limites, concessões, dependências e pontos ainda em aberto." className="w-full resize-none rounded border border-black/[.12] px-3 py-2.5 text-[13px] outline-none focus:border-[#7259B5]/60" /></div>
           <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Estado interno</label><Dropdown value={status} onChange={value => setStatus(value as "rascunho" | "aceita" | "arquivada")} options={STATUS_OPTIONS.map(item => ({ value: item[0], label: item[1] }))} /></div>
-          {erro && <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{erro}</p>}
+          {erro && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] text-[#B23A3A]">{erro}</p>}
         </div>
 
-        <div className="flex items-center justify-between border-t border-black/[.07] px-6 py-4"><div>{proposta && <button onClick={() => void remove()} className="flex items-center gap-1.5 text-[11px] font-semibold text-red-600/60 hover:text-red-600"><Trash2 size={12} /> Excluir</button>}</div><div className="flex items-center gap-3"><button onClick={onClose} className="text-[12px] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button onClick={() => void save()} disabled={saving} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40"><Check size={12} /> {saving ? "Salvando…" : "Salvar"}</button></div></div>
+        <div className="flex shrink-0 items-center justify-between border-t border-black/[.07] px-6 py-4"><div>{proposta && <button type="button" onClick={remove} className="flex items-center gap-1.5 text-[11px] font-semibold text-[#D94E4E]/70 hover:text-[#D94E4E]"><Trash2 size={12} /> Excluir</button>}</div><div className="flex items-center gap-3"><button type="button" onClick={onClose} className="text-[12px] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button type="button" onClick={() => void save()} disabled={saving} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"><Check size={12} /> {saving ? "Salvando…" : "Salvar"}</button></div></div>
       </div>
     </div>
   );

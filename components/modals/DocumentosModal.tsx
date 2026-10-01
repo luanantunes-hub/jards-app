@@ -1,10 +1,13 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import {
   X, Plus, FileText, FilePen, FileCheck, FileSearch, FileImage, Archive,
   Trash2, Eye, Upload, Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -60,6 +63,7 @@ function DocForm({
   onSaved: () => void;
 }) {
   const supabase   = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const fileRef    = useRef<HTMLInputElement>(null);
   const [titulo,   setTitulo]   = useState(doc?.titulo ?? "");
   const [icone,    setIcone]    = useState(doc?.icone  ?? "file-text");
@@ -69,26 +73,30 @@ function DocForm({
   const [saving,   setSaving]   = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [viewing,  setViewing]  = useState(false);
+  const [erro,     setErro]     = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   async function handleSave() {
     if (!titulo.trim()) return;
     setSaving(true);
+    setErro(null);
     try {
       let arquivo_url  = doc?.arquivo_url  ?? null;
       let arquivo_nome = doc?.arquivo_nome ?? null;
 
       if (file) {
         const { data: { user } } = await supabase.auth.getUser();
+        if (!user) { setErro("Sessão expirada. Entre novamente para enviar o arquivo."); return; }
         const ext  = file.name.split(".").pop();
-        const path = `${user!.id}/${escopo === "edital" ? inscricaoId : projetoId}/${crypto.randomUUID()}.${ext}`;
+        const path = `${user.id}/${escopo === "edital" ? inscricaoId : projetoId}/${crypto.randomUUID()}.${ext}`;
         const { error: upErr } = await supabase.storage
           .from("documentos-inscricao")
           .upload(path, file, { upsert: true });
-        if (!upErr) {
-          const { data: urlData } = supabase.storage.from("documentos-inscricao").getPublicUrl(path);
-          arquivo_url  = urlData.publicUrl;
-          arquivo_nome = file.name;
-        }
+        if (upErr) { setErro(`Não foi possível enviar o arquivo: ${upErr.message}`); return; }
+        const { data: urlData } = supabase.storage.from("documentos-inscricao").getPublicUrl(path);
+        arquivo_url  = urlData.publicUrl;
+        arquivo_nome = file.name;
       }
 
       const payload = {
@@ -102,23 +110,31 @@ function DocForm({
         projeto_id:      escopo === "projeto" ? projetoId  : null,
       };
 
-      if (doc) {
-        await (supabase as any).from("documentos_inscricao").update(payload).eq("id", doc.id);
-      } else {
-        await (supabase as any).from("documentos_inscricao").insert(payload);
-      }
+      const { error: dbErr } = doc
+        ? await (supabase as any).from("documentos_inscricao").update(payload).eq("id", doc.id)
+        : await (supabase as any).from("documentos_inscricao").insert(payload);
+      if (dbErr) { setErro(`Não foi possível salvar o documento: ${dbErr.message}`); return; }
       onSaved();
     } finally {
       setSaving(false);
     }
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!doc) return;
-    setDeleting(true);
-    await (supabase as any).from("documentos_inscricao").delete().eq("id", doc.id);
-    onSaved();
-    setDeleting(false);
+    confirmDelete({
+      title: `Excluir o documento “${doc.titulo}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setDeleting(true);
+        try {
+          await excluirPorId(supabase, "documentos_inscricao", doc.id);
+        } finally {
+          setDeleting(false);
+        }
+        onSaved();
+      },
+    });
   }
 
   async function handleView() {
@@ -133,22 +149,23 @@ function DocForm({
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)" }}>
-      <div className="bg-white rounded border w-[480px] max-h-[90vh] overflow-y-auto shadow-2xl"
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId}
+        className="bg-white rounded border w-[480px] max-w-[92vw] max-h-[90vh] flex flex-col shadow-2xl"
         style={{ borderColor: "rgba(13,13,13,.12)" }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
             <SelectedIcon size={16} className="text-black/40" />
-            <span className="text-[13px] font-bold text-black">
+            <span id={titleId} className="text-[13px] font-bold text-black">
               {doc ? "Editar documento" : "Novo documento"}
             </span>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/60 transition">
+          <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/60 transition">
             <X size={14} />
           </button>
         </div>
 
-        <div className="px-5 py-5 space-y-5">
+        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 space-y-5">
           {/* Título */}
           <div>
             <label className="text-[10px] font-bold uppercase tracking-wider text-black/35 block mb-1.5">
@@ -246,11 +263,12 @@ function DocForm({
         </div>
 
         {/* Footer */}
-        <div className="px-5 pb-5 space-y-2">
+        <div className="shrink-0 px-5 pb-5 space-y-2">
+          {erro && <p role="alert" className="text-[12px] text-[#B23A3A]">{erro}</p>}
           <button
             onClick={handleSave}
             disabled={saving || !titulo.trim()}
-            className="w-full py-2.5 rounded text-sm font-medium text-[#7259B5] bg-white border border-[#7259B5]/25 hover:bg-black/[.04] transition flex items-center justify-center gap-2 disabled:opacity-40"
+            className="w-full py-2.5 rounded text-sm font-medium text-white bg-[#2E8932] hover:bg-[#26752A] transition flex items-center justify-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={14} className="animate-spin" /> : null}
             Salvar
@@ -268,10 +286,10 @@ function DocForm({
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-red-600 transition"
+                className="flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-[#D94E4E] transition"
               >
                 {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                Deletar
+                Excluir
               </button>
             </div>
           )}
@@ -290,6 +308,7 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
   const [loading,    setLoading]    = useState(true);
   const [showForm,   setShowForm]   = useState(false);
   const [editingDoc, setEditingDoc] = useState<Doc | null>(null);
+  useModalDismiss(onClose);
 
   async function fetchDocs() {
     setLoading(true);
@@ -315,7 +334,8 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
   return (
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,.45)" }}>
-        <div className="bg-white rounded border shadow-2xl w-[540px] max-h-[85vh] flex flex-col"
+        <div role="dialog" aria-modal="true" aria-label="Documentos"
+          className="bg-white rounded border shadow-2xl w-[540px] max-w-[92vw] max-h-[85vh] flex flex-col"
           style={{ borderColor: "rgba(13,13,13,.10)" }}>
 
           {/* Header */}
@@ -332,7 +352,7 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
                 </button>
               ))}
             </div>
-            <button onClick={onClose} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/60 transition">
+            <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/60 transition">
               <X size={14} />
             </button>
           </div>
@@ -340,7 +360,7 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
           {/* Body */}
           <div className="flex-1 overflow-y-auto px-5 py-4">
             {loading ? (
-              <div className="py-10 text-center text-xs text-black/30">Carregando...</div>
+              <div className="py-10 text-center text-xs text-black/30">Carregando…</div>
             ) : docs.length === 0 ? (
               <div className="py-14 text-center">
                 <FileText size={24} className="text-black/15 mx-auto mb-2" />

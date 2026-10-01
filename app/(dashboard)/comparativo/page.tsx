@@ -1,7 +1,7 @@
 "use client";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Search, X, Lock, Unlock, MoreHorizontal, Briefcase, UsersRound, Globe, ArrowUpRight, ArrowRight } from "lucide-react";
+import { Search, X, Lock, Unlock, MoreHorizontal, Building2, BriefcaseBusiness, FilePenLine, ArrowUpRight, ArrowRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
@@ -605,21 +605,21 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
                     onClick={() => abrirAcao("prospect", e)}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
-                    <Briefcase size={13} className="text-black/40" /> Criar prospect
+                    <Building2 size={13} className="text-black/40" aria-hidden="true" /> Novo prospect
                   </button>
                   <button
                     type="button"
                     onClick={() => abrirAcao("captacao", e)}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
-                    <UsersRound size={13} className="text-black/40" /> Nova negociação
+                    <BriefcaseBusiness size={13} className="text-black/40" aria-hidden="true" /> Nova negociação
                   </button>
                   <button
                     type="button"
                     onClick={() => abrirAcao("inscricao", e)}
                     className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
-                    <Globe size={13} className="text-black/40" /> Nova inscrição
+                    <FilePenLine size={13} className="text-black/40" aria-hidden="true" /> Nova inscrição
                   </button>
                 </div>
               )}

@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Plus, FileCheck, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Search, Plus, FileCheck, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import type { StatusEdital } from "@/lib/supabase/types";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
@@ -19,7 +21,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import PrioBadge from "@/components/ui/PrioBadge";
 import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
-import { ListContent, ListPageHeader, ListSearch, ListSummary, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { getInscricaoTiming } from "@/lib/inscricoes/timing";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
@@ -161,6 +163,7 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
 
 export default function EditaisInscritosPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
   const { etiquetasInscricao } = useEtiquetas();
   const { options: leiOptions, create: createLei } = useLeiOptions();
@@ -207,10 +210,15 @@ export default function EditaisInscritosPage() {
   const [regInscricao,   setRegInscricao]   = useState<EditalInscrito | null>(null);
   const [anotEmpresa,    setAnotEmpresa]     = useState<EditalInscrito | null>(null);
 
-  async function handleDelete(id: string, titulo: string) {
-    if (!confirm(`Excluir inscrição "${titulo}"? Esta ação não pode ser desfeita.`)) return;
-    setEditais(prev => prev.filter(e => e.id !== id));
-    await (supabase as any).from("editais_user").delete().eq("id", id);
+  function handleDelete(id: string, titulo: string) {
+    confirmDelete({
+      title: `Excluir a inscrição “${titulo}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "editais_user", id);
+        setEditais(prev => prev.filter(e => e.id !== id));
+      },
+    });
   }
 
   async function moveEdital(id: string, newStatus: StatusEdital) {
@@ -596,9 +604,9 @@ export default function EditaisInscritosPage() {
                       { label: "Status", key: "status" },
                       { label: "", key: undefined },
                     ] satisfies { label: string; key?: string }[]).map((col, i) => (
-                      <th key={i} className="px-5 py-3 text-left text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
+                      <th key={i} aria-sort={col.key && sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined} className="px-5 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {col.key ? (
-                          <button onClick={() => toggleSort(col.key)} className="flex items-center gap-1 uppercase tracking-wider transition hover:text-black/60">
+                          <button type="button" onClick={() => toggleSort(col.key)} className="flex items-center gap-1 uppercase tracking-[.08em] transition hover:text-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                             {col.label}
                             {sortKey === col.key ? (
                               sortDir === "asc" ? <ChevronUp size={11} /> : <ChevronDown size={11} />
@@ -615,7 +623,9 @@ export default function EditaisInscritosPage() {
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
                   ) : filteredSorted.length === 0 ? (
-                    <tr><td colSpan={16} className="px-5 py-20 text-center text-sm text-black/35">Nenhuma inscrição encontrada</td></tr>
+                    <tr><td colSpan={16}>{editaisVisiveis.length === 0
+                      ? <ListEmptyState icon={FilePenLine} title="Nenhuma inscrição neste ciclo" description="Acompanhe aqui os editais em que seus projetos estão inscritos, do interesse ao resultado." action={<PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Nova inscrição</PrimaryListAction>} />
+                      : <ListEmptyState icon={Search} title="Nenhuma inscrição corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setStatusFilter("todos"); }} />}</td></tr>
                   ) : (
                     filteredSorted.map((e, i) => {
                       const sc      = statusConfig[e.status] ?? statusConfig.inscrito;
@@ -769,7 +779,7 @@ export default function EditaisInscritosPage() {
                           <td className="px-3 py-3.5">
                             <button
                               onClick={ev => { ev.stopPropagation(); handleDelete(e.id, titulo); }}
-                              className="opacity-0 group-hover:opacity-100 transition p-1.5 rounded hover:bg-red-50 text-black/20 hover:text-red-500"
+                              className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E]"
                               title="Excluir"
                             >
                               <Trash2 size={13} />

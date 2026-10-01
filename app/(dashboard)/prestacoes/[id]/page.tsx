@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import type { PrestacaoContas, StatusPrestacao, PrestacaoItem } from "@/lib/supabase/types";
 
 type PrestacaoDetalhe = PrestacaoContas & {
@@ -173,20 +174,10 @@ export default function PrestacaoDetalhe() {
     fetch();
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-5 h-5 border-2 border-black/10 border-t-[#7259B5] rounded-full animate-spin" />
-      </div>
-    );
-  }
+  if (loading) return <DetailPageSkeleton />;
 
   if (!prestacao) {
-    return (
-      <div className="px-8 py-8">
-        <p className="text-black/40">Prestação não encontrada.</p>
-      </div>
-    );
+    return <DetailNotFound title="Prestação não encontrada" description="Ela pode ter sido removida ou você não tem acesso a ela." backHref="/prestacoes" backLabel="Prestações" />;
   }
 
   const meta = STATUS_META[prestacao.status];
@@ -222,7 +213,7 @@ export default function PrestacaoDetalhe() {
       {/* Avançar status */}
       <div className="flex justify-between items-center mb-6">
         <div className="text-[11px] text-black/40">
-          {prestacao.captacao && <span>Captação: {prestacao.captacao.titulo ?? "—"}</span>}
+          {prestacao.captacao && <span>Negociação: {prestacao.captacao.titulo ?? "—"}</span>}
           {prestacao.projeto && <span className="ml-2">· Projeto: {prestacao.projeto.nome}</span>}
         </div>
 
@@ -415,7 +406,7 @@ export default function PrestacaoDetalhe() {
               </p>
             )}
             {prestacao.captacao && (
-              <p className="text-[10px] text-black/30 mt-0.5">Captação: {prestacao.captacao.titulo ?? "—"}</p>
+              <p className="text-[10px] text-black/30 mt-0.5">Negociação: {prestacao.captacao.titulo ?? "—"}</p>
             )}
             <div className="mt-3 pt-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[9px] font-semibold uppercase tracking-wide text-black/30 mb-2">Período de execução</p>

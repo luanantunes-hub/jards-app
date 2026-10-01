@@ -11,6 +11,7 @@ import { IdentityEditor } from "@/components/ui/IdentityEditor";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 export type EditDataProponente = {
   id: string;
@@ -54,6 +55,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
   const [erro, setErro]     = useState<string | null>(null);
   const [savedProponente, setSavedProponente] = useState<{ id: string; nome: string } | null>(null);
   const [showContato, setShowContato] = useState(false);
+  useModalDismiss(onClose);
 
   const [nome, setNome]         = useState(editData?.nome ?? "");
   const [cnpj, setCnpj]         = useState(editData?.cnpj ?? "");
@@ -198,7 +200,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
         </header>
 
         {/* Body */}
-        <div className="grid flex-1 overflow-y-auto sm:grid-cols-[minmax(0,1.12fr)_minmax(280px,.88fr)]">
+        <div className="grid min-h-0 flex-1 overflow-y-auto sm:grid-cols-[minmax(0,1.12fr)_minmax(280px,.88fr)]">
           {/* Col 1 — principal */}
           <section className="flex min-w-0 flex-col gap-4 p-6 sm:p-7 lg:p-8">
             {/* Nome */}
@@ -388,7 +390,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
 
         {/* Footer */}
         <footer className="flex flex-shrink-0 items-center justify-between border-t border-black/[.08] bg-white px-6 py-4 sm:px-8">
-          {erro && <p className="text-xs text-[#D94E4E] font-medium">{erro}</p>}
+          {erro && <p role="alert" className="text-xs text-[#D94E4E] font-medium">{erro}</p>}
           {!erro && <div />}
           <div className="flex items-center gap-3">
             <button onClick={onClose} className="px-4 py-2.5 text-[12px] font-semibold text-black/35 hover:text-black/55 transition">
@@ -397,7 +399,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
             <button
               onClick={handleSalvar}
               disabled={saving}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-[12px] font-bold bg-[#2E8932] text-white rounded hover:bg-[#2E8932]/90 transition disabled:opacity-60"
+              className="flex items-center gap-1.5 px-5 py-2.5 text-[12px] font-bold bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
             </button>

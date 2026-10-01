@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   ArrowLeft,
   ArrowUpRight,
-  Building2,
   ClipboardCheck,
   FileText,
   Globe,
@@ -16,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound } from "@/components/ui/DetailPagePrimitives";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import {
   PartnershipWorkspace,
@@ -152,7 +152,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   }
 
   if (loading) return <ClientSkeleton/>;
-  if (!account) return <ClientNotFound/>;
+  if (!account) return <DetailNotFound title="Cliente não encontrado" backHref="/contas-patrocinio" backLabel="Clientes" />;
 
   const healthScore = scorecardHealth.score ?? calculateHealth(health);
   const displayName = account.nome || account.empresa_crm?.nome || "Cliente";
@@ -266,4 +266,3 @@ function ClientSubsectionButton({ active, onClick, children, count }: { active: 
 }
 
 function ClientSkeleton() { return <div className="animate-pulse px-4 py-6 md:px-8"><div className="h-4 w-24 rounded bg-black/8"/><div className="mt-6 h-16 w-full max-w-2xl rounded bg-black/8"/><div className="mt-8 h-12 rounded bg-black/8"/><div className="mt-5 h-96 rounded bg-black/8"/></div>; }
-function ClientNotFound() { return <div className="px-4 py-8 text-center md:px-8"><Building2 size={30} className="mx-auto text-black/15"/><p className="mt-4 text-sm font-medium text-black/35">Cliente não encontrado</p><Link href="/contas-patrocinio" className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#7259B5]"><ArrowLeft size={12}/>Voltar para clientes</Link></div>; }

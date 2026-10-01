@@ -1,9 +1,10 @@
 "use client";
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { X, Upload, FileText, Loader2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { Select } from "@/components/ui/Select";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 const MAX_MB = 50;
 
@@ -30,6 +31,8 @@ export function PropostaUploadModal({
   const [dragging,  setDragging]  = useState(false);
   const [saving,    setSaving]    = useState(false);
   const [erro,      setErro]      = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   function pickFile(f: File) {
     if (f.type !== "application/pdf") { setErro("Somente arquivos PDF são aceitos."); return; }
@@ -104,14 +107,17 @@ export function PropostaUploadModal({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="w-full max-w-md bg-white rounded border shadow-xl"
         style={{ borderColor: "rgba(13,13,13,.10)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p className="text-[13px] font-bold text-black/80">Enviar proposta</p>
-          <button onClick={onClose} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition text-black/35 hover:text-black/60">
+          <p id={titleId} className="text-[13px] font-bold text-black/80">Enviar proposta</p>
+          <button type="button" onClick={onClose} aria-label="Fechar" className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition text-black/35 hover:text-black/60">
             <X size={14} />
           </button>
         </div>
@@ -157,6 +163,8 @@ export function PropostaUploadModal({
                   <p className="text-[10px] text-black/35">{fmtSize(file.size)}</p>
                 </div>
                 <button
+                  type="button"
+                  aria-label="Remover arquivo"
                   onClick={() => { setFile(null); setErro(null); }}
                   className="text-black/30 hover:text-black/60 transition"
                 >
@@ -193,7 +201,7 @@ export function PropostaUploadModal({
           </div>
 
           {erro && (
-            <p className="rounded border border-[#D94E4E]/20 bg-white px-3 py-2 text-[11px] text-[#D94E4E]">{erro}</p>
+            <p role="alert" className="rounded border border-[#D94E4E]/20 bg-white px-3 py-2 text-[11px] text-[#D94E4E]">{erro}</p>
           )}
         </div>
 
@@ -205,7 +213,7 @@ export function PropostaUploadModal({
           <button
             onClick={handleSalvar}
             disabled={saving || !file}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
             {saving ? "Enviando…" : "Salvar proposta"}

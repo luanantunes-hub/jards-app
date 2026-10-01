@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useId, useRef } from "react";
 import {
   X, Building2, FolderOpen,
   Users, CalendarDays, Save, Lightbulb, Briefcase,
@@ -18,6 +18,7 @@ import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type EmpresaCRM   = { id: string; nome: string };
 type Projeto      = { id: string; nome: string };
@@ -155,7 +156,7 @@ function NovoContatoInline({
         className="w-full text-[12px] border rounded px-2.5 py-1.5 bg-white outline-none focus:ring-1 focus:ring-black/20"
         style={{ borderColor: "rgba(13,13,13,.15)" }}
       />
-      {erro && <p className="text-[11px] text-[#D94E4E]">{erro}</p>}
+      {erro && <p role="alert" className="text-[11px] text-[#D94E4E]">{erro}</p>}
       <div className="flex gap-2">
         <button
           onClick={handleSave}
@@ -201,6 +202,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [saving, setSaving]         = useState(false);
   const [erro, setErro]             = useState<string | null>(null);
   const [showModuleMenu, setShowModuleMenu] = useState(false);
+  const titleId = useId();
+  useModalDismiss(() => { if (showModuleMenu) setShowModuleMenu(false); else onClose(); });
   const [visibleModules, setVisibleModules] = useState<Record<CaptacaoModule, boolean>>(() => {
     if (typeof window === "undefined") return DEFAULT_MODULE_VISIBILITY;
     try {
@@ -533,16 +536,16 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center"
       style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div className="flex w-full max-w-[760px] flex-col overflow-hidden rounded-b bg-white"
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex w-full max-w-[760px] flex-col overflow-hidden rounded-b bg-white"
         style={{ maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }} onClick={e => e.stopPropagation()}>
 
-        <header className="flex items-center justify-between border-b px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <header className="flex shrink-0 items-center justify-between border-b px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/5">
               <Building2 size={16} className="text-black/50" />
             </div>
             <div className="min-w-0">
-              <h2 className="text-[15px] font-bold text-black">{editData ? "Editar captação" : "Nova captação"}</h2>
+              <h2 id={titleId} className="text-[15px] font-bold text-black">{editData ? "Editar negociação" : "Nova negociação"}</h2>
             </div>
           </div>
 
@@ -836,12 +839,12 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
           </section>
         </main>
 
-        <footer className="flex items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          {erro ? <p className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          {erro ? <p role="alert" className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
             <button type="button" onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSalvar} disabled={saving}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#27762B] active:translate-y-px disabled:opacity-60">
+              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
               <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
             </button>
           </div>

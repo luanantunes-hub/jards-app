@@ -9,6 +9,9 @@ import {
   Play, Plus, ShieldCheck, Trash2, Upload, UserRound, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound } from "@/components/ui/DetailPagePrimitives";
+import { excluirDocumento } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
@@ -39,6 +42,7 @@ const MAX_FILE_BYTES = 50 * 1024 * 1024;
 export default function DeliveryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [delivery, setDelivery] = useState<CompromissoCliente | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
@@ -199,16 +203,20 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
     if (result.error) setError(result.error.message); else if (result.data?.signedUrl) window.open(result.data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
-  async function removeDocument(document: DocumentRow) {
-    if (!canWrite || !confirm(`Excluir “${document.nome}”?`)) return;
-    const storage = await supabase.storage.from("documentos").remove([document.url]);
-    if (storage.error) { setError(storage.error.message); return; }
-    const result = await (supabase as any).from("documentos").delete().eq("id", document.id);
-    if (result.error) setError(result.error.message); else await load();
+  function removeDocument(document: DocumentRow) {
+    if (!canWrite) return;
+    confirmDelete({
+      title: `Excluir o documento “${document.nome}”?`,
+      description: "O arquivo deixa de estar disponível para toda a equipe.",
+      onConfirm: async () => {
+        await excluirDocumento(supabase, document);
+        await load();
+      },
+    });
   }
 
-  if (loading) return <div className="mx-auto max-w-[1180px] animate-pulse px-4 py-8 sm:px-6 lg:px-8"><div className="h-5 w-28 rounded bg-black/[.06]"/><div className="mt-8 h-28 rounded bg-black/[.04]"/><div className="mt-6 h-80 rounded bg-black/[.04]"/></div>;
-  if (!delivery || !account) return <div className="mx-auto max-w-[1180px] px-4 py-16 text-center text-sm text-black/40">{error || "Entrega não encontrada."}</div>;
+  if (loading) return <div className="mx-auto max-w-[1280px] animate-pulse px-4 py-8 sm:px-6 lg:px-10"><div className="h-5 w-28 rounded bg-black/[.06]"/><div className="mt-8 h-28 rounded bg-black/[.04]"/><div className="mt-6 h-80 rounded bg-black/[.04]"/></div>;
+  if (!delivery || !account) return <DetailNotFound title="Entrega não encontrada" description={error && error !== "Entrega não encontrada." ? error : "Ela pode ter sido removida ou você não tem acesso a ela."} backHref="/contas-patrocinio" backLabel="Clientes" />;
 
   const responsible = members.find(item => item.user_id === delivery.responsavel_id);
   const companyName = account.empresa_crm?.nome || account.nome || "Cliente";
@@ -229,7 +237,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
 
   return <div className="min-h-full">
     <header className="border-b border-black/[.07]">
-      <div className="mx-auto max-w-[1180px] px-4 pb-7 pt-6 sm:px-6 lg:px-8 lg:pb-9 lg:pt-9">
+      <div className="mx-auto max-w-[1280px] px-4 pb-7 pt-6 sm:px-6 lg:px-10 lg:pb-9 lg:pt-9">
         <div className="flex items-center gap-2 text-[12px] font-medium text-black/40">
           <Link href={`/contas-patrocinio/${delivery.conta_patrocinio_id}`} className="inline-flex items-center gap-2 transition hover:text-black/65"><ArrowLeft size={14}/>{companyName}</Link>
           <span className="text-black/20">/</span><span>Entregas</span>
@@ -254,7 +262,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
       </div>
     </header>
 
-    <main className="mx-auto grid max-w-[1180px] gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-8 lg:py-9">
+    <main className="mx-auto grid max-w-[1280px] gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-10 lg:py-9">
       {error && <p className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2.5 text-[11px] text-[#D94E4E] lg:col-span-2">{error}</p>}
       <div className="min-w-0 space-y-6">
         <section className="overflow-hidden rounded border border-black/[.08] bg-white">
@@ -267,7 +275,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
 
         <section id="evidencias" className="scroll-mt-6 overflow-hidden rounded border border-black/[.08] bg-white">
           <SectionHeader icon={Paperclip} eyebrow={delivery.evidencia_obrigatoria ? "Comprovação obrigatória" : "Comprovação"} title={`Evidências · ${documents.length}`} action={canWrite ? <><input ref={fileRef} type="file" className="hidden" onChange={event => { const file = event.target.files?.[0]; if (file) void uploadEvidence(file); event.target.value = ""; }}/><button onClick={() => fileRef.current?.click()} disabled={uploading} className="inline-flex items-center gap-1.5 rounded border border-[#7259B5]/30 bg-white px-3 py-2 text-[11px] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40"><Upload size={12}/>{uploading ? "Enviando…" : "Adicionar"}</button></> : undefined}/>
-          {documents.length ? <div className="divide-y divide-black/[.06]">{documents.map(document => <div key={document.id} className="group flex items-center gap-3 px-5 py-3.5"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.035] text-black/35"><FileText size={15}/></span><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black/65">{document.nome}</p><p className="mt-0.5 text-[10px] text-black/25">{formatSize(document.tamanho)} · {formatDate(document.created_at)}</p></div><button onClick={() => void openDocument(document)} title="Abrir evidência" className="rounded p-2 text-black/25 transition hover:bg-black/[.04] hover:text-[#7259B5]"><Download size={13}/></button>{canWrite && <button onClick={() => void removeDocument(document)} title="Excluir evidência" className="rounded p-2 text-black/20 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 focus:opacity-100"><Trash2 size={13}/></button>}</div>)}</div> : canWrite ? <button type="button" onClick={() => fileRef.current?.click()} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const file = event.dataTransfer.files?.[0]; if (file) void uploadEvidence(file); }} className="m-5 flex min-h-36 w-[calc(100%-2.5rem)] flex-col items-center justify-center rounded border border-dashed border-black/[.12] bg-black/[.012] text-center transition hover:border-[#7259B5]/35 hover:bg-[#7259B5]/[.018]"><Upload size={20} className="text-black/20"/><p className="mt-3 text-[12px] font-semibold text-black/45">Adicionar evidência</p><p className="mt-1 text-[10px] text-black/25">Arquivo de até 50 MB</p></button> : <EmptyLine text="Nenhuma evidência anexada."/>}
+          {documents.length ? <div className="divide-y divide-black/[.06]">{documents.map(document => <div key={document.id} className="group flex items-center gap-3 px-5 py-3.5"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.035] text-black/35"><FileText size={15}/></span><div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black/65">{document.nome}</p><p className="mt-0.5 text-[10px] text-black/25">{formatSize(document.tamanho)} · {formatDate(document.created_at)}</p></div><button onClick={() => void openDocument(document)} title="Abrir evidência" className="rounded p-2 text-black/25 transition hover:bg-black/[.04] hover:text-[#7259B5]"><Download size={13}/></button>{canWrite && <button onClick={() => void removeDocument(document)} title="Excluir evidência" className="rounded p-2 text-black/20 opacity-0 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] group-hover:opacity-100 focus:opacity-100"><Trash2 size={13}/></button>}</div>)}</div> : canWrite ? <button type="button" onClick={() => fileRef.current?.click()} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); const file = event.dataTransfer.files?.[0]; if (file) void uploadEvidence(file); }} className="m-5 flex min-h-36 w-[calc(100%-2.5rem)] flex-col items-center justify-center rounded border border-dashed border-black/[.12] bg-black/[.012] text-center transition hover:border-[#7259B5]/35 hover:bg-[#7259B5]/[.018]"><Upload size={20} className="text-black/20"/><p className="mt-3 text-[12px] font-semibold text-black/45">Adicionar evidência</p><p className="mt-1 text-[10px] text-black/25">Arquivo de até 50 MB</p></button> : <EmptyLine text="Nenhuma evidência anexada."/>}
         </section>
 
         <section className="overflow-hidden rounded border border-black/[.08] bg-white">

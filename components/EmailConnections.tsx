@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircle, Check, Mail, RefreshCw, Unplug } from "lucide-react";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
 type ConnectionPublic = {
   provider: "google";
@@ -37,6 +38,7 @@ function fmtDate(d: string | null): string {
 export function EmailConnections() {
   const router = useRouter();
   const organizationId = useOrganizationId();
+  const { confirmDelete } = useDeleteConfirm();
 
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -84,18 +86,27 @@ export function EmailConnections() {
     window.location.href = `/api/email/google/start${q}`;
   }
 
-  async function disconnect() {
-    if (!confirm("Desconectar o Gmail? Os emails já sincronizados serão mantidos.")) return;
-    setBusy(true);
-    setErro(null);
-    const res = await fetch("/api/email/disconnect", { method: "POST" });
-    const json = (await res.json()) as { error?: string };
-    if (!res.ok) setErro(json.error ?? "Falha ao desconectar");
-    else {
-      setSucesso("Gmail desconectado");
-      await load();
-    }
-    setBusy(false);
+  function disconnect() {
+    confirmDelete({
+      title: "Desconectar o Gmail?",
+      description: "Os e-mails já sincronizados serão mantidos.",
+      confirmLabel: "Desconectar",
+      pendingLabel: "Desconectando…",
+      illustration: false,
+      onConfirm: async () => {
+        setBusy(true);
+        setErro(null);
+        try {
+          const res = await fetch("/api/email/disconnect", { method: "POST" });
+          const json = (await res.json().catch(() => ({}))) as { error?: string };
+          if (!res.ok) throw new Error(json.error ?? "Falha ao desconectar");
+          setSucesso("Gmail desconectado");
+          await load();
+        } finally {
+          setBusy(false);
+        }
+      },
+    });
   }
 
   async function sync() {
@@ -121,7 +132,7 @@ export function EmailConnections() {
     <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
       <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <Mail size={14} className="text-black/30" />
-        <span className="text-[12px] font-bold text-black">Email</span>
+        <span className="text-[12px] font-bold text-black">E-mail</span>
         <span className="ml-auto text-[11px] text-black/35">Gmail · conta pessoal</span>
       </div>
 
@@ -156,7 +167,7 @@ export function EmailConnections() {
                 ) : (
                   <p className="text-[11px] text-black/40 mt-0.5">
                     {googleConfigured
-                      ? "Sincronize emails com captações e contatos"
+                      ? "Sincronize e-mails com negociações e contatos"
                       : "Credenciais do servidor ainda não configuradas"}
                   </p>
                 )}

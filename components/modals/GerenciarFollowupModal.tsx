@@ -1,9 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import Link from "next/link";
 import { Check, ExternalLink, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type Followup = {
   id: string;
@@ -18,8 +21,11 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
   onClose: () => void;
   onChanged: () => void;
 }) {
+  const { confirmDelete } = useDeleteConfirm();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(() => { if (!saving) onClose(); });
 
   async function complete() {
     setSaving(true);
@@ -39,30 +45,29 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
     onChanged();
   }
 
-  async function remove() {
-    if (!window.confirm(`Excluir “${followup.titulo}”? Esta ação não pode ser desfeita.`)) return;
-    setSaving(true);
-    setError(null);
-    const { data, error: deleteError } = await (createClient() as any)
-      .from("crm_followups")
-      .delete()
-      .eq("id", followup.id)
-      .select("id")
-      .single();
-    setSaving(false);
-    if (deleteError || !data) {
-      setError(deleteError?.message ?? "Não foi possível excluir este follow-up. Atualize a lista e tente novamente.");
-      return;
-    }
-    onChanged();
+  function remove() {
+    confirmDelete({
+      title: `Excluir o follow-up “${followup.titulo}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setSaving(true);
+        setError(null);
+        try {
+          await excluirPorId(createClient(), "crm_followups", followup.id);
+        } finally {
+          setSaving(false);
+        }
+        onChanged();
+      },
+    });
   }
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4" onClick={() => { if (!saving) onClose(); }}>
-      <div className="w-full max-w-md rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
         <header className="flex items-start justify-between gap-4 border-b border-black/[.08] px-6 py-4">
           <div>
-            <p className="text-[14px] font-bold text-black">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
+            <p id={titleId} className="text-[14px] font-bold text-black">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
             <p className="mt-1 text-[12px] text-black/55">{followup.titulo}</p>
           </div>
           <button type="button" onClick={onClose} disabled={saving} aria-label="Fechar" className="text-black/35 hover:text-black/60 disabled:opacity-40"><X size={16} /></button>
@@ -84,10 +89,10 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
           {error && <p role="alert" className="text-[11px] font-medium text-[#D94E4E]">{error}</p>}
         </div>
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-black/[.08] px-6 py-4">
-          <button type="button" onClick={() => void remove()} disabled={saving} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#D94E4E] hover:underline disabled:opacity-40"><Trash2 size={13} /> Excluir</button>
+          <button type="button" onClick={remove} disabled={saving} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#D94E4E] hover:underline disabled:opacity-40"><Trash2 size={13} /> Excluir</button>
           {followup.status === "pendente" && (
-            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[12px] font-semibold text-white disabled:opacity-40">
-              <Check size={14} /> {saving ? "Salvando..." : "Concluir sem interação"}
+            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[12px] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">
+              <Check size={14} /> {saving ? "Salvando…" : "Concluir sem interação"}
             </button>
           )}
         </footer>

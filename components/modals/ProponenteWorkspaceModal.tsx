@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Copy, FolderOpen, Mail, Save, X } from "lucide-react";
+import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 export function ProponenteWorkspaceModal({
   proponenteId,
@@ -24,6 +25,8 @@ export function ProponenteWorkspaceModal({
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [contaExistente, setContaExistente] = useState<string | null>(null);
+  const titleId = useId();
+  useModalDismiss(onClose);
 
   async function handleConvidar() {
     setErro(null);
@@ -48,6 +51,9 @@ export function ProponenteWorkspaceModal({
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center bg-black/45" onClick={onClose}>
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="flex max-h-[calc(100dvh-20px)] w-full max-w-[520px] flex-col overflow-hidden rounded-b border-x border-b border-black/[.07] bg-white shadow-[0_16px_45px_rgba(13,13,13,.15)]"
         onClick={event => event.stopPropagation()}
       >
@@ -55,7 +61,7 @@ export function ProponenteWorkspaceModal({
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><FolderOpen size={16} className="text-black/50" /></div>
             <div>
-              <h2 className="text-[15px] font-bold text-black">Dar acesso ao proponente</h2>
+              <h2 id={titleId} className="text-[15px] font-bold text-black">Dar acesso ao proponente</h2>
               <p className="mt-0.5 text-[10px] text-black/35">Ele passa a ver os próprios projetos e o status de negociações e inscrições</p>
             </div>
           </div>
@@ -89,7 +95,7 @@ export function ProponenteWorkspaceModal({
           </main>
         ) : (
           <>
-            <main className="flex-1 space-y-4 px-5 py-5">
+            <main className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5">
               {jaTemAcesso && (
                 <p className="rounded border border-black/[.08] bg-black/[.02] px-3 py-2.5 text-[11px] text-black/50">
                   Este proponente já tem acesso ao workspace. Convidar de novo reenvia o link para um e-mail diferente, se precisar trocar.
@@ -115,7 +121,7 @@ export function ProponenteWorkspaceModal({
                   type="button"
                   onClick={() => void handleConvidar()}
                   disabled={saving}
-                  className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#27752B] active:translate-y-px disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save size={12} />{saving ? "Enviando…" : "Convidar"}
                 </button>

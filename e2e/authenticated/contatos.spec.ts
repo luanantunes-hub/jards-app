@@ -5,7 +5,7 @@ test("cria um novo contato", async ({ page }) => {
   const nome = e2eName("Contato");
 
   await page.goto("/contatos");
-  await page.getByRole("button", { name: "Novo contato" }).click();
+  await page.getByRole("button", { name: "Novo contato" }).first().click();
   await page.getByPlaceholder("Nome do contato").fill(nome);
   await page.getByRole("button", { name: "Salvar contato" }).click();
 

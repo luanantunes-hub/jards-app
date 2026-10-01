@@ -11,6 +11,8 @@ import {
   ChevronDown, ArrowUp, ArrowDown, Minus, Check,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirDocumento } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { Captacao, Atividade } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
@@ -27,7 +29,7 @@ import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RelationshipWorkspace } from "@/components/relationship/RelationshipWorkspace";
 import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeModal";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
-import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
 
 const RESULTADO_NEGATIVO = new Set(["recusado"]);
@@ -150,7 +152,7 @@ function formatRelative(dateStr: string): string {
 
 
 function DocIcon({ tipo }: { tipo: string | null }) {
-  if (tipo?.includes("pdf")) return <FileText size={14} className="text-red-400 flex-shrink-0" />;
+  if (tipo?.includes("pdf")) return <FileText size={14} className="text-[#D94E4E]/75 flex-shrink-0" />;
   if (tipo?.includes("image")) return <FileText size={14} className="text-blue-400 flex-shrink-0" />;
   if (tipo?.includes("spreadsheet") || tipo?.includes("excel") || tipo?.includes("xlsx"))
     return <FileText size={14} className="text-green-500 flex-shrink-0" />;
@@ -231,6 +233,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const router = useRouter();
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const { options: leiOptions, create: createLei } = useLeiOptions();
   const { etiquetas } = useEtiquetas();
   const STATUS_META: Record<string, { label: string; cor: string; icone: string }> = Object.fromEntries(etiquetas.map(e => [e.key, e]));
@@ -537,20 +540,16 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     await fetchData();
   }
 
-  async function handleExcluirDocumento(docId: string, storagePath: string) {
-    if (!confirm("Excluir este documento?")) return;
-    setDocumentoErro(null);
-    const { error: storageError } = await supabase.storage.from("documentos").remove([storagePath]);
-    if (storageError) {
-      setDocumentoErro(storageError.message);
-      return;
-    }
-    const { error: metadataError } = await (supabase.from("documentos") as any).delete().eq("id", docId);
-    if (metadataError) {
-      setDocumentoErro(metadataError.message);
-      return;
-    }
-    await fetchData();
+  function handleExcluirDocumento(docId: string, storagePath: string, nome: string) {
+    confirmDelete({
+      title: `Excluir o documento “${nome}”?`,
+      description: "O arquivo deixa de estar disponível para toda a equipe.",
+      onConfirm: async () => {
+        setDocumentoErro(null);
+        await excluirDocumento(supabase, { id: docId, url: storagePath });
+        await fetchData();
+      },
+    });
   }
 
   async function handleStatusChange(newStatus: string) {
@@ -581,41 +580,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     await fetchData();
   }
 
-  if (loading) {
-    return (
-      <div className="px-8 py-8 max-w-6xl">
-        <div className="animate-pulse space-y-6">
-          <div className="h-4 w-32 bg-black/5 rounded" />
-          <div className="h-8 w-64 bg-black/5 rounded" />
-          <div className="h-4 w-48 bg-black/5 rounded" />
-          <div className="grid grid-cols-4 gap-4 mt-8">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-black/5 rounded" />)}
-          </div>
-          <div className="grid grid-cols-[1fr_280px] gap-6 mt-8">
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-32 bg-black/5 rounded" />)}
-            </div>
-            <div className="space-y-4">
-              {[1, 2].map(i => <div key={i} className="h-40 bg-black/5 rounded" />)}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DetailPageSkeleton />;
 
   if (!captacao) {
-    return (
-      <div className="px-8 py-8 max-w-6xl">
-        <Link href="/captacoes" className="inline-flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-black transition mb-6">
-          <ArrowLeft size={13} /> Captações
-        </Link>
-        <div className="text-center py-20">
-          <p className="text-[15px] font-semibold text-black/40 mb-1">Captação não encontrada</p>
-          <p className="text-sm text-black/25">Esta captação pode ter sido removida.</p>
-        </div>
-      </div>
-    );
+    return <DetailNotFound title="Negociação não encontrada" description="Ela pode ter sido removida ou você não tem acesso a ela." backHref="/captacoes" backLabel="Negociações" />;
   }
 
   const atvsPendentes = atividades.filter(a => !a.feita);
@@ -669,7 +637,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           href="/captacoes"
           className="mb-7 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65"
         >
-          <ArrowLeft size={13} /> Captações
+          <ArrowLeft size={13} /> Negociações
         </Link>
 
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -862,7 +830,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               contacts={contatos.map(({ id, nome, cargo }) => ({ id, nome, cargo }))}
             />
           ) : (
-            <div className="rounded border bg-white px-5 py-12 text-center text-sm text-black/35" style={{ borderColor: "rgba(13,13,13,.08)" }}>Esta captação precisa estar associada a uma organização para usar o relacionamento.</div>
+            <div className="rounded border bg-white px-5 py-12 text-center text-sm text-black/35" style={{ borderColor: "rgba(13,13,13,.08)" }}>Esta negociação precisa estar associada a uma organização para usar o relacionamento.</div>
           )
         ) : activeTab === "cotas" ? (
           <CotasReferenceTab
@@ -931,7 +899,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             {/* Timeline */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Timeline</h2>
+                <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Histórico</h2>
                 <span className="text-[11px] text-black/25 font-medium">{timelineEvents.length} eventos</span>
               </div>
 
@@ -1121,12 +1089,12 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               {uploadandoDoc && (
                 <div className="bg-[#7259B5]/5 border border-[#7259B5]/20 rounded p-3 mb-3 flex items-center gap-3">
                   <RefreshCw size={14} className="text-[#7259B5] animate-spin" />
-                  <span className="text-[12px] text-[#7259B5] font-medium">Enviando arquivo...</span>
+                  <span className="text-[12px] text-[#7259B5] font-medium">Enviando arquivo…</span>
                 </div>
               )}
 
               {documentoErro && (
-                <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-medium text-red-700">
+                <div className="mb-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] font-medium text-[#B23A3A]">
                   {documentoErro}
                 </div>
               )}
@@ -1146,7 +1114,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                         <p className="text-[13px] font-medium truncate">{doc.nome}</p>
                         <p className="text-[10px] text-black/25">{formatDocSize(doc.tamanho)} · {formatDate(doc.created_at)}</p>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                         <button
                           onClick={async () => {
                             const { data } = await supabase.storage.from("documentos").createSignedUrl(doc.url, 3600);
@@ -1157,8 +1125,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                           <ExternalLink size={12} />
                         </button>
                         <button
-                          onClick={() => handleExcluirDocumento(doc.id, doc.url)}
-                          className="p-1.5 rounded hover:bg-red-50 text-black/25 hover:text-red-500 transition"
+                          onClick={() => handleExcluirDocumento(doc.id, doc.url, doc.nome)}
+                          className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/25 hover:text-[#D94E4E] transition"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -1375,7 +1343,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-[10px] text-black/40 mb-1 block">Valor Solicitado (R$)</label>
+                <label className="text-[10px] text-black/40 mb-1 block">Valor solicitado (R$)</label>
                 <input
                   type="number"
                   value={editValorSolicitado}
@@ -1386,7 +1354,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 />
               </div>
               <div>
-                <label className="text-[10px] text-black/40 mb-1 block">Valor Aprovado (R$)</label>
+                <label className="text-[10px] text-black/40 mb-1 block">Valor aprovado (R$)</label>
                 <input
                   type="number"
                   value={editValorAprovado}
@@ -1401,7 +1369,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 disabled={salvandoFinanceiro}
                 className="w-full px-3 py-2 text-[11px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
               >
-                {salvandoFinanceiro ? "Salvando..." : "Salvar"}
+                {salvandoFinanceiro ? "Salvando…" : "Salvar"}
               </button>
             </div>
           </div>

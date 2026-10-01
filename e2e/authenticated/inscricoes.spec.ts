@@ -5,7 +5,7 @@ test("cria uma nova inscrição com um patrocinador novo", async ({ page }) => {
   const nomeEmpresa = e2eName("Empresa Inscricao");
 
   await page.goto("/editais-inscritos");
-  await page.getByRole("button", { name: "Nova inscrição" }).click();
+  await page.getByRole("button", { name: "Nova inscrição" }).first().click();
   await page.getByPlaceholder("Buscar ou criar empresa…").fill(nomeEmpresa);
   await page.getByText(`+ Criar "${nomeEmpresa}"`).click();
   await expect(page.getByText("Criando…")).toBeHidden({ timeout: 10_000 });

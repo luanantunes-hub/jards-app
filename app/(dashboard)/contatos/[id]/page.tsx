@@ -796,7 +796,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                   <thead>
                     <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "rgba(13,13,13,.02)" }}>
                       {["Negociação", "Empresa", "Valor", "Status"].map(h => (
-                        <th key={h} className="px-5 py-3 text-[10px] font-bold uppercase tracking-wide text-black/35">{h}</th>
+                        <th key={h} className="px-5 py-3 text-[10px] font-medium uppercase tracking-[.08em] text-black/35">{h}</th>
                       ))}
                     </tr>
                   </thead>
