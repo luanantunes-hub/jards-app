@@ -80,6 +80,20 @@ begin
 end;
 $$;
 
+-- Em alguns ambientes (incluindo produção) a função/trigger da migration
+-- 20260726000017 nunca foi criada, deixando "historico_captações" vazia.
+-- Garante o trigger; o histórico passa a ser gravado daqui pra frente.
+do $$
+begin
+  if not exists (select 1 from pg_trigger where tgname = 'trg_historico_captacao') then
+    create trigger trg_historico_captacao
+      after update on public.captacoes
+      for each row
+      execute function public.fn_historico_captacao();
+  end if;
+end;
+$$;
+
 create index if not exists idx_historico_status_org
   on "historico_captações"(organization_id, captacao_id, created_at)
   where campo = 'status';
