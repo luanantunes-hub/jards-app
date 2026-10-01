@@ -4,6 +4,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, Plus, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedScoreArc } from "@/components/ui/SegmentedScoreArc";
 
 export type DecisionCriterion = {
@@ -129,6 +131,7 @@ type RelationshipScorecardProps = {
 
 function RelationshipScorecard({ entityId, organizationId, table, foreignKey, starterCriteria, starterActionLabel, placeholder }: RelationshipScorecardProps) {
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const [criteria, setCriteria] = useState<DecisionCriterion[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -218,15 +221,15 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
     }
   }
 
-  async function removeCriterion(id: string) {
-    if (!window.confirm("Excluir este critério do scorecard?")) return;
-    const previous = criteria;
-    setCriteria(items => items.filter(item => item.id !== id));
-    const { error: deleteError } = await (supabase as any).from(table).delete().eq("id", id);
-    if (deleteError) {
-      setCriteria(previous);
-      setError(deleteError.message);
-    }
+  function removeCriterion(id: string) {
+    confirmDelete({
+      title: "Excluir este critério do scorecard?",
+      description: "A nota ponderada é recalculada sem ele.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, table, id);
+        setCriteria(items => items.filter(item => item.id !== id));
+      },
+    });
   }
 
   return (
@@ -284,7 +287,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
                   />
                   <button
                     type="button"
-                    onClick={() => void removeCriterion(item.id)}
+                    onClick={() => removeCriterion(item.id)}
                     className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-black/20 opacity-60 transition hover:bg-red-50 hover:text-red-500 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200 group-hover:opacity-100 active:scale-[.94]"
                     aria-label={`Excluir ${item.nome}`}
                   >

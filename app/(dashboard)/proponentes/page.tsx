@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, Trash2, ExternalLink, List, Network, FolderOpen, CalendarClock, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { NovoProponenteModal } from "@/components/modals/NovoProponenteModal";
 import type { TipoProponente } from "@/lib/supabase/types";
@@ -153,6 +155,7 @@ function ProponentesMapView({ items, onOpenProponente, onOpenProjeto }: {
 
 export default function ProponentesPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
   const { etiquetasProponente } = useEtiquetas();
   const [proponentes, setProponentes] = useState<ProponenteRow[]>([]);
@@ -163,29 +166,28 @@ export default function ProponentesPage() {
   const [deletingId, setDeletingId]           = useState<string | null>(null);
   const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:proponentes:view", VIEW_MODES, "lista");
 
-  async function handleDelete(proponente: ProponenteRow) {
+  function handleDelete(proponente: ProponenteRow) {
     if (proponente.n_projetos > 0) {
-      alert(`Este proponente está vinculado a ${proponente.n_projetos} ${proponente.n_projetos === 1 ? "projeto" : "projetos"}. Remova ou altere esses vínculos antes de excluí-lo.`);
+      confirmDelete({
+        blocked: true,
+        title: "Este proponente tem projetos vinculados",
+        description: `“${proponente.nome}” está vinculado a ${proponente.n_projetos} ${proponente.n_projetos === 1 ? "projeto" : "projetos"}. Remova ou altere esses vínculos antes de excluí-lo.`,
+      });
       return;
     }
-    if (!confirm(`Excluir proponente "${proponente.nome}"? Esta ação não pode ser desfeita.`)) return;
-
-    setDeletingId(proponente.id);
-    const { data, error } = await supabase
-      .from("proponentes")
-      .delete()
-      .eq("id", proponente.id)
-      .select("id")
-      .maybeSingle();
-    setDeletingId(null);
-
-    if (error || !data) {
-      alert(error?.code === "23503"
-        ? "Este proponente ainda possui registros vinculados e não pode ser excluído."
-        : error?.message || "Não foi possível excluir o proponente. Verifique suas permissões e tente novamente.");
-      return;
-    }
-    setProponentes(current => current.filter(item => item.id !== proponente.id));
+    confirmDelete({
+      title: `Excluir o proponente “${proponente.nome}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setDeletingId(proponente.id);
+        try {
+          await excluirPorId(supabase, "proponentes", proponente.id, { vinculado: "Este proponente ainda possui registros vinculados e não pode ser excluído." });
+        } finally {
+          setDeletingId(null);
+        }
+        setProponentes(current => current.filter(item => item.id !== proponente.id));
+      },
+    });
   }
 
   async function fetchData() {

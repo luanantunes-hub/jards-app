@@ -15,6 +15,8 @@ function LinkedinIcon({ size = 13 }: { size?: number }) {
   );
 }
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import type { OrigemContato } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -234,6 +236,7 @@ function StakeholdersView({ contatos }: { contatos: ContatoRow[] }) {
 
 export default function ContatosPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
 
   const [contatos, setContatos] = useState<ContatoRow[]>([]);
@@ -309,10 +312,15 @@ export default function ContatosPage() {
 
   const hasFilters = search || origem !== "todos" || roleFilter !== "todos" || withoutInteraction;
 
-  async function handleDelete(id: string, nome: string) {
-    if (!confirm(`Excluir contato "${nome}"? Esta ação não pode ser desfeita.`)) return;
-    setContatos(prev => prev.filter(c => c.id !== id));
-    await supabase.from("contatos").delete().eq("id", id);
+  function handleDelete(id: string, nome: string) {
+    confirmDelete({
+      title: `Excluir o contato “${nome}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "contatos", id);
+        setContatos(prev => prev.filter(c => c.id !== id));
+      },
+    });
   }
 
   async function refetch() {

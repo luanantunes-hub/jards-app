@@ -6,6 +6,8 @@ import {
   HeartPulse, RefreshCw, TrendingUp, Eye, CalendarDays, UserRound, Plus,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { NovaContaClienteModal } from "@/components/modals/NovaContaClienteModal";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import type { ContaPatrocinio, SaudeConta } from "@/lib/supabase/types";
@@ -268,6 +270,7 @@ function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]
 
 export default function ContasPatrocinioPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
 
   const [contas, setContas] = useState<ContaRow[]>([]);
@@ -428,24 +431,21 @@ export default function ContasPatrocinioPage() {
     emRisco:  contas.filter(c => c.portfolio_lane === "intervir").length,
   };
 
-  async function handleDelete(conta: ContaRow) {
+  function handleDelete(conta: ContaRow) {
     const nome = conta.nome || conta.empresa_crm?.nome || "este cliente";
-    if (!confirm(`Excluir "${nome}"? Contratos e planos de ativação vinculados também serão removidos. Esta ação não pode ser desfeita.`)) return;
-
-    setDeletingId(conta.id);
-    const { data, error } = await supabase
-      .from("contas_patrocinio")
-      .delete()
-      .eq("id", conta.id)
-      .select("id")
-      .maybeSingle();
-    setDeletingId(null);
-
-    if (error || !data) {
-      alert(error?.message || "Não foi possível excluir o cliente. Verifique suas permissões e tente novamente.");
-      return;
-    }
-    setContas(current => current.filter(item => item.id !== conta.id));
+    confirmDelete({
+      title: `Excluir o cliente “${nome}”?`,
+      description: "Contratos e planos de ativação vinculados também serão removidos. Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setDeletingId(conta.id);
+        try {
+          await excluirPorId(supabase, "contas_patrocinio", conta.id);
+        } finally {
+          setDeletingId(null);
+        }
+        setContas(current => current.filter(item => item.id !== conta.id));
+      },
+    });
   }
 
   return (

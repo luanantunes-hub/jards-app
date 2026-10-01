@@ -7,6 +7,8 @@ import {
   Check, AlertCircle,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { Select } from "@/components/ui/Select";
 
 // ─── Block types ────────────────────────────────────────────────────────────
@@ -192,6 +194,7 @@ export default function BlogEditorPage() {
   const router   = useRouter();
   const { slug: id } = useParams<{ slug: string }>();
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
 
   const [titulo, setTitulo]           = useState("");
   const [slug, setSlug]               = useState("");
@@ -293,11 +296,20 @@ export default function BlogEditorPage() {
     });
   };
 
-  async function handleDelete() {
-    if (!confirm("Apagar este post permanentemente?")) return;
-    setDeleting(true);
-    await (supabase as any).from("blog_posts").delete().eq("id", id);
-    router.push("/gerenciar-blog");
+  function handleDelete() {
+    confirmDelete({
+      title: "Excluir este post?",
+      description: "O post sai do blog público e não pode ser recuperado.",
+      onConfirm: async () => {
+        setDeleting(true);
+        try {
+          await excluirPorId(supabase, "blog_posts", id);
+        } finally {
+          setDeleting(false);
+        }
+        router.push("/gerenciar-blog");
+      },
+    });
   }
 
   const inputCls = "w-full px-3 py-2 rounded text-sm outline-none transition bg-white placeholder:text-black/25 focus:ring-1 focus:ring-[#7259B5]/30";

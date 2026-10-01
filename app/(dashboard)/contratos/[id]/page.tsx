@@ -5,6 +5,8 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, CalendarDays, ChevronDown, Download, FileText, Handshake, Paperclip, Pencil, RefreshCw, Trash2, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirDocumento } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
 
 type Contract = {
@@ -29,6 +31,7 @@ function date(value: string | null) { return value ? new Date(`${value.split("T"
 export default function ContractPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [contract, setContract] = useState<Contract | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
@@ -81,7 +84,7 @@ export default function ContractPage({ params }: { params: Promise<{ id: string 
     setUploading(false);
   }
   async function open(document: DocumentRow) { const result = await supabase.storage.from("documentos").createSignedUrl(document.url, 3600); if (result.error) setError(result.error.message); else if (result.data?.signedUrl) window.open(result.data.signedUrl, "_blank", "noopener,noreferrer"); }
-  async function remove(document: DocumentRow) { if (!confirm(`Excluir “${document.nome}”?`)) return; const storage = await supabase.storage.from("documentos").remove([document.url]); if (storage.error) { setError(storage.error.message); return; } const result = await (supabase as any).from("documentos").delete().eq("id", document.id); if (result.error) setError(result.error.message); else await load(); }
+  function remove(document: DocumentRow) { confirmDelete({ title: `Excluir o documento “${document.nome}”?`, description: "O arquivo deixa de estar disponível para toda a equipe.", onConfirm: async () => { await excluirDocumento(supabase, document); await load(); } }); }
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault(); const data = new FormData(event.currentTarget); const raw = String(data.get("valor") ?? "").replace(/\./g, "").replace(",", ".");
     const result = await (supabase as any).from("contratos").update({ titulo:String(data.get("titulo")||"").trim()||null, numero:String(data.get("numero")||"").trim()||null, valor:Number(raw||0), status:data.get("status"), data_assinatura:data.get("data_assinatura")||null, data_inicio:data.get("data_inicio")||null, data_fim:data.get("data_fim")||null, proxima_renovacao:data.get("proxima_renovacao")||null, renovacao_automatica:data.get("renovacao_automatica")==="true", notas:String(data.get("notas")||"").trim()||null, rascunho_automatico:false }).eq("id", id);

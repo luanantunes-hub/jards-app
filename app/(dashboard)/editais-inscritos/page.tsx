@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Search, Plus, FileCheck, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import type { StatusEdital } from "@/lib/supabase/types";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
@@ -161,6 +163,7 @@ function ViewToggle({ view, onChange }: { view: ViewMode; onChange: (v: ViewMode
 
 export default function EditaisInscritosPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
   const { etiquetasInscricao } = useEtiquetas();
   const { options: leiOptions, create: createLei } = useLeiOptions();
@@ -207,10 +210,15 @@ export default function EditaisInscritosPage() {
   const [regInscricao,   setRegInscricao]   = useState<EditalInscrito | null>(null);
   const [anotEmpresa,    setAnotEmpresa]     = useState<EditalInscrito | null>(null);
 
-  async function handleDelete(id: string, titulo: string) {
-    if (!confirm(`Excluir inscrição "${titulo}"? Esta ação não pode ser desfeita.`)) return;
-    setEditais(prev => prev.filter(e => e.id !== id));
-    await (supabase as any).from("editais_user").delete().eq("id", id);
+  function handleDelete(id: string, titulo: string) {
+    confirmDelete({
+      title: `Excluir a inscrição “${titulo}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "editais_user", id);
+        setEditais(prev => prev.filter(e => e.id !== id));
+      },
+    });
   }
 
   async function moveEdital(id: string, newStatus: StatusEdital) {

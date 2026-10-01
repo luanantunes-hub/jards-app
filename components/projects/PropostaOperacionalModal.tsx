@@ -4,6 +4,8 @@
 import { useMemo, useState } from "react";
 import { Check, FileCheck2, Plus, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { CotaPatrocinio, Proposta, StatusProposta } from "@/lib/supabase/types";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -55,6 +57,7 @@ export function PropostaOperacionalModal({
   onSaved: () => void;
 }) {
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
   const initialKind = fixedCase?.kind ?? (proposta?.edital_user_id ? "edital" : "negociacao");
   const [titulo, setTitulo] = useState(proposta?.titulo ?? `${projetoNome} — adaptação comercial`);
@@ -127,12 +130,17 @@ export function PropostaOperacionalModal({
     onClose();
   }
 
-  async function remove() {
-    if (!proposta || !confirm("Excluir esta adaptação comercial?")) return;
-    const { error } = await (supabase as any).from("propostas").delete().eq("id", proposta.id);
-    if (error) { setErro(error.message); return; }
-    onSaved();
-    onClose();
+  function remove() {
+    if (!proposta) return;
+    confirmDelete({
+      title: "Excluir esta adaptação comercial?",
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "propostas", proposta.id);
+        onSaved();
+        onClose();
+      },
+    });
   }
 
   return (
@@ -188,7 +196,7 @@ export function PropostaOperacionalModal({
           {erro && <p className="rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] text-red-700">{erro}</p>}
         </div>
 
-        <div className="flex items-center justify-between border-t border-black/[.07] px-6 py-4"><div>{proposta && <button onClick={() => void remove()} className="flex items-center gap-1.5 text-[11px] font-semibold text-red-600/60 hover:text-red-600"><Trash2 size={12} /> Excluir</button>}</div><div className="flex items-center gap-3"><button onClick={onClose} className="text-[12px] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button onClick={() => void save()} disabled={saving} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40"><Check size={12} /> {saving ? "Salvando…" : "Salvar"}</button></div></div>
+        <div className="flex items-center justify-between border-t border-black/[.07] px-6 py-4"><div>{proposta && <button onClick={remove} className="flex items-center gap-1.5 text-[11px] font-semibold text-[#D94E4E]/70 hover:text-[#D94E4E]"><Trash2 size={12} /> Excluir</button>}</div><div className="flex items-center gap-3"><button onClick={onClose} className="text-[12px] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button onClick={() => void save()} disabled={saving} className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40"><Check size={12} /> {saving ? "Salvando…" : "Salvar"}</button></div></div>
       </div>
     </div>
   );

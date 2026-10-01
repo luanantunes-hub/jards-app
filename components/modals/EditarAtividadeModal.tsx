@@ -5,6 +5,8 @@ import {
   ChevronDown, Check, CalendarDays, Trash2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { PrioridadeSelect } from "@/components/ui/PrioridadeSelect";
 import type { Prioridade, TipoAtividade } from "@/lib/supabase/types";
@@ -52,6 +54,7 @@ export function EditarAtividadeModal({
   onDeleted?: () => void;
 }) {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
 
   const [loadingAtividade, setLoadingAtividade] = useState(true);
@@ -214,18 +217,22 @@ export function EditarAtividadeModal({
     onClose();
   }
 
-  async function handleDelete() {
-    if (!confirm("Excluir esta atividade? Esta ação não pode ser desfeita.")) return;
-    setDeleting(true);
-    setErro(null);
-    const { data, error } = await (supabase as any).from("atividades").delete().eq("id", atividadeId).select("id").single();
-    setDeleting(false);
-    if (error || !data) {
-      setErro(error?.message ?? "Não foi possível excluir esta atividade.");
-      return;
-    }
-    onDeleted?.();
-    onClose();
+  function handleDelete() {
+    confirmDelete({
+      title: "Excluir esta atividade?",
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setDeleting(true);
+        setErro(null);
+        try {
+          await excluirPorId(supabase, "atividades", atividadeId);
+        } finally {
+          setDeleting(false);
+        }
+        onDeleted?.();
+        onClose();
+      },
+    });
   }
 
   return (

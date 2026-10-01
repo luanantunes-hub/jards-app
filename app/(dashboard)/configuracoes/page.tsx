@@ -12,6 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useCreditos } from "@/contexts/CreditosContext";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import NovoMembroModal from "@/components/modals/NovoMembroModal";
 import { CalendarConnections } from "@/components/CalendarConnections";
 import { McpConnectionCard } from "@/components/McpConnectionCard";
@@ -75,6 +76,7 @@ export default function ConfiguracoesPage() {
   const router = useRouter();
   const organizationId = useOrganizationId();
   const { creditos, config, assinatura, loading: loadingCreditos, recarregar } = useCreditos();
+  const { confirmDelete } = useDeleteConfirm();
 
   const [loading, setLoading] = useState(true);
   const [membros, setMembros] = useState<MembroOrg[]>([]);
@@ -339,21 +341,32 @@ const { data: perfilData } = await (supabase as any)
     setSalvando(false);
   }
 
-  async function handleRemoverMembro(userId: string) {
+  function handleRemoverMembro(userId: string) {
     if (!organizationId) return;
-    if (!confirm("Remover este membro da organização?")) return;
-    setSalvando(true);
-    setErro(null);
-    const response = await fetch(`/api/members/${encodeURIComponent(userId)}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ organization_id: organizationId }),
+    confirmDelete({
+      title: "Remover este membro da organização?",
+      description: "A pessoa perde o acesso imediatamente. Os registros criados por ela continuam na organização.",
+      confirmLabel: "Remover",
+      pendingLabel: "Removendo…",
+      illustration: false,
+      onConfirm: async () => {
+        setSalvando(true);
+        setErro(null);
+        try {
+          const response = await fetch(`/api/members/${encodeURIComponent(userId)}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ organization_id: organizationId }),
+          });
+          const body = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(body.error ?? "Não foi possível remover o membro");
+          showSuccess("Membro removido");
+          await loadMembers();
+        } finally {
+          setSalvando(false);
+        }
+      },
     });
-    const body = await response.json().catch(() => ({}));
-    if (!response.ok) { setErro(body.error ?? "Não foi possível remover o membro"); }
-    else { showSuccess("Membro removido"); }
-    if (response.ok) await loadMembers();
-    setSalvando(false);
   }
 
   async function handleAlterarPapel(userId: string, novoPapel: string) {

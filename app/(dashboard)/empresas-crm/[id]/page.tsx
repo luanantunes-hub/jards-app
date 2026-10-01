@@ -476,6 +476,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
   const supabase = createClient();
   const [open, setOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
   const [tipo, setTipo] = useState(empresa.tipo);
   const boxRef = useRef<HTMLDivElement>(null);
   const menuPos = usePortalPosition(boxRef, open);
@@ -495,7 +496,13 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
 
   async function updateTipo(newTipo: "prospect" | "cliente_ativo" | "ex_cliente") {
     setSaving(true);
-    await (supabase as any).from("empresas_crm").update({ tipo: newTipo }).eq("id", empresa.id);
+    setErro(null);
+    const { error: erroTipo } = await (supabase as any).from("empresas_crm").update({ tipo: newTipo }).eq("id", empresa.id);
+    if (erroTipo) {
+      setSaving(false);
+      setErro("Não foi possível alterar o tipo da empresa. Tente novamente.");
+      return;
+    }
     if (newTipo === "cliente_ativo") {
       // Marcar como cliente precisa criar a conta de patrocínio, senão a empresa não aparece em Clientes.
       const { data: contaExistente } = await (supabase as any).from("contas_patrocinio").select("id").eq("empresa_crm_id", empresa.id).limit(1).maybeSingle();
@@ -510,8 +517,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
         if (erroConta) {
           await (supabase as any).from("empresas_crm").update({ tipo: empresa.tipo }).eq("id", empresa.id);
           setSaving(false);
-          setOpen(false);
-          window.alert(erroConta.message);
+          setErro(`Não foi possível criar o cliente: ${erroConta.message}`);
           return;
         }
       }
@@ -525,8 +531,9 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
   return (
     <div className="relative" ref={boxRef}>
       <button
-        onClick={() => setOpen(!open)}
+        onClick={() => { setErro(null); setOpen(!open); }}
         disabled={saving}
+        aria-expanded={open}
         className="inline-flex items-center gap-1.5 rounded border bg-white px-2.5 py-1 text-[11px] font-semibold transition hover:bg-black/[.04] disabled:opacity-60"
         style={{borderColor: currentColor + "66", color: currentColor}}
       >
@@ -559,6 +566,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
               );
             })}
           </div>
+          {erro && <p role="alert" className="border-t border-black/[.06] px-3 py-2 text-[11px] leading-snug text-[#B23A3A]">{erro}</p>}
         </PortalMenu>
       )}
     </div>

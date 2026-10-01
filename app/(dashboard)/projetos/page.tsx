@@ -3,6 +3,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Plus, FolderOpen, Trash2, List, Columns3, CalendarDays, UserRound, Calendar, TrendingUp, Zap, FileText, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
@@ -162,6 +164,7 @@ function ProjectsPortfolioView({ projetos, onOpen }: { projetos: ProjetoRow[]; o
 
 export default function ProjetosPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
   const [projetos, setProjetos] = useState<ProjetoRow[]>([]);
   const [loading, setLoading]   = useState(true);
@@ -172,15 +175,15 @@ export default function ProjetosPage() {
   const [faseFilter, setFaseFilter] = useState<"todas" | ProjetoRow["fase_codigo"]>("todas");
   const [showArquivados, setShowArquivados] = useState(false);
 
-  async function handleDelete(id: string, nome: string) {
-    if (!confirm(`Excluir projeto "${nome}"? Esta ação não pode ser desfeita.`)) return;
-    const snapshot = projetos;
-    setProjetos(prev => prev.filter(p => p.id !== id));
-    const { error } = await supabase.from("projetos_crm").delete().eq("id", id);
-    if (error) {
-      setProjetos(snapshot);
-      alert("Não foi possível excluir o projeto: " + error.message);
-    }
+  function handleDelete(id: string, nome: string) {
+    confirmDelete({
+      title: `Excluir o projeto “${nome}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "projetos_crm", id, { vinculado: "Este projeto ainda tem negociações, inscrições ou contratos vinculados. Arquive o projeto ou remova esses vínculos antes de excluí-lo." });
+        setProjetos(prev => prev.filter(p => p.id !== id));
+      },
+    });
   }
 
   async function fetchData() {

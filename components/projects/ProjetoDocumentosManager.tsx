@@ -4,6 +4,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, File, FileArchive, FileImage, FileSpreadsheet, FileText, Plus, Search, Trash2, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirDocumento } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { Select } from "@/components/ui/Select";
 
@@ -56,6 +58,7 @@ function DocumentIcon({ type, name }: { type: string | null; name: string }) {
 
 export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: { projetoId: string; captacoes: CaptacaoOption[]; inscricoes: InscricaoOption[] }) {
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [documentos, setDocumentos] = useState<ProjetoDocumento[]>([]);
@@ -155,13 +158,15 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
     if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
-  async function removeDocument(documento: ProjetoDocumento) {
-    if (!confirm(`Excluir “${documento.nome}”?`)) return;
-    const { error: storageError } = await supabase.storage.from("documentos").remove([documento.url]);
-    if (storageError) { setErro(storageError.message); return; }
-    const { error } = await (supabase as any).from("documentos").delete().eq("id", documento.id);
-    if (error) { setErro(error.message); return; }
-    await load();
+  function removeDocument(documento: ProjetoDocumento) {
+    confirmDelete({
+      title: `Excluir o documento “${documento.nome}”?`,
+      description: "O arquivo deixa de estar disponível para toda a equipe.",
+      onConfirm: async () => {
+        await excluirDocumento(supabase, documento);
+        await load();
+      },
+    });
   }
 
   const filtered = documentos.filter(item => `${item.nome} ${item.arquivo_nome ?? ""} ${item.categoria ?? ""}`.toLowerCase().includes(busca.toLowerCase()));

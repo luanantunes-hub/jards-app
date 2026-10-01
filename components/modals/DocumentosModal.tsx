@@ -5,6 +5,8 @@ import {
   Trash2, Eye, Upload, Loader2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -60,6 +62,7 @@ function DocForm({
   onSaved: () => void;
 }) {
   const supabase   = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const fileRef    = useRef<HTMLInputElement>(null);
   const [titulo,   setTitulo]   = useState(doc?.titulo ?? "");
   const [icone,    setIcone]    = useState(doc?.icone  ?? "file-text");
@@ -113,12 +116,21 @@ function DocForm({
     }
   }
 
-  async function handleDelete() {
+  function handleDelete() {
     if (!doc) return;
-    setDeleting(true);
-    await (supabase as any).from("documentos_inscricao").delete().eq("id", doc.id);
-    onSaved();
-    setDeleting(false);
+    confirmDelete({
+      title: `Excluir o documento “${doc.titulo}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        setDeleting(true);
+        try {
+          await excluirPorId(supabase, "documentos_inscricao", doc.id);
+        } finally {
+          setDeleting(false);
+        }
+        onSaved();
+      },
+    });
   }
 
   async function handleView() {
@@ -268,10 +280,10 @@ function DocForm({
               <button
                 onClick={handleDelete}
                 disabled={deleting}
-                className="flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-red-600 transition"
+                className="flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-[#D94E4E] transition"
               >
                 {deleting ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
-                Deletar
+                Excluir
               </button>
             </div>
           )}

@@ -11,6 +11,8 @@ import {
   ChevronDown, ArrowUp, ArrowDown, Minus, Check,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirDocumento } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { Captacao, Atividade } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
@@ -231,6 +233,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const { id } = use(params);
   const router = useRouter();
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const { options: leiOptions, create: createLei } = useLeiOptions();
   const { etiquetas } = useEtiquetas();
   const STATUS_META: Record<string, { label: string; cor: string; icone: string }> = Object.fromEntries(etiquetas.map(e => [e.key, e]));
@@ -537,20 +540,16 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     await fetchData();
   }
 
-  async function handleExcluirDocumento(docId: string, storagePath: string) {
-    if (!confirm("Excluir este documento?")) return;
-    setDocumentoErro(null);
-    const { error: storageError } = await supabase.storage.from("documentos").remove([storagePath]);
-    if (storageError) {
-      setDocumentoErro(storageError.message);
-      return;
-    }
-    const { error: metadataError } = await (supabase.from("documentos") as any).delete().eq("id", docId);
-    if (metadataError) {
-      setDocumentoErro(metadataError.message);
-      return;
-    }
-    await fetchData();
+  function handleExcluirDocumento(docId: string, storagePath: string, nome: string) {
+    confirmDelete({
+      title: `Excluir o documento “${nome}”?`,
+      description: "O arquivo deixa de estar disponível para toda a equipe.",
+      onConfirm: async () => {
+        setDocumentoErro(null);
+        await excluirDocumento(supabase, { id: docId, url: storagePath });
+        await fetchData();
+      },
+    });
   }
 
   async function handleStatusChange(newStatus: string) {
@@ -1157,7 +1156,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                           <ExternalLink size={12} />
                         </button>
                         <button
-                          onClick={() => handleExcluirDocumento(doc.id, doc.url)}
+                          onClick={() => handleExcluirDocumento(doc.id, doc.url, doc.nome)}
                           className="p-1.5 rounded hover:bg-red-50 text-black/25 hover:text-red-500 transition"
                         >
                           <Trash2 size={12} />

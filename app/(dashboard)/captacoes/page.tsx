@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Plus, ArrowUpRight, Calendar, TrendingUp, List, Columns2, Pencil, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { StatusCaptacao, MeioContato, OrigemOportunidade, CanalContato } from "@/lib/supabase/types";
 import { NovaCaptacaoModal, type EditDataCaptacao } from "@/components/modals/NovaCaptacaoModal";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -165,6 +167,7 @@ function getInitialCap(nome: string) {
 
 export default function CaptacoesPage() {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
   const organizationId = useOrganizationId();
   const { options: leiOptions, create: createLei } = useLeiOptions();
@@ -209,10 +212,15 @@ export default function CaptacoesPage() {
     if (error) setCaptacoes(previous);
   }
 
-  async function handleDelete(id: string, titulo: string) {
-    if (!confirm(`Excluir captação "${titulo}"? Esta ação não pode ser desfeita.`)) return;
-    setCaptacoes(prev => prev.filter(c => c.id !== id));
-    await supabase.from("captacoes").delete().eq("id", id);
+  function handleDelete(id: string, titulo: string) {
+    confirmDelete({
+      title: `Excluir a negociação “${titulo}”?`,
+      description: "Atividades, propostas e histórico desta negociação deixam de aparecer. Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "captacoes", id);
+        setCaptacoes(prev => prev.filter(c => c.id !== id));
+      },
+    });
   }
 
   async function moveCard(id: string, newStatus: StatusCaptacao) {

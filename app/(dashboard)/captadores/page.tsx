@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import PrioBadge from "@/components/ui/PrioBadge";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import AdicionarCaptadorModal from "@/components/modals/AdicionarCaptadorModal";
 import { ProjectIdentity, CAPTADOR_ICON_OPTIONS } from "@/components/ui/ProjectIdentity";
@@ -282,6 +284,7 @@ function CaptadoresList({
 
 export default function CaptadoresPage() {
   const supabase       = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const router         = useRouter();
   const organizationId = useOrganizationId();
   const [activeTab, setActiveTab] = useState<Tab>("equipe");
@@ -414,10 +417,15 @@ export default function CaptadoresPage() {
     setLoadingEquipe(false);
   }, [organizationId, supabase]);
 
-  async function handleDeleteCaptador(id: string, nome: string) {
-    if (!confirm(`Excluir captador "${nome}"? Esta ação não pode ser desfeita.`)) return;
-    setCaptadores(prev => prev.filter(c => c.id !== id));
-    await supabase.from("captadores").delete().eq("id", id);
+  function handleDeleteCaptador(id: string, nome: string) {
+    confirmDelete({
+      title: `Excluir o captador “${nome}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "captadores", id, { vinculado: "Este captador ainda tem negociações ou atribuições vinculadas. Reatribua esses registros antes de excluí-lo." });
+        setCaptadores(prev => prev.filter(c => c.id !== id));
+      },
+    });
   }
 
   /* ---- Fetch Métricas ---- */

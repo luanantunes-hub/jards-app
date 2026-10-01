@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { STATUS_BADGE } from "@/components/ui/StatusBadge";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
@@ -30,6 +31,7 @@ const CREATE_COLORS = ["#7259B5", "#2D72B0", "#1A8B7A", "#2E8932", "#B07A14", "#
 const CREATE_ICONS = ["Landmark", "Trophy", "Clapperboard", "HeartHandshake", "Building2", "MapPin", "Leaf", "Tag"];
 
 export function StatusDropdown({ options, current, position, onSelect, onClose, title = "Etiquetas", onCreate, onDelete }: Props) {
+  const { confirmDelete } = useDeleteConfirm();
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("");
   const [newColor, setNewColor] = useState(CREATE_COLORS[0]);
@@ -109,7 +111,7 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
                     type="button"
                     title={`Excluir ${label}`}
                     aria-label={`Excluir ${label}`}
-                    onClick={async event => { event.stopPropagation(); if (window.confirm(`Excluir a lei “${label}”?`)) await onDelete(status); }}
+                    onClick={event => { event.stopPropagation(); confirmDelete({ title: `Excluir a lei “${label}”?`, description: "Registros que já usam esta lei mantêm o valor salvo.", onConfirm: () => onDelete(status) }); }}
                     className="absolute left-1 top-1 flex h-5 w-5 items-center justify-center rounded bg-black/15 text-white/75 transition hover:bg-black/30 hover:text-white"
                   >
                     <Icons.Trash2 size={9}/>

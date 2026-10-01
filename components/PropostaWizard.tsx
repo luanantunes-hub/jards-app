@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { X, FileText, Eye, Copy, ExternalLink, Archive, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { Proposta, SlideCapa, SlideHistoria, SlideNumeros, SlideContato, CotaPatrocinio } from "@/lib/supabase/types";
 import { formatCotaValor, cotaTemDisponibilidade } from "@/lib/cotas";
@@ -41,6 +43,7 @@ export function PropostaWizard({
   onSaved: () => void;
 }) {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -130,13 +133,17 @@ export function PropostaWizard({
     if (!error) { onSaved(); onClose(); }
   }
 
-  async function handleExcluir() {
+  function handleExcluir() {
     if (!proposta) return;
-    if (!confirm("Excluir esta proposta?")) return;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sb = supabase as any;
-    const { error } = await sb.from("propostas").delete().eq("id", proposta.id);
-    if (!error) { onSaved(); onClose(); }
+    confirmDelete({
+      title: "Excluir esta proposta?",
+      description: "O link público deixa de funcionar. Para manter o histórico, prefira arquivar.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "propostas", proposta.id);
+        onSaved();
+        onClose();
+      },
+    });
   }
 
   function copyLink() {

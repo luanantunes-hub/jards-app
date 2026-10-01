@@ -9,6 +9,8 @@ import {
   Play, Plus, ShieldCheck, Trash2, Upload, UserRound, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirDocumento } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
@@ -39,6 +41,7 @@ const MAX_FILE_BYTES = 50 * 1024 * 1024;
 export default function DeliveryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const supabase = useMemo(() => createClient(), []);
+  const { confirmDelete } = useDeleteConfirm();
   const fileRef = useRef<HTMLInputElement>(null);
   const [delivery, setDelivery] = useState<CompromissoCliente | null>(null);
   const [account, setAccount] = useState<Account | null>(null);
@@ -199,12 +202,16 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
     if (result.error) setError(result.error.message); else if (result.data?.signedUrl) window.open(result.data.signedUrl, "_blank", "noopener,noreferrer");
   }
 
-  async function removeDocument(document: DocumentRow) {
-    if (!canWrite || !confirm(`Excluir “${document.nome}”?`)) return;
-    const storage = await supabase.storage.from("documentos").remove([document.url]);
-    if (storage.error) { setError(storage.error.message); return; }
-    const result = await (supabase as any).from("documentos").delete().eq("id", document.id);
-    if (result.error) setError(result.error.message); else await load();
+  function removeDocument(document: DocumentRow) {
+    if (!canWrite) return;
+    confirmDelete({
+      title: `Excluir o documento “${document.nome}”?`,
+      description: "O arquivo deixa de estar disponível para toda a equipe.",
+      onConfirm: async () => {
+        await excluirDocumento(supabase, document);
+        await load();
+      },
+    });
   }
 
   if (loading) return <div className="mx-auto max-w-[1180px] animate-pulse px-4 py-8 sm:px-6 lg:px-8"><div className="h-5 w-28 rounded bg-black/[.06]"/><div className="mt-8 h-28 rounded bg-black/[.04]"/><div className="mt-6 h-80 rounded bg-black/[.04]"/></div>;

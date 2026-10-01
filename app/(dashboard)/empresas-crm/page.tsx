@@ -5,6 +5,8 @@ import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Shield,
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { NovoClienteModal } from "@/components/modals/NovoClienteModal";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import type { EmpresaCrm } from "@/lib/supabase/types";
@@ -180,6 +182,7 @@ function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; o
 export default function EmpresasCrmPage() {
   const router = useRouter();
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
 
   const [empresas, setEmpresas] = useState<EmpresaViewRow[]>([]);
@@ -192,10 +195,15 @@ export default function EmpresasCrmPage() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:empresas:view", VIEW_MODES, "lista");
 
-  async function handleDelete(id: string, nome: string) {
-    if (!confirm(`Excluir empresa "${nome}"? Esta ação não pode ser desfeita.`)) return;
-    setEmpresas(prev => prev.filter(e => e.id !== id));
-    await supabase.from("empresas_crm").delete().eq("id", id);
+  function handleDelete(id: string, nome: string) {
+    confirmDelete({
+      title: `Excluir a empresa “${nome}”?`,
+      description: "Esta ação não pode ser desfeita.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "empresas_crm", id, { vinculado: "Esta empresa ainda tem negociações, contatos ou contratos vinculados. Remova esses vínculos antes de excluí-la." });
+        setEmpresas(prev => prev.filter(e => e.id !== id));
+      },
+    });
   }
 
   useEffect(() => {

@@ -5,6 +5,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, FileSpreadsheet, Pencil, Plus, Trash2, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { excluirPorId } from "@/lib/supabase/exclusao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { CotaPatrocinio, ProjetoOrcamentoItem } from "@/lib/supabase/types";
 import { Select } from "@/components/ui/Select";
@@ -89,6 +91,7 @@ export function ProjetoOrcamentoManager({
   valorTotal?: number;
 }) {
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
   const importRef = useRef<HTMLInputElement>(null);
   const [itens, setItens] = useState<ItemWithRateios[]>([]);
@@ -170,12 +173,16 @@ export function ProjetoOrcamentoManager({
     onChanged?.();
   }
 
-  async function deleteItem(item: ItemWithRateios) {
-    if (!window.confirm('Excluir a rubrica "' + item.rubrica + '"?')) return;
-    const { error } = await (supabase as any).from('projeto_orcamento_itens').delete().eq('id', item.id);
-    if (error) { setErro(error.message); return; }
-    await fetchItems();
-    onChanged?.();
+  function deleteItem(item: ItemWithRateios) {
+    confirmDelete({
+      title: `Excluir a rubrica “${item.rubrica}”?`,
+      description: "Os rateios desta rubrica entre as cotas também são removidos.",
+      onConfirm: async () => {
+        await excluirPorId(supabase, "projeto_orcamento_itens", item.id);
+        await fetchItems();
+        onChanged?.();
+      },
+    });
   }
 
   function exportCsv(cota: CotaPatrocinio & { pct: number }) {
@@ -386,7 +393,7 @@ export function ProjetoOrcamentoManager({
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-0.5">
                         <button title="Editar" onClick={() => openEdit(item)} className="rounded p-1.5 text-black/25 transition hover:bg-black/5 hover:text-black/60"><Pencil size={12} /></button>
-                        <button title="Excluir" onClick={() => void deleteItem(item)} className="rounded p-1.5 text-black/20 transition hover:bg-[#D94E4E]/10 hover:text-[#D94E4E]"><Trash2 size={12} /></button>
+                        <button title="Excluir" aria-label={`Excluir a rubrica ${item.rubrica}`} onClick={() => deleteItem(item)} className="rounded p-1.5 text-black/20 transition hover:bg-[#D94E4E]/10 hover:text-[#D94E4E]"><Trash2 size={12} /></button>
                       </div>
                     </td>
                   </tr>
