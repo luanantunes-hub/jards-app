@@ -29,7 +29,7 @@ export function AnchoredPopover({ pos, onClose, children }: {
 }) {
   useEffect(() => {
     if (!pos) return;
-    function onKey(event: KeyboardEvent) { if (event.key === "Escape") onClose(); }
+    function onKey(event: KeyboardEvent) { if (event.key === "Escape") { event.preventDefault(); onClose(); } }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [pos, onClose]);

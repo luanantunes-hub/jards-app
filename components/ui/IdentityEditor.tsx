@@ -52,7 +52,7 @@ export function IdentityEditor({
       if (!editorRef.current?.contains(event.target as Node)) setOpenPicker(null);
     }
     function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpenPicker(null);
+      if (event.key === "Escape") { event.preventDefault(); setOpenPicker(null); }
     }
     document.addEventListener("pointerdown", closeOnOutsideClick);
     document.addEventListener("keydown", closeOnEscape);
