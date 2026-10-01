@@ -299,7 +299,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
     </main>
 
     {editing && <EditDelivery delivery={delivery} members={members} error={error} onClose={() => { setEditing(false); setError(null); }} onSubmit={save}/>} 
-    {showActivity && <NovaAtividadeModal prefill={{ compromisso_id: delivery.id, empresa_crm_id: account.empresa_crm_id, projeto_id: delivery.projeto_id ?? undefined, responsavel_id: delivery.responsavel_id ?? undefined, date: delivery.prazo ?? undefined }} onClose={() => setShowActivity(false)} onSaved={() => { setShowActivity(false); void load(); }}/>} 
+    {showActivity && <NovaAtividadeModal prefill={{ compromisso_id: delivery.id, empresa_crm_id: account.empresa_crm_id, projeto_id: delivery.projeto_id ?? undefined, responsavel_id: delivery.responsavel_id ?? undefined, conta_patrocinio_id: delivery.conta_patrocinio_id ?? undefined, date: delivery.prazo ?? undefined }} onClose={() => setShowActivity(false)} onSaved={() => { setShowActivity(false); void load(); }}/>}
   </div>;
 }
 

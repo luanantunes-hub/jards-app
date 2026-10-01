@@ -79,6 +79,7 @@ export function NovaAtividadeModal({
     edital_user_id?: string;
     responsavel_id?: string;
     compromisso_id?: string;
+    conta_patrocinio_id?: string;
     date?: string;
   };
 }) {
@@ -97,17 +98,22 @@ export function NovaAtividadeModal({
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState<TipoAtividade>("reuniao");
   const [tipoCustomId, setTipoCustomId] = useState<string | null>(null);
+  // Prioriza o vínculo mais específico primeiro — mesma convenção usada em
+  // entityLabel() (app/(dashboard)/atividades/page.tsx): contato/captação são
+  // mais específicos que empresa, que fica por último. Com a ordem antiga,
+  // abrir "Nova atividade" a partir da página de um contato nascia com
+  // "Vinculada a: Empresa" em vez de "Contato", que é a entidade na tela.
   const [vinculoTipo, setVinculoTipo] = useState<VinculoTipo>(() => {
     if (prefill?.compromisso_id) return "entrega";
+    if (prefill?.contato_id)     return "contato";
     if (prefill?.captacao_id)    return "captacao";
+    if (prefill?.projeto_id)     return "projeto";
     if (prefill?.edital_user_id) return "inscricao";
     if (prefill?.empresa_crm_id) return "empresa";
-    if (prefill?.projeto_id)     return "projeto";
-    if (prefill?.contato_id)     return "contato";
     return "captacao";
   });
   const [vinculoId, setVinculoId] = useState<string | null>(
-    prefill?.compromisso_id ?? prefill?.captacao_id ?? prefill?.edital_user_id ?? prefill?.empresa_crm_id ?? prefill?.projeto_id ?? prefill?.contato_id ?? null,
+    prefill?.compromisso_id ?? prefill?.contato_id ?? prefill?.captacao_id ?? prefill?.projeto_id ?? prefill?.edital_user_id ?? prefill?.empresa_crm_id ?? null,
   );
   const [responsavelId, setResponsavelId] = useState<string | null>(prefill?.responsavel_id ?? null);
   const [dataInicio, setDataInicio] = useState(prefill?.date ?? todayInputValue());
@@ -232,6 +238,16 @@ export function NovaAtividadeModal({
     setShowCreateModal(false);
   }
 
+  // NovoProponenteModal não fecha sozinho ao salvar (modo criação) — ele
+  // continua montado pra mostrar uma tela de sucesso com atalhos ("Adicionar
+  // contato", "Criar primeiro projeto"), e só chama onClose quando o usuário
+  // realmente termina ali. Fechar aqui como os outros vínculos cortava essa
+  // tela antes de aparecer.
+  async function handleProponenteCreated(id?: string) {
+    await loadData();
+    if (id) setVinculoId(id);
+  }
+
   const vinculoOptions = ({
     captacao: captacoes, inscricao: inscricoes, empresa: empresas, projeto: projetos,
     agencia: agencias, proponente: proponentes, contato: contatos, entrega: entregas,
@@ -272,14 +288,24 @@ export function NovaAtividadeModal({
       nome: nome.trim(),
       tipo,
       tipo_custom_id: tipoCustomId,
-      captacao_id:    vinculoTipo === "captacao"  ? vinculoId : prefill?.captacao_id ?? null,
-      edital_user_id: vinculoTipo === "inscricao" ? vinculoId : prefill?.edital_user_id ?? null,
-      empresa_crm_id: vinculoTipo === "empresa"   ? vinculoId : prefill?.empresa_crm_id ?? null,
-      projeto_id:     vinculoTipo === "projeto"   ? vinculoId : prefill?.projeto_id ?? null,
-      captador_id:    vinculoTipo === "agencia"   ? vinculoId : null,
+      // Só grava o FK que corresponde ao vínculo escolhido — cair de volta no
+      // prefill pros outros campos deixava FKs de fontes diferentes (contexto
+      // herdado da tela de origem + escolha atual do usuário) coexistindo sem
+      // relação entre si, já que nenhuma constraint no banco valida que eles
+      // sejam consistentes entre si.
+      captacao_id:    vinculoTipo === "captacao"   ? vinculoId : null,
+      edital_user_id: vinculoTipo === "inscricao"  ? vinculoId : null,
+      empresa_crm_id: vinculoTipo === "empresa"    ? vinculoId : null,
+      projeto_id:     vinculoTipo === "projeto"    ? vinculoId : null,
+      captador_id:    vinculoTipo === "agencia"    ? vinculoId : null,
       proponente_id:  vinculoTipo === "proponente" ? vinculoId : null,
-      contato_id:     vinculoTipo === "contato"   ? vinculoId : prefill?.contato_id ?? null,
-      compromisso_id: vinculoTipo === "entrega"   ? vinculoId : prefill?.compromisso_id ?? null,
+      contato_id:     vinculoTipo === "contato"    ? vinculoId : null,
+      compromisso_id: vinculoTipo === "entrega"    ? vinculoId : null,
+      // Preenchido só quando a atividade é de fato sobre a entrega (mesmo
+      // par que fn_customer_success_automations já usa) — sem isso, o
+      // indicador de "dias sem atividade" do Customer Success nunca via
+      // atividades de entrega logadas manualmente por aqui.
+      conta_patrocinio_id: vinculoTipo === "entrega" ? prefill?.conta_patrocinio_id ?? null : null,
       responsavel_id: responsavelId,
       prioridade,
       data_inicio: dataInicio,
@@ -577,7 +603,7 @@ export function NovaAtividadeModal({
         <NovoProjetoModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
       )}
       {showCreateModal && vinculoTipo === "proponente" && (
-        <NovoProponenteModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
+        <NovoProponenteModal onClose={() => setShowCreateModal(false)} onSaved={handleProponenteCreated} />
       )}
       {showCreateModal && vinculoTipo === "contato" && (
         <NovoContatoModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
