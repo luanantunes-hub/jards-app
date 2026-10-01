@@ -16,8 +16,10 @@ Decisões centrais:
 4. **Alertas apoiam, não julgam.** O próprio manual de avaliação do MinC diz que apontamentos automáticos passam por análise humana. Cada checagem tem severidade (bloqueia envio, alerta de glosa, exige justificativa) e sempre aceita justificativa registrada.
 5. **Antes de qualquer funcionalidade, uma fase de fundação**: versionar o schema que hoje só existe no banco remoto, isolar por organização, corrigir o armazenamento e a função de IA sem autorização.
 6. **Posicionamento:** nenhum concorrente cobre, do lado do proponente e da consultoria, regras por lei despesa a despesa, conciliação pelo extrato e saída no formato oficial ao mesmo tempo. O concorrente mais próximo (PROJETE) ainda está em desenvolvimento. O Jards já tem o CRM de captação e as ativações do patrocinador e pode fechar o ciclo até a renovação (seção 4).
+7. **Mesma base de usuários, novo tipo de usuário, cobrança à parte.** A pessoa entra com o mesmo login do Jards; o que muda é o acesso por módulo. Um usuário pode ser só da prestação, só da captação ou dos dois. O módulo custa R$ 92,80 por mês com um usuário incluído, mais R$ 19,90 por usuário extra, o mesmo preço do usuário extra da captação (seção 6.10).
+8. **Um agente de IA mantém o catálogo de regras.** Ele lê o Diário Oficial e as páginas dos órgãos todos os dias, detecta mudanças nas normas e propõe a nova versão do regime com o trecho que justifica cada valor. Quem publica é uma pessoa da equipe (seção 11.1).
 
-Ordem sugerida: Fundação → Rouanet completo (piloto em cultura) → carteira e patrocinador → ANCINE → Esporte (LIE federal) → Saúde (PRONON/PRONAS). Estimativa: cerca de 27 semanas de uma pessoa full-stack (≈ 4 a 5 meses com duas), detalhada na seção 14.
+Ordem sugerida: Fundação → Rouanet completo (piloto em cultura) → carteira, patrocinador e cobrança → agente normativo → ANCINE → Esporte (LIE federal) → Saúde (PRONON/PRONAS). Estimativa: cerca de 33 semanas de uma pessoa full-stack (≈ 5 a 6 meses com duas), detalhada na seção 14.
 
 ---
 
@@ -213,7 +215,7 @@ Cuidados:
 
 ### 6.1 Regime normativo
 
-- **Catálogo global** `prestacao_regimes`, mantido pela equipe Jards (super admin). Cada registro é uma versão: código, área, mecanismo, esfera (federal, estadual, municipal), UF/município, órgão, sistema oficial, norma de referência, vigência, `parametros` (jsonb validado por schema Zod no código), `checagens` (lista de códigos com severidade e parâmetros), `checklist_envio`, `modelos_saida` e `fontes` (documento e página de cada regra).
+- **Catálogo global** `prestacao_regimes`, mantido pela equipe Jards (super admin) com o apoio do agente normativo, que propõe as novas versões (seção 11.1). Cada registro é uma versão: código, área, mecanismo, esfera (federal, estadual, municipal), UF/município, órgão, sistema oficial, norma de referência, vigência, `parametros` (jsonb validado por schema Zod no código), `checagens` (lista de códigos com severidade e parâmetros), `checklist_envio`, `modelos_saida` e `fontes` (documento e página de cada regra).
 - **Cada prestação guarda o regime e a versão** usados. Uma nova norma não muda prestações em andamento sem uma ação explícita e auditada (a IN 29/2026 se aplica a projetos em andamento; nesse caso o super admin migra em lote, com registro).
 - **Exceções declaradas por prestação** (ex.: projeto do art. 24, I–V da Rouanet, isento do teto por fornecedor; grupo artístico familiar; animação na ANCINE), sempre com justificativa e anexo.
 - **Regimes da v1**: `rouanet_in29_2026`, `ancine_in159_2021` (+ `ancine_in150_2019` para projetos antigos), `lie_p10_2026` (+ `lie_p424_2020` para projetos protocolados antes de 04/03/2026), `pronon_pronas_lxxxvi_a_2025` (+ `_prc5_2017`, `_1550_2014` e `_875_2013` para projetos antigos). Um regime `generico` cobre patrocínio direto e leis ainda não modeladas, sem checagens normativas.
@@ -294,6 +296,38 @@ Importações: extrato (OFX, CSV e PDF do Banco do Brasil), XML de NF-e/NFS-e, o
 - **Convidados:** acesso por convite, com escopo por seção e data de expiração, para contador (que assina declarações), auditor e patrocinador. O convidado comenta e marca itens como "verificado"; tudo entra no histórico.
 - **Captura por vários canais:** um e-mail (e, depois, WhatsApp) por projeto para receber notas e recibos, que caem na fila de conciliação; regras por CNPJ de fornecedor (item padrão, retenções); resumo semanal por responsável ("faltam 7 comprovantes no projeto X").
 
+### 6.10 Usuários, acesso e cobrança
+
+**Mesma base de usuários.** Login, perfil, organização, convites e membros são os de hoje (`auth.users`, `profiles`, `organizations`, `organization_members`, `organization_invitations`). Não há cadastro paralelo: quem já usa a captação ativa a prestação na mesma conta, e quem chega só pela prestação cria uma conta Jards comum.
+
+**O novo tipo de usuário é definido pelo módulo, não por um papel novo.** Hoje o papel (`admin`, `colaborador`, `leitor`, `captador`) define o que a pessoa pode fazer. Um usuário da prestação também precisa dessas diferenças (quem administra, quem lança, quem só lê), então criar um papel `prestacao` misturaria duas coisas. A proposta usa dois eixos:
+
+| Eixo | Onde fica | Valores |
+|---|---|---|
+| Módulos que a pessoa usa | `organization_members.modulos_acesso` (já lida pelo layout; falta a migration) | `captacao`, `prestacao` ou os dois |
+| O que pode fazer | `organization_members.papel` (atual) | `admin`, `colaborador`, `leitor`; `captador` continua só na captação |
+| Função na prestação | `organization_members.prestacao_funcao`, com exceção por prestação em `prestacao_membros` | preparador, revisor, responsável (seção 7.5) |
+
+Com isso existem três tipos de usuário: **só captação** (o de hoje), **só prestação** (o novo tipo) e **os dois**. Quem é só da prestação entra direto em `/prestacoes`, não vê o CRM e não aparece nas listas de responsáveis da captação. O seletor de módulo, hoje restrito ao super admin, passa a aparecer para quem tem os dois.
+
+**Convidados externos** (contador, auditor, patrocinador) não são membros: entram por convite com escopo por seção e data de expiração (seção 6.9) e não ocupam vaga, como o captador hoje.
+
+**Cobrança.**
+
+| Item | Valor | Stripe |
+|---|---|---|
+| Módulo Prestação de Contas, com 1 usuário incluído | R$ 92,80 por mês (o mesmo valor do plano Pro) | preço novo, `STRIPE_PRICE_MODULO_PRESTACAO` |
+| Usuário extra da prestação | R$ 19,90 por mês, o mesmo da captação | o mesmo `STRIPE_PRICE_SEAT` |
+
+- O valor de R$ 19,90 está fixo no código só para exibição (`UNIT_PRICE` em `app/api/members/seats/route.ts`); o que é cobrado de fato é o preço configurado no Stripe para `STRIPE_PRICE_SEAT`. Conferir no painel do Stripe antes do lançamento.
+- **Assinatura própria do módulo**, separada da assinatura do plano de captação. Motivos: o módulo pode ser contratado sem plano de captação; cada um é cancelado sem afetar o outro; e o Stripe não aceita o mesmo preço duas vezes na mesma assinatura, então, para ter linha própria, o usuário extra da prestação precisa reaproveitar `STRIPE_PRICE_SEAT` em outra assinatura (na mesma, as vagas dos dois módulos teriam de ser somadas num único item). Quem tem os dois recebe duas cobranças; dá para alinhar as datas com `billing_cycle_anchor`.
+- A assinatura é da **organização**, não da pessoa: o plano de captação fica hoje em `profiles.plano`, mas o módulo fica em `organization_modulos`, com o usuário responsável pela cobrança, como já acontece em `organization_seats`.
+- **Vagas por módulo.** Cada módulo tem sua franquia: 1 incluído + extras comprados. Quem usa os dois módulos ocupa uma vaga em cada (recomendação; a alternativa, contar uma vez só, está na seção 18). Captadores e convidados não ocupam vaga.
+- **Webhook.** Hoje `planFromSubscription` lança erro quando a assinatura não tem preço de plano conhecido ("Assinatura Stripe sem preço de plano conhecido"). Ele passa a reconhecer o preço do módulo e atualizar `organization_modulos` em vez de `profiles.plano`. Há webhook em `app/api/stripe/webhook/route.ts` e em `supabase/functions/stripe-webhook/`; confirmar qual está ativo e mudar os dois ou desligar um.
+- **Liberação.** `organizations.modulos_ativos` passa a ser derivada da assinatura do módulo (ativa, em teste ou em atraso dentro da carência de 15 dias que a captação já usa, `past_due_since`). O super admin pode liberar o módulo sem cobrança para o piloto (`cortesia`, com prazo e motivo registrados).
+- **Cancelamento não apaga nada.** As leis exigem guardar documentos por 5 a 10 anos depois da prestação (seção 12). Sem assinatura, o módulo fica em **somente leitura**, com exportação do dossiê completo sempre disponível. Exclusão só a pedido do titular (LGPD), depois de oferecida a exportação.
+- **Leitura por IA.** Ler notas e extratos tem custo por chamada. Medir no piloto (seção 11 registra custo e modelo por chamada) antes de definir uma franquia mensal de leituras incluída no preço.
+
 ---
 
 ## 7. Modelo de dados
@@ -306,6 +340,12 @@ Convenções: `organization_id not null` em toda tabela por organização; RLS p
 |---|---|
 | `prestacao_regimes` | `codigo`, `nome`, `area` (cultura, esporte, audiovisual, saude, outro), `mecanismo` (chave de `tipos_patrocinio`/`captacoes.lei`), `esfera`, `uf`, `municipio`, `orgao`, `sistema_oficial`, `norma_referencia`, `versao`, `vigente_desde`, `vigente_ate`, `status` (rascunho, publicado, obsoleto), `parametros jsonb`, `checagens jsonb`, `checklist_envio jsonb`, `modelos_saida jsonb`, `fontes jsonb` |
 | `calendario_regulatorio` | `tipo` (defeso_eleitoral, feriado), `esfera`, `uf`, `municipio`, `inicio`, `fim`, `descricao`, `fonte`. Alimenta a contagem de dias úteis e o defeso (2026: 04/07 a 04/10, ou 25/10 onde houver 2º turno) |
+| `normas_fontes` | Fontes vigiadas pelo agente normativo: `tipo` (dou, pagina, arquivo, api), `url`, `orgao`, `area`, `filtros jsonb` (órgãos e palavras-chave), `frequencia`, `ultimo_hash`, `ultima_coleta`, `ativa` |
+| `normas_documentos` | Atos e arquivos coletados: `fonte_id`, `tipo_ato`, `numero`, `orgao`, `data_publicacao`, `url`, `hash`, `arquivo` (cópia guardada), `texto`, `triagem` (irrelevante, informativo, altera_regra), `regimes_relacionados` |
+| `prestacao_regime_propostas` | Propostas do agente: `regime_id`, `tipo` (nova_versao, novo_regime, checagem_nova, calendario), `documento_ids`, `diff jsonb` (parâmetro, valor atual, valor proposto), `citacoes jsonb` (trecho literal, artigo, página), `vigencia_proposta`, `transicao` (aplica ou não a projetos em andamento), `prestacoes_afetadas`, `status` (nova, em_revisao, aceita, rejeitada, publicada), `revisado_por`, `revisado_em`, `motivo` |
+| `agente_execucoes` | `inicio`, `fim`, `fontes_lidas`, `documentos_novos`, `propostas`, `modelo`, `custo`, `erro` |
+
+As tabelas do catálogo são globais: leitura para usuários autenticados (só `prestacao_regimes` publicados e o calendário); escrita e as tabelas do agente só para o super admin e a chave de serviço.
 
 ### 7.2 Prestação e financeiro
 
@@ -353,7 +393,19 @@ Convenções: `organization_id not null` em toda tabela por organização; RLS p
 | `prestacao_verificacoes` | `check_codigo`, `severidade` (bloqueio, alerta, justificativa, info), `entidade_tipo`, `entidade_id`, `mensagem`, `fonte`, `status` (aberta, resolvida, justificada, dispensada), `justificativa`, `resolvida_por`, `resolvida_em` |
 | `prestacao_eventos` (auditoria imutável) | `ator`, `acao`, `entidade`, `antes jsonb`, `depois jsonb`, `ip`, `created_at`; substitui e amplia `prestacao_status_log` |
 
-Papéis por prestação (`prestacao_membros` ou papel na organização): **preparador** (lança), **revisor** (aceita ou recusa despesas, aprova justificativas) e **responsável** (muda status e registra o envio). Mudanças de status e aceite de despesas passam por funções no banco (`security definer`), não por `update` direto do navegador.
+Funções na prestação (padrão em `organization_members.prestacao_funcao`, exceção por prestação em `prestacao_membros`): **preparador** (lança), **revisor** (aceita ou recusa despesas, aprova justificativas) e **responsável** (muda status e registra o envio). Mudanças de status e aceite de despesas passam por funções no banco (`security definer`), não por `update` direto do navegador.
+
+### 7.6 Acesso e cobrança
+
+| Tabela | Colunas principais |
+|---|---|
+| `organization_members` (alterar) | + `modulos_acesso text[]` (padrão `{captacao}` para os membros atuais), `prestacao_funcao` |
+| `organization_invitations` (alterar) | + `modulos_acesso`, `prestacao_funcao`, para o convite já criar o tipo certo de usuário |
+| `organizations` (alterar) | + `modulos_ativos text[]`, mantida pela função de cobrança, nunca editada pelo navegador |
+| `organization_modulos` | `organization_id`, `modulo`, `status` (ativo, teste, atraso, cancelado, cortesia), `billing_user_id`, `stripe_customer_id`, `stripe_subscription_id`, `stripe_item_modulo_id`, `stripe_item_vagas_id`, `vagas_compradas`, `past_due_since`, `periodo_fim`, `cortesia_ate`, `cortesia_motivo` |
+| `organization_seats` (manter) | Continua sendo a franquia da captação; as vagas da prestação ficam em `organization_modulos.vagas_compradas` |
+
+`add_organization_member_with_seat` passa a receber os módulos e conferir a vaga de cada um; a contagem da prestação considera os membros com `prestacao` em `modulos_acesso`, sem captadores.
 
 ---
 
@@ -533,6 +585,36 @@ Celular primeiro na captura: foto de nota ou recibo (com leitura do QR da NFC-e)
 - **Motivos de glosa ligados ao catálogo:** a função `extrair-comprovante` deixa de devolver "risco" e motivos em texto livre; cada motivo aponta para um código de checagem, com o dispositivo normativo.
 - **Correções na função existente**: validar o token de quem chama e `can_access_prestacao` antes de baixar o arquivo; aceitar só caminhos da organização; registrar custo e modelo usado por chamada.
 
+### 11.1 Agente normativo (manutenção do catálogo)
+
+Em 2026 as quatro áreas mudaram de regra: a Rouanet passou à IN 29 e à IN 34, a LIE à LC 222, ao Decreto 12.861 e à Portaria 10, a saúde à Portaria 8.031/2025 e a ANCINE ao manual v2.11 e às alterações da IN 159. Acompanhar isso à mão não escala. O agente faz o trabalho repetitivo de vigiar, ler e comparar; a decisão de publicar continua humana.
+
+**O que ele vigia**
+
+| Fonte | Como | O que procura |
+|---|---|---|
+| Diário Oficial da União, seção 1 | XML diário do [INLABS](https://www.gov.br/imprensanacional/pt-br/servicos/inlabs) da Imprensa Nacional (gratuito, com cadastro). O [Ro-DOU](https://github.com/gestaogovbr/Ro-dou), do Ministério da Gestão, usa o mesmo fluxo e serve de referência | Atos do MinC, ANCINE, Ministério do Esporte, Ministério da Saúde e Fazenda que citem as leis e normas dos regimes (Lei 8.313, IN MinC, IN ANCINE 159, MP 2.228-1, LC 222, Decreto 12.861, PRONON, PRONAS/PCD, PRC 5/2017) ou "prestação de contas" |
+| Páginas e arquivos dos órgãos | Coleta semanal com comparação de hash | Novas versões dos manuais do proponente (MinC), do manual de prestação de contas e dos modelos RP/DE/DO (ANCINE), dos modelos e manuais da LIE, dos editais e do Manual Orientativo do PRONON/PRONAS |
+| APIs já usadas pelo módulo | A cada sincronização | Campos novos ou removidos na API do Salic e na de parcerias do Transferegov |
+| Calendário | Anual e quando houver ato | Defeso eleitoral (TSE e SECOM), feriados nacionais, estaduais e municipais para `calendario_regulatorio` |
+| Diários estaduais e municipais | Fase 10, pelo [Querido Diário](https://queridodiario.ok.org.br/) | ProAC, Pro-Mac e outros programas locais |
+
+**Como funciona**
+
+1. **Coleta** diária pelo `pg_cron` (o mesmo usado pelas rotinas de prazo da captação), chamando uma função que baixa o DOU do dia e as fontes vencidas. Tudo fica em `normas_documentos`, com cópia do arquivo e hash.
+2. **Triagem sem IA**: órgão, tipo de ato e palavras-chave descartam a maior parte do Diário a custo zero.
+3. **Leitura pela IA** dos atos que passaram: classifica (irrelevante, informativo, altera regra), aponta os dispositivos alterados e os relaciona aos parâmetros do regime, usando o schema Zod do regime como formato de saída.
+4. **Proposta**: rascunho de nova versão do regime com a diferença parâmetro a parâmetro, data de vigência, regra de transição (vale ou não para projetos em andamento) e a lista de prestações dos clientes afetadas. Quando a mudança pede uma checagem que ainda não existe em código, a proposta vira tarefa para o time de desenvolvimento, com o caso de teste rascunhado.
+5. **Travas contra erro**: cada valor proposto precisa vir com o trecho literal da norma, e o sistema confere se o trecho existe no documento guardado (valor sem citação localizável é descartado); a proposta precisa passar no schema Zod e na suíte de testes do regime; valores incertos entram como "a confirmar" (seção 6.1).
+6. **Revisão humana**: o super admin vê a diferença lado a lado com o trecho da norma e aceita, corrige ou rejeita, com motivo. Mudança que altera uma checagem de severidade "bloqueia envio" exige uma segunda pessoa. O agente nunca publica.
+7. **Publicação e aviso**: a nova versão entra no catálogo; quem tem prestação afetada recebe um aviso ("a IN 34/2026 mudou o prazo X; 3 prestações suas usam essa regra"). A migração das prestações em andamento continua sendo uma ação explícita e registrada.
+
+**Por onde começar.** O primeiro trabalho do agente é transformar as extrações já feitas em `prestacao-de-contas-fontes/` nos regimes de ANCINE, LIE e saúde, com revisão humana. As mudanças reais de 2026 viram o conjunto de teste: dado o regime antigo e a norma nova (IN 23/2025 → IN 29/2026; Portaria 424/2020 → Portaria 10/2026; Anexo LXXXVI da PRC 5 → Portaria 8.031/2025), a proposta do agente é comparada com a extração conferida à mão.
+
+**Medidas**: tempo entre a publicação no DOU e o regime atualizado (meta: até 5 dias úteis), propostas aceitas sem edição, falsos alarmes por semana e custo por execução (`agente_execucoes`).
+
+**Antes do agente completo**, uma versão mínima (coleta do DOU, triagem por palavra-chave e aviso ao super admin, sem IA) entra junto com o catálogo na fase 1, para que nenhuma mudança passe despercebida durante a construção.
+
 ---
 
 ## 12. Segurança, LGPD e guarda
@@ -542,7 +624,8 @@ Celular primeiro na captura: foto de nota ou recibo (com leitura do QR da NFC-e)
 - Arquivos em `{orgId}/prestacoes/{prestacaoId}/...`, com migração dos arquivos atuais.
 - **LGPD**: listas de presença e declarações com CPF ficam como arquivo; quando estruturadas, o CPF é mascarado e só o hash é usado para busca. Em PRONON/PRONAS, **nenhum dado clínico de paciente** entra no sistema: só contagens agregadas e documentos exigidos.
 - **Guarda**: após o envio, despesas e arquivos ficam travados contra exclusão até a data do regime (Rouanet: 5 anos do fim da vigência; LIE: 10 anos após a avaliação da PCF; saúde: 5 anos, conforme o Termo de Compromisso; ANCINE: prescrição de 5 anos e intercorrente de 3). Correções viram nova versão, não sobrescrita.
-- Bloqueio de rota para o módulo, com as colunas `modulos_ativos` e `modulos_acesso` criadas por migration e administradas na tela de admin. Até a liberação pública, só super admin.
+- Bloqueio de rota para o módulo no servidor (não só no menu), conferindo `modulos_ativos` da organização e `modulos_acesso` do membro, ambas criadas por migration; as políticas de RLS das tabelas da prestação também conferem o módulo. Até a liberação pública, só super admin e organizações com cortesia de piloto (seção 6.10).
+- Sem assinatura ativa, o módulo fica em somente leitura com exportação; nada é apagado por falta de pagamento enquanto durar a guarda.
 - **Períodos travados:** ao registrar um envio (parcial ou final), forma-se um retrato imutável dos lançamentos, documentos e relatórios enviados; reabrir exige pedido com motivo e fica no histórico. Isso protege a memória do projeto para análises que chegam anos depois (o passivo do MinC e da ANCINE passa de 30 mil prestações).
 - **Dados de terceiros importados:** CPFs de fornecedores vindos da API do Salic são guardados só para projetos do cliente e mascarados na interface.
 - **CNPJ alfanumérico** aceito em todos os validadores.
@@ -566,6 +649,11 @@ Celular primeiro na captura: foto de nota ou recibo (com leitura do QR da NFC-e)
 | O sistema oficial absorver a conciliação (Salic Compliance, BB Gestão Ágil) | O valor do Jards fica antes do envio (validação, dossiê, carteira) e depois (diligências, histórico, renovação) |
 | Integração bancária ou fiscal instável | Importação manual (OFX, CSV, PDF, XML) sempre disponível |
 | Preço baixo de ferramentas horizontais e de IA de captação | Vender redução de risco de glosa e horas de equipe, com métrica visível ("R$ X validados, Y pendências evitadas") |
+| O agente normativo propor um valor errado ou inventado | Valor só entra com trecho literal localizado no documento guardado; schema e testes do regime; revisão humana obrigatória, com duas pessoas para regras que bloqueiam envio; o agente nunca publica |
+| O agente deixar passar uma mudança | Vigia em duas frentes (DOU e páginas dos órgãos, com hash dos arquivos); varredura mensal dos parâmetros "a confirmar"; relatório de execuções sem coleta |
+| Assinatura só do módulo quebrar a cobrança atual | O webhook hoje rejeita assinatura sem preço de plano conhecido; testes com assinatura só do módulo, só do plano e das duas antes de ativar o preço novo |
+| Custo de IA corroer o preço de R$ 92,80 | Custo registrado por chamada desde o piloto; XML lido sem IA; franquia de leituras definida com dados reais |
+| Cliente cancelar e perder documentos que precisa guardar por anos | Cancelamento leva a somente leitura com exportação, nunca à exclusão automática |
 
 ---
 
@@ -573,18 +661,19 @@ Celular primeiro na captura: foto de nota ou recibo (com leitura do QR da NFC-e)
 
 Estimativas em semanas de uma pessoa full-stack.
 
-### Fase 0 — Fundação (2 semanas)
+### Fase 0 — Fundação e acesso por módulo (3 semanas)
 
 - Exportar o schema remoto das tabelas de prestação para migrations e conferir tipos, padrões e chaves.
-- `organization_id` com preenchimento retroativo; RLS por organização e papel.
+- `organization_id` com preenchimento retroativo; RLS por organização, papel e módulo.
 - Migrar caminhos de arquivo para `{orgId}/...`; corrigir `extrair-comprovante` e `importar-orcamento`.
 - Funções de banco para status e log; corrigir erros silenciosos e exclusões sem confirmação.
-- Bloqueio de rota, colunas de módulo e tela de admin para ativar o módulo por organização.
+- Colunas `modulos_ativos`, `modulos_acesso` e `prestacao_funcao` por migration (membros atuais recebem `{captacao}`); convite com módulo; bloqueio de rota no servidor; espaço próprio para quem é só da prestação; tela de admin para liberar o módulo por organização (cortesia de piloto).
 - Primeiros testes do módulo.
 
-### Fase 1 — Núcleo multi-regime e Rouanet (3 semanas)
+### Fase 1 — Núcleo multi-regime e Rouanet (4 semanas)
 
 - `prestacao_regimes`, `calendario_regulatorio` e o regime `rouanet_in29_2026`.
+- Vigia normativo mínimo: coleta diária do DOU pelo INLABS, triagem por órgão e palavra-chave e aviso ao super admin, sem IA (seção 11.1).
 - Criação guiada; importação do projeto pela API do Salic a partir do Pronac, com sincronização diária.
 - Marcos, prazos calculados (dias úteis com feriados), tarefas e notificações.
 - Orçamento versionado em árvore, com grupos de custo, coluna "comprometido" e pedidos de alteração (administrativo × formal).
@@ -608,29 +697,37 @@ Estimativas em semanas de uma pessoa full-stack.
 - Checklist de envio da Rouanet, espelho Salic, rascunho do relatório do objeto, GRU com atualização pela poupança.
 - Pacote com manifesto e pré-pacote; retrato travado a cada envio.
 - Pós-envio: diligências, glosas, decisões, recursos e devoluções.
-- Piloto com projetos Rouanet reais.
+- Piloto com projetos Rouanet reais, liberados por cortesia; medir o custo de IA por prestação.
 
-### Fase 5 — Carteira, patrocinador e convidados (3 semanas)
+### Fase 5 — Carteira, patrocinador, convidados e cobrança (4 semanas)
 
 - Painel de carteira para consultorias, com papéis (cliente envia, consultor revisa, responsável envia).
 - Relatório do patrocinador emitido pelo proponente, ligado às ativações e ao CRM.
 - Acesso de convidado (contador, auditor, patrocinador) e captura por e-mail; resumo semanal de pendências.
+- Cobrança (seção 6.10): preço `STRIPE_PRICE_MODULO_PRESTACAO` de R$ 92,80, assinatura própria do módulo com `STRIPE_PRICE_SEAT` para usuários extras, `organization_modulos`, webhook reconhecendo o módulo, vagas por módulo, contratação em "Meu plano" e cadastro de quem chega só pela prestação, somente leitura após cancelamento.
 
-### Fase 6 — Audiovisual / ANCINE (3 semanas)
+### Fase 6 — Agente normativo e editor de regimes (3 semanas)
+
+- Coleta das páginas e arquivos dos órgãos com hash; leitura dos atos pela IA; propostas de nova versão com diferença por parâmetro, citação conferida e lista de prestações afetadas (seção 11.1).
+- Tela de revisão e publicação de regimes sem deploy de código (parâmetros, checklists e calendário; novas checagens continuam em código), com segunda aprovação para regras que bloqueiam envio.
+- Aviso aos clientes com prestações afetadas.
+- Conjunto de teste com as mudanças de 2026; primeiro uso: rascunhar os regimes de ANCINE, LIE e saúde a partir das extrações em `prestacao-de-contas-fontes/`.
+
+### Fase 7 — Audiovisual / ANCINE (3 semanas)
 
 - Regimes `ancine_in159_2021` e `ancine_in150_2019`; prestação por fonte e agrupamento por obra.
 - Matriz de reembolso, tetos de gerenciamento, agenciamento e colocação, contrapartida, concentração por obra.
 - Planilhas RP, DE e DO no layout do STR; GRU por fonte; calculadora de débito (multa, Selic, mora) e simulador de parcelamento.
 - Checklist do objeto por modalidade (CPB, Central de Conteúdo, depósito legal, jogos); acompanhamento pelos dados abertos da ANCINE.
 
-### Fase 7 — Esporte / LIE federal (3 semanas)
+### Fase 8 — Esporte / LIE federal (3 semanas)
 
 - `lie_p10_2026` e `lie_p424_2020` (pela data de protocolo): duas contas no BB ou na Caixa, aplicação obrigatória, saque proibido, atividade-meio ≤ 15%, elaboração e captação por nível, vedações, remanejamento (2º pedido direto até 20%), readequação e prorrogações, PCP por parcela e PCF em 60 dias.
 - Nível da prática com teto de captação, grade horária de RH × frequência × pagamentos, lista de beneficiários (≥ 50% da rede pública na formação regular), bolsa só na excelência com CRC válida.
 - Geração do **formulário oficial PCP/PCF 2026** (10 abas: Receita e Despesa, Executado, Pagamentos, Recursos Humanos, Beneficiados, Grade, Eventos, A Executar, Bens Adquiridos, Diárias), do Relatório de Cumprimento do Objeto, da planilha de remanejamento, do texto do carimbo e da GRU.
 - Marcas da LIE e do Ministério, com a versão de defeso (sem a marca do Governo Federal; "Ministério do Esporte" com a Bandeira).
 
-### Fase 8 — Saúde (3 semanas)
+### Fase 9 — Saúde (3 semanas)
 
 - Regimes `pronon_pronas_lxxxvi_a_2025` e os antigos (875, 1550, PRC 5 Anexo LXXXVI) para projetos em andamento.
 - Gatilho de 100% captado, readequação para menor (60% a 99,99%), acréscimo de até 20%, custos indiretos ≤ 15%, elaboração + captação ≤ 5% e R$ 50 mil, vedação de obras.
@@ -638,14 +735,13 @@ Estimativas em semanas de uma pessoa full-stack.
 - Extrato e dados do projeto pela API de parcerias do Transferegov; registro de produção no CMD; GRU de encerramento em 30 dias.
 - LGPD reforçada: sem dado clínico; criptografia e descarte conforme a cláusula do Termo de Compromisso.
 
-### Fase 9 — Expansão contínua
+### Fase 10 — Expansão contínua
 
-- Tela de admin para criar e publicar regimes sem deploy de código (parâmetros e checklists; novas checagens continuam em código).
 - Captura automática de NF-e e NFS-e com o certificado digital do cliente; extrato automático (API do BB, CNAB da Caixa, Open Finance via agregador); captura por WhatsApp.
 - Assistente de IA ancorado na norma e no projeto.
-- Regimes estaduais e municipais (ProAC, Pro-Mac, FIA, Fundo do Idoso) e relatório ao patrocinador para patrocínio direto.
+- Regimes estaduais e municipais (ProAC, Pro-Mac, FIA, Fundo do Idoso), com o agente vigiando os diários locais pelo Querido Diário, e relatório ao patrocinador para patrocínio direto.
 
-**Total das fases 0 a 8: cerca de 27 semanas.** As fases 6, 7 e 8 podem correr em paralelo com duas pessoas depois da fase 2.
+**Total das fases 0 a 9: cerca de 33 semanas.** Com duas pessoas, depois da fase 2 uma segue com objeto, envio e piloto (fases 3 e 4) enquanto a outra faz carteira, cobrança e agente (fases 5 e 6); as fases 7, 8 e 9 podem correr em paralelo.
 
 ---
 
@@ -657,6 +753,8 @@ Estimativas em semanas de uma pessoa full-stack.
 - **RLS**: pessoa de outra organização, colega da mesma organização com papéis diferentes, anônimo.
 - **Saídas**: arquivos gerados sobre os modelos oficiais guardados em `prestacao-de-contas-fontes/modelos-oficiais/` (RP/DE/DO, formulário PCP/PCF da LIE), comparados com arquivos de referência; espelho Salic e Planilha II. Antes do piloto, enviar um arquivo de teste ao STR para confirmar que ele aceita a planilha gerada.
 - **E2E (Playwright)**: criação guiada → importar extrato → lançar despesa → conciliar → resolver pendências → gerar pacote.
+- **Acesso e cobrança**: usuário só da prestação não acessa rotas nem tabelas da captação (e o contrário); webhook com assinatura só do módulo, só do plano e das duas; vagas por módulo com captador e convidado fora da conta; carência de 15 dias; cancelamento levando a somente leitura sem apagar arquivos.
+- **Agente normativo**: as mudanças de 2026 (IN 23/2025 → IN 29/2026, Portaria 424/2020 → Portaria 10/2026, Anexo LXXXVI → LXXXVI-A) como casos de teste, comparando a proposta com a extração conferida; proposta com citação inexistente no documento precisa ser descartada; DOU de dias sem ato relevante não pode gerar proposta.
 
 ---
 
@@ -679,6 +777,13 @@ Estimativas em semanas de uma pessoa full-stack.
 - `supabase/migrations/2026XXXX_prestacao_financeiro.sql` (contas, lançamentos, fornecedores, despesas, pagamentos)
 - `supabase/migrations/2026XXXX_prestacao_objeto.sql` (metas, locais, evidências, peças, bens)
 - `supabase/migrations/2026XXXX_prestacao_pos_envio.sql` (diligências, glosas, decisões, recursos, devoluções, verificações, eventos)
+- `supabase/migrations/2026XXXX_modulos_acesso.sql` (`modulos_ativos`, `modulos_acesso`, `prestacao_funcao`, convites por módulo, vagas por módulo)
+- `supabase/migrations/2026XXXX_organization_modulos.sql` (assinatura do módulo, cortesia, função de cobrança)
+- `supabase/migrations/2026XXXX_agente_normativo.sql` (fontes, documentos, propostas, execuções, agendamento no `pg_cron`)
+- `supabase/functions/agente-normativo/` (coleta do INLABS e das páginas, triagem, leitura pela IA, propostas)
+- `lib/prestacao/agente/` (triagem, conferência de citações, diferença entre versões de regime)
+- `app/api/modulos/prestacao/checkout/route.ts`, `app/api/modulos/prestacao/vagas/route.ts`
+- `app/admin/regimes/` (revisão de propostas do agente e publicação de regimes, no painel de super admin que já existe em `app/admin/`)
 - `lib/prestacao/regimes/` (schemas Zod dos parâmetros e seeds por regime)
 - `lib/prestacao/checagens/` (uma função por código de checagem)
 - `lib/prestacao/prazos.ts`, `lib/prestacao/conciliacao.ts`, `lib/prestacao/extrato/` (OFX, CSV, PDF BB)
@@ -693,23 +798,41 @@ Estimativas em semanas de uma pessoa full-stack.
 - `app/(dashboard)/prestacoes/page.tsx`, `[id]/layout.tsx`, `[id]/page.tsx`, `orcamento/`, `comprovantes/` (vira Despesas), `atividades/`, `distribuicao/`, `divulgacao/` (vira Peças), `relatorio/`
 - `components/modals/NovaPrestacaoModal.tsx` (vira criação guiada)
 - `supabase/functions/extrair-comprovante/index.ts`, `supabase/functions/importar-orcamento/index.ts`
-- `app/(dashboard)/layout.tsx` (bloqueio de rota e navegação do módulo)
+- `app/(dashboard)/layout.tsx` (bloqueio de rota, espaço de quem é só da prestação e seletor de módulo para quem tem os dois)
+- `app/api/stripe/webhook/route.ts` e `supabase/functions/stripe-webhook/index.ts` (reconhecer o preço do módulo)
+- `app/api/members/seats/route.ts` e `components/modals/NovoMembroModal.tsx` (vagas e convite por módulo); a função `add_organization_member_with_seat` é redefinida na migration nova, sem editar a antiga
+- `app/(dashboard)/meu-plano/page.tsx` (contratar o módulo e ver as vagas de cada módulo)
+- `app/cadastro/page.tsx` (entrada de quem chega só pela prestação)
+- `app/admin/AdminNav.tsx` (atalho para regimes e propostas)
+- `.env.example` (`STRIPE_PRICE_MODULO_PRESTACAO`, credenciais do INLABS)
 - `lib/supabase/types.ts`
 - `app/(dashboard)/projetos/[id]/page.tsx` (atalho para criar ou abrir a prestação)
 - `package.json` (biblioteca para gerar XLSX e PDF, a escolher na fase 4)
 
 ---
 
-## 18. Decisões em aberto
+## 18. Decisões
 
-1. **Prioridade entre áreas.** Sugestão: cultura → carteira e patrocinador → audiovisual → esporte → saúde, pela qualidade das fontes, pela base de clientes e pela concorrência.
-2. **Quem opera.** Proponente direto, consultoria/captador gerindo vários proponentes, ou os dois. Isso muda papéis, a "carteira" por proponente e o que o patrocinador vê.
-3. **Plano comercial.** Se o módulo entra em todos os planos ou é cobrado à parte.
-4. **Manutenção do catálogo de regras.** Quem acompanha o DOU e os manuais dos órgãos (MinC, ANCINE, Ministério do Esporte, Ministério da Saúde) e publica nova versão de regime. Em 2026 houve mudança relevante nas quatro áreas.
-5. **Estados e municípios.** Se algum programa estadual ou municipal usado pelos clientes (ProAC, Pro-Mac, ICMS, ISS) entra antes da fase 9.
-6. **Visão do patrocinador.** Se o patrocinador recebe um relatório ou acesso de leitura à prestação.
-7. **Quem paga o software.** Se a assinatura pode entrar no orçamento do projeto como custo administrativo, conforme cada lei (na LIE, dentro dos 15% de atividade-meio; na Rouanet, dentro dos 15% administrativos), ou se é custo da consultoria.
-8. **Certificado digital do cliente.** Se o Jards vai guardar o certificado do proponente para capturar notas automaticamente (exige cuidado de segurança) ou se isso fica para depois.
+### Tomadas em 01/10/2026
+
+1. **Usuários.** Mesma base de usuários do Jards, com um novo tipo de usuário: quem usa só a prestação. O tipo é definido pelos módulos de acesso do membro, e o papel (admin, colaborador, leitor) continua valendo dentro do módulo. Serve tanto ao proponente que presta as próprias contas quanto à consultoria que cuida de vários clientes pela carteira (seções 6.9 e 6.10).
+2. **Plano comercial.** Módulo cobrado à parte: R$ 92,80 por mês com um usuário incluído, mais R$ 19,90 por usuário extra, o mesmo preço do usuário extra da captação (seção 6.10).
+3. **Manutenção do catálogo de regras.** Feita por um agente de IA programado pela equipe, que vigia o DOU e os órgãos e propõe as novas versões; a publicação é humana (seção 11.1).
+
+### Detalhes das decisões acima, com a recomendação adotada no plano
+
+- **Usuário que usa os dois módulos** ocupa uma vaga em cada. Alternativa: contar uma vez só, na captação; é mais simpático ao cliente, mas complica a conta das vagas e o reembolso proporcional no Stripe.
+- **Assinatura separada** da assinatura do plano de captação, para permitir contratar só a prestação e reaproveitar o preço do usuário extra sem conflito no Stripe.
+- **Franquia de leituras por IA** incluída nos R$ 92,80: definir depois de medir o custo no piloto.
+- **Desconto para quem já assina o plano Pro**: não previsto; avaliar no lançamento.
+
+### Ainda em aberto
+
+1. **Prioridade entre áreas.** Sugestão: cultura → carteira, patrocinador e cobrança → agente normativo → audiovisual → esporte → saúde, pela qualidade das fontes, pela base de clientes e pela concorrência.
+2. **Estados e municípios.** Se algum programa estadual ou municipal usado pelos clientes (ProAC, Pro-Mac, ICMS, ISS) entra antes da fase 10.
+3. **Visão do patrocinador.** Se o patrocinador recebe um relatório ou acesso de leitura à prestação.
+4. **Quem paga o software.** Se a assinatura pode entrar no orçamento do projeto como custo administrativo, conforme cada lei (na LIE, dentro dos 15% de atividade-meio; na Rouanet, dentro dos 15% administrativos), ou se é custo da consultoria.
+5. **Certificado digital do cliente.** Se o Jards vai guardar o certificado do proponente para capturar notas automaticamente (exige cuidado de segurança) ou se isso fica para depois.
 
 ---
 
