@@ -47,6 +47,11 @@ export function AuthorizeConsent({
         </div>
 
         <p className="mt-3 text-xs text-black/50">
+          Os dados pedidos em cada pergunta são enviados aos servidores da OpenAI para gerar a resposta — inclui
+          dados de terceiros quando o escopo permite contatos. Saiba mais na{" "}
+          <a href="/privacidade#s3" className="text-[#7259B5] hover:underline">política de privacidade</a>.
+        </p>
+        <p className="mt-2 text-xs text-black/50">
           Você pode revogar esse acesso a qualquer momento em Configurações → Acesso por API.
         </p>
 

@@ -63,7 +63,7 @@ export default function PrivacidadePage() {
             <p>Registramos automaticamente endereço IP, logs de sessão e histórico de alterações de campos críticos para segurança e auditoria. Esses dados não são usados para publicidade.</p>
           </Section>
 
-          <Section id="s3" num="3" title="Integrações Google — Gmail e Agenda">
+          <Section id="s3" num="3" title="Integrações externas — Google, Claude e ChatGPT">
             <div className="my-4 rounded border border-[#7259B5]/20 border-l-2 border-l-[#7259B5] bg-[#F5F3FC] px-4 py-3">
               <p className="mb-1 text-xs font-semibold text-[#0D0D0D]">Declaração de uso limitado dos dados do Google</p>
               <p className="text-xs text-black/55">
@@ -81,7 +81,7 @@ export default function PrivacidadePage() {
             <p><strong>O que não fazemos com dados do Gmail:</strong></p>
             <ul className="mt-1 ml-4 list-disc space-y-1">
               <li>Não usamos para publicidade, pesquisa de mercado ou venda a terceiros</li>
-              <li>Não usamos para treinar modelos de inteligência artificial</li>
+              <li>Não usamos para treinar modelos de inteligência artificial da Jards (o uso opcional de assistentes de IA de terceiros está descrito no §3.3)</li>
               <li>Não lemos e-mails humanos — o acesso é exclusivamente técnico e automatizado</li>
               <li>Não transferimos a terceiros, salvo subprocessadores listados no §6</li>
             </ul>
@@ -95,6 +95,34 @@ export default function PrivacidadePage() {
 
             <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">3.2 Google Agenda</h3>
             <p>Acessamos título, descrição, data/hora e participantes de eventos para sincronizar automaticamente atividades do tipo reunião cadastradas em captações. Tokens são criptografados com o mesmo padrão e revogáveis a qualquer momento.</p>
+
+            <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">3.3 Claude e ChatGPT (MCP / Custom GPT)</h3>
+            <p>
+              A Jards oferece, como recurso opcional dos planos pagos, acesso aos dados do CRM a partir de
+              assistentes de IA — o Claude (Anthropic) via protocolo MCP, e o ChatGPT (OpenAI) via uma Custom GPT.
+              Essa integração só é ativada se você mesmo conectar sua conta a ela; nenhum dado é enviado a esses
+              provedores por padrão.
+            </p>
+            <p><strong>O que é enviado:</strong> apenas o que a própria pergunta exige — projetos, propostas, tarefas, empresas e, quando autorizado, contatos (incluindo dados de terceiros, como nome, e-mail, telefone e cargo de contatos de empresas patrocinadoras).</p>
+            <p><strong>Para quem é enviado:</strong> para a Anthropic (quando o uso é via Claude) ou a OpenAI (quando o uso é via ChatGPT/Custom GPT), apenas no momento em que você faz uma pergunta que precisa desse dado — não há sincronização contínua nem cópia armazenada nesses provedores pelo lado da Jards.</p>
+            <p><strong>O que não fazemos:</strong></p>
+            <ul className="mt-1 ml-4 list-disc space-y-1">
+              <li>Não ativamos essa integração sem você conectar explicitamente sua conta (OAuth ou chave pessoal)</li>
+              <li>Não compartilhamos dados de uma organização que não seja a sua</li>
+              <li>Não usamos essas consultas para treinar modelos da Jards</li>
+            </ul>
+            <p>
+              O uso de dados pela Anthropic e pela OpenAI segue as políticas de cada empresa, que a Jards não
+              controla — consulte a{" "}
+              <a href="https://www.anthropic.com/legal/privacy" target="_blank" rel="noopener noreferrer" className="text-[#7259B5] hover:underline">
+                política de privacidade da Anthropic
+              </a>{" "}
+              e a{" "}
+              <a href="https://openai.com/policies/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[#7259B5] hover:underline">
+                política de privacidade da OpenAI
+              </a>
+              . Você pode revogar o acesso a qualquer momento em <em>Configurações → Minhas ferramentas → Claude e ChatGPT</em>.
+            </p>
           </Section>
 
           <Section id="s4" num="4" title="Stripe — Pagamentos e assinatura">
@@ -117,6 +145,8 @@ export default function PrivacidadePage() {
               <li><strong>Stripe</strong> — processamento de pagamentos (EUA / global)</li>
               <li><strong>Google LLC</strong> — APIs de Gmail e Agenda, somente quando autorizado (EUA / global)</li>
               <li><strong>Microsoft</strong> — API do Outlook/Agenda, somente quando autorizado (EUA / global)</li>
+              <li><strong>Anthropic</strong> — assistente Claude via MCP, somente se você conectar essa integração (EUA / global)</li>
+              <li><strong>OpenAI</strong> — ChatGPT/Custom GPT, somente se você conectar essa integração (EUA / global)</li>
             </ul>
             <p>Podemos divulgar dados quando exigido por lei ou ordem judicial.</p>
           </Section>

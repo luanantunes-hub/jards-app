@@ -116,6 +116,16 @@ para o passo a passo de cada uma:
 chave, usada por qualquer pessoa que utilizar aquela GPT. Nunca publique/compartilhe
 uma GPT configurada dessa forma — é exatamente o problema que o modo OAuth resolve.
 
+## Privacidade
+
+Toda pergunta feita ao Claude que acione uma ferramenta deste servidor envia os
+dados pedidos (incluindo, quando a pergunta envolver contatos, dados pessoais de
+terceiros — nome, e-mail, telefone, cargo) para os servidores da Anthropic, para
+gerar a resposta. A Jards não controla a política de retenção/treinamento da
+Anthropic sobre esses dados — veja a [política de privacidade da
+Anthropic](https://www.anthropic.com/legal/privacy) e o §3.3 da [política de
+privacidade do Jards](/privacidade#s3).
+
 ## Limitações conhecidas
 
 - Login por senha (deste servidor MCP, para Claude) fica guardado em texto puro na
