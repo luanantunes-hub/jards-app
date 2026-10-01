@@ -31,6 +31,52 @@ type NotificationPreview = {
 const V2_FIELDS = "id, tipo, event_key, categoria, prioridade, titulo, mensagem, link, lida, arquivada_em, adiada_ate, created_at";
 const LEGACY_FIELDS = "id, tipo, titulo, mensagem, link, lida, created_at";
 
+type UrgentEditalRow = {
+  id: string;
+  data_fechamento: string | null;
+  empresas: { nome: string } | null;
+};
+
+const DISMISSED_EDITAIS_KEY = "jards:notificacoes:editais-prazo-lidos";
+
+function readDismissedEditalIds(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const raw = window.localStorage.getItem(DISMISSED_EDITAIS_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? new Set(parsed) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function persistDismissedEditalIds(ids: Set<string>) {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(DISMISSED_EDITAIS_KEY, JSON.stringify(Array.from(ids)));
+  } catch {
+    // localStorage indisponível (modo privado, quota) — degrade silenciosamente
+  }
+}
+
+function isEditalPrazoId(id: string) {
+  return id.startsWith("edital-prazo:");
+}
+
+function diasRestantesEdital(fechamento: string | null): number {
+  if (!fechamento) return 9999;
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const data = new Date(fechamento + "T00:00:00");
+  return Math.ceil((data.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
+}
+
+function fmtDateShort(fechamento: string | null): string {
+  if (!fechamento) return "—";
+  const [, m, d] = fechamento.split("-");
+  return `${d}/${m}`;
+}
+
 function normalizeNotification(value: Record<string, unknown>): NotificationPreview {
   return {
     id: String(value.id),
@@ -75,6 +121,7 @@ export function NotificationBell({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [items, setItems] = useState<NotificationPreview[]>([]);
+  const dismissedEditalIdsRef = useRef<Set<string>>(readDismissedEditalIds());
 
   const load = useCallback(async () => {
     const supabase = createClient();
@@ -98,8 +145,55 @@ export function NotificationBell({ userId }: { userId: string }) {
         .limit(6);
     }
 
-    const next = (result.data ?? []).map((row: Record<string, unknown>) => normalizeNotification(row));
-    setItems(next);
+    const realItems = (result.data ?? []).map((row: Record<string, unknown>) => normalizeNotification(row));
+
+    // Editais com prazo de fechamento perto (<=14 dias) entram na mesma lista,
+    // como itens sintéticos — não existe linha em `notificacoes` para eles.
+    const { data: editaisData } = await supabase
+      .from("editais")
+      .select("id, data_fechamento, empresas(nome)")
+      .eq("ativo", true)
+      .limit(500);
+
+    const urgentEditais = ((editaisData ?? []) as unknown as UrgentEditalRow[])
+      .filter((e) => {
+        const dias = diasRestantesEdital(e.data_fechamento);
+        return dias > 0 && dias <= 14;
+      })
+      .sort((a, b) => diasRestantesEdital(a.data_fechamento) - diasRestantesEdital(b.data_fechamento));
+
+    // Some da lista de dispensados qualquer edital que já não esteja mais urgente.
+    const currentIds = new Set(urgentEditais.map((e) => `edital-prazo:${e.id}`));
+    Array.from(dismissedEditalIdsRef.current).forEach((id) => {
+      if (!currentIds.has(id)) dismissedEditalIdsRef.current.delete(id);
+    });
+    persistDismissedEditalIds(dismissedEditalIdsRef.current);
+
+    const nowIso = new Date().toISOString();
+    const syntheticItems: NotificationPreview[] = urgentEditais.map((e) => {
+      const dias = diasRestantesEdital(e.data_fechamento);
+      const id = `edital-prazo:${e.id}`;
+      return {
+        id,
+        tipo: "edital",
+        event_key: "edital_prazo",
+        categoria: "prazo",
+        prioridade: "critica",
+        titulo: e.empresas?.nome ?? "Edital",
+        mensagem: `Fecha em ${dias} ${dias === 1 ? "dia" : "dias"} (${fmtDateShort(e.data_fechamento)})`,
+        link: "/editais-abertos",
+        lida: dismissedEditalIdsRef.current.has(id),
+        arquivada_em: null,
+        adiada_ate: null,
+        created_at: nowIso,
+      };
+    });
+
+    const combined = [...syntheticItems, ...realItems].sort((a, b) => {
+      if (a.lida !== b.lida) return a.lida ? 1 : -1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
+    setItems(combined.slice(0, 6));
 
     let countResult = await supabase
       .from("notificacoes")
@@ -115,7 +209,8 @@ export function NotificationBell({ userId }: { userId: string }) {
         .eq("user_id", userId)
         .eq("lida", false);
     }
-    setUnreadCount(countResult.count ?? 0);
+    const unreadEditais = syntheticItems.filter((item) => !item.lida).length;
+    setUnreadCount((countResult.count ?? 0) + unreadEditais);
     setLoading(false);
   }, [userId]);
 
@@ -145,6 +240,13 @@ export function NotificationBell({ userId }: { userId: string }) {
 
   async function markRead(notification: NotificationPreview) {
     if (notification.lida) return;
+    if (isEditalPrazoId(notification.id)) {
+      dismissedEditalIdsRef.current.add(notification.id);
+      persistDismissedEditalIds(dismissedEditalIdsRef.current);
+      setItems(current => current.map(item => item.id === notification.id ? { ...item, lida: true } : item));
+      setUnreadCount(current => Math.max(0, current - 1));
+      return;
+    }
     const supabase = createClient();
     // O schema manual do cliente ainda não infere updates desta migration.
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -160,6 +262,10 @@ export function NotificationBell({ userId }: { userId: string }) {
       .update({ lida: true })
       .eq("user_id", userId)
       .eq("lida", false);
+    items.forEach(item => {
+      if (isEditalPrazoId(item.id)) dismissedEditalIdsRef.current.add(item.id);
+    });
+    persistDismissedEditalIds(dismissedEditalIdsRef.current);
     setItems(current => current.map(item => ({ ...item, lida: true })));
     setUnreadCount(0);
   }

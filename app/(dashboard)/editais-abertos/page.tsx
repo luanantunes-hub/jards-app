@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, AlertCircle, ArrowUpDown, X, ChevronLeft, ChevronRight, ChevronsRight, Download, UserPlus, ChevronUp, ChevronDown, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Search, ArrowUpDown, X, ChevronLeft, ChevronRight, ChevronsRight, Download, UserPlus, ChevronUp, ChevronDown, ThumbsUp, ThumbsDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
@@ -349,7 +349,6 @@ export default function EditaisAbertosPage() {
 
   const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE);
   const paginated  = filtered.slice(currentPage * CARDS_PER_PAGE, (currentPage + 1) * CARDS_PER_PAGE);
-  const urgentes   = editais.filter((e) => { const d = diasRestantes(e.data_fechamento); return d > 0 && d <= 14; });
 
   function handlePageChange(p: number) {
     setCurrentPage(p);
@@ -510,16 +509,6 @@ export default function EditaisAbertosPage() {
         </div>
       )}
 
-      {/* Urgency alert */}
-      {!loading && urgentes.length > 0 && (
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded px-4 py-3 text-xs font-semibold text-amber-800 mb-6">
-          <AlertCircle size={14} className="flex-shrink-0" />
-          <span>
-            <strong>{urgentes.length} {urgentes.length === 1 ? "edital" : "editais"}</strong> com prazo inferior a 14 dias —{" "}
-            {urgentes.map((e) => e.empresas?.nome ?? "—").join(", ")}
-          </span>
-        </div>
-      )}
 
       {/* Filters */}
       <div className="flex items-center gap-3 mb-3 flex-wrap">
@@ -547,12 +536,6 @@ export default function EditaisAbertosPage() {
           compact
           emphasized={false}
         />
-
-        {!loading && (
-          <span className="text-sm text-black/40">
-            <span className="font-bold text-black">{filtered.length}</span> edita{filtered.length === 1 ? "l" : "is"}
-          </span>
-        )}
 
         {search && (
           <button
@@ -613,7 +596,6 @@ export default function EditaisAbertosPage() {
             const adm   = isADM ? (item.data as EditalAberto) : null;
             const com   = !isADM ? (item.data as SugestaoEdital) : null;
             const dias  = diasRestantes(item.data.data_fechamento);
-            const urg   = urgency(dias);
             const nome  = isADM ? (adm!.empresas?.nome ?? "Empresa") : com!.empresa_nome;
 
             return (
@@ -685,7 +667,7 @@ export default function EditaisAbertosPage() {
                   </div>
                   <div>
                     <p className="text-black/35 font-semibold uppercase tracking-wide mb-0.5">Fechamento</p>
-                    <p className="font-bold" style={{ color: urg.text }}>{fmtDate(item.data.data_fechamento)}</p>
+                    <p className="font-medium text-black/60">{fmtDate(item.data.data_fechamento)}</p>
                   </div>
                 </div>
 
