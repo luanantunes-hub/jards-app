@@ -573,7 +573,7 @@ export default function CaptadoresPage() {
                 <span className="font-bold text-black">{captadoresFiltrados.length}</span> {captadoresFiltrados.length === 1 ? "agência" : "agências"}
               </span>
             )}
-            {activeTab === "equipe" && (
+            {activeTab === "equipe" && organizationId && (
               <button
                 onClick={() => setShowModal(true)}
                 className="flex items-center gap-2 px-4 py-2.5 text-xs font-medium bg-white border rounded hover:bg-black/5 transition"
@@ -886,7 +886,7 @@ export default function CaptadoresPage() {
                     valor_captado: c.valor_captado,
                     logo_url: c.identidade_tipo === "logo"
                       ? (c.identidade_logo_url ?? c.logo_url)
-                      : c.logo_url,
+                      : null,
                   }))}
                   conexoes={atribuicoesFiltradas.flatMap(a => a.empresa_crm ? [{
                     captador_id: a.captador_user_id,

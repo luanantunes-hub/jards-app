@@ -116,13 +116,19 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
       const { error } = await (supabase as any).from("captadores").update({
         nome:      nome.trim(),
         prioridade,
-        logo_url:  identidadeLogoPreview?.trim() || logoUrl.trim() || null,
         email:     email.trim() || null,
         telefone:  telefone.trim() || null,
         agencia:   agencia.trim() || null,
         identidade_tipo: identidadeTipo,
         identidade_valor: identidadeTipo === "icone" || identidadeTipo === "emoji" ? identidadeValor || null : null,
         identidade_cor: identidadeTipo === "icone" ? identidadeCor : null,
+        // Mantém a URL atual só quando o tipo continua "logo" (o upload abaixo
+        // sobrescreve se houver arquivo novo); qualquer outro tipo limpa os
+        // dois campos, para não deixar um logo antigo "vazando" em telas que
+        // não checam identidade_tipo antes de usar logo_url (ex. Cluster).
+        ...(identidadeTipo === "logo"
+          ? { logo_url: identidadeLogoPreview?.trim() || logoUrl.trim() || null }
+          : { logo_url: null, identidade_logo_url: null }),
       }).eq("id", editData.id);
       if (error) { setSaving(false); setErro(error.message); return; }
       if (identidadeTipo === "logo" && logoFile) await uploadIdentidadeLogo(supabase, editData.id);
@@ -149,7 +155,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
       organization_id: orgId,
       nome:      nome.trim(),
       prioridade,
-      logo_url:  identidadeLogoPreview?.trim() || logoUrl.trim() || null,
+      logo_url:  identidadeTipo === "logo" ? (identidadeLogoPreview?.trim() || logoUrl.trim() || null) : null,
       email:     email.trim() || null,
       telefone:  telefone.trim() || null,
       agencia:   agencia.trim() || null,
