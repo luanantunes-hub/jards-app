@@ -12,11 +12,11 @@ Decisões centrais:
 
 1. **Regime normativo como dado versionado.** Cada prestação aponta para um *regime* (ex.: `rouanet_in29_2026`, `ancine_in159_2021`, `pie_sc_in04_2025`). O regime guarda os parâmetros (prazos, tetos, meios de pagamento, documentos exigidos, checklist de envio, modelos de saída). As checagens são funções em código, testadas, que o regime liga e parametriza. Nada de "20%" escrito em componente React.
 2. **O extrato bancário é a espinha dorsal.** Todas as quatro áreas exigem a mesma coisa no fundo: cada débito da conta do projeto precisa ter um documento fiscal válido, ligado a um item aprovado do orçamento, pago ao próprio credor. O módulo passa a ser construído em cima de contas → lançamentos → pagamentos → despesas → itens.
-3. **O Jards é a mesa de trabalho, não o sistema oficial.** Salic, STR/ANCINE, Prosas, Transferegov e o sistema da LIE não têm API pública para escrita. O Jards organiza, valida e gera o pacote no formato de cada sistema; a pessoa lança ou envia lá. A situação oficial (ex.: E75, E24, diligência aberta) é registrada no Jards.
+3. **O Jards é a mesa de trabalho, não o sistema oficial.** Salic, STR/ANCINE, Transferegov e o sistema da LIE não têm API pública para escrita. O Jards organiza, valida e gera o pacote no formato de cada sistema; a pessoa lança ou envia lá. A situação oficial (ex.: E75, E24, diligência aberta) é registrada no Jards.
 4. **Alertas apoiam, não julgam.** O próprio manual de avaliação do MinC diz que apontamentos automáticos passam por análise humana. Cada checagem tem severidade (bloqueia envio, alerta de glosa, exige justificativa) e sempre aceita justificativa registrada.
 5. **Antes de qualquer funcionalidade, uma fase de fundação**: versionar o schema que hoje só existe no banco remoto, isolar por organização, corrigir o armazenamento e a função de IA sem autorização.
 
-Ordem sugerida: Fundação → Rouanet completo (piloto em cultura) → ANCINE → Esporte (PIE-SC e LIE federal) → Saúde (PRONON/PRONAS). Estimativa: cerca de 24 semanas de uma pessoa full-stack (≈ 4 meses com duas), detalhada na seção 12.
+Ordem sugerida: Fundação → Rouanet completo (piloto em cultura) → ANCINE → Esporte (LIE federal) → Saúde (PRONON/PRONAS). Estimativa: cerca de 23 semanas de uma pessoa full-stack (≈ 4 meses com duas), detalhada na seção 12.
 
 ---
 
@@ -30,8 +30,6 @@ Ordem sugerida: Fundação → Rouanet completo (piloto em cultura) → ANCINE �
 | Cultura | Manual de Uso da Marca do PRONAC — jan/2026 e versão defeso jun/2026 | MinC | Marcas, créditos, placas, defeso eleitoral | Alta (oficial) |
 | Cultura | Manual de Projetos Culturais (Vale) | Instituto Cultural Vale, 2021 | Rouanet sob a IN 02/2019 | **Obsoleto** — usar só como histórico |
 | Audiovisual | Manual de Prestação de Contas v2.11 | ANCINE/SPR, 23/09/2026 (IN 159/2021) | PC completa: contas, documentos, tetos, RP/DE/DO, GRU, sanções, parcelamento | Alta (oficial) |
-| Esporte (SC) | Manual de Execução Financeira e Prestação de Contas — PIE | FESPORTE/SC, 2026 | Programa estadual de ICMS: conta, despesas, apostilamento, relatórios, checklist I–XXII | Alta, com conflito de canal de entrega (papel × Prosas) |
-| Esporte (SC) | Pesquisa web: IN FESPORTE 04/2025, Portaria 123/2025, Manual da Marca PIE | — | Prazo, canal e resultados da prestação final; onde a IN diverge do manual | Média (só resumos de busca) |
 | Esporte (federal) | Manual de Divulgação da LIE — versão defeso | Ministério do Esporte, "versão 2023" | Só marcas e divulgação; o texto das regras de defeso está em imagem | Baixa para PC |
 | Esporte (federal) | Pesquisa web: LC 222/2025, Decreto 12.861/2026, Portaria MESP 10/2026 | — | Contas, tetos, vedações, PCP/PCF, prazos, transição de regimes | Média a baixa (só resumos de busca) |
 | Saúde | Manual de análise contábil e financeira PRONON e PRONAS/PCD | MS/FNS, 2ª ed., ago/2019 | Só a parte financeira da prestação final, nos regimes 875/2013, 1550/2014 e PRC 5/2017 | Média; desatualizado frente à Portaria 8.031/2025 |
@@ -48,7 +46,6 @@ Precisam ser baixados num navegador e colocados na pasta do Drive:
 2. **Saúde**: texto da Portaria GM/MS 8.031/2025 (DOU de 08/09/2025, Seção 1, p. 99–106). O "Manual Orientativo" previsto nela ainda não saiu (prazo até 08/06/2026, prorrogável até 08/03/2027).
 3. **Rouanet**: texto integral da IN MinC 29/2026 (e da IN 34/2026, que a alterou), para conferir os artigos usados no plano (arts. 19, 20, 22, 24, 47, 58, 64 e 68 a 76) e as divergências da seção 2.3.
 4. **ANCINE**: "Manual STR – Planilhas" e os modelos `.xls` de RP, DE e DO; Manual de Aplicação da Logomarca v3.0; guias de acompanhamento do FSA no BRDE.
-5. **PIE-SC**: texto integral da IN FESPORTE 04/2025 e da Portaria 123/2025, e os modelos de relatório técnico e balancete do site da FESPORTE.
 
 ---
 
@@ -63,28 +60,28 @@ aprovação ─► captação (conta de captação) ─► liberação (limiar m
    ─► execução (conta de movimento): débito ⇄ pagamento ⇄ documento fiscal ⇄ item aprovado
    ─► comprovação (contínua, semestral ou anual) ─► prestação final (prazo fatal)
    ─► análise: objeto + financeiro ─► diligências ─► resultado (aprovada | com ressalvas | reprovada)
-   ─► devolução de saldo (GRU) · glosas · recurso · sanções ─► guarda documental (5–10 anos)
+   ─► devolução de saldo (GRU) · glosas · recurso · sanções ─► guarda documental (5 anos ou mais)
 ```
 
 ### 2.2 Parâmetros por regime
 
-| Parâmetro | Rouanet (IN MinC 29/2026) | ANCINE (IN 159/2021) | PIE-SC (Dec. 780/2024, IN FESPORTE 04/2025) | PRONON/PRONAS (PRC 5, Anexo LXXXVI-A) | LIE federal (LC 222/2025, Port. MESP 10/2026) [web] |
-|---|---|---|---|---|---|
-| Sistema oficial | Salic | STR + BB Gestão Ágil + Protocolo Digital | Prosas + SGPE | Transferegov (habilitação, chamamento, execução); SEI/SIPAR nos projetos antigos | SLI (cadastro, captação, recibos) + Transferegov (remanejamento, aditivo, PCP, PCF) [?] |
-| Contas | Captação (bloqueada) + Movimento, BB | Captação + Movimentação (+ Recolhimento do investidor), BB, abertas pela ANCINE; FSA sem captação | 1 conta única, BB, gerida pela FESPORTE | Captação + Movimento, BB | conta específica e exclusiva no BB ou na Caixa; na prática, captação + movimento [?] |
-| Liberação | ≥ 20% do aprovado captado (art. 47; análise técnica a partir de 10%) | autorização da ANCINE | fim da captação (≥ 20%) + Termo de Compromisso | Termo de Compromisso | ≥ 20% captado + Termo de Compromisso |
-| Meios de pagamento | só PIX, TED ou outro meio formal (art. 58); o Salic ainda lista cheque e saque | TED, DOC, PIX; boleto em casos listados; **cheque e saque = glosa** | boleto, PIX, transferência; **saque vedado** | não consta (cheque citado no manual antigo) | transferência identificada; saque e espécie vedados [?] |
-| Comprovação durante a execução | contínua no Salic, débito a débito; manter ≥ 80% comprovado | por RP/DE/DO no fim; parcial existe sem regra clara | relatórios técnicos a cada 6 meses | anual, até 30/04 | prestação parcial (PCP) a critério do Ministério; condiciona as parcelas seguintes |
-| Prazo da prestação final | 60 dias improrrogáveis do fim da execução (situação E75) | 180 dias da conclusão do objeto (CPB, estreia, fim do festival) | 30 dias úteis do 1º dia útil após o fim da execução | 30/04 do ano seguinte ao último exercício | 60 dias do término do projeto |
-| Entrega | eletrônica no Salic | planilhas no STR + Protocolo Digital | só Prosas, PDF colorido assinado via gov.br (a IN prevalece sobre o manual, que pedia papel) | Transferegov ("poderá") | ofício do responsável legal + Transferegov [?] |
-| O documento fiscal precisa ter | descrição igual à planilha; em nome do proponente; retenções | título + nº SALIC; proponente como tomadora; emissão ≤ 30 dias após o débito | nº do processo SGPE; em nome do proponente; atesto de recebimento | SIPAR + nome do projeto (ou declaração do representante) | não encontrado |
-| Tetos principais | sobre o "valor do projeto": administração ≤ 15% (inclui tarifas); divulgação/acessibilidade ≤ 20%, paga na proporção do captado; captação ≤ 10% e ≤ R$ 150 mil | gerenciamento ≤ 10%; agenciamento ≤ 10% proporcional ao captado; colocação ≤ 10%; contrapartida ≥ 5% | elaboração + captação ≤ 10% do captado | elaboração + captação ≤ 5% e ≤ R$ 50 mil (a confirmar no Anexo LXXXVI-A) | atividade-meio ≤ 15% do orçamento total, fora o pessoal da atividade-fim; elaboração/captação ≤ 10% [?] |
-| Concentração e vedações | fornecedor ≤ 20% do captado (exceções do art. 24, I–V); proponente + partes relacionadas ≤ 20% (30% PF/MEI) | fornecedor/grupo 25–50% = advertência; > 50% = inabilitação | bens/serviços de dirigentes e parentes até 2º grau vedados | não consta | vedados: atleta profissional, intermediação, espaço publicitário, benefício a pessoa ligada ao patrocinador |
-| Remanejamento sem autorização | livre se não mudar o valor do projeto, os custos vinculados e a captação (IN 29); o Salic ainda aplica 50% do item | pedido prévio quando as alterações somam 20% do orçamento; sempre justificar | +10% no preço unitário, ±20% na quantidade; acima disso, apostilamento antes da despesa | não consta | até 2 pedidos, com aprovação prévia [?] |
-| Devolução de saldo | GRU ao FNC (34902 / 340034 / 019473), referência = Pronac | GRU por fonte (019401, 026642, 026667, 026674), referência = SALIC | guia à FESPORTE; correção SELIC + 1% ao mês na inadimplência [?] | GRU ao Tesouro em 30 dias da notificação | transferência a outro projeto do proponente (120 dias [?]) ou recolhimento; GRU não encontrada |
-| Resultado | aprovada / com ressalvas / reprovada; inabilitação de 3 anos | aprovada / com ressalvas / não aprovada; multa de 50% (Lei do Audiovisual) ou 20% (FSA/Funcines); inabilitação até 2 anos | regular / regular com ressalva / irregular; análise em até 150 dias [?] | parecer conclusivo; TCE | não encontrado; sem PCF: suspensão para novos projetos e recolhimento de saldos; reconsideração em 5 dias |
-| Guarda de documentos | 5 anos (marco divergente; usar entrega + 6 meses + 5 anos) | não consta no manual | 10 anos | 5 anos após a aprovação | não encontrado |
-| Transição de regimes | IN 29 vale para projetos em andamento | IN 150/2019 e IN 125/2015 para projetos antigos | — | 875/2013, 1550/2014, PRC 5/2017, Anexo LXXXVI-A/2025 | Portaria 424/2020 para projetos submetidos até 31/12/2025 [?] |
+| Parâmetro | Rouanet (IN MinC 29/2026) | ANCINE (IN 159/2021) | PRONON/PRONAS (PRC 5, Anexo LXXXVI-A) | LIE federal (LC 222/2025, Port. MESP 10/2026) [web] |
+|---|---|---|---|---|
+| Sistema oficial | Salic | STR + BB Gestão Ágil + Protocolo Digital | Transferegov (habilitação, chamamento, execução); SEI/SIPAR nos projetos antigos | SLI (cadastro, captação, recibos) + Transferegov (remanejamento, aditivo, PCP, PCF) [?] |
+| Contas | Captação (bloqueada) + Movimento, BB | Captação + Movimentação (+ Recolhimento do investidor), BB, abertas pela ANCINE; FSA sem captação | Captação + Movimento, BB | conta específica e exclusiva no BB ou na Caixa; na prática, captação + movimento [?] |
+| Liberação | ≥ 20% do aprovado captado (art. 47; análise técnica a partir de 10%) | autorização da ANCINE | Termo de Compromisso | ≥ 20% captado + Termo de Compromisso |
+| Meios de pagamento | só PIX, TED ou outro meio formal (art. 58); o Salic ainda lista cheque e saque | TED, DOC, PIX; boleto em casos listados; **cheque e saque = glosa** | não consta (cheque citado no manual antigo) | transferência identificada; saque e espécie vedados [?] |
+| Comprovação durante a execução | contínua no Salic, débito a débito; manter ≥ 80% comprovado | por RP/DE/DO no fim; parcial existe sem regra clara | anual, até 30/04 | prestação parcial (PCP) a critério do Ministério; condiciona as parcelas seguintes |
+| Prazo da prestação final | 60 dias improrrogáveis do fim da execução (situação E75) | 180 dias da conclusão do objeto (CPB, estreia, fim do festival) | 30/04 do ano seguinte ao último exercício | 60 dias do término do projeto |
+| Entrega | eletrônica no Salic | planilhas no STR + Protocolo Digital | Transferegov ("poderá") | ofício do responsável legal + Transferegov [?] |
+| O documento fiscal precisa ter | descrição igual à planilha; em nome do proponente; retenções | título + nº SALIC; proponente como tomadora; emissão ≤ 30 dias após o débito | SIPAR + nome do projeto (ou declaração do representante) | não encontrado |
+| Tetos principais | sobre o "valor do projeto": administração ≤ 15% (inclui tarifas); divulgação/acessibilidade ≤ 20%, paga na proporção do captado; captação ≤ 10% e ≤ R$ 150 mil | gerenciamento ≤ 10%; agenciamento ≤ 10% proporcional ao captado; colocação ≤ 10%; contrapartida ≥ 5% | elaboração + captação ≤ 5% e ≤ R$ 50 mil (a confirmar no Anexo LXXXVI-A) | atividade-meio ≤ 15% do orçamento total, fora o pessoal da atividade-fim; elaboração/captação ≤ 10% [?] |
+| Concentração e vedações | fornecedor ≤ 20% do captado (exceções do art. 24, I–V); proponente + partes relacionadas ≤ 20% (30% PF/MEI) | fornecedor/grupo 25–50% = advertência; > 50% = inabilitação | não consta | vedados: atleta profissional, intermediação, espaço publicitário, benefício a pessoa ligada ao patrocinador |
+| Remanejamento sem autorização | livre se não mudar o valor do projeto, os custos vinculados e a captação (IN 29); o Salic ainda aplica 50% do item | pedido prévio quando as alterações somam 20% do orçamento; sempre justificar | não consta | até 2 pedidos, com aprovação prévia [?] |
+| Devolução de saldo | GRU ao FNC (34902 / 340034 / 019473), referência = Pronac | GRU por fonte (019401, 026642, 026667, 026674), referência = SALIC | GRU ao Tesouro em 30 dias da notificação | transferência a outro projeto do proponente (120 dias [?]) ou recolhimento; GRU não encontrada |
+| Resultado | aprovada / com ressalvas / reprovada; inabilitação de 3 anos | aprovada / com ressalvas / não aprovada; multa de 50% (Lei do Audiovisual) ou 20% (FSA/Funcines); inabilitação até 2 anos | parecer conclusivo; TCE | não encontrado; sem PCF: suspensão para novos projetos e recolhimento de saldos; reconsideração em 5 dias |
+| Guarda de documentos | 5 anos (marco divergente; usar entrega + 6 meses + 5 anos) | não consta no manual | 5 anos após a aprovação | não encontrado |
+| Transição de regimes | IN 29 vale para projetos em andamento | IN 150/2019 e IN 125/2015 para projetos antigos | 875/2013, 1550/2014, PRC 5/2017, Anexo LXXXVI-A/2025 | Portaria 424/2020 para projetos submetidos até 31/12/2025 [?] |
 
 ### 2.3 Divergências que ainda precisam do texto da norma
 
@@ -139,7 +136,7 @@ A estrutura de abas, o upload com leitura por IA, o fluxo de evidências de ativ
 
 ### 4.2 Unidade de prestação
 
-- Uma prestação = **um projeto × uma fonte × um identificador oficial** (Pronac, SALIC/processo ANCINE, processo SGPE, SIPAR). A ANCINE exige prestação separada por fonte, mesmo para a mesma obra.
+- Uma prestação = **um projeto × uma fonte × um identificador oficial** (Pronac, SALIC/processo ANCINE, SIPAR, nº do projeto na LIE). A ANCINE exige prestação separada por fonte, mesmo para a mesma obra.
 - Um projeto (`projetos_crm`) pode ter várias prestações; uma prestação recebe **vários aportes** (hoje há um único `captacao_id`).
 - Prestações da mesma obra e do mesmo objeto (ANCINE) ficam agrupadas para a concentração por fornecedor e para o prazo que vence por último.
 
@@ -159,9 +156,9 @@ despesa ─N:1─► fornecedor (PF, PJ, MEI, estrangeiro; partes relacionadas; 
 ### 4.4 Orçamento versionado
 
 - Versões: solicitada, aprovada para captar, adequada, homologada, readequada (as cinco do Salic), com uma ativa.
-- Árvore genérica de nós (`produto`, `etapa`, `meta`, `grupo`, `local`, `item`), porque cada regime tem uma hierarquia: Rouanet usa Fonte → Produto → Etapa → UF → Município → Item; a ANCINE usa rubricas de desenvolvimento, produção, pós e comercialização; PIE e saúde usam plano de trabalho com metas e etapas.
+- Árvore genérica de nós (`produto`, `etapa`, `meta`, `grupo`, `local`, `item`), porque cada regime tem uma hierarquia: Rouanet usa Fonte → Produto → Etapa → UF → Município → Item; a ANCINE usa rubricas de desenvolvimento, produção, pós e comercialização; LIE e saúde usam plano de trabalho com metas e etapas.
 - Cada item tem **grupo de custo** (administração, divulgação/acessibilidade, captação, gerenciamento, agenciamento, elaboração, recolhimentos, execução), que alimenta os tetos.
-- **Alterações** (remanejamento, complementação, redução, inclusão, apostilamento) são registros com status e data de aprovação. O motor checa os limites do regime e se a aprovação veio **antes** da despesa (exigência do PIE).
+- **Alterações** (remanejamento, complementação, redução, inclusão, termo aditivo) são registros com status e data de aprovação. O motor checa os limites do regime e, quando o regime exige, se a aprovação veio **antes** da despesa.
 
 ### 4.5 Objeto e evidências
 
@@ -190,7 +187,6 @@ Sem API de escrita, o Jards gera:
 - **Rouanet**: "espelho Salic" com os campos do comprovante na ordem da tela (tipo, número, série, data, CPF/CNPJ, forma, data e nº do pagamento, valor), rascunho do Relatório de Execução do Objeto, plano de distribuição, bens doados e GRU pré-preenchida.
 - **ANCINE**: planilhas RP, DE e DO no layout do STR e GRU por fonte. O DE já tem layout conhecido (cabeçalho com título, SALIC, proponente, tipo de conta, banco, agência e conta; colunas Data, Histórico, Fomento, Outros Depósitos, Transferências, Aplicações/Resgates, Pagamentos, Despesas Bancárias e Saldo calculado). A RP tem as colunas principais (item orçamentário, credor, CPF/CNPJ só com números, histórico idêntico ao do DE, data do pagamento, tipo e número do documento fiscal, data de emissão, valor). O DO depende do modelo oficial.
 - **LIE federal**: dossiê da prestação final (ofício do responsável legal, execução desde o início somando as parciais, relatório de cumprimento dos objetivos, extratos, documentos, lista de beneficiários, relatório fotográfico); prestação parcial sob demanda.
-- **PIE-SC**: balancete, relatórios técnicos parciais e final, pacote de PDFs em ordem cronológica, um por campo do Prosas, e checklist I–XXII.
 - **Saúde**: relação de pagamentos, Planilha II de conciliação, Tabela 1 de rendimentos, informações compiladas, relação de bens com inventário.
 - **Todos**: dossiê ZIP com índice e relatório PDF da prestação.
 
@@ -219,16 +215,16 @@ Convenções: `organization_id not null` em toda tabela por organização; RLS p
 | `prestacao_extrato_importacoes` | `conta_id`, `formato`, `periodo_inicio`, `periodo_fim`, `hash_arquivo` (evita importação duplicada), `documento_id` |
 | `prestacao_lancamentos` | `conta_id`, `data`, `natureza` (credito, debito), `valor`, `historico`, `numero_documento`, `numero_normalizado`, `categoria` (aporte, transferencia, pagamento, tarifa, rendimento, aplicacao, resgate, devolucao, estorno, outro), `status_conciliacao` |
 | `fornecedores` (por organização) | `tipo_pessoa` (PF, PJ, MEI, estrangeiro), `documento`, `nome`, `cnae_principal`, `grupo_economico`, `parte_relacionada` + `tipo_relacao` (proponente, cônjuge, coligada, sócio em comum, dirigente, parente) |
-| `prestacao_despesas` (evolui `prestacao_comprovantes`) | `item_id`, `fornecedor_id`, `tipo_documento` (nfe, nfse, cupom, recibo, rpa, rpci, invoice, folha, guia, fatura, boleto, apolice, nota_debito), `numero`, `serie`, `chave_acesso`, `data_emissao`, `data_fato_gerador`, `valor_bruto`, `iss`, `inss`, `irrf`, `outras_retencoes`, `valor_liquido`, `descricao`, `moeda` + `cambio`, `identificacao_projeto` (presente, declaração, ausente), `atesto_nome`, `atesto_cargo`, `atesto_data`, `reembolso`, `status` (rascunho, em_revisao, aceita, lancada_oficial, glosada), `justificativa`, `extracao_ia jsonb` |
+| `prestacao_despesas` (evolui `prestacao_comprovantes`) | `item_id`, `fornecedor_id`, `tipo_documento` (nfe, nfse, cupom, recibo, rpa, rpci, invoice, folha, guia, fatura, boleto, apolice, nota_debito), `numero`, `serie`, `chave_acesso`, `data_emissao`, `data_fato_gerador`, `valor_bruto`, `iss`, `inss`, `irrf`, `outras_retencoes`, `valor_liquido`, `descricao`, `moeda` + `cambio`, `identificacao_projeto` (presente, declaração, ausente), `reembolso`, `status` (rascunho, em_revisao, aceita, lancada_oficial, glosada), `justificativa`, `extracao_ia jsonb` |
 | `prestacao_pagamentos` | `despesa_id`, `lancamento_id`, `forma` (pix, ted, doc, boleto, cheque, saque, cartao, cambio), `data`, `valor`, `favorecido_documento`, `numero_documento_pagamento` |
 
 ### 5.3 Orçamento
 
 | Tabela | Colunas principais |
 |---|---|
-| `prestacao_orcamento_versoes` | `prestacao_id`, `tipo` (solicitada, aprovada, adequada, homologada, readequada), `ativa`, `ato` (portaria, apostilamento), `data_ato`, `documento_id` |
+| `prestacao_orcamento_versoes` | `prestacao_id`, `tipo` (solicitada, aprovada, adequada, homologada, readequada), `ativa`, `ato` (portaria, termo aditivo), `data_ato`, `documento_id` |
 | `prestacao_orcamento_nos` (substitui `prestacao_itens`, mantido como view durante a transição) | `versao_id`, `parent_id`, `tipo` (produto, etapa, meta, grupo, local, item), `codigo`, `nome`, `uf`, `municipio`, `grupo_custo`, `unidade`, `quantidade`, `ocorrencias`, `valor_unitario`, `valor_total`, `fonte`, `ordem` |
-| `prestacao_alteracoes` | `tipo` (remanejamento, complementacao, reducao, inclusao, exclusao, apostilamento, prorrogacao, transferencia), `status` (rascunho, solicitada, aprovada, negada), `solicitada_em`, `aprovada_em`, `ato`, `justificativa`, `diff jsonb` |
+| `prestacao_alteracoes` | `tipo` (remanejamento, complementacao, reducao, inclusao, exclusao, termo_aditivo, prorrogacao, transferencia), `status` (rascunho, solicitada, aprovada, negada), `solicitada_em`, `aprovada_em`, `ato`, `justificativa`, `diff jsonb` |
 
 ### 5.4 Objeto, divulgação e bens
 
@@ -271,63 +267,62 @@ Papéis por prestação (`prestacao_membros` ou papel na organização): **prepa
 
 ### 6.2 Catálogo inicial
 
-As listas completas, com página citada, estão nos arquivos de fontes (Rouanet: 59 + 49 + 39 checagens; ANCINE: 38; PIE: 23 + 17; LIE: 34; saúde: 22 + 22; marcas: 22 + 9). Abaixo, as que entram na primeira versão, com o regime que as liga.
+As listas completas, com página citada, estão nos arquivos de fontes (Rouanet: 59 + 49 + 39 checagens; ANCINE: 38; LIE: 34; saúde: 22 + 22; marcas: 22 + 9). Abaixo, as que entram na primeira versão, com o regime que as liga.
 
 | Código | O que verifica | Severidade | Regimes |
 |---|---|---|---|
 | **Prazos e estado** | | | |
 | `PRAZO_FINAL` | Contagem até o prazo da prestação final, com marco e tipo de dia do regime | alerta → bloqueio vencido | todos |
 | `PRAZO_DILIGENCIA` | Diligência aberta com vencimento próximo | alerta | todos |
-| `RELATORIO_PARCIAL` | Relatório semestral (PIE) ou anual até 30/04 (saúde) | alerta | PIE, saúde |
+| `RELATORIO_PARCIAL` | Prestação parcial solicitada pelo Ministério (LIE) ou documentos anuais até 30/04 (saúde) | alerta | LIE, saúde |
 | `COMPROVACAO_TEMPESTIVA` | Comprovado abaixo de 80% do gasto | alerta | Rouanet |
-| `LIBERACAO_MINIMA` | Despesa paga antes da liberação (20% captado / termo assinado) | justificativa | Rouanet, PIE, saúde |
+| `LIBERACAO_MINIMA` | Despesa paga antes da liberação (20% captado / termo assinado) | justificativa | Rouanet, LIE, saúde |
 | **Conta e conciliação** | | | |
 | `DEBITO_SEM_COMPROVANTE` | Débito na conta de movimento sem despesa conciliada | bloqueio | todos |
 | `NUMERO_PAGAMENTO_DIVERGENTE` | Nº do pagamento diferente do lançamento do extrato (normalizado) | bloqueio | Rouanet |
-| `FORMA_PAGAMENTO` | Saque, cheque ou cartão fora das hipóteses do regime | bloqueio (ANCINE, PIE) / justificativa (Rouanet) | todos |
+| `FORMA_PAGAMENTO` | Saque, cheque ou cartão fora das hipóteses do regime | bloqueio (ANCINE) / justificativa (Rouanet, LIE) | todos |
 | `FAVORECIDO_DIFERENTE` | CPF/CNPJ do favorecido diferente do emitente (exceções: reembolso, MEI) | justificativa | todos |
 | `EXTRATO_LACUNA` | Mês sem extrato entre abertura e último pagamento | bloqueio | todos |
-| `TARIFA_GLOSAVEL` | Tarifa (exceto manutenção), juros, multa, IOF | alerta | ANCINE, PIE |
+| `TARIFA_GLOSAVEL` | Tarifa (exceto manutenção), juros, multa, IOF | alerta | ANCINE |
 | `SALDO_FINAL` | Saldo diferente de zero no envio sem GRU registrada | bloqueio | todos |
 | `RENDIMENTO_LIMITE` | Captado + rendimentos acima do aprovado | bloqueio | Rouanet |
 | **Documento fiscal** | | | |
-| `DOC_FORA_VIGENCIA` | Emissão antes do marco inicial ou depois do fim da execução | alerta (ressalva na Rouanet) / bloqueio (PIE, saúde) | todos |
+| `DOC_FORA_VIGENCIA` | Emissão antes do marco inicial ou depois do fim da execução | alerta (ressalva na Rouanet) / bloqueio (saúde) | todos |
 | `DOC_TOMADOR` | Documento não emitido em nome do proponente | bloqueio | todos |
-| `DOC_IDENTIFICACAO_PROJETO` | Falta Pronac/SALIC/SGPE/SIPAR no documento quando exigido | bloqueio ou declaração | ANCINE, PIE, saúde |
+| `DOC_IDENTIFICACAO_PROJETO` | Falta SALIC/SIPAR no documento quando exigido | bloqueio ou declaração | ANCINE, saúde |
 | `DOC_DESCRICAO_PLANILHA` | Descrição diferente do item aprovado | alerta | Rouanet |
 | `DOC_PJ_SEM_NF` | Fornecedor PJ com recibo ou fatura sem dispensa legal anexada | justificativa | Rouanet, ANCINE |
 | `DOC_RETENCOES` | Serviço sem ISS, INSS ou IRRF quando aplicável | alerta | todos |
 | `DOC_EMISSAO_POS_DEBITO` | Emissão mais de 30 dias após o débito | alerta | ANCINE |
 | `NFE_CHAVE_REPETIDA` | Chave de NF-e já usada em outro projeto | bloqueio | todos |
 | `RPA_CAMPOS` | RPA sem nome, CPF, endereço, data, assinatura, retenções ou SALIC | bloqueio | Rouanet, ANCINE |
-| `ATESTO_RECEBIMENTO` | Despesa sem atesto com nome e cargo | bloqueio | PIE |
 | **Limites e partes relacionadas** | | | |
 | `FORNECEDOR_CONCENTRACAO` | Soma por fornecedor ou grupo acima do teto (base e faixas do regime) | alerta / bloqueio | Rouanet, ANCINE |
 | `PROPONENTE_PARTES_RELACIONADAS` | Proponente e partes relacionadas acima de 20% (30% PF/MEI) | alerta | Rouanet |
-| `CONFLITO_INTERESSE` | Fornecedor é dirigente ou parente até 2º grau (PIE) ou ligado ao patrocinador (LIE) | bloqueio | PIE, LIE |
+| `CONFLITO_INTERESSE` | Fornecedor ligado ao patrocinador ou doador | bloqueio | LIE |
 | `TETO_GRUPO_CUSTO` | Administração, divulgação, captação, gerenciamento, agenciamento, elaboração, atividade-meio acima do teto (sobre valor do projeto, captado, orçamento total ou de produção, conforme o regime) | alerta | todos |
 | `BANCO_CONTA` | Conta fora do banco exigido (BB; BB ou Caixa na LIE) ou titular diferente do proponente | bloqueio | todos |
 | `CONTRAPARTIDA_MINIMA` | Contrapartida abaixo de 5% | alerta | ANCINE |
 | `REEMBOLSO_MATRIZ` | Reembolso fora da lista do art. 15 ou acima de R$ 1.000 | bloqueio | ANCINE |
-| `DESPESA_VEDADA` | Categoria vedada pelo regime (folha da proponente e infraestrutura na ANCINE; cessão de atleta no PIE; atleta profissional, intermediação e espaço publicitário na LIE etc.) | bloqueio | todos |
+| `DESPESA_VEDADA` | Categoria vedada pelo regime (folha da proponente e infraestrutura na ANCINE; atleta profissional, intermediação e espaço publicitário na LIE etc.) | bloqueio | todos |
 | **Orçamento e alterações** | | | |
 | `ITEM_SEM_SALDO` | Despesa acima do saldo do item | bloqueio | todos |
-| `REMANEJAMENTO_LIMITE` | Variação acima do limite sem alteração aprovada; número máximo de pedidos (LIE) | bloqueio | Rouanet, ANCINE, PIE, LIE |
-| `APOSTILAMENTO_PREVIO` | Despesa alterada paga antes da aprovação do apostilamento | bloqueio | PIE |
+| `REMANEJAMENTO_LIMITE` | Variação acima do limite sem alteração aprovada; número máximo de pedidos (LIE) | bloqueio | Rouanet, ANCINE, LIE |
+| `ALTERACAO_PREVIA` | Despesa em item remanejado paga antes da aprovação da alteração | alerta | LIE |
 | `ALTERACAO_PENDENTE` | Readequação em análise no envio | bloqueio | Rouanet |
 | **Objeto** | | | |
 | `META_SEM_RESULTADO` | Meta sem realizado ou divergência sem justificativa | bloqueio | todos |
 | `LOCAL_SEM_STATUS` | Local sem status; "não realizado" sem justificativa | bloqueio | Rouanet |
 | `ACESSIBILIDADE_SEM_EVIDENCIA` | Medida pactuada sem evidência | alerta | Rouanet |
 | `DISTRIBUICAO_PERCENTUAIS` | Percentuais do plano de distribuição fora do regime | alerta | Rouanet |
-| `LISTA_PRESENCA` | Atividade formativa ou treino sem lista com identificação | alerta | Rouanet, PIE, LIE |
-| `RH_GRADE_FREQUENCIA` | Profissional pago em dia sem atividade registrada, ou horas pagas acima da grade de RH | alerta | PIE, LIE |
+| `LISTA_PRESENCA` | Atividade formativa ou treino sem lista com identificação | alerta | Rouanet, LIE |
+| `RH_GRADE_FREQUENCIA` | Profissional pago em dia sem atividade registrada, ou horas pagas acima da grade de RH | alerta | LIE |
 | `BENEFICIARIO_PERFIL` | Beneficiário fora do perfil exigido (vulnerabilidade na Formação Esportiva, faixa etária) | alerta | LIE |
 | `BEM_SEM_DESTINACAO` | Bem permanente sem cotação, inventário ou termo de doação | alerta | todos |
 | `OBJETO_AUDIOVISUAL` | Produção sem CPB, cópia na Central de Conteúdo ou depósito legal | bloqueio | ANCINE |
 | **Divulgação** | | | |
 | `PECA_SEM_APROVACAO` | Peça veiculada sem aprovação prévia ou antes dela | alerta | Rouanet, LIE, ANCINE |
-| `PECA_MARCAS` | Marcas obrigatórias ausentes, fora de ordem ou com papel errado | alerta | Rouanet, LIE, PIE, ANCINE |
+| `PECA_MARCAS` | Marcas obrigatórias ausentes, fora de ordem ou com papel errado | alerta | Rouanet, LIE, ANCINE |
 | `PECA_DEFESO` | Peça no período de defeso com versão errada do manual | alerta | federais |
 | `PECA_SO_ARTE` | Comprovação só com a arte aprovada, sem registro de veiculação | alerta | Rouanet |
 
@@ -345,7 +340,6 @@ As listas completas, com página citada, estão nos arquivos de fontes (Rouanet:
 | Rouanet | devolução em 20 dias e recurso em 30 dias após reprovação [?] | ciência da reprovação |
 | ANCINE | execução financeira e prestação final em 180 dias | conclusão do objeto (prazo que vencer por último entre processos da mesma obra) |
 | ANCINE | GRU de glosa em 30 dias; recurso em 30 dias, com efeito suspensivo | comunicação / recebimento da notificação |
-| PIE-SC | prestação final em 30 dias úteis; relatório parcial a cada 6 meses; esclarecimento em 10 dias úteis; defesa em 15 dias; prorrogação pedida 30 dias antes do fim; Termo de Compromisso devolvido em 10 dias | 1º dia útil após o fim da execução; assinatura do termo; notificação |
 | LIE federal [web] | prestação final em 60 dias; diligência em 30 dias corridos [?]; reconsideração em 5 dias; transferência de saldo em 120 dias [?] | término do projeto; notificação; ciência da decisão |
 | Saúde | documentos anuais até 30/04; GRU em 30 dias | calendário; notificação do MS |
 
@@ -412,7 +406,7 @@ Registro de evidência pelo celular (foto com data, local e vínculo à atividad
 - Status, aceite de despesa e registro de envio por funções no banco com checagem de papel e escrita atômica no log.
 - Arquivos em `{orgId}/prestacoes/{prestacaoId}/...`, com migração dos arquivos atuais.
 - **LGPD**: listas de presença e declarações com CPF ficam como arquivo; quando estruturadas, o CPF é mascarado e só o hash é usado para busca. Em PRONON/PRONAS, **nenhum dado clínico de paciente** entra no sistema: só contagens agregadas e documentos exigidos.
-- **Guarda**: após o envio, despesas e arquivos ficam travados contra exclusão até a data do regime (Rouanet: entrega + 6 meses + 5 anos; PIE: 10 anos; saúde: 5 anos após a aprovação). Correções viram nova versão, não sobrescrita.
+- **Guarda**: após o envio, despesas e arquivos ficam travados contra exclusão até a data do regime (Rouanet: entrega + 6 meses + 5 anos; saúde: 5 anos após a aprovação; LIE e ANCINE a confirmar). Correções viram nova versão, não sobrescrita.
 - Bloqueio de rota para o módulo, com as colunas `modulos_ativos` e `modulos_acesso` criadas por migration e administradas na tela de admin. Até a liberação pública, só super admin.
 
 ---
@@ -477,9 +471,8 @@ Estimativas em semanas de uma pessoa full-stack.
 - Planilhas RP, DE e DO (depende do manual de planilhas do STR); GRU por fonte; calculadora de débito e simulador de parcelamento.
 - Checklist do objeto por modalidade (CPB, Central de Conteúdo, depósito legal, jogos).
 
-### Fase 6 — Esporte (3 semanas, a LIE depende da Portaria MESP 10/2026 em mãos)
+### Fase 6 — Esporte / LIE federal (2 semanas, depende da Portaria MESP 10/2026 em mãos)
 
-- `pie_sc_in04_2025`: conta única, apostilamento prévio, faixas de 10% e 20%, relatórios semestrais, checklist I–XXII, pacote em PDF assinado para o Prosas, atesto de recebimento, bolsa-atleta.
 - `lie_lc222_2026` e `lie_portaria424_2020`: conta no BB ou na Caixa, atividade-meio ≤ 15%, vedações da LC 222, até 2 remanejamentos, prestação parcial sob demanda e final em 60 dias, nível da prática (formação, excelência, toda a vida) com teto de captação, grade horária de RH × frequência × pagamentos, lista de beneficiários com perfil, marcas da LIE com versão de defeso.
 
 ### Fase 7 — Saúde (3 semanas, depende do texto da Portaria 8.031/2025)
@@ -494,7 +487,7 @@ Estimativas em semanas de uma pessoa full-stack.
 - Regimes estaduais e municipais (ProAC, Pro-Mac, FIA, Fundo do Idoso) e relatório ao patrocinador para patrocínio direto.
 - Integração bancária (Open Finance) para extrato automático.
 
-**Total das fases 0 a 7: cerca de 24 semanas.** As fases 5, 6 e 7 podem correr em paralelo com duas pessoas depois da fase 2.
+**Total das fases 0 a 7: cerca de 23 semanas.** As fases 5, 6 e 7 podem correr em paralelo com duas pessoas depois da fase 2.
 
 ---
 
@@ -531,7 +524,7 @@ Estimativas em semanas de uma pessoa full-stack.
 - `lib/prestacao/regimes/` (schemas Zod dos parâmetros e seeds por regime)
 - `lib/prestacao/checagens/` (uma função por código de checagem)
 - `lib/prestacao/prazos.ts`, `lib/prestacao/conciliacao.ts`, `lib/prestacao/extrato/` (OFX, CSV, PDF BB)
-- `lib/prestacao/saidas/` (espelho Salic, RP/DE/DO, Planilha II, pacote Prosas, dossiê)
+- `lib/prestacao/saidas/` (espelho Salic, RP/DE/DO, Planilha II, dossiê da LIE, dossiê geral)
 - `app/api/prestacoes/[id]/verificar/route.ts`, `.../exportar/route.ts`
 - `app/(dashboard)/prestacoes/[id]/financeiro/`, `objeto/`, `pendencias/`, `envio/`, `pos-envio/`, `historico/`
 - `components/prestacao/` (árvore de orçamento, tela de conciliação, cartão de verificação, checklist de envio)
@@ -554,8 +547,8 @@ Estimativas em semanas de uma pessoa full-stack.
 1. **Prioridade entre áreas.** Sugestão: cultura → audiovisual → esporte → saúde, pela qualidade das fontes e pela base de clientes.
 2. **Quem opera.** Proponente direto, consultoria/captador gerindo vários proponentes, ou os dois. Isso muda papéis, a "carteira" por proponente e o que o patrocinador vê.
 3. **Plano comercial.** Se o módulo entra em todos os planos ou é cobrado à parte.
-4. **Busca das fontes da seção 1** (LIE, saúde, IN 29 integral, manual STR, IN FESPORTE 04/2025).
-5. **Estados e municípios na v1.** Só SC (PIE) ou já incluir outros programas usados pelos clientes.
+4. **Busca das fontes da seção 1** (LIE, saúde, IN 29 integral, manual STR).
+5. **Estados e municípios.** Se algum programa estadual ou municipal usado pelos clientes (ProAC, Pro-Mac, ICMS, ISS) entra antes da fase 8.
 6. **Visão do patrocinador.** Se o patrocinador recebe um relatório ou acesso de leitura à prestação.
 
 ---

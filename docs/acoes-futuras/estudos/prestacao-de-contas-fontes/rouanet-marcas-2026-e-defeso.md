@@ -23,7 +23,6 @@ A mesma pasta do Drive contém outros arquivos que provavelmente cobrem os temas
 | `MANUAL_LEI-ROUANET_INSTRUCAO-NORMATIVA-29.pdf` | [id do Drive omitido] | Rouanet / IN MinC 29/2026. É a fonte provável para prazos, contas, orçamento e prestação de contas. |
 | `ManualProjetosCulturais-07.pdf` | [id do Drive omitido] | [?] Pode ser estadual ou municipal. |
 | `MANUAL DE PC_v2.11_23.09.2026.pdf` | [id do Drive omitido] | [?] Órgão não identificado pelo nome. |
-| `Manual de Prestação de contas PIE.pdf` | [id do Drive omitido] | Esporte (PIE) [?]. |
 | `LIE DEFESO.pdf` | [id do Drive omitido] | Esporte, defeso; 30,9 MB. |
 | `manual-do-proponente-modulo-2-2026.pdf` / `manual-do-proponente-modulo-iii-avaliacao-de-resultados-2.pdf` | [id do Drive omitido] / [id do Drive omitido] | [?] Programa não identificado pelo nome. |
 | `Manual-de-Orientacoes-PRONON-e-PRONAS.PCD-2-edicao-Verso-3.1.pdf` | [id do Drive omitido] | Saúde. |
