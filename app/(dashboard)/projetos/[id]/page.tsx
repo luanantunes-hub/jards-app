@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AlignLeft, ArrowLeft, Check, ChevronDown, FolderOpen, Pencil, Plus, Calendar, BarChart2, TrendingUp, Users, FileText, Eye, ImageIcon, ImagePlus, FileSpreadsheet, BriefcaseBusiness, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { EditarObjetivoModal } from "@/components/modals/EditarObjetivoModal";
 import { NovoResultadoModal, type EditDataResultado } from "@/components/modals/NovoResultadoModal";
@@ -388,23 +389,10 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
   useEffect(() => { fetchAll(); }, [id]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (loading) {
-    return (
-      <div className="px-8 pt-8">
-        <div className="h-5 w-32 bg-black/8 rounded animate-pulse mb-6" />
-        <div className="h-8 w-64 bg-black/8 rounded animate-pulse mb-2" />
-        <div className="h-4 w-48 bg-black/8 rounded animate-pulse" />
-      </div>
-    );
-  }
+  if (loading) return <DetailPageSkeleton />;
 
   if (!projeto) {
-    return (
-      <div className="px-8 pt-8 text-center">
-        <p className="text-[14px] text-black/40">Projeto não encontrado.</p>
-        <Link href="/projetos" className="mt-2 inline-block text-[14px] text-black/40 hover:text-black/60 transition">← Voltar</Link>
-      </div>
-    );
+    return <DetailNotFound title="Projeto não encontrado" backHref="/projetos" backLabel="Projetos" />;
   }
 
   const captadoAprovado = captacoes

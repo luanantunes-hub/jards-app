@@ -5,6 +5,7 @@ import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowUpRight, CalendarDays, ChevronDown, Download, FileText, Handshake, Paperclip, Pencil, RefreshCw, Trash2, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound } from "@/components/ui/DetailPagePrimitives";
 import { excluirDocumento } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -106,7 +107,7 @@ export default function ContractPage({ params }: { params: Promise<{ id: string 
   }
 
   if (loading) return <div className="mx-auto max-w-[1280px] animate-pulse px-4 py-10 sm:px-6 lg:px-10"><div className="h-5 w-28 rounded bg-black/[.06]"/><div className="mt-8 h-28 rounded bg-black/[.04]"/><div className="mt-6 h-80 rounded bg-black/[.04]"/></div>;
-  if (!contract || !account) return <div className="mx-auto max-w-[1280px] px-4 py-16 text-center text-sm text-black/40">{error || "Contrato não encontrado."}</div>;
+  if (!contract || !account) return <DetailNotFound title="Contrato não encontrado" description={error && error !== "Contrato não encontrado." ? error : undefined} backHref="/contas-patrocinio" backLabel="Clientes" />;
   const companyName = account.empresa_crm?.nome || account.nome || "Cliente";
 
   return <div className="min-h-full">

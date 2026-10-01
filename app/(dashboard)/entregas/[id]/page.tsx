@@ -9,6 +9,7 @@ import {
   Play, Plus, ShieldCheck, Trash2, Upload, UserRound, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound } from "@/components/ui/DetailPagePrimitives";
 import { excluirDocumento } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
@@ -214,8 +215,8 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
     });
   }
 
-  if (loading) return <div className="mx-auto max-w-[1180px] animate-pulse px-4 py-8 sm:px-6 lg:px-8"><div className="h-5 w-28 rounded bg-black/[.06]"/><div className="mt-8 h-28 rounded bg-black/[.04]"/><div className="mt-6 h-80 rounded bg-black/[.04]"/></div>;
-  if (!delivery || !account) return <div className="mx-auto max-w-[1180px] px-4 py-16 text-center text-sm text-black/40">{error || "Entrega não encontrada."}</div>;
+  if (loading) return <div className="mx-auto max-w-[1280px] animate-pulse px-4 py-8 sm:px-6 lg:px-10"><div className="h-5 w-28 rounded bg-black/[.06]"/><div className="mt-8 h-28 rounded bg-black/[.04]"/><div className="mt-6 h-80 rounded bg-black/[.04]"/></div>;
+  if (!delivery || !account) return <DetailNotFound title="Entrega não encontrada" description={error && error !== "Entrega não encontrada." ? error : "Ela pode ter sido removida ou você não tem acesso a ela."} backHref="/contas-patrocinio" backLabel="Clientes" />;
 
   const responsible = members.find(item => item.user_id === delivery.responsavel_id);
   const companyName = account.empresa_crm?.nome || account.nome || "Cliente";
@@ -236,7 +237,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
 
   return <div className="min-h-full">
     <header className="border-b border-black/[.07]">
-      <div className="mx-auto max-w-[1180px] px-4 pb-7 pt-6 sm:px-6 lg:px-8 lg:pb-9 lg:pt-9">
+      <div className="mx-auto max-w-[1280px] px-4 pb-7 pt-6 sm:px-6 lg:px-10 lg:pb-9 lg:pt-9">
         <div className="flex items-center gap-2 text-[12px] font-medium text-black/40">
           <Link href={`/contas-patrocinio/${delivery.conta_patrocinio_id}`} className="inline-flex items-center gap-2 transition hover:text-black/65"><ArrowLeft size={14}/>{companyName}</Link>
           <span className="text-black/20">/</span><span>Entregas</span>
@@ -261,7 +262,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
       </div>
     </header>
 
-    <main className="mx-auto grid max-w-[1180px] gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-8 lg:py-9">
+    <main className="mx-auto grid max-w-[1280px] gap-6 px-4 py-7 sm:px-6 lg:grid-cols-[minmax(0,1fr)_300px] lg:px-10 lg:py-9">
       {error && <p className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2.5 text-[11px] text-[#D94E4E] lg:col-span-2">{error}</p>}
       <div className="min-w-0 space-y-6">
         <section className="overflow-hidden rounded border border-black/[.08] bg-white">

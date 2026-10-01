@@ -10,7 +10,7 @@ import { IdentityPickerPopup } from "@/components/ui/IdentityPickerPopup";
 import AdicionarCaptadorModal from "@/components/modals/AdicionarCaptadorModal";
 import { NegotiationsTable, type CaptacaoRow } from "@/components/company/NegotiationsTable";
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
-import { DetailHeaderAction, DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { DetailHeaderAction, DetailPageContent, DetailTabs, DetailNotFound } from "@/components/ui/DetailPagePrimitives";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CaptadorOverview, type CaptadorOverviewData } from "@/components/captadores/CaptadorOverview";
 import { CaptadorRelationshipScorecard } from "@/components/relationship/DecisionScorecard";
@@ -222,7 +222,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
   }
 
   if (loading) return <CaptadorSkeleton />;
-  if (!captador) return <CaptadorNotFound />;
+  if (!captador) return <DetailNotFound title="Captador não encontrado" backHref="/captadores" backLabel="Captadores" />;
 
   return (
     <div className="min-h-full">
@@ -462,14 +462,3 @@ function CaptadorSkeleton() {
   );
 }
 
-function CaptadorNotFound() {
-  return (
-    <div className="px-4 py-8 text-center md:px-8">
-      <UserCheck size={30} className="mx-auto text-black/15" />
-      <p className="mt-4 text-sm font-medium text-black/35">Captador não encontrado</p>
-      <Link href="/captadores" className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#7259B5]">
-        <ArrowLeft size={12} /> Voltar para captadores
-      </Link>
-    </div>
-  );
-}

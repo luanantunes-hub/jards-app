@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
 import { NovoProponenteModal, type EditDataProponente } from "@/components/modals/NovoProponenteModal";
 import { ProponenteWorkspaceModal } from "@/components/modals/ProponenteWorkspaceModal";
-import { DetailHeaderAction, DetailPageContent, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { DetailHeaderAction, DetailPageContent, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import type { TipoProponente } from "@/lib/supabase/types";
@@ -326,31 +326,10 @@ export default function ProponenteDetailPage() {
     fetchAll();
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col h-full">
-        <div className="flex-shrink-0 px-8 pt-8 pb-5 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <div className="h-3 w-24 rounded bg-black/8 animate-pulse mb-4" />
-          <div className="h-7 w-64 rounded bg-black/8 animate-pulse" />
-        </div>
-        <div className="flex-1 px-8 py-6 flex gap-6">
-          <div className="w-72 flex-shrink-0 bg-white rounded border animate-pulse h-64" style={{ borderColor: "rgba(13,13,13,.08)" }} />
-          <div className="flex-1 space-y-4">
-            <div className="h-20 bg-white rounded border animate-pulse" style={{ borderColor: "rgba(13,13,13,.08)" }} />
-            <div className="h-48 bg-white rounded border animate-pulse" style={{ borderColor: "rgba(13,13,13,.08)" }} />
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DetailPageSkeleton />;
 
   if (!proponente) {
-    return (
-      <div className="flex flex-col h-full items-center justify-center gap-3">
-        <p className="text-black/40 text-sm">Proponente não encontrado.</p>
-        <Link href="/proponentes" className="text-xs text-black/40 hover:text-black/70 underline transition">Voltar para proponentes</Link>
-      </div>
-    );
+    return <DetailNotFound title="Proponente não encontrado" backHref="/proponentes" backLabel="Proponentes" />;
   }
 
   const totalGarant = projetos.reduce((s, p) => s + (p.valor_garantido ?? 0), 0);

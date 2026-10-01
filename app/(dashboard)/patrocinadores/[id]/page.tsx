@@ -10,6 +10,7 @@ import {
   MoreHorizontal, Building2, BriefcaseBusiness, FilePenLine, ArrowUpRight, CircleHelp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound } from "@/components/ui/DetailPagePrimitives";
 import { useCreditos } from "@/contexts/CreditosContext";
 import type { Empresa, Responsavel, Edital, Tipologia, InvestimentoTrimestre, StatusCaptacao, ContatoSugestao } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -852,14 +853,7 @@ export default function PatrocinadorPage() {
   }
 
   if (loading) return <PageSkeleton />;
-  if (!empresa) return (
-    <div className="px-8 py-8">
-      <Link href="/patrocinadores" className="inline-flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-black transition mb-6">
-        <ArrowLeft size={13} /> Patrocinadores
-      </Link>
-      <p className="text-black/40 text-sm">Empresa não encontrada.</p>
-    </div>
-  );
+  if (!empresa) return <DetailNotFound title="Patrocinador não encontrado" backHref="/patrocinadores" backLabel="Patrocinadores" />;
 
   const trimestres = [
     { label: "T1", active: empresa.trimestre_1 },

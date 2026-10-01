@@ -37,7 +37,7 @@ import { RelationshipWorkspace } from "@/components/relationship/RelationshipWor
 import { RelationshipScoreGauge } from "@/components/ui/RelationshipScoreGauge";
 import { NegotiationsTable, type CaptacaoRow } from "@/components/company/NegotiationsTable";
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
-import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import type { EmpresaCrm } from "@/lib/supabase/types";
 
@@ -124,8 +124,8 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
     if (new URLSearchParams(window.location.search).get("tab") === "relationship") setPageTab("relationship");
   }, []);
 
-  if (loading) return <DetailSkeleton />;
-  if (!empresa) return <NotFound />;
+  if (loading) return <DetailPageSkeleton />;
+  if (!empresa) return <DetailNotFound title="Empresa não encontrada" description="Ela pode ter sido removida ou você não tem acesso a ela." backHref="/empresas-crm" backLabel="Empresas" />;
 
   const openNegotiations = negotiations.filter(item => !CLOSED_STATUSES.has(item.status));
   const openNotices = notices.filter(item => !EDITAL_CLOSED_STATUSES.has(item.status));
@@ -591,5 +591,3 @@ function NextStepRow({label,title,subtitle,actionLabel,onAction,href}:{label:str
 }
 function ContextLine({icon:Icon,label,value}:{icon:typeof Target;label:string;value:string}) { return <div className="flex items-center gap-2.5"><Icon size={13} className="text-black/25"/><span className="flex-1 text-[11px] text-black/45">{label}</span><span className="text-[12px] font-semibold tabular-nums text-black/65">{value}</span></div>; }
 function EmptySide({copy}:{copy:string}) { return <p className="py-4 text-center text-[11px] leading-relaxed text-black/30">{copy}</p>; }
-function DetailSkeleton() { return <div className="animate-pulse px-4 py-6 md:px-8"><div className="h-4 w-24 rounded bg-black/8"/><div className="mt-6 h-16 w-full max-w-2xl rounded bg-black/8"/><div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{Array.from({length:4}).map((_,index)=><div key={index} className="h-28 rounded bg-black/8"/>)}</div><div className="mt-5 h-80 rounded bg-black/8"/></div>; }
-function NotFound() { return <div className="px-4 py-8 text-center md:px-8"><Building2 size={30} className="mx-auto text-black/15"/><p className="mt-4 text-sm font-medium text-black/35">Empresa não encontrada</p><Link href="/empresas-crm" className="mt-4 inline-flex items-center gap-1 text-xs font-medium text-[#7259B5]"><ArrowLeft size={12}/>Voltar para empresas</Link></div>; }

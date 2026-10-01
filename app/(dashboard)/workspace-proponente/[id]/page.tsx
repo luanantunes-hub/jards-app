@@ -5,6 +5,7 @@ import { use, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Calendar, Zap, FileText, Check, TrendingUp, Building2, FileStack } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { useEtiquetas, type Etiqueta } from "@/contexts/EtiquetasContext";
@@ -105,23 +106,10 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
     });
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="px-8 pt-8">
-        <div className="h-5 w-32 bg-black/8 rounded animate-pulse mb-6" />
-        <div className="h-8 w-64 bg-black/8 rounded animate-pulse mb-2" />
-        <div className="h-4 w-48 bg-black/8 rounded animate-pulse" />
-      </div>
-    );
-  }
+  if (loading) return <DetailPageSkeleton sidebar={false} />;
 
   if (!projeto) {
-    return (
-      <div className="px-8 pt-8 text-center">
-        <p className="text-[14px] text-black/40">{erro ?? "Projeto não encontrado."}</p>
-        <Link href="/workspace-proponente" className="mt-2 inline-block text-[14px] text-black/40 hover:text-black/60 transition">← Voltar</Link>
-      </div>
-    );
+    return <DetailNotFound title="Projeto não encontrado" description={erro ?? undefined} backHref="/workspace-proponente" backLabel="Meus projetos" />;
   }
 
   const captadoAprovado = projeto.negociacoes.filter(c => c.status === "aprovado").reduce((s, c) => s + (c.valorSolicitado ?? 0), 0);

@@ -29,7 +29,7 @@ import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RelationshipWorkspace } from "@/components/relationship/RelationshipWorkspace";
 import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeModal";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
-import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs } from "@/components/ui/DetailPagePrimitives";
+import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
 
 const RESULTADO_NEGATIVO = new Set(["recusado"]);
@@ -580,41 +580,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     await fetchData();
   }
 
-  if (loading) {
-    return (
-      <div className="px-8 py-8 max-w-6xl">
-        <div className="animate-pulse space-y-6">
-          <div className="h-4 w-32 bg-black/5 rounded" />
-          <div className="h-8 w-64 bg-black/5 rounded" />
-          <div className="h-4 w-48 bg-black/5 rounded" />
-          <div className="grid grid-cols-4 gap-4 mt-8">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-black/5 rounded" />)}
-          </div>
-          <div className="grid grid-cols-[1fr_280px] gap-6 mt-8">
-            <div className="space-y-4">
-              {[1, 2, 3].map(i => <div key={i} className="h-32 bg-black/5 rounded" />)}
-            </div>
-            <div className="space-y-4">
-              {[1, 2].map(i => <div key={i} className="h-40 bg-black/5 rounded" />)}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DetailPageSkeleton />;
 
   if (!captacao) {
-    return (
-      <div className="px-8 py-8 max-w-6xl">
-        <Link href="/captacoes" className="inline-flex items-center gap-1.5 text-xs font-semibold text-black/35 hover:text-black transition mb-6">
-          <ArrowLeft size={13} /> Negociações
-        </Link>
-        <div className="text-center py-20">
-          <p className="text-[15px] font-semibold text-black/40 mb-1">Negociação não encontrada</p>
-          <p className="text-sm text-black/25">Esta negociação pode ter sido removida.</p>
-        </div>
-      </div>
-    );
+    return <DetailNotFound title="Negociação não encontrada" description="Ela pode ter sido removida ou você não tem acesso a ela." backHref="/captacoes" backLabel="Negociações" />;
   }
 
   const atvsPendentes = atividades.filter(a => !a.feita);
