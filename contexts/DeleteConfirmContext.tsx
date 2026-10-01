@@ -96,6 +96,9 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
 
   function handleKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (event.key === "Escape") {
+      // O React do App Router escuta no próprio document: stopPropagation não
+      // impede os listeners de modais (useModalDismiss), preventDefault sim.
+      event.preventDefault();
       event.stopPropagation();
       handleClose();
       return;
