@@ -14,4 +14,16 @@ São extrações assistidas: antes de virar regra no sistema, cada número deve 
 | [pie-sc-e-manual-vale-rouanet-2021.md](./pie-sc-e-manual-vale-rouanet-2021.md) | Manual de Prestação de Contas do PIE (FESPORTE/SC) e Manual de Projetos Culturais (Vale, 2021, obsoleto) | Esporte (SC) e Cultura |
 | [saude-pronon-pronas-manual-2019.md](./saude-pronon-pronas-manual-2019.md) | Manual de análise contábil e financeira PRONON e PRONAS/PCD (MS/FNS, 2019) | Saúde |
 
+### Pesquisa na web
+
+Neste ambiente, o acesso direto a páginas foi bloqueado para quase todos os domínios e a cota de buscas acabou durante a pesquisa. O conteúdo abaixo veio de resumos do buscador; nenhum texto normativo foi lido na íntegra. Cada arquivo indica a confiança de cada regra e o que conferir primeiro.
+
+| Arquivo | Tema | Área |
+|---|---|---|
+| [rouanet-in29-texto-normativo-web.md](./rouanet-in29-texto-normativo-web.md) | Artigos da IN MinC 29/2026 e da IN 34/2026 que fecham as divergências entre manuais | Cultura |
+| [ancine-str-logomarca-fsa-web.md](./ancine-str-logomarca-fsa-web.md) | Layout das planilhas RP/DE/DO do STR, logomarca, FSA/BRDE | Audiovisual |
+| [lie-federal-2026-web.md](./lie-federal-2026-web.md) | LC 222/2025, Decreto 12.861/2026, Portaria MESP 10/2026 | Esporte (federal) |
+| [pie-sc-normas-web.md](./pie-sc-normas-web.md) | IN FESPORTE 04/2025, Portaria 123/2025, Manual da Marca PIE | Esporte (SC) |
+| [saude-regras-vigentes-2026-web.md](./saude-regras-vigentes-2026-web.md) | Portaria GM/MS 8.031/2025 (Anexo LXXXVI-A), Transferegov, deduções de 2026 | Saúde |
+
 Observação: os arquivos "Manual do Proponente – Módulo II" e "Módulo III" foram enviados como se fossem da Lei de Incentivo ao Esporte, mas são da Lei Rouanet. As notas mantêm o aviso no topo.
