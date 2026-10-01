@@ -377,6 +377,11 @@
     .flow-grid { display:grid; grid-template-columns:repeat(5,1fr); border-top:1px solid rgba(40,37,37,.12); border-bottom:1px solid rgba(40,37,37,.12); }
     .jards-flow-step { min-height:210px; padding:28px 24px; border-right:1px solid rgba(40,37,37,.12); }
     .jards-flow-step:last-child { border-right:0; }
+    @media (min-width:768px) {
+      .alt-fluxo .jards-flow-step { position:relative; }
+      .alt-fluxo .jards-flow-step:not(:last-child)::before { content:""; position:absolute; right:-1px; bottom:100%; width:1px; height:48px; pointer-events:none;
+        background:linear-gradient(to top,rgba(40,37,37,.26) 0 10px,transparent 10px),repeating-linear-gradient(to top,transparent 0 7px,rgba(40,37,37,.17) 7px 10px); }
+    }
     .flow-index { display:block; margin-bottom:28px; font-size:clamp(34px,3.4vw,48px); line-height:.9; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
     .jards-flow-step strong { display:block; margin-bottom:10px; font-size:20px; }
     .jards-flow-step p { color:rgba(40,37,37,.58); font-size:14px; line-height:1.6; }
@@ -455,10 +460,34 @@
     .platform-forces { position:relative; isolation:isolate; min-height:clamp(700px,108dvh,880px); display:flex; align-items:center; overflow:hidden; background:#F7F7F5; }
     .platform-forces::before { content:""; position:absolute; inset:0; z-index:-3; background:#F7F7F5; }
     .platform-forces::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.20; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
-    .platform-paper-shapes { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
-    .platform-paper-shape { position:absolute; display:block; border:1px solid rgba(255,255,255,.32); border-radius:42px; box-shadow:inset 0 1px 0 rgba(255,255,255,.40),0 28px 65px rgba(52,42,78,.055); }
-    .platform-paper-purple { left:-17vw; bottom:-39%; width:62vw; height:72%; background:rgba(104,77,176,.11); -webkit-mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); transform:rotate(-3deg); }
-    .platform-paper-red { top:-38%; right:-14vw; width:58vw; height:70%; background:rgba(217,74,74,.10); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:rotate(3deg); }
+    /* Prancheta: linhas de construção alinhadas à página e os módulos do
+       símbolo feitos a compasso (desenhados pelo script "Prancheta"). */
+    .prancheta { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
+    .prancheta svg { position:absolute; inset:0; width:100%; height:100%; }
+    .pr-linha { fill:none; stroke:rgba(40,37,37,.26); stroke-width:1; }
+    .pr-linha.is-guia { stroke:rgba(40,37,37,.17); stroke-dasharray:3 7; }
+    .pr-linha.is-forte { stroke:rgba(40,37,37,.5); }
+    .pr-arco { fill:none; stroke:rgba(40,37,37,.2); stroke-width:1; stroke-dasharray:2 6; }
+    .pr-marca { fill:none; stroke:rgba(40,37,37,.5); stroke-width:1; }
+    .pr-contorno { fill:none; stroke-width:1.25; }
+    .pr-nota { fill:rgba(40,37,37,.5); font-family:'Google Sans',system-ui,sans-serif; font-size:11px; font-weight:500; letter-spacing:.06em; }
+    .pr-host { position:relative; isolation:isolate; }
+    /* A linha que chega ao botão principal fica roxa quando ele é apontado. */
+    .pr-cta, .pr-aguada-cor, line[data-forca] { transition:stroke .2s ease, fill-opacity .2s ease; }
+    .landing-hero:has(.hero-actions .alt-cta:is(:hover,:focus-visible)) .pr-cta,
+    .closing-cta:has(.alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:#684DB0; }
+    /* Passar o mouse numa das três forças acende o módulo dela na margem. */
+    .platform-forces:has(.ledger-item:nth-child(1):hover) [data-forca="1"].pr-aguada-cor,
+    .platform-forces:has(.ledger-item:nth-child(2):hover) [data-forca="2"].pr-aguada-cor,
+    .platform-forces:has(.ledger-item:nth-child(3):hover) [data-forca="3"].pr-aguada-cor { fill-opacity:.34; }
+    .platform-forces:has(.ledger-item:nth-child(1):hover) line[data-forca="1"],
+    .platform-forces:has(.ledger-item:nth-child(2):hover) line[data-forca="2"],
+    .platform-forces:has(.ledger-item:nth-child(3):hover) line[data-forca="3"] { stroke:rgba(40,37,37,.55); }
+    @media print {
+      .prancheta, .jards-flow-step::before { display:none !important; }
+      html.js .reveal { opacity:1 !important; transform:none !important; }
+    }
+    @media (forced-colors: active) { .prancheta, .jards-flow-step::before { display:none; } }
     .feature-ledger { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr); width:100%; overflow:hidden; border:1px solid rgba(40,37,37,.10); background:rgba(255,255,255,.88); box-shadow:0 24px 70px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.75); backdrop-filter:blur(18px) saturate(120%); -webkit-backdrop-filter:blur(18px) saturate(120%); }
     /* sem a linha do tempo (o fluxo já conta a jornada) e sem numerais: o texto fica centrado na altura das três forças */
     .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(40,37,37,.10); }
@@ -476,8 +505,6 @@
       .team-art { min-height:auto; }
       .assignment-row { grid-template-columns:1fr 1fr; }
       .platform-forces { min-height:auto; padding-top:56px; padding-bottom:56px; }
-      .platform-paper-purple { left:-78vw; bottom:-12%; width:142vw; height:48%; }
-      .platform-paper-red { top:-17%; right:-77vw; width:138vw; height:44%; }
       .feature-ledger { grid-template-columns:1fr; }
       .ledger-main { padding:34px 24px 32px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
       .ledger-main>p { max-width:34ch; font-size:14px; }
@@ -490,16 +517,8 @@
     .landing-hero { position:relative; isolation:isolate; overflow:hidden; min-height:100dvh; background:#F7F7F5; }
     .landing-hero::before { content:""; position:absolute; inset:0; z-index:-3; background:#F7F7F5; }
     .landing-hero::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.22; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
-    .hero-paper-shapes { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
-    .hero-paper-shape { position:absolute; display:block; border:1px solid rgba(255,255,255,.34); box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 28px 65px rgba(52,42,78,.08); }
-    .hero-paper-red { left:-13vw; bottom:-34vh; width:64vw; height:76vh; border-radius:42px; background:rgba(217,74,74,.15); -webkit-mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); transform:translate3d(0,0,0) rotate(-4deg); }
-    .hero-paper-purple { top:-30vh; right:-12vw; width:63vw; height:76vh; border-radius:42px; background:rgba(104,77,176,.14); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:translate3d(0,0,0) rotate(4deg); }
     .pricing-pro-card { border:1px solid rgba(104,77,176,.34); background:#19151F; box-shadow:0 22px 60px rgba(52,42,78,.16),inset 0 1px 0 rgba(255,255,255,.06); }
     .closing-cta { position:relative; isolation:isolate; overflow:hidden; background:#F7F7F5; }
-    .closing-cta::before,.closing-cta::after { content:""; position:absolute; z-index:-1; display:block; width:66vw; height:150%; border:1px solid rgba(255,255,255,.34); border-radius:42px; box-shadow:inset 0 1px 0 rgba(255,255,255,.42),0 28px 65px rgba(52,42,78,.07); pointer-events:none; }
-    .closing-cta::before { left:-18vw; bottom:-92%; background:rgba(217,74,74,.14); -webkit-mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 100% 0,transparent 0 34%,#000 34.4%); transform:rotate(-4deg); }
-    .closing-cta::after { top:-94%; right:-17vw; background:rgba(104,77,176,.14); -webkit-mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); mask:radial-gradient(circle at 0 100%,transparent 0 34%,#000 34.4%); transform:rotate(4deg); }
-    @media (max-width:767px) { .closing-cta::before,.closing-cta::after { width:125vw; height:115%; } .closing-cta::before { left:-78vw; bottom:-66%; } .closing-cta::after { top:-68%; right:-80vw; } }
     .blog-section { background:#fff; }
     .blog-head { margin-bottom:52px; }
     .blog-head h2 { max-width:12ch; margin-top:14px; font-size:clamp(38px,4.5vw,64px); font-weight:700; line-height:1.02; letter-spacing:-.05em; color:#282525; }
@@ -587,7 +606,7 @@
     /* Keep the device composition proportional within its column. */
     .art-stage { position:absolute; top:0; left:0; width:1424px; height:960px; margin:0; transform:scale(var(--hero-art-scale,.5)); transform-origin:top left; }
     @media (max-width:1023px) { .hero-layout { gap:28px; padding-right:24px; padding-left:24px; } .hero-copy h1 { font-size:clamp(48px,5.5vw,58px); } .hero-description { font-size:16px; } }
-    @media (max-width:767px) { .hero-layout { grid-template-columns:minmax(0,1fr); gap:42px; min-height:100dvh; padding:118px 24px 92px; } .hero-copy h1 { max-width:14ch; font-size:clamp(42px,11vw,52px); } .hero-visual { justify-self:center; width:94%; margin-top:2px; } .hero-anteater-detail { right:18px; width:min(44vw,210px); transform:translateY(4%); } .hero-paper-red { left:-72vw; bottom:27%; width:132vw; height:58vh; } .hero-paper-purple { top:44%; right:-70vw; width:140vw; height:54vh; } }
+    @media (max-width:767px) { .hero-layout { grid-template-columns:minmax(0,1fr); gap:42px; min-height:100svh; padding:118px 24px 92px; } .hero-copy h1 { max-width:14ch; font-size:clamp(42px,11vw,52px); } .hero-visual { justify-self:center; width:94%; margin-top:2px; } .hero-anteater-detail { right:18px; width:min(44vw,210px); transform:translateY(4%); } }
     .art-desktop-frame { position:absolute; z-index:2; left:50%; top:108px; width:82%; padding:17px 11px 24px; transform:translateX(-50%); border:1px solid #777a7e; border-radius:22px 22px 12px 12px; background:linear-gradient(115deg,#303235,#17181a 28%,#222426 72%,#111214); box-shadow:inset 0 1px 0 #ededee,inset 2px 0 1px #a6a8ab,inset -2px 0 1px #55585c,0 0 0 1px #d1d2d4,0 36px 92px rgba(52,42,78,.22),0 8px 22px rgba(40,37,37,.16); }
     .art-desktop-frame::before { position:absolute; top:5px; left:50%; width:6px; height:6px; transform:translateX(-50%); border:1px solid #40434a; border-radius:50%; background:radial-gradient(circle at 35% 30%,#648296 0 10%,#1a2b37 24%,#0d1014 60%); box-shadow:0 0 0 2px #141517; content:""; }
     .art-desktop-frame::after { position:absolute; right:-4.5%; bottom:-11px; left:-4.5%; height:19px; border:1px solid #94979b; border-top-color:#f3f4f5; border-radius:2px 2px 50% 50% / 2px 2px 12px 12px; background:linear-gradient(90deg,rgba(52,56,62,.6),transparent 5% 95%,rgba(52,56,62,.6)),linear-gradient(180deg,#e7e8ea 0%,#c8cbcf 30%,#aaadb2 54%,#797d83 82%,#575b61 100%); box-shadow:inset 0 1px 0 #fff,0 2px 2px rgba(36,38,43,.22),0 12px 15px -8px rgba(36,38,43,.3); content:""; }
@@ -632,9 +651,7 @@
     .art-insight-meta { display:flex; align-items:center; justify-content:space-between; margin-top:15px; padding-top:12px; border-top:1px solid rgba(40,37,37,.08); }
     .art-insight-meta span { color:#B07A14; font-size:9px; font-weight:700; }
     .art-insight-meta b { color:#684DB0; font-size:9px; }
-    @media (prefers-reduced-motion:no-preference) { .hero-paper-red { animation:hero-paper-red-in 1.15s cubic-bezier(.16,1,.3,1) both; } .hero-paper-purple { animation:hero-paper-purple-in 1.25s .06s cubic-bezier(.16,1,.3,1) both; } .art-report-card { animation:art-float-a 7s ease-in-out infinite; } .art-insight-card { animation:art-float-b 8s ease-in-out infinite; } }
-    @keyframes hero-paper-red-in { from { opacity:0; transform:translate3d(-30px,20px,0) rotate(-6deg); } to { opacity:1; transform:translate3d(0,0,0) rotate(-4deg); } }
-    @keyframes hero-paper-purple-in { from { opacity:0; transform:translate3d(32px,-20px,0) rotate(6deg); } to { opacity:1; transform:translate3d(0,0,0) rotate(4deg); } }
+    @media (prefers-reduced-motion:no-preference) { .art-report-card { animation:art-float-a 7s ease-in-out infinite; } .art-insight-card { animation:art-float-b 8s ease-in-out infinite; } }
     @keyframes art-float-a { 0%,100% { transform:translateY(0) rotate(-1deg); } 50% { transform:translateY(-7px) rotate(-1deg); } }
     @keyframes art-float-b { 0%,100% { transform:translateY(0) rotate(1deg); } 50% { transform:translateY(6px) rotate(1deg); } }
     .art-appbar { display:flex; align-items:center; justify-content:space-between; min-height:38px; padding:0 18px; border-bottom:1px solid rgba(40,37,37,.09); background:rgba(40,37,37,.018); }
@@ -738,7 +755,7 @@
       --alt-purple-on-dark: #CFC3F0;
       --alt-surface: #F7F7F5;
       --alt-radius: 4px;
-      --alt-container: 1152px;
+      --alt-container: 72rem;
       --alt-h2-chapter: clamp(40px, 4.45vw, 64px);
       --alt-h2-section: clamp(34px, 3.6vw, 52px);
       /* coluna da direita dos cabeçalhos divididos (fluxo, preços, blog): mesma largura, mesmo x */
@@ -924,10 +941,7 @@
 
 <!-- ════════════════════════ HERO ════════════════════════ -->
 <section id="top" class="landing-hero">
-  <div class="hero-paper-shapes" aria-hidden="true">
-    <span class="hero-paper-shape hero-paper-red"></span>
-    <span class="hero-paper-shape hero-paper-purple"></span>
-  </div>
+  <div class="prancheta" data-prancheta="topo" aria-hidden="true"></div>
   <div class="hero-layout">
     <div class="hero-copy">
     <p class="alt-kicker mb-6">Inteligência e operação para patrocínios</p>
@@ -1272,7 +1286,8 @@
 
 
 <!-- ════════════════════════ LEIS DE INCENTIVO ════════════════════════ -->
-<section id="leis-incentivo" class="section-space alt-surface px-6">
+<section id="leis-incentivo" class="section-space alt-surface pr-host px-6">
+  <div class="prancheta" data-prancheta="leis" aria-hidden="true"></div>
   <div class="max-w-6xl mx-auto">
     <div class="mb-10 reveal">
       <p class="alt-kicker">Cobertura de leis</p>
@@ -1740,10 +1755,7 @@
 
 <!-- ════════════════════════ PILARES DA PLATAFORMA ════════════════════════ -->
 <section id="plataforma-forcas" class="platform-forces section-space px-6">
-  <div class="platform-paper-shapes" aria-hidden="true">
-    <span class="platform-paper-shape platform-paper-purple"></span>
-    <span class="platform-paper-shape platform-paper-red"></span>
-  </div>
+  <div class="prancheta" data-prancheta="forcas" aria-hidden="true"></div>
   <div class="max-w-6xl mx-auto feature-ledger reveal">
     <div class="ledger-main">
       <p class="alt-kicker">A plataforma por inteiro</p>
@@ -2291,7 +2303,8 @@
 
 
 <!-- ════════════════════════ TECNOLOGIA E PROXIMIDADE ════════════════════════ -->
-<section id="operacao" class="bg-white px-6">
+<section id="operacao" class="bg-white pr-host px-6">
+  <div class="prancheta" data-prancheta="orelhoes" aria-hidden="true"></div>
   <div class="section-space max-w-6xl mx-auto product-story">
     <div class="alt-operacao-grid">
       <div class="reveal">
@@ -2319,7 +2332,8 @@
 
 
 <!-- ════════════════════════ CONECTOR MCP ════════════════════════ -->
-<section id="conector-ia" class="section-space alt-surface px-6">
+<section id="conector-ia" class="section-space alt-surface pr-host px-6">
+  <div class="prancheta" data-prancheta="conector" aria-hidden="true"></div>
   <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
       <div class="reveal min-w-0">
@@ -2606,6 +2620,7 @@
 
 <!-- ════════════════════════ CTA FINAL ════════════════════════ -->
 <section class="closing-cta section-space px-6" aria-labelledby="fechamento-titulo">
+  <div class="prancheta" data-prancheta="fechamento" aria-hidden="true"></div>
   <div class="max-w-3xl mx-auto text-center reveal">
     <p class="alt-kicker">Toda a jornada conectada</p>
     <h2 id="fechamento-titulo" class="alt-h2 alt-h2--section font-display text-[#282525] mb-5">
@@ -2849,6 +2864,341 @@
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }});
   }, { threshold: 0.06 });
   document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+</script>
+<script>
+// ── Prancheta ──
+// As superfícies de papel (topo, leis, três forças, conector e fechamento) são
+// desenhadas como uma prancha técnica: um eixo único na margem do conteúdo,
+// linhas de construção que nascem de elementos reais da página e passam um
+// pouco das quinas, e os módulos do símbolo da Jards (quarto de círculo coral
+// + quarto roxo de meio raio) feitos a compasso. As seções brancas são folhas
+// sobre a prancha; a única exceção é a foto dos orelhões, que traz os módulos
+// da rua para a marca.
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var COR = { coral:'#D94A4A', roxo:'#684DB0', grafite:'#282525' };
+  var movimento = window.matchMedia('(prefers-reduced-motion: no-preference)');
+  var largo = window.matchMedia('(min-width: 768px)');
+  var pranchetas = Array.prototype.slice.call(document.querySelectorAll('[data-prancheta]'));
+  if (!pranchetas.length) return;
+
+  function no(tag, attrs, pai){
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (pai) pai.appendChild(n);
+    return n;
+  }
+  // Posição final do elemento: desconta o deslocamento de entrada dos .reveal,
+  // que ainda pode estar em andamento quando a prancha é medida.
+  function caixa(alvo, base){
+    if (!alvo) return null;
+    var a = alvo.getBoundingClientRect(), b = base.getBoundingClientRect(), dx = 0, dy = 0;
+    for (var n = alvo; n && n !== base; n = n.parentElement) {
+      if (n.classList && n.classList.contains('reveal')) {
+        var t = getComputedStyle(n).transform;
+        if (t && t !== 'none') { var m = new DOMMatrixReadOnly(t); dx += m.m41; dy += m.m42; }
+      }
+    }
+    var x = a.left - b.left - dx, y = a.top - b.top - dy;
+    return { x:x, y:y, w:a.width, h:a.height, r:x + a.width, b:y + a.height, cx:x + a.width/2, cy:y + a.height/2 };
+  }
+  // O eixo corre na margem, 12px antes da borda do container de conteúdo
+  // (72rem centralizado, 24px no mínimo): igual em todas as seções e sem
+  // encostar nas letras.
+  function eixo(w){
+    var rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return Math.floor(Math.max(24, (w - 72*rem) / 2) - 12) + .5;
+  }
+  // Traço de 1px nítido: a coordenada fixa de linhas retas cai no meio do pixel.
+  function px(v){ return Math.round(v - .5) + .5; }
+
+  function Desenho(svg, id){
+    this.svg = svg; this.id = id; this.hachuras = {};
+    this.defs = no('defs', {}, svg);
+    this.g = no('g', {}, svg);
+  }
+  Desenho.prototype.hachura = function(cor){
+    if (this.hachuras[cor]) return this.hachuras[cor];
+    var pid = 'pr-' + this.id + '-' + cor;
+    var p = no('pattern', { id:pid, width:7, height:7, patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)' }, this.defs);
+    no('line', { x1:3.5, y1:0, x2:3.5, y2:7, stroke:COR[cor], 'stroke-width':1, 'stroke-opacity':.3 }, p);
+    return (this.hachuras[cor] = 'url(#' + pid + ')');
+  };
+  // Linha de construção: passa das pontas, como no traço à mão.
+  Desenho.prototype.linha = function(x1, y1, x2, y2, tipo, sobra){
+    sobra = sobra == null ? 16 : sobra;
+    if (x1 === x2) x1 = x2 = px(x1);
+    if (y1 === y2) y1 = y2 = px(y1);
+    var dx = x2-x1, dy = y2-y1, L = Math.hypot(dx, dy) || 1, ux = dx/L*sobra, uy = dy/L*sobra;
+    return no('line', { x1:x1-ux, y1:y1-uy, x2:x2+ux, y2:y2+uy, 'class':'pr-linha ' + (tipo || '') }, this.g);
+  };
+  Desenho.prototype.eixo = function(x, h){ return this.linha(x, 0, x, h, 'is-guia', 0); };
+  Desenho.prototype.circulo = function(cx, cy, r){
+    return no('circle', { cx:cx, cy:cy, r:r, 'class':'pr-arco' }, this.g);
+  };
+  Desenho.prototype.centro = function(cx, cy, r){
+    var b = r ? Math.min(8, Math.max(4, r * .22)) : 8;
+    this.linha(cx-b, cy, cx+b, cy, 'is-forte', 0);
+    this.linha(cx, cy-b, cx, cy+b, 'is-forte', 0);
+    no('circle', { cx:px(cx), cy:px(cy), r:b * .44, 'class':'pr-marca' }, this.g);
+  };
+  Desenho.prototype.nota = function(x, y, texto, ancora){
+    var t = no('text', { x:x, y:y, 'class':'pr-nota', 'text-anchor':ancora || 'middle' }, this.g);
+    t.textContent = texto;
+    return t;
+  };
+  // Cruz de registro: só onde duas linhas reais se encontram.
+  Desenho.prototype.registro = function(x, y){
+    this.linha(x-5, y, x+5, y, 'is-forte', 0);
+    this.linha(x, y-5, x, y+5, 'is-forte', 0);
+  };
+  // Módulo: quarto de círculo com aguada, hachura e contorno.
+  // Abre para 'no' (cima-esquerda), 'ne', 'so' ou 'se'.
+  Desenho.prototype.modulo = function(cx, cy, r, abre, cor, aguada, marca){
+    var ang = { ne:[-90,0], se:[0,90], so:[90,180], no:[180,270] }[abre];
+    var t0 = ang[0]*Math.PI/180, t1 = ang[1]*Math.PI/180;
+    var d = 'M' + cx + ' ' + cy +
+      ' L' + (cx + r*Math.cos(t0)) + ' ' + (cy + r*Math.sin(t0)) +
+      ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r*Math.cos(t1)) + ' ' + (cy + r*Math.sin(t1)) + ' Z';
+    var extra = marca ? { 'data-forca':marca } : {};
+    function com(o){ for (var k in extra) o[k] = extra[k]; return o; }
+    no('path', com({ d:d, fill:COR[cor], 'fill-opacity':aguada == null ? .1 : aguada, 'class':'pr-aguada pr-aguada-cor' }), this.g);
+    no('path', { d:d, fill:this.hachura(cor), 'class':'pr-aguada' }, this.g);
+    no('path', com({ d:d, 'class':'pr-contorno', stroke:COR[cor], 'stroke-opacity':.6 }), this.g);
+  };
+  // O símbolo da Jards: o quarto roxo (raio R/2) encaixa embaixo do coral.
+  Desenho.prototype.simbolo = function(cx, cy, R, w, h, compacto){
+    var rx = cx - R/2;
+    if (compacto) {
+      this.linha(cx - R - 24, cy, cx + 24, cy, 'is-guia', 0);
+      this.linha(cx, cy - R - 16, cx, cy + R/2 + 16, 'is-guia', 0);
+      this.linha(rx, cy - R - 16, rx, cy + R/2 + 16, 'is-guia', 0);
+    } else {
+      this.linha(0, cy, w, cy, 'is-guia', 0);
+      this.linha(cx, 0, cx, h, 'is-guia', 0);
+      this.linha(rx, 0, rx, h, 'is-guia', 0);
+    }
+    this.circulo(cx, cy, R);
+    this.circulo(rx, cy, R/2);
+    this.modulo(cx, cy, R, 'no', 'coral', .12);
+    this.modulo(rx, cy, R/2, 'se', 'roxo', .14);
+    this.centro(cx, cy, R);
+    this.centro(rx, cy, R/2);
+    // A proporção real da marca: o roxo tem metade do raio do coral.
+    this.linha(cx, cy, cx - R*Math.SQRT1_2, cy - R*Math.SQRT1_2, '', 0);
+    this.linha(rx, cy, rx + R/2*Math.SQRT1_2, cy + R/2*Math.SQRT1_2, '', 0);
+    if (!compacto) {
+      this.nota(cx - R*.36, cy - R*.36 - 10, 'r');
+      this.nota(rx + R*.2 + 10, cy + R*.2 - 2, 'r/2', 'start');
+    }
+  };
+
+  var desenhos = {
+    topo: function(d, sec, w, h){
+      var titulo = caixa(sec.querySelector('.hero-copy h1'), sec);
+      var botao = caixa(sec.querySelector('.hero-actions .alt-cta'), sec);
+      if (!titulo || !botao) return;
+      var x0 = eixo(w);
+      // O eixo da prancha e a linha que chega ao botão principal.
+      d.eixo(x0, h);
+      d.linha(0, botao.cy, botao.x, botao.cy, 'pr-cta', 0);
+      d.registro(x0, botao.cy);
+      // Módulo coral apoiado na base, a partir da borda do texto.
+      var R = Math.min(h - botao.b - 36, (titulo.w || 400) * .62);
+      if (R > 90) {
+        var cx = titulo.x + R;
+        d.circulo(cx, h, R);
+        d.linha(cx, h - R - 24, cx, h, 'is-guia', 0);
+        d.modulo(cx, h, R, 'no', 'coral', .12);
+      }
+      if (largo.matches) {
+        // Roxo na proporção da marca (metade do coral), preso à margem
+        // direita logo abaixo do menu.
+        var Rr = Math.max(R > 90 ? R / 2 : 80, 72), cyr = 96;
+        d.circulo(w, cyr, Rr);
+        d.modulo(w, cyr, Rr, 'so', 'roxo', .12);
+        d.registro(w - Rr, cyr);
+      } else {
+        // Celular: ao lado dos botões, depois do último item da mesma linha.
+        var naLinha = Array.prototype.map.call(sec.querySelectorAll('.hero-actions > *'), function(e){ return caixa(e, sec); })
+          .filter(function(c){ return Math.abs(c.cy - botao.cy) < 4; });
+        var dir = Math.max.apply(null, naLinha.map(function(c){ return c.r; }));
+        var Rc = Math.min(w - dir - 28, 132);
+        if (Rc > 60) {
+          d.modulo(w, botao.y - 8, Rc, 'so', 'roxo', .12);
+          d.registro(w - Rc, botao.y - 8);
+        }
+      }
+    },
+    leis: function(d, sec, w, h){
+      var painel = caixa(sec.querySelector('#leis-painel'), sec);
+      var x0 = eixo(w);
+      d.eixo(x0, h);
+      // A borda de cima da lista de patrocinadores chega até o eixo.
+      if (painel) {
+        d.linha(x0, painel.y, painel.x, painel.y, 'is-guia', 0);
+        d.registro(x0, painel.y);
+      }
+    },
+    forcas: function(d, sec, w, h){
+      var quadro = caixa(sec.querySelector('.feature-ledger'), sec);
+      var principal = caixa(sec.querySelector('.ledger-main'), sec);
+      var itens = Array.prototype.map.call(sec.querySelectorAll('.ledger-item'), function(e){ return caixa(e, sec); });
+      if (!quadro) return;
+      // As bordas do quadro continuam pela página, como um retângulo traçado.
+      d.eixo(eixo(w), h);
+      d.linha(0, quadro.y, w, quadro.y, 'is-guia', 0);
+      d.linha(0, quadro.b, w, quadro.b, 'is-guia', 0);
+      d.linha(quadro.x, 0, quadro.x, h, 'is-guia', 0);
+      d.linha(quadro.r, 0, quadro.r, h, 'is-guia', 0);
+      if (principal && principal.r < quadro.r - 40) d.linha(principal.r, 0, principal.r, h, 'is-guia', 0);
+      [[quadro.x, quadro.y], [quadro.r, quadro.y], [quadro.x, quadro.b], [quadro.r, quadro.b]].forEach(function(p){ d.registro(p[0], p[1]); });
+      // Cada força ganha seu módulo na margem direita, na altura da sua linha;
+      // passar o mouse na força acende o módulo dela (CSS, via data-forca).
+      var margem = w - quadro.r;
+      var cores = ['roxo', 'coral', 'grafite'];
+      if (margem >= 96 && itens.length === 3 && itens[0].x > quadro.x + 40) {
+        var r = Math.min(30, (margem - 40) / 2);
+        itens.forEach(function(it, i){
+          var cx = quadro.r + margem / 2 + r / 2, cy = it.cy + r / 2;
+          d.linha(quadro.r, it.cy, cx - r - 6, it.cy, '', 0).setAttribute('data-forca', i + 1);
+          d.modulo(cx, cy, r, 'no', cores[i], .16, i + 1);
+          d.registro(cx, cy);
+        });
+      }
+    },
+    // Da rua para a marca: dois prumos sobem dos orelhões coral e roxo até a
+    // régua da seção, e cada um leva seu módulo na proporção do símbolo.
+    // Os eixos dos orelhões ficam a ~35% e ~75% da largura da foto; valem
+    // enquanto .pipeline-photo for 1:1 com object-fit:cover (só corte vertical).
+    orelhoes: function(d, sec, w, h){
+      if (!largo.matches) return;
+      var foto = caixa(sec.querySelector('.pipeline-photo'), sec);
+      var regua = caixa(sec.querySelector('.product-story'), sec);
+      if (!foto || !regua) return;
+      var topo = regua.y, vao = foto.y - topo;
+      if (vao < 90) return;
+      var xc = foto.x + foto.w * .35, xr = foto.x + foto.w * .75;
+      var R = Math.min(48, vao * .4), yb = topo + vao * .5 + R / 2;
+      d.linha(xc, topo + .5, xc, foto.y, 'is-guia', 0);
+      d.linha(xr, topo + .5, xr, foto.y, 'is-guia', 0);
+      // Onde o prumo encontra a régua: um tique em T, que a borda não corta.
+      [xc, xr].forEach(function(x){
+        d.linha(x - 6, topo + .5, x + 6, topo + .5, 'is-forte', 0);
+        d.linha(x, topo + .5, x, topo + 7, 'is-forte', 0);
+      });
+      d.linha(xc - R - 14, yb, xr + R / 2 + 14, yb, 'is-guia', 0);
+      d.modulo(xc, yb, R, 'no', 'coral', .14);
+      d.modulo(xr, yb, R / 2, 'se', 'roxo', .16);
+      d.centro(xc, yb, R);
+      d.centro(xr, yb, R / 2);
+    },
+    conector: function(d, sec, w, h){
+      d.eixo(eixo(w), h);
+    },
+    fechamento: function(d, sec, w, h){
+      var conteudo = caixa(sec.querySelector('.max-w-3xl'), sec);
+      var botao = caixa(sec.querySelector('.alt-cta'), sec);
+      if (!conteudo || !botao) return;
+      var x0 = eixo(w), fim = h - 28;
+      // Aqui a prancha termina: o eixo para na última cruz.
+      d.linha(x0, 0, x0, fim, 'is-guia', 0);
+      d.registro(x0, fim);
+      var margem = w - conteudo.r;
+      var R = Math.min(margem * .78, h * .5);
+      if (R >= 120) {
+        // O símbolo completo à direita; a linha de base sai do eixo, passa
+        // pelo botão e chega ao símbolo.
+        var cx = conteudo.r + margem / 2 + R / 2;
+        d.simbolo(cx, botao.cy, R, w, h);
+        d.linha(x0, botao.cy, cx - R, botao.cy, 'pr-cta', 0);
+        d.registro(x0, botao.cy);
+      } else {
+        // Telas estreitas: o símbolo pequeno embaixo de tudo, como assinatura.
+        var Rm = Math.min(56, (h - conteudo.b - 28) / 1.5);
+        if (Rm >= 28) d.simbolo(w / 2 + Rm / 2, conteudo.b + 12 + Rm, Rm, w, h, true);
+      }
+    }
+  };
+
+  var estado = new Map();
+
+  function desenhar(alvo, animar){
+    var sec = alvo.parentElement, w = sec.clientWidth, h = sec.clientHeight;
+    if (!w || !h) return;
+    estado.get(alvo).tam = w + 'x' + h;
+    alvo.textContent = '';
+    var svg = no('svg', { viewBox:'0 0 ' + w + ' ' + h, width:w, height:h, focusable:'false' }, alvo);
+    var d = new Desenho(svg, alvo.getAttribute('data-prancheta'));
+    desenhos[alvo.getAttribute('data-prancheta')](d, sec, w, h);
+    if (animar) revelar(svg);
+  }
+
+  // Primeiro o conteúdo assenta, depois o lápis traça: os traços sólidos se
+  // desenham e os tracejados e aguadas aparecem em seguida.
+  function revelar(svg){
+    if (!movimento.matches || !svg.animate) return;
+    var tracos = svg.querySelectorAll('.pr-linha:not(.is-guia), .pr-contorno');
+    Array.prototype.forEach.call(tracos, function(el, i){
+      var L = el.getTotalLength ? el.getTotalLength() : 0;
+      if (!L) return;
+      el.animate([{ strokeDasharray:L, strokeDashoffset:L }, { strokeDasharray:L, strokeDashoffset:0 }],
+        { duration:900, delay:80 + i*35, easing:'cubic-bezier(.65,0,.35,1)', fill:'backwards' });
+    });
+    Array.prototype.forEach.call(svg.querySelectorAll('.is-guia, .pr-arco, .pr-aguada, .pr-marca, .pr-nota'), function(el, i){
+      el.animate([{ opacity:0 }, { opacity:1 }], { duration:700, delay:300 + (i % 12)*40, easing:'ease-out', fill:'backwards' });
+    });
+  }
+
+  var pendentes = new Set(), quadro = 0;
+  function agendar(alvo){
+    pendentes.add(alvo);
+    if (quadro) return;
+    quadro = requestAnimationFrame(function(){
+      quadro = 0;
+      pendentes.forEach(function(a){
+        var sec = a.parentElement, st = estado.get(a);
+        if (st.visto && st.tam !== sec.clientWidth + 'x' + sec.clientHeight) desenhar(a, false);
+      });
+      pendentes.clear();
+    });
+  }
+
+  var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  // Com animação, a prancha só aparece quando a seção entra na tela (senão
+  // ela surgiria pronta, sumiria e se redesenharia). Sem animação, já nasce
+  // desenhada.
+  var anima = movimento.matches && 'IntersectionObserver' in window;
+  pronto.then(function(){
+    pranchetas.forEach(function(alvo){
+      estado.set(alvo, { visto:!anima, tam:'' });
+      if (!anima) desenhar(alvo, false);
+    });
+    if ('ResizeObserver' in window) {
+      var ro = new ResizeObserver(function(entradas){
+        entradas.forEach(function(e){
+          var alvo = e.target.querySelector(':scope > [data-prancheta]');
+          if (alvo) agendar(alvo);
+        });
+      });
+      pranchetas.forEach(function(alvo){ ro.observe(alvo.parentElement); });
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entradas){
+        entradas.forEach(function(e){
+          if (!e.isIntersecting) return;
+          var alvo = e.target.querySelector(':scope > [data-prancheta]');
+          var st = alvo && estado.get(alvo);
+          if (!st || st.visto) return;
+          st.visto = true;
+          io.unobserve(e.target);
+          setTimeout(function(){ desenhar(alvo, true); }, movimento.matches ? 450 : 0);
+        });
+      }, { threshold:.2 });
+      pranchetas.forEach(function(alvo){ io.observe(alvo.parentElement); });
+    }
+  });
+})();
 </script>
 </body>
 </html>
