@@ -29,11 +29,12 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!busca.trim()) { setEmpresas([]); return; }
+    if (!busca.trim() || !organizationId) { setEmpresas([]); return; }
     async function buscarEmpresas() {
       const { data } = await (supabase as any)
         .from("empresas_crm")
         .select("id, nome, tipo")
+        .eq("organization_id", organizationId)
         .ilike("nome", `%${busca}%`)
         .order("nome")
         .limit(8);
@@ -41,7 +42,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
     }
     buscarEmpresas();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [busca]);
+  }, [busca, organizationId]);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -147,7 +148,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
                   <Building2 size={13} className="text-black/40 flex-shrink-0" />
                   <span className="text-[13px] font-semibold text-black">{empresaSelecionada.nome}</span>
                 </div>
-                <button type="button" onClick={() => { setEmpresaSelecionada(null); setBusca(""); }}
+                <button type="button" onClick={() => { setEmpresaSelecionada(null); setBusca(""); setAgenciaId(""); setResponsavelId(""); }}
                   className="text-[11px] text-black/35 hover:text-black/55 transition">trocar</button>
               </div>
             ) : (
