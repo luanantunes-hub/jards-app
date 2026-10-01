@@ -8,6 +8,7 @@ São extrações assistidas: antes de virar regra no sistema, cada número deve 
 |---|---|---|
 | [rouanet-modulo-ii-execucao.md](./rouanet-modulo-ii-execucao.md) | Manual do Proponente – Módulo II – Monitoramento e Execução (MinC, v3, ago/2026) | Cultura |
 | [rouanet-modulo-iii-avaliacao.md](./rouanet-modulo-iii-avaliacao.md) | Manual do Proponente – Módulo III – Avaliação de Resultados (MinC, 2026) | Cultura |
+| [ancine-oficial-str-logomarca.md](./ancine-oficial-str-logomarca.md) | **Modelos oficiais RP, DE e DO** (célula a célula), Manual STR – Planilhas v2.2, documentos fiscais, Manual de Logomarca v3.0, IN 159 com alterações, FSA/BRDE; 58 checagens | Audiovisual |
 | [lie-federal-2026-oficial.md](./lie-federal-2026-oficial.md) | **LC 222/2025, Decreto 12.861/2026, Portaria MESP 10/2026 e Portaria 424/2020, texto integral**, e os modelos oficiais (formulário PCP/PCF 2026 descrito célula a célula, RCO, carimbo, GRU, remanejamento, PDLIE, defeso); 53 checagens | Esporte (federal) |
 | [rouanet-in29-texto-integral.md](./rouanet-in29-texto-integral.md) | **IN MinC 29/2026 e IN 34/2026, texto integral** (gov.br/cultura e DOU): parâmetros conferidos artigo por artigo e 61 checagens | Cultura |
 | [rouanet-in29-manual-olivieri.md](./rouanet-in29-manual-olivieri.md) | Manual IN 29 (escritório Olivieri, fev/2026) | Cultura |
@@ -34,5 +35,7 @@ Neste ambiente, o acesso direto a páginas foi bloqueado para quase todos os dom
 | [ancine-str-logomarca-fsa-web.md](./ancine-str-logomarca-fsa-web.md) | Layout das planilhas RP/DE/DO do STR, logomarca, FSA/BRDE | Audiovisual |
 | [lie-federal-2026-web.md](./lie-federal-2026-web.md) | LC 222/2025, Decreto 12.861/2026, Portaria MESP 10/2026 | Esporte (federal) |
 | [saude-regras-vigentes-2026-web.md](./saude-regras-vigentes-2026-web.md) | Portaria GM/MS 8.031/2025 (Anexo LXXXVI-A), Transferegov, deduções de 2026 | Saúde |
+
+Os modelos oficiais que o módulo vai preencher (ANCINE e LIE) estão em [`modelos-oficiais/`](./modelos-oficiais/README.md).
 
 Observação: os arquivos "Manual do Proponente – Módulo II" e "Módulo III" foram enviados como se fossem da Lei de Incentivo ao Esporte, mas são da Lei Rouanet. As notas mantêm o aviso no topo.
