@@ -213,14 +213,13 @@ export default function BlogEditorPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
 
-      const { data: member } = await (supabase as any)
-        .from("organization_members")
-        .select("papel")
-        .eq("user_id", user.id)
-        .limit(1)
+      const { data: perfil } = await (supabase as any)
+        .from("profiles")
+        .select("jards_super_admin")
+        .eq("id", user.id)
         .maybeSingle();
 
-      if (member?.papel !== "admin") { router.push("/dashboard"); return; }
+      if (perfil?.jards_super_admin !== true) { router.push("/dashboard"); return; }
 
       const { data: post } = await (supabase as any)
         .from("blog_posts")

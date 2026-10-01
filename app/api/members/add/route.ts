@@ -33,15 +33,15 @@ export async function POST(req: NextRequest) {
 
   const admin = adminClient();
 
-  // 1. Confirmar que o solicitante é admin da org
-  const { data: requesterMember } = await admin
-    .from("organization_members")
-    .select("papel")
-    .eq("organization_id", organization_id)
-    .eq("user_id", user.id)
+  // 1. Adicionar alguém sem convite nem aceite é operação da equipe da Jards.
+  // Admins de organização usam /api/members/invite.
+  const { data: requester } = await admin
+    .from("profiles")
+    .select("jards_super_admin")
+    .eq("id", user.id)
     .maybeSingle();
 
-  if (!requesterMember || requesterMember.papel !== "admin") {
+  if (requester?.jards_super_admin !== true) {
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
 

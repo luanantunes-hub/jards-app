@@ -108,9 +108,16 @@ function PasswordResetModal({
   );
 }
 
+// Só caminhos do próprio site: "?next=https://outro.site" ou "//outro.site"
+// levariam a pessoa para fora depois do login.
+function destinoInterno(next: string | null) {
+  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return "/dashboard";
+  return next;
+}
+
 function LoginForm() {
   const searchParams = useSearchParams();
-  const next = searchParams.get("next") || "/dashboard";
+  const next = destinoInterno(searchParams.get("next"));
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

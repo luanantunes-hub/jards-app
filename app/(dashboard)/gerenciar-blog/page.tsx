@@ -33,14 +33,14 @@ export default function BlogAdminPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { router.push("/login"); return; }
 
-      const { data: member } = await (supabase as any)
-        .from("organization_members")
-        .select("papel")
-        .eq("user_id", user.id)
-        .limit(1)
+      // O blog é da Jards: todo cadastro novo é admin da própria organização.
+      const { data: perfil } = await (supabase as any)
+        .from("profiles")
+        .select("jards_super_admin")
+        .eq("id", user.id)
         .maybeSingle();
 
-      if (member?.papel !== "admin") {
+      if (perfil?.jards_super_admin !== true) {
         router.push("/dashboard");
         return;
       }

@@ -16,6 +16,15 @@ async function authenticatedUser() {
   return user;
 }
 
+// O catálogo de relatórios é compartilhado por todos os clientes: trocar ou
+// apagar um relatório fica com quem o enviou ou com a equipe da Jards.
+async function podeAlterarRelatorio(userId: string, uploadedBy: string | null) {
+  if (uploadedBy && uploadedBy === userId) return true;
+  const admin = createAdminClient();
+  const { data } = await admin.from("profiles").select("jards_super_admin").eq("id", userId).maybeSingle();
+  return data?.jards_super_admin === true;
+}
+
 async function listReports(empresaId: string) {
   const admin = createAdminClient();
   const { data, error } = await admin.from("relatorios_sustentabilidade").select("*").eq("empresa_id", empresaId).order("created_at", { ascending: false });
@@ -56,8 +65,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const admin = createAdminClient();
   let previous: { id: string; storage_path: string } | null = null;
   if (reportId) {
-    const { data, error } = await admin.from("relatorios_sustentabilidade").select("id,storage_path").eq("id", reportId).eq("empresa_id", id).maybeSingle();
+    const { data, error } = await admin.from("relatorios_sustentabilidade").select("id,storage_path,uploaded_by").eq("id", reportId).eq("empresa_id", id).maybeSingle();
     if (error || !data) return NextResponse.json({ error: "Relatório não encontrado" }, { status: 404 });
+    if (!await podeAlterarRelatorio(user.id, data.uploaded_by)) {
+      return NextResponse.json({ error: "Só quem enviou este relatório pode trocá-lo" }, { status: 403 });
+    }
     previous = data as { id: string; storage_path: string };
   } else {
     const { data, error } = await admin.from("relatorios_sustentabilidade").select("id").eq("empresa_id", id).limit(1);
@@ -103,13 +115,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  if (!await authenticatedUser()) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+  const user = await authenticatedUser();
+  if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   const { id } = await params;
   const reportId = new URL(request.url).searchParams.get("reportId");
   if (!reportId) return NextResponse.json({ error: "Relatório não informado" }, { status: 400 });
   const admin = createAdminClient();
-  const { data: report } = await admin.from("relatorios_sustentabilidade").select("id,storage_path").eq("id", reportId).eq("empresa_id", id).maybeSingle();
+  const { data: report } = await admin.from("relatorios_sustentabilidade").select("id,storage_path,uploaded_by").eq("id", reportId).eq("empresa_id", id).maybeSingle();
   if (!report) return NextResponse.json({ error: "Relatório não encontrado" }, { status: 404 });
+  if (!await podeAlterarRelatorio(user.id, report.uploaded_by)) {
+    return NextResponse.json({ error: "Só quem enviou este relatório pode excluí-lo" }, { status: 403 });
+  }
   const { error } = await admin.from("relatorios_sustentabilidade").delete().eq("id", reportId).eq("empresa_id", id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   await admin.storage.from(BUCKET).remove([report.storage_path]);

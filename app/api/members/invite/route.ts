@@ -13,6 +13,12 @@ function adminClient() {
   );
 }
 
+// ilike trata % e _ como curingas: "%@empresa.com" acharia qualquer perfil
+// daquele domínio. O e-mail é comparado literalmente.
+function emailLiteral(email: string) {
+  return email.replace(/[\\%_]/g, (c) => `\\${c}`);
+}
+
 function rpcErrorResponse(error: { code?: string; message?: string }) {
   const noSeat = error.code === "23514" || error.message?.includes("assentos disponiveis");
   const duplicate = error.code === "23505";
@@ -86,7 +92,7 @@ export async function POST(req: NextRequest) {
     .eq("organization_id", organizationId)
     .eq("status", "pending")
     .eq("role", role)
-    .ilike("email", email)
+    .ilike("email", emailLiteral(email))
     .maybeSingle();
   if (pendingError) return NextResponse.json({ error: pendingError.message }, { status: 500 });
   if (pendingInvitation) {
@@ -114,7 +120,7 @@ export async function POST(req: NextRequest) {
   }
 
   const { data: existingProfile, error: profileError } = await admin
-    .from("profiles").select("id, email").ilike("email", email).maybeSingle();
+    .from("profiles").select("id, email").ilike("email", emailLiteral(email)).maybeSingle();
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
 
   if (existingProfile) {
