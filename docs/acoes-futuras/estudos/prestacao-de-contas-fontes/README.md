@@ -9,6 +9,7 @@ São extrações assistidas: antes de virar regra no sistema, cada número deve 
 | [rouanet-modulo-ii-execucao.md](./rouanet-modulo-ii-execucao.md) | Manual do Proponente – Módulo II – Monitoramento e Execução (MinC, v3, ago/2026) | Cultura |
 | [rouanet-modulo-iii-avaliacao.md](./rouanet-modulo-iii-avaliacao.md) | Manual do Proponente – Módulo III – Avaliação de Resultados (MinC, 2026) | Cultura |
 | [ancine-oficial-str-logomarca.md](./ancine-oficial-str-logomarca.md) | **Modelos oficiais RP, DE e DO** (célula a célula), Manual STR – Planilhas v2.2, documentos fiscais, Manual de Logomarca v3.0, IN 159 com alterações, FSA/BRDE; 58 checagens | Audiovisual |
+| [saude-anexo-lxxxvi-a-oficial.md](./saude-anexo-lxxxvi-a-oficial.md) | **Anexo LXXXVI-A da PRC 5/2017 (Portaria GM/MS 8.031/2025), texto integral**, editais de 2025 e minuta do Termo de Compromisso; 38 checagens | Saúde |
 | [lie-federal-2026-oficial.md](./lie-federal-2026-oficial.md) | **LC 222/2025, Decreto 12.861/2026, Portaria MESP 10/2026 e Portaria 424/2020, texto integral**, e os modelos oficiais (formulário PCP/PCF 2026 descrito célula a célula, RCO, carimbo, GRU, remanejamento, PDLIE, defeso); 53 checagens | Esporte (federal) |
 | [rouanet-in29-texto-integral.md](./rouanet-in29-texto-integral.md) | **IN MinC 29/2026 e IN 34/2026, texto integral** (gov.br/cultura e DOU): parâmetros conferidos artigo por artigo e 61 checagens | Cultura |
 | [rouanet-in29-manual-olivieri.md](./rouanet-in29-manual-olivieri.md) | Manual IN 29 (escritório Olivieri, fev/2026) | Cultura |
@@ -27,7 +28,7 @@ São extrações assistidas: antes de virar regra no sistema, cada número deve 
 
 ### Pesquisa na web
 
-Neste ambiente, o acesso direto a páginas foi bloqueado para quase todos os domínios e a cota de buscas acabou durante a pesquisa. O conteúdo abaixo veio de resumos do buscador; nenhum texto normativo foi lido na íntegra. Cada arquivo indica a confiança de cada regra e o que conferir primeiro.
+Primeira rodada, feita quando o acesso aos sites do governo estava bloqueado: o conteúdo veio de resumos do buscador. Os arquivos com texto integral acima (IN 29, LIE, ANCINE e saúde) substituem estes onde houver conflito.
 
 | Arquivo | Tema | Área |
 |---|---|---|
