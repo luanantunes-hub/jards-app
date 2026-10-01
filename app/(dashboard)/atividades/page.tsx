@@ -985,13 +985,13 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
       {/* Nav */}
       <div className="flex items-center justify-between px-5 py-3.5 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="flex items-center gap-2">
-          <button onClick={prevWeek} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/5 transition text-black/40">
+          <button type="button" aria-label="Semana anterior" onClick={prevWeek} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/5 transition text-black/40">
             <ChevronLeft size={14} />
           </button>
           <span className="text-[12px] font-bold text-black/70 min-w-[200px] text-center">
             {fmtDate(days[0].str)} — {fmtDate(days[GANTT_DAYS - 1].str)}
           </span>
-          <button onClick={nextWeek} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/5 transition text-black/40">
+          <button type="button" aria-label="Próxima semana" onClick={nextWeek} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/5 transition text-black/40">
             <ChevronRight size={14} />
           </button>
         </div>
@@ -1629,7 +1629,7 @@ function AtividadesTable({ atividades, loading, tab, savingActivityId, onToggle,
     <tbody>{loading ? Array.from({ length: 7 }).map((_, i) => <tr key={i} className="border-b" style={{ borderColor: "rgba(13,13,13,.045)" }}><td colSpan={12} className="px-4 py-4"><div className="h-3.5 w-2/3 animate-pulse rounded bg-black/[.06]" /></td></tr>) : sorted.length === 0 ? <tr><td colSpan={12} className="px-5 py-20 text-center"><CheckCheck size={28} className="mx-auto mb-2 text-black/15" /><p className="text-sm font-medium text-black/30">{tab === "pendentes" ? "Nenhuma atividade pendente" : "Nenhuma atividade concluída"}</p></td></tr> : sorted.map(a => {
       const tc = typeConfigFor(a); const Icon = tc.Icon; const deadline = due(a);
       return <tr key={a.id} className="group border-b last:border-b-0 hover:bg-black/[.018] cursor-pointer" style={{ borderColor: "rgba(13,13,13,.045)" }} onClick={() => onEdit(a.id)}>
-        <td className="cursor-default bg-white px-4 py-3 text-left group-hover:bg-[#FBFBFA]" onClick={e => e.stopPropagation()}><button type="button" onClick={() => void onToggle(a.id, a.feita)} disabled={savingActivityId === a.id} className="inline-flex cursor-pointer text-black/20 transition hover:text-black/55 disabled:opacity-40 disabled:cursor-not-allowed">{savingActivityId === a.id ? <Clock size={17} className="animate-pulse text-[#7259B5]" /> : a.feita ? <CheckCircle2 size={17} className="text-[#2E8932]" /> : <Circle size={17} />}</button></td>
+        <td className="cursor-default bg-white px-4 py-3 text-left group-hover:bg-[#FBFBFA]" onClick={e => e.stopPropagation()}><button type="button" aria-label={a.feita ? `Reabrir “${a.nome}”` : `Concluir “${a.nome}”`} aria-pressed={a.feita} onClick={() => void onToggle(a.id, a.feita)} disabled={savingActivityId === a.id} className="inline-flex cursor-pointer text-black/20 transition hover:text-black/55 disabled:opacity-40 disabled:cursor-not-allowed">{savingActivityId === a.id ? <Clock size={17} className="animate-pulse text-[#7259B5]" /> : a.feita ? <CheckCircle2 size={17} className="text-[#2E8932]" /> : <Circle size={17} />}</button></td>
         <td className="bg-white px-4 py-3 group-hover:bg-[#FBFBFA]"><div className="flex w-full items-center gap-2.5 text-left"><span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded" style={{ color: tc.color }}><Icon size={13} /></span><span className="min-w-0"><span className={`block truncate text-[12.5px] font-semibold ${a.feita ? "text-black/30 line-through" : "text-black/75"}`}>{a.nome}</span><span className="mt-0.5 block text-[10px] text-black/30">{tc.label}</span></span></div></td>
         <td className="px-4 py-3"><span className="block max-w-[170px] truncate text-[11px] font-medium text-black/55">{captacaoLabel(a)}</span></td>
         <td className="px-4 py-3"><div className="max-w-[200px]"><span className="block truncate text-[11px] font-medium text-black/60">{a.contato?.nome ?? a.empresa_crm?.nome ?? "—"}</span>{a.contato?.email && <span className="mt-0.5 block truncate text-[9.5px] text-black/30">{a.contato.email}</span>}{a.contato?.telefone && <span className="block text-[9.5px] text-black/25">{a.contato.telefone}</span>}</div></td>

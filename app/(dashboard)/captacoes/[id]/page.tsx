@@ -152,7 +152,7 @@ function formatRelative(dateStr: string): string {
 
 
 function DocIcon({ tipo }: { tipo: string | null }) {
-  if (tipo?.includes("pdf")) return <FileText size={14} className="text-red-400 flex-shrink-0" />;
+  if (tipo?.includes("pdf")) return <FileText size={14} className="text-[#D94E4E]/75 flex-shrink-0" />;
   if (tipo?.includes("image")) return <FileText size={14} className="text-blue-400 flex-shrink-0" />;
   if (tipo?.includes("spreadsheet") || tipo?.includes("excel") || tipo?.includes("xlsx"))
     return <FileText size={14} className="text-green-500 flex-shrink-0" />;
@@ -1125,7 +1125,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               )}
 
               {documentoErro && (
-                <div className="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-[11px] font-medium text-red-700">
+                <div className="mb-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] font-medium text-[#B23A3A]">
                   {documentoErro}
                 </div>
               )}
@@ -1145,7 +1145,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                         <p className="text-[13px] font-medium truncate">{doc.nome}</p>
                         <p className="text-[10px] text-black/25">{formatDocSize(doc.tamanho)} · {formatDate(doc.created_at)}</p>
                       </div>
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                         <button
                           onClick={async () => {
                             const { data } = await supabase.storage.from("documentos").createSignedUrl(doc.url, 3600);
@@ -1157,7 +1157,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                         </button>
                         <button
                           onClick={() => handleExcluirDocumento(doc.id, doc.url, doc.nome)}
-                          className="p-1.5 rounded hover:bg-red-50 text-black/25 hover:text-red-500 transition"
+                          className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/25 hover:text-[#D94E4E] transition"
                         >
                           <Trash2 size={12} />
                         </button>

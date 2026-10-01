@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Shield, UserCheck } from "lucide-react";
+import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Search, Shield, UserCheck } from "lucide-react";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { NovoClienteModal } from "@/components/modals/NovoClienteModal";
 import { createClient } from "@/lib/supabase/client";
@@ -11,7 +11,7 @@ import { SegmentedControl } from "@/components/ui/FilterControls";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import type { EmpresaCrm } from "@/lib/supabase/types";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
-import { ListContent, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar } from "@/components/list/ListPagePrimitives";
+import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
@@ -338,7 +338,7 @@ export default function EmpresasCrmPage() {
       <ListPageHeader
         eyebrow="Inteligência de contas"
         title="Empresas"
-        summary={<ListSummary strong={filtered.length}>{filtered.length === 1 ? "empresa" : "empresas"}</ListSummary>}
+        summary={!loading && <ListSummary strong={filtered.length}>{filtered.length === 1 ? "empresa" : "empresas"}</ListSummary>}
         actions={
           <div className="flex items-center gap-2">
             {tipoFilter === "cliente_ativo" ? (
@@ -382,24 +382,24 @@ export default function EmpresasCrmPage() {
           <ManagedTable storageKey="empresas-crm-v6" definitions={EMPRESAS_COLUMNS} className="w-full">
             <thead>
               <tr className="border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Empresa</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Localização</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Setor</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Tipo</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Negociações</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Convertido</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Potencial</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Agência</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Próx. follow-up</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Últ. contato</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Contatos</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Inscrições</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Projetos</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Cidades</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Responsável</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Adicionado em</th>
-                <th className="text-left px-5 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Atualizado em</th>
-                <th className="text-left px-4 py-3 text-[11px] font-bold text-black/35 uppercase tracking-wide">Ações</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Empresa</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Localização</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Setor</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Tipo</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Negociações</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Convertido</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Potencial</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Agência</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Próx. follow-up</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Últ. contato</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Contatos</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Inscrições</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Projetos</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Cidades</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Responsável</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Adicionado em</th>
+                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Atualizado em</th>
+                <th className="text-left px-4 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -415,11 +415,10 @@ export default function EmpresasCrmPage() {
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={COL_COUNT} className="px-5 py-12 text-center">
-                    <Building2 size={28} className="mx-auto text-black/15 mb-2" />
-                    <p className="text-sm text-black/35 font-medium">
-                      {empresas.length === 0 ? "Nenhuma empresa encontrada" : "Nenhum resultado para a busca"}
-                    </p>
+                  <td colSpan={COL_COUNT}>
+                    {empresas.length === 0
+                      ? <ListEmptyState icon={Building2} title="Nenhuma empresa cadastrada" description="Adicione empresas que você está prospectando ou explore a base de patrocinadores." action={<PrimaryListAction onClick={() => setShowNovoProspect(true)}><Plus size={13} aria-hidden="true" /> Novo prospect</PrimaryListAction>} />
+                      : <ListEmptyState icon={Search} title="Nenhuma empresa corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setTipoFilter("todos"); }} />}
                   </td>
                 </tr>
               ) : (
@@ -617,10 +616,10 @@ export default function EmpresasCrmPage() {
 
                     {/* Ações */}
                     <td className="px-4 py-3.5">
-                      <div className="flex items-center opacity-0 group-hover:opacity-100 transition">
+                      <div className="flex items-center opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                         <button
                           onClick={ev => { ev.stopPropagation(); handleDelete(e.id, e.nome); }}
-                          className="p-1.5 rounded hover:bg-red-50 text-black/20 hover:text-red-500 transition"
+                          className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition"
                           title="Excluir"
                         >
                           <Trash2 size={13} />

@@ -148,12 +148,12 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
       {/* Delete */}
       {etiqueta.deletavel ? (
         <button onClick={() => onDelete(etiqueta.id)}
-          className="opacity-0 group-hover:opacity-100 p-1.5 rounded hover:bg-red-50 text-black/20 hover:text-red-500 transition flex-shrink-0">
+          className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition flex-shrink-0">
           <Trash2 size={13} />
         </button>
       ) : (
         <div className="w-7 flex-shrink-0" title="Etiqueta obrigatória">
-          <span className="text-[9px] text-black/20 opacity-0 group-hover:opacity-100">fixo</span>
+          <span className="text-[9px] text-black/20 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100">fixo</span>
         </div>
       )}
     </div>
@@ -312,7 +312,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
         </div>
         )}
       </div>
-      {erro && <p role="alert" className="mt-2 text-[12px] text-red-600">{erro}</p>}
+      {erro && <p role="alert" className="mt-2 text-[12px] text-[#B23A3A]">{erro}</p>}
       {etapaParaExcluir && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/45 p-4" onClick={() => !excluindo && setEtapaParaExcluir(null)}>
           <div role="dialog" aria-modal="true" aria-labelledby="excluir-etapa-titulo" className="w-full max-w-md rounded bg-white p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
@@ -323,10 +323,10 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
             <select id="destino-etapa" value={destinoKey} onChange={event => setDestinoKey(event.target.value)} className="mt-2 w-full rounded border border-black/15 bg-white px-3 py-2 text-[13px] text-black">
               {etiquetas.filter(item => item.key !== etapaParaExcluir.key).map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
             </select>
-            {erro && <p role="alert" className="mt-3 text-[12px] text-red-600">{erro}</p>}
+            {erro && <p role="alert" className="mt-3 text-[12px] text-[#B23A3A]">{erro}</p>}
             <div className="mt-6 flex justify-end gap-3">
               <button type="button" disabled={excluindo} onClick={() => setEtapaParaExcluir(null)} className="rounded px-4 py-2 text-[12px] font-semibold text-black/55 hover:bg-black/5">Cancelar</button>
-              <button type="button" disabled={excluindo || !destinoKey} onClick={confirmarExclusaoEtapa} className="rounded bg-red-600 px-4 py-2 text-[12px] font-semibold text-white disabled:opacity-50">{excluindo ? "Excluindo…" : "Mover e excluir"}</button>
+              <button type="button" disabled={excluindo || !destinoKey} onClick={confirmarExclusaoEtapa} className="rounded bg-[#D94E4E] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#C04040] disabled:opacity-50">{excluindo ? "Excluindo…" : "Mover e excluir"}</button>
             </div>
           </div>
         </div>

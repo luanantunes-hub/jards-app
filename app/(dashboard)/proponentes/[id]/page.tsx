@@ -570,7 +570,7 @@ export default function ProponenteDetailPage() {
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: CAPTADOR_STATUS_COLOR[cp.status] }}>{cp.status}</span>
                           {cp.status === "ativo" && (
-                            <button onClick={() => handleDesvincular(cp.id)} className="opacity-0 group-hover:opacity-100 text-black/20 hover:text-red-500 transition">
+                            <button onClick={() => handleDesvincular(cp.id)} className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 text-black/20 hover:text-[#D94E4E] transition">
                               <X size={11}/>
                             </button>
                           )}

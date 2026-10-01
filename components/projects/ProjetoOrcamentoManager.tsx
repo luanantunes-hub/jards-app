@@ -356,16 +356,16 @@ export function ProjetoOrcamentoManager({
             <table className="w-max min-w-full text-[12px]">
               <thead className="border-b bg-black/[.02]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 <tr>
-                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-black/35">Rubrica</th>
-                  <th className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-black/35">Descrição</th>
-                  <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-black/35">Valor total</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/35">Rubrica</th>
+                  <th className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/35">Descrição</th>
+                  <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-[.08em] text-black/35">Valor total</th>
                   {activeCota ? (
-                    <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wide" style={{ color: "#7259B5" }}>
+                    <th className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-[.08em]" style={{ color: "#7259B5" }}>
                       {activeCota.nome} ({(activeCota.pct * 100).toFixed(1)}%)
                     </th>
                   ) : valorTotal && valorTotal > 0 && cotaData.length > 0 ? (
                     cotaData.map(cota => (
-                      <th key={cota.id} className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wide text-black/35">
+                      <th key={cota.id} className="px-4 py-3 text-right text-[10px] font-medium uppercase tracking-[.08em] text-black/35">
                         {cota.nome} <span className="font-normal text-black/25">({(cota.pct * 100).toFixed(1)}%)</span>
                       </th>
                     ))

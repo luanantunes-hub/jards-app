@@ -288,7 +288,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
                   <button
                     type="button"
                     onClick={() => removeCriterion(item.id)}
-                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-black/20 opacity-60 transition hover:bg-red-50 hover:text-red-500 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200 group-hover:opacity-100 active:scale-[.94]"
+                    className="flex h-7 w-7 shrink-0 items-center justify-center rounded text-black/20 opacity-60 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D94E4E]/25 group-hover:opacity-100 active:scale-[.94]"
                     aria-label={`Excluir ${item.nome}`}
                   >
                     <Trash2 size={11} strokeWidth={1.8} />
@@ -334,7 +334,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
           </div>
         )}
 
-        {error && <p className="mt-3 rounded border border-red-200 bg-red-50 px-3 py-2.5 text-[10px] leading-relaxed text-red-700" role="alert">{error}</p>}
+        {error && <p className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2.5 text-[10px] leading-relaxed text-[#B23A3A]" role="alert">{error}</p>}
       </div>
     </section>
   );

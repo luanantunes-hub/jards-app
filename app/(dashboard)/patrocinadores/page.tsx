@@ -264,11 +264,13 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   return (
     <div className="flex items-center justify-center gap-1 px-4 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
       <button
+        type="button"
+        aria-label="Página anterior"
         disabled={page === 0}
         onClick={() => onChange(page - 1)}
         className={`${btn} text-black/40 hover:bg-black/6 disabled:opacity-25 disabled:cursor-not-allowed`}
       >
-        <CaretLeft size={14} />
+        <CaretLeft size={14} aria-hidden="true" />
       </button>
       {getPages().map((p, i) =>
         p === "…" ? (
@@ -276,6 +278,9 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
         ) : (
           <button
             key={p}
+            type="button"
+            aria-label={`Página ${(p as number) + 1}`}
+            aria-current={p === page ? "page" : undefined}
             onClick={() => onChange(p as number)}
             className={`${btn} ${p === page ? "bg-[#684DB0] text-white" : "text-black/50 hover:bg-black/6"}`}
           >
@@ -284,11 +289,13 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
         )
       )}
       <button
+        type="button"
+        aria-label="Próxima página"
         disabled={page >= totalPages - 1}
         onClick={() => onChange(page + 1)}
         className={`${btn} text-black/40 hover:bg-black/6 disabled:opacity-25 disabled:cursor-not-allowed`}
       >
-        <CaretRight size={14} />
+        <CaretRight size={14} aria-hidden="true" />
       </button>
     </div>
   );

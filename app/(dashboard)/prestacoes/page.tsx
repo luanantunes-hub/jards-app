@@ -1,10 +1,12 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Plus, ClipboardCheck, ArrowUpRight, CalendarDays, CheckCircle2, AlertCircle, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoContas, StatusPrestacao } from "@/lib/supabase/types";
 import { NovaPrestacaoModal } from "@/components/modals/NovaPrestacaoModal";
+import { LIST_HEADER_CELL, ListContent, ListEmptyState, ListPageHeader, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 
 type PrestacaoRow = PrestacaoContas & {
   captacao: { titulo: string | null; lei: string | null } | null;
@@ -58,77 +60,68 @@ export default function PrestacoesList() {
     (Object.keys(STATUS_META) as StatusPrestacao[]).map(s => [s, prestacoes.filter(p => p.status === s).length])
   ) as Record<StatusPrestacao, number>;
 
+  const hasFilter = filtroStatus !== "todos";
+
   return (
-    <div className="px-8 py-8 min-h-full" style={{ background: "#F2F2F2" }}>
-      {/* Header */}
-      <div className="flex items-end justify-between mb-6">
-        <div>
-          <h1 className="font-bold text-[#0D0D0D] text-[28px]">Prestação de contas</h1>
-          <p className="text-sm text-black/40 mt-1">
-            {prestacoes.length} {prestacoes.length === 1 ? "prestação" : "prestações"}
-          </p>
-        </div>
-        <button
-          onClick={() => setShowNova(true)}
-          className="flex items-center gap-2 px-4 py-2.5 rounded text-[13px] font-semibold text-white transition hover:opacity-90"
-          style={{ background: "#7259B5" }}
-        >
-          <Plus size={15} />
-          Nova prestação
-        </button>
-      </div>
+    <div className="flex h-full flex-col">
+      <ListPageHeader
+        eyebrow="Prestação de contas"
+        title="Prestações"
+        summary={!loading && <ListSummary strong={prestacoes.length}>{prestacoes.length === 1 ? "prestação" : "prestações"}</ListSummary>}
+        actions={<PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
+      />
 
-      {/* Filtros por status */}
-      <div className="flex gap-2 flex-wrap mb-5">
-        <button
-          onClick={() => setFiltroStatus("todos")}
-          className={`px-3 py-1.5 rounded text-[11px] font-semibold border transition ${
-            filtroStatus === "todos"
-              ? "bg-white border-black/20 text-black"
-              : "bg-white border-black/[.08] text-black/40 hover:bg-black/[.03]"
-          }`}
-        >
-          Todas ({prestacoes.length})
-        </button>
-        {(Object.entries(STATUS_META) as [StatusPrestacao, typeof STATUS_META[StatusPrestacao]][]).map(([s, meta]) => (
+      <ListToolbar>
+        <div role="group" aria-label="Filtrar por status" className="flex gap-2">
           <button
-            key={s}
-            onClick={() => setFiltroStatus(s)}
-            className="px-3 py-1.5 rounded text-[11px] font-semibold border transition bg-white"
-            style={{
-              borderColor: filtroStatus === s ? meta.color : "rgba(13,13,13,.08)",
-              color: filtroStatus === s ? meta.color : "rgba(13,13,13,.40)",
-            }}
+            type="button"
+            aria-pressed={filtroStatus === "todos"}
+            onClick={() => setFiltroStatus("todos")}
+            className={`h-9 shrink-0 rounded border px-3 text-[12px] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${
+              filtroStatus === "todos"
+                ? "border-[#7259B5]/40 bg-white text-[#7259B5]"
+                : "border-black/[.08] bg-white text-black/45 hover:bg-black/[.03]"
+            }`}
           >
-            {meta.label} {contadores[s] > 0 && `(${contadores[s]})`}
+            Todas <span className="tabular-nums">({prestacoes.length})</span>
           </button>
-        ))}
-      </div>
+          {(Object.entries(STATUS_META) as [StatusPrestacao, typeof STATUS_META[StatusPrestacao]][]).map(([s, meta]) => (
+            <button
+              key={s}
+              type="button"
+              aria-pressed={filtroStatus === s}
+              onClick={() => setFiltroStatus(s)}
+              className="h-9 shrink-0 rounded border bg-white px-3 text-[12px] font-medium transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+              style={{
+                borderColor: filtroStatus === s ? meta.color : "rgba(13,13,13,.08)",
+                color: filtroStatus === s ? meta.color : "rgba(13,13,13,.45)",
+              }}
+            >
+              {meta.label} {contadores[s] > 0 && <span className="tabular-nums">({contadores[s]})</span>}
+            </button>
+          ))}
+        </div>
+      </ListToolbar>
 
-      {/* Lista */}
-      <div className="bg-white overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        {loading ? (
-          <div className="flex items-center justify-center py-16">
-            <div className="w-5 h-5 border-2 border-black/10 border-t-[#7259B5] rounded-full animate-spin" />
-          </div>
-        ) : filtradas.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <ClipboardCheck size={28} className="text-black/10 mb-3" />
-            <p className="text-[13px] font-medium text-black/40">
-              {filtroStatus === "todos" ? "Nenhuma prestação cadastrada" : "Nenhuma prestação com este status"}
-            </p>
-            {filtroStatus === "todos" && (
-              <p className="text-[11px] text-black/25 mt-1">Crie uma prestação vinculando a uma negociação aprovada</p>
-            )}
-          </div>
-        ) : (
-          <table className="w-full text-sm">
+      <ListContent>
+        <ListTableSurface>
+          {!loading && filtradas.length === 0 ? (
+            <ListEmptyState
+              icon={ClipboardCheck}
+              title={hasFilter ? "Nenhuma prestação com este status" : "Nenhuma prestação cadastrada"}
+              description={hasFilter ? undefined : "Crie uma prestação vinculando-a a uma negociação aprovada."}
+              filtered={hasFilter}
+              onClearFilters={() => setFiltroStatus("todos")}
+              action={hasFilter ? undefined : <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
+            />
+          ) : (
+          <table className="w-full min-w-[760px] text-sm">
             <thead>
               <tr style={{ background: "#F9F9F8" }}>
                 {["Título", "Negociação", "Status", "Prazo", "Aprovado", "Realizado"].map(col => (
                   <th
                     key={col}
-                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wide text-black/35 border-b"
+                    className={`px-4 py-3 text-left ${LIST_HEADER_CELL} border-b`}
                     style={{ borderColor: "rgba(13,13,13,.07)" }}
                   >
                     {col}
@@ -137,7 +130,11 @@ export default function PrestacoesList() {
               </tr>
             </thead>
             <tbody>
-              {filtradas.map((p, i) => {
+              {loading ? Array.from({ length: 5 }).map((_, i) => (
+                <tr key={i} className="border-b last:border-b-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+                  <td colSpan={6} className="px-4 py-4"><div className="h-3.5 w-2/3 animate-pulse rounded bg-black/[.06]" /></td>
+                </tr>
+              )) : filtradas.map((p, i) => {
                 const meta = STATUS_META[p.status];
                 const pct = p.valor_aprovado && p.valor_aprovado > 0
                   ? Math.round((p.valor_realizado / p.valor_aprovado) * 100)
@@ -151,7 +148,7 @@ export default function PrestacoesList() {
                     style={{ borderBottom: i < filtradas.length - 1 ? "1px solid rgba(13,13,13,.05)" : undefined }}
                   >
                     <td className="px-4 py-3">
-                      <p className="text-[13px] font-semibold text-black">{p.titulo}</p>
+                      <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="text-[13px] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
                       {p.projeto && <p className="text-[10px] text-black/35 mt-0.5">{p.projeto.nome}</p>}
                     </td>
                     <td className="px-4 py-3">
@@ -163,25 +160,25 @@ export default function PrestacoesList() {
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold"
-                        style={{ background: meta.bg, color: meta.color }}
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded border bg-white px-2 py-1 text-[10px] font-medium"
+                        style={{ borderColor: meta.color.startsWith("#") ? meta.color + "47" : "rgba(13,13,13,.12)", color: meta.color }}
                       >
                         {meta.icon} {meta.label}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`text-[11px] font-medium ${vencida ? "text-[#D94E4E]" : "text-black/55"}`}>
+                      <span className={`whitespace-nowrap text-[11px] font-medium tabular-nums ${vencida ? "text-[#D94E4E]" : "text-black/55"}`}>
                         {fmtDate(p.prazo)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 font-variant-numeric text-[12px] text-black/55">
+                    <td className="px-4 py-3 text-[12px] tabular-nums text-black/55">
                       {fmt(p.valor_aprovado)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-[12px] text-black/55 font-medium">{fmt(p.valor_realizado)}</span>
+                        <span className="text-[12px] font-medium tabular-nums text-black/55">{fmt(p.valor_realizado)}</span>
                         {pct !== null && (
-                          <span className="text-[10px] font-semibold" style={{
+                          <span className="text-[10px] font-semibold tabular-nums" style={{
                             color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "rgba(13,13,13,.35)"
                           }}>
                             {pct}%
@@ -194,8 +191,9 @@ export default function PrestacoesList() {
               })}
             </tbody>
           </table>
-        )}
-      </div>
+          )}
+        </ListTableSurface>
+      </ListContent>
 
       {showNova && (
         <NovaPrestacaoModal

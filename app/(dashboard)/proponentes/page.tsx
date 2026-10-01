@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, ExternalLink, List, Network, FolderOpen, CalendarClock, Mail } from "lucide-react";
+import { Plus, Trash2, ExternalLink, List, Network, FolderOpen, CalendarClock, Mail, Landmark, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -9,7 +9,7 @@ import { SegmentedControl } from "@/components/ui/FilterControls";
 import { NovoProponenteModal } from "@/components/modals/NovoProponenteModal";
 import type { TipoProponente } from "@/lib/supabase/types";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
-import { ListPageHeader, ListSummary, ListToolbar, PrimaryListAction, ListTableSurface } from "@/components/list/ListPagePrimitives";
+import { ListEmptyState, ListPageHeader, ListSummary, ListToolbar, PrimaryListAction, ListTableSurface } from "@/components/list/ListPagePrimitives";
 import { ProjectIdentity, PROPONENTE_ICON_OPTIONS } from "@/components/ui/ProjectIdentity";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { calculateWeightedScore, CompactDecisionScoreRing } from "@/components/relationship/DecisionScorecard";
@@ -265,21 +265,21 @@ export default function ProponentesPage() {
       {!loading && proponentes.length > 0 && <ListToolbar><div className="flex max-w-full flex-col gap-2 lg:flex-row"><SegmentedControl value={tipoFilter} onChange={setTipoFilter} ariaLabel="Filtrar proponentes por tipo" options={[{ value: "todos", label: "Todos os tipos" }, ...etiquetasProponente.map(item => ({ value: item.key, label: item.label }))]}/><SegmentedControl value={quickFilter} onChange={value => setQuickFilter(value as QuickFilter)} ariaLabel="Filtrar proponentes por situação" options={[{ value: "todos", label: "Todos" }, { value: "com_projetos", label: "Com projetos" }, { value: "sem_projetos", label: "Sem projetos" }, { value: "com_captacao", label: "Com captação" }, { value: "sem_atividade", label: "Sem atividade" }]}/></div></ListToolbar>}
 
       {/* Table */}
-      <div className={`flex-1 overflow-y-auto px-8 py-6 ${viewMode === "lista" ? "md:pr-0" : ""}`}>
+      <div className={`flex-1 overflow-y-auto px-4 py-5 md:px-8 md:py-6 ${viewMode === "lista" ? "md:pr-0" : ""}`}>
         {proponentes.length === 0 && !loading ? (
-          <div className="flex flex-col items-center justify-center py-32 text-center">
-            <div className="w-14 h-14 rounded bg-black/4 flex items-center justify-center mb-4">
-              <FolderOpen size={22} className="text-black/25" />
-            </div>
-            <p className="text-[15px] font-semibold text-black/40 mb-1">Nenhum proponente ainda</p>
-            <p className="text-sm text-black/25 mb-5">Cadastre as organizações e pessoas que proponham projetos culturais</p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
-            >
-              <Plus size={13} /> Cadastrar proponente
-            </button>
-          </div>
+          <ListEmptyState
+            icon={Landmark}
+            title="Nenhum proponente ainda"
+            description="Cadastre as organizações e pessoas que propõem projetos incentivados."
+            action={<PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Cadastrar proponente</PrimaryListAction>}
+          />
+        ) : !loading && visibleProponentes.length === 0 ? (
+          <ListEmptyState
+            icon={Search}
+            title="Nenhum proponente corresponde aos filtros"
+            filtered
+            onClearFilters={() => { setTipoFilter("todos"); setQuickFilter("todos"); }}
+          />
         ) : viewMode === "mapa" ? (
           <ProponentesMapView
             items={visibleProponentes}
@@ -293,7 +293,7 @@ export default function ProponentesPage() {
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
                     {["Proponente", "Perfil", "Portfólio", "Captação", "Próximo movimento", "Contato principal", "Score", "CNPJ / CPF", "Site", "Adicionado em", "Atualizado em", "Ações"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-wider whitespace-nowrap">
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -387,7 +387,7 @@ export default function ProponentesPage() {
                               <button
                                 disabled={deletingId === p.id}
                                 onClick={e => { e.stopPropagation(); void handleDelete(p); }}
-                                className="p-1.5 rounded hover:bg-red-50 text-black/20 hover:text-red-500 transition disabled:cursor-wait disabled:opacity-30"
+                                className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition disabled:cursor-wait disabled:opacity-30"
                                 title="Excluir"
                                 aria-label={`Excluir ${p.nome}`}
                               >

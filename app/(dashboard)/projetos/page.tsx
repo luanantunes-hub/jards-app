@@ -333,7 +333,7 @@ export default function ProjetosPage() {
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
                     {["Projeto", "Proponente", "Fase", "Objetivo", "Captado", "Progresso", "Negociações", "Inscrições", "Próximo prazo", "Ponto focal", "Atualização", ""].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
+                      <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -448,10 +448,10 @@ export default function ProjetosPage() {
 
                         {/* Ações */}
                         <td className="px-4 py-3.5">
-                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                             <button
                               onClick={e => { e.stopPropagation(); handleDelete(p.id, p.nome); }}
-                              className="p-1.5 rounded hover:bg-red-50 text-black/20 hover:text-red-500 transition"
+                              className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition"
                               title="Excluir"
                             >
                               <Trash2 size={13} />

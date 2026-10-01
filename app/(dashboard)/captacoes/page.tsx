@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, ArrowUpRight, Calendar, TrendingUp, List, Columns2, Pencil, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Plus, ArrowUpRight, BriefcaseBusiness, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -19,7 +19,7 @@ import { KanbanBoard, KanbanCard, KanbanColumn, KanbanEmpty, KanbanSkeleton } fr
 import { useIncrementalReveal, RevealSentinel } from "@/components/kanban/useIncrementalReveal";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
-import { ListTableSurface } from "@/components/list/ListPagePrimitives";
+import { ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
@@ -534,55 +534,34 @@ export default function CaptacoesPage() {
           onSaved={refetch}
         />
       )}
-      {/* Header */}
-      <div className="flex-shrink-0 px-8 pt-8 pb-5 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="flex items-start justify-between">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Pipeline comercial</p>
-            <h1 className="mt-1 font-bold tracking-[-.025em] text-[#0D0D0D] text-[28px]">Negociações</h1>
-          </div>
-
-          <div className="flex items-center gap-3">
-            {!loading && (
-              <div className="flex items-center gap-4 text-sm text-black/40">
-                <span><span className="font-bold tabular-nums text-black">{filteredCaptacoes.length}</span> de {captacoes.length}</span>
-                <span className="flex items-center gap-1">
-                  <TrendingUp size={13} className="text-green-600" />
-                  <span className="font-bold text-black">{fmtValor(pipelineTotal)}</span>
-                  <span className="text-black/40">no pipeline</span>
-                </span>
-              </div>
-            )}
-            <ViewToggle view={view} onChange={setView} />
-            <button
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border rounded hover:bg-black/5 transition"
-              style={{ borderColor: "rgba(13,13,13,.12)" }}
-            >
-              <Plus size={13} /> Nova negociação
-            </button>
-          </div>
-        </div>
-      </div>
+      <ListPageHeader
+        eyebrow="Pipeline comercial"
+        title="Negociações"
+        summary={!loading && <>
+          <ListSummary strong={filteredCaptacoes.length}>de {captacoes.length}</ListSummary>
+          <ListSummary strong={fmtValor(pipelineTotal)} tone="#2E8932">no pipeline</ListSummary>
+        </>}
+        actions={<>
+          <ViewToggle view={view} onChange={setView} />
+          <PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Nova negociação</PrimaryListAction>
+        </>}
+      />
 
       {/* Botões de controle: escopo e busca das negociações */}
-      <div className="flex flex-shrink-0 flex-col gap-3 border-b bg-white px-8 py-3 lg:flex-row lg:items-center" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-        <label className="relative block w-full shrink-0 lg:w-[300px]">
-          <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/25"/>
-          <input value={search} onChange={event => setSearch(event.target.value)} placeholder="Buscar empresa, projeto ou lei" className="h-9 w-full rounded border border-black/10 bg-white pl-9 pr-3 text-[12px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10"/>
-        </label>
-        <div className="flex max-w-full items-center gap-2 overflow-x-auto">
+      <ListToolbar search={<ListSearch value={search} onChange={setSearch} placeholder="Buscar empresa, projeto ou lei" />}>
           <button
             type="button"
+            aria-haspopup="menu"
+            aria-expanded={Boolean(cicloMenuPos)}
             onClick={(e) => {
               const rect = e.currentTarget.getBoundingClientRect();
               setCicloMenuPos(cicloMenuPos ? null : { top: rect.bottom + 4, left: rect.left });
             }}
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded border border-black/[.12] bg-white px-3.5 text-[12px] font-semibold text-black/40 transition hover:bg-black/[.04] hover:text-black/65"
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded border border-black/[.12] bg-white px-3.5 text-[12px] font-medium text-black/45 transition hover:bg-black/[.04] hover:text-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
           >
-            <Calendar size={12}/>
+            <Calendar size={12} aria-hidden="true"/>
             {cicloFiltro === "atual" ? "Ciclo atual" : cicloFiltro === "todos" ? "Todos os ciclos" : `Ciclo ${cicloFiltro}`}
-            <ChevronDown size={11} className="opacity-40" />
+            <ChevronDown size={11} className="opacity-40" aria-hidden="true" />
           </button>
           <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
           <SegmentedControl
@@ -596,8 +575,7 @@ export default function CaptacoesPage() {
               { value: "recentes", label: "Recentes", icon: Calendar },
             ] as const}
           />
-        </div>
-      </div>
+      </ListToolbar>
 
       {/* ── Kanban view ── */}
       {view === "kanban" && (
@@ -654,8 +632,8 @@ export default function CaptacoesPage() {
 
       {/* ── Etiqueta estrutural: Tabela CRM — modo lista das negociações ── */}
       {view === "list" && (
-        <div className="flex-1 overflow-y-auto px-8 py-6 md:pr-0">
-          <ListTableSurface className="rounded-r-none border-r-0">
+        <div className="flex-1 overflow-y-auto px-4 py-5 md:py-6 md:pl-8 md:pr-0">
+          <ListTableSurface className="md:rounded-r-none md:border-r-0">
               <ManagedTable storageKey="captacoes" definitions={CAPTACOES_COLUMNS} className="w-full text-sm">
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
@@ -673,9 +651,9 @@ export default function CaptacoesPage() {
                       { label: "Atualizado em", key: undefined },
                       { label: "", key: undefined },
                     ] satisfies { label: string; key?: string }[]).map((col, i) => (
-                      <th key={i} className="px-4 py-3 text-left text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
+                      <th key={i} aria-sort={col.key && sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined} className="px-4 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {col.key ? (
-                          <button onClick={() => toggleSort(col.key)} className="flex items-center gap-1 uppercase tracking-wider transition hover:text-black/60">
+                          <button type="button" onClick={() => toggleSort(col.key)} className="flex items-center gap-1 uppercase tracking-[.08em] transition hover:text-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                             {col.label}
                             {sortKey === col.key ? (
                               sortDir === "asc" ? <ChevronUp size={11} /> : <ChevronDown size={11} />
@@ -701,8 +679,22 @@ export default function CaptacoesPage() {
                     ))
                   ) : filteredCaptacoesSorted.length === 0 ? (
                     <tr>
-                      <td colSpan={12} className="px-4 py-20 text-center text-sm text-black/35">
-                        Nenhuma negociação corresponde aos filtros
+                      <td colSpan={12}>
+                        {captacoes.length === 0 ? (
+                          <ListEmptyState
+                            icon={BriefcaseBusiness}
+                            title="Nenhuma negociação neste ciclo"
+                            description="Registre a primeira conversa com um patrocinador para acompanhar valores, etapas e próximos contatos."
+                            action={<PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Nova negociação</PrimaryListAction>}
+                          />
+                        ) : (
+                          <ListEmptyState
+                            icon={Search}
+                            title="Nenhuma negociação corresponde aos filtros"
+                            filtered
+                            onClearFilters={() => { setSearch(""); setPipelineFilter("todas"); }}
+                          />
+                        )}
                       </td>
                     </tr>
                   ) : (
@@ -844,10 +836,10 @@ export default function CaptacoesPage() {
 
                           {/* Ações */}
                           <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition">
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                               <button
                                 onClick={e => { e.stopPropagation(); handleDelete(c.id, c.titulo ?? "sem título"); }}
-                                className="p-1 rounded hover:bg-red-50 text-black/20 hover:text-red-500 transition"
+                                className="p-1 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition"
                                 title="Excluir"
                               >
                                 <Trash2 size={13} />

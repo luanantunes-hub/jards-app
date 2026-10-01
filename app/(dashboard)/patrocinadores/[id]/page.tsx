@@ -1382,7 +1382,7 @@ export default function PatrocinadorPage() {
                   <thead>
                     <tr style={{ background: "#F9F9F8", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
                       {["Nome", "Cargo", "Fonte", "Rede", "Exportar", "Votos", "E-mail"].map((h) => (
-                        <th key={h} className="px-5 py-3 text-left text-[10px] font-bold text-black/30 uppercase tracking-wider">{h}</th>
+                        <th key={h} className="px-5 py-3 text-left text-[10px] font-medium text-black/30 uppercase tracking-[.08em]">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -1634,7 +1634,7 @@ export default function PatrocinadorPage() {
                     <thead>
                       <tr style={{ background: "#F9F9F8", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
                         {["Edital", "Abertura", "Fechamento", "Prazo", "Exportar", ""].map((h) => (
-                          <th key={h} className="px-5 py-3 text-left text-[10px] font-bold text-black/30 uppercase tracking-wider">{h}</th>
+                          <th key={h} className="px-5 py-3 text-left text-[10px] font-medium text-black/30 uppercase tracking-[.08em]">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -1867,7 +1867,7 @@ export default function PatrocinadorPage() {
                                 </label>
                                 <button
                                   onClick={() => handleDeleteRelatorio(rel)}
-                                  className="rounded p-1.5 text-black/30 transition hover:bg-red-50 hover:text-[#D94E4E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D94E4E]/25"
+                                  className="rounded p-1.5 text-black/30 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D94E4E]/25"
                                   title="Remover relatório"
                                 >
                                   <Trash2 size={12} />

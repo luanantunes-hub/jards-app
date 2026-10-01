@@ -88,11 +88,13 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
   return (
     <div className="flex items-center justify-center gap-1 pt-6">
       <button
+        type="button"
+        aria-label="Página anterior"
         disabled={page === 0}
         onClick={() => onChange(page - 1)}
         className={`${btn} text-black/40 hover:bg-black/6 disabled:opacity-25 disabled:cursor-not-allowed`}
       >
-        <ChevronLeft size={14} />
+        <ChevronLeft size={14} aria-hidden="true" />
       </button>
       {getPages().map((p, i) =>
         p === "…" ? (
@@ -100,6 +102,9 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
         ) : (
           <button
             key={p}
+            type="button"
+            aria-label={`Página ${(p as number) + 1}`}
+            aria-current={p === page ? "page" : undefined}
             onClick={() => onChange(p as number)}
             className={`${btn} ${p === page ? "bg-white border border-[#7259B5]/25 text-[#7259B5]" : "text-black/50 hover:bg-black/[.04]"}`}
           >
@@ -108,11 +113,13 @@ function Pagination({ page, totalPages, onChange }: { page: number; totalPages: 
         )
       )}
       <button
+        type="button"
+        aria-label="Próxima página"
         disabled={page >= totalPages - 1}
         onClick={() => onChange(page + 1)}
         className={`${btn} text-black/40 hover:bg-black/6 disabled:opacity-25 disabled:cursor-not-allowed`}
       >
-        <ChevronRight size={14} />
+        <ChevronRight size={14} aria-hidden="true" />
       </button>
     </div>
   );
@@ -421,6 +428,8 @@ export default function EditaisAbertosPage() {
                 <h2 className="text-[14px] font-bold text-black">Sugerir edital</h2>
               </div>
               <button
+                type="button"
+                aria-label="Fechar"
                 onClick={() => setShowSugerirForm(false)}
                 className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/5 transition text-black/35"
               >
@@ -696,13 +705,13 @@ export default function EditaisAbertosPage() {
                   return (
                     <div className="border-t pt-3 flex items-center justify-between gap-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                       <div className="flex items-center gap-1.5">
-                        <button onClick={ev => { ev.stopPropagation(); handleVotoEdital(adm!.id, true); }}
+                        <button type="button" aria-label={`Funciona (${v.funciona})`} aria-pressed={v.meu === true} onClick={ev => { ev.stopPropagation(); handleVotoEdital(adm!.id, true); }}
                           className="flex items-center gap-1 px-2 py-1 rounded border transition text-[10px] font-semibold"
                           style={{ borderColor: v.meu === true ? "#2E8932" : "rgba(13,13,13,.12)", color: v.meu === true ? "#2E8932" : "rgba(13,13,13,.35)", background: v.meu === true ? "rgba(46,137,50,.06)" : "transparent" }}>
                           <ThumbsUp size={10} />
                           {v.funciona > 0 && <span className="tabular-nums">{v.funciona}</span>}
                         </button>
-                        <button onClick={ev => { ev.stopPropagation(); handleVotoEdital(adm!.id, false); }}
+                        <button type="button" aria-label={`Não funciona (${v.nao_funciona})`} aria-pressed={v.meu === false} onClick={ev => { ev.stopPropagation(); handleVotoEdital(adm!.id, false); }}
                           className="flex items-center gap-1 px-2 py-1 rounded border transition text-[10px] font-semibold"
                           style={{ borderColor: v.meu === false ? "#D94E4E" : "rgba(13,13,13,.12)", color: v.meu === false ? "#D94E4E" : "rgba(13,13,13,.35)", background: v.meu === false ? "rgba(217,78,78,.06)" : "transparent" }}>
                           <ThumbsDown size={10} />
@@ -712,14 +721,14 @@ export default function EditaisAbertosPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 transition-all duration-150"
+                          className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                           style={{ borderColor: "rgba(13,13,13,.15)" }}
                           onClick={(ev) => { ev.stopPropagation(); handleExportarEdital(adm!); }}>
                           <Download size={11} /> Exportar
                         </button>
                         {adm!.url_acesso && (
                           <a href={adm!.url_acesso} target="_blank" rel="noopener noreferrer"
-                            className="group/btn inline-flex items-center gap-1.5 bg-[#7259B5] text-white text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-150"
+                            className="group/btn inline-flex items-center gap-1.5 bg-[#7259B5] text-white text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                             onClick={(ev) => ev.stopPropagation()}>
                             Acessar
                             <ChevronRight size={11} className="group-hover/btn:hidden" />
@@ -735,13 +744,13 @@ export default function EditaisAbertosPage() {
                   return (
                     <div className="border-t pt-3 flex items-center justify-between gap-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                       <div className="flex items-center gap-1.5">
-                        <button onClick={() => handleVotar(com!.id, 1)}
+                        <button type="button" aria-label={`Votar a favor (${com!.votos_positivos})`} aria-pressed={meuVoto === 1} onClick={() => handleVotar(com!.id, 1)}
                           className="flex items-center gap-1 px-2 py-1 rounded border transition text-[10px] font-semibold"
                           style={{ borderColor: meuVoto === 1 ? "#2E8932" : "rgba(13,13,13,.12)", color: meuVoto === 1 ? "#2E8932" : "rgba(13,13,13,.35)", background: meuVoto === 1 ? "rgba(46,137,50,.06)" : "transparent" }}>
                           <ChevronUp size={12} />
                           {com!.votos_positivos > 0 && <span className="tabular-nums">{com!.votos_positivos}</span>}
                         </button>
-                        <button onClick={() => handleVotar(com!.id, -1)}
+                        <button type="button" aria-label={`Votar contra (${com!.votos_negativos})`} aria-pressed={meuVoto === -1} onClick={() => handleVotar(com!.id, -1)}
                           className="flex items-center gap-1 px-2 py-1 rounded border transition text-[10px] font-semibold"
                           style={{ borderColor: meuVoto === -1 ? "#D94E4E" : "rgba(13,13,13,.12)", color: meuVoto === -1 ? "#D94E4E" : "rgba(13,13,13,.35)", background: meuVoto === -1 ? "rgba(217,78,78,.06)" : "transparent" }}>
                           <ChevronDown size={12} />
@@ -750,7 +759,7 @@ export default function EditaisAbertosPage() {
                         {com!.votos_negativos >= 3 && <span className="text-[9px] text-black/25">{com!.votos_negativos >= 5 ? "removido em breve" : `${com!.votos_negativos}/5`}</span>}
                       </div>
                       <a href={url} target="_blank" rel="noopener noreferrer"
-                        className="group/btn inline-flex items-center gap-1.5 bg-[#7259B5] text-white text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-all duration-150"
+                        className="group/btn inline-flex items-center gap-1.5 bg-[#7259B5] text-white text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                         onClick={(ev) => ev.stopPropagation()}>
                         Acessar
                         <ChevronRight size={11} className="group-hover/btn:hidden" />
@@ -793,13 +802,13 @@ export default function EditaisAbertosPage() {
                 >
                   {/* Votos */}
                   <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
-                    <button onClick={() => handleVotar(s.id, 1)} className="p-0.5 rounded hover:bg-black/5 transition">
+                    <button type="button" aria-label="Votar a favor" aria-pressed={meuVoto === 1} onClick={() => handleVotar(s.id, 1)} className="p-0.5 rounded hover:bg-black/5 transition">
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
                     <span className={`text-[11px] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
                       {saldo}
                     </span>
-                    <button onClick={() => handleVotar(s.id, -1)} className="p-0.5 rounded hover:bg-black/5 transition">
+                    <button type="button" aria-label="Votar contra" aria-pressed={meuVoto === -1} onClick={() => handleVotar(s.id, -1)} className="p-0.5 rounded hover:bg-black/5 transition">
                       <ChevronDown size={14} className={meuVoto === -1 ? "text-[#D94E4E]" : "text-black/20"} />
                     </button>
                   </div>

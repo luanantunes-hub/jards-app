@@ -176,7 +176,7 @@ function SortableTeamHeader({
     <button
       type="button"
       onClick={() => onSort(sortKey)}
-      className={`group inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-black/35 transition hover:text-black/60 ${align === "right" ? "justify-self-end" : ""}`}
+      className={`group inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[.08em] text-black/35 transition hover:text-black/60 ${align === "right" ? "justify-self-end" : ""}`}
       aria-label={`Ordenar ${label} ${active && direction === "asc" ? "do maior para o menor" : "do menor para o maior"}`}
     >
       <span>{label}</span>
@@ -242,7 +242,7 @@ function CaptadoresList({
       <div className="flex items-center justify-end gap-1 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
         {captador.email && <a href={`mailto:${captador.email}`} onClick={event => event.stopPropagation()} className="flex h-7 w-7 items-center justify-center rounded text-black/25 transition hover:bg-black/[.04] hover:text-black/60" title="Enviar e-mail"><Mail size={13} /></a>}
         <button type="button" onClick={event => { event.stopPropagation(); onEdit(captador); }} className="flex h-7 w-7 items-center justify-center rounded text-black/25 transition hover:bg-black/[.04] hover:text-black/60" title="Editar captador"><Pencil size={13} /></button>
-        <button type="button" onClick={event => { event.stopPropagation(); onDelete(captador.id, captador.nome); }} className="flex h-7 w-7 items-center justify-center rounded text-black/20 transition hover:bg-red-50 hover:text-red-500" title="Excluir captador"><Trash2 size={13} /></button>
+        <button type="button" onClick={event => { event.stopPropagation(); onDelete(captador.id, captador.nome); }} className="flex h-7 w-7 items-center justify-center rounded text-black/20 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E]" title="Excluir captador"><Trash2 size={13} /></button>
       </div>
     );
   }
@@ -782,7 +782,7 @@ export default function CaptadoresPage() {
                             {c.email && (
                               <a
                                 href={`mailto:${c.email}`}
-                                className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 transition-all duration-150"
+                                className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                                 style={{ borderColor: "rgba(13,13,13,.15)" }}
                                 onClick={ev => ev.stopPropagation()}
                               >
@@ -790,14 +790,14 @@ export default function CaptadoresPage() {
                               </a>
                             )}
                             <button
-                              className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 transition-all duration-150"
+                              className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                               style={{ borderColor: "rgba(13,13,13,.15)" }}
                               onClick={ev => { ev.stopPropagation(); setEditingCaptador(c); }}
                             >
                               <Pencil size={11} /> Editar
                             </button>
                             <button
-                              className="inline-flex items-center gap-1.5 text-red-400 hover:text-red-600 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border border-red-200 opacity-0 group-hover:opacity-100 transition-all duration-150"
+                              className="inline-flex items-center gap-1.5 text-[#D94E4E]/75 hover:text-[#D94E4E] text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border border-[#D94E4E]/25 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                               onClick={ev => { ev.stopPropagation(); handleDeleteCaptador(c.id, c.nome); }}
                             >
                               <Trash2 size={11} /> Excluir
@@ -951,8 +951,8 @@ export default function CaptadoresPage() {
                         <span className={`text-[12px] ${emRisco?"text-[#B07A14] font-semibold":"text-black/40"}`}>{formatDias(a.dias_sem_avanco)}</span>
                       </div>
                       <div className="flex items-center justify-end">
-                        <button onClick={(event) => { event.stopPropagation(); setEditData(a); setShowAtribuicaoModal(true); }} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/70 transition">
-                          <ArrowUpDown size={13} />
+                        <button type="button" aria-label="Editar atribuição" title="Editar atribuição" onClick={(event) => { event.stopPropagation(); setEditData(a); setShowAtribuicaoModal(true); }} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/70 transition focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                          <Pencil size={13} aria-hidden="true" />
                         </button>
                       </div>
                     </div>

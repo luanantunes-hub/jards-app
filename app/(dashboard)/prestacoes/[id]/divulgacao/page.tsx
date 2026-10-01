@@ -119,7 +119,7 @@ export default function DivulgacaoPage() {
     <div className="px-8 py-6 max-w-4xl">
 
       {erro && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-[12px] font-medium text-red-700">
+        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-4 py-3 text-[12px] font-medium text-[#B23A3A]">
           Não foi possível concluir a operação: {erro}
         </div>
       )}
@@ -179,7 +179,7 @@ export default function DivulgacaoPage() {
             <thead>
               <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 {["Tipo", "Descrição", "Veiculação", "Lei citada", "Logo MinC", "Arquivo", ""].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-wide text-black/30">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -212,7 +212,7 @@ export default function DivulgacaoPage() {
                     <button
                       onClick={() => remover(item.id)}
                       disabled={deletingId === item.id}
-                      className="text-black/20 hover:text-red-500 transition"
+                      className="text-black/20 hover:text-[#D94E4E] transition"
                     >
                       <Trash2 size={13} />
                     </button>
