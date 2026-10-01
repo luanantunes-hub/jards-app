@@ -88,9 +88,14 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
     setErro(null);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Não autenticado"); setSaving(false); return; }
+    if (!organizationId) { setErro("Organização ainda carregando — tente novamente."); setSaving(false); return; }
 
     if (cnpj.trim()) {
-      let duplicateQuery = supabase.from("proponentes").select("id,nome").eq("cnpj", cnpj.trim()).limit(1);
+      // Restrito à organização atual — proponentes é visível em todas as
+      // organizações de que o usuário participa (RLS por membership, não pela
+      // organização ativa na tela), então sem esse filtro um documento já
+      // cadastrado em OUTRA organização do usuário bloqueava o cadastro aqui.
+      let duplicateQuery = supabase.from("proponentes").select("id,nome").eq("organization_id", organizationId).eq("cnpj", cnpj.trim()).limit(1);
       if (editData?.id) duplicateQuery = duplicateQuery.neq("id", editData.id);
       const { data: duplicateData } = await duplicateQuery.maybeSingle();
       const duplicate = duplicateData as unknown as { nome: string } | null;
@@ -112,6 +117,10 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
       identidade_tipo: identidadeTipo,
       identidade_valor: identidadeTipo === "icone" || identidadeTipo === "emoji" ? identidadeValor || null : null,
       identidade_cor: identidadeTipo === "icone" ? identidadeCor : null,
+      // Mantém a URL atual só quando o tipo continua "logo" (o upload abaixo
+      // sobrescreve se houver arquivo novo); qualquer outro tipo limpa o
+      // campo, mesmo padrão já corrigido em AdicionarCaptadorModal.
+      ...(identidadeTipo === "logo" ? {} : { identidade_logo_url: null }),
     };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

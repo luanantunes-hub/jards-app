@@ -12,6 +12,7 @@ import { ProjectIdentity, PROPONENTE_ICON_OPTIONS } from "@/components/ui/Projec
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { calculateWeightedScore, CompactDecisionScoreRing } from "@/components/relationship/DecisionScorecard";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
+import { useOrganizationId } from "@/contexts/OrganizationContext";
 
 type ViewMode = "lista" | "mapa";
 const VIEW_MODES = ["lista", "mapa"] as const;
@@ -154,6 +155,7 @@ function ProponentesMapView({ items, onOpenProponente, onOpenProjeto }: {
 export default function ProponentesPage() {
   const supabase = createClient();
   const router = useRouter();
+  const organizationId = useOrganizationId();
   const { etiquetasProponente } = useEtiquetas();
   const [proponentes, setProponentes] = useState<ProponenteRow[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -189,13 +191,18 @@ export default function ProponentesPage() {
   }
 
   async function fetchData() {
+    if (!organizationId) return;
     setLoading(true);
+    // Restrito à organização atual em todas as cinco consultas — proponentes
+    // e projetos_crm são visíveis em todas as organizações de que o usuário
+    // participa (a segunda isola só por dono via RLS, nem por organização),
+    // então sem esses filtros a lista misturava dados de outras organizações.
     const [{ data: rawData, error }, { data: projectData }, { data: scoreData }, { data: contactData }, { data: activityData }] = await Promise.all([
-      supabase.from("proponentes").select("id, nome, cnpj, tipo, cidade, estado, email, telefone, site, descricao, created_at, updated_at, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor").order("nome", { ascending: true }),
-      supabase.from("projetos_crm").select("id, nome, proponente_id, fase, valor_alvo, valor_garantido, identidade_tipo, identidade_valor, identidade_logo_url").order("nome", { ascending: true }),
-      supabase.from("proponente_score_criterios").select("proponente_id,peso,nota"),
-      supabase.from("contatos").select("id,proponente_id,nome,email,cargo,influencia,ultima_interacao,ativo_na_empresa").not("proponente_id", "is", null),
-      supabase.from("atividades").select("id,proponente_id,projeto_id,nome,data_prevista,created_at").eq("feita", false).order("data_prevista", { ascending: true, nullsFirst: false }),
+      supabase.from("proponentes").select("id, nome, cnpj, tipo, cidade, estado, email, telefone, site, descricao, created_at, updated_at, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor").eq("organization_id", organizationId).order("nome", { ascending: true }),
+      supabase.from("projetos_crm").select("id, nome, proponente_id, fase, valor_alvo, valor_garantido, identidade_tipo, identidade_valor, identidade_logo_url").eq("organization_id", organizationId).order("nome", { ascending: true }),
+      supabase.from("proponente_score_criterios").select("proponente_id,peso,nota").eq("organization_id", organizationId),
+      supabase.from("contatos").select("id,proponente_id,nome,email,cargo,influencia,ultima_interacao,ativo_na_empresa").eq("organization_id", organizationId).not("proponente_id", "is", null),
+      supabase.from("atividades").select("id,proponente_id,projeto_id,nome,data_prevista,created_at").eq("organization_id", organizationId).eq("feita", false).order("data_prevista", { ascending: true, nullsFirst: false }),
     ]);
 
     if (error || !rawData) { setLoading(false); return; }
@@ -233,7 +240,7 @@ export default function ProponentesPage() {
     setLoading(false);
   }
 
-  useEffect(() => { fetchData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+  useEffect(() => { fetchData(); }, [organizationId]); // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
 
   function handleSaved() {
     fetchData();
