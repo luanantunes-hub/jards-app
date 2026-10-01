@@ -129,6 +129,10 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/p/") ||
         pathname === "/login" ||
         pathname === "/" ||
+        pathname === "/robots.txt" ||
+        pathname === "/sitemap.xml" ||
+        pathname === "/termos" ||
+        pathname === "/privacidade" ||
         pathname.startsWith("/redefinir-senha") ||
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
@@ -167,7 +171,11 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/p/") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
-    pathname === "/favicon.ico";
+    pathname === "/favicon.ico" ||
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
+    pathname === "/termos" ||
+    pathname === "/privacidade";
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {
