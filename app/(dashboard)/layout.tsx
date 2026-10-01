@@ -246,8 +246,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [organizationId, loadOrg]);
 
   function trocarModulo(id: ModuloId) {
-    if (!modulosOrg.includes(id)) return; // org não tem o módulo
-    if (!modulosUser.includes(id)) return; // user não tem acesso
+    if (!isSuperAdmin && !modulosOrg.includes(id)) return; // org não tem o módulo
+    if (!isSuperAdmin && !modulosUser.includes(id)) return; // user não tem acesso
     setModuloAtivo(id);
     // Navega para a home do módulo
     const nav = NAV_POR_MODULO[id];
@@ -521,19 +521,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           className="flex-shrink-0 flex items-center justify-end px-8 border-b"
           style={{ height: 56, background: "#FFFFFF", borderColor: "rgba(13,13,13,.08)" }}
         >
-          {/* Module switcher — oculto temporariamente até a liberação pública de Prestação */}
-          <div className="hidden items-center gap-1 p-1 rounded" aria-hidden="true" style={{ background: "rgba(13,13,13,.05)" }}>
+          {/* Module switcher — até a liberação pública de Prestação, visível só para super admin */}
+          {isSuperAdmin && !isWorkspaceCaptador && (
+          <div className="mr-auto flex items-center gap-1 p-1 rounded" style={{ background: "rgba(13,13,13,.05)" }}>
             {MODULOS.map(({ id, label }) => {
-              const orgTem    = modulosOrg.includes(id);
-              const userTem   = modulosUser.includes(id);
+              const orgTem    = isSuperAdmin || modulosOrg.includes(id);
+              const userTem   = isSuperAdmin || modulosUser.includes(id);
               const acessivel = orgTem && userTem;
               const ativo     = moduloAtivo === id;
 
               return (
                 <button
                   key={id}
+                  type="button"
                   onClick={() => trocarModulo(id)}
                   disabled={!acessivel}
+                  aria-pressed={ativo}
                   title={
                     !orgTem
                       ? "Módulo não contratado — fale com o suporte"
@@ -541,7 +544,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       ? "Você não tem acesso a este módulo"
                       : label
                   }
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-semibold transition-all"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/40"
                   style={{
                     background: ativo ? "#FFFFFF" : "transparent",
                     color: ativo
@@ -565,6 +568,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               );
             })}
           </div>
+          )}
 
           {/* Right actions */}
           <div className="flex items-center gap-3">
