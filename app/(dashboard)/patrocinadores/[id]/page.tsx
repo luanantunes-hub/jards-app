@@ -621,7 +621,7 @@ export default function PatrocinadorPage() {
       setLoading(true);
       const [empRes, respRes, editRes, capRes, tipoRes, trimRes, desbRes, invLeiRes, carteiraLeiRes, projetosIncentivoRes] = await Promise.all([
         supabase.from("empresas").select("*").eq("id", id).single(),
-        supabase.from("responsaveis").select("*").eq("empresa_id", id).order("ordem"),
+        (supabase as any).rpc("fn_responsaveis_empresa", { p_empresa_id: id }),
         supabase.from("editais").select("*").eq("empresa_id", id).order("data_fechamento", { ascending: false }),
         supabase.from("captacoes").select("id, titulo, status, valor_solicitado, lei, empresa_crm_id, projeto:projetos_crm!projeto_id(nome)").eq("empresa_id", id).order("created_at", { ascending: false }),
         supabase.from("tipologias").select("*").eq("empresa_pub_id", id).maybeSingle(),
@@ -843,6 +843,9 @@ export default function PatrocinadorPage() {
 
     if (sucesso) {
       setDesbloqueado(true);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: liberados } = await (supabase as any).rpc("fn_responsaveis_empresa", { p_empresa_id: id });
+      if (liberados) setResponsaveis(liberados);
     }
 
     setUnlocking(false);
