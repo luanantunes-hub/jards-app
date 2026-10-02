@@ -3,7 +3,7 @@
 // 20260930000000_projeto_incentivo_sites_usuario.sql) — manter as duas listas em sincronia.
 
 const PADROES_BLOQUEADOS =
-  /(porn|xxx|xvideo|xnxx|xhamster|redtube|youporn|pornhub|spankbang|tnaflix|tube8|brazzers|onlyfans|fansly|chaturbate|bongacams|camsoda|stripchat|livejasmin|myfreecams|erome|fapello|rule34|hentai|nsfw|motherless|efukt|thothub|camgirl|camwhore|sexcam|sexshop|sexchat|putaria|punheta|buceta|safadinha|novinhas|redwap|beeg|eporner|xtube|gostosas)/i;
+  /(porn|xxx|xvideo|xnxx|xhamster|redtube|youporn|pornhub|spankbang|tnaflix|tube8|brazzers|onlyfans|fansly|chaturbate|bongacams|camsoda|stripchat|livejasmin|myfreecams|erome|fapello|rule34|hentai|nsfw|motherless|efukt|thothub|camgirl|camwhore|sexcam|sexshop|sexchat|putaria|punheta|buceta|safadinha|novinhas|redwap|beeg|eporner|xtube|xvideos|gostosas)/i;
 
 export type ResultadoUrlSite = { ok: true; url: string } | { ok: false; erro: string };
 
