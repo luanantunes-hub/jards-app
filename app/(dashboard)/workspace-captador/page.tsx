@@ -46,14 +46,14 @@ function normalizarSite(valor: string): string | null {
 function StatusPedidoBadge({ status }: { status: PedidoStatus }) {
   const organizationName = useOrganizationName() || "sua organização";
   const cfg = STATUS_PEDIDO[status];
-  return <span className="shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide" style={{ color: cfg.cor, background: cfg.fundo }}>{status === "aguardando_captador" ? `Responder a ${organizationName}` : cfg.label}</span>;
+  return <span className="shrink-0 rounded px-2 py-1 text-[0.625rem] font-semibold uppercase tracking-wide" style={{ color: cfg.cor, background: cfg.fundo }}>{status === "aguardando_captador" ? `Responder a ${organizationName}` : cfg.label}</span>;
 }
 
 function StatusAtribuicaoBadge({ status }: { status: string }) {
   const ativa = status === "ativa";
   return (
     <span
-      className="shrink-0 rounded px-2 py-1 text-[10px] font-semibold uppercase tracking-wide"
+      className="shrink-0 rounded px-2 py-1 text-[0.625rem] font-semibold uppercase tracking-wide"
       style={ativa ? { color: "#2E8932", background: "#2E893214" } : { color: "rgba(0,0,0,.5)", background: "rgba(0,0,0,.04)" }}
     >
       {status}
@@ -66,7 +66,7 @@ function OportunidadeRow({ href, empresa, titulo, tipo, site, domain, trailing }
 }) {
   return <Link href={href} className="group flex min-h-18 items-center gap-3 border-b border-black/[.07] px-4 py-3 transition hover:bg-black/[.025] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] last:border-b-0">
     <CompanyLogo nome={empresa} domain={domain} site={site} size={36} className="shrink-0 border border-black/[.07]"/>
-    <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-semibold text-black/80">{titulo}</span><span className="mt-0.5 block truncate text-[11px] text-black/45">{empresa}{tipo ? ` · ${tipo}` : ""}</span></span>
+    <span className="min-w-0 flex-1"><span className="block truncate text-[0.8125rem] font-semibold text-black/80">{titulo}</span><span className="mt-0.5 block truncate text-[0.6875rem] text-black/45">{empresa}{tipo ? ` · ${tipo}` : ""}</span></span>
     {trailing}<ChevronRight size={15} className="shrink-0 text-black/25 transition group-hover:translate-x-0.5 group-hover:text-black/55"/>
   </Link>;
 }
@@ -125,41 +125,41 @@ function NovaOportunidadeSheet({ workspaceId, escopos, organizationId, onClose, 
   }
 
   return <TopSheet titulo="Nova oportunidade" onClose={onClose} footer={close => resultado ? (
-    <button type="button" onClick={close} className="rounded bg-[#171717] px-4 py-2 text-[12px] font-semibold text-white">Fechar</button>
+    <button type="button" onClick={close} className="rounded bg-[#171717] px-4 py-2 text-[0.75rem] font-semibold text-white">Fechar</button>
   ) : <>
-    <button type="button" onClick={close} className="text-[12px] text-black/50">Cancelar</button>
+    <button type="button" onClick={close} className="text-[0.75rem] text-black/50">Cancelar</button>
     <button type="button" onClick={() => void enviar(close)} disabled={enviando || titulo.trim().length < 2 || nome.trim().length < 2 || !etiqueta || !escopo || !!site.trim() && !siteNormalizado}
-      className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">
+      className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">
       <Send size={12} />{enviando ? "Enviando…" : escopo?.modo === "pedido" ? "Enviar para avaliação" : "Consultar e iniciar"}
     </button>
   </>}>
-    {resultado ? <p className="text-[13px] text-black/70">{resultado === "criado" ? "A oportunidade entrou no seu trabalho." : "Esta organização já tem uma oportunidade em andamento."}</p> : <div className="space-y-4">
+    {resultado ? <p className="text-[0.8125rem] text-black/70">{resultado === "criado" ? "A oportunidade entrou no seu trabalho." : "Esta organização já tem uma oportunidade em andamento."}</p> : <div className="space-y-4">
       <>
-        <div><label htmlFor="oportunidade-titulo" className="mb-1.5 block text-[11px] font-semibold text-black/55">Qual é a oportunidade?</label>
-          <input id="oportunidade-titulo" autoFocus value={titulo} maxLength={200} onChange={e => setTitulo(e.target.value)} placeholder="Ex.: Apoio ao projeto, edital 2026…" className="h-10 w-full rounded border border-black/[.15] px-3 text-[13px] outline-none focus:border-[#5F4AA8]" />
+        <div><label htmlFor="oportunidade-titulo" className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Qual é a oportunidade?</label>
+          <input id="oportunidade-titulo" autoFocus value={titulo} maxLength={200} onChange={e => setTitulo(e.target.value)} placeholder="Ex.: Apoio ao projeto, edital 2026…" className="h-10 w-full rounded border border-black/[.15] px-3 text-[0.8125rem] outline-none focus:border-[#5F4AA8]" />
         </div>
-        <div><label htmlFor="oportunidade-organizacao" className="mb-1.5 block text-[11px] font-semibold text-black/55">Empresa ou instituição relacionada</label>
-          <input id="oportunidade-organizacao" value={nome} maxLength={200} onChange={e => setNome(e.target.value)} placeholder="Nome da organização" className="h-10 w-full rounded border border-black/[.15] px-3 text-[13px] outline-none focus:border-[#5F4AA8]" />
+        <div><label htmlFor="oportunidade-organizacao" className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Empresa ou instituição relacionada</label>
+          <input id="oportunidade-organizacao" value={nome} maxLength={200} onChange={e => setNome(e.target.value)} placeholder="Nome da organização" className="h-10 w-full rounded border border-black/[.15] px-3 text-[0.8125rem] outline-none focus:border-[#5F4AA8]" />
         </div>
-        <div><label htmlFor="oportunidade-site" className="mb-1.5 block text-[11px] font-semibold text-black/55">Site da empresa ou instituição</label>
-          <div className="flex items-center gap-3"><input id="oportunidade-site" type="url" value={site} maxLength={500} onChange={e => setSite(e.target.value)} placeholder="exemplo.com.br" className="h-10 min-w-0 flex-1 rounded border border-black/[.15] px-3 text-[13px] outline-none focus:border-[#5F4AA8]" />
+        <div><label htmlFor="oportunidade-site" className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Site da empresa ou instituição</label>
+          <div className="flex items-center gap-3"><input id="oportunidade-site" type="url" value={site} maxLength={500} onChange={e => setSite(e.target.value)} placeholder="exemplo.com.br" className="h-10 min-w-0 flex-1 rounded border border-black/[.15] px-3 text-[0.8125rem] outline-none focus:border-[#5F4AA8]" />
             {siteNormalizado && <CompanyLogo nome={nome || "Organização"} site={siteNormalizado} size={38} className="shrink-0 border border-black/[.08]" />}</div>
-          {site.trim() && !siteNormalizado && <p role="alert" className="mt-1 text-[11px] text-[#B64545]">Informe um endereço de site válido.</p>}
+          {site.trim() && !siteNormalizado && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B64545]">Informe um endereço de site válido.</p>}
         </div>
         <div className="relative">
-          <p className="mb-1.5 text-[11px] font-semibold text-black/55">Tipo de oportunidade</p>
-          <button type="button" onClick={() => setMostrarEtiquetas(v => !v)} disabled={etiquetasDisponiveis.length === 0} aria-expanded={mostrarEtiquetas} className="flex h-10 w-full items-center justify-between rounded border border-black/[.15] px-3 text-left text-[12px] text-black/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] disabled:opacity-50">
+          <p className="mb-1.5 text-[0.6875rem] font-semibold text-black/55">Tipo de oportunidade</p>
+          <button type="button" onClick={() => setMostrarEtiquetas(v => !v)} disabled={etiquetasDisponiveis.length === 0} aria-expanded={mostrarEtiquetas} className="flex h-10 w-full items-center justify-between rounded border border-black/[.15] px-3 text-left text-[0.75rem] text-black/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] disabled:opacity-50">
             {etiqueta?.nome ?? (etiquetasDisponiveis.length ? "Selecione o tipo" : "Nenhum tipo disponível")} <ChevronRight size={13} className="rotate-90" />
           </button>
           {mostrarEtiquetas && <div className="absolute z-10 mt-1 max-h-48 w-full overflow-y-auto rounded border border-black/[.12] bg-white shadow-sm">
-            {etiquetasDisponiveis.map(label => <button type="button" key={label.id} onClick={() => { setEtiquetaId(label.id); setMostrarEtiquetas(false); }} className="block w-full px-3 py-2 text-left text-[12px] text-black/70 hover:bg-black/[.04]">{label.nome}</button>)}
+            {etiquetasDisponiveis.map(label => <button type="button" key={label.id} onClick={() => { setEtiquetaId(label.id); setMostrarEtiquetas(false); }} className="block w-full px-3 py-2 text-left text-[0.75rem] text-black/70 hover:bg-black/[.04]">{label.nome}</button>)}
           </div>}
         </div>
-        <div><label htmlFor="oportunidade-contexto" className="mb-1.5 block text-[11px] font-semibold text-black/55">Contexto para {organizationName} · opcional</label>
-          <textarea id="oportunidade-contexto" value={mensagem} onChange={e => setMensagem(e.target.value)} maxLength={4000} rows={3} placeholder="O que a organização precisa saber?" className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[13px] outline-none focus:border-[#5F4AA8]" />
+        <div><label htmlFor="oportunidade-contexto" className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Contexto para {organizationName} · opcional</label>
+          <textarea id="oportunidade-contexto" value={mensagem} onChange={e => setMensagem(e.target.value)} maxLength={4000} rows={3} placeholder="O que a organização precisa saber?" className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[0.8125rem] outline-none focus:border-[#5F4AA8]" />
         </div>
       </>
-      {erro && <p role="alert" className="text-[11px] text-[#B64545]">{erro}</p>}
+      {erro && <p role="alert" className="text-[0.6875rem] text-[#B64545]">{erro}</p>}
     </div>}
   </TopSheet>;
 }
@@ -201,13 +201,13 @@ function FunilKanban({ etapas, itens, pedidos, draggingId, setDraggingId, overEt
               <div className="flex items-center gap-2.5">
                 <CompanyLogo nome={item.empresaNome} domain={item.empresaDomainKey} site={item.empresaSite || pedido?.empresa_site} size={32} className="shrink-0 border border-black/[.07]"/>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[12.5px] font-semibold text-black/80">{pedido?.oportunidade_titulo || item.empresaNome}</p>
-                  <p className="mt-0.5 truncate text-[11px] text-black/45">{item.empresaNome}</p>
+                  <p className="truncate text-[0.78125rem] font-semibold text-black/80">{pedido?.oportunidade_titulo || item.empresaNome}</p>
+                  <p className="mt-0.5 truncate text-[0.6875rem] text-black/45">{item.empresaNome}</p>
                 </div>
               </div>
               <div className="mt-2.5 flex items-center justify-between border-t border-black/[.06] pt-2">
-                <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice - 1].key); }} className="text-[11px] font-medium text-black/45 hover:text-black disabled:invisible">← Voltar</button>
-                <button type="button" disabled={indice === etapas.length - 1} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice + 1].key); }} className="text-[11px] font-medium text-[#5F4AA8] hover:underline disabled:invisible">Avançar →</button>
+                <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice - 1].key); }} className="text-[0.6875rem] font-medium text-black/45 hover:text-black disabled:invisible">← Voltar</button>
+                <button type="button" disabled={indice === etapas.length - 1} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice + 1].key); }} className="text-[0.6875rem] font-medium text-[#5F4AA8] hover:underline disabled:invisible">Avançar →</button>
               </div>
             </KanbanCard>;
           })}
@@ -228,10 +228,10 @@ function OportunidadeSolta({ item, onIniciar, router }: {
       className="flex min-h-16 cursor-pointer items-center gap-3 border-b border-black/[.07] px-4 py-3 transition hover:bg-black/[.025] last:border-b-0"
     >
       <CompanyLogo nome={item.empresaNome} domain={item.empresaDomainKey} site={item.empresaSite} size={36} className="shrink-0 border border-black/[.07]"/>
-      <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-black/80">{item.empresaNome}</span>
+      <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-semibold text-black/80">{item.empresaNome}</span>
       <div className="flex shrink-0 items-center gap-1.5" onClick={event => event.stopPropagation()}>
-        <button type="button" onClick={() => onIniciar(item.id, "negociacoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[11px] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Negociação</button>
-        <button type="button" onClick={() => onIniciar(item.id, "inscricoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[11px] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Inscrição</button>
+        <button type="button" onClick={() => onIniciar(item.id, "negociacoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Negociação</button>
+        <button type="button" onClick={() => onIniciar(item.id, "inscricoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Inscrição</button>
       </div>
     </div>
   );
@@ -345,16 +345,16 @@ export default function WorkspaceCaptadorPage() {
   return (
     <div className="min-h-full">
       <header className="border-b border-black/[.06] bg-white">
-        <div className="mx-auto flex max-w-[1280px] flex-col justify-between gap-5 px-4 pb-8 pt-7 sm:flex-row sm:items-end sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
-          <div><p className="mb-2 text-[11px] font-medium text-black/40">Workspace do captador</p><h1 className="text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{organizationName}</h1></div>
+        <div className="mx-auto flex max-w-pagina flex-col justify-between gap-5 px-4 pb-8 pt-7 sm:flex-row sm:items-end sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+          <div><p className="mb-2 text-[0.6875rem] font-medium text-black/40">Workspace do captador</p><h1 className="text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{organizationName}</h1></div>
           {!naoEncontrado && <button type="button" onClick={() => setSheetAberto(true)} disabled={!(escopos ?? []).some(e => e.habilitado && (e.tipo === "negociacoes" || e.tipo === "inscricoes"))}
-            className="inline-flex h-11 items-center gap-2 self-start rounded border border-black/[.15] bg-white px-4 text-[12px] font-medium text-black transition hover:bg-black/[.04] active:scale-[.98] disabled:opacity-40 sm:self-auto"><Plus size={14}/>Nova oportunidade</button>}
+            className="inline-flex h-11 items-center gap-2 self-start rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black transition hover:bg-black/[.04] active:scale-[.98] disabled:opacity-40 sm:self-auto"><Plus size={14}/>Nova oportunidade</button>}
         </div>
       </header>
 
       {naoEncontrado ? (
         <DetailPageContent>
-          <p className="text-[13px] text-black/50">Workspace indisponível.</p>
+          <p className="text-[0.8125rem] text-black/50">Workspace indisponível.</p>
         </DetailPageContent>
       ) : (
         <>
@@ -364,17 +364,17 @@ export default function WorkspaceCaptadorPage() {
             { id: "historico", label: "Histórico", count: pedidos.filter(p => p.status === "recusado").length },
           ]}/>
           <DetailPageContent>
-            {erroPedidos && <p role="alert" className="mb-4 text-[12px] text-[#B64545]">Oportunidades indisponíveis.</p>}
-            {erroEtapa && <p role="alert" className="mb-4 text-[12px] text-[#B64545]">{erroEtapa}</p>}
+            {erroPedidos && <p role="alert" className="mb-4 text-[0.75rem] text-[#B64545]">Oportunidades indisponíveis.</p>}
+            {erroEtapa && <p role="alert" className="mb-4 text-[0.75rem] text-[#B64545]">{erroEtapa}</p>}
             {aba === "resumo" && <div className="space-y-6">
               <section className="grid grid-cols-3 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08]">
-                {[["Em andamento", atribuicoes.length], ["Sua resposta", esperandoResposta.length + acoesPendentes.length], ["Em análise", aguardandoGestor.length]].map(([label, value]) => <div key={label} className="bg-white px-4 py-4 sm:px-5"><p className="text-[11px] text-black/40">{label}</p><p className="mt-3 text-[25px] font-semibold tabular-nums tracking-tight text-[#171717]">{value}</p></div>)}
+                {[["Em andamento", atribuicoes.length], ["Sua resposta", esperandoResposta.length + acoesPendentes.length], ["Em análise", aguardandoGestor.length]].map(([label, value]) => <div key={label} className="bg-white px-4 py-4 sm:px-5"><p className="text-[0.6875rem] text-black/40">{label}</p><p className="mt-3 text-[1.5625rem] font-semibold tabular-nums tracking-tight text-[#171717]">{value}</p></div>)}
               </section>
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+              <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
                 <div className="min-w-0 space-y-5">
                   <section className="overflow-hidden rounded border border-black/[.08] bg-white">
-                    <header className="flex items-center justify-between border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Em andamento</h2><span className="text-[11px] tabular-nums text-black/35">{atribuicoes.length}</span></header>
-                    {atribuicoes.length === 0 ? <p className="px-4 py-6 text-[12px] text-black/40">Nenhuma oportunidade.</p> : atribuicoes.map(a => {
+                    <header className="flex items-center justify-between border-b border-black/[.07] px-4 py-4"><h2 className="text-[0.9375rem] font-semibold text-black/80">Em andamento</h2><span className="text-[0.6875rem] tabular-nums text-black/35">{atribuicoes.length}</span></header>
+                    {atribuicoes.length === 0 ? <p className="px-4 py-6 text-[0.75rem] text-black/40">Nenhuma oportunidade.</p> : atribuicoes.map(a => {
                       const pedido = pedidos.find(p => p.atribuicao_id === a.id);
                       return <OportunidadeRow key={a.id} href={`/workspace-captador/${a.id}`} empresa={a.empresaNome} titulo={pedido?.oportunidade_titulo || a.empresaNome} tipo={pedido && rotuloOportunidade(pedido)} site={a.empresaSite || pedido?.empresa_site} domain={a.empresaDomainKey} trailing={<StatusAtribuicaoBadge status={a.status}/>}/>;
                     })}
@@ -382,15 +382,15 @@ export default function WorkspaceCaptadorPage() {
                 </div>
                 <aside className="order-first space-y-5 xl:order-last">
                   <section className="overflow-hidden rounded border border-black/[.08] bg-white">
-                    <header className="flex items-center justify-between border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Sua atenção</h2><span className="text-[11px] tabular-nums text-black/35">{esperandoResposta.length + acoesPendentes.length}</span></header>
-                    {esperandoResposta.length + acoesPendentes.length === 0 ? <p className="px-4 py-5 text-[12px] text-black/40">Nenhuma pendência.</p> : <>
+                    <header className="flex items-center justify-between border-b border-black/[.07] px-4 py-4"><h2 className="text-[0.9375rem] font-semibold text-black/80">Sua atenção</h2><span className="text-[0.6875rem] tabular-nums text-black/35">{esperandoResposta.length + acoesPendentes.length}</span></header>
+                    {esperandoResposta.length + acoesPendentes.length === 0 ? <p className="px-4 py-5 text-[0.75rem] text-black/40">Nenhuma pendência.</p> : <>
                       {esperandoResposta.map(p => <OportunidadeRow key={p.id} href={`/workspace-captador/${p.id}`} empresa={p.nome_busca} titulo={p.oportunidade_titulo || p.nome_busca} tipo={rotuloOportunidade(p)} site={p.empresa_site}/>)}
                       {acoesPendentes.map(a => { const vinculada = atribuicoes.find(item => item.id === a.atribuicao_id); return <OportunidadeRow key={a.id} href={`/workspace-captador/${a.atribuicao_id}`} empresa={vinculada?.empresaNome || "Organização"} titulo={a.descricao} site={vinculada?.empresaSite} domain={vinculada?.empresaDomainKey}/>; })}
                     </>}
                   </section>
                   <section className="overflow-hidden rounded border border-black/[.08] bg-white">
-                    <header className="flex items-center justify-between border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Em análise</h2><span className="text-[11px] tabular-nums text-black/35">{aguardandoGestor.length}</span></header>
-                    {aguardandoGestor.length === 0 ? <p className="px-4 py-5 text-[12px] text-black/40">Nenhuma oportunidade.</p> : aguardandoGestor.map(p => <OportunidadeRow key={p.id} href={`/workspace-captador/${p.id}`} empresa={p.nome_busca} titulo={p.oportunidade_titulo || p.nome_busca} tipo={rotuloOportunidade(p)} site={p.empresa_site}/>)}
+                    <header className="flex items-center justify-between border-b border-black/[.07] px-4 py-4"><h2 className="text-[0.9375rem] font-semibold text-black/80">Em análise</h2><span className="text-[0.6875rem] tabular-nums text-black/35">{aguardandoGestor.length}</span></header>
+                    {aguardandoGestor.length === 0 ? <p className="px-4 py-5 text-[0.75rem] text-black/40">Nenhuma oportunidade.</p> : aguardandoGestor.map(p => <OportunidadeRow key={p.id} href={`/workspace-captador/${p.id}`} empresa={p.nome_busca} titulo={p.oportunidade_titulo || p.nome_busca} tipo={rotuloOportunidade(p)} site={p.empresa_site}/>)}
                   </section>
                 </aside>
               </div>
@@ -412,13 +412,13 @@ export default function WorkspaceCaptadorPage() {
                 {fluxoAba === "negociacoes" && <FunilKanban etapas={etiquetas} itens={negociacoesAtivas} {...props} />}
                 {fluxoAba === "inscricoes" && <FunilKanban etapas={etiquetasInscricao} itens={inscricoesAtivas} {...props} />}
                 {fluxoAba === "soltas" && <section className="overflow-hidden rounded border border-black/[.08] bg-white">
-                  <p className="border-b border-black/[.07] px-4 py-3 text-[12px] text-black/45">Ainda sem funil — escolha onde cada uma deve entrar.</p>
+                  <p className="border-b border-black/[.07] px-4 py-3 text-[0.75rem] text-black/45">Ainda sem funil — escolha onde cada uma deve entrar.</p>
                   {soltas.map(item => <OportunidadeSolta key={item.id} item={item} onIniciar={iniciarFluxo} router={router} />)}
                 </section>}
               </div>;
             })()}
-            {aba === "historico" && <section className="overflow-hidden rounded border border-black/[.08] bg-white"><header className="border-b border-black/[.07] px-4 py-4"><h2 className="text-[15px] font-semibold text-black/80">Histórico</h2></header>
-              {pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").length === 0 ? <p className="px-4 py-6 text-[12px] text-black/40">Nenhum registro.</p> : pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").map(p => <OportunidadeRow key={p.id} href={`/workspace-captador/${p.id}`} empresa={p.nome_busca} titulo={p.oportunidade_titulo || p.nome_busca} tipo={rotuloOportunidade(p)} site={p.empresa_site} trailing={<StatusPedidoBadge status={p.status}/>}/>)}
+            {aba === "historico" && <section className="overflow-hidden rounded border border-black/[.08] bg-white"><header className="border-b border-black/[.07] px-4 py-4"><h2 className="text-[0.9375rem] font-semibold text-black/80">Histórico</h2></header>
+              {pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").length === 0 ? <p className="px-4 py-6 text-[0.75rem] text-black/40">Nenhum registro.</p> : pedidos.filter(p => p.status === "aprovado" || p.status === "recusado").map(p => <OportunidadeRow key={p.id} href={`/workspace-captador/${p.id}`} empresa={p.nome_busca} titulo={p.oportunidade_titulo || p.nome_busca} tipo={rotuloOportunidade(p)} site={p.empresa_site} trailing={<StatusPedidoBadge status={p.status}/>}/>)}
             </section>}
           </DetailPageContent>
         </>

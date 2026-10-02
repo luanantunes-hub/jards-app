@@ -88,7 +88,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
         </div>}
         <button
           onClick={() => setComposerOpen(true)}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-medium bg-white rounded hover:bg-black/[.04] transition"
+          className="flex items-center gap-1.5 px-3.5 py-2 text-[0.75rem] font-medium bg-white rounded hover:bg-black/[.04] transition"
           style={{ color: "rgba(13,13,13,.65)", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(13,13,13,.15)" }}
         >
           <Pencil size={12} /> Experiência
@@ -100,7 +100,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
         <div className="flex gap-1.5 mb-5 flex-wrap">
           <button
             onClick={() => setFiltro("todos")}
-            className={`px-2.5 py-1 rounded text-[10px] font-bold transition border ${
+            className={`px-2.5 py-1 rounded text-[0.625rem] font-bold transition border ${
               filtro === "todos"
                 ? "bg-white border-black/20 text-black"
                 : "bg-white border-black/[.08] text-black/40 hover:bg-black/[.04]"
@@ -112,7 +112,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
             <button
               key={key}
               onClick={() => setFiltro(key)}
-              className="px-2.5 py-1 rounded text-[10px] font-bold transition border bg-white"
+              className="px-2.5 py-1 rounded text-[0.625rem] font-bold transition border bg-white"
               style={{
                 borderColor: filtro === key ? meta.color : "rgba(13,13,13,.08)",
                 color: filtro === key ? meta.color : "rgba(0,0,0,.4)",
@@ -127,7 +127,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
         {comentarios.length === 0 ? (
           <div className="text-center py-10">
             <MessageCircle size={22} className="mx-auto text-black/10 mb-2" />
-            <p className="text-[12px] text-black/30">
+            <p className="text-[0.75rem] text-black/30">
               {filtro === "todos"
                 ? "Nenhum relato ainda. Seja o primeiro a contar."
                 : "Nenhum relato neste tópico."}
@@ -153,7 +153,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
                     >
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[11px] font-bold ${c.votos > 0 ? "text-[#2E8932]" : "text-black/25"}`}>
+                    <span className={`text-[0.6875rem] font-bold ${c.votos > 0 ? "text-[#2E8932]" : "text-black/25"}`}>
                       {c.votos}
                     </span>
                     <button
@@ -169,14 +169,14 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1.5">
                       <span
-                        className="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide"
+                        className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded uppercase tracking-wide"
                         style={{ background: meta.bg, color: meta.color }}
                       >
                         {meta.label}
                       </span>
                     </div>
-                    <p className="text-[12px] text-black/70 leading-relaxed">{c.conteudo}</p>
-                    <p className="text-[9px] text-black/20 mt-2">
+                    <p className="text-[0.75rem] text-black/70 leading-relaxed">{c.conteudo}</p>
+                    <p className="text-[0.5625rem] text-black/20 mt-2">
                       {new Date(c.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                     </p>
                   </div>
@@ -241,8 +241,8 @@ function NovoComentarioModal({
           <div className="w-10 h-10 rounded flex items-center justify-center mx-auto mb-4" style={{ background: "#2E893214" }}>
             <MessageCircle size={18} className="text-[#2E8932]" />
           </div>
-          <h2 className="text-[15px] font-bold text-[#0D0D0D] mb-1">Obrigado por compartilhar!</h2>
-          <p className="text-[13px] text-black/45">Sua experiência ajuda toda a comunidade.</p>
+          <h2 className="text-[0.9375rem] font-bold text-[#0D0D0D] mb-1">Obrigado por compartilhar!</h2>
+          <p className="text-[0.8125rem] text-black/45">Sua experiência ajuda toda a comunidade.</p>
         </div>
       </div>
     );
@@ -256,14 +256,14 @@ function NovoComentarioModal({
       <div className="bg-white rounded shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 className="text-[14px] font-semibold text-[#0D0D0D]">Contar experiência</h2>
+          <h2 className="text-[0.875rem] font-semibold text-[#0D0D0D]">Contar experiência</h2>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-black/5 transition text-black/35 hover:text-black/55">
             <X size={15} />
           </button>
         </div>
 
         <div className="p-6">
-          <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-2">Tópico</p>
+          <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-2">Tópico</p>
           <div className="flex flex-col gap-1 mb-5">
             {topicos.map(([key, m]) => {
               const Icon = TOPICO_ICON[key];
@@ -287,10 +287,10 @@ function NovoComentarioModal({
                     <Icon size={12} style={{ color: isSelected ? m.color : "rgba(0,0,0,.30)" }} />
                   </div>
                   <div className="flex-1 min-w-0 flex items-baseline gap-2">
-                    <p className="text-[12px] font-medium leading-tight" style={{ color: isSelected ? m.color : "#0D0D0D" }}>
+                    <p className="text-[0.75rem] font-medium leading-tight" style={{ color: isSelected ? m.color : "#0D0D0D" }}>
                       {m.label}
                     </p>
-                    <p className="text-[10px] text-black/30 truncate">{m.desc}</p>
+                    <p className="text-[0.625rem] text-black/30 truncate">{m.desc}</p>
                   </div>
                   {/* Indicador de seleção */}
                   <div
@@ -310,7 +310,7 @@ function NovoComentarioModal({
           {/* Dica contextual */}
           <div className="flex items-center gap-2 px-3 py-2 rounded mb-4" style={{ background: meta.bg }}>
             <ActiveIcon size={12} style={{ color: meta.color, flexShrink: 0 }} />
-            <p className="text-[10px] font-medium" style={{ color: meta.color }}>
+            <p className="text-[0.625rem] font-medium" style={{ color: meta.color }}>
               {topico === "processo_selecao"      && "Como é o processo? É transparente? Costuma dar certo?"}
               {topico === "tomador_decisao"       && "Quem decide? É acessível? Costuma responder?"}
               {topico === "experiencia_patrocinio" && "Como foi a experiência de ser patrocinado por eles?"}
@@ -325,22 +325,22 @@ function NovoComentarioModal({
             rows={4}
             maxLength={1200}
             placeholder="Compartilhe sua experiência..."
-            className="w-full px-3 py-2.5 text-[13px] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition resize-none"
+            className="w-full px-3 py-2.5 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition resize-none"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
           <div className="flex justify-between items-center mt-1 mb-5">
-            <span className="text-[9px] text-black/25">Anônimo para outros usuários</span>
-            <span className="text-[9px] text-black/25">{conteudo.length}/1200</span>
+            <span className="text-[0.5625rem] text-black/25">Anônimo para outros usuários</span>
+            <span className="text-[0.5625rem] text-black/25">{conteudo.length}/1200</span>
           </div>
 
           <div className="flex justify-end gap-3">
-            <button onClick={onClose} className="px-4 py-2 text-[13px] font-medium text-black/35 hover:text-black/55 transition">
+            <button onClick={onClose} className="px-4 py-2 text-[0.8125rem] font-medium text-black/35 hover:text-black/55 transition">
               Cancelar
             </button>
             <button
               onClick={handleSubmit}
               disabled={saving || conteudo.trim().length < 10}
-              className="flex items-center gap-1.5 px-5 py-2 text-[13px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
+              className="flex items-center gap-1.5 px-5 py-2 text-[0.8125rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
             >
               {saving ? <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
               Publicar

@@ -46,11 +46,11 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
     <section className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <header className="flex flex-col gap-4 border-b px-5 py-5 md:flex-row md:items-end md:justify-between md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.12em] text-black/35">Editais</p>
-          <h2 className="mt-1 text-[21px] font-semibold tracking-[-.02em] text-black">Inscrições</h2>
+          <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">Editais</p>
+          <h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">Inscrições</h2>
         </div>
         {onNew && (
-          <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded border border-black/[.12] bg-white px-3.5 py-2 text-[12px] font-medium text-black/55 hover:bg-black/[.04]">
+          <button onClick={onNew} className="inline-flex items-center gap-1.5 rounded border border-black/[.12] bg-white px-3.5 py-2 text-[0.75rem] font-medium text-black/55 hover:bg-black/[.04]">
             <Plus size={12} />Nova inscrição
           </button>
         )}
@@ -58,15 +58,15 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
       {!rows.length ? (
         <div className="px-5 py-20 text-center">
           <FileStack size={24} className="mx-auto text-black/15" />
-          <p className="mt-4 text-[14px] font-semibold text-black/45">Nenhuma inscrição registrada</p>
+          <p className="mt-4 text-[0.875rem] font-semibold text-black/45">Nenhuma inscrição registrada</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[940px] border-collapse text-left">
+          <table className="w-full min-w-[58.75rem] border-collapse text-left">
             <thead>
               <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 {["Edital", "Projeto", "Status", "Valor", "Fechamento", "Último avanço"].map(label => (
-                  <th key={label} className="px-5 py-3 text-[10px] font-medium text-black/30">{label}</th>
+                  <th key={label} className="px-5 py-3 text-[0.625rem] font-medium text-black/30">{label}</th>
                 ))}
               </tr>
             </thead>
@@ -92,17 +92,17 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
                     className="cursor-pointer transition hover:bg-black/[.018] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                   >
                     <td className="px-5 py-4">
-                      <span className="text-[13px] font-semibold text-black/75">
+                      <span className="text-[0.8125rem] font-semibold text-black/75">
                         {row.titulo || "Edital sem título"}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-[11px] text-black/45">{row.projeto?.nome || "—"}</td>
+                    <td className="px-5 py-4 text-[0.6875rem] text-black/45">{row.projeto?.nome || "—"}</td>
                     <td className="px-5 py-4">
                       <StatusBadge status={row.status} label={s.label} bg={s.color} iconName={s.iconName} size="sm" />
                     </td>
-                    <td className="px-5 py-4 text-[12px] font-semibold tabular-nums text-black/65">{fmtCurrency(row.valor)}</td>
-                    <td className="px-5 py-4 text-[11px] tabular-nums text-black/45">{fmtDate(row.data_fechamento)}</td>
-                    <td className="px-5 py-4 text-[11px] text-black/45">há {daysSince(row.updated_at)} dias</td>
+                    <td className="px-5 py-4 text-[0.75rem] font-semibold tabular-nums text-black/65">{fmtCurrency(row.valor)}</td>
+                    <td className="px-5 py-4 text-[0.6875rem] tabular-nums text-black/45">{fmtDate(row.data_fechamento)}</td>
+                    <td className="px-5 py-4 text-[0.6875rem] text-black/45">há {daysSince(row.updated_at)} dias</td>
                   </tr>
                 );
               })}

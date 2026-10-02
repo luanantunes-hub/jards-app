@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { escalaUi } from "@/lib/escala-ui";
 
 const MENU_MAX_HEIGHT = 320;
 
@@ -15,7 +16,7 @@ export function usePortalPosition(anchorRef: React.RefObject<HTMLElement | null>
     if (!rect) return;
     const spaceBelow = window.innerHeight - rect.bottom;
     const spaceAbove = rect.top;
-    const openAbove = spaceBelow < MENU_MAX_HEIGHT && spaceAbove > spaceBelow;
+    const openAbove = spaceBelow < MENU_MAX_HEIGHT * escalaUi() && spaceAbove > spaceBelow;
     setPosition(openAbove
       ? { placement: "above", left: rect.left, width: rect.width, bottom: window.innerHeight - rect.top + 4 }
       : { placement: "below", left: rect.left, width: rect.width, top: rect.bottom + 4 });

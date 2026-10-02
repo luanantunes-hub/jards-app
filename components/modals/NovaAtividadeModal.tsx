@@ -15,6 +15,7 @@ import { NovoProponenteModal } from "@/components/modals/NovoProponenteModal";
 import { NovoContatoModal } from "@/components/modals/NovoContatoModal";
 import type { Prioridade, TipoAtividade } from "@/lib/supabase/types";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { escalaUi } from "@/lib/escala-ui";
 
 const VINCULO_CREATE_LABEL: Partial<Record<VinculoTipo, string>> = {
   captacao:   "Criar nova negociação",
@@ -80,6 +81,7 @@ export function NovaAtividadeModal({
     edital_user_id?: string;
     responsavel_id?: string;
     compromisso_id?: string;
+    conta_patrocinio_id?: string;
     date?: string;
   };
 }) {
@@ -100,17 +102,22 @@ export function NovaAtividadeModal({
   const [nome, setNome] = useState("");
   const [tipo, setTipo] = useState<TipoAtividade>("reuniao");
   const [tipoCustomId, setTipoCustomId] = useState<string | null>(null);
+  // Prioriza o vínculo mais específico primeiro — mesma convenção usada em
+  // entityLabel() (app/(dashboard)/atividades/page.tsx): contato/captação são
+  // mais específicos que empresa, que fica por último. Com a ordem antiga,
+  // abrir "Nova atividade" a partir da página de um contato nascia com
+  // "Vinculada a: Empresa" em vez de "Contato", que é a entidade na tela.
   const [vinculoTipo, setVinculoTipo] = useState<VinculoTipo>(() => {
     if (prefill?.compromisso_id) return "entrega";
+    if (prefill?.contato_id)     return "contato";
     if (prefill?.captacao_id)    return "captacao";
+    if (prefill?.projeto_id)     return "projeto";
     if (prefill?.edital_user_id) return "inscricao";
     if (prefill?.empresa_crm_id) return "empresa";
-    if (prefill?.projeto_id)     return "projeto";
-    if (prefill?.contato_id)     return "contato";
     return "captacao";
   });
   const [vinculoId, setVinculoId] = useState<string | null>(
-    prefill?.compromisso_id ?? prefill?.captacao_id ?? prefill?.edital_user_id ?? prefill?.empresa_crm_id ?? prefill?.projeto_id ?? prefill?.contato_id ?? null,
+    prefill?.compromisso_id ?? prefill?.contato_id ?? prefill?.captacao_id ?? prefill?.projeto_id ?? prefill?.edital_user_id ?? prefill?.empresa_crm_id ?? null,
   );
   const [responsavelId, setResponsavelId] = useState<string | null>(prefill?.responsavel_id ?? null);
   const [dataInicio, setDataInicio] = useState(prefill?.date ?? todayInputValue());
@@ -235,6 +242,16 @@ export function NovaAtividadeModal({
     setShowCreateModal(false);
   }
 
+  // NovoProponenteModal não fecha sozinho ao salvar (modo criação) — ele
+  // continua montado pra mostrar uma tela de sucesso com atalhos ("Adicionar
+  // contato", "Criar primeiro projeto"), e só chama onClose quando o usuário
+  // realmente termina ali. Fechar aqui como os outros vínculos cortava essa
+  // tela antes de aparecer.
+  async function handleProponenteCreated(id?: string) {
+    await loadData();
+    if (id) setVinculoId(id);
+  }
+
   const vinculoOptions = ({
     captacao: captacoes, inscricao: inscricoes, empresa: empresas, projeto: projetos,
     agencia: agencias, proponente: proponentes, contato: contatos, entrega: entregas,
@@ -275,14 +292,24 @@ export function NovaAtividadeModal({
       nome: nome.trim(),
       tipo,
       tipo_custom_id: tipoCustomId,
-      captacao_id:    vinculoTipo === "captacao"  ? vinculoId : prefill?.captacao_id ?? null,
-      edital_user_id: vinculoTipo === "inscricao" ? vinculoId : prefill?.edital_user_id ?? null,
-      empresa_crm_id: vinculoTipo === "empresa"   ? vinculoId : prefill?.empresa_crm_id ?? null,
-      projeto_id:     vinculoTipo === "projeto"   ? vinculoId : prefill?.projeto_id ?? null,
-      captador_id:    vinculoTipo === "agencia"   ? vinculoId : null,
+      // Só grava o FK que corresponde ao vínculo escolhido — cair de volta no
+      // prefill pros outros campos deixava FKs de fontes diferentes (contexto
+      // herdado da tela de origem + escolha atual do usuário) coexistindo sem
+      // relação entre si, já que nenhuma constraint no banco valida que eles
+      // sejam consistentes entre si.
+      captacao_id:    vinculoTipo === "captacao"   ? vinculoId : null,
+      edital_user_id: vinculoTipo === "inscricao"  ? vinculoId : null,
+      empresa_crm_id: vinculoTipo === "empresa"    ? vinculoId : null,
+      projeto_id:     vinculoTipo === "projeto"    ? vinculoId : null,
+      captador_id:    vinculoTipo === "agencia"    ? vinculoId : null,
       proponente_id:  vinculoTipo === "proponente" ? vinculoId : null,
-      contato_id:     vinculoTipo === "contato"   ? vinculoId : prefill?.contato_id ?? null,
-      compromisso_id: vinculoTipo === "entrega"   ? vinculoId : prefill?.compromisso_id ?? null,
+      contato_id:     vinculoTipo === "contato"    ? vinculoId : null,
+      compromisso_id: vinculoTipo === "entrega"    ? vinculoId : null,
+      // Preenchido só quando a atividade é de fato sobre a entrega (mesmo
+      // par que fn_customer_success_automations já usa) — sem isso, o
+      // indicador de "dias sem atividade" do Customer Success nunca via
+      // atividades de entrega logadas manualmente por aqui.
+      conta_patrocinio_id: vinculoTipo === "entrega" ? prefill?.conta_patrocinio_id ?? null : null,
       responsavel_id: responsavelId,
       prioridade,
       data_inicio: dataInicio,
@@ -316,7 +343,7 @@ export function NovaAtividadeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white overflow-hidden rounded-b flex max-h-[96dvh] flex-col w-full max-w-[720px]"
+        className="bg-white overflow-hidden rounded-b flex max-h-[96dvh] flex-col w-full max-w-[45rem]"
         style={{
           borderBottom: "1px solid rgba(13,13,13,.08)",
           boxShadow: "0 8px 32px rgba(0,0,0,.10)",
@@ -333,7 +360,7 @@ export function NovaAtividadeModal({
             <div className="w-8 h-8 rounded bg-black/5 flex items-center justify-center">
               <Plus size={14} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[14px] font-bold text-black">Nova atividade</h2>
+            <h2 id={titleId} className="text-[0.875rem] font-bold text-black">Nova atividade</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={14} className="text-black/40" />
@@ -343,19 +370,19 @@ export function NovaAtividadeModal({
         {/* Body — 2 colunas */}
         <div className="min-h-0 flex-1 overflow-y-auto px-8 pt-5 pb-4">
           {erro && (
-            <div role="alert" className="text-[12px] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
+            <div role="alert" className="text-[0.75rem] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
               {erro}
             </div>
           )}
 
           {/* Nome — full width */}
           <div className="mb-4">
-            <label className="text-[11px] font-semibold text-black mb-1 block">Nome da atividade</label>
+            <label className="text-[0.6875rem] font-semibold text-black mb-1 block">Nome da atividade</label>
             <input
               value={nome}
               onChange={e => setNome(e.target.value)}
               placeholder="Ex: Ligação de follow-up, Reunião de alinhamento..."
-              className="w-full border rounded px-3 py-2 text-[13px] text-black outline-none focus:border-[#7259B5] transition"
+              className="w-full border rounded px-3 py-2 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
               style={{ borderColor: "rgba(13,13,13,.15)" }}
               autoFocus
             />
@@ -368,9 +395,9 @@ export function NovaAtividadeModal({
               {/* Tipo */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[11px] font-semibold text-black">Tipo</label>
+                  <label className="text-[0.6875rem] font-semibold text-black">Tipo</label>
                   <button type="button" onClick={() => setCriandoTipo(v => !v)}
-                    className="text-[10px] font-semibold text-[#7259B5] hover:text-[#604EA3] transition">
+                    className="text-[0.625rem] font-semibold text-[#7259B5] hover:text-[#604EA3] transition">
                     {criandoTipo ? "Cancelar" : "+ Criar tipo"}
                   </button>
                 </div>
@@ -380,7 +407,7 @@ export function NovaAtividadeModal({
                     return (
                       <button key={t.key}
                         onClick={() => { setTipo(t.key); setTipoCustomId(null); if (t.key === "reuniao" || t.key === "evento") setCalendarSyncRequested(true); }}
-                        className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded border transition"
+                        className="flex items-center gap-1 px-2.5 py-1 text-[0.625rem] font-semibold rounded border transition"
                         style={{ borderColor: active ? t.color : "rgba(13,13,13,.12)", background: "white", color: active ? t.color : "rgba(13,13,13,.45)" }}>
                         <t.Icon size={11} />
                         {t.label}
@@ -395,7 +422,7 @@ export function NovaAtividadeModal({
                       const active = tipoCustomId === t.id;
                       return (
                         <button key={t.id} onClick={() => { setTipo("outro"); setTipoCustomId(t.id); }}
-                          className="flex items-center gap-1 px-2.5 py-1 text-[10px] font-semibold rounded border transition"
+                          className="flex items-center gap-1 px-2.5 py-1 text-[0.625rem] font-semibold rounded border transition"
                           style={{ borderColor: active ? t.cor : "rgba(13,13,13,.12)", background: "white", color: active ? t.cor : "rgba(13,13,13,.45)" }}>
                           <Icon size={11} /> {t.nome}
                         </button>
@@ -406,7 +433,7 @@ export function NovaAtividadeModal({
                 {criandoTipo && (
                   <div className="mt-2 border rounded p-3 space-y-2" style={{ borderColor: "rgba(114,89,181,.25)", background: "rgba(114,89,181,.025)" }}>
                     <input value={novoTipoNome} onChange={e => setNovoTipoNome(e.target.value)} placeholder="Ex: Visita técnica"
-                      className="w-full border rounded px-2.5 py-1.5 text-[12px] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.15)" }} />
+                      className="w-full border rounded px-2.5 py-1.5 text-[0.75rem] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.15)" }} />
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {TIPO_OPTIONS.map(option => {
                         const Icon = option.Icon;
@@ -419,14 +446,14 @@ export function NovaAtividadeModal({
                         className="w-4 h-4 rounded-full border-2" style={{ background: color, borderColor: novaTipoCor === color ? "#0D0D0D" : "transparent" }} />)}
                     </div>
                     <button type="button" disabled={!novoTipoNome.trim()} onClick={criarTipoPersonalizado}
-                      className="px-2.5 py-1 text-[11px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] disabled:opacity-40">Salvar tipo</button>
+                      className="px-2.5 py-1 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] disabled:opacity-40">Salvar tipo</button>
                   </div>
                 )}
               </div>
 
               {/* Vínculo */}
               <div>
-                <label className="text-[11px] font-semibold text-black mb-1.5 block">
+                <label className="text-[0.6875rem] font-semibold text-black mb-1.5 block">
                   Vinculada a
                 </label>
                 <div className="flex items-center gap-1 flex-wrap mb-1.5">
@@ -434,7 +461,7 @@ export function NovaAtividadeModal({
                     const active = vinculoTipo === option.key;
                     return (
                     <button key={option.key} type="button" onClick={() => { setVinculoTipo(option.key); setVinculoId(null); }}
-                      className="px-2 py-0.5 text-[10px] font-semibold rounded border transition"
+                      className="px-2 py-0.5 text-[0.625rem] font-semibold rounded border transition"
                       style={{ borderColor: active ? option.color : "rgba(13,13,13,.1)", background: "white", color: active ? option.color : "rgba(13,13,13,.45)" }}>
                       {option.label}
                     </button>
@@ -456,7 +483,7 @@ export function NovaAtividadeModal({
 
               {/* Responsável */}
               <div>
-                <label className="text-[11px] font-semibold text-black mb-1.5 block">Responsável</label>
+                <label className="text-[0.6875rem] font-semibold text-black mb-1.5 block">Responsável</label>
                 <Dropdown
                   value={responsavelId}
                   options={membros}
@@ -470,7 +497,7 @@ export function NovaAtividadeModal({
 
               {/* Prioridade */}
               <div>
-                <label className="text-[11px] font-semibold text-black mb-1.5 block">Prioridade</label>
+                <label className="text-[0.6875rem] font-semibold text-black mb-1.5 block">Prioridade</label>
                 <PrioridadeSelect value={prioridade} onChange={setPrioridade} />
               </div>
             </div>
@@ -479,20 +506,20 @@ export function NovaAtividadeModal({
             <div className="space-y-4">
               {/* Cronograma */}
               <div>
-                <label className="text-[11px] font-semibold text-black mb-1.5 block">Cronograma</label>
+                <label className="text-[0.6875rem] font-semibold text-black mb-1.5 block">Cronograma</label>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] text-black/40 mb-1 block">Início</label>
+                    <label className="text-[0.625rem] text-black/40 mb-1 block">Início</label>
                     <input type="date" value={dataInicio} max={dataPrevista || undefined}
                       onChange={e => { const next = e.target.value; setDataInicio(next); if (dataPrevista && next > dataPrevista) setDataPrevista(next); }}
-                      className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition"
+                      className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition"
                       style={{ borderColor: "rgba(13,13,13,.15)" }} />
                   </div>
                   <div>
-                    <label className="text-[10px] text-black/40 mb-1 block">Prazo</label>
+                    <label className="text-[0.625rem] text-black/40 mb-1 block">Prazo</label>
                     <input type="date" value={dataPrevista} min={dataInicio || undefined}
                       onChange={e => setDataPrevista(e.target.value)}
-                      className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition"
+                      className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition"
                       style={{ borderColor: "rgba(13,13,13,.15)" }} />
                   </div>
                 </div>
@@ -500,20 +527,20 @@ export function NovaAtividadeModal({
 
               {/* Horário */}
               <div>
-                <label className="text-[11px] font-semibold text-black mb-1.5 block">
+                <label className="text-[0.6875rem] font-semibold text-black mb-1.5 block">
                   Horário
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] text-black/40 mb-1 block">Início</label>
+                    <label className="text-[0.625rem] text-black/40 mb-1 block">Início</label>
                     <input type="time" value={horaInicio} onChange={e => setHoraInicio(e.target.value)}
-                      className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition"
+                      className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition"
                       style={{ borderColor: "rgba(13,13,13,.15)" }} />
                   </div>
                   <div>
-                    <label className="text-[10px] text-black/40 mb-1 block">Fim</label>
+                    <label className="text-[0.625rem] text-black/40 mb-1 block">Fim</label>
                     <input type="time" value={horaFim} onChange={e => setHoraFim(e.target.value)}
-                      className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition"
+                      className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition"
                       style={{ borderColor: "rgba(13,13,13,.15)" }} />
                   </div>
                 </div>
@@ -523,32 +550,32 @@ export function NovaAtividadeModal({
               <label className="flex items-center gap-2.5 border rounded px-3 py-2 cursor-pointer hover:border-[#7259B5]/35 transition"
                 style={{ borderColor: calendarSyncRequested ? "rgba(114,89,181,.5)" : "rgba(13,13,13,.12)", background: "white" }}>
                 <input type="checkbox" checked={calendarSyncRequested} onChange={e => setCalendarSyncRequested(e.target.checked)} className="accent-[#7259B5]" />
-                <span className="flex items-center gap-1.5 text-[11px] font-semibold text-black">
+                <span className="flex items-center gap-1.5 text-[0.6875rem] font-semibold text-black">
                   <CalendarDays size={12} className="text-[#7259B5]" /> Sincronizar com calendário
                 </span>
               </label>
 
               {/* Resultado */}
               <div>
-                <label className="text-[11px] font-semibold text-black mb-1 block">
+                <label className="text-[0.6875rem] font-semibold text-black mb-1 block">
                   Resultado
                 </label>
                 <textarea value={resultado} onChange={e => setResultado(e.target.value)}
                   placeholder="O que aconteceu? Qual foi o desfecho?"
                   rows={2}
-                  className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition resize-none"
+                  className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition resize-none"
                   style={{ borderColor: "rgba(13,13,13,.15)" }} />
               </div>
 
               {/* Nota */}
               <div>
-                <label className="text-[11px] font-semibold text-black mb-1 block">
+                <label className="text-[0.6875rem] font-semibold text-black mb-1 block">
                   Nota
                 </label>
                 <textarea value={nota} onChange={e => setNota(e.target.value)}
                   placeholder="Detalhes relevantes..."
                   rows={2}
-                  className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition resize-none"
+                  className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition resize-none"
                   style={{ borderColor: "rgba(13,13,13,.15)" }} />
               </div>
             </div>
@@ -583,7 +610,7 @@ export function NovaAtividadeModal({
         <NovoProjetoModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
       )}
       {showCreateModal && vinculoTipo === "proponente" && (
-        <NovoProponenteModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
+        <NovoProponenteModal onClose={() => setShowCreateModal(false)} onSaved={handleProponenteCreated} />
       )}
       {showCreateModal && vinculoTipo === "contato" && (
         <NovoContatoModal onClose={() => setShowCreateModal(false)} onSaved={handleVinculoCreated} />
@@ -638,7 +665,7 @@ function Dropdown({
     const rect = ref.current?.getBoundingClientRect();
     if (!open && rect) {
       const spaceBelow = window.innerHeight - rect.bottom - 4;
-      setMenuStyle(spaceBelow >= Math.min(192, rect.top - 4)
+      setMenuStyle(spaceBelow >= Math.min(192 * escalaUi(), rect.top - 4)
         ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
         : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
     }
@@ -652,7 +679,7 @@ function Dropdown({
       <button
         type="button"
         onClick={handleToggle}
-        className="w-full flex items-center justify-between border rounded px-3 py-2.5 text-[13px] text-left transition hover:border-[#7259B5]/40"
+        className="w-full flex items-center justify-between border rounded px-3 py-2.5 text-[0.8125rem] text-left transition hover:border-[#7259B5]/40"
         style={{
           borderColor: open ? "#7259B5" : "rgba(13,13,13,.15)",
           color: selected ? "#0D0D0D" : "rgba(13,13,13,.35)",
@@ -674,14 +701,14 @@ function Dropdown({
           {value && (
             <button
               onClick={() => { onChange(null); onClose(); }}
-              className="w-full text-left px-3 py-2 text-[12px] text-[#D94E4E] hover:bg-[#D94E4E]/5 transition border-b"
+              className="w-full text-left px-3 py-2 text-[0.75rem] text-[#D94E4E] hover:bg-[#D94E4E]/5 transition border-b"
               style={{ borderColor: "rgba(13,13,13,.06)" }}
             >
               Limpar seleção
             </button>
           )}
           {options.length === 0 ? (
-            <p className="px-3 py-3 text-[12px] text-black/30 text-center">Nenhum item encontrado</p>
+            <p className="px-3 py-3 text-[0.75rem] text-black/30 text-center">Nenhum item encontrado</p>
           ) : (
             options.map(opt => (
               <button
@@ -690,9 +717,9 @@ function Dropdown({
                 className="w-full text-left px-3 py-2 hover:bg-black/[0.03] transition flex items-center justify-between"
               >
                 <div className="min-w-0">
-                  <p className="text-[12px] text-black truncate">{opt.label}</p>
+                  <p className="text-[0.75rem] text-black truncate">{opt.label}</p>
                   {opt.sublabel && (
-                    <p className="text-[10px] text-black/30 truncate">{opt.sublabel}</p>
+                    <p className="text-[0.625rem] text-black/30 truncate">{opt.sublabel}</p>
                   )}
                 </div>
                 {opt.id === value && <Check size={12} className="text-[#7259B5] flex-shrink-0" />}
@@ -702,7 +729,7 @@ function Dropdown({
           {onCreateClick && createLabel && (
             <button
               onMouseDown={e => { e.preventDefault(); onCreateClick(); }}
-              className="w-full flex items-center gap-1.5 text-left px-3 py-2 text-[12px] font-semibold text-[#7259B5] hover:bg-[#7259B5]/5 transition border-t"
+              className="w-full flex items-center gap-1.5 text-left px-3 py-2 text-[0.75rem] font-semibold text-[#7259B5] hover:bg-[#7259B5]/5 transition border-t"
               style={{ borderColor: "rgba(13,13,13,.06)" }}
             >
               <Plus size={12} /> {createLabel}

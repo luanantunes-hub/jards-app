@@ -96,13 +96,13 @@ export function NovaPropostaModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: "25rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
               <Coins size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[15px] font-bold text-black">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={15} className="text-black/40" />
@@ -111,31 +111,31 @@ export function NovaPropostaModal({
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-4 rounded border bg-black/[.02] px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="min-w-0">
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-black/30">Projeto</p>
-              <p className="truncate text-[11px] font-semibold text-black/65">{projetoNome}</p>
+              <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30">Projeto</p>
+              <p className="truncate text-[0.6875rem] font-semibold text-black/65">{projetoNome}</p>
             </div>
             <div className="h-6 w-px bg-black/10" />
             <div className="min-w-0">
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-black/30">Empresa</p>
-              <p className="truncate text-[11px] font-semibold text-black/65">{empresaNome}</p>
+              <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30">Empresa</p>
+              <p className="truncate text-[0.6875rem] font-semibold text-black/65">{empresaNome}</p>
             </div>
           </div>
 
           {cotas.length > 0 && (
             <div>
-              <label className="text-[10px] text-black/40 mb-1 block">Cota-base (opcional)</label>
+              <label className="text-[0.625rem] text-black/40 mb-1 block">Cota-base (opcional)</label>
               <Dropdown
                 value={cotaId}
                 onChange={selectCota}
                 placeholder="Construir sem cota-base"
                 options={cotas.map(c => ({ value: c.id, label: `${c.nome}${c.modelo === "produto" && c.produto_nome ? ` · ${c.produto_nome}` : ""} · ${formatCotaValor(c)}` }))}
               />
-              <p className="mt-1.5 text-[10px] text-black/35">Escolher uma cota pré-preenche o valor — pode ajustar livremente depois (proposta adaptada).</p>
+              <p className="mt-1.5 text-[0.625rem] text-black/35">Escolher uma cota pré-preenche o valor — pode ajustar livremente depois (proposta adaptada).</p>
             </div>
           )}
 
           <div>
-            <label className="text-[10px] text-black/40 mb-1 block">Valor proposto (R$)</label>
+            <label className="text-[0.625rem] text-black/40 mb-1 block">Valor proposto (R$)</label>
             <input
               type="text"
               inputMode="decimal"
@@ -143,21 +143,21 @@ export function NovaPropostaModal({
               value={valorInput}
               onChange={(e) => setValorInput(e.target.value)}
               placeholder="0,00"
-              className="w-full px-3 py-2 text-[13px] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
+              className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             />
           </div>
 
-          {erro && <p role="alert" className="text-[12px] text-[#B23A3A]">{erro}</p>}
+          {erro && <p role="alert" className="text-[0.75rem] text-[#B23A3A]">{erro}</p>}
 
           <button
             onClick={salvar}
             disabled={salvando || !valorInput.trim()}
-            className="w-full px-3 py-2 text-[11px] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="w-full px-3 py-2 text-[0.6875rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {salvando ? "Salvando…" : "Salvar"}
           </button>
-          <Link href={`/projetos/${projetoId}`} className="flex items-center justify-center gap-1.5 text-[10px] font-medium text-black/35 hover:text-[#7259B5] transition">
+          <Link href={`/projetos/${projetoId}`} className="flex items-center justify-center gap-1.5 text-[0.625rem] font-medium text-black/35 hover:text-[#7259B5] transition">
             Gerenciar cotas do projeto <ExternalLink size={9} />
           </Link>
         </div>

@@ -77,7 +77,7 @@ export default function PrestacoesList() {
             type="button"
             aria-pressed={filtroStatus === "todos"}
             onClick={() => setFiltroStatus("todos")}
-            className={`h-9 shrink-0 rounded border px-3 text-[12px] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${
+            className={`h-9 shrink-0 rounded border px-3 text-[0.75rem] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${
               filtroStatus === "todos"
                 ? "border-[#7259B5]/40 bg-white text-[#7259B5]"
                 : "border-black/[.08] bg-white text-black/45 hover:bg-black/[.03]"
@@ -91,7 +91,7 @@ export default function PrestacoesList() {
               type="button"
               aria-pressed={filtroStatus === s}
               onClick={() => setFiltroStatus(s)}
-              className="h-9 shrink-0 rounded border bg-white px-3 text-[12px] font-medium transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+              className="h-9 shrink-0 rounded border bg-white px-3 text-[0.75rem] font-medium transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               style={{
                 borderColor: filtroStatus === s ? meta.color : "rgba(13,13,13,.08)",
                 color: filtroStatus === s ? meta.color : "rgba(13,13,13,.45)",
@@ -115,7 +115,7 @@ export default function PrestacoesList() {
               action={hasFilter ? undefined : <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
             />
           ) : (
-          <table className="w-full min-w-[760px] text-sm">
+          <table className="w-full min-w-[47.5rem] text-sm">
             <thead>
               <tr style={{ background: "#F9F9F8" }}>
                 {["Título", "Negociação", "Status", "Prazo", "Aprovado", "Realizado"].map(col => (
@@ -148,37 +148,37 @@ export default function PrestacoesList() {
                     style={{ borderBottom: i < filtradas.length - 1 ? "1px solid rgba(13,13,13,.05)" : undefined }}
                   >
                     <td className="px-4 py-3">
-                      <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="text-[13px] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
-                      {p.projeto && <p className="text-[10px] text-black/35 mt-0.5">{p.projeto.nome}</p>}
+                      <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
+                      {p.projeto && <p className="text-[0.625rem] text-black/35 mt-0.5">{p.projeto.nome}</p>}
                     </td>
                     <td className="px-4 py-3">
                       {p.captacao ? (
-                        <p className="text-[11px] text-black/55">{p.captacao.titulo ?? "—"}</p>
+                        <p className="text-[0.6875rem] text-black/55">{p.captacao.titulo ?? "—"}</p>
                       ) : (
-                        <span className="text-[11px] text-black/25">—</span>
+                        <span className="text-[0.6875rem] text-black/25">—</span>
                       )}
                     </td>
                     <td className="px-4 py-3">
                       <span
-                        className="inline-flex items-center gap-1 whitespace-nowrap rounded border bg-white px-2 py-1 text-[10px] font-medium"
+                        className="inline-flex items-center gap-1 whitespace-nowrap rounded border bg-white px-2 py-1 text-[0.625rem] font-medium"
                         style={{ borderColor: meta.color.startsWith("#") ? meta.color + "47" : "rgba(13,13,13,.12)", color: meta.color }}
                       >
                         {meta.icon} {meta.label}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`whitespace-nowrap text-[11px] font-medium tabular-nums ${vencida ? "text-[#D94E4E]" : "text-black/55"}`}>
+                      <span className={`whitespace-nowrap text-[0.6875rem] font-medium tabular-nums ${vencida ? "text-[#D94E4E]" : "text-black/55"}`}>
                         {fmtDate(p.prazo)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-[12px] tabular-nums text-black/55">
+                    <td className="px-4 py-3 text-[0.75rem] tabular-nums text-black/55">
                       {fmt(p.valor_aprovado)}
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-[12px] font-medium tabular-nums text-black/55">{fmt(p.valor_realizado)}</span>
+                        <span className="text-[0.75rem] font-medium tabular-nums text-black/55">{fmt(p.valor_realizado)}</span>
                         {pct !== null && (
-                          <span className="text-[10px] font-semibold tabular-nums" style={{
+                          <span className="text-[0.625rem] font-semibold tabular-nums" style={{
                             color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "rgba(13,13,13,.35)"
                           }}>
                             {pct}%

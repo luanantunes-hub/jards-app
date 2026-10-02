@@ -25,6 +25,7 @@ import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { ProjetoSolicitacoes } from "@/components/proponentes/ProjetoSolicitacoes";
+import { escalaUi } from "@/lib/escala-ui";
 
 type Projeto = {
   id: string;
@@ -424,9 +425,9 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Cover — só aparece quando há imagem */}
       {capaUrl && (
-        <div className="mx-auto w-full max-w-[1280px] px-4 pt-4 sm:px-6 lg:px-10">
+        <div className="mx-auto w-full max-w-pagina px-4 pt-4 sm:px-6 lg:px-10">
          <div
-          className="group relative h-[88px] flex-shrink-0 select-none overflow-hidden rounded border sm:h-[104px]"
+          className="group relative h-[5.5rem] flex-shrink-0 select-none overflow-hidden rounded border sm:h-[6.5rem]"
           style={{ borderColor: "rgba(13,13,13,.08)", cursor: repoMode ? "ns-resize" : "default" }}
           onMouseDown={repoMode ? handleRepoDragStart : undefined}
          >
@@ -453,12 +454,12 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             {repoMode ? (
               <>
                 <button onClick={handleCancelReposition}
-                  className="shrink-0 rounded px-3 py-1.5 text-[10px] font-medium transition"
+                  className="shrink-0 rounded px-3 py-1.5 text-[0.625rem] font-medium transition"
                   style={{ background: "rgba(0,0,0,.35)", backdropFilter: "blur(4px)", color: "rgba(255,255,255,.70)" }}>
                   Cancelar
                 </button>
                 <button onClick={handleSavePosition}
-                  className="shrink-0 rounded px-3 py-1.5 text-[10px] font-medium text-white transition hover:opacity-90"
+                  className="shrink-0 rounded px-3 py-1.5 text-[0.625rem] font-medium text-white transition hover:opacity-90"
                   style={{ background: "#2E8932" }}>
                   Salvar posição
                 </button>
@@ -466,17 +467,17 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             ) : (
               <>
                 <button onClick={handleCapaRemove}
-                  className="flex shrink-0 items-center gap-1.5 rounded px-3 py-1.5 text-[10px] font-medium transition"
+                  className="flex shrink-0 items-center gap-1.5 rounded px-3 py-1.5 text-[0.625rem] font-medium transition"
                   style={{ background: "rgba(0,0,0,.35)", backdropFilter: "blur(4px)", color: "rgba(255,255,255,.60)" }}>
                   Remover capa
                 </button>
                 <button onClick={() => { setRepoMode(true); setRepoOrigY(capaPositionY); }}
-                  className="flex shrink-0 items-center gap-1.5 rounded px-3 py-1.5 text-[10px] font-medium transition"
+                  className="flex shrink-0 items-center gap-1.5 rounded px-3 py-1.5 text-[0.625rem] font-medium transition"
                   style={{ background: "rgba(0,0,0,.35)", backdropFilter: "blur(4px)", color: "rgba(255,255,255,.75)" }}>
                   Reposicionar
                 </button>
                 <button onClick={() => capaInputRef.current?.click()} disabled={capaUploading}
-                  className="flex shrink-0 items-center gap-1.5 rounded px-3 py-1.5 text-[10px] font-medium transition"
+                  className="flex shrink-0 items-center gap-1.5 rounded px-3 py-1.5 text-[0.625rem] font-medium transition"
                   style={{ background: "rgba(0,0,0,.35)", backdropFilter: "blur(4px)", color: capaUploading ? "rgba(255,255,255,.40)" : "rgba(255,255,255,.80)" }}>
                   <ImageIcon size={11} />
                   {capaUploading ? "Enviando…" : "Trocar capa"}
@@ -648,17 +649,17 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Header */}
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+        <div className="mx-auto max-w-pagina px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
         {/* input compartilhado com a capa quando não há imagem */}
         {!capaUrl && <input ref={capaInputRef} type="file" accept="image/*" className="hidden" onChange={handleCapaUpload} />}
 
         <div className="mb-7 flex items-center justify-between">
-          <Link href="/projetos" className="inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65">
+          <Link href="/projetos" className="inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65">
             <ArrowLeft size={14} /> Projetos
           </Link>
           {!capaUrl && (
             <button onClick={() => capaInputRef.current?.click()} disabled={capaUploading}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-black/35 transition hover:text-black/60">
+              className="inline-flex items-center gap-1.5 text-[0.6875rem] font-medium text-black/35 transition hover:text-black/60">
               <ImageIcon size={12} />
               {capaUploading ? "Enviando…" : "Adicionar capa"}
             </button>
@@ -673,8 +674,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                 <ProjectIdentity nome={projeto.nome} tipo={projeto.identidade_tipo} valor={projeto.identidade_valor} logoUrl={projeto.identidade_logo_url} cor={projeto.identidade_cor} size="md" />
                 <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded border border-black/10 bg-white text-black/45 shadow-sm opacity-0 transition group-hover:opacity-100 group-hover:text-[#7259B5]"><Pencil size={8}/></span>
               </button>
-              {identityOpen && <div className="absolute left-0 top-12 z-30 w-[286px] rounded border border-black/[.09] bg-white p-3 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
-                <div className="px-1 pb-3"><p className="text-[13px] font-semibold text-black/70">Identidade do projeto</p></div>
+              {identityOpen && <div className="absolute left-0 top-12 z-30 w-[17.875rem] rounded border border-black/[.09] bg-white p-3 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
+                <div className="px-1 pb-3"><p className="text-[0.8125rem] font-semibold text-black/70">Identidade do projeto</p></div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {PROJECT_ICON_OPTIONS.map(({ key, label, Icon }) => {
                     const active = projeto.identidade_tipo === "icone" && projeto.identidade_valor === key;
@@ -684,7 +685,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                 </div>
                 {projeto.identidade_tipo === "icone" && (
                   <div className="mt-2.5 border-t pt-2.5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                    <p className="px-1 pb-2 text-[10px] font-semibold text-black/40">Cor do ícone</p>
+                    <p className="px-1 pb-2 text-[0.625rem] font-semibold text-black/40">Cor do ícone</p>
                     <div className="grid grid-cols-8 gap-1.5">
                       {PROJECT_ICON_COLORS.map(({ key, label, cor }) => {
                         const active = (projeto.identidade_cor ?? PROJECT_ICON_COLORS[0].cor) === cor;
@@ -693,21 +694,21 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   </div>
                 )}
-                <button type="button" disabled={identitySaving} onClick={() => identityLogoInputRef.current?.click()} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded border border-[#7259B5]/25 bg-white text-[12px] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40"><ImagePlus size={14}/>{identitySaving ? "Salvando…" : projeto.identidade_tipo === "logo" ? "Trocar logo" : "Usar logo"}</button>
+                <button type="button" disabled={identitySaving} onClick={() => identityLogoInputRef.current?.click()} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded border border-[#7259B5]/25 bg-white text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40"><ImagePlus size={14}/>{identitySaving ? "Salvando…" : projeto.identidade_tipo === "logo" ? "Trocar logo" : "Usar logo"}</button>
               </div>}
             </div>
             <div className="min-w-0">
               <div className="mb-3 flex flex-wrap items-center gap-2">
                 {projeto.status_operacional === "pausado" && (
-                  <span className="rounded border border-[#B07A14]/25 bg-white px-2 py-1 text-[10px] font-medium text-[#B07A14]">Pausado</span>
+                  <span className="rounded border border-[#B07A14]/25 bg-white px-2 py-1 text-[0.625rem] font-medium text-[#B07A14]">Pausado</span>
                 )}
                 {projeto.status_operacional === "arquivado" && (
-                  <span className="rounded border border-black/[.10] bg-white px-2 py-1 text-[10px] font-medium text-black/40">Arquivado</span>
+                  <span className="rounded border border-black/[.10] bg-white px-2 py-1 text-[0.625rem] font-medium text-black/40">Arquivado</span>
                 )}
               </div>
-              <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{projeto.nome}</h1>
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{projeto.nome}</h1>
               {projeto.proponente_nome && (
-                <p className="mt-2 text-[14px] text-black/50">
+                <p className="mt-2 text-[0.875rem] text-black/50">
                   {projeto.proponente_nome}
                   {(projeto.proponente_cidade || projeto.proponente_estado) && (
                     <span className="text-black/25"> · {[projeto.proponente_cidade, projeto.proponente_estado].filter(Boolean).join(", ")}</span>
@@ -715,7 +716,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                 </p>
               )}
               {projeto.descricao && (
-                <p className="mt-3 max-w-3xl text-[15px] leading-6 text-black/45">{projeto.descricao}</p>
+                <p className="mt-3 max-w-3xl text-[0.9375rem] leading-6 text-black/45">{projeto.descricao}</p>
               )}
             </div>
           </div>
@@ -723,7 +724,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
           <div className="flex shrink-0 flex-wrap items-center gap-2 lg:justify-end">
             <button
               onClick={() => setEditing(true)}
-              className="flex h-11 items-center gap-2 rounded border bg-white px-4 text-[12px] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
+              className="flex h-11 items-center gap-2 rounded border bg-white px-4 text-[0.75rem] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             >
               <Pencil size={14} /> Editar
@@ -736,7 +737,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Tabs */}
       <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-       <nav aria-label="Seções do projeto" className="mx-auto flex max-w-[1280px] items-center gap-1.5 overflow-x-auto px-4 py-3 sm:px-6 lg:px-10">
+       <nav aria-label="Seções do projeto" className="mx-auto flex max-w-pagina items-center gap-1.5 overflow-x-auto px-4 py-3 sm:px-6 lg:px-10">
         <TabBtn active={tab === "overview"} onClick={() => setTab("overview")} icon={<Eye size={12} />}>
           Visão geral
         </TabBtn>
@@ -746,7 +747,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
         <TabBtn active={tab === "proposta"} onClick={() => setTab("proposta")} icon={<BriefcaseBusiness size={12} />}>
           Cotas
           {(propostas.length + cotas.length) > 0 && (
-            <span className="ml-1.5 w-4 h-4 rounded bg-[#7259B5]/10 text-[#7259B5] text-[9px] font-bold flex items-center justify-center">
+            <span className="ml-1.5 w-4 h-4 rounded bg-[#7259B5]/10 text-[#7259B5] text-[0.5625rem] font-bold flex items-center justify-center">
               {propostas.length + cotas.length}
             </span>
           )}
@@ -771,7 +772,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
       {/* Content */}
       <div>
-       <main className="mx-auto w-full max-w-[1280px] px-4 py-7 sm:px-6 sm:py-9 lg:px-10 lg:py-10">
+       <main className="mx-auto w-full max-w-pagina px-4 py-7 sm:px-6 sm:py-9 lg:px-10 lg:py-10">
         {tab === "pitch" && <PitchWorkspace projectId={projeto.id} projectName={projeto.nome} />}
         {tab === "textos" && <TextosManager projetoId={projeto.id} />}
         {tab === "proponente" && <ProjetoSolicitacoes projetoId={projeto.id} isOrganizacao proponenteNome={projeto.proponente_nome || "o proponente"} />}
@@ -790,19 +791,19 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             {proximaAtividade ? (
               <div className="flex items-center justify-between gap-4 rounded border px-5 py-4" style={{ background: "rgba(13,13,13,.018)", borderColor: "rgba(13,13,13,.08)" }}>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[.12em] text-black/35 mb-1.5">Próximo passo</p>
-                  <p className="text-[14px] font-semibold text-black/75">{proximaAtividade.nome}</p>
-                  <p className="mt-0.5 text-[11px] text-black/35 flex items-center gap-1"><Calendar size={9} />{fmtDate(proximaAtividade.data_prevista)}</p>
+                  <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35 mb-1.5">Próximo passo</p>
+                  <p className="text-[0.875rem] font-semibold text-black/75">{proximaAtividade.nome}</p>
+                  <p className="mt-0.5 text-[0.6875rem] text-black/35 flex items-center gap-1"><Calendar size={9} />{fmtDate(proximaAtividade.data_prevista)}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <button type="button" onClick={() => setShowNovaAtividade(true)} className="flex items-center gap-1 rounded border border-black/[.15] bg-white px-3 py-1.5 text-[11px] font-medium text-black/60 transition hover:bg-black/[.04]"><Plus size={11} /> Nova</button>
-                  <Link href="/atividades" className="text-[11px] font-medium text-black/40 transition hover:text-black/65">Ver todas →</Link>
+                  <button type="button" onClick={() => setShowNovaAtividade(true)} className="flex items-center gap-1 rounded border border-black/[.15] bg-white px-3 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:bg-black/[.04]"><Plus size={11} /> Nova</button>
+                  <Link href="/atividades" className="text-[0.6875rem] font-medium text-black/40 transition hover:text-black/65">Ver todas →</Link>
                 </div>
               </div>
             ) : (
               <div className="flex items-center justify-between gap-4 rounded border px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.09)", borderStyle: "dashed" }}>
-                <p className="text-[12px] text-black/35">Nenhuma atividade futura programada para este projeto.</p>
-                <button type="button" onClick={() => setShowNovaAtividade(true)} className="shrink-0 text-[11px] font-medium text-[#7259B5] transition hover:text-[#5a45a0]">Adicionar</button>
+                <p className="text-[0.75rem] text-black/35">Nenhuma atividade futura programada para este projeto.</p>
+                <button type="button" onClick={() => setShowNovaAtividade(true)} className="shrink-0 text-[0.6875rem] font-medium text-[#7259B5] transition hover:text-[#5a45a0]">Adicionar</button>
               </div>
             )}
 
@@ -810,20 +811,20 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             <div className="rounded border bg-white p-6 sm:p-7" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <div className="flex items-start justify-between gap-4 mb-5">
                 <div>
-                  <p className="text-[11px] font-medium text-black/40 mb-2">Captado do objetivo</p>
-                  <p className="text-[52px] font-semibold tracking-[-.045em] tabular-nums leading-none text-black/80">
-                    {progress}<span className="text-[30px] text-black/35 ml-1">%</span>
+                  <p className="text-[0.6875rem] font-medium text-black/40 mb-2">Captado do objetivo</p>
+                  <p className="text-[3.25rem] font-semibold tracking-[-.045em] tabular-nums leading-none text-black/80">
+                    {progress}<span className="text-[1.875rem] text-black/35 ml-1">%</span>
                   </p>
-                  {projeto.valor_alvo && <p className="mt-2 text-[12px] text-black/35">de {fmtValor(projeto.valor_alvo)}</p>}
+                  {projeto.valor_alvo && <p className="mt-2 text-[0.75rem] text-black/35">de {fmtValor(projeto.valor_alvo)}</p>}
                 </div>
                 <div className="relative">
                   <button
                     type="button"
                     onClick={e => {
                       const r = e.currentTarget.getBoundingClientRect();
-                      setFasePop(prev => prev ? null : { top: r.bottom + 6, left: Math.min(r.right - 272, window.innerWidth - 280) });
+                      setFasePop(prev => prev ? null : { top: r.bottom + 6, left: Math.min(r.right - 272 * escalaUi(), window.innerWidth - 280 * escalaUi()) });
                     }}
-                    className="flex items-center gap-1.5 rounded border px-3 py-1.5 text-[11px] font-medium transition hover:opacity-80"
+                    className="flex items-center gap-1.5 rounded border px-3 py-1.5 text-[0.6875rem] font-medium transition hover:opacity-80"
                     style={{ borderColor: faseMeta.color + "47", color: faseMeta.color, background: "white" }}
                   >
                     <faseMeta.Icon size={12} />{faseMeta.label}
@@ -834,7 +835,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                       <div className="fixed inset-0 z-40" onClick={() => setFasePop(null)} />
                       <div
                         className="fixed z-50 rounded border bg-white p-2 shadow-xl"
-                        style={{ top: fasePop.top, left: fasePop.left, borderColor: "rgba(13,13,13,.09)", width: 272 }}
+                        style={{ top: fasePop.top, left: fasePop.left, borderColor: "rgba(13,13,13,.09)", width: "17rem" }}
                       >
                         <div className="grid grid-cols-3 gap-1.5">
                           {FASES.map(f => {
@@ -857,7 +858,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                                   </span>
                                 )}
                                 <f.Icon size={16} strokeWidth={1.8} />
-                                <span className="text-[9px] font-bold uppercase tracking-[.08em] leading-none">{f.label}</span>
+                                <span className="text-[0.5625rem] font-bold uppercase tracking-[.08em] leading-none">{f.label}</span>
                               </button>
                             );
                           })}
@@ -872,26 +873,26 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <div className="mt-6 grid grid-cols-3 gap-4 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#2E8932" }}>Confirmado</p>
-                  <p className="text-[18px] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{fmtValor(confirmado)}</p>
+                  <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#2E8932" }}>Confirmado</p>
+                  <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{fmtValor(confirmado)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#7259B5" }}>Em negociação</p>
-                  <p className="text-[18px] font-semibold tabular-nums" style={{ color: "#7259B5" }}>{fmtValor(negociacao)}</p>
+                  <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#7259B5" }}>Em negociação</p>
+                  <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: "#7259B5" }}>{fmtValor(negociacao)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>
+                  <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>
                     {faltante > 0 ? "Falta captar" : "Meta atingida"}
                   </p>
-                  <p className="text-[18px] font-semibold tabular-nums" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>{faltante > 0 ? fmtValor(faltante) : "—"}</p>
+                  <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>{faltante > 0 ? fmtValor(faltante) : "—"}</p>
                 </div>
               </div>
 
               {/* Orçamento total calculado do orçamento */}
               {orcamentoTotal > 0 && (
                 <div className="mt-5 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                  <p className="text-[10px] font-bold uppercase tracking-[.10em] text-black/35 mb-1.5">Orçamento total do projeto</p>
-                  <p className="text-[20px] font-semibold tabular-nums text-black/70">{fmtValor(orcamentoTotal)}</p>
+                  <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] text-black/35 mb-1.5">Orçamento total do projeto</p>
+                  <p className="text-[1.25rem] font-semibold tabular-nums text-black/70">{fmtValor(orcamentoTotal)}</p>
                 </div>
               )}
             </div>
@@ -899,16 +900,16 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             {/* Quick stats */}
             <div className="grid grid-cols-3 gap-3">
               <div className="rounded border bg-black/[.025] px-4 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[10px] font-medium text-black/35">Negociações ativas</p>
-                <p className="mt-1.5 text-[22px] font-semibold text-black/70 tabular-nums">{captacoes.filter(item => !["aprovado","recusado"].includes(item.status)).length}</p>
+                <p className="text-[0.625rem] font-medium text-black/35">Negociações ativas</p>
+                <p className="mt-1.5 text-[1.375rem] font-semibold text-black/70 tabular-nums">{captacoes.filter(item => !["aprovado","recusado"].includes(item.status)).length}</p>
               </div>
               <div className="rounded border bg-black/[.025] px-4 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[10px] font-medium text-black/35">Inscrições em editais</p>
-                <p className="mt-1.5 text-[22px] font-semibold text-black/70 tabular-nums">{inscricoes.length}</p>
+                <p className="text-[0.625rem] font-medium text-black/35">Inscrições em editais</p>
+                <p className="mt-1.5 text-[1.375rem] font-semibold text-black/70 tabular-nums">{inscricoes.length}</p>
               </div>
               <div className="rounded border bg-black/[.025] px-4 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[10px] font-medium text-black/35">Responsável</p>
-                <p className="mt-1.5 text-[13px] font-semibold text-black/70 truncate">{projeto.ponto_focal?.full_name ?? "Não definido"}</p>
+                <p className="text-[0.625rem] font-medium text-black/35">Responsável</p>
+                <p className="mt-1.5 text-[0.8125rem] font-semibold text-black/70 truncate">{projeto.ponto_focal?.full_name ?? "Não definido"}</p>
               </div>
             </div>
 
@@ -924,12 +925,12 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-medium text-black/40">Tipos de patrocínio</p>
+                  <p className="text-[0.6875rem] font-medium text-black/40">Tipos de patrocínio</p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {(projeto.tipos_patrocinio ?? []).length > 0 ? projeto.tipos_patrocinio.map(tipo => (
                       <span
                         key={tipo}
-                        className="rounded border bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide"
+                        className="rounded border bg-white px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase tracking-wide"
                         style={{
                           borderColor: `${sponsorshipTypeColor(tipo)}47`,
                           color: sponsorshipTypeColor(tipo),
@@ -938,7 +939,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                         {sponsorshipTypeLabel(tipo)}
                       </span>
                     )) : (
-                      <span className="text-[13px] text-black/30">Não definido</span>
+                      <span className="text-[0.8125rem] text-black/30">Não definido</span>
                     )}
                   </div>
                 </div>
@@ -947,9 +948,9 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
             {alerts.length > 0 && (
               <section className="rounded border bg-white" style={{ borderColor: "rgba(176,122,20,.22)" }}>
-                <div className="border-b px-5 py-3 text-[10px] font-medium uppercase tracking-[.12em] text-[#B07A14]" style={{ borderColor: "rgba(176,122,20,.14)" }}>Pontos de atenção</div>
+                <div className="border-b px-5 py-3 text-[0.625rem] font-medium uppercase tracking-[.12em] text-[#B07A14]" style={{ borderColor: "rgba(176,122,20,.14)" }}>Pontos de atenção</div>
                 {alerts.map(alert => (
-                  <div key={alert} className="flex items-center gap-2 border-b px-5 py-3 text-[11px] text-black/50 last:border-b-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+                  <div key={alert} className="flex items-center gap-2 border-b px-5 py-3 text-[0.6875rem] text-black/50 last:border-b-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                     <span className="h-1.5 w-1.5 rounded bg-[#B07A14]" />{alert}
                   </div>
                 ))}
@@ -972,25 +973,35 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
               <div className="space-y-6">
                 <section>
                   <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-                    <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40 flex items-center gap-1.5">
+                    <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40 flex items-center gap-1.5">
                       <TrendingUp size={12} /> Objetivo vs Realizado
                     </h2>
                     <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => setEditingObjetivo(true)}
-                        className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[11px] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
+                        className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
                         style={{ borderColor: "rgba(13,13,13,.14)" }}
                       >
                         <Pencil size={12} /> Editar objetivo
                       </button>
+                      {ultimoResultado && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingResultado(ultimoResultado)}
+                          className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
+                          style={{ borderColor: "rgba(13,13,13,.14)" }}
+                        >
+                          <Pencil size={12} /> Atualizar último resultado
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() => ultimoResultado ? setEditingResultado(ultimoResultado) : setShowResultado(true)}
-                        className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[11px] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
+                        onClick={() => setShowResultado(true)}
+                        className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
                         style={{ borderColor: "rgba(13,13,13,.14)" }}
                       >
-                        {ultimoResultado ? <><Pencil size={12} /> Atualizar resultado</> : <><Plus size={12} /> Registrar resultado</>}
+                        <Plus size={12} /> Registrar resultado
                       </button>
                     </div>
                   </div>
@@ -1000,12 +1011,12 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                     {/* Linha Objetivo */}
                     <div className="flex items-center gap-5 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                       <div className="w-24 flex-shrink-0">
-                        <p className="text-[10px] font-bold uppercase tracking-[.12em] text-black/30">Objetivo</p>
+                        <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/30">Objetivo</p>
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[13px] font-semibold text-black/60">{fmtValor(projeto.valor_alvo)}</span>
-                          <span className="text-[11px] text-black/30">100%</span>
+                          <span className="text-[0.8125rem] font-semibold text-black/60">{fmtValor(projeto.valor_alvo)}</span>
+                          <span className="text-[0.6875rem] text-black/30">100%</span>
                         </div>
                         <div className="h-2 rounded bg-black/6 overflow-hidden">
                           <div className="h-full w-full rounded bg-black/10" />
@@ -1016,7 +1027,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                     {/* Linha Confirmado */}
                     <div className="flex items-center gap-5 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                       <div className="w-24 flex-shrink-0">
-                        <p className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color: "#2E8932" }}>Confirmado</p>
+                        <p className="text-[0.625rem] font-bold uppercase tracking-[.12em]" style={{ color: "#2E8932" }}>Confirmado</p>
                       </div>
                       <div className="flex-1">
                         {(() => {
@@ -1025,8 +1036,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           return (
                             <>
                               <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[13px] font-semibold" style={{ color: "#2E8932" }}>{fmtValor(real)}</span>
-                                <span className="text-[11px] font-bold" style={{ color: "#2E8932" }}>{projeto.valor_alvo ? `${pct.toFixed(0)}%` : "—"}</span>
+                                <span className="text-[0.8125rem] font-semibold" style={{ color: "#2E8932" }}>{fmtValor(real)}</span>
+                                <span className="text-[0.6875rem] font-bold" style={{ color: "#2E8932" }}>{projeto.valor_alvo ? `${pct.toFixed(0)}%` : "—"}</span>
                               </div>
                               <div className="h-2 rounded bg-[#2E8932]/10 overflow-hidden">
                                 <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${pct}%` }} />
@@ -1040,7 +1051,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                     {/* Linha Em negociação */}
                     <div className="flex items-center gap-5 px-5 py-4">
                       <div className="w-24 flex-shrink-0">
-                        <p className="text-[10px] font-bold uppercase tracking-[.12em]" style={{ color: "#7259B5" }}>Negociação</p>
+                        <p className="text-[0.625rem] font-bold uppercase tracking-[.12em]" style={{ color: "#7259B5" }}>Negociação</p>
                       </div>
                       <div className="flex-1">
                         {(() => {
@@ -1049,8 +1060,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           return (
                             <>
                               <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[13px] font-semibold" style={{ color: "#7259B5" }}>{fmtValor(neg)}</span>
-                                <span className="text-[11px] font-bold" style={{ color: "#7259B5" }}>{projeto.valor_alvo ? `${pct.toFixed(0)}%` : "—"}</span>
+                                <span className="text-[0.8125rem] font-semibold" style={{ color: "#7259B5" }}>{fmtValor(neg)}</span>
+                                <span className="text-[0.6875rem] font-bold" style={{ color: "#7259B5" }}>{projeto.valor_alvo ? `${pct.toFixed(0)}%` : "—"}</span>
                               </div>
                               <div className="h-2 rounded bg-[#7259B5]/10 overflow-hidden">
                                 <div className="h-full rounded bg-[#7259B5] transition-all" style={{ width: `${pct}%` }} />
@@ -1065,7 +1076,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                   {/* Resultado registrado */}
                   {ultimoResultado && (
                     <div className="mt-4 border rounded p-4 space-y-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="text-[10px] font-bold uppercase tracking-[.12em] text-black/30">
+                      <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/30">
                         Resultado · {ultimoResultado.data_resultado ? fmtDate(ultimoResultado.data_resultado) : "sem data"}
                       </p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -1079,7 +1090,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                         )}
                       </div>
                       {ultimoResultado.observacoes && (
-                        <p className="text-[12px] text-black/45 leading-relaxed border-t pt-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                        <p className="text-[0.75rem] text-black/45 leading-relaxed border-t pt-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                           {ultimoResultado.observacoes}
                         </p>
                       )}
@@ -1089,7 +1100,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                   {/* Histórico de resultados anteriores */}
                   {resultados.length > 1 && (
                     <div className="mt-4 space-y-2">
-                      <p className="text-[10px] font-bold uppercase tracking-[.12em] text-black/30 mb-2">Histórico de resultados</p>
+                      <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/30 mb-2">Histórico de resultados</p>
                       {resultados.slice(1).map(r => (
                         <div
                           key={r.id}
@@ -1097,8 +1108,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           style={{ borderColor: "rgba(13,13,13,.08)" }}
                           onClick={() => setEditingResultado(r)}
                         >
-                          <span className="text-[12px] text-black/45">{r.data_resultado ? fmtDate(r.data_resultado) : "Sem data"}</span>
-                          <span className="text-[12px] font-bold text-black/60">{fmtValor(r.valor_captado)}</span>
+                          <span className="text-[0.75rem] text-black/45">{r.data_resultado ? fmtDate(r.data_resultado) : "Sem data"}</span>
+                          <span className="text-[0.75rem] font-bold text-black/60">{fmtValor(r.valor_captado)}</span>
                         </div>
                       ))}
                     </div>
@@ -1108,14 +1119,14 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             ) : captacaoTab === "negociacoes" ? (
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Negociações</h2>
-                  <button type="button" onClick={() => setShowNovaCaptacao(true)} className="flex items-center gap-1 rounded border border-black/[.18] bg-white px-3 py-1.5 text-[11px] font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.98]">
+                  <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Negociações</h2>
+                  <button type="button" onClick={() => setShowNovaCaptacao(true)} className="flex items-center gap-1 rounded border border-black/[.18] bg-white px-3 py-1.5 text-[0.6875rem] font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.98]">
                     <Plus size={11} /> Nova negociação
                   </button>
                 </div>
                 {captacoes.length === 0 ? (
                   <div className="border rounded p-6 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>
-                    <p className="text-[12px] text-black/30">Adicione a primeira negociação para acompanhar o progresso da captação.</p>
+                    <p className="text-[0.75rem] text-black/30">Adicione a primeira negociação para acompanhar o progresso da captação.</p>
                   </div>
                 ) : (
                   <div className="border rounded overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -1132,12 +1143,12 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           style={{ borderBottom: i < captacoes.length - 1 ? "1px solid rgba(13,13,13,.06)" : "none" }}
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-black line-clamp-1">{c.titulo ?? empresa}</p>
-                            <p className="text-[11px] text-black/35">{empresa}</p>
+                            <p className="text-[0.8125rem] font-semibold text-black line-clamp-1">{c.titulo ?? empresa}</p>
+                            <p className="text-[0.6875rem] text-black/35">{empresa}</p>
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">
                             <StatusBadge status={c.status} label={st.label} bg={st.color} iconName={st.iconName} size="sm" />
-                            <span className="text-[12px] font-bold text-black/50">{fmtValor(c.valor_solicitado)}</span>
+                            <span className="text-[0.75rem] font-bold text-black/50">{fmtValor(c.valor_solicitado)}</span>
                           </div>
                         </button>
                       );
@@ -1148,14 +1159,14 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             ) : captacaoTab === "inscricoes" ? (
               <section>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Inscrições</h2>
-                  <button type="button" onClick={() => setShowNovaInscricao(true)} className="flex items-center gap-1 rounded border border-black/[.18] bg-white px-3 py-1.5 text-[11px] font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.98]">
+                  <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Inscrições</h2>
+                  <button type="button" onClick={() => setShowNovaInscricao(true)} className="flex items-center gap-1 rounded border border-black/[.18] bg-white px-3 py-1.5 text-[0.6875rem] font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.98]">
                     <Plus size={11} /> Nova inscrição
                   </button>
                 </div>
                 {inscricoes.length === 0 ? (
                   <div className="border rounded p-5 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>
-                    <p className="text-[12px] text-black/30">Nenhum edital inscrito ainda.</p>
+                    <p className="text-[0.75rem] text-black/30">Nenhum edital inscrito ainda.</p>
                   </div>
                 ) : (
                   <div className="border rounded overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -1171,9 +1182,9 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           style={{ borderBottom: i < inscricoes.length - 1 ? "1px solid rgba(13,13,13,.06)" : "none" }}
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-black line-clamp-1">{insc.edital?.nome ?? insc.titulo ?? "Edital"}</p>
+                            <p className="text-[0.8125rem] font-semibold text-black line-clamp-1">{insc.edital?.nome ?? insc.titulo ?? "Edital"}</p>
                             {insc.data_submissao && (
-                              <p className="text-[11px] text-black/35 flex items-center gap-1">
+                              <p className="text-[0.6875rem] text-black/35 flex items-center gap-1">
                                 <Calendar size={9} /> {fmtDate(insc.data_submissao)}
                               </p>
                             )}
@@ -1223,16 +1234,16 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
               <section>
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5">
                   <div>
-                    <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Propostas por negociação</h2>
+                    <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Propostas por negociação</h2>
                   </div>
-                  <button onClick={() => { setEditingProposta(null); setShowPropostaModal(true); }} className="inline-flex items-center justify-center gap-1.5 rounded border border-black/15 bg-white px-4 py-2 text-[12px] font-semibold text-black/70 transition hover:bg-black/[.04] active:scale-[.98]"><Plus size={13} /> Nova versão</button>
+                  <button onClick={() => { setEditingProposta(null); setShowPropostaModal(true); }} className="inline-flex items-center justify-center gap-1.5 rounded border border-black/15 bg-white px-4 py-2 text-[0.75rem] font-semibold text-black/70 transition hover:bg-black/[.04] active:scale-[.98]"><Plus size={13} /> Nova versão</button>
                 </div>
 
                 {propostas.length === 0 ? (
                   <div className="rounded border px-6 py-10 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>
                     <BriefcaseBusiness size={20} className="mx-auto text-black/15" />
-                    <p className="mt-3 text-[12px] font-medium text-black/40">Nenhuma versão customizada registrada</p>
-                    <p className="mt-1 text-[11px] text-black/30">Crie versões desta proposta adaptadas para cada patrocinador.</p>
+                    <p className="mt-3 text-[0.75rem] font-medium text-black/40">Nenhuma versão customizada registrada</p>
+                    <p className="mt-1 text-[0.6875rem] text-black/30">Crie versões desta proposta adaptadas para cada patrocinador.</p>
                   </div>
                 ) : (
                   <div className="grid gap-3 lg:grid-cols-2">
@@ -1243,7 +1254,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                       const statusMeta = STATUS_PROPOSTA[proposta.status] ?? { label: proposta.status, color: "rgba(13,13,13,.40)" };
                       return (
                         <button key={proposta.id} onClick={() => { setEditingProposta(proposta); setShowPropostaModal(true); }} className="rounded border border-black/[.08] bg-white p-5 text-left transition hover:bg-black/[.018] active:scale-[.995]">
-                          <div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="truncate text-[13px] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 truncate text-[10px] text-black/35">{captacao ? `Negociação · ${captacao.empresa_crm?.nome || captacao.titulo}` : inscricao ? `Inscrição · ${inscricao.edital?.nome || "Edital"}` : "Sem vínculo definido"}</p></div><span className="shrink-0 rounded px-2 py-1 text-[9px] font-semibold" style={{ color: statusMeta.color, background: `${statusMeta.color}12` }}>{statusMeta.label}</span></div>
+                          <div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{captacao ? `Negociação · ${captacao.empresa_crm?.nome || captacao.titulo}` : inscricao ? `Inscrição · ${inscricao.edital?.nome || "Edital"}` : "Sem vínculo definido"}</p></div><span className="shrink-0 rounded px-2 py-1 text-[0.5625rem] font-semibold" style={{ color: statusMeta.color, background: `${statusMeta.color}12` }}>{statusMeta.label}</span></div>
                           <div className="mt-5 grid grid-cols-3 gap-3 border-t border-black/[.06] pt-4"><MiniInfo label="Cota-base" value={cota?.nome ?? "Sem cota"} /><MiniInfo label="Valor" value={fmtValor(proposta.valor_proposto)} /><MiniInfo label="Contrapartidas" value={String(proposta.contrapartidas?.length ?? 0)} /></div>
                         </button>
                       );
@@ -1273,16 +1284,16 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 
 
 function MiniInfo({ label, value }: { label: string; value: string }) {
-  return <div className="min-w-0"><p className="text-[10px] font-medium text-black/35">{label}</p><p className="mt-1.5 truncate text-[13px] font-medium text-black/65">{value}</p></div>;
+  return <div className="min-w-0"><p className="text-[0.625rem] font-medium text-black/35">{label}</p><p className="mt-1.5 truncate text-[0.8125rem] font-medium text-black/65">{value}</p></div>;
 }
 
 function MetricCard({ label, value, color, icon }: { label: string; value: string; color?: string; icon?: React.ReactNode }) {
   return (
     <div className="rounded px-3 py-2.5" style={{ background: "rgba(13,13,13,.03)" }}>
-      <p className="text-[10px] font-semibold text-black/30 uppercase tracking-[.10em] mb-1 flex items-center gap-1">
+      <p className="text-[0.625rem] font-semibold text-black/30 uppercase tracking-[.10em] mb-1 flex items-center gap-1">
         {icon}{label}
       </p>
-      <p className="text-[15px] font-bold" style={{ color: color ?? "#0D0D0D" }}>{value}</p>
+      <p className="text-[0.9375rem] font-bold" style={{ color: color ?? "#0D0D0D" }}>{value}</p>
     </div>
   );
 }
@@ -1292,7 +1303,7 @@ function TabBtn({ active, onClick, icon, children }: { active: boolean; onClick:
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-11 shrink-0 items-center gap-2 rounded border bg-white px-4 text-[12px] font-medium transition active:scale-[.98] ${
+      className={`flex h-11 shrink-0 items-center gap-2 rounded border bg-white px-4 text-[0.75rem] font-medium transition active:scale-[.98] ${
         active
           ? "border-[#7259B5]/40 text-[#7259B5]"
           : "border-transparent text-black/40 hover:bg-black/[.04] hover:text-black/60"
@@ -1311,7 +1322,7 @@ function SubTabBtn({ active, onClick, children, count, vertical = false }: {
     <button
       type="button"
       onClick={onClick}
-      className={`flex items-center gap-1.5 text-[12px] font-medium transition ${
+      className={`flex items-center gap-1.5 text-[0.75rem] font-medium transition ${
         vertical
           ? `w-full border-l-2 pl-3 py-1.5 ${active ? "border-black/55 text-black/75" : "border-transparent text-black/35 hover:text-black/55"}`
           : `pb-2.5 border-b-2 ${active ? "border-black/60 text-black/75" : "border-transparent text-black/35 hover:text-black/55"}`
@@ -1319,7 +1330,7 @@ function SubTabBtn({ active, onClick, children, count, vertical = false }: {
     >
       {children}
       {count !== undefined && count > 0 && (
-        <span className={`text-[10px] font-bold tabular-nums ${active ? "text-black/50" : "text-black/25"}`}>
+        <span className={`text-[0.625rem] font-bold tabular-nums ${active ? "text-black/50" : "text-black/25"}`}>
           {count}
         </span>
       )}

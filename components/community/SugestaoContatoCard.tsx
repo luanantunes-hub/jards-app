@@ -55,7 +55,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
         </div>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="flex items-center gap-1.5 px-3.5 py-2 text-[12px] font-medium bg-white rounded hover:bg-black/[.04] transition"
+          className="flex items-center gap-1.5 px-3.5 py-2 text-[0.75rem] font-medium bg-white rounded hover:bg-black/[.04] transition"
           style={{ color: "rgba(13,13,13,.65)", borderWidth: 1, borderStyle: "solid", borderColor: "rgba(13,13,13,.15)" }}
         >
           <UserPlus size={11} /> Sugerir
@@ -74,7 +74,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
         {sugestoes.length === 0 && !showForm ? (
           <div className="text-center py-8">
             <UserPlus size={20} className="mx-auto text-black/10 mb-2" />
-            <p className="text-[11px] text-black/30">Nenhum contato sugerido ainda.</p>
+            <p className="text-[0.6875rem] text-black/30">Nenhum contato sugerido ainda.</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -99,7 +99,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
                     >
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[12px] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                    <span className={`text-[0.75rem] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
                       {saldo}
                     </span>
                     <button
@@ -113,21 +113,21 @@ export function SugestaoContatoList({ empresaId }: Props) {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <p className="text-[12px] font-semibold text-black">{s.nome}</p>
+                      <p className="text-[0.75rem] font-semibold text-black">{s.nome}</p>
                       {isPromovido && (
-                        <span className="text-[9px] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: "#2E893214", color: "#2E8932" }}>
+                        <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: "#2E893214", color: "#2E8932" }}>
                           <Check size={9} /> Adicionado
                         </span>
                       )}
                     </div>
-                    {s.cargo && <p className="text-[11px] text-black/45">{s.cargo}</p>}
+                    {s.cargo && <p className="text-[0.6875rem] text-black/45">{s.cargo}</p>}
                     {s.email && (
-                      <a href={`mailto:${s.email}`} className="text-[10px] text-black/60 hover:text-black transition">
+                      <a href={`mailto:${s.email}`} className="text-[0.625rem] text-black/60 hover:text-black transition">
                         {s.email}
                       </a>
                     )}
                     {s.justificativa && (
-                      <p className="text-[10px] text-black/35 mt-1 italic">"{s.justificativa}"</p>
+                      <p className="text-[0.625rem] text-black/35 mt-1 italic">"{s.justificativa}"</p>
                     )}
                   </div>
                 </div>
@@ -179,7 +179,7 @@ function FormSugestaoContato({
   return (
     <div className="p-4 rounded border mb-4" style={{ borderColor: "rgba(13,13,13,.08)", background: "#FAFAFA" }}>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-bold text-black/50 uppercase tracking-wide">Sugerir contato</p>
+        <p className="text-[0.6875rem] font-bold text-black/50 uppercase tracking-wide">Sugerir contato</p>
         <button onClick={onCancel} className="text-black/35 hover:text-black/55 transition">
           <X size={14} />
         </button>
@@ -189,7 +189,7 @@ function FormSugestaoContato({
           value={nome}
           onChange={e => setNome(e.target.value)}
           placeholder="Nome completo *"
-          className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+          className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
           style={{ borderColor: "rgba(13,13,13,.10)" }}
         />
         <div className="grid grid-cols-2 gap-2">
@@ -197,14 +197,14 @@ function FormSugestaoContato({
             value={cargo}
             onChange={e => setCargo(e.target.value)}
             placeholder="Cargo"
-            className="px-3 py-2 text-[12px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+            className="px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
             style={{ borderColor: "rgba(13,13,13,.10)" }}
           />
           <input
             value={email}
             onChange={e => setEmail(e.target.value)}
             placeholder="E-mail"
-            className="px-3 py-2 text-[12px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+            className="px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
             style={{ borderColor: "rgba(13,13,13,.10)" }}
           />
         </div>
@@ -212,7 +212,7 @@ function FormSugestaoContato({
           value={linkedin}
           onChange={e => setLinkedin(e.target.value)}
           placeholder="LinkedIn (url)"
-          className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+          className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
           style={{ borderColor: "rgba(13,13,13,.10)" }}
         />
         <textarea
@@ -221,18 +221,18 @@ function FormSugestaoContato({
           rows={2}
           maxLength={600}
           placeholder="Por que esse contato é relevante?"
-          className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20 resize-none"
+          className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20 resize-none"
           style={{ borderColor: "rgba(13,13,13,.10)" }}
         />
       </div>
       <div className="flex justify-end gap-3 mt-3">
-        <button onClick={onCancel} className="px-3 py-1.5 text-[11px] font-medium text-black/35 hover:text-black/55 transition">
+        <button onClick={onCancel} className="px-3 py-1.5 text-[0.6875rem] font-medium text-black/35 hover:text-black/55 transition">
           Cancelar
         </button>
         <button
           onClick={handleSubmit}
           disabled={saving || !nome.trim()}
-          className="flex items-center gap-1 px-4 py-1.5 text-[12px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
+          className="flex items-center gap-1 px-4 py-1.5 text-[0.75rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
         >
           {saving ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
           Sugerir

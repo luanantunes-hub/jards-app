@@ -124,11 +124,11 @@ function PotencialTag({ lei, potencial, valorEfetivo, potencialRealocado }: { le
         className="flex flex-col items-end gap-0.5"
         title={`Espaço estimado se ${outra} cedesse todo o espaço que ocupa no teto compartilhado (realocação, não soma com o potencial normal)`}
       >
-        <div className="flex items-center gap-1 whitespace-nowrap text-[12px] font-semibold" style={{ color: "#2E8932" }}>
+        <div className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold" style={{ color: "#2E8932" }}>
           <ArrowRight size={10} strokeWidth={2.5} className="shrink-0" />
           +{fmt(potencialRealocado)}
         </div>
-        <span className="text-[8px] font-bold uppercase tracking-wider text-black/30">Potencial realocado</span>
+        <span className="text-[0.5rem] font-bold uppercase tracking-wider text-black/30">Potencial realocado</span>
       </div>
     );
   }
@@ -138,18 +138,18 @@ function PotencialTag({ lei, potencial, valorEfetivo, potencialRealocado }: { le
         className="flex flex-col items-end gap-0.5"
         title={`Espaço estimado até o teto legal de dedução${lei === "esporte" ? " (considerando o teto de 2% de projeto geral — pode ser maior, até 4%, se for inclusão social)" : ""}`}
       >
-        <div className="flex items-center gap-1 whitespace-nowrap text-[12px] font-semibold" style={{ color: "#2E8932" }}>
+        <div className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold" style={{ color: "#2E8932" }}>
           <Unlock size={10} strokeWidth={2.5} className="shrink-0" />
           +{fmt(potencial)}
         </div>
-        <span className="text-[8px] font-bold uppercase tracking-wider text-black/30">Potencial</span>
+        <span className="text-[0.5rem] font-bold uppercase tracking-wider text-black/30">Potencial</span>
       </div>
     );
   }
   if (valorEfetivo > 0) {
     return (
       <div
-        className="flex items-center gap-1 whitespace-nowrap text-[12px] font-semibold"
+        className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold"
         style={{ color: "#B07A14" }}
         title="Valor já está no teto legal estimado"
       >
@@ -175,14 +175,14 @@ function CrescimentoTag({ crescimento, valor }: { crescimento?: Crescimento; val
       className="flex flex-col items-start gap-0.5"
       title={`Crescimento anual estimado${confianca === "setor" ? " (baseado no setor — empresa tem pouco histórico próprio)" : ""}`}
     >
-      <div className="flex items-center gap-1 whitespace-nowrap text-[12px] font-semibold" style={{ color: positivo ? "#1A8B7A" : "rgba(13,13,13,.4)" }}>
+      <div className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold" style={{ color: positivo ? "#1A8B7A" : "rgba(13,13,13,.4)" }}>
         {positivo ? "+" : "-"}
         {Math.round(Math.abs(taxaAnual) * 100)}%
         <ArrowRight size={10} strokeWidth={2.5} className="shrink-0 text-black/25" />
         {positivo ? "+" : "-"}
         {fmt(valorNominal)}
       </div>
-      <span className="text-[8px] font-bold uppercase tracking-wider text-black/30">
+      <span className="text-[0.5rem] font-bold uppercase tracking-wider text-black/30">
         Cresc./ano{confianca === "setor" && " · setor"}
       </span>
     </div>
@@ -299,7 +299,7 @@ function ComparativoContent() {
         <div key={e.id} className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-6">
           <div className="flex w-full shrink-0 items-center gap-3 sm:w-[22%]">
             <CompanyLogo nome={e.nome} site={e.site} logo_url={e.logo_url} size={30} className="rounded border border-black/8" />
-            <span className="truncate text-[14px] font-medium text-black/70">{e.nome}</span>
+            <span className="truncate text-[0.875rem] font-medium text-black/70">{e.nome}</span>
           </div>
           <div className="h-2.5 flex-1 rounded-full bg-black/[.05]">
             <div
@@ -308,7 +308,7 @@ function ComparativoContent() {
             />
           </div>
           <div className="w-full shrink-0 text-right sm:w-[24%]">
-            <div className="text-[20px] font-semibold leading-none tabular-nums text-black/85">
+            <div className="text-[1.25rem] font-semibold leading-none tabular-nums text-black/85">
               {loadingValores ? "…" : fmt(valor)}
             </div>
             {!loadingValores && metricaExtra !== "nenhuma" && (
@@ -326,13 +326,13 @@ function ComparativoContent() {
   return (
     <div className="min-h-full bg-white">
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <div className="mx-auto max-w-[1280px] px-4 pb-7 pt-8 sm:px-6 lg:px-10 lg:pb-9">
-          <h1 className="max-w-2xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">
+        <div className="mx-auto max-w-pagina px-4 pb-7 pt-8 sm:px-6 lg:px-10 lg:pb-9">
+          <h1 className="max-w-2xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">
             Comparativo de investimento
           </h1>
 
           <div className="mt-6 flex flex-wrap items-center gap-4">
-            <div ref={buscaBoxRef} className="relative min-w-[220px] max-w-[320px] flex-1">
+            <div ref={buscaBoxRef} className="relative min-w-[13.75rem] max-w-[20rem] flex-1">
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30" />
               <input
                 value={busca}
@@ -348,7 +348,7 @@ function ComparativoContent() {
                     key={e.id}
                     type="button"
                     onClick={() => adicionar(e)}
-                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[13px] hover:bg-black/[.03] transition"
+                    className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left text-[0.8125rem] hover:bg-black/[.03] transition"
                   >
                     <CompanyLogo nome={e.nome} site={e.site} logo_url={e.logo_url} size={22} />
                     {e.nome}
@@ -364,7 +364,7 @@ function ComparativoContent() {
                     key={value}
                     type="button"
                     onClick={() => setViewMode(value)}
-                    className="px-3.5 py-1.5 text-[12px] font-semibold transition"
+                    className="px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                     style={{
                       background: viewMode === value ? "#0D0D0D" : "#fff",
                       color: viewMode === value ? "#fff" : "rgba(13,13,13,.45)",
@@ -380,12 +380,12 @@ function ComparativoContent() {
 
           {selecionadas.length > 0 && (
             <div className="mt-5">
-              <p className="mb-2.5 text-[10px] font-bold uppercase tracking-[.08em] text-black/35">Empresas em comparação</p>
+              <p className="mb-2.5 text-[0.625rem] font-bold uppercase tracking-[.08em] text-black/35">Empresas em comparação</p>
               <div className="flex flex-wrap items-center gap-5">
                 {selecionadas.map((e) => (
                   <div key={e.id} className="group relative flex items-center gap-2.5">
                     <CompanyLogo nome={e.nome} site={e.site} logo_url={e.logo_url} size={32} className="rounded border border-black/8" />
-                    <span className="max-w-[140px] truncate text-[13px] font-medium text-black/75">{e.nome}</span>
+                    <span className="max-w-[8.75rem] truncate text-[0.8125rem] font-medium text-black/75">{e.nome}</span>
                     <button
                       type="button"
                       onClick={() => remover(e.id)}
@@ -402,7 +402,7 @@ function ComparativoContent() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-[1280px] px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-pagina px-4 py-8 sm:px-6 lg:px-10">
         {selecionadas.length === 0 ? (
           <div
             className="flex flex-col items-center justify-center gap-8 rounded border bg-white py-20 text-center"
@@ -413,24 +413,24 @@ function ComparativoContent() {
               <img
                 src="/tamandua-esporte-tenis.webp"
                 alt="Tamanduá jogando tênis"
-                className="-mr-8 h-[190px] w-[190px] rotate-[-6deg] object-contain sm:h-[220px] sm:w-[220px]"
+                className="-mr-8 h-[11.875rem] w-[11.875rem] rotate-[-6deg] object-contain sm:h-[13.75rem] sm:w-[13.75rem]"
               />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/tamandua-cultura-guitarra.webp"
                 alt="Tamanduá de terno tocando guitarra"
-                className="relative z-10 h-[230px] w-[230px] object-contain sm:h-[264px] sm:w-[264px]"
+                className="relative z-10 h-[14.375rem] w-[14.375rem] object-contain sm:h-[16.5rem] sm:w-[16.5rem]"
               />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/tamandua-saude-medico.webp"
                 alt="Tamanduá médico com prancheta"
-                className="-ml-8 h-[190px] w-[190px] rotate-[6deg] object-contain sm:h-[220px] sm:w-[220px]"
+                className="-ml-8 h-[11.875rem] w-[11.875rem] rotate-[6deg] object-contain sm:h-[13.75rem] sm:w-[13.75rem]"
               />
             </div>
             <div>
-              <p className="text-[15px] font-medium text-black/60">Busque e adicione empresas para comparar</p>
-              <p className="mt-1 text-[13px] text-black/35">Cultura, Esporte, Ancine e Saúde.</p>
+              <p className="text-[0.9375rem] font-medium text-black/60">Busque e adicione empresas para comparar</p>
+              <p className="mt-1 text-[0.8125rem] text-black/35">Cultura, Esporte, Ancine e Saúde.</p>
             </div>
           </div>
         ) : (
@@ -440,7 +440,7 @@ function ComparativoContent() {
                 <button
                   type="button"
                   onClick={() => setMetricaExtra(metricaExtra === "crescimento" ? "nenhuma" : "crescimento")}
-                  className="flex items-center gap-1.5 rounded-l border px-3.5 py-1.5 text-[12px] font-semibold transition"
+                  className="flex items-center gap-1.5 rounded-l border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
                     background: metricaExtra === "crescimento" ? "#1A8B7A" : "#fff",
                     color: metricaExtra === "crescimento" ? "#fff" : "rgba(13,13,13,.45)",
@@ -454,7 +454,7 @@ function ComparativoContent() {
                 </button>
                 <div
                   role="tooltip"
-                  className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[220px] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[10px] leading-snug text-white opacity-0 shadow-lg transition group-hover/crescbtn:opacity-100"
+                  className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[13.75rem] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/crescbtn:opacity-100"
                 >
                   Tendência anual de investimento de cada empresa, estimada a partir do histórico.
                 </div>
@@ -463,7 +463,7 @@ function ComparativoContent() {
                 <button
                   type="button"
                   onClick={() => setMetricaExtra(metricaExtra === "potencial" ? "nenhuma" : "potencial")}
-                  className="flex items-center gap-1.5 rounded-r border px-3.5 py-1.5 text-[12px] font-semibold transition"
+                  className="flex items-center gap-1.5 rounded-r border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
                     background: metricaExtra === "potencial" ? "#2E8932" : "#fff",
                     color: metricaExtra === "potencial" ? "#fff" : "rgba(13,13,13,.45)",
@@ -477,7 +477,7 @@ function ComparativoContent() {
                 </button>
                 <div
                   role="tooltip"
-                  className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[220px] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[10px] leading-snug text-white opacity-0 shadow-lg transition group-hover/potbtn:opacity-100"
+                  className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[13.75rem] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/potbtn:opacity-100"
                 >
                   Quanto ainda cabe no teto legal de dedução de cada empresa.
                 </div>
@@ -492,21 +492,21 @@ function ComparativoContent() {
               <div>
                 {LEIS.map(({ key, label }, i) => (
                   <div key={key} className={`py-8 ${i > 0 ? "border-t" : ""}`} style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                    <h2 className="mb-5 text-[11px] font-bold uppercase tracking-[.08em] text-black/35">{label}</h2>
+                    <h2 className="mb-5 text-[0.6875rem] font-bold uppercase tracking-[.08em] text-black/35">{label}</h2>
                     <div className="flex flex-col gap-5">{renderLeiRows(key)}</div>
                   </div>
                 ))}
 
                 <div className="flex flex-col gap-3 border-t py-6 sm:flex-row sm:items-center sm:gap-6" style={{ borderColor: "rgba(13,13,13,.1)" }}>
-                  <div className="w-full shrink-0 text-[11px] font-bold uppercase tracking-[.08em] text-black/45 sm:w-[22%]">
+                  <div className="w-full shrink-0 text-[0.6875rem] font-bold uppercase tracking-[.08em] text-black/45 sm:w-[22%]">
                     Total 2025
                   </div>
                   <div className="flex flex-1 flex-wrap gap-x-8 gap-y-2 sm:justify-end">
                     {selecionadas.map((e) => (
                       <div key={e.id} className="flex items-baseline gap-2">
                         <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: colorFrom(e.nome) }} />
-                        <span className="text-[13px] font-medium text-black/50">{e.nome}</span>
-                        <span className="text-[16px] font-bold tabular-nums text-black/90">
+                        <span className="text-[0.8125rem] font-medium text-black/50">{e.nome}</span>
+                        <span className="text-[1rem] font-bold tabular-nums text-black/90">
                           {loadingValores ? "…" : fmt(totalPorEmpresa(e.id))}
                         </span>
                       </div>
@@ -558,8 +558,8 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
           return (
             <div key={key}>
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-black/40">{label}</span>
-                <span className="text-[15px] font-semibold tabular-nums text-black/80">{loading ? "…" : fmt(valor)}</span>
+                <span className="text-[0.625rem] font-bold uppercase tracking-wider text-black/40">{label}</span>
+                <span className="text-[0.9375rem] font-semibold tabular-nums text-black/80">{loading ? "…" : fmt(valor)}</span>
               </div>
               <div className="h-1.5 w-full rounded-full bg-black/[.05]">
                 <div
@@ -597,27 +597,27 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
               </button>
               {menuAberto === e.id && (
                 <div
-                  className="absolute right-0 top-8 z-20 w-[190px] rounded border bg-white py-1 shadow-[0_12px_32px_rgba(13,13,13,.12)]"
+                  className="absolute right-0 top-8 z-20 w-[11.875rem] rounded border bg-white py-1 shadow-[0_12px_32px_rgba(13,13,13,.12)]"
                   style={{ borderColor: "rgba(13,13,13,.08)" }}
                 >
                   <button
                     type="button"
                     onClick={() => abrirAcao("prospect", e)}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.78125rem] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
                     <Building2 size={13} className="text-black/40" aria-hidden="true" /> Novo prospect
                   </button>
                   <button
                     type="button"
                     onClick={() => abrirAcao("captacao", e)}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.78125rem] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
                     <BriefcaseBusiness size={13} className="text-black/40" aria-hidden="true" /> Nova negociação
                   </button>
                   <button
                     type="button"
                     onClick={() => abrirAcao("inscricao", e)}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.78125rem] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
                     <FilePenLine size={13} className="text-black/40" aria-hidden="true" /> Nova inscrição
                   </button>
@@ -634,11 +634,11 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
                 className="rounded border border-black/8 p-1"
               />
               <div>
-                <span className="text-[16px] font-semibold text-black/85">{e.nome}</span>
-                <div className="mt-1 text-[22px] font-semibold leading-none tabular-nums text-black/90">
+                <span className="text-[1rem] font-semibold text-black/85">{e.nome}</span>
+                <div className="mt-1 text-[1.375rem] font-semibold leading-none tabular-nums text-black/90">
                   {loading ? "…" : fmt(total)}
                 </div>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-black/30">Total 2025</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-wider text-black/30">Total 2025</span>
               </div>
             </div>
 
@@ -684,7 +684,7 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
 
 export default function ComparativoPage() {
   return (
-    <Suspense fallback={<div className="min-h-[360px] animate-pulse bg-black/[.015]" />}>
+    <Suspense fallback={<div className="min-h-[22.5rem] animate-pulse bg-black/[.015]" />}>
       <ComparativoContent />
     </Suspense>
   );

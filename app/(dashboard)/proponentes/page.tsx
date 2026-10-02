@@ -14,6 +14,7 @@ import { ProjectIdentity, PROPONENTE_ICON_OPTIONS } from "@/components/ui/Projec
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { calculateWeightedScore, CompactDecisionScoreRing } from "@/components/relationship/DecisionScorecard";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
+import { useOrganizationId } from "@/contexts/OrganizationContext";
 
 type ViewMode = "lista" | "mapa";
 const VIEW_MODES = ["lista", "mapa"] as const;
@@ -36,18 +37,18 @@ type ProponenteProject = {
 type ProponenteProjectRow = ProponenteProject & { proponente_id: string | null };
 
 const PROPONENTES_COLUMNS = [
-  { id: "proponente", label: "Proponente", width: "250px", grow: true, hideable: false },
-  { id: "perfil", label: "Perfil", width: "180px" },
-  { id: "portfolio", label: "Portfólio", width: "145px" },
-  { id: "captacao", label: "Captação", width: "220px" },
-  { id: "proximo_movimento", label: "Próximo movimento", width: "190px" },
-  { id: "contato", label: "Contato principal", width: "200px" },
-  { id: "score", label: "Score", width: "90px" },
-  { id: "cnpj", label: "CNPJ / CPF", width: "170px", defaultHidden: true },
-  { id: "site", label: "Site", width: "160px", defaultHidden: true },
-  { id: "adicionado_em", label: "Adicionado em", width: "140px", defaultHidden: true },
-  { id: "atualizado_em", label: "Atualizado em", width: "140px", defaultHidden: true },
-  { id: "acoes", label: "Ações", width: "80px", defaultHidden: true },
+  { id: "proponente", label: "Proponente", width: "15.625rem", grow: true, hideable: false },
+  { id: "perfil", label: "Perfil", width: "11.25rem" },
+  { id: "portfolio", label: "Portfólio", width: "9.0625rem" },
+  { id: "captacao", label: "Captação", width: "13.75rem" },
+  { id: "proximo_movimento", label: "Próximo movimento", width: "11.875rem" },
+  { id: "contato", label: "Contato principal", width: "12.5rem" },
+  { id: "score", label: "Score", width: "5.625rem" },
+  { id: "cnpj", label: "CNPJ / CPF", width: "10.625rem", defaultHidden: true },
+  { id: "site", label: "Site", width: "10rem", defaultHidden: true },
+  { id: "adicionado_em", label: "Adicionado em", width: "8.75rem", defaultHidden: true },
+  { id: "atualizado_em", label: "Atualizado em", width: "8.75rem", defaultHidden: true },
+  { id: "acoes", label: "Ações", width: "5rem", defaultHidden: true },
 ] as const satisfies readonly ColumnDefinition[];
 
 type QuickFilter = "todos" | "com_projetos" | "sem_projetos" | "com_captacao" | "sem_atividade";
@@ -129,20 +130,20 @@ function ProponentesMapView({ items, onOpenProponente, onOpenProjeto }: {
               <ProjectIdentity nome={item.nome} tipo={item.identidade_tipo} valor={item.identidade_valor} logoUrl={item.identidade_logo_url} cor={item.identidade_cor} iconOptions={PROPONENTE_ICON_OPTIONS} />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="truncate text-[14px] font-bold text-black">{item.nome}</h2>
-                  <span className="text-[10px] font-semibold text-black/35">{item.n_projetos} {item.n_projetos === 1 ? "projeto" : "projetos"}</span>
+                  <h2 className="truncate text-[0.875rem] font-bold text-black">{item.nome}</h2>
+                  <span className="text-[0.625rem] font-semibold text-black/35">{item.n_projetos} {item.n_projetos === 1 ? "projeto" : "projetos"}</span>
                 </div>
-                <p className="mt-1 text-[11px] text-black/40">{[item.tipo ? tipoLabels[item.tipo] ?? TIPO_LABEL[item.tipo] ?? item.tipo : null, item.cidade, item.estado].filter(Boolean).join(" / ") || "Sem classificação"}</p>
-                {(target > 0 || guaranteed > 0) && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[10px] text-black/35"><span>Objetivo <strong className="text-black/60">{fmtMoney(target)}</strong></span><span>Garantido <strong className="text-[#2E8932]">{fmtMoney(guaranteed)}</strong></span></div>}
+                <p className="mt-1 text-[0.6875rem] text-black/40">{[item.tipo ? tipoLabels[item.tipo] ?? TIPO_LABEL[item.tipo] ?? item.tipo : null, item.cidade, item.estado].filter(Boolean).join(" / ") || "Sem classificação"}</p>
+                {(target > 0 || guaranteed > 0) && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-black/35"><span>Objetivo <strong className="text-black/60">{fmtMoney(target)}</strong></span><span>Garantido <strong className="text-[#2E8932]">{fmtMoney(guaranteed)}</strong></span></div>}
               </div>
             </button>
             <div className="grid gap-2 bg-[#F7F7F5] p-3 sm:grid-cols-2">
               {item.projetos.length === 0 ? (
-                <div className="col-span-full flex items-center justify-center gap-2 rounded border border-dashed border-black/10 py-8 text-[11px] text-black/25"><FolderOpen size={13}/>Nenhum projeto vinculado</div>
+                <div className="col-span-full flex items-center justify-center gap-2 rounded border border-dashed border-black/10 py-8 text-[0.6875rem] text-black/25"><FolderOpen size={13}/>Nenhum projeto vinculado</div>
               ) : item.projetos.map(project => (
                 <button key={project.id} type="button" onClick={() => onOpenProjeto(project.id)} className="flex min-w-0 items-center gap-2.5 rounded border border-black/[.07] bg-white p-2.5 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                   <ProjectIdentity nome={project.nome} tipo={project.identidade_tipo} valor={project.identidade_valor} logoUrl={project.identidade_logo_url} size="sm"/>
-                  <div className="min-w-0"><p className="truncate text-[11px] font-semibold text-black/75">{project.nome}</p><p className="mt-0.5 text-[9.5px] capitalize text-black/30">{project.fase?.replaceAll("_", " ") ?? "Planejamento"}</p></div>
+                  <div className="min-w-0"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{project.nome}</p><p className="mt-0.5 text-[0.59375rem] capitalize text-black/30">{project.fase?.replaceAll("_", " ") ?? "Planejamento"}</p></div>
                 </button>
               ))}
             </div>
@@ -157,6 +158,7 @@ export default function ProponentesPage() {
   const supabase = createClient();
   const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
+  const organizationId = useOrganizationId();
   const { etiquetasProponente } = useEtiquetas();
   const [proponentes, setProponentes] = useState<ProponenteRow[]>([]);
   const [loading, setLoading]         = useState(true);
@@ -191,13 +193,18 @@ export default function ProponentesPage() {
   }
 
   async function fetchData() {
+    if (!organizationId) return;
     setLoading(true);
+    // Restrito à organização atual em todas as cinco consultas — proponentes
+    // e projetos_crm são visíveis em todas as organizações de que o usuário
+    // participa (a segunda isola só por dono via RLS, nem por organização),
+    // então sem esses filtros a lista misturava dados de outras organizações.
     const [{ data: rawData, error }, { data: projectData }, { data: scoreData }, { data: contactData }, { data: activityData }] = await Promise.all([
-      supabase.from("proponentes").select("id, nome, cnpj, tipo, cidade, estado, email, telefone, site, descricao, created_at, updated_at, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor").order("nome", { ascending: true }),
-      supabase.from("projetos_crm").select("id, nome, proponente_id, fase, valor_alvo, valor_garantido, identidade_tipo, identidade_valor, identidade_logo_url").order("nome", { ascending: true }),
-      supabase.from("proponente_score_criterios").select("proponente_id,peso,nota"),
-      supabase.from("contatos").select("id,proponente_id,nome,email,cargo,influencia,ultima_interacao,ativo_na_empresa").not("proponente_id", "is", null),
-      supabase.from("atividades").select("id,proponente_id,projeto_id,nome,data_prevista,created_at").eq("feita", false).order("data_prevista", { ascending: true, nullsFirst: false }),
+      supabase.from("proponentes").select("id, nome, cnpj, tipo, cidade, estado, email, telefone, site, descricao, created_at, updated_at, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor").eq("organization_id", organizationId).order("nome", { ascending: true }),
+      supabase.from("projetos_crm").select("id, nome, proponente_id, fase, valor_alvo, valor_garantido, identidade_tipo, identidade_valor, identidade_logo_url").eq("organization_id", organizationId).order("nome", { ascending: true }),
+      supabase.from("proponente_score_criterios").select("proponente_id,peso,nota").eq("organization_id", organizationId),
+      supabase.from("contatos").select("id,proponente_id,nome,email,cargo,influencia,ultima_interacao,ativo_na_empresa").eq("organization_id", organizationId).not("proponente_id", "is", null),
+      supabase.from("atividades").select("id,proponente_id,projeto_id,nome,data_prevista,created_at").eq("organization_id", organizationId).eq("feita", false).order("data_prevista", { ascending: true, nullsFirst: false }),
     ]);
 
     if (error || !rawData) { setLoading(false); return; }
@@ -235,7 +242,7 @@ export default function ProponentesPage() {
     setLoading(false);
   }
 
-  useEffect(() => { fetchData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
+  useEffect(() => { fetchData(); }, [organizationId]); // eslint-disable-line react-hooks/exhaustive-deps, react-hooks/set-state-in-effect
 
   function handleSaved() {
     fetchData();
@@ -293,7 +300,7 @@ export default function ProponentesPage() {
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
                     {["Proponente", "Perfil", "Portfólio", "Captação", "Próximo movimento", "Contato principal", "Score", "CNPJ / CPF", "Site", "Adicionado em", "Atualizado em", "Ações"].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
+                      <th key={h} className="px-4 py-3 text-left text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -327,13 +334,13 @@ export default function ProponentesPage() {
                           onClick={() => router.push(`/proponentes/${p.id}`)}
                         >
                           {/* Nome */}
-                          <td className="px-4 py-3.5 max-w-[240px]">
+                          <td className="px-4 py-3.5 max-w-[15rem]">
                             <div className="flex items-center gap-2.5">
                               <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} iconOptions={PROPONENTE_ICON_OPTIONS} />
                               <div className="min-w-0">
-                                <p className="text-[13px] font-semibold text-black leading-tight line-clamp-1">{p.nome}</p>
+                                <p className="text-[0.8125rem] font-semibold text-black leading-tight line-clamp-1">{p.nome}</p>
                                 {p.descricao && (
-                                  <p className="text-[11px] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
+                                  <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
                                 )}
                               </div>
                             </div>
@@ -342,33 +349,33 @@ export default function ProponentesPage() {
                           {/* Perfil */}
                           <td className="px-4 py-3.5">
                             <div className="space-y-1">
-                              <p className="text-[11px] font-medium" style={{ color: tipoBg ?? "rgba(13,13,13,.35)" }}>{p.tipo ? tipoMeta?.label ?? TIPO_LABEL[p.tipo] ?? p.tipo : "Sem tipo"}</p>
-                              <p className="truncate text-[10px] text-black/35">{[p.cidade, p.estado].filter(Boolean).join(" · ") || "Sem localização"}</p>
+                              <p className="text-[0.6875rem] font-medium" style={{ color: tipoBg ?? "rgba(13,13,13,.35)" }}>{p.tipo ? tipoMeta?.label ?? TIPO_LABEL[p.tipo] ?? p.tipo : "Sem tipo"}</p>
+                              <p className="truncate text-[0.625rem] text-black/35">{[p.cidade, p.estado].filter(Boolean).join(" · ") || "Sem localização"}</p>
                             </div>
                           </td>
 
                           {/* Portfólio */}
                           <td className="px-4 py-3.5">
-                            <p className="text-[12px] font-medium text-black/60">{p.n_projetos} {p.n_projetos === 1 ? "projeto" : "projetos"}</p>
-                            <p className="mt-1 text-[10px] text-black/30">{activeProjects} {activeProjects === 1 ? "ativo" : "ativos"}</p>
+                            <p className="text-[0.75rem] font-medium text-black/60">{p.n_projetos} {p.n_projetos === 1 ? "projeto" : "projetos"}</p>
+                            <p className="mt-1 text-[0.625rem] text-black/30">{activeProjects} {activeProjects === 1 ? "ativo" : "ativos"}</p>
                           </td>
 
                           {/* Captação */}
                           <td className="px-4 py-3.5">
                             {target > 0 ? <div>
-                              <p className="text-[11px] font-medium tabular-nums text-black/60"><span className="text-[#2E8932]">{fmtMoney(guaranteed)}</span> de {fmtMoney(target)}</p>
-                              <div className="mt-2 flex items-center gap-2"><span className="h-1 flex-1 overflow-hidden rounded-full bg-black/[.06]"><span className="block h-full rounded-full bg-[#2E8932]" style={{ width: `${progress}%` }}/></span><span className="w-8 text-right text-[9.5px] tabular-nums text-black/35">{progress}%</span></div>
-                            </div> : <span className="text-[11px] text-black/25">Sem meta definida</span>}
+                              <p className="text-[0.6875rem] font-medium tabular-nums text-black/60"><span className="text-[#2E8932]">{fmtMoney(guaranteed)}</span> de {fmtMoney(target)}</p>
+                              <div className="mt-2 flex items-center gap-2"><span className="h-1 flex-1 overflow-hidden rounded-full bg-black/[.06]"><span className="block h-full rounded-full bg-[#2E8932]" style={{ width: `${progress}%` }}/></span><span className="w-8 text-right text-[0.59375rem] tabular-nums text-black/35">{progress}%</span></div>
+                            </div> : <span className="text-[0.6875rem] text-black/25">Sem meta definida</span>}
                           </td>
 
                           {/* Próximo movimento */}
                           <td className="px-4 py-3.5">
-                            {p.proxima_atividade ? <div className="flex items-start gap-2"><CalendarClock size={12} className="mt-0.5 shrink-0 text-black/25"/><div className="min-w-0"><p className="truncate text-[11px] font-medium text-black/60">{p.proxima_atividade.nome}</p><p className="mt-1 text-[10px] tabular-nums text-black/30">{p.proxima_atividade.data_prevista ? fmtDate(p.proxima_atividade.data_prevista) : "Sem data"}</p></div></div> : <span className="text-[11px] text-[#D94E4E]">Sem atividade</span>}
+                            {p.proxima_atividade ? <div className="flex items-start gap-2"><CalendarClock size={12} className="mt-0.5 shrink-0 text-black/25"/><div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60">{p.proxima_atividade.nome}</p><p className="mt-1 text-[0.625rem] tabular-nums text-black/30">{p.proxima_atividade.data_prevista ? fmtDate(p.proxima_atividade.data_prevista) : "Sem data"}</p></div></div> : <span className="text-[0.6875rem] text-[#D94E4E]">Sem atividade</span>}
                           </td>
 
                           {/* Contato principal */}
                           <td className="px-4 py-3.5">
-                            {p.contato_principal ? <div className="min-w-0"><p className="truncate text-[11px] font-medium text-black/60">{p.contato_principal.nome || "Contato sem nome"}</p><p className="mt-1 truncate text-[10px] text-black/30">{p.contato_principal.cargo || p.contato_principal.email || "Sem detalhes"}</p></div> : p.email ? <div className="flex min-w-0 items-center gap-1.5"><Mail size={11} className="shrink-0 text-black/25"/><span className="truncate text-[10px] text-black/40">{p.email}</span></div> : <span className="text-[11px] text-black/25">Sem contato</span>}
+                            {p.contato_principal ? <div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60">{p.contato_principal.nome || "Contato sem nome"}</p><p className="mt-1 truncate text-[0.625rem] text-black/30">{p.contato_principal.cargo || p.contato_principal.email || "Sem detalhes"}</p></div> : p.email ? <div className="flex min-w-0 items-center gap-1.5"><Mail size={11} className="shrink-0 text-black/25"/><span className="truncate text-[0.625rem] text-black/40">{p.email}</span></div> : <span className="text-[0.6875rem] text-black/25">Sem contato</span>}
                           </td>
 
                           {/* Score */}
@@ -376,10 +383,10 @@ export default function ProponentesPage() {
                             <CompactDecisionScoreRing score={p.score} />
                           </td>
 
-                          <td className="px-4 py-3.5">{p.cnpj ? <span className="text-[11px] font-mono text-black/45">{p.cnpj}</span> : <span className="text-black/20">—</span>}</td>
-                          <td className="px-4 py-3.5">{p.site ? <a href={p.site} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[10px] text-black/40 hover:text-[#7259B5]" onClick={e=>e.stopPropagation()}><ExternalLink size={11}/><span className="truncate">{p.site.replace(/^https?:\/\//, "")}</span></a> : <span className="text-black/20">—</span>}</td>
-                          <td className="px-4 py-3.5 text-[10px] tabular-nums text-black/35 whitespace-nowrap">{fmtDate(p.created_at)}</td>
-                          <td className="px-4 py-3.5 text-[10px] tabular-nums text-black/35 whitespace-nowrap">{fmtDate(p.updated_at)}</td>
+                          <td className="px-4 py-3.5">{p.cnpj ? <span className="text-[0.6875rem] font-mono text-black/45">{p.cnpj}</span> : <span className="text-black/20">—</span>}</td>
+                          <td className="px-4 py-3.5">{p.site ? <a href={p.site} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[0.625rem] text-black/40 hover:text-[#7259B5]" onClick={e=>e.stopPropagation()}><ExternalLink size={11}/><span className="truncate">{p.site.replace(/^https?:\/\//, "")}</span></a> : <span className="text-black/20">—</span>}</td>
+                          <td className="px-4 py-3.5 text-[0.625rem] tabular-nums text-black/35 whitespace-nowrap">{fmtDate(p.created_at)}</td>
+                          <td className="px-4 py-3.5 text-[0.625rem] tabular-nums text-black/35 whitespace-nowrap">{fmtDate(p.updated_at)}</td>
 
                           {/* Ações */}
                           <td className="px-4 py-3.5">

@@ -66,7 +66,7 @@ export default function WorkspaceProponenteListPage() {
 
   if (loading) {
     return (
-      <div className="mx-auto w-full max-w-[1280px] px-4 pt-8 sm:px-6 lg:px-10">
+      <div className="mx-auto w-full max-w-pagina px-4 pt-8 sm:px-6 lg:px-10">
         <div className="h-8 w-64 bg-black/8 rounded animate-pulse mb-2" />
         <div className="h-4 w-48 bg-black/8 rounded animate-pulse" />
       </div>
@@ -76,22 +76,22 @@ export default function WorkspaceProponenteListPage() {
   return (
     <div className="min-h-full">
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-8 sm:px-6 lg:px-10 lg:pt-10">
-          <h1 className="text-[28px] font-semibold leading-[1.04] tracking-[-.04em] text-[#0D0D0D] sm:text-[32px]">Meus projetos</h1>
-          <p className="mt-2 text-[14px] text-black/45">
+        <div className="mx-auto max-w-pagina px-4 pb-8 pt-8 sm:px-6 lg:px-10 lg:pt-10">
+          <h1 className="text-[1.75rem] font-semibold leading-[1.04] tracking-[-.04em] text-[#0D0D0D] sm:text-[2rem]">Meus projetos</h1>
+          <p className="mt-2 text-[0.875rem] text-black/45">
             {proponentesUnicos > 1 ? `Projetos de ${proponentesUnicos} proponentes vinculados a você.` : "Acompanhe o andamento das negociações e inscrições de cada projeto."}
           </p>
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-[1280px] px-4 py-8 sm:px-6 lg:px-10">
-        {erro && <p role="alert" className="mb-4 text-[12px] font-medium text-[#D94E4E]">{erro}</p>}
+      <main className="mx-auto w-full max-w-pagina px-4 py-8 sm:px-6 lg:px-10">
+        {erro && <p role="alert" className="mb-4 text-[0.75rem] font-medium text-[#D94E4E]">{erro}</p>}
 
         {projetos.length === 0 ? (
           <div className="rounded border px-6 py-14 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>
             <FolderOpen size={22} className="mx-auto text-black/15" />
-            <p className="mt-3 text-[13px] font-medium text-black/40">Nenhum projeto vinculado ainda.</p>
-            <p className="mt-1 text-[12px] text-black/30">Assim que um projeto seu for cadastrado, ele aparece aqui.</p>
+            <p className="mt-3 text-[0.8125rem] font-medium text-black/40">Nenhum projeto vinculado ainda.</p>
+            <p className="mt-1 text-[0.75rem] text-black/30">Assim que um projeto seu for cadastrado, ele aparece aqui.</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -107,18 +107,18 @@ export default function WorkspaceProponenteListPage() {
                 >
                   <div className="flex items-start justify-between gap-3">
                     <ProjectIdentity nome={projeto.nome} tipo={projeto.identidadeTipo} valor={projeto.identidadeValor} logoUrl={projeto.identidadeLogoUrl} cor={projeto.identidadeCor} size="sm" />
-                    <span className="flex shrink-0 items-center gap-1 rounded border bg-white px-2 py-1 text-[10px] font-medium" style={{ borderColor: faseMeta.color + "47", color: faseMeta.color }}>
+                    <span className="flex shrink-0 items-center gap-1 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: faseMeta.color + "47", color: faseMeta.color }}>
                       <faseMeta.Icon size={10} />{faseMeta.label}
                     </span>
                   </div>
-                  <p className="mt-3 truncate text-[14px] font-semibold text-black/80 group-hover:text-black">{projeto.nome}</p>
-                  {proponentesUnicos > 1 && <p className="mt-0.5 truncate text-[11px] text-black/35">{projeto.proponenteNome}</p>}
+                  <p className="mt-3 truncate text-[0.875rem] font-semibold text-black/80 group-hover:text-black">{projeto.nome}</p>
+                  {proponentesUnicos > 1 && <p className="mt-0.5 truncate text-[0.6875rem] text-black/35">{projeto.proponenteNome}</p>}
 
                   {projeto.valorAlvo ? (
                     <div className="mt-4">
                       <div className="mb-1.5 flex items-center justify-between">
-                        <span className="text-[11px] text-black/40">{fmtValor(projeto.valorGarantido)} de {fmtValor(projeto.valorAlvo)}</span>
-                        <span className="text-[11px] font-bold text-black/50">{progress}%</span>
+                        <span className="text-[0.6875rem] text-black/40">{fmtValor(projeto.valorGarantido)} de {fmtValor(projeto.valorAlvo)}</span>
+                        <span className="text-[0.6875rem] font-bold text-black/50">{progress}%</span>
                       </div>
                       <div className="h-1.5 overflow-hidden rounded bg-black/[.06]">
                         <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${progress}%` }} />
@@ -126,7 +126,7 @@ export default function WorkspaceProponenteListPage() {
                     </div>
                   ) : <div className="mt-4 h-1.5" />}
 
-                  <div className="mt-4 flex items-center gap-3 border-t pt-3 text-[11px] text-black/35" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                  <div className="mt-4 flex items-center gap-3 border-t pt-3 text-[0.6875rem] text-black/35" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                     <span>{projeto.negociacoesCount} negociaç{projeto.negociacoesCount === 1 ? "ão" : "ões"}</span>
                     <span>·</span>
                     <span>{projeto.inscricoesCount} inscriç{projeto.inscricoesCount === 1 ? "ão" : "ões"}</span>

@@ -16,16 +16,16 @@ export function KanbanColumn({ label, count, total, forecast, accent, iconName, 
   onDrop?: (event: DragEvent<HTMLDivElement>) => void; children: ReactNode;
 }) {
   const HeaderIcon = iconName ? (Icons as any)[iconName] as LucideIcon | undefined : undefined;
-  return <section className={`flex shrink-0 snap-start flex-col overflow-hidden rounded border transition-colors ${compact ? "min-h-[300px] w-[82vw] max-w-[304px] md:w-[300px]" : "min-h-[400px] w-[84vw] max-w-[304px] md:w-72"}`} style={{ borderColor: active ? "#7259B570" : "rgba(13,13,13,.07)", background: active ? "#7259B508" : "rgba(13,13,13,.018)" }} aria-label={`${label}: ${count ?? 0} itens`}>
-    <header className={`flex items-center justify-between gap-3 border-b bg-white/80 ${compact ? "min-h-[54px] px-3.5 py-2.5" : "min-h-[62px] items-start px-4 py-3"}`} style={{ borderColor: "rgba(13,13,13,.06)" }}>
+  return <section className={`flex shrink-0 snap-start flex-col overflow-hidden rounded border transition-colors ${compact ? "min-h-[18.75rem] w-[82vw] max-w-[19rem] md:w-[18.75rem]" : "min-h-[25rem] w-[84vw] max-w-[19rem] md:w-72"}`} style={{ borderColor: active ? "#7259B570" : "rgba(13,13,13,.07)", background: active ? "#7259B508" : "rgba(13,13,13,.018)" }} aria-label={`${label}: ${count ?? 0} itens`}>
+    <header className={`flex items-center justify-between gap-3 border-b bg-white/80 ${compact ? "min-h-[3.375rem] px-3.5 py-2.5" : "min-h-[3.875rem] items-start px-4 py-3"}`} style={{ borderColor: "rgba(13,13,13,.06)" }}>
       <div className="min-w-0">
-        <div className="flex items-center gap-2">{HeaderIcon ? <HeaderIcon size={14} strokeWidth={2.2} className="shrink-0" style={{ color: accent }}/> : <span className="h-[7px] w-[7px] shrink-0 rounded" style={{ background: accent }}/>}<h2 className="truncate text-[12px] font-semibold text-black/75">{label}</h2></div>
+        <div className="flex items-center gap-2">{HeaderIcon ? <HeaderIcon size={14} strokeWidth={2.2} className="shrink-0" style={{ color: accent }}/> : <span className="h-[0.4375rem] w-[0.4375rem] shrink-0 rounded" style={{ background: accent }}/>}<h2 className="truncate text-[0.75rem] font-semibold text-black/75">{label}</h2></div>
         {compact ? (
-          <p className="mt-0.5 truncate text-[10px] font-medium tabular-nums text-black/35">{count === null ? "Carregando" : `${count} ${count === 1 ? "item" : "itens"}`}{total ? ` · ${total}` : ""}{forecast ? ` · ${forecast}` : ""}</p>
+          <p className="mt-0.5 truncate text-[0.625rem] font-medium tabular-nums text-black/35">{count === null ? "Carregando" : `${count} ${count === 1 ? "item" : "itens"}`}{total ? ` · ${total}` : ""}{forecast ? ` · ${forecast}` : ""}</p>
         ) : (
           <>
-            <p className="mt-1 text-[10.5px] font-medium tabular-nums text-black/35">{count === null ? "Carregando" : `${count} ${count === 1 ? "item" : "itens"}`}{total ? ` · ${total}` : ""}</p>
-            {forecast && <p className="mt-0.5 text-[10px] font-medium tabular-nums" style={{color:accent}}>Previsão {forecast}</p>}
+            <p className="mt-1 text-[0.65625rem] font-medium tabular-nums text-black/35">{count === null ? "Carregando" : `${count} ${count === 1 ? "item" : "itens"}`}{total ? ` · ${total}` : ""}</p>
+            {forecast && <p className="mt-0.5 text-[0.625rem] font-medium tabular-nums" style={{color:accent}}>Previsão {forecast}</p>}
           </>
         )}
       </div>
@@ -54,7 +54,7 @@ export function KanbanCard({ children, onClick, dragging = false, draggable = fa
 }
 
 export function KanbanEmpty({ label, actionLabel, onAction }: { label: string; actionLabel?: string; onAction?: () => void }) {
-  return <div className="flex min-h-28 flex-col items-center justify-center px-4 text-center"><p className="text-[11px] font-medium text-black/28">{label}</p>{onAction&&<button onClick={onAction} className="mt-2 text-[11px] font-medium text-[#7259B5] hover:text-[#7259B5]/70">{actionLabel ?? "Adicionar primeiro"}</button>}</div>;
+  return <div className="flex min-h-28 flex-col items-center justify-center px-4 text-center"><p className="text-[0.6875rem] font-medium text-black/28">{label}</p>{onAction&&<button onClick={onAction} className="mt-2 text-[0.6875rem] font-medium text-[#7259B5] hover:text-[#7259B5]/70">{actionLabel ?? "Adicionar primeiro"}</button>}</div>;
 }
 
 export function KanbanSkeleton() {

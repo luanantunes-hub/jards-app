@@ -54,15 +54,15 @@ export function ProponenteWorkspaceModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[calc(100dvh-20px)] w-full max-w-[520px] flex-col overflow-hidden rounded-b border-x border-b border-black/[.07] bg-white shadow-[0_16px_45px_rgba(13,13,13,.15)]"
+        className="flex max-h-[calc(100dvh-20px)] w-full max-w-[32.5rem] flex-col overflow-hidden rounded-b border-x border-b border-black/[.07] bg-white shadow-[0_16px_45px_rgba(13,13,13,.15)]"
         onClick={event => event.stopPropagation()}
       >
         <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-5 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><FolderOpen size={16} className="text-black/50" /></div>
             <div>
-              <h2 id={titleId} className="text-[15px] font-bold text-black">Dar acesso ao proponente</h2>
-              <p className="mt-0.5 text-[10px] text-black/35">Ele passa a ver os próprios projetos e o status de negociações e inscrições</p>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Dar acesso ao proponente</h2>
+              <p className="mt-0.5 text-[0.625rem] text-black/35">Ele passa a ver os próprios projetos e o status de negociações e inscrições</p>
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]"><X size={15} className="text-black/40" /></button>
@@ -70,58 +70,58 @@ export function ProponenteWorkspaceModal({
 
         {contaExistente ? (
           <main className="flex-1 space-y-4 px-5 py-6">
-            <p className="text-[13px] font-semibold text-black">Acesso liberado.</p>
-            <p className="text-[12px] text-black/50">
+            <p className="text-[0.8125rem] font-semibold text-black">Acesso liberado.</p>
+            <p className="text-[0.75rem] text-black/50">
               <strong className="font-semibold text-black/70">{contaExistente}</strong> já tinha uma conta no Jards, então não enviamos convite por e-mail — o acesso ao workspace já está liberado.
               Se a pessoa não lembrar a senha, é só usar &quot;Esqueci minha senha&quot; na tela de login.
             </p>
-            <button type="button" onClick={onClose} className="text-[12px] font-semibold text-[#7259B5]">Concluir</button>
+            <button type="button" onClick={onClose} className="text-[0.75rem] font-semibold text-[#7259B5]">Concluir</button>
           </main>
         ) : inviteUrl ? (
           <main className="flex-1 space-y-4 px-5 py-6">
-            <p className="text-[13px] font-semibold text-black">Acesso liberado.</p>
-            <p className="text-[12px] text-black/50">Esse proponente já tinha um convite pendente — em vez de mandar outro e-mail, copie e envie esse link diretamente pra ele:</p>
+            <p className="text-[0.8125rem] font-semibold text-black">Acesso liberado.</p>
+            <p className="text-[0.75rem] text-black/50">Esse proponente já tinha um convite pendente — em vez de mandar outro e-mail, copie e envie esse link diretamente pra ele:</p>
             <div className="flex items-center gap-2 rounded border border-black/[.12] bg-black/[.02] px-3 py-2.5">
-              <span className="min-w-0 flex-1 truncate text-[11px] text-black/60">{inviteUrl}</span>
+              <span className="min-w-0 flex-1 truncate text-[0.6875rem] text-black/60">{inviteUrl}</span>
               <button
                 type="button"
                 onClick={async () => { await navigator.clipboard.writeText(inviteUrl); setCopiado(true); }}
-                className="flex shrink-0 items-center gap-1 rounded border border-black/10 px-2.5 py-1.5 text-[11px] font-semibold text-black/60 transition hover:bg-black/[.04]"
+                className="flex shrink-0 items-center gap-1 rounded border border-black/10 px-2.5 py-1.5 text-[0.6875rem] font-semibold text-black/60 transition hover:bg-black/[.04]"
               >
                 <Copy size={12} />{copiado ? "Copiado" : "Copiar"}
               </button>
             </div>
-            <button type="button" onClick={onClose} className="text-[12px] font-semibold text-[#7259B5]">Concluir</button>
+            <button type="button" onClick={onClose} className="text-[0.75rem] font-semibold text-[#7259B5]">Concluir</button>
           </main>
         ) : (
           <>
             <main className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-5">
               {jaTemAcesso && (
-                <p className="rounded border border-black/[.08] bg-black/[.02] px-3 py-2.5 text-[11px] text-black/50">
+                <p className="rounded border border-black/[.08] bg-black/[.02] px-3 py-2.5 text-[0.6875rem] text-black/50">
                   Este proponente já tem acesso ao workspace. Convidar de novo reenvia o link para um e-mail diferente, se precisar trocar.
                 </p>
               )}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-[12px] font-semibold text-black"><Mail size={12} className="text-black/35" />E-mail do proponente</label>
+                <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-black"><Mail size={12} className="text-black/35" />E-mail do proponente</label>
                 <input
                   type="email"
                   value={email}
                   onChange={event => setEmail(event.target.value)}
                   placeholder="contato@instituicao.org"
-                  className="h-10 w-full rounded border border-black/[.15] bg-white px-3 text-[13px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
+                  className="h-10 w-full rounded border border-black/[.15] bg-white px-3 text-[0.8125rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
                 />
-                <p className="mt-1.5 text-[11px] text-black/35">Ele recebe um convite por e-mail pra criar uma senha e ver os próprios projetos.</p>
+                <p className="mt-1.5 text-[0.6875rem] text-black/35">Ele recebe um convite por e-mail pra criar uma senha e ver os próprios projetos.</p>
               </div>
             </main>
             <footer className="flex shrink-0 items-center justify-between gap-4 border-t border-black/[.08] px-5 py-3.5">
-              {erro ? <p role="alert" className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+              {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
               <div className="ml-auto flex shrink-0 items-center gap-2">
-                <button type="button" onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
+                <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
                 <button
                   type="button"
                   onClick={() => void handleConvidar()}
                   disabled={saving}
-                  className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Save size={12} />{saving ? "Enviando…" : "Convidar"}
                 </button>

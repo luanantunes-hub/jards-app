@@ -138,14 +138,14 @@ function NovoContatoInline({
         value={nome}
         onChange={e => setNome(e.target.value)}
         placeholder="Nome *"
-        className="w-full text-[12px] border rounded px-2.5 py-1.5 bg-white outline-none focus:ring-1 focus:ring-black/20"
+        className="w-full text-[0.75rem] border rounded px-2.5 py-1.5 bg-white outline-none focus:ring-1 focus:ring-black/20"
         style={{ borderColor: "rgba(13,13,13,.15)" }}
       />
       <input
         value={cargo}
         onChange={e => setCargo(e.target.value)}
         placeholder="Cargo"
-        className="w-full text-[12px] border rounded px-2.5 py-1.5 bg-white outline-none focus:ring-1 focus:ring-black/20"
+        className="w-full text-[0.75rem] border rounded px-2.5 py-1.5 bg-white outline-none focus:ring-1 focus:ring-black/20"
         style={{ borderColor: "rgba(13,13,13,.15)" }}
       />
       <input
@@ -153,19 +153,19 @@ function NovoContatoInline({
         onChange={e => setEmail(e.target.value)}
         placeholder="E-mail"
         type="email"
-        className="w-full text-[12px] border rounded px-2.5 py-1.5 bg-white outline-none focus:ring-1 focus:ring-black/20"
+        className="w-full text-[0.75rem] border rounded px-2.5 py-1.5 bg-white outline-none focus:ring-1 focus:ring-black/20"
         style={{ borderColor: "rgba(13,13,13,.15)" }}
       />
-      {erro && <p role="alert" className="text-[11px] text-[#D94E4E]">{erro}</p>}
+      {erro && <p role="alert" className="text-[0.6875rem] text-[#D94E4E]">{erro}</p>}
       <div className="flex gap-2">
         <button
           onClick={handleSave}
           disabled={saving || !nome.trim()}
-          className="flex-1 py-1.5 rounded text-[11px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 hover:bg-black/[.04] transition disabled:opacity-40"
+          className="flex-1 py-1.5 rounded text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 hover:bg-black/[.04] transition disabled:opacity-40"
         >
           {saving ? "Salvando…" : "Salvar"}
         </button>
-        <button onClick={onCancel} className="px-3 py-1.5 text-[11px] text-black/35 hover:text-black/55 transition">
+        <button onClick={onCancel} className="px-3 py-1.5 text-[0.6875rem] text-black/35 hover:text-black/55 transition">
           Cancelar
         </button>
       </div>
@@ -526,17 +526,17 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
 
   /* ── Helpers de render ── */
   function SectionLabel({ children }: { children: React.ReactNode }) {
-    return <p className="text-[9px] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
+    return <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
   }
 
   function FieldLabel({ children }: { children: React.ReactNode }) {
-    return <label className="mb-1.5 flex items-center text-[12px] font-semibold text-black">{children}</label>;
+    return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
   }
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col items-center"
       style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex w-full max-w-[760px] flex-col overflow-hidden rounded-b bg-white"
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white"
         style={{ maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }} onClick={e => e.stopPropagation()}>
 
         <header className="flex shrink-0 items-center justify-between border-b px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -545,7 +545,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               <Building2 size={16} className="text-black/50" />
             </div>
             <div className="min-w-0">
-              <h2 id={titleId} className="text-[15px] font-bold text-black">{editData ? "Editar negociação" : "Nova negociação"}</h2>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{editData ? "Editar negociação" : "Nova negociação"}</h2>
             </div>
           </div>
 
@@ -553,23 +553,23 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             <div className="relative">
               <button type="button" onClick={() => setShowModuleMenu(current => !current)}
                 aria-expanded={showModuleMenu}
-                className="flex items-center gap-1.5 rounded border border-black/[.12] bg-white px-3 py-2 text-[11px] font-semibold text-black/45 transition hover:bg-black/[.04] hover:text-black/65 focus:outline-none focus:ring-2 focus:ring-black/[.06]">
+                className="flex items-center gap-1.5 rounded border border-black/[.12] bg-white px-3 py-2 text-[0.6875rem] font-semibold text-black/45 transition hover:bg-black/[.04] hover:text-black/65 focus:outline-none focus:ring-2 focus:ring-black/[.06]">
                 <SlidersHorizontal size={13} /> Campos
               </button>
               {showModuleMenu && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-[270px] rounded border bg-white p-2 shadow-xl" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+                <div className="absolute right-0 top-full z-50 mt-2 w-[16.875rem] rounded border bg-white p-2 shadow-xl" style={{ borderColor: "rgba(13,13,13,.12)" }}>
                   <div className="px-2 pb-2 pt-1">
-                    <p className="text-[11px] font-bold text-black">Escolha o que deseja ver</p>
+                    <p className="text-[0.6875rem] font-bold text-black">Escolha o que deseja ver</p>
                   </div>
                   {CAPTACAO_MODULES.map(({ key, label, Icon }) => (
                     <button key={key} type="button" onClick={() => toggleModule(key)}
                       className="flex w-full items-center gap-2.5 rounded px-2 py-2 text-left transition hover:bg-black/[.04]">
                       <Icon size={14} className={visibleModules[key] ? "text-[#7259B5]" : "text-black/25"} />
                       <span className="min-w-0 flex-1">
-                        <span className="block text-[11px] font-semibold text-black">{label}</span>
+                        <span className="block text-[0.6875rem] font-semibold text-black">{label}</span>
                       </span>
                       <span className={`relative h-5 w-9 flex-shrink-0 rounded-full transition ${visibleModules[key] ? "bg-[#7259B5]" : "bg-black/15"}`}>
-                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${visibleModules[key] ? "translate-x-[18px]" : "translate-x-0.5"}`} />
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${visibleModules[key] ? "translate-x-[1.125rem]" : "translate-x-0.5"}`} />
                       </span>
                     </button>
                   ))}
@@ -592,7 +592,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   <FieldLabel>Patrocinador</FieldLabel>
                   {!empresaId && (
                     <button type="button" onMouseDown={e => { e.preventDefault(); handleCriarEmpresa(empresaSearch.trim() || "Nova empresa"); }}
-                      className="flex items-center gap-1 text-[10px] font-bold text-[#7259B5] transition hover:opacity-70">
+                      className="flex items-center gap-1 text-[0.625rem] font-bold text-[#7259B5] transition hover:opacity-70">
                       <Plus size={10} /> Novo
                     </button>
                   )}
@@ -603,7 +603,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   <input type="text" placeholder="Buscar ou criar…" value={empresaSearch}
                     onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
                     onFocus={() => setEmpresaOpen(true)} onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
-                    className="min-w-0 flex-1 bg-transparent text-[13px] text-black outline-none" />
+                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
                   {empresaSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
                 </div>
                 {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
@@ -612,13 +612,13 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                       <button key={empresa.id} type="button" onMouseDown={event => {
                         event.preventDefault(); setEmpresaId(empresa.id); setEmpresaSearch(empresa.nome); setEmpresaOpen(false);
                         checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id);
-                      }} className="w-full px-3 py-2 text-left text-[13px] text-black transition hover:bg-black/[.04]">
+                      }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
                         {empresa.nome}
                       </button>
                     ))}
                     {empresaSearch.trim() && !hasExactMatch && (
                       <button type="button" onMouseDown={event => { event.preventDefault(); handleCriarEmpresa(empresaSearch.trim()); }} disabled={criandoEmpresa}
-                        className="w-full border-t px-3 py-2 text-left text-[13px] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
+                        className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
                         style={{ borderColor: "rgba(13,13,13,.08)" }}>
                         {criandoEmpresa ? "Criando…" : `+ Criar "${empresaSearch.trim()}"`}
                       </button>
@@ -632,7 +632,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   <FieldLabel>Projeto</FieldLabel>
                   {!projetoId && (
                     <button type="button" onMouseDown={e => { e.preventDefault(); handleCriarProjeto(projetoSearch.trim() || "Novo projeto"); }}
-                      className="flex items-center gap-1 text-[10px] font-bold text-[#7259B5] transition hover:opacity-70">
+                      className="flex items-center gap-1 text-[0.625rem] font-bold text-[#7259B5] transition hover:opacity-70">
                       <Plus size={10} /> Novo
                     </button>
                   )}
@@ -643,7 +643,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   <input type="text" placeholder="Buscar ou criar…" value={projetoSearch}
                     onChange={e => { setProjetoSearch(e.target.value); setProjetoId(""); setProjetoOpen(true); }}
                     onFocus={() => setProjetoOpen(true)} onBlur={() => setTimeout(() => setProjetoOpen(false), 150)}
-                    className="min-w-0 flex-1 bg-transparent text-[13px] text-black outline-none" />
+                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
                   {projetoSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setProjetoSearch(""); setProjetoId(""); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
                 </div>
                 {projetoOpen && (projetosFiltrados.length > 0 || (projetoSearch.trim() && !hasExactMatchProjeto)) && (
@@ -653,13 +653,13 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                         event.preventDefault(); setProjetoId(projeto.id); setProjetoSearch(projeto.nome); setProjetoOpen(false);
                         if (empresaId) checkExclusividade(empresaId, projeto.id);
                       }}
-                        className="w-full px-3 py-2 text-left text-[13px] text-black transition hover:bg-black/[.04]">
+                        className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
                         {projeto.nome}
                       </button>
                     ))}
                     {projetoSearch.trim() && !hasExactMatchProjeto && (
                       <button type="button" onMouseDown={event => { event.preventDefault(); handleCriarProjeto(projetoSearch.trim()); }} disabled={criandoProjeto}
-                        className="w-full border-t px-3 py-2 text-left text-[13px] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
+                        className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
                         style={{ borderColor: "rgba(13,13,13,.08)" }}>
                         {criandoProjeto ? "Criando…" : `+ Criar "${projetoSearch.trim()}"`}
                       </button>
@@ -683,7 +683,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               <div className="flex">
                 {POTENCIAL_OPTIONS.map((option, index) => (
                   <button key={option.value} type="button" onClick={() => setPotencialFechamento(option.value)}
-                    className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[11px] font-semibold transition hover:z-10 hover:bg-black/[.04] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
+                    className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[0.6875rem] font-semibold transition hover:z-10 hover:bg-black/[.04] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
                     style={potencialFechamento === option.value
                       ? { color: option.color, borderColor: `${option.color}70` }
                       : { color: option.color, borderColor: "rgba(13,13,13,.10)" }}>
@@ -699,8 +699,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               <SectionLabel>Pessoas e atribuições</SectionLabel>
               {(blindagem || exclusividade) && (
                 <div className="mb-3 grid gap-2 sm:grid-cols-2">
-                  {blindagem && <div className="rounded bg-[#FEF3C7] px-3 py-2 text-[10px] font-semibold text-[#9A6710]">Empresa já prospectada por {blindagem.captadorNome}.</div>}
-                  {exclusividade && <div className="rounded bg-[#D94E4E12] px-3 py-2 text-[10px] font-semibold text-[#B83E3E]">{EXCLUSAO_LABELS[exclusividade.tipo] || exclusividade.tipo} ativa com {exclusividade.captadorNome}.</div>}
+                  {blindagem && <div className="rounded bg-[#FEF3C7] px-3 py-2 text-[0.625rem] font-semibold text-[#9A6710]">Empresa já prospectada por {blindagem.captadorNome}.</div>}
+                  {exclusividade && <div className="rounded bg-[#D94E4E12] px-3 py-2 text-[0.625rem] font-semibold text-[#B83E3E]">{EXCLUSAO_LABELS[exclusividade.tipo] || exclusividade.tipo} ativa com {exclusividade.captadorNome}.</div>}
                 </div>
               )}
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -713,7 +713,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                         onClick={() => { if (empresaId) setShowNovoContato(true); }}
                         disabled={!empresaId}
                         title={empresaId ? "Cadastrar novo contato" : "Selecione uma empresa primeiro"}
-                        className="flex items-center gap-1 text-[10px] font-semibold text-[#7259B5] transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-30"
+                        className="flex items-center gap-1 text-[0.625rem] font-semibold text-[#7259B5] transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-30"
                       >
                         <UserPlus size={10} /> Novo
                       </button>
@@ -749,7 +749,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                         setCaptacaoTipo(tipo);
                         if (empresaId) checkExclusividade(empresaId, projetoId, undefined, undefined, tipo);
                       }}
-                        className="border-r px-3 py-1.5 text-[10px] font-semibold last:border-r-0"
+                        className="border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
                         style={captacaoTipo === tipo
                           ? { background: "#0D0D0D", color: "white", borderColor: "#0D0D0D" }
                           : { background: "white", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}>
@@ -796,14 +796,14 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   <FieldLabel>Próximo follow-up</FieldLabel>
                   <div className="flex items-center gap-2 rounded border px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                     <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
-                    <input type="date" value={proximoFollowup} onChange={e => setProximoFollowup(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[12px] text-black outline-none" />
+                    <input type="date" value={proximoFollowup} onChange={e => setProximoFollowup(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
                   </div>
                 </div>
                 <div>
                   <FieldLabel>Previsão</FieldLabel>
                   <div className="flex items-center gap-2 rounded border px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                     <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
-                    <input type="date" value={previsao} onChange={e => setPrevisao(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[12px] text-black outline-none" />
+                    <input type="date" value={previsao} onChange={e => setPrevisao(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
                   </div>
                 </div>
               </div>
@@ -828,23 +828,23 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               <div>
                 <FieldLabel>Data e hora</FieldLabel>
                 <input type="datetime-local" value={dataContato} onChange={e => setDataContato(e.target.value)}
-                  className="w-full rounded border bg-white px-3 py-2.5 text-[12px] outline-none" style={{ borderColor: "rgba(13,13,13,.15)" }} />
+                  className="w-full rounded border bg-white px-3 py-2.5 text-[0.75rem] outline-none" style={{ borderColor: "rgba(13,13,13,.15)" }} />
               </div>
               <div>
                 <FieldLabel>Resumo</FieldLabel>
                 <input value={resumoContato} onChange={e => setResumoContato(e.target.value)} placeholder="O que aconteceu?"
-                  className="w-full rounded border bg-white px-3 py-2.5 text-[12px] outline-none" style={{ borderColor: "rgba(13,13,13,.15)" }} />
+                  className="w-full rounded border bg-white px-3 py-2.5 text-[0.75rem] outline-none" style={{ borderColor: "rgba(13,13,13,.15)" }} />
               </div>
             </div>
           </section>
         </main>
 
         <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          {erro ? <p role="alert" className="min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+          {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
           <div className="ml-auto flex flex-shrink-0 items-center gap-2">
-            <button type="button" onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
+            <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSalvar} disabled={saving}
-              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
               <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
             </button>
           </div>

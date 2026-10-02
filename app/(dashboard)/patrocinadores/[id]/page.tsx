@@ -227,13 +227,13 @@ function TrimestralChart({ data }: { data: InvestimentoTrimestre }) {
       <div className="grid grid-cols-2 gap-6 sm:grid-cols-4">
         {qData.map((q, i) => (
           <div key={i}>
-            <p className="text-[10px] font-medium text-black/30 mb-2">{q.name}</p>
+            <p className="text-[0.625rem] font-medium text-black/30 mb-2">{q.name}</p>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-[20px] font-light text-black/75 leading-none tracking-tight">
+              <span className="text-[1.25rem] font-light text-black/75 leading-none tracking-tight">
                 {q.value > 0 ? `${q.pct}%` : "—"}
               </span>
               {q.value > 0 && (
-                <span className="text-[14px] leading-none font-light" style={{ color: q.positive ? "#2E8932" : "#D94E4E" }}>
+                <span className="text-[0.875rem] leading-none font-light" style={{ color: q.positive ? "#2E8932" : "#D94E4E" }}>
                   {q.positive ? "↑" : "↓"}
                 </span>
               )}
@@ -261,13 +261,13 @@ function TrimestralChart({ data }: { data: InvestimentoTrimestre }) {
             >
               {isHovered ? (
                 <div className="text-center px-1">
-                  <p className="text-[11px] font-medium text-black/40 leading-none mb-1">{cell.label}</p>
-                  <p className="text-[14px] font-semibold text-black/70 leading-none">
+                  <p className="text-[0.6875rem] font-medium text-black/40 leading-none mb-1">{cell.label}</p>
+                  <p className="text-[0.875rem] font-semibold text-black/70 leading-none">
                     {cell.v > 0 ? fmtValor(cell.v) : "—"}
                   </p>
                 </div>
               ) : (
-                <span className="text-[12px] font-medium text-black/30 leading-none">{cell.label}</span>
+                <span className="text-[0.75rem] font-medium text-black/30 leading-none">{cell.label}</span>
               )}
             </div>
           );
@@ -326,10 +326,10 @@ function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
   return (
     <div>
       <div className="flex items-center justify-between px-5 pt-5 pb-2">
-        <p className="text-[10px] font-bold text-black/30 uppercase tracking-wide">Investimento Anual</p>
+        <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-wide">Investimento Anual</p>
         {total > 0 && diffPct !== 0 && (
           <span
-            className="text-[10px] font-bold px-2 py-0.5 rounded"
+            className="text-[0.625rem] font-bold px-2 py-0.5 rounded"
             style={{ background: diffPct >= 0 ? "#2E893214" : "#D94E4E14", color: diffPct >= 0 ? "#2E8932" : "#D94E4E" }}
           >
             {diffPct >= 0 ? "+" : ""}{diffPct.toFixed(2).replace(".", ",")}%
@@ -427,11 +427,11 @@ function TipologiaChart({ t }: { t: Tipologia }) {
     <div className="space-y-2">
       {values.map(({ key, v }) => (
         <div key={key} className="flex items-center gap-2">
-          <span className="text-[11px] text-black/50 font-medium w-32 flex-shrink-0">{TIPO_PT[key]}</span>
+          <span className="text-[0.6875rem] text-black/50 font-medium w-32 flex-shrink-0">{TIPO_PT[key]}</span>
           <div className="flex-1 h-2 rounded-full bg-black/6 overflow-hidden">
             <div className="h-full rounded-full bg-[#7259B5] transition-all" style={{ width: `${(v / max) * 100}%` }} />
           </div>
-          <span className="text-[10px] font-bold text-black/40 w-5 text-right">{v}</span>
+          <span className="text-[0.625rem] font-bold text-black/40 w-5 text-right">{v}</span>
         </div>
       ))}
     </div>
@@ -926,7 +926,7 @@ export default function PatrocinadorPage() {
         />
       )}
       {erroExportar && (
-        <div className="fixed bottom-5 right-5 z-50 flex max-w-[320px] items-start gap-2 rounded border border-[#D94E4E]/20 bg-white px-4 py-3 text-[12px] font-medium text-[#D94E4E] shadow-[0_12px_32px_rgba(13,13,13,.12)]">
+        <div className="fixed bottom-5 right-5 z-50 flex max-w-[20rem] items-start gap-2 rounded border border-[#D94E4E]/20 bg-white px-4 py-3 text-[0.75rem] font-medium text-[#D94E4E] shadow-[0_12px_32px_rgba(13,13,13,.12)]">
           <span className="min-w-0 flex-1">{erroExportar}</span>
           <button type="button" onClick={() => setErroExportar(null)} aria-label="Fechar aviso" className="text-[#D94E4E]/60 hover:text-[#D94E4E]"><X size={13} /></button>
         </div>
@@ -970,8 +970,8 @@ export default function PatrocinadorPage() {
         >
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
-              <p className="text-[13px] font-semibold text-black">Sugerir contato</p>
-              <p className="text-[11px] text-black/35 mt-0.5">Responsável pelo patrocínio</p>
+              <p className="text-[0.8125rem] font-semibold text-black">Sugerir contato</p>
+              <p className="text-[0.6875rem] text-black/35 mt-0.5">Responsável pelo patrocínio</p>
             </div>
             <button
               onClick={() => setShowSugerirForm(false)}
@@ -982,42 +982,42 @@ export default function PatrocinadorPage() {
           </div>
           <div className="flex-1 overflow-y-auto px-5 py-5 space-y-3">
             <div>
-              <label className="block text-[10px] font-bold text-black/35 uppercase tracking-wide mb-1.5">Nome completo *</label>
+              <label className="block text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-1.5">Nome completo *</label>
               <input
                 value={sugerirForm.nome}
                 onChange={e => setSugerirForm(f => ({ ...f, nome: e.target.value }))}
                 placeholder="Nome completo"
-                className="w-full px-3 py-2 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/25 placeholder:text-black/25"
+                className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/25 placeholder:text-black/25"
                 style={{ borderColor: "rgba(13,13,13,.10)" }}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-black/35 uppercase tracking-wide mb-1.5">Cargo</label>
+              <label className="block text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-1.5">Cargo</label>
               <input
                 value={sugerirForm.cargo}
                 onChange={e => setSugerirForm(f => ({ ...f, cargo: e.target.value }))}
                 placeholder="Cargo"
-                className="w-full px-3 py-2 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/25 placeholder:text-black/25"
+                className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/25 placeholder:text-black/25"
                 style={{ borderColor: "rgba(13,13,13,.10)" }}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-black/35 uppercase tracking-wide mb-1.5">E-mail</label>
+              <label className="block text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-1.5">E-mail</label>
               <input
                 value={sugerirForm.email}
                 onChange={e => setSugerirForm(f => ({ ...f, email: e.target.value }))}
                 placeholder="E-mail"
-                className="w-full px-3 py-2 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/25 placeholder:text-black/25"
+                className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/25 placeholder:text-black/25"
                 style={{ borderColor: "rgba(13,13,13,.10)" }}
               />
             </div>
             <div>
-              <label className="block text-[10px] font-bold text-black/35 uppercase tracking-wide mb-1.5">LinkedIn</label>
+              <label className="block text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-1.5">LinkedIn</label>
               <input
                 value={sugerirForm.linkedin}
                 onChange={e => setSugerirForm(f => ({ ...f, linkedin: e.target.value }))}
                 placeholder="LinkedIn"
-                className="w-full px-3 py-2 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/25 placeholder:text-black/25"
+                className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/25 placeholder:text-black/25"
                 style={{ borderColor: "rgba(13,13,13,.10)" }}
               />
             </div>
@@ -1025,14 +1025,14 @@ export default function PatrocinadorPage() {
           <div className="px-5 py-4 border-t flex items-center justify-end gap-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <button
               onClick={() => setShowSugerirForm(false)}
-              className="text-[12px] font-medium text-black/35 hover:text-black/55 transition"
+              className="text-[0.75rem] font-medium text-black/35 hover:text-black/55 transition"
             >
               Cancelar
             </button>
             <button
               onClick={handleSugerir}
               disabled={sugerirSaving || !sugerirForm.nome.trim()}
-              className="flex items-center gap-1.5 px-5 py-2 text-[12px] font-semibold rounded transition disabled:opacity-40 hover:bg-black/[.04]"
+              className="flex items-center gap-1.5 px-5 py-2 text-[0.75rem] font-semibold rounded transition disabled:opacity-40 hover:bg-black/[.04]"
               style={{ color: "#7259B5", border: "1px solid rgba(114,89,181,.25)", background: "white" }}
             >
               {sugerirSaving && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
@@ -1044,7 +1044,7 @@ export default function PatrocinadorPage() {
 
       {/* ── Hero header ── */}
       <div className="px-4 pt-6 pb-0 border-b md:px-8" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <Link href="/patrocinadores" className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-black/30 hover:text-black transition mb-5">
+        <Link href="/patrocinadores" className="inline-flex items-center gap-1.5 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition mb-5">
           <ArrowLeft size={12} /> Patrocinadores
         </Link>
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1058,7 +1058,7 @@ export default function PatrocinadorPage() {
             />
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h1 className="min-w-0 break-words text-[28px] font-bold leading-tight tracking-[-.025em] text-[#0D0D0D]">{empresa.nome}</h1>
+                <h1 className="min-w-0 break-words text-[1.75rem] font-bold leading-tight tracking-[-.025em] text-[#0D0D0D]">{empresa.nome}</h1>
                 {empresa.site && (
                   <a
                     href={empresa.site.startsWith("http") ? empresa.site : `https://${empresa.site}`}
@@ -1080,7 +1080,7 @@ export default function PatrocinadorPage() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link
               href={`/comparativo?empresas=${empresa.id}`}
-              className="flex h-9 items-center gap-1.5 rounded border bg-white px-3.5 text-[12px] font-medium text-black transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+              className="flex h-9 items-center gap-1.5 rounded border bg-white px-3.5 text-[0.75rem] font-medium text-black transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             >
               <ArrowLeftRight size={12} aria-hidden="true" /> Comparar
@@ -1097,27 +1097,27 @@ export default function PatrocinadorPage() {
               </button>
               {menuAcoesAberto && (
                 <div
-                  className="absolute right-0 top-10 z-20 w-[190px] rounded border bg-white py-1 shadow-[0_12px_32px_rgba(13,13,13,.12)]"
+                  className="absolute right-0 top-10 z-20 w-[11.875rem] rounded border bg-white py-1 shadow-[0_12px_32px_rgba(13,13,13,.12)]"
                   style={{ borderColor: "rgba(13,13,13,.08)" }}
                 >
                   <button
                     type="button"
                     onClick={() => { setMenuAcoesAberto(false); setShowProspectModal(true); }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.78125rem] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
                     <Building2 size={13} className="text-black/40" aria-hidden="true" /> Novo prospect
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMenuAcoesAberto(false); setShowCaptacaoModal(true); }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.78125rem] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
                     <BriefcaseBusiness size={13} className="text-black/40" aria-hidden="true" /> Nova negociação
                   </button>
                   <button
                     type="button"
                     onClick={() => { setMenuAcoesAberto(false); setInscricaoEdital(null); setShowInscricaoModal(true); }}
-                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12.5px] font-medium text-black/70 transition hover:bg-black/[.04]"
+                    className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.78125rem] font-medium text-black/70 transition hover:bg-black/[.04]"
                   >
                     <FilePenLine size={13} className="text-black/40" aria-hidden="true" /> Nova inscrição
                   </button>
@@ -1129,14 +1129,14 @@ export default function PatrocinadorPage() {
         {/* Tags row */}
         <div className="flex items-center gap-2 pb-4 flex-wrap">
           {empresa.setor && (
-            <div className="flex items-center gap-1.5 text-[11px] bg-black/[0.04] px-3 py-1 rounded">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-black/30">Setor</span>
+            <div className="flex items-center gap-1.5 text-[0.6875rem] bg-black/[0.04] px-3 py-1 rounded">
+              <span className="text-[0.5625rem] font-bold uppercase tracking-wide text-black/30">Setor</span>
               <span className="font-semibold text-black/60">{empresa.setor}</span>
             </div>
           )}
           {empresa.cidade && empresa.estado && (
-            <div className="flex items-center gap-1.5 text-[11px] bg-black/[0.04] px-3 py-1 rounded">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-black/30">Sede</span>
+            <div className="flex items-center gap-1.5 text-[0.6875rem] bg-black/[0.04] px-3 py-1 rounded">
+              <span className="text-[0.5625rem] font-bold uppercase tracking-wide text-black/30">Sede</span>
               <span className="font-semibold text-black/60">{empresa.cidade}, {empresa.estado}</span>
             </div>
           )}
@@ -1145,7 +1145,7 @@ export default function PatrocinadorPage() {
               {trimestres.map(({ label, active }) => (
                 <span
                   key={label}
-                  className="text-[10px] font-bold px-2 py-0.5 rounded"
+                  className="text-[0.625rem] font-bold px-2 py-0.5 rounded"
                   style={active
                     ? { background: "#2E893214", color: "#2E8932" }
                     : { background: "rgba(13,13,13,.06)", color: "rgba(13,13,13,.35)" }}
@@ -1162,20 +1162,20 @@ export default function PatrocinadorPage() {
       <div className="px-4 py-5 md:px-8 md:py-6">
 
         {/* 2-col grid: info+CRM | charts+contacts+editais */}
-        <div className="grid grid-cols-1 gap-6 items-start xl:grid-cols-[280px_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 gap-6 items-start xl:grid-cols-[17.5rem_minmax(0,1fr)]">
 
           {/* ── Col 1: Sobre · Contato geral · Negociações ativas ── */}
           <div className="space-y-4">
             {(isLeiView ? carteiraLei?.descricao : empresa.descricao) && (
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-2">Sobre</p>
+                <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-2">Sobre</p>
                 <p className="text-xs text-black/55 leading-relaxed">{isLeiView ? carteiraLei?.descricao : empresa.descricao}</p>
               </div>
             )}
 
             {(empresa.email_geral || empresa.telefone || empresa.site) && (
               <div className="bg-white rounded border p-5 space-y-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-3">Contato geral</p>
+                <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-3">Contato geral</p>
                 {empresa.email_geral && (
                   <a href={`mailto:${empresa.email_geral}`} className="flex items-start gap-2 text-xs text-black/50 hover:text-black transition">
                     <Mail size={12} className="shrink-0 mt-0.5" /> <span className="break-all">{empresa.email_geral}</span>
@@ -1204,8 +1204,8 @@ export default function PatrocinadorPage() {
                 <div className="flex items-center gap-2">
                   <Newspaper size={13} className="text-black/40" />
                   <div>
-                    <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide">Notícias</p>
-                    <p className="text-[10px] text-black/30 mt-0.5">Sobre {empresa.nome}</p>
+                    <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide">Notícias</p>
+                    <p className="text-[0.625rem] text-black/30 mt-0.5">Sobre {empresa.nome}</p>
                   </div>
                 </div>
               </div>
@@ -1216,8 +1216,8 @@ export default function PatrocinadorPage() {
                   </div>
                 ) : newsItems.length === 0 ? (
                   <div className="py-4 text-center">
-                    <p className="text-[11px] text-black/35">Nenhuma notícia encontrada.</p>
-                    <p className="text-[10px] text-black/25 mt-1">
+                    <p className="text-[0.6875rem] text-black/35">Nenhuma notícia encontrada.</p>
+                    <p className="text-[0.625rem] text-black/25 mt-1">
                       {newsStatus === "quota_exceeded"
                         ? "A cota mensal de buscas foi atingida."
                         : newsStatus === "configuration_error"
@@ -1229,15 +1229,15 @@ export default function PatrocinadorPage() {
                   <div className="space-y-3">
                     {newsItems.slice(0, 5).map(item => (
                       <a key={item.id} href={item.url_original} target="_blank" rel="noopener noreferrer" className="block group">
-                        <p className="text-[11px] leading-snug font-semibold text-black/70 group-hover:text-[#7259B5] transition line-clamp-2">{item.titulo}</p>
-                        <p className="text-[9px] text-black/30 mt-1">
+                        <p className="text-[0.6875rem] leading-snug font-semibold text-black/70 group-hover:text-[#7259B5] transition line-clamp-2">{item.titulo}</p>
+                        <p className="text-[0.5625rem] text-black/30 mt-1">
                           {item.nome_veiculo ?? "Fonte não informada"}{item.publicado_em ? ` · ${fmtDate(item.publicado_em)}` : ""}
                         </p>
                       </a>
                     ))}
                     <div className="pt-1 flex items-center justify-between border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                      <span className="text-[9px] text-black/25">{newsLastSearch ? `Atualizado em ${fmtDate(newsLastSearch)}` : "Atualização semanal"}</span>
-                      {newsStatus === "quota_exceeded" && <span className="text-[9px] text-[#B07A14]">Cota atingida</span>}
+                      <span className="text-[0.5625rem] text-black/25">{newsLastSearch ? `Atualizado em ${fmtDate(newsLastSearch)}` : "Atualização semanal"}</span>
+                      {newsStatus === "quota_exceeded" && <span className="text-[0.5625rem] text-[#B07A14]">Cota atingida</span>}
                     </div>
                   </div>
                 )}
@@ -1250,14 +1250,14 @@ export default function PatrocinadorPage() {
               return (
                 <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <div className="px-4 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                    <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide">Negociações ativas</p>
+                    <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide">Negociações ativas</p>
                     {totalItems > 0 && (
-                      <span className="text-[10px] font-bold text-black/30">{totalItems}</span>
+                      <span className="text-[0.625rem] font-bold text-black/30">{totalItems}</span>
                     )}
                   </div>
                   {totalItems === 0 ? (
                     <div className="flex justify-center py-8 px-4">
-                      <img src="/illustrations/negociacoes-empty.jpeg" alt="" className="w-full max-w-[180px] opacity-90" />
+                      <img src="/illustrations/negociacoes-empty.jpeg" alt="" className="w-full max-w-[11.25rem] opacity-90" />
                     </div>
                   ) : (
                     <div>
@@ -1273,8 +1273,8 @@ export default function PatrocinadorPage() {
                             className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                             style={{ borderBottom: !isLast ? "1px solid rgba(13,13,13,.05)" : "none" }}
                           >
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "white", border: "1px solid #7259B540", color: "#7259B5" }}>Neg.</span>
-                            <p className="text-[11px] font-medium text-black/70 truncate flex-1 min-w-0">
+                            <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "white", border: "1px solid #7259B540", color: "#7259B5" }}>Neg.</span>
+                            <p className="text-[0.6875rem] font-medium text-black/70 truncate flex-1 min-w-0">
                               {c.projeto?.nome ?? c.titulo ?? "Sem título"}
                             </p>
                             <StatusBadge status={c.status} label={sc.label} bg={sc.text} iconName={sc.iconName} size="sm" />
@@ -1293,8 +1293,8 @@ export default function PatrocinadorPage() {
                             className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                             style={{ borderBottom: !isLast ? "1px solid rgba(13,13,13,.05)" : "none" }}
                           >
-                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "white", border: "1px solid #2D72B040", color: "#2D72B0" }}>Edital</span>
-                            <p className="text-[11px] font-medium text-black/70 truncate flex-1 min-w-0">
+                            <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "white", border: "1px solid #2D72B040", color: "#2D72B0" }}>Edital</span>
+                            <p className="text-[0.6875rem] font-medium text-black/70 truncate flex-1 min-w-0">
                               {e.projeto?.nome ?? e.titulo ?? "Sem título"}
                             </p>
                             <StatusBadge status={e.status} label={se.label} bg={se.text} iconName={se.iconName} size="sm" />
@@ -1327,7 +1327,7 @@ export default function PatrocinadorPage() {
                     { id: "experiencias" as const, label: "Experiências" },
                   ].map(tab => {
                     const selected = responsaveisTab === tab.id;
-                    return <button key={tab.id} onClick={() => setResponsaveisTab(tab.id)} className="relative h-14 text-[13px] font-semibold transition" style={{ color: selected ? "#7259B5" : "rgba(13,13,13,.4)" }}>{tab.label}{selected && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#7259B5]"/>}</button>;
+                    return <button key={tab.id} onClick={() => setResponsaveisTab(tab.id)} className="relative h-14 text-[0.8125rem] font-semibold transition" style={{ color: selected ? "#7259B5" : "rgba(13,13,13,.4)" }}>{tab.label}{selected && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#7259B5]"/>}</button>;
                   })}
                 </div>
                 {responsaveisTab === "responsaveis" ? <div className="flex items-center gap-2">
@@ -1335,7 +1335,7 @@ export default function PatrocinadorPage() {
                     <button
                       onClick={handleVerContatos}
                       disabled={unlocking || creditosLoading}
-                      className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 bg-white border rounded hover:bg-black/5 transition disabled:opacity-50"
+                      className="flex items-center gap-1.5 text-[0.6875rem] font-bold px-3 py-1.5 bg-white border rounded hover:bg-black/5 transition disabled:opacity-50"
                       style={{ borderColor: "rgba(13,13,13,.12)" }}
                       title="Ver contatos verificados"
                     >
@@ -1345,14 +1345,14 @@ export default function PatrocinadorPage() {
                   )}
                   <button
                     onClick={() => setShowReportarErro(true)}
-                    className="flex items-center gap-1.5 text-[11px] font-semibold px-3 py-1.5 border rounded transition hover:bg-black/[0.02]"
+                    className="flex items-center gap-1.5 text-[0.6875rem] font-semibold px-3 py-1.5 border rounded transition hover:bg-black/[0.02]"
                     style={{ borderColor: "rgba(217,78,78,.25)", color: "#D94E4E" }}
                   >
                     Reportar Erro
                   </button>
                   <button
                     onClick={() => setShowSugerirForm(v => !v)}
-                    className="flex items-center gap-1.5 text-[11px] font-medium px-3 py-1.5 bg-white border rounded hover:bg-black/[0.04] transition"
+                    className="flex items-center gap-1.5 text-[0.6875rem] font-medium px-3 py-1.5 bg-white border rounded hover:bg-black/[0.04] transition"
                     style={{ borderColor: "rgba(13,13,13,.15)", color: "rgba(13,13,13,.65)" }}
                   >
                     <UserPlus size={11} /> Sugerir
@@ -1360,7 +1360,7 @@ export default function PatrocinadorPage() {
                 </div> : (
                   <button
                     onClick={() => setShowExperienciaModal(true)}
-                    className="flex items-center gap-1.5 text-[11px] font-bold px-3 py-1.5 bg-white border rounded hover:bg-black/5 transition"
+                    className="flex items-center gap-1.5 text-[0.6875rem] font-bold px-3 py-1.5 bg-white border rounded hover:bg-black/5 transition"
                     style={{ borderColor: "rgba(13,13,13,.12)", color: "rgba(13,13,13,.65)" }}
                   >
                     <Pencil size={11} /> Experiência
@@ -1376,7 +1376,7 @@ export default function PatrocinadorPage() {
                   <thead>
                     <tr style={{ background: "#F9F9F8", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
                       {["Nome", "Cargo", "Fonte", "Rede", "Exportar", "Votos", "E-mail"].map((h) => (
-                        <th key={h} className="px-5 py-3 text-left text-[10px] font-medium text-black/30 uppercase tracking-[.08em]">{h}</th>
+                        <th key={h} className="px-5 py-3 text-left text-[0.625rem] font-medium text-black/30 uppercase tracking-[.08em]">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -1395,13 +1395,13 @@ export default function PatrocinadorPage() {
                           <td className="px-5 py-3.5">
                             <div className="flex items-center gap-2.5">
                               <div
-                                className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center text-[11px] font-semibold"
+                                className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center text-[0.6875rem] font-semibold"
                                 style={{ background: "linear-gradient(145deg, #f8f8fb 0%, #d4d4dc 100%)", color: "#9e9ea8", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.06)" }}
                               >
                                 {r.nome.charAt(0).toUpperCase()}
                               </div>
                               <span
-                                className={`font-medium text-black text-[13px] ${!mostraContatos ? "select-none" : ""}`}
+                                className={`font-medium text-black text-[0.8125rem] ${!mostraContatos ? "select-none" : ""}`}
                                 style={{ filter: !mostraContatos ? "blur(3px)" : "none" }}
                               >
                                 {nome}
@@ -1411,7 +1411,7 @@ export default function PatrocinadorPage() {
                           <td className="px-5 py-3.5 text-black/40 text-xs">{r.cargo ?? "—"}</td>
                           <td className="px-5 py-3.5">
                             <span
-                              className="text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide"
+                              className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide"
                               style={isAdm
                                 ? { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.50)" }
                                 : { background: "rgba(45,114,176,.10)", color: "#2D72B0" }}
@@ -1460,7 +1460,7 @@ export default function PatrocinadorPage() {
                                   >
                                     <ThumbsUp size={12} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                                   </button>
-                                  <span className={`text-[11px] font-bold tabular-nums w-4 text-center ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                                  <span className={`text-[0.6875rem] font-bold tabular-nums w-4 text-center ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
                                     {saldo}
                                   </span>
                                   <button
@@ -1478,7 +1478,7 @@ export default function PatrocinadorPage() {
                             {email ? (
                               <div className="flex items-center justify-between gap-2">
                                 <span
-                                  className={`text-[12px] font-medium ${mostraContatos ? "text-black/70" : "text-black/20 select-none"}`}
+                                  className={`text-[0.75rem] font-medium ${mostraContatos ? "text-black/70" : "text-black/20 select-none"}`}
                                   style={{ filter: !mostraContatos ? "blur(4px)" : "none" }}
                                 >
                                   {email}
@@ -1510,13 +1510,13 @@ export default function PatrocinadorPage() {
                           <td className="px-5 py-3.5">
                             <div className="flex items-center gap-2.5">
                               <div
-                                className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center text-[11px] font-semibold"
+                                className="w-7 h-7 rounded flex-shrink-0 flex items-center justify-center text-[0.6875rem] font-semibold"
                                 style={{ background: "linear-gradient(145deg,#f8f8fb 0%,#d4d4dc 100%)", color: "#9e9ea8", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.06)" }}
                               >
                                 {s.nome.charAt(0).toUpperCase()}
                               </div>
                               <span
-                                className={`font-medium text-black text-[13px] ${!mostraContatos ? "select-none" : ""}`}
+                                className={`font-medium text-black text-[0.8125rem] ${!mostraContatos ? "select-none" : ""}`}
                                 style={{ filter: !mostraContatos ? "blur(3px)" : "none" }}
                               >
                                 {sNome}
@@ -1526,7 +1526,7 @@ export default function PatrocinadorPage() {
                           <td className="px-5 py-3.5 text-black/40 text-xs">{s.cargo ?? "—"}</td>
                           <td className="px-5 py-3.5">
                             <span
-                              className="text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide"
+                              className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide"
                               style={{ background: "rgba(45,114,176,.10)", color: "#2D72B0" }}
                             >
                               COMUNIDADE
@@ -1569,7 +1569,7 @@ export default function PatrocinadorPage() {
                               >
                                 <ThumbsUp size={12} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                               </button>
-                              <span className={`text-[11px] font-bold tabular-nums w-4 text-center ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                              <span className={`text-[0.6875rem] font-bold tabular-nums w-4 text-center ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
                                 {saldo}
                               </span>
                               <button
@@ -1585,7 +1585,7 @@ export default function PatrocinadorPage() {
                             {sEmail ? (
                               <div className="flex items-center justify-between gap-2">
                                 <span
-                                  className={`text-[12px] font-medium ${mostraContatos ? "text-black/70" : "text-black/20 select-none"}`}
+                                  className={`text-[0.75rem] font-medium ${mostraContatos ? "text-black/70" : "text-black/20 select-none"}`}
                                   style={{ filter: !mostraContatos ? "blur(4px)" : "none" }}
                                 >
                                   {sEmail}
@@ -1615,7 +1615,7 @@ export default function PatrocinadorPage() {
                 <p className="text-sm font-semibold text-black">Editais e chamamentos</p>
                 <button
                   onClick={() => { setInscricaoEdital(null); setShowInscricaoModal(true); }}
-                  className="text-[11px] font-medium text-black/35 hover:text-black transition"
+                  className="text-[0.6875rem] font-medium text-black/35 hover:text-black transition"
                 >
                   Exportar
                 </button>
@@ -1628,7 +1628,7 @@ export default function PatrocinadorPage() {
                     <thead>
                       <tr style={{ background: "#F9F9F8", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
                         {["Edital", "Abertura", "Fechamento", "Prazo", "Exportar", ""].map((h) => (
-                          <th key={h} className="px-5 py-3 text-left text-[10px] font-medium text-black/30 uppercase tracking-[.08em]">{h}</th>
+                          <th key={h} className="px-5 py-3 text-left text-[0.625rem] font-medium text-black/30 uppercase tracking-[.08em]">{h}</th>
                         ))}
                       </tr>
                     </thead>
@@ -1642,7 +1642,7 @@ export default function PatrocinadorPage() {
                             className="hover:bg-black/[0.015] transition"
                             style={{ borderBottom: i < editais.length - 1 ? "1px solid rgba(13,13,13,.05)" : "none" }}
                           >
-                            <td className="px-5 py-3.5 font-medium text-black text-[13px] max-w-[200px]">
+                            <td className="px-5 py-3.5 font-medium text-black text-[0.8125rem] max-w-[12.5rem]">
                               <span className="line-clamp-2">{e.titulo ?? "Sem título"}</span>
                             </td>
                             <td className="px-5 py-3.5 text-black/40 text-xs whitespace-nowrap">{fmtDate(e.data_abertura)}</td>
@@ -1650,7 +1650,7 @@ export default function PatrocinadorPage() {
                             <td className="px-5 py-3.5">
                               {dias !== null ? (
                                 <span
-                                  className="text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap"
+                                  className="text-[0.625rem] font-bold px-2 py-0.5 rounded whitespace-nowrap"
                                   style={
                                     dias < 0   ? { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.35)" } :
                                     dias <= 14 ? { background: "#D94E4E14", color: "#D94E4E" } :
@@ -1662,7 +1662,7 @@ export default function PatrocinadorPage() {
                                 </span>
                               ) : (
                                 <span
-                                  className="text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap"
+                                  className="text-[0.625rem] font-bold px-2 py-0.5 rounded whitespace-nowrap"
                                   style={{ background: aberto ? "#2E893214" : "rgba(13,13,13,.07)", color: aberto ? "#2E8932" : "rgba(13,13,13,.35)" }}
                                 >
                                   {aberto ? "Aberto" : "Encerrado"}
@@ -1672,7 +1672,7 @@ export default function PatrocinadorPage() {
                             <td className="px-5 py-3.5">
                               <button
                                 onClick={() => { setInscricaoEdital(e); setShowInscricaoModal(true); }}
-                                className="text-[11px] font-medium text-black/35 hover:text-black transition"
+                                className="text-[0.6875rem] font-medium text-black/35 hover:text-black transition"
                               >
                                 Exportar
                               </button>
@@ -1713,7 +1713,7 @@ export default function PatrocinadorPage() {
                     <button
                       key={tab}
                       onClick={() => setTrimTab(tab)}
-                      className="px-5 py-3.5 text-[12px] font-semibold transition border-b-2"
+                      className="px-5 py-3.5 text-[0.75rem] font-semibold transition border-b-2"
                       style={{
                         borderColor: effectiveTrimTab === tab ? "#7259B5" : "transparent",
                         color:       effectiveTrimTab === tab ? "#7259B5" : "rgba(13,13,13,.35)",
@@ -1728,17 +1728,17 @@ export default function PatrocinadorPage() {
                     <TrimestralChart data={trimestral} />
                   ) : effectiveTrimTab === "projetos" ? (
                     projetosIncentivo.length > 0 ? (
-                      <div className="max-h-[400px] overflow-y-auto grid sm:grid-cols-3 gap-2.5 pr-1">
+                      <div className="max-h-[25rem] overflow-y-auto grid sm:grid-cols-3 gap-2.5 pr-1">
                         {projetosIncentivo.map((p) => {
                           const categoria = categoriaDoProjeto(p.nome, p.lei, p.id);
-                          const tamanhoNome = p.nome.length > 90 ? "text-[8px] line-clamp-4" : p.nome.length > 60 ? "text-[9px] line-clamp-3" : p.nome.length > 40 ? "text-[10px] line-clamp-3" : "text-[11px] line-clamp-2";
+                          const tamanhoNome = p.nome.length > 90 ? "text-[0.5rem] line-clamp-4" : p.nome.length > 60 ? "text-[0.5625rem] line-clamp-3" : p.nome.length > 40 ? "text-[0.625rem] line-clamp-3" : "text-[0.6875rem] line-clamp-2";
                           const conteudo = (
                             <>
                               <ProjetoCategoriaIlustracao categoria={categoria} projetoId={p.id} size={44} />
                               <div className="min-w-0 flex-1">
                                 <span className={`block font-semibold leading-snug transition text-black ${tamanhoNome}`}>{p.nome}</span>
                                 {p.valor ? (
-                                  <span className="mt-1 block text-[10px] font-semibold text-black/35">{fmtValor(p.valor)}</span>
+                                  <span className="mt-1 block text-[0.625rem] font-semibold text-black/35">{fmtValor(p.valor)}</span>
                                 ) : null}
                               </div>
                             </>
@@ -1756,7 +1756,7 @@ export default function PatrocinadorPage() {
                                   <button
                                     type="button"
                                     onClick={() => setProjetoSiteModal({ id: p.id, nome: p.nome })}
-                                    className="absolute right-1.5 top-1.5 hidden rounded px-1.5 py-0.5 text-[10px] font-medium text-black/35 transition hover:bg-black/[.06] hover:text-black/55 group-hover/card:block"
+                                    className="absolute right-1.5 top-1.5 hidden rounded px-1.5 py-0.5 text-[0.625rem] font-medium text-black/35 transition hover:bg-black/[.06] hover:text-black/55 group-hover/card:block"
                                   >
                                     Editar
                                   </button>
@@ -1800,13 +1800,13 @@ export default function PatrocinadorPage() {
                         ) : (
                           <Upload size={18} className="text-black/25" />
                         )}
-                        <span className="text-[12px] font-medium text-black/40">
+                        <span className="text-[0.75rem] font-medium text-black/40">
                           {uploadingRel ? "Enviando…" : "Enviar relatório de sustentabilidade"}
                         </span>
-                        <span className="text-[10px] text-black/25">PDF, DOC ou DOCX · máx. 50 MB</span>
+                        <span className="text-[0.625rem] text-black/25">PDF, DOC ou DOCX · máx. 50 MB</span>
                       </label>}
 
-                      {reportError && <div role="alert" className="mb-4 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2.5 text-[11px] text-[#D94E4E]">{reportError}</div>}
+                      {reportError && <div role="alert" className="mb-4 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2.5 text-[0.6875rem] text-[#D94E4E]">{reportError}</div>}
 
                       {/* Lista de relatórios */}
                       {relatorios.length > 0 ? (
@@ -1819,7 +1819,7 @@ export default function PatrocinadorPage() {
                             return (
                               <article
                                 key={rel.id}
-                                className="group relative aspect-[4/3] min-h-[300px] overflow-hidden rounded-md border bg-[#EDEDE9] sm:aspect-video sm:min-h-[360px]"
+                                className="group relative aspect-[4/3] min-h-[18.75rem] overflow-hidden rounded-md border bg-[#EDEDE9] sm:aspect-video sm:min-h-[22.5rem]"
                                 style={{ borderColor: "rgba(13,13,13,.08)" }}
                               >
                                 <a
@@ -1837,13 +1837,13 @@ export default function PatrocinadorPage() {
                                 )}
                                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-black/5" />
 
-                                <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded bg-white/95 px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[.12em] text-black/65 shadow-sm backdrop-blur-sm">
+                                <div className="absolute left-4 top-4 flex items-center gap-1.5 rounded bg-white/95 px-2.5 py-1.5 text-[0.5625rem] font-bold uppercase tracking-[.12em] text-black/65 shadow-sm backdrop-blur-sm">
                                   <FileText size={11} /> Relatório de sustentabilidade
                                 </div>
 
                                 <div className="pointer-events-none absolute inset-x-0 bottom-0 p-4 sm:p-5">
-                                  <p className="max-w-[70%] truncate text-[18px] font-semibold leading-tight tracking-[-.01em] text-white sm:text-[20px]">{rel.nome}</p>
-                                  <p className="mt-1 text-[10px] font-medium text-white/65">{data}{mb ? ` · ${mb}` : ""}</p>
+                                  <p className="max-w-[70%] truncate text-[1.125rem] font-semibold leading-tight tracking-[-.01em] text-white sm:text-[1.25rem]">{rel.nome}</p>
+                                  <p className="mt-1 text-[0.625rem] font-medium text-white/65">{data}{mb ? ` · ${mb}` : ""}</p>
                                 </div>
 
                                 <div className="absolute bottom-4 right-4 flex items-center gap-1 rounded bg-white/95 p-1 shadow-sm backdrop-blur-sm sm:bottom-5 sm:right-5">
@@ -1851,11 +1851,11 @@ export default function PatrocinadorPage() {
                                   href={rel.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center gap-1 rounded px-2 py-1.5 text-[10px] font-semibold text-black/55 transition hover:bg-black/[.05] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20"
+                                  className="flex items-center gap-1 rounded px-2 py-1.5 text-[0.625rem] font-semibold text-black/55 transition hover:bg-black/[.05] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20"
                                 >
                                   <ExternalLink size={11} /> Abrir
                                 </a>
-                                <label className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-[10px] font-semibold text-black/55 transition hover:bg-black/[.05] hover:text-black ${replacing ? "pointer-events-none opacity-50" : ""}`} title="Trocar arquivo deste relatório">
+                                <label className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-[0.625rem] font-semibold text-black/55 transition hover:bg-black/[.05] hover:text-black ${replacing ? "pointer-events-none opacity-50" : ""}`} title="Trocar arquivo deste relatório">
                                   <input type="file" accept=".pdf,.doc,.docx" className="hidden" disabled={replacing} onChange={event => { const file = event.target.files?.[0]; if (file) void handleUploadRelatorio(file, rel); event.target.value = ""; }}/>
                                   {replacing ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-black/15 border-t-black/50"/> : <RefreshCw size={11}/>} {replacing ? "Trocando…" : "Trocar"}
                                 </label>
@@ -1872,7 +1872,7 @@ export default function PatrocinadorPage() {
                           })}
                         </div>
                       ) : (
-                        <p className="text-center text-[11px] text-black/25 py-2">Nenhum relatório enviado ainda.</p>
+                        <p className="text-center text-[0.6875rem] text-black/25 py-2">Nenhum relatório enviado ainda.</p>
                       )}
                     </div>
                   )}
@@ -1883,7 +1883,7 @@ export default function PatrocinadorPage() {
             {/* Tipologia */}
             {tipologia && (
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-1">Perfil</p>
+                <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-1">Perfil</p>
                 <p className="text-sm font-semibold text-black mb-4">Tipologia de projetos apoiados</p>
                 <TipologiaChart t={tipologia} />
               </div>
@@ -1911,7 +1911,7 @@ function PageSkeleton() {
           </div>
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-6 px-4 py-5 md:px-8 md:py-6 xl:grid-cols-[280px_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 px-4 py-5 md:px-8 md:py-6 xl:grid-cols-[17.5rem_minmax(0,1fr)]">
         <div className="space-y-4">{[0, 1, 2].map(i => <div key={i} className="h-40 rounded bg-black/[.04]" />)}</div>
         <div className="space-y-4">{[0, 1].map(i => <div key={i} className="h-64 rounded bg-black/[.04]" />)}</div>
       </div>

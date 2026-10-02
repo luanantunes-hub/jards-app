@@ -24,7 +24,7 @@ export function PastDueBanner() {
 
   return (
     <div
-      className="fixed top-0 left-0 right-0 z-[100] flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-5 py-2 text-[12px] font-semibold text-white"
+      className="fixed top-0 left-0 right-0 z-[100] flex flex-wrap items-center justify-center gap-x-3 gap-y-1 px-5 py-2 text-[0.75rem] font-semibold text-white"
       style={{ background: "#B07A14" }}
     >
       <AlertTriangle size={13} className="shrink-0" />
@@ -36,7 +36,7 @@ export function PastDueBanner() {
       <button
         onClick={handlePortal}
         disabled={loading}
-        className="rounded px-3 py-1 text-[11px] font-semibold text-white transition disabled:opacity-60"
+        className="rounded px-3 py-1 text-[0.6875rem] font-semibold text-white transition disabled:opacity-60"
         style={{ background: "rgba(0,0,0,.22)" }}
       >
         {loading ? "Abrindo…" : "Atualizar pagamento"}

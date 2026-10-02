@@ -69,15 +69,15 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
-          <p className="text-[11px] font-semibold text-black/40 uppercase tracking-wide">Cadastros</p>
+          <p className="text-[0.6875rem] font-semibold text-black/40 uppercase tracking-wide">Cadastros</p>
           <p className="text-2xl font-bold text-[#0D0D0D] mt-1 tabular-nums">{total}</p>
         </div>
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
-          <p className="text-[11px] font-semibold text-black/40 uppercase tracking-wide">Responderam a origem</p>
+          <p className="text-[0.6875rem] font-semibold text-black/40 uppercase tracking-wide">Responderam a origem</p>
           <p className="text-2xl font-bold text-[#0D0D0D] mt-1 tabular-nums">{respondidos}</p>
         </div>
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
-          <p className="text-[11px] font-semibold text-black/40 uppercase tracking-wide">Taxa de resposta</p>
+          <p className="text-[0.6875rem] font-semibold text-black/40 uppercase tracking-wide">Taxa de resposta</p>
           <p className="text-2xl font-bold text-[#0D0D0D] mt-1 tabular-nums">
             {total > 0 ? Math.round((respondidos / total) * 100) : 0}%
           </p>
@@ -101,7 +101,7 @@ export default function AdminDashboardPage() {
               return (
                 <div key={key} className="flex items-center gap-3">
                   <span
-                    className={`text-[12.5px] w-40 flex-shrink-0 ${isNull ? "text-black/35 italic" : "text-black/60 font-medium"}`}
+                    className={`text-[0.78125rem] w-40 flex-shrink-0 ${isNull ? "text-black/35 italic" : "text-black/60 font-medium"}`}
                   >
                     {SOURCE_LABELS[key]}
                   </span>
@@ -114,7 +114,7 @@ export default function AdminDashboardPage() {
                       }}
                     />
                   </div>
-                  <span className="text-[12px] font-bold text-black/50 w-16 text-right tabular-nums">
+                  <span className="text-[0.75rem] font-bold text-black/50 w-16 text-right tabular-nums">
                     {count} <span className="font-normal text-black/30">({pct}%)</span>
                   </span>
                 </div>

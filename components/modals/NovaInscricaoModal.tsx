@@ -65,14 +65,14 @@ const POTENCIAL_OPTIONS: { value: PotencialFechamento; label: string; color: str
 function DateField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <div>
-      <label className="text-[12px] font-semibold text-black mb-1.5 block">{label}</label>
+      <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">{label}</label>
       <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
         <CalendarDays size={13} className="text-black/35 flex-shrink-0" />
         <input
           type="date"
           value={value}
           onChange={event => onChange(event.target.value)}
-          className="flex-1 text-[13px] outline-none bg-transparent text-black min-w-0"
+          className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
         />
       </div>
     </div>
@@ -399,7 +399,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
         aria-modal="true"
         aria-labelledby={titleId}
         className="flex w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-b bg-white"
-        style={{ maxWidth: 980, maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
+        style={{ maxWidth: "61.25rem", maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -408,7 +408,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
             <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
               <FolderOpen size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[15px] font-bold text-black">{editData ? "Editar inscrição" : "Nova inscrição"}</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{editData ? "Editar inscrição" : "Nova inscrição"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={15} className="text-black/40" />
@@ -421,7 +421,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
           <div className="min-w-0 shrink-0 space-y-4 p-6 md:flex-[0_0_56%] md:overflow-y-auto">
             {/* Patrocinador — combobox */}
             <div className="relative">
-              <label className="text-[12px] font-semibold text-black mb-1.5 block">Patrocinador</label>
+              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Patrocinador</label>
               <div ref={empresaBoxRef} className="flex items-center border rounded px-3 py-2.5 gap-2 bg-white" style={{ borderColor: empresaOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
                 <Building2 size={13} className="text-black/35 flex-shrink-0" />
                 <input
@@ -431,7 +431,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); }}
                   onFocus={() => setEmpresaOpen(true)}
                   onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
-                  className="flex-1 text-[13px] outline-none bg-transparent text-black min-w-0"
+                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
                 />
                 {empresaSearch && (
                   <button
@@ -448,7 +448,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                     <button
                       key={e.id}
                       onMouseDown={ev => { ev.preventDefault(); setEmpresaId(e.id); setEmpresaSearch(e.nome); setEmpresaOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-[13px] text-black hover:bg-black/[0.04] transition"
+                      className="w-full text-left px-3 py-2 text-[0.8125rem] text-black hover:bg-black/[0.04] transition"
                     >
                       {e.nome}
                     </button>
@@ -457,7 +457,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                     <button
                       onMouseDown={ev => { ev.preventDefault(); handleCriarEmpresa(empresaSearch.trim()); }}
                       disabled={criandoEmpresa}
-                      className="w-full text-left px-3 py-2 text-[13px] font-semibold text-[#7259B5] hover:bg-black/[0.04] transition border-t disabled:opacity-50"
+                      className="w-full text-left px-3 py-2 text-[0.8125rem] font-semibold text-[#7259B5] hover:bg-black/[0.04] transition border-t disabled:opacity-50"
                       style={{ borderColor: "rgba(13,13,13,.08)" }}
                     >
                       {criandoEmpresa ? "Criando…" : `+ Criar "${empresaSearch.trim()}"`}
@@ -469,7 +469,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
 
             {/* Título do edital */}
             <div>
-              <label className="text-[12px] font-semibold text-black mb-1.5 block">Título do edital</label>
+              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Título do edital</label>
               <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <FolderOpen size={13} className="text-black/35 flex-shrink-0" />
                 <input
@@ -477,14 +477,14 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   placeholder="Nome do edital / chamada pública"
                   value={titulo}
                   onChange={e => setTitulo(e.target.value)}
-                  className="flex-1 text-[13px] outline-none bg-transparent text-black min-w-0"
+                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
                 />
               </div>
             </div>
 
             {/* Tipo de patrocínio */}
             <div>
-              <label className="text-[12px] font-semibold text-black mb-1.5 block">Tipo de patrocínio</label>
+              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Tipo de patrocínio</label>
               <CustomDropdown
                 value={lei}
                 onChange={setLei}
@@ -507,7 +507,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
 
             {/* Projeto — combobox */}
             <div className="relative">
-              <label className="text-[12px] font-semibold text-black mb-1.5 block">Projeto</label>
+              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Projeto</label>
               <div ref={projetoBoxRef} className="flex items-center border rounded px-3 py-2.5 gap-2 bg-white" style={{ borderColor: projetoOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
                 <FolderOpen size={13} className="text-black/35 flex-shrink-0" />
                 <input
@@ -517,7 +517,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   onChange={e => { setProjetoSearch(e.target.value); setProjetoId(""); setCotaId(""); setProjetoOpen(true); }}
                   onFocus={() => setProjetoOpen(true)}
                   onBlur={() => setTimeout(() => setProjetoOpen(false), 150)}
-                  className="flex-1 text-[13px] outline-none bg-transparent text-black min-w-0"
+                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
                 />
                 {projetoSearch && (
                   <button
@@ -534,7 +534,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                     <button
                       key={p.id}
                       onMouseDown={ev => { ev.preventDefault(); setProjetoId(p.id); setProjetoSearch(p.nome); setCotaId(""); setProjetoOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-[13px] text-black hover:bg-black/[0.04] transition"
+                      className="w-full text-left px-3 py-2 text-[0.8125rem] text-black hover:bg-black/[0.04] transition"
                     >
                       {p.nome}
                     </button>
@@ -543,7 +543,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                     <button
                       onMouseDown={ev => { ev.preventDefault(); handleCriarProjeto(projetoSearch.trim()); }}
                       disabled={criandoProjeto}
-                      className="w-full text-left px-3 py-2 text-[13px] font-semibold text-[#7259B5] hover:bg-black/[0.04] transition border-t disabled:opacity-50"
+                      className="w-full text-left px-3 py-2 text-[0.8125rem] font-semibold text-[#7259B5] hover:bg-black/[0.04] transition border-t disabled:opacity-50"
                       style={{ borderColor: "rgba(13,13,13,.08)" }}
                     >
                       {criandoProjeto ? "Criando…" : `+ Criar "${projetoSearch.trim()}"`}
@@ -551,7 +551,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   )}
                   <button
                     onMouseDown={ev => { ev.preventDefault(); setProjetoOpen(false); setShowNovoProjeto(true); }}
-                    className="w-full text-left px-3 py-2 text-[13px] font-semibold text-black/55 hover:bg-black/[0.04] transition border-t flex items-center gap-1.5"
+                    className="w-full text-left px-3 py-2 text-[0.8125rem] font-semibold text-black/55 hover:bg-black/[0.04] transition border-t flex items-center gap-1.5"
                     style={{ borderColor: "rgba(13,13,13,.08)" }}
                   >
                     <Plus size={12} /> Criar novo projeto…
@@ -562,7 +562,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
 
             {/* Cota — fonte do valor e das contrapartidas */}
             <div>
-              <label className="mb-1.5 block text-[12px] font-semibold text-black">Cota</label>
+              <label className="mb-1.5 block text-[0.75rem] font-semibold text-black">Cota</label>
               <CustomDropdown
                 value={cotaId}
                 onChange={value => {
@@ -591,15 +591,15 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
               {cotaSelecionada && (
                 <div className="mt-2 rounded border border-black/[.07] bg-black/[.018] px-3 py-2.5">
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-[10px] font-medium text-black/35">Referência da cota</span>
-                    <span className="text-[12px] font-semibold tabular-nums text-black/70">{formatCotaValor(cotaSelecionada)}</span>
+                    <span className="text-[0.625rem] font-medium text-black/35">Referência da cota</span>
+                    <span className="text-[0.75rem] font-semibold tabular-nums text-black/70">{formatCotaValor(cotaSelecionada)}</span>
                   </div>
-                  <label className="mt-2 block text-[10px] font-medium text-black/45">Valor desta inscrição (R$)</label>
+                  <label className="mt-2 block text-[0.625rem] font-medium text-black/45">Valor desta inscrição (R$)</label>
                   <input inputMode="decimal" value={valorInput} onChange={event => setValorInput(event.target.value)}
-                    className="mt-1 w-full rounded border border-black/15 bg-white px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5]" />
+                    className="mt-1 w-full rounded border border-black/15 bg-white px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5]" />
                   {valorForaDaFaixa(cotaSelecionada, valorInput.trim() ? Number(valorInput.replace(/\./g, "").replace(",", ".")) : null) &&
-                    <p className="mt-1.5 text-[10px] text-[#B07A14]">Fora da faixa sugerida; confira se outra cota é mais adequada.</p>}
-                  <p className="mt-1.5 text-[10px] leading-4 text-black/40">
+                    <p className="mt-1.5 text-[0.625rem] text-[#B07A14]">Fora da faixa sugerida; confira se outra cota é mais adequada.</p>}
+                  <p className="mt-1.5 text-[0.625rem] leading-4 text-black/40">
                     {cotaSelecionada.contrapartidas.length > 0
                       ? `${cotaSelecionada.contrapartidas.length} contrapartida${cotaSelecionada.contrapartidas.length === 1 ? "" : "s"} serão transformadas em entregas se a inscrição for aprovada.`
                       : "Esta cota ainda não possui contrapartidas."}
@@ -610,14 +610,14 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
 
             {/* Responsável — agência ou membro */}
             <div>
-              <label className="text-[12px] font-semibold text-black mb-1.5 block">Responsável</label>
+              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Responsável</label>
               <div className="flex rounded overflow-hidden border mb-2" style={{ borderColor: "rgba(13,13,13,.12)" }}>
                 {(["agencia", "membro"] as const).map(tipo => (
                   <button
                     key={tipo}
                     type="button"
                     onClick={() => trocarResponsavelTipo(tipo)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-[11px] font-semibold transition"
+                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-[0.6875rem] font-semibold transition"
                     style={responsavelTipo === tipo
                       ? { background: "#0D0D0D", color: "#fff" }
                       : { background: "#fff", color: "rgba(13,13,13,.45)" }}
@@ -640,7 +640,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                       onChange={e => { const v = e.target.value; setResponsavelPesquisa(v); setResponsavelId(""); setResponsavelOpen(v.trim().length > 0); }}
                       onFocus={() => { if (responsavelPesquisa.trim()) setResponsavelOpen(true); }}
                       onBlur={() => setTimeout(() => setResponsavelOpen(false), 150)}
-                      className="flex-1 text-[13px] outline-none bg-transparent text-black min-w-0"
+                      className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
                     />
                     {responsavelPesquisa && (
                       <button
@@ -659,8 +659,8 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                           onMouseDown={ev => { ev.preventDefault(); selecionarResponsavel(r); }}
                           className="w-full text-left px-3 py-2 hover:bg-black/[0.04] transition"
                         >
-                          <span className="block text-[13px] text-black">{r.label}</span>
-                          {r.sublabel && <span className="block text-[10px] text-black/35">{r.sublabel}</span>}
+                          <span className="block text-[0.8125rem] text-black">{r.label}</span>
+                          {r.sublabel && <span className="block text-[0.625rem] text-black/35">{r.sublabel}</span>}
                         </button>
                       ))}
                       {responsavelTipo === "agencia" && responsavelPesquisa.trim() && !hasExactMatchResponsavel && (
@@ -668,7 +668,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                           type="button"
                           onMouseDown={ev => { ev.preventDefault(); handleCriarAgencia(responsavelPesquisa.trim()); }}
                           disabled={criandoAgencia}
-                          className="w-full border-t px-3 py-2 text-left text-[13px] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
+                          className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
                           style={{ borderColor: "rgba(13,13,13,.08)" }}
                         >
                           {criandoAgencia ? "Criando…" : `+ Criar "${responsavelPesquisa.trim()}"`}
@@ -688,9 +688,9 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
           {/* Col 2 — decisão e cronograma */}
           <div className="min-w-0 shrink-0 space-y-5 p-6 md:flex-[0_0_44%] md:overflow-y-auto">
             <section>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-black/30">Definição comercial</p>
+              <p className="mb-4 text-[0.625rem] font-bold uppercase tracking-widest text-black/30">Definição comercial</p>
               <div>
-                <label className="mb-2 block text-[12px] font-semibold text-black">Etapa da inscrição</label>
+                <label className="mb-2 block text-[0.75rem] font-semibold text-black">Etapa da inscrição</label>
                 <div className="flex">
                   {(() => {
                     const currentIdx = etapas.findIndex(e => e.status === status);
@@ -720,20 +720,20 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                     });
                   })()}
                 </div>
-                <p className="mt-1.5 text-[10px] font-medium" style={{ color: etapas.find(e => e.status === status)?.color ?? "rgba(13,13,13,.3)" }}>
+                <p className="mt-1.5 text-[0.625rem] font-medium" style={{ color: etapas.find(e => e.status === status)?.color ?? "rgba(13,13,13,.3)" }}>
                   {etapas.find(e => e.status === status)?.label}
                 </p>
               </div>
 
               <div className="mt-5">
-                <label className="mb-2 block text-[12px] font-semibold text-black">Potencial de fechamento</label>
+                <label className="mb-2 block text-[0.75rem] font-semibold text-black">Potencial de fechamento</label>
                 <div className="flex">
                   {POTENCIAL_OPTIONS.map((option, index) => (
                     <button
                       key={option.value}
                       type="button"
                       onClick={() => setPotencialFechamento(option.value)}
-                      className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[11px] font-semibold transition hover:z-10 hover:bg-black/[.025] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
+                      className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[0.6875rem] font-semibold transition hover:z-10 hover:bg-black/[.025] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
                       style={potencialFechamento === option.value
                         ? { color: option.color, borderColor: `${option.color}70` }
                         : { color: option.color, borderColor: "rgba(13,13,13,.10)" }}
@@ -747,7 +747,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
             </section>
 
             <section className="border-t border-black/[.07] pt-5">
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-widest text-black/30">Cronograma de captação</p>
+              <p className="mb-4 text-[0.625rem] font-bold uppercase tracking-widest text-black/30">Cronograma de captação</p>
               <div className="space-y-4">
             <DateField label="Data de abertura"   value={dataAbertura}   onChange={setDataAbertura} />
             <DateField label="Data de fechamento" value={dataFechamento}  onChange={setDataFechamento} />
@@ -762,13 +762,13 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
           {erro && <p role="alert" className="text-xs text-[#D94E4E] font-medium">{erro}</p>}
           {!erro && <div />}
           <div className="flex items-center gap-3">
-            <button onClick={onClose} className="px-4 py-2.5 text-[12px] font-semibold text-black/35 hover:text-black/55 transition">
+            <button onClick={onClose} className="px-4 py-2.5 text-[0.75rem] font-semibold text-black/35 hover:text-black/55 transition">
               Cancelar
             </button>
             <button
               onClick={handleSalvar}
               disabled={saving}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-[12px] font-bold bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 px-5 py-2.5 text-[0.75rem] font-bold bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
             </button>

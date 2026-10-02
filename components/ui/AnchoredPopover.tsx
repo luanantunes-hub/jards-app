@@ -1,14 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { escalaUi } from "@/lib/escala-ui";
 
 type PopoverPos = { top: number; left: number; width: number };
 
 export function useAnchoredPopover() {
   const [pos, setPos] = useState<PopoverPos | null>(null);
 
-  function abrir(event: React.MouseEvent<HTMLElement>, width = 340) {
+  // width em px na base de 16px; acompanha a fonte base em telas grandes.
+  function abrir(event: React.MouseEvent<HTMLElement>, larguraBase = 340) {
     const r = event.currentTarget.getBoundingClientRect();
+    const width = larguraBase * escalaUi();
     setPos({
       top: r.bottom + 6,
       left: Math.min(r.right - width, window.innerWidth - width - 8),

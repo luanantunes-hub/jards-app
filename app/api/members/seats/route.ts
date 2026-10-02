@@ -46,8 +46,11 @@ async function seatSummary(organizationId: string) {
     { count: pendingCount, error: pendingError },
   ] = await Promise.all([
     admin.from("organization_seats").select("purchased_seats, billing_user_id, stripe_subscription_item_id").eq("organization_id", organizationId).maybeSingle(),
-    admin.from("organization_members").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).neq("papel", "captador"),
-    admin.from("organization_invitations").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("status", "pending").neq("role", "captador"),
+    // Mesma exclusão usada pelos RPCs que de fato validam capacidade
+    // (add_organization_member_with_seat / reserve_organization_invitation):
+    // captador e proponente não consomem assento.
+    admin.from("organization_members").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).not("papel", "in", "(captador,proponente)"),
+    admin.from("organization_invitations").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("status", "pending").not("role", "in", "(captador,proponente)"),
   ]);
   if (seatError) throw seatError;
   if (countError) throw countError;

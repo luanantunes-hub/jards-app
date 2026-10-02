@@ -94,7 +94,7 @@ export function CustomDropdown({
         <>
           <div className="fixed inset-0" style={{ zIndex: portalZIndex - 1 }} onClick={() => setIsOpen(false)} />
           <div
-            className="fixed max-h-[200px] overflow-y-auto rounded border bg-white py-1 shadow-xl"
+            className="fixed max-h-[12.5rem] overflow-y-auto rounded border bg-white py-1 shadow-xl"
             style={{ ...menuPosition, zIndex: portalZIndex, borderColor: "rgba(13,13,13,.12)" }}
           >
             {options.map((opt) => (
@@ -107,8 +107,8 @@ export function CustomDropdown({
                   onChange(opt.value);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 text-[13px] ${emphasized ? "font-medium" : "font-normal"} flex items-center gap-2 transition ${
-                  compact ? "text-[12px]" : ""
+                className={`w-full text-left px-3 py-2 text-[0.8125rem] ${emphasized ? "font-medium" : "font-normal"} flex items-center gap-2 transition ${
+                  compact ? "text-[0.75rem]" : ""
                 } ${
                   value === opt.value
                     ? "text-[#0D0D0D] bg-black/[0.03]"
@@ -118,7 +118,7 @@ export function CustomDropdown({
                 {opt.icon && <span className="flex-shrink-0">{opt.icon}</span>}
                 <span className="flex-1 truncate">{opt.label}</span>
                 {value === opt.value && (
-                  <span className="ml-auto text-[10px] text-black/30">✓</span>
+                  <span className="ml-auto text-[0.625rem] text-black/30">✓</span>
                 )}
               </button>
             ))}

@@ -96,7 +96,7 @@ export function TiposPatrocinioSheet({
         aria-labelledby={titleId}
         className="absolute inset-x-0 top-0 mx-auto flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white"
         style={{
-          width: 520,
+          width: "32.5rem",
           maxWidth: "92vw",
           transform: sheetVisible ? "none" : "translateY(-100%)",
           transition: "transform 260ms cubic-bezier(.32,.72,0,1)",
@@ -105,7 +105,7 @@ export function TiposPatrocinioSheet({
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id={titleId} className="text-[14px] font-semibold text-black/80">Patrocínio</h3>
+          <h3 id={titleId} className="text-[0.875rem] font-semibold text-black/80">Patrocínio</h3>
           <button type="button" onClick={close} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded hover:bg-black/[.05] transition">
             <X size={14} className="text-black/40" />
           </button>
@@ -115,7 +115,7 @@ export function TiposPatrocinioSheet({
         <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
           {/* Federal */}
           <div>
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[.1em] text-black/35">Federais e direto</p>
+            <p className="mb-3 text-[0.625rem] font-semibold uppercase tracking-[.1em] text-black/35">Federais e direto</p>
             <div className="space-y-0.5">
               {FEDERAL_TYPES.map(type => {
                 const active = selected.includes(type.value);
@@ -129,7 +129,7 @@ export function TiposPatrocinioSheet({
                     >
                       {active && <Check size={10} className="text-white" strokeWidth={3} />}
                     </div>
-                    <span className="text-[13px] text-black/70">{type.label}</span>
+                    <span className="text-[0.8125rem] text-black/70">{type.label}</span>
                   </label>
                 );
               })}
@@ -138,7 +138,7 @@ export function TiposPatrocinioSheet({
 
           {/* Local incentives */}
           <div>
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[.1em] text-black/35">Incentivos locais</p>
+            <p className="mb-3 text-[0.625rem] font-semibold uppercase tracking-[.1em] text-black/35">Incentivos locais</p>
 
             {localTypes.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
@@ -147,7 +147,7 @@ export function TiposPatrocinioSheet({
                   const kind = key.slice(0, colonIdx);
                   const val = key.slice(colonIdx + 1);
                   return (
-                    <span key={key} className="flex items-center gap-1.5 rounded border border-black/[.12] bg-black/[.025] px-2.5 py-1 text-[11px] text-black/60">
+                    <span key={key} className="flex items-center gap-1.5 rounded border border-black/[.12] bg-black/[.025] px-2.5 py-1 text-[0.6875rem] text-black/60">
                       {kind === "estadual" ? `Estadual · ${val}` : `Municipal · ${val}`}
                       <button type="button" onClick={() => removeLocal(key)} aria-label={`Remover ${kind === "estadual" ? "estadual" : "municipal"} ${val}`} className="text-black/30 transition hover:text-black/60">
                         <X size={10} />
@@ -163,13 +163,13 @@ export function TiposPatrocinioSheet({
               {!addingEstadual ? (
                 <button
                   onClick={() => { setAddingEstadual(true); setAddingMunicipal(false); }}
-                  className="flex items-center gap-1 rounded border border-dashed border-black/[.15] px-3 py-1.5 text-[11px] text-black/45 transition hover:border-black/30 hover:text-black/60"
+                  className="flex items-center gap-1 rounded border border-dashed border-black/[.15] px-3 py-1.5 text-[0.6875rem] text-black/45 transition hover:border-black/30 hover:text-black/60"
                 >
                   <Plus size={11} /> Estadual
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <div style={{ width: 180 }}>
+                  <div style={{ width: "11.25rem" }}>
                     <Dropdown
                       value={estadualState}
                       onChange={setEstadualState}
@@ -177,10 +177,10 @@ export function TiposPatrocinioSheet({
                       options={BRAZIL_STATES.map(([code, name]) => ({ value: code, label: `${code} — ${name}` }))}
                     />
                   </div>
-                  <button onClick={addEstadual} disabled={!estadualState} className="h-10 rounded bg-[#0D0D0D] px-3 text-[11px] font-medium text-white transition hover:bg-black/80 disabled:opacity-40">
+                  <button onClick={addEstadual} disabled={!estadualState} className="h-10 rounded bg-[#0D0D0D] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-black/80 disabled:opacity-40">
                     Adicionar
                   </button>
-                  <button onClick={() => { setAddingEstadual(false); setEstadualState(""); }} className="text-[11px] text-black/35 transition hover:text-black/55">
+                  <button onClick={() => { setAddingEstadual(false); setEstadualState(""); }} className="text-[0.6875rem] text-black/35 transition hover:text-black/55">
                     Cancelar
                   </button>
                 </div>
@@ -190,7 +190,7 @@ export function TiposPatrocinioSheet({
               {!addingMunicipal && (
                 <button
                   onClick={() => { setAddingMunicipal(true); setAddingEstadual(false); }}
-                  className="flex items-center gap-1 rounded border border-dashed border-black/[.15] px-3 py-1.5 text-[11px] text-black/45 transition hover:border-black/30 hover:text-black/60"
+                  className="flex items-center gap-1 rounded border border-dashed border-black/[.15] px-3 py-1.5 text-[0.6875rem] text-black/45 transition hover:border-black/30 hover:text-black/60"
                 >
                   <Plus size={11} /> Municipal
                 </button>
@@ -203,12 +203,12 @@ export function TiposPatrocinioSheet({
                     onKeyDown={e => e.key === "Enter" && addMunicipal()}
                     placeholder="Nome da cidade…"
                     autoFocus
-                    className="h-10 w-40 rounded border border-black/[.15] px-3 text-[12px] outline-none focus:border-black/30 transition"
+                    className="h-10 w-40 rounded border border-black/[.15] px-3 text-[0.75rem] outline-none focus:border-black/30 transition"
                   />
-                  <button onClick={addMunicipal} disabled={!municipalName.trim()} className="h-10 rounded bg-[#0D0D0D] px-3 text-[11px] font-medium text-white transition hover:bg-black/80 disabled:opacity-40">
+                  <button onClick={addMunicipal} disabled={!municipalName.trim()} className="h-10 rounded bg-[#0D0D0D] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-black/80 disabled:opacity-40">
                     Adicionar
                   </button>
-                  <button onClick={() => { setAddingMunicipal(false); setMunicipalName(""); }} className="text-[11px] text-black/35 transition hover:text-black/55">
+                  <button onClick={() => { setAddingMunicipal(false); setMunicipalName(""); }} className="text-[0.6875rem] text-black/35 transition hover:text-black/55">
                     Cancelar
                   </button>
                 </div>
@@ -218,15 +218,15 @@ export function TiposPatrocinioSheet({
         </div>
 
         {/* Footer */}
-        {erro && <p role="alert" className="shrink-0 px-6 pb-3 text-[12px] text-[#B23A3A]">{erro}</p>}
+        {erro && <p role="alert" className="shrink-0 px-6 pb-3 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
         <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <button onClick={close} className="text-[12px] font-medium text-black/35 transition hover:text-black/55">
+          <button onClick={close} className="text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">
             Cancelar
           </button>
           <button
             onClick={() => void save()}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Check size={12} /> {saving ? "Salvando…" : "Salvar"}
           </button>

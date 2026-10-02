@@ -116,7 +116,7 @@ export function PropostaUploadModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p id={titleId} className="text-[13px] font-bold text-black/80">Enviar proposta</p>
+          <p id={titleId} className="text-[0.8125rem] font-bold text-black/80">Enviar proposta</p>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition text-black/35 hover:text-black/60">
             <X size={14} />
           </button>
@@ -125,7 +125,7 @@ export function PropostaUploadModal({
         <div className="p-5 space-y-4">
           {/* Título */}
           <div>
-            <label className="block text-[11px] font-medium text-black/45 mb-1.5">Título</label>
+            <label className="block text-[0.6875rem] font-medium text-black/45 mb-1.5">Título</label>
             <input
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
@@ -136,11 +136,11 @@ export function PropostaUploadModal({
 
           {captacoes.length > 0 && (
             <div>
-              <label className="mb-1.5 block text-[11px] font-medium text-black/45">Vincular à negociação</label>
+              <label className="mb-1.5 block text-[0.6875rem] font-medium text-black/45">Vincular à negociação</label>
               <Select
                 value={captacaoSelecionada}
                 onChange={event => setCaptacaoSelecionada(event.target.value)}
-                className="h-10 w-full rounded border border-black/12 bg-white px-3 text-[12px] text-black/70 outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/15"
+                className="h-10 w-full rounded border border-black/12 bg-white px-3 text-[0.75rem] text-black/70 outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/15"
               >
                 <option value="">Documento geral do projeto</option>
                 {captacoes.map(captacao => (
@@ -154,13 +154,13 @@ export function PropostaUploadModal({
 
           {/* Drop zone */}
           <div>
-            <label className="block text-[11px] font-medium text-black/45 mb-1.5">Arquivo PDF</label>
+            <label className="block text-[0.6875rem] font-medium text-black/45 mb-1.5">Arquivo PDF</label>
             {file ? (
               <div className="flex items-center gap-3 p-3 rounded border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
                 <FileText size={18} className="text-[#7259B5] flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-black/80 truncate">{file.name}</p>
-                  <p className="text-[10px] text-black/35">{fmtSize(file.size)}</p>
+                  <p className="text-[0.75rem] font-medium text-black/80 truncate">{file.name}</p>
+                  <p className="text-[0.625rem] text-black/35">{fmtSize(file.size)}</p>
                 </div>
                 <button
                   type="button"
@@ -185,10 +185,10 @@ export function PropostaUploadModal({
                 }}
               >
                 <Upload size={18} className="text-black/25" />
-                <p className="text-[12px] text-black/40 text-center">
+                <p className="text-[0.75rem] text-black/40 text-center">
                   Arraste o PDF aqui ou <span className="text-[#7259B5] font-semibold">clique para selecionar</span>
                 </p>
-                <p className="text-[10px] text-black/25">Máximo {MAX_MB} MB</p>
+                <p className="text-[0.625rem] text-black/25">Máximo {MAX_MB} MB</p>
               </div>
             )}
             <input
@@ -201,19 +201,19 @@ export function PropostaUploadModal({
           </div>
 
           {erro && (
-            <p role="alert" className="rounded border border-[#D94E4E]/20 bg-white px-3 py-2 text-[11px] text-[#D94E4E]">{erro}</p>
+            <p role="alert" className="rounded border border-[#D94E4E]/20 bg-white px-3 py-2 text-[0.6875rem] text-[#D94E4E]">{erro}</p>
           )}
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-5 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <button onClick={onClose} className="text-[12px] font-semibold text-black/35 hover:text-black/55 transition">
+          <button onClick={onClose} className="text-[0.75rem] font-semibold text-black/35 hover:text-black/55 transition">
             Cancelar
           </button>
           <button
             onClick={handleSalvar}
             disabled={saving || !file}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? <Loader2 size={13} className="animate-spin" /> : <Upload size={13} />}
             {saving ? "Enviando…" : "Salvar proposta"}

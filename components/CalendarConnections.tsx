@@ -190,13 +190,13 @@ export function CalendarConnections() {
             <opts.Icon />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-black">{opts.title}</p>
+            <p className="text-[0.8125rem] font-semibold text-black">{opts.title}</p>
             {c ? (
-              <p className="text-[11px] text-black/40 truncate mt-0.5">
+              <p className="text-[0.6875rem] text-black/40 truncate mt-0.5">
                 {c.provider_account_email ?? "Conta conectada"}
               </p>
             ) : (
-              <p className="text-[11px] text-black/40 mt-0.5">
+              <p className="text-[0.6875rem] text-black/40 mt-0.5">
                 {opts.configured
                   ? "Sincronize atividades com sua agenda"
                   : "Credenciais do servidor ainda não configuradas"}
@@ -207,7 +207,7 @@ export function CalendarConnections() {
             <button
               onClick={() => disconnect(opts.provider)}
               disabled={connecting}
-              className="flex items-center gap-1 text-[11px] font-semibold text-black/40 hover:text-[#D94E4E] transition disabled:opacity-40"
+              className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/40 hover:text-[#D94E4E] transition disabled:opacity-40"
             >
               <Unplug size={12} /> Desconectar
             </button>
@@ -215,7 +215,7 @@ export function CalendarConnections() {
             <button
               onClick={() => startOAuth(opts.provider)}
               disabled={!opts.configured || connecting}
-              className="px-3 py-1.5 text-[11px] font-semibold rounded transition disabled:opacity-40"
+              className="px-3 py-1.5 text-[0.6875rem] font-semibold rounded transition disabled:opacity-40"
               style={{ background: "#7259B5", color: "white" }}
             >
               Conectar
@@ -226,7 +226,7 @@ export function CalendarConnections() {
         {c && (
           <div className="mt-4 space-y-3">
             <label className="block">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-black/30">Calendário-alvo</span>
+              <span className="text-[0.625rem] font-bold uppercase tracking-widest text-black/30">Calendário-alvo</span>
               <Select
                 value={c.calendar_id}
                 disabled={connecting}
@@ -235,7 +235,7 @@ export function CalendarConnections() {
                   const item = list.find((x) => x.id === e.target.value);
                   selectCalendar(opts.provider, e.target.value, item?.name ?? e.target.value);
                 }}
-                className="mt-1.5 w-full px-3 py-2 text-[12px] rounded border appearance-none bg-white"
+                className="mt-1.5 w-full px-3 py-2 text-[0.75rem] rounded border appearance-none bg-white"
                 style={{ borderColor: "rgba(13,13,13,.12)" }}
               >
                 {!list.find((x) => x.id === c.calendar_id) && (
@@ -257,11 +257,11 @@ export function CalendarConnections() {
                 onChange={(e) => toggleSync(opts.provider, e.target.checked)}
                 className="rounded border-black/20"
               />
-              <span className="text-[12px] text-black/60">Sincronização ativa</span>
+              <span className="text-[0.75rem] text-black/60">Sincronização ativa</span>
             </label>
 
             {c.last_error && (
-              <p className="text-[11px] text-[#D94E4E]">{c.last_error}</p>
+              <p className="text-[0.6875rem] text-[#D94E4E]">{c.last_error}</p>
             )}
           </div>
         )}
@@ -273,18 +273,18 @@ export function CalendarConnections() {
     <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
       <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <CalendarDays size={14} className="text-black/30" />
-        <span className="text-[12px] font-bold text-black">Calendários</span>
+        <span className="text-[0.75rem] font-bold text-black">Calendários</span>
       </div>
 
       <div className="p-6 space-y-4">
         {erro && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+          <div className="flex items-center gap-2 px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
             <AlertCircle size={14} className="flex-shrink-0" />
             {erro}
           </div>
         )}
         {sucesso && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded text-[12px] font-medium" style={{ background: "#2E893214", color: "#2E8932" }}>
+          <div className="flex items-center gap-2 px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#2E893214", color: "#2E8932" }}>
             <Check size={14} />
             {sucesso}
           </div>

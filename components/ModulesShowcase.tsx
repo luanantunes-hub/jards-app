@@ -318,7 +318,7 @@ const ATIVS = [
   { done: false, nome: "Preparar relatório de atividades",   tipo: "Tarefa",  neg: "—",                   co: "Interno",     prazo: "sexta",  prio: ["rgba(13,13,13,.06)", "rgba(13,13,13,.45)", "Baixa"] },
 ] as const;
 const DEADLINE_COLOR: Record<string, string> = { hoje: "#B07A14", amanhã: "rgba(13,13,13,.55)", sexta: "rgba(13,13,13,.55)", seg: "rgba(13,13,13,.55)", ontem: "rgba(13,13,13,.35)" };
-const TH = "text-[10px] font-medium uppercase tracking-[.08em] text-black/35 bg-[#F9F9F8] px-3.5 py-2.5 text-left whitespace-nowrap";
+const TH = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 bg-[#F9F9F8] px-3.5 py-2.5 text-left whitespace-nowrap";
 
 function AtividadesPanel() {
   return (
@@ -447,13 +447,13 @@ export default function ModulesShowcase() {
   const { navKey, Panel } = TABS[active];
 
   return (
-    <section className="max-w-[1080px] mx-auto w-full">
+    <section className="max-w-[67.5rem] mx-auto w-full">
       {/* chamada */}
-      <p className="text-center text-[10px] font-bold uppercase tracking-[.12em] text-[#7259B5] mb-3.5">Plataforma</p>
+      <p className="text-center text-[0.625rem] font-bold uppercase tracking-[.12em] text-[#7259B5] mb-3.5">Plataforma</p>
       <h2 className="text-center text-[clamp(26px,3.8vw,40px)] font-extrabold leading-[1.18] text-balance mb-3" style={{ fontFamily: "'Valley Sans', system-ui, sans-serif" }}>
         Tudo que você precisa para captar<br className="hidden sm:block" /> com mais estratégia
       </h2>
-      <p className="text-center text-[15px] leading-[1.7] text-black/45 max-w-[480px] mx-auto mb-10">
+      <p className="text-center text-[0.9375rem] leading-[1.7] text-black/45 max-w-[30rem] mx-auto mb-10">
         Do mapeamento de editais à gestão do relacionamento com patrocinadores — em um só lugar.
       </p>
 
@@ -463,7 +463,7 @@ export default function ModulesShowcase() {
           <button
             key={i}
             onClick={() => setActive(i)}
-            className="px-6 py-2.5 text-[13px] font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap"
+            className="px-6 py-2.5 text-[0.8125rem] font-semibold border-b-2 -mb-px transition-colors whitespace-nowrap"
             style={{
               borderColor: active === i ? "#7259B5" : "transparent",
               color: active === i ? "#7259B5" : "rgba(13,13,13,.40)",

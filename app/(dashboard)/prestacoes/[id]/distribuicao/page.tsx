@@ -116,13 +116,13 @@ export default function DistribuicaoPage() {
     .filter(i => i.tipo === "pago" && i.preco_unitario)
     .reduce((s, i) => s + i.quantidade * (i.preco_unitario ?? 0), 0);
 
-  if (loading) return <div className="p-8 text-[13px] text-black/30">Carregando…</div>;
+  if (loading) return <div className="p-8 text-[0.8125rem] text-black/30">Carregando…</div>;
 
   return (
     <div className="px-8 py-6 max-w-4xl">
 
       {erro && (
-        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-4 py-3 text-[12px] font-medium text-[#B23A3A]">
+        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-4 py-3 text-[0.75rem] font-medium text-[#B23A3A]">
           Não foi possível concluir a operação: {erro}
         </div>
       )}
@@ -137,9 +137,9 @@ export default function DistribuicaoPage() {
             { label: "Receita estimada", value: receitaEstimada > 0 ? fmt(receitaEstimada) : "—", sub: null },
           ].map(c => (
             <div key={c.label} className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-black/30 mb-1">{c.label}</p>
-              <p className="text-[17px] font-bold text-black/80">{c.value}</p>
-              {c.sub && <p className="text-[10px] text-black/35 mt-0.5">{c.sub}</p>}
+              <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">{c.label}</p>
+              <p className="text-[1.0625rem] font-bold text-black/80">{c.value}</p>
+              {c.sub && <p className="text-[0.625rem] text-black/35 mt-0.5">{c.sub}</p>}
             </div>
           ))}
         </div>
@@ -147,7 +147,7 @@ export default function DistribuicaoPage() {
 
       {/* Alerta MinC */}
       {items.length > 0 && pctGratuito < 20 && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-5 text-[12px]"
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-5 text-[0.75rem]"
           style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
           <span className="font-semibold flex-shrink-0">Atenção:</span>
           <span>
@@ -159,12 +159,12 @@ export default function DistribuicaoPage() {
 
       {/* Header da tabela */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-semibold text-black/45">
+        <p className="text-[0.6875rem] font-semibold text-black/45">
           {items.length > 0 ? `${items.length} categoria${items.length > 1 ? "s" : ""} cadastrada${items.length > 1 ? "s" : ""}` : "Nenhuma categoria cadastrada"}
         </p>
         <button
           onClick={() => setModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded text-[12px] font-semibold text-white transition hover:opacity-90"
+          className="flex items-center gap-1.5 px-3 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90"
           style={{ background: "#7259B5" }}
         >
           <Plus size={13} /> Adicionar categoria
@@ -176,18 +176,18 @@ export default function DistribuicaoPage() {
         <div className="bg-white rounded border flex flex-col items-center justify-center py-16 text-center"
           style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <Users size={28} className="text-black/15 mb-3" />
-          <p className="text-[13px] text-black/35 font-medium">Nenhum plano de distribuição</p>
-          <p className="text-[11px] text-black/25 mt-1 max-w-xs">
+          <p className="text-[0.8125rem] text-black/35 font-medium">Nenhum plano de distribuição</p>
+          <p className="text-[0.6875rem] text-black/25 mt-1 max-w-xs">
             Cadastre como os ingressos ou acessos à atividade serão distribuídos — pagos, gratuitos e cotas reservadas.
           </p>
         </div>
       ) : (
         <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <table className="w-full text-[12px]">
+          <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 {["Tipo", "Categoria", "Público-alvo", "Quantidade", "Preço unit.", "Observações", ""].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -198,7 +198,7 @@ export default function DistribuicaoPage() {
                   <tr key={item.id} className="border-b last:border-0 hover:bg-black/[.015] transition"
                     style={{ borderColor: "rgba(13,13,13,.05)" }}>
                     <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-semibold"
+                      <span className="px-2 py-0.5 rounded text-[0.625rem] font-semibold"
                         style={{ background: tm.bg, color: tm.color }}>
                         {tm.label}
                       </span>
@@ -211,7 +211,7 @@ export default function DistribuicaoPage() {
                     <td className="px-4 py-3 text-black/60 tabular-nums">
                       {item.tipo === "pago" && item.preco_unitario ? fmt(item.preco_unitario) : "—"}
                     </td>
-                    <td className="px-4 py-3 text-black/45 max-w-[180px] truncate">{item.observacoes || "—"}</td>
+                    <td className="px-4 py-3 text-black/45 max-w-[11.25rem] truncate">{item.observacoes || "—"}</td>
                     <td className="px-4 py-3">
                       <button
                         onClick={() => remover(item.id)}
@@ -236,18 +236,18 @@ export default function DistribuicaoPage() {
           onClick={e => { if (e.target === e.currentTarget) { setModalOpen(false); setForm(EMPTY); } }}>
           <div className="bg-white rounded w-full max-w-md" style={{ boxShadow: "0 8px 32px rgba(13,13,13,.15)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[13px] font-bold text-black/80">Adicionar categoria de distribuição</p>
+              <p className="text-[0.8125rem] font-bold text-black/80">Adicionar categoria de distribuição</p>
             </div>
             <div className="p-5 space-y-4">
 
               {/* Tipo */}
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Tipo de acesso</label>
+                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Tipo de acesso</label>
                 <div className="flex gap-2">
                   {(["gratuito", "pago", "cortesia"] as Tipo[]).map(t => (
                     <button key={t}
                       onClick={() => setForm(f => ({ ...f, tipo: t }))}
-                      className="flex-1 py-2 rounded text-[11px] font-semibold transition border"
+                      className="flex-1 py-2 rounded text-[0.6875rem] font-semibold transition border"
                       style={{
                         background: form.tipo === t ? TIPO_META[t].bg : "transparent",
                         color: form.tipo === t ? TIPO_META[t].color : "rgba(13,13,13,.40)",
@@ -262,21 +262,21 @@ export default function DistribuicaoPage() {
               {/* Categoria e público */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Categoria</label>
+                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Categoria</label>
                   <input
                     value={form.categoria ?? ""}
                     onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}
                     placeholder="Show, exposição, oficina…"
-                    className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none"
+                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Público-alvo</label>
+                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Público-alvo</label>
                   <Select
                     value={form.publico_alvo}
                     onChange={e => setForm(f => ({ ...f, publico_alvo: e.target.value as PublicoAlvo }))}
-                    className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none bg-white"
+                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none bg-white"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   >
                     {(Object.entries(PUBLICO_LABEL) as [PublicoAlvo, string][]).map(([v, l]) => (
@@ -289,26 +289,26 @@ export default function DistribuicaoPage() {
               {/* Quantidade e preço */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Quantidade</label>
+                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Quantidade</label>
                   <input
                     type="number"
                     min={0}
                     value={form.quantidade}
                     onChange={e => setForm(f => ({ ...f, quantidade: parseInt(e.target.value) || 0 }))}
-                    className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none"
+                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
                 {form.tipo === "pago" && (
                   <div>
-                    <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Preço unitário (R$)</label>
+                    <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Preço unitário (R$)</label>
                     <input
                       type="number"
                       min={0}
                       step="0.01"
                       value={form.preco_unitario ?? ""}
                       onChange={e => setForm(f => ({ ...f, preco_unitario: parseFloat(e.target.value) || null }))}
-                      className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none"
+                      className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
                       style={{ borderColor: "rgba(13,13,13,.12)" }}
                     />
                   </div>
@@ -317,13 +317,13 @@ export default function DistribuicaoPage() {
 
               {/* Observações */}
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Observações</label>
+                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Observações</label>
                 <textarea
                   rows={2}
                   value={form.observacoes ?? ""}
                   onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
                   placeholder="Critérios de seleção, documentação necessária…"
-                  className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none resize-none"
+                  className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none resize-none"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
@@ -333,7 +333,7 @@ export default function DistribuicaoPage() {
               style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <button
                 onClick={() => { setModalOpen(false); setForm(EMPTY); }}
-                className="text-[12px] font-medium transition"
+                className="text-[0.75rem] font-medium transition"
                 style={{ color: "rgba(13,13,13,.35)" }}
                 onMouseOver={e => (e.currentTarget.style.color = "rgba(13,13,13,.55)")}
                 onMouseOut={e => (e.currentTarget.style.color = "rgba(13,13,13,.35)")}
@@ -343,7 +343,7 @@ export default function DistribuicaoPage() {
               <button
                 onClick={salvar}
                 disabled={saving || form.quantidade === 0}
-                className="px-4 py-2 rounded text-[12px] font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                className="px-4 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
                 style={{ background: "#7259B5" }}
               >
                 {saving ? "Salvando…" : "Salvar"}

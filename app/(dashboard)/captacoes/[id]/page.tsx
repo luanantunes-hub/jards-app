@@ -198,12 +198,12 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
       </div>
       <div className="flex-1 pb-5">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-[11px] font-semibold text-black/50">{formatDate(data)}</span>
-          <span className="text-[10px] text-black/25">{formatRelative(data)}</span>
+          <span className="text-[0.6875rem] font-semibold text-black/50">{formatDate(data)}</span>
+          <span className="text-[0.625rem] text-black/25">{formatRelative(data)}</span>
         </div>
-        <p className="text-[13px] font-medium text-[#0D0D0D]">{titulo}</p>
+        <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{titulo}</p>
         {descricao && <p className="text-xs text-black/40 mt-0.5">{descricao}</p>}
-        {usuario && <p className="text-[10px] text-black/25 mt-1">{usuario}</p>}
+        {usuario && <p className="text-[0.625rem] text-black/25 mt-1">{usuario}</p>}
       </div>
     </div>
   );
@@ -216,13 +216,13 @@ function ValorManualPanel({ captacao, onEditarManual }: {
   return (
     <button onClick={onEditarManual} className="flex h-11 items-center gap-3 rounded border border-black/[.12] bg-white px-4 transition hover:bg-black/[.04]">
       <div className="text-left">
-        <p className="text-[9px] font-semibold uppercase tracking-wide text-black/35">Solicitado</p>
-        <p className="text-[12px] font-bold text-[#B07A14]">{captacao.valor_solicitado ? formatCurrency(captacao.valor_solicitado) : "—"}</p>
+        <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Solicitado</p>
+        <p className="text-[0.75rem] font-bold text-[#B07A14]">{captacao.valor_solicitado ? formatCurrency(captacao.valor_solicitado) : "—"}</p>
       </div>
       <div className="h-6 w-px bg-black/10" />
       <div className="text-left">
-        <p className="text-[9px] font-semibold uppercase tracking-wide text-black/35">Aprovado</p>
-        <p className="text-[12px] font-bold text-[#1A8B7A]">{captacao.valor_aprovado ? formatCurrency(captacao.valor_aprovado) : "—"}</p>
+        <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Aprovado</p>
+        <p className="text-[0.75rem] font-bold text-[#1A8B7A]">{captacao.valor_aprovado ? formatCurrency(captacao.valor_aprovado) : "—"}</p>
       </div>
       <Pencil size={11} className="text-black/25" />
     </button>
@@ -632,10 +632,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   return (
     <div className="min-h-full">
       {/* Header */}
-      <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}><div className="mx-auto max-w-[1280px] px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+      <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}><div className="mx-auto max-w-pagina px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
         <Link
           href="/captacoes"
-          className="mb-7 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65"
+          className="mb-7 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65"
         >
           <ArrowLeft size={13} /> Negociações
         </Link>
@@ -650,10 +650,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               size={56}
             />
             <div className="min-w-0">
-              <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">
                 {captacao.titulo || captacao.projeto?.nome || "Sem título"}
               </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[14px] text-black/45">
+              <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.875rem] text-black/45">
                 {captacao.empresa_crm?.nome && !captacao.empresa_pub?.nome ? (
                   <Link href={`/empresas-crm/${captacao.empresa_crm_id}`} className="text-sm text-black/50 hover:text-[#7259B5] transition">
                     {captacao.empresa_crm.nome}
@@ -675,13 +675,13 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 {captacao.ciclo_ano && (
                   <>
                     <span className="text-black/20">·</span>
-                    <span className="rounded border bg-white px-2 py-0.5 text-[10px] font-medium text-black/40" style={{ borderColor: "rgba(13,13,13,.10)" }}>
+                    <span className="rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium text-black/40" style={{ borderColor: "rgba(13,13,13,.10)" }}>
                       Ciclo {captacao.ciclo_ano}
                     </span>
                   </>
                 )}
                 {captacao.ciclo_anterior_id && (
-                  <Link href={`/captacoes/${captacao.ciclo_anterior_id}`} className="text-[10px] font-medium text-black/35 transition hover:text-[#7259B5]">
+                  <Link href={`/captacoes/${captacao.ciclo_anterior_id}`} className="text-[0.625rem] font-medium text-black/35 transition hover:text-[#7259B5]">
                     Ver ciclo anterior
                   </Link>
                 )}
@@ -731,13 +731,13 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             )}
             <button
               onClick={() => setShowEditModal(true)}
-              className="flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[12px] font-medium text-black/55 transition hover:bg-black/[.04]"
+              className="flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04]"
             >
               <Pencil size={12} /> Editar
             </button>
             <button
               onClick={() => setShowNewAtividade(!showNewAtividade)}
-              className={`flex h-11 items-center gap-2 rounded border px-4 text-[12px] font-medium transition ${
+              className={`flex h-11 items-center gap-2 rounded border px-4 text-[0.75rem] font-medium transition ${
                 showNewAtividade
                   ? "bg-white border-[#7259B5]/25 text-[#7259B5]"
                   : "bg-white border-black/[.12] text-black/55 hover:bg-black/[.04]"
@@ -751,16 +751,16 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       </div></header>
 
       {/* Stats Bar */}
-      <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}><div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-5 px-4 py-5 sm:grid-cols-3 sm:px-6 lg:px-10">
+      <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}><div className="mx-auto grid max-w-pagina grid-cols-2 gap-5 px-4 py-5 sm:grid-cols-3 sm:px-6 lg:px-10">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Prioridade</p>
+            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Prioridade</p>
             <button
               type="button"
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 setPrioMenuPos(prioMenuPos ? null : { top: rect.bottom + 4, left: rect.left });
               }}
-              className="inline-flex items-center gap-1.5 rounded border bg-white px-2 py-0.5 text-[11px] font-semibold transition hover:opacity-80"
+              className="inline-flex items-center gap-1.5 rounded border bg-white px-2 py-0.5 text-[0.6875rem] font-semibold transition hover:opacity-80"
               style={{
                 borderColor: captacao.prioridade ? (PRIO_META[captacao.prioridade]?.color ?? "rgba(13,13,13,.25)") + "47" : "transparent",
                 color: PRIO_META[captacao.prioridade ?? ""]?.color ?? "rgba(13,13,13,.25)",
@@ -775,14 +775,14 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Tipo de patrocínio</p>
+            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Tipo de patrocínio</p>
             <button
               type="button"
               onClick={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect();
                 setLeiMenuPos(leiMenuPos ? null : { top: rect.bottom + 4, left: rect.left });
               }}
-              className="rounded border bg-white px-2 py-0.5 text-[11px] font-semibold capitalize transition hover:opacity-80"
+              className="rounded border bg-white px-2 py-0.5 text-[0.6875rem] font-semibold capitalize transition hover:opacity-80"
               style={{
                 borderColor: captacao.lei ? (leiOptions.find(l => l.status === captacao.lei)?.bg ?? "rgba(13,13,13,.4)") + "47" : "transparent",
                 color: leiOptions.find(l => l.status === captacao.lei)?.bg ?? "rgba(13,13,13,.6)",
@@ -792,16 +792,16 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Agência de captação</p>
+            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Agência de captação</p>
             {(captacao as any).captador_externo ? (
               <div>
-                <p className="text-[13px] font-medium text-[#0D0D0D]">{(captacao as any).captador_externo.nome}</p>
+                <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{(captacao as any).captador_externo.nome}</p>
                 {(captacao as any).captador_externo.agencia && (
-                  <p className="text-[11px] text-black/40">{(captacao as any).captador_externo.agencia}</p>
+                  <p className="text-[0.6875rem] text-black/40">{(captacao as any).captador_externo.agencia}</p>
                 )}
               </div>
             ) : (
-              <span className="text-[13px] text-black/40">—</span>
+              <span className="text-[0.8125rem] text-black/40">—</span>
             )}
           </div>
         </div></div>
@@ -851,7 +851,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             {captacao.projeto && (
               <section>
                 <div className="mb-3">
-                  <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Projeto</h2>
+                  <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Projeto</h2>
                 </div>
                 <Link
                   href={captacao.projeto_id ? `/projetos/${captacao.projeto_id}` : "#"}
@@ -867,13 +867,13 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                       cor={captacao.projeto.identidade_cor}
                       size="md"
                     />
-                    <p className="min-w-0 flex-1 truncate text-[15px] font-semibold text-[#0D0D0D]">{captacao.projeto.nome}</p>
+                    <p className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-[#0D0D0D]">{captacao.projeto.nome}</p>
                   </div>
                   {captacao.projeto.descricao && (
-                    <p className="mt-3 text-[12px] leading-relaxed text-black/45">{captacao.projeto.descricao}</p>
+                    <p className="mt-3 text-[0.75rem] leading-relaxed text-black/45">{captacao.projeto.descricao}</p>
                   )}
                   {(captacao.projeto.proponente_nome || captacao.projeto.valor_alvo) && (
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-black/50">
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.6875rem] text-black/50">
                       {captacao.projeto.proponente_nome && (
                         <span className="inline-flex items-center gap-1.5">
                           <Users size={11} className="text-black/30" />
@@ -899,8 +899,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             {/* Timeline */}
             <section>
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Histórico</h2>
-                <span className="text-[11px] text-black/25 font-medium">{timelineEvents.length} eventos</span>
+                <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Histórico</h2>
+                <span className="text-[0.6875rem] text-black/25 font-medium">{timelineEvents.length} eventos</span>
               </div>
 
               {/* Formulário inline de nova atividade */}
@@ -910,7 +910,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                     <div className="w-7 h-7 rounded-full bg-[#7259B5] flex items-center justify-center">
                       <Plus size={13} className="text-white" />
                     </div>
-                    <span className="text-[13px] font-medium text-[#0D0D0D]">Nova atividade</span>
+                    <span className="text-[0.8125rem] font-medium text-[#0D0D0D]">Nova atividade</span>
                   </div>
 
                   <div className="space-y-3">
@@ -919,7 +919,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                       value={newAtividadeNome}
                       onChange={e => setNewAtividadeNome(e.target.value)}
                       placeholder="Nome da atividade..."
-                      className="w-full px-3 py-2 text-[13px] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
+                      className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
                       style={{ borderColor: "rgba(13,13,13,.12)" }}
                     />
 
@@ -939,7 +939,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                           key={value}
                           type="button"
                           onClick={() => setNewAtividadeTipo(value)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[11px] font-medium rounded border transition ${
+                          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[0.6875rem] font-medium rounded border transition ${
                             newAtividadeTipo === value
                               ? "bg-white text-[#7259B5] border-[#7259B5]/25"
                               : "bg-white text-black/50 border-black/10 hover:border-black/20"
@@ -956,7 +956,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                         type="date"
                         value={newAtividadeData}
                         onChange={e => setNewAtividadeData(e.target.value)}
-                        className="flex-1 px-3 py-2 text-[12px] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
+                        className="flex-1 px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
                         style={{ borderColor: "rgba(13,13,13,.12)" }}
                       />
                     </div>
@@ -966,21 +966,21 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                       onChange={e => setNewAtividadeNota(e.target.value)}
                       placeholder="Nota"
                       rows={2}
-                      className="w-full px-3 py-2 text-[12px] border rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
                       style={{ borderColor: "rgba(13,13,13,.12)" }}
                     />
 
                     <div className="flex justify-end gap-2 pt-1">
                       <button
                         onClick={() => setShowNewAtividade(false)}
-                        className="px-3 py-1.5 text-[11px] font-medium text-black/40 hover:text-black/60 transition"
+                        className="px-3 py-1.5 text-[0.6875rem] font-medium text-black/40 hover:text-black/60 transition"
                       >
                         Cancelar
                       </button>
                       <button
                         onClick={handleSalvarAtividade}
                         disabled={!newAtividadeNome.trim() || salvandoAtividade}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-[11px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
+                        className="flex items-center gap-1.5 px-4 py-1.5 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
                       >
                         {salvandoAtividade ? (
                           <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
@@ -1020,8 +1020,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             {atvsPendentes.length > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Próximas Atividades</h2>
-                  <span className="text-[11px] text-black/25 font-medium">{atvsPendentes.length}</span>
+                  <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Próximas Atividades</h2>
+                  <span className="text-[0.6875rem] text-black/25 font-medium">{atvsPendentes.length}</span>
                 </div>
                 <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   {atvsPendentes.map(atv => {
@@ -1034,13 +1034,13 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                         />
                         <Icon size={13} className="text-black/30 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-medium text-[#0D0D0D] truncate">{atv.nome}</p>
+                          <p className="text-[0.8125rem] font-medium text-[#0D0D0D] truncate">{atv.nome}</p>
                           {atv.contato && (
-                            <p className="text-[11px] text-black/35">{atv.contato.nome}</p>
+                            <p className="text-[0.6875rem] text-black/35">{atv.contato.nome}</p>
                           )}
                         </div>
                         {atv.data_prevista && (
-                          <span className="text-[11px] text-black/35 flex-shrink-0">{formatDate(atv.data_prevista)}</span>
+                          <span className="text-[0.6875rem] text-black/35 flex-shrink-0">{formatDate(atv.data_prevista)}</span>
                         )}
                       </div>
                     );
@@ -1052,17 +1052,17 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             {propostas.length > 0 && (
               <section>
                 <div className="mb-3 flex items-center justify-between">
-                  <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Adaptação comercial</h2>
-                  {captacao.projeto_id && <Link href={`/projetos/${captacao.projeto_id}`} className="text-[10px] font-semibold text-[#7259B5] hover:underline">Abrir no projeto</Link>}
+                  <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Adaptação comercial</h2>
+                  {captacao.projeto_id && <Link href={`/projetos/${captacao.projeto_id}`} className="text-[0.625rem] font-semibold text-[#7259B5] hover:underline">Abrir no projeto</Link>}
                 </div>
                 <div className="space-y-2">
                   {propostas.map(proposta => (
                     <div key={proposta.id} className="rounded border border-black/[.08] bg-white px-4 py-4">
                       <div className="flex items-start justify-between gap-4">
-                        <div><p className="text-[13px] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 text-[10px] text-black/30">{proposta.contrapartidas.length} contrapartida{proposta.contrapartidas.length === 1 ? "" : "s"} · {formatDate(proposta.created_at)}</p></div>
-                        <span className="text-[13px] font-semibold text-black/65">{proposta.valor_proposto == null ? "—" : proposta.valor_proposto.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                        <div><p className="text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 text-[0.625rem] text-black/30">{proposta.contrapartidas.length} contrapartida{proposta.contrapartidas.length === 1 ? "" : "s"} · {formatDate(proposta.created_at)}</p></div>
+                        <span className="text-[0.8125rem] font-semibold text-black/65">{proposta.valor_proposto == null ? "—" : proposta.valor_proposto.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                       </div>
-                      {proposta.observacoes_comerciais && <p className="mt-3 border-t border-black/[.06] pt-3 text-[11px] leading-5 text-black/40">{proposta.observacoes_comerciais}</p>}
+                      {proposta.observacoes_comerciais && <p className="mt-3 border-t border-black/[.06] pt-3 text-[0.6875rem] leading-5 text-black/40">{proposta.observacoes_comerciais}</p>}
                     </div>
                   ))}
                 </div>
@@ -1072,8 +1072,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             {/* Documentos */}
             <section>
               <div className="flex items-center justify-between mb-3">
-                <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Documentos</h2>
-                <label className="inline-flex items-center gap-1 rounded border border-black/15 bg-white px-2 py-1 text-[11px] font-semibold text-black/70 hover:bg-black/[.04] transition cursor-pointer">
+                <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Documentos</h2>
+                <label className="inline-flex items-center gap-1 rounded border border-black/15 bg-white px-2 py-1 text-[0.6875rem] font-semibold text-black/70 hover:bg-black/[.04] transition cursor-pointer">
                   <Upload size={11} /> Adicionar
                   <input
                     type="file"
@@ -1089,12 +1089,12 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               {uploadandoDoc && (
                 <div className="bg-[#7259B5]/5 border border-[#7259B5]/20 rounded p-3 mb-3 flex items-center gap-3">
                   <RefreshCw size={14} className="text-[#7259B5] animate-spin" />
-                  <span className="text-[12px] text-[#7259B5] font-medium">Enviando arquivo…</span>
+                  <span className="text-[0.75rem] text-[#7259B5] font-medium">Enviando arquivo…</span>
                 </div>
               )}
 
               {documentoErro && (
-                <div className="mb-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] font-medium text-[#B23A3A]">
+                <div className="mb-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[0.6875rem] font-medium text-[#B23A3A]">
                   {documentoErro}
                 </div>
               )}
@@ -1103,7 +1103,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 <div className="bg-white rounded border p-6 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <FileText size={20} className="mx-auto text-black/15 mb-2" />
                   <p className="text-xs text-black/30">Nenhum documento anexado</p>
-                  <p className="text-[10px] text-black/20 mt-1">PDF, Word, Excel, imagens, ZIP</p>
+                  <p className="text-[0.625rem] text-black/20 mt-1">PDF, Word, Excel, imagens, ZIP</p>
                 </div>
               ) : documentos.length > 0 ? (
                 <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -1111,8 +1111,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                     <div key={doc.id} className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 hover:bg-black/[0.02] transition group" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                       <DocIcon tipo={doc.tipo} />
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-medium truncate">{doc.nome}</p>
-                        <p className="text-[10px] text-black/25">{formatDocSize(doc.tamanho)} · {formatDate(doc.created_at)}</p>
+                        <p className="text-[0.8125rem] font-medium truncate">{doc.nome}</p>
+                        <p className="text-[0.625rem] text-black/25">{formatDocSize(doc.tamanho)} · {formatDate(doc.created_at)}</p>
                       </div>
                       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                         <button
@@ -1139,7 +1139,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           </div>
 
           {/* Sidebar */}
-          <div className="w-full shrink-0 space-y-4 xl:w-[320px]">
+          <div className="w-full shrink-0 space-y-4 xl:w-[20rem]">
             {/* Status */}
             <DetailSidebarCard title="Status" icon={Tag}>
               <button
@@ -1171,28 +1171,28 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             <DetailSidebarCard title="Detalhes" icon={Info}>
               <div className="space-y-3">
                 <div>
-                  <p className="text-[10px] text-black/35 mb-0.5">Próximo follow-up</p>
-                  <p className="text-[13px] font-medium">{formatDate(captacao.proxima_prospeccao)}</p>
+                  <p className="text-[0.625rem] text-black/35 mb-0.5">Próximo follow-up</p>
+                  <p className="text-[0.8125rem] font-medium">{formatDate(captacao.proxima_prospeccao)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-black/35 mb-0.5">Previsão</p>
-                  <p className="text-[13px] font-medium">{formatDate(captacao.data_previsao)}</p>
+                  <p className="text-[0.625rem] text-black/35 mb-0.5">Previsão</p>
+                  <p className="text-[0.8125rem] font-medium">{formatDate(captacao.data_previsao)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-black/35 mb-0.5">Criado em</p>
-                  <p className="text-[13px] font-medium">{formatDate(captacao.created_at)}</p>
+                  <p className="text-[0.625rem] text-black/35 mb-0.5">Criado em</p>
+                  <p className="text-[0.8125rem] font-medium">{formatDate(captacao.created_at)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-black/35 mb-0.5">Origem da oportunidade</p>
-                  <p className="text-[13px] font-medium">{taxonomyLabel(origens, captacao.origem_oportunidade)}</p>
+                  <p className="text-[0.625rem] text-black/35 mb-0.5">Origem da oportunidade</p>
+                  <p className="text-[0.8125rem] font-medium">{taxonomyLabel(origens, captacao.origem_oportunidade)}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-black/35 mb-0.5">Canal planejado</p>
-                  <p className="text-[13px] font-medium">{captacao.canal_planejado ? taxonomyLabel(canais, captacao.canal_planejado) : captacao.meio_contato || "Definir depois"}</p>
+                  <p className="text-[0.625rem] text-black/35 mb-0.5">Canal planejado</p>
+                  <p className="text-[0.8125rem] font-medium">{captacao.canal_planejado ? taxonomyLabel(canais, captacao.canal_planejado) : captacao.meio_contato || "Definir depois"}</p>
                 </div>
                 <div>
-                  <p className="text-[10px] text-black/35 mb-0.5">Contatos realizados</p>
-                  <p className="text-[13px] font-medium">{interacoes.length}</p>
+                  <p className="text-[0.625rem] text-black/35 mb-0.5">Contatos realizados</p>
+                  <p className="text-[0.8125rem] font-medium">{interacoes.length}</p>
                 </div>
               </div>
             </DetailSidebarCard>
@@ -1203,12 +1203,12 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 <div className="space-y-2">
                   {contatos.slice(0, 5).map(c => (
                     <div key={c.id} className="flex items-center gap-3 py-1.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-gradient-to-br from-white via-black/[.035] to-black/[.10] text-[15px] font-semibold text-black/45">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-gradient-to-br from-white via-black/[.035] to-black/[.10] text-[0.9375rem] font-semibold text-black/45">
                         {c.nome.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-[12px] font-semibold text-black/75">{c.nome}</p>
-                        <p className="truncate text-[10px] text-black/45">{c.cargo || "Cargo não informado"}</p>
+                        <p className="truncate text-[0.75rem] font-semibold text-black/75">{c.nome}</p>
+                        <p className="truncate text-[0.625rem] text-black/45">{c.cargo || "Cargo não informado"}</p>
                       </div>
                       {c.email && (
                         <a href={`mailto:${c.email}`} className="text-black/25 hover:text-[#7259B5]" aria-label={`Enviar e-mail para ${c.nome}`}>
@@ -1218,7 +1218,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                     </div>
                   ))}
                   {contatos.length > 5 && (
-                    <p className="text-[11px] text-black/30 text-center pt-1">+{contatos.length - 5} outros contatos</p>
+                    <p className="text-[0.6875rem] text-black/30 text-center pt-1">+{contatos.length - 5} outros contatos</p>
                   )}
                 </div>
               </DetailSidebarCard>
@@ -1285,7 +1285,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           <div className="fixed inset-0 z-40" onClick={() => setPrioMenuPos(null)} />
           <div
             className="fixed z-50 overflow-hidden rounded-lg border bg-white shadow-xl"
-            style={{ top: prioMenuPos.top, left: prioMenuPos.left, borderColor: "rgba(13,13,13,.10)", minWidth: 180 }}
+            style={{ top: prioMenuPos.top, left: prioMenuPos.left, borderColor: "rgba(13,13,13,.10)", minWidth: "11.25rem" }}
           >
             {(["sem", "alta", "media", "baixa"] as const).map(p => {
               const isActive = (p === "sem" ? null : p) === captacao.prioridade;
@@ -1295,7 +1295,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                   key={p}
                   type="button"
                   onClick={() => handlePrioridadeChange(p === "sem" ? null : p)}
-                  className="flex w-full items-center justify-between px-3 py-2 text-left text-[12px] transition hover:bg-black/[.03]"
+                  className="flex w-full items-center justify-between px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.03]"
                 >
                   <span className="inline-flex items-center gap-1.5 text-black">
                     {it ? (
@@ -1329,13 +1329,13 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       )}
       {editingFinanceiro && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={() => setEditingFinanceiro(false)}>
-          <div className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: "25rem" }} onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
                   <Coins size={16} className="text-black/50" />
                 </div>
-                <h2 className="text-[15px] font-bold text-black">Financeiro</h2>
+                <h2 className="text-[0.9375rem] font-bold text-black">Financeiro</h2>
               </div>
               <button onClick={() => setEditingFinanceiro(false)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
                 <X size={15} className="text-black/40" />
@@ -1343,31 +1343,31 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </div>
             <div className="p-6 space-y-4">
               <div>
-                <label className="text-[10px] text-black/40 mb-1 block">Valor solicitado (R$)</label>
+                <label className="text-[0.625rem] text-black/40 mb-1 block">Valor solicitado (R$)</label>
                 <input
                   type="number"
                   value={editValorSolicitado}
                   onChange={(e) => setEditValorSolicitado(e.target.value)}
                   placeholder="0,00"
-                  className="w-full px-3 py-2 text-[13px] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
+                  className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
               <div>
-                <label className="text-[10px] text-black/40 mb-1 block">Valor aprovado (R$)</label>
+                <label className="text-[0.625rem] text-black/40 mb-1 block">Valor aprovado (R$)</label>
                 <input
                   type="number"
                   value={editValorAprovado}
                   onChange={(e) => setEditValorAprovado(e.target.value)}
                   placeholder="0,00"
-                  className="w-full px-3 py-2 text-[13px] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
+                  className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
               <button
                 onClick={handleSalvarFinanceiro}
                 disabled={salvandoFinanceiro}
-                className="w-full px-3 py-2 text-[11px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
+                className="w-full px-3 py-2 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
               >
                 {salvandoFinanceiro ? "Salvando…" : "Salvar"}
               </button>

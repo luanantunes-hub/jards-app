@@ -240,7 +240,7 @@ export default function NotificacoesPage() {
       <div className="mx-auto max-w-4xl animate-pulse px-4 py-6 md:px-8 md:py-8" aria-busy="true" aria-label="Carregando notificações">
         <div className="h-3 w-24 rounded bg-black/[.06]" />
         <div className="mt-2 h-7 w-48 rounded bg-black/[.06]" />
-        <div className="mt-8 space-y-2">{Array.from({ length: 5 }).map((_, index) => <div key={index} className="h-[76px] rounded border border-black/[.06] bg-black/[.02]" />)}</div>
+        <div className="mt-8 space-y-2">{Array.from({ length: 5 }).map((_, index) => <div key={index} className="h-[4.75rem] rounded border border-black/[.06] bg-black/[.02]" />)}</div>
       </div>
     );
   }
@@ -249,9 +249,9 @@ export default function NotificacoesPage() {
     <div className="mx-auto max-w-4xl px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:gap-6">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Central</p>
-          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D]">Notificações</h1>
-          <p className="mt-1 text-[13px] text-black/40">
+          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Central</p>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Notificações</h1>
+          <p className="mt-1 text-[0.8125rem] text-black/40">
             {unread > 0 ? `${unread} não lida${unread === 1 ? "" : "s"}` : "Tudo em dia"}
           </p>
         </div>
@@ -259,7 +259,7 @@ export default function NotificacoesPage() {
           <button
             type="button"
             onClick={markAllRead}
-            className="flex items-center gap-2 rounded border border-[#7259B5] bg-white px-3 py-2 text-[12px] font-semibold text-[#7259B5] transition hover:bg-black/[.04]"
+            className="flex items-center gap-2 rounded border border-[#7259B5] bg-white px-3 py-2 text-[0.75rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04]"
           >
             <CheckCheck size={13} /> Marcar todas como lidas
           </button>
@@ -267,11 +267,11 @@ export default function NotificacoesPage() {
       </div>
 
       {!migrationReady && (
-        <div className="mt-6 rounded border border-[#B07A14]/20 bg-[#B07A14]/[.05] px-4 py-3 text-[11px] text-[#805A12]">
+        <div className="mt-6 rounded border border-[#B07A14]/20 bg-[#B07A14]/[.05] px-4 py-3 text-[0.6875rem] text-[#805A12]">
           A central está em modo compatível. Aplique a migration Notification Inbox v2 para ativar prioridade, arquivo, adiamento e novos eventos.
         </div>
       )}
-      {error && <div className="mt-6 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.05] px-4 py-3 text-[11px] text-[#A33A3A]">{error}</div>}
+      {error && <div className="mt-6 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.05] px-4 py-3 text-[0.6875rem] text-[#A33A3A]">{error}</div>}
 
       <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-b border-black/[.08] pb-3">
         <SegmentedControl
@@ -286,7 +286,7 @@ export default function NotificacoesPage() {
             aria-label="Filtrar por módulo"
             value={category}
             onChange={event => setCategory(event.target.value)}
-            className="rounded border border-black/[.12] bg-white px-2.5 py-1.5 text-[11px] font-medium text-black/55 outline-none focus:border-[#7259B5]/50"
+            className="rounded border border-black/[.12] bg-white px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/55 outline-none focus:border-[#7259B5]/50"
           >
             <option value="todas">Todos os módulos</option>
             {categories.map(value => <option key={value} value={value}>{CATEGORY_LABELS[value] ?? value}</option>)}
@@ -297,15 +297,15 @@ export default function NotificacoesPage() {
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-24 text-center">
           <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-black/[.035]"><Bell size={22} className="text-black/18" /></span>
-          <p className="text-[14px] font-semibold text-black/45">Nenhuma notificação</p>
+          <p className="text-[0.875rem] font-semibold text-black/45">Nenhuma notificação</p>
         </div>
       ) : (
         <div className="mt-7 space-y-8">
           {(["Hoje", "Esta semana", "Anteriores"] as DateGroup[]).map(group => grouped[group].length > 0 && (
             <section key={group}>
               <div className="mb-2 flex items-center gap-2">
-                <h2 className="text-[11px] font-bold uppercase tracking-[.08em] text-black/35">{group}</h2>
-                <span className="text-[10px] text-black/25">{grouped[group].length}</span>
+                <h2 className="text-[0.6875rem] font-bold uppercase tracking-[.08em] text-black/35">{group}</h2>
+                <span className="text-[0.625rem] text-black/25">{grouped[group].length}</span>
               </div>
               <div className="overflow-hidden rounded border border-black/[.08] bg-white">
                 {grouped[group].map((item, index) => {
@@ -329,12 +329,12 @@ export default function NotificacoesPage() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="truncate text-[13px] font-semibold text-black/80">{item.titulo}</p>
+                          <p className="truncate text-[0.8125rem] font-semibold text-black/80">{item.titulo}</p>
                           {!item.lida && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#7259B5]" />}
-                          {critical && <span className="rounded bg-[#D94E4E]/[.09] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-[#A33A3A]">Crítica</span>}
+                          {critical && <span className="rounded bg-[#D94E4E]/[.09] px-1.5 py-0.5 text-[0.5rem] font-bold uppercase tracking-wide text-[#A33A3A]">Crítica</span>}
                         </div>
-                        <p className="mt-0.5 text-[12px] leading-5 text-black/48">{item.mensagem}</p>
-                        <div className="mt-1.5 flex items-center gap-2 text-[9px] text-black/28">
+                        <p className="mt-0.5 text-[0.75rem] leading-5 text-black/48">{item.mensagem}</p>
+                        <div className="mt-1.5 flex items-center gap-2 text-[0.5625rem] text-black/28">
                           <span>{CATEGORY_LABELS[item.categoria] ?? item.categoria}</span><span>·</span><span>{formatTime(item.created_at)}</span>
                         </div>
                       </div>

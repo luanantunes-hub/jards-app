@@ -115,7 +115,7 @@ export default function ConfiguracoesMcpPage() {
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-10">
-      <Link href="/configuracoes" className="mb-6 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65">
+      <Link href="/configuracoes" className="mb-6 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65">
         <ArrowLeft size={14} aria-hidden="true" /> Configurações
       </Link>
       <h1 className="flex items-center gap-2 text-xl font-semibold tracking-tight">
@@ -141,7 +141,7 @@ export default function ConfiguracoesMcpPage() {
       <div className="mt-8 rounded border border-black/10 bg-white p-4">
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label className="block text-[10px] font-medium uppercase tracking-[.08em] text-black/50">
+            <label className="block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/50">
               Nome da chave (opcional)
             </label>
             <input
@@ -152,7 +152,7 @@ export default function ConfiguracoesMcpPage() {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-medium uppercase tracking-[.08em] text-black/50">Permissão</label>
+            <label className="block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/50">Permissão</label>
             <div className="mt-2">
               <Select value={scope} onChange={(e) => setScope(e.target.value as "read" | "write")} className="h-10">
                 <option value="read">Somente leitura</option>
@@ -163,8 +163,8 @@ export default function ConfiguracoesMcpPage() {
         </div>
 
         <div className="mt-3">
-          <label className="block text-[10px] font-medium uppercase tracking-[.08em] text-black/50">Expira em</label>
-          <div className="mt-2 max-w-[200px]">
+          <label className="block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/50">Expira em</label>
+          <div className="mt-2 max-w-[12.5rem]">
             <Select value={expiresInDays} onChange={(e) => setExpiresInDays(e.target.value)} className="h-10">
               <option value="7">7 dias</option>
               <option value="30">30 dias</option>
@@ -206,7 +206,7 @@ export default function ConfiguracoesMcpPage() {
       </div>
 
       <div className="mt-8">
-        <h2 className="text-[10px] font-medium uppercase tracking-[.08em] text-black/50">Chaves ativas</h2>
+        <h2 className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/50">Chaves ativas</h2>
         {carregando ? (
           <p className="mt-3 text-sm text-black/50">Carregando…</p>
         ) : chavesAtivas.length === 0 ? (
@@ -221,7 +221,7 @@ export default function ConfiguracoesMcpPage() {
                     <p className="flex items-center gap-2 text-sm font-medium">
                       {c.label || "Sem nome"}
                       <span
-                        className="rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium"
+                        className="rounded border bg-white px-1.5 py-0.5 text-[0.625rem] font-medium"
                         style={{
                           borderColor: (c.scope === "write" ? "#D94A4A" : "#2D72B0") + "47",
                           color: c.scope === "write" ? "#D94A4A" : "#2D72B0",
@@ -230,7 +230,7 @@ export default function ConfiguracoesMcpPage() {
                         {c.scope === "write" ? "leitura + criação" : "somente leitura"}
                       </span>
                       {expirada && (
-                        <span className="rounded border border-[#D94A4A]/30 bg-white px-1.5 py-0.5 text-[10px] font-medium text-[#D94A4A]">
+                        <span className="rounded border border-[#D94A4A]/30 bg-white px-1.5 py-0.5 text-[0.625rem] font-medium text-[#D94A4A]">
                           expirada
                         </span>
                       )}

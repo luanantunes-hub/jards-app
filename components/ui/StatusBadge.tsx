@@ -78,7 +78,7 @@ export default function StatusBadge({ status, label, size = "md", className = ""
 
   const iconSize = size === "sm" ? 9 : 11;
   const chevronSize = size === "sm" ? 10 : 12;
-  const textSize = size === "sm" ? "text-[9px]" : "text-[11px]";
+  const textSize = size === "sm" ? "text-[0.5625rem]" : "text-[0.6875rem]";
   const padding = size === "sm" ? "px-1.5 py-0.5" : "px-2 py-1";
 
   const style = variant === "outline"
