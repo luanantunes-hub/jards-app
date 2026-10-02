@@ -984,13 +984,23 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                       >
                         <Pencil size={12} /> Editar objetivo
                       </button>
+                      {ultimoResultado && (
+                        <button
+                          type="button"
+                          onClick={() => setEditingResultado(ultimoResultado)}
+                          className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[11px] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
+                          style={{ borderColor: "rgba(13,13,13,.14)" }}
+                        >
+                          <Pencil size={12} /> Atualizar último resultado
+                        </button>
+                      )}
                       <button
                         type="button"
-                        onClick={() => ultimoResultado ? setEditingResultado(ultimoResultado) : setShowResultado(true)}
+                        onClick={() => setShowResultado(true)}
                         className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[11px] font-medium text-black/50 transition hover:bg-black/[.04] active:scale-[.98]"
                         style={{ borderColor: "rgba(13,13,13,.14)" }}
                       >
-                        {ultimoResultado ? <><Pencil size={12} /> Atualizar resultado</> : <><Plus size={12} /> Registrar resultado</>}
+                        <Plus size={12} /> Registrar resultado
                       </button>
                     </div>
                   </div>
