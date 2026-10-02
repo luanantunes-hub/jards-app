@@ -20,7 +20,7 @@ const VIEW_OPTIONS = [
 ] as const;
 
 const PROJETOS_COLUMNS = [
-  { id: "projeto", label: "Projeto", width: "15.625rem", hideable: false }, { id: "proponente", label: "Proponente", width: "11.875rem" }, { id: "fase", label: "Fase", width: "7.8125rem" }, { id: "objetivo", label: "Objetivo", width: "7.8125rem" }, { id: "captado", label: "Captado", width: "7.8125rem" }, { id: "progresso", label: "Progresso", width: "9.375rem" }, { id: "captacoes", label: "Negociações", width: "6.5625rem" }, { id: "inscricoes", label: "Inscrições", width: "6.5625rem" }, { id: "prazo", label: "Próximo prazo", width: "9.0625rem" }, { id: "focal", label: "Ponto focal", width: "10.625rem" }, { id: "atualizacao", label: "Atualização", width: "8.75rem" }, { id: "acoes", label: "Ações", width: "5rem" },
+  { id: "projeto", label: "Projeto", width: "15.625rem", grow: true, hideable: false }, { id: "proponente", label: "Proponente", width: "11.875rem" }, { id: "fase", label: "Fase", width: "7.8125rem" }, { id: "objetivo", label: "Objetivo", width: "7.8125rem" }, { id: "captado", label: "Captado", width: "7.8125rem" }, { id: "progresso", label: "Progresso", width: "9.375rem" }, { id: "captacoes", label: "Negociações", width: "6.5625rem" }, { id: "inscricoes", label: "Inscrições", width: "6.5625rem" }, { id: "prazo", label: "Próximo prazo", width: "9.0625rem" }, { id: "focal", label: "Ponto focal", width: "10.625rem" }, { id: "atualizacao", label: "Atualização", width: "8.75rem" }, { id: "acoes", label: "Ações", width: "5rem" },
 ] as const satisfies readonly ColumnDefinition[];
 
 type ProjetoRow = {
@@ -345,7 +345,7 @@ export default function ProjetosPage() {
                       <tr key={i} style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
                         {[200, 160, 80, 90, 90, 120, 60, 60, 100, 120, 90, 40].map((w, j) => (
                           <td key={j} className="px-4 py-3.5">
-                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: w }} />
+                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: `${w / 16}rem` }} />
                           </td>
                         ))}
                       </tr>
@@ -359,7 +359,7 @@ export default function ProjetosPage() {
                         style={{ borderBottom: i < filteredProjetos.length - 1 ? "1px solid rgba(13,13,13,.045)" : "none" }}
                       >
                         {/* Nome */}
-                        <td className="px-4 py-3.5 max-w-[17.5rem]">
+                        <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2">
                             <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} size="sm" />
                             <div className="min-w-0">

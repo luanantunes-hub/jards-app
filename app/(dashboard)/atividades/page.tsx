@@ -22,7 +22,7 @@ import { followupSourceLink } from "@/lib/activities/followupSourceLink";
 import { escalaUi } from "@/lib/escala-ui";
 
 const ATIVIDADES_COLUMNS = [
-  { id: "concluida", label: "Concluída", width: "6.5625rem" }, { id: "atividade", label: "Atividade", width: "17.5rem", hideable: false }, { id: "negociacao", label: "Negociação", width: "11.875rem" }, { id: "empresa", label: "Empresa / contato", width: "13.75rem" }, { id: "prazo", label: "Prazo", width: "7.5rem" }, { id: "duracao", label: "Duração", width: "6.5625rem" }, { id: "prioridade", label: "Prioridade", width: "7.1875rem" }, { id: "responsavel", label: "Responsável", width: "10.625rem" }, { id: "resultado", label: "Resultado", width: "9.375rem" }, { id: "projeto", label: "Projeto", width: "11.25rem" }, { id: "observacao", label: "Observação", width: "14.375rem" },
+  { id: "concluida", label: "Concluída", width: "6.5625rem" }, { id: "atividade", label: "Atividade", width: "17.5rem", grow: true, hideable: false }, { id: "negociacao", label: "Negociação", width: "11.875rem" }, { id: "empresa", label: "Empresa / contato", width: "13.75rem" }, { id: "prazo", label: "Prazo", width: "7.5rem" }, { id: "duracao", label: "Duração", width: "6.5625rem" }, { id: "prioridade", label: "Prioridade", width: "7.1875rem" }, { id: "responsavel", label: "Responsável", width: "10.625rem" }, { id: "resultado", label: "Resultado", width: "9.375rem" }, { id: "projeto", label: "Projeto", width: "11.25rem" }, { id: "observacao", label: "Observação", width: "14.375rem" },
 ] as const satisfies readonly ColumnDefinition[];
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */

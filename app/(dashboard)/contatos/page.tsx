@@ -162,7 +162,7 @@ function SkeletonRow() {
     <tr style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
       {[210, 205, 210, 175, 220, 175, 155, 135, 165, 165, 85].map((w, i) => (
         <td key={i} className="px-6 py-4">
-          <div className="h-3.5 max-w-full rounded bg-black/8 animate-pulse" style={{ width: w }} />
+          <div className="h-3.5 max-w-full rounded bg-black/8 animate-pulse" style={{ width: `${w / 16}rem` }} />
         </td>
       ))}
     </tr>

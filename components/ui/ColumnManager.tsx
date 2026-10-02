@@ -63,13 +63,18 @@ export function ManagedTable<Id extends string>({ storageKey, definitions, class
   const [totalRows, setTotalRows] = useState(0);
   const safeKey = storageKey.replace(/[^a-zA-Z0-9_-]/g, "-");
   const visibleOrder = manager.visible.map(column => column.id);
+  // Peso da coluna "grow" proporcional à largura mínima: com várias colunas
+  // crescendo, nenhuma é alargada além do mínimo enquanto a tabela não cabe.
   const template = manager.visible.map(column => {
     const width = column.width ?? "8.75rem";
-    return column.grow ? `minmax(${width}, 1fr)` : width;
+    const peso = Number.parseFloat(width);
+    return column.grow ? `minmax(${width}, ${Number.isFinite(peso) && peso > 0 ? peso : 1}fr)` : width;
   }).join(" ");
+  // Coluna "grow" só ocupa a largura que sobra: contain:inline-size impede que o
+  // texto mais longo dela (min-width:max-content da tabela) a alargue.
   const rules = definitions.map((column, sourceIndex) => {
     const visualIndex = visibleOrder.indexOf(column.id);
-    return `.managed-${safeKey} tr > :nth-child(${sourceIndex + 1}){${visualIndex < 0 ? "display:none!important;" : `display:block;order:${visualIndex};`}}`;
+    return `.managed-${safeKey} tr > :nth-child(${sourceIndex + 1}){${visualIndex < 0 ? "display:none!important;" : `display:block;order:${visualIndex};${column.grow ? "contain:inline-size;" : ""}`}}`;
   }).join("");
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
   const start = (page - 1) * pageSize + 1;
