@@ -215,7 +215,7 @@ export default function CaptacoesPage() {
   function handleDelete(id: string, titulo: string) {
     confirmDelete({
       title: `Excluir a negociação “${titulo}”?`,
-      description: "Atividades, propostas e histórico desta negociação deixam de aparecer. Esta ação não pode ser desfeita.",
+      description: "O histórico e os documentos da negociação são apagados. Atividades, notas e propostas continuam salvas, sem o vínculo. Esta ação não pode ser desfeita.",
       onConfirm: async () => {
         await excluirPorId(supabase, "captacoes", id);
         setCaptacoes(prev => prev.filter(c => c.id !== id));
