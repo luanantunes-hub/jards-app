@@ -365,8 +365,8 @@ export default function ProponenteDetailPage() {
 
       {/* Header */}
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-        <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
-          <Link href="/proponentes" className="mb-7 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65">
+        <div className="mx-auto max-w-pagina px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+          <Link href="/proponentes" className="mb-7 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65">
             <ArrowLeft size={12} /> Proponentes
           </Link>
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -385,13 +385,13 @@ export default function ProponenteDetailPage() {
                 triggerLabel="Alterar identidade do proponente"
               />
               <div className="min-w-0">
-                <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{proponente.nome}</h1>
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{proponente.nome}</h1>
                 {proponente.maturidade && (() => {
                   const item = etiquetasMaturidadeProponente.find(etiqueta => etiqueta.key === proponente.maturidade);
-                  return item ? <span className="mt-2 inline-flex rounded border px-2 py-1 text-[10px] font-semibold" style={{ color: item.cor, borderColor: `${item.cor}55` }}>Maturidade: {item.label}</span> : null;
+                  return item ? <span className="mt-2 inline-flex rounded border px-2 py-1 text-[0.625rem] font-semibold" style={{ color: item.cor, borderColor: `${item.cor}55` }}>Maturidade: {item.label}</span> : null;
                 })()}
                 {(proponente.cidade || proponente.estado) && (
-                  <p className="mt-2 flex items-center gap-1 text-[14px] text-black/45">
+                  <p className="mt-2 flex items-center gap-1 text-[0.875rem] text-black/45">
                     <MapPin size={11} />
                     {[proponente.cidade, proponente.estado].filter(Boolean).join(" · ")}
                   </p>
@@ -455,54 +455,54 @@ export default function ProponenteDetailPage() {
         <div className="flex flex-col gap-6 lg:flex-row">
 
           {/* Sidebar */}
-          <div className="w-full shrink-0 space-y-4 lg:w-[320px]">
+          <div className="w-full shrink-0 space-y-4 lg:w-[20rem]">
 
             <DecisionScorecard proponenteId={proponente.id} organizationId={organizationId} />
 
             {/* Informações */}
             <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider mb-3">Informações</p>
+              <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-wider mb-3">Informações</p>
               <div className="space-y-3">
                 {proponente.cnpj && (
-                  <div><p className="text-[10px] text-black/30 mb-0.5">CNPJ</p><p className="text-[12px] text-black/70 font-mono">{proponente.cnpj}</p></div>
+                  <div><p className="text-[0.625rem] text-black/30 mb-0.5">CNPJ</p><p className="text-[0.75rem] text-black/70 font-mono">{proponente.cnpj}</p></div>
                 )}
                 {proponente.email && (
-                  <div className="flex items-start gap-1.5"><Mail size={12} className="text-black/25 mt-0.5 flex-shrink-0"/><a href={`mailto:${proponente.email}`} className="text-[12px] text-black/60 hover:text-black/80 transition break-all">{proponente.email}</a></div>
+                  <div className="flex items-start gap-1.5"><Mail size={12} className="text-black/25 mt-0.5 flex-shrink-0"/><a href={`mailto:${proponente.email}`} className="text-[0.75rem] text-black/60 hover:text-black/80 transition break-all">{proponente.email}</a></div>
                 )}
                 {proponente.telefone && (
-                  <div className="flex items-center gap-1.5"><Phone size={12} className="text-black/25 flex-shrink-0"/><span className="text-[12px] text-black/60">{proponente.telefone}</span></div>
+                  <div className="flex items-center gap-1.5"><Phone size={12} className="text-black/25 flex-shrink-0"/><span className="text-[0.75rem] text-black/60">{proponente.telefone}</span></div>
                 )}
                 {proponente.site && (
                   <div className="flex items-center gap-1.5"><Globe size={12} className="text-black/25 flex-shrink-0"/>
-                    <a href={proponente.site} target="_blank" rel="noopener noreferrer" className="text-[12px] text-black/50 hover:text-[#7259B5] transition flex items-center gap-1">
-                      <span className="truncate max-w-[160px]">{proponente.site.replace(/^https?:\/\//, "")}</span><ExternalLink size={10}/>
+                    <a href={proponente.site} target="_blank" rel="noopener noreferrer" className="text-[0.75rem] text-black/50 hover:text-[#7259B5] transition flex items-center gap-1">
+                      <span className="truncate max-w-[10rem]">{proponente.site.replace(/^https?:\/\//, "")}</span><ExternalLink size={10}/>
                     </a>
                   </div>
                 )}
                 {!proponente.cnpj && !proponente.email && !proponente.telefone && !proponente.site && (
-                  <p className="text-[12px] text-black/25 italic">Sem informações de contato</p>
+                  <p className="text-[0.75rem] text-black/25 italic">Sem informações de contato</p>
                 )}
               </div>
               {proponente.descricao && (
                 <>
                   <div className="my-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}/>
                   <div className="flex items-start gap-1.5"><FileText size={12} className="text-black/25 mt-0.5 flex-shrink-0"/>
-                    <p className="text-[12px] text-black/55 leading-relaxed">{proponente.descricao}</p>
+                    <p className="text-[0.75rem] text-black/55 leading-relaxed">{proponente.descricao}</p>
                   </div>
                 </>
               )}
               <div className="my-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}/>
-              <p className="text-[11px] text-black/25">Cadastrado em {fmtDate(proponente.created_at)}</p>
+              <p className="text-[0.6875rem] text-black/25">Cadastrado em {fmtDate(proponente.created_at)}</p>
             </div>
 
             {/* Captadores */}
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3.5 border-b flex items-center gap-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 <Handshake size={13} className="text-black/30"/>
-                <span className="text-[10px] font-bold text-black/35 uppercase tracking-wider">Captadores</span>
-                <span className="ml-auto text-[11px] text-black/30">{captadores.filter(c => c.status === "ativo").length}</span>
+                <span className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wider">Captadores</span>
+                <span className="ml-auto text-[0.6875rem] text-black/30">{captadores.filter(c => c.status === "ativo").length}</span>
                 {disponiveis.length > 0 && (
-                  <button onClick={() => setShowVincular(v => !v)} className="flex items-center gap-1 text-[10px] font-semibold text-black/35 hover:text-[#7259B5] transition">
+                  <button onClick={() => setShowVincular(v => !v)} className="flex items-center gap-1 text-[0.625rem] font-semibold text-black/35 hover:text-[#7259B5] transition">
                     <Plus size={11}/> Vincular
                   </button>
                 )}
@@ -512,7 +512,7 @@ export default function ProponenteDetailPage() {
               {showVincular && (
                 <div className="px-4 py-3 border-b bg-black/[.015]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <div className="space-y-2">
-                    <Select value={vincularId} onChange={e => setVincularId(e.target.value)} className="h-8 text-[12px]">
+                    <Select value={vincularId} onChange={e => setVincularId(e.target.value)} className="h-8 text-[0.75rem]">
                       <option value="">Selecionar captador</option>
                       {disponiveis.map(c => (
                         <option key={c.id} value={c.id}>{c.nome}{c.agencia ? ` · ${c.agencia}` : ""}</option>
@@ -520,10 +520,10 @@ export default function ProponenteDetailPage() {
                     </Select>
                     <div className="flex items-center gap-2">
                       <input type="date" value={vincularData} onChange={e => setVincularData(e.target.value)}
-                        className="h-8 flex-1 rounded border border-black/12 bg-white px-2 text-[11px] outline-none focus:border-[#7259B5]"
+                        className="h-8 flex-1 rounded border border-black/12 bg-white px-2 text-[0.6875rem] outline-none focus:border-[#7259B5]"
                         placeholder="Data início (opcional)"/>
                       <button disabled={!vincularId || vincularSaving} onClick={handleVincularCaptador}
-                        className="h-8 px-3 rounded bg-[#7259B5] text-white text-[11px] font-semibold disabled:opacity-40 transition hover:bg-[#5e48a0]">
+                        className="h-8 px-3 rounded bg-[#7259B5] text-white text-[0.6875rem] font-semibold disabled:opacity-40 transition hover:bg-[#5e48a0]">
                         {vincularSaving ? "…" : "Salvar"}
                       </button>
                       <button onClick={() => setShowVincular(false)} className="h-8 w-8 flex items-center justify-center text-black/35 hover:text-black/60 transition">
@@ -537,17 +537,17 @@ export default function ProponenteDetailPage() {
               {captadores.length === 0 ? (
                 <div className="px-5 py-8 text-center">
                   <Handshake size={18} className="text-black/15 mx-auto mb-2"/>
-                  <p className="text-[12px] text-black/25">Nenhum captador vinculado</p>
-                  <p className="text-[11px] text-black/20 mt-1">Use “Vincular” para associar um captador</p>
+                  <p className="text-[0.75rem] text-black/25">Nenhum captador vinculado</p>
+                  <p className="text-[0.6875rem] text-black/20 mt-1">Use “Vincular” para associar um captador</p>
                 </div>
               ) : (
                 <div className="divide-y" style={{ borderColor: "rgba(13,13,13,.045)" }}>
                   {captadores.map(cp => (
                     <div key={cp.id} className="px-5 py-3 group">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[13px] font-semibold text-black leading-tight truncate">{cp.captador?.nome ?? "—"}</p>
+                        <p className="text-[0.8125rem] font-semibold text-black leading-tight truncate">{cp.captador?.nome ?? "—"}</p>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-[9px] font-bold uppercase tracking-wide" style={{ color: CAPTADOR_STATUS_COLOR[cp.status] }}>{cp.status}</span>
+                          <span className="text-[0.5625rem] font-bold uppercase tracking-wide" style={{ color: CAPTADOR_STATUS_COLOR[cp.status] }}>{cp.status}</span>
                           {cp.status === "ativo" && (
                             <button onClick={() => handleDesvincular(cp.id)} className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 text-black/20 hover:text-[#D94E4E] transition">
                               <X size={11}/>
@@ -555,8 +555,8 @@ export default function ProponenteDetailPage() {
                           )}
                         </div>
                       </div>
-                      {cp.captador?.agencia && <p className="text-[11px] text-black/35 mt-0.5">{cp.captador.agencia}</p>}
-                      {cp.data_inicio && <p className="text-[10px] text-black/25 mt-1">desde {fmtDate(cp.data_inicio)}</p>}
+                      {cp.captador?.agencia && <p className="text-[0.6875rem] text-black/35 mt-0.5">{cp.captador.agencia}</p>}
+                      {cp.data_inicio && <p className="text-[0.625rem] text-black/25 mt-1">desde {fmtDate(cp.data_inicio)}</p>}
                     </div>
                   ))}
                 </div>
@@ -577,10 +577,10 @@ export default function ProponenteDetailPage() {
                 <div key={label} className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Icon size={13} className="text-black/25"/>
-                    <p className="text-[10px] font-bold text-black/30 uppercase tracking-wider">{label}</p>
+                    <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-wider">{label}</p>
                   </div>
-                  <p className="text-[22px] font-bold text-[#0D0D0D] leading-none">{value}</p>
-                  <p className="text-[11px] text-black/30 mt-0.5">{sub}</p>
+                  <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none">{value}</p>
+                  <p className="text-[0.6875rem] text-black/30 mt-0.5">{sub}</p>
                 </div>
               ))}
             </div>
@@ -590,21 +590,21 @@ export default function ProponenteDetailPage() {
               <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <div className="px-5 py-3.5 border-b flex items-center gap-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <Users size={14} className="text-black/30"/>
-                  <span className="text-[11px] font-bold text-black/35 uppercase tracking-wider">Contatos vinculados</span>
-                  <span className="ml-auto text-[11px] text-black/30">{contatos.length}</span>
+                  <span className="text-[0.6875rem] font-bold text-black/35 uppercase tracking-wider">Contatos vinculados</span>
+                  <span className="ml-auto text-[0.6875rem] text-black/30">{contatos.length}</span>
                 </div>
                 <div className="divide-y" style={{ borderColor: "rgba(13,13,13,.045)" }}>
                   {contatos.map(c => (
                     <Link key={c.id} href={`/contatos/${c.id}`} className="px-5 py-3 flex items-center gap-3 hover:bg-black/[0.02] transition">
                       <div className="w-7 h-7 rounded bg-black/6 flex items-center justify-center flex-shrink-0">
-                        <span className="text-[11px] font-bold text-black/30">{(c.nome ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()}</span>
+                        <span className="text-[0.6875rem] font-bold text-black/30">{(c.nome ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[13px] font-semibold text-black leading-tight">{c.nome ?? "—"}</p>
-                        {c.cargo && <p className="text-[11px] text-black/35">{c.cargo}</p>}
+                        <p className="text-[0.8125rem] font-semibold text-black leading-tight">{c.nome ?? "—"}</p>
+                        {c.cargo && <p className="text-[0.6875rem] text-black/35">{c.cargo}</p>}
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
-                        {c.email && <span className="text-[11px] text-black/40 truncate max-w-[160px]">{c.email}</span>}
+                        {c.email && <span className="text-[0.6875rem] text-black/40 truncate max-w-[10rem]">{c.email}</span>}
                         {c.linkedin_url && <ExternalLink size={12} className="text-black/25"/>}
                       </div>
                     </Link>
@@ -623,9 +623,9 @@ export default function ProponenteDetailPage() {
 
 function ProponenteSubsectionButton({ active, onClick, children, count }: { active: boolean; onClick: () => void; children: React.ReactNode; count?: number }) {
   return (
-    <button type="button" onClick={onClick} className={`flex w-full items-center gap-1.5 border-l-2 py-1.5 pl-3 text-left text-[12px] font-medium transition ${active ? "border-black/55 text-black/75" : "border-transparent text-black/35 hover:text-black/55"}`}>
+    <button type="button" onClick={onClick} className={`flex w-full items-center gap-1.5 border-l-2 py-1.5 pl-3 text-left text-[0.75rem] font-medium transition ${active ? "border-black/55 text-black/75" : "border-transparent text-black/35 hover:text-black/55"}`}>
       <span className="min-w-0 truncate">{children}</span>
-      {count !== undefined && count > 0 && <span className={`text-[10px] font-semibold tabular-nums ${active ? "text-black/50" : "text-black/25"}`}>{count}</span>}
+      {count !== undefined && count > 0 && <span className={`text-[0.625rem] font-semibold tabular-nums ${active ? "text-black/50" : "text-black/25"}`}>{count}</span>}
     </button>
   );
 }
@@ -634,10 +634,10 @@ function SectionHeading({ eyebrow, title, count }: { eyebrow: string; title: str
   return (
     <header className="flex items-end justify-between gap-4 border-b px-5 py-5 md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
       <div>
-        <p className="text-[10px] font-bold uppercase tracking-[.12em] text-black/35">{eyebrow}</p>
-        <h2 className="mt-1 text-[21px] font-semibold tracking-[-.02em] text-black">{title}</h2>
+        <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">{eyebrow}</p>
+        <h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">{title}</h2>
       </div>
-      <span className="text-[11px] tabular-nums text-black/30">{count} {count === 1 ? "registro" : "registros"}</span>
+      <span className="text-[0.6875rem] tabular-nums text-black/30">{count} {count === 1 ? "registro" : "registros"}</span>
     </header>
   );
 }
@@ -653,10 +653,10 @@ function ProjetosView({ projetos, onOpen }: {
         <EmptyState icon={FolderOpen} title="Nenhum projeto vinculado" description="Os projetos ligados a este proponente aparecerão aqui." />
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] border-collapse text-left">
+          <table className="w-full min-w-[56.25rem] border-collapse text-left">
             <thead>
               <tr className="border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                {["Projeto", "Fase", "Áreas", "Valor alvo", "Garantido"].map(label => <th key={label} className="px-5 py-3 text-[10px] font-medium text-black/30">{label}</th>)}
+                {["Projeto", "Fase", "Áreas", "Valor alvo", "Garantido"].map(label => <th key={label} className="px-5 py-3 text-[0.625rem] font-medium text-black/30">{label}</th>)}
               </tr>
             </thead>
             <tbody className="divide-y divide-black/[.06]">
@@ -664,11 +664,11 @@ function ProjetosView({ projetos, onOpen }: {
                 const fase = FASE_COLOR[project.fase] ?? FASE_COLOR.planejamento;
                 return (
                   <tr key={project.id} onClick={() => onOpen(project.id)} className="group cursor-pointer transition hover:bg-black/[.018]">
-                    <td className="max-w-[260px] px-5 py-4"><p className="truncate text-[13px] font-semibold text-black/75">{project.nome}</p>{project.mecanismo && <p className="mt-0.5 truncate text-[10px] text-black/30">{project.mecanismo}</p>}</td>
-                    <td className="px-5 py-4"><span className="rounded px-1.5 py-0.5 text-[10px] font-medium" style={{ background: fase.bg, color: fase.text }}>{FASE_LABEL[project.fase]}</span></td>
-                    <td className="max-w-[210px] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded bg-[#7259B5]/[.08] px-1.5 py-0.5 text-[9px] font-medium text-[#7259B5]">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[9px] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
-                    <td className="px-5 py-4 text-[12px] tabular-nums text-black/50">{fmtValor(project.valor_alvo)}</td>
-                    <td className="px-5 py-4 text-[12px] font-medium tabular-nums text-[#2E8932]">{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
+                    <td className="max-w-[16.25rem] px-5 py-4"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{project.nome}</p>{project.mecanismo && <p className="mt-0.5 truncate text-[0.625rem] text-black/30">{project.mecanismo}</p>}</td>
+                    <td className="px-5 py-4"><span className="rounded px-1.5 py-0.5 text-[0.625rem] font-medium" style={{ background: fase.bg, color: fase.text }}>{FASE_LABEL[project.fase]}</span></td>
+                    <td className="max-w-[13.125rem] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded bg-[#7259B5]/[.08] px-1.5 py-0.5 text-[0.5625rem] font-medium text-[#7259B5]">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[0.5625rem] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
+                    <td className="px-5 py-4 text-[0.75rem] tabular-nums text-black/50">{fmtValor(project.valor_alvo)}</td>
+                    <td className="px-5 py-4 text-[0.75rem] font-medium tabular-nums text-[#2E8932]">{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
                   </tr>
                 );
               })}
@@ -692,10 +692,10 @@ function DocumentosView({ documentos, onOpen }: { documentos: DocumentoRow[]; on
             <div key={documento.id} className="group flex items-center gap-3 px-5 py-3.5 transition hover:bg-black/[.018] md:px-6">
               <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/40"><DocumentIcon type={documento.tipo} name={documento.arquivo_nome ?? documento.nome} /></span>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-[13px] font-semibold text-black/70">{documento.nome}</p>
-                <p className="mt-0.5 truncate text-[10px] text-black/30">{documento.categoria || "Outro"} · {fmtFileSize(documento.tamanho)} · {fmtDate(documento.created_at)} · {documento.projeto?.nome ?? "Projeto"}</p>
+                <p className="truncate text-[0.8125rem] font-semibold text-black/70">{documento.nome}</p>
+                <p className="mt-0.5 truncate text-[0.625rem] text-black/30">{documento.categoria || "Outro"} · {fmtFileSize(documento.tamanho)} · {fmtDate(documento.created_at)} · {documento.projeto?.nome ?? "Projeto"}</p>
               </div>
-              {documento.projeto && <Link href={`/projetos/${documento.projeto.id}`} className="hidden text-[11px] font-medium text-black/30 transition hover:text-[#7259B5] sm:inline">Ver projeto</Link>}
+              {documento.projeto && <Link href={`/projetos/${documento.projeto.id}`} className="hidden text-[0.6875rem] font-medium text-black/30 transition hover:text-[#7259B5] sm:inline">Ver projeto</Link>}
               <button type="button" onClick={() => void onOpen(documento)} className="rounded p-2 text-black/25 transition hover:bg-[#7259B5]/10 hover:text-[#7259B5]" title="Abrir documento" aria-label={`Abrir ${documento.nome}`}><Download size={13} /></button>
             </div>
           ))}
@@ -713,17 +713,17 @@ function ClientesView({ clientes }: { clientes: ClienteRow[] }) {
         <EmptyState icon={UserRoundCheck} title="Nenhum cliente convertido" description="Clientes originados por projetos deste proponente aparecerão aqui após a aprovação." />
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[780px] border-collapse text-left">
-            <thead><tr className="border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.07)" }}>{["Cliente", "Projetos", "Valor convertido", "Última conversão"].map(label => <th key={label} className="px-5 py-3 text-[10px] font-medium text-black/30">{label}</th>)}</tr></thead>
+          <table className="w-full min-w-[48.75rem] border-collapse text-left">
+            <thead><tr className="border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.07)" }}>{["Cliente", "Projetos", "Valor convertido", "Última conversão"].map(label => <th key={label} className="px-5 py-3 text-[0.625rem] font-medium text-black/30">{label}</th>)}</tr></thead>
             <tbody className="divide-y divide-black/[.06]">
               {clientes.map(cliente => {
                 const href = cliente.conta_id ? `/contas-patrocinio/${cliente.conta_id}` : `/empresas-crm/${cliente.id}`;
                 return (
                   <tr key={cliente.id} className="transition hover:bg-black/[.018]">
-                    <td className="px-5 py-4"><Link href={href} className="flex items-center gap-3"><CompanyLogo nome={cliente.nome} domain={cliente.domain_key} site={cliente.site} size={34} className="shrink-0 rounded"/><span><span className="block text-[13px] font-semibold text-black/75">{cliente.nome}</span>{cliente.setor && <span className="mt-0.5 block text-[10px] text-black/30">{cliente.setor}</span>}</span></Link></td>
-                    <td className="px-5 py-4"><div className="flex flex-wrap gap-1">{cliente.projetos.slice(0, 2).map(project => <Link key={project.id} href={`/projetos/${project.id}`} className="rounded bg-black/[.045] px-2 py-1 text-[10px] text-black/45 transition hover:text-[#7259B5]">{project.nome}</Link>)}{cliente.projetos.length > 2 && <span className="px-1 py-1 text-[10px] text-black/25">+{cliente.projetos.length - 2}</span>}</div></td>
-                    <td className="px-5 py-4 text-[12px] font-semibold tabular-nums text-[#2E8932]">{fmtValor(cliente.valor)}</td>
-                    <td className="px-5 py-4 text-[11px] tabular-nums text-black/40">{fmtDate(cliente.ultima_venda)}</td>
+                    <td className="px-5 py-4"><Link href={href} className="flex items-center gap-3"><CompanyLogo nome={cliente.nome} domain={cliente.domain_key} site={cliente.site} size={34} className="shrink-0 rounded"/><span><span className="block text-[0.8125rem] font-semibold text-black/75">{cliente.nome}</span>{cliente.setor && <span className="mt-0.5 block text-[0.625rem] text-black/30">{cliente.setor}</span>}</span></Link></td>
+                    <td className="px-5 py-4"><div className="flex flex-wrap gap-1">{cliente.projetos.slice(0, 2).map(project => <Link key={project.id} href={`/projetos/${project.id}`} className="rounded bg-black/[.045] px-2 py-1 text-[0.625rem] text-black/45 transition hover:text-[#7259B5]">{project.nome}</Link>)}{cliente.projetos.length > 2 && <span className="px-1 py-1 text-[0.625rem] text-black/25">+{cliente.projetos.length - 2}</span>}</div></td>
+                    <td className="px-5 py-4 text-[0.75rem] font-semibold tabular-nums text-[#2E8932]">{fmtValor(cliente.valor)}</td>
+                    <td className="px-5 py-4 text-[0.6875rem] tabular-nums text-black/40">{fmtDate(cliente.ultima_venda)}</td>
                   </tr>
                 );
               })}
@@ -739,8 +739,8 @@ function EmptyState({ icon: Icon, title, description }: { icon: typeof FolderOpe
   return (
     <div className="px-6 py-20 text-center">
       <Icon size={24} className="mx-auto text-black/15" />
-      <p className="mt-4 text-[14px] font-semibold text-black/45">{title}</p>
-      <p className="mx-auto mt-1 max-w-sm text-[11px] leading-relaxed text-black/25">{description}</p>
+      <p className="mt-4 text-[0.875rem] font-semibold text-black/45">{title}</p>
+      <p className="mx-auto mt-1 max-w-sm text-[0.6875rem] leading-relaxed text-black/25">{description}</p>
     </div>
   );
 }

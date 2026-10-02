@@ -34,17 +34,17 @@ const VIEW_OPTIONS = [
 ] as const;
 
 const CONTATOS_COLUMNS = [
-  { id: "nome", label: "Nome", width: "210px", grow: true, hideable: false },
-  { id: "empresa", label: "Empresa", width: "205px" },
-  { id: "cargo", label: "Cargo", width: "210px" },
-  { id: "papel", label: "Papel", width: "175px" },
-  { id: "relacionamento", label: "Relacionamento", width: "220px" },
-  { id: "interacao", label: "Última interação", width: "175px" },
-  { id: "contato", label: "Contato", width: "155px" },
-  { id: "origem", label: "Origem", width: "135px", defaultHidden: true },
-  { id: "adicionado_em", label: "Adicionado em", width: "165px", defaultHidden: true },
-  { id: "atualizado_em", label: "Atualizado em", width: "165px", defaultHidden: true },
-  { id: "acoes", label: "Ações", width: "85px", defaultHidden: true },
+  { id: "nome", label: "Nome", width: "13.125rem", grow: true, hideable: false },
+  { id: "empresa", label: "Empresa", width: "12.8125rem" },
+  { id: "cargo", label: "Cargo", width: "13.125rem" },
+  { id: "papel", label: "Papel", width: "10.9375rem" },
+  { id: "relacionamento", label: "Relacionamento", width: "13.75rem" },
+  { id: "interacao", label: "Última interação", width: "10.9375rem" },
+  { id: "contato", label: "Contato", width: "9.6875rem" },
+  { id: "origem", label: "Origem", width: "8.4375rem", defaultHidden: true },
+  { id: "adicionado_em", label: "Adicionado em", width: "10.3125rem", defaultHidden: true },
+  { id: "atualizado_em", label: "Atualizado em", width: "10.3125rem", defaultHidden: true },
+  { id: "acoes", label: "Ações", width: "5.3125rem", defaultHidden: true },
 ] as const satisfies readonly ColumnDefinition[];
 
 type ContatoRow = {
@@ -202,24 +202,24 @@ function StakeholdersView({ contatos }: { contatos: ContatoRow[] }) {
         <section key={key} className="overflow-hidden rounded border border-black/[.08] bg-white">
           <header className="flex items-center gap-3 border-b border-black/[.07] px-4 py-3.5">
             <CompanyLogo nome={group.name} domain={group.domain} site={group.site} size={34} className="shrink-0 border border-black/[.06]"/>
-            <div className="min-w-0 flex-1"><h2 className="truncate text-[13px] font-bold text-black">{group.name}</h2><p className="mt-0.5 text-[10px] text-black/35">{group.items.length} {group.items.length === 1 ? "contato" : "contatos"}</p></div>
+            <div className="min-w-0 flex-1"><h2 className="truncate text-[0.8125rem] font-bold text-black">{group.name}</h2><p className="mt-0.5 text-[0.625rem] text-black/35">{group.items.length} {group.items.length === 1 ? "contato" : "contatos"}</p></div>
           </header>
           <div className="grid grid-cols-1 bg-[#F7F7F5] lg:grid-cols-3">
             {STAKEHOLDER_LANES.map((lane, laneIndex) => {
               const laneItems = group.items.filter(item => lane.roles.includes(item.papel_decisao as never) || (lane.key === "operacao" && !item.papel_decisao));
               const Icon = lane.icon;
               return (
-                <div key={lane.key} className={`min-h-[190px] p-3 ${laneIndex > 0 ? "border-t border-black/[.07] lg:border-l lg:border-t-0" : ""}`}>
-                  <div className="mb-2.5 flex items-center justify-between gap-2"><div className="flex items-center gap-1.5 text-[10px] font-bold text-black/45"><Icon size={12}/>{lane.label}</div><span className="text-[9.5px] font-semibold tabular-nums text-black/25">{laneItems.length}</span></div>
+                <div key={lane.key} className={`min-h-[11.875rem] p-3 ${laneIndex > 0 ? "border-t border-black/[.07] lg:border-l lg:border-t-0" : ""}`}>
+                  <div className="mb-2.5 flex items-center justify-between gap-2"><div className="flex items-center gap-1.5 text-[0.625rem] font-bold text-black/45"><Icon size={12}/>{lane.label}</div><span className="text-[0.59375rem] font-semibold tabular-nums text-black/25">{laneItems.length}</span></div>
                   <div className="space-y-2">
-                    {laneItems.length === 0 ? <div className="rounded border border-dashed border-black/10 py-8 text-center text-[10px] text-black/20">Nenhum contato</div> : laneItems.map(item => {
+                    {laneItems.length === 0 ? <div className="rounded border border-dashed border-black/10 py-8 text-center text-[0.625rem] text-black/20">Nenhum contato</div> : laneItems.map(item => {
                       const name = item.nome ?? item.responsavel?.nome ?? "Contato sem nome";
                       const role = item.papel_decisao ? ROLE_LABEL[item.papel_decisao] : "Papel não definido";
                       const sentimentColor = item.sentimento === "positivo" ? "#2E8932" : item.sentimento === "negativo" ? "#D94E4E" : item.sentimento === "neutro" ? "#B07A14" : "rgba(13,13,13,.22)";
                       return (
                         <article key={item.id} className="rounded border border-black/[.07] bg-white p-2.5 cursor-pointer hover:border-[#7259B5]/30 transition" onClick={() => { window.location.href = `/contatos/${item.id}`; }}>
-                          <div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-black/[.05] text-[10px] font-bold text-black/35">{name.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-[11px] font-semibold text-black/75">{name}</p><span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: sentimentColor }} title={`Sentimento: ${item.sentimento ?? "não avaliado"}`}/></div><p className="mt-0.5 truncate text-[9.5px] text-black/35">{item.cargo ?? item.responsavel?.cargo ?? role}</p></div>{item.email && <a href={`mailto:${item.email}`} className="rounded p-1 text-black/25 transition hover:bg-black/[.05] hover:text-black" aria-label={`Enviar e-mail para ${name}`}><Mail size={11}/></a>}</div>
-                          <div className="mt-2 flex items-center justify-between gap-2 border-t border-black/[.05] pt-2"><span className="truncate text-[9px] font-medium text-black/35">{role}</span><div className="flex items-center gap-1.5"><LevelMarks value={item.influencia}/><LevelMarks value={item.forca_relacao} color="#2E8932"/></div></div>
+                          <div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-black/[.05] text-[0.625rem] font-bold text-black/35">{name.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{name}</p><span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: sentimentColor }} title={`Sentimento: ${item.sentimento ?? "não avaliado"}`}/></div><p className="mt-0.5 truncate text-[0.59375rem] text-black/35">{item.cargo ?? item.responsavel?.cargo ?? role}</p></div>{item.email && <a href={`mailto:${item.email}`} className="rounded p-1 text-black/25 transition hover:bg-black/[.05] hover:text-black" aria-label={`Enviar e-mail para ${name}`}><Mail size={11}/></a>}</div>
+                          <div className="mt-2 flex items-center justify-between gap-2 border-t border-black/[.05] pt-2"><span className="truncate text-[0.5625rem] font-medium text-black/35">{role}</span><div className="flex items-center gap-1.5"><LevelMarks value={item.influencia}/><LevelMarks value={item.forca_relacao} color="#2E8932"/></div></div>
                         </article>
                       );
                     })}
@@ -412,7 +412,7 @@ export default function ContatosPage() {
                 {["Nome", "Empresa", "Cargo", "Papel", "Relacionamento", "Última interação", "Contato", "Origem", "Adicionado em", "Atualizado em", ""].map((h) => (
                   <th
                     key={h}
-                    className="px-6 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap"
+                    className="px-6 py-3 text-left text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap"
                   >
                     {h === "Nome" ? <SortableContactHeader label="NOME" sortKey="nome" sort={sort} onChange={setSort} />
                       : h === "Empresa" ? <SortableContactHeader label="EMPRESA" sortKey="empresa" sort={sort} onChange={setSort} />
@@ -455,12 +455,12 @@ export default function ContatosPage() {
                       <td className="px-6 py-3.5">
                         <div className="flex min-w-0 items-center gap-2.5">
                           <div
-                            className="w-7 h-7 rounded flex items-center justify-center text-[10px] font-semibold flex-shrink-0"
+                            className="w-7 h-7 rounded flex items-center justify-center text-[0.625rem] font-semibold flex-shrink-0"
                             style={{ background: "linear-gradient(145deg, #f8f8fb 0%, #d4d4dc 100%)", color: "#9e9ea8", boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.06)" }}
                           >
                             {nome.charAt(0).toUpperCase()}
                           </div>
-                          <span className="truncate font-semibold text-black text-[13px]" title={nome}>{nome}</span>
+                          <span className="truncate font-semibold text-black text-[0.8125rem]" title={nome}>{nome}</span>
                         </div>
                       </td>
 
@@ -475,32 +475,32 @@ export default function ContatosPage() {
                             size={20}
                             className="rounded flex-shrink-0"
                           />
-                          <span title={empresa} className="truncate text-black/65 font-medium text-[12.5px]">{empresa}</span>
+                          <span title={empresa} className="truncate text-black/65 font-medium text-[0.78125rem]">{empresa}</span>
                         </div>
                       </td>
 
                       {/* Cargo */}
-                      <td className="px-6 py-3.5 text-black/50 text-[12.5px] max-w-[180px]">
+                      <td className="px-6 py-3.5 text-black/50 text-[0.78125rem] max-w-[11.25rem]">
                         <span className="line-clamp-1">{cargo}</span>
                       </td>
 
                       {/* Papel na decisão */}
                       <td className="px-6 py-3.5">
-                        <span className={`text-[11px] font-medium ${c.papel_decisao ? "text-black/65" : "text-black/25"}`}>{role}</span>
+                        <span className={`text-[0.6875rem] font-medium ${c.papel_decisao ? "text-black/65" : "text-black/25"}`}>{role}</span>
                       </td>
 
                       {/* Relacionamento */}
                       <td className="px-6 py-3.5">
                         <div className="flex min-w-0 items-center gap-2">
                           <LevelMarks value={c.forca_relacao} color="#2E8932" />
-                          <span className="truncate text-[11px] font-medium" style={{ color: sentimentColor }}>
+                          <span className="truncate text-[0.6875rem] font-medium" style={{ color: sentimentColor }}>
                             {relationshipLabel(c.forca_relacao)}{c.sentimento && c.sentimento !== "desconhecido" ? ` · ${c.sentimento}` : ""}
                           </span>
                         </div>
                       </td>
 
                       {/* Última interação */}
-                      <td className={`px-6 py-3.5 text-[11px] font-medium whitespace-nowrap ${c.ultima_interacao ? "text-black/50" : "text-[#D94E4E]"}`}>
+                      <td className={`px-6 py-3.5 text-[0.6875rem] font-medium whitespace-nowrap ${c.ultima_interacao ? "text-black/50" : "text-[#D94E4E]"}`}>
                         {interactionLabel(c.ultima_interacao)}
                       </td>
 
@@ -518,7 +518,7 @@ export default function ContatosPage() {
                       <td className="px-6 py-3.5">
                         {og ? (
                           <span
-                            className="text-[10px] font-bold px-2 py-0.5 rounded whitespace-nowrap text-white"
+                            className="text-[0.625rem] font-bold px-2 py-0.5 rounded whitespace-nowrap text-white"
                             style={{ background: og.bg }}
                           >
                             {og.label}

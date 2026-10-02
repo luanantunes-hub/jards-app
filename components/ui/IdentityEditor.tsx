@@ -4,6 +4,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { ChevronDown, FolderOpen, ImagePlus } from "lucide-react";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
 import type { IdentityIconOption, IdentityType } from "@/components/ui/ProjectIdentity";
+import { escalaUi } from "@/lib/escala-ui";
 
 type IdentityColorOption = { key: string; label: string; cor: string };
 
@@ -42,7 +43,8 @@ export function IdentityEditor({
     const triggerBounds = trigger.getBoundingClientRect();
     const bottom = Math.min(bounds?.bottom ?? window.innerHeight, window.innerHeight);
     const top = Math.max(bounds?.top ?? 0, 0);
-    setOpenAbove(bottom - triggerBounds.bottom < 140 && triggerBounds.top - top > 140);
+    const espaco = 140 * escalaUi();
+    setOpenAbove(bottom - triggerBounds.bottom < espaco && triggerBounds.top - top > espaco);
     setOpenPicker(picker);
   }
 
@@ -65,7 +67,7 @@ export function IdentityEditor({
   return (
     <div ref={editorRef} className="min-w-0">
       <div className="mb-2 flex items-center justify-between gap-4">
-        <span className="text-[12px] font-semibold text-black/85">Identidade visual</span>
+        <span className="text-[0.75rem] font-semibold text-black/85">Identidade visual</span>
         <div className="flex items-center gap-3" aria-label="Tipo de identidade visual">
           {([
             { key: "icone" as const, label: "Ícone" },
@@ -76,7 +78,7 @@ export function IdentityEditor({
               type="button"
               aria-pressed={logoMode ? key === "logo" : key === "icone"}
               onClick={() => { setOpenPicker(null); onTypeChange(key); }}
-              className={`rounded-sm py-1 text-[11px] font-semibold underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${
+              className={`rounded-sm py-1 text-[0.6875rem] font-semibold underline-offset-4 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${
                 (logoMode ? key === "logo" : key === "icone")
                   ? "text-[#6149A7] underline"
                   : "text-black/40 hover:text-black/70"
@@ -104,7 +106,7 @@ export function IdentityEditor({
               iconOptions={iconOptions}
             />
           </div>
-          <span className="min-w-0 truncate text-[12px] font-semibold text-black/85">{name}</span>
+          <span className="min-w-0 truncate text-[0.75rem] font-semibold text-black/85">{name}</span>
         </div>
 
         {logoMode ? (
@@ -112,12 +114,12 @@ export function IdentityEditor({
             <button
               type="button"
               onClick={onLogoRequest}
-              className="inline-flex min-h-9 items-center gap-2 rounded-sm text-[11px] font-semibold text-[#6149A7] underline underline-offset-4 transition-colors hover:text-[#493581] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+              className="inline-flex min-h-9 items-center gap-2 rounded-sm text-[0.6875rem] font-semibold text-[#6149A7] underline underline-offset-4 transition-colors hover:text-[#493581] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
             >
               <ImagePlus size={16} strokeWidth={1.7} aria-hidden="true" />
               {logoUrl ? "Trocar logotipo" : "Escolher logotipo"}
             </button>
-            <p className="text-[10px] leading-relaxed text-black/40">{logoHelp}</p>
+            <p className="text-[0.625rem] leading-relaxed text-black/40">{logoHelp}</p>
           </div>
         ) : (
           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
@@ -128,7 +130,7 @@ export function IdentityEditor({
                 aria-expanded={openPicker === "icon"}
                 aria-controls={`${id}-icons`}
                 onClick={(event) => togglePicker("icon", event.currentTarget)}
-                className="flex h-[38px] min-w-[145px] items-center gap-2 rounded-[5px] border border-black/[.13] bg-white px-2.5 text-[11px] font-semibold text-black/85 transition-colors hover:border-black/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                className="flex h-[2.375rem] min-w-[9.0625rem] items-center gap-2 rounded-[5px] border border-black/[.13] bg-white px-2.5 text-[0.6875rem] font-semibold text-black/85 transition-colors hover:border-black/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               >
                 <span className="hidden font-medium text-black/45 min-[520px]:inline">Símbolo</span>
                 <SelectedIcon size={16} strokeWidth={1.7} className="shrink-0 text-[#252329]" aria-hidden="true" />
@@ -136,7 +138,7 @@ export function IdentityEditor({
                 <ChevronDown size={13} className="ml-auto text-black/45" aria-hidden="true" />
               </button>
               {openPicker === "icon" && (
-                <div id={`${id}-icons`} role="group" aria-label="Símbolos" className={`absolute left-0 z-30 grid w-[196px] grid-cols-4 gap-1.5 rounded-[7px] border border-black/[.13] bg-white p-2.5 shadow-[0_9px_24px_rgba(29,24,43,.11)] ${openAbove ? "bottom-[calc(100%+5px)]" : "top-[calc(100%+5px)]"}`}>
+                <div id={`${id}-icons`} role="group" aria-label="Símbolos" className={`absolute left-0 z-30 grid w-[12.25rem] grid-cols-4 gap-1.5 rounded-[7px] border border-black/[.13] bg-white p-2.5 shadow-[0_9px_24px_rgba(29,24,43,.11)] ${openAbove ? "bottom-[calc(100%+5px)]" : "top-[calc(100%+5px)]"}`}>
                   {iconOptions.map(({ key, label, Icon }) => (
                     <button
                       type="button"
@@ -145,7 +147,7 @@ export function IdentityEditor({
                       aria-label={label}
                       aria-pressed={value === key}
                       onClick={() => { onValueChange(key); setOpenPicker(null); }}
-                      className={`flex h-[38px] w-[38px] items-center justify-center rounded-[5px] border bg-white text-[#252329] transition-colors hover:border-black/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${value === key ? "border-black/70" : "border-transparent"}`}
+                      className={`flex h-[2.375rem] w-[2.375rem] items-center justify-center rounded-[5px] border bg-white text-[#252329] transition-colors hover:border-black/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${value === key ? "border-black/70" : "border-transparent"}`}
                     >
                       <Icon size={18} strokeWidth={1.7} aria-hidden="true" />
                     </button>
@@ -161,15 +163,15 @@ export function IdentityEditor({
                 aria-expanded={openPicker === "color"}
                 aria-controls={`${id}-colors`}
                 onClick={(event) => togglePicker("color", event.currentTarget)}
-                className="flex h-[38px] min-w-[105px] items-center gap-2 rounded-[5px] border border-black/[.13] bg-white px-2.5 text-[11px] font-semibold text-black/85 transition-colors hover:border-black/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                className="flex h-[2.375rem] min-w-[6.5625rem] items-center gap-2 rounded-[5px] border border-black/[.13] bg-white px-2.5 text-[0.6875rem] font-semibold text-black/85 transition-colors hover:border-black/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               >
                 <span className="hidden font-medium text-black/45 min-[520px]:inline">Cor</span>
-                <span className="h-[14px] w-[14px] shrink-0 rounded-[3px]" style={{ backgroundColor: color }} aria-hidden="true" />
+                <span className="h-[0.875rem] w-[0.875rem] shrink-0 rounded-[3px]" style={{ backgroundColor: color }} aria-hidden="true" />
                 <span>{selectedColor?.label ?? "Personalizada"}</span>
                 <ChevronDown size={13} className="ml-auto text-black/45" aria-hidden="true" />
               </button>
               {openPicker === "color" && (
-                <div id={`${id}-colors`} role="group" aria-label="Cores" className={`absolute left-0 z-30 grid w-[154px] grid-cols-4 justify-items-center gap-2.5 rounded-[7px] border border-black/[.13] bg-white p-2.5 shadow-[0_9px_24px_rgba(29,24,43,.11)] ${openAbove ? "bottom-[calc(100%+5px)]" : "top-[calc(100%+5px)]"}`}>
+                <div id={`${id}-colors`} role="group" aria-label="Cores" className={`absolute left-0 z-30 grid w-[9.625rem] grid-cols-4 justify-items-center gap-2.5 rounded-[7px] border border-black/[.13] bg-white p-2.5 shadow-[0_9px_24px_rgba(29,24,43,.11)] ${openAbove ? "bottom-[calc(100%+5px)]" : "top-[calc(100%+5px)]"}`}>
                   {colors.map(({ key, label, cor }) => (
                     <button
                       type="button"
@@ -178,7 +180,7 @@ export function IdentityEditor({
                       aria-label={label}
                       aria-pressed={color.toLowerCase() === cor.toLowerCase()}
                       onClick={() => { onColorChange(cor); setOpenPicker(null); }}
-                      className={`h-[23px] w-[23px] rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-black ${color.toLowerCase() === cor.toLowerCase() ? "outline-2 outline-offset-[3px] outline-black/80" : "hover:scale-110"}`}
+                      className={`h-[1.4375rem] w-[1.4375rem] rounded-[4px] focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-black ${color.toLowerCase() === cor.toLowerCase() ? "outline-2 outline-offset-[3px] outline-black/80" : "hover:scale-110"}`}
                       style={{ backgroundColor: cor }}
                     />
                   ))}

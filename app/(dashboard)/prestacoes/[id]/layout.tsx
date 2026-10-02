@@ -49,12 +49,12 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
       <div className="bg-white border-b px-8 pt-6 pb-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <button
           onClick={() => router.push("/prestacoes")}
-          className="flex items-center gap-1.5 text-[11px] text-black/40 hover:text-black/70 transition mb-3"
+          className="flex items-center gap-1.5 text-[0.6875rem] text-black/40 hover:text-black/70 transition mb-3"
         >
           <ArrowLeft size={12} /> Prestações
         </button>
         <div className="flex items-center gap-3 mb-4">
-          <h1 className="font-bold text-[20px] text-[#0D0D0D] truncate">{titulo || "…"}</h1>
+          <h1 className="font-bold text-[1.25rem] text-[#0D0D0D] truncate">{titulo || "…"}</h1>
           {status && <StatusBadge status={status} size="sm" />}
         </div>
         {/* Tabs */}
@@ -65,7 +65,7 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-[12px] font-medium border-b-2 transition-colors"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-[0.75rem] font-medium border-b-2 transition-colors"
                 style={{
                   borderColor: active ? "#7259B5" : "transparent",
                   color: active ? "#7259B5" : "rgba(13,13,13,.45)",

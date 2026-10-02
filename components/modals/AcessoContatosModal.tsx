@@ -81,7 +81,7 @@ export function AcessoContatosModal({
         aria-modal="true"
         aria-labelledby="acesso-contatos-title"
         aria-describedby="acesso-contatos-description"
-        className="relative w-full max-w-[480px] overflow-hidden rounded border border-black/10 bg-white shadow-[0_24px_70px_rgba(13,13,13,.16)]"
+        className="relative w-full max-w-[30rem] overflow-hidden rounded border border-black/10 bg-white shadow-[0_24px_70px_rgba(13,13,13,.16)]"
       >
         <button
           type="button"
@@ -92,7 +92,7 @@ export function AcessoContatosModal({
           <X size={14} strokeWidth={2} />
         </button>
 
-        <div className="relative h-[230px] border-b border-black/[.06] bg-white sm:h-[250px]">
+        <div className="relative h-[14.375rem] border-b border-black/[.06] bg-white sm:h-[15.625rem]">
           <Image
             src={semCreditos ? "/tamandua-sem-creditos.png" : "/tamandua-assine-plano.png"}
             alt={semCreditos
@@ -108,7 +108,7 @@ export function AcessoContatosModal({
 
         <div className="px-6 pb-6 pt-5 sm:px-7 sm:pb-7">
           <p
-            className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[.12em]"
+            className="flex items-center gap-1.5 text-[0.625rem] font-semibold uppercase tracking-[.12em]"
             style={{ color: accent }}
           >
             {variant === "mcp_gpt" && (
@@ -122,14 +122,14 @@ export function AcessoContatosModal({
 
           <h2
             id="acesso-contatos-title"
-            className="mt-2 max-w-[390px] text-[22px] font-semibold leading-[1.2] tracking-[-.025em] text-[#0D0D0D]"
+            className="mt-2 max-w-[24.375rem] text-[1.375rem] font-semibold leading-[1.2] tracking-[-.025em] text-[#0D0D0D]"
           >
             {conteudo.titulo}
           </h2>
 
           <p
             id="acesso-contatos-description"
-            className="mt-3 max-w-[410px] text-[13px] leading-6 text-black/50"
+            className="mt-3 max-w-[25.625rem] text-[0.8125rem] leading-6 text-black/50"
           >
             {conteudo.descricao}
           </p>
@@ -138,10 +138,10 @@ export function AcessoContatosModal({
             <div className="mt-5 flex items-center gap-3 border-y border-black/[.06] py-3.5">
               <CalendarDays size={16} strokeWidth={1.8} className="shrink-0 text-black/35" />
               <div>
-                <p className="text-[10px] font-medium uppercase tracking-[.08em] text-black/30">
+                <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30">
                   Próxima renovação
                 </p>
-                <p className="mt-0.5 text-[13px] font-semibold text-black/70">
+                <p className="mt-0.5 text-[0.8125rem] font-semibold text-black/70">
                   {proximaRenovacao()}
                 </p>
               </div>
@@ -152,7 +152,7 @@ export function AcessoContatosModal({
             <button
               type="button"
               onClick={onClose}
-              className="min-h-10 px-1 text-[12px] font-medium text-black/35 transition hover:text-black/55"
+              className="min-h-10 px-1 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55"
             >
               Agora não
             </button>
@@ -161,7 +161,7 @@ export function AcessoContatosModal({
               type="button"
               autoFocus
               onClick={onPrimary}
-              className="inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded border bg-white px-4 text-[12px] font-medium transition hover:bg-black/[.04] active:scale-[.98]"
+              className="inline-flex min-h-10 items-center gap-2 whitespace-nowrap rounded border bg-white px-4 text-[0.75rem] font-medium transition hover:bg-black/[.04] active:scale-[.98]"
               style={{ borderColor: `${accent}45`, color: accent }}
             >
               {conteudo.botao}

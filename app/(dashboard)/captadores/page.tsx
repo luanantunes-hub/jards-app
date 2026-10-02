@@ -67,17 +67,17 @@ type CaptadorScoreRow = {
 };
 
 const CAPTADORES_COLUMNS = [
-  { id: "captador", label: "Captador", width: "230px", hideable: false, grow: true },
-  { id: "contato", label: "Contato", width: "190px" },
-  { id: "prioridade", label: "Prioridade", width: "105px" },
-  { id: "carteira", label: "Carteira", width: "155px" },
-  { id: "conversao", label: "Conversão", width: "125px" },
-  { id: "valor", label: "Valor captado", width: "135px" },
-  { id: "proximo", label: "Próximo acompanhamento", width: "175px" },
-  { id: "score", label: "Score", width: "80px" },
-  { id: "adicionado", label: "Adicionado em", width: "120px", defaultHidden: true },
-  { id: "atualizado", label: "Atualizado em", width: "120px", defaultHidden: true },
-  { id: "acoes", label: "Ações", width: "100px", defaultHidden: true },
+  { id: "captador", label: "Captador", width: "14.375rem", hideable: false, grow: true },
+  { id: "contato", label: "Contato", width: "11.875rem" },
+  { id: "prioridade", label: "Prioridade", width: "6.5625rem" },
+  { id: "carteira", label: "Carteira", width: "9.6875rem" },
+  { id: "conversao", label: "Conversão", width: "7.8125rem" },
+  { id: "valor", label: "Valor captado", width: "8.4375rem" },
+  { id: "proximo", label: "Próximo acompanhamento", width: "10.9375rem" },
+  { id: "score", label: "Score", width: "5rem" },
+  { id: "adicionado", label: "Adicionado em", width: "7.5rem", defaultHidden: true },
+  { id: "atualizado", label: "Atualizado em", width: "7.5rem", defaultHidden: true },
+  { id: "acoes", label: "Ações", width: "6.25rem", defaultHidden: true },
 ] as const satisfies readonly ColumnDefinition[];
 
 type CaptadorColumnId = typeof CAPTADORES_COLUMNS[number]["id"];
@@ -177,7 +177,7 @@ function SortableTeamHeader({
     <button
       type="button"
       onClick={() => onSort(sortKey)}
-      className={`group inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-[.08em] text-black/35 transition hover:text-black/60 ${align === "right" ? "justify-self-end" : ""}`}
+      className={`group inline-flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 transition hover:text-black/60 ${align === "right" ? "justify-self-end" : ""}`}
       aria-label={`Ordenar ${label} ${active && direction === "asc" ? "do maior para o menor" : "do menor para o maior"}`}
     >
       <span>{label}</span>
@@ -205,8 +205,9 @@ function CaptadoresList({
 }) {
   const router = useRouter();
   const manager = useColumnManager<CaptadorColumnId>("captadores-v2", CAPTADORES_COLUMNS);
-  const template = manager.visible.map(column => column.grow ? `minmax(${column.width ?? "140px"}, 1fr)` : column.width ?? "140px").join(" ");
-  const minimumWidth = Math.max(720, manager.visible.reduce((sum, column) => sum + Number.parseInt(column.width ?? "140", 10), 0) + Math.max(0, manager.visible.length - 1) * 16 + 40);
+  const template = manager.visible.map(column => column.grow ? `minmax(${column.width ?? "8.75rem"}, 1fr)` : column.width ?? "8.75rem").join(" ");
+  // Em rem, como as larguras das colunas: gap-4 (1rem) entre elas e 2.5rem de respiro.
+  const minimumWidth = `${Math.max(45, manager.visible.reduce((sum, column) => sum + Number.parseFloat(column.width ?? "8.75rem"), 0) + Math.max(0, manager.visible.length - 1) + 2.5)}rem`;
 
   function renderHeader(id: CaptadorColumnId) {
     if (id === "captador") return <SortableTeamHeader label="Captador" sortKey="nome" activeKey={sortKey} direction={sortDirection} onSort={onSort} />;
@@ -217,27 +218,27 @@ function CaptadoresList({
     if (id === "proximo") return <SortableTeamHeader label="Próximo acompanhamento" sortKey="proximo" activeKey={sortKey} direction={sortDirection} onSort={onSort} />;
     if (id === "score") return <SortableTeamHeader label="Score" sortKey="score" activeKey={sortKey} direction={sortDirection} onSort={onSort} />;
     const label = CAPTADORES_COLUMNS.find(column => column.id === id)?.label ?? id;
-    return <span className={`text-[10px] font-medium uppercase tracking-[.08em] text-black/35 ${id === "acoes" ? "block text-right" : ""}`}>{label}</span>;
+    return <span className={`text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 ${id === "acoes" ? "block text-right" : ""}`}>{label}</span>;
   }
 
   function renderCell(id: CaptadorColumnId, captador: CaptadorRow) {
     if (id === "captador") return (
       <div className="flex min-w-0 items-center gap-2.5">
         <ProjectIdentity nome={captador.nome} tipo={captador.identidade_tipo ?? (captador.logo_url ? "logo" : "padrao")} valor={captador.identidade_valor} logoUrl={captador.identidade_logo_url ?? captador.logo_url} cor={captador.identidade_cor} size="sm" iconOptions={CAPTADOR_ICON_OPTIONS} />
-        <div className="min-w-0"><p className="truncate text-[13px] font-semibold text-black" title={captador.nome}>{captador.nome}</p>{captador.agencia && <p className="truncate text-[11px] text-black/35" title={captador.agencia}>{captador.agencia}</p>}</div>
+        <div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black" title={captador.nome}>{captador.nome}</p>{captador.agencia && <p className="truncate text-[0.6875rem] text-black/35" title={captador.agencia}>{captador.agencia}</p>}</div>
       </div>
     );
-    if (id === "contato") return <div className="min-w-0"><p className="truncate text-[12px] text-black/55" title={captador.email ?? undefined}>{captador.email || "—"}</p>{captador.telefone && <p className="truncate text-[10px] text-black/30">{captador.telefone}</p>}</div>;
+    if (id === "contato") return <div className="min-w-0"><p className="truncate text-[0.75rem] text-black/55" title={captador.email ?? undefined}>{captador.email || "—"}</p>{captador.telefone && <p className="truncate text-[0.625rem] text-black/30">{captador.telefone}</p>}</div>;
     if (id === "prioridade") return <PrioBadge prio={captador.prioridade} size="sm" />;
-    if (id === "carteira") return <div className="min-w-0"><p className="text-[12px] font-medium tabular-nums text-black/60">{captador.n_empresas} {captador.n_empresas === 1 ? "empresa" : "empresas"}</p><p className="mt-0.5 text-[10px] tabular-nums text-black/30">{captador.n_negociacoes_ativas} {captador.n_negociacoes_ativas === 1 ? "negociação ativa" : "negociações ativas"}</p></div>;
+    if (id === "carteira") return <div className="min-w-0"><p className="text-[0.75rem] font-medium tabular-nums text-black/60">{captador.n_empresas} {captador.n_empresas === 1 ? "empresa" : "empresas"}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{captador.n_negociacoes_ativas} {captador.n_negociacoes_ativas === 1 ? "negociação ativa" : "negociações ativas"}</p></div>;
     if (id === "conversao") {
       const conversion = captador.n_encerradas > 0 ? Math.round((captador.n_aprovadas / captador.n_encerradas) * 100) : null;
-      return <div><p className={`text-[12px] font-semibold tabular-nums ${conversion === null ? "text-black/25" : "text-black/65"}`}>{conversion === null ? "—" : `${conversion}%`}</p><p className="mt-0.5 text-[10px] tabular-nums text-black/30">{captador.n_encerradas > 0 ? `${captador.n_aprovadas} de ${captador.n_encerradas} encerradas` : "Sem amostra"}</p></div>;
+      return <div><p className={`text-[0.75rem] font-semibold tabular-nums ${conversion === null ? "text-black/25" : "text-black/65"}`}>{conversion === null ? "—" : `${conversion}%`}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{captador.n_encerradas > 0 ? `${captador.n_aprovadas} de ${captador.n_encerradas} encerradas` : "Sem amostra"}</p></div>;
     }
-    if (id === "valor") return <span className="text-[12px] font-semibold text-black/60">{fmtValor(captador.valor_captado)}</span>;
-    if (id === "proximo") return captador.proxima_atividade ? <div className="min-w-0"><p className="truncate text-[11px] font-medium text-black/60" title={captador.proxima_atividade.nome}>{captador.proxima_atividade.nome}</p><p className="mt-0.5 text-[10px] tabular-nums text-black/30">{fmtDate(captador.proxima_atividade.data_prevista)}</p></div> : <span className="text-[11px] text-[#B07A14]">Sem atividade</span>;
-    if (id === "adicionado") return <span className="text-[11px] tabular-nums text-black/40">{fmtDate(captador.created_at)}</span>;
-    if (id === "atualizado") return <span className="text-[11px] tabular-nums text-black/40">{fmtDate(captador.updated_at)}</span>;
+    if (id === "valor") return <span className="text-[0.75rem] font-semibold text-black/60">{fmtValor(captador.valor_captado)}</span>;
+    if (id === "proximo") return captador.proxima_atividade ? <div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60" title={captador.proxima_atividade.nome}>{captador.proxima_atividade.nome}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{fmtDate(captador.proxima_atividade.data_prevista)}</p></div> : <span className="text-[0.6875rem] text-[#B07A14]">Sem atividade</span>;
+    if (id === "adicionado") return <span className="text-[0.6875rem] tabular-nums text-black/40">{fmtDate(captador.created_at)}</span>;
+    if (id === "atualizado") return <span className="text-[0.6875rem] tabular-nums text-black/40">{fmtDate(captador.updated_at)}</span>;
     if (id === "score") return <CompactDecisionScoreRing score={captador.score} />;
     return (
       <div className="flex items-center justify-end gap-1 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
@@ -569,7 +570,7 @@ export default function CaptadoresPage() {
       <div role="tablist" aria-label="Seções de captadores" className="flex shrink-0 items-center gap-1 overflow-x-auto border-b px-4 md:px-8" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         {TABS.map(({ key, label, icon: Icon }) => (
           <button key={key} type="button" role="tab" aria-selected={activeTab === key} onClick={() => setActiveTab(key)}
-            className="-mb-px flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-[13px] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+            className="-mb-px flex shrink-0 items-center gap-2 border-b-2 px-4 py-3 text-[0.8125rem] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
             style={{ borderColor: activeTab === key ? "#7259B5" : "transparent", color: activeTab === key ? "#7259B5" : "rgba(13,13,13,.4)" }}>
             <Icon size={14} aria-hidden="true" />
             {label}
@@ -585,14 +586,14 @@ export default function CaptadoresPage() {
           <div className="space-y-6">
             {!loadingEquipe && captadores.length > 0 && (
               <div className="flex flex-col gap-3 rounded border border-black/[.08] bg-white p-3 lg:flex-row lg:items-center">
-                <label className="relative block min-w-0 flex-1 lg:max-w-[360px]">
+                <label className="relative block min-w-0 flex-1 lg:max-w-[22.5rem]">
                   <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/25" />
                   <input
                     type="search"
                     value={teamSearch}
                     onChange={event => setTeamSearch(event.target.value)}
                     placeholder="Buscar captador, agência ou contato"
-                    className="h-9 w-full rounded border border-black/10 bg-white pl-9 pr-3 text-[12px] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10"
+                    className="h-9 w-full rounded border border-black/10 bg-white pl-9 pr-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10"
                   />
                 </label>
 
@@ -602,7 +603,7 @@ export default function CaptadoresPage() {
                   <SegmentedControl value={teamLink} onChange={setTeamLink} ariaLabel="Filtrar por vínculo" options={[{ value: "todos", label: "Todos" }, { value: "workspace", label: "Workspace" }, { value: "externos", label: "Externos" }]} />
 
                   {teamFiltersActive && (
-                    <button type="button" onClick={clearTeamFilters} className="h-9 shrink-0 rounded px-2.5 text-[11px] font-medium text-black/35 transition hover:bg-black/[.04] hover:text-black/60">
+                    <button type="button" onClick={clearTeamFilters} className="h-9 shrink-0 rounded px-2.5 text-[0.6875rem] font-medium text-black/35 transition hover:bg-black/[.04] hover:text-black/60">
                       Limpar
                     </button>
                   )}
@@ -615,7 +616,7 @@ export default function CaptadoresPage() {
               <div className="rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)", background: "white" }}>
                 <div className="flex items-center gap-2 mb-4">
                   <Activity size={14} className="text-[#7259B5]" />
-                  <span className="text-[12px] font-bold text-black">Meu painel</span>
+                  <span className="text-[0.75rem] font-bold text-black">Meu painel</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                   {[
@@ -625,16 +626,16 @@ export default function CaptadoresPage() {
                     { label:"Minhas Empresas", value: `${metricas.empresas_atribuidas}`, sub:`${metricas.total_captações} negociações no total`, color:"#0D0D0D" },
                   ].map(m => (
                     <div key={m.label}>
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-black/30 mb-1">{m.label}</p>
-                      <p className="text-[24px] font-bold" style={{ color: m.color }}>{m.value}</p>
-                      <p className="text-[10px] text-black/30">{m.sub}</p>
+                      <p className="text-[0.625rem] font-bold uppercase tracking-widest text-black/30 mb-1">{m.label}</p>
+                      <p className="text-[1.5rem] font-bold" style={{ color: m.color }}>{m.value}</p>
+                      <p className="text-[0.625rem] text-black/30">{m.sub}</p>
                     </div>
                   ))}
                 </div>
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[11px] text-black/40">Taxa de conversão</span>
-                    <span className="text-[12px] font-bold text-black">
+                    <span className="text-[0.6875rem] text-black/40">Taxa de conversão</span>
+                    <span className="text-[0.75rem] font-bold text-black">
                       {metricas.total_captações > 0 ? Math.round((metricas.captações_ganhas / metricas.total_captações) * 100) : 0}%
                     </span>
                   </div>
@@ -651,7 +652,7 @@ export default function CaptadoresPage() {
                 <div className="w-14 h-14 rounded flex items-center justify-center mb-4" style={{ background: "rgba(13,13,13,.04)" }}>
                   <UserCheck size={22} className="text-black/25" />
                 </div>
-                <p className="text-[15px] font-semibold text-black/40 mb-1">Nenhuma agência cadastrada</p>
+                <p className="text-[0.9375rem] font-semibold text-black/40 mb-1">Nenhuma agência cadastrada</p>
                 <p className="text-sm text-black/25 mb-4">Adicione agências de captação para começar</p>
                 <button onClick={() => setShowModal(true)}
                   className="flex items-center gap-2 px-4 py-2 text-xs font-bold bg-white border rounded hover:bg-black/5 transition"
@@ -662,8 +663,8 @@ export default function CaptadoresPage() {
             ) : captadoresFiltrados.length === 0 && !loadingEquipe ? (
               <div className="rounded border border-black/[.08] bg-white px-5 py-16 text-center">
                 <Search size={22} className="mx-auto text-black/15" />
-                <p className="mt-3 text-[13px] font-semibold text-black/45">Nenhum captador encontrado</p>
-                <button type="button" onClick={clearTeamFilters} className="mt-3 rounded border border-[#7259B5]/30 bg-white px-3 py-2 text-[11px] font-semibold text-[#7259B5] transition hover:bg-black/[.04]">
+                <p className="mt-3 text-[0.8125rem] font-semibold text-black/45">Nenhum captador encontrado</p>
+                <button type="button" onClick={clearTeamFilters} className="mt-3 rounded border border-[#7259B5]/30 bg-white px-3 py-2 text-[0.6875rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04]">
                   Limpar filtros
                 </button>
               </div>
@@ -708,9 +709,9 @@ export default function CaptadoresPage() {
                               iconOptions={CAPTADOR_ICON_OPTIONS}
                             />
                             <div>
-                              <Link href={`/captadores/${c.id}`} className="text-[15px] font-bold text-[#0D0D0D] leading-tight hover:text-[#7259B5] transition">{c.nome}</Link>
+                              <Link href={`/captadores/${c.id}`} className="text-[0.9375rem] font-bold text-[#0D0D0D] leading-tight hover:text-[#7259B5] transition">{c.nome}</Link>
                               {c.agencia && (
-                                <p className="text-[11px] text-black/35 mt-0.5">{c.agencia}</p>
+                                <p className="text-[0.6875rem] text-black/35 mt-0.5">{c.agencia}</p>
                               )}
                             </div>
                           </div>
@@ -718,18 +719,18 @@ export default function CaptadoresPage() {
                         </div>
 
                         {/* Meta grid */}
-                        <div className="grid grid-cols-3 gap-2 text-[10px] mb-3">
+                        <div className="grid grid-cols-3 gap-2 text-[0.625rem] mb-3">
                           <div>
                             <p className="text-black/35 font-semibold uppercase tracking-wide mb-0.5">Empresas</p>
-                            <p className="text-[20px] font-bold leading-tight" style={{ color: c.n_empresas > 0 ? "#0D0D0D" : "rgba(13,13,13,.2)" }}>{c.n_empresas}</p>
+                            <p className="text-[1.25rem] font-bold leading-tight" style={{ color: c.n_empresas > 0 ? "#0D0D0D" : "rgba(13,13,13,.2)" }}>{c.n_empresas}</p>
                           </div>
                           <div>
                             <p className="text-black/35 font-semibold uppercase tracking-wide mb-0.5">Negociações</p>
-                            <p className="text-[20px] font-bold leading-tight" style={{ color: c.n_negociacoes_ativas > 0 ? "#2E8932" : "rgba(13,13,13,.2)" }}>{c.n_negociacoes_ativas}</p>
+                            <p className="text-[1.25rem] font-bold leading-tight" style={{ color: c.n_negociacoes_ativas > 0 ? "#2E8932" : "rgba(13,13,13,.2)" }}>{c.n_negociacoes_ativas}</p>
                           </div>
                           <div>
                             <p className="text-black/35 font-semibold uppercase tracking-wide mb-0.5">Valor Captado</p>
-                            <p className="text-[13px] font-bold leading-tight mt-1" style={{ color: c.valor_captado > 0 ? "#0D0D0D" : "rgba(13,13,13,.2)" }}>{fmtValor(c.valor_captado)}</p>
+                            <p className="text-[0.8125rem] font-bold leading-tight mt-1" style={{ color: c.valor_captado > 0 ? "#0D0D0D" : "rgba(13,13,13,.2)" }}>{fmtValor(c.valor_captado)}</p>
                           </div>
                         </div>
 
@@ -737,7 +738,7 @@ export default function CaptadoresPage() {
                         <div className="border-t pt-3 flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                           <div>
                             {c.user_id && (
-                              <span className="inline-flex items-center gap-1 text-[9px] font-bold px-2 py-0.5 rounded text-white" style={{ background: "#2E8932" }}>
+                              <span className="inline-flex items-center gap-1 text-[0.5625rem] font-bold px-2 py-0.5 rounded text-white" style={{ background: "#2E8932" }}>
                                 <Check size={9} /> Workspace
                               </span>
                             )}
@@ -746,7 +747,7 @@ export default function CaptadoresPage() {
                             {c.email && (
                               <a
                                 href={`mailto:${c.email}`}
-                                className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
+                                className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[0.625rem] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                                 style={{ borderColor: "rgba(13,13,13,.15)" }}
                                 onClick={ev => ev.stopPropagation()}
                               >
@@ -754,14 +755,14 @@ export default function CaptadoresPage() {
                               </a>
                             )}
                             <button
-                              className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
+                              className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[0.625rem] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                               style={{ borderColor: "rgba(13,13,13,.15)" }}
                               onClick={ev => { ev.stopPropagation(); setEditingCaptador(c); }}
                             >
                               <Pencil size={11} /> Editar
                             </button>
                             <button
-                              className="inline-flex items-center gap-1.5 text-[#D94E4E]/75 hover:text-[#D94E4E] text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border border-[#D94E4E]/25 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
+                              className="inline-flex items-center gap-1.5 text-[#D94E4E]/75 hover:text-[#D94E4E] text-[0.625rem] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border border-[#D94E4E]/25 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                               onClick={ev => { ev.stopPropagation(); handleDeleteCaptador(c.id, c.nome); }}
                             >
                               <Trash2 size={11} /> Excluir
@@ -803,8 +804,8 @@ export default function CaptadoresPage() {
                   className={`relative px-5 py-4 sm:px-6 sm:py-5 ${index % 2 ? "border-l" : ""} ${index >= 2 ? "border-t sm:border-t-0" : ""} ${index > 0 ? "sm:border-l" : ""}`}
                   style={{ borderColor: "rgba(13,13,13,.065)" }}
                 >
-                  <p className="text-[10px] font-semibold uppercase tracking-[.09em] text-black/32">{s.label}</p>
-                  <p className="mt-1 text-[26px] font-semibold leading-none tabular-nums tracking-[-.035em]" style={{ color: s.color }}>{s.value}</p>
+                  <p className="text-[0.625rem] font-semibold uppercase tracking-[.09em] text-black/32">{s.label}</p>
+                  <p className="mt-1 text-[1.625rem] font-semibold leading-none tabular-nums tracking-[-.035em]" style={{ color: s.color }}>{s.value}</p>
                 </div>
               ))}
             </div>
@@ -874,9 +875,9 @@ export default function CaptadoresPage() {
               </div>
             ) : (
               <div className="bg-white rounded border overflow-x-auto" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="grid min-w-[860px] grid-cols-[2fr_1.2fr_1fr_1fr_0.8fr_0.8fr_0.6fr] gap-4 px-5 py-3 border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                <div className="grid min-w-[53.75rem] grid-cols-[2fr_1.2fr_1fr_1fr_0.8fr_0.8fr_0.6fr] gap-4 px-5 py-3 border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                   {["Empresa","Captador","Exclusividade","Projeto","Status","Último avanço","Ações"].map(h => (
-                    <span key={h} className={`text-[10px] font-medium uppercase tracking-[.08em] text-black/35 ${h==="Ações"?"text-right":""}`}>{h}</span>
+                    <span key={h} className={`text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 ${h==="Ações"?"text-right":""}`}>{h}</span>
                   ))}
                 </div>
                 {atribuicoesFiltradas.map(a => {
@@ -889,7 +890,7 @@ export default function CaptadoresPage() {
                       tabIndex={a.empresa_crm_id ? 0 : undefined}
                       onClick={() => { if (a.empresa_crm_id) router.push(`/empresas-crm/${a.empresa_crm_id}`); }}
                       onKeyDown={event => { if (a.empresa_crm_id && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); router.push(`/empresas-crm/${a.empresa_crm_id}`); } }}
-                      className={`grid min-w-[860px] grid-cols-[2fr_1.2fr_1fr_1fr_0.8fr_0.8fr_0.6fr] items-center gap-4 border-b px-5 py-4 transition last:border-b-0 hover:bg-black/[0.015] ${a.empresa_crm_id ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/30" : ""}`}
+                      className={`grid min-w-[53.75rem] grid-cols-[2fr_1.2fr_1fr_1fr_0.8fr_0.8fr_0.6fr] items-center gap-4 border-b px-5 py-4 transition last:border-b-0 hover:bg-black/[0.015] ${a.empresa_crm_id ? "cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/30" : ""}`}
                       style={{ borderColor: "rgba(13,13,13,.04)" }}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
@@ -900,19 +901,19 @@ export default function CaptadoresPage() {
                           size={32}
                           className="flex-shrink-0"
                         />
-                        <span className="truncate text-[13px] font-semibold text-[#0D0D0D]">
+                        <span className="truncate text-[0.8125rem] font-semibold text-[#0D0D0D]">
                           {a.empresa_crm?.nome || "—"}
                         </span>
                       </div>
-                      <span className="text-[12px] text-black/60 truncate">{a.captador?.nome || "—"}</span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold w-fit text-white" style={{ background: exc.bg }}>
+                      <span className="text-[0.75rem] text-black/60 truncate">{a.captador?.nome || "—"}</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.625rem] font-semibold w-fit text-white" style={{ background: exc.bg }}>
                         <ExcIcon size={10} />{exc.label}
                       </span>
-                      <span className="text-[12px] text-black/50 truncate">{a.projeto?.nome || "Todos"}</span>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold w-fit text-white" style={{ background: st.bg }}>{st.label}</span>
+                      <span className="text-[0.75rem] text-black/50 truncate">{a.projeto?.nome || "Todos"}</span>
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.625rem] font-semibold w-fit text-white" style={{ background: st.bg }}>{st.label}</span>
                       <div className="flex items-center gap-1.5">
                         {emRisco && <AlertTriangle size={12} className="text-[#B07A14]" />}
-                        <span className={`text-[12px] ${emRisco?"text-[#B07A14] font-semibold":"text-black/40"}`}>{formatDias(a.dias_sem_avanco)}</span>
+                        <span className={`text-[0.75rem] ${emRisco?"text-[#B07A14] font-semibold":"text-black/40"}`}>{formatDias(a.dias_sem_avanco)}</span>
                       </div>
                       <div className="flex items-center justify-end">
                         <button type="button" aria-label="Editar atribuição" title="Editar atribuição" onClick={(event) => { event.stopPropagation(); setEditData(a); setShowAtribuicaoModal(true); }} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/70 transition focus-visible:outline-2 focus-visible:outline-[#7259B5]">

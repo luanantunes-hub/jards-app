@@ -48,22 +48,22 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
           <X size={16} weight="bold" />
         </button>
 
-        <div className="flex min-h-[260px] items-center justify-center overflow-hidden bg-[#FAFAF9] p-4 sm:min-h-[430px] sm:p-7">
+        <div className="flex min-h-[16.25rem] items-center justify-center overflow-hidden bg-[#FAFAF9] p-4 sm:min-h-[26.875rem] sm:p-7">
           <Image
             src="/illustrations/tamanduas-boas-vindas-equipe.png"
             width={1024}
             height={1024}
             priority
             alt="Equipe de tamanduás Jards celebrando"
-            className="h-auto w-full max-w-[390px] object-contain"
+            className="h-auto w-full max-w-[24.375rem] object-contain"
           />
         </div>
 
         <div className="flex flex-col justify-center px-6 pb-8 pt-7 sm:px-9 sm:py-12">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[.13em] text-[#2E8932]">
+          <p className="mb-3 text-[0.6875rem] font-bold uppercase tracking-[.13em] text-[#2E8932]">
             {quantityLabel}
           </p>
-          <h2 id="welcome-team-title" className="max-w-sm text-[30px] font-bold leading-[1.08] tracking-[-.035em] text-[#0D0D0D] sm:text-[36px]">
+          <h2 id="welcome-team-title" className="max-w-sm text-[1.875rem] font-bold leading-[1.08] tracking-[-.035em] text-[#0D0D0D] sm:text-[2.25rem]">
             Sua equipe ganhou espaço para crescer.
           </h2>
           <p className="mt-4 max-w-sm text-sm leading-6 text-black/50">

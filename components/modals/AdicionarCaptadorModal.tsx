@@ -205,7 +205,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
           aria-modal="true"
           aria-labelledby={titleId}
           className="bg-white rounded shadow-2xl w-full overflow-hidden flex flex-col"
-          style={{ maxWidth: 560, maxHeight: "90vh" }}
+          style={{ maxWidth: "35rem", maxHeight: "90vh" }}
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
@@ -214,7 +214,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
               <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
                 {isEdit ? <Pencil size={15} /> : <UserPlus size={16} />}
               </div>
-              <h2 id={titleId} className="text-[15px] font-bold text-black">
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">
                 {isEdit ? "Editar agência" : step === "form" ? "Adicionar agência" : "Agência cadastrada"}
               </h2>
             </div>
@@ -228,14 +228,14 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
             {step === "form" || isEdit ? (
               <div className="space-y-4">
                 {erro && (
-                  <div className="px-3 py-2 rounded text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+                  <div className="px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
                     {erro}
                   </div>
                 )}
 
                 {/* Nome */}
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Nome da agência *</label>
+                  <label className="text-[0.6875rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Nome da agência *</label>
                   <input
                     autoFocus={!isEdit}
                     type="text"
@@ -243,7 +243,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                     onChange={e => setNome(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter") handleSalvar(); }}
                     placeholder="Ex: Captação Cultural SP"
-                    className="w-full px-3 py-2.5 text-[13px] border rounded bg-white outline-none focus:border-black/25 transition"
+                    className="w-full px-3 py-2.5 text-[0.8125rem] border rounded bg-white outline-none focus:border-black/25 transition"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
@@ -281,36 +281,36 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                 {/* Contato principal */}
                 <div className="space-y-3 border-t border-black/[.07] pt-4">
                   <div>
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-black/30">Contato principal</p>
-                    <p className="mt-0.5 text-[10px] text-black/35">Pessoa responsável pela relação com a agência.</p>
+                    <p className="text-[0.6875rem] font-bold uppercase tracking-widest text-black/30">Contato principal</p>
+                    <p className="mt-0.5 text-[0.625rem] text-black/35">Pessoa responsável pela relação com a agência.</p>
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-[11px] font-medium text-black/50">Representante principal</label>
-                    <input type="text" value={agencia} onChange={e => setAgencia(e.target.value)} placeholder="Ex: Maria Silva" className="w-full rounded border bg-white px-3 py-2.5 text-[13px] outline-none focus:border-black/25 transition" style={{ borderColor: "rgba(13,13,13,.12)" }} />
+                    <label className="mb-1.5 block text-[0.6875rem] font-medium text-black/50">Representante principal</label>
+                    <input type="text" value={agencia} onChange={e => setAgencia(e.target.value)} placeholder="Ex: Maria Silva" className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] outline-none focus:border-black/25 transition" style={{ borderColor: "rgba(13,13,13,.12)" }} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-medium text-black/50">E-mail</label>
-                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="contato@agencia.com.br" className="w-full rounded border bg-white px-3 py-2.5 text-[12px] outline-none focus:border-black/25 transition" style={{ borderColor: "rgba(13,13,13,.12)" }} />
+                      <label className="mb-1.5 block text-[0.6875rem] font-medium text-black/50">E-mail</label>
+                      <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="contato@agencia.com.br" className="w-full rounded border bg-white px-3 py-2.5 text-[0.75rem] outline-none focus:border-black/25 transition" style={{ borderColor: "rgba(13,13,13,.12)" }} />
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-[11px] font-medium text-black/50">Telefone</label>
-                      <input type="tel" value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999" className="w-full rounded border bg-white px-3 py-2.5 text-[12px] outline-none focus:border-black/25 transition" style={{ borderColor: "rgba(13,13,13,.12)" }} />
+                      <label className="mb-1.5 block text-[0.6875rem] font-medium text-black/50">Telefone</label>
+                      <input type="tel" value={telefone} onChange={e => setTelefone(e.target.value)} placeholder="(11) 99999-9999" className="w-full rounded border bg-white px-3 py-2.5 text-[0.75rem] outline-none focus:border-black/25 transition" style={{ borderColor: "rgba(13,13,13,.12)" }} />
                     </div>
                   </div>
                 </div>
 
                 {/* Prioridade */}
                 <div>
-                  <label className="text-[11px] font-bold uppercase tracking-widest text-black/30 block">Prioridade da parceria</label>
-                  <p className="mb-2 mt-0.5 text-[10px] text-black/35">Define a ordem de atenção na carteira.</p>
+                  <label className="text-[0.6875rem] font-bold uppercase tracking-widest text-black/30 block">Prioridade da parceria</label>
+                  <p className="mb-2 mt-0.5 text-[0.625rem] text-black/35">Define a ordem de atenção na carteira.</p>
                   <div className="flex">
                     {PRIORIDADE_OPTS.map((opt, index) => (
                       <button
                         key={opt.value}
                         onClick={() => setPrioridade(opt.value)}
                         type="button"
-                        className={`relative flex flex-1 items-center justify-center gap-1.5 border px-3 py-2 text-[12px] font-semibold transition hover:z-10 hover:bg-black/[.025] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === PRIORIDADE_OPTS.length - 1 ? "rounded-r" : ""}`}
+                        className={`relative flex flex-1 items-center justify-center gap-1.5 border px-3 py-2 text-[0.75rem] font-semibold transition hover:z-10 hover:bg-black/[.025] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === PRIORIDADE_OPTS.length - 1 ? "rounded-r" : ""}`}
                         style={{
                           borderColor: prioridade === opt.value ? `${opt.color}70` : "rgba(13,13,13,.10)",
                           background: prioridade === opt.value ? `${opt.color}0A` : "white",
@@ -332,8 +332,8 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                     <Check size={18} style={{ color: "#2E8932" }} />
                   </div>
                   <div>
-                    <p className="text-[13px] font-bold text-black">{nome}</p>
-                    <p className="text-[11px] text-black/40">Agência cadastrada com sucesso</p>
+                    <p className="text-[0.8125rem] font-bold text-black">{nome}</p>
+                    <p className="text-[0.6875rem] text-black/40">Agência cadastrada com sucesso</p>
                   </div>
                 </div>
 
@@ -341,12 +341,12 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-[12px] font-bold text-black">Contatos da agência</p>
-                      <p className="text-[11px] text-black/35 mt-0.5">Pessoas vinculadas a esta agência no CRM</p>
+                      <p className="text-[0.75rem] font-bold text-black">Contatos da agência</p>
+                      <p className="text-[0.6875rem] text-black/35 mt-0.5">Pessoas vinculadas a esta agência no CRM</p>
                     </div>
                     <button
                       onClick={() => setShowContatoModal(true)}
-                      className="flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1.5 rounded border transition hover:bg-black/5"
+                      className="flex items-center gap-1.5 text-[0.6875rem] font-semibold px-2.5 py-1.5 rounded border transition hover:bg-black/5"
                       style={{ borderColor: "rgba(13,13,13,.12)", color: "#7259B5" }}
                     >
                       <Plus size={12} /> Adicionar
@@ -361,15 +361,15 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                             <User size={12} style={{ color: "#7259B5" }} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-[12px] font-semibold text-black truncate">{c.nome}</p>
-                            {c.cargo && <p className="text-[11px] text-black/35 truncate">{c.cargo}</p>}
+                            <p className="text-[0.75rem] font-semibold text-black truncate">{c.nome}</p>
+                            {c.cargo && <p className="text-[0.6875rem] text-black/35 truncate">{c.cargo}</p>}
                           </div>
-                          {c.email && <span className="text-[11px] text-black/30 truncate max-w-[130px]">{c.email}</span>}
+                          {c.email && <span className="text-[0.6875rem] text-black/30 truncate max-w-[8.125rem]">{c.email}</span>}
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[11px] text-black/25 py-1">Nenhum contato adicionado ainda</p>
+                    <p className="text-[0.6875rem] text-black/25 py-1">Nenhum contato adicionado ainda</p>
                   )}
                 </div>
               </div>
@@ -378,14 +378,14 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
 
           {/* Footer */}
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <button onClick={handleClose} className="px-4 py-2 text-[12px] font-medium text-black/35 hover:text-black/55 transition">
+            <button onClick={handleClose} className="px-4 py-2 text-[0.75rem] font-medium text-black/35 hover:text-black/55 transition">
               {step === "form" || isEdit ? "Cancelar" : "Fechar"}
             </button>
             {(step === "form" || isEdit) && (
               <button
                 onClick={handleSalvar}
                 disabled={saving || !nome.trim()}
-                className="rounded bg-[#2E8932] px-5 py-2 text-[12px] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-35 disabled:cursor-not-allowed"
+                className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-35 disabled:cursor-not-allowed"
               >
                 {saving ? "Salvando…" : isEdit ? "Salvar alterações" : "Cadastrar agência"}
               </button>

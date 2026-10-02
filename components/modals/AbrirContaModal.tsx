@@ -70,8 +70,8 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
               <Building2 size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[15px] font-bold text-[#0D0D0D]">Criar cliente</h2>
-              <p className="text-[12px] text-black/40">{empresaNome}</p>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#0D0D0D]">Criar cliente</h2>
+              <p className="text-[0.75rem] text-black/40">{empresaNome}</p>
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-black/5 transition">
@@ -81,42 +81,42 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
 
         <div className="space-y-4">
           <div>
-            <label className="text-[11px] font-bold text-black/40 uppercase tracking-wide block mb-1.5">Nome do cliente</label>
+            <label className="text-[0.6875rem] font-bold text-black/40 uppercase tracking-wide block mb-1.5">Nome do cliente</label>
             <input
               value={nome}
               onChange={(e) => setNome(e.target.value)}
               placeholder="Ex: Patrocínio Anual 2026"
-              className="w-full px-3 py-2.5 text-[13px] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
+              className="w-full px-3 py-2.5 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             />
           </div>
 
           <div>
-            <label className="text-[11px] font-bold text-black/40 uppercase tracking-wide block mb-1.5">Notas</label>
+            <label className="text-[0.6875rem] font-bold text-black/40 uppercase tracking-wide block mb-1.5">Notas</label>
             <textarea
               value={notas}
               onChange={(e) => setNotas(e.target.value)}
               placeholder="Observações sobre o cliente..."
               rows={3}
-              className="w-full px-3 py-2.5 text-[13px] border rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
+              className="w-full px-3 py-2.5 text-[0.8125rem] border rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             />
           </div>
         </div>
 
-        {erro && <p role="alert" className="mt-4 text-[12px] text-[#B23A3A]">{erro}</p>}
+        {erro && <p role="alert" className="mt-4 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
 
         <div className="flex justify-end gap-2 mt-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-[13px] font-medium text-black/40 hover:text-black/60 transition"
+            className="px-4 py-2 text-[0.8125rem] font-medium text-black/40 hover:text-black/60 transition"
           >
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex items-center gap-1.5 px-5 py-2 text-[13px] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-5 py-2 text-[0.8125rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? (
               <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />

@@ -174,8 +174,8 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
   return (
     <div className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <p className="text-[11px] text-black/35">{documentos.length} arquivo{documentos.length === 1 ? "" : "s"}</p>
-        <button onClick={() => setShowModal(true)} className="inline-flex items-center justify-center gap-1.5 rounded border border-black/20 bg-white px-4 py-2 text-[12px] font-semibold text-black/80 transition hover:bg-black/[.04] active:scale-[.98]">
+        <p className="text-[0.6875rem] text-black/35">{documentos.length} arquivo{documentos.length === 1 ? "" : "s"}</p>
+        <button onClick={() => setShowModal(true)} className="inline-flex items-center justify-center gap-1.5 rounded border border-black/20 bg-white px-4 py-2 text-[0.75rem] font-semibold text-black/80 transition hover:bg-black/[.04] active:scale-[.98]">
           <Plus size={13} /> Adicionar documento
         </button>
       </div>
@@ -183,18 +183,18 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
       {documentos.length > 0 && (
         <div className="relative max-w-sm">
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/25" />
-          <input value={busca} onChange={event => setBusca(event.target.value)} placeholder="Buscar documentos" className="h-9 w-full rounded border border-black/[.1] bg-white pl-9 pr-3 text-[12px] outline-none focus:border-[#7259B5]/50" />
+          <input value={busca} onChange={event => setBusca(event.target.value)} placeholder="Buscar documentos" className="h-9 w-full rounded border border-black/[.1] bg-white pl-9 pr-3 text-[0.75rem] outline-none focus:border-[#7259B5]/50" />
         </div>
       )}
 
-      {erro && !showModal && <p className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] text-[#B23A3A]">{erro}</p>}
+      {erro && !showModal && <p className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[0.6875rem] text-[#B23A3A]">{erro}</p>}
 
       {loading ? (
         <div className="space-y-2">{[1, 2, 3].map(item => <div key={item} className="h-16 animate-pulse rounded bg-black/[.035]" />)}</div>
       ) : filtered.length === 0 ? (
         <div className="rounded border border-dashed border-black/[.12] px-6 py-12 text-center">
           <FileText size={22} className="mx-auto text-black/15" />
-          <p className="mt-3 text-[12px] font-medium text-black/40">{busca ? "Nenhum documento encontrado" : "Nenhum documento armazenado"}</p>
+          <p className="mt-3 text-[0.75rem] font-medium text-black/40">{busca ? "Nenhum documento encontrado" : "Nenhum documento armazenado"}</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded border border-black/[.08] bg-white">
@@ -206,8 +206,8 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
               <div key={documento.id} className="group flex items-center gap-3 border-b border-black/[.06] px-4 py-3 last:border-b-0 hover:bg-black/[.018]">
                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/40"><DocumentIcon type={documento.tipo} name={documento.arquivo_nome ?? documento.nome} /></span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold text-black/75">{documento.nome}</p>
-                  <p className="mt-0.5 truncate text-[10px] text-black/30">{category} · {formatSize(documento.tamanho)} · {formatDate(documento.created_at)}{captacao ? ` · ${captacao.empresaNome || captacao.titulo}` : inscricao ? ` · ${inscricao.titulo}` : " · Projeto"}</p>
+                  <p className="truncate text-[0.8125rem] font-semibold text-black/75">{documento.nome}</p>
+                  <p className="mt-0.5 truncate text-[0.625rem] text-black/30">{category} · {formatSize(documento.tamanho)} · {formatDate(documento.created_at)}{captacao ? ` · ${captacao.empresaNome || captacao.titulo}` : inscricao ? ` · ${inscricao.titulo}` : " · Projeto"}</p>
                 </div>
                 <button onClick={() => void openDocument(documento)} title="Abrir" className="rounded p-2 text-black/25 transition hover:bg-[#7259B5]/10 hover:text-[#7259B5]"><Download size={13} /></button>
                 <button onClick={() => void removeDocument(documento)} title="Excluir" className="rounded p-2 text-black/20 opacity-0 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] group-hover:opacity-100"><Trash2 size={13} /></button>
@@ -220,20 +220,20 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closeModal}>
           <div className="w-full max-w-lg overflow-hidden rounded border border-black/[.09] bg-white shadow-xl" onClick={event => event.stopPropagation()}>
-            <div className="flex items-center justify-between border-b border-black/[.07] px-5 py-4"><h3 className="text-[14px] font-semibold text-black/80">Adicionar documento</h3><button onClick={closeModal} className="rounded p-1.5 text-black/30 hover:bg-black/[.05]"><X size={14} /></button></div>
+            <div className="flex items-center justify-between border-b border-black/[.07] px-5 py-4"><h3 className="text-[0.875rem] font-semibold text-black/80">Adicionar documento</h3><button onClick={closeModal} className="rounded p-1.5 text-black/30 hover:bg-black/[.05]"><X size={14} /></button></div>
             <div className="space-y-4 p-5">
-              <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Título</label><input value={titulo} onChange={event => setTitulo(event.target.value)} className="h-10 w-full rounded border border-black/[.12] px-3 text-[13px] outline-none focus:border-[#7259B5]/50" /></div>
+              <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Título</label><input value={titulo} onChange={event => setTitulo(event.target.value)} className="h-10 w-full rounded border border-black/[.12] px-3 text-[0.8125rem] outline-none focus:border-[#7259B5]/50" /></div>
               <div className="grid gap-4 sm:grid-cols-2">
-                <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Categoria</label><Select value={categoria} onChange={event => setCategoria(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[12px] outline-none">{CATEGORIAS.map(item => <option key={item[0]} value={item[0]}>{item[1]}</option>)}</Select></div>
-                <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Contexto</label><Select value={contextKind} onChange={event => { setContextKind(event.target.value as "projeto" | "negociacao" | "inscricao"); setCaptacaoId(""); setInscricaoId(""); }} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[12px] outline-none"><option value="projeto">Projeto inteiro</option><option value="negociacao">Negociação específica</option><option value="inscricao">Inscrição específica</option></Select></div>
+                <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Categoria</label><Select value={categoria} onChange={event => setCategoria(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] outline-none">{CATEGORIAS.map(item => <option key={item[0]} value={item[0]}>{item[1]}</option>)}</Select></div>
+                <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Contexto</label><Select value={contextKind} onChange={event => { setContextKind(event.target.value as "projeto" | "negociacao" | "inscricao"); setCaptacaoId(""); setInscricaoId(""); }} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] outline-none"><option value="projeto">Projeto inteiro</option><option value="negociacao">Negociação específica</option><option value="inscricao">Inscrição específica</option></Select></div>
               </div>
-              {contextKind === "negociacao" && <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Negociação</label><Select value={captacaoId} onChange={event => setCaptacaoId(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[12px] outline-none"><option value="">Selecione</option>{captacoes.map(item => <option key={item.id} value={item.id}>{item.titulo}{item.empresaNome ? ` · ${item.empresaNome}` : ""}</option>)}</Select></div>}
-              {contextKind === "inscricao" && <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Inscrição</label><Select value={inscricaoId} onChange={event => setInscricaoId(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[12px] outline-none"><option value="">Selecione</option>{inscricoes.map(item => <option key={item.id} value={item.id}>{item.titulo}{item.complemento ? ` · ${item.complemento}` : ""}</option>)}</Select></div>}
-              <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Descrição</label><textarea value={descricao} onChange={event => setDescricao(event.target.value)} rows={3} className="w-full resize-none rounded border border-black/[.12] px-3 py-2.5 text-[13px] outline-none focus:border-[#7259B5]/50" /></div>
-              <div><label className="mb-1.5 block text-[11px] font-semibold text-black/55">Arquivo</label><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-20 w-full items-center justify-center gap-2 rounded border border-dashed border-black/[.14] px-4 text-[12px] text-black/40 transition hover:bg-black/[.02]"><Upload size={15} /> {file ? file.name : "Selecionar arquivo"}</button><input ref={inputRef} type="file" className="hidden" onChange={event => { const selected = event.target.files?.[0]; if (selected) chooseFile(selected); }} /><p className="mt-1.5 text-[10px] text-black/25">Qualquer formato, até 50 MB.</p></div>
-              {erro && <p className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] text-[#B23A3A]">{erro}</p>}
+              {contextKind === "negociacao" && <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Negociação</label><Select value={captacaoId} onChange={event => setCaptacaoId(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] outline-none"><option value="">Selecione</option>{captacoes.map(item => <option key={item.id} value={item.id}>{item.titulo}{item.empresaNome ? ` · ${item.empresaNome}` : ""}</option>)}</Select></div>}
+              {contextKind === "inscricao" && <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Inscrição</label><Select value={inscricaoId} onChange={event => setInscricaoId(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] outline-none"><option value="">Selecione</option>{inscricoes.map(item => <option key={item.id} value={item.id}>{item.titulo}{item.complemento ? ` · ${item.complemento}` : ""}</option>)}</Select></div>}
+              <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Descrição</label><textarea value={descricao} onChange={event => setDescricao(event.target.value)} rows={3} className="w-full resize-none rounded border border-black/[.12] px-3 py-2.5 text-[0.8125rem] outline-none focus:border-[#7259B5]/50" /></div>
+              <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Arquivo</label><button type="button" onClick={() => inputRef.current?.click()} className="flex min-h-20 w-full items-center justify-center gap-2 rounded border border-dashed border-black/[.14] px-4 text-[0.75rem] text-black/40 transition hover:bg-black/[.02]"><Upload size={15} /> {file ? file.name : "Selecionar arquivo"}</button><input ref={inputRef} type="file" className="hidden" onChange={event => { const selected = event.target.files?.[0]; if (selected) chooseFile(selected); }} /><p className="mt-1.5 text-[0.625rem] text-black/25">Qualquer formato, até 50 MB.</p></div>
+              {erro && <p className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[0.6875rem] text-[#B23A3A]">{erro}</p>}
             </div>
-            <div className="flex items-center justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button onClick={closeModal} className="text-[12px] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button onClick={() => void save()} disabled={saving || !file || !titulo.trim()} className="rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></div>
+            <div className="flex items-center justify-end gap-3 border-t border-black/[.07] px-5 py-4"><button onClick={closeModal} className="text-[0.75rem] font-semibold text-black/35 hover:text-black/55">Cancelar</button><button onClick={() => void save()} disabled={saving || !file || !titulo.trim()} className="rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40">{saving ? "Salvando…" : "Salvar"}</button></div>
           </div>
         </div>
       )}

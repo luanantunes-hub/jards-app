@@ -33,17 +33,17 @@ const HEALTH_WEIGHT: Record<SaudeConta["estado"], number> = {
 };
 
 const CONTAS_COLUMNS = [
-  { id: "empresa", label: "Empresa", width: "minmax(260px,1.5fr)", hideable: false },
-  { id: "status", label: "Status", width: "105px", hideable: false },
-  { id: "saude", label: "Saúde", width: "125px" },
-  { id: "responsavel", label: "Responsável", width: "150px" },
-  { id: "contratos", label: "Contratos", width: "100px" },
-  { id: "valor", label: "Valor total", width: "130px" },
-  { id: "renovacao", label: "Próx. renovação", width: "145px" },
-  { id: "atividade", label: "Última interação", width: "140px" },
-  { id: "adicionado_em", label: "Adicionado em", width: "125px", defaultHidden: true },
-  { id: "atualizado_em", label: "Atualizado em", width: "125px", defaultHidden: true },
-  { id: "acoes", label: "Ações", width: "80px", defaultHidden: true },
+  { id: "empresa", label: "Empresa", width: "minmax(16.25rem,1.5fr)", hideable: false },
+  { id: "status", label: "Status", width: "6.5625rem", hideable: false },
+  { id: "saude", label: "Saúde", width: "7.8125rem" },
+  { id: "responsavel", label: "Responsável", width: "9.375rem" },
+  { id: "contratos", label: "Contratos", width: "6.25rem" },
+  { id: "valor", label: "Valor total", width: "8.125rem" },
+  { id: "renovacao", label: "Próx. renovação", width: "9.0625rem" },
+  { id: "atividade", label: "Última interação", width: "8.75rem" },
+  { id: "adicionado_em", label: "Adicionado em", width: "7.8125rem", defaultHidden: true },
+  { id: "atualizado_em", label: "Atualizado em", width: "7.8125rem", defaultHidden: true },
+  { id: "acoes", label: "Ações", width: "5rem", defaultHidden: true },
 ] as const satisfies readonly ColumnDefinition[];
 
 const STATUS_LABEL: Record<string, { label: string; bg: string }> = {
@@ -216,46 +216,46 @@ function classifyPortfolio(account: Omit<ContaRow, "portfolio_lane" | "portfolio
 
 function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]; loading: boolean; onOpen: (id: string) => void }) {
   if (loading) {
-    return <div className="grid min-w-[1120px] grid-cols-4 gap-3">{PORTFOLIO_LANES.map(lane => <div key={lane.key} className="h-[520px] animate-pulse rounded bg-black/[.05]" />)}</div>;
+    return <div className="grid min-w-[70rem] grid-cols-4 gap-3">{PORTFOLIO_LANES.map(lane => <div key={lane.key} className="h-[32.5rem] animate-pulse rounded bg-black/[.05]" />)}</div>;
   }
 
   return (
     <div className="overflow-x-auto pb-2">
-      <div className="grid min-w-[1120px] grid-cols-4 gap-3">
+      <div className="grid min-w-[70rem] grid-cols-4 gap-3">
         {PORTFOLIO_LANES.map(lane => {
           const LaneIcon = lane.icon;
           const items = accounts.filter(account => account.portfolio_lane === lane.key).sort((a, b) => a.portfolio_urgency - b.portfolio_urgency || b.valor_total - a.valor_total);
           const total = items.reduce((sum, account) => sum + Number(account.valor_total ?? 0), 0);
           return (
-            <section key={lane.key} className="flex min-h-[520px] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
+            <section key={lane.key} className="flex min-h-[32.5rem] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
               <header className="border-b border-black/[.07] px-3.5 py-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div><div className="flex items-center gap-1.5"><LaneIcon size={13} style={{ color: lane.color }}/><h2 className="text-[12px] font-bold" style={{ color: lane.color }}>{lane.label}</h2></div><p className="mt-1 text-[9.5px] text-black/30">{lane.description}</p></div>
-                  <span className="text-[10px] font-semibold tabular-nums text-black/30">{items.length}</span>
+                  <div><div className="flex items-center gap-1.5"><LaneIcon size={13} style={{ color: lane.color }}/><h2 className="text-[0.75rem] font-bold" style={{ color: lane.color }}>{lane.label}</h2></div><p className="mt-1 text-[0.59375rem] text-black/30">{lane.description}</p></div>
+                  <span className="text-[0.625rem] font-semibold tabular-nums text-black/30">{items.length}</span>
                 </div>
-                <p className="mt-2 text-[10px] tabular-nums text-black/35">{total > 0 ? `${fmtCurrency(total)} na carteira` : "Sem valor registrado"}</p>
+                <p className="mt-2 text-[0.625rem] tabular-nums text-black/35">{total > 0 ? `${fmtCurrency(total)} na carteira` : "Sem valor registrado"}</p>
               </header>
               <div className="space-y-2 p-2.5">
                 {items.length === 0 ? (
-                  <div className="rounded border border-dashed border-black/10 px-3 py-10 text-center text-[10.5px] text-black/25">Nenhum cliente nesta faixa</div>
+                  <div className="rounded border border-dashed border-black/10 px-3 py-10 text-center text-[0.65625rem] text-black/25">Nenhum cliente nesta faixa</div>
                 ) : items.map(account => {
                   const companyName = account.empresa_crm?.nome ?? account.nome ?? "Cliente";
                   return (
                     <button key={account.id} type="button" onClick={() => onOpen(account.id)} className="w-full rounded border border-black/[.08] bg-white p-3 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                       <div className="flex items-start gap-2.5">
                         <CompanyLogo nome={companyName} domain={account.empresa_crm?.domain_key} site={account.empresa_crm?.site} size={32} className="shrink-0 border border-black/[.06]"/>
-                        <div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black">{companyName}</p><p className="mt-0.5 truncate text-[9.5px] text-black/30">{account.nome && account.nome !== companyName ? account.nome : account.empresa_crm?.setor ?? "Cliente"}</p></div>
-                        {account.health_score !== null && <span className="text-[10px] font-bold tabular-nums" style={{ color: account.health_score >= 70 ? "#2E8932" : account.health_score >= 45 ? "#B07A14" : "#D94E4E" }}>{account.health_score}</span>}
+                        <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black">{companyName}</p><p className="mt-0.5 truncate text-[0.59375rem] text-black/30">{account.nome && account.nome !== companyName ? account.nome : account.empresa_crm?.setor ?? "Cliente"}</p></div>
+                        {account.health_score !== null && <span className="text-[0.625rem] font-bold tabular-nums" style={{ color: account.health_score >= 70 ? "#2E8932" : account.health_score >= 45 ? "#B07A14" : "#D94E4E" }}>{account.health_score}</span>}
                       </div>
                       <div className="mt-3 border-t border-black/[.06] pt-2.5">
-                        <p className="text-[10px] font-semibold" style={{ color: lane.color }}>{account.portfolio_reason}</p>
-                        <p className="mt-1 line-clamp-2 text-[11px] font-medium leading-[1.4] text-black/65">{account.portfolio_action}</p>
+                        <p className="text-[0.625rem] font-semibold" style={{ color: lane.color }}>{account.portfolio_reason}</p>
+                        <p className="mt-1 line-clamp-2 text-[0.6875rem] font-medium leading-[1.4] text-black/65">{account.portfolio_action}</p>
                       </div>
-                      <div className="mt-2.5 space-y-1.5 text-[9.5px] text-black/35">
+                      <div className="mt-2.5 space-y-1.5 text-[0.59375rem] text-black/35">
                         <div className="flex items-center gap-1.5"><CalendarDays size={10}/><span>{account.portfolio_deadline ? fmtDate(account.portfolio_deadline) : "Sem prazo definido"}</span></div>
                         <div className="flex items-center gap-1.5"><UserRound size={10}/><span className="truncate">{account.proxima_atividade?.responsavel ?? account.responsavel_nome ?? "Sem responsável"}</span></div>
                       </div>
-                      <div className="mt-2.5 flex items-center justify-between border-t border-black/[.05] pt-2"><span className="text-[9px] text-black/25">{account.n_contratos} {account.n_contratos === 1 ? "contrato" : "contratos"}</span><span className="text-[10px] font-bold tabular-nums text-black/55">{fmtCurrency(account.valor_total)}</span></div>
+                      <div className="mt-2.5 flex items-center justify-between border-t border-black/[.05] pt-2"><span className="text-[0.5625rem] text-black/25">{account.n_contratos} {account.n_contratos === 1 ? "contrato" : "contratos"}</span><span className="text-[0.625rem] font-bold tabular-nums text-black/55">{fmtCurrency(account.valor_total)}</span></div>
                     </button>
                   );
                 })}
@@ -497,17 +497,17 @@ export default function ContasPatrocinioPage() {
         <ManagedTable storageKey="contas-patrocinio-v2" definitions={CONTAS_COLUMNS} className="w-full">
           <thead>
             <tr className="border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Empresa</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Status</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Saúde</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Responsável</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Contratos</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Valor Total</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Próx. Renovação</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Última interação</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Adicionado em</th>
-              <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Atualizado em</th>
-              <th className="px-5 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/35">Ações</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Empresa</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Status</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Saúde</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Responsável</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Contratos</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Valor Total</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Próx. Renovação</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Última interação</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Adicionado em</th>
+              <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Atualizado em</th>
+              <th className="px-5 py-3 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">Ações</th>
             </tr>
           </thead>
           <tbody>
@@ -552,7 +552,7 @@ export default function ContasPatrocinioPage() {
                           className="flex-shrink-0"
                         />
                         <div className="min-w-0">
-                          <span className="text-[13px] font-semibold text-[#0D0D0D] truncate block">
+                          <span className="text-[0.8125rem] font-semibold text-[#0D0D0D] truncate block">
                             {c.empresa_crm?.nome || "—"}
                           </span>
                         </div>
@@ -563,7 +563,7 @@ export default function ContasPatrocinioPage() {
                     <td className="px-5 py-3.5">
                       {st && (
                         <span
-                          className="text-[10px] font-bold px-2 py-0.5 rounded text-white uppercase tracking-wide"
+                          className="text-[0.625rem] font-bold px-2 py-0.5 rounded text-white uppercase tracking-wide"
                           style={{ background: st.bg }}
                         >
                           {st.label}
@@ -574,7 +574,7 @@ export default function ContasPatrocinioPage() {
                     {/* Saúde da parceria */}
                     <td className="px-5 py-3.5">
                       <span
-                        className="text-[10px] font-semibold uppercase tracking-wide whitespace-nowrap"
+                        className="text-[0.625rem] font-semibold uppercase tracking-wide whitespace-nowrap"
                         style={{ color: health.color }}
                         title={c.health_score === null ? "Saúde ainda não avaliada" : `Score de saúde: ${c.health_score} de 100`}
                       >
@@ -584,19 +584,19 @@ export default function ContasPatrocinioPage() {
 
                     {/* Responsável */}
                     <td className="px-5 py-3.5">
-                      <div className="flex min-w-0 items-center gap-1.5 text-[12px] text-black/55">
+                      <div className="flex min-w-0 items-center gap-1.5 text-[0.75rem] text-black/55">
                         <UserRound size={12} className="shrink-0 text-black/25" />
                         <span className="truncate">{c.responsavel_nome ?? "Sem responsável"}</span>
                       </div>
                     </td>
 
                     {/* Contratos */}
-                    <td className="px-5 py-3.5 text-black/50 text-[12px]">
+                    <td className="px-5 py-3.5 text-black/50 text-[0.75rem]">
                       {c.n_contratos}
                     </td>
 
                     {/* Valor Total */}
-                    <td className="px-5 py-3.5 text-[12px] font-bold text-black/75">
+                    <td className="px-5 py-3.5 text-[0.75rem] font-bold text-black/75">
                       {fmtCurrency(c.valor_total)}
                     </td>
 
@@ -605,28 +605,28 @@ export default function ContasPatrocinioPage() {
                       {c.proxima_renovacao ? (
                         <div className="flex items-center gap-1.5">
                           {renovWarning && <AlertTriangle size={11} className="text-[#B07A14]" />}
-                          <span className={`text-[12px] ${renovWarning ? "font-bold text-[#B07A14]" : "text-black/40"}`}>
+                          <span className={`text-[0.75rem] ${renovWarning ? "font-bold text-[#B07A14]" : "text-black/40"}`}>
                             {fmtDate(c.proxima_renovacao)}
                           </span>
                         </div>
                       ) : (
-                        <span className="text-black/20 text-[12px]">—</span>
+                        <span className="text-black/20 text-[0.75rem]">—</span>
                       )}
                     </td>
 
                     {/* Última interação */}
                     <td className="px-5 py-3.5">
                       {c.dias_sem_atividade !== null ? (
-                        <span className="text-[12px] font-semibold" style={{ color: diasSemAtividadeCor(c.dias_sem_atividade) }}>
+                        <span className="text-[0.75rem] font-semibold" style={{ color: diasSemAtividadeCor(c.dias_sem_atividade) }}>
                           {c.dias_sem_atividade === 0 ? "Hoje" : `há ${c.dias_sem_atividade} dias`}
                         </span>
                       ) : (
-                        <span className="text-black/25 text-[12px]">Sem registro</span>
+                        <span className="text-black/25 text-[0.75rem]">Sem registro</span>
                       )}
                     </td>
 
-                    <td className="px-5 py-3.5 text-[12px] tabular-nums text-black/40 whitespace-nowrap">{fmtDate(c.created_at)}</td>
-                    <td className="px-5 py-3.5 text-[12px] tabular-nums text-black/40 whitespace-nowrap">{fmtDate(c.updated_at)}</td>
+                    <td className="px-5 py-3.5 text-[0.75rem] tabular-nums text-black/40 whitespace-nowrap">{fmtDate(c.created_at)}</td>
+                    <td className="px-5 py-3.5 text-[0.75rem] tabular-nums text-black/40 whitespace-nowrap">{fmtDate(c.updated_at)}</td>
 
                     {/* Ações */}
                     <td className="px-5 py-3.5">

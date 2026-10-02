@@ -90,9 +90,9 @@ export function RelationshipScoreGauge({ score, label = "Potencial de relacionam
   const meta = scoreMeta(score, variant);
 
   return (
-    <div className={compact ? "w-[168px]" : "w-full max-w-[220px]"}>
-      <p className="mb-1 text-center text-[9px] font-medium tracking-[.04em] text-black/30">{label}</p>
-      <svg viewBox="0 0 160 78" className={compact ? "h-[64px] w-full" : "h-[78px] w-full"} role="img" aria-label={`${label}: ${score ?? "sem dados"}`}>
+    <div className={compact ? "w-[10.5rem]" : "w-full max-w-[13.75rem]"}>
+      <p className="mb-1 text-center text-[0.5625rem] font-medium tracking-[.04em] text-black/30">{label}</p>
+      <svg viewBox="0 0 160 78" className={compact ? "h-[4rem] w-full" : "h-[4.875rem] w-full"} role="img" aria-label={`${label}: ${score ?? "sem dados"}`}>
         {SEGMENTS.map((segment, index) => (
           <path key={index} d={arc(segment.from, segment.to)} fill="none" stroke={score !== null && value > index * 20 ? segment.color : "rgba(13,13,13,.075)"} strokeWidth="17" />
         ))}
@@ -107,7 +107,7 @@ export function RelationshipScoreGauge({ score, label = "Potencial de relacionam
         <circle cx="80" cy="68" r="2.25" fill="#0D0D0D" />
       </svg>
       <div className={compact ? "-mt-1 text-center" : "text-center"}>
-        <p className="text-[11px] font-semibold" style={{ color: meta.color }}>{titleOverride ?? meta.title}</p>
+        <p className="text-[0.6875rem] font-semibold" style={{ color: meta.color }}>{titleOverride ?? meta.title}</p>
       </div>
     </div>
   );

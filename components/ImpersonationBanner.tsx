@@ -76,7 +76,7 @@ export function ImpersonationBanner() {
   if (mismatch) {
     return (
       <div
-        className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center gap-2 px-5 py-2 text-[12px] font-semibold text-white"
+        className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-center gap-2 px-5 py-2 text-[0.75rem] font-semibold text-white"
         style={{ background: "#D94E4E" }}
       >
         <Shield size={13} />
@@ -92,7 +92,7 @@ export function ImpersonationBanner() {
       className="fixed top-0 left-0 right-0 z-[100] flex items-center justify-between px-5 py-2"
       style={{ background: "#B07A14" }}
     >
-      <div className="flex items-center gap-2 text-[12px] font-semibold text-white/90">
+      <div className="flex items-center gap-2 text-[0.75rem] font-semibold text-white/90">
         <Shield size={13} className="text-white" />
         Navegando como{" "}
         <span className="font-bold text-white">{email}</span>
@@ -100,7 +100,7 @@ export function ImpersonationBanner() {
       <button
         onClick={handleExit}
         disabled={exiting}
-        className="flex items-center gap-1.5 px-3 py-1 rounded text-[11px] font-semibold text-white transition disabled:opacity-60"
+        className="flex items-center gap-1.5 px-3 py-1 rounded text-[0.6875rem] font-semibold text-white transition disabled:opacity-60"
         style={{ background: "rgba(0,0,0,.22)" }}
       >
         <X size={11} />

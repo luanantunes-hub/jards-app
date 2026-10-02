@@ -124,21 +124,21 @@ function MetricBlock({
           <span className="flex h-7 w-7 items-center justify-center rounded bg-black/[.045] text-black/40">
             <Icon size={13} strokeWidth={1.8} />
           </span>
-          <p className="text-[10px] font-semibold uppercase tracking-[.11em]">{label}</p>
+          <p className="text-[0.625rem] font-semibold uppercase tracking-[.11em]">{label}</p>
         </div>
-        <span className="inline-flex items-center gap-1 text-[9px] font-medium text-black/28" title="A confiança considera o tamanho da amostra e a quantidade de captadores comparáveis.">
+        <span className="inline-flex items-center gap-1 text-[0.5625rem] font-medium text-black/28" title="A confiança considera o tamanho da amostra e a quantidade de captadores comparáveis.">
           <Info size={9} /> {sampleLabel}
         </span>
       </div>
-      <p className="text-[25px] font-semibold leading-none tracking-[-.035em] text-[#0D0D0D] tabular-nums">{formatter(value)}</p>
-      <p className="mt-2 min-h-4 text-[11px] font-medium" style={{ color: tone }}>{comparisonText}</p>
+      <p className="text-[1.5625rem] font-semibold leading-none tracking-[-.035em] text-[#0D0D0D] tabular-nums">{formatter(value)}</p>
+      <p className="mt-2 min-h-4 text-[0.6875rem] font-medium" style={{ color: tone }}>{comparisonText}</p>
       <div className="relative mt-4 h-1 overflow-visible rounded-sm bg-black/[.06]">
         <div className="h-full rounded-sm bg-[#0D0D0D]/75 transition-[width] duration-500" style={{ width: `${noFinancialHistory ? 0 : currentWidth}%` }} />
         {reliable && median != null && !noFinancialHistory && (
           <span className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-[#7259B5]" style={{ left: `${medianPosition}%` }} title={`Mediana: ${formatter(median)}`} />
         )}
       </div>
-      <p className="mt-2 text-[10px] text-black/28">
+      <p className="mt-2 text-[0.625rem] text-black/28">
         {detail ?? (noFinancialHistory ? "A equipe também está sem valor captado nesta amostra" : reliable && median != null ? `Mediana ${formatter(median)}` : "Dados insuficientes para comparar")}
       </p>
     </div>
@@ -172,7 +172,7 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
     return (
       <div className="rounded border border-black/[.08] bg-white px-6 py-14 text-center">
         <Activity size={22} className="mx-auto text-black/15" />
-        <p className="mt-3 text-[13px] font-medium text-black/38">Ainda não há dados suficientes para esta leitura.</p>
+        <p className="mt-3 text-[0.8125rem] font-medium text-black/38">Ainda não há dados suficientes para esta leitura.</p>
       </div>
     );
   }
@@ -191,12 +191,12 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
     <div className="space-y-5">
       <section className="overflow-hidden rounded border border-black/[.08] bg-white">
         <div className="px-5 pb-5 pt-6 sm:px-6">
-          <p className="max-w-3xl text-[20px] font-semibold leading-[1.25] tracking-[-.025em] text-[#0D0D0D] sm:text-[22px]">
+          <p className="max-w-3xl text-[1.25rem] font-semibold leading-[1.25] tracking-[-.025em] text-[#0D0D0D] sm:text-[1.375rem]">
             <span className="font-normal text-black/65">{summary.before}</span>
             <span className="font-semibold text-[#0D0D0D]">{summary.emphasis}</span>
             <span className="font-normal text-black/65">{summary.after}</span>
           </p>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[10px] text-black/32">
+          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.625rem] text-black/32">
             <span className="inline-flex items-center gap-1.5"><UsersRound size={11} /> {comparisonLabel}</span>
             <span className="inline-flex items-center gap-1.5"><CalendarDays size={11} /> Últimos 12 meses</span>
           </div>
@@ -238,14 +238,14 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
 
         <div className="border-t border-black/[.06] bg-black/[.012] px-5 py-4 sm:px-6">
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-[.11em] text-black/30">Resultados do período</span>
+            <span className="text-[0.625rem] font-semibold uppercase tracking-[.11em] text-black/30">Resultados do período</span>
             <Info size={10} className="text-black/20" aria-label="Negociações e inscrições podem chegar à aprovação por caminhos diferentes." />
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             {resultItems.map(({ value, label, icon: Icon }) => (
               <div key={label} className="flex items-center gap-2.5 rounded bg-white px-3 py-2.5">
                 <Icon size={13} strokeWidth={1.8} className="text-black/28" />
-                <p className="text-[11px] text-black/40"><strong className="mr-1 font-semibold tabular-nums text-black/75">{value}</strong>{label}</p>
+                <p className="text-[0.6875rem] text-black/40"><strong className="mr-1 font-semibold tabular-nums text-black/75">{value}</strong>{label}</p>
               </div>
             ))}
           </div>
@@ -255,13 +255,13 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
       <div className="grid gap-5 lg:grid-cols-[1.15fr_.85fr]">
         <section className="rounded border border-black/[.08] bg-white">
           <div className="flex items-center justify-between border-b border-black/[.06] px-5 py-4">
-            <h2 className="text-[13px] font-semibold text-black/75">Atenção necessária</h2>
-            {data.alertas.length > 0 && <span className="text-[11px] font-semibold tabular-nums text-black/35">{data.alertas.length}</span>}
+            <h2 className="text-[0.8125rem] font-semibold text-black/75">Atenção necessária</h2>
+            {data.alertas.length > 0 && <span className="text-[0.6875rem] font-semibold tabular-nums text-black/35">{data.alertas.length}</span>}
           </div>
           {data.alertas.length === 0 ? (
             <div className="flex items-center gap-3 px-5 py-7 text-black/35">
               <CheckCircle2 size={16} className="text-[#2E8932]" />
-              <p className="text-[12px] font-medium">Nenhum ponto crítico identificado.</p>
+              <p className="text-[0.75rem] font-medium">Nenhum ponto crítico identificado.</p>
             </div>
           ) : (
             <div>
@@ -269,10 +269,10 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
                 <Link key={`${alert.tipo}-${alert.id ?? index}-${alert.href}`} href={alert.href} className="group flex items-center gap-3 border-b border-black/[.05] px-5 py-3.5 transition last:border-b-0 hover:bg-black/[.018]">
                   <AlertCircle size={14} className={alert.severidade === "risco" ? "text-[#D94E4E]" : "text-[#B07A14]"} />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-semibold text-black/68">{alert.titulo}</p>
-                    <p className="mt-0.5 truncate text-[10px] text-black/35">{alert.detalhe}</p>
+                    <p className="truncate text-[0.75rem] font-semibold text-black/68">{alert.titulo}</p>
+                    <p className="mt-0.5 truncate text-[0.625rem] text-black/35">{alert.detalhe}</p>
                   </div>
-                  <span className="text-[10px] font-semibold text-black/32 transition group-hover:text-[#7259B5]">{alert.acao}</span>
+                  <span className="text-[0.625rem] font-semibold text-black/32 transition group-hover:text-[#7259B5]">{alert.acao}</span>
                 </Link>
               ))}
             </div>
@@ -281,10 +281,10 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
 
         <section className="rounded border border-black/[.08] bg-white">
           <div className="border-b border-black/[.06] px-5 py-4">
-            <h2 className="text-[13px] font-semibold text-black/75">Atividade recente</h2>
+            <h2 className="text-[0.8125rem] font-semibold text-black/75">Atividade recente</h2>
           </div>
           {data.atividade_recente.length === 0 ? (
-            <div className="px-5 py-7 text-[12px] font-medium text-black/30">Nenhum movimento registrado no período.</div>
+            <div className="px-5 py-7 text-[0.75rem] font-medium text-black/30">Nenhum movimento registrado no período.</div>
           ) : (
             <div>
               {data.atividade_recente.map(event => {
@@ -292,10 +292,10 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
                   <>
                     <Clock3 size={13} className="mt-0.5 shrink-0 text-black/22" />
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-[12px] font-semibold text-black/65">{event.titulo}</p>
-                      {event.contexto && <p className="mt-0.5 truncate text-[10px] text-black/33">{event.contexto}</p>}
+                      <p className="truncate text-[0.75rem] font-semibold text-black/65">{event.titulo}</p>
+                      {event.contexto && <p className="mt-0.5 truncate text-[0.625rem] text-black/33">{event.contexto}</p>}
                     </div>
-                    <span className="shrink-0 text-[10px] tabular-nums text-black/28">{relativeDate(event.ocorrido_em)}</span>
+                    <span className="shrink-0 text-[0.625rem] tabular-nums text-black/28">{relativeDate(event.ocorrido_em)}</span>
                   </>
                 );
                 return event.href ? (

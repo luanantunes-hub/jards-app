@@ -399,8 +399,8 @@ export default function EditaisAbertosPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
-          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D]">Editais</h1>
+          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Editais</h1>
         </div>
         <PrimaryListAction onClick={() => setShowSugerirForm(v => !v)}><UserPlus size={13} aria-hidden="true" /> Sugerir edital</PrimaryListAction>
       </div>
@@ -414,7 +414,7 @@ export default function EditaisAbertosPage() {
           <div className="flex-1" style={{ background: "rgba(0,0,0,.18)" }} />
           <div
             className="bg-white h-full overflow-y-auto flex flex-col"
-            style={{ width: 360, borderLeft: "1px solid rgba(13,13,13,.08)", boxShadow: "-8px 0 32px rgba(0,0,0,.10)" }}
+            style={{ width: "22.5rem", borderLeft: "1px solid rgba(13,13,13,.08)", boxShadow: "-8px 0 32px rgba(0,0,0,.10)" }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -423,7 +423,7 @@ export default function EditaisAbertosPage() {
                 <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: "rgba(114,89,181,0.08)" }}>
                   <UserPlus size={14} style={{ color: "#7259B5" }} />
                 </div>
-                <h2 className="text-[14px] font-bold text-black">Sugerir edital</h2>
+                <h2 className="text-[0.875rem] font-bold text-black">Sugerir edital</h2>
               </div>
               <button
                 type="button"
@@ -438,58 +438,58 @@ export default function EditaisAbertosPage() {
             {/* Body */}
             <div className="flex-1 px-6 py-5 space-y-4 overflow-y-auto">
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Empresa / Patrocinador *</label>
+                <label className="text-[0.625rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Empresa / Patrocinador *</label>
                 <input
                   required
                   value={sugerirForm.empresa}
                   onChange={e => setSugerirForm(f => ({ ...f, empresa: e.target.value }))}
                   placeholder="Ex: Petrobras"
-                  className="w-full px-3 py-2.5 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+                  className="w-full px-3 py-2.5 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Título do edital *</label>
+                <label className="text-[0.625rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Título do edital *</label>
                 <input
                   required
                   value={sugerirForm.titulo}
                   onChange={e => setSugerirForm(f => ({ ...f, titulo: e.target.value }))}
                   placeholder="Ex: Programa Cultural 2026"
-                  className="w-full px-3 py-2.5 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+                  className="w-full px-3 py-2.5 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Link do edital *</label>
+                <label className="text-[0.625rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Link do edital *</label>
                 <input
                   required
                   value={sugerirForm.url}
                   onChange={e => setSugerirForm(f => ({ ...f, url: e.target.value }))}
                   placeholder="https://..."
-                  className="w-full px-3 py-2.5 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+                  className="w-full px-3 py-2.5 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Abertura *</label>
+                  <label className="text-[0.625rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Abertura *</label>
                   <input
                     required
                     type="date"
                     value={sugerirForm.abertura}
                     onChange={e => setSugerirForm(f => ({ ...f, abertura: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+                    className="w-full px-3 py-2.5 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Fechamento *</label>
+                  <label className="text-[0.625rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Fechamento *</label>
                   <input
                     required
                     type="date"
                     value={sugerirForm.fechamento}
                     onChange={e => setSugerirForm(f => ({ ...f, fechamento: e.target.value }))}
-                    className="w-full px-3 py-2.5 text-[13px] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
+                    className="w-full px-3 py-2.5 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
@@ -500,14 +500,14 @@ export default function EditaisAbertosPage() {
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <button
                 onClick={() => setShowSugerirForm(false)}
-                className="px-4 py-2 text-[12px] font-medium text-black/35 hover:text-black/55 transition"
+                className="px-4 py-2 text-[0.75rem] font-medium text-black/35 hover:text-black/55 transition"
               >
                 Cancelar
               </button>
               <button
                 onClick={handleSugerir}
                 disabled={sugerirSaving || !sugerirForm.empresa.trim() || !sugerirForm.titulo.trim() || !sugerirForm.url.trim() || !sugerirForm.abertura || !sugerirForm.fechamento}
-                className="flex items-center gap-1.5 px-5 py-2 text-[12px] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
+                className="flex items-center gap-1.5 px-5 py-2 text-[0.75rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
               >
                 {sugerirSaving ? <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin" /> : null}
                 Sugerir edital
@@ -520,7 +520,7 @@ export default function EditaisAbertosPage() {
 
       {/* Filters */}
       <div className="flex items-center gap-3 mb-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-[280px]">
+        <div className="relative flex-1 min-w-[12.5rem] max-w-[17.5rem]">
           <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30" />
           <input
             value={search}
@@ -615,16 +615,16 @@ export default function EditaisAbertosPage() {
                       </div>
                     )}
                     <div>
-                      <p className="text-[15px] font-bold text-[#0D0D0D] leading-tight">{nome}</p>
+                      <p className="text-[0.9375rem] font-bold text-[#0D0D0D] leading-tight">{nome}</p>
                       {isADM && adm!.empresas?.estado && (
-                        <p className="text-[11px] text-black/35 mt-0.5">{adm!.empresas!.estado}</p>
+                        <p className="text-[0.6875rem] text-black/35 mt-0.5">{adm!.empresas!.estado}</p>
                       )}
                     </div>
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <span
-                      className="text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide"
+                      className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide"
                       style={isADM
                         ? { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.50)" }
                         : { background: "rgba(45,114,176,.10)", color: "#2D72B0" }}
@@ -632,7 +632,7 @@ export default function EditaisAbertosPage() {
                       {isADM ? "ADM" : "COMUNIDADE"}
                     </span>
                     <span
-                      className="text-[10px] font-bold px-2 py-0.5 rounded"
+                      className="text-[0.625rem] font-bold px-2 py-0.5 rounded"
                       style={dias > 0
                         ? { background: "rgba(46,137,50,.10)", color: "#2E8932" }
                         : { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.40)" }}
@@ -648,7 +648,7 @@ export default function EditaisAbertosPage() {
                 </h3>
 
                 {/* Meta grid */}
-                <div className="grid grid-cols-2 gap-2 text-[10px] mb-3">
+                <div className="grid grid-cols-2 gap-2 text-[0.625rem] mb-3">
                   <div>
                     <p className="text-black/35 font-semibold uppercase tracking-wide mb-0.5">Abertura</p>
                     <p className="font-medium text-black/60">{fmtDate(item.data.data_abertura)}</p>
@@ -667,29 +667,29 @@ export default function EditaisAbertosPage() {
                     <div className="border-t pt-3 flex items-center justify-between gap-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                       <div className="flex items-center gap-1.5">
                         <button type="button" aria-label={`Funciona (${v.funciona})`} aria-pressed={v.meu === true} onClick={ev => { ev.stopPropagation(); handleVotoEdital(adm!.id, true); }}
-                          className="flex items-center gap-1 px-2 py-1 rounded border transition text-[10px] font-semibold"
+                          className="flex items-center gap-1 px-2 py-1 rounded border transition text-[0.625rem] font-semibold"
                           style={{ borderColor: v.meu === true ? "#2E8932" : "rgba(13,13,13,.12)", color: v.meu === true ? "#2E8932" : "rgba(13,13,13,.35)", background: v.meu === true ? "rgba(46,137,50,.06)" : "transparent" }}>
                           <ThumbsUp size={10} />
                           {v.funciona > 0 && <span className="tabular-nums">{v.funciona}</span>}
                         </button>
                         <button type="button" aria-label={`Não funciona (${v.nao_funciona})`} aria-pressed={v.meu === false} onClick={ev => { ev.stopPropagation(); handleVotoEdital(adm!.id, false); }}
-                          className="flex items-center gap-1 px-2 py-1 rounded border transition text-[10px] font-semibold"
+                          className="flex items-center gap-1 px-2 py-1 rounded border transition text-[0.625rem] font-semibold"
                           style={{ borderColor: v.meu === false ? "#D94E4E" : "rgba(13,13,13,.12)", color: v.meu === false ? "#D94E4E" : "rgba(13,13,13,.35)", background: v.meu === false ? "rgba(217,78,78,.06)" : "transparent" }}>
                           <ThumbsDown size={10} />
                           {v.nao_funciona > 0 && <span className="tabular-nums">{v.nao_funciona}</span>}
                         </button>
-                        {saldo >= 3 && <span className="text-[9px] text-black/25">{saldo >= 5 ? "removido em breve" : `${saldo}/5`}</span>}
+                        {saldo >= 3 && <span className="text-[0.5625rem] text-black/25">{saldo >= 5 ? "removido em breve" : `${saldo}/5`}</span>}
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
+                          className="inline-flex items-center gap-1.5 text-black/40 hover:text-black/70 text-[0.625rem] font-bold px-2.5 py-1.5 rounded whitespace-nowrap border opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                           style={{ borderColor: "rgba(13,13,13,.15)" }}
                           onClick={(ev) => { ev.stopPropagation(); handleExportarEdital(adm!); }}>
                           <Download size={11} /> Exportar
                         </button>
                         {adm!.url_acesso && (
                           <a href={adm!.url_acesso} target="_blank" rel="noopener noreferrer"
-                            className="group/btn inline-flex items-center gap-1.5 bg-[#7259B5] text-white text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
+                            className="group/btn inline-flex items-center gap-1.5 bg-[#7259B5] text-white text-[0.625rem] font-bold px-2.5 py-1.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                             onClick={(ev) => ev.stopPropagation()}>
                             Acessar
                             <ChevronRight size={11} className="group-hover/btn:hidden" />
@@ -706,21 +706,21 @@ export default function EditaisAbertosPage() {
                     <div className="border-t pt-3 flex items-center justify-between gap-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                       <div className="flex items-center gap-1.5">
                         <button type="button" aria-label={`Votar a favor (${com!.votos_positivos})`} aria-pressed={meuVoto === 1} onClick={() => handleVotar(com!.id, 1)}
-                          className="flex items-center gap-1 px-2 py-1 rounded border transition text-[10px] font-semibold"
+                          className="flex items-center gap-1 px-2 py-1 rounded border transition text-[0.625rem] font-semibold"
                           style={{ borderColor: meuVoto === 1 ? "#2E8932" : "rgba(13,13,13,.12)", color: meuVoto === 1 ? "#2E8932" : "rgba(13,13,13,.35)", background: meuVoto === 1 ? "rgba(46,137,50,.06)" : "transparent" }}>
                           <ChevronUp size={12} />
                           {com!.votos_positivos > 0 && <span className="tabular-nums">{com!.votos_positivos}</span>}
                         </button>
                         <button type="button" aria-label={`Votar contra (${com!.votos_negativos})`} aria-pressed={meuVoto === -1} onClick={() => handleVotar(com!.id, -1)}
-                          className="flex items-center gap-1 px-2 py-1 rounded border transition text-[10px] font-semibold"
+                          className="flex items-center gap-1 px-2 py-1 rounded border transition text-[0.625rem] font-semibold"
                           style={{ borderColor: meuVoto === -1 ? "#D94E4E" : "rgba(13,13,13,.12)", color: meuVoto === -1 ? "#D94E4E" : "rgba(13,13,13,.35)", background: meuVoto === -1 ? "rgba(217,78,78,.06)" : "transparent" }}>
                           <ChevronDown size={12} />
                           {com!.votos_negativos > 0 && <span className="tabular-nums">{com!.votos_negativos}</span>}
                         </button>
-                        {com!.votos_negativos >= 3 && <span className="text-[9px] text-black/25">{com!.votos_negativos >= 5 ? "removido em breve" : `${com!.votos_negativos}/5`}</span>}
+                        {com!.votos_negativos >= 3 && <span className="text-[0.5625rem] text-black/25">{com!.votos_negativos >= 5 ? "removido em breve" : `${com!.votos_negativos}/5`}</span>}
                       </div>
                       <a href={url} target="_blank" rel="noopener noreferrer"
-                        className="group/btn inline-flex items-center gap-1.5 bg-[#7259B5] text-white text-[10px] font-bold px-2.5 py-1.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
+                        className="group/btn inline-flex items-center gap-1.5 bg-[#7259B5] text-white text-[0.625rem] font-bold px-2.5 py-1.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition-all duration-150"
                         onClick={(ev) => ev.stopPropagation()}>
                         Acessar
                         <ChevronRight size={11} className="group-hover/btn:hidden" />
@@ -744,10 +744,10 @@ export default function EditaisAbertosPage() {
       {sugestoesIncompletas.length > 0 && (
         <div className="mt-10">
           <div className="flex items-center gap-2 mb-4">
-            <p className="text-[11px] font-bold text-black/35 uppercase tracking-wide">Sugestões incompletas</p>
-            <span className="text-[10px] font-bold text-black/25">{sugestoesIncompletas.length}</span>
+            <p className="text-[0.6875rem] font-bold text-black/35 uppercase tracking-wide">Sugestões incompletas</p>
+            <span className="text-[0.625rem] font-bold text-black/25">{sugestoesIncompletas.length}</span>
             <div className="flex-1 h-px" style={{ background: "rgba(13,13,13,.08)" }} />
-            <p className="text-[10px] text-black/30">Aguardando dados completos</p>
+            <p className="text-[0.625rem] text-black/30">Aguardando dados completos</p>
           </div>
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-3">
             {sugestoesIncompletas.map(s => {
@@ -766,7 +766,7 @@ export default function EditaisAbertosPage() {
                     <button type="button" aria-label="Votar a favor" aria-pressed={meuVoto === 1} onClick={() => handleVotar(s.id, 1)} className="p-0.5 rounded hover:bg-black/5 transition">
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[11px] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                    <span className={`text-[0.6875rem] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
                       {saldo}
                     </span>
                     <button type="button" aria-label="Votar contra" aria-pressed={meuVoto === -1} onClick={() => handleVotar(s.id, -1)} className="p-0.5 rounded hover:bg-black/5 transition">
@@ -777,10 +777,10 @@ export default function EditaisAbertosPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-0.5">
-                      <p className="text-[13px] font-bold text-black leading-tight truncate">{s.empresa_nome}</p>
+                      <p className="text-[0.8125rem] font-bold text-black leading-tight truncate">{s.empresa_nome}</p>
                       {dias !== null && (
                         <span
-                          className="text-[9px] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
+                          className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
                           style={dias > 0
                             ? { background: "rgba(46,137,50,.10)", color: "#2E8932" }
                             : { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.40)" }}
@@ -789,31 +789,31 @@ export default function EditaisAbertosPage() {
                         </span>
                       )}
                     </div>
-                    {s.titulo && <p className="text-[11px] text-black/50 leading-snug mb-1 line-clamp-2">{s.titulo}</p>}
+                    {s.titulo && <p className="text-[0.6875rem] text-black/50 leading-snug mb-1 line-clamp-2">{s.titulo}</p>}
                     {(s.data_abertura || s.data_fechamento) && (
-                      <p className="text-[10px] text-black/35 mb-1">
+                      <p className="text-[0.625rem] text-black/35 mb-1">
                         {s.data_abertura && <span>{fmtDate(s.data_abertura)}</span>}
                         {s.data_abertura && s.data_fechamento && <span className="mx-1">→</span>}
                         {s.data_fechamento && <span className="font-semibold">{fmtDate(s.data_fechamento)}</span>}
                       </p>
                     )}
                     {s.justificativa && (
-                      <p className="text-[10px] text-black/30 italic mb-1.5 line-clamp-2">"{s.justificativa}"</p>
+                      <p className="text-[0.625rem] text-black/30 italic mb-1.5 line-clamp-2">"{s.justificativa}"</p>
                     )}
                     {s.url_acesso && (
                       <a
                         href={s.url_acesso.startsWith("http") ? s.url_acesso : `https://${s.url_acesso}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#7259B5] hover:underline"
+                        className="inline-flex items-center gap-1 text-[0.625rem] font-semibold text-[#7259B5] hover:underline"
                       >
                         <ChevronsRight size={11} /> Acessar edital
                       </a>
                     )}
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wide" style={{ background: "rgba(45,114,176,.10)", color: "#2D72B0" }}>COMUNIDADE</span>
+                      <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide" style={{ background: "rgba(45,114,176,.10)", color: "#2D72B0" }}>COMUNIDADE</span>
                       {s.votos_negativos > 0 && (
-                        <span className="text-[9px] text-black/25">{s.votos_negativos}/5 reportados</span>
+                        <span className="text-[0.5625rem] text-black/25">{s.votos_negativos}/5 reportados</span>
                       )}
                     </div>
                   </div>

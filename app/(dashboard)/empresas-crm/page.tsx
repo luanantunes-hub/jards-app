@@ -56,24 +56,24 @@ const EXCLUSAO_CONFIG: Record<string, { label: string; bg: string; icon: React.E
 };
 
 const EMPRESAS_COLUMNS = [
-  { id: "empresa",          label: "Empresa",            width: "minmax(220px,1.5fr)", hideable: false },
-  { id: "localizacao",      label: "Localização",        width: "minmax(90px,.7fr)",   hideable: true },
-  { id: "setor",            label: "Setor",              width: "minmax(90px,.7fr)",   hideable: true },
-  { id: "tipo",             label: "Tipo",               width: "110px",               hideable: false },
-  { id: "negociacoes",      label: "Negociações",        width: "155px",               hideable: true },
-  { id: "valor_convertido", label: "Convertido",         width: "120px",               hideable: true },
-  { id: "potencial",        label: "Potencial",          width: "140px",               hideable: true },
-  { id: "agencia",          label: "Agência",            width: "minmax(90px,.7fr)",   hideable: true },
-  { id: "proximo_followup", label: "Próx. follow-up",   width: "130px",               hideable: true },
-  { id: "ultimo_contato",   label: "Últ. contato",      width: "115px",               hideable: true },
-  { id: "contatos",         label: "Contatos",           width: "100px",               hideable: true },
-  { id: "inscricoes",       label: "Inscrições",         width: "110px",               hideable: true },
-  { id: "projetos",         label: "Projetos",           width: "100px",               hideable: true },
-  { id: "cidades_interesse",label: "Cidades",            width: "minmax(150px,1fr)",   hideable: true },
-  { id: "responsavel",      label: "Responsável",        width: "140px",               hideable: true },
-  { id: "adicionado_em",    label: "Adicionado em",      width: "125px",               hideable: true },
-  { id: "atualizado_em",    label: "Atualizado em",      width: "125px",               hideable: true },
-  { id: "acoes",            label: "Ações",              width: "80px",                hideable: false },
+  { id: "empresa",          label: "Empresa",            width: "minmax(13.75rem,1.5fr)", hideable: false },
+  { id: "localizacao",      label: "Localização",        width: "minmax(5.625rem,.7fr)",   hideable: true },
+  { id: "setor",            label: "Setor",              width: "minmax(5.625rem,.7fr)",   hideable: true },
+  { id: "tipo",             label: "Tipo",               width: "6.875rem",               hideable: false },
+  { id: "negociacoes",      label: "Negociações",        width: "9.6875rem",               hideable: true },
+  { id: "valor_convertido", label: "Convertido",         width: "7.5rem",               hideable: true },
+  { id: "potencial",        label: "Potencial",          width: "8.75rem",               hideable: true },
+  { id: "agencia",          label: "Agência",            width: "minmax(5.625rem,.7fr)",   hideable: true },
+  { id: "proximo_followup", label: "Próx. follow-up",   width: "8.125rem",               hideable: true },
+  { id: "ultimo_contato",   label: "Últ. contato",      width: "7.1875rem",               hideable: true },
+  { id: "contatos",         label: "Contatos",           width: "6.25rem",               hideable: true },
+  { id: "inscricoes",       label: "Inscrições",         width: "6.875rem",               hideable: true },
+  { id: "projetos",         label: "Projetos",           width: "6.25rem",               hideable: true },
+  { id: "cidades_interesse",label: "Cidades",            width: "minmax(9.375rem,1fr)",   hideable: true },
+  { id: "responsavel",      label: "Responsável",        width: "8.75rem",               hideable: true },
+  { id: "adicionado_em",    label: "Adicionado em",      width: "7.8125rem",               hideable: true },
+  { id: "atualizado_em",    label: "Atualizado em",      width: "7.8125rem",               hideable: true },
+  { id: "acoes",            label: "Ações",              width: "5rem",                hideable: false },
 ] as const satisfies readonly ColumnDefinition[];
 
 function fmtDate(d: string | null): string {
@@ -142,8 +142,8 @@ function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; o
   return (
     <div className="relative rounded border border-black/[.08] bg-white p-3 md:p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
-        <div className="flex items-center gap-2 text-[10px] text-black/35"><UsersRound size={12}/><span>Força do relacionamento</span></div>
-        <div className="flex items-center gap-2 text-[10px] text-black/35"><TrendingUp size={12}/><span>Valor das negociações ativas</span></div>
+        <div className="flex items-center gap-2 text-[0.625rem] text-black/35"><UsersRound size={12}/><span>Força do relacionamento</span></div>
+        <div className="flex items-center gap-2 text-[0.625rem] text-black/35"><TrendingUp size={12}/><span>Valor das negociações ativas</span></div>
       </div>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {quadrants.map(quadrant => {
@@ -154,19 +154,19 @@ function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; o
           });
           const total = items.reduce((sum, item) => sum + item.activePipelineValue, 0);
           return (
-            <section key={quadrant.key} className="min-h-[240px] rounded border border-black/[.07] bg-[#F8F8F6] p-3.5">
+            <section key={quadrant.key} className="min-h-[15rem] rounded border border-black/[.07] bg-[#F8F8F6] p-3.5">
               <header className="mb-3 flex items-start justify-between gap-3">
-                <div><h2 className="text-[12px] font-bold" style={{ color: quadrant.tone }}>{quadrant.title}</h2><p className="mt-0.5 text-[10px] text-black/30">{quadrant.subtitle}</p></div>
-                <div className="text-right"><p className="text-[10px] font-semibold tabular-nums text-black/45">{items.length} {items.length === 1 ? "empresa" : "empresas"}</p>{total > 0 && <p className="mt-0.5 text-[9px] tabular-nums text-black/30">{fmtMoney(total)}</p>}</div>
+                <div><h2 className="text-[0.75rem] font-bold" style={{ color: quadrant.tone }}>{quadrant.title}</h2><p className="mt-0.5 text-[0.625rem] text-black/30">{quadrant.subtitle}</p></div>
+                <div className="text-right"><p className="text-[0.625rem] font-semibold tabular-nums text-black/45">{items.length} {items.length === 1 ? "empresa" : "empresas"}</p>{total > 0 && <p className="mt-0.5 text-[0.5625rem] tabular-nums text-black/30">{fmtMoney(total)}</p>}</div>
               </header>
               {items.length === 0 ? (
-                <div className="flex min-h-[160px] items-center justify-center rounded border border-dashed border-black/10 text-[11px] text-black/25">Nenhuma empresa neste quadrante</div>
+                <div className="flex min-h-[10rem] items-center justify-center rounded border border-dashed border-black/10 text-[0.6875rem] text-black/25">Nenhuma empresa neste quadrante</div>
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">
                   {items.map(item => (
                     <button key={item.id} type="button" onClick={() => onOpen(item.id)} className="flex min-w-0 items-center gap-2.5 rounded border border-black/[.07] bg-white p-2.5 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                       <CompanyLogo nome={item.nome} domain={item.domain_key} site={item.site} size={item.activeNegotiations > 2 ? 36 : 30} className="shrink-0 border border-black/[.06]"/>
-                      <div className="min-w-0"><p className="truncate text-[11px] font-semibold text-black/75">{item.nome}</p><p className="mt-0.5 text-[9.5px] text-black/30">{item.activeNegotiations} {item.activeNegotiations === 1 ? "negociação" : "negociações"}{item.activePipelineValue > 0 ? `, ${fmtMoney(item.activePipelineValue)}` : ""}</p>{item.potencial_relacionamento == null && <p className="mt-0.5 text-[9px] text-[#B07A14]">Relação não avaliada</p>}</div>
+                      <div className="min-w-0"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{item.nome}</p><p className="mt-0.5 text-[0.59375rem] text-black/30">{item.activeNegotiations} {item.activeNegotiations === 1 ? "negociação" : "negociações"}{item.activePipelineValue > 0 ? `, ${fmtMoney(item.activePipelineValue)}` : ""}</p>{item.potencial_relacionamento == null && <p className="mt-0.5 text-[0.5625rem] text-[#B07A14]">Relação não avaliada</p>}</div>
                     </button>
                   ))}
                 </div>
@@ -382,24 +382,24 @@ export default function EmpresasCrmPage() {
           <ManagedTable storageKey="empresas-crm-v6" definitions={EMPRESAS_COLUMNS} className="w-full">
             <thead>
               <tr className="border-b bg-[#F9F9F8]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Empresa</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Localização</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Setor</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Tipo</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Negociações</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Convertido</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Potencial</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Agência</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Próx. follow-up</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Últ. contato</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Contatos</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Inscrições</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Projetos</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Cidades</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Responsável</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Adicionado em</th>
-                <th className="text-left px-5 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Atualizado em</th>
-                <th className="text-left px-4 py-3 text-[10px] font-medium text-black/35 uppercase tracking-[.08em]">Ações</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Empresa</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Localização</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Setor</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Tipo</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Negociações</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Convertido</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Potencial</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Agência</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Próx. follow-up</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Últ. contato</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Contatos</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Inscrições</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Projetos</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Cidades</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Responsável</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Adicionado em</th>
+                <th className="text-left px-5 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Atualizado em</th>
+                <th className="text-left px-4 py-3 text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em]">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -433,19 +433,19 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <CompanyLogo nome={e.nome} domain={e.domain_key} size={28} className="flex-shrink-0" />
-                        <span className="text-[13px] font-semibold text-[#0D0D0D] truncate block">
+                        <span className="text-[0.8125rem] font-semibold text-[#0D0D0D] truncate block">
                           {e.nome}
                         </span>
                       </div>
                     </td>
 
                     {/* Localização */}
-                    <td className="px-5 py-3.5 text-black/50 text-[12.5px]">
+                    <td className="px-5 py-3.5 text-black/50 text-[0.78125rem]">
                       {e.localizacao || "—"}
                     </td>
 
                     {/* Setor */}
-                    <td className="px-5 py-3.5 text-black/50 text-[12.5px]">
+                    <td className="px-5 py-3.5 text-black/50 text-[0.78125rem]">
                       {e.setor || "—"}
                     </td>
 
@@ -453,7 +453,7 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       {e.tipo && TIPO_ETIQUETA[e.tipo] ? (
                         <span
-                          className="rounded border bg-white px-2 py-1 text-[10px] font-medium"
+                          className="rounded border bg-white px-2 py-1 text-[0.625rem] font-medium"
                           style={{
                             borderColor: TIPO_ETIQUETA[e.tipo].color + "47",
                             color: TIPO_ETIQUETA[e.tipo].color,
@@ -462,7 +462,7 @@ export default function EmpresasCrmPage() {
                           {TIPO_ETIQUETA[e.tipo].label}
                         </span>
                       ) : (
-                        <span className="text-black/20 text-[12px]">—</span>
+                        <span className="text-black/20 text-[0.75rem]">—</span>
                       )}
                     </td>
 
@@ -470,10 +470,10 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       {e.activeNegotiations > 0 ? (
                         <div>
-                          <span className="text-[13px] font-semibold tabular-nums text-black/70">{e.activeNegotiations}</span>
-                          <span className="text-[11px] text-black/35"> {e.activeNegotiations === 1 ? "negociação" : "negociações"}</span>
+                          <span className="text-[0.8125rem] font-semibold tabular-nums text-black/70">{e.activeNegotiations}</span>
+                          <span className="text-[0.6875rem] text-black/35"> {e.activeNegotiations === 1 ? "negociação" : "negociações"}</span>
                           {e.activePipelineValue > 0 && (
-                            <p className="mt-0.5 text-[11px] text-black/40 tabular-nums">{fmtMoney(e.activePipelineValue)}</p>
+                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums">{fmtMoney(e.activePipelineValue)}</p>
                           )}
                         </div>
                       ) : (
@@ -483,7 +483,7 @@ export default function EmpresasCrmPage() {
 
                     {/* Convertido */}
                     <td className="px-5 py-3.5">
-                      <span className={`text-[12px] font-semibold tabular-nums ${e.convertedValue > 0 ? "text-[#2E8932]" : "text-black/25"}`}>
+                      <span className={`text-[0.75rem] font-semibold tabular-nums ${e.convertedValue > 0 ? "text-[#2E8932]" : "text-black/25"}`}>
                         {fmtMoney(e.convertedValue)}
                       </span>
                     </td>
@@ -500,8 +500,8 @@ export default function EmpresasCrmPage() {
                         const ExcIcon = exc.icon;
                         return (
                           <div className="min-w-0">
-                            <p className="text-[12px] font-medium text-black/70 truncate max-w-[130px]">{e.atribuicao.captadorNome}</p>
-                            <span className="mt-1 inline-flex w-fit items-center gap-1 rounded px-2 py-0.5 text-[10px] font-semibold text-white" style={{ background: exc.bg }}>
+                            <p className="text-[0.75rem] font-medium text-black/70 truncate max-w-[8.125rem]">{e.atribuicao.captadorNome}</p>
+                            <span className="mt-1 inline-flex w-fit items-center gap-1 rounded px-2 py-0.5 text-[0.625rem] font-semibold text-white" style={{ background: exc.bg }}>
                               <ExcIcon size={10} />{exc.label}
                             </span>
                           </div>
@@ -517,7 +517,7 @@ export default function EmpresasCrmPage() {
                         const d = new Date(e.proximoFollowup);
                         const isOverdue = d < new Date();
                         return (
-                          <span className={`text-[12px] tabular-nums ${isOverdue ? "text-[#D94E4E] font-medium" : "text-black/50"}`}>
+                          <span className={`text-[0.75rem] tabular-nums ${isOverdue ? "text-[#D94E4E] font-medium" : "text-black/50"}`}>
                             {fmtDate(e.proximoFollowup)}
                           </span>
                         );
@@ -532,7 +532,7 @@ export default function EmpresasCrmPage() {
                         const d = e.ultimoContatoDias!;
                         const color = d <= 14 ? "#2E8932" : d <= 30 ? "#B07A14" : "#D94E4E";
                         const label = d === 0 ? "Hoje" : d === 1 ? "1 dia" : `${d} dias`;
-                        return <span className="text-[12px] font-medium tabular-nums" style={{ color }}>{label}</span>;
+                        return <span className="text-[0.75rem] font-medium tabular-nums" style={{ color }}>{label}</span>;
                       })() : (
                         <span className="text-black/20 text-xs">—</span>
                       )}
@@ -542,8 +542,8 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       {e.contatosCount > 0 ? (
                         <div>
-                          <span className="text-[13px] font-semibold tabular-nums text-black/70">{e.contatosCount}</span>
-                          <span className="text-[11px] text-black/35"> {e.contatosCount === 1 ? "contato" : "contatos"}</span>
+                          <span className="text-[0.8125rem] font-semibold tabular-nums text-black/70">{e.contatosCount}</span>
+                          <span className="text-[0.6875rem] text-black/35"> {e.contatosCount === 1 ? "contato" : "contatos"}</span>
                         </div>
                       ) : (
                         <span className="text-black/20 text-xs">—</span>
@@ -554,10 +554,10 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       {e.inscricoesCount > 0 ? (
                         <div>
-                          <span className="text-[13px] font-semibold tabular-nums text-black/70">{e.inscricoesCount}</span>
-                          <span className="text-[11px] text-black/35"> {e.inscricoesCount === 1 ? "edital" : "editais"}</span>
+                          <span className="text-[0.8125rem] font-semibold tabular-nums text-black/70">{e.inscricoesCount}</span>
+                          <span className="text-[0.6875rem] text-black/35"> {e.inscricoesCount === 1 ? "edital" : "editais"}</span>
                           {e.inscricoesValue > 0 && (
-                            <p className="mt-0.5 text-[11px] text-black/40 tabular-nums">{fmtMoney(e.inscricoesValue)}</p>
+                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums">{fmtMoney(e.inscricoesValue)}</p>
                           )}
                         </div>
                       ) : (
@@ -569,8 +569,8 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       {e.projectsCount > 0 ? (
                         <div>
-                          <span className="text-[13px] font-semibold tabular-nums text-black/70">{e.projectsCount}</span>
-                          <span className="text-[11px] text-black/35"> {e.projectsCount === 1 ? "projeto" : "projetos"}</span>
+                          <span className="text-[0.8125rem] font-semibold tabular-nums text-black/70">{e.projectsCount}</span>
+                          <span className="text-[0.6875rem] text-black/35"> {e.projectsCount === 1 ? "projeto" : "projetos"}</span>
                         </div>
                       ) : (
                         <span className="text-black/20 text-xs">—</span>
@@ -582,10 +582,10 @@ export default function EmpresasCrmPage() {
                       {(e.cidades_interesse ?? []).length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {(e.cidades_interesse ?? []).slice(0, 3).map(c => (
-                            <span key={c} className="rounded border border-black/10 bg-black/[.035] px-1.5 py-0.5 text-[10px] text-black/50">{c}</span>
+                            <span key={c} className="rounded border border-black/10 bg-black/[.035] px-1.5 py-0.5 text-[0.625rem] text-black/50">{c}</span>
                           ))}
                           {(e.cidades_interesse ?? []).length > 3 && (
-                            <span className="rounded border border-black/10 bg-black/[.035] px-1.5 py-0.5 text-[10px] text-black/35">+{(e.cidades_interesse ?? []).length - 3}</span>
+                            <span className="rounded border border-black/10 bg-black/[.035] px-1.5 py-0.5 text-[0.625rem] text-black/35">+{(e.cidades_interesse ?? []).length - 3}</span>
                           )}
                         </div>
                       ) : (
@@ -596,7 +596,7 @@ export default function EmpresasCrmPage() {
                     {/* Responsável */}
                     <td className="px-5 py-3.5">
                       {e.responsavelNome ? (
-                        <span className="text-[12px] text-black/55 truncate block max-w-[130px]">
+                        <span className="text-[0.75rem] text-black/55 truncate block max-w-[8.125rem]">
                           {e.responsavelNome.split(" ")[0]}
                         </span>
                       ) : (
@@ -605,12 +605,12 @@ export default function EmpresasCrmPage() {
                     </td>
 
                     {/* Adicionado em */}
-                    <td className="px-5 py-3.5 text-[12px] text-black/40 tabular-nums">
+                    <td className="px-5 py-3.5 text-[0.75rem] text-black/40 tabular-nums">
                       {fmtDate(e.created_at)}
                     </td>
 
                     {/* Atualizado em */}
-                    <td className="px-5 py-3.5 text-[12px] text-black/40 tabular-nums">
+                    <td className="px-5 py-3.5 text-[0.75rem] text-black/40 tabular-nums">
                       {fmtDate(e.updated_at)}
                     </td>
 

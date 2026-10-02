@@ -32,7 +32,7 @@ export default function AdminNav() {
 
       <div className="h-4 w-px mr-4" style={{ background: "rgba(255,255,255,.10)" }} />
 
-      <span className="text-[11px] font-bold tracking-[.10em] uppercase mr-4" style={{ color: "rgba(255,255,255,.25)" }}>
+      <span className="text-[0.6875rem] font-bold tracking-[.10em] uppercase mr-4" style={{ color: "rgba(255,255,255,.25)" }}>
         Admin
       </span>
 
@@ -42,7 +42,7 @@ export default function AdminNav() {
           <Link
             key={href}
             href={href}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-medium transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[0.75rem] font-medium transition"
             style={
               active
                 ? { background: "rgba(114,89,181,.25)", color: "#C4B5FD" }

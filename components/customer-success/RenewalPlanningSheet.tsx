@@ -216,11 +216,11 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-start justify-center bg-black/40 px-4" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-labelledby="renewal-sheet-title" className="max-h-[92dvh] w-full max-w-[680px] overflow-y-auto rounded-b bg-white shadow-[0_20px_70px_rgba(13,13,13,.18)]">
+      <div role="dialog" aria-modal="true" aria-labelledby="renewal-sheet-title" className="max-h-[92dvh] w-full max-w-[42.5rem] overflow-y-auto rounded-b bg-white shadow-[0_20px_70px_rgba(13,13,13,.18)]">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/[.07] bg-white px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><RefreshCw size={16} /></span>
-            <div><p className="text-[10px] font-medium text-black/30">Continuidade da parceria</p><h2 id="renewal-sheet-title" className="text-[15px] font-semibold text-black/80">Planejar renovação</h2></div>
+            <div><p className="text-[0.625rem] font-medium text-black/30">Continuidade da parceria</p><h2 id="renewal-sheet-title" className="text-[0.9375rem] font-semibold text-black/80">Planejar renovação</h2></div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60"><X size={15} /></button>
         </header>
@@ -235,23 +235,23 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <FieldLabel label="Iniciar negociação em"><div className="relative"><CalendarClock size={13} className="pointer-events-none absolute left-3 top-3 text-black/30"/><input type="date" value={startDate} onChange={event => setStartDate(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white pl-9 pr-3 text-[12px] text-black/70 outline-none focus:border-black/30" /></div></FieldLabel>
-            <FieldLabel label="Valor esperado"><input inputMode="decimal" value={expectedValue} onChange={event => setExpectedValue(event.target.value)} placeholder="R$" className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[12px] text-black/70 outline-none focus:border-black/30" /></FieldLabel>
+            <FieldLabel label="Iniciar negociação em"><div className="relative"><CalendarClock size={13} className="pointer-events-none absolute left-3 top-3 text-black/30"/><input type="date" value={startDate} onChange={event => setStartDate(event.target.value)} className="h-10 w-full rounded border border-black/[.12] bg-white pl-9 pr-3 text-[0.75rem] text-black/70 outline-none focus:border-black/30" /></div></FieldLabel>
+            <FieldLabel label="Valor esperado"><input inputMode="decimal" value={expectedValue} onChange={event => setExpectedValue(event.target.value)} placeholder="R$" className="h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black/70 outline-none focus:border-black/30" /></FieldLabel>
           </div>
 
           <div className="rounded border border-black/[.08] bg-black/[.012] p-4">
-            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-white text-black/40 shadow-[inset_0_0_0_1px_rgba(13,13,13,.07)]"><GitBranch size={15}/></span><div className="min-w-0 flex-1"><p className="text-[11px] font-semibold text-black/45">Decisão da renovação</p><p className="mt-0.5 truncate text-[13px] font-semibold text-black/70">{evaluation.outcome ? OUTCOME_LABELS[evaluation.outcome] : evaluation.status === "em_andamento" ? "Avaliação em andamento" : "Ainda não avaliada"}</p></div><button type="button" onClick={() => setDecisionOpen(true)} className="rounded border border-black/[.1] bg-white px-3 py-2 text-[11px] font-semibold text-black/55 hover:bg-black/[.04]">{evaluation.status === "nao_avaliada" ? "Avaliar" : "Continuar"}</button></div>
+            <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-white text-black/40 shadow-[inset_0_0_0_1px_rgba(13,13,13,.07)]"><GitBranch size={15}/></span><div className="min-w-0 flex-1"><p className="text-[0.6875rem] font-semibold text-black/45">Decisão da renovação</p><p className="mt-0.5 truncate text-[0.8125rem] font-semibold text-black/70">{evaluation.outcome ? OUTCOME_LABELS[evaluation.outcome] : evaluation.status === "em_andamento" ? "Avaliação em andamento" : "Ainda não avaliada"}</p></div><button type="button" onClick={() => setDecisionOpen(true)} className="rounded border border-black/[.1] bg-white px-3 py-2 text-[0.6875rem] font-semibold text-black/55 hover:bg-black/[.04]">{evaluation.status === "nao_avaliada" ? "Avaliar" : "Continuar"}</button></div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <FieldLabel label="Nota para a negociação"><textarea value={note} onChange={event => setNote(event.target.value)} rows={4} placeholder="Contexto e abordagem para o próximo ciclo" className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[12px] leading-5 text-black/70 outline-none focus:border-black/30" /></FieldLabel>
-            <FieldLabel label="Riscos"><textarea value={risks} onChange={event => setRisks(event.target.value)} rows={4} placeholder="Objeções, orçamento ou mudanças de cenário" className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[12px] leading-5 text-black/70 outline-none focus:border-black/30" /></FieldLabel>
+            <FieldLabel label="Nota para a negociação"><textarea value={note} onChange={event => setNote(event.target.value)} rows={4} placeholder="Contexto e abordagem para o próximo ciclo" className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.75rem] leading-5 text-black/70 outline-none focus:border-black/30" /></FieldLabel>
+            <FieldLabel label="Riscos"><textarea value={risks} onChange={event => setRisks(event.target.value)} rows={4} placeholder="Objeções, orçamento ou mudanças de cenário" className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.75rem] leading-5 text-black/70 outline-none focus:border-black/30" /></FieldLabel>
           </div>
-          {error && <p role="alert" className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2 text-[11px] text-[#D94E4E]">{error}</p>}
+          {error && <p role="alert" className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
         </div>
 
         <footer className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-black/[.07] bg-white px-5 py-4 sm:px-6">
-          <button type="button" onClick={onClose} className="px-2 py-2 text-[12px] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
-          <button type="button" onClick={save} disabled={saving || !contractId || !startDate} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-40"><Save size={12}/>{saving ? "Salvando…" : "Salvar"}</button>
+          <button type="button" onClick={onClose} className="px-2 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
+          <button type="button" onClick={save} disabled={saving || !contractId || !startDate} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-40"><Save size={12}/>{saving ? "Salvando…" : "Salvar"}</button>
         </footer>
       </div>
       <RenewalDecisionSheet open={decisionOpen} tree={decisionTree} value={evaluation} onChange={setEvaluation} onClose={() => setDecisionOpen(false)}/>
@@ -260,5 +260,5 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
 }
 
 function FieldLabel({ label, children }: { label: string; children: React.ReactNode }) {
-  return <div className="block"><span className="mb-1.5 block text-[11px] font-semibold text-black/50">{label}</span>{children}</div>;
+  return <div className="block"><span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/50">{label}</span>{children}</div>;
 }

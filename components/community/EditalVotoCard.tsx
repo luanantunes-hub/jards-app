@@ -53,25 +53,25 @@ function VotoRow({
 
   return (
     <div className="space-y-2">
-      <p className="text-[11px] text-black/45">{pergunta}</p>
+      <p className="text-[0.6875rem] text-black/45">{pergunta}</p>
       <div className="flex items-center gap-2">
         <button
           onClick={() => onVoto(true)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-[11px] font-semibold transition hover:bg-black/[.02]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-[0.6875rem] font-semibold transition hover:bg-black/[.02]"
           style={btnStyle(true)}
         >
           <ThumbsUp size={11} /> Sim
         </button>
         <button
           onClick={() => onVoto(false)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-[11px] font-semibold transition hover:bg-black/[.02]"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded border text-[0.6875rem] font-semibold transition hover:bg-black/[.02]"
           style={btnStyle(false)}
         >
           <ThumbsDown size={11} /> Não
         </button>
       </div>
       {pct !== null && (
-        <p className="text-[10px] text-black/30">
+        <p className="text-[0.625rem] text-black/30">
           <span style={{ color: pct >= 60 ? "#2E8932" : pct >= 40 ? "#B07A14" : "#D94E4E" }} className="font-bold">
             {pct}% positivo
           </span>
@@ -163,7 +163,7 @@ export function EditalVotoCard({ editalId, votosFunciona, votosNaoFunciona }: Pr
         counts={countsP}
         onVoto={handlePrincipal}
       />
-      {erro && <p role="alert" className="col-span-2 text-[10px] leading-4 text-[#D94E4E]">Não foi possível salvar este voto: {erro}</p>}
+      {erro && <p role="alert" className="col-span-2 text-[0.625rem] leading-4 text-[#D94E4E]">Não foi possível salvar este voto: {erro}</p>}
     </div>
   );
 }

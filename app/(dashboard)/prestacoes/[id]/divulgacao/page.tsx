@@ -113,20 +113,20 @@ export default function DivulgacaoPage() {
   const semLei = items.filter(i => !i.lei_mencionada).length;
   const semLogo = items.filter(i => !i.minc_logo).length;
 
-  if (loading) return <div className="p-8 text-[13px] text-black/30">Carregando…</div>;
+  if (loading) return <div className="p-8 text-[0.8125rem] text-black/30">Carregando…</div>;
 
   return (
     <div className="px-8 py-6 max-w-4xl">
 
       {erro && (
-        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-4 py-3 text-[12px] font-medium text-[#B23A3A]">
+        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-4 py-3 text-[0.75rem] font-medium text-[#B23A3A]">
           Não foi possível concluir a operação: {erro}
         </div>
       )}
 
       {/* Alertas de conformidade */}
       {semLei > 0 && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-4 text-[12px]"
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
           style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
           <span className="font-semibold flex-shrink-0">Atenção:</span>
           <span>
@@ -136,7 +136,7 @@ export default function DivulgacaoPage() {
         </div>
       )}
       {semLogo > 0 && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-4 text-[12px]"
+        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
           style={{ background: "#B07A1408", borderColor: "#B07A1430", color: "#B07A14" }}>
           <span className="font-semibold flex-shrink-0">Atenção:</span>
           <span>
@@ -148,14 +148,14 @@ export default function DivulgacaoPage() {
 
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
-        <p className="text-[11px] font-semibold text-black/45">
+        <p className="text-[0.6875rem] font-semibold text-black/45">
           {items.length > 0
             ? `${items.length} material${items.length > 1 ? "is" : ""} cadastrado${items.length > 1 ? "s" : ""}`
             : "Nenhum material cadastrado"}
         </p>
         <button
           onClick={() => setModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded text-[12px] font-semibold text-white transition hover:opacity-90"
+          className="flex items-center gap-1.5 px-3 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90"
           style={{ background: "#7259B5" }}
         >
           <Plus size={13} /> Adicionar material
@@ -167,19 +167,19 @@ export default function DivulgacaoPage() {
         <div className="bg-white rounded border flex flex-col items-center justify-center py-16 text-center"
           style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <Megaphone size={28} className="text-black/15 mb-3" />
-          <p className="text-[13px] text-black/35 font-medium">Nenhum material de divulgação</p>
-          <p className="text-[11px] text-black/25 mt-1 max-w-xs">
+          <p className="text-[0.8125rem] text-black/35 font-medium">Nenhum material de divulgação</p>
+          <p className="text-[0.6875rem] text-black/25 mt-1 max-w-xs">
             Registre cartazes, banners, posts e demais materiais usados para divulgar o projeto,
             comprovando o cumprimento das obrigações de divulgação da Lei Rouanet.
           </p>
         </div>
       ) : (
         <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <table className="w-full text-[12px]">
+          <table className="w-full text-[0.75rem]">
             <thead>
               <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 {["Tipo", "Descrição", "Veiculação", "Lei citada", "Logo MinC", "Arquivo", ""].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -188,19 +188,19 @@ export default function DivulgacaoPage() {
                 <tr key={item.id} className="border-b last:border-0 hover:bg-black/[.015] transition"
                   style={{ borderColor: "rgba(13,13,13,.05)" }}>
                   <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-semibold"
+                    <span className="px-2 py-0.5 rounded text-[0.625rem] font-semibold"
                       style={{ background: "rgba(114,89,181,.08)", color: "#7259B5" }}>
                       {TIPO_LABEL[item.tipo]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-black/65 max-w-[200px] truncate">{item.descricao || "—"}</td>
+                  <td className="px-4 py-3 text-black/65 max-w-[12.5rem] truncate">{item.descricao || "—"}</td>
                   <td className="px-4 py-3 text-black/50">{fmtDate(item.data_veiculacao)}</td>
                   <td className="px-4 py-3"><Bool ok={item.lei_mencionada} /></td>
                   <td className="px-4 py-3"><Bool ok={item.minc_logo} /></td>
                   <td className="px-4 py-3">
                     {item.arquivo_url ? (
                       <a href={item.arquivo_url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[11px] transition"
+                        className="flex items-center gap-1 text-[0.6875rem] transition"
                         style={{ color: "#2D72B0" }}>
                         <ExternalLink size={11} /> Ver
                       </a>
@@ -231,17 +231,17 @@ export default function DivulgacaoPage() {
           onClick={e => { if (e.target === e.currentTarget) { setModalOpen(false); setForm(EMPTY); } }}>
           <div className="bg-white rounded w-full max-w-md" style={{ boxShadow: "0 8px 32px rgba(13,13,13,.15)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[13px] font-bold text-black/80">Adicionar material de divulgação</p>
+              <p className="text-[0.8125rem] font-bold text-black/80">Adicionar material de divulgação</p>
             </div>
             <div className="p-5 space-y-4">
 
               {/* Tipo */}
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Tipo de material</label>
+                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Tipo de material</label>
                 <Select
                   value={form.tipo}
                   onChange={e => setForm(f => ({ ...f, tipo: e.target.value as TipoDivulgacao }))}
-                  className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none bg-white"
+                  className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none bg-white"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 >
                   {(Object.entries(TIPO_LABEL) as [TipoDivulgacao, string][]).map(([v, l]) => (
@@ -252,12 +252,12 @@ export default function DivulgacaoPage() {
 
               {/* Descrição */}
               <div>
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Descrição</label>
+                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Descrição</label>
                 <input
                   value={form.descricao ?? ""}
                   onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
                   placeholder="Cartaz A3 impresso, post Instagram 1080×1080…"
-                  className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none"
+                  className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
@@ -265,22 +265,22 @@ export default function DivulgacaoPage() {
               {/* Data e URL */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Data de veiculação</label>
+                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Data de veiculação</label>
                   <input
                     type="date"
                     value={form.data_veiculacao ?? ""}
                     onChange={e => setForm(f => ({ ...f, data_veiculacao: e.target.value }))}
-                    className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none"
+                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">URL do arquivo</label>
+                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">URL do arquivo</label>
                   <input
                     value={form.arquivo_url ?? ""}
                     onChange={e => setForm(f => ({ ...f, arquivo_url: e.target.value }))}
                     placeholder="https://…"
-                    className="w-full border rounded px-3 py-2 text-[12px] focus:outline-none"
+                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
@@ -288,7 +288,7 @@ export default function DivulgacaoPage() {
 
               {/* Checkboxes */}
               <div className="space-y-2">
-                <label className="text-[10px] font-semibold uppercase tracking-wide text-black/40 block">Conformidade</label>
+                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 block">Conformidade</label>
                 {([
                   { key: "lei_mencionada" as const, label: "Menciona a Lei Rouanet / Lei de Incentivo à Cultura" },
                   { key: "minc_logo" as const, label: "Exibe o logo do Ministério da Cultura (MinC)" },
@@ -300,7 +300,7 @@ export default function DivulgacaoPage() {
                       onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
                       className="accent-[#7259B5]"
                     />
-                    <span className="text-[12px] text-black/65">{label}</span>
+                    <span className="text-[0.75rem] text-black/65">{label}</span>
                   </label>
                 ))}
               </div>
@@ -310,7 +310,7 @@ export default function DivulgacaoPage() {
               style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <button
                 onClick={() => { setModalOpen(false); setForm(EMPTY); }}
-                className="text-[12px] font-medium transition"
+                className="text-[0.75rem] font-medium transition"
                 style={{ color: "rgba(13,13,13,.35)" }}
                 onMouseOver={e => (e.currentTarget.style.color = "rgba(13,13,13,.55)")}
                 onMouseOut={e => (e.currentTarget.style.color = "rgba(13,13,13,.35)")}
@@ -320,7 +320,7 @@ export default function DivulgacaoPage() {
               <button
                 onClick={salvar}
                 disabled={saving}
-                className="px-4 py-2 rounded text-[12px] font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
+                className="px-4 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
                 style={{ background: "#7259B5" }}
               >
                 {saving ? "Salvando…" : "Salvar"}

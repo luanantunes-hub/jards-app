@@ -94,7 +94,7 @@ export function ObliqueStrategyCard() {
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div ref={infoRef} className="relative mb-3 flex shrink-0 items-center gap-1.5">
-        <p className="text-[11px] font-semibold uppercase tracking-[.14em] text-black/40">Estratégias Oblíquas</p>
+        <p className="text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-black/40">Estratégias Oblíquas</p>
         <button
           type="button"
           onClick={() => setShowInfo((value) => !value)}

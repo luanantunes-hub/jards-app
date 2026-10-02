@@ -64,14 +64,14 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white shadow-2xl" style={{ maxWidth: 440 }} onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white shadow-2xl" style={{ maxWidth: "27.5rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded bg-black/[.05] text-black">
               <Link2 size={15} />
             </div>
             <div className="min-w-0">
-              <h2 id={titleId} className="text-[15px] font-bold text-black">Site do projeto</h2>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Site do projeto</h2>
             </div>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 shrink-0 items-center justify-center rounded transition hover:bg-black/[.06]">
@@ -81,12 +81,12 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
 
         <div className="space-y-3 px-5 py-5">
           {erro && (
-            <div className="rounded px-3 py-2 text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+            <div className="rounded px-3 py-2 text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
               {erro}
             </div>
           )}
           <div className="flex items-start gap-2 rounded bg-black/[.04] px-3 py-2.5">
-            <p className="min-w-0 flex-1 text-[13px] font-medium leading-snug text-black">{projetoNome}</p>
+            <p className="min-w-0 flex-1 text-[0.8125rem] font-medium leading-snug text-black">{projetoNome}</p>
             <button
               type="button"
               onClick={handleCopiar}
@@ -98,7 +98,7 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
             </button>
           </div>
           <label>
-            <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Endereço do site</span>
+            <span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/50">Endereço do site</span>
             <div className="rounded border bg-white px-3" style={{ borderColor: "rgba(13,13,13,.15)" }}>
               <input
                 autoFocus
@@ -108,7 +108,7 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
                 onChange={e => { setUrl(e.target.value); setErro(null); }}
                 onKeyDown={e => { if (e.key === "Enter") handleSalvar(); }}
                 placeholder="https://www.exemplo.com.br"
-                className="h-11 w-full bg-transparent text-[14px] text-black outline-none"
+                className="h-11 w-full bg-transparent text-[0.875rem] text-black outline-none"
               />
             </div>
           </label>
@@ -116,14 +116,14 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
 
         <div className="flex items-center justify-between gap-3 border-t px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {siteAtual ? (
-            <button onClick={handleRemover} disabled={saving} className="px-3 py-2 text-[12px] font-medium text-[#D94E4E]/70 transition hover:text-[#D94E4E] disabled:opacity-40">Remover</button>
+            <button onClick={handleRemover} disabled={saving} className="px-3 py-2 text-[0.75rem] font-medium text-[#D94E4E]/70 transition hover:text-[#D94E4E] disabled:opacity-40">Remover</button>
           ) : <span />}
           <div className="flex items-center gap-3">
-            <button onClick={onClose} className="px-3 py-2 text-[12px] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
+            <button onClick={onClose} className="px-3 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
             <button
               onClick={handleSalvar}
               disabled={saving}
-              className="rounded bg-[#2E8932] px-5 py-2 text-[12px] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {saving ? "Salvando…" : "Salvar"}
             </button>

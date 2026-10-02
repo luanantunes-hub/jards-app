@@ -325,7 +325,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
           aria-modal="true"
           aria-labelledby={titleId}
           className="bg-white rounded shadow-2xl w-full flex flex-col"
-          style={{ maxWidth: 600, maxHeight: "calc(100vh - 48px)" }}
+          style={{ maxWidth: "37.5rem", maxHeight: "calc(100vh - 48px)" }}
           onClick={e => e.stopPropagation()}
         >
           {/* Header */}
@@ -334,7 +334,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
               <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
                 <FolderOpen size={16} />
               </span>
-              <h2 id={titleId} className="text-[15px] font-bold text-black">{editData ? "Editar projeto" : "Novo projeto"}</h2>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{editData ? "Editar projeto" : "Novo projeto"}</h2>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
               <X size={15} className="text-black/40" />
@@ -346,14 +346,14 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
 
             {/* — Identidade + Nome — */}
             <section className="px-6 py-5 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <label className="text-[11px] font-semibold text-black/50 mb-1.5 block">Nome</label>
+              <label className="text-[0.6875rem] font-semibold text-black/50 mb-1.5 block">Nome</label>
               <input
                 autoFocus
                 type="text"
                 placeholder="Nome do projeto"
                 value={nome}
                 onChange={e => setNome(e.target.value)}
-                className="mb-4 w-full rounded border border-black/[.12] px-3 py-2.5 text-[13px] font-medium text-black outline-none placeholder:text-black/30 focus:border-black/25 transition"
+                className="mb-4 w-full rounded border border-black/[.12] px-3 py-2.5 text-[0.8125rem] font-medium text-black outline-none placeholder:text-black/30 focus:border-black/25 transition"
               />
               <input ref={logoInputRef} type="file" accept="image/png,image/webp" className="hidden" onChange={e => handleLogoChange(e.target.files?.[0])} />
               <IdentityEditor
@@ -374,27 +374,27 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
 
             {/* — Projeto — */}
             <section className="px-6 py-5 space-y-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-black/25">Projeto</p>
+              <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/25">Projeto</p>
               <div>
-                <label className="text-[11px] font-semibold text-black/50 mb-1.5 block">Descrição</label>
+                <label className="text-[0.6875rem] font-semibold text-black/50 mb-1.5 block">Descrição</label>
                 <textarea
                   placeholder="Descreva o projeto resumidamente…"
                   value={descricao}
                   onChange={e => setDescricao(e.target.value)}
                   rows={3}
-                  className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[13px] text-black outline-none transition"
+                  className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <label>
-                  <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Meta de captação</span>
+                  <span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/50">Meta de captação</span>
                   <input type="text" inputMode="decimal" value={valorAlvo} onChange={e => setValorAlvo(formatDecimalBR(e.target.value))} placeholder="Ex.: 1.250.000,00"
-                    className="h-10 w-full rounded border bg-white px-3 text-[13px] outline-none transition"
+                    className="h-10 w-full rounded border bg-white px-3 text-[0.8125rem] outline-none transition"
                     style={{ borderColor: "rgba(13,13,13,.12)" }} />
                 </label>
                 <label>
-                  <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Fase</span>
+                  <span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/50">Fase</span>
                   <Dropdown value={fase} onChange={v => setFase(v as typeof fase)} options={[
                     { value: "planejamento", label: "Planejamento" },
                     { value: "captacao",     label: "Captação" },
@@ -405,7 +405,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                 </label>
               </div>
               <div>
-                <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Responsável interno</span>
+                <span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/50">Responsável interno</span>
                 <Dropdown value={pontoFocalId ?? ""} onChange={value => setPontoFocalId(value || null)} options={[
                   { value: "", label: "Sem responsável" },
                   ...members.map(member => ({ value: member.id, label: member.full_name ?? "Membro" })),
@@ -415,11 +415,11 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
 
             {/* — Vínculo e gestão — */}
             <section className="px-6 py-5 space-y-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-black/25">Vínculo com o proponente</p>
+              <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/25">Vínculo com o proponente</p>
 
               {/* Proponente combobox */}
               <div ref={proponenteRef} className="relative">
-                <label className="text-[11px] font-semibold text-black/50 mb-1.5 block">Instituição proponente</label>
+                <label className="text-[0.6875rem] font-semibold text-black/50 mb-1.5 block">Instituição proponente</label>
                 <div
                   className="flex cursor-text items-center gap-2 rounded border px-3 py-2.5 transition"
                   style={{ borderColor: proponenteOpen ? "rgba(13,13,13,.30)" : "rgba(13,13,13,.12)" }}
@@ -432,30 +432,30 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     value={proponenteQuery}
                     onChange={e => { setProponenteQuery(e.target.value); setProponenteId(null); setProponenteNome(""); setProponenteOpen(true); }}
                     onFocus={() => setProponenteOpen(true)}
-                    className="min-w-0 flex-1 bg-transparent text-[13px] text-black outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
                   />
                   {proponenteId && (
                     <button onClick={e => { e.stopPropagation(); setProponenteId(null); setProponenteNome(""); setProponenteQuery(""); }}
-                      className="flex-shrink-0 text-[14px] leading-none text-black/25 hover:text-black/50">×</button>
+                      className="flex-shrink-0 text-[0.875rem] leading-none text-black/25 hover:text-black/50">×</button>
                   )}
                 </div>
                 {proponenteOpen && (
                   <div className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded border bg-white shadow-lg" style={{ borderColor: "rgba(13,13,13,.12)" }}>
                     {proponenteOptions.map(opt => (
                       <button key={opt.id} onMouseDown={e => { e.preventDefault(); selectProponente(opt); }}
-                        className="w-full px-3 py-2.5 text-left text-[13px] transition hover:bg-black/[0.04]">
+                        className="w-full px-3 py-2.5 text-left text-[0.8125rem] transition hover:bg-black/[0.04]">
                         <span className="font-medium text-black">{opt.nome}</span>
                         {(opt.cidade || opt.estado) && (
-                          <span className="ml-1.5 text-[11px] text-black/35">{[opt.cidade, opt.estado].filter(Boolean).join(", ")}</span>
+                          <span className="ml-1.5 text-[0.6875rem] text-black/35">{[opt.cidade, opt.estado].filter(Boolean).join(", ")}</span>
                         )}
                       </button>
                     ))}
                     {proponenteOptions.length === 0 && proponenteQuery.trim() && (
-                      <p className="px-3 py-2.5 text-[12px] text-black/30">Nenhum resultado</p>
+                      <p className="px-3 py-2.5 text-[0.75rem] text-black/30">Nenhum resultado</p>
                     )}
                     <button
                       onMouseDown={e => { e.preventDefault(); setProponenteOpen(false); setShowNovoProponente(true); }}
-                      className="flex w-full items-center gap-1.5 border-t px-3 py-2.5 text-left text-[12px] font-semibold text-[#7259B5] transition hover:bg-black/[0.04]"
+                      className="flex w-full items-center gap-1.5 border-t px-3 py-2.5 text-left text-[0.75rem] font-semibold text-[#7259B5] transition hover:bg-black/[0.04]"
                       style={{ borderColor: "rgba(13,13,13,.07)" }}>
                       <Plus size={11} />
                       {proponenteQuery.trim() ? `Criar "${proponenteQuery.trim()}"` : "Novo proponente"}
@@ -468,16 +468,16 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
 
             {/* — Patrocínio — */}
             <section className="px-6 py-5 space-y-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-black/25">Patrocínio</p>
+              <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/25">Patrocínio</p>
 
               <div>
-                <p className="mb-2 text-[9px] font-medium uppercase tracking-[.1em] text-black/25">Federais e direto</p>
+                <p className="mb-2 text-[0.5625rem] font-medium uppercase tracking-[.1em] text-black/25">Federais e direto</p>
                 <div className="flex flex-wrap gap-1.5">
                   {SPONSORSHIP_TYPE_OPTIONS.map(option => {
                     const active = tiposPatrocinio.includes(option.value);
                     return (
                       <button key={option.value} type="button" aria-pressed={active} onClick={() => toggleTipoPatrocinio(option.value)}
-                        className="rounded border px-2.5 py-1.5 text-[10px] font-medium transition"
+                        className="rounded border px-2.5 py-1.5 text-[0.625rem] font-medium transition"
                         style={{
                           borderColor: active ? "rgba(114,89,181,.40)" : "rgba(13,13,13,.10)",
                           background: active ? "rgba(114,89,181,.07)" : "white",
@@ -491,7 +491,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     .filter(value => !SPONSORSHIP_TYPE_OPTIONS.some(option => option.value === value))
                     .map(value => (
                       <button key={value} type="button" aria-pressed="true" onClick={() => toggleTipoPatrocinio(value)}
-                        className="rounded border border-[#7259B5]/40 bg-[#7259B5]/[.07] px-2.5 py-1.5 text-[10px] font-medium text-[#7259B5] transition">
+                        className="rounded border border-[#7259B5]/40 bg-[#7259B5]/[.07] px-2.5 py-1.5 text-[0.625rem] font-medium text-[#7259B5] transition">
                         {sponsorshipTypeLabel(value)} ×
                       </button>
                     ))}
@@ -499,12 +499,12 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
               </div>
 
               <div>
-                <p className="mb-2 text-[9px] font-medium uppercase tracking-[.1em] text-black/25">Incentivos locais</p>
+                <p className="mb-2 text-[0.5625rem] font-medium uppercase tracking-[.1em] text-black/25">Incentivos locais</p>
                 <div className="flex gap-2">
                   {(["estadual", "municipal"] as const).map(escopo => (
                     <button key={escopo} type="button"
                       onClick={() => setIncentivoEscopo(c => c === escopo ? null : escopo)}
-                      className="h-8 rounded border bg-white px-3 text-[10px] font-medium transition hover:bg-black/[.03]"
+                      className="h-8 rounded border bg-white px-3 text-[0.625rem] font-medium transition hover:bg-black/[.03]"
                       style={{
                         borderColor: incentivoEscopo === escopo ? "rgba(114,89,181,.40)" : "rgba(13,13,13,.10)",
                         color: incentivoEscopo === escopo ? "#7259B5" : "rgba(13,13,13,.45)",
@@ -515,13 +515,13 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                 </div>
                 {incentivoEscopo && (
                   <div className="mt-2 space-y-2 rounded border p-3" style={{ borderColor: "rgba(13,13,13,.08)", background: "rgba(13,13,13,.012)" }}>
-                    <div className={`grid gap-2 ${incentivoEscopo === "municipal" ? "grid-cols-[1fr_1fr_80px]" : "grid-cols-[1fr_100px]"}`}>
+                    <div className={`grid gap-2 ${incentivoEscopo === "municipal" ? "grid-cols-[1fr_1fr_5rem]" : "grid-cols-[1fr_6.25rem]"}`}>
                       <input value={incentivoNome} onChange={e => setIncentivoNome(e.target.value)}
                         placeholder={incentivoEscopo === "estadual" ? "Nome da lei estadual" : "Nome da lei municipal"}
-                        className="h-9 min-w-0 rounded border border-black/10 bg-white px-3 text-[11px] outline-none" />
+                        className="h-9 min-w-0 rounded border border-black/10 bg-white px-3 text-[0.6875rem] outline-none" />
                       {incentivoEscopo === "municipal" && (
                         <input value={incentivoCidade} onChange={e => setIncentivoCidade(e.target.value)} placeholder="Cidade"
-                          className="h-9 min-w-0 rounded border border-black/10 bg-white px-3 text-[11px] outline-none" />
+                          className="h-9 min-w-0 rounded border border-black/10 bg-white px-3 text-[0.6875rem] outline-none" />
                       )}
                       <Dropdown value={incentivoEstado} onChange={setIncentivoEstado}
                         placeholder="UF"
@@ -530,7 +530,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     <div className="flex justify-end">
                       <button type="button" onClick={addIncentivoLocal}
                         disabled={!incentivoNome.trim() || !incentivoEstado || (incentivoEscopo === "municipal" && !incentivoCidade.trim())}
-                        className="rounded bg-[#2E8932] px-3 py-1.5 text-[10px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">
+                        className="rounded bg-[#2E8932] px-3 py-1.5 text-[0.625rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">
                         Adicionar
                       </button>
                     </div>
@@ -540,9 +540,9 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                   <input value={tipoPatrocinioCustom} onChange={e => setTipoPatrocinioCustom(e.target.value)}
                     onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addTipoPatrocinioCustom(); } }}
                     placeholder="Outro tipo…"
-                    className="h-9 min-w-0 flex-1 rounded border border-black/10 bg-white px-3 text-[11px] outline-none" />
+                    className="h-9 min-w-0 flex-1 rounded border border-black/10 bg-white px-3 text-[0.6875rem] outline-none" />
                   <button type="button" onClick={addTipoPatrocinioCustom} disabled={!tipoPatrocinioCustom.trim()}
-                    className="flex h-9 items-center gap-1.5 rounded border px-3 text-[11px] font-medium text-[#7259B5] transition hover:bg-black/[.03] disabled:opacity-35"
+                    className="flex h-9 items-center gap-1.5 rounded border px-3 text-[0.6875rem] font-medium text-[#7259B5] transition hover:bg-black/[.03] disabled:opacity-35"
                     style={{ borderColor: "rgba(114,89,181,.28)" }}>
                     <Plus size={11} /> Adicionar
                   </button>
@@ -554,13 +554,13 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
 
           {/* Footer */}
           <footer className="flex flex-shrink-0 items-center justify-between border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            {erro ? <p role="alert" className="mr-4 min-w-0 text-[11px] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+            {erro ? <p role="alert" className="mr-4 min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
             <div className="ml-auto flex flex-shrink-0 items-center gap-2">
-              <button onClick={onClose} className="px-3 py-2 text-[12px] font-semibold text-black/35 transition hover:text-black/55">
+              <button onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">
                 Cancelar
               </button>
               <button onClick={handleSalvar} disabled={saving}
-                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[12px] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
+                className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
                 <Save size={12} /> {saving ? "Salvando…" : "Salvar projeto"}
               </button>
             </div>

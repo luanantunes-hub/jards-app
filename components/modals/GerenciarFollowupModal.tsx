@@ -67,31 +67,31 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
         <header className="flex items-start justify-between gap-4 border-b border-black/[.08] px-6 py-4">
           <div>
-            <p id={titleId} className="text-[14px] font-bold text-black">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
-            <p className="mt-1 text-[12px] text-black/55">{followup.titulo}</p>
+            <p id={titleId} className="text-[0.875rem] font-bold text-black">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
+            <p className="mt-1 text-[0.75rem] text-black/55">{followup.titulo}</p>
           </div>
           <button type="button" onClick={onClose} disabled={saving} aria-label="Fechar" className="text-black/35 hover:text-black/60 disabled:opacity-40"><X size={16} /></button>
         </header>
         <div className="space-y-4 px-6 py-5">
-          <p className="text-[11px] text-black/45">
+          <p className="text-[0.6875rem] text-black/45">
             {followup.status === "pendente" ? "Pendente" : followup.status === "concluido" ? "Concluído" : "Cancelado"}
             {followup.previstoPara ? ` · Prazo ${new Date(followup.previstoPara).toLocaleDateString("pt-BR")}` : ""}
           </p>
           {followup.sourceLink ? (
-            <Link href={followup.sourceLink} className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#7259B5] hover:underline">
+            <Link href={followup.sourceLink} className="inline-flex items-center gap-1.5 text-[0.6875rem] font-semibold text-[#7259B5] hover:underline">
               Abrir vínculo <ExternalLink size={12} />
             </Link>
           ) : (
-            <p className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.05] px-3 py-2 text-[11px] text-black/55">
+            <p className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.05] px-3 py-2 text-[0.6875rem] text-black/55">
               O vínculo original não está disponível. Você ainda pode concluir ou excluir este follow-up aqui.
             </p>
           )}
-          {error && <p role="alert" className="text-[11px] font-medium text-[#D94E4E]">{error}</p>}
+          {error && <p role="alert" className="text-[0.6875rem] font-medium text-[#D94E4E]">{error}</p>}
         </div>
         <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-black/[.08] px-6 py-4">
-          <button type="button" onClick={remove} disabled={saving} className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#D94E4E] hover:underline disabled:opacity-40"><Trash2 size={13} /> Excluir</button>
+          <button type="button" onClick={remove} disabled={saving} className="inline-flex items-center gap-1.5 text-[0.6875rem] font-medium text-[#D94E4E] hover:underline disabled:opacity-40"><Trash2 size={13} /> Excluir</button>
           {followup.status === "pendente" && (
-            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[12px] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">
+            <button type="button" onClick={() => void complete()} disabled={saving} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">
               <Check size={14} /> {saving ? "Salvando…" : "Concluir sem interação"}
             </button>
           )}

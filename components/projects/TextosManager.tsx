@@ -211,23 +211,23 @@ export function TextosManager({ projetoId }: { projetoId: string }) {
     <>
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4">
-          <span className="text-[12px] text-black/35">
+          <span className="text-[0.75rem] text-black/35">
             {items.length > 0 ? `${items.length} texto${items.length !== 1 ? "s" : ""}` : "Nenhum texto"}
           </span>
-          <button onClick={openCreateSheet} className="flex items-center gap-1.5 rounded border border-black/[.15] bg-white px-3.5 py-2 text-[12px] font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.98]">
+          <button onClick={openCreateSheet} className="flex items-center gap-1.5 rounded border border-black/[.15] bg-white px-3.5 py-2 text-[0.75rem] font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.98]">
             <Plus size={13} /> Nova resposta
           </button>
         </div>
 
         {error && (
-          <div className="flex items-start gap-2 rounded border border-[#D94E4E]/20 px-3 py-2.5 text-[11px] text-[#D94E4E]">
+          <div className="flex items-start gap-2 rounded border border-[#D94E4E]/20 px-3 py-2.5 text-[0.6875rem] text-[#D94E4E]">
             <AlertCircle size={13} className="mt-0.5 shrink-0" />{error}
           </div>
         )}
 
         {items.length === 0 ? (
           <div className="rounded border border-dashed border-black/[.12] px-6 py-14 text-center">
-            <p className="text-[12px] font-medium text-black/40">Nenhum texto cadastrado</p>
+            <p className="text-[0.75rem] font-medium text-black/40">Nenhum texto cadastrado</p>
           </div>
         ) : (
           <div className="overflow-hidden rounded border border-black/[.08] bg-white">
@@ -245,13 +245,13 @@ export function TextosManager({ projetoId }: { projetoId: string }) {
                   <div className="flex items-start gap-2 px-4 py-3">
                     <span className="mt-1 cursor-grab shrink-0 text-black/20 active:cursor-grabbing"><GripVertical size={14} /></span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold text-black/75">{item.campo_nome}</p>
-                      <p className={`mt-1 line-clamp-2 text-[12px] leading-5 ${item.modelo_texto ? "text-black/40" : "text-black/25"}`}>
+                      <p className="text-[0.8125rem] font-semibold text-black/75">{item.campo_nome}</p>
+                      <p className={`mt-1 line-clamp-2 text-[0.75rem] leading-5 ${item.modelo_texto ? "text-black/40" : "text-black/25"}`}>
                         {item.modelo_texto || "Sem resposta padrão"}
                       </p>
                     </div>
                     <div className="flex shrink-0 items-center gap-1">
-                      {item.tem_modelo && <span className="mr-1 text-[9px] font-bold text-[#7259B5]/65">Padrão</span>}
+                      {item.tem_modelo && <span className="mr-1 text-[0.5625rem] font-bold text-[#7259B5]/65">Padrão</span>}
                       <button onClick={() => openEditSheet(item)} className="flex h-7 w-7 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05]" aria-label={`Editar ${item.campo_nome}`}>
                         <Pencil size={12} />
                       </button>
@@ -274,30 +274,30 @@ export function TextosManager({ projetoId }: { projetoId: string }) {
             onClick={event => event.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b px-6 pb-4 pt-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <h3 className="text-[15px] font-semibold text-black/80">{editingItem ? "Editar resposta" : "Nova resposta"}</h3>
+              <h3 className="text-[0.9375rem] font-semibold text-black/80">{editingItem ? "Editar resposta" : "Nova resposta"}</h3>
               <button onClick={closeSheet} className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.05]"><X size={15} className="text-black/40" /></button>
             </div>
             <div className="space-y-4 overflow-y-auto px-6 py-5" style={{ maxHeight: "calc(67vh - 120px)" }}>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[.08em] text-black/40">Pergunta ou título</label>
+                <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[.08em] text-black/40">Pergunta ou título</label>
                 <input
                   ref={perguntaRef}
                   value={novaPergunta}
                   onChange={event => setNovaPergunta(event.target.value)}
                   onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void saveSheet(); } }}
                   placeholder="Ex: Qual o impacto social do projeto?"
-                  className="w-full rounded border border-black/[.1] px-3 py-2.5 text-[13px] outline-none transition focus:border-black/25"
+                  className="w-full rounded border border-black/[.1] px-3 py-2.5 text-[0.8125rem] outline-none transition focus:border-black/25"
                 />
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[.08em] text-black/40">Resposta padrão</label>
-                <textarea value={novaResposta} onChange={event => setNovaResposta(event.target.value)} placeholder="Escreva a resposta…" rows={6} className="w-full resize-none rounded border border-black/[.1] px-3 py-2.5 text-[13px] leading-relaxed outline-none transition focus:border-black/25" />
+                <label className="mb-1.5 block text-[0.6875rem] font-semibold uppercase tracking-[.08em] text-black/40">Resposta padrão</label>
+                <textarea value={novaResposta} onChange={event => setNovaResposta(event.target.value)} placeholder="Escreva a resposta…" rows={6} className="w-full resize-none rounded border border-black/[.1] px-3 py-2.5 text-[0.8125rem] leading-relaxed outline-none transition focus:border-black/25" />
               </div>
-              {error && <div className="flex items-start gap-2 text-[11px] text-[#D94E4E]"><AlertCircle size={12} className="mt-0.5 shrink-0" />{error}</div>}
+              {error && <div className="flex items-start gap-2 text-[0.6875rem] text-[#D94E4E]"><AlertCircle size={12} className="mt-0.5 shrink-0" />{error}</div>}
             </div>
             <div className="flex items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <button onClick={closeSheet} className="text-[12px] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
-              <button onClick={() => void saveSheet()} disabled={!novaPergunta.trim() || creating} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-35">
+              <button onClick={closeSheet} className="text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
+              <button onClick={() => void saveSheet()} disabled={!novaPergunta.trim() || creating} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-35">
                 {creating && <Loader2 size={12} className="animate-spin" />} Salvar
               </button>
             </div>

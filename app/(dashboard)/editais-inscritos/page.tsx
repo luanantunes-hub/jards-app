@@ -25,6 +25,7 @@ import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, L
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { getInscricaoTiming } from "@/lib/inscricoes/timing";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
+import { escalaUi } from "@/lib/escala-ui";
 
 type EditalInscrito = {
   id: string;
@@ -72,22 +73,22 @@ const EDITAIS_SELECT_NO_LEI = EDITAIS_SELECT.replace("lei, ", "");
 const EDITAIS_SELECT_LEGACY = EDITAIS_SELECT_NO_POTENTIAL.replace("lei, ", "");
 
 const INSCRICOES_COLUMNS = [
-  { id: "projeto",    label: "Projeto",      width: "minmax(170px,1fr)" },
-  { id: "empresa",    label: "Empresa",      width: "minmax(180px,1fr)" },
-  { id: "edital",     label: "Edital",       width: "minmax(240px,1.6fr)", defaultHidden: true },
-  { id: "lei",        label: "Tipo de patrocínio", width: "165px" },
-  { id: "responsavel", label: "Responsável", width: "minmax(150px,1fr)" },
-  { id: "adicionada", label: "Adicionado em", width: "130px" },
-  { id: "atualizada", label: "Atualizado em", width: "130px" },
-  { id: "fechamento", label: "Fechamento",   width: "125px" },
-  { id: "resultado",  label: "Resultado",    width: "125px" },
-  { id: "valor",      label: "Valor",        width: "115px" },
-  { id: "prioridade", label: "Prioridade",   width: "115px" },
-  { id: "documentos", label: "Docs",   width: "80px" },
-  { id: "registros",  label: "Conteúdo",            width: "80px"  },
-  { id: "anotacoes",  label: "Notas",   width: "80px" },
-  { id: "status",     label: "Status",       width: "135px", hideable: false },
-  { id: "excluir",    label: "",              width: "48px" },
+  { id: "projeto",    label: "Projeto",      width: "minmax(10.625rem,1fr)" },
+  { id: "empresa",    label: "Empresa",      width: "minmax(11.25rem,1fr)" },
+  { id: "edital",     label: "Edital",       width: "minmax(15rem,1.6fr)", defaultHidden: true },
+  { id: "lei",        label: "Tipo de patrocínio", width: "10.3125rem" },
+  { id: "responsavel", label: "Responsável", width: "minmax(9.375rem,1fr)" },
+  { id: "adicionada", label: "Adicionado em", width: "8.125rem" },
+  { id: "atualizada", label: "Atualizado em", width: "8.125rem" },
+  { id: "fechamento", label: "Fechamento",   width: "7.8125rem" },
+  { id: "resultado",  label: "Resultado",    width: "7.8125rem" },
+  { id: "valor",      label: "Valor",        width: "7.1875rem" },
+  { id: "prioridade", label: "Prioridade",   width: "7.1875rem" },
+  { id: "documentos", label: "Docs",   width: "5rem" },
+  { id: "registros",  label: "Conteúdo",            width: "5rem"  },
+  { id: "anotacoes",  label: "Notas",   width: "5rem" },
+  { id: "status",     label: "Status",       width: "8.4375rem", hideable: false },
+  { id: "excluir",    label: "",              width: "3rem" },
 ] as const satisfies readonly ColumnDefinition[];
 
 function fmtDate(d: string | null): string {
@@ -391,7 +392,7 @@ export default function EditaisInscritosPage() {
         <div className="mb-2 flex items-center justify-between gap-1.5">
           <div className="flex min-w-0 items-center gap-1.5">
             <CompanyLogo nome={empresa} domain={e.empresas_crm?.domain_key} site={e.empresas?.site ?? e.empresas_crm?.site} logo_url={e.empresas?.logo_url} size={18} className="flex-shrink-0" />
-            <span className="text-[10px] font-semibold text-black/50 truncate">{empresa}</span>
+            <span className="text-[0.625rem] font-semibold text-black/50 truncate">{empresa}</span>
           </div>
           {atividade && (
             <div className="group/atividade relative shrink-0">
@@ -403,7 +404,7 @@ export default function EditaisInscritosPage() {
               </span>
               <div
                 role="tooltip"
-                className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[190px] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[10px] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
+                className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
               >
                 <p className="font-semibold">{atividade.nome}</p>
                 <p className={atividade.atrasada ? "text-[#F0B24D]" : "text-white/55"}>
@@ -416,10 +417,10 @@ export default function EditaisInscritosPage() {
             </div>
           )}
         </div>
-        <p className="text-[13px] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{titulo}</p>
+        <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{titulo}</p>
         <div className="flex items-center justify-between">
           {e.data_fechamento ? (
-            <span className="flex items-center gap-1 text-[10px] text-black/40 font-semibold"><Calendar size={9} />{fmtShortDate(e.data_fechamento)}</span>
+            <span className="flex items-center gap-1 text-[0.625rem] text-black/40 font-semibold"><Calendar size={9} />{fmtShortDate(e.data_fechamento)}</span>
           ) : <span />}
           {e.valor != null && <span className="text-xs font-bold text-black/65">{fmtValor(e.valor)}</span>}
         </div>
@@ -468,7 +469,7 @@ export default function EditaisInscritosPage() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setCicloMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[160px] overflow-hidden rounded border bg-white shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white shadow-xl"
             style={{ top: cicloMenuPos.top, left: cicloMenuPos.left, borderColor: "rgba(13,13,13,.12)" }}
           >
             {([
@@ -480,7 +481,7 @@ export default function EditaisInscritosPage() {
                 key={opt.value}
                 type="button"
                 onClick={() => { setCicloFiltro(opt.value); setCicloMenuPos(null); }}
-                className="flex w-full items-center px-3 py-2 text-left text-[12px] transition hover:bg-black/[.04]"
+                className="flex w-full items-center px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.04]"
                 style={{ fontWeight: cicloFiltro === opt.value ? 700 : 500 }}
               >
                 {opt.label}
@@ -604,7 +605,7 @@ export default function EditaisInscritosPage() {
                       { label: "Status", key: "status" },
                       { label: "", key: undefined },
                     ] satisfies { label: string; key?: string }[]).map((col, i) => (
-                      <th key={i} aria-sort={col.key && sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined} className="px-5 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
+                      <th key={i} aria-sort={col.key && sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined} className="px-5 py-3 text-left text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {col.key ? (
                           <button type="button" onClick={() => toggleSort(col.key)} className="flex items-center gap-1 uppercase tracking-[.08em] transition hover:text-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                             {col.label}
@@ -642,7 +643,7 @@ export default function EditaisInscritosPage() {
 
                       return (
                         <tr key={e.id} onClick={() => router.push(`/editais-inscritos/${e.id}`)} className="hover:bg-black/[0.02] transition group cursor-pointer" style={{ borderBottom: i < filteredSorted.length - 1 ? "1px solid rgba(13,13,13,.05)" : "none" }}>
-                          <td className="px-5 py-3.5 text-black/50 text-[12.5px] max-w-[220px]">
+                          <td className="px-5 py-3.5 text-black/50 text-[0.78125rem] max-w-[13.75rem]">
                             {e.projetos_crm ? (
                               <div className="flex items-center gap-1.5">
                                 <ProjectIdentity nome={e.projetos_crm.nome} tipo={e.projetos_crm.identidade_tipo} valor={e.projetos_crm.identidade_valor} logoUrl={e.projetos_crm.identidade_logo_url} cor={e.projetos_crm.identidade_cor} size="sm" />
@@ -654,18 +655,18 @@ export default function EditaisInscritosPage() {
                             <div className="flex items-center gap-2">
                               <CompanyLogo nome={empresa} domain={e.empresas_crm?.domain_key} site={e.empresas?.site ?? e.empresas_crm?.site} logo_url={e.empresas?.logo_url} size={18} className="flex-shrink-0" />
                               {e.empresas_crm?.nome && !e.empresas?.nome ? (
-                                <Link href={`/empresas-crm/${e.empresa_crm_id}`} onClick={(e2) => e2.stopPropagation()} className="text-black/60 font-medium text-[12.5px] whitespace-nowrap hover:text-[#7259B5] transition">
+                                <Link href={`/empresas-crm/${e.empresa_crm_id}`} onClick={(e2) => e2.stopPropagation()} className="text-black/60 font-medium text-[0.78125rem] whitespace-nowrap hover:text-[#7259B5] transition">
                                   {empresa}
                                 </Link>
                               ) : (
-                                <span className="text-black/60 font-medium text-[12.5px] whitespace-nowrap">{empresa}</span>
+                                <span className="text-black/60 font-medium text-[0.78125rem] whitespace-nowrap">{empresa}</span>
                               )}
                             </div>
                           </td>
-                          <td className="px-5 py-3.5 max-w-[220px]">
+                          <td className="px-5 py-3.5 max-w-[13.75rem]">
                             <div className="flex items-start gap-2">
                               <FileCheck size={14} className="text-black/25 flex-shrink-0 mt-0.5" />
-                              <span className="font-medium text-black/70 leading-snug line-clamp-2 text-[13px]">{titulo}</span>
+                              <span className="font-medium text-black/70 leading-snug line-clamp-2 text-[0.8125rem]">{titulo}</span>
                             </div>
                           </td>
                           <td className="px-5 py-3.5">
@@ -676,17 +677,17 @@ export default function EditaisInscritosPage() {
                               setLeiMenuId(leiMenuId === e.id ? null : e.id);
                             }} className="transition hover:opacity-70">
                               {lei ? (
-                                <span className="rounded border bg-white text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wide" style={{ borderColor: lei.text + "47", color: lei.text }}>
+                                <span className="rounded border bg-white text-[0.5625rem] font-bold px-1.5 py-0.5 uppercase tracking-wide" style={{ borderColor: lei.text + "47", color: lei.text }}>
                                   {lei.label}
                                 </span>
                               ) : <span className="text-black/20 text-xs hover:text-black/40">+ Lei</span>}
                             </button>
                           </td>
-                          <td className="px-5 py-3.5 max-w-[170px]">
+                          <td className="px-5 py-3.5 max-w-[10.625rem]">
                             {e.responsavel_nome ? (
-                              <span className="font-medium text-[12.5px] text-black/60">
+                              <span className="font-medium text-[0.78125rem] text-black/60">
                                 <span className="line-clamp-1 truncate">{e.responsavel_nome}</span>
-                                <span className="block text-[10px] font-semibold uppercase tracking-wider" style={{ color: e.responsavel_tipo === "agencia" ? "#2D72B0" : "#1A8B7A" }}>
+                                <span className="block text-[0.625rem] font-semibold uppercase tracking-wider" style={{ color: e.responsavel_tipo === "agencia" ? "#2D72B0" : "#1A8B7A" }}>
                                   {e.responsavel_tipo === "agencia" ? "Agência" : "Equipe"}
                                 </span>
                               </span>
@@ -698,7 +699,7 @@ export default function EditaisInscritosPage() {
                           <td className="px-5 py-3.5 whitespace-nowrap">
                             <span className="block text-xs tabular-nums text-black/40">{fmtDate(e.updated_at)}</span>
                             <span
-                              className="mt-1 block max-w-[150px] whitespace-normal text-[9px] font-semibold uppercase leading-tight tracking-[.06em]"
+                              className="mt-1 block max-w-[9.375rem] whitespace-normal text-[0.5625rem] font-semibold uppercase leading-tight tracking-[.06em]"
                               style={{ color: timing.color }}
                               title={timing.detail}
                             >
@@ -719,7 +720,7 @@ export default function EditaisInscritosPage() {
                             })()}
                           </td>
                           <td className="px-5 py-3.5 text-black/40 text-xs whitespace-nowrap">{fmtDate(e.data_resultado)}</td>
-                          <td className="px-5 py-3.5 font-bold text-black/70 text-[13px] whitespace-nowrap">{fmtValor(e.valor)}</td>
+                          <td className="px-5 py-3.5 font-bold text-black/70 text-[0.8125rem] whitespace-nowrap">{fmtValor(e.valor)}</td>
                           <td className="px-5 py-3.5"><PrioBadge prio={e.prioridade} size="md" /></td>
 
                           {/* Documentos */}
@@ -762,7 +763,7 @@ export default function EditaisInscritosPage() {
                               onClick={ev => {
                                 ev.stopPropagation();
                                 const rect = ev.currentTarget.getBoundingClientRect();
-                                const menuH = kanbanCols.length * 36 + 8;
+                                const menuH = (kanbanCols.length * 36 + 8) * escalaUi();
                                 setMenuPos({
                                   top:  window.innerHeight - rect.bottom > menuH ? rect.bottom + 4 : rect.top - menuH - 4,
                                   left: rect.left,
@@ -843,22 +844,22 @@ export default function EditaisInscritosPage() {
                             <div className="mb-2 flex items-center gap-1.5">
                               <CompanyLogo nome={empresa} domain={e.empresas_crm?.domain_key} site={e.empresas?.site ?? e.empresas_crm?.site} logo_url={e.empresas?.logo_url} size={18} className="flex-shrink-0" />
                               {e.empresas_crm?.nome && !e.empresas?.nome ? (
-                                <Link href={`/empresas-crm/${e.empresa_crm_id}`} onClick={(e2) => e2.stopPropagation()} className="text-[10px] font-semibold text-black/50 truncate hover:text-[#7259B5] transition">
+                                <Link href={`/empresas-crm/${e.empresa_crm_id}`} onClick={(e2) => e2.stopPropagation()} className="text-[0.625rem] font-semibold text-black/50 truncate hover:text-[#7259B5] transition">
                                   {empresa}
                                 </Link>
                               ) : (
-                                <span className="text-[10px] font-semibold text-black/50 truncate">{empresa}</span>
+                                <span className="text-[0.625rem] font-semibold text-black/50 truncate">{empresa}</span>
                               )}
                               <ArrowUpRight size={12} className="ml-auto shrink-0 text-black/20 opacity-0 transition group-hover:opacity-100"/>
                             </div>
 
                             {/* Título */}
-                            <p className="text-[13px] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{titulo}</p>
+                            <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{titulo}</p>
 
                             {/* Footer */}
                             <div className="flex items-center justify-between">
                               {e.data_fechamento ? (
-                                <span className="flex items-center gap-1 text-[10px] text-black/40 font-semibold">
+                                <span className="flex items-center gap-1 text-[0.625rem] text-black/40 font-semibold">
                                   <Calendar size={9} />
                                   {fmtShortDate(e.data_fechamento)}
                                 </span>

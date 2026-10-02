@@ -51,11 +51,11 @@ function scoreMeta(score: number | null) {
 
 function ScoreRing({ score }: { score: number | null }) {
   return (
-    <div className="relative h-[124px] w-[124px] shrink-0">
+    <div className="relative h-[7.75rem] w-[7.75rem] shrink-0">
       <SegmentedScoreArc score={score} label={score === null ? "Score sem avaliação" : `Score ${score.toFixed(1)} de 5`} />
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-[30px] font-semibold tracking-[-.055em] text-[#1D1D1F]">{score === null ? "N/A" : score.toFixed(1).replace(".", ",")}</span>
-        <span className="mt-0.5 text-[10px] font-medium text-black/35">de 5</span>
+        <span className="text-[1.875rem] font-semibold tracking-[-.055em] text-[#1D1D1F]">{score === null ? "N/A" : score.toFixed(1).replace(".", ",")}</span>
+        <span className="mt-0.5 text-[0.625rem] font-medium text-black/35">de 5</span>
       </div>
     </div>
   );
@@ -75,7 +75,7 @@ export function CompactDecisionScoreRing({ score }: { score: number | null }) {
         strokeWidth={10}
         label={score === null ? "Score sem avaliação" : `Score ${score.toFixed(1)} de 5`}
       />
-      <span className="absolute inset-0 flex items-center justify-center text-[9px] font-bold tracking-[-.04em] text-[#1D1D1F]">
+      <span className="absolute inset-0 flex items-center justify-center text-[0.5625rem] font-bold tracking-[-.04em] text-[#1D1D1F]">
         {score === null ? "N/A" : score.toFixed(1).replace(".", ",")}
       </span>
     </div>
@@ -97,7 +97,7 @@ function SegmentedControl({
 }) {
   return (
     <div>
-      <span className="mb-1.5 block text-[9px] font-semibold text-black/35">{label}</span>
+      <span className="mb-1.5 block text-[0.5625rem] font-semibold text-black/35">{label}</span>
       <div className="inline-flex rounded bg-black/[.055] p-[2px]" role="group" aria-label={label}>
         {values.map(value => (
           <button
@@ -105,7 +105,7 @@ function SegmentedControl({
             type="button"
             onClick={() => onSelect(value)}
             aria-pressed={selected === value}
-            className={`flex h-7 min-w-7 items-center justify-center rounded px-1.5 text-[10px] font-semibold transition-[background,color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/35 active:scale-[.96] ${
+            className={`flex h-7 min-w-7 items-center justify-center rounded px-1.5 text-[0.625rem] font-semibold transition-[background,color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/35 active:scale-[.96] ${
               selected === value
                 ? "bg-white text-[#7259B5] shadow-[0_1px_3px_rgba(0,0,0,.12)]"
                 : "text-black/40 hover:text-black/65"
@@ -236,13 +236,13 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
     <section className="overflow-hidden rounded border border-black/[.08] bg-white">
       <div className="flex items-center justify-between px-5 pb-3 pt-5">
         <div>
-          <h2 className="text-[15px] font-semibold tracking-[-.02em] text-[#1D1D1F]">Score de relacionamento</h2>
-          <p className="mt-0.5 text-[11px] text-black/40">Média ponderada</p>
+          <h2 className="text-[0.9375rem] font-semibold tracking-[-.02em] text-[#1D1D1F]">Score de relacionamento</h2>
+          <p className="mt-0.5 text-[0.6875rem] text-black/40">Média ponderada</p>
         </div>
         <button
           type="button"
           onClick={() => setAdding(true)}
-          className="inline-flex h-8 items-center gap-1.5 rounded border border-[#7259B5]/20 bg-white px-3 text-[10px] font-semibold text-[#7259B5] shadow-[0_1px_2px_rgba(0,0,0,.04)] transition hover:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 active:scale-[.97]"
+          className="inline-flex h-8 items-center gap-1.5 rounded border border-[#7259B5]/20 bg-white px-3 text-[0.625rem] font-semibold text-[#7259B5] shadow-[0_1px_2px_rgba(0,0,0,.04)] transition hover:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 active:scale-[.97]"
         >
           <Plus size={11} strokeWidth={2} /> Adicionar
         </button>
@@ -252,8 +252,8 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
         <div className="flex items-center gap-4 rounded border border-black/[.045] bg-white px-4 py-4 shadow-[0_1px_2px_rgba(0,0,0,.025)]">
           <ScoreRing score={score} />
           <div className="min-w-0 flex-1">
-            <p className="text-[14px] font-semibold leading-tight tracking-[-.02em]" style={{ color: scoreState.color }}>{scoreState.label}</p>
-            <p className="mt-2 text-[11px] leading-relaxed text-black/45">
+            <p className="text-[0.875rem] font-semibold leading-tight tracking-[-.02em]" style={{ color: scoreState.color }}>{scoreState.label}</p>
+            <p className="mt-2 text-[0.6875rem] leading-relaxed text-black/45">
               {criteria.length === 0
                 ? "Nenhum critério definido"
                 : `${ratedCount} de ${criteria.length} ${criteria.length === 1 ? "critério avaliado" : "critérios avaliados"}`}
@@ -263,15 +263,15 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
 
         {loading ? (
           <div className="mt-3 space-y-2" aria-label="Carregando critérios">
-            <div className="h-[94px] animate-pulse rounded bg-black/[.045]" />
-            <div className="h-[94px] animate-pulse rounded bg-black/[.045]" />
+            <div className="h-[5.875rem] animate-pulse rounded bg-black/[.045]" />
+            <div className="h-[5.875rem] animate-pulse rounded bg-black/[.045]" />
           </div>
         ) : criteria.length === 0 && !adding ? (
           <div className="mt-3 rounded bg-white px-4 py-5 text-center shadow-[0_1px_2px_rgba(0,0,0,.025)]">
-            <p className="text-[12px] font-medium text-black/55">Comece sua avaliação</p>
+            <p className="text-[0.75rem] font-medium text-black/55">Comece sua avaliação</p>
             <div className="mt-3 flex items-center justify-center gap-2">
-              <button type="button" onClick={() => setAdding(true)} className="rounded border border-[#7259B5]/20 bg-white px-3 py-2 text-[10px] font-semibold text-[#7259B5] transition hover:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 active:scale-[.97]">Criar critério</button>
-              <button type="button" disabled={savingId === "starter"} onClick={() => void addStarterCriteria()} className="rounded border border-black/[.08] bg-white px-3 py-2 text-[10px] font-semibold text-black/50 transition hover:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 active:scale-[.97] disabled:opacity-40">{starterActionLabel}</button>
+              <button type="button" onClick={() => setAdding(true)} className="rounded border border-[#7259B5]/20 bg-white px-3 py-2 text-[0.625rem] font-semibold text-[#7259B5] transition hover:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 active:scale-[.97]">Criar critério</button>
+              <button type="button" disabled={savingId === "starter"} onClick={() => void addStarterCriteria()} className="rounded border border-black/[.08] bg-white px-3 py-2 text-[0.625rem] font-semibold text-black/50 transition hover:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 active:scale-[.97] disabled:opacity-40">{starterActionLabel}</button>
             </div>
           </div>
         ) : (
@@ -282,7 +282,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
                   <input
                     defaultValue={item.nome}
                     onBlur={event => { const value = event.target.value.trim(); if (value && value !== item.nome) void updateCriterion(item.id, { nome: value }); else event.target.value = item.nome; }}
-                    className="min-w-0 flex-1 rounded bg-transparent px-0.5 py-1 text-[12px] font-semibold tracking-[-.01em] text-black/70 outline-none transition focus:bg-black/[.025] focus:px-2 focus:ring-2 focus:ring-[#7259B5]/20"
+                    className="min-w-0 flex-1 rounded bg-transparent px-0.5 py-1 text-[0.75rem] font-semibold tracking-[-.01em] text-black/70 outline-none transition focus:bg-black/[.025] focus:px-2 focus:ring-2 focus:ring-[#7259B5]/20"
                     aria-label={`Nome do critério ${item.nome}`}
                   />
                   <button
@@ -309,7 +309,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
                     onSelect={rating => void updateCriterion(item.id, { nota: rating as 1 | 2 | 3 | 4 | 5 })}
                   />
                 </div>
-                {savingId === item.id && <span className="mt-2 block text-right text-[9px] text-black/25" aria-live="polite">Salvando…</span>}
+                {savingId === item.id && <span className="mt-2 block text-right text-[0.5625rem] text-black/25" aria-live="polite">Salvando…</span>}
               </div>
             ))}
           </div>
@@ -317,7 +317,7 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
 
         {adding && (
           <div className="mt-3 rounded border border-[#7259B5]/15 bg-white p-3.5 shadow-[0_4px_16px_rgba(0,0,0,.045)]">
-            <label htmlFor={`new-score-criterion-${entityId}`} className="mb-1.5 block text-[10px] font-semibold text-black/50">Novo critério</label>
+            <label htmlFor={`new-score-criterion-${entityId}`} className="mb-1.5 block text-[0.625rem] font-semibold text-black/50">Novo critério</label>
             <input
               id={`new-score-criterion-${entityId}`}
               autoFocus
@@ -325,16 +325,16 @@ function RelationshipScorecard({ entityId, organizationId, table, foreignKey, st
               onChange={event => setNewName(event.target.value)}
               onKeyDown={event => { if (event.key === "Enter") void addCriterion(); if (event.key === "Escape") setAdding(false); }}
               placeholder={placeholder}
-              className="h-9 w-full rounded border border-black/[.10] bg-[#F5F5F7] px-3 text-[11px] text-black/70 outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:bg-white focus:ring-2 focus:ring-[#7259B5]/15"
+              className="h-9 w-full rounded border border-black/[.10] bg-[#F5F5F7] px-3 text-[0.6875rem] text-black/70 outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:bg-white focus:ring-2 focus:ring-[#7259B5]/15"
             />
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button type="button" onClick={() => { setAdding(false); setNewName(""); }} className="inline-flex h-8 items-center gap-1.5 rounded px-3 text-[10px] font-semibold text-black/40 transition hover:bg-black/[.04] hover:text-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 active:scale-[.97]" aria-label="Cancelar"><X size={11} /> Cancelar</button>
-              <button type="button" disabled={!newName.trim() || savingId === "new"} onClick={() => void addCriterion()} className="inline-flex h-8 items-center gap-1.5 rounded bg-[#2E8932] px-3 text-[10px] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E8932]/30 active:scale-[.97] disabled:opacity-40" aria-label="Salvar critério"><Check size={11} /> Salvar</button>
+              <button type="button" onClick={() => { setAdding(false); setNewName(""); }} className="inline-flex h-8 items-center gap-1.5 rounded px-3 text-[0.625rem] font-semibold text-black/40 transition hover:bg-black/[.04] hover:text-black/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 active:scale-[.97]" aria-label="Cancelar"><X size={11} /> Cancelar</button>
+              <button type="button" disabled={!newName.trim() || savingId === "new"} onClick={() => void addCriterion()} className="inline-flex h-8 items-center gap-1.5 rounded bg-[#2E8932] px-3 text-[0.625rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2E8932]/30 active:scale-[.97] disabled:opacity-40" aria-label="Salvar critério"><Check size={11} /> Salvar</button>
             </div>
           </div>
         )}
 
-        {error && <p className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2.5 text-[10px] leading-relaxed text-[#B23A3A]" role="alert">{error}</p>}
+        {error && <p className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2.5 text-[0.625rem] leading-relaxed text-[#B23A3A]" role="alert">{error}</p>}
       </div>
     </section>
   );

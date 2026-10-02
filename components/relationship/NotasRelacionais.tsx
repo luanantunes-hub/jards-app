@@ -63,7 +63,7 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
 
   return (
     <div className="p-5">
-      <p className="mb-4 text-[11px] leading-relaxed text-black/40">Contexto qualitativo sobre {proponenteId ? "o proponente" : "a empresa"}. Livre para editar, apagar ou criar novas notas.</p>
+      <p className="mb-4 text-[0.6875rem] leading-relaxed text-black/40">Contexto qualitativo sobre {proponenteId ? "o proponente" : "a empresa"}. Livre para editar, apagar ou criar novas notas.</p>
       {showNew && (
         <div className="mb-4">
           <div className="flex gap-2">
@@ -73,18 +73,18 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
               onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void criarNota(); } }}
               placeholder="Título da nota"
               autoFocus
-              className="h-8 flex-1 rounded border px-2.5 text-[12px] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-1 focus:ring-[#7259B5]/10"
+              className="h-8 flex-1 rounded border px-2.5 text-[0.75rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-1 focus:ring-[#7259B5]/10"
               style={{borderColor: erro ? "#D94E4E" : "rgba(13,13,13,.12)"}}
             />
-            <button type="button" onClick={() => { setShowNew(false); setErro(null); setNovoTitulo(""); }} className="px-2 text-[11px] font-medium text-black/35 transition hover:text-black/55">
+            <button type="button" onClick={() => { setShowNew(false); setErro(null); setNovoTitulo(""); }} className="px-2 text-[0.6875rem] font-medium text-black/35 transition hover:text-black/55">
               Cancelar
             </button>
             <button type="button" onClick={() => void criarNota()} disabled={!novoTitulo.trim() || creating}
-              className="rounded bg-[#2E8932] px-3 text-[11px] font-bold text-white transition hover:bg-[#26752A] disabled:opacity-40">
+              className="rounded bg-[#2E8932] px-3 text-[0.6875rem] font-bold text-white transition hover:bg-[#26752A] disabled:opacity-40">
               Criar
             </button>
           </div>
-          {erro && <p className="mt-1.5 text-[10px] text-[#D94E4E]">{erro}</p>}
+          {erro && <p className="mt-1.5 text-[0.625rem] text-[#D94E4E]">{erro}</p>}
         </div>
       )}
       {loading ? (
@@ -146,16 +146,16 @@ function NotaItem({ nota, outrosTitulos, onChanged, onDelete }: { nota: NotaRow;
         onChange={e => { setTitulo(e.target.value); setTituloErro(false); }}
         onBlur={handleTituloBlur}
         placeholder="Título (opcional)"
-        className={`w-full bg-transparent pr-5 text-[13px] font-semibold outline-none ${tituloErro ? "text-[#D94E4E]" : "text-black/75"}`}
+        className={`w-full bg-transparent pr-5 text-[0.8125rem] font-semibold outline-none ${tituloErro ? "text-[#D94E4E]" : "text-black/75"}`}
       />
-      {tituloErro && <p className="mt-0.5 text-[10px] text-[#D94E4E]">Já existe uma nota com esse título.</p>}
+      {tituloErro && <p className="mt-0.5 text-[0.625rem] text-[#D94E4E]">Já existe uma nota com esse título.</p>}
       <textarea
         value={conteudo}
         onChange={e => setConteudo(e.target.value)}
         onBlur={() => { if (conteudo !== nota.conteudo) void salvar({ conteudo }); }}
         placeholder="Escreva aqui…"
         rows={3}
-        className="mt-1.5 w-full resize-none bg-transparent text-[12px] text-black/65 outline-none placeholder:text-black/25"
+        className="mt-1.5 w-full resize-none bg-transparent text-[0.75rem] text-black/65 outline-none placeholder:text-black/25"
       />
     </div>
   );

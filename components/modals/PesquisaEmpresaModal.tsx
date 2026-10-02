@@ -38,7 +38,7 @@ export function PesquisaEmpresaModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="pesquisa-empresa-title"
-        className="relative w-full max-w-[520px] overflow-hidden rounded border border-black/10 bg-white shadow-[0_28px_80px_rgba(13,13,13,.18)]"
+        className="relative w-full max-w-[32.5rem] overflow-hidden rounded border border-black/10 bg-white shadow-[0_28px_80px_rgba(13,13,13,.18)]"
       >
         <button
           type="button"
@@ -50,7 +50,7 @@ export function PesquisaEmpresaModal({
           <X size={14} weight="bold" />
         </button>
 
-        <div className="relative h-[250px] border-b border-black/[.06] bg-white sm:h-[280px]">
+        <div className="relative h-[15.625rem] border-b border-black/[.06] bg-white sm:h-[17.5rem]">
           <Image
             src="/tamandua-busca.png"
             alt="Tamanduá dirigindo uma scooter enquanto leva uma árvore adormecida"
@@ -64,11 +64,11 @@ export function PesquisaEmpresaModal({
         <div className="px-6 pb-6 pt-5 sm:px-7 sm:pb-7">
           {concluida ? (
             <>
-              <p className="text-[10px] font-semibold uppercase tracking-[.12em] text-[#2E8932]">Busca priorizada</p>
-              <h2 id="pesquisa-empresa-title" className="mt-2 text-[21px] font-semibold tracking-[-.025em] text-[#0D0D0D]">
+              <p className="text-[0.625rem] font-semibold uppercase tracking-[.12em] text-[#2E8932]">Busca priorizada</p>
+              <h2 id="pesquisa-empresa-title" className="mt-2 text-[1.3125rem] font-semibold tracking-[-.025em] text-[#0D0D0D]">
                 Pedido recebido.
               </h2>
-              <p className="mt-3 text-[14px] leading-6 text-black/50">
+              <p className="mt-3 text-[0.875rem] leading-6 text-black/50">
                 {jaSolicitada
                   ? `A pesquisa de ${empresaNome} já está na nossa fila. Vamos te avisar quando os dados estiverem disponíveis.`
                   : `A pesquisa de ${empresaNome} entrou na nossa fila. Vamos identificar os contatos-chave e te avisar em breve.`}
@@ -76,19 +76,19 @@ export function PesquisaEmpresaModal({
               <button
                 type="button"
                 onClick={onClose}
-                className="mt-6 inline-flex min-h-10 items-center justify-center rounded border border-[#7259B5]/30 bg-white px-5 text-[12px] font-medium text-[#7259B5] transition hover:bg-black/[.04] active:scale-[.98]"
+                className="mt-6 inline-flex min-h-10 items-center justify-center rounded border border-[#7259B5]/30 bg-white px-5 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] active:scale-[.98]"
               >
                 Fechar
               </button>
             </>
           ) : (
             <>
-              <h2 id="pesquisa-empresa-title" className="text-[17px] font-medium leading-7 tracking-[-.015em] text-black/70">
+              <h2 id="pesquisa-empresa-title" className="text-[1.0625rem] font-medium leading-7 tracking-[-.015em] text-black/70">
                 <strong className="font-semibold text-[#0D0D0D]">{usuarioNome}</strong>, precisamos confirmar algumas informações da empresa <strong className="font-semibold text-[#0D0D0D]">{empresaNome}</strong>. Clique em “começar busca” para priorizar este pedido. Vamos identificar os contatos-chave e te avisar em breve.
               </h2>
 
               {erro && (
-                <p role="alert" className="mt-4 rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[11px] leading-5 text-[#D94E4E]">
+                <p role="alert" className="mt-4 rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.6875rem] leading-5 text-[#D94E4E]">
                   {erro}
                 </p>
               )}
@@ -98,7 +98,7 @@ export function PesquisaEmpresaModal({
                   type="button"
                   disabled={loading}
                   onClick={onStart}
-                  className="inline-flex min-h-11 items-center rounded border border-[#7259B5]/30 bg-white text-[12px] font-medium text-[#7259B5] transition hover:bg-black/[.04] active:scale-[.98] disabled:opacity-45"
+                  className="inline-flex min-h-11 items-center rounded border border-[#7259B5]/30 bg-white text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] active:scale-[.98] disabled:opacity-45"
                 >
                   <span className="flex items-center gap-2 px-4">
                     <MagnifyingGlass size={14} weight="bold" />

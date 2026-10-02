@@ -25,8 +25,8 @@ type Empresa = {
   tem_detalhe: boolean | null;
 };
 
-const cellCls = "w-full min-w-[120px] rounded bg-transparent px-2 py-1.5 text-sm outline-none transition focus:bg-white focus:ring-1 focus:ring-[#7259B5]/30";
-const theadCls = "px-2 py-2 text-left text-[10px] font-semibold uppercase tracking-wide text-black/35";
+const cellCls = "w-full min-w-[7.5rem] rounded bg-transparent px-2 py-1.5 text-sm outline-none transition focus:bg-white focus:ring-1 focus:ring-[#7259B5]/30";
+const theadCls = "px-2 py-2 text-left text-[0.625rem] font-semibold uppercase tracking-wide text-black/35";
 
 function ResponsavelRow({ responsavel, onSave, onDelete }: {
   responsavel: Responsavel;
@@ -77,7 +77,7 @@ function ResponsavelRow({ responsavel, onSave, onDelete }: {
       <td><input className={cellCls} value={draft.linkedin_url ?? ""} onChange={(e) => setDraft((d) => ({ ...d, linkedin_url: e.target.value }))} onBlur={commit} /></td>
       <td className="w-16 whitespace-nowrap px-2 text-right">
         {error ? <span title={error}><AlertCircle size={14} className="inline text-red-500" /></span>
-          : saving ? <span className="text-[10px] text-black/30">salvando…</span>
+          : saving ? <span className="text-[0.625rem] text-black/30">salvando…</span>
           : saved ? <Check size={14} className="inline text-[#2E8932]" /> : null}
         <button onClick={remove} disabled={deleting} className="ml-2 align-middle text-black/25 transition hover:text-red-500 disabled:opacity-40">
           <Trash2 size={14} />
@@ -122,7 +122,7 @@ function EditalRow({ edital, onSave }: {
       <td><input className={cellCls} value={draft.url_acesso ?? ""} onChange={(e) => setDraft((d) => ({ ...d, url_acesso: e.target.value }))} onBlur={commit} placeholder="https://..." /></td>
       <td className="w-10 whitespace-nowrap px-2 text-right">
         {error ? <span title={error}><AlertCircle size={14} className="inline text-red-500" /></span>
-          : saving ? <span className="text-[10px] text-black/30">salvando…</span>
+          : saving ? <span className="text-[0.625rem] text-black/30">salvando…</span>
           : saved ? <Check size={14} className="inline text-[#2E8932]" /> : null}
       </td>
     </tr>
@@ -170,7 +170,7 @@ function NovoEditalRow({ empresaId, onCriado }: { empresaId: string; onCriado: (
       <td><input className={cellCls} value={draft.url_acesso} onChange={(e) => setDraft((d) => ({ ...d, url_acesso: e.target.value }))} onBlur={commit} placeholder="https://..." /></td>
       <td className="w-10 whitespace-nowrap px-2 text-right">
         {error ? <span title={error}><AlertCircle size={14} className="inline text-red-500" /></span>
-          : saving ? <span className="text-[10px] text-black/30">salvando…</span> : null}
+          : saving ? <span className="text-[0.625rem] text-black/30">salvando…</span> : null}
       </td>
     </tr>
   );
@@ -320,7 +320,7 @@ export default function AdminPatrocinadorPage() {
 
         {/* Identidade */}
         <section>
-          <p className="text-[11px] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Identidade</p>
+          <p className="text-[0.6875rem] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Identidade</p>
           <div className="grid grid-cols-2 gap-3">
             <div className="col-span-2">
               <label className="block text-xs font-medium text-black/50 mb-1">Nome</label>
@@ -350,7 +350,7 @@ export default function AdminPatrocinadorPage() {
 
         {/* Localização e contato */}
         <section>
-          <p className="text-[11px] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Contato</p>
+          <p className="text-[0.6875rem] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Contato</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-black/50 mb-1">Cidade</label>
@@ -377,7 +377,7 @@ export default function AdminPatrocinadorPage() {
 
         {/* Investimento */}
         <section>
-          <p className="text-[11px] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Investimento</p>
+          <p className="text-[0.6875rem] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Investimento</p>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-medium text-black/50 mb-1">Aporte estimado (R$)</label>
@@ -411,7 +411,7 @@ export default function AdminPatrocinadorPage() {
 
         {/* Detalhes */}
         <section>
-          <p className="text-[11px] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Acesso</p>
+          <p className="text-[0.6875rem] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Acesso</p>
           <label className="flex items-center gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -428,7 +428,7 @@ export default function AdminPatrocinadorPage() {
 
         {/* Responsáveis */}
         <section>
-          <p className="text-[11px] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Responsáveis</p>
+          <p className="text-[0.6875rem] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Responsáveis</p>
           {responsaveis.length === 0 ? (
             <p className="text-sm text-black/35">Nenhum responsável cadastrado.</p>
           ) : (
@@ -455,7 +455,7 @@ export default function AdminPatrocinadorPage() {
 
         {/* Editais */}
         <section>
-          <p className="text-[11px] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Editais</p>
+          <p className="text-[0.6875rem] font-bold tracking-[.08em] uppercase text-black/30 mb-3">Editais</p>
           <div className="overflow-x-auto rounded" style={inputStyle}>
             <table className="w-full text-left">
               <thead>

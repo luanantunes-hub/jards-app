@@ -76,7 +76,7 @@ export default function AdminPatrocinadoresPage() {
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/30" />
           <input
             className="pl-9 pr-4 py-2 rounded text-sm outline-none"
-            style={{ border: "1px solid rgba(13,13,13,.10)", width: 220 }}
+            style={{ border: "1px solid rgba(13,13,13,.10)", width: "13.75rem" }}
             placeholder="Buscar empresa…"
             value={search}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -88,11 +88,11 @@ export default function AdminPatrocinadoresPage() {
         <table className="w-full text-sm">
           <thead>
             <tr style={{ background: "#FAFAFA", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Empresa</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Setor</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Localização</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Aporte estimado</th>
-              <th className="text-center px-4 py-3 text-[11px] font-semibold text-black/40">Detalhe</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Empresa</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Setor</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Localização</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Aporte estimado</th>
+              <th className="text-center px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Detalhe</th>
             </tr>
           </thead>
           <tbody>
@@ -106,14 +106,14 @@ export default function AdminPatrocinadoresPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <CompanyLogo nome={e.nome} logo_url={e.logo_url} size={28} />
-                    <span className="font-medium text-[#0D0D0D] text-[13px]">{e.nome}</span>
+                    <span className="font-medium text-[#0D0D0D] text-[0.8125rem]">{e.nome}</span>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-[13px] text-black/55">{e.setor ?? "—"}</td>
-                <td className="px-4 py-3 text-[13px] text-black/55">
+                <td className="px-4 py-3 text-[0.8125rem] text-black/55">{e.setor ?? "—"}</td>
+                <td className="px-4 py-3 text-[0.8125rem] text-black/55">
                   {[e.cidade, e.estado].filter(Boolean).join(", ") || "—"}
                 </td>
-                <td className="px-4 py-3 text-[13px] text-black/55">
+                <td className="px-4 py-3 text-[0.8125rem] text-black/55">
                   {e.aporte_estimado ? `R$ ${Number(e.aporte_estimado).toLocaleString("pt-BR")}` : "—"}
                 </td>
                 <td className="px-4 py-3 text-center">

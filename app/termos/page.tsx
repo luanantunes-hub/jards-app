@@ -28,7 +28,7 @@ export default function TermosPage() {
       <main className="mx-auto max-w-3xl px-6 py-14">
         {/* Title */}
         <div className="mb-12 border-b border-black/8 pb-10">
-          <p className="mb-3 text-[11px] font-semibold uppercase tracking-[.12em] text-[#7259B5]">Documento legal</p>
+          <p className="mb-3 text-[0.6875rem] font-semibold uppercase tracking-[.12em] text-[#7259B5]">Documento legal</p>
           <h1 className="mb-4 text-4xl font-bold tracking-tight text-[#0D0D0D]">Termos de Uso</h1>
           <p className="text-base leading-7 text-black/50">
             Ao criar uma conta ou usar a plataforma Jards, você concorda com estes termos.
@@ -226,7 +226,7 @@ function Section({ id, num, title, children }: { id: string; num: string; title:
   return (
     <section id={id} className="scroll-mt-20">
       <h2 className="mb-3 flex items-center gap-2.5 text-base font-bold text-[#0D0D0D]">
-        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#F0EDFB] text-[11px] font-bold text-[#7259B5]">{num}</span>
+        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#F0EDFB] text-[0.6875rem] font-bold text-[#7259B5]">{num}</span>
         {title}
       </h2>
       <div className="space-y-3">{children}</div>

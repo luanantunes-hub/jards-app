@@ -150,13 +150,13 @@ function DocForm({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)" }}>
       <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className="bg-white rounded border w-[480px] max-w-[92vw] max-h-[90vh] flex flex-col shadow-2xl"
+        className="bg-white rounded border w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col shadow-2xl"
         style={{ borderColor: "rgba(13,13,13,.12)" }}>
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
             <SelectedIcon size={16} className="text-black/40" />
-            <span id={titleId} className="text-[13px] font-bold text-black">
+            <span id={titleId} className="text-[0.8125rem] font-bold text-black">
               {doc ? "Editar documento" : "Novo documento"}
             </span>
           </div>
@@ -168,7 +168,7 @@ function DocForm({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 space-y-5">
           {/* Título */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-black/35 block mb-1.5">
+            <label className="text-[0.625rem] font-bold uppercase tracking-wider text-black/35 block mb-1.5">
               Título do documento
             </label>
             <input
@@ -182,7 +182,7 @@ function DocForm({
 
           {/* Ícone */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-black/35 block mb-2">
+            <label className="text-[0.625rem] font-bold uppercase tracking-wider text-black/35 block mb-2">
               Ícone
             </label>
             <div className="flex gap-2 flex-wrap">
@@ -207,7 +207,7 @@ function DocForm({
 
           {/* Cor */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-black/35 block mb-2">
+            <label className="text-[0.625rem] font-bold uppercase tracking-wider text-black/35 block mb-2">
               Cor
             </label>
             <div className="flex gap-2.5">
@@ -232,7 +232,7 @@ function DocForm({
 
           {/* Upload */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-wider text-black/35 block mb-1.5">
+            <label className="text-[0.625rem] font-bold uppercase tracking-wider text-black/35 block mb-1.5">
               Upload do documento <span className="font-normal normal-case text-black/25">(máx. 25 MB)</span>
             </label>
             <div
@@ -245,7 +245,7 @@ function DocForm({
                 {fileName || "Clique para subir documento"}
               </p>
               {file && (
-                <p className="text-[10px] text-black/25 mt-0.5">
+                <p className="text-[0.625rem] text-black/25 mt-0.5">
                   {(file.size / 1024 / 1024).toFixed(2)} MB
                 </p>
               )}
@@ -264,7 +264,7 @@ function DocForm({
 
         {/* Footer */}
         <div className="shrink-0 px-5 pb-5 space-y-2">
-          {erro && <p role="alert" className="text-[12px] text-[#B23A3A]">{erro}</p>}
+          {erro && <p role="alert" className="text-[0.75rem] text-[#B23A3A]">{erro}</p>}
           <button
             onClick={handleSave}
             disabled={saving || !titulo.trim()}
@@ -335,7 +335,7 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,.45)" }}>
         <div role="dialog" aria-modal="true" aria-label="Documentos"
-          className="bg-white rounded border shadow-2xl w-[540px] max-w-[92vw] max-h-[85vh] flex flex-col"
+          className="bg-white rounded border shadow-2xl w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
           style={{ borderColor: "rgba(13,13,13,.10)" }}>
 
           {/* Header */}
@@ -381,9 +381,9 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
                       style={{ background: cs.bg, borderColor: cs.border + "80" }}
                     >
                       <Icon size={22} className="mb-2" style={{ color: cs.text }} />
-                      <p className="text-[12px] font-bold" style={{ color: cs.text }}>{doc.titulo}</p>
+                      <p className="text-[0.75rem] font-bold" style={{ color: cs.text }}>{doc.titulo}</p>
                       {doc.arquivo_nome && (
-                        <p className="text-[10px] mt-1 truncate" style={{ color: cs.text, opacity: .6 }}>
+                        <p className="text-[0.625rem] mt-1 truncate" style={{ color: cs.text, opacity: .6 }}>
                           {doc.arquivo_nome}
                         </p>
                       )}

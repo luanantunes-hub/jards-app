@@ -189,7 +189,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
         aria-modal="true"
         aria-labelledby={titleId}
         className="bg-white rounded shadow-2xl w-full overflow-hidden flex flex-col"
-        style={{ maxWidth: 520, maxHeight: "90vh" }}
+        style={{ maxWidth: "32.5rem", maxHeight: "90vh" }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -198,7 +198,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
             <div className="w-9 h-9 rounded flex items-center justify-center" style={{ background: "rgba(114,89,181,0.08)" }}>
               <ArrowRightLeft size={16} style={{ color: "#7259B5" }} />
             </div>
-            <h2 id={titleId} className="text-[15px] font-bold text-black">Solicitar transferência</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Solicitar transferência</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/5 transition">
             <X size={15} className="text-black/40" />
@@ -209,18 +209,18 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
         <div className="min-h-0 flex-1 p-6 space-y-4 overflow-y-auto">
           {/* Erro */}
           {erro && (
-            <div role="alert" className="px-3 py-2 rounded text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+            <div role="alert" className="px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
               {erro}
             </div>
           )}
 
           {/* Empresa */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Empresa</label>
+            <label className="text-[0.6875rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Empresa</label>
             <Select
               value={atribuicaoId ?? ""}
               onChange={(e) => setAtribuicaoId(e.target.value || null)}
-              className="w-full px-3 py-2 text-[13px] border rounded bg-white outline-none"
+              className="w-full px-3 py-2 text-[0.8125rem] border rounded bg-white outline-none"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             >
               <option value="">Selecione…</option>
@@ -234,16 +234,16 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
 
           {/* Destinatário */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Transferir para</label>
+            <label className="text-[0.6875rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Transferir para</label>
             {membros.length === 0 ? (
-              <p className="text-[12px] text-black/30">Nenhum outro captador na organização</p>
+              <p className="text-[0.75rem] text-black/30">Nenhum outro captador na organização</p>
             ) : (
               <div className="space-y-1">
                 {membros.map((m) => (
                   <button
                     key={m.user_id}
                     onClick={() => setDestinatarioId(m.user_id)}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition text-[12px]"
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition text-[0.75rem]"
                     style={
                       destinatarioId === m.user_id
                         ? { background: "rgba(13,13,13,.08)", color: "#0D0D0D", fontWeight: 600 }
@@ -262,13 +262,13 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
 
           {/* Motivo */}
           <div>
-            <label className="text-[11px] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Motivo</label>
+            <label className="text-[0.6875rem] font-bold uppercase tracking-widest text-black/30 block mb-1.5">Motivo</label>
             <textarea
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
               placeholder="Explique o motivo da transferência..."
               rows={3}
-              className="w-full px-3 py-2 text-[13px] border rounded bg-white outline-none resize-none"
+              className="w-full px-3 py-2 text-[0.8125rem] border rounded bg-white outline-none resize-none"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             />
           </div>
@@ -278,14 +278,14 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
         <div className="flex shrink-0 items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button
             onClick={onClose}
-            className="px-4 py-2 text-[12px] font-medium text-black/35 hover:text-black/55 transition"
+            className="px-4 py-2 text-[0.75rem] font-medium text-black/35 hover:text-black/55 transition"
           >
             Cancelar
           </button>
           <button
             onClick={handleSalvar}
             disabled={saving || !atribuicaoId || !destinatarioId || !motivo.trim()}
-            className="px-5 py-2 text-[12px] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-5 py-2 text-[0.75rem] font-medium bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? "Enviando…" : "Enviar solicitação"}
           </button>

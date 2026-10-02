@@ -84,7 +84,7 @@ export default function BlogAdminPage() {
       />
       <ListContent>
         <div className="mx-auto max-w-4xl">
-          {error && <p role="alert" className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[12px] text-[#B23A3A]">{error}</p>}
+          {error && <p role="alert" className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{error}</p>}
           {!isAdmin || loading ? (
             <div className="space-y-2" aria-busy="true" aria-label="Carregando posts">
               {Array.from({ length: 4 }).map((_, index) => (
@@ -114,13 +114,13 @@ export default function BlogAdminPage() {
                     <div className="min-w-0 flex-1">
                       <div className="mb-1 flex items-center gap-2">
                         <span
-                          className="rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium"
+                          className="rounded border bg-white px-1.5 py-0.5 text-[0.625rem] font-medium"
                           style={post.status === "publicado" ? { borderColor: "#2E893247", color: "#2E8932" } : { borderColor: "rgba(13,13,13,.12)", color: "rgba(13,13,13,.45)" }}
                         >
                           {post.status === "publicado" ? "Publicado" : "Rascunho"}
                         </span>
                         {post.tags?.length > 0 && (
-                          <span className="flex items-center gap-1 text-[10px] text-black/35">
+                          <span className="flex items-center gap-1 text-[0.625rem] text-black/35">
                             <Tag size={9} aria-hidden="true" />
                             {post.tags.slice(0, 3).join(", ")}
                           </span>
@@ -129,7 +129,7 @@ export default function BlogAdminPage() {
                       <p className="truncate text-sm font-semibold text-[#0D0D0D]">{post.titulo || "Sem título"}</p>
                       <p className="mt-0.5 text-xs text-black/35">/{post.slug}</p>
                     </div>
-                    <div className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[11px] tabular-nums text-black/30">
+                    <div className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[0.6875rem] tabular-nums text-black/30">
                       {post.status === "publicado" ? <Globe size={11} aria-hidden="true" /> : <Clock size={11} aria-hidden="true" />}
                       {post.status === "publicado" ? fmtDate(post.publicado_em) : fmtDate(post.created_at)}
                     </div>

@@ -54,13 +54,13 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white shadow-2xl" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white shadow-2xl" style={{ maxWidth: "26.25rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
               <Target size={15} />
             </div>
-            <h2 id={titleId} className="text-[15px] font-bold text-black">Editar objetivo</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Editar objetivo</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />
@@ -69,14 +69,14 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
 
         <div className="space-y-3 px-5 py-5">
           {erro && (
-            <div role="alert" className="rounded px-3 py-2 text-[12px] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+            <div role="alert" className="rounded px-3 py-2 text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
               {erro}
             </div>
           )}
           <label>
-            <span className="mb-1.5 block text-[11px] font-semibold text-black/50">Meta de captação</span>
+            <span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/50">Meta de captação</span>
             <div className="flex items-center gap-2 rounded border bg-white px-3" style={{ borderColor: "rgba(13,13,13,.15)" }}>
-              <span className="text-[13px] text-black/35">R$</span>
+              <span className="text-[0.8125rem] text-black/35">R$</span>
               <input
                 autoFocus
                 type="text"
@@ -85,18 +85,18 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
                 onChange={e => setValor(formatDecimalBR(e.target.value))}
                 onKeyDown={e => { if (e.key === "Enter") handleSalvar(); }}
                 placeholder="Ex.: 1.250.000,00"
-                className="h-11 w-full bg-transparent text-[14px] text-black outline-none"
+                className="h-11 w-full bg-transparent text-[0.875rem] text-black outline-none"
               />
             </div>
           </label>
         </div>
 
         <div className="flex items-center justify-end gap-3 border-t px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <button onClick={onClose} className="px-3 py-2 text-[12px] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
+          <button onClick={onClose} className="px-3 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
           <button
             onClick={handleSalvar}
             disabled={saving}
-            className="rounded bg-[#2E8932] px-5 py-2 text-[12px] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {saving ? "Salvando…" : "Salvar"}
           </button>
