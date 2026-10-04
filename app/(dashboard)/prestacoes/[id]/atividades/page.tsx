@@ -4,6 +4,8 @@ import { useParams } from "next/navigation";
 import { Plus, Upload, Image, Trash2, X, MapPin, Users, CalendarDays, ChevronDown, ChevronUp, Briefcase, HandHeart, Accessibility } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoAtividade, PrestacaoAtividadeEvidencia } from "@/lib/supabase/types";
+import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
+import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 
 type AtividadeComEvidencias = PrestacaoAtividade & { evidencias: PrestacaoAtividadeEvidencia[] };
 
@@ -36,6 +38,7 @@ export default function AtividadesPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const organizationId = usePrestacaoOrganizacao(id);
 
   const [atividades, setAtividades] = useState<AtividadeComEvidencias[]>([]);
   const [loading, setLoading] = useState(true);
@@ -118,9 +121,14 @@ export default function AtividadesPage() {
   }
 
   async function uploadEvidencia(atId: string, file: File) {
+    if (!organizationId) return;
     setUploadingFor(atId);
-    const ext = file.name.split(".").pop() ?? "bin";
-    const path = `prestacoes/${id}/atividades/${atId}/${Date.now()}.${ext}`;
+    const path = montarCaminhoPrestacao({
+      organizationId,
+      prestacaoId: id,
+      pasta: { tipo: "atividade", atividadeId: atId },
+      nomeOriginal: file.name,
+    });
     const { error } = await supabase.storage.from("documentos").upload(path, file, { upsert: false });
     if (!error) {
       await (supabase as any).from("prestacao_atividade_evidencias").insert({
@@ -303,6 +311,7 @@ export default function AtividadesPage() {
                                 type="file"
                                 className="hidden"
                                 accept="image/*,video/*"
+                                disabled={!organizationId || uploadingFor === at.id}
                                 onChange={e => {
                                   const f = e.target.files?.[0];
                                   if (f) uploadEvidencia(at.id, f);

@@ -5,6 +5,8 @@ import { Plus, Pencil, Trash2, AlertTriangle, Check, Upload } from "lucide-react
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoItem } from "@/lib/supabase/types";
 import { Select } from "@/components/ui/Select";
+import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
+import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 
 type ImportItem = {
   rubrica: string;
@@ -28,6 +30,7 @@ type EditingItem = Partial<PrestacaoItem> & { _new?: boolean };
 export default function OrcamentoPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
+  const organizationId = usePrestacaoOrganizacao(id);
   const [itens, setItens] = useState<PrestacaoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<EditingItem | null>(null);
@@ -198,8 +201,18 @@ export default function OrcamentoPage() {
       setCsvRaw(raw);
       setImporting(false);
     } else if (file.name.endsWith(".pdf")) {
+      if (!organizationId) {
+        setImportStatus("A prestação ainda está carregando. Tente de novo em instantes.");
+        setImporting(false);
+        return;
+      }
       setImportStatus("Enviando PDF para análise…");
-      const path = `orcamentos/${id}/${Date.now()}.pdf`;
+      const path = montarCaminhoPrestacao({
+        organizationId,
+        prestacaoId: id,
+        pasta: { tipo: "orcamento" },
+        nomeOriginal: file.name,
+      });
       const { error: upErr } = await supabase.storage.from("documentos").upload(path, file, { upsert: false });
       if (upErr) {
         setImportStatus("Erro ao enviar PDF.");
@@ -207,22 +220,23 @@ export default function OrcamentoPage() {
         return;
       }
       setImportStatus("Analisando orçamento com IA…");
+      let mensagemFinal = "";
       try {
         const { data: fnData, error: fnErr } = await supabase.functions.invoke("importar-orcamento", {
-          body: { storage_path: path },
+          body: { storage_path: path, prestacao_id: id },
         });
         if (fnErr || !fnData?.itens?.length) {
-          setImportStatus("Não foi possível extrair rubricas do PDF. Tente um CSV.");
-          setImporting(false);
-          return;
+          mensagemFinal = "Não foi possível extrair rubricas do PDF. Tente um CSV.";
+        } else {
+          setPreview(fnData.itens as ImportItem[]);
         }
-        setPreview(fnData.itens as ImportItem[]);
       } catch {
-        setImportStatus("Erro na análise. Tente um CSV.");
+        mensagemFinal = "Erro na análise. Tente um CSV.";
       }
+      // O PDF só serve para a leitura: sai do storage em qualquer resultado.
       await supabase.storage.from("documentos").remove([path]);
       setImporting(false);
-      setImportStatus("");
+      setImportStatus(mensagemFinal);
     } else {
       setImportStatus("Formato não suportado. Use CSV ou PDF.");
       setImporting(false);

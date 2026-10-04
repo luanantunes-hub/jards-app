@@ -5,6 +5,8 @@ import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCi
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoComprovante, PrestacaoItem, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
 import { Select } from "@/components/ui/Select";
+import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
+import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
   nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
@@ -38,6 +40,7 @@ export default function ComprovantesPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const organizationId = usePrestacaoOrganizacao(id);
 
   const [comprovantes, setComprovantes] = useState<PrestacaoComprovante[]>([]);
   const [itens, setItens] = useState<PrestacaoItem[]>([]);
@@ -83,6 +86,10 @@ export default function ComprovantesPage() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    if (!organizationId) {
+      setUploadError("A prestação ainda está carregando. Tente de novo em instantes.");
+      return;
+    }
     setUploadError("");
     setRiscoGlosa(null);
     setMotivosGlosa([]);
@@ -91,8 +98,12 @@ export default function ComprovantesPage() {
     // 1. Sobe o arquivo
     setExtraindo(true);
     setUploadProgress("Enviando arquivo…");
-    const ext = file.name.split(".").pop() ?? "bin";
-    const path = `prestacoes/${id}/${Date.now()}.${ext}`;
+    const path = montarCaminhoPrestacao({
+      organizationId,
+      prestacaoId: id,
+      pasta: { tipo: "comprovantes" },
+      nomeOriginal: file.name,
+    });
     const { error: storageErr } = await supabase.storage
       .from("documentos")
       .upload(path, file, { upsert: false });
