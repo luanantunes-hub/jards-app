@@ -125,63 +125,63 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
   return (
     <div className="min-h-full">
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
-          <Link href="/workspace-proponente" className="mb-7 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65">
+        <div className="mx-auto max-w-pagina px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+          <Link href="/workspace-proponente" className="mb-7 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65">
             <ArrowLeft size={14} /> Meus projetos
           </Link>
           <div className="flex min-w-0 items-center gap-4">
             <ProjectIdentity nome={projeto.nome} tipo={projeto.identidadeTipo} valor={projeto.identidadeValor} logoUrl={projeto.identidadeLogoUrl} cor={projeto.identidadeCor} size="md" />
             <div className="min-w-0">
-              <span className="mb-2 inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[10px] font-medium" style={{ borderColor: faseMeta.color + "47", color: faseMeta.color, background: "white" }}>
+              <span className="mb-2 inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: faseMeta.color + "47", color: faseMeta.color, background: "white" }}>
                 <faseMeta.Icon size={10} />{faseMeta.label}
               </span>
-              <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{projeto.nome}</h1>
-              <p className="mt-2 text-[14px] text-black/50">{projeto.proponenteNome}</p>
-              {projeto.descricao && <p className="mt-3 max-w-3xl text-[15px] leading-6 text-black/45">{projeto.descricao}</p>}
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{projeto.nome}</h1>
+              <p className="mt-2 text-[0.875rem] text-black/50">{projeto.proponenteNome}</p>
+              {projeto.descricao && <p className="mt-3 max-w-3xl text-[0.9375rem] leading-6 text-black/45">{projeto.descricao}</p>}
             </div>
           </div>
         </div>
       </div>
 
-      <main className="mx-auto w-full max-w-[1280px] px-4 py-7 sm:px-6 sm:py-9 lg:px-10 lg:py-10">
+      <main className="mx-auto w-full max-w-pagina px-4 py-7 sm:px-6 sm:py-9 lg:px-10 lg:py-10">
         <div className="space-y-6">
           {/* Hero financeiro */}
           <div className="rounded border bg-white p-6 sm:p-7" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <p className="text-[11px] font-medium text-black/40 mb-2">Captado do objetivo</p>
-            <p className="text-[52px] font-semibold tracking-[-.045em] tabular-nums leading-none text-black/80">
-              {progress}<span className="text-[30px] text-black/35 ml-1">%</span>
+            <p className="text-[0.6875rem] font-medium text-black/40 mb-2">Captado do objetivo</p>
+            <p className="text-[3.25rem] font-semibold tracking-[-.045em] tabular-nums leading-none text-black/80">
+              {progress}<span className="text-[1.875rem] text-black/35 ml-1">%</span>
             </p>
-            {projeto.valorAlvo && <p className="mt-2 text-[12px] text-black/35">de {fmtValor(projeto.valorAlvo)}</p>}
+            {projeto.valorAlvo && <p className="mt-2 text-[0.75rem] text-black/35">de {fmtValor(projeto.valorAlvo)}</p>}
 
             <div className="mt-5 h-2 overflow-hidden rounded bg-black/[.06]">
               <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${progress}%` }} />
             </div>
             <div className="mt-6 grid grid-cols-3 gap-4 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#2E8932" }}>Confirmado</p>
-                <p className="text-[18px] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{fmtValor(confirmado)}</p>
+                <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#2E8932" }}>Confirmado</p>
+                <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{fmtValor(confirmado)}</p>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#7259B5" }}>Em negociação</p>
-                <p className="text-[18px] font-semibold tabular-nums" style={{ color: "#7259B5" }}>{fmtValor(negociacao)}</p>
+                <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#7259B5" }}>Em negociação</p>
+                <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: "#7259B5" }}>{fmtValor(negociacao)}</p>
               </div>
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>
+                <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>
                   {faltante > 0 ? "Falta captar" : "Meta atingida"}
                 </p>
-                <p className="text-[18px] font-semibold tabular-nums" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>{faltante > 0 ? fmtValor(faltante) : "—"}</p>
+                <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>{faltante > 0 ? fmtValor(faltante) : "—"}</p>
               </div>
             </div>
           </div>
 
           {/* Negociações */}
           <section>
-            <h2 className="mb-3 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[.12em] text-black/40">
+            <h2 className="mb-3 flex items-center gap-1.5 text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">
               <Building2 size={12} /> Negociações
             </h2>
             {projeto.negociacoes.length === 0 ? (
               <div className="rounded border p-5 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>
-                <p className="text-[12px] text-black/30">Nenhuma negociação registrada ainda.</p>
+                <p className="text-[0.75rem] text-black/30">Nenhuma negociação registrada ainda.</p>
               </div>
             ) : (
               <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -190,11 +190,11 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
                   const st = etiqueta ? { label: etiqueta.label, color: etiqueta.cor, iconName: etiqueta.icone } : { ...(STATUS_CAP[neg.status] ?? { label: neg.status, color: "#888888" }), iconName: undefined };
                   return (
                     <div>
-                      <p className="truncate text-[12.5px] font-semibold text-black/80">{neg.titulo ?? neg.empresaNome}</p>
-                      <p className="mt-0.5 truncate text-[11px] text-black/45">{neg.empresaNome}</p>
+                      <p className="truncate text-[0.78125rem] font-semibold text-black/80">{neg.titulo ?? neg.empresaNome}</p>
+                      <p className="mt-0.5 truncate text-[0.6875rem] text-black/45">{neg.empresaNome}</p>
                       <div className="mt-2.5 flex items-center justify-between border-t border-black/[.06] pt-2">
                         <StatusBadge status={neg.status} label={st.label} bg={st.color} iconName={st.iconName} size="sm" />
-                        <span className="text-[12px] font-bold text-black/50">{fmtValor(neg.valorSolicitado)}</span>
+                        <span className="text-[0.75rem] font-bold text-black/50">{fmtValor(neg.valorSolicitado)}</span>
                       </div>
                     </div>
                   );
@@ -205,12 +205,12 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
 
           {/* Inscrições */}
           <section>
-            <h2 className="mb-3 flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-[.12em] text-black/40">
+            <h2 className="mb-3 flex items-center gap-1.5 text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">
               <FileStack size={12} /> Inscrições
             </h2>
             {projeto.inscricoes.length === 0 ? (
               <div className="rounded border p-5 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>
-                <p className="text-[12px] text-black/30">Nenhum edital inscrito ainda.</p>
+                <p className="text-[0.75rem] text-black/30">Nenhum edital inscrito ainda.</p>
               </div>
             ) : (
               <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -219,8 +219,8 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
                   const st = etiqueta ? { label: etiqueta.label, color: etiqueta.cor, iconName: etiqueta.icone } : { ...(STATUS_INSC[insc.status] ?? { label: insc.status, color: "#888888" }), iconName: undefined };
                   return (
                     <div>
-                      <p className="truncate text-[12.5px] font-semibold text-black/80">{insc.titulo}</p>
-                      {insc.dataSubmissao && <p className="mt-0.5 flex items-center gap-1 text-[11px] text-black/45"><Calendar size={9} /> {fmtDate(insc.dataSubmissao)}</p>}
+                      <p className="truncate text-[0.78125rem] font-semibold text-black/80">{insc.titulo}</p>
+                      {insc.dataSubmissao && <p className="mt-0.5 flex items-center gap-1 text-[0.6875rem] text-black/45"><Calendar size={9} /> {fmtDate(insc.dataSubmissao)}</p>}
                       <div className="mt-2.5 border-t border-black/[.06] pt-2">
                         <StatusBadge status={insc.status} label={st.label} bg={st.color} iconName={st.iconName} size="sm" />
                       </div>

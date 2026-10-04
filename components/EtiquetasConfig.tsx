@@ -103,7 +103,7 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] text-black/30 mt-2 text-center">Cor personalizada</p>
+              <p className="text-[0.5625rem] text-black/30 mt-2 text-center">Cor personalizada</p>
               <input type="color" value={etiqueta.cor}
                 onChange={e => onUpdate(etiqueta.id, { cor: e.target.value })}
                 className="w-full h-6 mt-1 rounded cursor-pointer border-0 bg-transparent" />
@@ -118,7 +118,7 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
         <button onClick={() => setShowIconPicker(v => !v)}
           className="w-7 h-7 rounded border bg-transparent flex items-center justify-center transition"
           style={{ borderColor: `${etiqueta.cor}66`, color: etiqueta.cor }}>
-          {Icon ? <Icon size={14} strokeWidth={2.5} /> : <span className="text-[10px]">?</span>}
+          {Icon ? <Icon size={14} strokeWidth={2.5} /> : <span className="text-[0.625rem]">?</span>}
         </button>
         {showIconPicker && (
           <IconePickerPopup current={etiqueta.icone}
@@ -134,12 +134,12 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
         onChange={e => setLabel(e.target.value)}
         onBlur={commitLabel}
         onKeyDown={e => { if (e.key === "Enter") { e.currentTarget.blur(); } }}
-        className="flex-1 text-[13px] font-semibold text-black bg-transparent outline-none border-b border-transparent focus:border-black/20 transition py-0.5"
+        className="flex-1 text-[0.8125rem] font-semibold text-black bg-transparent outline-none border-b border-transparent focus:border-black/20 transition py-0.5"
         placeholder="Nome da etiqueta"
       />
 
       {/* Preview */}
-      <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-bold text-white flex-shrink-0"
+      <span className="inline-flex items-center gap-1 rounded px-2 py-0.5 text-[0.625rem] font-bold text-white flex-shrink-0"
         style={{ background: etiqueta.cor }}>
         {Icon && <Icon size={9} strokeWidth={2.5} />}
         {etiqueta.label}
@@ -153,7 +153,7 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
         </button>
       ) : (
         <div className="w-7 flex-shrink-0" title="Etiqueta obrigatória">
-          <span className="text-[9px] text-black/20 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100">fixo</span>
+          <span className="text-[0.5625rem] text-black/20 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100">fixo</span>
         </div>
       )}
     </div>
@@ -301,32 +301,32 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
             onChange={e => setNovaLabel(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") handleCriar(); }}
             placeholder="Nova etiqueta…"
-            className="flex-1 text-[13px] text-black bg-transparent outline-none placeholder:text-black/25"
+            className="flex-1 text-[0.8125rem] text-black bg-transparent outline-none placeholder:text-black/25"
           />
           {novaLabel.trim() && (
             <button onClick={handleCriar} disabled={criando}
-              className="px-3 py-1 text-[11px] font-bold text-[#7259B5] hover:bg-[#7259B5]/8 rounded transition disabled:opacity-40">
+              className="px-3 py-1 text-[0.6875rem] font-bold text-[#7259B5] hover:bg-[#7259B5]/8 rounded transition disabled:opacity-40">
               {criando ? "Criando…" : "Criar"}
             </button>
           )}
         </div>
         )}
       </div>
-      {erro && <p role="alert" className="mt-2 text-[12px] text-[#B23A3A]">{erro}</p>}
+      {erro && <p role="alert" className="mt-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
       {etapaParaExcluir && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/45 p-4" onClick={() => !excluindo && setEtapaParaExcluir(null)}>
           <div role="dialog" aria-modal="true" aria-labelledby="excluir-etapa-titulo" className="w-full max-w-md rounded bg-white p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
-            <h2 id="excluir-etapa-titulo" className="text-[17px] font-bold text-black">Excluir “{etapaParaExcluir.label}”?</h2>
-            <p className="mt-2 text-[13px] leading-relaxed text-black/55">Os registros nesta etapa serão transferidos para a etapa escolhida antes da exclusão.</p>
-            <p className="mt-2 text-[12px] text-black/40">Essa mudança também pode alterar indicadores que dependem do status dos registros.</p>
-            <label htmlFor="destino-etapa" className="mt-5 block text-[12px] font-semibold text-black/70">Mover registros para</label>
-            <select id="destino-etapa" value={destinoKey} onChange={event => setDestinoKey(event.target.value)} className="mt-2 w-full rounded border border-black/15 bg-white px-3 py-2 text-[13px] text-black">
+            <h2 id="excluir-etapa-titulo" className="text-[1.0625rem] font-bold text-black">Excluir “{etapaParaExcluir.label}”?</h2>
+            <p className="mt-2 text-[0.8125rem] leading-relaxed text-black/55">Os registros nesta etapa serão transferidos para a etapa escolhida antes da exclusão.</p>
+            <p className="mt-2 text-[0.75rem] text-black/40">Essa mudança também pode alterar indicadores que dependem do status dos registros.</p>
+            <label htmlFor="destino-etapa" className="mt-5 block text-[0.75rem] font-semibold text-black/70">Mover registros para</label>
+            <select id="destino-etapa" value={destinoKey} onChange={event => setDestinoKey(event.target.value)} className="mt-2 w-full rounded border border-black/15 bg-white px-3 py-2 text-[0.8125rem] text-black">
               {etiquetas.filter(item => item.key !== etapaParaExcluir.key).map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
             </select>
-            {erro && <p role="alert" className="mt-3 text-[12px] text-[#B23A3A]">{erro}</p>}
+            {erro && <p role="alert" className="mt-3 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
             <div className="mt-6 flex justify-end gap-3">
-              <button type="button" disabled={excluindo} onClick={() => setEtapaParaExcluir(null)} className="rounded px-4 py-2 text-[12px] font-semibold text-black/55 hover:bg-black/5">Cancelar</button>
-              <button type="button" disabled={excluindo || !destinoKey} onClick={confirmarExclusaoEtapa} className="rounded bg-[#D94E4E] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#C04040] disabled:opacity-50">{excluindo ? "Excluindo…" : "Mover e excluir"}</button>
+              <button type="button" disabled={excluindo} onClick={() => setEtapaParaExcluir(null)} className="rounded px-4 py-2 text-[0.75rem] font-semibold text-black/55 hover:bg-black/5">Cancelar</button>
+              <button type="button" disabled={excluindo || !destinoKey} onClick={confirmarExclusaoEtapa} className="rounded bg-[#D94E4E] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#C04040] disabled:opacity-50">{excluindo ? "Excluindo…" : "Mover e excluir"}</button>
             </div>
           </div>
         </div>

@@ -219,7 +219,7 @@ function LoginForm() {
 
       <form className="space-y-3.5" onSubmit={handleSubmit}>
         <div>
-          <label className="mb-1.5 block text-[11px] font-medium text-black/55">
+          <label className="mb-1.5 block text-[0.6875rem] font-medium text-black/55">
             E-mail
           </label>
           <input
@@ -234,7 +234,7 @@ function LoginForm() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-[11px] font-medium text-black/55">
+          <label className="mb-1.5 block text-[0.6875rem] font-medium text-black/55">
             Senha
           </label>
           <div className="relative">
@@ -324,7 +324,7 @@ export default function LoginPage() {
       <a href="/" aria-label="Ir para a página inicial do Jards" className="mb-6 inline-block">
         <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="h-7 w-auto" />
       </a>
-      <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Continue seu trabalho</p>
+      <p className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Continue seu trabalho</p>
       <h1 className="text-[clamp(2.2rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">Hoje é o dia.</h1>
       <p className="mb-5 mt-2.5 text-sm leading-6 text-black/50">Seu workspace, projetos e negociações permanecem no mesmo contexto.</p>
 
@@ -336,7 +336,7 @@ export default function LoginPage() {
         Ainda não usa o Jards? <a href="/cadastro" className="font-semibold text-black hover:underline">Criar uma conta</a>
       </p>
 
-      <p className="mt-4 text-center text-[11px] leading-5 text-black/35">
+      <p className="mt-4 text-center text-[0.6875rem] leading-5 text-black/35">
         <a href="/termos" className="hover:text-black/45 underline">Termos de Uso</a>
         {" · "}
         <a href="/privacidade" className="hover:text-black/45 underline">Política de Privacidade</a>

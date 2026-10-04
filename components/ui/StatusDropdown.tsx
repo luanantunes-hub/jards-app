@@ -4,6 +4,7 @@ import { STATUS_BADGE } from "@/components/ui/StatusBadge";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { escalaUi } from "@/lib/escala-ui";
 
 type Option = {
   status: string;
@@ -68,11 +69,11 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
       <div
         className="fixed z-50 overflow-x-hidden overflow-y-auto rounded border bg-white shadow-xl"
         style={{
-          top: Math.max(12, Math.min(position.top, window.innerHeight - 532)),
+          top: Math.max(12, Math.min(position.top, window.innerHeight - 532 * escalaUi())),
           left: position.left,
           borderColor: "rgba(13,13,13,.10)",
-          minWidth: 280,
-          maxWidth: 320,
+          minWidth: "17.5rem",
+          maxWidth: "20rem",
           maxHeight: "calc(100vh - 24px)",
         }}
       >
@@ -84,7 +85,7 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
             <rect x="1" y="9" width="6" height="6" rx="1.2" fill="currentColor" />
             <rect x="9" y="9" width="6" height="6" rx="1.2" fill="currentColor" />
           </svg>
-          <span className="text-[11px] font-bold text-black/40 uppercase tracking-widest">{title}</span>
+          <span className="text-[0.6875rem] font-bold text-black/40 uppercase tracking-widest">{title}</span>
         </div>
 
         {/* Divider */}
@@ -99,11 +100,11 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
                 <button
                   type="button"
                   onClick={() => { onSelect(status); onClose(); }}
-                  className="relative flex h-full min-h-[70px] w-full flex-col items-center justify-center gap-1.5 rounded px-1 py-2.5 text-white transition"
+                  className="relative flex h-full min-h-[4.375rem] w-full flex-col items-center justify-center gap-1.5 rounded px-1 py-2.5 text-white transition"
                   style={{ background: bg, opacity: isActive ? 1 : 0.58, outline: isActive ? `2px solid ${bg}` : "none", outlineOffset: isActive ? 2 : 0 }}
                 >
                   {Icon && <Icon size={14} strokeWidth={2.5} />}
-                  <span className="text-center text-[9px] font-bold uppercase leading-tight tracking-wide">{label}</span>
+                  <span className="text-center text-[0.5625rem] font-bold uppercase leading-tight tracking-wide">{label}</span>
                   {isActive && <span className="absolute right-1 top-1 flex h-3 w-3 items-center justify-center rounded bg-white/30"><Icons.Check size={7} strokeWidth={3}/></span>}
                 </button>
                 {custom && onDelete && (
@@ -121,24 +122,24 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
             );
           })}
           {onCreate && !creating && (
-            <button type="button" onClick={() => setCreating(true)} className="flex min-h-[70px] flex-col items-center justify-center gap-1.5 rounded border border-dashed border-black/20 bg-white px-1 py-2.5 text-black/35 transition hover:border-[#7259B5]/45 hover:bg-[#7259B5]/[.025] hover:text-[#7259B5]">
+            <button type="button" onClick={() => setCreating(true)} className="flex min-h-[4.375rem] flex-col items-center justify-center gap-1.5 rounded border border-dashed border-black/20 bg-white px-1 py-2.5 text-black/35 transition hover:border-[#7259B5]/45 hover:bg-[#7259B5]/[.025] hover:text-[#7259B5]">
               <Icons.Plus size={15}/>
-              <span className="text-[9px] font-bold uppercase tracking-wide">Adicionar</span>
+              <span className="text-[0.5625rem] font-bold uppercase tracking-wide">Adicionar</span>
             </button>
           )}
         </div>
 
         {creating && (
           <div className="border-t border-black/[.07] p-3">
-            <input autoFocus value={newLabel} onChange={event => setNewLabel(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void createOption(); }} placeholder="Nome da lei" className="h-9 w-full rounded border border-black/10 bg-white px-3 text-[12px] outline-none placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10" />
+            <input autoFocus value={newLabel} onChange={event => setNewLabel(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void createOption(); }} placeholder="Nome da lei" className="h-9 w-full rounded border border-black/10 bg-white px-3 text-[0.75rem] outline-none placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10" />
             <div className="mt-2.5 flex items-center justify-between gap-3">
               <div className="flex gap-1">{CREATE_COLORS.map(color => <button key={color} type="button" title={color} onClick={() => setNewColor(color)} className="flex h-6 w-6 items-center justify-center rounded border" style={{ background: color, borderColor: newColor === color ? "#0D0D0D" : "transparent" }}>{newColor === color && <Icons.Check size={10} color="white"/>}</button>)}</div>
             </div>
             <div className="mt-2 flex gap-1">{CREATE_ICONS.map(iconName => { const Icon = (Icons as any)[iconName] as LucideIcon; return <button key={iconName} type="button" title={iconName} onClick={() => setNewIcon(iconName)} className={`flex h-7 w-7 items-center justify-center rounded border ${newIcon === iconName ? "border-[#7259B5]/45 bg-[#7259B5]/[.06] text-[#7259B5]" : "border-black/[.07] text-black/35 hover:bg-black/[.03]"}`}><Icon size={12}/></button>; })}</div>
-            {error && <p className="mt-2 text-[10px] font-medium text-[#C84242]">{error}</p>}
+            {error && <p className="mt-2 text-[0.625rem] font-medium text-[#C84242]">{error}</p>}
             <div className="mt-3 flex items-center justify-end gap-2">
-              <button type="button" onClick={() => { setCreating(false); setError(null); }} className="h-8 px-2 text-[11px] font-medium text-black/35 hover:text-black/60">Cancelar</button>
-              <button type="button" disabled={!newLabel.trim() || saving} onClick={() => void createOption()} className="h-8 rounded bg-[#2E8932] px-3 text-[11px] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">{saving ? "Salvando…" : "Salvar"}</button>
+              <button type="button" onClick={() => { setCreating(false); setError(null); }} className="h-8 px-2 text-[0.6875rem] font-medium text-black/35 hover:text-black/60">Cancelar</button>
+              <button type="button" disabled={!newLabel.trim() || saving} onClick={() => void createOption()} className="h-8 rounded bg-[#2E8932] px-3 text-[0.6875rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-35">{saving ? "Salvando…" : "Salvar"}</button>
             </div>
           </div>
         )}

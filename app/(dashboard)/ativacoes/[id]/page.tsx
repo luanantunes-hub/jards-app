@@ -19,5 +19,5 @@ export default function ActivationPlanPage({ params }: { params: Promise<{ id: s
     })();
   }, [id, router, supabase]);
 
-  return <div className="mx-auto max-w-[1280px] px-4 py-16 text-center text-[12px] text-black/30 sm:px-6 lg:px-10">Abrindo entrega…</div>;
+  return <div className="mx-auto max-w-pagina px-4 py-16 text-center text-[0.75rem] text-black/30 sm:px-6 lg:px-10">Abrindo entrega…</div>;
 }

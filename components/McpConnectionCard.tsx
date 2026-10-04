@@ -69,8 +69,8 @@ export function McpConnectionCard() {
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold text-black">Claude e ChatGPT (MCP)</p>
-            <p className="text-[11px] text-black/40 mt-0.5">
+            <p className="text-[0.8125rem] font-semibold text-black">Claude e ChatGPT (MCP)</p>
+            <p className="text-[0.6875rem] text-black/40 mt-0.5">
               {ativas === null
                 ? "Conecte assistentes de IA aos dados do Jards"
                 : ativas > 0

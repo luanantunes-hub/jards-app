@@ -55,22 +55,22 @@ export function BoasVindasPlanoModal({ plano, onClose }: Props) {
           <X size={16} weight="bold" />
         </button>
 
-        <div className="flex min-h-[250px] items-center justify-center overflow-hidden bg-[#FAFAF9] p-5 sm:min-h-[430px] sm:p-8">
+        <div className="flex min-h-[15.625rem] items-center justify-center overflow-hidden bg-[#FAFAF9] p-5 sm:min-h-[26.875rem] sm:p-8">
           <Image
             src="/illustrations/tamandua-boas-vindas-plano.png"
             width={1024}
             height={1024}
             priority
             alt="Tamanduá Jards celebrando a assinatura do plano"
-            className="h-auto w-full max-w-[330px] object-contain"
+            className="h-auto w-full max-w-[20.625rem] object-contain"
           />
         </div>
 
         <div className="flex flex-col justify-center px-6 pb-8 pt-7 sm:px-10 sm:py-12">
-          <p className="mb-3 text-[11px] font-bold uppercase tracking-[.13em] text-[#2E8932]">
+          <p className="mb-3 text-[0.6875rem] font-bold uppercase tracking-[.13em] text-[#2E8932]">
             Plano {PLAN_LABELS[plano]} confirmado
           </p>
-          <h2 id="welcome-plan-title" className="max-w-sm text-[30px] font-bold leading-[1.08] tracking-[-.035em] text-[#0D0D0D] sm:text-[36px]">
+          <h2 id="welcome-plan-title" className="max-w-sm text-[1.875rem] font-bold leading-[1.08] tracking-[-.035em] text-[#0D0D0D] sm:text-[2.25rem]">
             Que bom ter você com a gente.
           </h2>
           <p className="mt-4 max-w-sm text-sm leading-6 text-black/50">

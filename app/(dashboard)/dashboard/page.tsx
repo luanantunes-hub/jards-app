@@ -14,6 +14,7 @@ import type { DashboardModuleId } from "@/components/dashboard/dashboardModules"
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { escalaUi } from "@/lib/escala-ui";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -162,7 +163,7 @@ function BlockSkeleton({ h = 220 }: { h?: number }) {
   return (
     <div
       className="bg-white rounded border animate-pulse"
-      style={{ borderColor: "rgba(13,13,13,.08)", height: h }}
+      style={{ borderColor: "rgba(13,13,13,.08)", height: `${h / 16}rem` }}
     />
   );
 }
@@ -184,9 +185,11 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    // O desenho é feito numa largura lógica (px ÷ fator da fonte base); o
+    // viewBox amplia tudo junto, como o restante da página em telas grandes.
     const observer = new ResizeObserver(entries => {
       const w = entries[0]?.contentRect.width;
-      if (w) setWidth(w);
+      if (w) setWidth(w / escalaUi());
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -245,7 +248,7 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
 
   return (
     <div className="px-5 py-5" ref={containerRef}>
-      <svg viewBox={`0 0 ${width} ${height}`} className="block h-[300px] w-full" role="img" aria-label="Funil consolidado de eficácia dos canais">
+      <svg viewBox={`0 0 ${width} ${height}`} className="block h-[18.75rem] w-full" role="img" aria-label="Funil consolidado de eficácia dos canais">
         {stageX.map((x, i) => (
           <line key={i} x1={x} y1={4} x2={x} y2={height - 4} stroke="rgba(13,13,13,.09)" strokeWidth={1.5} />
         ))}
@@ -261,9 +264,9 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
           const anchor = isLast ? "middle" : "start";
           return (
             <g key={stage.key}>
-              <text x={textX} y={28} textAnchor={anchor} className="text-[22px] font-bold" fill="#0D0D0D">{total}</text>
-              <text x={textX} y={48} textAnchor={anchor} className="text-[13px]" fill="rgba(13,13,13,.5)">{stage.label}</text>
-              <text x={textX} y={65} textAnchor={anchor} className="text-[13px] font-bold" fill="rgba(13,13,13,.7)">{pct}%</text>
+              <text x={textX} y={28} textAnchor={anchor} fontSize={22} className="font-bold" fill="#0D0D0D">{total}</text>
+              <text x={textX} y={48} textAnchor={anchor} fontSize={13} fill="rgba(13,13,13,.5)">{stage.label}</text>
+              <text x={textX} y={65} textAnchor={anchor} fontSize={13} className="font-bold" fill="rgba(13,13,13,.7)">{pct}%</text>
             </g>
           );
         })}
@@ -274,7 +277,7 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
           return (
             <div key={metric.canal} className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-full" style={{ background: option?.cor ?? "#7259B5" }} />
-              <span className="text-[11px] font-medium text-black/55">{option?.label ?? metric.canal.replaceAll("_", " ")}</span>
+              <span className="text-[0.6875rem] font-medium text-black/55">{option?.label ?? metric.canal.replaceAll("_", " ")}</span>
             </div>
           );
         })}
@@ -636,8 +639,8 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-7 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Gerenciamento</p>
-          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D]">Visão geral</h1>
+          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Gerenciamento</p>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Visão geral</h1>
         </div>
         <DashboardCustomizer open={customizerOpen} onOpenChange={setCustomizerOpen} preferences={dashboardPreferences.preferences} onToggle={dashboardPreferences.toggle} onMove={dashboardPreferences.move} onReset={dashboardPreferences.reset} />
       </div>
@@ -652,46 +655,46 @@ export default function DashboardPage() {
             <>
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em]">Pipeline</p>
+                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Pipeline</p>
                   <TrendingUp size={14} className="text-[#7259B5]" />
                 </div>
-                <p className="text-[22px] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(pipeline)}</p>
-                <p className="text-[11px] text-black/35">{pipelineCount} em andamento</p>
+                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(pipeline)}</p>
+                <p className="text-[0.6875rem] text-black/35">{pipelineCount} em andamento</p>
               </div>
 
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em]">Ponderado</p>
+                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Ponderado</p>
                   <CircleDollarSign size={14} className="text-[#7259B5]" />
                 </div>
-                <p className="text-[22px] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(pipelinePonderado)}</p>
+                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(pipelinePonderado)}</p>
               </div>
 
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em]">Aprovado</p>
+                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Aprovado</p>
                   <CheckCircle2 size={14} className="text-[#2E8932]" />
                 </div>
-                <p className="text-[22px] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(aprovadoValor)}</p>
-                <p className="text-[11px] text-black/35">{aprovadoCount} patrocínios</p>
+                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(aprovadoValor)}</p>
+                <p className="text-[0.6875rem] text-black/35">{aprovadoCount} patrocínios</p>
               </div>
 
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em]">Conversão</p>
+                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Conversão</p>
                   <Percent size={14} className="text-[#7259B5]" />
                 </div>
-                <p className="text-[22px] font-bold text-[#0D0D0D] leading-none mb-1">
+                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">
                   {conversao !== null ? `${conversao}%` : "—"}
                 </p>
               </div>
 
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em]">Pendentes</p>
+                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Pendentes</p>
                   <ListChecks size={14} className="text-black/45" />
                 </div>
-                <p className="text-[22px] font-bold text-[#0D0D0D] leading-none mb-1">{pendentes}</p>
+                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{pendentes}</p>
               </div>
             </>
           )
@@ -703,17 +706,17 @@ export default function DashboardPage() {
         <section className="mb-4 overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("priorities") }}>
           <div className="flex items-center justify-between border-b px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-[.09em] text-black/30">Foco</p>
-              <h2 className="mt-0.5 text-[13px] font-semibold text-[#0D0D0D]">Prioridades do dia</h2>
+              <p className="text-[0.625rem] font-bold uppercase tracking-[.09em] text-black/30">Foco</p>
+              <h2 className="mt-0.5 text-[0.8125rem] font-semibold text-[#0D0D0D]">Prioridades do dia</h2>
             </div>
-            <p className="hidden text-[10px] text-black/30 sm:block">Ordenadas por urgência operacional</p>
+            <p className="hidden text-[0.625rem] text-black/30 sm:block">Ordenadas por urgência operacional</p>
           </div>
           <div className="grid sm:grid-cols-2 xl:grid-cols-4">
             {prioridades.map(({ label, detail, value, href, Icon, color }, index) => (
               <Link
                 key={label}
                 href={href}
-                className={`group flex min-h-[84px] items-center gap-3 px-5 py-4 transition-colors hover:bg-black/[.025] ${
+                className={`group flex min-h-[5.25rem] items-center gap-3 px-5 py-4 transition-colors hover:bg-black/[.025] ${
                   index > 0 ? "border-t sm:border-t-0 sm:border-l" : ""
                 } ${index === 2 ? "sm:border-l-0 xl:border-l" : ""}`}
                 style={{ borderColor: "rgba(13,13,13,.06)" }}
@@ -723,10 +726,10 @@ export default function DashboardPage() {
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-[12px] font-semibold text-black/70">{label}</p>
-                    <span className="text-[15px] font-bold tabular-nums" style={{ color }}>{value}</span>
+                    <p className="truncate text-[0.75rem] font-semibold text-black/70">{label}</p>
+                    <span className="text-[0.9375rem] font-bold tabular-nums" style={{ color }}>{value}</span>
                   </div>
-                  <p className="mt-1 truncate text-[10px] text-black/32">{value > 0 ? detail : "Nenhuma ação necessária"}</p>
+                  <p className="mt-1 truncate text-[0.625rem] text-black/32">{value > 0 ? detail : "Nenhuma ação necessária"}</p>
                 </div>
                 <ArrowRight size={12} className="flex-none text-black/20 transition-transform group-hover:translate-x-0.5 group-hover:text-black/40" />
               </Link>
@@ -736,19 +739,19 @@ export default function DashboardPage() {
       ))}
 
       {/* Funil + Estagnadas */}
-      {(dashboardPreferences.isEnabled("funnel") || dashboardPreferences.isEnabled("risks")) && <div className={`grid gap-4 mb-4 ${dashboardPreferences.isEnabled("funnel") && dashboardPreferences.isEnabled("risks") ? "xl:grid-cols-[1fr_300px]" : "grid-cols-1"}`} style={{ order: Math.min(modulePosition("funnel"), modulePosition("risks")) }}>
+      {(dashboardPreferences.isEnabled("funnel") || dashboardPreferences.isEnabled("risks")) && <div className={`grid gap-4 mb-4 ${dashboardPreferences.isEnabled("funnel") && dashboardPreferences.isEnabled("risks") ? "xl:grid-cols-[1fr_18.75rem]" : "grid-cols-1"}`} style={{ order: Math.min(modulePosition("funnel"), modulePosition("risks")) }}>
 
         {/* Funil */}
         {dashboardPreferences.isEnabled("funnel") && (loading ? <BlockSkeleton h={250} /> : (
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <div>
-                <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Pipeline</p>
-                <p className="text-[13px] font-semibold text-[#0D0D0D]">Distribuição por estágio</p>
+                <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Pipeline</p>
+                <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Distribuição por estágio</p>
               </div>
               <Link
                 href="/captacoes"
-                className="flex items-center gap-1 text-[11px] font-semibold text-black/30 hover:text-black transition"
+                className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
               >
                 Ver kanban <ArrowRight size={11} />
               </Link>
@@ -760,10 +763,10 @@ export default function DashboardPage() {
                 const tempo = tempoPorEstagio[status];
                 return (
                   <div key={status} className="flex items-center gap-3">
-                    <span className="text-[11px] text-black/45 w-[132px] flex-shrink-0 whitespace-nowrap">
+                    <span className="text-[0.6875rem] text-black/45 w-[8.25rem] flex-shrink-0 whitespace-nowrap">
                       {label}
                     </span>
-                    <div className="flex-1 h-[5px] rounded-full" style={{ background: "rgba(13,13,13,.05)" }}>
+                    <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(13,13,13,.05)" }}>
                       <div
                         className="h-full rounded-full"
                         style={{
@@ -774,13 +777,13 @@ export default function DashboardPage() {
                       />
                     </div>
                     <span
-                      className="text-[11px] text-black/30 w-[42px] text-right flex-shrink-0 tabular-nums"
+                      className="text-[0.6875rem] text-black/30 w-[2.625rem] text-right flex-shrink-0 tabular-nums"
                       title={tempo ? `Tempo mediano neste estágio · ${tempo.amostras} ${tempo.amostras === 1 ? "passagem" : "passagens"}` : "Ainda sem passagens concluídas por este estágio"}
                     >
                       {tempo ? `~${fmtDias(tempo.mediana_dias)}` : "—"}
                     </span>
-                    <span className="text-[11px] text-black/25 w-5 text-right flex-shrink-0">{count}</span>
-                    <span className="text-[11px] font-semibold text-black/55 w-[58px] text-right flex-shrink-0">
+                    <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{count}</span>
+                    <span className="text-[0.6875rem] font-semibold text-black/55 w-[3.625rem] text-right flex-shrink-0">
                       {valor > 0 ? fmtValor(valor) : "—"}
                     </span>
                   </div>
@@ -788,24 +791,24 @@ export default function DashboardPage() {
               })}
 
               <div className="border-t mt-1 pt-3.5 flex items-center gap-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <span className="text-[11px] font-semibold w-[132px] flex-shrink-0 whitespace-nowrap text-[#2E8932]">
+                <span className="text-[0.6875rem] font-semibold w-[8.25rem] flex-shrink-0 whitespace-nowrap text-[#2E8932]">
                   Aprovado
                 </span>
-                <div className="flex-1 h-[5px] rounded-full" style={{ background: "rgba(46,137,50,.12)" }}>
+                <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(46,137,50,.12)" }}>
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${aprovadoBarPct}%`, background: "#2E8932", opacity: 0.7 }}
                   />
                 </div>
-                <span className="w-[42px] flex-shrink-0" aria-hidden="true" />
-                <span className="text-[11px] text-black/25 w-5 text-right flex-shrink-0">{aprovadoCount}</span>
-                <span className="text-[11px] font-semibold w-[58px] text-right flex-shrink-0 text-[#2E8932]">
+                <span className="w-[2.625rem] flex-shrink-0" aria-hidden="true" />
+                <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{aprovadoCount}</span>
+                <span className="text-[0.6875rem] font-semibold w-[3.625rem] text-right flex-shrink-0 text-[#2E8932]">
                   {aprovadoValor > 0 ? fmtValor(aprovadoValor) : "—"}
                 </span>
               </div>
 
               {Object.keys(tempoPorEstagio).length > 0 && (
-                <p className="text-[10px] text-black/30">
+                <p className="text-[0.625rem] text-black/30">
                   ~ dias: tempo mediano que as negociações passam em cada estágio
                 </p>
               )}
@@ -817,8 +820,8 @@ export default function DashboardPage() {
         {dashboardPreferences.isEnabled("risks") && (loading ? <BlockSkeleton h={250} /> : (
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Atenção</p>
-              <p className="text-[13px] font-semibold text-[#0D0D0D]">Negociações estagnadas</p>
+              <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Atenção</p>
+              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Negociações estagnadas</p>
             </div>
 
             {stagnant.length === 0 ? (
@@ -840,11 +843,11 @@ export default function DashboardPage() {
                         <Clock size={13} style={{ color: urgente ? "#D94E4E" : "#B07A14" }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[12px] font-semibold text-[#0D0D0D] truncate">{c.empresa}</p>
-                        <p className="text-[10px] text-black/35 mt-0.5">{STATUS_LABEL[c.status]}</p>
+                        <p className="text-[0.75rem] font-semibold text-[#0D0D0D] truncate">{c.empresa}</p>
+                        <p className="text-[0.625rem] text-black/35 mt-0.5">{STATUS_LABEL[c.status]}</p>
                       </div>
                       <span
-                        className="text-[11px] font-bold flex-shrink-0"
+                        className="text-[0.6875rem] font-bold flex-shrink-0"
                         style={{ color: urgente ? "#D94E4E" : "#B07A14" }}
                       >
                         {c.diasSemAtividade}d
@@ -865,8 +868,8 @@ export default function DashboardPage() {
         {dashboardPreferences.isEnabled("recentActivities") && (loading ? <BlockSkeleton h={220} /> : (
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">CRM</p>
-              <p className="text-[13px] font-semibold text-[#0D0D0D]">Atividades recentes</p>
+              <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">CRM</p>
+              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Atividades recentes</p>
             </div>
 
             {atividades.length === 0 ? (
@@ -887,18 +890,18 @@ export default function DashboardPage() {
                           <Icon size={12} style={{ color: tc.color }} />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[12px] font-semibold text-black/75 truncate">{a.nome}</p>
+                          <p className="text-[0.75rem] font-semibold text-black/75 truncate">{a.nome}</p>
                           {entity && (
                             a.empresa_crm?.nome && !a.contato?.nome && !a.captacao?.titulo ? (
-                              <Link href={`/empresas-crm/${a.empresa_crm_id}`} className="text-[10px] text-black/35 mt-0.5 truncate block hover:text-[#7259B5] transition">
+                              <Link href={`/empresas-crm/${a.empresa_crm_id}`} className="text-[0.625rem] text-black/35 mt-0.5 truncate block hover:text-[#7259B5] transition">
                                 {entity}
                               </Link>
                             ) : (
-                              <p className="text-[10px] text-black/35 mt-0.5 truncate">{entity}</p>
+                              <p className="text-[0.625rem] text-black/35 mt-0.5 truncate">{entity}</p>
                             )
                           )}
                         </div>
-                        <span className="text-[10px] text-black/22 whitespace-nowrap flex-shrink-0 mt-0.5">
+                        <span className="text-[0.625rem] text-black/22 whitespace-nowrap flex-shrink-0 mt-0.5">
                           {timeAgo(a.created_at)}
                         </span>
                       </div>
@@ -908,7 +911,7 @@ export default function DashboardPage() {
                 <div className="px-5 py-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <Link
                     href="/atividades"
-                    className="flex items-center gap-1 text-[11px] font-semibold text-black/30 hover:text-black transition"
+                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
                   >
                     Ver todas <ArrowUpRight size={11} />
                   </Link>
@@ -922,8 +925,8 @@ export default function DashboardPage() {
         {dashboardPreferences.isEnabled("upcomingEvents") && (loading ? <BlockSkeleton h={220} /> : (
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Calendário</p>
-              <p className="text-[13px] font-semibold text-[#0D0D0D]">Próximos 30 dias</p>
+              <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Calendário</p>
+              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Próximos 30 dias</p>
             </div>
 
             {eventos.length === 0 ? (
@@ -939,18 +942,18 @@ export default function DashboardPage() {
                     return (
                       <div key={ev.id} className="px-5 py-3.5 flex items-start gap-3">
                         <div className="w-9 text-center flex-shrink-0">
-                          <p className="text-[9px] font-bold text-black/25 uppercase tracking-[.06em]">{mes}</p>
-                          <p className="text-[18px] font-bold leading-tight" style={{ color: dayColor }}>{dia}</p>
+                          <p className="text-[0.5625rem] font-bold text-black/25 uppercase tracking-[.06em]">{mes}</p>
+                          <p className="text-[1.125rem] font-bold leading-tight" style={{ color: dayColor }}>{dia}</p>
                         </div>
                         <div className="flex-1 min-w-0 pt-0.5">
                           <span
-                            className="mb-1.5 inline-block rounded border bg-transparent px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[.05em]"
+                            className="mb-1.5 inline-block rounded border bg-transparent px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase tracking-[.05em]"
                             style={{ borderColor: `${badge.text}59`, color: badge.text }}
                           >
                             {isEdital ? "Edital" : "Follow-up"}
                           </span>
-                          <p className="text-[12px] font-semibold text-[#0D0D0D] truncate">{ev.titulo}</p>
-                          <p className="text-[11px] text-black/35 mt-0.5">{ev.sub}</p>
+                          <p className="text-[0.75rem] font-semibold text-[#0D0D0D] truncate">{ev.titulo}</p>
+                          <p className="text-[0.6875rem] text-black/35 mt-0.5">{ev.sub}</p>
                         </div>
                       </div>
                     );
@@ -959,7 +962,7 @@ export default function DashboardPage() {
                 <div className="px-5 py-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <Link
                     href="/atividades"
-                    className="flex items-center gap-1 text-[11px] font-semibold text-black/30 hover:text-black transition"
+                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
                   >
                     Abrir calendário <ArrowUpRight size={11} />
                   </Link>
@@ -976,8 +979,8 @@ export default function DashboardPage() {
         <div className="mt-4 bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("channelEffectiveness") }}>
           <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Aquisição</p>
-              <p className="text-[13px] font-semibold text-[#0D0D0D]">Eficácia dos canais</p>
+              <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Aquisição</p>
+              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Eficácia dos canais</p>
             </div>
             {channelMetrics.length > 0 && (
               <SegmentedControl
@@ -999,12 +1002,12 @@ export default function DashboardPage() {
             <ChannelFunnelChart metrics={channelMetrics} canais={canais} />
           ) : (
             <>
-              <div className="hidden sm:grid grid-cols-[1fr_repeat(4,88px)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25">Canal</span>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center">Resposta</span>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center">Reunião</span>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center">Proposta</span>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Conversão</span>
+              <div className="hidden sm:grid grid-cols-[1fr_repeat(4,5.5rem)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25">Canal</span>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Resposta</span>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Reunião</span>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Proposta</span>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Conversão</span>
               </div>
               <div className="divide-y divide-black/[.06]">
                 {channelMetrics.map(metric => {
@@ -1014,29 +1017,29 @@ export default function DashboardPage() {
                   const proposalRate = metric.interacoes ? Math.round((metric.propostas_solicitadas / metric.interacoes) * 100) : 0;
                   const winRate = metric.negociacoes ? Math.round((metric.negociacoes_aprovadas / metric.negociacoes) * 100) : null;
                   return (
-                    <div key={metric.canal} className="grid grid-cols-2 sm:grid-cols-[1fr_repeat(4,88px)] items-center gap-3 sm:gap-4 px-5 py-3.5">
+                    <div key={metric.canal} className="grid grid-cols-2 sm:grid-cols-[1fr_repeat(4,5.5rem)] items-center gap-3 sm:gap-4 px-5 py-3.5">
                       <div className="col-span-2 sm:col-span-1 min-w-0">
-                        <p className="truncate text-[12px] font-semibold text-[#0D0D0D]">{option?.label ?? metric.canal.replaceAll("_", " ")}</p>
-                        <p className="mt-0.5 text-[10px] text-black/30">
+                        <p className="truncate text-[0.75rem] font-semibold text-[#0D0D0D]">{option?.label ?? metric.canal.replaceAll("_", " ")}</p>
+                        <p className="mt-0.5 text-[0.625rem] text-black/30">
                           {metric.interacoes} interações · {metric.negociacoes} negociações
                           {metric.interacoes < 5 && <span className="text-[#D94E4E]"> · amostra pequena</span>}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Resposta</p>
-                        <p className="text-[13px] font-semibold text-black/65">{responseRate}%</p>
+                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Resposta</p>
+                        <p className="text-[0.8125rem] font-semibold text-black/65">{responseRate}%</p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Reunião</p>
-                        <p className="text-[13px] font-semibold text-black/65">{meetingRate}%</p>
+                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Reunião</p>
+                        <p className="text-[0.8125rem] font-semibold text-black/65">{meetingRate}%</p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Proposta</p>
-                        <p className="text-[13px] font-semibold text-black/65">{proposalRate}%</p>
+                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Proposta</p>
+                        <p className="text-[0.8125rem] font-semibold text-black/65">{proposalRate}%</p>
                       </div>
                       <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                        <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Conversão</p>
-                        <p className="text-[15px] font-bold text-[#7259B5]">{winRate === null ? "—" : `${winRate}%`}</p>
+                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Conversão</p>
+                        <p className="text-[0.9375rem] font-bold text-[#7259B5]">{winRate === null ? "—" : `${winRate}%`}</p>
                       </div>
                     </div>
                   );
@@ -1052,8 +1055,8 @@ export default function DashboardPage() {
         <div className="mt-4 bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("captadoresRanking") }}>
           <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
-              <p className="text-[10px] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Velocidade</p>
-              <p className="text-[13px] font-semibold text-[#0D0D0D]">Velocidade por captador</p>
+              <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Velocidade</p>
+              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Velocidade por captador</p>
             </div>
             <SegmentedControl
               ariaLabel="Tipo de captador"
@@ -1074,37 +1077,37 @@ export default function DashboardPage() {
             </p>
           ) : (
             <>
-              <div className="hidden sm:grid grid-cols-[1fr_repeat(3,104px)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25">Captador</span>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center">Ciclos fechados</span>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center">Tempo mediano</span>
-                <span className="text-[9px] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Aprovação</span>
+              <div className="hidden sm:grid grid-cols-[1fr_repeat(3,6.5rem)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25">Captador</span>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Ciclos fechados</span>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Tempo mediano</span>
+                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Aprovação</span>
               </div>
               <div className="divide-y divide-black/[.06]">
                 {ranking[rankingView].map((item) => (
-                  <div key={item.captador_id} className="grid grid-cols-3 sm:grid-cols-[1fr_repeat(3,104px)] items-center gap-3 sm:gap-4 px-5 py-3.5">
+                  <div key={item.captador_id} className="grid grid-cols-3 sm:grid-cols-[1fr_repeat(3,6.5rem)] items-center gap-3 sm:gap-4 px-5 py-3.5">
                     <div className="col-span-3 sm:col-span-1 min-w-0">
-                      <p className="truncate text-[12px] font-semibold text-[#0D0D0D]">{item.nome}</p>
+                      <p className="truncate text-[0.75rem] font-semibold text-[#0D0D0D]">{item.nome}</p>
                       {item.ciclos_fechados < 5 && (
-                        <p className="mt-0.5 text-[10px] text-[#D94E4E]">amostra pequena</p>
+                        <p className="mt-0.5 text-[0.625rem] text-[#D94E4E]">amostra pequena</p>
                       )}
                     </div>
                     <div className="text-center">
-                      <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Ciclos</p>
-                      <p className="text-[13px] font-semibold text-black/65 tabular-nums">{item.ciclos_fechados}</p>
+                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Ciclos</p>
+                      <p className="text-[0.8125rem] font-semibold text-black/65 tabular-nums">{item.ciclos_fechados}</p>
                     </div>
                     <div className="text-center">
-                      <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Tempo</p>
-                      <p className="text-[13px] font-semibold text-black/65 tabular-nums">{fmtDias(item.mediana_dias)}</p>
+                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Tempo</p>
+                      <p className="text-[0.8125rem] font-semibold text-black/65 tabular-nums">{fmtDias(item.mediana_dias)}</p>
                     </div>
                     <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="sm:hidden text-[9px] uppercase tracking-wide text-black/25">Aprovação</p>
-                      <p className="text-[15px] font-bold text-[#7259B5] tabular-nums">{Math.round(item.taxa_aprovacao * 100)}%</p>
+                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Aprovação</p>
+                      <p className="text-[0.9375rem] font-bold text-[#7259B5] tabular-nums">{Math.round(item.taxa_aprovacao * 100)}%</p>
                     </div>
                   </div>
                 ))}
               </div>
-              <p className="px-5 py-3 border-t text-[10px] text-black/30" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+              <p className="px-5 py-3 border-t text-[0.625rem] text-black/30" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 Ciclo = da abertura (ou retomada) da negociação até aprovado/recusado. Ordenado pelo tempo mediano.
               </p>
             </>

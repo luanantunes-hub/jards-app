@@ -42,6 +42,8 @@ export function CompanyLogo({ nome, domain: domainProp, site, logo_url, size = 3
   }
 
   const letter = nome.trim().charAt(0).toUpperCase();
+  // size em px na base de 16px; em rem, o logo acompanha a fonte base em telas grandes.
+  const lado = `${size / 16}rem`;
 
   if (src) {
     return (
@@ -51,7 +53,7 @@ export function CompanyLogo({ nome, domain: domainProp, site, logo_url, size = 3
         width={size}
         height={size}
         className={`object-contain bg-white rounded ${className}`}
-        style={{ width: size, height: size }}
+        style={{ width: lado, height: lado }}
         onError={handleError}
       />
     );
@@ -63,9 +65,9 @@ export function CompanyLogo({ nome, domain: domainProp, site, logo_url, size = 3
       aria-label={`Logo indisponível de ${nome}`}
       className={`flex items-center justify-center font-semibold select-none rounded ${className}`}
       style={{
-        width: size,
-        height: size,
-        fontSize: Math.round(size * 0.38),
+        width: lado,
+        height: lado,
+        fontSize: `${Math.round(size * 0.38) / 16}rem`,
         background: "linear-gradient(145deg, #f8f8fb 0%, #d4d4dc 100%)",
         color: "#9e9ea8",
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.9), 0 1px 2px rgba(0,0,0,0.06)",

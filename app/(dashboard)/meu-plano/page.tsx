@@ -218,7 +218,7 @@ function MeuPlanoInner() {
     <div className="px-8 py-8 max-w-5xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-bold text-[#0D0D0D] text-[28px]">Meu plano</h1>
+        <h1 className="font-bold text-[#0D0D0D] text-[1.75rem]">Meu plano</h1>
       </div>
 
       {/* Alerts */}
@@ -256,7 +256,7 @@ function MeuPlanoInner() {
         </div>
       )}
 
-      <div className="grid xl:grid-cols-[1fr_300px] gap-6">
+      <div className="grid xl:grid-cols-[1fr_18.75rem] gap-6">
         {/* Planos */}
         <div className="space-y-4">
           <p className="text-xs font-bold text-black/35 uppercase tracking-wider">Planos disponíveis</p>
@@ -279,7 +279,7 @@ function MeuPlanoInner() {
                 >
                   {(isAtual || plan.destaque) && (
                     <span
-                      className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[10px] font-bold"
+                      className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[0.625rem] font-bold"
                       style={isAtual
                         ? { background: plan.cor, color: "#fff" }
                         : { background: "#fff", color: "#0D0D0D", boxShadow: "0 1px 4px rgba(13,13,13,.18)" }}
@@ -290,15 +290,15 @@ function MeuPlanoInner() {
 
                   {/* Eyebrow + preço */}
                   <p
-                    className="mb-4 text-[11px] font-bold uppercase tracking-widest"
+                    className="mb-4 text-[0.6875rem] font-bold uppercase tracking-widest"
                     style={{ color: dark ? "rgba(255,255,255,.45)" : "rgba(13,13,13,.40)" }}
                   >
                     {plan.label}
                   </p>
-                  <p className="text-[32px] font-bold leading-none tracking-tight" style={{ color: dark ? "#fff" : "#0D0D0D" }}>
+                  <p className="text-[2rem] font-bold leading-none tracking-tight" style={{ color: dark ? "#fff" : "#0D0D0D" }}>
                     {plan.preco}
                   </p>
-                  <p className="mb-5 mt-1.5 text-[12px]" style={{ color: dark ? "rgba(255,255,255,.40)" : "rgba(13,13,13,.35)" }}>
+                  <p className="mb-5 mt-1.5 text-[0.75rem]" style={{ color: dark ? "rgba(255,255,255,.40)" : "rgba(13,13,13,.35)" }}>
                     {plan.precoLegenda}
                   </p>
 
@@ -307,7 +307,7 @@ function MeuPlanoInner() {
                   {/* Features */}
                   <ul className="mb-6 flex-1 space-y-2.5">
                     {plan.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2.5 text-[13px]" style={{ color: dark ? "rgba(255,255,255,.85)" : "rgba(13,13,13,.65)" }}>
+                      <li key={f} className="flex items-start gap-2.5 text-[0.8125rem]" style={{ color: dark ? "rgba(255,255,255,.85)" : "rgba(13,13,13,.65)" }}>
                         <Check size={13} strokeWidth={2.5} className="mt-0.5 flex-shrink-0" style={{ color: dark ? "#B9A6E8" : plan.cor }} />
                         {f}
                       </li>
@@ -351,7 +351,7 @@ function MeuPlanoInner() {
         <div className="space-y-4">
           {/* Plano atual */}
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-3">Plano atual</p>
+            <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-3">Plano atual</p>
             {loading ? (
               <div className="space-y-2 animate-pulse">
                 <div className="h-5 w-24 bg-black/8 rounded" />
@@ -364,7 +364,7 @@ function MeuPlanoInner() {
                   <span className="text-base font-bold" style={{ color: planDef.cor }}>{planDef.label}</span>
                 </div>
                 {profile?.stripe_subscription_status && profile.stripe_subscription_status !== "inactive" && (
-                  <p className="text-[10px] font-semibold uppercase tracking-wide text-black/35">
+                  <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35">
                     {profile.stripe_subscription_status === "active" ? "Ativa" : profile.stripe_subscription_status === "trialing" ? "Período de teste" : profile.stripe_subscription_status === "canceled" ? "Cancelada" : "Pagamento pendente"}
                   </p>
                 )}
@@ -389,7 +389,7 @@ function MeuPlanoInner() {
 
           {/* Uso do mês */}
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-4">Uso este mês</p>
+            <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-4">Uso este mês</p>
             {loading ? (
               <div className="space-y-4 animate-pulse">
                 {[0, 1].map(i => (
@@ -417,7 +417,7 @@ function MeuPlanoInner() {
 
           {/* FAQ rápido */}
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[10px] font-bold text-black/35 uppercase tracking-wide mb-3">Dúvidas</p>
+            <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-3">Dúvidas</p>
             <div className="space-y-3 text-xs text-black/50">
               <p><span className="font-semibold text-black/70">Posso cancelar a qualquer momento?</span><br />Sim. O acesso fica ativo até o fim do período pago.</p>
               <p><span className="font-semibold text-black/70">O que são desbloqueios?</span><br />Cada empresa com dados detalhados (contatos, histórico) consome 1 crédito por mês.</p>

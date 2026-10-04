@@ -20,7 +20,7 @@ const VIEW_OPTIONS = [
 ] as const;
 
 const PROJETOS_COLUMNS = [
-  { id: "projeto", label: "Projeto", width: "250px", hideable: false }, { id: "proponente", label: "Proponente", width: "190px" }, { id: "fase", label: "Fase", width: "125px" }, { id: "objetivo", label: "Objetivo", width: "125px" }, { id: "captado", label: "Captado", width: "125px" }, { id: "progresso", label: "Progresso", width: "150px" }, { id: "captacoes", label: "Negociações", width: "105px" }, { id: "inscricoes", label: "Inscrições", width: "105px" }, { id: "prazo", label: "Próximo prazo", width: "145px" }, { id: "focal", label: "Ponto focal", width: "170px" }, { id: "atualizacao", label: "Atualização", width: "140px" }, { id: "acoes", label: "Ações", width: "80px" },
+  { id: "projeto", label: "Projeto", width: "15.625rem", grow: true, hideable: false }, { id: "proponente", label: "Proponente", width: "11.875rem" }, { id: "fase", label: "Fase", width: "7.8125rem" }, { id: "objetivo", label: "Objetivo", width: "7.8125rem" }, { id: "captado", label: "Captado", width: "7.8125rem" }, { id: "progresso", label: "Progresso", width: "9.375rem" }, { id: "captacoes", label: "Negociações", width: "6.5625rem" }, { id: "inscricoes", label: "Inscrições", width: "6.5625rem" }, { id: "prazo", label: "Próximo prazo", width: "9.0625rem" }, { id: "focal", label: "Ponto focal", width: "10.625rem" }, { id: "atualizacao", label: "Atualização", width: "8.75rem" }, { id: "acoes", label: "Ações", width: "5rem" },
 ] as const satisfies readonly ColumnDefinition[];
 
 type ProjetoRow = {
@@ -75,12 +75,12 @@ function FinancialProgress({ captured, target }: { captured: number; target: num
   const completed = rawProgress >= 100;
 
   return (
-    <div className="w-[118px]" title={`${rawProgress}% do objetivo captado`}>
+    <div className="w-[7.375rem]" title={`${rawProgress}% do objetivo captado`}>
       <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <span className={`text-[10px] font-semibold tabular-nums tracking-[-.01em] ${completed ? "text-[#267A49]" : "text-black/55"}`}>
+        <span className={`text-[0.625rem] font-semibold tabular-nums tracking-[-.01em] ${completed ? "text-[#267A49]" : "text-black/55"}`}>
           {progress}%
         </span>
-        {completed && <span className="text-[8px] font-semibold uppercase tracking-[.06em] text-[#267A49]/70">Meta</span>}
+        {completed && <span className="text-[0.5rem] font-semibold uppercase tracking-[.06em] text-[#267A49]/70">Meta</span>}
       </div>
       <div
         className="h-1.5 overflow-hidden rounded bg-black/[.075] ring-1 ring-inset ring-black/[.025]"
@@ -110,22 +110,22 @@ const PORTFOLIO_PHASES = [
 function ProjectsPortfolioView({ projetos, onOpen }: { projetos: ProjetoRow[]; onOpen: (id: string) => void }) {
   return (
     <div className="overflow-x-auto pb-2">
-      <div className="grid min-w-[1180px] grid-cols-5 gap-3">
+      <div className="grid min-w-[73.75rem] grid-cols-5 gap-3">
         {PORTFOLIO_PHASES.map(phase => {
           const items = projetos.filter(project => project.fase_codigo === phase.key);
           const value = items.reduce((sum, project) => sum + Number(project.valor_alvo ?? 0), 0);
           return (
-            <section key={phase.key} className="flex min-h-[520px] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
+            <section key={phase.key} className="flex min-h-[32.5rem] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
               <header className="border-b border-black/[.07] px-3.5 py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-[12px] font-bold" style={{ color: phase.color }}>{phase.label}</h2>
-                  <span className="text-[10px] font-semibold tabular-nums text-black/30">{items.length}</span>
+                  <h2 className="text-[0.75rem] font-bold" style={{ color: phase.color }}>{phase.label}</h2>
+                  <span className="text-[0.625rem] font-semibold tabular-nums text-black/30">{items.length}</span>
                 </div>
-                <p className="mt-1 text-[10px] tabular-nums text-black/35">{value > 0 ? fmtValor(value) : "Sem objetivo financeiro"}</p>
+                <p className="mt-1 text-[0.625rem] tabular-nums text-black/35">{value > 0 ? fmtValor(value) : "Sem objetivo financeiro"}</p>
               </header>
               <div className="space-y-2 p-2.5">
                 {items.length === 0 ? (
-                  <div className="rounded border border-dashed border-black/10 px-3 py-8 text-center text-[11px] text-black/25">Nenhum projeto nesta fase</div>
+                  <div className="rounded border border-dashed border-black/10 px-3 py-8 text-center text-[0.6875rem] text-black/25">Nenhum projeto nesta fase</div>
                 ) : items.map(project => {
                   const progress = project.valor_alvo ? Math.min(100, Math.round((project.valor_captado / project.valor_alvo) * 100)) : 0;
                   return (
@@ -138,15 +138,15 @@ function ProjectsPortfolioView({ projetos, onOpen }: { projetos: ProjetoRow[]; o
                       <div className="flex items-start gap-2.5">
                         <ProjectIdentity nome={project.nome} tipo={project.identidade_tipo} valor={project.identidade_valor} logoUrl={project.identidade_logo_url} cor={project.identidade_cor} size="sm" />
                         <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-[12px] font-semibold leading-[1.35] text-black">{project.nome}</p>
-                          <p className="mt-1 truncate text-[10px] text-black/35">{project.proponente_nome ?? "Sem proponente"}</p>
+                          <p className="line-clamp-2 text-[0.75rem] font-semibold leading-[1.35] text-black">{project.nome}</p>
+                          <p className="mt-1 truncate text-[0.625rem] text-black/35">{project.proponente_nome ?? "Sem proponente"}</p>
                         </div>
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-2 border-t border-black/[.06] pt-2.5">
-                        <div><p className="text-[9px] font-semibold uppercase tracking-[.08em] text-black/25">Captado</p><p className="mt-0.5 text-[11px] font-bold text-black/65">{fmtValor(project.valor_captado)}</p></div>
-                        <div><p className="text-[9px] font-semibold uppercase tracking-[.08em] text-black/25">Progresso</p><p className="mt-0.5 text-[11px] font-bold tabular-nums text-black/65">{progress}%</p></div>
+                        <div><p className="text-[0.5625rem] font-semibold uppercase tracking-[.08em] text-black/25">Captado</p><p className="mt-0.5 text-[0.6875rem] font-bold text-black/65">{fmtValor(project.valor_captado)}</p></div>
+                        <div><p className="text-[0.5625rem] font-semibold uppercase tracking-[.08em] text-black/25">Progresso</p><p className="mt-0.5 text-[0.6875rem] font-bold tabular-nums text-black/65">{progress}%</p></div>
                       </div>
-                      <div className="mt-2.5 space-y-1.5 text-[10px] text-black/40">
+                      <div className="mt-2.5 space-y-1.5 text-[0.625rem] text-black/40">
                         <div className="flex items-center gap-1.5"><CalendarDays size={11}/><span>{project.proximo_prazo ? new Date(`${project.proximo_prazo}T00:00:00`).toLocaleDateString("pt-BR") : "Sem prazo próximo"}</span></div>
                         <div className="flex items-center gap-1.5"><UserRound size={11}/><span className="truncate">{project.ponto_focal ?? "Sem ponto focal"}</span></div>
                       </div>
@@ -302,7 +302,7 @@ export default function ProjetosPage() {
             <div className="w-14 h-14 rounded bg-black/4 flex items-center justify-center mb-4">
               <FolderOpen size={22} className="text-black/25" />
             </div>
-            <p className="text-[15px] font-semibold text-black/40 mb-1">Nenhum projeto ainda</p>
+            <p className="text-[0.9375rem] font-semibold text-black/40 mb-1">Nenhum projeto ainda</p>
             <p className="text-sm text-black/25 mb-5">Crie projetos para organizar suas negociações e inscrições</p>
             <button
               onClick={() => setShowModal(true)}
@@ -316,7 +316,7 @@ export default function ProjetosPage() {
             <div className="w-14 h-14 rounded bg-black/4 flex items-center justify-center mb-4">
               <FolderOpen size={22} className="text-black/25" />
             </div>
-            <p className="text-[15px] font-semibold text-black/40 mb-1">Nenhum projeto encontrado</p>
+            <p className="text-[0.9375rem] font-semibold text-black/40 mb-1">Nenhum projeto encontrado</p>
             <p className="text-sm text-black/25 mb-5">Ajuste a busca ou os filtros para ver mais resultados</p>
             <button
               onClick={() => { setSearch(""); setFaseFilter("todas"); setShowArquivados(true); }}
@@ -333,7 +333,7 @@ export default function ProjetosPage() {
                 <thead>
                   <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "#F9F9F8" }}>
                     {["Projeto", "Proponente", "Fase", "Objetivo", "Captado", "Progresso", "Negociações", "Inscrições", "Próximo prazo", "Ponto focal", "Atualização", ""].map((h) => (
-                      <th key={h} className="px-4 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
+                      <th key={h} className="px-4 py-3 text-left text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {h}
                       </th>
                     ))}
@@ -345,7 +345,7 @@ export default function ProjetosPage() {
                       <tr key={i} style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
                         {[200, 160, 80, 90, 90, 120, 60, 60, 100, 120, 90, 40].map((w, j) => (
                           <td key={j} className="px-4 py-3.5">
-                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: w }} />
+                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: `${w / 16}rem` }} />
                           </td>
                         ))}
                       </tr>
@@ -359,13 +359,13 @@ export default function ProjetosPage() {
                         style={{ borderBottom: i < filteredProjetos.length - 1 ? "1px solid rgba(13,13,13,.045)" : "none" }}
                       >
                         {/* Nome */}
-                        <td className="px-4 py-3.5 max-w-[280px]">
+                        <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2">
                             <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} size="sm" />
                             <div className="min-w-0">
-                              <p className="text-[13px] font-semibold text-black leading-tight line-clamp-1">{p.nome}</p>
+                              <p className="text-[0.8125rem] font-semibold text-black leading-tight line-clamp-1">{p.nome}</p>
                               {p.descricao && (
-                                <p className="text-[11px] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
+                                <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
                               )}
                             </div>
                           </div>
@@ -375,9 +375,9 @@ export default function ProjetosPage() {
                         <td className="px-4 py-3.5">
                           {p.proponente_nome ? (
                             <div>
-                              <p className="text-[13px] font-medium text-black/70">{p.proponente_nome}</p>
+                              <p className="text-[0.8125rem] font-medium text-black/70">{p.proponente_nome}</p>
                               {(p.proponente_cidade || p.proponente_estado) && (
-                                <p className="text-[11px] text-black/35">
+                                <p className="text-[0.6875rem] text-black/35">
                                   {[p.proponente_cidade, p.proponente_estado].filter(Boolean).join(" · ")}
                                 </p>
                               )}
@@ -399,7 +399,7 @@ export default function ProjetosPage() {
                             };
                             const fm = FASE_META[p.fase_codigo] ?? FASE_META.planejamento;
                             return (
-                              <span className="inline-flex items-center gap-1 rounded border bg-white px-2 py-1 text-[10px] font-medium" style={{ borderColor: fm.color + "47", color: fm.color }}>
+                              <span className="inline-flex items-center gap-1 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: fm.color + "47", color: fm.color }}>
                                 <fm.Icon size={10} />{fm.label}
                               </span>
                             );
@@ -408,42 +408,42 @@ export default function ProjetosPage() {
 
                         {/* Objetivo */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="text-[13px] font-bold text-black/70">{fmtValor(p.valor_alvo)}</span>
+                          <span className="text-[0.8125rem] font-bold text-black/70">{fmtValor(p.valor_alvo)}</span>
                         </td>
 
                         {/* Captado */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="text-[13px] font-semibold" style={{ color: p.valor_captado > 0 ? "#2E8932" : "rgba(13,13,13,.20)" }}>{fmtValor(p.valor_captado)}</span>
+                          <span className="text-[0.8125rem] font-semibold" style={{ color: p.valor_captado > 0 ? "#2E8932" : "rgba(13,13,13,.20)" }}>{fmtValor(p.valor_captado)}</span>
                         </td>
 
                         {/* Progresso financeiro */}
-                        <td className="px-4 py-3.5 min-w-[140px]">
+                        <td className="px-4 py-3.5 min-w-[8.75rem]">
                           <FinancialProgress captured={p.valor_captado} target={p.valor_alvo} />
                         </td>
 
                         {/* Captações */}
                         <td className="px-4 py-3.5">
-                          <span className="text-[13px] font-semibold text-black/60">{p.n_captacoes || <span className="text-black/20">0</span>}</span>
+                          <span className="text-[0.8125rem] font-semibold text-black/60">{p.n_captacoes || <span className="text-black/20">0</span>}</span>
                         </td>
 
                         {/* Inscrições */}
                         <td className="px-4 py-3.5">
-                          <span className="text-[13px] font-semibold text-black/60">{p.n_inscricoes || <span className="text-black/20">0</span>}</span>
+                          <span className="text-[0.8125rem] font-semibold text-black/60">{p.n_inscricoes || <span className="text-black/20">0</span>}</span>
                         </td>
 
                         {/* Próximo prazo */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="text-[11px] font-medium text-black/45">{p.proximo_prazo ? new Date(`${p.proximo_prazo}T00:00:00`).toLocaleDateString("pt-BR") : "—"}</span>
+                          <span className="text-[0.6875rem] font-medium text-black/45">{p.proximo_prazo ? new Date(`${p.proximo_prazo}T00:00:00`).toLocaleDateString("pt-BR") : "—"}</span>
                         </td>
 
                         {/* Ponto focal */}
                         <td className="px-4 py-3.5">
-                          <span className={`block max-w-[140px] truncate text-[11px] font-medium ${p.ponto_focal ? "text-black/55" : "text-[#B07A14]"}`}>{p.ponto_focal ?? "Sem ponto focal"}</span>
+                          <span className={`block max-w-[8.75rem] truncate text-[0.6875rem] font-medium ${p.ponto_focal ? "text-black/55" : "text-[#B07A14]"}`}>{p.ponto_focal ?? "Sem ponto focal"}</span>
                         </td>
 
                         {/* Última atualização */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="text-[10.5px] text-black/35">{fmtAtualizacao(p.ultima_atualizacao)}</span>
+                          <span className="text-[0.65625rem] text-black/35">{fmtAtualizacao(p.ultima_atualizacao)}</span>
                         </td>
 
                         {/* Ações */}

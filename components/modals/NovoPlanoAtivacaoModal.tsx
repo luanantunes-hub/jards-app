@@ -133,10 +133,10 @@ export function NovoPlanoAtivacaoModal({ organizationId, initialContaId = "", in
   }
 
   return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/25 p-0 sm:items-center sm:p-6">
-    <div role="dialog" aria-modal="true" aria-labelledby="activation-modal-title" className="max-h-[94vh] w-full overflow-y-auto rounded-t bg-white sm:max-w-[720px] sm:rounded">
+    <div role="dialog" aria-modal="true" aria-labelledby="activation-modal-title" className="max-h-[94vh] w-full overflow-y-auto rounded-t bg-white sm:max-w-[45rem] sm:rounded">
       <header className="sticky top-0 z-10 border-b bg-white px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <div className="flex items-start justify-between gap-4"><div><p className="text-[10px] font-medium uppercase tracking-[.12em] text-black/30">Patrocínio</p><h2 id="activation-modal-title" className="mt-1 text-[19px] font-semibold tracking-[-.02em] text-black">Novo plano de ativação</h2></div><button type="button" onClick={onClose} className="text-black/30 hover:text-black/55" aria-label="Fechar"><X size={17}/></button></div>
-        <div className="mt-4 grid grid-cols-3 gap-2">{STEPS.map((label, index) => <div key={label}><div className="h-1 rounded bg-black/[.06]"><div className="h-full rounded bg-[#7259B5] transition-all" style={{ width: index <= step ? "100%" : "0%" }}/></div><p className="mt-1.5 text-[10px] font-medium" style={{ color: index === step ? "#7259B5" : "rgba(13,13,13,.3)" }}>{label}</p></div>)}</div>
+        <div className="flex items-start justify-between gap-4"><div><p className="text-[0.625rem] font-medium uppercase tracking-[.12em] text-black/30">Patrocínio</p><h2 id="activation-modal-title" className="mt-1 text-[1.1875rem] font-semibold tracking-[-.02em] text-black">Novo plano de ativação</h2></div><button type="button" onClick={onClose} className="text-black/30 hover:text-black/55" aria-label="Fechar"><X size={17}/></button></div>
+        <div className="mt-4 grid grid-cols-3 gap-2">{STEPS.map((label, index) => <div key={label}><div className="h-1 rounded bg-black/[.06]"><div className="h-full rounded bg-[#7259B5] transition-all" style={{ width: index <= step ? "100%" : "0%" }}/></div><p className="mt-1.5 text-[0.625rem] font-medium" style={{ color: index === step ? "#7259B5" : "rgba(13,13,13,.3)" }}>{label}</p></div>)}</div>
       </header>
 
       <div className="px-5 py-5 sm:px-6 sm:py-6">
@@ -159,26 +159,26 @@ export function NovoPlanoAtivacaoModal({ organizationId, initialContaId = "", in
             <TextField label="Início" type="date" value={dataInicio} onChange={setDataInicio} />
             <TextField label="Término" type="date" value={dataFim} onChange={setDataFim} />
             <TextField label="Valor do direito" type="number" value={valorDireito} onChange={setValorDireito} placeholder="0,00" />
-            <div className="rounded border p-4" style={{ borderColor: "rgba(13,13,13,.09)" }}><label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={importar} onChange={event => setImportar(event.target.checked)} className="mt-0.5 accent-[#7259B5]"/><span><span className="block text-[12px] font-semibold text-black/65">Importar contrapartidas</span><span className="mt-1 block text-[11px] leading-5 text-black/35">Cria entregáveis em rascunho a partir da cota selecionada.</span></span></label></div>
+            <div className="rounded border p-4" style={{ borderColor: "rgba(13,13,13,.09)" }}><label className="flex cursor-pointer items-start gap-3"><input type="checkbox" checked={importar} onChange={event => setImportar(event.target.checked)} className="mt-0.5 accent-[#7259B5]"/><span><span className="block text-[0.75rem] font-semibold text-black/65">Importar contrapartidas</span><span className="mt-1 block text-[0.6875rem] leading-5 text-black/35">Cria entregáveis em rascunho a partir da cota selecionada.</span></span></label></div>
           </div>}
-          {error && <p className="mt-4 rounded border border-[#D94E4E]/25 px-3 py-2 text-[11px] text-[#D94E4E]" role="alert">{error}</p>}
+          {error && <p className="mt-4 rounded border border-[#D94E4E]/25 px-3 py-2 text-[0.6875rem] text-[#D94E4E]" role="alert">{error}</p>}
         </>}
       </div>
 
       <footer className="sticky bottom-0 flex items-center justify-between gap-3 border-t bg-white px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <button type="button" onClick={step === 0 ? onClose : () => setStep(value => value - 1)} className="inline-flex items-center gap-1.5 text-[12px] font-medium text-black/35 hover:text-black/55">{step > 0 && <ArrowLeft size={12}/>} {step === 0 ? "Cancelar" : "Voltar"}</button>
-        {step < STEPS.length - 1 ? <button type="button" disabled={!canAdvance || loading} onClick={() => setStep(value => value + 1)} className="inline-flex h-10 items-center gap-2 rounded border border-black/[.15] bg-white px-4 text-[12px] font-medium text-black/70 hover:bg-black/[.04] disabled:opacity-35">Avançar <ArrowRight size={12}/></button> : <button type="button" disabled={saving || !canAdvance} onClick={() => void save()} className="inline-flex h-10 items-center gap-2 rounded bg-[#2E8932] px-4 text-[12px] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"><Check size={13}/>{saving ? "Salvando…" : "Criar plano"}</button>}
+        <button type="button" onClick={step === 0 ? onClose : () => setStep(value => value - 1)} className="inline-flex items-center gap-1.5 text-[0.75rem] font-medium text-black/35 hover:text-black/55">{step > 0 && <ArrowLeft size={12}/>} {step === 0 ? "Cancelar" : "Voltar"}</button>
+        {step < STEPS.length - 1 ? <button type="button" disabled={!canAdvance || loading} onClick={() => setStep(value => value + 1)} className="inline-flex h-10 items-center gap-2 rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black/70 hover:bg-black/[.04] disabled:opacity-35">Avançar <ArrowRight size={12}/></button> : <button type="button" disabled={saving || !canAdvance} onClick={() => void save()} className="inline-flex h-10 items-center gap-2 rounded bg-[#2E8932] px-4 text-[0.75rem] font-semibold text-white hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"><Check size={13}/>{saving ? "Salvando…" : "Criar plano"}</button>}
       </footer>
     </div>
   </div>;
 }
 
 function TextField({ label, value, onChange, required = false, type = "text", placeholder, className = "" }: { label: string; value: string; onChange: (value: string) => void; required?: boolean; type?: string; placeholder?: string; className?: string }) {
-  return <label className={className}><span className="mb-1.5 block text-[11px] font-semibold text-black/55">{label}{required && <span className="text-[#D94E4E]"> *</span>}</span><input type={type} value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} className="h-10 w-full rounded border bg-white px-3 text-[12px] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.13)" }}/></label>;
+  return <label className={className}><span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">{label}{required && <span className="text-[#D94E4E]"> *</span>}</span><input type={type} value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} className="h-10 w-full rounded border bg-white px-3 text-[0.75rem] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.13)" }}/></label>;
 }
 
 function TextArea({ label, value, onChange, placeholder }: { label: string; value: string; onChange: (value: string) => void; placeholder?: string }) {
-  return <label><span className="mb-1.5 block text-[11px] font-semibold text-black/55">{label}</span><textarea value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} rows={4} className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[12px] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.13)" }}/></label>;
+  return <label><span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">{label}</span><textarea value={value} onChange={event => onChange(event.target.value)} placeholder={placeholder} rows={4} className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[0.75rem] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.13)" }}/></label>;
 }
 
 function SelectField({ label, value, onChange, options, required = false }: { label: string; value: string; onChange: (value: string) => void; options: Array<[string, string]>; required?: boolean }) {
@@ -187,7 +187,7 @@ function SelectField({ label, value, onChange, options, required = false }: { la
     : [{ value: "", label: "Nenhum" }, ...options.map(([id, name]) => ({ value: id, label: name }))];
   return (
     <div>
-      <span className="mb-1.5 block text-[11px] font-semibold text-black/55">
+      <span className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">
         {label}{required && <span className="text-[#D94E4E]"> *</span>}
       </span>
       <Dropdown

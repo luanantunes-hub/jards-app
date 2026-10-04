@@ -105,7 +105,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
   }, [carregar]);
 
   if (loading) return <DetailPageContent><div className="space-y-5 animate-pulse"><div className="h-8 w-1/3 rounded bg-black/[.07]"/><div className="h-16 rounded bg-black/[.04]"/><div className="h-40 rounded bg-black/[.04]"/></div></DetailPageContent>;
-  if (!pedido && !atribuicao) return <DetailPageContent><Link href="/workspace-captador" className="inline-flex items-center gap-2 text-[12px] text-black/50 hover:text-black"><ArrowLeft size={14}/>Oportunidades</Link><p className="mt-8 text-[14px] text-black/65">Oportunidade não encontrada.</p></DetailPageContent>;
+  if (!pedido && !atribuicao) return <DetailPageContent><Link href="/workspace-captador" className="inline-flex items-center gap-2 text-[0.75rem] text-black/50 hover:text-black"><ArrowLeft size={14}/>Oportunidades</Link><p className="mt-8 text-[0.875rem] text-black/65">Oportunidade não encontrada.</p></DetailPageContent>;
 
   const empresaNome = atribuicao?.empresaNome || pedido?.nome_busca || "Organização";
   const site = atribuicao?.empresaSite || pedido?.empresa_site || atribuicao?.empresaDomainKey || null;
@@ -117,19 +117,19 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
 
   return <div className="min-h-full">
     <header className="border-b border-black/[.06] bg-white">
-      <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
-        <Link href="/workspace-captador" className="mb-7 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/70"><ArrowLeft size={14}/>Oportunidades</Link>
+      <div className="mx-auto max-w-pagina px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+        <Link href="/workspace-captador" className="mb-7 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/70"><ArrowLeft size={14}/>Oportunidades</Link>
         <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-start">
           <div className="flex min-w-0 items-center gap-4">
             <CompanyLogo nome={empresaNome} domain={atribuicao?.empresaDomainKey} site={site} size={56} className="shrink-0 border border-black/[.07]"/>
             <div className="min-w-0">
-              <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{empresaNome}</h1>
-              {titulo && titulo !== empresaNome && <p className="mt-2 text-[13px] text-black/55">{titulo}</p>}
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{empresaNome}</h1>
+              {titulo && titulo !== empresaNome && <p className="mt-2 text-[0.8125rem] text-black/55">{titulo}</p>}
             </div>
           </div>
           <div className="flex shrink-0 items-center gap-3 sm:pt-2">
-            {atribuicao?.status !== "ativa" && <span className="rounded border border-black/[.12] px-3 py-2 text-[12px] font-medium text-black/70">{status}</span>}
-            {atribuicao?.status === "ativa" && <button type="button" onClick={() => { setTab("acompanhamento"); setAbrirPedidoTrigger(t => t + 1); }} className="rounded border border-black/[.15] px-3 py-2 text-[12px] font-medium text-black/65 transition hover:border-black/30 hover:text-black">Solicitar à organização</button>}
+            {atribuicao?.status !== "ativa" && <span className="rounded border border-black/[.12] px-3 py-2 text-[0.75rem] font-medium text-black/70">{status}</span>}
+            {atribuicao?.status === "ativa" && <button type="button" onClick={() => { setTab("acompanhamento"); setAbrirPedidoTrigger(t => t + 1); }} className="rounded border border-black/[.15] px-3 py-2 text-[0.75rem] font-medium text-black/65 transition hover:border-black/30 hover:text-black">Solicitar à organização</button>}
             {site && <a href={site.startsWith("http") ? site : `https://${site}`} target="_blank" rel="noopener noreferrer" aria-label={`Abrir site de ${empresaNome}`} className="flex h-9 w-9 items-center justify-center rounded border border-black/[.12] text-black/50 transition hover:border-black/30 hover:text-black"><ArrowUpRight size={15}/></a>}
           </div>
         </div>
@@ -144,24 +144,24 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
     <DetailPageContent>
       {tab === "resumo" && <div className="space-y-6">
         {atribuicao?.status === "ativa" && (pedido?.tipo === "negociacoes" || pedido?.tipo === "inscricoes") && <section className="rounded border border-black/[.08] bg-white px-5 py-4">
-          <h2 className="mb-3 text-[12px] font-semibold text-black/60">Andamento <span className="font-normal text-black/35">— sugestão para {organizationName}</span></h2>
+          <h2 className="mb-3 text-[0.75rem] font-semibold text-black/60">Andamento <span className="font-normal text-black/35">— sugestão para {organizationName}</span></h2>
           <div className="flex flex-wrap gap-2">{(pedido.tipo === "negociacoes" ? etiquetas : etiquetasInscricao).map(etapa => <button key={etapa.key} type="button" disabled={movendoEtapa} onClick={() => void moverEtapa(etapa.key)} aria-pressed={atribuicao.workspaceEtapa === etapa.key}
-            className={`rounded border px-3 py-2 text-[12px] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#171717] bg-[#171717] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-black"}`}>{etapa.label}</button>)}</div>
-          {erroEtapa && <p role="alert" className="mt-2 text-[12px] text-[#B64545]">{erroEtapa}</p>}
+            className={`rounded border px-3 py-2 text-[0.75rem] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#171717] bg-[#171717] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-black"}`}>{etapa.label}</button>)}</div>
+          {erroEtapa && <p role="alert" className="mt-2 text-[0.75rem] text-[#B64545]">{erroEtapa}</p>}
         </section>}
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08] lg:grid-cols-4">
           {[
             ["Status", status], ["Tipo", tipo], ["Organização", organizationName], ["Entrada", dataCurta(pedido?.created_at)],
-          ].map(([label, value]) => <div key={label} className="min-h-24 bg-white px-5 py-4"><p className="text-[11px] font-medium text-black/40">{label}</p><p className="mt-3 line-clamp-2 text-[17px] font-semibold leading-tight tracking-tight text-[#171717]">{value}</p></div>)}
+          ].map(([label, value]) => <div key={label} className="min-h-24 bg-white px-5 py-4"><p className="text-[0.6875rem] font-medium text-black/40">{label}</p><p className="mt-3 line-clamp-2 text-[1.0625rem] font-semibold leading-tight tracking-tight text-[#171717]">{value}</p></div>)}
         </section>
 
         <div className="space-y-5">
           <section className="rounded border border-black/[.08] bg-white p-5">
-            <h2 className="text-[15px] font-semibold text-black/80">Próximo passo</h2>
-            <p className="mt-4 text-[14px] font-medium text-black/75">{proximo?.texto || (pedido?.status === "pendente" ? "Aguardando avaliação" : pedido?.status === "aguardando_captador" ? "Responder à organização" : "—")}</p>
-            {proximo?.data && <p className="mt-1 text-[12px] text-black/45">Até {dataCurta(proximo.data)}</p>}
+            <h2 className="text-[0.9375rem] font-semibold text-black/80">Próximo passo</h2>
+            <p className="mt-4 text-[0.875rem] font-medium text-black/75">{proximo?.texto || (pedido?.status === "pendente" ? "Aguardando avaliação" : pedido?.status === "aguardando_captador" ? "Responder à organização" : "—")}</p>
+            {proximo?.data && <p className="mt-1 text-[0.75rem] text-black/45">Até {dataCurta(proximo.data)}</p>}
           </section>
-          {(coordenacao?.situacao || pedido?.mensagem) && <section className="rounded border border-black/[.08] bg-white p-5"><h2 className="text-[15px] font-semibold text-black/80">{coordenacao?.situacao ? "Situação atual" : "Contexto"}</h2><p className="mt-3 whitespace-pre-wrap text-[13px] leading-relaxed text-black/65">{coordenacao?.situacao || pedido?.mensagem}</p></section>}
+          {(coordenacao?.situacao || pedido?.mensagem) && <section className="rounded border border-black/[.08] bg-white p-5"><h2 className="text-[0.9375rem] font-semibold text-black/80">{coordenacao?.situacao ? "Situação atual" : "Contexto"}</h2><p className="mt-3 whitespace-pre-wrap text-[0.8125rem] leading-relaxed text-black/65">{coordenacao?.situacao || pedido?.mensagem}</p></section>}
         </div>
       </div>}
       {tab === "acompanhamento" && <section className="rounded border border-black/[.08] bg-white p-5">

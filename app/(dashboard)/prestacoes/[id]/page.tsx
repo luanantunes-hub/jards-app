@@ -212,7 +212,7 @@ export default function PrestacaoDetalhe() {
     <div className="px-8 py-6">
       {/* Avançar status */}
       <div className="flex justify-between items-center mb-6">
-        <div className="text-[11px] text-black/40">
+        <div className="text-[0.6875rem] text-black/40">
           {prestacao.captacao && <span>Negociação: {prestacao.captacao.titulo ?? "—"}</span>}
           {prestacao.projeto && <span className="ml-2">· Projeto: {prestacao.projeto.nome}</span>}
         </div>
@@ -221,7 +221,7 @@ export default function PrestacaoDetalhe() {
           <div className="relative flex-shrink-0" ref={avancarBoxRef}>
             <button
               onClick={() => setAvancarOpen(!avancarOpen)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded text-[13px] font-semibold text-white transition hover:opacity-90"
+              className="flex items-center gap-2 px-4 py-2.5 rounded text-[0.8125rem] font-semibold text-white transition hover:opacity-90"
               style={{ background: "#7259B5" }}
             >
               Avançar status <ChevronDown size={13} />
@@ -230,7 +230,7 @@ export default function PrestacaoDetalhe() {
             {avancarOpen && avancarMenuPos && createPortal(
               <div
                 className="fixed bg-white rounded border shadow-lg z-20"
-                style={{ right: avancarMenuPos.right, top: avancarMenuPos.top, borderColor: "rgba(13,13,13,.10)", minWidth: 240 }}
+                style={{ right: avancarMenuPos.right, top: avancarMenuPos.top, borderColor: "rgba(13,13,13,.10)", minWidth: "15rem" }}
               >
                 <div className="p-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <textarea
@@ -238,7 +238,7 @@ export default function PrestacaoDetalhe() {
                     onChange={e => setComentario(e.target.value)}
                     placeholder="Comentário"
                     rows={2}
-                    className="w-full text-[11px] border rounded px-2.5 py-2 resize-none focus:outline-none"
+                    className="w-full text-[0.6875rem] border rounded px-2.5 py-2 resize-none focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
@@ -247,7 +247,7 @@ export default function PrestacaoDetalhe() {
                     key={s}
                     onClick={() => avancar(s)}
                     disabled={saving}
-                    className="w-full flex items-center gap-2 px-4 py-3 text-left text-[12px] font-medium hover:bg-black/[.03] transition border-b last:border-0"
+                    className="w-full flex items-center gap-2 px-4 py-3 text-left text-[0.75rem] font-medium hover:bg-black/[.03] transition border-b last:border-0"
                     style={{ borderColor: "rgba(13,13,13,.05)" }}
                   >
                     <span
@@ -266,14 +266,14 @@ export default function PrestacaoDetalhe() {
 
       {/* Alerta de prazo próximo */}
       {prazoAlerta && (
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded border mb-4 text-[12px]"
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
           style={{ background: "#B07A1408", borderColor: "#B07A1430", color: "#B07A14" }}>
           <AlertCircle size={13} />
           <span>Prazo em <strong>{diasRestantes} dia{diasRestantes !== 1 ? "s" : ""}</strong> — {fmtDate(prestacao.prazo)}</span>
         </div>
       )}
       {vencida && (
-        <div className="flex items-center gap-2.5 px-4 py-3 rounded border mb-4 text-[12px]"
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
           style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
           <AlertCircle size={13} />
           <span>Prazo vencido em {fmtDate(prestacao.prazo)} — regularize o envio o quanto antes.</span>
@@ -288,21 +288,21 @@ export default function PrestacaoDetalhe() {
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {/* Header */}
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-              <p className="text-[11px] font-semibold text-black/50 mb-3">Comprovação financeira</p>
+              <p className="text-[0.6875rem] font-semibold text-black/50 mb-3">Comprovação financeira</p>
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-wide text-black/30 mb-1">Aprovado</p>
-                  <p className="text-[17px] font-bold text-black/80">{fmt(totalAprovado)}</p>
+                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">Aprovado</p>
+                  <p className="text-[1.0625rem] font-bold text-black/80">{fmt(totalAprovado)}</p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-wide mb-1" style={{ color: "#2E893280" }}>Comprovado</p>
-                  <p className="text-[17px] font-bold" style={{ color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "#7259B5" }}>
+                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide mb-1" style={{ color: "#2E893280" }}>Comprovado</p>
+                  <p className="text-[1.0625rem] font-bold" style={{ color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "#7259B5" }}>
                     {fmt(totalComprovado)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[9px] font-semibold uppercase tracking-wide text-black/30 mb-1">A comprovar</p>
-                  <p className="text-[17px] font-bold" style={{ color: totalAComprovar > 0 ? "#D94E4E" : "#2E8932" }}>
+                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">A comprovar</p>
+                  <p className="text-[1.0625rem] font-bold" style={{ color: totalAComprovar > 0 ? "#D94E4E" : "#2E8932" }}>
                     {totalAComprovar > 0 ? fmt(totalAComprovar) : "—"}
                   </p>
                 </div>
@@ -312,8 +312,8 @@ export default function PrestacaoDetalhe() {
             {/* Barra de progresso */}
             <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[10px] text-black/35">Percentual comprovado</p>
-                <span className="text-[11px] font-bold tabular-nums" style={{
+                <p className="text-[0.625rem] text-black/35">Percentual comprovado</p>
+                <span className="text-[0.6875rem] font-bold tabular-nums" style={{
                   color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "rgba(13,13,13,.4)"
                 }}>{pct}%</span>
               </div>
@@ -331,7 +331,7 @@ export default function PrestacaoDetalhe() {
             {/* Alerta de reembolso PF */}
             {pctPF > 0 && (
               <div
-                className="mx-5 mb-4 flex items-start gap-2 px-3 py-2.5 rounded border text-[11px]"
+                className="mx-5 mb-4 flex items-start gap-2 px-3 py-2.5 rounded border text-[0.6875rem]"
                 style={
                   pctPF > 20
                     ? { background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }
@@ -355,7 +355,7 @@ export default function PrestacaoDetalhe() {
                   onClick={() => setRubricsOpen(o => !o)}
                   className="w-full flex items-center justify-between px-5 py-2.5 text-left hover:bg-black/[.015] transition"
                 >
-                  <span className="text-[10px] font-semibold text-black/40">Por rubrica</span>
+                  <span className="text-[0.625rem] font-semibold text-black/40">Por rubrica</span>
                   <ChevronRight size={12} className="text-black/30 transition-transform" style={{ transform: rubricsOpen ? "rotate(90deg)" : "none" }} />
                 </button>
 
@@ -368,10 +368,10 @@ export default function PrestacaoDetalhe() {
                       return (
                         <div key={item.id} className="px-5 py-3 border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                           <div className="flex items-center justify-between mb-1">
-                            <p className="text-[11px] font-medium text-black/70 truncate">{item.rubrica}</p>
+                            <p className="text-[0.6875rem] font-medium text-black/70 truncate">{item.rubrica}</p>
                             <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                              <span className="text-[10px] text-black/35 tabular-nums">{fmt(item.valor_realizado)} / {fmt(item.valor_aprovado)}</span>
-                              <span className="text-[10px] font-semibold tabular-nums" style={{
+                              <span className="text-[0.625rem] text-black/35 tabular-nums">{fmt(item.valor_realizado)} / {fmt(item.valor_aprovado)}</span>
+                              <span className="text-[0.625rem] font-semibold tabular-nums" style={{
                                 color: itemPct >= 90 ? "#2E8932" : itemPct >= 50 ? "#B07A14" : "rgba(13,13,13,.35)"
                               }}>{itemPct}%</span>
                             </div>
@@ -396,42 +396,42 @@ export default function PrestacaoDetalhe() {
 
           {/* Prazo */}
           <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-black/35 mb-2">Prazo de envio</p>
-            <p className="text-[15px] font-bold" style={{ color: vencida ? "#D94E4E" : "rgba(13,13,13,.75)" }}>
+            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-2">Prazo de envio</p>
+            <p className="text-[0.9375rem] font-bold" style={{ color: vencida ? "#D94E4E" : "rgba(13,13,13,.75)" }}>
               {fmtDate(prestacao.prazo)}
             </p>
             {diasRestantes !== null && !vencida && (
-              <p className="text-[10px] mt-1" style={{ color: diasRestantes <= 15 ? "#B07A14" : "rgba(13,13,13,.30)" }}>
+              <p className="text-[0.625rem] mt-1" style={{ color: diasRestantes <= 15 ? "#B07A14" : "rgba(13,13,13,.30)" }}>
                 {diasRestantes > 0 ? `${diasRestantes} dias restantes` : "Vence hoje"}
               </p>
             )}
             {prestacao.captacao && (
-              <p className="text-[10px] text-black/30 mt-0.5">Negociação: {prestacao.captacao.titulo ?? "—"}</p>
+              <p className="text-[0.625rem] text-black/30 mt-0.5">Negociação: {prestacao.captacao.titulo ?? "—"}</p>
             )}
             <div className="mt-3 pt-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-black/30 mb-2">Período de execução</p>
+              <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-2">Período de execução</p>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-[9px] text-black/30 mb-1">Início</p>
+                  <p className="text-[0.5625rem] text-black/30 mb-1">Início</p>
                   <input
                     type="date"
                     defaultValue={prestacao.data_inicio_execucao ?? ""}
                     onBlur={async e => {
                       await (supabase as any).from("prestacoes_contas").update({ data_inicio_execucao: e.target.value || null }).eq("id", id);
                     }}
-                    className="w-full border rounded px-2 py-1.5 text-[11px] focus:outline-none"
+                    className="w-full border rounded px-2 py-1.5 text-[0.6875rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
                 <div>
-                  <p className="text-[9px] text-black/30 mb-1">Fim</p>
+                  <p className="text-[0.5625rem] text-black/30 mb-1">Fim</p>
                   <input
                     type="date"
                     defaultValue={prestacao.data_fim_execucao ?? ""}
                     onBlur={async e => {
                       await (supabase as any).from("prestacoes_contas").update({ data_fim_execucao: e.target.value || null }).eq("id", id);
                     }}
-                    className="w-full border rounded px-2 py-1.5 text-[11px] focus:outline-none"
+                    className="w-full border rounded px-2 py-1.5 text-[0.6875rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
@@ -442,8 +442,8 @@ export default function PrestacaoDetalhe() {
           {/* Observações */}
           {prestacao.observacoes && (
             <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-black/35 mb-2">Observações</p>
-              <p className="text-[13px] text-black/65 leading-relaxed">{prestacao.observacoes}</p>
+              <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-2">Observações</p>
+              <p className="text-[0.8125rem] text-black/65 leading-relaxed">{prestacao.observacoes}</p>
             </div>
           )}
 
@@ -454,7 +454,7 @@ export default function PrestacaoDetalhe() {
 
           {/* Info do status */}
           <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-black/35 mb-3">Status atual</p>
+            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-3">Status atual</p>
             <div className="flex items-center gap-2">
               {STATUS_ORDER.map((s, i) => (
                 <div key={s} className="flex items-center gap-1">
@@ -474,13 +474,13 @@ export default function PrestacaoDetalhe() {
                 </div>
               ))}
             </div>
-            <p className="text-[11px] font-semibold mt-2" style={{ color: meta.color }}>{meta.label}</p>
+            <p className="text-[0.6875rem] font-semibold mt-2" style={{ color: meta.color }}>{meta.label}</p>
           </div>
 
           {/* Checklist de prontidão */}
           <div className="bg-white rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[11px] font-semibold text-black/50">Prontidão para envio</p>
+              <p className="text-[0.6875rem] font-semibold text-black/50">Prontidão para envio</p>
             </div>
             <div className="p-4 space-y-2.5">
               {[
@@ -511,8 +511,8 @@ export default function PrestacaoDetalhe() {
                     style={{ background: item.ok ? "#2E8932" : "#D94E4E" }}
                   />
                   <div>
-                    <p className="text-[11px] font-medium text-black/70">{item.label}</p>
-                    <p className="text-[10px]" style={{ color: item.ok ? "#2E8932" : "#D94E4E" }}>{item.detail}</p>
+                    <p className="text-[0.6875rem] font-medium text-black/70">{item.label}</p>
+                    <p className="text-[0.625rem]" style={{ color: item.ok ? "#2E8932" : "#D94E4E" }}>{item.detail}</p>
                   </div>
                 </div>
               ))}
@@ -522,11 +522,11 @@ export default function PrestacaoDetalhe() {
           {/* Histórico */}
           <div className="bg-white rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[11px] font-semibold text-black/50">Histórico</p>
+              <p className="text-[0.6875rem] font-semibold text-black/50">Histórico</p>
             </div>
             <div className="p-4">
               {log.length === 0 ? (
-                <p className="text-[11px] text-black/25 text-center py-4">Nenhuma movimentação ainda.</p>
+                <p className="text-[0.6875rem] text-black/25 text-center py-4">Nenhuma movimentação ainda.</p>
               ) : (
                 <div className="space-y-3">
                   {log.map(entry => (
@@ -536,13 +536,13 @@ export default function PrestacaoDetalhe() {
                         style={{ background: STATUS_META[entry.status_novo].color }}
                       />
                       <div>
-                        <p className="text-[11px] font-medium text-black/70">
+                        <p className="text-[0.6875rem] font-medium text-black/70">
                           → {STATUS_META[entry.status_novo].label}
                         </p>
                         {entry.comentario && (
-                          <p className="text-[10px] text-black/40 mt-0.5 italic">"{entry.comentario}"</p>
+                          <p className="text-[0.625rem] text-black/40 mt-0.5 italic">"{entry.comentario}"</p>
                         )}
-                        <p className="text-[9px] text-black/25 mt-0.5">
+                        <p className="text-[0.5625rem] text-black/25 mt-0.5">
                           {new Date(entry.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}
                         </p>
                       </div>
@@ -555,14 +555,14 @@ export default function PrestacaoDetalhe() {
 
           {/* Meta */}
           <div className="bg-white rounded border p-4 space-y-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-black/35">Informações</p>
+            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35">Informações</p>
             <div>
-              <p className="text-[9px] text-black/30 mb-0.5">Criada em</p>
-              <p className="text-[11px] text-black/60">{fmtDate(prestacao.created_at.split("T")[0])}</p>
+              <p className="text-[0.5625rem] text-black/30 mb-0.5">Criada em</p>
+              <p className="text-[0.6875rem] text-black/60">{fmtDate(prestacao.created_at.split("T")[0])}</p>
             </div>
             <div>
-              <p className="text-[9px] text-black/30 mb-0.5">Atualizada em</p>
-              <p className="text-[11px] text-black/60">{fmtDate(prestacao.updated_at.split("T")[0])}</p>
+              <p className="text-[0.5625rem] text-black/30 mb-0.5">Atualizada em</p>
+              <p className="text-[0.6875rem] text-black/60">{fmtDate(prestacao.updated_at.split("T")[0])}</p>
             </div>
           </div>
         </div>

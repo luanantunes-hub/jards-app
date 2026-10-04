@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef, useEffect, useId } from "react";
 import { ChevronDown, Check } from "lucide-react";
+import { escalaUi } from "@/lib/escala-ui";
 
 export interface DropdownItem {
   value: string;
@@ -70,7 +71,7 @@ export function Dropdown({
     if (rect) {
       const spaceBelow = window.innerHeight - rect.bottom - 4;
       const spaceAbove = rect.top - 4;
-      const maxListHeight = 208; // max-h-52
+      const maxListHeight = 208 * escalaUi(); // max-h-52 (13rem)
 
       if (spaceBelow >= Math.min(maxListHeight, spaceAbove)) {
         setListStyle({ top: rect.bottom + 4, left: rect.left, width: rect.width });
@@ -136,7 +137,7 @@ export function Dropdown({
         aria-expanded={open}
         aria-controls={open ? listId : undefined}
         aria-label={ariaLabel}
-        className="flex h-10 w-full items-center gap-2 rounded border bg-white px-3 text-left text-[13px] transition focus-visible:border-[#7259B5]/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/15 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex h-10 w-full items-center gap-2 rounded border bg-white px-3 text-left text-[0.8125rem] transition focus-visible:border-[#7259B5]/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/15 disabled:cursor-not-allowed disabled:opacity-50"
         style={{ borderColor: open ? "rgba(13,13,13,.28)" : "rgba(13,13,13,.12)" }}
       >
         <span className={`flex-1 truncate ${selected ? "text-black" : "text-black/30"}`}>
@@ -163,7 +164,7 @@ export function Dropdown({
               aria-selected={opt.value === value}
               onMouseDown={e => e.preventDefault()}
               onClick={() => choose(opt.value)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[13px] outline-none transition hover:bg-black/[.04] focus-visible:bg-[#7259B5]/[.07]"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.8125rem] outline-none transition hover:bg-black/[.04] focus-visible:bg-[#7259B5]/[.07]"
               style={{ color: opt.value === value ? "#0D0D0D" : "rgba(13,13,13,.60)" }}
             >
               <span className="flex-1 truncate">{opt.label}</span>

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef } from "react";
 import { ArrowLeft, Check, RotateCcw, Settings2, X } from "lucide-react";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { escalaUi } from "@/lib/escala-ui";
 import { OUTCOME_LABELS, nextDecision, type RenewalDecisionAnswers, type RenewalDecisionNode, type RenewalDecisionOutcome } from "@/lib/customer-success/renewalDecisionTree";
 
 type EvaluationState = {
@@ -16,6 +17,10 @@ type EvaluationState = {
 type GraphVertex = { id: string; kind: "question" | "outcome"; title: string; x: number; y: number };
 type GraphEdge = { id: string; sourceId: string; targetId: string; optionId: string; label: string };
 
+// Coordenadas do diagrama em px na base de 16px, desenhadas em rem (e o SVG das
+// ligações com viewBox nas mesmas unidades): o diagrama inteiro cresce junto com
+// a fonte base em telas grandes, sem desalinhar texto e caixas.
+const remDe = (px: number) => `${px / 16}rem`;
 const NODE_W = 216;
 const NODE_H = 72;
 const COLUMN_GAP = 128;
@@ -91,9 +96,10 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
     const viewport = viewportRef.current;
     const vertex = graph.vertices.find(item => item.id === focusId);
     if (!viewport || !vertex) return;
+    const escala = escalaUi();
     const frame = window.requestAnimationFrame(() => viewport.scrollTo({
-      left: Math.max(0, vertex.x + NODE_W / 2 - viewport.clientWidth / 2),
-      top: Math.max(0, vertex.y + NODE_H / 2 - viewport.clientHeight / 2),
+      left: Math.max(0, (vertex.x + NODE_W / 2) * escala - viewport.clientWidth / 2),
+      top: Math.max(0, (vertex.y + NODE_H / 2) * escala - viewport.clientHeight / 2),
       behavior: value.status === "nao_avaliada" ? "auto" : "smooth",
     }));
     return () => window.cancelAnimationFrame(frame);
@@ -130,18 +136,18 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
   return <div role="dialog" aria-modal="true" aria-labelledby="decision-title" className="fixed inset-0 z-[1200] flex flex-col bg-[#F7F7F5]">
     <header className="relative z-20 flex h-16 shrink-0 items-center justify-between border-b border-black/[.08] bg-white px-5 md:px-7">
       <div className="min-w-0">
-        <h2 id="decision-title" className="text-[15px] font-semibold tracking-[-.01em] text-black/80">Árvore de renovação</h2>
-        <p className="mt-0.5 text-[10px] text-black/35">{value.outcome ? "Diagnóstico concluído" : `${answered} ${answered === 1 ? "decisão registrada" : "decisões registradas"}`}</p>
+        <h2 id="decision-title" className="text-[0.9375rem] font-semibold tracking-[-.01em] text-black/80">Árvore de renovação</h2>
+        <p className="mt-0.5 text-[0.625rem] text-black/35">{value.outcome ? "Diagnóstico concluído" : `${answered} ${answered === 1 ? "decisão registrada" : "decisões registradas"}`}</p>
       </div>
       <div className="flex items-center gap-2">
-        <Link href="/configuracoes?section=funis" onClick={onClose} className="inline-flex h-8 items-center gap-1.5 rounded border border-black/[.08] bg-white px-2.5 text-[10px] font-medium text-black/40 hover:bg-black/[.035] hover:text-black/60"><Settings2 size={12}/>Editar árvore</Link>
+        <Link href="/configuracoes?section=funis" onClick={onClose} className="inline-flex h-8 items-center gap-1.5 rounded border border-black/[.08] bg-white px-2.5 text-[0.625rem] font-medium text-black/40 hover:bg-black/[.035] hover:text-black/60"><Settings2 size={12}/>Editar árvore</Link>
         <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded text-black/30 hover:bg-black/[.04] hover:text-black/55"><X size={15}/></button>
       </div>
     </header>
 
     <main ref={viewportRef} className="relative min-h-0 flex-1 overflow-auto bg-[radial-gradient(circle,rgba(13,13,13,.11)_1px,transparent_1px)] [background-size:24px_24px]">
-      <div className="relative" style={{ width: graph.width, height: graph.height }}>
-        <svg aria-hidden="true" className="absolute inset-0 h-full w-full overflow-visible">
+      <div className="relative" style={{ width: remDe(graph.width), height: remDe(graph.height) }}>
+        <svg aria-hidden="true" viewBox={`0 0 ${graph.width} ${graph.height}`} className="absolute inset-0 h-full w-full overflow-visible">
           {graph.edges.map(edge => {
             const source = positions.get(edge.sourceId);
             const target = positions.get(edge.targetId);
@@ -155,8 +161,9 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
             const selected = selectedEdges.has(edge.id);
             return <g key={edge.id} className="tree-edge-enter">
               <path d={`M ${sx} ${sy} C ${sx + control} ${sy + parallelOffset}, ${tx - control} ${ty + parallelOffset}, ${tx} ${ty}`} fill="none" stroke={selected ? "#2E8932" : "rgba(13,13,13,.13)"} strokeWidth={selected ? 2 : 1.2} strokeDasharray={selected ? "7 5" : "4 6"} className={selected ? "tree-edge-active" : ""}/>
+              {/* Dentro do SVG, px são unidades do viewBox e já acompanham a escala. */}
               {selected && <foreignObject x={(sx + tx) / 2 - 48} y={(sy + ty) / 2 + parallelOffset - 12} width="96" height="24">
-                <div className="mx-auto w-fit max-w-[92px] truncate rounded border border-[#2E8932]/20 bg-[#F1F8F1] px-1.5 py-0.5 text-[8px] font-medium text-[#2E8932]">{edge.label}</div>
+                <div className="mx-auto w-fit max-w-[92px] truncate rounded border border-[#2E8932]/20 bg-[#F1F8F1] px-[6px] py-[2px] text-[8px] font-medium text-[#2E8932]">{edge.label}</div>
               </foreignObject>}
             </g>;
           })}
@@ -167,10 +174,10 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
           const isAnswered = vertex.kind === "question" && Boolean(value.answers[vertex.id]);
           const outcomeKey = vertex.id.startsWith("outcome:") ? vertex.id.slice("outcome:".length) : null;
           const isOutcome = Boolean(outcomeKey && value.outcome === outcomeKey);
-          return <div key={vertex.id} className={`tree-node-enter absolute flex flex-col justify-center rounded border px-4 ${isCurrent ? "tree-node-active border-[#7259B5] bg-white shadow-[0_10px_35px_rgba(74,54,126,.14)]" : isAnswered || isOutcome ? "border-[#2E8932]/30 bg-[#F7FBF7]" : vertex.kind === "outcome" ? "border-black/[.08] bg-[#F1F1EF]" : "border-black/[.09] bg-white/95"}`} style={{ left: vertex.x, top: vertex.y, width: NODE_W, height: NODE_H, animationDelay: `${Math.min(index * 35, 350)}ms` }}>
+          return <div key={vertex.id} className={`tree-node-enter absolute flex flex-col justify-center rounded border px-4 ${isCurrent ? "tree-node-active border-[#7259B5] bg-white shadow-[0_10px_35px_rgba(74,54,126,.14)]" : isAnswered || isOutcome ? "border-[#2E8932]/30 bg-[#F7FBF7]" : vertex.kind === "outcome" ? "border-black/[.08] bg-[#F1F1EF]" : "border-black/[.09] bg-white/95"}`} style={{ left: remDe(vertex.x), top: remDe(vertex.y), width: remDe(NODE_W), height: remDe(NODE_H), animationDelay: `${Math.min(index * 35, 350)}ms` }}>
             <div className="flex items-start gap-2.5">
-              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-[8px] font-semibold ${isAnswered || isOutcome ? "border-[#2E8932]/20 bg-[#2E8932] text-white" : isCurrent ? "border-[#7259B5]/25 bg-[#7259B5] text-white" : "border-black/[.08] bg-black/[.025] text-black/25"}`}>{isAnswered || isOutcome ? <Check size={10}/> : vertex.kind === "outcome" ? "◆" : index + 1}</span>
-              <div className="min-w-0"><p className="text-[9px] font-medium uppercase tracking-[.08em] text-black/25">{vertex.kind === "outcome" ? "Diagnóstico" : isCurrent ? "Pergunta atual" : "Decisão"}</p><p className="mt-1 text-[11px] font-semibold leading-snug text-black/65">{vertex.title}</p></div>
+              <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-[0.5rem] font-semibold ${isAnswered || isOutcome ? "border-[#2E8932]/20 bg-[#2E8932] text-white" : isCurrent ? "border-[#7259B5]/25 bg-[#7259B5] text-white" : "border-black/[.08] bg-black/[.025] text-black/25"}`}>{isAnswered || isOutcome ? <Check size={10}/> : vertex.kind === "outcome" ? "◆" : index + 1}</span>
+              <div className="min-w-0"><p className="text-[0.5625rem] font-medium uppercase tracking-[.08em] text-black/25">{vertex.kind === "outcome" ? "Diagnóstico" : isCurrent ? "Pergunta atual" : "Decisão"}</p><p className="mt-1 text-[0.6875rem] font-semibold leading-snug text-black/65">{vertex.title}</p></div>
             </div>
           </div>;
         })}
@@ -178,23 +185,23 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
     </main>
 
     <footer className="pointer-events-none absolute inset-x-0 bottom-4 z-20 px-4 md:bottom-5">
-      <div className="pointer-events-auto mx-auto w-full max-w-[680px] rounded border border-black/[.1] bg-white p-3 shadow-[0_18px_55px_rgba(13,13,13,.16)]">
+      <div className="pointer-events-auto mx-auto w-full max-w-[42.5rem] rounded border border-black/[.1] bg-white p-3 shadow-[0_18px_55px_rgba(13,13,13,.16)]">
         {value.outcome ? <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-[#2E8932]/10 text-[#2E8932]"><Check size={14}/></span>
-            <div className="min-w-0"><p className="text-[9px] font-semibold uppercase tracking-[.08em] text-[#2E8932]/60">Diagnóstico</p><p className="truncate text-[14px] font-semibold text-black/75">{OUTCOME_LABELS[value.outcome]}</p></div>
+            <div className="min-w-0"><p className="text-[0.5625rem] font-semibold uppercase tracking-[.08em] text-[#2E8932]/60">Diagnóstico</p><p className="truncate text-[0.875rem] font-semibold text-black/75">{OUTCOME_LABELS[value.outcome]}</p></div>
           </div>
           <div className="flex shrink-0 items-center justify-end gap-1.5">
-            <button type="button" onClick={reset} className="inline-flex items-center gap-1.5 rounded border border-black/[.09] bg-white px-3 py-2 text-[10px] font-medium text-black/45 hover:bg-black/[.035]"><RotateCcw size={11}/>Refazer</button>
-            <button type="button" onClick={onClose} className="rounded bg-[#2E8932] px-3.5 py-2 text-[10px] font-semibold text-white hover:bg-[#26752A]">Concluir avaliação</button>
+            <button type="button" onClick={reset} className="inline-flex items-center gap-1.5 rounded border border-black/[.09] bg-white px-3 py-2 text-[0.625rem] font-medium text-black/45 hover:bg-black/[.035]"><RotateCcw size={11}/>Refazer</button>
+            <button type="button" onClick={onClose} className="rounded bg-[#2E8932] px-3.5 py-2 text-[0.625rem] font-semibold text-white hover:bg-[#26752A]">Concluir avaliação</button>
           </div>
         </div> : current ? <div className="flex items-end gap-2.5">
           <button type="button" onClick={reset} aria-label="Voltar ao início" className="mb-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded text-black/25 hover:bg-black/[.04] hover:text-black/50"><ArrowLeft size={13}/></button>
           <div className="min-w-0 flex-1">
-            <p className="mb-2 text-[12px] font-semibold leading-snug text-black/70">{current.title}</p>
-            <div className="flex flex-wrap gap-1.5">{current.options.map(option => <button key={option.id} type="button" onClick={() => answer(option.id)} className="rounded border border-black/[.1] bg-white px-3 py-2 text-[10px] font-medium text-black/55 transition hover:border-black/20 hover:bg-black/[.035] hover:text-black/75">{option.label}</button>)}</div>
+            <p className="mb-2 text-[0.75rem] font-semibold leading-snug text-black/70">{current.title}</p>
+            <div className="flex flex-wrap gap-1.5">{current.options.map(option => <button key={option.id} type="button" onClick={() => answer(option.id)} className="rounded border border-black/[.1] bg-white px-3 py-2 text-[0.625rem] font-medium text-black/55 transition hover:border-black/20 hover:bg-black/[.035] hover:text-black/75">{option.label}</button>)}</div>
           </div>
-        </div> : <div className="flex items-center justify-between gap-3"><p className="text-[12px] text-black/40">A árvore não possui uma etapa inicial.</p><button type="button" onClick={onClose} className="rounded bg-[#2E8932] px-3.5 py-2 text-[10px] font-semibold text-white hover:bg-[#26752A]">Fechar</button></div>}
+        </div> : <div className="flex items-center justify-between gap-3"><p className="text-[0.75rem] text-black/40">A árvore não possui uma etapa inicial.</p><button type="button" onClick={onClose} className="rounded bg-[#2E8932] px-3.5 py-2 text-[0.625rem] font-semibold text-white hover:bg-[#26752A]">Fechar</button></div>}
       </div>
     </footer>
 

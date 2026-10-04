@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronLeft, ChevronRight, Eye, EyeOff, GripVertical, RotateCcw, Settings2 } from "lucide-react";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { escalaUi } from "@/lib/escala-ui";
 
 export type ColumnDefinition<Id extends string = string> = {
   id: Id;
@@ -62,13 +63,18 @@ export function ManagedTable<Id extends string>({ storageKey, definitions, class
   const [totalRows, setTotalRows] = useState(0);
   const safeKey = storageKey.replace(/[^a-zA-Z0-9_-]/g, "-");
   const visibleOrder = manager.visible.map(column => column.id);
+  // Peso da coluna "grow" proporcional à largura mínima: com várias colunas
+  // crescendo, nenhuma é alargada além do mínimo enquanto a tabela não cabe.
   const template = manager.visible.map(column => {
-    const width = column.width ?? "140px";
-    return column.grow ? `minmax(${width}, 1fr)` : width;
+    const width = column.width ?? "8.75rem";
+    const peso = Number.parseFloat(width);
+    return column.grow ? `minmax(${width}, ${Number.isFinite(peso) && peso > 0 ? peso : 1}fr)` : width;
   }).join(" ");
+  // Coluna "grow" só ocupa a largura que sobra: contain:inline-size impede que o
+  // texto mais longo dela (min-width:max-content da tabela) a alargue.
   const rules = definitions.map((column, sourceIndex) => {
     const visualIndex = visibleOrder.indexOf(column.id);
-    return `.managed-${safeKey} tr > :nth-child(${sourceIndex + 1}){${visualIndex < 0 ? "display:none!important;" : `display:block;order:${visualIndex};`}}`;
+    return `.managed-${safeKey} tr > :nth-child(${sourceIndex + 1}){${visualIndex < 0 ? "display:none!important;" : `display:block;order:${visualIndex};${column.grow ? "contain:inline-size;" : ""}`}}`;
   }).join("");
   const totalPages = Math.max(1, Math.ceil(totalRows / pageSize));
   const start = (page - 1) * pageSize + 1;
@@ -107,8 +113,8 @@ export function ManagedTable<Id extends string>({ storageKey, definitions, class
       <table ref={tableRef} className={`managed-${safeKey} ${className}`}>{children}</table>
     </div>
     {totalRows > 0 && <div className="flex flex-col gap-3 border-t px-4 py-3 sm:flex-row sm:items-center sm:justify-between" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-      <div className="flex items-center gap-2 text-[11px] text-black/40"><span>Exibir</span><CustomDropdown value={String(pageSize)} onChange={value => changePageSize(Number(value))} options={[15, 30, 45, 60].map(value => ({ value: String(value), label: String(value) }))} compact placement="top" className="w-[76px]"/><span>por página</span></div>
-      <div className="flex items-center gap-3"><span className="text-[11px] tabular-nums text-black/40">{start}–{end} de {totalRows}</span><div className="flex items-center gap-1"><button type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={page === 1} aria-label="Página anterior" className="flex h-9 w-9 items-center justify-center rounded border border-black/10 bg-white text-black/45 transition hover:bg-black/[.04] disabled:opacity-25"><ChevronLeft size={14}/></button><button type="button" onClick={() => setPage(current => Math.min(totalPages, current + 1))} disabled={page === totalPages} aria-label="Próxima página" className="flex h-9 w-9 items-center justify-center rounded border border-black/10 bg-white text-black/45 transition hover:bg-black/[.04] disabled:opacity-25"><ChevronRight size={14}/></button></div></div>
+      <div className="flex items-center gap-2 text-[0.6875rem] text-black/40"><span>Exibir</span><CustomDropdown value={String(pageSize)} onChange={value => changePageSize(Number(value))} options={[15, 30, 45, 60].map(value => ({ value: String(value), label: String(value) }))} compact placement="top" className="w-[4.75rem]"/><span>por página</span></div>
+      <div className="flex items-center gap-3"><span className="text-[0.6875rem] tabular-nums text-black/40">{start}–{end} de {totalRows}</span><div className="flex items-center gap-1"><button type="button" onClick={() => setPage(current => Math.max(1, current - 1))} disabled={page === 1} aria-label="Página anterior" className="flex h-9 w-9 items-center justify-center rounded border border-black/10 bg-white text-black/45 transition hover:bg-black/[.04] disabled:opacity-25"><ChevronLeft size={14}/></button><button type="button" onClick={() => setPage(current => Math.min(totalPages, current + 1))} disabled={page === totalPages} aria-label="Próxima página" className="flex h-9 w-9 items-center justify-center rounded border border-black/10 bg-white text-black/45 transition hover:bg-black/[.04] disabled:opacity-25"><ChevronRight size={14}/></button></div></div>
     </div>}
   </div>;
 }
@@ -127,7 +133,7 @@ export function ColumnManager<Id extends string>({ columns, hidden, onToggle, on
       const rect = rootRef.current?.getBoundingClientRect();
       if (!rect) return;
       setMenuPos({
-        left: Math.min(Math.max(8, rect.left), window.innerWidth - MENU_WIDTH - 8),
+        left: Math.min(Math.max(8, rect.left), window.innerWidth - MENU_WIDTH * escalaUi() - 8),
         top: rect.bottom + 4,
       });
     };
@@ -162,11 +168,11 @@ export function ColumnManager<Id extends string>({ columns, hidden, onToggle, on
       <Settings2 size={15} strokeWidth={1.6} className="transition-[stroke-width] group-hover:[stroke-width:2.5]" />
     </button>
     {open && menuPos && createPortal(
-      <div ref={menuRef} className="fixed z-50 rounded border border-black/[.09] bg-white p-2 shadow-[0_16px_45px_rgba(13,13,13,.12)]" style={{ left: menuPos.left, top: menuPos.top, width: MENU_WIDTH }}>
-        <div className="flex items-center justify-between px-2 pb-2 pt-1"><p className="text-[13px] font-semibold text-black/70">Colunas da lista</p><button type="button" onClick={onReset} title="Restaurar padrão" className="flex h-8 w-8 items-center justify-center rounded text-black/30 hover:bg-black/[.04] hover:text-black/55"><RotateCcw size={13}/></button></div>
+      <div ref={menuRef} className="fixed z-50 rounded border border-black/[.09] bg-white p-2 shadow-[0_16px_45px_rgba(13,13,13,.12)]" style={{ left: menuPos.left, top: menuPos.top, width: `${MENU_WIDTH / 16}rem` }}>
+        <div className="flex items-center justify-between px-2 pb-2 pt-1"><p className="text-[0.8125rem] font-semibold text-black/70">Colunas da lista</p><button type="button" onClick={onReset} title="Restaurar padrão" className="flex h-8 w-8 items-center justify-center rounded text-black/30 hover:bg-black/[.04] hover:text-black/55"><RotateCcw size={13}/></button></div>
         <div className="max-h-[min(320px,calc(100dvh-490px))] overflow-y-auto">{columns.map(column => {
           const isHidden = hidden.includes(column.id);
-          return <div key={column.id} draggable onDragStart={() => setDragging(column.id)} onDragEnd={() => setDragging(null)} onDragOver={event => event.preventDefault()} onDrop={() => { if (dragging) onMove(dragging, column.id); setDragging(null); }} className={`flex h-10 items-center gap-2 rounded px-2 transition ${dragging === column.id ? "opacity-40" : "hover:bg-black/[.03]"}`}><GripVertical size={14} className="cursor-grab text-black/20"/><span className="flex-1 truncate text-[12px] font-medium text-black/55">{column.label}</span>{column.hideable === false ? <Check size={13} className="text-black/20"/> : <button type="button" onClick={() => onToggle(column.id)} aria-label={`${isHidden ? "Exibir" : "Ocultar"} ${column.label}`} className={`flex h-7 w-7 items-center justify-center rounded hover:bg-black/[.05] ${isHidden ? "text-black/20" : "text-[#7259B5]"}`}>{isHidden ? <EyeOff size={14}/> : <Eye size={14}/>}</button>}</div>;
+          return <div key={column.id} draggable onDragStart={() => setDragging(column.id)} onDragEnd={() => setDragging(null)} onDragOver={event => event.preventDefault()} onDrop={() => { if (dragging) onMove(dragging, column.id); setDragging(null); }} className={`flex h-10 items-center gap-2 rounded px-2 transition ${dragging === column.id ? "opacity-40" : "hover:bg-black/[.03]"}`}><GripVertical size={14} className="cursor-grab text-black/20"/><span className="flex-1 truncate text-[0.75rem] font-medium text-black/55">{column.label}</span>{column.hideable === false ? <Check size={13} className="text-black/20"/> : <button type="button" onClick={() => onToggle(column.id)} aria-label={`${isHidden ? "Exibir" : "Ocultar"} ${column.label}`} className={`flex h-7 w-7 items-center justify-center rounded hover:bg-black/[.05] ${isHidden ? "text-black/20" : "text-[#7259B5]"}`}>{isHidden ? <EyeOff size={14}/> : <Eye size={14}/>}</button>}</div>;
         })}</div>
       </div>,
       document.body,

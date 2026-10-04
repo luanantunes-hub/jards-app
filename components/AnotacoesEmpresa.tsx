@@ -52,18 +52,18 @@ function NotaItem({
         value={text}
         onChange={e => { setText(e.target.value); scheduleAutoSave(e.target.value); }}
         rows={3}
-        className="w-full px-3 py-2.5 text-[13px] text-black/75 resize-none bg-white focus:outline-none placeholder-black/20"
+        className="w-full px-3 py-2.5 text-[0.8125rem] text-black/75 resize-none bg-white focus:outline-none placeholder-black/20"
         placeholder="Anotação sobre a empresa…"
       />
       <div className="flex items-center justify-between px-3 py-1.5 border-t"
         style={{ borderColor: "rgba(13,13,13,.07)", background: "rgba(13,13,13,.015)" }}>
-        <span className="text-[10px] text-black/30">
+        <span className="text-[0.625rem] text-black/30">
           {fmtTs(nota.updated_at > nota.created_at ? nota.updated_at : nota.created_at)}
           {saving && <span className="ml-1.5 text-black/20">· salvando…</span>}
         </span>
         <button
           onClick={handleDelete}
-          className="flex items-center gap-1 text-[10px] font-semibold text-black/25 hover:text-[#D94E4E] transition"
+          className="flex items-center gap-1 text-[0.625rem] font-semibold text-black/25 hover:text-[#D94E4E] transition"
         >
           <Trash2 size={10} /> Deletar
         </button>
@@ -115,7 +115,7 @@ export function AnotacoesEmpresa({ empresaCrmId, empresaNome, onClose }: Props) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,.45)" }}
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="bg-white rounded border shadow-2xl w-[480px] max-h-[80vh] flex flex-col"
+      <div className="bg-white rounded border shadow-2xl w-[30rem] max-h-[80vh] flex flex-col"
         style={{ borderColor: "rgba(13,13,13,.10)" }}>
 
         {/* Header */}
@@ -124,8 +124,8 @@ export function AnotacoesEmpresa({ empresaCrmId, empresaNome, onClose }: Props) 
           <div className="flex items-center gap-2">
             <StickyNote size={14} className="text-black/35" />
             <div>
-              <p className="text-[12px] font-bold text-black">Anotações</p>
-              <p className="text-[10.5px] text-black/35">{empresaNome}</p>
+              <p className="text-[0.75rem] font-bold text-black">Anotações</p>
+              <p className="text-[0.65625rem] text-black/35">{empresaNome}</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/60 transition">
@@ -141,12 +141,12 @@ export function AnotacoesEmpresa({ empresaCrmId, empresaNome, onClose }: Props) 
             onChange={e => setNewText(e.target.value)}
             rows={2}
             placeholder="Escreva uma nova anotação…"
-            className="w-full px-3 py-2 text-[13px] text-black/75 resize-none bg-white border rounded placeholder-black/25 focus:outline-none focus:ring-2 focus:ring-black/15"
+            className="w-full px-3 py-2 text-[0.8125rem] text-black/75 resize-none bg-white border rounded placeholder-black/25 focus:outline-none focus:ring-2 focus:ring-black/15"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
             onKeyDown={e => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) addNota(); }}
           />
           <div className="flex items-center justify-between mt-2">
-            <span className="text-[10px] text-black/25">Ctrl+Enter para salvar</span>
+            <span className="text-[0.625rem] text-black/25">Ctrl+Enter para salvar</span>
             <button
               onClick={addNota}
               disabled={adding || !newText.trim()}

@@ -19,9 +19,10 @@ import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { followupSourceLink } from "@/lib/activities/followupSourceLink";
+import { escalaUi } from "@/lib/escala-ui";
 
 const ATIVIDADES_COLUMNS = [
-  { id: "concluida", label: "Concluída", width: "105px" }, { id: "atividade", label: "Atividade", width: "280px", hideable: false }, { id: "negociacao", label: "Negociação", width: "190px" }, { id: "empresa", label: "Empresa / contato", width: "220px" }, { id: "prazo", label: "Prazo", width: "120px" }, { id: "duracao", label: "Duração", width: "105px" }, { id: "prioridade", label: "Prioridade", width: "115px" }, { id: "responsavel", label: "Responsável", width: "170px" }, { id: "resultado", label: "Resultado", width: "150px" }, { id: "projeto", label: "Projeto", width: "180px" }, { id: "observacao", label: "Observação", width: "230px" },
+  { id: "concluida", label: "Concluída", width: "6.5625rem" }, { id: "atividade", label: "Atividade", width: "17.5rem", grow: true, hideable: false }, { id: "negociacao", label: "Negociação", width: "11.875rem" }, { id: "empresa", label: "Empresa / contato", width: "13.75rem" }, { id: "prazo", label: "Prazo", width: "7.5rem" }, { id: "duracao", label: "Duração", width: "6.5625rem" }, { id: "prioridade", label: "Prioridade", width: "7.1875rem" }, { id: "responsavel", label: "Responsável", width: "10.625rem" }, { id: "resultado", label: "Resultado", width: "9.375rem" }, { id: "projeto", label: "Projeto", width: "11.25rem" }, { id: "observacao", label: "Observação", width: "14.375rem" },
 ] as const satisfies readonly ColumnDefinition[];
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
@@ -96,6 +97,9 @@ const DAY_NAMES_SHORT = ["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 const GANTT_DAY_W  = 52;
 const GANTT_LEFT_W = 220;
 const GANTT_DAYS   = 14;
+// A geometria do Gantt é calculada em px na base de 16px e desenhada em rem,
+// para crescer junto com a fonte base em telas grandes.
+const remDe = (px: number) => `${px / 16}rem`;
 
 /* ─── Helpers ───────────────────────────────────────────────────────────── */
 
@@ -343,14 +347,14 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
           </span>
           <span className="min-w-0 flex-1">
             <span
-              className={`block font-semibold leading-snug ${compact ? "text-[10px]" : "text-[12px]"} ${atividade.feita ? "line-through" : ""}`}
+              className={`block font-semibold leading-snug ${compact ? "text-[0.625rem]" : "text-[0.75rem]"} ${atividade.feita ? "line-through" : ""}`}
               style={{ color: atividade.feita ? "rgba(13,13,13,.25)" : "#FFFFFF" }}
             >
               {atividade.nome}
             </span>
             {!compact && entity !== "—" && (
               <span
-                className="block mt-1 text-[10px] truncate"
+                className="block mt-1 text-[0.625rem] truncate"
                 style={{ color: atividade.feita ? "rgba(13,13,13,.25)" : "rgba(255,255,255,.72)" }}
               >
                 {entity}
@@ -370,7 +374,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
           <button type="button" onClick={() => move(-1)} aria-label="Período anterior" className="w-8 h-8 flex items-center justify-center rounded border border-transparent hover:bg-black/[.04] transition text-black/40 hover:text-black/70">
             <ChevronLeft size={14} />
           </button>
-          <h2 className="text-[13px] font-semibold text-black/75 min-w-0 flex-1 text-center capitalize sm:min-w-[220px] sm:flex-none">
+          <h2 className="text-[0.8125rem] font-semibold text-black/75 min-w-0 flex-1 text-center capitalize sm:min-w-[13.75rem] sm:flex-none">
             {navLabel}
           </h2>
           <button type="button" onClick={() => move(1)} aria-label="Próximo período" className="w-8 h-8 flex items-center justify-center rounded border border-transparent hover:bg-black/[.04] transition text-black/40 hover:text-black/70">
@@ -384,7 +388,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
                 key={option}
                 type="button"
                 onClick={() => setScale(option)}
-                className={`h-8 px-3 rounded border text-[11px] font-medium capitalize transition ${scale === option ? "border-[#7259B5]/35 text-[#7259B5] bg-white" : "border-transparent text-black/35 hover:bg-black/[.04] hover:text-black/55"}`}
+                className={`h-8 px-3 rounded border text-[0.6875rem] font-medium capitalize transition ${scale === option ? "border-[#7259B5]/35 text-[#7259B5] bg-white" : "border-transparent text-black/35 hover:bg-black/[.04] hover:text-black/55"}`}
               >
                 {option === "mes" ? "Mês" : option === "dia" ? "Dia" : "Semana"}
               </button>
@@ -394,20 +398,20 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
       </div>
 
       {scale === "dia" && (
-        <div className="min-h-[360px] p-4 sm:p-5">
+        <div className="min-h-[22.5rem] p-4 sm:p-5">
           <div className="mb-4 flex items-end justify-between border-b pb-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
-              <p className="text-[10px] font-medium uppercase tracking-[.12em] text-black/30">Agenda do dia</p>
-              <p className="mt-1 text-[22px] font-semibold tabular-nums text-black/80">{cursor.getDate()}</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.12em] text-black/30">Agenda do dia</p>
+              <p className="mt-1 text-[1.375rem] font-semibold tabular-nums text-black/80">{cursor.getDate()}</p>
             </div>
-            <span className="text-[11px] text-black/30">{(byDate.get(cursorStr) ?? []).length} atividades</span>
+            <span className="text-[0.6875rem] text-black/30">{(byDate.get(cursorStr) ?? []).length} atividades</span>
           </div>
           {(byDate.get(cursorStr) ?? []).length > 0 ? (
             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {(byDate.get(cursorStr) ?? []).map(atividade => <ActivityCard key={atividade.id} atividade={atividade} />)}
             </div>
           ) : (
-            <div className="flex min-h-[180px] flex-col items-center justify-center text-center">
+            <div className="flex min-h-[11.25rem] flex-col items-center justify-center text-center">
               <CalendarDays size={24} className="mb-2 text-black/15" />
               <p className="text-xs font-medium text-black/30">Nenhuma atividade neste dia</p>
             </div>
@@ -415,7 +419,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
           <button
             type="button"
             onClick={() => onNew(cursorStr)}
-            className="mt-3 flex items-center gap-1.5 text-[11px] font-medium text-black/30 hover:text-[#7259B5] transition"
+            className="mt-3 flex items-center gap-1.5 text-[0.6875rem] font-medium text-black/30 hover:text-[#7259B5] transition"
           >
             <Plus size={12} /> Nova atividade
           </button>
@@ -424,31 +428,31 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
 
       {scale === "semana" && (
         <div className="overflow-x-auto">
-          <div className="grid min-w-[840px] grid-cols-7">
+          <div className="grid min-w-[52.5rem] grid-cols-7">
             {weekDays.map((date, index) => {
               const dateStr = date.toISOString().split("T")[0];
               const items = byDate.get(dateStr) ?? [];
               const isToday = dateStr === todayStr;
               return (
                 <section key={dateStr}
-                  className="min-h-[390px] border-l first:border-l-0 flex flex-col"
+                  className="min-h-[24.375rem] border-l first:border-l-0 flex flex-col"
                   style={{ borderColor: "rgba(13,13,13,.06)", background: isToday ? "rgba(114,89,181,.035)" : "white" }}
                   onMouseEnter={() => setHoveredDate(dateStr)}
                   onMouseLeave={() => setHoveredDate(null)}
                 >
                   <header className="border-b px-3 py-3 text-center" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                    <p className={`text-[9px] font-medium uppercase tracking-[.12em] ${isToday ? "text-[#7259B5]" : "text-black/30"}`}>{["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][index]}</p>
-                    <p className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded text-[12px] font-semibold tabular-nums ${isToday ? "bg-[#7259B5] text-white" : "text-black/60"}`}>{date.getDate()}</p>
+                    <p className={`text-[0.5625rem] font-medium uppercase tracking-[.12em] ${isToday ? "text-[#7259B5]" : "text-black/30"}`}>{["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][index]}</p>
+                    <p className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded text-[0.75rem] font-semibold tabular-nums ${isToday ? "bg-[#7259B5] text-white" : "text-black/60"}`}>{date.getDate()}</p>
                   </header>
                   <div className="space-y-2 p-2 flex-1">
                     {items.map(atividade => <ActivityCard key={atividade.id} atividade={atividade} compact />)}
-                    {items.length === 0 && <p className="pt-5 text-center text-[10px] text-black/20">Livre</p>}
+                    {items.length === 0 && <p className="pt-5 text-center text-[0.625rem] text-black/20">Livre</p>}
                   </div>
                   <div className="px-2 pb-2">
                     <button
                       type="button"
                       onClick={() => onNew(dateStr)}
-                      className="w-full flex items-center justify-center gap-1 py-1 rounded text-[9.5px] font-medium text-black/20 hover:text-[#7259B5] hover:bg-[#7259B5]/5 transition"
+                      className="w-full flex items-center justify-center gap-1 py-1 rounded text-[0.59375rem] font-medium text-black/20 hover:text-[#7259B5] hover:bg-[#7259B5]/5 transition"
                       style={{ opacity: hoveredDate === dateStr ? 1 : 0, pointerEvents: hoveredDate === dateStr ? "auto" : "none" }}
                     >
                       <Plus size={10} /> Nova
@@ -464,7 +468,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
       {scale === "mes" && <>
         <div className="grid grid-cols-7 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           {["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(d => (
-            <div key={d} className="py-2 text-center text-[10px] font-medium tracking-wider text-black/30" style={{ borderLeft: "1px solid rgba(13,13,13,.05)" }}>{d}</div>
+            <div key={d} className="py-2 text-center text-[0.625rem] font-medium tracking-wider text-black/30" style={{ borderLeft: "1px solid rgba(13,13,13,.05)" }}>{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7">
@@ -482,7 +486,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
 
           return (
             <div key={i}
-              className="min-h-[92px] p-1.5 sm:min-h-[104px] flex flex-col"
+              className="min-h-[5.75rem] p-1.5 sm:min-h-[6.5rem] flex flex-col"
               style={{
                 borderTop: "1px solid rgba(13,13,13,.06)",
                 borderLeft: i % 7 !== 0 ? "1px solid rgba(13,13,13,.05)" : "none",
@@ -496,7 +500,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
               onMouseLeave={() => setHoveredDate(null)}
             >
               <div className="mb-1">
-                <span className={`text-[11px] font-bold inline-flex items-center justify-center w-5 h-5 rounded-full ${
+                <span className={`text-[0.6875rem] font-bold inline-flex items-center justify-center w-5 h-5 rounded-full ${
                   isToday ? "bg-[#7259B5] text-white" : !isCurrentMonth ? "text-black/20" : "text-black/40"
                 }`}>
                   {isCurrentMonth ? dayNum : ""}
@@ -508,7 +512,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
                           return (
                     <button type="button" key={a.id}
                       onClick={() => onEdit(a.id)}
-                      className="mb-[2px] block w-full cursor-pointer truncate rounded-[2px] px-1.5 py-[3px] text-left text-[9.5px] font-medium leading-tight transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25"
+                      className="mb-[2px] block w-full cursor-pointer truncate rounded-[2px] px-1.5 py-[3px] text-left text-[0.59375rem] font-medium leading-tight transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25"
                               style={{
                                 background: a.feita ? "rgba(0,0,0,.04)" : pill.bg,
                                 color: a.feita ? "rgba(13,13,13,.25)" : "#FFFFFF",
@@ -521,14 +525,14 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
                   );
                 })}
                 {overflow > 0 && (
-                  <div className="text-[9px] font-bold text-black/25 mt-0.5">+{overflow} mais</div>
+                  <div className="text-[0.5625rem] font-bold text-black/25 mt-0.5">+{overflow} mais</div>
                 )}
               </div>
               {isCurrentMonth && dateStr && (
                 <button
                   type="button"
                   onClick={() => onNew(dateStr)}
-                  className="w-full flex items-center justify-center gap-0.5 py-0.5 rounded text-[9px] font-medium text-black/20 hover:text-[#7259B5] hover:bg-[#7259B5]/5 transition"
+                  className="w-full flex items-center justify-center gap-0.5 py-0.5 rounded text-[0.5625rem] font-medium text-black/20 hover:text-[#7259B5] hover:bg-[#7259B5]/5 transition"
                   style={{ opacity: hoveredDate === dateStr ? 1 : 0, pointerEvents: hoveredDate === dateStr ? "auto" : "none" }}
                 >
                   <Plus size={9} /> Nova
@@ -579,7 +583,7 @@ function MemberAvatar({ name, avatarUrl, unassigned = false }: {
 
   return (
     <span
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-[11px] font-semibold"
+      className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-[0.6875rem] font-semibold"
       style={{
         background: unassigned ? "rgba(176,122,20,.10)" : "rgba(114,89,181,.08)",
         color: unassigned ? "#B07A14" : "#7259B5",
@@ -733,65 +737,65 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
   return (
     <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <div className="flex flex-col gap-3 border-b px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between sm:px-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <p className="text-[10px] font-medium uppercase tracking-[.12em] text-black/30">Carga da equipe</p>
+        <p className="text-[0.625rem] font-medium uppercase tracking-[.12em] text-black/30">Carga da equipe</p>
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => setWeekStart(current => new Date(current.getTime() - 7 * 86400000))} aria-label="Semana anterior" className="flex h-9 w-9 items-center justify-center rounded border border-black/[.09] bg-white text-black/40 transition hover:bg-black/[.04]"><ChevronLeft size={14} /></button>
-          <span className="min-w-[170px] text-center text-[11px] font-medium tabular-nums text-black/55">{fmtDate(days[0].key)} — {fmtDate(weekEnd)}</span>
+          <span className="min-w-[10.625rem] text-center text-[0.6875rem] font-medium tabular-nums text-black/55">{fmtDate(days[0].key)} — {fmtDate(weekEnd)}</span>
           <button type="button" onClick={() => setWeekStart(current => new Date(current.getTime() + 7 * 86400000))} aria-label="Próxima semana" className="flex h-9 w-9 items-center justify-center rounded border border-black/[.09] bg-white text-black/40 transition hover:bg-black/[.04]"><ChevronRight size={14} /></button>
-          <button type="button" onClick={() => setWeekStart(mondayOf(new Date()))} className="h-9 rounded border border-black/[.09] bg-white px-3 text-[11px] font-medium text-black/45 transition hover:bg-black/[.04]">Hoje</button>
-          <button type="button" onClick={() => { setDraftThresholds(thresholds); setThresholdError(null); setShowThresholds(current => !current); }} aria-expanded={showThresholds} className={`flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[11px] font-medium transition hover:bg-black/[.04] ${showThresholds ? "border-[#7259B5] text-[#7259B5]" : "border-black/[.09] text-black/45"}`}><Settings2 size={13} /> Limites</button>
+          <button type="button" onClick={() => setWeekStart(mondayOf(new Date()))} className="h-9 rounded border border-black/[.09] bg-white px-3 text-[0.6875rem] font-medium text-black/45 transition hover:bg-black/[.04]">Hoje</button>
+          <button type="button" onClick={() => { setDraftThresholds(thresholds); setThresholdError(null); setShowThresholds(current => !current); }} aria-expanded={showThresholds} className={`flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] font-medium transition hover:bg-black/[.04] ${showThresholds ? "border-[#7259B5] text-[#7259B5]" : "border-black/[.09] text-black/45"}`}><Settings2 size={13} /> Limites</button>
         </div>
       </div>
 
       {showThresholds && (
         <div className="border-b bg-black/[.012] px-4 py-4 sm:px-5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <p className="text-[12px] font-semibold text-black/70">Classificação da carga semanal</p>
+            <p className="text-[0.75rem] font-semibold text-black/70">Classificação da carga semanal</p>
             <div className="flex flex-wrap items-end gap-3">
               <label className="block">
-                <span className="mb-1.5 block text-[9px] font-medium uppercase tracking-[.1em] text-[#2E8932]">Equilibrada até</span>
-                <input type="number" min={1} max={99} value={draftThresholds.balancedMax} onChange={event => setDraftThresholds(current => ({ ...current, balancedMax: Math.max(1, Number(event.target.value) || 1) }))} className="h-9 w-24 rounded border border-black/10 bg-white px-3 text-[12px] font-medium tabular-nums text-black/70 outline-none focus:border-[#7259B5]" />
+                <span className="mb-1.5 block text-[0.5625rem] font-medium uppercase tracking-[.1em] text-[#2E8932]">Equilibrada até</span>
+                <input type="number" min={1} max={99} value={draftThresholds.balancedMax} onChange={event => setDraftThresholds(current => ({ ...current, balancedMax: Math.max(1, Number(event.target.value) || 1) }))} className="h-9 w-24 rounded border border-black/10 bg-white px-3 text-[0.75rem] font-medium tabular-nums text-black/70 outline-none focus:border-[#7259B5]" />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[9px] font-medium uppercase tracking-[.1em] text-[#B07A14]">Atenção até</span>
-                <input type="number" min={2} max={99} value={draftThresholds.attentionMax} onChange={event => setDraftThresholds(current => ({ ...current, attentionMax: Math.max(2, Number(event.target.value) || 2) }))} className="h-9 w-24 rounded border border-black/10 bg-white px-3 text-[12px] font-medium tabular-nums text-black/70 outline-none focus:border-[#7259B5]" />
+                <span className="mb-1.5 block text-[0.5625rem] font-medium uppercase tracking-[.1em] text-[#B07A14]">Atenção até</span>
+                <input type="number" min={2} max={99} value={draftThresholds.attentionMax} onChange={event => setDraftThresholds(current => ({ ...current, attentionMax: Math.max(2, Number(event.target.value) || 2) }))} className="h-9 w-24 rounded border border-black/10 bg-white px-3 text-[0.75rem] font-medium tabular-nums text-black/70 outline-none focus:border-[#7259B5]" />
               </label>
-              <div className="pb-0.5 text-[10px] text-[#D94E4E]">Acima de {draftThresholds.attentionMax}: sobrecarga</div>
-              <button type="button" onClick={() => { setDraftThresholds(DEFAULT_THRESHOLDS); setThresholdError(null); }} className="h-9 rounded border border-black/10 bg-white px-3 text-[11px] font-medium text-black/40 transition hover:bg-black/[.04]">Restaurar padrão</button>
-              <button type="button" disabled={savingThresholds} onClick={() => void saveThresholds(draftThresholds)} className="h-9 rounded border border-[#7259B5]/35 bg-white px-3 text-[11px] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">{savingThresholds ? "Salvando…" : "Salvar limites"}</button>
+              <div className="pb-0.5 text-[0.625rem] text-[#D94E4E]">Acima de {draftThresholds.attentionMax}: sobrecarga</div>
+              <button type="button" onClick={() => { setDraftThresholds(DEFAULT_THRESHOLDS); setThresholdError(null); }} className="h-9 rounded border border-black/10 bg-white px-3 text-[0.6875rem] font-medium text-black/40 transition hover:bg-black/[.04]">Restaurar padrão</button>
+              <button type="button" disabled={savingThresholds} onClick={() => void saveThresholds(draftThresholds)} className="h-9 rounded border border-[#7259B5]/35 bg-white px-3 text-[0.6875rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">{savingThresholds ? "Salvando…" : "Salvar limites"}</button>
             </div>
           </div>
-          {thresholdError && <p role="alert" className="mt-3 text-[10px] text-[#D94E4E]">{thresholdError}</p>}
+          {thresholdError && <p role="alert" className="mt-3 text-[0.625rem] text-[#D94E4E]">{thresholdError}</p>}
         </div>
       )}
 
       <div className="grid grid-cols-3 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="px-5 py-3">
-          <p className="text-[18px] font-semibold tabular-nums text-black/75">{members.filter(member => member.id !== "__unassigned").length}</p>
-          <p className="text-[10px] text-black/30">membros com atividades</p>
+          <p className="text-[1.125rem] font-semibold tabular-nums text-black/75">{members.filter(member => member.id !== "__unassigned").length}</p>
+          <p className="text-[0.625rem] text-black/30">membros com atividades</p>
         </div>
         <div className="border-l px-5 py-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-          <p className={`text-[18px] font-semibold tabular-nums ${overloaded > 0 ? "text-[#D94E4E]" : "text-black/75"}`}>{overloaded}</p>
-          <p className="text-[10px] text-black/30">em sobrecarga</p>
+          <p className={`text-[1.125rem] font-semibold tabular-nums ${overloaded > 0 ? "text-[#D94E4E]" : "text-black/75"}`}>{overloaded}</p>
+          <p className="text-[0.625rem] text-black/30">em sobrecarga</p>
         </div>
         <div className="border-l px-5 py-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-          <p className={`text-[18px] font-semibold tabular-nums ${unassignedInWeek > 0 ? "text-[#B07A14]" : "text-black/75"}`}>{unassignedInWeek}</p>
-          <p className="text-[10px] text-black/30">sem responsável</p>
+          <p className={`text-[1.125rem] font-semibold tabular-nums ${unassignedInWeek > 0 ? "text-[#B07A14]" : "text-black/75"}`}>{unassignedInWeek}</p>
+          <p className="text-[0.625rem] text-black/30">sem responsável</p>
         </div>
       </div>
 
       {members.length === 0 ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center text-center">
+        <div className="flex min-h-[18.75rem] flex-col items-center justify-center text-center">
           <Gauge size={24} className="mb-2 text-black/15" />
           <p className="text-xs font-medium text-black/30">Nenhuma atividade pendente para distribuir</p>
         </div>
       ) : (
         <div className="overflow-x-auto overscroll-x-contain [scrollbar-gutter:stable]">
-          <div className="min-w-[980px]">
-            <div className="grid grid-cols-[220px_repeat(7,minmax(96px,1fr))_110px] border-b bg-black/[.012]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-              <div className="px-4 py-2.5 text-[10px] font-medium uppercase tracking-[.1em] text-black/30">Responsável</div>
-              {days.map(({ date, key }) => <div key={key} className={`border-l px-2 py-2.5 text-center ${key === todayStr ? "bg-[#7259B5]/[.05]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}><p className={`text-[9px] font-medium uppercase ${key === todayStr ? "text-[#7259B5]" : "text-black/30"}`}>{DAY_NAMES_SHORT[date.getDay()]}</p><p className={`mt-0.5 text-[11px] font-semibold tabular-nums ${key === todayStr ? "text-[#7259B5]" : "text-black/55"}`}>{date.getDate()}</p></div>)}
-              <div className="border-l px-3 py-2.5 text-center text-[10px] font-medium uppercase tracking-[.1em] text-black/30" style={{ borderColor: "rgba(13,13,13,.05)" }}>Semana</div>
+          <div className="min-w-[61.25rem]">
+            <div className="grid grid-cols-[13.75rem_repeat(7,minmax(6rem,1fr))_6.875rem] border-b bg-black/[.012]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+              <div className="px-4 py-2.5 text-[0.625rem] font-medium uppercase tracking-[.1em] text-black/30">Responsável</div>
+              {days.map(({ date, key }) => <div key={key} className={`border-l px-2 py-2.5 text-center ${key === todayStr ? "bg-[#7259B5]/[.05]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}><p className={`text-[0.5625rem] font-medium uppercase ${key === todayStr ? "text-[#7259B5]" : "text-black/30"}`}>{DAY_NAMES_SHORT[date.getDay()]}</p><p className={`mt-0.5 text-[0.6875rem] font-semibold tabular-nums ${key === todayStr ? "text-[#7259B5]" : "text-black/55"}`}>{date.getDate()}</p></div>)}
+              <div className="border-l px-3 py-2.5 text-center text-[0.625rem] font-medium uppercase tracking-[.1em] text-black/30" style={{ borderColor: "rgba(13,13,13,.05)" }}>Semana</div>
             </div>
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
               {members.map(member => {
@@ -801,19 +805,19 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
                   <MemberDropRow key={member.id} memberId={member.id}>
                     <div className="flex items-center gap-2.5 px-4 py-3">
                       <MemberAvatar name={member.name} avatarUrl={member.avatarUrl} unassigned={member.id === "__unassigned"} />
-                      <div className="min-w-0"><p className="truncate text-[12px] font-semibold text-black/70">{member.name}</p><p className="mt-0.5 text-[9px] text-black/30">{member.items.length} pendentes no total</p></div>
+                      <div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/70">{member.name}</p><p className="mt-0.5 text-[0.5625rem] text-black/30">{member.items.length} pendentes no total</p></div>
                     </div>
                     {days.map(({ key }) => {
                       const dayItems = weeklyItems.filter(item => normDate(scheduledDate(item)!) === key);
                       return <div key={key} className={`space-y-1 border-l p-1.5 ${key === todayStr ? "bg-[#7259B5]/[.025]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}>{dayItems.map(item => <DraggablePill key={item.id} item={item} onEdit={onEdit} />)}</div>;
                     })}
-                    <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className="text-[18px] font-semibold tabular-nums" style={{ color: status.color }}>{weeklyItems.length}</span><span className="text-[9px] font-medium" style={{ color: status.color }}>{status.label}</span></div>
+                    <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className="text-[1.125rem] font-semibold tabular-nums" style={{ color: status.color }}>{weeklyItems.length}</span><span className="text-[0.5625rem] font-medium" style={{ color: status.color }}>{status.label}</span></div>
                   </MemberDropRow>
                 );
               })}
               <DragOverlay dropAnimation={null}>
                 {activeItem ? (
-                  <div className="rounded px-1.5 py-1 text-left text-[9px] font-medium shadow-lg" style={{ background: typePillFor(activeItem).bar, color: "white", width: 96 }}>
+                  <div className="rounded px-1.5 py-1 text-left text-[0.5625rem] font-medium shadow-lg" style={{ background: typePillFor(activeItem).bar, color: "white", width: "6rem" }}>
                     {activeItem.nome}
                   </div>
                 ) : null}
@@ -831,7 +835,7 @@ function MemberDropRow({ memberId, children }: { memberId: string; children: Rea
   return (
     <div
       ref={setNodeRef}
-      className={`grid min-h-[70px] grid-cols-[220px_repeat(7,minmax(96px,1fr))_110px] border-b last:border-b-0 transition-colors ${isOver ? "bg-[#7259B5]/[.06]" : ""}`}
+      className={`grid min-h-[4.375rem] grid-cols-[13.75rem_repeat(7,minmax(6rem,1fr))_6.875rem] border-b last:border-b-0 transition-colors ${isOver ? "bg-[#7259B5]/[.06]" : ""}`}
       style={{ borderColor: "rgba(13,13,13,.05)" }}
     >
       {children}
@@ -850,7 +854,7 @@ function DraggablePill({ item, onEdit }: { item: AtividadeRow; onEdit: (id: stri
       type="button"
       onClick={() => onEdit(item.id)}
       title={item.nome}
-      className={`block w-full cursor-grab truncate rounded px-1.5 py-1 text-left text-[9px] font-medium transition-opacity hover:opacity-75 active:cursor-grabbing ${item.feita ? "opacity-45" : ""}`}
+      className={`block w-full cursor-grab truncate rounded px-1.5 py-1 text-left text-[0.5625rem] font-medium transition-opacity hover:opacity-75 active:cursor-grabbing ${item.feita ? "opacity-45" : ""}`}
       style={{ background: pill.bar, color: "white", opacity: isDragging ? 0 : undefined, touchAction: "none" }}
     >
       {item.nome}
@@ -953,7 +957,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
     setDraftDates(current => ({ ...current, [atividade.id]: latest }));
 
     const handleMove = (moveEvent: PointerEvent) => {
-      const deltaDays = Math.round((moveEvent.clientX - originX) / GANTT_DAY_W);
+      const deltaDays = Math.round((moveEvent.clientX - originX) / (GANTT_DAY_W * escalaUi()));
       if (edge === "start") {
         const candidate = shiftDate(initialStart, deltaDays);
         latest = { data_inicio: candidate > initialEnd ? initialEnd : candidate, data_prevista: initialEnd };
@@ -989,36 +993,36 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
           <button type="button" aria-label="Semana anterior" onClick={prevWeek} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/5 transition text-black/40">
             <ChevronLeft size={14} />
           </button>
-          <span className="text-[12px] font-bold text-black/70 min-w-[200px] text-center">
+          <span className="text-[0.75rem] font-bold text-black/70 min-w-[12.5rem] text-center">
             {fmtDate(days[0].str)} — {fmtDate(days[GANTT_DAYS - 1].str)}
           </span>
           <button type="button" aria-label="Próxima semana" onClick={nextWeek} className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/5 transition text-black/40">
             <ChevronRight size={14} />
           </button>
         </div>
-        <button onClick={goToday} className="text-[11px] font-semibold text-black/40 hover:text-black/70 px-2.5 py-1.5 rounded hover:bg-black/5 transition">
+        <button onClick={goToday} className="text-[0.6875rem] font-semibold text-black/40 hover:text-black/70 px-2.5 py-1.5 rounded hover:bg-black/5 transition">
           Hoje
         </button>
       </div>
       <div className="overflow-x-auto">
-        <div style={{ width: GANTT_LEFT_W + GANTT_DAY_W * GANTT_DAYS, minWidth: "100%" }}>
+        <div style={{ width: remDe(GANTT_LEFT_W + GANTT_DAY_W * GANTT_DAYS), minWidth: "100%" }}>
 
           {/* Day header */}
           <div className="flex border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <div style={{ width: GANTT_LEFT_W, flexShrink: 0 }}
-              className="px-4 py-2 text-[10px] font-bold text-black/25 tracking-wider uppercase">
+            <div style={{ width: remDe(GANTT_LEFT_W), flexShrink: 0 }}
+              className="px-4 py-2 text-[0.625rem] font-bold text-black/25 tracking-wider uppercase">
               Atividade
             </div>
             {days.map(({ d, str }) => {
               const isToday   = str === new Date().toISOString().split("T")[0];
               const isWeekend = d.getDay() === 0 || d.getDay() === 6;
               return (
-                <div key={str} style={{ width: GANTT_DAY_W, flexShrink: 0, borderLeft: "1px solid rgba(13,13,13,.05)" }}
+                <div key={str} style={{ width: remDe(GANTT_DAY_W), flexShrink: 0, borderLeft: "1px solid rgba(13,13,13,.05)" }}
                   className={`py-2 text-center ${isToday ? "bg-[#7259B514]" : isWeekend ? "bg-black/[.015]" : ""}`}>
-                  <div className={`text-[10px] font-bold ${isToday ? "text-[#7259B5]" : "text-black/35"}`}>
+                  <div className={`text-[0.625rem] font-bold ${isToday ? "text-[#7259B5]" : "text-black/35"}`}>
                     {d.getDate()}
                   </div>
-                  <div className={`text-[9px] uppercase tracking-wide ${isToday ? "text-[#7259B5]" : "text-black/20"}`}>
+                  <div className={`text-[0.5625rem] uppercase tracking-wide ${isToday ? "text-[#7259B5]" : "text-black/20"}`}>
                     {DAY_NAMES_SHORT[d.getDay()]}
                   </div>
                 </div>
@@ -1036,8 +1040,8 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
             <div key={key}>
               {/* Group header */}
               <div className="flex items-center border-b" style={{ borderColor: "rgba(13,13,13,.06)", background: "rgba(13,13,13,.022)" }}>
-                <div style={{ width: GANTT_LEFT_W, flexShrink: 0 }}
-                  className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-wider text-black/35 truncate">
+                <div style={{ width: remDe(GANTT_LEFT_W), flexShrink: 0 }}
+                  className="px-4 py-1.5 text-[0.625rem] font-bold uppercase tracking-wider text-black/35 truncate">
                   {label}
                 </div>
                 <div style={{ flex: 1 }} />
@@ -1054,21 +1058,21 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
 
                 return (
                   <div key={a.id} className="flex items-center border-b transition"
-                    style={{ borderColor: "rgba(13,13,13,.045)", height: 36 }}>
+                    style={{ borderColor: "rgba(13,13,13,.045)", height: remDe(36) }}>
 
                     <button type="button" onClick={() => onEdit(a.id)}
                       aria-label={`Editar atividade ${a.nome}`}
-                      style={{ width: GANTT_LEFT_W, flexShrink: 0 }}
+                      style={{ width: remDe(GANTT_LEFT_W), flexShrink: 0 }}
                       className="h-full px-4 flex items-center gap-2 min-w-0 text-left cursor-pointer hover:bg-black/[.025] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/25">
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center" style={{ color: pill.bar }}>
                         <TypeIcon size={12} strokeWidth={2} />
                       </span>
                       <div className="min-w-0">
-                        <p className={`text-[12.5px] font-semibold truncate leading-none ${a.feita ? "line-through text-black/25" : "text-black/80"}`}>
+                        <p className={`text-[0.78125rem] font-semibold truncate leading-none ${a.feita ? "line-through text-black/25" : "text-black/80"}`}>
                           {a.nome}
                         </p>
                         {entity !== "—" && (
-                          <p className="text-[9.5px] text-black/30 truncate mt-0.5 leading-none">{entity}</p>
+                          <p className="text-[0.59375rem] text-black/30 truncate mt-0.5 leading-none">{entity}</p>
                         )}
                       </div>
                     </button>
@@ -1081,7 +1085,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                         return (
                           <div key={str} style={{
                             position: "absolute", top: 0, bottom: 0,
-                            left: i * GANTT_DAY_W, width: GANTT_DAY_W,
+                            left: remDe(i * GANTT_DAY_W), width: remDe(GANTT_DAY_W),
                             background: "rgba(13,13,13,.015)",
                           }} />
                         );
@@ -1090,7 +1094,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                       {days.map((_, i) => (
                         <div key={i} style={{
                           position: "absolute", top: 0, bottom: 0,
-                          left: i * GANTT_DAY_W, width: 1,
+                          left: remDe(i * GANTT_DAY_W), width: 1,
                           background: "rgba(13,13,13,.04)",
                         }} />
                       ))}
@@ -1098,7 +1102,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                       {todayOffset !== null && (
                         <div style={{
                           position: "absolute", top: 0, bottom: 0,
-                          left: todayOffset, width: 1.5,
+                          left: remDe(todayOffset), width: 1.5,
                           background: "#7259B5", opacity: 0.35,
                         }} />
                       )}
@@ -1106,9 +1110,9 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                       {bar && (
                         <div className="group" style={{
                           position: "absolute",
-                          left: bar.left + 2, width: Math.max(bar.width - 4, 4),
+                          left: remDe(bar.left + 2), width: remDe(Math.max(bar.width - 4, 4)),
                           top: "50%", transform: "translateY(-50%)",
-                          height: 16, borderRadius: 2,
+                          height: remDe(16), borderRadius: 2,
                           background: a.feita ? "rgba(13,13,13,.12)" : pill.bar,
                           opacity: a.feita ? 0.5 : draggingId === a.id ? 0.85 : 1,
                           boxShadow: draggingId === a.id ? "0 0 0 2px rgba(114,89,181,.18)" : "none",
@@ -1130,7 +1134,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                                 style={{ touchAction: "none" }}
                               />
                               {draggingId === a.id && dates && (
-                                <span className="absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded border border-black/[.08] bg-white px-2 py-1 text-[9px] font-medium text-black/60 shadow-sm">
+                                <span className="absolute bottom-full left-1/2 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded border border-black/[.08] bg-white px-2 py-1 text-[0.5625rem] font-medium text-black/60 shadow-sm">
                                   {fmtDate(dates.data_inicio)} — {fmtDate(dates.data_prevista)}
                                 </span>
                               )}
@@ -1449,8 +1453,8 @@ export default function AtividadesPage() {
       {/* Header — mesma tipografia do ListPageHeader; a página rola inteira */}
       <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Rotina comercial</p>
-          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D]">Atividades</h1>
+          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Rotina comercial</p>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Atividades</h1>
         </div>
         <PrimaryListAction onClick={() => setShowNovaAtividade(true)}><Plus size={13} aria-hidden="true" /> Nova atividade</PrimaryListAction>
       </div>
@@ -1459,20 +1463,20 @@ export default function AtividadesPage() {
       {viewMode === "lista" && !loading && tab === "pendentes" && (
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border text-sm" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <span className="font-bold text-[15px]">{filtered.length}</span>
+            <span className="font-bold text-[0.9375rem]">{filtered.length}</span>
             <span className="text-black/40 text-xs">pendentes</span>
           </div>
           {atrasadas > 0 && (
             <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
               <AlertCircle size={13} className="text-[#D94E4E] flex-shrink-0" />
-              <span className="font-bold text-[#D94E4E] text-[15px]">{atrasadas}</span>
+              <span className="font-bold text-[#D94E4E] text-[0.9375rem]">{atrasadas}</span>
               <span className="text-black/40 text-xs">atrasadas</span>
             </div>
           )}
           {hoje > 0 && (
             <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
               <Clock size={13} className="text-[#B07A14] flex-shrink-0" />
-              <span className="font-bold text-[#B07A14] text-[15px]">{hoje}</span>
+              <span className="font-bold text-[#B07A14] text-[0.9375rem]">{hoje}</span>
               <span className="text-black/40 text-xs">para hoje</span>
             </div>
           )}
@@ -1523,7 +1527,7 @@ export default function AtividadesPage() {
       </div>
 
       {toggleError && (
-        <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded border border-[#D94E4E]/25 bg-white px-4 py-3 text-[11px] text-[#D94E4E]">
+        <div role="alert" className="mb-4 flex items-center justify-between gap-3 rounded border border-[#D94E4E]/25 bg-white px-4 py-3 text-[0.6875rem] text-[#D94E4E]">
           <span>{toggleError}</span>
           <button type="button" onClick={() => setToggleError(null)} className="font-medium hover:opacity-70">Fechar</button>
         </div>
@@ -1613,30 +1617,30 @@ function AtividadesTable({ atividades, loading, tab, savingActivityId, onToggle,
     const group = getGroup(a.data_prevista);
     return { color: group === "atrasadas" ? "#D94E4E" : group === "hoje" ? "#B07A14" : "rgba(13,13,13,.50)", label: fmtDate(a.data_prevista) };
   };
-  const Header = ({ label, column }: { label: string; column?: ActivitySortKey }) => <button type="button" disabled={!column} onClick={() => column && changeSort(column)} className="flex items-center gap-1 whitespace-nowrap text-[10px] font-medium uppercase tracking-[.08em] text-black/35 disabled:cursor-default">{label}{column && <ArrowUpDown size={10} className={sortKey === column ? "text-[#7259B5]" : "text-black/20"} />}</button>;
+  const Header = ({ label, column }: { label: string; column?: ActivitySortKey }) => <button type="button" disabled={!column} onClick={() => column && changeSort(column)} className="flex items-center gap-1 whitespace-nowrap text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 disabled:cursor-default">{label}{column && <ArrowUpDown size={10} className={sortKey === column ? "text-[#7259B5]" : "text-black/20"} />}</button>;
 
   return <div className="-mr-4 rounded rounded-r-none border border-r-0 bg-white md:-mr-8" style={{ borderColor: "rgba(13,13,13,.08)" }}><ManagedTable storageKey="atividades" definitions={ATIVIDADES_COLUMNS} className="w-full border-collapse text-sm">
     <thead className="sticky top-0 z-20 bg-[#F9F9F8]"><tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
       <th className="bg-[#F9F9F8] px-4 py-3 text-left"><Header label="Concluída" /></th>
       <th className="bg-[#F9F9F8] px-4 py-3 text-left"><Header label="Atividade" column="nome" /></th>
-      <th className="w-[190px] px-4 py-3 text-left"><Header label="Negociação" /></th><th className="w-[220px] px-4 py-3 text-left"><Header label="Empresa / contato" /></th>
-      <th className="w-[120px] px-4 py-3 text-left"><Header label="Prazo" column="prazo" /></th><th className="w-[105px] px-4 py-3 text-left"><Header label="Duração" /></th>
-      <th className="w-[110px] px-4 py-3 text-left"><Header label="Prioridade" column="prioridade" /></th><th className="w-[160px] px-4 py-3 text-left"><Header label="Responsável" column="responsavel" /></th>
-      <th className="w-[150px] px-4 py-3 text-left"><Header label="Resultado" column="resultado" /></th><th className="w-[170px] px-4 py-3 text-left"><Header label="Projeto" /></th>
-      <th className="w-[220px] px-4 py-3 text-left"><Header label="Observação" /></th>
+      <th className="w-[11.875rem] px-4 py-3 text-left"><Header label="Negociação" /></th><th className="w-[13.75rem] px-4 py-3 text-left"><Header label="Empresa / contato" /></th>
+      <th className="w-[7.5rem] px-4 py-3 text-left"><Header label="Prazo" column="prazo" /></th><th className="w-[6.5625rem] px-4 py-3 text-left"><Header label="Duração" /></th>
+      <th className="w-[6.875rem] px-4 py-3 text-left"><Header label="Prioridade" column="prioridade" /></th><th className="w-[10rem] px-4 py-3 text-left"><Header label="Responsável" column="responsavel" /></th>
+      <th className="w-[9.375rem] px-4 py-3 text-left"><Header label="Resultado" column="resultado" /></th><th className="w-[10.625rem] px-4 py-3 text-left"><Header label="Projeto" /></th>
+      <th className="w-[13.75rem] px-4 py-3 text-left"><Header label="Observação" /></th>
     </tr></thead>
     <tbody>{loading ? Array.from({ length: 7 }).map((_, i) => <tr key={i} className="border-b" style={{ borderColor: "rgba(13,13,13,.045)" }}><td colSpan={12} className="px-4 py-4"><div className="h-3.5 w-2/3 animate-pulse rounded bg-black/[.06]" /></td></tr>) : sorted.length === 0 ? <tr><td colSpan={12} className="px-5 py-20 text-center"><CheckCheck size={28} className="mx-auto mb-2 text-black/15" /><p className="text-sm font-medium text-black/30">{tab === "pendentes" ? "Nenhuma atividade pendente" : "Nenhuma atividade concluída"}</p></td></tr> : sorted.map(a => {
       const tc = typeConfigFor(a); const Icon = tc.Icon; const deadline = due(a);
       return <tr key={a.id} className="group border-b last:border-b-0 hover:bg-black/[.018] cursor-pointer" style={{ borderColor: "rgba(13,13,13,.045)" }} onClick={() => onEdit(a.id)}>
         <td className="cursor-default bg-white px-4 py-3 text-left group-hover:bg-[#FBFBFA]" onClick={e => e.stopPropagation()}><button type="button" aria-label={a.feita ? `Reabrir “${a.nome}”` : `Concluir “${a.nome}”`} aria-pressed={a.feita} onClick={() => void onToggle(a.id, a.feita)} disabled={savingActivityId === a.id} className="inline-flex cursor-pointer text-black/20 transition hover:text-black/55 disabled:opacity-40 disabled:cursor-not-allowed">{savingActivityId === a.id ? <Clock size={17} className="animate-pulse text-[#7259B5]" /> : a.feita ? <CheckCircle2 size={17} className="text-[#2E8932]" /> : <Circle size={17} />}</button></td>
-        <td className="bg-white px-4 py-3 group-hover:bg-[#FBFBFA]"><div className="flex w-full items-center gap-2.5 text-left"><span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded" style={{ color: tc.color }}><Icon size={13} /></span><span className="min-w-0"><span className={`block truncate text-[12.5px] font-semibold ${a.feita ? "text-black/30 line-through" : "text-black/75"}`}>{a.nome}</span><span className="mt-0.5 block text-[10px] text-black/30">{tc.label}</span></span></div></td>
-        <td className="px-4 py-3"><span className="block max-w-[170px] truncate text-[11px] font-medium text-black/55">{captacaoLabel(a)}</span></td>
-        <td className="px-4 py-3"><div className="max-w-[200px]"><span className="block truncate text-[11px] font-medium text-black/60">{a.contato?.nome ?? a.empresa_crm?.nome ?? "—"}</span>{a.contato?.email && <span className="mt-0.5 block truncate text-[9.5px] text-black/30">{a.contato.email}</span>}{a.contato?.telefone && <span className="block text-[9.5px] text-black/25">{a.contato.telefone}</span>}</div></td>
-        <td className="px-4 py-3"><span className="whitespace-nowrap text-[11px] font-medium tabular-nums" style={{ color: deadline.color }}>{deadline.label}</span>{a.hora_inicio && <span className="mt-0.5 block text-[9.5px] text-black/25">{a.hora_inicio.slice(0,5)}{a.hora_fim ? ` — ${a.hora_fim.slice(0,5)}` : ""}</span>}</td>
-        <td className="px-4 py-3 text-[11px] tabular-nums text-black/40">{duration(a)}</td><td className="px-4 py-3"><PrioBadge prio={a.prioridade} size="sm" /></td>
-        <td className="px-4 py-3"><span className={`text-[11px] font-medium ${a.responsavel?.full_name ? "text-black/55" : "text-[#B07A14]"}`}>{a.responsavel?.full_name ?? "Sem responsável"}</span></td>
-        <td className="px-4 py-3"><span className="block max-w-[135px] truncate text-[11px] text-black/45">{a.resultado || "—"}</span></td><td className="px-4 py-3"><span className="block max-w-[155px] truncate text-[11px] text-black/45">{a.projeto?.nome ?? a.captacao?.projeto?.nome ?? "—"}</span></td>
-        <td className="px-4 py-3"><span className="block max-w-[205px] truncate text-[10.5px] text-black/35" title={a.nota ?? undefined}>{a.nota || "—"}</span></td>
+        <td className="bg-white px-4 py-3 group-hover:bg-[#FBFBFA]"><div className="flex w-full items-center gap-2.5 text-left"><span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded" style={{ color: tc.color }}><Icon size={13} /></span><span className="min-w-0"><span className={`block truncate text-[0.78125rem] font-semibold ${a.feita ? "text-black/30 line-through" : "text-black/75"}`}>{a.nome}</span><span className="mt-0.5 block text-[0.625rem] text-black/30">{tc.label}</span></span></div></td>
+        <td className="px-4 py-3"><span className="block max-w-[10.625rem] truncate text-[0.6875rem] font-medium text-black/55">{captacaoLabel(a)}</span></td>
+        <td className="px-4 py-3"><div className="max-w-[12.5rem]"><span className="block truncate text-[0.6875rem] font-medium text-black/60">{a.contato?.nome ?? a.empresa_crm?.nome ?? "—"}</span>{a.contato?.email && <span className="mt-0.5 block truncate text-[0.59375rem] text-black/30">{a.contato.email}</span>}{a.contato?.telefone && <span className="block text-[0.59375rem] text-black/25">{a.contato.telefone}</span>}</div></td>
+        <td className="px-4 py-3"><span className="whitespace-nowrap text-[0.6875rem] font-medium tabular-nums" style={{ color: deadline.color }}>{deadline.label}</span>{a.hora_inicio && <span className="mt-0.5 block text-[0.59375rem] text-black/25">{a.hora_inicio.slice(0,5)}{a.hora_fim ? ` — ${a.hora_fim.slice(0,5)}` : ""}</span>}</td>
+        <td className="px-4 py-3 text-[0.6875rem] tabular-nums text-black/40">{duration(a)}</td><td className="px-4 py-3"><PrioBadge prio={a.prioridade} size="sm" /></td>
+        <td className="px-4 py-3"><span className={`text-[0.6875rem] font-medium ${a.responsavel?.full_name ? "text-black/55" : "text-[#B07A14]"}`}>{a.responsavel?.full_name ?? "Sem responsável"}</span></td>
+        <td className="px-4 py-3"><span className="block max-w-[8.4375rem] truncate text-[0.6875rem] text-black/45">{a.resultado || "—"}</span></td><td className="px-4 py-3"><span className="block max-w-[9.6875rem] truncate text-[0.6875rem] text-black/45">{a.projeto?.nome ?? a.captacao?.projeto?.nome ?? "—"}</span></td>
+        <td className="px-4 py-3"><span className="block max-w-[12.8125rem] truncate text-[0.65625rem] text-black/35" title={a.nota ?? undefined}>{a.nota || "—"}</span></td>
       </tr>;
     })}</tbody>
   </ManagedTable></div>;

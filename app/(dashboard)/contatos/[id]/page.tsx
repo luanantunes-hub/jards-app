@@ -18,6 +18,7 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { StatusCaptacao } from "@/lib/supabase/types";
+import { escalaUi } from "@/lib/escala-ui";
 
 function LinkedinIcon({ size = 14 }: { size?: number }) {
   return (
@@ -254,7 +255,7 @@ function InlineTextarea({
           if ((event.metaKey || event.ctrlKey) && event.key === "Enter") void commit();
           if (event.key === "Escape") { setDraft(value ?? ""); setEditing(false); }
         }}
-        className="mt-2 min-h-12 w-full resize-none border-b border-[#7259B5] bg-transparent text-[12px] leading-5 text-black/70 outline-none"
+        className="mt-2 min-h-12 w-full resize-none border-b border-[#7259B5] bg-transparent text-[0.75rem] leading-5 text-black/70 outline-none"
       />
     );
   }
@@ -263,7 +264,7 @@ function InlineTextarea({
     <button
       type="button"
       onClick={() => { setDraft(value ?? ""); setEditing(true); }}
-      className="group/inline mt-2 flex min-h-10 w-full items-start gap-1 text-left text-[12px] leading-5 text-black/60"
+      className="group/inline mt-2 flex min-h-10 w-full items-start gap-1 text-left text-[0.75rem] leading-5 text-black/60"
       title="Clique para editar"
     >
       <span className="line-clamp-2 flex-1">{value || <span className="text-black/25">{placeholder}</span>}</span>
@@ -288,7 +289,7 @@ function InlineSelect({
     if (menuPos) { setMenuPos(null); return; }
     const rect = triggerRef.current?.getBoundingClientRect();
     if (rect) {
-      const width = Math.max(rect.width, 180);
+      const width = Math.max(rect.width, 180 * escalaUi());
       setMenuPos({
         top: rect.bottom + 5,
         left: Math.max(12, Math.min(rect.left, window.innerWidth - width - 12)),
@@ -310,7 +311,7 @@ function InlineSelect({
         onClick={toggle}
         aria-haspopup="listbox"
         aria-expanded={Boolean(menuPos)}
-        className="group inline-flex min-h-9 w-full max-w-full items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 text-[13px] font-semibold text-[#0D0D0D] transition-[background-color,border-color,transform] duration-150 hover:border-black/[.10] hover:bg-black/[.018] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+        className="group inline-flex min-h-9 w-full max-w-full items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 text-[0.8125rem] font-semibold text-[#0D0D0D] transition-[background-color,border-color,transform] duration-150 hover:border-black/[.10] hover:bg-black/[.018] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
       >
         <span className="flex h-5 w-5 shrink-0 items-center justify-center text-black/65"><CurrentIcon size={14} strokeWidth={1.9} /></span>
         <span className="min-w-0 flex-1 truncate text-left">{current?.label ?? "—"}</span>
@@ -320,7 +321,7 @@ function InlineSelect({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[160px] overflow-hidden rounded border bg-white py-1 shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white py-1 shadow-xl"
             style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width, borderColor: "rgba(13,13,13,.12)" }}
             role="listbox"
           >
@@ -331,7 +332,7 @@ function InlineSelect({
                   key={o.value}
                   type="button"
                   onClick={() => handleSelect(o.value)}
-                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[12px] transition hover:bg-black/[.04]"
+                  className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.04]"
                   style={{ fontWeight: selected ? 700 : 500, color: o.value ? "#0D0D0D" : "rgba(13,13,13,.4)" }}
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center text-black/60"><Icon size={13}/></span>
@@ -369,8 +370,8 @@ function InlineBars({
       : displayValue <= 1 ? "Frágil" : displayValue <= 3 ? "Em construção" : "Forte";
 
   return (
-    <div className="flex min-h-[48px] flex-col justify-end gap-2" onMouseLeave={() => setHoverLevel(null)}>
-      <div className="flex h-[26px] items-end gap-2" role="group" aria-label={kind === "influencia" ? "Definir influência" : "Definir força da relação"}>
+    <div className="flex min-h-[3rem] flex-col justify-end gap-2" onMouseLeave={() => setHoverLevel(null)}>
+      <div className="flex h-[1.625rem] items-end gap-2" role="group" aria-label={kind === "influencia" ? "Definir influência" : "Definir força da relação"}>
         {Array.from({ length: steps }).map((_, i) => {
           const nextValue = Math.round(((i + 1) / steps) * max);
           const fill = Math.max(0, Math.min(1, displayLevel - i));
@@ -382,7 +383,7 @@ function InlineBars({
             title={`${nextValue} de ${max}`}
             onClick={() => onSave(nextValue === value ? null : nextValue)}
             onMouseEnter={() => setHoverLevel(i + 1)}
-            className="relative w-[8px] origin-bottom overflow-hidden rounded-[1px] bg-black/[.09] transition-transform duration-150 hover:scale-x-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+            className="relative w-[0.5rem] origin-bottom overflow-hidden rounded-[1px] bg-black/[.09] transition-transform duration-150 hover:scale-x-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
             style={{ height: heights[i] }}
           >
             <span
@@ -394,8 +395,8 @@ function InlineBars({
         })}
       </div>
       <div className="flex min-w-0 items-baseline justify-between gap-2">
-        <p className="truncate text-[11px] font-semibold" style={{ color: displayValue == null ? "rgba(13,13,13,.32)" : color }}>{reading}</p>
-        <p className="shrink-0 text-[14px] font-semibold tabular-nums tracking-[-.02em] text-black/65">{displayValue ?? "—"}<span className="ml-0.5 text-[10px] font-medium text-black/25">/{max}</span></p>
+        <p className="truncate text-[0.6875rem] font-semibold" style={{ color: displayValue == null ? "rgba(13,13,13,.32)" : color }}>{reading}</p>
+        <p className="shrink-0 text-[0.875rem] font-semibold tabular-nums tracking-[-.02em] text-black/65">{displayValue ?? "—"}<span className="ml-0.5 text-[0.625rem] font-medium text-black/25">/{max}</span></p>
       </div>
     </div>
   );
@@ -480,7 +481,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
   if (loading) {
     return (
       <div className="min-h-full">
-        <div className="mx-auto max-w-[1280px] px-4 pt-16 sm:px-6 lg:px-10 space-y-4">
+        <div className="mx-auto max-w-pagina px-4 pt-16 sm:px-6 lg:px-10 space-y-4">
           <div className="h-4 w-24 rounded bg-black/[.06] animate-pulse" />
           <div className="h-12 w-72 rounded bg-black/[.06] animate-pulse" />
           <div className="h-4 w-48 rounded bg-black/[.06] animate-pulse" />
@@ -492,9 +493,9 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
   if (!contato) {
     return (
       <div className="min-h-full">
-        <div className="mx-auto max-w-[1280px] px-4 pt-16 text-center sm:px-6 lg:px-10">
-          <p className="text-[13px] text-black/40">Contato não encontrado.</p>
-          <Link href="/contatos" className="mt-4 inline-block text-[12px] text-[#7259B5] hover:underline">Voltar</Link>
+        <div className="mx-auto max-w-pagina px-4 pt-16 text-center sm:px-6 lg:px-10">
+          <p className="text-[0.8125rem] text-black/40">Contato não encontrado.</p>
+          <Link href="/contatos" className="mt-4 inline-block text-[0.75rem] text-[#7259B5] hover:underline">Voltar</Link>
         </div>
       </div>
     );
@@ -509,35 +510,35 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
     <div className="min-h-full">
       {/* ── Header ─────────────────────────────────────────────── */}
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-        <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
-          <Link href="/contatos" className="mb-7 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65">
+        <div className="mx-auto max-w-pagina px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+          <Link href="/contatos" className="mb-7 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65">
             <ArrowLeft size={14} /> Contatos
           </Link>
 
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex min-w-0 items-start gap-4">
               <div
-                className="flex h-14 w-14 shrink-0 items-center justify-center rounded text-[20px] font-semibold text-black/55"
+                className="flex h-14 w-14 shrink-0 items-center justify-center rounded text-[1.25rem] font-semibold text-black/55"
                 style={{ background: "linear-gradient(145deg, #F8F8FA 0%, #D6D6DC 100%)", boxShadow: "inset 0 1px 0 rgba(255,255,255,.9), 0 1px 2px rgba(13,13,13,.05)" }}
               >
                 {initials}
               </div>
 
               <div className="min-w-0">
-                <h1 className="text-[28px] font-semibold leading-[1.06] tracking-[-.04em] text-[#0D0D0D] sm:text-[34px]">
+                <h1 className="text-[1.75rem] font-semibold leading-[1.06] tracking-[-.04em] text-[#0D0D0D] sm:text-[2.125rem]">
                   <InlineText
                     value={contato.nome}
                     onSave={v => saveField("nome", v)}
                     placeholder="Nome do contato"
-                    className="text-[28px] sm:text-[34px] font-semibold leading-[1.06] tracking-[-.04em]"
+                    className="text-[1.75rem] sm:text-[2.125rem] font-semibold leading-[1.06] tracking-[-.04em]"
                   />
                 </h1>
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[13px] text-black/45">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[0.8125rem] text-black/45">
                   <InlineText
                     value={contato.cargo}
                     onSave={v => saveField("cargo", v)}
                     placeholder="Cargo"
-                    className="text-[13px]"
+                    className="text-[0.8125rem]"
                   />
                   {contato.empresa_crm && (
                     <>
@@ -555,12 +556,12 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
             {/* Actions */}
             <div className="flex shrink-0 flex-wrap gap-2 lg:justify-end">
               {contato.email && (
-                <a href={`mailto:${contato.email}`} className="inline-flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[12px] font-medium text-black/55 transition hover:bg-black/[.04]">
+                <a href={`mailto:${contato.email}`} className="inline-flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04]">
                   <Mail size={14} strokeWidth={1.8} /> E-mail
                 </a>
               )}
               {contato.telefone && (
-                <a href={`tel:${contato.telefone}`} className="inline-flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[12px] font-medium text-black/55 transition hover:bg-black/[.04]">
+                <a href={`tel:${contato.telefone}`} className="inline-flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04]">
                   <Phone size={14} strokeWidth={1.8} /> Ligar
                 </a>
               )}
@@ -568,7 +569,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                 <a
                   href={contato.linkedin_url.startsWith("http") ? contato.linkedin_url : `https://${contato.linkedin_url}`}
                   target="_blank" rel="noopener noreferrer"
-                  className="inline-flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[12px] font-medium text-black/55 transition hover:bg-black/[.04]"
+                  className="inline-flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04]"
                 >
                   <LinkedinIcon size={14} /> LinkedIn
                 </a>
@@ -580,40 +581,40 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
           {/* ── Health strip ──────────────────────────────────── */}
           <div className="mt-7 grid grid-cols-1 gap-px overflow-hidden rounded border bg-black/[.045] sm:grid-cols-2 lg:grid-cols-[1.1fr_1.15fr_1.15fr_1fr_1fr_1fr]" style={{ borderColor: "rgba(13,13,13,.055)" }}>
             {/* Papel */}
-            <div className="flex min-h-[108px] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/35">Papel na decisão</p>
+            <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
+              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Papel na decisão</p>
               <InlineSelect value={contato.papel_decisao} opts={PAPEL_OPTS} onSave={v => saveField("papel_decisao", v)} />
             </div>
             {/* Influência */}
-            <div className="flex min-h-[108px] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-black/35"><Radio size={11} strokeWidth={1.9} />Influência</p>
+            <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
+              <p className="flex items-center gap-1.5 text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35"><Radio size={11} strokeWidth={1.9} />Influência</p>
               <InlineBars value={contato.influencia} max={5} color="#7259B5" kind="influencia" onSave={v => saveField("influencia", v)} />
             </div>
             {/* Força */}
-            <div className="flex min-h-[108px] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-[.08em] text-black/35"><Handshake size={11} strokeWidth={1.9} />Força da relação</p>
+            <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
+              <p className="flex items-center gap-1.5 text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35"><Handshake size={11} strokeWidth={1.9} />Força da relação</p>
               <InlineBars value={contato.forca_relacao} max={5} color="#1A8B7A" kind="relacao" onSave={v => saveField("forca_relacao", v)} />
             </div>
             {/* Sentimento */}
-            <div className="flex min-h-[108px] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/35">Sentimento</p>
+            <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
+              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Sentimento</p>
               <InlineSelect value={contato.sentimento} opts={SENTIMENTO_OPTS} onSave={v => saveField("sentimento", v)} />
             </div>
             {/* Última interação */}
-            <div className="flex min-h-[108px] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/35">Última interação</p>
+            <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
+              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Última interação</p>
               <div className="group flex min-h-9 items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 transition hover:border-black/[.10] hover:bg-black/[.018]">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center" style={{ color: interacaoColor(dias) }}><CalendarClock size={14} strokeWidth={1.9} /></span>
-                <p className="truncate text-[13px] font-semibold" style={{ color: interacaoColor(dias) }}>{interacaoText}</p>
+                <p className="truncate text-[0.8125rem] font-semibold" style={{ color: interacaoColor(dias) }}>{interacaoText}</p>
               </div>
             </div>
             {/* Canal preferido */}
-            <div className="flex min-h-[108px] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/35">Canal preferido</p>
+            <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
+              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Canal preferido</p>
               <InlineSelect value={contato.canal_preferido} opts={CANAL_OPTS} onSave={v => saveField("canal_preferido", v)} />
             </div>
           </div>
-          {saveError && <p role="alert" className="mt-2 text-[11px] font-medium text-[#D94E4E]">{saveError}</p>}
+          {saveError && <p role="alert" className="mt-2 text-[0.6875rem] font-medium text-[#D94E4E]">{saveError}</p>}
         </div>
       </header>
 
@@ -635,11 +636,11 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
             {/* Dados de contato */}
             <section className="overflow-hidden rounded border border-black/[.055] bg-black/[.045]">
               <div className="border-b border-black/[.05] bg-white px-5 py-3.5">
-                <p className="text-[10px] font-bold uppercase tracking-wide text-black/40">Dados de contato</p>
+                <p className="text-[0.625rem] font-bold uppercase tracking-wide text-black/40">Dados de contato</p>
               </div>
               <div className="grid gap-px sm:grid-cols-2 xl:grid-cols-4">
-                <div className="min-h-[92px] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/30">Empresa</p>
+                <div className="min-h-[5.75rem] min-w-0 bg-white px-5 py-4">
+                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Empresa</p>
                   <div className="mt-2">
                     <CustomDropdown
                       value={contato.empresa_crm_id ?? ""}
@@ -658,38 +659,38 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                   { label: "Telefone alternativo", field: "telefone_2", value: contato.telefone_2, Icon: Phone, placeholder: "Adicionar outro telefone" },
                   { label: "LinkedIn", field: "linkedin_url", value: contato.linkedin_url, Icon: LinkedinIcon, placeholder: "Adicionar LinkedIn" },
                 ] as const).map(({ label, field, value, Icon, placeholder }) => (
-                  <div key={field} className="flex min-h-[92px] min-w-0 items-start gap-3 bg-white px-5 py-4">
+                  <div key={field} className="flex min-h-[5.75rem] min-w-0 items-start gap-3 bg-white px-5 py-4">
                     <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center text-black/30">
                       <Icon size={15} />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/30">{label}</p>
+                      <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">{label}</p>
                       <InlineText
                         value={value}
                         onSave={nextValue => saveField(field, nextValue)}
                         placeholder={placeholder}
-                        className="mt-2 w-full min-w-0 truncate text-[13px] font-semibold text-black/70"
+                        className="mt-2 w-full min-w-0 truncate text-[0.8125rem] font-semibold text-black/70"
                       />
                     </div>
                   </div>
                 ))}
-                <div className="min-h-[108px] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/30">Origem</p>
+                <div className="min-h-[6.75rem] min-w-0 bg-white px-5 py-4">
+                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Origem</p>
                   <div className="mt-2">
                     <InlineSelect value={contato.origem} opts={ORIGEM_OPTS} onSave={value => saveField("origem", value)} />
                   </div>
                 </div>
-                <div className="min-h-[108px] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/30">Notas de contato</p>
+                <div className="min-h-[6.75rem] min-w-0 bg-white px-5 py-4">
+                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Notas de contato</p>
                   <InlineTextarea value={contato.notas} onSave={value => saveField("notas", value)} />
                 </div>
-                <div className="flex min-h-[108px] min-w-0 items-start gap-3 bg-white px-5 py-4">
+                <div className="flex min-h-[6.75rem] min-w-0 items-start gap-3 bg-white px-5 py-4">
                   <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center text-black/30">
                     <CalendarClock size={15} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[9px] font-bold uppercase tracking-[.08em] text-black/30">Registro</p>
-                    <div className="mt-2 space-y-1.5 text-[11px] text-black/40">
+                    <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Registro</p>
+                    <div className="mt-2 space-y-1.5 text-[0.6875rem] text-black/40">
                       <p className="flex items-center justify-between gap-2"><span>Adicionado</span><strong className="font-semibold tabular-nums text-black/65">{fmtDate(contato.created_at)}</strong></p>
                       <p className="flex items-center justify-between gap-2"><span>Atualizado</span><strong className="font-semibold tabular-nums text-black/65">{fmtDate(contato.updated_at)}</strong></p>
                     </div>
@@ -698,12 +699,12 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
               </div>
             </section>
 
-            <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="grid gap-7 lg:grid-cols-[minmax(0,1fr)_18.75rem]">
               {/* Timeline */}
               <section>
-              <p className="mb-4 text-[10px] font-bold uppercase tracking-wide text-black/35">Atividades</p>
+              <p className="mb-4 text-[0.625rem] font-bold uppercase tracking-wide text-black/35">Atividades</p>
               {atividades.length === 0 ? (
-                <div className="rounded border border-dashed py-12 text-center text-[12px] text-black/30" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+                <div className="rounded border border-dashed py-12 text-center text-[0.75rem] text-black/30" style={{ borderColor: "rgba(13,13,13,.12)" }}>
                   Nenhuma atividade registrada
                 </div>
               ) : (
@@ -719,11 +720,11 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                         </div>
                         <div className="min-w-0 flex-1 rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                           <div className="flex flex-wrap items-start justify-between gap-2">
-                            <p className="text-[13px] font-semibold text-[#0D0D0D]">{a.nome}</p>
-                            <span className="shrink-0 text-[11px] text-black/35">{fmtDate(dataStr)}</span>
+                            <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{a.nome}</p>
+                            <span className="shrink-0 text-[0.6875rem] text-black/35">{fmtDate(dataStr)}</span>
                           </div>
-                          {a.resultado && <p className="mt-1 text-[12px] text-black/55 line-clamp-2">{a.resultado}</p>}
-                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[10px] text-black/35">
+                          {a.resultado && <p className="mt-1 text-[0.75rem] text-black/55 line-clamp-2">{a.resultado}</p>}
+                          <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.625rem] text-black/35">
                             {a.feita && <span className="font-semibold text-[#1A8B7A]">Concluída</span>}
                             {a.responsavel?.full_name && <span>{a.responsavel.full_name}</span>}
                             {a.captacao?.titulo && (
@@ -740,9 +741,9 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
 
               {/* Negociações relacionadas */}
               <aside>
-                <p className="mb-3 text-[10px] font-bold uppercase tracking-wide text-black/35">Negociações vinculadas</p>
+                <p className="mb-3 text-[0.625rem] font-bold uppercase tracking-wide text-black/35">Negociações vinculadas</p>
                 {captacoes.length === 0 ? (
-                  <div className="rounded border border-dashed py-8 text-center text-[12px] text-black/30" style={{ borderColor: "rgba(13,13,13,.12)" }}>Nenhuma negociação</div>
+                  <div className="rounded border border-dashed py-8 text-center text-[0.75rem] text-black/30" style={{ borderColor: "rgba(13,13,13,.12)" }}>Nenhuma negociação</div>
                 ) : (
                   <div className="space-y-2">
                     {captacoes.slice(0, 5).map(c => {
@@ -753,7 +754,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           className="block rounded border px-3 py-2.5 transition hover:border-[#7259B5]/30 hover:bg-[#7259B5]/[.02]"
                           style={{ borderColor: "rgba(13,13,13,.09)" }}>
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-[12px] font-semibold text-[#0D0D0D] leading-snug">{c.titulo ?? c.projeto?.nome ?? "Sem título"}</p>
+                            <p className="text-[0.75rem] font-semibold text-[#0D0D0D] leading-snug">{c.titulo ?? c.projeto?.nome ?? "Sem título"}</p>
                             <StatusBadge
                               status={c.status}
                               label={etiqueta?.label ?? cfg.label}
@@ -762,7 +763,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                               size="sm"
                             />
                           </div>
-                          <div className="mt-0.5 flex items-center gap-2 text-[10px] text-black/35">
+                          <div className="mt-0.5 flex items-center gap-2 text-[0.625rem] text-black/35">
                             {c.empresa_crm?.nome && <span>{c.empresa_crm.nome}</span>}
                             {c.valor_solicitado && <span>· {fmtCurrency(c.valor_solicitado)}</span>}
                           </div>
@@ -771,7 +772,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                     })}
                     {captacoes.length > 5 && (
                       <button type="button" onClick={() => setPageTab("captacoes")}
-                        className="w-full rounded border border-dashed py-2 text-[11px] text-[#7259B5] transition hover:bg-[#7259B5]/[.03]"
+                        className="w-full rounded border border-dashed py-2 text-[0.6875rem] text-[#7259B5] transition hover:bg-[#7259B5]/[.03]"
                         style={{ borderColor: "rgba(114,89,181,.2)" }}>
                         Ver todas ({captacoes.length})
                       </button>
@@ -785,9 +786,9 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
 
         {pageTab === "captacoes" && (
           <div>
-            <p className="mb-4 text-[10px] font-bold uppercase tracking-wide text-black/35">Negociações vinculadas</p>
+            <p className="mb-4 text-[0.625rem] font-bold uppercase tracking-wide text-black/35">Negociações vinculadas</p>
             {captacoes.length === 0 ? (
-              <div className="rounded border border-dashed py-16 text-center text-[12px] text-black/30" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+              <div className="rounded border border-dashed py-16 text-center text-[0.75rem] text-black/30" style={{ borderColor: "rgba(13,13,13,.12)" }}>
                 Nenhuma negociação vinculada a este contato
               </div>
             ) : (
@@ -796,7 +797,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                   <thead>
                     <tr style={{ borderBottom: "1px solid rgba(13,13,13,.07)", background: "rgba(13,13,13,.02)" }}>
                       {["Negociação", "Empresa", "Valor", "Status"].map(h => (
-                        <th key={h} className="px-5 py-3 text-[10px] font-medium uppercase tracking-[.08em] text-black/35">{h}</th>
+                        <th key={h} className="px-5 py-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -821,12 +822,12 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           className="group cursor-pointer transition hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                         >
                           <td className="px-5 py-3.5">
-                            <span className="text-[13px] font-semibold text-[#0D0D0D]">
+                            <span className="text-[0.8125rem] font-semibold text-[#0D0D0D]">
                               {c.titulo ?? c.projeto?.nome ?? "Sem título"}
                             </span>
                           </td>
-                          <td className="px-5 py-3.5 text-[12.5px] text-black/55">{c.empresa_crm?.nome ?? "—"}</td>
-                          <td className="px-5 py-3.5 text-[12.5px] text-black/55 tabular-nums">{fmtCurrency(c.valor_solicitado)}</td>
+                          <td className="px-5 py-3.5 text-[0.78125rem] text-black/55">{c.empresa_crm?.nome ?? "—"}</td>
+                          <td className="px-5 py-3.5 text-[0.78125rem] text-black/55 tabular-nums">{fmtCurrency(c.valor_solicitado)}</td>
                           <td className="px-5 py-3.5">
                             <StatusBadge
                               status={c.status}

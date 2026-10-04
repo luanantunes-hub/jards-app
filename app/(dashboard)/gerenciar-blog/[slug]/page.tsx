@@ -139,7 +139,7 @@ function BlockEditor({
             placeholder="Citação..."
             value={block.content ?? ""}
             rows={2}
-            style={{ borderLeft: "3px solid rgba(114,89,181,.4)", paddingLeft: 12 }}
+            style={{ borderLeft: "3px solid rgba(114,89,181,.4)", paddingLeft: "0.75rem" }}
             onChange={(e) => onChange({ ...block, content: e.target.value })}
           />
         )}
@@ -174,7 +174,7 @@ function BlockEditor({
             )}
           </div>
         )}
-        <p className="text-[10px] text-black/25 mt-1">{BLOCK_LABELS[block.type]}</p>
+        <p className="text-[0.625rem] text-black/25 mt-1">{BLOCK_LABELS[block.type]}</p>
       </div>
 
       {/* Delete */}
@@ -379,7 +379,7 @@ export default function BlogEditorPage() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 py-8 grid grid-cols-[1fr_280px] gap-6 items-start">
+      <div className="max-w-5xl mx-auto px-6 py-8 grid grid-cols-[1fr_17.5rem] gap-6 items-start">
         {/* Main: content */}
         <div>
           {/* Cover image preview */}
@@ -440,7 +440,7 @@ export default function BlogEditorPage() {
 
         {/* Sidebar: metadata */}
         <div className="space-y-4 rounded p-5 sticky top-16" style={{ background: "white", border: "1px solid rgba(13,13,13,.08)" }}>
-          <p className="text-[11px] font-bold tracking-[.08em] uppercase text-black/30">Metadados</p>
+          <p className="text-[0.6875rem] font-bold tracking-[.08em] uppercase text-black/30">Metadados</p>
 
           <div>
             <label className="block text-xs font-medium text-black/50 mb-1">Slug</label>
@@ -465,7 +465,7 @@ export default function BlogEditorPage() {
               value={tagsRaw}
               onChange={(e) => setTagsRaw(e.target.value)}
             />
-            <p className="text-[10px] text-black/30 mt-1">Separadas por vírgula</p>
+            <p className="text-[0.625rem] text-black/30 mt-1">Separadas por vírgula</p>
           </div>
 
           <div>
@@ -479,7 +479,7 @@ export default function BlogEditorPage() {
               maxLength={160}
               onChange={(e) => setSeoDesc(e.target.value)}
             />
-            <p className="text-[10px] text-black/30 mt-1">{seoDesc.length}/160</p>
+            <p className="text-[0.625rem] text-black/30 mt-1">{seoDesc.length}/160</p>
           </div>
 
           <div>

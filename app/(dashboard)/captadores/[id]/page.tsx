@@ -227,8 +227,8 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
   return (
     <div className="min-h-full">
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-        <div className="mx-auto max-w-[1280px] px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
-          <Link href="/captadores" className="mb-7 inline-flex items-center gap-2 text-[12px] font-medium text-black/40 transition hover:text-black/65">
+        <div className="mx-auto max-w-pagina px-4 pb-8 pt-6 sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
+          <Link href="/captadores" className="mb-7 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/40 transition hover:text-black/65">
             <ArrowLeft size={14} /> Captadores
           </Link>
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
@@ -249,12 +249,12 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
               <div className="min-w-0">
                 {captador.user_id && (
                   <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded px-2 py-1 text-[9px] font-bold uppercase tracking-wide text-white" style={{ background: "#2E8932" }}>
+                    <span className="inline-flex items-center gap-1 rounded px-2 py-1 text-[0.5625rem] font-bold uppercase tracking-wide text-white" style={{ background: "#2E8932" }}>
                       <Check size={9} /> Workspace
                     </span>
                   </div>
                 )}
-                <h1 className="max-w-4xl text-[32px] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[38px]">{captador.nome}</h1>
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{captador.nome}</h1>
                 <p className="mt-2 text-sm text-black/50">{captador.agencia || "Agência independente"}</p>
               </div>
             </div>
@@ -286,37 +286,37 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
         {pageTab === "workspace" && workspace ? (
           <div className="space-y-8">
             <div>
-              <h2 className="text-[19px] font-semibold tracking-tight text-[#171717]">Oportunidades com {captador.nome}</h2>
-              <p className="mt-1 text-[13px] text-black/50">Pedidos, respostas e acompanhamento compartilhado.</p>
-              {erroWorkspace && <p role="alert" className="mt-2 text-[12px] text-[#B64545]">Não foi possível carregar os pedidos: {erroWorkspace}</p>}
+              <h2 className="text-[1.1875rem] font-semibold tracking-tight text-[#171717]">Oportunidades com {captador.nome}</h2>
+              <p className="mt-1 text-[0.8125rem] text-black/50">Pedidos, respostas e acompanhamento compartilhado.</p>
+              {erroWorkspace && <p role="alert" className="mt-2 text-[0.75rem] text-[#B64545]">Não foi possível carregar os pedidos: {erroWorkspace}</p>}
             </div>
-            <div className="grid gap-8 lg:grid-cols-[minmax(240px,320px)_minmax(0,1fr)]">
+            <div className="grid gap-8 lg:grid-cols-[minmax(15rem,20rem)_minmax(0,1fr)]">
               <div>
-                <h3 className="mb-3 text-[12px] font-semibold text-black/70">Pedidos <span className="font-normal tabular-nums text-black/40">{pedidosWorkspace.length}</span></h3>
-                {pedidosWorkspace.length === 0 ? <p className="text-[12px] text-black/45">Ainda não há pedidos. O captador pode iniciar um pela própria área.</p> : (
+                <h3 className="mb-3 text-[0.75rem] font-semibold text-black/70">Pedidos <span className="font-normal tabular-nums text-black/40">{pedidosWorkspace.length}</span></h3>
+                {pedidosWorkspace.length === 0 ? <p className="text-[0.75rem] text-black/45">Ainda não há pedidos. O captador pode iniciar um pela própria área.</p> : (
                   <div className="divide-y divide-black/[.08] border-y border-black/[.08]">
                     {pedidosWorkspace.map(p => (
                       <button key={p.id} type="button" onClick={() => { setPedidoSelecionado(p.id); setAtribuicaoSelecionada(null); }}
                         className={`w-full py-3 text-left transition hover:text-[#5F4AA8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${pedidoSelecionado === p.id ? "text-[#5F4AA8]" : "text-black/80"}`}>
-                        <span className="block truncate text-[13px] font-medium">{p.oportunidade_titulo || p.nome_busca}</span>
-                        <span className="mt-1 block text-[11px] text-black/40">{p.oportunidade_etiqueta?.nome ?? PEDIDO_TIPO_LABEL[p.tipo]} · {p.nome_busca} · {p.status === "pendente" ? "Pede sua decisão" : p.status === "aguardando_captador" ? "Aguardando captador" : p.status === "aprovado" ? "Aprovado" : "Recusado"}</span>
+                        <span className="block truncate text-[0.8125rem] font-medium">{p.oportunidade_titulo || p.nome_busca}</span>
+                        <span className="mt-1 block text-[0.6875rem] text-black/40">{p.oportunidade_etiqueta?.nome ?? PEDIDO_TIPO_LABEL[p.tipo]} · {p.nome_busca} · {p.status === "pendente" ? "Pede sua decisão" : p.status === "aguardando_captador" ? "Aguardando captador" : p.status === "aprovado" ? "Aprovado" : "Recusado"}</span>
                       </button>
                     ))}
                   </div>
                 )}
-                <h3 className="mb-3 mt-7 text-[12px] font-semibold text-black/70">Em andamento <span className="font-normal tabular-nums text-black/40">{atribuicoes.length}</span></h3>
+                <h3 className="mb-3 mt-7 text-[0.75rem] font-semibold text-black/70">Em andamento <span className="font-normal tabular-nums text-black/40">{atribuicoes.length}</span></h3>
                 <div className="divide-y divide-black/[.08] border-y border-black/[.08]">
                   {atribuicoes.map(a => {
                     const tipoFluxo = pedidosWorkspace.find(p => p.atribuicao_id === a.id)?.tipo;
                     const lista = tipoFluxo === "negociacoes" ? etiquetas : tipoFluxo === "inscricoes" ? etiquetasInscricao : [];
                     const sugestao = a.workspace_etapa ? (lista.find(item => item.key === a.workspace_etapa)?.label ?? a.workspace_etapa) : null;
                     return <button key={a.id} type="button" onClick={() => { setAtribuicaoSelecionada(a.id); setPedidoSelecionado(null); }}
-                      className={`block w-full py-3 text-left text-[13px] transition hover:text-[#5F4AA8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${atribuicaoSelecionada === a.id ? "font-semibold text-[#5F4AA8]" : "text-black/75"}`}>
+                      className={`block w-full py-3 text-left text-[0.8125rem] transition hover:text-[#5F4AA8] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8] ${atribuicaoSelecionada === a.id ? "font-semibold text-[#5F4AA8]" : "text-black/75"}`}>
                       <span className="block">{a.empresa_crm?.nome ?? "Empresa"}</span>
-                      {sugestao && <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-normal text-[#5F4AA8]"><span className="h-1 w-1 rounded-full bg-[#5F4AA8]"/>Sugestão do captador: {sugestao}</span>}
+                      {sugestao && <span className="mt-0.5 inline-flex items-center gap-1 text-[0.6875rem] font-normal text-[#5F4AA8]"><span className="h-1 w-1 rounded-full bg-[#5F4AA8]"/>Sugestão do captador: {sugestao}</span>}
                     </button>;
                   })}
-                  {atribuicoes.length === 0 && <p className="py-3 text-[12px] text-black/45">Nenhuma atribuição ainda.</p>}
+                  {atribuicoes.length === 0 && <p className="py-3 text-[0.75rem] text-black/45">Nenhuma atribuição ainda.</p>}
                 </div>
               </div>
               <div className="min-h-72 border-l border-black/[.08] pl-0 lg:pl-7">
@@ -326,7 +326,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
                 ) : atribuicaoSelecionada ? (
                   <AtribuicaoConversa key={atribuicaoSelecionada} id={atribuicaoSelecionada} organizationId={captador.organization_id} isGestor
                     pedido={pedidosWorkspace.find(p => p.atribuicao_id === atribuicaoSelecionada)} />
-                ) : <div className="py-8 text-center text-[13px] text-black/40">Selecione um pedido ou uma oportunidade para acompanhar a conversa.</div>}
+                ) : <div className="py-8 text-center text-[0.8125rem] text-black/40">Selecione um pedido ou uma oportunidade para acompanhar a conversa.</div>}
               </div>
             </div>
           </div>
@@ -341,12 +341,12 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
             {pedidosWorkspace.some(p => p.status === "pendente") && (
               <button type="button" onClick={() => { setPageTab("workspace"); setPedidoSelecionado(pedidosWorkspace.find(p => p.status === "pendente")?.id ?? null); }}
                 className="flex w-full items-center justify-between gap-3 border-y border-[#B07A14]/25 py-3 text-left transition hover:text-[#5F4AA8]">
-                <span className="text-[13px] font-semibold">{pedidosWorkspace.filter(p => p.status === "pendente").length} pedido(s) aguardando sua decisão</span>
-                <span className="text-[12px] font-medium">Abrir conversa →</span>
+                <span className="text-[0.8125rem] font-semibold">{pedidosWorkspace.filter(p => p.status === "pendente").length} pedido(s) aguardando sua decisão</span>
+                <span className="text-[0.75rem] font-medium">Abrir conversa →</span>
               </button>
             )}
             <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-              <div className="w-full shrink-0 lg:w-[320px]">
+              <div className="w-full shrink-0 lg:w-[20rem]">
                 <CaptadorRelationshipScorecard captadorId={captador.id} organizationId={captador.organization_id} />
               </div>
               <div className="min-w-0 flex-1">
@@ -416,16 +416,16 @@ function AtribuicoesList({ rows }: { rows: AtribuicaoRow[] }) {
               />
               <div className="min-w-0">
                 {a.empresa_crm ? (
-                  <span className="block truncate text-[13px] font-semibold text-[#0D0D0D]">
+                  <span className="block truncate text-[0.8125rem] font-semibold text-[#0D0D0D]">
                     {a.empresa_crm.nome}
                   </span>
                 ) : (
-                  <span className="text-[13px] font-semibold text-black/40">—</span>
+                  <span className="text-[0.8125rem] font-semibold text-black/40">—</span>
                 )}
-                <p className="truncate text-[11px] text-black/35">{a.projeto?.nome ?? "Todos os projetos"} · {EXC_LABEL[a.tipo] ?? a.tipo}</p>
+                <p className="truncate text-[0.6875rem] text-black/35">{a.projeto?.nome ?? "Todos os projetos"} · {EXC_LABEL[a.tipo] ?? a.tipo}</p>
               </div>
             </div>
-            <span className="shrink-0 rounded border bg-white px-2 py-1 text-[10px] font-medium" style={{ borderColor: st.color + "47", color: st.color }}>
+            <span className="shrink-0 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: st.color + "47", color: st.color }}>
               {st.label}
             </span>
           </>

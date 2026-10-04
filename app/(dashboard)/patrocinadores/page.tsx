@@ -103,7 +103,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   return (
     <div className="px-4 pb-8 md:px-8">
       <div className="flex flex-wrap items-center gap-2 mb-5">
-        <div className="relative flex-1 min-w-[200px] max-w-[280px]">
+        <div className="relative flex-1 min-w-[12.5rem] max-w-[17.5rem]">
           <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30" />
           <input
             value={search}
@@ -160,7 +160,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
                   { label: "Investimento", icon: <ChartBar size={11} weight="bold" /> },
                 ].map(({ label, icon }) => (
                   <th key={label} className="px-4 py-3 text-left">
-                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
+                    <span className="flex items-center gap-1.5 text-[0.625rem] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
                       <span className="text-black/30">{icon}</span>
                       {label}
                     </span>
@@ -187,7 +187,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
                     <td className="px-4 py-3">
                       <CompanyLogo nome={l.empresas?.nome ?? ""} site={l.empresas?.site} logo_url={l.empresas?.logo_url} size={32} className="rounded border border-black/8" />
                     </td>
-                    <td className="px-4 py-3"><span className="font-semibold text-[#0D0D0D] text-[13px]">{l.empresas?.nome}</span></td>
+                    <td className="px-4 py-3"><span className="font-semibold text-[#0D0D0D] text-[0.8125rem]">{l.empresas?.nome}</span></td>
                     <td className="px-4 py-3">
                       <button
                         className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150
@@ -202,10 +202,10 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
                         <Crosshair size={14} weight="bold" />
                       </button>
                     </td>
-                    <td className="px-4 py-3 text-black/50 text-[12.5px]">{l.empresas?.setor ?? "—"}</td>
-                    <td className="px-4 py-3 text-black/50 text-[12.5px] font-medium">{l.empresas?.estado ?? "—"}</td>
-                    <td className="px-4 py-3 text-black/50 text-[12.5px]">{l.empresas?.cidade ?? "—"}</td>
-                    <td className="px-4 py-3"><span className="font-bold text-[#0D0D0D] text-[13px] tabular-nums">{fmt(l.valor)}</span></td>
+                    <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.setor ?? "—"}</td>
+                    <td className="px-4 py-3 text-black/50 text-[0.78125rem] font-medium">{l.empresas?.estado ?? "—"}</td>
+                    <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.cidade ?? "—"}</td>
+                    <td className="px-4 py-3"><span className="font-bold text-[#0D0D0D] text-[0.8125rem] tabular-nums">{fmt(l.valor)}</span></td>
                   </tr>
                 ))
               )}
@@ -541,7 +541,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2 mb-5">
         {/* Search */}
-        <div className="relative flex-1 min-w-[200px] max-w-[280px]">
+        <div className="relative flex-1 min-w-[12.5rem] max-w-[17.5rem]">
           <MagnifyingGlass size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-black/30" />
           <input
             value={search}
@@ -611,7 +611,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                     onClick={() => col && toggleSort(col)}
                     className={`px-4 py-3 text-left select-none ${col ? "cursor-pointer hover:bg-black/[0.02]" : ""}`}
                   >
-                    <span className="flex items-center gap-1.5 text-[10px] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
+                    <span className="flex items-center gap-1.5 text-[0.625rem] font-bold text-black/35 uppercase tracking-wider whitespace-nowrap">
                       <span className="text-black/30">{icon}</span>
                       {label}
                       {col && <SortIcon col={col} />}
@@ -662,7 +662,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
                       {/* Empresa */}
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-[#0D0D0D] text-[13px]">{e.nome}</span>
+                        <span className="font-semibold text-[#0D0D0D] text-[0.8125rem]">{e.nome}</span>
                       </td>
 
                       {/* Ver */}
@@ -682,17 +682,17 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                       </td>
 
                       {/* Setor */}
-                      <td className="px-4 py-3 text-black/50 text-[12.5px]">{e.setor ?? "—"}</td>
+                      <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{e.setor ?? "—"}</td>
 
                       {/* Estado */}
-                      <td className="px-4 py-3 text-black/50 text-[12.5px] font-medium">{e.estado ?? "—"}</td>
+                      <td className="px-4 py-3 text-black/50 text-[0.78125rem] font-medium">{e.estado ?? "—"}</td>
 
                       {/* Cidade */}
-                      <td className="px-4 py-3 text-black/50 text-[12.5px]">{e.cidade ?? "—"}</td>
+                      <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{e.cidade ?? "—"}</td>
 
                       {/* Investimento */}
                       <td className="px-4 py-3">
-                        <span className="font-bold text-[#0D0D0D] text-[13px]">
+                        <span className="font-bold text-[#0D0D0D] text-[0.8125rem]">
                           {fmt(e.aporte_estimado)}
                         </span>
                       </td>
@@ -773,8 +773,8 @@ export default function PatrocinadoresPage() {
     <div className="min-h-full bg-white">
       <div className="flex flex-col gap-4 px-4 pb-5 pt-6 md:px-8 md:pt-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
-          <h1 className="mt-1 text-[28px] font-bold tracking-[-.025em] text-[#0D0D0D] [text-wrap:balance]">Encontrar patrocinadores</h1>
+          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D] [text-wrap:balance]">Encontrar patrocinadores</h1>
         </div>
         <SegmentedControl
           value={aba}
@@ -793,7 +793,7 @@ export default function PatrocinadoresPage() {
           carteiras_por_lei como esporte/ancine/saude — só o histórico anual (o gráfico da
           página de detalhe) foi migrado pra investimentos_por_lei (lei='cultura'). */}
       {aba === "cultura" && (
-        <Suspense fallback={<div className="min-h-[360px] animate-pulse bg-black/[.015]" />}>
+        <Suspense fallback={<div className="min-h-[22.5rem] animate-pulse bg-black/[.015]" />}>
           <PatrocinadoresContent isSuperAdmin={isSuperAdmin} />
         </Suspense>
       )}

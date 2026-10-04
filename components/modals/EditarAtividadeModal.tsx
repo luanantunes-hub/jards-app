@@ -11,6 +11,7 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { PrioridadeSelect } from "@/components/ui/PrioridadeSelect";
 import type { Prioridade, TipoAtividade } from "@/lib/supabase/types";
+import { escalaUi } from "@/lib/escala-ui";
 
 const TIPO_OPTIONS: { key: TipoAtividade; label: string; Icon: React.ElementType; color: string }[] = [
   { key: "reuniao",  label: "Reunião",  Icon: Users,          color: "#7259B5" },
@@ -251,13 +252,13 @@ export function EditarAtividadeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white h-full w-[640px] max-w-[92vw] overflow-hidden flex flex-col shadow-2xl"
+        className="bg-white h-full w-[40rem] max-w-[92vw] overflow-hidden flex flex-col shadow-2xl"
         style={{ borderLeft: "1px solid rgba(13,13,13,.08)" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 id={titleId} className="text-[14px] font-bold text-black">Editar atividade</h2>
+          <h2 id={titleId} className="text-[0.875rem] font-bold text-black">Editar atividade</h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-7 h-7 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={14} className="text-black/40" />
           </button>
@@ -277,19 +278,19 @@ export function EditarAtividadeModal({
           ) : (
             <>
               {erro && (
-                <div role="alert" className="text-[12px] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
+                <div role="alert" className="text-[0.75rem] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
                   {erro}
                 </div>
               )}
 
               {/* Nome — full width */}
               <div className="mb-5">
-                <label className="text-[12px] font-semibold text-black mb-1.5 block">Nome da atividade</label>
+                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Nome da atividade</label>
                 <input
                   value={nome}
                   onChange={e => setNome(e.target.value)}
                   placeholder="Ex: Ligação de follow-up, Reunião de alinhamento..."
-                  className="w-full border rounded px-3 py-2 text-[13px] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                   autoFocus
                 />
@@ -302,13 +303,13 @@ export function EditarAtividadeModal({
                 <div className="space-y-4">
                   {/* Tipo */}
                   <div>
-                    <label className="text-[12px] font-semibold text-black mb-2 block">Tipo</label>
+                    <label className="text-[0.75rem] font-semibold text-black mb-2 block">Tipo</label>
                     <div className="flex items-center gap-1.5 flex-wrap">
                       {TIPO_OPTIONS.map(t => {
                         const active = tipo === t.key && !tipoCustomId;
                         return (
                           <button key={t.key} onClick={() => { setTipo(t.key); setTipoCustomId(null); }}
-                            className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded border transition"
+                            className="flex items-center gap-1 px-2.5 py-1 text-[0.6875rem] font-semibold rounded border transition"
                             style={{
                               borderColor: active ? t.color : "rgba(13,13,13,.12)",
                               background: "white",
@@ -326,7 +327,7 @@ export function EditarAtividadeModal({
                           const active = tipoCustomId === t.id;
                           return (
                             <button key={t.id} onClick={() => { setTipo("outro"); setTipoCustomId(t.id); }}
-                              className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded border transition"
+                              className="flex items-center gap-1 px-2.5 py-1 text-[0.6875rem] font-semibold rounded border transition"
                               style={{ borderColor: active ? t.cor : "rgba(13,13,13,.12)", background: "white", color: active ? t.cor : "rgba(13,13,13,.45)" }}>
                               <Icon size={11} />{t.nome}
                             </button>
@@ -338,7 +339,7 @@ export function EditarAtividadeModal({
 
                   {/* Vínculo */}
                   <div>
-                    <label className="text-[12px] font-semibold text-black mb-2 block">
+                    <label className="text-[0.75rem] font-semibold text-black mb-2 block">
                       Vínculo
                     </label>
                     <div className="flex items-center gap-1 flex-wrap mb-2">
@@ -346,7 +347,7 @@ export function EditarAtividadeModal({
                         const active = vinculoTipo === option.key;
                         return (
                         <button key={option.key} type="button" onClick={() => { setVinculoTipo(option.key); setVinculoId(null); }}
-                          className="px-2 py-0.5 text-[10px] font-semibold rounded border transition"
+                          className="px-2 py-0.5 text-[0.625rem] font-semibold rounded border transition"
                           style={{ borderColor: active ? option.color : "rgba(13,13,13,.1)", background: "white", color: active ? option.color : "rgba(13,13,13,.45)" }}>
                           {option.label}
                         </button>
@@ -366,7 +367,7 @@ export function EditarAtividadeModal({
 
                   {/* Responsável */}
                   <div>
-                    <label className="text-[12px] font-semibold text-black mb-1.5 block">Responsável</label>
+                    <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Responsável</label>
                     <Dropdown
                       value={responsavelId}
                       options={membros}
@@ -380,7 +381,7 @@ export function EditarAtividadeModal({
 
                   {/* Prioridade */}
                   <div>
-                    <label className="text-[12px] font-semibold text-black mb-1.5 block">Prioridade</label>
+                    <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Prioridade</label>
                     <PrioridadeSelect value={prioridade} onChange={setPrioridade} />
                   </div>
                 </div>
@@ -390,15 +391,15 @@ export function EditarAtividadeModal({
                   {/* Datas */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[12px] font-semibold text-black mb-1.5 block">Início</label>
+                      <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Início</label>
                       <input type="date" value={dataInicio} onChange={e => setDataInicio(e.target.value)}
-                        className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition"
+                        className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition"
                         style={{ borderColor: "rgba(13,13,13,.15)" }} />
                     </div>
                     <div>
-                      <label className="text-[12px] font-semibold text-black mb-1.5 block">Prazo</label>
+                      <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Prazo</label>
                       <input type="date" value={dataPrevista} onChange={e => setDataPrevista(e.target.value)}
-                        className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition"
+                        className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition"
                         style={{ borderColor: "rgba(13,13,13,.15)" }} />
                     </div>
                   </div>
@@ -406,19 +407,19 @@ export function EditarAtividadeModal({
                   {/* Horários */}
                   <div className="grid grid-cols-2 gap-2">
                     <div>
-                      <label className="text-[12px] font-semibold text-black mb-1.5 block">
+                      <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">
                         Hora início <span className="text-black/30 font-normal">(opt.)</span>
                       </label>
                       <input type="time" value={horaInicio} onChange={e => setHoraInicio(e.target.value)}
-                        className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition"
+                        className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition"
                         style={{ borderColor: "rgba(13,13,13,.15)" }} />
                     </div>
                     <div>
-                      <label className="text-[12px] font-semibold text-black mb-1.5 block">
+                      <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">
                         Hora fim <span className="text-black/30 font-normal">(opt.)</span>
                       </label>
                       <input type="time" value={horaFim} onChange={e => setHoraFim(e.target.value)}
-                        className="w-full border rounded px-2.5 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition"
+                        className="w-full border rounded px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition"
                         style={{ borderColor: "rgba(13,13,13,.15)" }} />
                     </div>
                   </div>
@@ -429,32 +430,32 @@ export function EditarAtividadeModal({
                     <input type="checkbox" checked={calendarSyncRequested}
                       onChange={e => setCalendarSyncRequested(e.target.checked)}
                       className="accent-[#7259B5] flex-shrink-0" />
-                    <span className="flex items-center gap-1.5 text-[11px] font-semibold text-black">
+                    <span className="flex items-center gap-1.5 text-[0.6875rem] font-semibold text-black">
                       <CalendarDays size={12} className="text-[#7259B5]" /> Sincronizar com calendário
                     </span>
                   </label>
 
                   {/* Resultado */}
                   <div>
-                    <label className="text-[12px] font-semibold text-black mb-1.5 block">
+                    <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">
                       Resultado
                     </label>
                     <textarea value={resultado} onChange={e => setResultado(e.target.value)}
                       placeholder="O que aconteceu? Qual foi o desfecho?"
                       rows={2}
-                      className="w-full border rounded px-3 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition resize-none"
+                      className="w-full border rounded px-3 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition resize-none"
                       style={{ borderColor: "rgba(13,13,13,.15)" }} />
                   </div>
 
                   {/* Nota */}
                   <div>
-                    <label className="text-[12px] font-semibold text-black mb-1.5 block">
+                    <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">
                       Nota
                     </label>
                     <textarea value={nota} onChange={e => setNota(e.target.value)}
                       placeholder="Detalhes relevantes..."
                       rows={2}
-                      className="w-full border rounded px-3 py-2 text-[12px] text-black outline-none focus:border-[#7259B5] transition resize-none"
+                      className="w-full border rounded px-3 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] transition resize-none"
                       style={{ borderColor: "rgba(13,13,13,.15)" }} />
                   </div>
                 </div>
@@ -531,7 +532,7 @@ function Dropdown({
     const rect = ref.current?.getBoundingClientRect();
     if (!open && rect) {
       const spaceBelow = window.innerHeight - rect.bottom - 4;
-      setMenuStyle(spaceBelow >= Math.min(192, rect.top - 4)
+      setMenuStyle(spaceBelow >= Math.min(192 * escalaUi(), rect.top - 4)
         ? { top: rect.bottom + 4, left: rect.left, width: rect.width }
         : { bottom: window.innerHeight - rect.top + 4, left: rect.left, width: rect.width });
     }
@@ -545,7 +546,7 @@ function Dropdown({
       <button
         type="button"
         onClick={handleToggle}
-        className="w-full flex items-center justify-between border rounded px-3 py-2.5 text-[13px] text-left transition hover:border-[#7259B5]/40"
+        className="w-full flex items-center justify-between border rounded px-3 py-2.5 text-[0.8125rem] text-left transition hover:border-[#7259B5]/40"
         style={{ borderColor: open ? "#7259B5" : "rgba(13,13,13,.15)", color: selected ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
       >
         <span className="truncate">
@@ -559,20 +560,20 @@ function Dropdown({
         <div className="fixed z-[999] bg-white border rounded shadow-lg max-h-48 overflow-y-auto" style={{ ...menuStyle, borderColor: "rgba(13,13,13,.1)" }}>
           {value && (
             <button onClick={() => { onChange(null); onClose(); }}
-              className="w-full text-left px-3 py-2 text-[12px] text-[#D94E4E] hover:bg-[#D94E4E]/5 transition border-b"
+              className="w-full text-left px-3 py-2 text-[0.75rem] text-[#D94E4E] hover:bg-[#D94E4E]/5 transition border-b"
               style={{ borderColor: "rgba(13,13,13,.06)" }}>
               Limpar seleção
             </button>
           )}
           {options.length === 0 ? (
-            <p className="px-3 py-3 text-[12px] text-black/30 text-center">Nenhum item encontrado</p>
+            <p className="px-3 py-3 text-[0.75rem] text-black/30 text-center">Nenhum item encontrado</p>
           ) : (
             options.map(opt => (
               <button key={opt.id} onClick={() => { onChange(opt.id); onClose(); }}
                 className="w-full text-left px-3 py-2 hover:bg-black/[0.03] transition flex items-center justify-between">
                 <div className="min-w-0">
-                  <p className="text-[12px] text-black truncate">{opt.label}</p>
-                  {opt.sublabel && <p className="text-[10px] text-black/30 truncate">{opt.sublabel}</p>}
+                  <p className="text-[0.75rem] text-black truncate">{opt.label}</p>
+                  {opt.sublabel && <p className="text-[0.625rem] text-black/30 truncate">{opt.sublabel}</p>}
                 </div>
                 {opt.id === value && <Check size={12} className="text-[#7259B5] flex-shrink-0" />}
               </button>

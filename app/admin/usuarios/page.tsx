@@ -109,7 +109,7 @@ export default function AdminUsuariosPage() {
         </div>
         <input
           className="px-4 py-2 rounded text-sm outline-none"
-          style={{ border: "1px solid rgba(13,13,13,.10)", width: 220 }}
+          style={{ border: "1px solid rgba(13,13,13,.10)", width: "13.75rem" }}
           placeholder="Buscar usuário…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -117,7 +117,7 @@ export default function AdminUsuariosPage() {
       </div>
 
       {entryError && (
-        <div className="mb-4 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.04] px-4 py-2.5 text-[12px] text-[#991B1B]">
+        <div className="mb-4 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.04] px-4 py-2.5 text-[0.75rem] text-[#991B1B]">
           {entryError}
         </div>
       )}
@@ -126,11 +126,11 @@ export default function AdminUsuariosPage() {
         <table className="w-full text-sm">
           <thead>
             <tr style={{ background: "#FAFAFA", borderBottom: "1px solid rgba(13,13,13,.06)" }}>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Nome</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Cargo / Tipo</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Plano</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Papel</th>
-              <th className="text-left px-4 py-3 text-[11px] font-semibold text-black/40">Cadastrado em</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Nome</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Cargo / Tipo</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Plano</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Papel</th>
+              <th className="text-left px-4 py-3 text-[0.6875rem] font-semibold text-black/40">Cadastrado em</th>
               <th className="px-4 py-3" />
             </tr>
           </thead>
@@ -144,33 +144,33 @@ export default function AdminUsuariosPage() {
                   style={{ borderTop: i > 0 ? "1px solid rgba(13,13,13,.05)" : undefined, background: "white" }}
                 >
                   <td className="px-4 py-3">
-                    <p className="font-medium text-[13px] text-[#0D0D0D]">{u.full_name ?? "—"}</p>
-                    <p className="text-[11px] text-black/40">{u.email ?? "—"}</p>
+                    <p className="font-medium text-[0.8125rem] text-[#0D0D0D]">{u.full_name ?? "—"}</p>
+                    <p className="text-[0.6875rem] text-black/40">{u.email ?? "—"}</p>
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-black/55">
+                  <td className="px-4 py-3 text-[0.8125rem] text-black/55">
                     <p>{u.cargo_funcao ?? "—"}</p>
-                    {u.tipo_organizacao && <p className="text-[11px] text-black/35">{u.tipo_organizacao}</p>}
+                    {u.tipo_organizacao && <p className="text-[0.6875rem] text-black/35">{u.tipo_organizacao}</p>}
                   </td>
-                  <td className="px-4 py-3 text-[13px] text-black/55">{u.plano ?? "—"}</td>
+                  <td className="px-4 py-3 text-[0.8125rem] text-black/55">{u.plano ?? "—"}</td>
                   <td className="px-4 py-3">
                     {papelStyle ? (
                       <span
-                        className="text-[10px] font-semibold px-2 py-0.5 rounded"
+                        className="text-[0.625rem] font-semibold px-2 py-0.5 rounded"
                         style={{ background: papelStyle.bg, color: papelStyle.text }}
                       >
                         {PAPEL_LABEL[u.papel ?? ""] ?? u.papel}
                       </span>
                     ) : (
-                      <span className="text-[13px] text-black/30">—</span>
+                      <span className="text-[0.8125rem] text-black/30">—</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-[12px] text-black/40">{fmtDate(u.created_at)}</td>
+                  <td className="px-4 py-3 text-[0.75rem] text-black/40">{fmtDate(u.created_at)}</td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => void handleEnterAs(u.id)}
                       disabled={!!entering}
                       title="Entrar como este usuário"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[11px] font-semibold transition disabled:opacity-40"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded text-[0.6875rem] font-semibold transition disabled:opacity-40"
                       style={{ border: "1px solid rgba(13,13,13,.10)", color: "rgba(13,13,13,.45)" }}
                     >
                       {isEntering

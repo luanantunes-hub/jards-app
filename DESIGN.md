@@ -37,7 +37,7 @@ Princípios:
 - títulos grandes usam tracking negativo e `text-wrap: balance`;
 - corpo usa peso 400 ou 500;
 - controles e filtros não ficam em negrito por padrão;
-- tabelas usam cabeçalhos de 10px, peso 500, caixa alta e tracking `.08em`;
+- tabelas usam cabeçalhos de `0.625rem` (10px na base), peso 500, caixa alta e tracking `.08em`;
 - números financeiros devem usar algarismos tabulares quando comparados em coluna.
 
 ## Forma e espaçamento
@@ -47,7 +47,9 @@ Princípios:
 - alturas usuais de controle: 36–44px;
 - áreas clicáveis devem ter pelo menos 40px quando isoladas;
 - separação entre seções usa espaço, regra fina ou mudança sutil de superfície;
-- páginas de dados usam container máximo próximo de 1280px.
+- páginas de detalhe usam container máximo `max-w-pagina` (utilidade em `globals.css`): 80rem (1280px na base), abrindo para 96rem em telas a partir de 2400px de largura e 120rem a partir de 3200px (só a largura conta, para os ultrawides);
+- listas com `ManagedTable` marcam a coluna principal com `grow: true`, para a tabela ocupar a largura que sobra em telas largas;
+- medidas que acompanham a tela ficam em `rem` (`text-[0.75rem]`, `w-[17.5rem]`, `max-w-[80rem]`); `px` só para bordas, raios, sombras, desfoques e traços abaixo de 4px.
 
 ## Botões
 
@@ -118,7 +120,7 @@ Etiquetas informativas e não editáveis usam borda leve, fundo neutro e cor sem
 
 ```tsx
 <span
-  className="rounded border bg-white px-2 py-1 text-[10px] font-medium"
+  className="rounded border bg-white px-2 py-1 text-[0.625rem] font-medium"
   style={{ borderColor: color + "47", color }}
 >
   {label}
@@ -172,6 +174,9 @@ Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 ## Responsividade
 
 - começar pela leitura em uma coluna;
+- telas grandes: a fonte base cresce a partir de 1800px de largura (106,25%; 112,5% com 2100×1000; 125% com 2400×1150; 137,5% com 3200×1700, medidas da janela) e tudo que está em `rem` cresce junto — por isso tamanhos novos não usam `px`. A exigência de altura mantém ultrawides no degrau da altura que eles têm;
+- larguras em `style` usam string em rem (`maxWidth: "35rem"`), não número; ícones Lucide/Phosphor com `size` numérico já acompanham a escala por uma regra em `globals.css`;
+- medidas que o JavaScript compara com `getBoundingClientRect` ou `window.innerHeight` (altura de menu para abrir acima, largura de popover, coordenadas de desenho) são multiplicadas por `escalaUi()` de `lib/escala-ui.ts`;
 - toolbars podem quebrar linha sem perder o botão principal;
 - abas horizontais podem rolar no celular;
 - modais ocupam a altura disponível e preservam o rodapé;

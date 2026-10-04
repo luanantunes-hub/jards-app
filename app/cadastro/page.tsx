@@ -103,7 +103,7 @@ export default function CadastroPage() {
             <a href="/login" className="mb-4 inline-flex items-center gap-1.5 text-xs text-black/40 transition hover:text-black">
               <ArrowLeft size={13} /> Voltar ao login
             </a>
-            <p className="mb-2.5 text-[11px] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Crie seu workspace</p>
+            <p className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Crie seu workspace</p>
             <h1 className="text-[clamp(2.15rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">Comece gratuitamente.</h1>
             <p className="mb-4 mt-2.5 text-sm leading-6 text-black/50">Configure seu espaço e comece com o contexto organizado.</p>
 
@@ -113,7 +113,7 @@ export default function CadastroPage() {
 
             <div className="mb-4 flex items-center gap-3" aria-hidden="true">
               <span className="h-px flex-1 bg-black/8" />
-              <span className="text-[11px] text-black/30">ou use seu e-mail</span>
+              <span className="text-[0.6875rem] text-black/30">ou use seu e-mail</span>
               <span className="h-px flex-1 bg-black/8" />
             </div>
 
@@ -143,9 +143,9 @@ export default function CadastroPage() {
               </button>
             </form>
 
-            <p className="mt-3 text-center text-[11px] text-black/40">Sem cartão. Seus dados ficam protegidos.</p>
+            <p className="mt-3 text-center text-[0.6875rem] text-black/40">Sem cartão. Seus dados ficam protegidos.</p>
 
-            <p className="mt-3 text-center text-[11px] leading-5 text-black/35">
+            <p className="mt-3 text-center text-[0.6875rem] leading-5 text-black/35">
               Ao criar uma conta, você concorda com os nossos{" "}
               <a href="/termos" className="text-black/45 underline hover:text-black/70">Termos de Uso</a>
               {" "}e a nossa{" "}
@@ -177,7 +177,7 @@ const inputClass = "w-full rounded-xl border border-black/12 bg-white px-4 py-2.
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[11px] font-medium text-black/55">{label}</span>
+      <span className="mb-1.5 block text-[0.6875rem] font-medium text-black/55">{label}</span>
       {children}
     </label>
   );

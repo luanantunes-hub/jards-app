@@ -243,8 +243,8 @@ export function CompanyTimeline({
     <div>
       {showHeader && (
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-[12px] font-bold uppercase tracking-[.12em] text-black/40">Histórico</h2>
-          <span className="text-[11px] text-black/25 font-medium">{events.length} eventos</span>
+          <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Histórico</h2>
+          <span className="text-[0.6875rem] text-black/25 font-medium">{events.length} eventos</span>
         </div>
       )}
 
@@ -264,15 +264,15 @@ export function CompanyTimeline({
               </div>
               <div className="flex-1 pb-5">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[11px] font-semibold text-black/50">{formatDate(evt.data)}</span>
-                  <span className="text-[10px] text-black/25">{formatRelative(evt.data)}</span>
+                  <span className="text-[0.6875rem] font-semibold text-black/50">{formatDate(evt.data)}</span>
+                  <span className="text-[0.625rem] text-black/25">{formatRelative(evt.data)}</span>
                 </div>
-                <p className="text-[13px] font-medium text-[#0D0D0D]">{evt.titulo}</p>
+                <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{evt.titulo}</p>
                 {evt.descricao && <p className="text-xs text-black/40 mt-0.5">{evt.descricao}</p>}
                 {evt.captacao_titulo && (
-                  <p className="text-[10px] text-[#7259B5] mt-1">↗ {evt.captacao_titulo}</p>
+                  <p className="text-[0.625rem] text-[#7259B5] mt-1">↗ {evt.captacao_titulo}</p>
                 )}
-                {evt.usuario && <p className="text-[10px] text-black/25 mt-1">{evt.usuario}</p>}
+                {evt.usuario && <p className="text-[0.625rem] text-black/25 mt-1">{evt.usuario}</p>}
               </div>
             </div>
           ))}

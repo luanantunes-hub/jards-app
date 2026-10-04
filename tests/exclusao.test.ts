@@ -36,3 +36,18 @@ test("exclusão bloqueada por RLS não é reportada como sucesso", async () => {
   await assert.rejects(excluirPorId(clienteFalso({ data: null, error: null }), "contatos", "c1"), /permissões/);
   await assert.doesNotReject(excluirPorId(clienteFalso({ data: { id: "c1" }, error: null }), "contatos", "c1"));
 });
+
+test("o detalhe do Postgres diz qual ligação impede a exclusão", () => {
+  const atividades = { code: "23503", message: "update or delete on table \"captacoes\" violates foreign key constraint", details: "Key (id)=(1) is still referenced from table \"atividades\"." };
+  assert.equal(mensagemDeExclusao(atividades, "mensagem genérica"), "Este registro ainda está ligado a atividades. Remova ou altere esses vínculos antes de excluí-lo.");
+});
+
+test("venda registrada (ON DELETE RESTRICT, código 23001) explica que é histórico", () => {
+  const venda = { code: "23001", message: "violates RESTRICT setting", details: "Key (id)=(1) is referenced from table \"vendas_patrocinio\"." };
+  assert.match(mensagemDeExclusao(venda), /venda registrada/);
+});
+
+test("tabela desconhecida usa a mensagem do chamador", () => {
+  const outro = { code: "23503", message: "fk", details: "Key (id)=(1) is still referenced from table \"tabela_nova\"." };
+  assert.equal(mensagemDeExclusao(outro, "Mensagem do chamador."), "Mensagem do chamador.");
+});

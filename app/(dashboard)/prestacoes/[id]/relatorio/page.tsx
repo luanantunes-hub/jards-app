@@ -18,7 +18,7 @@ function pct(realizado: number, aprovado: number) {
 }
 
 function PctBar({ value, tol }: { value: number | null; tol?: number }) {
-  if (value === null) return <span className="text-black/25 text-[10px]">—</span>;
+  if (value === null) return <span className="text-black/25 text-[0.625rem]">—</span>;
   const over = tol != null && value > 100 + tol;
   const warn = tol != null && value > 100;
   const color = over ? "#D94E4E" : warn ? "#B07A14" : value >= 80 ? "#2E8932" : "rgba(13,13,13,.35)";
@@ -27,7 +27,7 @@ function PctBar({ value, tol }: { value: number | null; tol?: number }) {
       <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,13,13,.07)" }}>
         <div className="h-full rounded-full" style={{ width: `${Math.min(value, 100)}%`, background: color }} />
       </div>
-      <span className="text-[10px] font-bold tabular-nums" style={{ color }}>{value}%</span>
+      <span className="text-[0.625rem] font-bold tabular-nums" style={{ color }}>{value}%</span>
     </div>
   );
 }
@@ -81,7 +81,7 @@ export default function RelatorioPage() {
           <button
             key={v.key}
             onClick={() => setView(v.key)}
-            className="px-4 py-1.5 rounded text-[11px] font-semibold transition"
+            className="px-4 py-1.5 rounded text-[0.6875rem] font-semibold transition"
             style={{
               background: view === v.key ? "#7259B5" : "transparent",
               color: view === v.key ? "white" : "rgba(13,13,13,.45)",
@@ -102,15 +102,15 @@ export default function RelatorioPage() {
           {view === "metas" && (
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[12px] font-semibold text-black">Metas comprovadas</p>
-                <p className="text-[10px] text-black/35">{itens.length} rubrica{itens.length !== 1 ? "s" : ""}</p>
+                <p className="text-[0.75rem] font-semibold text-black">Metas comprovadas</p>
+                <p className="text-[0.625rem] text-black/35">{itens.length} rubrica{itens.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-[12px]">
+                <table className="w-full text-[0.75rem]">
                   <thead>
                     <tr style={{ background: "#F9F9F8" }}>
                       {["Etapa / Rubrica", "Qtde. aprovada", "Qtde. executada", "%", "Vl. aprovado", "Vl. executado", "%", "Saldo a executar"].map((h, index) => (
-                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
+                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -125,7 +125,7 @@ export default function RelatorioPage() {
                         <tr key={item.id} className="hover:bg-black/[.015] transition border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                           <td className="px-4 py-3">
                             <p className="font-semibold text-black">{i + 1} - {item.rubrica}</p>
-                            {item.descricao && <p className="text-[10px] text-black/35 mt-0.5">{item.descricao}</p>}
+                            {item.descricao && <p className="text-[0.625rem] text-black/35 mt-0.5">{item.descricao}</p>}
                           </td>
                           <td className="px-4 py-3 text-black/50 tabular-nums">{compsAceitos.length > 0 ? `${compsAceitos.length},00` : "—"}</td>
                           <td className="px-4 py-3 text-black/50 tabular-nums">{qtdExec},00</td>
@@ -140,11 +140,11 @@ export default function RelatorioPage() {
                   </tbody>
                   <tfoot>
                     <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
-                      <td className="px-4 py-2.5 text-[11px] font-bold text-black/50" colSpan={4}>Total</td>
-                      <td className="px-4 py-2.5 text-[12px] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
-                      <td className="px-4 py-2.5 text-[12px] font-bold tabular-nums" style={{ color: "#2E8932" }}>{fmt(totalRealizado)}</td>
+                      <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50" colSpan={4}>Total</td>
+                      <td className="px-4 py-2.5 text-[0.75rem] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
+                      <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums" style={{ color: "#2E8932" }}>{fmt(totalRealizado)}</td>
                       <td className="px-4 py-2.5"><PctBar value={pct(totalRealizado, totalAprovado)} /></td>
-                      <td className="px-4 py-2.5 text-[12px] font-bold tabular-nums text-black/50">{fmt(totalAprovado - totalRealizado)}</td>
+                      <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums text-black/50">{fmt(totalAprovado - totalRealizado)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -160,23 +160,23 @@ export default function RelatorioPage() {
                 if (compsItem.length === 0) return (
                   <div key={item.id} className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                     <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="text-[12px] font-semibold text-black">{idx + 1} - {item.rubrica}</p>
+                      <p className="text-[0.75rem] font-semibold text-black">{idx + 1} - {item.rubrica}</p>
                     </div>
-                    <p className="text-[11px] text-black/30 px-5 py-4">Nenhum comprovante aceito vinculado.</p>
+                    <p className="text-[0.6875rem] text-black/30 px-5 py-4">Nenhum comprovante aceito vinculado.</p>
                   </div>
                 );
                 return (
                   <div key={item.id} className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                     <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="text-[12px] font-semibold text-black">{idx + 1} - {item.rubrica}</p>
-                      <span className="text-[10px] text-black/35">{compsItem.length} item{compsItem.length !== 1 ? "s" : ""} · {fmt(compsItem.reduce((s, c) => s + (c.valor_extraido ?? 0), 0))}</span>
+                      <p className="text-[0.75rem] font-semibold text-black">{idx + 1} - {item.rubrica}</p>
+                      <span className="text-[0.625rem] text-black/35">{compsItem.length} item{compsItem.length !== 1 ? "s" : ""} · {fmt(compsItem.reduce((s, c) => s + (c.valor_extraido ?? 0), 0))}</span>
                     </div>
                     <div className="overflow-x-auto">
-                      <table className="w-full text-[12px]">
+                      <table className="w-full text-[0.75rem]">
                         <thead>
                           <tr style={{ background: "#F9F9F8" }}>
                             {["Item", "Qtde. aprovada", "Qtde. executada", "%", "Vl. aprovado", "Vl. executado", "%", "Saldo"].map((h, index) => (
-                              <th key={`${h}-${index}`} className="px-4 py-2 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/25 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.06)" }}>{h}</th>
+                              <th key={`${h}-${index}`} className="px-4 py-2 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/25 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.06)" }}>{h}</th>
                             ))}
                           </tr>
                         </thead>
@@ -187,7 +187,7 @@ export default function RelatorioPage() {
                               <tr key={c.id} className="border-b last:border-0 hover:bg-black/[.015]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                                 <td className="px-4 py-2.5">
                                   <p className="font-medium text-black/80">{c.descricao_servico || c.nome_arquivo}</p>
-                                  <p className="text-[10px] text-black/35">{c.tipo}</p>
+                                  <p className="text-[0.625rem] text-black/35">{c.tipo}</p>
                                 </td>
                                 <td className="px-4 py-2.5 text-black/40 tabular-nums">1,00</td>
                                 <td className="px-4 py-2.5 text-black/40 tabular-nums">1,00</td>
@@ -212,15 +212,15 @@ export default function RelatorioPage() {
           {view === "sintetico" && (
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[12px] font-semibold text-black">Relação de pagamentos — Sintético</p>
-                <p className="text-[10px] text-black/35">{aceitos.length} pagamento{aceitos.length !== 1 ? "s" : ""} aceito{aceitos.length !== 1 ? "s" : ""}</p>
+                <p className="text-[0.75rem] font-semibold text-black">Relação de pagamentos — Sintético</p>
+                <p className="text-[0.625rem] text-black/35">{aceitos.length} pagamento{aceitos.length !== 1 ? "s" : ""} aceito{aceitos.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-[12px]">
+                <table className="w-full text-[0.75rem]">
                   <thead>
                     <tr style={{ background: "#F9F9F8" }}>
                       {["Rubrica", "Qtde. comprovantes", "Vl. total comprovado", "Vl. aprovado", "Saldo"].map((h, index) => (
-                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
+                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -229,7 +229,7 @@ export default function RelatorioPage() {
                       <tr key={item.id} className="border-b last:border-0 hover:bg-black/[.015]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                         <td className="px-4 py-3">
                           <p className="font-semibold text-black">{item.rubrica}</p>
-                          {item.descricao && <p className="text-[10px] text-black/35">{item.descricao}</p>}
+                          {item.descricao && <p className="text-[0.625rem] text-black/35">{item.descricao}</p>}
                         </td>
                         <td className="px-4 py-3 text-black/50 tabular-nums">{qtd}</td>
                         <td className="px-4 py-3 font-semibold tabular-nums" style={{ color: total > item.valor_aprovado ? "#D94E4E" : "#2E8932" }}>{fmt(total)}</td>
@@ -238,17 +238,17 @@ export default function RelatorioPage() {
                       </tr>
                     ))}
                     {sintetico.every(s => s.qtd === 0) && (
-                      <tr><td colSpan={5} className="px-5 py-8 text-center text-[11px] text-black/30">Nenhum comprovante aceito cadastrado.</td></tr>
+                      <tr><td colSpan={5} className="px-5 py-8 text-center text-[0.6875rem] text-black/30">Nenhum comprovante aceito cadastrado.</td></tr>
                     )}
                   </tbody>
                   {aceitos.length > 0 && (
                     <tfoot>
                       <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
-                        <td className="px-4 py-2.5 text-[11px] font-bold text-black/50">Total</td>
-                        <td className="px-4 py-2.5 text-[11px] font-bold text-black/50 tabular-nums">{aceitos.length}</td>
-                        <td className="px-4 py-2.5 text-[12px] font-bold tabular-nums" style={{ color: "#2E8932" }}>{fmt(totalRealizado)}</td>
-                        <td className="px-4 py-2.5 text-[12px] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
-                        <td className="px-4 py-2.5 text-[12px] font-bold tabular-nums text-black/50">{fmt(totalAprovado - totalRealizado)}</td>
+                        <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50">Total</td>
+                        <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50 tabular-nums">{aceitos.length}</td>
+                        <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums" style={{ color: "#2E8932" }}>{fmt(totalRealizado)}</td>
+                        <td className="px-4 py-2.5 text-[0.75rem] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
+                        <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums text-black/50">{fmt(totalAprovado - totalRealizado)}</td>
                       </tr>
                     </tfoot>
                   )}
@@ -261,21 +261,21 @@ export default function RelatorioPage() {
           {view === "analitico" && (
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[12px] font-semibold text-black">Relação de pagamentos — Analítico</p>
-                <p className="text-[10px] text-black/35">{aceitos.length} registro{aceitos.length !== 1 ? "s" : ""}</p>
+                <p className="text-[0.75rem] font-semibold text-black">Relação de pagamentos — Analítico</p>
+                <p className="text-[0.625rem] text-black/35">{aceitos.length} registro{aceitos.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-[12px]">
+                <table className="w-full text-[0.75rem]">
                   <thead>
                     <tr style={{ background: "#F9F9F8" }}>
                       {["Data", "Rubrica", "Descrição / Documento", "Tipo", "Origem", "Valor"].map((h, index) => (
-                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[10px] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
+                        <th key={`${h}-${index}`} className="px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {aceitos.length === 0 ? (
-                      <tr><td colSpan={6} className="px-5 py-8 text-center text-[11px] text-black/30">Nenhum comprovante aceito cadastrado.</td></tr>
+                      <tr><td colSpan={6} className="px-5 py-8 text-center text-[0.6875rem] text-black/30">Nenhum comprovante aceito cadastrado.</td></tr>
                     ) : aceitos.map(c => {
                       const rubrica = itens.find(it => it.id === c.item_id);
                       return (
@@ -283,20 +283,20 @@ export default function RelatorioPage() {
                           <td className="px-4 py-3 text-black/50 whitespace-nowrap tabular-nums">{fmtDate(c.data_doc)}</td>
                           <td className="px-4 py-3">
                             {rubrica
-                              ? <span className="text-[11px] font-medium text-black/70">{rubrica.rubrica}</span>
-                              : <span className="text-[10px] text-black/25 italic">Sem rubrica</span>}
+                              ? <span className="text-[0.6875rem] font-medium text-black/70">{rubrica.rubrica}</span>
+                              : <span className="text-[0.625rem] text-black/25 italic">Sem rubrica</span>}
                           </td>
-                          <td className="px-4 py-3 max-w-[220px]">
+                          <td className="px-4 py-3 max-w-[13.75rem]">
                             <p className="font-medium text-black/80 truncate">{c.descricao_servico || c.nome_arquivo}</p>
-                            {c.observacao && <p className="text-[10px] text-black/35 truncate italic">{c.observacao}</p>}
+                            {c.observacao && <p className="text-[0.625rem] text-black/35 truncate italic">{c.observacao}</p>}
                           </td>
                           <td className="px-4 py-3">
-                            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide"
+                            <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide"
                               style={{ background: "rgba(114,89,181,.10)", color: "#7259B5" }}>
                               {c.tipo}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-[10px] text-black/40 capitalize">{c.origem}</td>
+                          <td className="px-4 py-3 text-[0.625rem] text-black/40 capitalize">{c.origem}</td>
                           <td className="px-4 py-3 font-bold tabular-nums" style={{ color: "#2E8932" }}>{fmt(c.valor_extraido)}</td>
                         </tr>
                       );
@@ -305,8 +305,8 @@ export default function RelatorioPage() {
                   {aceitos.length > 0 && (
                     <tfoot>
                       <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
-                        <td colSpan={5} className="px-4 py-2.5 text-[11px] font-bold text-black/50">Total</td>
-                        <td className="px-4 py-2.5 text-[12px] font-bold tabular-nums" style={{ color: "#2E8932" }}>
+                        <td colSpan={5} className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50">Total</td>
+                        <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums" style={{ color: "#2E8932" }}>
                           {fmt(aceitos.reduce((s, c) => s + (c.valor_extraido ?? 0), 0))}
                         </td>
                       </tr>

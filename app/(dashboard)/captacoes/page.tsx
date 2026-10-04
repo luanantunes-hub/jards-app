@@ -23,9 +23,10 @@ import { ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurfa
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
+import { escalaUi } from "@/lib/escala-ui";
 
 const CAPTACOES_COLUMNS = [
-  { id: "empresa", label: "Empresa", width: "220px", hideable: false }, { id: "titulo", label: "Projeto", width: "250px" }, { id: "lei", label: "Tipo de patrocínio", width: "165px" }, { id: "status", label: "Status", width: "140px", hideable: false }, { id: "valor", label: "Valor", width: "120px" }, { id: "prioridade", label: "Prioridade", width: "110px" }, { id: "responsavel", label: "Responsável", width: "180px" }, { id: "agencia", label: "Agência", width: "160px" }, { id: "contato", label: "Próx. contato", width: "140px" }, { id: "adicionado_em", label: "Adicionado em", width: "125px" }, { id: "atualizado_em", label: "Atualizado em", width: "125px" }, { id: "acoes", label: "Ações", width: "80px" },
+  { id: "empresa", label: "Empresa", width: "13.75rem", grow: true, hideable: false }, { id: "titulo", label: "Projeto", width: "15.625rem", grow: true }, { id: "lei", label: "Tipo de patrocínio", width: "10.3125rem" }, { id: "status", label: "Status", width: "8.75rem", hideable: false }, { id: "valor", label: "Valor", width: "7.5rem" }, { id: "prioridade", label: "Prioridade", width: "6.875rem" }, { id: "responsavel", label: "Responsável", width: "11.25rem" }, { id: "agencia", label: "Agência", width: "10rem" }, { id: "contato", label: "Próx. contato", width: "8.75rem" }, { id: "adicionado_em", label: "Adicionado em", width: "7.8125rem" }, { id: "atualizado_em", label: "Atualizado em", width: "7.8125rem" }, { id: "acoes", label: "Ações", width: "5rem" },
 ] as const satisfies readonly ColumnDefinition[];
 
 type CaptacaoRow = {
@@ -215,7 +216,7 @@ export default function CaptacoesPage() {
   function handleDelete(id: string, titulo: string) {
     confirmDelete({
       title: `Excluir a negociação “${titulo}”?`,
-      description: "Atividades, propostas e histórico desta negociação deixam de aparecer. Esta ação não pode ser desfeita.",
+      description: "O histórico e os documentos da negociação são apagados. Atividades, notas e propostas continuam salvas, sem o vínculo. Esta ação não pode ser desfeita.",
       onConfirm: async () => {
         await excluirPorId(supabase, "captacoes", id);
         setCaptacoes(prev => prev.filter(c => c.id !== id));
@@ -392,11 +393,11 @@ export default function CaptacoesPage() {
           <div className="flex items-center gap-1.5 min-w-0">
             <CompanyLogo nome={empresa} domain={c.empresa_crm?.domain_key} site={c.empresa_pub?.site ?? c.empresa_crm?.site} logo_url={c.empresa_pub?.logo_url} size={20} className="flex-shrink-0" />
             {c.empresa_crm?.nome && !c.empresa_pub?.nome ? (
-              <Link href={`/empresas-crm/${c.empresa_crm_id}`} onClick={(e) => e.stopPropagation()} className="text-[10px] font-semibold text-black/50 truncate hover:text-[#7259B5] transition">
+              <Link href={`/empresas-crm/${c.empresa_crm_id}`} onClick={(e) => e.stopPropagation()} className="text-[0.625rem] font-semibold text-black/50 truncate hover:text-[#7259B5] transition">
                 {empresa}
               </Link>
             ) : (
-              <span className="text-[10px] font-semibold text-black/50 truncate">{empresa}</span>
+              <span className="text-[0.625rem] font-semibold text-black/50 truncate">{empresa}</span>
             )}
           </div>
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -410,7 +411,7 @@ export default function CaptacoesPage() {
                 </span>
                 <div
                   role="tooltip"
-                  className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[190px] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[10px] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
+                  className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
                 >
                   <p className="font-semibold">{atividade.nome}</p>
                   <p className={atividade.atrasada ? "text-[#F0B24D]" : "text-white/55"}>
@@ -425,14 +426,14 @@ export default function CaptacoesPage() {
             <ArrowUpRight size={12} className="text-black/20 opacity-0 transition group-hover:opacity-100"/>
           </div>
         </div>
-        <p className="mb-3 line-clamp-2 text-[13px] font-semibold leading-[1.35] tracking-[-.01em] text-black/85">{titulo}</p>
+        <p className="mb-3 line-clamp-2 text-[0.8125rem] font-semibold leading-[1.35] tracking-[-.01em] text-black/85">{titulo}</p>
         <div className="flex items-center justify-between">
           {lei ? (
-            <span className="rounded border bg-white text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wide" style={{ borderColor: lei.text + "47", color: lei.text }}>
+            <span className="rounded border bg-white text-[0.5625rem] font-bold px-1.5 py-0.5 uppercase tracking-wide" style={{ borderColor: lei.text + "47", color: lei.text }}>
               {lei.label}
             </span>
           ) : <span />}
-          <span className="text-[12px] font-semibold tabular-nums text-black/65">{fmtValor(c.valor_solicitado)}</span>
+          <span className="text-[0.75rem] font-semibold tabular-nums text-black/65">{fmtValor(c.valor_solicitado)}</span>
         </div>
         {typeof valuePct === "number" && (
           <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-black/[.07]">
@@ -440,7 +441,7 @@ export default function CaptacoesPage() {
           </div>
         )}
         {c.proxima_prospeccao && (
-          <div className="mt-3 flex items-center justify-between border-t pt-2.5 text-[10px] font-medium" style={{ borderColor: "rgba(13,13,13,.06)", color: "#B07A14" }}>
+          <div className="mt-3 flex items-center justify-between border-t pt-2.5 text-[0.625rem] font-medium" style={{ borderColor: "rgba(13,13,13,.06)", color: "#B07A14" }}>
             <span>Próximo contato</span>
             <span className="flex items-center gap-1 tabular-nums">
             <Calendar size={10} />
@@ -487,7 +488,7 @@ export default function CaptacoesPage() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setCicloMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[160px] overflow-hidden rounded border bg-white shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white shadow-xl"
             style={{ top: cicloMenuPos.top, left: cicloMenuPos.left, borderColor: "rgba(13,13,13,.12)" }}
           >
             {([
@@ -499,7 +500,7 @@ export default function CaptacoesPage() {
                 key={opt.value}
                 type="button"
                 onClick={() => { setCicloFiltro(opt.value); setCicloMenuPos(null); }}
-                className="flex w-full items-center px-3 py-2 text-left text-[12px] transition hover:bg-black/[.04]"
+                className="flex w-full items-center px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.04]"
                 style={{ fontWeight: cicloFiltro === opt.value ? 700 : 500 }}
               >
                 {opt.label}
@@ -557,7 +558,7 @@ export default function CaptacoesPage() {
               const rect = e.currentTarget.getBoundingClientRect();
               setCicloMenuPos(cicloMenuPos ? null : { top: rect.bottom + 4, left: rect.left });
             }}
-            className="flex h-9 shrink-0 items-center gap-1.5 rounded border border-black/[.12] bg-white px-3.5 text-[12px] font-medium text-black/45 transition hover:bg-black/[.04] hover:text-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+            className="flex h-9 shrink-0 items-center gap-1.5 rounded border border-black/[.12] bg-white px-3.5 text-[0.75rem] font-medium text-black/45 transition hover:bg-black/[.04] hover:text-black/65 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
           >
             <Calendar size={12} aria-hidden="true"/>
             {cicloFiltro === "atual" ? "Ciclo atual" : cicloFiltro === "todos" ? "Todos os ciclos" : `Ciclo ${cicloFiltro}`}
@@ -651,7 +652,7 @@ export default function CaptacoesPage() {
                       { label: "Atualizado em", key: undefined },
                       { label: "", key: undefined },
                     ] satisfies { label: string; key?: string }[]).map((col, i) => (
-                      <th key={i} aria-sort={col.key && sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined} className="px-4 py-3 text-left text-[10px] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
+                      <th key={i} aria-sort={col.key && sortKey === col.key ? (sortDir === "asc" ? "ascending" : "descending") : undefined} className="px-4 py-3 text-left text-[0.625rem] font-medium text-black/35 uppercase tracking-[.08em] whitespace-nowrap">
                         {col.key ? (
                           <button type="button" onClick={() => toggleSort(col.key)} className="flex items-center gap-1 uppercase tracking-[.08em] transition hover:text-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                             {col.label}
@@ -672,7 +673,7 @@ export default function CaptacoesPage() {
                       <tr key={i} style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
                         {[140, 200, 80, 90, 70, 40, 150, 130, 80, 90, 90, 40].map((w, j) => (
                           <td key={j} className="px-4 py-3.5">
-                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: w }} />
+                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: `${w / 16}rem` }} />
                           </td>
                         ))}
                       </tr>
@@ -716,19 +717,19 @@ export default function CaptacoesPage() {
                             <div className="flex items-center gap-2">
                               <CompanyLogo nome={empresa} domain={c.empresa_crm?.domain_key} site={c.empresa_pub?.site ?? c.empresa_crm?.site} logo_url={c.empresa_pub?.logo_url} size={20} className="flex-shrink-0" />
                               {c.empresa_crm?.nome && !c.empresa_pub?.nome ? (
-                                <Link href={`/empresas-crm/${c.empresa_crm_id}`} onClick={(e) => e.stopPropagation()} className="text-[12.5px] font-medium text-black/60 hover:text-[#7259B5] transition">
+                                <Link href={`/empresas-crm/${c.empresa_crm_id}`} onClick={(e) => e.stopPropagation()} className="text-[0.78125rem] font-medium text-black/60 hover:text-[#7259B5] transition">
                                   {empresa}
                                 </Link>
                               ) : (
-                                <span className="text-[12.5px] font-medium text-black/60">{empresa}</span>
+                                <span className="text-[0.78125rem] font-medium text-black/60">{empresa}</span>
                               )}
                             </div>
                           </td>
 
                           {/* Projeto */}
-                          <td className="px-4 py-3.5 max-w-[300px]">
+                          <td className="px-4 py-3.5">
                             {c.projeto?.nome ? (
-                              <span className="flex items-center gap-1.5 text-[12.5px] text-black/50">
+                              <span className="flex items-center gap-1.5 text-[0.78125rem] text-black/50">
                                 <ProjectIdentity nome={c.projeto.nome} tipo={c.projeto.identidade_tipo} valor={c.projeto.identidade_valor} logoUrl={c.projeto.identidade_logo_url} cor={c.projeto.identidade_cor} size="sm" />
                                 {c.projeto.nome}
                               </span>
@@ -746,7 +747,7 @@ export default function CaptacoesPage() {
                               setLeiMenuId(leiMenuId === c.id ? null : c.id);
                             }} className="transition hover:opacity-70">
                               {lei ? (
-                                <span className="rounded border bg-white text-[9px] font-bold px-1.5 py-0.5 uppercase tracking-wide" style={{ borderColor: lei.text + "47", color: lei.text }}>
+                                <span className="rounded border bg-white text-[0.5625rem] font-bold px-1.5 py-0.5 uppercase tracking-wide" style={{ borderColor: lei.text + "47", color: lei.text }}>
                                   {lei.label}
                                 </span>
                               ) : <span className="text-black/20 text-xs hover:text-black/40">+ Lei</span>}
@@ -760,7 +761,7 @@ export default function CaptacoesPage() {
                                 onClick={e => {
                                   e.stopPropagation();
                                   const rect = e.currentTarget.getBoundingClientRect();
-                                  const menuH = COLUNAS.length * 36 + 8;
+                                  const menuH = (COLUNAS.length * 36 + 8) * escalaUi();
                                   setMenuPos({
                                     top:  window.innerHeight - rect.bottom > menuH ? rect.bottom + 4 : rect.top - menuH - 4,
                                     left: rect.left,
@@ -776,7 +777,7 @@ export default function CaptacoesPage() {
 
                           {/* Valor */}
                           <td className="px-4 py-3.5 whitespace-nowrap">
-                            <span className="font-bold tabular-nums text-[13px] text-black/70">{fmtValor(c.valor_solicitado)}</span>
+                            <span className="font-bold tabular-nums text-[0.8125rem] text-black/70">{fmtValor(c.valor_solicitado)}</span>
                           </td>
 
                           {/* Prioridade */}
@@ -790,7 +791,7 @@ export default function CaptacoesPage() {
                               const id = c.supervisor_id ?? c.captador_id;
                               const m = id ? membros[id] : null;
                               return m ? (
-                                <span className="font-medium text-[12.5px] text-black/60">{m.nome}</span>
+                                <span className="font-medium text-[0.78125rem] text-black/60">{m.nome}</span>
                               ) : <span className="text-black/25 text-xs">—</span>;
                             })()}
                           </td>
@@ -798,9 +799,9 @@ export default function CaptacoesPage() {
                           {/* Agência de captação */}
                           <td className="px-4 py-3.5">
                             {c.captador_externo?.nome ? (
-                              <span className="font-medium text-[12.5px] text-black/60">
+                              <span className="font-medium text-[0.78125rem] text-black/60">
                                 <span className="line-clamp-1 truncate">{c.captador_externo.nome}</span>
-                                <span className="block text-[10px] font-semibold uppercase tracking-wider" style={{ color: "#2D72B0" }}>
+                                <span className="block text-[0.625rem] font-semibold uppercase tracking-wider" style={{ color: "#2D72B0" }}>
                                   Agência
                                 </span>
                               </span>
@@ -810,21 +811,21 @@ export default function CaptacoesPage() {
                           {/* Próx. contato */}
                           <td className="px-4 py-3.5 whitespace-nowrap">
                             {c.proxima_prospeccao ? (
-                              <span className="flex items-center gap-1 text-[11px] text-amber-700 font-semibold">
+                              <span className="flex items-center gap-1 text-[0.6875rem] text-amber-700 font-semibold">
                                 <Calendar size={10} />
                                 {fmtShortDate(c.proxima_prospeccao)}
                               </span>
                             ) : <span className="text-black/20 text-xs">—</span>}
                           </td>
 
-                          <td className="px-4 py-3.5 text-[11px] tabular-nums text-black/40 whitespace-nowrap">{fmtDate(c.created_at)}</td>
+                          <td className="px-4 py-3.5 text-[0.6875rem] tabular-nums text-black/40 whitespace-nowrap">{fmtDate(c.created_at)}</td>
                           <td className="px-4 py-3.5 whitespace-nowrap">
-                            <span className="block text-[11px] tabular-nums text-black/40">{fmtDate(c.updated_at)}</span>
+                            <span className="block text-[0.6875rem] tabular-nums text-black/40">{fmtDate(c.updated_at)}</span>
                             {(() => {
                               const recency = updateRecency(c.updated_at);
                               return recency ? (
                                 <span
-                                  className="mt-1 inline-flex rounded border bg-white px-1.5 py-0.5 text-[9px] font-semibold"
+                                  className="mt-1 inline-flex rounded border bg-white px-1.5 py-0.5 text-[0.5625rem] font-semibold"
                                   style={{ borderColor: `${recency.color}40`, color: recency.color }}
                                   title={`${recency.days} ${recency.days === 1 ? "dia" : "dias"} sem atualização`}
                                 >

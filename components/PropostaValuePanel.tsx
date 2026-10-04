@@ -105,7 +105,7 @@ export function PropostaValuePanel({
         className="flex h-11 items-center gap-2 rounded border px-4"
         style={{ borderColor: aprovado ? "#2E893240" : "#D94E4E40", background: aprovado ? "#2E893208" : "#D94E4E08" }}
       >
-        <span className="text-[12px] font-bold" style={{ color: aprovado ? "#2E8932" : "#D94E4E" }}>
+        <span className="text-[0.75rem] font-bold" style={{ color: aprovado ? "#2E8932" : "#D94E4E" }}>
           {aprovado ? `Aprovado · ${formatCurrency(valorFinal)}` : "Recusado"}
         </span>
       </div>
@@ -122,8 +122,8 @@ export function PropostaValuePanel({
           title="Sem proposta formal registrada — clique para criar uma"
         >
           <div className="text-left">
-            <p className="text-[9px] font-semibold uppercase tracking-wide text-black/35">Solicitado</p>
-            <p className="text-[12px] font-bold text-[#B07A14]">{formatCurrency(valorAtual)}</p>
+            <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Solicitado</p>
+            <p className="text-[0.75rem] font-bold text-[#B07A14]">{formatCurrency(valorAtual)}</p>
           </div>
           <Plus size={11} className="text-black/25" />
         </button>
@@ -150,7 +150,7 @@ export function PropostaValuePanel({
       <>
         <button
           onClick={() => setShowNovaProposta(true)}
-          className="flex h-11 items-center gap-2 rounded border border-dashed border-black/[.18] bg-white px-4 text-[12px] font-medium text-black/45 transition hover:border-[#7259B5]/40 hover:text-[#7259B5]"
+          className="flex h-11 items-center gap-2 rounded border border-dashed border-black/[.18] bg-white px-4 text-[0.75rem] font-medium text-black/45 transition hover:border-[#7259B5]/40 hover:text-[#7259B5]"
         >
           <Plus size={12} /> Nova proposta
         </button>
@@ -177,7 +177,7 @@ export function PropostaValuePanel({
       <>
         <button
           onClick={() => setShowEditProposta(true)}
-          className="flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[12px] font-medium text-black/55 transition hover:bg-black/[.04]"
+          className="flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04]"
         >
           Abrir proposta
         </button>
@@ -203,15 +203,15 @@ export function PropostaValuePanel({
     <>
       <div className="flex h-11 items-center gap-1 rounded border border-black/[.12] bg-white pl-3 pr-1.5">
         <div className="pr-2 text-left">
-          <p className="text-[9px] font-semibold uppercase tracking-wide text-black/35">Proposto</p>
-          <p className="text-[12px] font-bold text-[#B07A14]">{formatCurrency(propostaAtual.valor_proposto)}</p>
+          <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Proposto</p>
+          <p className="text-[0.75rem] font-bold text-[#B07A14]">{formatCurrency(propostaAtual.valor_proposto)}</p>
         </div>
         <div className="h-6 w-px bg-black/10" />
-        <button disabled={salvandoDesfecho} onClick={handleAceitar} className="rounded px-2 py-1.5 text-[11px] font-semibold text-[#2E8932] transition hover:bg-[#2E8932]/10 disabled:opacity-40">Aceitar</button>
-        <button disabled={salvandoDesfecho} onClick={() => setShowNegociarProposta(true)} className="rounded px-2 py-1.5 text-[11px] font-semibold text-[#7259B5] transition hover:bg-[#7259B5]/10 disabled:opacity-40">Negociar</button>
-        <button disabled={salvandoDesfecho} onClick={handleRecusar} className="rounded px-2 py-1.5 text-[11px] font-semibold text-[#D94E4E] transition hover:bg-[#D94E4E]/10 disabled:opacity-40">Recusar</button>
+        <button disabled={salvandoDesfecho} onClick={handleAceitar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-[#2E8932]/10 disabled:opacity-40">Aceitar</button>
+        <button disabled={salvandoDesfecho} onClick={() => setShowNegociarProposta(true)} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#7259B5] transition hover:bg-[#7259B5]/10 disabled:opacity-40">Negociar</button>
+        <button disabled={salvandoDesfecho} onClick={handleRecusar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#D94E4E] transition hover:bg-[#D94E4E]/10 disabled:opacity-40">Recusar</button>
       </div>
-      {erroDesfecho && <p className="mt-1 max-w-sm text-[10px] font-medium text-[#B23A3A]">{erroDesfecho}</p>}
+      {erroDesfecho && <p className="mt-1 max-w-sm text-[0.625rem] font-medium text-[#B23A3A]">{erroDesfecho}</p>}
       {showNegociarProposta && (
         <PropostaOperacionalModal
           projetoId={projetoId}

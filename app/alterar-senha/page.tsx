@@ -70,7 +70,7 @@ export default function AlterarSenhaPage() {
             </div>
             <h1
               className="font-bold text-[#0D0D0D] mb-2"
-              style={{ fontSize: "24px" }}
+              style={{ fontSize: "1.5rem" }}
             >
               Senha atualizada!
             </h1>
@@ -88,7 +88,7 @@ export default function AlterarSenhaPage() {
 
             <h1
               className="font-bold text-[#0D0D0D] mb-1"
-              style={{ fontSize: "28px" }}
+              style={{ fontSize: "1.75rem" }}
             >
               Alterar senha
             </h1>

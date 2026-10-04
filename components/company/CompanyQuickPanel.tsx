@@ -95,7 +95,7 @@ function StatusPill({ status }: { status: string }) {
   const item = STATUS[status] ?? { label: status.replaceAll("_", " "), color: "#777777" };
   return (
     <span
-      className="rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[.05em]"
+      className="rounded-full px-2 py-1 text-[0.5625rem] font-bold uppercase tracking-[.05em]"
       style={{ color: item.color, background: `${item.color}10` }}
     >
       {item.label}
@@ -153,21 +153,21 @@ export function CompanyQuickPanel({ company, onClose }: {
     <div className="fixed inset-0 z-50 flex justify-end bg-black/20" onMouseDown={onClose}>
       <aside
         aria-label={`Painel da empresa ${company.nome}`}
-        className="flex h-full w-full max-w-[580px] flex-col border-l border-black/[.08] bg-[#F7F7F5] shadow-2xl"
+        className="flex h-full w-full max-w-[36.25rem] flex-col border-l border-black/[.08] bg-[#F7F7F5] shadow-2xl"
         onMouseDown={event => event.stopPropagation()}
       >
         <header className="border-b border-black/[.07] bg-white px-5 pb-4 pt-5 sm:px-6">
           <div className="flex items-start gap-3">
             <CompanyLogo nome={company.nome} domain={company.domain_key} site={company.site} size={44} className="shrink-0 rounded border border-black/[.06]" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[17px] font-semibold tracking-[-.02em] text-black">{company.nome}</p>
-              <p className="mt-1 truncate text-[11px] text-black/40">{company.setor || "Setor não informado"}</p>
+              <p className="truncate text-[1.0625rem] font-semibold tracking-[-.02em] text-black">{company.nome}</p>
+              <p className="mt-1 truncate text-[0.6875rem] text-black/40">{company.setor || "Setor não informado"}</p>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar painel" className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/65">
               <X size={15} />
             </button>
           </div>
-          <Link href={`/empresas-crm/${company.id}`} className="mt-4 inline-flex items-center gap-1.5 text-[11px] font-semibold text-[#7259B5] hover:underline">
+          <Link href={`/empresas-crm/${company.id}`} className="mt-4 inline-flex items-center gap-1.5 text-[0.6875rem] font-semibold text-[#7259B5] hover:underline">
             Abrir perfil completo <ArrowUpRight size={11} />
           </Link>
         </header>
@@ -178,11 +178,11 @@ export function CompanyQuickPanel({ company, onClose }: {
               key={item.id}
               type="button"
               onClick={() => setTab(item.id)}
-              className={`relative flex min-w-0 items-center justify-center gap-1.5 px-2 py-3.5 text-[10.5px] font-semibold transition ${tab === item.id ? "text-[#7259B5]" : "text-black/40 hover:text-black/65"}`}
+              className={`relative flex min-w-0 items-center justify-center gap-1.5 px-2 py-3.5 text-[0.65625rem] font-semibold transition ${tab === item.id ? "text-[#7259B5]" : "text-black/40 hover:text-black/65"}`}
             >
               <item.Icon size={12} />
               <span className="truncate">{item.label}</span>
-              {item.count > 0 && <span className="text-[9px] tabular-nums opacity-70">{item.count}</span>}
+              {item.count > 0 && <span className="text-[0.5625rem] tabular-nums opacity-70">{item.count}</span>}
               {tab === item.id && <span className="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-[#7259B5]" />}
             </button>
           ))}
@@ -197,7 +197,7 @@ export function CompanyQuickPanel({ company, onClose }: {
                 {followups.length ? followups.map(item => (
                   <div key={item.id} className="flex items-start gap-3 border-t border-black/[.06] py-3 first:border-0 first:pt-0 last:pb-0">
                     <CalendarClock size={13} className="mt-0.5 shrink-0 text-[#B07A14]" />
-                    <div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black/70">{item.titulo}</p><p className="mt-1 text-[10px] text-black/35">{fmtDate(item.previsto_para)}</p></div>
+                    <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black/70">{item.titulo}</p><p className="mt-1 text-[0.625rem] text-black/35">{fmtDate(item.previsto_para)}</p></div>
                   </div>
                 )) : <Empty copy="Nenhum follow-up pendente." />}
               </PanelSection>
@@ -205,8 +205,8 @@ export function CompanyQuickPanel({ company, onClose }: {
               <PanelSection title="Contatos mapeados" count={contacts.length}>
                 {contacts.length ? contacts.map(contact => (
                   <div key={contact.id} className="flex items-center gap-3 border-t border-black/[.06] py-3 first:border-0 first:pt-0 last:pb-0">
-                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.045] text-[12px] font-semibold text-black/45">{contact.nome.charAt(0).toUpperCase()}</span>
-                    <div className="min-w-0 flex-1"><p className="truncate text-[12px] font-semibold text-black/70">{contact.nome}</p><p className="mt-0.5 truncate text-[10px] text-black/35">{contact.cargo || "Cargo não informado"}</p></div>
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.045] text-[0.75rem] font-semibold text-black/45">{contact.nome.charAt(0).toUpperCase()}</span>
+                    <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black/70">{contact.nome}</p><p className="mt-0.5 truncate text-[0.625rem] text-black/35">{contact.cargo || "Cargo não informado"}</p></div>
                     {contact.email && <a href={`mailto:${contact.email}`} aria-label={`Enviar e-mail para ${contact.nome}`} className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-[#7259B5]"><Mail size={13} /></a>}
                     {contact.telefone && <a href={`tel:${contact.telefone}`} aria-label={`Ligar para ${contact.nome}`} className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-[#7259B5]"><Phone size={13} /></a>}
                   </div>
@@ -217,8 +217,8 @@ export function CompanyQuickPanel({ company, onClose }: {
             <PanelSection title="Negociações da empresa" count={negotiations.length}>
               {negotiations.length ? negotiations.map(item => (
                 <Link key={item.id} href={`/captacoes/${item.id}`} className="group block border-t border-black/[.06] py-3.5 first:border-0 first:pt-0 last:pb-0">
-                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[12px] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.titulo || "Negociação sem título"}</p><p className="mt-1 truncate text-[10px] text-black/35">{item.projeto?.nome || "Sem projeto"}{item.proxima_prospeccao ? ` · próximo contato ${fmtDate(item.proxima_prospeccao)}` : ""}</p></div><StatusPill status={item.status} /></div>
-                  {fmtMoney(item.valor_solicitado) && <p className="mt-2 text-[11px] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor_solicitado)}</p>}
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.titulo || "Negociação sem título"}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{item.projeto?.nome || "Sem projeto"}{item.proxima_prospeccao ? ` · próximo contato ${fmtDate(item.proxima_prospeccao)}` : ""}</p></div><StatusPill status={item.status} /></div>
+                  {fmtMoney(item.valor_solicitado) && <p className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor_solicitado)}</p>}
                 </Link>
               )) : <Empty copy="Nenhuma negociação vinculada." />}
             </PanelSection>
@@ -226,8 +226,8 @@ export function CompanyQuickPanel({ company, onClose }: {
             <PanelSection title="Inscrições da empresa" count={registrations.length}>
               {registrations.length ? registrations.map(item => (
                 <Link key={item.id} href={`/editais-inscritos/${item.id}`} className="group block border-t border-black/[.06] py-3.5 first:border-0 first:pt-0 last:pb-0">
-                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[12px] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.titulo || "Inscrição sem título"}</p><p className="mt-1 truncate text-[10px] text-black/35">{item.projeto?.nome || "Sem projeto"}{item.data_fechamento ? ` · encerra ${fmtDate(item.data_fechamento)}` : ""}</p></div><StatusPill status={item.status} /></div>
-                  {fmtMoney(item.valor) && <p className="mt-2 text-[11px] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor)}</p>}
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.titulo || "Inscrição sem título"}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{item.projeto?.nome || "Sem projeto"}{item.data_fechamento ? ` · encerra ${fmtDate(item.data_fechamento)}` : ""}</p></div><StatusPill status={item.status} /></div>
+                  {fmtMoney(item.valor) && <p className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor)}</p>}
                 </Link>
               )) : <Empty copy="Nenhuma inscrição vinculada." />}
             </PanelSection>
@@ -241,12 +241,12 @@ export function CompanyQuickPanel({ company, onClose }: {
 function PanelSection({ title, count, children }: { title: string; count: number; children: React.ReactNode }) {
   return (
     <section className="rounded border border-black/[.08] bg-white p-4">
-      <header className="mb-3 flex items-center justify-between gap-3"><h2 className="text-[11px] font-semibold text-black/50">{title}</h2><span className="text-[10px] tabular-nums text-black/25">{count}</span></header>
+      <header className="mb-3 flex items-center justify-between gap-3"><h2 className="text-[0.6875rem] font-semibold text-black/50">{title}</h2><span className="text-[0.625rem] tabular-nums text-black/25">{count}</span></header>
       {children}
     </section>
   );
 }
 
 function Empty({ copy }: { copy: string }) {
-  return <p className="py-8 text-center text-[11px] text-black/30">{copy}</p>;
+  return <p className="py-8 text-center text-[0.6875rem] text-black/30">{copy}</p>;
 }

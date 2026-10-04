@@ -77,7 +77,7 @@ export default function PropostaPublicaPage({ params }: { params: Promise<{ slug
             <Image src="/jards-logo.svg" alt="Jards" width={63} height={20} className="h-5 w-auto opacity-60 hover:opacity-90 transition brightness-0 invert" />
           </a>
           <span className="h-4 w-px bg-white/12" />
-          <p className="text-[13px] font-semibold text-white/70 truncate max-w-[240px] sm:max-w-sm md:max-w-lg">
+          <p className="text-[0.8125rem] font-semibold text-white/70 truncate max-w-[15rem] sm:max-w-sm md:max-w-lg">
             {proposta.titulo}
           </p>
         </div>
@@ -86,7 +86,7 @@ export default function PropostaPublicaPage({ params }: { params: Promise<{ slug
             href={proposta.pdf_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[11px] font-semibold text-white/50 border border-white/12 hover:border-white/25 hover:text-white/80 transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[0.6875rem] font-semibold text-white/50 border border-white/12 hover:border-white/25 hover:text-white/80 transition"
           >
             <ExternalLink size={11} />
             Abrir PDF

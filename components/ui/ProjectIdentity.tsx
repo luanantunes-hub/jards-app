@@ -94,7 +94,7 @@ export function ProjectIdentity({
   }
 
   if (tipo === "emoji" && valor) {
-    return <div className={`${dimensions} rounded bg-black/5 flex items-center justify-center text-[18px] flex-shrink-0`} aria-label={`Ícone ${valor}`}>{valor}</div>;
+    return <div className={`${dimensions} rounded bg-black/5 flex items-center justify-center text-[1.125rem] flex-shrink-0`} aria-label={`Ícone ${valor}`}>{valor}</div>;
   }
 
   if (tipo === "icone") {
@@ -102,7 +102,7 @@ export function ProjectIdentity({
   }
 
   if (tipo === "logo" && logoFailed) {
-    return <div className={`${dimensions} rounded flex items-center justify-center text-[11px] font-bold flex-shrink-0`} style={{ color: iconCor }}>{initials(nome)}</div>;
+    return <div className={`${dimensions} rounded flex items-center justify-center text-[0.6875rem] font-bold flex-shrink-0`} style={{ color: iconCor }}>{initials(nome)}</div>;
   }
 
   return <div className={`${dimensions} rounded bg-black/5 flex items-center justify-center text-black/35 flex-shrink-0`}><DefaultIcon size={iconSize} /></div>;

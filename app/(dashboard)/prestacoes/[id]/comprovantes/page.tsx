@@ -245,7 +245,7 @@ export default function ComprovantesPage() {
       {/* Upload */}
       <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p className="text-[12px] font-semibold text-black">Enviar comprovante</p>
+          <p className="text-[0.75rem] font-semibold text-black">Enviar comprovante</p>
         </div>
         <div className="p-5">
           {!pendingFile ? (
@@ -255,8 +255,8 @@ export default function ComprovantesPage() {
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             >
               <Upload size={20} className="text-black/20" />
-              <p className="text-[12px] text-black/40">Clique para selecionar arquivo</p>
-              <p className="text-[10px] text-black/25">PDF, imagem, planilha, XML…</p>
+              <p className="text-[0.75rem] text-black/40">Clique para selecionar arquivo</p>
+              <p className="text-[0.625rem] text-black/25">PDF, imagem, planilha, XML…</p>
             </button>
           ) : (
             <div className="space-y-3">
@@ -264,8 +264,8 @@ export default function ComprovantesPage() {
               <div className="flex items-center gap-3 p-3 rounded border" style={{ borderColor: "rgba(13,13,13,.10)", background: "#FAFAFA" }}>
                 <FileText size={16} className="text-[#7259B5] flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-[12px] font-medium text-black truncate">{pendingFile.name}</p>
-                  <p className="text-[10px] text-black/35">{(pendingFile.size / 1024).toFixed(1)} KB</p>
+                  <p className="text-[0.75rem] font-medium text-black truncate">{pendingFile.name}</p>
+                  <p className="text-[0.625rem] text-black/35">{(pendingFile.size / 1024).toFixed(1)} KB</p>
                 </div>
                 <button onClick={cancelarUpload} className="p-1 rounded hover:bg-black/5 text-black/30 hover:text-black/55">
                   <X size={13} />
@@ -275,11 +275,11 @@ export default function ComprovantesPage() {
               <div className="grid grid-cols-2 gap-3">
                 {/* Tipo */}
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-bold uppercase tracking-wide text-black/40 mb-1.5">Tipo de documento</label>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Tipo de documento</label>
                   <Select
                     value={tipo}
                     onChange={e => setTipo(e.target.value as TipoComprovante)}
-                    className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none"
+                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   >
                     <optgroup label="Fiscais">
@@ -294,7 +294,7 @@ export default function ComprovantesPage() {
                     </optgroup>
                   </Select>
                   {TIPO_META[tipo].hint && (
-                    <p className="text-[10px] mt-1.5 leading-relaxed" style={{ color: "rgba(13,13,13,.38)" }}>
+                    <p className="text-[0.625rem] mt-1.5 leading-relaxed" style={{ color: "rgba(13,13,13,.38)" }}>
                       {TIPO_META[tipo].hint}
                     </p>
                   )}
@@ -302,14 +302,14 @@ export default function ComprovantesPage() {
 
                 {/* Origem */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wide text-black/40 mb-1.5">Origem</label>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Origem</label>
                   <div className="flex gap-2">
                     {(["nacional", "internacional"] as const).map(o => (
                       <button
                         key={o}
                         type="button"
                         onClick={() => setOrigem(o)}
-                        className="flex-1 py-2 rounded border text-[11px] font-semibold transition capitalize"
+                        className="flex-1 py-2 rounded border text-[0.6875rem] font-semibold transition capitalize"
                         style={{
                           background: origem === o ? "#7259B518" : "white",
                           borderColor: origem === o ? "#7259B5" : "rgba(13,13,13,.12)",
@@ -324,11 +324,11 @@ export default function ComprovantesPage() {
 
                 {/* Rubrica */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wide text-black/40 mb-1.5">Rubrica</label>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Rubrica</label>
                   <Select
                     value={itemId}
                     onChange={e => setItemId(e.target.value)}
-                    className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none"
+                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
                   >
                     <option value="">Sem rubrica</option>
@@ -338,25 +338,25 @@ export default function ComprovantesPage() {
 
                 {/* Valor */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wide text-black/40 mb-1.5">Valor (R$)</label>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Valor (R$)</label>
                   <input
                     type="number"
                     value={valorExtraido}
                     onChange={e => setValorExtraido(e.target.value)}
                     placeholder="0,00"
-                    className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none"
+                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
 
                 {/* Data */}
                 <div>
-                  <label className="block text-[10px] font-bold uppercase tracking-wide text-black/40 mb-1.5">Data do documento</label>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Data do documento</label>
                   <input
                     type="date"
                     value={dataDoc}
                     onChange={e => setDataDoc(e.target.value)}
-                    className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none"
+                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
                 </div>
@@ -364,7 +364,7 @@ export default function ComprovantesPage() {
 
               {/* Descrição do serviço */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wide text-black/40 mb-1.5">
+                <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">
                   Descrição do serviço
                   {tipo === "nfe" && <span className="ml-1 font-normal text-[#D94E4E]/70">(deve corresponder à rubrica aprovada)</span>}
                 </label>
@@ -372,18 +372,18 @@ export default function ComprovantesPage() {
                   value={descricaoServico}
                   onChange={e => setDescricaoServico(e.target.value)}
                   placeholder={tipo === "cartao_embarque" ? "Passageiros e trechos" : tipo === "invoice" ? "Descrição do serviço prestado (tradução livre)": "Descrição do serviço ou produto"}
-                  className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none"
+                  className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wide text-black/40 mb-1.5">Observação</label>
+                <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Observação</label>
                 <input
                   value={observacao}
                   onChange={e => setObservacao(e.target.value)}
                   placeholder="Observação"
-                  className="w-full px-3 py-2 text-[12px] border rounded focus:outline-none"
+                  className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
@@ -396,19 +396,19 @@ export default function ComprovantesPage() {
                     borderColor: riscoGlosa === "alto" ? "#D94E4E30" : riscoGlosa === "medio" ? "#B07A1430" : "#2E893230",
                   }}>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded"
+                    <span className="text-[0.625rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded"
                       style={{
                         background: riscoGlosa === "alto" ? "#D94E4E" : riscoGlosa === "medio" ? "#B07A14" : "#2E8932",
                         color: "white",
                       }}>
                       Risco de glosa {riscoGlosa === "alto" ? "ALTO" : riscoGlosa === "medio" ? "MÉDIO" : "BAIXO"}
                     </span>
-                    <span className="text-[10px] text-black/40">análise da IA</span>
+                    <span className="text-[0.625rem] text-black/40">análise da IA</span>
                   </div>
                   {motivosGlosa.length > 0 && (
                     <ul className="space-y-0.5">
                       {motivosGlosa.map((m, i) => (
-                        <li key={i} className="text-[11px] flex items-start gap-1.5"
+                        <li key={i} className="text-[0.6875rem] flex items-start gap-1.5"
                           style={{ color: riscoGlosa === "alto" ? "#D94E4E" : riscoGlosa === "medio" ? "#B07A14" : "#2E8932" }}>
                           <span className="mt-0.5">•</span>{m}
                         </li>
@@ -420,7 +420,7 @@ export default function ComprovantesPage() {
 
               {/* Erro de upload */}
               {uploadError && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded border text-[11px]"
+                <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
                   style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
                   {uploadError}
                 </div>
@@ -428,7 +428,7 @@ export default function ComprovantesPage() {
 
               {/* Banner IA analisando */}
               {extraindo && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded border text-[11px]"
+                <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
                   style={{ background: "#7259B508", borderColor: "#7259B530", color: "#7259B5" }}>
                   <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin flex-shrink-0" />
                   {uploadProgress || "Analisando documento com IA…"}
@@ -439,14 +439,14 @@ export default function ComprovantesPage() {
                 <button
                   onClick={cancelarUpload}
                   disabled={uploading}
-                  className="px-3 py-1.5 text-[11px] text-black/35 hover:text-black/55 transition"
+                  className="px-3 py-1.5 text-[0.6875rem] text-black/35 hover:text-black/55 transition"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleUpload}
                   disabled={uploading || extraindo}
-                  className="flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-semibold text-white rounded transition hover:opacity-90 disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-4 py-1.5 text-[0.75rem] font-semibold text-white rounded transition hover:opacity-90 disabled:opacity-50"
                   style={{ background: "#7259B5" }}
                 >
                   {uploading
@@ -463,9 +463,9 @@ export default function ComprovantesPage() {
       {/* Lista */}
       <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p className="text-[12px] font-semibold text-black">
+          <p className="text-[0.75rem] font-semibold text-black">
             Documentos enviados
-            {comprovantes.length > 0 && <span className="text-black/30 font-normal text-[11px] ml-1.5">({comprovantes.length})</span>}
+            {comprovantes.length > 0 && <span className="text-black/30 font-normal text-[0.6875rem] ml-1.5">({comprovantes.length})</span>}
           </p>
         </div>
 
@@ -475,7 +475,7 @@ export default function ComprovantesPage() {
           </div>
         ) : comprovantes.length === 0 ? (
           <div className="text-center py-10">
-            <p className="text-[12px] text-black/30">Nenhum comprovante enviado ainda.</p>
+            <p className="text-[0.75rem] text-black/30">Nenhum comprovante enviado ainda.</p>
           </div>
         ) : (
           <div className="divide-y" style={{ borderColor: "rgba(13,13,13,.05)" }}>
@@ -496,19 +496,19 @@ export default function ComprovantesPage() {
                     <div className="flex items-center gap-2 mb-0.5">
                       <button
                         onClick={() => getUrl(c.storage_path)}
-                        className="text-[12px] font-semibold text-black hover:text-[#7259B5] transition truncate max-w-xs flex items-center gap-1"
+                        className="text-[0.75rem] font-semibold text-black hover:text-[#7259B5] transition truncate max-w-xs flex items-center gap-1"
                       >
                         {c.nome_arquivo} <ExternalLink size={10} className="flex-shrink-0 opacity-50" />
                       </button>
-                      <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                      <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded"
                         style={{ background: `${tipoM.color}14`, color: tipoM.color }}>
                         {tipoM.label}
                       </span>
                     </div>
-                    <div className="flex items-center gap-3 text-[10px] text-black/35 flex-wrap">
+                    <div className="flex items-center gap-3 text-[0.625rem] text-black/35 flex-wrap">
                       {rubrica && <span>{rubrica.rubrica}</span>}
                       {c.origem === "internacional" && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold" style={{ background: "#1A8B7A14", color: "#1A8B7A" }}>Internacional</span>
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#1A8B7A14", color: "#1A8B7A" }}>Internacional</span>
                       )}
                       {c.valor_extraido !== null && <span className="tabular-nums">{fmt(c.valor_extraido)}</span>}
                       {c.data_doc && <span>{fmtDate(c.data_doc)}</span>}
@@ -518,16 +518,16 @@ export default function ComprovantesPage() {
                           (periodo.inicio && d < periodo.inicio) ||
                           (periodo.fim && d > periodo.fim);
                         return fora ? (
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-semibold"
+                          <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold"
                             style={{ background: "#D94E4E14", color: "#D94E4E" }}>
                             Fora do período
                           </span>
                         ) : null;
                       })()}
-                      {c.descricao_servico && <span className="truncate max-w-[200px]">{c.descricao_servico}</span>}
+                      {c.descricao_servico && <span className="truncate max-w-[12.5rem]">{c.descricao_servico}</span>}
                       {c.observacao && <span className="italic">"{c.observacao}"</span>}
                       {(c as any).risco_glosa && (c as any).risco_glosa !== "baixo" && (
-                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase"
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold uppercase"
                           style={{
                             background: (c as any).risco_glosa === "alto" ? "#D94E4E14" : "#B07A1414",
                             color: (c as any).risco_glosa === "alto" ? "#D94E4E" : "#B07A14",
@@ -543,7 +543,7 @@ export default function ComprovantesPage() {
                     <Select
                       value={c.status}
                       onChange={e => mudarStatus(c.id, e.target.value as StatusComprovante)}
-                      className="text-[10px] font-semibold px-2 py-1 rounded border focus:outline-none"
+                      className="text-[0.625rem] font-semibold px-2 py-1 rounded border focus:outline-none"
                       style={{
                         borderColor: `${statusM.color}30`,
                         color: statusM.color,

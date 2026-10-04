@@ -131,11 +131,11 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
             aria-modal="true"
             aria-labelledby={titleId}
             aria-describedby={descriptionId}
-            className={`w-full max-w-[360px] overflow-hidden rounded bg-white shadow-2xl transition duration-200 ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none ${visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[.97] opacity-0"}`}
+            className={`w-full max-w-[22.5rem] overflow-hidden rounded bg-white shadow-2xl transition duration-200 ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none ${visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[.97] opacity-0"}`}
             onClick={e => e.stopPropagation()}
           >
             {showIllustration && (
-              <div className="flex items-end justify-center overflow-hidden bg-black/[.02] pt-7" style={{ height: 168 }}>
+              <div className="flex items-end justify-center overflow-hidden bg-black/[.02] pt-7" style={{ height: "10.5rem" }}>
                 <img
                   src="/mascote-lixeira.png"
                   alt=""
@@ -146,14 +146,14 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
             )}
 
             <div className={`px-6 text-center ${showIllustration ? "pb-4 pt-5" : "pb-4 pt-8"}`}>
-              <h2 id={titleId} className="text-[15px] font-bold text-black/80 [text-wrap:balance]">
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black/80 [text-wrap:balance]">
                 {opts.title ?? "Excluir este item?"}
               </h2>
-              <p id={descriptionId} className="mt-2 text-[12px] leading-relaxed text-black/45">
+              <p id={descriptionId} className="mt-2 text-[0.75rem] leading-relaxed text-black/45">
                 {opts.description ?? "Apagado de vez, sem volta atrás."}
               </p>
               {error && (
-                <p role="alert" className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-left text-[12px] text-[#B23A3A]">
+                <p role="alert" className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-left text-[0.75rem] text-[#B23A3A]">
                   {error}
                 </p>
               )}
@@ -165,7 +165,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
                 type="button"
                 onClick={handleClose}
                 disabled={loading}
-                className={`rounded px-2 py-2 text-[12px] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50 ${blocked ? "bg-[#0D0D0D] px-4 text-white hover:bg-black/80" : "text-black/45 hover:text-black/70"}`}
+                className={`rounded px-2 py-2 text-[0.75rem] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50 ${blocked ? "bg-[#0D0D0D] px-4 text-white hover:bg-black/80" : "text-black/45 hover:text-black/70"}`}
               >
                 {blocked ? "Entendi" : "Cancelar"}
               </button>
@@ -174,7 +174,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
                   type="button"
                   onClick={() => void handleConfirm()}
                   disabled={loading}
-                  className="flex items-center gap-1.5 rounded bg-[#D94E4E] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#C04040] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D94E4E] active:scale-[.98] disabled:opacity-50"
+                  className="flex items-center gap-1.5 rounded bg-[#D94E4E] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#C04040] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D94E4E] active:scale-[.98] disabled:opacity-50"
                 >
                   {(opts.illustration ?? true) && <Trash2 size={11} aria-hidden="true" />}
                   {loading ? (opts.pendingLabel ?? "Excluindo…") : (opts.confirmLabel ?? "Excluir")}

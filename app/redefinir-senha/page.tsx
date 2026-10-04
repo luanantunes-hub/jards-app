@@ -46,7 +46,7 @@ export default function RedefinirSenhaPage() {
             </div>
             <h1
               className="font-bold text-[#0D0D0D] mb-2"
-              style={{ fontSize: "24px" }}
+              style={{ fontSize: "1.5rem" }}
             >
               E-mail enviado!
             </h1>
@@ -74,7 +74,7 @@ export default function RedefinirSenhaPage() {
 
             <h1
               className="font-bold text-[#0D0D0D] mb-1"
-              style={{ fontSize: "28px" }}
+              style={{ fontSize: "1.75rem" }}
             >
               Redefinir senha
             </h1>

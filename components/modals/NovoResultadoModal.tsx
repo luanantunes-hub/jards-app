@@ -126,12 +126,12 @@ export function NovoResultadoModal({
         aria-modal="true"
         aria-labelledby={titleId}
         className="bg-white rounded w-full flex flex-col border border-black/[.09] shadow-xl overflow-hidden"
-        style={{ maxWidth: 420, maxHeight: "90vh" }}
+        style={{ maxWidth: "26.25rem", maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 id={titleId} className="text-[14px] font-semibold text-black/80">
+          <h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">
             {editData ? "Editar captação" : "Registrar captação"}
           </h2>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.05] transition">
@@ -144,7 +144,7 @@ export function NovoResultadoModal({
           {/* Cota */}
           {!editData && (
             <div>
-              <label className="text-[11px] font-semibold text-black/55 block mb-1.5">Cota vendida</label>
+              <label className="text-[0.6875rem] font-semibold text-black/55 block mb-1.5">Cota vendida</label>
               <Dropdown
                 value={cotaId}
                 onChange={handleCotaChange}
@@ -160,7 +160,7 @@ export function NovoResultadoModal({
           {/* Proposta (opcional) */}
           {!editData && (
             <div>
-              <label className="text-[11px] font-semibold text-black/55 block mb-1.5">
+              <label className="text-[0.6875rem] font-semibold text-black/55 block mb-1.5">
                 Proposta <span className="font-normal text-black/25">(opcional)</span>
               </label>
               <Dropdown
@@ -170,45 +170,45 @@ export function NovoResultadoModal({
                 options={propostasVisiveis.map(p => ({ value: p.id, label: p.titulo }))}
               />
               {propostaId && (
-                <p className="mt-1 text-[10px] text-black/35">Valor pré-preenchido pela proposta selecionada.</p>
+                <p className="mt-1 text-[0.625rem] text-black/35">Valor pré-preenchido pela proposta selecionada.</p>
               )}
             </div>
           )}
 
           {/* Valor captado */}
           <div>
-            <label className="text-[11px] font-semibold text-black/55 block mb-1.5">Valor captado</label>
+            <label className="text-[0.6875rem] font-semibold text-black/55 block mb-1.5">Valor captado</label>
             <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
-              <span className="text-[12px] text-black/35 flex-shrink-0">R$</span>
+              <span className="text-[0.75rem] text-black/35 flex-shrink-0">R$</span>
               <input
                 type="text" inputMode="numeric" placeholder="0,00"
                 value={atm(captadoCents)}
                 onKeyDown={atmKey(setCaptadoCents)}
                 onChange={() => {}}
-                className="flex-1 text-[14px] font-semibold outline-none bg-transparent text-black min-w-0"
+                className="flex-1 text-[0.875rem] font-semibold outline-none bg-transparent text-black min-w-0"
               />
             </div>
             {valueDelta !== null && valueDelta !== 0 && (
-              <p className="mt-1.5 text-[10px] font-medium" style={{ color: valueDelta > 0 ? "#2E8932" : "#D94E4E" }}>
+              <p className="mt-1.5 text-[0.625rem] font-medium" style={{ color: valueDelta > 0 ? "#2E8932" : "#D94E4E" }}>
                 {valueDelta > 0 ? "+" : ""}{money(valueDelta)} em relação ao valor padrão da cota
               </p>
             )}
           </div>
 
           {erro && (
-            <p role="alert" className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[11px] text-[#B23A3A]">{erro}</p>
+            <p role="alert" className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[0.6875rem] text-[#B23A3A]">{erro}</p>
           )}
         </div>
 
         {/* Footer */}
         <div className="flex shrink-0 items-center justify-end gap-3 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <button onClick={onClose} className="text-[12px] font-medium text-black/35 hover:text-black/55 transition">
+          <button onClick={onClose} className="text-[0.75rem] font-medium text-black/35 hover:text-black/55 transition">
             Cancelar
           </button>
           <button
             onClick={handleSalvar}
             disabled={saving}
-            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[12px] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-4 py-2 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] active:scale-[.98] disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
           </button>

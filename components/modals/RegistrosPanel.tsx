@@ -145,12 +145,12 @@ function CampoItem({
         style={{ borderColor: "rgba(13,13,13,.07)", background: "rgba(13,13,13,.025)" }}>
         <div className="flex min-w-0 items-center gap-2">
           {dragHandle}
-          <span className="truncate text-[11px] font-bold text-black/60">{reg.campo_nome}</span>
+          <span className="truncate text-[0.6875rem] font-bold text-black/60">{reg.campo_nome}</span>
         </div>
         <div className="flex items-center gap-1">
           {saving && <Loader2 size={10} className="animate-spin text-black/25" />}
           {isDefault && (
-            <span className="rounded bg-black/[.05] px-1.5 py-0.5 text-[9px] font-bold text-black">
+            <span className="rounded bg-black/[.05] px-1.5 py-0.5 text-[0.5625rem] font-bold text-black">
               resposta padrão
             </span>
           )}
@@ -162,7 +162,7 @@ function CampoItem({
         value={text}
         onChange={e => { setText(e.target.value); setIsDefault(false); scheduleAutoSave(e.target.value); }}
         rows={4}
-        className="w-full px-3 py-2.5 text-[13px] text-black/75 resize-none bg-white focus:outline-none placeholder-black/20"
+        className="w-full px-3 py-2.5 text-[0.8125rem] text-black/75 resize-none bg-white focus:outline-none placeholder-black/20"
         placeholder="Digite a resposta…"
       />
 
@@ -172,19 +172,19 @@ function CampoItem({
         <button
           onClick={elevarModelo}
           disabled={elev || !projetoId || !text.trim()}
-          className={`flex items-center gap-1.5 text-[10.5px] font-semibold transition disabled:opacity-30 ${isDefault ? "text-black" : "text-black/40 hover:text-black/70"}`}
+          className={`flex items-center gap-1.5 text-[0.65625rem] font-semibold transition disabled:opacity-30 ${isDefault ? "text-black" : "text-black/40 hover:text-black/70"}`}
         >
           {elev ? <Loader2 size={10} className="animate-spin" /> : isDefault ? <Check size={10} /> : <Star size={10} />}
           {isDefault ? "Resposta padrão" : "Eleger como padrão"}
         </button>
         <button
           onClick={handleDelete}
-          className="flex items-center gap-1.5 text-[10.5px] font-semibold text-black/30 hover:text-[#D94E4E] transition"
+          className="flex items-center gap-1.5 text-[0.65625rem] font-semibold text-black/30 hover:text-[#D94E4E] transition"
         >
           <Trash2 size={10} /> Deletar
         </button>
       </div>
-      {error && <div className="flex items-center gap-1.5 border-t border-[#D94E4E]/15 px-3 py-2 text-[10px] text-[#D94E4E]"><AlertCircle size={11}/>{error}</div>}
+      {error && <div className="flex items-center gap-1.5 border-t border-[#D94E4E]/15 px-3 py-2 text-[0.625rem] text-[#D94E4E]"><AlertCircle size={11}/>{error}</div>}
     </div>
   );
 }
@@ -356,7 +356,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
     >
       <div role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} aria-label={embedded ? undefined : "Conteúdo preenchido"} className={embedded
         ? "bg-white w-full flex flex-col rounded border overflow-hidden"
-        : "bg-white w-full max-w-[680px] flex flex-col h-full shadow-2xl overflow-hidden"
+        : "bg-white w-full max-w-[42.5rem] flex flex-col h-full shadow-2xl overflow-hidden"
       } style={embedded ? { borderColor: "rgba(13,13,13,.08)" } : undefined}>
 
         {/* Header empresa */}
@@ -364,8 +364,8 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
           <div className="flex items-start justify-between mb-3">
             {embedded ? (
               <div>
-                <p className="text-[10px] font-bold uppercase tracking-[.12em] text-black/30">Inscrição</p>
-                <h2 className="mt-1 text-[17px] font-bold text-black">Conteúdo preenchido</h2>
+                <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/30">Inscrição</p>
+                <h2 className="mt-1 text-[1.0625rem] font-bold text-black">Conteúdo preenchido</h2>
               </div>
             ) : (
               <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/60 transition">
@@ -373,12 +373,12 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
               </button>
             )}
             <div className="flex flex-col items-end gap-1">
-              {!embedded && <span className="text-[10px] font-bold px-2.5 py-1 rounded" style={{ background: sc.bg, color: sc.text }}>
+              {!embedded && <span className="text-[0.625rem] font-bold px-2.5 py-1 rounded" style={{ background: sc.bg, color: sc.text }}>
                 {STATUS_LABEL[inscricao.status]}
               </span>}
               {onOpenDocumentos && (
                 <button onClick={onOpenDocumentos}
-                  className="flex items-center gap-1 text-[11px] font-semibold text-black/35 hover:text-[#7259B5] transition">
+                  className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/35 hover:text-[#7259B5] transition">
                   <Files size={11} /> Documentos do Projeto +
                 </button>
               )}
@@ -388,7 +388,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
           {!embedded && <div className="flex items-center gap-3">
             <CompanyLogo nome={inscricao.empresa_nome} domain={inscricao.empresa_domain} site={inscricao.empresa_site} logo_url={inscricao.empresa_logo} size={36} className="flex-shrink-0" />
             <div>
-              <p className="font-bold text-[15px] text-black">{inscricao.empresa_nome}</p>
+              <p className="font-bold text-[0.9375rem] text-black">{inscricao.empresa_nome}</p>
               <div className="flex items-center gap-3 mt-0.5">
                 {inscricao.projeto_nome && (
                   <span className="text-xs text-black/40 font-medium">{inscricao.projeto_nome}</span>
@@ -403,7 +403,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
 
         {/* Conteúdo preenchido */}
         <div className={`${embedded ? "px-6 py-6" : "flex-1 overflow-y-auto px-6 py-5"}`}>
-          {panelError && !showBusca && <div role="alert" className="mb-4 flex items-start gap-2 rounded border border-[#D94E4E]/20 px-3 py-2.5 text-[11px] text-[#D94E4E]"><AlertCircle size={13} className="mt-0.5 shrink-0"/>{panelError}</div>}
+          {panelError && !showBusca && <div role="alert" className="mb-4 flex items-start gap-2 rounded border border-[#D94E4E]/20 px-3 py-2.5 text-[0.6875rem] text-[#D94E4E]"><AlertCircle size={13} className="mt-0.5 shrink-0"/>{panelError}</div>}
           {loading ? (
             <div className="py-10 text-center text-xs text-black/30">Carregando…</div>
           ) : registros.length === 0 ? (
@@ -455,11 +455,11 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
             role="dialog"
             aria-modal="true"
             aria-label="Novo conteúdo"
-            className={`flex h-full w-full max-w-[520px] flex-col rounded-l bg-white shadow-2xl transition-transform duration-200 ease-out ${buscaVisible ? "translate-x-0" : "translate-x-full"}`}
+            className={`flex h-full w-full max-w-[32.5rem] flex-col rounded-l bg-white shadow-2xl transition-transform duration-200 ease-out ${buscaVisible ? "translate-x-0" : "translate-x-full"}`}
             onClick={event => event.stopPropagation()}
           >
             <header className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <h3 className="text-[15px] font-semibold text-black">Novo conteúdo</h3>
+              <h3 className="text-[0.9375rem] font-semibold text-black">Novo conteúdo</h3>
               <button type="button" onClick={closeBusca} className="flex h-8 w-8 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60" aria-label="Fechar">
                 <X size={15} />
               </button>
@@ -473,7 +473,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
                   value={searchText}
                   onChange={event => setSearchText(event.target.value)}
                   placeholder="Buscar ou criar campo…"
-                  className="w-full rounded border border-black/[.14] bg-white py-3 pl-9 pr-10 text-[13px] text-black outline-none transition placeholder:text-black/30 focus:border-black/30 focus:ring-2 focus:ring-black/[.05]"
+                  className="w-full rounded border border-black/[.14] bg-white py-3 pl-9 pr-10 text-[0.8125rem] text-black outline-none transition placeholder:text-black/30 focus:border-black/30 focus:ring-2 focus:ring-black/[.05]"
                   onKeyDown={event => {
                     if (event.key === "Escape") { event.preventDefault(); closeBusca(); }
                     if (event.key === "Enter" && sugestoes.length === 0 && searchText.trim()) void createAndAdd();
@@ -492,10 +492,10 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
                     className="w-full border-b border-black/[.06] px-4 py-3 text-left transition last:border-0 hover:bg-black/[.03] disabled:opacity-40"
                   >
                     <div className="flex items-center justify-between gap-4">
-                      <span className="text-[12.5px] font-semibold text-black/80">{sugestao.nome}</span>
-                      {sugestao.tem_modelo && <span className="shrink-0 text-[9px] font-bold text-black/45">Resposta padrão</span>}
+                      <span className="text-[0.78125rem] font-semibold text-black/80">{sugestao.nome}</span>
+                      {sugestao.tem_modelo && <span className="shrink-0 text-[0.5625rem] font-bold text-black/45">Resposta padrão</span>}
                     </div>
-                    {sugestao.preview && <p className="mt-1 truncate text-[11px] text-black/35">{sugestao.preview}</p>}
+                    {sugestao.preview && <p className="mt-1 truncate text-[0.6875rem] text-black/35">{sugestao.preview}</p>}
                   </button>
                 ))}
 
@@ -504,7 +504,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
                     type="button"
                     onClick={() => void createAndAdd()}
                     disabled={adding}
-                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-[12px] text-black/55 transition hover:bg-black/[.03] disabled:opacity-40"
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-[0.75rem] text-black/55 transition hover:bg-black/[.03] disabled:opacity-40"
                   >
                     {adding ? <Loader2 size={12} className="shrink-0 animate-spin" /> : <Plus size={12} className="shrink-0" />}
                     Adicionar <span className="font-semibold text-black">"{searchText}"</span> como novo campo
@@ -512,12 +512,12 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
                 )}
 
                 {!loadingSug && sugestoes.length === 0 && !searchText.trim() && (
-                  <div className="px-4 py-8 text-center text-[12px] text-black/30">Digite para criar um novo campo</div>
+                  <div className="px-4 py-8 text-center text-[0.75rem] text-black/30">Digite para criar um novo campo</div>
                 )}
               </div>
 
-              {!inscricao.projeto_id && <div className="mt-3 flex items-center gap-1.5 text-[11px] text-black/35"><AlertCircle size={12}/>Sem projeto, o campo será usado somente nesta inscrição.</div>}
-              {panelError && <div role="alert" className="mt-3 flex items-start gap-1.5 rounded border border-[#D94E4E]/20 px-3 py-2 text-[11px] leading-relaxed text-[#D94E4E]"><AlertCircle size={12} className="mt-0.5 shrink-0"/>{panelError}</div>}
+              {!inscricao.projeto_id && <div className="mt-3 flex items-center gap-1.5 text-[0.6875rem] text-black/35"><AlertCircle size={12}/>Sem projeto, o campo será usado somente nesta inscrição.</div>}
+              {panelError && <div role="alert" className="mt-3 flex items-start gap-1.5 rounded border border-[#D94E4E]/20 px-3 py-2 text-[0.6875rem] leading-relaxed text-[#D94E4E]"><AlertCircle size={12} className="mt-0.5 shrink-0"/>{panelError}</div>}
             </div>
           </section>
         </div>

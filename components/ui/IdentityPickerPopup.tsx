@@ -51,8 +51,8 @@ export function IdentityPickerPopup({
         <span className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded border border-black/10 bg-white text-black/45 opacity-0 shadow-sm transition group-hover:opacity-100 group-hover:text-[#7259B5] group-focus-visible:opacity-100 ${open ? "opacity-100" : ""}`}><Pencil size={8} /></span>
       </button>
       {open && (
-        <div className="absolute left-0 top-12 z-30 w-[286px] rounded border border-black/[.09] bg-white p-3 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
-          <div className="px-1 pb-3"><p className="text-[13px] font-semibold text-black/70">{title}</p></div>
+        <div className="absolute left-0 top-12 z-30 w-[17.875rem] rounded border border-black/[.09] bg-white p-3 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
+          <div className="px-1 pb-3"><p className="text-[0.8125rem] font-semibold text-black/70">{title}</p></div>
           <div className="grid grid-cols-4 gap-1.5">
             {iconOptions.map(({ key, label, Icon }) => {
               const active = tipo === "icone" && valor === key;
@@ -68,7 +68,7 @@ export function IdentityPickerPopup({
           </div>
           {tipo === "icone" && (
             <div className="mt-2.5 border-t pt-2.5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="px-1 pb-2 text-[10px] font-semibold text-black/40">Cor do ícone</p>
+              <p className="px-1 pb-2 text-[0.625rem] font-semibold text-black/40">Cor do ícone</p>
               <div className="grid grid-cols-8 gap-1.5">
                 {iconColors.map(({ key, label, cor: corValue }) => {
                   const active = (cor ?? iconColors[0].cor) === corValue;
@@ -81,7 +81,7 @@ export function IdentityPickerPopup({
               </div>
             </div>
           )}
-          <button type="button" disabled={saving} onClick={() => logoInputRef.current?.click()} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded border border-[#7259B5]/25 bg-white text-[12px] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">
+          <button type="button" disabled={saving} onClick={() => logoInputRef.current?.click()} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded border border-[#7259B5]/25 bg-white text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">
             <ImagePlus size={14} />
             {saving ? "Salvando…" : tipo === "logo" ? "Trocar logo" : "Usar logo"}
           </button>

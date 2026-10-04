@@ -99,7 +99,7 @@ export default function AdminPedidosPage() {
           <h1 className="text-xl font-bold text-[#0D0D0D]">Pedidos de pesquisa</h1>
           <p className="mt-1 text-sm text-black/40">A entrega libera o patrocinador e notifica o solicitante dentro da Jards.</p>
         </div>
-        <div className="flex items-center gap-2 text-[11px]">
+        <div className="flex items-center gap-2 text-[0.6875rem]">
           <span className="inline-flex items-center gap-1.5 rounded border border-[#B07A14]/20 bg-white px-2.5 py-1.5 font-medium text-[#9A6910]"><Clock3 size={12} />{pendentes} pendentes</span>
           <span className="inline-flex items-center gap-1.5 rounded border border-[#2E8932]/20 bg-white px-2.5 py-1.5 font-medium text-[#2E8932]"><CheckCircle2 size={12} />{entregues} entregues</span>
         </div>
@@ -115,26 +115,26 @@ export default function AdminPedidosPage() {
       ) : (
         <div className="overflow-hidden rounded border border-black/[.08] bg-white">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[860px] border-collapse text-left">
+            <table className="w-full min-w-[53.75rem] border-collapse text-left">
               <thead><tr className="border-b border-black/[.07] bg-black/[.015]">
-                {['Solicitante', 'Patrocinador', 'Solicitado em', 'Entregue em', 'Status', 'Ação'].map((label) => <th key={label} className="px-4 py-3 text-[10px] font-medium uppercase tracking-[.06em] text-black/30">{label}</th>)}
+                {['Solicitante', 'Patrocinador', 'Solicitado em', 'Entregue em', 'Status', 'Ação'].map((label) => <th key={label} className="px-4 py-3 text-[0.625rem] font-medium uppercase tracking-[.06em] text-black/30">{label}</th>)}
               </tr></thead>
               <tbody className="divide-y divide-black/[.06]">
                 {pedidos.map((pedido) => {
                   const delivered = pedido.status === "entregue";
                   return (
                     <tr key={pedido.id} className="transition hover:bg-black/[.018]">
-                      <td className="px-4 py-4"><p className="text-[12px] font-semibold text-black/70">{pedido.user_nome ?? "Usuário"}</p><p className="mt-0.5 text-[10px] text-black/35">{pedido.user_email ?? pedido.solicitante_id.slice(0, 8)}</p></td>
-                      <td className="px-4 py-4"><p className="text-[12px] font-semibold text-black/70">{pedido.empresa_nome ?? "—"}</p><p className="mt-0.5 text-[10px] text-black/30">{pedido.tem_detalhe ? "Detalhes disponíveis" : "Em preparação"}</p></td>
-                      <td className="px-4 py-4 text-[11px] tabular-nums text-black/40">{fmtDate(pedido.created_at)}</td>
-                      <td className="px-4 py-4 text-[11px] tabular-nums text-black/40">{fmtDate(pedido.concluida_em)}</td>
+                      <td className="px-4 py-4"><p className="text-[0.75rem] font-semibold text-black/70">{pedido.user_nome ?? "Usuário"}</p><p className="mt-0.5 text-[0.625rem] text-black/35">{pedido.user_email ?? pedido.solicitante_id.slice(0, 8)}</p></td>
+                      <td className="px-4 py-4"><p className="text-[0.75rem] font-semibold text-black/70">{pedido.empresa_nome ?? "—"}</p><p className="mt-0.5 text-[0.625rem] text-black/30">{pedido.tem_detalhe ? "Detalhes disponíveis" : "Em preparação"}</p></td>
+                      <td className="px-4 py-4 text-[0.6875rem] tabular-nums text-black/40">{fmtDate(pedido.created_at)}</td>
+                      <td className="px-4 py-4 text-[0.6875rem] tabular-nums text-black/40">{fmtDate(pedido.concluida_em)}</td>
                       <td className="px-4 py-4">
                         <Select
                           value={pedido.status}
                           disabled={changingId === pedido.id}
                           onChange={(event) => void changeStatus(pedido, event.target.value as PedidoStatus)}
                           aria-label={`Status do pedido de ${pedido.empresa_nome ?? "patrocinador"}`}
-                          className="rounded border bg-white px-2.5 py-1.5 text-[11px] font-semibold outline-none transition hover:bg-black/[.04] disabled:opacity-45"
+                          className="rounded border bg-white px-2.5 py-1.5 text-[0.6875rem] font-semibold outline-none transition hover:bg-black/[.04] disabled:opacity-45"
                           style={{ borderColor: delivered ? "rgba(46,137,50,.28)" : "rgba(176,122,20,.28)", color: delivered ? "#2E8932" : "#9A6910" }}
                         >
                           <option value="pendente">Pendente</option>
@@ -142,7 +142,7 @@ export default function AdminPedidosPage() {
                         </Select>
                       </td>
                       <td className="px-4 py-4">
-                        <button type="button" onClick={() => router.push(`/admin/patrocinadores/${pedido.empresa_id}`)} className="inline-flex items-center gap-1 rounded border border-[#7259B5]/25 bg-white px-2.5 py-1.5 text-[11px] font-medium text-[#7259B5] transition hover:bg-black/[.04]">Abrir patrocinador <ArrowRight size={11} /></button>
+                        <button type="button" onClick={() => router.push(`/admin/patrocinadores/${pedido.empresa_id}`)} className="inline-flex items-center gap-1 rounded border border-[#7259B5]/25 bg-white px-2.5 py-1.5 text-[0.6875rem] font-medium text-[#7259B5] transition hover:bg-black/[.04]">Abrir patrocinador <ArrowRight size={11} /></button>
                       </td>
                     </tr>
                   );

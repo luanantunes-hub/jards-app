@@ -129,8 +129,9 @@ function getDisplayName(user: User | null): string {
   return user.email?.split("@")[0] ?? "—";
 }
 
-const COLLAPSED_W = 56;
-const EXPANDED_W  = 224;
+// Em rem: acompanham a fonte base, como o recuo md:pl-14 (3.5rem) do conteúdo.
+const COLLAPSED_W = "3.5rem";
+const EXPANDED_W  = "14rem";
 
 // ─── Layout ─────────────────────────────────────────────────────────────────
 
@@ -344,7 +345,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <div
           className="flex items-center flex-shrink-0 border-b overflow-hidden"
           style={{
-            height: 56,
+            height: "3.5rem",
             paddingLeft: isExpanded ? 20 : 0,
             justifyContent: isExpanded ? "flex-start" : "center",
             borderColor: "rgba(13,13,13,.07)",
@@ -372,14 +373,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {userAvatar ? (
                 <img src={userAvatar} alt="" className="w-7 h-7 rounded object-cover bg-white flex-shrink-0" />
               ) : (
-                <div className="w-7 h-7 rounded bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
+                <div className="w-7 h-7 rounded bg-[#7259B5] flex items-center justify-center text-[0.6875rem] font-bold text-white flex-shrink-0">
                   {initial}
                 </div>
               )}
               {isExpanded && (
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
-                  <p className="text-[10px] text-black/35 truncate whitespace-nowrap">Captador externo</p>
+                  <p className="text-[0.625rem] text-black/35 truncate whitespace-nowrap">Captador externo</p>
                 </div>
               )}
             </div>
@@ -397,14 +398,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {userAvatar ? (
                 <img src={userAvatar} alt="" className="w-7 h-7 rounded object-cover bg-white flex-shrink-0" />
               ) : (
-                <div className="w-7 h-7 rounded bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0">
+                <div className="w-7 h-7 rounded bg-[#7259B5] flex items-center justify-center text-[0.6875rem] font-bold text-white flex-shrink-0">
                   {initial}
                 </div>
               )}
               {isExpanded && (
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
-                  <p className="text-[10px] text-black/35 truncate whitespace-nowrap">
+                  <p className="text-[0.625rem] text-black/35 truncate whitespace-nowrap">
                     {plan === "gratuito" ? "Plano gratuito" : plan === "basico" ? "Plano Básico" : plan === "profissional" ? "Plano Profissional" : "Jards"}
                   </p>
                 </div>
@@ -417,14 +418,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <nav className="flex-1 px-2 py-3 overflow-y-auto overflow-x-hidden">
           {isWorkspaceCaptador ? (
             <div>
-              <p className="px-2 mb-1.5 text-[10px] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap" style={{ height: isExpanded ? "auto" : 0, overflow: "hidden", opacity: isExpanded ? 1 : 0 }}>
+              <p className="px-2 mb-1.5 text-[0.625rem] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap" style={{ height: isExpanded ? "auto" : 0, overflow: "hidden", opacity: isExpanded ? 1 : 0 }}>
                 Workspace
               </p>
               <Link
                 href="/workspace-captador"
                 title={!isExpanded ? "Meu workspace" : undefined}
                 aria-current={correspondeRota(path, "/workspace-captador") ? "page" : undefined}
-                className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
                   correspondeRota(path, "/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
                 }`}
                 style={{
@@ -448,7 +449,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   marginBottom: isExpanded ? 6 : 0,
                 }}
               >
-                <p className="px-2 text-[10px] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap">
+                <p className="px-2 text-[0.625rem] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap">
                   {section}
                 </p>
               </div>
@@ -462,7 +463,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       title={!isExpanded ? label : undefined}
                       aria-label={!isExpanded ? label : undefined}
                       aria-current={active ? "page" : undefined}
-                      className={`flex items-center rounded text-[13px] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                      className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
                         active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
                       }`}
                       style={{
@@ -484,7 +485,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/meu-plano"
               title={!isExpanded ? "Fazer upgrade" : undefined}
               aria-label="Fazer upgrade"
-              className="mt-4 flex items-center overflow-hidden whitespace-nowrap rounded bg-[#7259B5] text-[13px] font-semibold text-white transition-colors hover:bg-[#5D489D] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+              className="mt-4 flex items-center overflow-hidden whitespace-nowrap rounded bg-[#7259B5] text-[0.8125rem] font-semibold text-white transition-colors hover:bg-[#5D489D] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               style={{
                 gap: isExpanded ? 10 : 0,
                 padding: isExpanded ? "9px 10px" : "9px 0",
@@ -504,7 +505,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/admin"
               title={!isExpanded ? "Admin" : undefined}
               aria-label={!isExpanded ? "Admin" : undefined}
-              className="flex items-center rounded text-[13px] font-medium transition whitespace-nowrap overflow-hidden hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+              className="flex items-center rounded text-[0.8125rem] font-medium transition whitespace-nowrap overflow-hidden hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
               style={{
                 gap: isExpanded ? 10 : 0,
                 padding: isExpanded ? "8px 10px" : "8px 0",
@@ -522,7 +523,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             title={!isExpanded ? "Configurações" : undefined}
             aria-label={!isExpanded ? "Configurações" : undefined}
             aria-current={correspondeRota(path, "/configuracoes") ? "page" : undefined}
-            className={`flex items-center rounded text-[13px] font-medium transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+            className={`flex items-center rounded text-[0.8125rem] font-medium transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
               correspondeRota(path, "/configuracoes") ? "bg-black/[0.05] text-[#0D0D0D]" : "text-black/35 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
             }`}
             style={{
@@ -540,7 +541,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             onClick={handleLogout}
             title={!isExpanded ? "Sair" : undefined}
             aria-label={!isExpanded ? "Sair" : undefined}
-            className="w-full flex items-center rounded text-[13px] font-medium text-black/35 hover:text-[#D94E4E] hover:bg-black/[0.05] transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+            className="w-full flex items-center rounded text-[0.8125rem] font-medium text-black/35 hover:text-[#D94E4E] hover:bg-black/[0.05] transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
             style={{
               gap: isExpanded ? 10 : 0,
               padding: isExpanded ? "8px 10px" : "8px 0",
@@ -559,7 +560,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         {/* Top bar */}
         <header
           className="flex-shrink-0 flex items-center justify-end px-4 md:px-8 border-b"
-          style={{ height: 56, background: "#FFFFFF", borderColor: "rgba(13,13,13,.08)" }}
+          style={{ height: "3.5rem", background: "#FFFFFF", borderColor: "rgba(13,13,13,.08)" }}
         >
           <div className="mr-auto flex items-center gap-2 md:hidden">
             <button
@@ -597,7 +598,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       ? "Você não tem acesso a este módulo"
                       : label
                   }
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[12px] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/40"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[0.75rem] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/40"
                   style={{
                     background: ativo ? "#FFFFFF" : "transparent",
                     color: ativo
@@ -612,7 +613,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {!acessivel && <Lock size={10} style={{ color: "rgba(13,13,13,.25)" }} />}
                   {label}
                   {!orgTem && (
-                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded"
+                    <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded"
                       style={{ background: "#7259B514", color: "#7259B5" }}>
                       Pro
                     </span>
@@ -635,7 +636,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   aria-label="Trocar organização"
                   aria-haspopup="menu"
                   aria-expanded={orgSwitcherOpen}
-                  className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white overflow-hidden transition hover:brightness-95"
+                  className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[0.6875rem] font-bold text-white overflow-hidden transition hover:brightness-95"
                 >
                   {org.avatar_url ? (
                     <img src={org.avatar_url} alt="" className="w-full h-full object-cover bg-white" />
@@ -647,7 +648,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setOrgSwitcherOpen(false)} />
                     <div role="menu" aria-label="Organizações" className="absolute right-0 top-10 z-50 w-64 rounded border border-black/[.09] bg-white p-1.5 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
-                      <p className="px-2.5 pb-1.5 pt-1 text-[9px] font-bold uppercase tracking-widest text-black/30">Trocar organização</p>
+                      <p className="px-2.5 pb-1.5 pt-1 text-[0.5625rem] font-bold uppercase tracking-widest text-black/30">Trocar organização</p>
                       {memberships.map(m => (
                         <button
                           key={m.organizationId}
@@ -657,12 +658,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           onClick={() => trocarOrganizacao(m)}
                           className={`flex w-full items-center gap-2.5 rounded px-2.5 py-2 text-left transition hover:bg-black/[.04] ${m.organizationId === organizationId ? "bg-black/[.03]" : ""}`}
                         >
-                          <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#7259B5] text-[10px] font-bold text-white">
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-[#7259B5] text-[0.625rem] font-bold text-white">
                             {m.avatarUrl ? <img src={m.avatarUrl} alt="" className="h-full w-full object-cover" /> : (m.nome ? m.nome.charAt(0).toUpperCase() : "?")}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[12px] font-semibold text-black">{m.nome || "Sem nome"}</span>
-                            {m.papel === "captador" && <span className="text-[10px] font-medium text-black/40">Workspace de captador</span>}
+                            <span className="block truncate text-[0.75rem] font-semibold text-black">{m.nome || "Sem nome"}</span>
+                            {m.papel === "captador" && <span className="text-[0.625rem] font-medium text-black/40">Workspace de captador</span>}
                           </span>
                         </button>
                       ))}
@@ -675,7 +676,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 href="/configuracoes"
                 title={org.nome || "Configurações"}
                 aria-label={org.nome ? `${org.nome} — configurações` : "Configurações"}
-                className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[11px] font-bold text-white overflow-hidden transition hover:brightness-95"
+                className="w-8 h-8 rounded-full bg-[#7259B5] flex items-center justify-center text-[0.6875rem] font-bold text-white overflow-hidden transition hover:brightness-95"
               >
                 {org.avatar_url ? (
                   <img src={org.avatar_url} alt="" className="w-full h-full object-cover bg-white" />
