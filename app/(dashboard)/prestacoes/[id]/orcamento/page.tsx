@@ -292,7 +292,7 @@ export default function OrcamentoPage() {
 
   // ─────────────────────────────────────────────────────────────────────────────
 
-  // Realizado = comprovantes aceitos ligados à rubrica (valor_realizado nunca foi calculado no banco).
+  // Realizado = comprovantes aceitos ligados à rubrica, a mesma soma do gatilho do banco.
   const executadoItem  = executadoPorItem(comprovantes);
   const totalAprovado  = itens.reduce((s, i) => s + i.valor_aprovado, 0);
   const totalRealizado = itens.reduce((s, i) => s + (executadoItem.get(i.id) ?? 0), 0);

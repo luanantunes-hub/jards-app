@@ -60,7 +60,7 @@ export default function PrestacoesList() {
       return org === null || org === organizationId;
     });
 
-    // Executado provisório: soma dos comprovantes aceitos (valor_realizado nunca foi calculado no banco).
+    // Executado: soma dos comprovantes aceitos, incluindo os sem rubrica, que o valor_realizado do banco não conta.
     const ids = daOrganizacao.map(p => p.id);
     const { data: comps } = ids.length > 0
       ? await (supabase as any)

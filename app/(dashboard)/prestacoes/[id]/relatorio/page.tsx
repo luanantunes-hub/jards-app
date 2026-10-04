@@ -53,7 +53,7 @@ export default function RelatorioPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  // Executado = comprovantes aceitos (valor_realizado nunca foi calculado no banco).
+  // Executado = comprovantes aceitos, com os sem rubrica à parte (lib/prestacao/execucao.ts).
   const aceitos = comprovantes.filter(c => c.status === "aceito");
   const executadoItem = executadoPorItem(comprovantes);
   const semRubrica = executadoSemRubrica(comprovantes);

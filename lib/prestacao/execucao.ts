@@ -1,8 +1,11 @@
 // Execução financeira provisória: soma dos comprovantes aceitos.
 //
-// `valor_realizado` nunca foi calculado no banco (nem na prestação nem nos
-// itens). Até a fase 2, quando o executado passa a vir dos pagamentos
-// conciliados com o extrato, as telas usam esta soma.
+// O banco mantém `valor_realizado` por gatilho (recalcular_valor_realizado e
+// sync_prestacao_valor_realizado, versionados em 20260827074320): por item, a
+// mesma soma daqui; na prestação, a soma dos itens, sem os comprovantes
+// aceitos que ainda não têm rubrica. As telas somam direto dos comprovantes
+// para mostrar esses também. Na fase 2 o executado passa a vir dos
+// pagamentos conciliados com o extrato.
 
 export type ComprovanteParaExecucao = {
   item_id: string | null;
