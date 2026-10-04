@@ -12,14 +12,17 @@
 
 ## Andamento
 
-Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`.
+Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 91 passando no `npm test`.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
 | P0.3 Arquivos no caminho da organização | Feita (`2e5d186`) | Rodar `npx tsx scripts/prestacao-migrar-arquivos.ts` (ensaio) e depois com `--live`, com acesso ao banco |
 | P0.4 Funções de IA com autorização | Feita (`c64f0f2`) | Publicar as funções: `supabase functions deploy extrair-comprovante importar-orcamento` |
 | P0.10 Correções no módulo, parte de tela | Feita (`356941e`) | Nada; a parte de banco (status por função, log na criação) espera o acesso ao banco |
-| P0.1, P0.2, P0.5 a P0.9 | Não iniciadas | Pré-requisitos 1 a 4 |
+| P0.7 Acesso por módulo e bloqueio no servidor | Feita (`48447a7`) | Nada para o que existe hoje; quem não é super admin precisa da prestação liberada em `organizations.modulos_ativos` e `organization_members.modulos_acesso` para abrir `/prestacoes`. O e2e com três tipos de usuário espera a P0.5 |
+| P1.3 Prazos e calendário | Feita (`0fb0697`) | Nada; os feriados locais e o defeso entram quando existir `calendario_regulatorio` |
+| P1.1 Regime da Rouanet, parte em TypeScript | Feita (`8058507`) | Tabela `prestacao_regimes`, seed gerado destes arquivos e validação com `zod` |
+| P0.1, P0.2, P0.5, P0.6, P0.8, P0.9 | Não iniciadas | Pré-requisitos 1 a 4 |
 
 Ajustes de rota no que já foi feito:
 - O executado provisório (P0.10) é calculado no app (`lib/prestacao/execucao.ts`) em vez de uma view, para não depender de migration.
@@ -27,6 +30,8 @@ Ajustes de rota no que já foi feito:
 - Na P0.4 o CORS continuou aberto: a autorização é pelo token no cabeçalho, sem cookie, então restringir a origem não protege nada e quebraria o uso local.
 - Os testes ficam em `tests/prestacao-*.test.ts`, na raiz de `tests/`: o `npm test` passa o padrão `tests/**/*.test.ts` pelo shell, e uma subpasta faria os testes da raiz deixarem de rodar.
 - O comportamento da autorização das funções tem teste em Deno (`supabase/functions/_shared/prestacao-acesso.test.ts`), que o CI ainda não roda.
+- A lista vazia em `modulos_acesso` ou `modulos_ativos` vale como "só captação" até a P0.5 definir as colunas, para ninguém perder acesso por dado antigo.
+- O regime da Rouanet nasceu em TypeScript (`lib/prestacao/regimes/`), com `satisfies` no lugar do `zod`; o banco e a validação em tempo de execução entram com o acesso ao banco.
 
 ---
 
