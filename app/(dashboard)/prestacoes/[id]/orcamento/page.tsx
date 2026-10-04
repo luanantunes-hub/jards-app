@@ -7,6 +7,8 @@ import type { PrestacaoItem } from "@/lib/supabase/types";
 import { Select } from "@/components/ui/Select";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
+import { executadoPorItem, percentualExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
 type ImportItem = {
   rubrica: string;
@@ -31,7 +33,10 @@ export default function OrcamentoPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
   const organizationId = usePrestacaoOrganizacao(id);
+  const { confirmDelete } = useDeleteConfirm();
   const [itens, setItens] = useState<PrestacaoItem[]>([]);
+  const [comprovantes, setComprovantes] = useState<ComprovanteParaExecucao[]>([]);
+  const [erro, setErro] = useState("");
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<EditingItem | null>(null);
   const [saving, setSaving] = useState(false);
@@ -51,12 +56,19 @@ export default function OrcamentoPage() {
   const [mapTol, setMapTol] = useState("");
 
   const fetch = useCallback(async () => {
-    const { data } = await (supabase as any)
-      .from("prestacao_itens")
-      .select("*")
-      .eq("prestacao_id", id)
-      .order("ordem", { ascending: true });
+    const [{ data }, { data: comps }] = await Promise.all([
+      (supabase as any)
+        .from("prestacao_itens")
+        .select("*")
+        .eq("prestacao_id", id)
+        .order("ordem", { ascending: true }),
+      (supabase as any)
+        .from("prestacao_comprovantes")
+        .select("item_id, status, valor_extraido")
+        .eq("prestacao_id", id),
+    ]);
     setItens((data as PrestacaoItem[]) ?? []);
+    setComprovantes((comps as ComprovanteParaExecucao[]) ?? []);
     setLoading(false);
   }, [id, supabase]);
 
@@ -78,8 +90,10 @@ export default function OrcamentoPage() {
   async function salvar() {
     if (!editing || !editing.rubrica?.trim()) return;
     setSaving(true);
+    setErro("");
+    let resultado: { error: { message: string } | null };
     if (editing._new) {
-      await (supabase as any).from("prestacao_itens").insert({
+      resultado = await (supabase as any).from("prestacao_itens").insert({
         prestacao_id: id,
         rubrica: editing.rubrica,
         descricao: editing.descricao || null,
@@ -88,23 +102,34 @@ export default function OrcamentoPage() {
         ordem: editing.ordem ?? itens.length,
       });
     } else {
-      await (supabase as any).from("prestacao_itens").update({
+      resultado = await (supabase as any).from("prestacao_itens").update({
         rubrica: editing.rubrica,
         descricao: editing.descricao || null,
         valor_aprovado: Number(editing.valor_aprovado ?? 0),
         tolerancia_pct: Number(editing.tolerancia_pct ?? 15),
       }).eq("id", editing.id);
     }
-    setEditing(null);
     setSaving(false);
+    if (resultado.error) {
+      setErro(`Não foi possível salvar a rubrica: ${resultado.error.message}`);
+      return;
+    }
+    setEditing(null);
     fetch();
   }
 
-  async function excluir(itemId: string) {
-    setDeletingId(itemId);
-    await (supabase as any).from("prestacao_itens").delete().eq("id", itemId);
-    setDeletingId(null);
-    fetch();
+  function excluir(item: PrestacaoItem) {
+    confirmDelete({
+      title: "Excluir rubrica?",
+      description: `"${item.rubrica}" sai do orçamento. Comprovantes ligados a ela ficam sem rubrica.`,
+      onConfirm: async () => {
+        setDeletingId(item.id);
+        const { error } = await (supabase as any).from("prestacao_itens").delete().eq("id", item.id);
+        setDeletingId(null);
+        if (error) throw new Error(error.message);
+        fetch();
+      },
+    });
   }
 
   // ─── Importação CSV ──────────────────────────────────────────────────────────
@@ -255,27 +280,40 @@ export default function OrcamentoPage() {
       tolerancia_pct: item.tolerancia_pct ?? 15,
       ordem: itens.length + i,
     }));
-    await (supabase as any).from("prestacao_itens").insert(rows);
+    const { error } = await (supabase as any).from("prestacao_itens").insert(rows);
     setConfirmando(false);
+    if (error) {
+      setErro(`Não foi possível importar as rubricas: ${error.message}`);
+      return;
+    }
     setPreview(null);
     fetch();
   }
 
   // ─────────────────────────────────────────────────────────────────────────────
 
+  // Realizado = comprovantes aceitos ligados à rubrica (valor_realizado nunca foi calculado no banco).
+  const executadoItem  = executadoPorItem(comprovantes);
   const totalAprovado  = itens.reduce((s, i) => s + i.valor_aprovado, 0);
-  const totalRealizado = itens.reduce((s, i) => s + i.valor_realizado, 0);
-  const totalPct       = totalAprovado > 0 ? Math.round((totalRealizado / totalAprovado) * 100) : null;
+  const totalRealizado = itens.reduce((s, i) => s + (executadoItem.get(i.id) ?? 0), 0);
+  const totalPct       = percentualExecutado(totalRealizado, totalAprovado);
 
   return (
     <div className="px-8 py-6">
+      {erro && !editing && (
+        <p role="alert" className="mb-4 px-4 py-3 rounded border text-[0.75rem]"
+          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+          {erro}
+        </p>
+      )}
+
       {/* Totais */}
       {itens.length > 0 && (
         <div className="grid grid-cols-3 gap-3 mb-5">
           {[
             { label: "Total aprovado",  value: fmt(totalAprovado),  color: undefined },
-            { label: "Total realizado", value: fmt(totalRealizado), color: totalPct !== null ? pctColor(totalPct, 15) : undefined },
-            { label: "% executado",     value: totalPct !== null ? `${totalPct}%` : "—", color: totalPct !== null ? pctColor(totalPct, 15) : undefined },
+            { label: "Total realizado", value: fmt(totalRealizado), color: totalPct !== null ? pctColor(totalPct, 0) : undefined },
+            { label: "% executado",     value: totalPct !== null ? `${totalPct}%` : "—", color: totalPct !== null ? pctColor(totalPct, 0) : undefined },
           ].map(c => (
             <div key={c.label} className="bg-white rounded border p-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-[0.5625rem] font-bold uppercase tracking-wide text-black/30 mb-1">{c.label}</p>
@@ -341,7 +379,8 @@ export default function OrcamentoPage() {
               </thead>
               <tbody>
                 {itens.map((item, i) => {
-                  const pct = item.valor_aprovado > 0 ? Math.round((item.valor_realizado / item.valor_aprovado) * 100) : null;
+                  const realizado = executadoItem.get(item.id) ?? 0;
+                  const pct = percentualExecutado(realizado, item.valor_aprovado);
                   const cor = pct !== null ? pctColor(pct, item.tolerancia_pct) : "rgba(13,13,13,.35)";
                   const excedido = pct !== null && pct > 100 + item.tolerancia_pct;
                   return (
@@ -351,7 +390,7 @@ export default function OrcamentoPage() {
                         {item.descricao && <p className="text-[0.625rem] text-black/35 mt-0.5">{item.descricao}</p>}
                       </td>
                       <td className="px-4 py-3 text-[0.75rem] text-black/60 font-medium tabular-nums">{fmt(item.valor_aprovado)}</td>
-                      <td className="px-4 py-3 text-[0.75rem] font-semibold tabular-nums" style={{ color: cor }}>{fmt(item.valor_realizado)}</td>
+                      <td className="px-4 py-3 text-[0.75rem] font-semibold tabular-nums" style={{ color: cor }}>{fmt(realizado)}</td>
                       <td className="px-4 py-3">
                         {pct !== null ? (
                           <div className="flex items-center gap-1.5">
@@ -370,7 +409,8 @@ export default function OrcamentoPage() {
                             <Pencil size={12} />
                           </button>
                           <button
-                            onClick={() => excluir(item.id)}
+                            onClick={() => excluir(item)}
+                            aria-label={`Excluir rubrica ${item.rubrica}`}
                             disabled={deletingId === item.id}
                             className="p-1.5 rounded hover:bg-[#D94E4E]/10 transition text-black/20 hover:text-[#D94E4E]"
                           >
@@ -387,8 +427,8 @@ export default function OrcamentoPage() {
                   <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
                     <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50">Total</td>
                     <td className="px-4 py-2.5 text-[0.75rem] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
-                    <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums" style={{ color: totalPct !== null ? pctColor(totalPct, 15) : "rgba(13,13,13,.4)" }}>{fmt(totalRealizado)}</td>
-                    <td className="px-4 py-2.5 text-[0.6875rem] font-bold tabular-nums" style={{ color: totalPct !== null ? pctColor(totalPct, 15) : "rgba(13,13,13,.35)" }}>{totalPct !== null ? `${totalPct}%` : "—"}</td>
+                    <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums" style={{ color: totalPct !== null ? pctColor(totalPct, 0) : "rgba(13,13,13,.4)" }}>{fmt(totalRealizado)}</td>
+                    <td className="px-4 py-2.5 text-[0.6875rem] font-bold tabular-nums" style={{ color: totalPct !== null ? pctColor(totalPct, 0) : "rgba(13,13,13,.35)" }}>{totalPct !== null ? `${totalPct}%` : "—"}</td>
                     <td colSpan={2} />
                   </tr>
                 )}
@@ -400,7 +440,7 @@ export default function OrcamentoPage() {
 
       {/* Form inline de edição */}
       {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditing(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setEditing(null); setErro(""); }}>
           <div className="bg-white rounded shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
             <h3 className="text-[0.875rem] font-semibold text-black mb-4">{editing._new ? "Nova rubrica" : "Editar rubrica"}</h3>
             <div className="space-y-3">
@@ -449,9 +489,15 @@ export default function OrcamentoPage() {
                 </div>
               </div>
               <p className="text-[0.625rem] text-black/35 -mt-1">O valor realizado é calculado automaticamente pelos comprovantes aceitos vinculados a esta rubrica.</p>
+              {erro && (
+                <p role="alert" className="text-[0.6875rem] px-3 py-2 rounded border"
+                  style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+                  {erro}
+                </p>
+              )}
             </div>
             <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => setEditing(null)} className="px-4 py-2 text-[0.75rem] text-black/35 hover:text-black/55 transition">Cancelar</button>
+              <button onClick={() => { setEditing(null); setErro(""); }} className="px-4 py-2 text-[0.75rem] text-black/35 hover:text-black/55 transition">Cancelar</button>
               <button
                 onClick={salvar}
                 disabled={saving || !editing.rubrica?.trim()}

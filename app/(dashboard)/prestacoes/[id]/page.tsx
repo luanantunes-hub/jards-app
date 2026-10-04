@@ -6,6 +6,7 @@ import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import type { PrestacaoContas, StatusPrestacao, PrestacaoItem } from "@/lib/supabase/types";
+import { executadoPorItem, percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -61,13 +62,10 @@ export default function PrestacaoDetalhe() {
   const [prestacao, setPrestacao] = useState<PrestacaoDetalhe | null>(null);
   const [log, setLog] = useState<LogEntry[]>([]);
   const [itens, setItens] = useState<PrestacaoItem[]>([]);
-  const [prontidao, setProntidao] = useState({
-    atividadesCount: 0,
-    comprovantesCount: 0,
-    relatorioSecoes: 0,
-  });
-  const [totalPF, setTotalPF] = useState(0);
+  const [atividadesCount, setAtividadesCount] = useState(0);
+  const [comprovantes, setComprovantes] = useState<ComprovanteParaExecucao[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState("");
   const [avancarOpen, setAvancarOpen] = useState(false);
   const avancarBoxRef = useRef<HTMLDivElement>(null);
   const [avancarMenuPos, setAvancarMenuPos] = useState<{ right: number; top: number } | null>(null);
@@ -96,9 +94,7 @@ export default function PrestacaoDetalhe() {
       { data: logData },
       { data: itensData },
       { count: atCount },
-      { count: compCount },
-      { data: relData },
-      { data: pfData },
+      { data: compData },
     ] = await Promise.all([
       (supabase as any)
         .from("prestacoes_contas")
@@ -121,33 +117,16 @@ export default function PrestacaoDetalhe() {
         .eq("prestacao_id", id),
       (supabase as any)
         .from("prestacao_comprovantes")
-        .select("*", { count: "exact", head: true })
+        .select("item_id, status, valor_extraido")
         .eq("prestacao_id", id),
-      (supabase as any)
-        .from("prestacao_relatorio")
-        .select("secao, conteudo")
-        .eq("prestacao_id", id),
-      (supabase as any)
-        .from("prestacao_comprovantes")
-        .select("valor")
-        .eq("prestacao_id", id)
-        .in("tipo", ["rpa", "recibo"]),
     ]);
 
     setPrestacao(data as PrestacaoDetalhe);
     setLog((logData as LogEntry[]) ?? []);
     setItens((itensData as PrestacaoItem[]) ?? []);
 
-    const secoesPreenchidas = ((relData ?? []) as { secao: string; conteudo: string }[])
-      .filter(r => r.conteudo.trim().length > 0).length;
-    setProntidao({
-      atividadesCount: atCount ?? 0,
-      comprovantesCount: compCount ?? 0,
-      relatorioSecoes: secoesPreenchidas,
-    });
-
-    const somaPF = ((pfData ?? []) as { valor: number }[]).reduce((s, r) => s + (r.valor ?? 0), 0);
-    setTotalPF(somaPF);
+    setAtividadesCount(atCount ?? 0);
+    setComprovantes((compData as ComprovanteParaExecucao[]) ?? []);
 
     setLoading(false);
   }, [id, supabase]);
@@ -157,21 +136,35 @@ export default function PrestacaoDetalhe() {
   async function avancar(novoStatus: StatusPrestacao) {
     if (!prestacao) return;
     setSaving(true);
+    setErro("");
     const { data: { user } } = await supabase.auth.getUser();
 
-    await (supabase as any).from("prestacoes_contas").update({ status: novoStatus }).eq("id", id);
-    await (supabase as any).from("prestacao_status_log").insert({
+    // Duas escritas separadas até a mudança de status virar função no banco (P0.10).
+    const { error: statusErro } = await (supabase as any).from("prestacoes_contas").update({ status: novoStatus }).eq("id", id);
+    if (statusErro) {
+      setErro(`Não foi possível mudar o status: ${statusErro.message}`);
+      setSaving(false);
+      return;
+    }
+    const { error: logErro } = await (supabase as any).from("prestacao_status_log").insert({
       prestacao_id: id,
       status_anterior: prestacao.status,
       status_novo: novoStatus,
       usuario_id: user?.id ?? null,
       comentario: comentario.trim() || null,
     });
+    if (logErro) setErro(`O status mudou, mas o histórico não foi gravado: ${logErro.message}`);
 
     setComentario("");
     setAvancarOpen(false);
     setSaving(false);
     fetch();
+  }
+
+  async function salvarPeriodo(campo: "data_inicio_execucao" | "data_fim_execucao", valor: string) {
+    setErro("");
+    const { error } = await (supabase as any).from("prestacoes_contas").update({ [campo]: valor || null }).eq("id", id);
+    if (error) setErro(`Não foi possível salvar o período de execução: ${error.message}`);
   }
 
   if (loading) return <DetailPageSkeleton />;
@@ -183,17 +176,14 @@ export default function PrestacaoDetalhe() {
   const meta = STATUS_META[prestacao.status];
   const proximos = PROXIMOS[prestacao.status];
 
-  // Totais de comprovação financeira
+  // Totais de comprovação financeira: soma dos comprovantes aceitos
   const totalAprovado = itens.length > 0
     ? itens.reduce((s, i) => s + i.valor_aprovado, 0)
     : (prestacao.valor_aprovado ?? 0);
-  const totalComprovado = itens.length > 0
-    ? itens.reduce((s, i) => s + i.valor_realizado, 0)
-    : (prestacao.valor_realizado ?? 0);
+  const totalComprovado = totalExecutado(comprovantes);
+  const executadoItem = executadoPorItem(comprovantes);
   const totalAComprovar = totalAprovado - totalComprovado;
-  const pct = totalAprovado > 0 ? Math.round((totalComprovado / totalAprovado) * 100) : 0;
-  // % de pagamentos a pessoas físicas (RPA + recibo) sobre o aprovado
-  const pctPF = totalAprovado > 0 && totalPF > 0 ? Math.round((totalPF / totalAprovado) * 100) : 0;
+  const pct = percentualExecutado(totalComprovado, totalAprovado) ?? 0;
 
   // Alerta de prazo (60 dias após data_fim_execucao, ou campo prazo)
   const vencida = prestacao.prazo && new Date(prestacao.prazo) < new Date()
@@ -264,6 +254,13 @@ export default function PrestacaoDetalhe() {
         )}
       </div>
 
+      {erro && (
+        <p role="alert" className="mb-4 px-4 py-3 rounded border text-[0.75rem]"
+          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+          {erro}
+        </p>
+      )}
+
       {/* Alerta de prazo próximo */}
       {prazoAlerta && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
@@ -328,26 +325,6 @@ export default function PrestacaoDetalhe() {
               </div>
             </div>
 
-            {/* Alerta de reembolso PF */}
-            {pctPF > 0 && (
-              <div
-                className="mx-5 mb-4 flex items-start gap-2 px-3 py-2.5 rounded border text-[0.6875rem]"
-                style={
-                  pctPF > 20
-                    ? { background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }
-                    : { background: "#B07A1408", borderColor: "#B07A1430", color: "#B07A14" }
-                }
-              >
-                <AlertCircle size={12} className="flex-shrink-0 mt-0.5" />
-                <span>
-                  <strong>{pctPF}%</strong> do aprovado em RPA/recibo (PF).
-                  {pctPF > 20
-                    ? " Acima do limite recomendado de 20% — revise os comprovantes."
-                    : " Próximo do limite de 20% recomendado pela MinC."}
-                </span>
-              </div>
-            )}
-
             {/* Breakdown por rubrica */}
             {itens.length > 0 && (
               <div>
@@ -362,15 +339,14 @@ export default function PrestacaoDetalhe() {
                 {rubricsOpen && (
                   <div className="border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                     {itens.map(item => {
-                      const itemPct = item.valor_aprovado > 0
-                        ? Math.round((item.valor_realizado / item.valor_aprovado) * 100)
-                        : 0;
+                      const itemExecutado = executadoItem.get(item.id) ?? 0;
+                      const itemPct = percentualExecutado(itemExecutado, item.valor_aprovado) ?? 0;
                       return (
                         <div key={item.id} className="px-5 py-3 border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                           <div className="flex items-center justify-between mb-1">
                             <p className="text-[0.6875rem] font-medium text-black/70 truncate">{item.rubrica}</p>
                             <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                              <span className="text-[0.625rem] text-black/35 tabular-nums">{fmt(item.valor_realizado)} / {fmt(item.valor_aprovado)}</span>
+                              <span className="text-[0.625rem] text-black/35 tabular-nums">{fmt(itemExecutado)} / {fmt(item.valor_aprovado)}</span>
                               <span className="text-[0.625rem] font-semibold tabular-nums" style={{
                                 color: itemPct >= 90 ? "#2E8932" : itemPct >= 50 ? "#B07A14" : "rgba(13,13,13,.35)"
                               }}>{itemPct}%</span>
@@ -416,9 +392,7 @@ export default function PrestacaoDetalhe() {
                   <input
                     type="date"
                     defaultValue={prestacao.data_inicio_execucao ?? ""}
-                    onBlur={async e => {
-                      await (supabase as any).from("prestacoes_contas").update({ data_inicio_execucao: e.target.value || null }).eq("id", id);
-                    }}
+                    onBlur={e => salvarPeriodo("data_inicio_execucao", e.target.value)}
                     className="w-full border rounded px-2 py-1.5 text-[0.6875rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
@@ -428,9 +402,7 @@ export default function PrestacaoDetalhe() {
                   <input
                     type="date"
                     defaultValue={prestacao.data_fim_execucao ?? ""}
-                    onBlur={async e => {
-                      await (supabase as any).from("prestacoes_contas").update({ data_fim_execucao: e.target.value || null }).eq("id", id);
-                    }}
+                    onBlur={e => salvarPeriodo("data_fim_execucao", e.target.value)}
                     className="w-full border rounded px-2 py-1.5 text-[0.6875rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   />
@@ -486,18 +458,13 @@ export default function PrestacaoDetalhe() {
               {[
                 {
                   label: "Atividades cadastradas",
-                  ok: prontidao.atividadesCount > 0,
-                  detail: prontidao.atividadesCount > 0 ? `${prontidao.atividadesCount} atividade${prontidao.atividadesCount > 1 ? "s" : ""}` : "Nenhuma cadastrada",
+                  ok: atividadesCount > 0,
+                  detail: atividadesCount > 0 ? `${atividadesCount} atividade${atividadesCount > 1 ? "s" : ""}` : "Nenhuma cadastrada",
                 },
                 {
                   label: "Comprovantes enviados",
-                  ok: prontidao.comprovantesCount > 0,
-                  detail: prontidao.comprovantesCount > 0 ? `${prontidao.comprovantesCount} comprovante${prontidao.comprovantesCount > 1 ? "s" : ""}` : "Nenhum enviado",
-                },
-                {
-                  label: "Relatório preenchido",
-                  ok: prontidao.relatorioSecoes >= 2,
-                  detail: prontidao.relatorioSecoes >= 2 ? `${prontidao.relatorioSecoes} seções` : prontidao.relatorioSecoes === 1 ? "1 seção (incompleto)" : "Não iniciado",
+                  ok: comprovantes.length > 0,
+                  detail: comprovantes.length > 0 ? `${comprovantes.length} comprovante${comprovantes.length > 1 ? "s" : ""}` : "Nenhum enviado",
                 },
                 {
                   label: "Orçamento em comprovação",

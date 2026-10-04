@@ -6,11 +6,16 @@ import { Plus, ClipboardCheck, ArrowUpRight, CalendarDays, CheckCircle2, AlertCi
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoContas, StatusPrestacao } from "@/lib/supabase/types";
 import { NovaPrestacaoModal } from "@/components/modals/NovaPrestacaoModal";
+import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { organizacaoDaPrestacao } from "@/lib/prestacao/armazenamento";
+import { percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
 import { LIST_HEADER_CELL, ListContent, ListEmptyState, ListPageHeader, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 
 type PrestacaoRow = PrestacaoContas & {
-  captacao: { titulo: string | null; lei: string | null } | null;
-  projeto: { nome: string } | null;
+  organization_id?: string | null;
+  captacao: { titulo: string | null; lei: string | null; organization_id: string | null } | null;
+  projeto: { nome: string; organization_id: string | null } | null;
+  executado: number;
 };
 
 const STATUS_META: Record<StatusPrestacao, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
@@ -35,20 +40,43 @@ const fmtDate = (d: string | null) =>
 export default function PrestacoesList() {
   const router = useRouter();
   const supabase = createClient();
+  const organizationId = useOrganizationId();
   const [prestacoes, setPrestacoes] = useState<PrestacaoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [showNova, setShowNova] = useState(false);
   const [filtroStatus, setFiltroStatus] = useState<StatusPrestacao | "todos">("todos");
 
   const fetch = useCallback(async () => {
+    if (!organizationId) return;
     setLoading(true);
     const { data } = await (supabase as any)
       .from("prestacoes_contas")
-      .select("*, captacao:captacao_id(titulo, lei), projeto:projeto_id(nome)")
+      .select("*, captacao:captacao_id(titulo, lei, organization_id), projeto:projeto_id(nome, organization_id)")
       .order("created_at", { ascending: false });
-    setPrestacoes((data as PrestacaoRow[]) ?? []);
+    // O acesso vale para todas as organizações da pessoa; a lista mostra só a atual.
+    // Prestação sem organização conhecida só é visível para quem criou e continua na lista.
+    const daOrganizacao = ((data ?? []) as Omit<PrestacaoRow, "executado">[]).filter(p => {
+      const org = organizacaoDaPrestacao(p);
+      return org === null || org === organizationId;
+    });
+
+    // Executado provisório: soma dos comprovantes aceitos (valor_realizado nunca foi calculado no banco).
+    const ids = daOrganizacao.map(p => p.id);
+    const { data: comps } = ids.length > 0
+      ? await (supabase as any)
+          .from("prestacao_comprovantes")
+          .select("prestacao_id, item_id, status, valor_extraido")
+          .eq("status", "aceito")
+          .in("prestacao_id", ids)
+      : { data: [] };
+    const porPrestacao = new Map<string, ComprovanteParaExecucao[]>();
+    for (const c of (comps ?? []) as (ComprovanteParaExecucao & { prestacao_id: string })[]) {
+      porPrestacao.set(c.prestacao_id, [...(porPrestacao.get(c.prestacao_id) ?? []), c]);
+    }
+
+    setPrestacoes(daOrganizacao.map(p => ({ ...p, executado: totalExecutado(porPrestacao.get(p.id) ?? []) })));
     setLoading(false);
-  }, [supabase]);
+  }, [organizationId, supabase]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
@@ -136,9 +164,7 @@ export default function PrestacoesList() {
                 </tr>
               )) : filtradas.map((p, i) => {
                 const meta = STATUS_META[p.status];
-                const pct = p.valor_aprovado && p.valor_aprovado > 0
-                  ? Math.round((p.valor_realizado / p.valor_aprovado) * 100)
-                  : null;
+                const pct = percentualExecutado(p.executado, p.valor_aprovado ?? 0);
                 const vencida = p.prazo && new Date(p.prazo) < new Date() && p.status !== "aprovado" && p.status !== "arquivado";
                 return (
                   <tr
@@ -176,7 +202,7 @@ export default function PrestacoesList() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
-                        <span className="text-[0.75rem] font-medium tabular-nums text-black/55">{fmt(p.valor_realizado)}</span>
+                        <span className="text-[0.75rem] font-medium tabular-nums text-black/55">{fmt(p.executado)}</span>
                         {pct !== null && (
                           <span className="text-[0.625rem] font-semibold tabular-nums" style={{
                             color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "rgba(13,13,13,.35)"

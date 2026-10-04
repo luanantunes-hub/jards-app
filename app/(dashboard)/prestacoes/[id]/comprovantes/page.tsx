@@ -7,6 +7,7 @@ import type { PrestacaoComprovante, PrestacaoItem, TipoComprovante, StatusCompro
 import { Select } from "@/components/ui/Select";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
   nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
@@ -41,6 +42,8 @@ export default function ComprovantesPage() {
   const supabase = createClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const organizationId = usePrestacaoOrganizacao(id);
+  const { confirmDelete } = useDeleteConfirm();
+  const [erroLista, setErroLista] = useState("");
 
   const [comprovantes, setComprovantes] = useState<PrestacaoComprovante[]>([]);
   const [itens, setItens] = useState<PrestacaoItem[]>([]);
@@ -185,7 +188,7 @@ export default function ComprovantesPage() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    await (supabase as any).from("prestacao_comprovantes").insert({
+    const { error: insertErro } = await (supabase as any).from("prestacao_comprovantes").insert({
       prestacao_id: id,
       item_id: itemId || null,
       tipo,
@@ -200,6 +203,12 @@ export default function ComprovantesPage() {
       risco_glosa: riscoGlosa || null,
       motivos_glosa: motivosGlosa.length > 0 ? motivosGlosa : [],
     });
+    if (insertErro) {
+      setUploadError(`Não foi possível salvar o comprovante: ${insertErro.message}`);
+      setUploadProgress("");
+      setUploading(false);
+      return;
+    }
 
     setPendingFile(null);
     setStoragePath(null);
@@ -235,19 +244,31 @@ export default function ComprovantesPage() {
     setExtraindo(false);
   }
 
-  async function excluir(comprovante: PrestacaoComprovante) {
-    await supabase.storage.from("documentos").remove([comprovante.storage_path]);
-    await (supabase as any).from("prestacao_comprovantes").delete().eq("id", comprovante.id);
-    fetch();
+  function excluir(comprovante: PrestacaoComprovante) {
+    confirmDelete({
+      title: "Excluir comprovante?",
+      description: `"${comprovante.nome_arquivo}" e o arquivo enviado serão apagados.`,
+      onConfirm: async () => {
+        // Apaga a linha antes do arquivo: se a linha falhar, o arquivo continua acessível.
+        const { error } = await (supabase as any).from("prestacao_comprovantes").delete().eq("id", comprovante.id);
+        if (error) throw new Error(error.message);
+        await supabase.storage.from("documentos").remove([comprovante.storage_path]);
+        fetch();
+      },
+    });
   }
 
   async function getUrl(path: string) {
-    const { data } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
+    setErroLista("");
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    else setErroLista(`Não foi possível abrir o arquivo${error ? `: ${error.message}` : ""}.`);
   }
 
   async function mudarStatus(compId: string, status: StatusComprovante) {
-    await (supabase as any).from("prestacao_comprovantes").update({ status }).eq("id", compId);
+    setErroLista("");
+    const { error } = await (supabase as any).from("prestacao_comprovantes").update({ status }).eq("id", compId);
+    if (error) setErroLista(`Não foi possível mudar o status: ${error.message}`);
     fetch();
   }
 
@@ -480,6 +501,13 @@ export default function ComprovantesPage() {
           </p>
         </div>
 
+        {erroLista && (
+          <p role="alert" className="mx-5 mt-4 px-3 py-2 rounded border text-[0.6875rem]"
+            style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+            {erroLista}
+          </p>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="w-4 h-4 border-2 border-black/10 border-t-[#7259B5] rounded-full animate-spin" />
@@ -567,6 +595,7 @@ export default function ComprovantesPage() {
                     </Select>
                     <button
                       onClick={() => excluir(c)}
+                      aria-label={`Excluir comprovante ${c.nome_arquivo}`}
                       className="p-1.5 rounded hover:bg-[#D94E4E]/10 text-black/20 hover:text-[#D94E4E] transition"
                     >
                       <X size={12} />

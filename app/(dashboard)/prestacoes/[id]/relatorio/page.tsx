@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoItem, PrestacaoComprovante } from "@/lib/supabase/types";
+import { executadoPorItem, executadoSemRubrica, totalExecutado } from "@/lib/prestacao/execucao";
 
 type View = "metas" | "itens" | "sintetico" | "analitico";
 
@@ -52,9 +53,14 @@ export default function RelatorioPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  // Executado = comprovantes aceitos (valor_realizado nunca foi calculado no banco).
   const aceitos = comprovantes.filter(c => c.status === "aceito");
+  const executadoItem = executadoPorItem(comprovantes);
+  const semRubrica = executadoSemRubrica(comprovantes);
+  const aceitosSemRubrica = aceitos.filter(c => !c.item_id).length;
   const totalAprovado = itens.reduce((s, i) => s + i.valor_aprovado, 0);
-  const totalRealizado = itens.reduce((s, i) => s + i.valor_realizado, 0);
+  const totalRealizadoItens = itens.reduce((s, i) => s + (executadoItem.get(i.id) ?? 0), 0);
+  const totalRealizado = totalExecutado(comprovantes);
 
   // Sintético: agrupado por rubrica
   const sintetico = itens.map(item => {
@@ -116,22 +122,21 @@ export default function RelatorioPage() {
                   </thead>
                   <tbody>
                     {itens.map((item, i) => {
-                      const compsAceitos = aceitos.filter(c => c.item_id === item.id);
-                      const qtdExec = compsAceitos.length;
-                      const pctFis = pct(qtdExec, qtdExec > 0 ? qtdExec : 0);
-                      const pctFin = pct(item.valor_realizado, item.valor_aprovado);
-                      const saldo = item.valor_aprovado - item.valor_realizado;
+                      // Quantidades físicas só existem a partir das metas (fase 3).
+                      const executado = executadoItem.get(item.id) ?? 0;
+                      const pctFin = pct(executado, item.valor_aprovado);
+                      const saldo = item.valor_aprovado - executado;
                       return (
                         <tr key={item.id} className="hover:bg-black/[.015] transition border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                           <td className="px-4 py-3">
                             <p className="font-semibold text-black">{i + 1} - {item.rubrica}</p>
                             {item.descricao && <p className="text-[0.625rem] text-black/35 mt-0.5">{item.descricao}</p>}
                           </td>
-                          <td className="px-4 py-3 text-black/50 tabular-nums">{compsAceitos.length > 0 ? `${compsAceitos.length},00` : "—"}</td>
-                          <td className="px-4 py-3 text-black/50 tabular-nums">{qtdExec},00</td>
-                          <td className="px-4 py-3"><PctBar value={qtdExec > 0 ? 100 : 0} /></td>
+                          <td className="px-4 py-3 text-black/25">—</td>
+                          <td className="px-4 py-3 text-black/25">—</td>
+                          <td className="px-4 py-3"><PctBar value={null} /></td>
                           <td className="px-4 py-3 text-black/60 tabular-nums font-medium">{fmt(item.valor_aprovado)}</td>
-                          <td className="px-4 py-3 tabular-nums font-semibold" style={{ color: pctFin !== null && pctFin > 100 + item.tolerancia_pct ? "#D94E4E" : "#2E8932" }}>{fmt(item.valor_realizado)}</td>
+                          <td className="px-4 py-3 tabular-nums font-semibold" style={{ color: pctFin !== null && pctFin > 100 + item.tolerancia_pct ? "#D94E4E" : "#2E8932" }}>{fmt(executado)}</td>
                           <td className="px-4 py-3"><PctBar value={pctFin} tol={item.tolerancia_pct} /></td>
                           <td className="px-4 py-3 tabular-nums" style={{ color: saldo < 0 ? "#D94E4E" : "rgba(13,13,13,.50)" }}>{fmt(saldo)}</td>
                         </tr>
@@ -142,9 +147,9 @@ export default function RelatorioPage() {
                     <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
                       <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50" colSpan={4}>Total</td>
                       <td className="px-4 py-2.5 text-[0.75rem] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
-                      <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums" style={{ color: "#2E8932" }}>{fmt(totalRealizado)}</td>
-                      <td className="px-4 py-2.5"><PctBar value={pct(totalRealizado, totalAprovado)} /></td>
-                      <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums text-black/50">{fmt(totalAprovado - totalRealizado)}</td>
+                      <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums" style={{ color: "#2E8932" }}>{fmt(totalRealizadoItens)}</td>
+                      <td className="px-4 py-2.5"><PctBar value={pct(totalRealizadoItens, totalAprovado)} /></td>
+                      <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums text-black/50">{fmt(totalAprovado - totalRealizadoItens)}</td>
                     </tr>
                   </tfoot>
                 </table>
@@ -175,7 +180,7 @@ export default function RelatorioPage() {
                       <table className="w-full text-[0.75rem]">
                         <thead>
                           <tr style={{ background: "#F9F9F8" }}>
-                            {["Item", "Qtde. aprovada", "Qtde. executada", "%", "Vl. aprovado", "Vl. executado", "%", "Saldo"].map((h, index) => (
+                            {["Documento", "Data", "Tipo", "Valor"].map((h, index) => (
                               <th key={`${h}-${index}`} className="px-4 py-2 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/25 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.06)" }}>{h}</th>
                             ))}
                           </tr>
@@ -187,15 +192,10 @@ export default function RelatorioPage() {
                               <tr key={c.id} className="border-b last:border-0 hover:bg-black/[.015]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                                 <td className="px-4 py-2.5">
                                   <p className="font-medium text-black/80">{c.descricao_servico || c.nome_arquivo}</p>
-                                  <p className="text-[0.625rem] text-black/35">{c.tipo}</p>
                                 </td>
-                                <td className="px-4 py-2.5 text-black/40 tabular-nums">1,00</td>
-                                <td className="px-4 py-2.5 text-black/40 tabular-nums">1,00</td>
-                                <td className="px-4 py-2.5"><PctBar value={100} /></td>
-                                <td className="px-4 py-2.5 text-black/50 tabular-nums">{fmt(val)}</td>
+                                <td className="px-4 py-2.5 text-black/50 whitespace-nowrap tabular-nums">{fmtDate(c.data_doc)}</td>
+                                <td className="px-4 py-2.5 text-[0.625rem] text-black/45">{c.tipo}</td>
                                 <td className="px-4 py-2.5 font-semibold tabular-nums" style={{ color: "#2E8932" }}>{fmt(val)}</td>
-                                <td className="px-4 py-2.5"><PctBar value={100} /></td>
-                                <td className="px-4 py-2.5 tabular-nums text-black/35">{fmt(0)}</td>
                               </tr>
                             );
                           })}
@@ -237,7 +237,16 @@ export default function RelatorioPage() {
                         <td className="px-4 py-3 tabular-nums" style={{ color: item.valor_aprovado - total < 0 ? "#D94E4E" : "rgba(13,13,13,.45)" }}>{fmt(item.valor_aprovado - total)}</td>
                       </tr>
                     ))}
-                    {sintetico.every(s => s.qtd === 0) && (
+                    {aceitosSemRubrica > 0 && (
+                      <tr className="border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+                        <td className="px-4 py-3 text-[0.6875rem] italic text-black/45">Aceitos sem rubrica</td>
+                        <td className="px-4 py-3 text-black/50 tabular-nums">{aceitosSemRubrica}</td>
+                        <td className="px-4 py-3 font-semibold tabular-nums" style={{ color: "#B07A14" }}>{fmt(semRubrica)}</td>
+                        <td className="px-4 py-3 text-black/25">—</td>
+                        <td className="px-4 py-3 text-black/25">—</td>
+                      </tr>
+                    )}
+                    {aceitos.length === 0 && (
                       <tr><td colSpan={5} className="px-5 py-8 text-center text-[0.6875rem] text-black/30">Nenhum comprovante aceito cadastrado.</td></tr>
                     )}
                   </tbody>
