@@ -748,7 +748,7 @@ Estimativas em semanas de uma pessoa full-stack.
 
 ## 15. Testes
 
-- **Unitários por checagem** (`tests/prestacao/*.test.ts`, com o `tsx --test` já usado): casos positivos e negativos montados a partir dos exemplos dos manuais (ex.: complementação de R$ 100 mil com R$ 50 mil captados; agenciamento de R$ 100 mil autorizados e R$ 80 mil captados = teto de R$ 8 mil; ação formativa de 600 pessoas = 60).
+- **Unitários por checagem** (`tests/prestacao-*.test.ts`, com o `tsx --test` já usado): casos positivos e negativos montados a partir dos exemplos dos manuais (ex.: complementação de R$ 100 mil com R$ 50 mil captados; agenciamento de R$ 100 mil autorizados e R$ 80 mil captados = teto de R$ 8 mil; ação formativa de 600 pessoas = 60).
 - **Prazos**: dias corridos e úteis com feriados, marcos de cada regime e o "prazo que vence por último" da ANCINE.
 - **Conciliação**: extratos de exemplo com tarifas, rendimentos, estornos e pagamentos parcelados.
 - **RLS**: pessoa de outra organização, colega da mesma organização com papéis diferentes, anônimo.
@@ -792,7 +792,7 @@ Estimativas em semanas de uma pessoa full-stack.
 - `app/api/prestacoes/[id]/verificar/route.ts`, `.../exportar/route.ts`
 - `app/(dashboard)/prestacoes/[id]/financeiro/`, `objeto/`, `pendencias/`, `envio/`, `pos-envio/`, `historico/`
 - `components/prestacao/` (árvore de orçamento, tela de conciliação, cartão de verificação, checklist de envio)
-- `tests/prestacao/`
+- `tests/prestacao-*.test.ts` (na raiz de `tests/`; ver o plano de implementação)
 
 ### Modificar
 

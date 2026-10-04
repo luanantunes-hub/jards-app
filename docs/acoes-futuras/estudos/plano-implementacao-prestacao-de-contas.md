@@ -10,6 +10,24 @@
 - "Aceite" é o que precisa ser verdade para o PR ser aprovado.
 - Os números de linha citados são do `main` de 01/10/2026 (commit `b5128bf`).
 
+## Andamento
+
+Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`.
+
+| Entrega | Situação | O que falta para valer em produção |
+|---|---|---|
+| P0.3 Arquivos no caminho da organização | Feita (`2e5d186`) | Rodar `npx tsx scripts/prestacao-migrar-arquivos.ts` (ensaio) e depois com `--live`, com acesso ao banco |
+| P0.4 Funções de IA com autorização | Feita (`c64f0f2`) | Publicar as funções: `supabase functions deploy extrair-comprovante importar-orcamento` |
+| P0.10 Correções no módulo, parte de tela | Feita (`356941e`) | Nada; a parte de banco (status por função, log na criação) espera o acesso ao banco |
+| P0.1, P0.2, P0.5 a P0.9 | Não iniciadas | Pré-requisitos 1 a 4 |
+
+Ajustes de rota no que já foi feito:
+- O executado provisório (P0.10) é calculado no app (`lib/prestacao/execucao.ts`) em vez de uma view, para não depender de migration.
+- A lista de prestações já filtra pela organização atual, como o modal de criação no `main` (parte de app da P0.2).
+- Na P0.4 o CORS continuou aberto: a autorização é pelo token no cabeçalho, sem cookie, então restringir a origem não protege nada e quebraria o uso local.
+- Os testes ficam em `tests/prestacao-*.test.ts`, na raiz de `tests/`: o `npm test` passa o padrão `tests/**/*.test.ts` pelo shell, e uma subpasta faria os testes da raiz deixarem de rodar.
+- O comportamento da autorização das funções tem teste em Deno (`supabase/functions/_shared/prestacao-acesso.test.ts`), que o CI ainda não roda.
+
 ---
 
 ## 1. Ponto de partida
@@ -111,7 +129,7 @@ Objetivo: o módulo atual passa a ser seguro, isolado por organização, com arq
 ### P0.4 — Edge functions com autorização (2 dias)
 
 - `extrair-comprovante` e `importar-orcamento`: ler o cabeçalho `Authorization`, validar o usuário, chamar `can_access_prestacao(prestacao_id)` com o cliente do usuário, exigir que `storage_path` comece por `{orgId}/prestacoes/{prestacao_id}/`; só então baixar com a chave de serviço. `prestacao_id` obrigatório nas duas.
-- `verify_jwt = true` nas duas em `supabase/config.toml`; CORS restrito ao domínio do app.
+- `verify_jwt = true` nas duas em `supabase/config.toml`.
 - `importar-orcamento`: erro claro quando falta `GOOGLE_AI_API_KEY`; modelo vindo de `GOOGLE_AI_MODEL`, como na outra função. Adicionar a variável ao `.env.example`.
 - Teste de texto: as duas funções validam o usuário e o acesso antes do download.
 - **Aceite:** chamada sem token, com token de outra organização ou com caminho de outra prestação devolve 401/403.
@@ -165,7 +183,7 @@ Objetivo: o módulo atual passa a ser seguro, isolado por organização, com arq
 - Status por função `fn_prestacao_mudar_status(prestacao_id, novo_status, comentario)`: confere a transição (mapa de `[id]/page.tsx:37-44`) e o papel, grava status e log na mesma transação. Gatilho grava o primeiro log na criação.
 - Aceite e recusa de comprovante passam a gravar quem e quando.
 - Tirar da tela as regras erradas (seção 3.2 do estudo) até o motor de checagens existir: alerta de 20% de pessoa física, tolerância padrão de 15%, "20% gratuito", e as quantidades fixas do relatório (passam a "—").
-- `valor_realizado` provisório: view `prestacao_itens_execucao` somando os comprovantes aceitos por item. Na fase 2 ela é substituída pelos pagamentos conciliados.
+- `valor_realizado` provisório: soma dos comprovantes aceitos por item, calculada no app (`lib/prestacao/execucao.ts`). Na fase 2 ela é substituída pelos pagamentos conciliados.
 - Tratar erros em todas as escritas das telas atuais; exclusões pelo `useDeleteConfirm()`.
 - **Aceite:** nenhum número de regra sem fonte na tela; status não muda sem log.
 
@@ -289,11 +307,11 @@ Com duas pessoas, o caminho crítico é 0 → 1 → 2 → 4 (piloto). Em paralel
 
 | Tipo | Onde | O que cobre | Quando roda |
 |---|---|---|---|
-| Unitário | `tests/prestacao/*.test.ts` | Prazos, conciliação, checagens, schema dos regimes, caminhos de arquivo, lógica de módulo | `npm test`, CI |
+| Unitário | `tests/prestacao-*.test.ts` | Prazos, conciliação, checagens, schema dos regimes, caminhos de arquivo, lógica de módulo | `npm test`, CI |
 | Contrato SQL | `tests/prestacao-schema.test.ts` e outros | Toda tabela com RLS; funções com `search_path`; seed igual à fonte; webhook igual nos dois arquivos | `npm test`, CI |
 | RLS | `supabase/tests/*.test.sql` | Acesso por organização, papel e módulo, nas tabelas e no bucket | `supabase test db`; CI quando a cadeia de migrations subir do zero |
 | Fluxo | `e2e/authenticated/prestacao-*.spec.ts` | Criação guiada, upload, mudança de status, acesso por tipo de usuário | Local e antes de cada liberação |
-| Saídas | `tests/prestacao/saidas/` | Arquivos gerados comparados com referências sobre os modelos oficiais | `npm test` |
+| Saídas | `tests/prestacao-saidas-*.test.ts` | Arquivos gerados comparados com referências sobre os modelos oficiais | `npm test` |
 
 Os dados de teste dos e2e usam o prefixo de `e2e/helpers/supabaseAdmin.ts` e são apagados ao fim.
 
