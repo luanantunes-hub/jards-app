@@ -29,3 +29,8 @@ test("contratos, entregas e ativações destacam Clientes no menu", () => {
   assert.equal(itemAtivoDoMenu("/ativacoes/abc"), "/contas-patrocinio");
   assert.equal(itemAtivoDoMenu("/captacoes/abc"), "/captacoes/abc");
 });
+
+test("rotas da prestação usam o título do módulo", () => {
+  assert.equal(tituloDaPagina("/prestacoes"), "Prestações — Jards");
+  assert.equal(tituloDaPagina("/prestacoes/abc/comprovantes"), "Prestações — Jards");
+});
