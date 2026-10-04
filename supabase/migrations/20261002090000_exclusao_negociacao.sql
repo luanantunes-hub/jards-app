@@ -2,48 +2,38 @@
 -- sempre que ela tinha atividades, notas, propostas, cotas ou tarefas ligadas:
 -- essas chaves estrangeiras foram criadas sem ON DELETE.
 --
--- Esses registros têm vida própria fora da negociação (histórico da empresa,
--- proposta e cota do projeto), então passam a ser apenas desvinculados.
+-- A regra muda sem mexer nas chaves: antes de a negociação sair, um trigger
+-- desvincula esses registros, que têm vida própria fora dela (histórico da
+-- empresa, proposta e cota do projeto). Nenhum dado é apagado além do que já
+-- saía junto com a negociação.
 -- A venda registrada continua impedindo a exclusão (ON DELETE RESTRICT em
 -- vendas_patrocinio): uma negociação vendida faz parte do histórico do cliente.
 -- Esta migration é idempotente.
 
-do $$
-declare
-  r record;
+-- Recalcular a próxima prospecção de uma negociação que está saindo alteraria
+-- a própria linha em exclusão, e o Postgres recusa o DELETE.
+create or replace function public.fn_sync_captacao_proximo_followup(p_captacao_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $function$
 begin
-  for r in
-    select c.conname, c.conrelid::regclass as tabela
-    from pg_constraint c
-    join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
-    where c.contype = 'f'
-      and c.confrelid = 'public.captacoes'::regclass
-      and array_length(c.conkey, 1) = 1
-      and a.attname = 'captacao_id'
-      and not a.attnotnull
-      and c.confdeltype = 'a' -- NO ACTION: criada sem ON DELETE
-      and c.conrelid::regclass = any (array[
-        to_regclass('public.atividades'),
-        to_regclass('public.notas'),
-        to_regclass('public.propostas'),
-        to_regclass('public.cotas_patrocinio'),
-        to_regclass('public.tarefas'),
-        to_regclass('public.editais_inscritos')
-      ])
-  loop
-    execute format('alter table %s drop constraint %I', r.tabela, r.conname);
-    execute format(
-      'alter table %s add constraint %I foreign key (captacao_id) references public.captacoes(id) on delete set null',
-      r.tabela, r.conname
-    );
-  end loop;
-end $$;
+  if p_captacao_id is null then return; end if;
+  if p_captacao_id::text = current_setting('jards.captacao_em_exclusao', true) then return; end if;
+  update public.captacoes c
+  set proxima_prospeccao = (
+    select min(f.previsto_para)::date
+    from public.crm_followups f
+    where f.captacao_id = p_captacao_id and f.status = 'pendente'
+  )
+  where c.id = p_captacao_id;
+end;
+$function$;
 
--- Antes de a negociação sair: libera a cota que ela apenas reservava e remove
--- follow-ups cujo único contexto era ela. Desvincular esses follow-ups violaria
--- crm_followups_contexto_check e travaria a exclusão com outro erro.
 -- SECURITY DEFINER: a pessoa que pode excluir a negociação nem sempre pode
--- editar a cota do projeto; o efeito fica restrito às linhas desta negociação.
+-- editar a atividade de outra pessoa ou a cota do projeto; o efeito fica
+-- restrito às linhas desta negociação.
 create or replace function public.preparar_exclusao_captacao()
 returns trigger
 language plpgsql
@@ -51,24 +41,42 @@ security definer
 set search_path = public
 as $$
 begin
+  perform set_config('jards.captacao_em_exclusao', old.id::text, true);
+
+  update public.atividades        set captacao_id = null where captacao_id = old.id;
+  update public.notas             set captacao_id = null where captacao_id = old.id;
+  update public.propostas         set captacao_id = null where captacao_id = old.id;
+  update public.tarefas           set captacao_id = null where captacao_id = old.id;
+  update public.editais_inscritos set captacao_id = null where captacao_id = old.id;
+
+  -- A cota que a negociação apenas reservava volta a ficar disponível.
   update public.cotas_patrocinio
-     set status = 'disponivel',
-         captacao_id = null
-   where captacao_id = old.id
-     and status = 'reservada';
+     set captacao_id = null,
+         status = case when status = 'reservada' then 'disponivel' else status end
+   where captacao_id = old.id;
 
-  delete from public.crm_followups
+  -- Follow-up pendente cujo único contexto era a negociação passa para a
+  -- empresa ou o cliente dela; sem nenhum dos dois, fica no histórico como
+  -- cancelado. Sem isso, crm_followups_contexto_check travaria a exclusão.
+  update public.crm_followups
+     set captacao_id = null,
+         empresa_crm_id = old.empresa_crm_id,
+         conta_patrocinio_id = old.conta_patrocinio_id,
+         status = case
+           when old.empresa_crm_id is null and old.conta_patrocinio_id is null then 'cancelado'
+           else status
+         end
    where captacao_id = old.id
-     and empresa_crm_id is null
-     and conta_patrocinio_id is null;
+     and status = 'pendente'
+     and num_nonnulls(empresa_crm_id, conta_patrocinio_id, proponente_id) = 0;
 
+  perform set_config('jards.captacao_em_exclusao', '', true);
   return old;
 end;
 $$;
 
 revoke all on function public.preparar_exclusao_captacao() from public, anon, authenticated;
 
-drop trigger if exists trg_preparar_exclusao_captacao on public.captacoes;
-create trigger trg_preparar_exclusao_captacao
+create or replace trigger trg_preparar_exclusao_captacao
   before delete on public.captacoes
   for each row execute function public.preparar_exclusao_captacao();
