@@ -392,6 +392,14 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Funções que leem arquivos da prestação: exigem o token de quem chama.
+# A autorização completa fica em functions/_shared/prestacao-acesso.ts.
+[functions.extrair-comprovante]
+verify_jwt = true
+
+[functions.importar-orcamento]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

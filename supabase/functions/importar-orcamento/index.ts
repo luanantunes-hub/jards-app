@@ -1,9 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { autorizarArquivoDaPrestacao, corsHeaders } from "../_shared/prestacao-acesso.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,12 +6,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { storage_path } = await req.json() as { storage_path: string };
+    const { storage_path, prestacao_id } = await req.json() as { storage_path: string; prestacao_id: string };
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    // Confere quem chama antes de usar a chave de serviço.
+    const acesso = await autorizarArquivoDaPrestacao(req, {
+      prestacaoId: prestacao_id,
+      storagePath: storage_path,
+      pastas: ["orcamento"],
+    });
+    if (!acesso.ok) return acesso.resposta;
+    const supabase = acesso.admin;
 
     // Baixa o PDF do Storage
     const { data: fileData, error: dlErr } = await supabase.storage
@@ -37,8 +36,15 @@ Deno.serve(async (req) => {
     const base64 = btoa(binary);
 
     const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: "GOOGLE_AI_API_KEY não configurada" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const model = Deno.env.get("GOOGLE_AI_MODEL") || "gemini-2.5-flash";
     const geminiUrl =
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
     const prompt = `Este documento é um orçamento de projeto cultural (planilha ou tabela de rubricas).
 Extraia todas as rubricas orçamentárias e retorne APENAS um array JSON, sem markdown, sem explicação:
