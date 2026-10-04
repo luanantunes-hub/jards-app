@@ -12,7 +12,7 @@
 
 ## Andamento
 
-Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 95 passando no `npm test`.
+Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 97 passando no `npm test`.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
@@ -31,7 +31,7 @@ Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 95 
 O acesso de leitura ao projeto `ykaymbmybellixxvtasi` foi liberado. O que a leitura mostrou:
 
 - **Falha de segurança corrigida em 04/10/2026, com aprovação.** Sete das nove tabelas da prestação tinham a regra `using (true)`: qualquer conta logada lia, alterava e apagava prestações de todas as organizações. A migration `20261001210000_corrigir_acessos_abertos` estava no repositório, mas nunca tinha sido aplicada. Ela foi aplicada pelo `execute_sql`, porque o `apply_migration` e os comandos com `DROP` travavam no conector; `ALTER POLICY` entrou no lugar de `DROP/CREATE`. Ficou registrada no histórico como `20261004120000 corrigir_acessos_abertos`. Verificação: uma conta sem vínculo vê 0 prestações, 0 itens e 0 comprovantes; quem criou continua vendo tudo. Itens 4 e 5 também aplicados: visitantes não executam mais as 71 funções privilegiadas (exceto as 4 necessárias), e as 10 funções sem `search_path` ganharam um. O item 2 (`profiles`) já estava em vigor.
-- **Outro vazamento entre organizações, fora da prestação:** as regras de `crm_interacoes`, `crm_followups` e `crm_duvidas` comparam `om.organization_id = om.organization_id`, o que é sempre verdade. Elas não estão em nenhuma migration do repositório. Correção proposta: `om.organization_id = <tabela>.organization_id`.
+- **Outro vazamento entre organizações, fora da prestação, corrigido em 04/10/2026 com aprovação:** as regras de `crm_interacoes`, `crm_followups` e `crm_duvidas` (criadas em `20260828000010`) comparavam a organização do membro com ela mesma. Um membro de uma organização com 1 interação via 23 e mais 13 follow-ups de outras organizações. `20261004140000_crm_politicas_por_organizacao.sql` corrigiu, e depois disso a mesma pessoa vê só a da própria organização. Um teste impede o padrão em migrations novas.
 - **O banco calcula `valor_realizado`** por gatilho, ao contrário do que o código sugeria e do que eu registrei na P0.10. Os gatilhos agora estão versionados na migration de base.
 - **O enum `tipo_comprovante` não aceitava 7 tipos que a tela oferece** (RPA, extrato, invoice, folha, guia, cartão de embarque, print).
 - **As migrations divergem de produção nos dois sentidos.** Há migrations do repositório nunca aplicadas e mudanças de produção que não estão no repositório. O histórico de produção usa versões próprias: não usar `supabase db push` sem antes reconciliar.
