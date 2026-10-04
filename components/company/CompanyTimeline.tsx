@@ -157,7 +157,7 @@ export function CompanyTimeline({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         supabase
           .from("editais_user")
-          .select("id, titulo, status, created_at")
+          .select("id, status, created_at, projeto:projetos_crm!projeto_id(nome)")
           .eq("empresa_crm_id", empresaCrmId)
           .order("created_at", { ascending: false })
           .limit(30) as any
@@ -205,7 +205,7 @@ export function CompanyTimeline({
     const inscricoes = ((inscRes.data ?? []) as any[]).map(e => ({
       tipo: "inscricao" as const,
       atividade_tipo: "inscricao",
-      titulo: `Inscrição: ${e.titulo || "Edital sem título"}`,
+      titulo: e.projeto?.nome ? `Inscrição: ${e.projeto.nome}` : "Inscrição",
       descricao: `Status: ${EDITAL_STATUS_LABEL[e.status] || e.status}`,
       data: e.created_at,
       usuario: null,

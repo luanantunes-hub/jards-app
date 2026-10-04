@@ -95,7 +95,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
     setCaptador(captadorData);
 
     const negociacoesSelect = "id,titulo,status,valor_solicitado,potencial_fechamento,proxima_prospeccao,data_previsao,created_at,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)";
-    const inscricoesSelect = "id,titulo,status,created_at,valor,data_fechamento,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)";
+    const inscricoesSelect = "id,status,created_at,valor,data_fechamento,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)";
     const inscricoesFiltro = captadorData.user_id
       ? `and(responsavel_tipo.eq.agencia,responsavel_id.eq.${id}),and(responsavel_tipo.eq.membro,responsavel_id.eq.${captadorData.user_id})`
       : `and(responsavel_tipo.eq.agencia,responsavel_id.eq.${id})`;

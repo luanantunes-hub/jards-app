@@ -43,7 +43,6 @@ export type EditDataInscricao = {
   projeto_id: string | null;
   projeto_nome: string | null;
   cota_id?: string | null;
-  titulo: string | null;
   lei?: string | null;
   valor: number | null;
   status: StatusEdital;
@@ -79,7 +78,7 @@ function DateField({ label, value, onChange }: { label: string; value: string; o
   );
 }
 
-export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPreId, empresaPubId, statusPre, potentialPre, tituloPre, leiPre, dataAberturaPre, dataFechamentoPre, editData, initialProjetoId, initialProjetoNome }: {
+export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPreId, empresaPubId, statusPre, potentialPre, leiPre, dataAberturaPre, dataFechamentoPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
   onSaved: (id?: string) => void;
   nomePreEmpresa?: string;
@@ -87,7 +86,6 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   empresaPubId?: string;
   statusPre?: StatusEdital;
   potentialPre?: PotencialFechamento;
-  tituloPre?: string;
   leiPre?: string;
   dataAberturaPre?: string;
   dataFechamentoPre?: string;
@@ -120,7 +118,6 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   const [criandoEmpresa, setCriandoEmpresa] = useState(false);
   const empresaBoxRef = useRef<HTMLDivElement>(null);
   const empresaMenuPos = usePortalPosition(empresaBoxRef, empresaOpen);
-  const [titulo, setTitulo]               = useState(editData?.titulo ?? tituloPre ?? "");
   const [lei, setLei]                     = useState(editData?.lei ?? leiPre ?? "");
   const [projetoId, setProjetoId]         = useState(editData?.projeto_id ?? initialProjetoId ?? "");
   const [projetoSearch, setProjetoSearch] = useState(editData?.projeto_nome ?? initialProjetoNome ?? "");
@@ -345,7 +342,6 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
       empresa_id:      empresaPubId   || null,
       projeto_id:      projetoId      || null,
       cota_id:         cotaId         || null,
-      titulo:          titulo.trim()  || null,
       lei:             lei            || null,
       valor:           valorNegociado ?? cotaSelecionada?.valor ?? editData?.valor ?? null,
       status,
@@ -465,21 +461,6 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   )}
                 </PortalMenu>
               )}
-            </div>
-
-            {/* Título do edital */}
-            <div>
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Título do edital</label>
-              <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
-                <FolderOpen size={13} className="text-black/35 flex-shrink-0" />
-                <input
-                  type="text"
-                  placeholder="Nome do edital / chamada pública"
-                  value={titulo}
-                  onChange={e => setTitulo(e.target.value)}
-                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
-                />
-              </div>
             </div>
 
             {/* Tipo de patrocínio */}

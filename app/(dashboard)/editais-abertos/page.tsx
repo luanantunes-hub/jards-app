@@ -386,7 +386,6 @@ export default function EditaisAbertosPage() {
     <div className="px-4 py-6 md:px-8 md:py-8" ref={topRef}>
       {showInscricaoModal && selectedEdital && (
         <NovaInscricaoModal
-          tituloPre={selectedEdital.titulo ?? ""}
           dataAberturaPre={selectedEdital.data_abertura ?? ""}
           dataFechamentoPre={selectedEdital.data_fechamento ?? ""}
           nomePreEmpresa={selectedEdital.empresas?.nome}

@@ -838,7 +838,6 @@ export interface EditalUser {
   projeto_id: string | null;
   cota_id: string | null;
   contato_id: string | null;
-  titulo: string | null;
   lei: string | null;
   valor: number | null;
   site: string | null;

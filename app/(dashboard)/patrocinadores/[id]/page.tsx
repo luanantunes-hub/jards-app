@@ -54,7 +54,6 @@ type CaptacaoItem = {
 
 type EditaiUserItem = {
   id: string;
-  titulo: string | null;
   status: string;
   projeto: { nome: string } | null;
 };
@@ -589,7 +588,7 @@ export default function PatrocinadorPage() {
     if (newCrmId) setEmpresaCrmId(newCrmId);
     const { data: euData } = await (supabase as any)
       .from("editais_user")
-      .select("id, titulo, status")
+      .select("id, status, projeto:projetos_crm!projeto_id(nome)")
       .eq("empresa_id", id)
       .order("created_at", { ascending: false });
     setEditaisUser(euData ?? []);
@@ -643,7 +642,7 @@ export default function PatrocinadorPage() {
       setEmpresaCrmId(crmId);
       const { data: euData } = await (supabase as any)
         .from("editais_user")
-        .select("id, titulo, status, projeto:projetos_crm!projeto_id(nome)")
+        .select("id, status, projeto:projetos_crm!projeto_id(nome)")
         .eq("empresa_id", id)
         .order("created_at", { ascending: false });
       setEditaisUser(euData ?? []);
@@ -910,7 +909,6 @@ export default function PatrocinadorPage() {
           nomePreEmpresa={empresa?.nome}
           empresaPreId={empresaCrmId ?? undefined}
           empresaPubId={id}
-          tituloPre={inscricaoEdital?.titulo ?? ""}
           dataAberturaPre={inscricaoEdital?.data_abertura ?? ""}
           dataFechamentoPre={inscricaoEdital?.data_fechamento ?? ""}
           onClose={() => { setShowInscricaoModal(false); setInscricaoEdital(null); }}
@@ -1295,7 +1293,7 @@ export default function PatrocinadorPage() {
                           >
                             <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "white", border: "1px solid #2D72B040", color: "#2D72B0" }}>Edital</span>
                             <p className="text-[0.6875rem] font-medium text-black/70 truncate flex-1 min-w-0">
-                              {e.projeto?.nome ?? e.titulo ?? "Sem título"}
+                              {e.projeto?.nome ?? "Sem projeto"}
                             </p>
                             <StatusBadge status={e.status} label={se.label} bg={se.text} iconName={se.iconName} size="sm" />
                           </button>

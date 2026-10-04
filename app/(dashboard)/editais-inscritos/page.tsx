@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Plus, FileCheck, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Search, Plus, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -29,7 +29,6 @@ import { escalaUi } from "@/lib/escala-ui";
 
 type EditalInscrito = {
   id: string;
-  titulo: string | null;
   lei: string | null;
   valor: number | null;
   data_abertura: string | null;
@@ -49,7 +48,6 @@ type EditalInscrito = {
   responsavel_nome: string | null;
   ciclo_ano: number | null;
   ciclo_anterior_id: string | null;
-  editais: { titulo: string | null } | null;
   empresas: { nome: string; logo_url: string | null; site: string | null } | null;
   empresas_crm: { nome: string; domain_key: string | null; site: string | null } | null;
   projetos_crm: { nome: string; identidade_tipo: "padrao" | "icone" | "emoji" | "logo" | null; identidade_valor: string | null; identidade_logo_url: string | null; identidade_cor: string | null } | null;
@@ -59,10 +57,9 @@ type ViewMode = "list" | "kanban" | "potential";
 type AtividadeIndicador = { nome: string; atrasada: boolean; dias: number; responsavel: string | null };
 
 const EDITAIS_SELECT = `
-  id, titulo, lei, valor, data_abertura, data_fechamento, data_resultado,
+  id, lei, valor, data_abertura, data_fechamento, data_resultado,
   status, prioridade, potencial_fechamento, created_at, updated_at, site, empresa_crm_id, projeto_id, cota_id,
   responsavel_tipo, responsavel_id, responsavel_nome, ciclo_ano, ciclo_anterior_id,
-  editais!edital_pub_id(titulo),
   empresas!empresa_pub_id(nome, logo_url, site),
   empresas_crm!empresa_crm_id(nome, domain_key, site),
   projetos_crm!projeto_id(nome, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor)
@@ -75,7 +72,6 @@ const EDITAIS_SELECT_LEGACY = EDITAIS_SELECT_NO_POTENTIAL.replace("lei, ", "");
 const INSCRICOES_COLUMNS = [
   { id: "projeto",    label: "Projeto",      width: "minmax(10.625rem,1fr)" },
   { id: "empresa",    label: "Empresa",      width: "minmax(11.25rem,1fr)" },
-  { id: "edital",     label: "Edital",       width: "minmax(15rem,1.6fr)", defaultHidden: true },
   { id: "lei",        label: "Tipo de patrocínio", width: "10.3125rem" },
   { id: "responsavel", label: "Responsável", width: "minmax(9.375rem,1fr)" },
   { id: "adicionada", label: "Adicionado em", width: "8.125rem" },
@@ -115,11 +111,16 @@ function fmtValor(v: number | null): string {
   return `R$ ${v}`;
 }
 
+// A inscrição é identificada por empresa e projeto — não há mais um nome próprio.
+function rotuloInscricao(e: Pick<EditalInscrito, "empresas_crm" | "empresas" | "projetos_crm">): string {
+  const empresa = e.empresas_crm?.nome ?? e.empresas?.nome;
+  return [empresa, e.projetos_crm?.nome].filter(Boolean).join(" · ") || "Inscrição";
+}
 
 function SkeletonRow() {
   return (
     <tr style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
-      {Array.from({ length: 16 }).map((_, i) => (
+      {Array.from({ length: 15 }).map((_, i) => (
         <td key={i} className="px-5 py-4">
           <div className="h-3.5 w-20 rounded bg-black/8 animate-pulse" />
         </td>
@@ -211,9 +212,9 @@ export default function EditaisInscritosPage() {
   const [regInscricao,   setRegInscricao]   = useState<EditalInscrito | null>(null);
   const [anotEmpresa,    setAnotEmpresa]     = useState<EditalInscrito | null>(null);
 
-  function handleDelete(id: string, titulo: string) {
+  function handleDelete(id: string, rotulo: string) {
     confirmDelete({
-      title: `Excluir a inscrição “${titulo}”?`,
+      title: `Excluir a inscrição “${rotulo}”?`,
       description: "Esta ação não pode ser desfeita.",
       onConfirm: async () => {
         await excluirPorId(supabase, "editais_user", id);
@@ -325,12 +326,11 @@ export default function EditaisInscritosPage() {
     if (statusFilter !== "todos" && e.status !== statusFilter) return false;
     if (!dSearch.trim()) return true;
     const s       = dSearch.toLowerCase();
-    const titulo  = e.titulo ?? e.editais?.titulo ?? "";
     const empresa = e.empresas_crm?.nome ?? e.empresas?.nome ?? "";
     const projeto = e.projetos_crm?.nome ?? "";
     const responsavel = e.responsavel_nome ?? "";
     const lei = leiOptions.find(option => option.status === e.lei)?.label ?? e.lei ?? "";
-    return titulo.toLowerCase().includes(s) || empresa.toLowerCase().includes(s) || projeto.toLowerCase().includes(s) || responsavel.toLowerCase().includes(s) || lei.toLowerCase().includes(s);
+    return empresa.toLowerCase().includes(s) || projeto.toLowerCase().includes(s) || responsavel.toLowerCase().includes(s) || lei.toLowerCase().includes(s);
   });
 
   function toggleSort(key: string) {
@@ -377,7 +377,7 @@ export default function EditaisInscritosPage() {
   }
 
   function renderPotentialCard(e: EditalInscrito, isDragging: boolean, valuePct?: number, dragHandlers?: { onDragStart: () => void; onDragEnd: () => void }) {
-    const titulo = e.titulo ?? e.editais?.titulo ?? "Sem título";
+    const projeto = e.projetos_crm?.nome ?? "Sem projeto";
     const empresa = e.empresas_crm?.nome ?? e.empresas?.nome ?? "—";
     const atividade = atividadesPorInscricao[e.id];
     return (
@@ -417,7 +417,7 @@ export default function EditaisInscritosPage() {
             </div>
           )}
         </div>
-        <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{titulo}</p>
+        <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{projeto}</p>
         <div className="flex items-center justify-between">
           {e.data_fechamento ? (
             <span className="flex items-center gap-1 text-[0.625rem] text-black/40 font-semibold"><Calendar size={9} />{fmtShortDate(e.data_fechamento)}</span>
@@ -505,7 +505,6 @@ export default function EditaisInscritosPage() {
             responsavel_tipo: editingRecord.responsavel_tipo,
             responsavel_id:   editingRecord.responsavel_id,
             responsavel_nome: editingRecord.responsavel_nome,
-            titulo:           editingRecord.titulo,
             lei:              editingRecord.lei,
             valor:            editingRecord.valor,
             status:           editingRecord.status,
@@ -555,7 +554,7 @@ export default function EditaisInscritosPage() {
       <ListPageHeader eyebrow="Operação de editais" title="Inscrições" summary={!loading&&<><ListSummary strong={filtered.length}>registros</ListSummary><ListSummary strong={countByStatus('aprovado')} tone="#2E8932">aprovados</ListSummary><ListSummary strong={countByStatus('em_analise')} tone="#B07A14">em análise</ListSummary></>} actions={<><ViewToggle view={view} onChange={setView}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Nova inscrição</PrimaryListAction></>}/>
 
       <div className="flex shrink-0 flex-col gap-3 border-b bg-white px-4 py-3 md:px-8 lg:flex-row lg:items-center" style={{borderColor:"rgba(13,13,13,.06)"}}>
-        <ListSearch value={search} onChange={setSearch} placeholder="Buscar edital, empresa ou projeto"/>
+        <ListSearch value={search} onChange={setSearch} placeholder="Buscar empresa ou projeto"/>
         <div className="flex max-w-full items-center gap-2 overflow-x-auto">
           <button
             type="button"
@@ -590,7 +589,6 @@ export default function EditaisInscritosPage() {
                     {([
                       { label: "Projeto", key: "projeto" },
                       { label: "Empresa", key: "empresa" },
-                      { label: "Edital", key: undefined },
                       { label: "Tipo de patrocínio", key: "lei" },
                       { label: "Responsável", key: "responsavel" },
                       { label: "Adicionado em", key: undefined },
@@ -624,15 +622,15 @@ export default function EditaisInscritosPage() {
                   {loading ? (
                     Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
                   ) : filteredSorted.length === 0 ? (
-                    <tr><td colSpan={16}>{editaisVisiveis.length === 0
+                    <tr><td colSpan={15}>{editaisVisiveis.length === 0
                       ? <ListEmptyState icon={FilePenLine} title="Nenhuma inscrição neste ciclo" description="Acompanhe aqui os editais em que seus projetos estão inscritos, do interesse ao resultado." action={<PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Nova inscrição</PrimaryListAction>} />
                       : <ListEmptyState icon={Search} title="Nenhuma inscrição corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setStatusFilter("todos"); }} />}</td></tr>
                   ) : (
                     filteredSorted.map((e, i) => {
                       const sc      = statusConfig[e.status] ?? statusConfig.inscrito;
-                      const titulo  = e.titulo ?? e.editais?.titulo ?? "Sem título";
                       const empresa = e.empresas_crm?.nome ?? e.empresas?.nome ?? "—";
                       const projeto = e.projetos_crm?.nome ?? "—";
+                      const rotulo  = rotuloInscricao(e);
                       const lei     = e.lei ? leiMap[e.lei] : null;
                       const timing = getInscricaoTiming({
                         status: e.status,
@@ -661,12 +659,6 @@ export default function EditaisInscritosPage() {
                               ) : (
                                 <span className="text-black/60 font-medium text-[0.78125rem] whitespace-nowrap">{empresa}</span>
                               )}
-                            </div>
-                          </td>
-                          <td className="px-5 py-3.5 max-w-[13.75rem]">
-                            <div className="flex items-start gap-2">
-                              <FileCheck size={14} className="text-black/25 flex-shrink-0 mt-0.5" />
-                              <span className="font-medium text-black/70 leading-snug line-clamp-2 text-[0.8125rem]">{titulo}</span>
                             </div>
                           </td>
                           <td className="px-5 py-3.5">
@@ -779,7 +771,7 @@ export default function EditaisInscritosPage() {
                           {/* Excluir */}
                           <td className="px-3 py-3.5">
                             <button
-                              onClick={ev => { ev.stopPropagation(); handleDelete(e.id, titulo); }}
+                              onClick={ev => { ev.stopPropagation(); handleDelete(e.id, rotulo); }}
                               className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E]"
                               title="Excluir"
                             >
@@ -827,7 +819,7 @@ export default function EditaisInscritosPage() {
                       <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={() => { setPreStatus(status); setShowModal(true); }}/>
                     ) : (
                       cards.slice(0, getVisible(status)).map((e) => {
-                        const titulo  = e.titulo ?? e.editais?.titulo ?? "Sem título";
+                        const projeto = e.projetos_crm?.nome ?? "Sem projeto";
                         const empresa = e.empresas_crm?.nome ?? e.empresas?.nome ?? "—";
                         const isGhost = draggingId === e.id;
 
@@ -853,8 +845,8 @@ export default function EditaisInscritosPage() {
                               <ArrowUpRight size={12} className="ml-auto shrink-0 text-black/20 opacity-0 transition group-hover:opacity-100"/>
                             </div>
 
-                            {/* Título */}
-                            <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{titulo}</p>
+                            {/* Projeto */}
+                            <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{projeto}</p>
 
                             {/* Footer */}
                             <div className="flex items-center justify-between">

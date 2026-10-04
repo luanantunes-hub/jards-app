@@ -121,7 +121,7 @@ export function EditarAtividadeModal({
           .limit(50),
         (supabase as any)
           .from("editais_user")
-          .select("id, titulo, edital:editais!edital_pub_id(titulo), empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_pub_id(nome), projeto:projetos_crm!projeto_id(nome)")
+          .select("id, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_pub_id(nome), projeto:projetos_crm!projeto_id(nome)")
           .eq("organization_id", organizationId)
           .order("created_at", { ascending: false })
           .limit(50),
@@ -160,7 +160,7 @@ export function EditarAtividadeModal({
 
       // Dropdown lists
       if (caps) setCaptacoes(caps.map((c: any) => vinculoOpcao(c.id, { titulo: c.titulo, projeto: c.projeto?.nome, empresa: c.empresa_crm?.nome ?? c.empresa?.nome })));
-      if (insc) setInscricoes((insc as any[]).map(i => vinculoOpcao(i.id, { titulo: i.edital?.titulo ?? i.titulo, projeto: i.projeto?.nome, empresa: i.empresa_crm?.nome ?? i.empresa?.nome })));
+      if (insc) setInscricoes((insc as any[]).map(i => vinculoOpcao(i.id, { projeto: i.projeto?.nome, empresa: i.empresa_crm?.nome ?? i.empresa?.nome })));
       if (emps) setEmpresas((emps as any[]).map(e => ({ id: e.id, label: e.nome ?? "Sem nome" })));
       if (projs) setProjetos((projs as any[]).map(p => ({ id: p.id, label: p.nome ?? "Sem nome" })));
       if (capsAgencias) setAgencias((capsAgencias as any[]).map(a => ({ id: a.id, label: a.agencia || a.nome, sublabel: a.agencia ? a.nome : undefined })));

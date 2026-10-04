@@ -37,7 +37,6 @@ const PRIO_META: Record<string, { label: string; color: string; Icon: React.Elem
 
 type InscricaoDetalhe = {
   id: string;
-  titulo: string | null;
   lei: string | null;
   valor: number | null;
   data_abertura: string | null;
@@ -59,7 +58,6 @@ type InscricaoDetalhe = {
   retomada_programada_em: string | null;
   ciclo_programado: number | null;
   retomada_atividade_id: string | null;
-  editais: { titulo: string | null } | null;
   empresas: { nome: string; logo_url: string | null; site: string | null } | null;
   empresas_crm: { nome: string; domain_key: string | null; site: string | null } | null;
   projetos_crm: { nome: string; descricao: string | null; identidade_tipo: "padrao" | "icone" | "emoji" | "logo" | null; identidade_valor: string | null; identidade_logo_url: string | null; identidade_cor: string | null } | null;
@@ -212,11 +210,10 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     const { data: row, error } = await (supabase as any)
       .from("editais_user")
       .select(`
-        id, titulo, lei, valor, data_abertura, data_fechamento, data_resultado,
+        id, lei, valor, data_abertura, data_fechamento, data_resultado,
         status, prioridade, potencial_fechamento, created_at, site, empresa_crm_id, projeto_id, cota_id,
         responsavel_tipo, responsavel_id, responsavel_nome, ciclo_ano, ciclo_anterior_id,
         retomada_programada_em, ciclo_programado, retomada_atividade_id,
-        editais!edital_pub_id(titulo),
         empresas!empresa_pub_id(nome, logo_url, site),
         empresas_crm!empresa_crm_id(nome, domain_key, site),
         projetos_crm!projeto_id(nome, descricao, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor)
@@ -373,8 +370,11 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     return <DetailNotFound title="Inscrição não encontrada" description="Ela pode ter sido removida ou você não tem acesso a ela." backHref="/editais-inscritos" backLabel="Inscrições" />;
   }
 
-  const titulo  = inscricao.titulo ?? inscricao.editais?.titulo ?? "Sem título";
   const empresa = inscricao.empresas_crm?.nome ?? inscricao.empresas?.nome ?? "—";
+  const projetoNome = inscricao.projetos_crm?.nome ?? null;
+  // A inscrição é identificada por projeto e empresa: o projeto vira o título
+  // da página, e a empresa o complemento (ou o próprio título, sem projeto).
+  const titulo = projetoNome ?? empresa;
   const diasFechamento = daysUntil(inscricao.data_fechamento);
 
   const pendentes = atividades.filter(a => !a.feita);
@@ -415,7 +415,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             responsavel_tipo: inscricao.responsavel_tipo,
             responsavel_id:   inscricao.responsavel_id,
             responsavel_nome: inscricao.responsavel_nome,
-            titulo:           inscricao.titulo,
             lei:              inscricao.lei,
             valor:            inscricao.valor,
             status:           inscricao.status,
@@ -517,16 +516,16 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             <div className="min-w-0">
               <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{titulo}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.875rem] text-black/45">
-                {inscricao.empresas_crm?.nome && !inscricao.empresas?.nome ? (
+                {projetoNome && (inscricao.empresas_crm?.nome && !inscricao.empresas?.nome ? (
                   <Link href={`/empresas-crm/${inscricao.empresa_crm_id}`} className="text-sm text-black/45 hover:text-[#7259B5] transition">
                     {empresa}
                   </Link>
                 ) : (
                   <span className="text-sm text-black/45">{empresa}</span>
-                )}
+                ))}
                 {inscricao.ciclo_ano && (
                   <>
-                    <span className="text-black/20">·</span>
+                    {projetoNome && <span className="text-black/20">·</span>}
                     <span className="rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium text-black/40" style={{ borderColor: "rgba(13,13,13,.10)" }}>
                       Ciclo {inscricao.ciclo_ano}
                     </span>
@@ -1008,17 +1007,11 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               </div>
             </div>
 
-            {/* Edital / Site */}
-            {(inscricao.editais?.titulo || inscricao.site) && (
+            {/* Site do edital */}
+            {inscricao.site && (
               <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <h3 className="text-[0.625rem] font-bold uppercase tracking-wide text-black/35 mb-3">Edital</h3>
                 <div className="space-y-2.5">
-                  {inscricao.editais?.titulo && (
-                    <div className="flex items-start gap-2">
-                      <FileCheck size={12} className="text-black/25 flex-shrink-0 mt-0.5" />
-                      <p className="text-[0.75rem] text-black/60 leading-snug">{inscricao.editais.titulo}</p>
-                    </div>
-                  )}
                   {inscricao.site && (
                     <a
                       href={inscricao.site.startsWith("http") ? inscricao.site : `https://${inscricao.site}`}

@@ -51,7 +51,6 @@ type Negotiation = {
 
 type Registration = {
   id: string;
-  titulo: string | null;
   status: string;
   valor: number | null;
   data_fechamento: string | null;
@@ -130,7 +129,7 @@ export function CompanyQuickPanel({ company, onClose }: {
       supabase.from("contatos").select("id,nome,cargo,email,telefone").eq("empresa_crm_id", company.id).order("score", { ascending: false }),
       supabase.from("crm_followups").select("id,titulo,previsto_para").eq("empresa_crm_id", company.id).eq("status", "pendente").order("previsto_para", { ascending: true }).limit(6),
       supabase.from("captacoes").select("id,titulo,status,valor_solicitado,proxima_prospeccao,projeto:projetos_crm!projeto_id(nome)").eq("empresa_crm_id", company.id).order("updated_at", { ascending: false }),
-      supabase.from("editais_user").select("id,titulo,status,valor,data_fechamento,projeto:projetos_crm!projeto_id(nome)").eq("empresa_crm_id", company.id).order("updated_at", { ascending: false }),
+      supabase.from("editais_user").select("id,status,valor,data_fechamento,projeto:projetos_crm!projeto_id(nome)").eq("empresa_crm_id", company.id).order("updated_at", { ascending: false }),
     ]).then(([contactsResult, followupsResult, negotiationsResult, registrationsResult]) => {
       if (!active) return;
       setContacts((contactsResult.data ?? []) as Contact[]);
@@ -226,7 +225,7 @@ export function CompanyQuickPanel({ company, onClose }: {
             <PanelSection title="Inscrições da empresa" count={registrations.length}>
               {registrations.length ? registrations.map(item => (
                 <Link key={item.id} href={`/editais-inscritos/${item.id}`} className="group block border-t border-black/[.06] py-3.5 first:border-0 first:pt-0 last:pb-0">
-                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.titulo || "Inscrição sem título"}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{item.projeto?.nome || "Sem projeto"}{item.data_fechamento ? ` · encerra ${fmtDate(item.data_fechamento)}` : ""}</p></div><StatusPill status={item.status} /></div>
+                  <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.projeto?.nome || "Sem projeto"}</p>{item.data_fechamento && <p className="mt-1 truncate text-[0.625rem] text-black/35">encerra {fmtDate(item.data_fechamento)}</p>}</div><StatusPill status={item.status} /></div>
                   {fmtMoney(item.valor) && <p className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor)}</p>}
                 </Link>
               )) : <Empty copy="Nenhuma inscrição vinculada." />}
