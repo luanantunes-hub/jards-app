@@ -12,7 +12,7 @@
 
 ## Andamento
 
-Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 91 passando no `npm test`.
+Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 95 passando no `npm test`.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
@@ -22,10 +22,24 @@ Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 91 
 | P0.7 Acesso por módulo e bloqueio no servidor | Feita (`48447a7`) | Nada para o que existe hoje; quem não é super admin precisa da prestação liberada em `organizations.modulos_ativos` e `organization_members.modulos_acesso` para abrir `/prestacoes`. O e2e com três tipos de usuário espera a P0.5 |
 | P1.3 Prazos e calendário | Feita (`0fb0697`) | Nada; os feriados locais e o defeso entram quando existir `calendario_regulatorio` |
 | P1.1 Regime da Rouanet, parte em TypeScript | Feita (`8058507`) | Tabela `prestacao_regimes`, seed gerado destes arquivos e validação com `zod` |
-| P0.1, P0.2, P0.5, P0.6, P0.8, P0.9 | Não iniciadas | Pré-requisitos 1 a 4 |
+| P0.1 Estrutura versionada | Feita (`ec22685`) | Nada; tipar as tabelas em `lib/supabase/types.ts` fica para quando cada tela for reescrita |
+| Tipos de comprovante (achado na P0.1) | Migration pronta (`414bdb3`) | Aplicar em produção |
+| P0.2, P0.5, P0.6, P0.8, P0.9 | Não iniciadas | Desbloqueadas: o banco de produção pode ser lido |
+
+### Banco de produção (leitura de 04/10/2026)
+
+O acesso de leitura ao projeto `ykaymbmybellixxvtasi` foi liberado. O que a leitura mostrou:
+
+- **Falha de segurança corrigida em 04/10/2026, com aprovação.** Sete das nove tabelas da prestação tinham a regra `using (true)`: qualquer conta logada lia, alterava e apagava prestações de todas as organizações. A migration `20261001210000_corrigir_acessos_abertos` estava no repositório, mas nunca tinha sido aplicada. Ela foi aplicada pelo `execute_sql`, porque o `apply_migration` e os comandos com `DROP` travavam no conector; `ALTER POLICY` entrou no lugar de `DROP/CREATE`. Ficou registrada no histórico como `20261004120000 corrigir_acessos_abertos`. Verificação: uma conta sem vínculo vê 0 prestações, 0 itens e 0 comprovantes; quem criou continua vendo tudo. Itens 4 e 5 também aplicados: visitantes não executam mais as 71 funções privilegiadas (exceto as 4 necessárias), e as 10 funções sem `search_path` ganharam um. O item 2 (`profiles`) já estava em vigor.
+- **Outro vazamento entre organizações, fora da prestação:** as regras de `crm_interacoes`, `crm_followups` e `crm_duvidas` comparam `om.organization_id = om.organization_id`, o que é sempre verdade. Elas não estão em nenhuma migration do repositório. Correção proposta: `om.organization_id = <tabela>.organization_id`.
+- **O banco calcula `valor_realizado`** por gatilho, ao contrário do que o código sugeria e do que eu registrei na P0.10. Os gatilhos agora estão versionados na migration de base.
+- **O enum `tipo_comprovante` não aceitava 7 tipos que a tela oferece** (RPA, extrato, invoice, folha, guia, cartão de embarque, print).
+- **As migrations divergem de produção nos dois sentidos.** Há migrations do repositório nunca aplicadas e mudanças de produção que não estão no repositório. O histórico de produção usa versões próprias: não usar `supabase db push` sem antes reconciliar.
+- **Dados da prestação:** 1 prestação (sem projeto e sem captação), 37 itens, 1 comprovante no caminho antigo e 3 arquivos nos prefixos antigos. As colunas de módulo existem (`text[] not null default '{captacao}'`); 1 organização e 1 pessoa já têm a prestação.
+- **Papéis:** membros aceitam `colaborador` e `leitor`, mas `organization_invitations` ainda não. Isso está registrado num cartão de tarefa separado.
 
 Ajustes de rota no que já foi feito:
-- O executado provisório (P0.10) é calculado no app (`lib/prestacao/execucao.ts`) em vez de uma view, para não depender de migration.
+- O executado (P0.10) é calculado no app (`lib/prestacao/execucao.ts`). O banco já fazia a mesma soma por item com gatilho; a tela soma direto para incluir no total os comprovantes aceitos sem rubrica.
 - A lista de prestações já filtra pela organização atual, como o modal de criação no `main` (parte de app da P0.2).
 - Na P0.4 o CORS continuou aberto: a autorização é pelo token no cabeçalho, sem cookie, então restringir a origem não protege nada e quebraria o uso local.
 - Os testes ficam em `tests/prestacao-*.test.ts`, na raiz de `tests/`: o `npm test` passa o padrão `tests/**/*.test.ts` pelo shell, e uma subpasta faria os testes da raiz deixarem de rodar.
