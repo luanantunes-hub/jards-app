@@ -34,11 +34,13 @@
 }
 
 /* Largura das páginas de detalhe: 80rem (1280px na base). Em telas muito
-   largas o limite também abre, para não sobrar faixa vazia dos lados. */
+   largas o limite também abre, para não sobrar faixa vazia dos lados. Aqui só
+   a largura conta: ultrawides (2560×1080, 3440×1440) têm sobra justamente na
+   horizontal. */
 @utility max-w-pagina {
   max-width: 80rem;
-  @media (min-width: 2400px) and (min-height: 1150px) { max-width: 96rem; }
-  @media (min-width: 3200px) and (min-height: 1700px) { max-width: 120rem; }
+  @media (min-width: 2400px) { max-width: 96rem; }
+  @media (min-width: 3200px) { max-width: 120rem; }
 }
 
 body {

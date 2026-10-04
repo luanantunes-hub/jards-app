@@ -47,7 +47,8 @@ Princípios:
 - alturas usuais de controle: 36–44px;
 - áreas clicáveis devem ter pelo menos 40px quando isoladas;
 - separação entre seções usa espaço, regra fina ou mudança sutil de superfície;
-- páginas de detalhe usam container máximo `max-w-pagina` (utilidade em `globals.css`): 80rem (1280px na base), abrindo para 96rem em telas a partir de 2400×1150 e 120rem a partir de 3200×1700;
+- páginas de detalhe usam container máximo `max-w-pagina` (utilidade em `globals.css`): 80rem (1280px na base), abrindo para 96rem em telas a partir de 2400px de largura e 120rem a partir de 3200px (só a largura conta, para os ultrawides);
+- listas com `ManagedTable` marcam a coluna principal com `grow: true`, para a tabela ocupar a largura que sobra em telas largas;
 - medidas que acompanham a tela ficam em `rem` (`text-[0.75rem]`, `w-[17.5rem]`, `max-w-[80rem]`); `px` só para bordas, raios, sombras, desfoques e traços abaixo de 4px.
 
 ## Botões

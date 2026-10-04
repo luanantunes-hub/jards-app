@@ -26,7 +26,7 @@ import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
 
 const CAPTACOES_COLUMNS = [
-  { id: "empresa", label: "Empresa", width: "13.75rem", hideable: false }, { id: "titulo", label: "Projeto", width: "15.625rem" }, { id: "lei", label: "Tipo de patrocínio", width: "10.3125rem" }, { id: "status", label: "Status", width: "8.75rem", hideable: false }, { id: "valor", label: "Valor", width: "7.5rem" }, { id: "prioridade", label: "Prioridade", width: "6.875rem" }, { id: "responsavel", label: "Responsável", width: "11.25rem" }, { id: "agencia", label: "Agência", width: "10rem" }, { id: "contato", label: "Próx. contato", width: "8.75rem" }, { id: "adicionado_em", label: "Adicionado em", width: "7.8125rem" }, { id: "atualizado_em", label: "Atualizado em", width: "7.8125rem" }, { id: "acoes", label: "Ações", width: "5rem" },
+  { id: "empresa", label: "Empresa", width: "13.75rem", grow: true, hideable: false }, { id: "titulo", label: "Projeto", width: "15.625rem", grow: true }, { id: "lei", label: "Tipo de patrocínio", width: "10.3125rem" }, { id: "status", label: "Status", width: "8.75rem", hideable: false }, { id: "valor", label: "Valor", width: "7.5rem" }, { id: "prioridade", label: "Prioridade", width: "6.875rem" }, { id: "responsavel", label: "Responsável", width: "11.25rem" }, { id: "agencia", label: "Agência", width: "10rem" }, { id: "contato", label: "Próx. contato", width: "8.75rem" }, { id: "adicionado_em", label: "Adicionado em", width: "7.8125rem" }, { id: "atualizado_em", label: "Atualizado em", width: "7.8125rem" }, { id: "acoes", label: "Ações", width: "5rem" },
 ] as const satisfies readonly ColumnDefinition[];
 
 type CaptacaoRow = {
@@ -673,7 +673,7 @@ export default function CaptacoesPage() {
                       <tr key={i} style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
                         {[140, 200, 80, 90, 70, 40, 150, 130, 80, 90, 90, 40].map((w, j) => (
                           <td key={j} className="px-4 py-3.5">
-                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: w }} />
+                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: `${w / 16}rem` }} />
                           </td>
                         ))}
                       </tr>
@@ -727,7 +727,7 @@ export default function CaptacoesPage() {
                           </td>
 
                           {/* Projeto */}
-                          <td className="px-4 py-3.5 max-w-[18.75rem]">
+                          <td className="px-4 py-3.5">
                             {c.projeto?.nome ? (
                               <span className="flex items-center gap-1.5 text-[0.78125rem] text-black/50">
                                 <ProjectIdentity nome={c.projeto.nome} tipo={c.projeto.identidade_tipo} valor={c.projeto.identidade_valor} logoUrl={c.projeto.identidade_logo_url} cor={c.projeto.identidade_cor} size="sm" />

@@ -312,7 +312,7 @@ export default function ProponentesPage() {
                       <tr key={i} style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
                         {[200, 120, 100, 170, 150, 150, 40, 130, 100, 90, 90, 40].map((w, j) => (
                           <td key={j} className="px-4 py-3.5">
-                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: w }} />
+                            <div className="h-3.5 rounded bg-black/8 animate-pulse" style={{ width: `${w / 16}rem` }} />
                           </td>
                         ))}
                       </tr>
