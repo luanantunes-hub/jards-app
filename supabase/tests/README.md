@@ -20,7 +20,7 @@ A saída é TAP: `ok`/`not ok` por verificação e, no fim, `# Looks like you fa
 npx tsx scripts/testes-banco-em-bloco.ts supabase/tests/prestacao_rls.test.sql > bloco.sql
 ```
 
-Cole o conteúdo de `bloco.sql` e rode. O bloco termina com o erro `BLOCO DESFEITO`, que traz a saída TAP e desfaz tudo. O editor avisa que há comandos destrutivos (as sondas de exclusão): pode confirmar, porque também são desfeitas. O conector do Supabase usado pelo Claude espera essa confirmação e, sem ela, para depois de 60 segundos.
+Cole o conteúdo de `bloco.sql` e rode. O bloco termina com o erro `BLOCO DESFEITO`, que traz a saída TAP e desfaz tudo. O editor avisa que há comandos destrutivos (as sondas de exclusão): pode confirmar, porque também são desfeitas. O conector do Supabase usado pelo Claude pede a mesma confirmação para comandos `DELETE FROM` e, numa sessão sem como mostrá-la, para depois de 60 segundos; por ele, rode o arquivo sem as sondas de exclusão e confira quem pode apagar avaliando as regras de `pg_policies` como cada pessoa (foi o que se fez em 05/10/2026).
 
 **Uma migration antes de aplicar:** ponha o arquivo dela na frente.
 
