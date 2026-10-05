@@ -86,13 +86,21 @@ export function validarCortesia(pedido: PedidoCortesia, emUso: number, hoje: str
   return null;
 }
 
-/** Erros da função admin_definir_acesso_modulo, em linguagem da tela. */
+/**
+ * Erros das funções de acesso por módulo (admin_definir_acesso_modulo,
+ * alterar_modulos_membro, convites), em linguagem da tela. Os códigos mais
+ * específicos vêm antes: "sem_vaga_prestacao" também contém "sem_vaga".
+ */
 const ERROS_ACESSO: Record<string, string> = {
   membro_inexistente: "Essa pessoa não faz parte da organização.",
-  captador_sem_modulo: "Captadores externos usam só a captação.",
-  modulo_inativo: "A organização não tem a prestação ativa. Libere a cortesia primeiro.",
-  sem_vaga: "Todas as vagas estão em uso. Aumente as vagas da cortesia.",
-  ultimo_modulo: "Essa pessoa usa só a prestação e ficaria sem nenhum módulo.",
+  captador_sem_modulo: "Captadores e proponentes externos usam só a captação.",
+  modulo_inativo: "A organização não tem esse módulo ativo.",
+  modulo_invalido: "Módulo desconhecido.",
+  funcao_invalida: "Função na prestação desconhecida.",
+  sem_vaga_captacao: "Todas as vagas da captação estão em uso. Compre usuários extras antes.",
+  sem_vaga_prestacao: "Todas as vagas da prestação de contas estão em uso.",
+  sem_vaga: "Todas as vagas estão em uso.",
+  ultimo_modulo: "A pessoa ficaria sem nenhum módulo.",
 };
 
 export function mensagemErroAcesso(erro: string | null | undefined): string {

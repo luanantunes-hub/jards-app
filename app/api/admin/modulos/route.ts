@@ -34,14 +34,11 @@ function dataBr(data: string) {
   return data.split("-").reverse().join("/");
 }
 
-async function membrosComModulo(admin: any, organizationId: string): Promise<number> {
-  const { count } = await admin
-    .from("organization_members")
-    .select("id", { count: "exact", head: true })
-    .eq("organization_id", organizationId)
-    .neq("papel", "captador")
-    .contains("modulos_acesso", [MODULO]);
-  return count ?? 0;
+/** Vínculos e convites pendentes com a prestação: a mesma conta do banco. */
+async function vagasEmUso(admin: any, organizationId: string): Promise<number> {
+  const { data, error } = await admin.rpc("modulo_vagas_em_uso", { p_org: organizationId, p_modulo: MODULO });
+  if (error) throw error;
+  return Number(data ?? 0);
 }
 
 export async function GET(request: NextRequest) {
@@ -151,7 +148,8 @@ export async function POST(request: NextRequest) {
     if (contratoPago(atual)) {
       return NextResponse.json({ error: "A organização já assina a prestação. A cortesia não substitui a assinatura." }, { status: 409 });
     }
-    const emUso = await membrosComModulo(admin, organizationId);
+    const emUso = await vagasEmUso(admin, organizationId).catch(() => null);
+    if (emUso === null) return NextResponse.json({ error: "Não foi possível conferir as vagas." }, { status: 500 });
     const invalido = validarCortesia(pedido, emUso, hojeEmBrasilia());
     if (invalido) return NextResponse.json({ error: invalido }, { status: 400 });
 

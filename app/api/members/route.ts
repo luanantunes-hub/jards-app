@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
   const { data: memberships, error: membershipError } = await admin
     .from("organization_members")
-    .select("user_id,papel,created_at")
+    .select("user_id,papel,created_at,modulos_acesso,prestacao_funcao")
     .eq("organization_id", organizationId)
     .order("created_at");
   if (membershipError) return NextResponse.json({ error: membershipError.message }, { status: 500 });
@@ -58,6 +58,8 @@ export async function GET(req: NextRequest) {
     return {
       user_id: member.user_id,
       papel: member.papel,
+      modulos_acesso: member.modulos_acesso ?? ["captacao"],
+      prestacao_funcao: member.prestacao_funcao ?? null,
       full_name: profile?.full_name ?? null,
       email: profile?.email ?? null,
       created_at: member.created_at,

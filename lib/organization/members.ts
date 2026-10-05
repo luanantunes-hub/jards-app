@@ -1,6 +1,9 @@
 export type OrganizationMemberSummary = {
   user_id: string;
   papel: string;
+  /** Módulos que a pessoa usa (P0.6); a rota devolve ["captacao"] quando vazio. */
+  modulos_acesso?: string[];
+  prestacao_funcao?: string | null;
   full_name: string | null;
   email: string | null;
   created_at: string;
