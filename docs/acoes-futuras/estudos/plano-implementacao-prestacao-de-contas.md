@@ -21,7 +21,8 @@ Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 160
 | P0.10 Correções no módulo | Tela feita (`356941e`); banco feito e aplicado em produção em 05/10/2026 | Publicar o app: até lá, a tela antiga não muda status nem avalia comprovante, porque ainda grava direto na tabela |
 | P0.7 Acesso por módulo e bloqueio no servidor | Feita (`48447a7`) | Nada para o que existe hoje; quem não é super admin precisa da prestação liberada em `organizations.modulos_ativos` e `organization_members.modulos_acesso` para abrir `/prestacoes`. O e2e com três tipos de usuário espera a P0.5 |
 | P1.2 Prestação ligada ao regime | Feita e aplicada em produção em 05/10/2026 | Publicar o app |
-| P1.4 Criação guiada | Feita | Publicar o app. A importação direta do Salic é a P1.5; o passo de orçamento leva à importação de planilha ou PDF que já existe |
+| P1.4 Criação guiada | Feita | Publicar o app. O passo de orçamento leva à importação de planilha ou PDF |
+| P1.5 Importação do Salic | Eliminada em 05/10/2026 | Nada. A API pública do Salic não funciona mais: em 05/10/2026 as consultas de projetos e de proponentes devolviam erro 503. O Pronac continua sendo digitado na criação, e o orçamento entra por planilha ou PDF (P1.6) |
 | P1.8 Prazos viram atividades e avisos | Feita e aplicada em produção em 05/10/2026 | Publicar o app (categoria nas notificações e atalho da atividade para a prestação) |
 | P1.6 Orçamento em árvore | Feita e aplicada em produção em 05/10/2026 | Publicar o app e as funções `extrair-comprovante` e `importar-orcamento` (sugestão de item e leitura do PDF com etapa e grupo de custo). Até o deploy, a tela antiga grava na tabela antiga, que espelha na árvore. Classificar os 37 itens da Platibanda por grupo de custo para os tetos ficarem completos |
 | P1.3 Prazos e calendário | Feita (`0fb0697`) | `calendario_regulatorio` já existe (P1.1); a contagem passa a ler dele os feriados locais quando a prestação ganhar regime e local (P1.2) |
@@ -89,7 +90,7 @@ O levantamento do código mudou algumas premissas do estudo. O que o plano leva 
 | A cobrança é por pessoa (`profiles.plano`), os créditos por organização; usuário extra é item da mesma assinatura do plano | `fn_process_stripe_billing_event` em `20260910000002:13-172`; `app/api/members/seats/route.ts:157-181` | Assinatura do módulo é nova e por organização |
 | O webhook real é a edge function; a rota do Next é cópia para desenvolvimento, e um teste exige que as duas fiquem iguais | `app/api/stripe/webhook/route.ts:1-3`, `tests/predeploy.test.ts:34-52` | Mudar as duas no mesmo PR |
 | Testes: `node:test` com `tsx`, testes de funções puras e testes que leem o texto das migrations; nenhum teste fala com o banco; o CI roda typecheck, testes e build, sem lint e sem e2e | `package.json`, `.github/workflows/predeploy.yml` | Criar testes de RLS (P0.8) |
-| Tarefas agendadas: `pg_cron` chamando funções SQL; edge function só é chamada por `pg_net` num gatilho | `20260830000001:510-527`, `20260825000010:22-68` | Coleta do agente e sincronização do Salic usam `pg_cron` + `pg_net` |
+| Tarefas agendadas: `pg_cron` chamando funções SQL; edge function só é chamada por `pg_net` num gatilho | `20260830000001:510-527`, `20260825000010:22-68` | Coleta do agente usa `pg_cron` + `pg_net` |
 | `zod` não é dependência declarada; não há biblioteca de toast | `package.json` | Adicionar `zod` (P1.1); mensagens seguem o padrão local das páginas |
 
 ---
@@ -239,7 +240,7 @@ Com duas pessoas: A faz P0.1, P0.2, P0.3, P0.4 e P0.10; B faz P0.5, P0.6, P0.7, 
 
 ---
 
-## 5. Fase 1 — Núcleo multi-regime e Rouanet (≈ 27 dias)
+## 5. Fase 1 — Núcleo multi-regime e Rouanet (≈ 24 dias)
 
 ### P1.1 — Catálogo de regimes (3 dias)
 
@@ -264,11 +265,9 @@ Com duas pessoas: A faz P0.1, P0.2, P0.3, P0.4 e P0.10; B faz P0.5, P0.6, P0.7, 
 
 - Substitui o `NovaPrestacaoModal`: projeto ou captação → regime (sugerido pela lei da captação) → identificador oficial (Pronac) → importação → marcos. Rascunho salvo a cada passo.
 
-### P1.5 — Importação do Salic (3 dias)
+### P1.5 — Importação do Salic (eliminada)
 
-- `lib/prestacao/integracoes/salic.ts`: cliente da API pública (`api.salic.cultura.gov.br/api/v1`) e conversão para prestação, orçamento (depende de P1.6) e aportes.
-- Sincronização diária pelo padrão `pg_cron` + `pg_net` + edge function, com registro da última sincronização e do erro, se houver.
-- Quando a API falhar, a criação segue manual, com aviso.
+- Eliminada em 05/10/2026: a API pública do Salic (`api.salic.cultura.gov.br/api/v1`) não funciona mais; as consultas de projetos e de proponentes devolviam erro 503. O Pronac continua como identificador oficial digitado na criação, e o orçamento entra por planilha ou PDF lido pela IA (P1.6). A origem `salic` das versões do orçamento fica sem uso.
 
 ### P1.6 — Orçamento em árvore (4 dias)
 
@@ -295,9 +294,9 @@ Com duas pessoas: A faz P0.1, P0.2, P0.3, P0.4 e P0.10; B faz P0.5, P0.6, P0.7, 
 
 ### Ordem
 
-P1.1 → P1.2 → (P1.3, P1.6) → P1.4 → P1.5 → P1.7 → P1.8 → P1.9. A P1.10 é independente e pode ir em paralelo.
+P1.1 → P1.2 → (P1.3, P1.6) → P1.4 → P1.7 → P1.8 → P1.9. A P1.10 é independente e pode ir em paralelo.
 
-**Marco M1:** uma prestação Rouanet criada pelo Pronac, com orçamento importado em árvore, prazos calculados, tarefas e avisos funcionando, e o vigia mandando o resumo diário do DOU.
+**Marco M1:** uma prestação Rouanet criada com o Pronac, com o orçamento importado de planilha ou PDF em árvore, prazos calculados, tarefas e avisos funcionando, e o vigia mandando o resumo diário do DOU.
 
 ---
 
@@ -334,9 +333,9 @@ Para cada área: regimes e seed revisados a partir do rascunho do agente · chec
 | Fase | Estudo | Este plano | Diferença |
 |---|---|---|---|
 | 0 | 3 semanas | ≈ 4,5 semanas (22 dias) | Papéis de equipe divergentes, migração de arquivos e testes de RLS que não existiam |
-| 1 | 4 semanas | ≈ 5,5 semanas (27 dias) | Seed gerado do TypeScript e sincronização diária do Salic |
+| 1 | 4 semanas | ≈ 5 semanas (24 dias) | Seed gerado do TypeScript; a importação do Salic saiu (−3 dias) |
 | 2 a 9 | 26 semanas | 26 semanas | Revisar no início de cada fase |
-| **Total** | **33 semanas** | **≈ 36 semanas** de uma pessoa; ≈ 6 meses com duas | |
+| **Total** | **33 semanas** | **≈ 35 semanas** de uma pessoa; ≈ 6 meses com duas | |
 
 Com duas pessoas, o caminho crítico é 0 → 1 → 2 → 4 (piloto). Em paralelo: P0.5 a P0.9 com a outra pessoa; P1.10 e a fase 6 fora do caminho crítico; fase 5 em paralelo com a 3.
 
@@ -361,7 +360,7 @@ Os dados de teste dos e2e usam o prefixo de `e2e/helpers/supabaseAdmin.ts` e sã
 - **Ordem de deploy:** migration de expansão → app → conferência → migration de contração.
 - **Prestações existentes:** recebem organização (P0.2), arquivos migrados (P0.3) e regime (P1.2). Cada passo deixa registro no histórico da prestação.
 - **Visibilidade:** até o fim da fase 4, só super admin e organizações com cortesia; a liberação pública acontece com a cobrança (fase 5).
-- **Acompanhamento:** erros das edge functions, custo de IA por organização e por prestação, falhas da sincronização do Salic e das rotinas agendadas.
+- **Acompanhamento:** erros das edge functions, custo de IA por organização e por prestação, falhas das rotinas agendadas.
 - **Volta atrás:** toda migration de expansão é compatível com o código anterior; a contração só entra depois de uma semana sem erro.
 
 ---
@@ -374,7 +373,6 @@ Os dados de teste dos e2e usam o prefixo de `e2e/helpers/supabaseAdmin.ts` e sã
 | A cadeia de migrations não sobe num banco novo | Testes de RLS no branch do Supabase até a cadeia ser corrigida |
 | Migração de arquivos perder documentos | Ensaio antes, script idempotente, cópia antes de apagar, contagem antes e depois |
 | A organização atual só é conhecida no navegador | Bloqueio do servidor por "tem acesso em alguma organização"; isolamento real no RLS |
-| A API do Salic ficar fora do ar ou mudar | Criação manual sempre possível; o vigia normativo acompanha mudanças nos campos |
 | As duas cópias do webhook do Stripe se separarem | Mudança sempre nas duas; teste de paridade que já existe |
 | A fase 0 parecer "parada" para o negócio | M0 com uma organização piloto real usando o módulo atual corrigido |
 
