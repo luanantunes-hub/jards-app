@@ -64,7 +64,7 @@ export const CONFERENCIA_ANCINE_IN150_2019: readonly AjusteConferido[] = [
   // ausente_vale_outra_norma
   { caminho: "orcamento.bases.valor_total_projeto.fonte", fonte: { documento: "Manual de Prestação de Contas ANCINE v2.11 (23/09/2026)", dispositivo: "p. 27–28", nota: "A IN 150 usa \"orçamento global aprovado\" (art. 14, parágrafo único) sem defini-lo como base." } },
   // ausente_vale_outra_norma
-  { caminho: "orcamento.tetos[gerenciamento].fonte", fonte: { documento: "IN ANCINE 158/2021", dispositivo: "art. 31, I; Lei 11.437/2006, art. 12", aConfirmar: true, nota: "A IN 150 glosa o excesso (art. 21, VI) sem fixar percentual nem base. Vale a IN 158/2021 se a regra de transição dela alcançar o projeto; senão, a IN 125/2015, norma de aprovação que a IN 150 cita (Anexo, art. 1º, VIII). Limitado ao executado com recursos ANCINE; na coprodução internacional, só a parte brasileira. O excesso é glosado (IN 159, art. 18, VI)." } },
+  { caminho: "orcamento.tetos[gerenciamento].fonte", fonte: { documento: "IN ANCINE 158/2021", dispositivo: "art. 31, I; Lei 11.437/2006, art. 12", aConfirmar: true, nota: "A IN 150 glosa o excesso (art. 21, VI) sem fixar percentual nem base. Vale a IN 158/2021 se a regra de transição dela alcançar o projeto; senão, a IN 125/2015, norma de aprovação que a IN 150 cita (Anexo, art. 1º, VIII). Limitado ao executado com recursos ANCINE; na coprodução internacional, só a parte brasileira." } },
   // ausente_vale_outra_norma
   { caminho: "orcamento.tetos[agenciamento].fonte", fonte: { documento: "IN ANCINE 158/2021", dispositivo: "art. 31, II", aConfirmar: true, nota: "A IN 150 glosa o excesso (art. 21, VI) sem fixar percentual nem base. Vale a IN 158/2021 se a regra de transição dela alcançar o projeto; senão, a IN 125/2015, norma de aprovação que a IN 150 cita (Anexo, art. 1º, VIII). Proporcional ao captado: R$ 100 mil autorizados e R$ 80 mil captados dão teto de R$ 8 mil." } },
   // ausente_vale_outra_norma
@@ -259,7 +259,12 @@ export const CONFERENCIA_ANCINE_IN150_2019: readonly AjusteConferido[] = [
   { caminho: "despesas.regras[diarias_so_autonomo].fonte", fonte: { documento: "Manual de Prestação de Contas ANCINE v2.11 (23/09/2026)", dispositivo: "p. 33–34", nota: "A IN 150 admite diárias sem restringir a autônomos (art. 16, I); a restrição é do Manual." } },
   { caminho: "despesas.regras[glosa_dentro_dos_20].fonte", fonte: in150("art. 21, XV; art. 22, II", "relacionadas a itens orçamentários inconsistentes com a natureza do projeto;", "A IN 150 não tem o art. 20 da IN 159 nem fala em 20%.") },
   { caminho: "despesas.fonte", fonte: in150("Seção IV, arts. 20 a 25", "Despesas irregulares, inválidas ou estranhas ao projeto serão glosadas.", "Equivalências: art. 18 da IN 159 → art. 21; art. 19 → art. 22; o art. 20 não tem par.") },
-  { caminho: "porte.fonte", fonte: in150("art. 29, VI, g; art. 43, § 1º, II, c", "g) produção com orçamento executado de até R$ 500.000,00 (quinhentos mil reais);", "R$ 500 mil (inclusive) é uma das oito exceções da regra de concentração.") },
+  // confirmada
+  {
+    caminho: "porte.fonte",
+    regra: { motivo: "A IN 150 não classifica projetos por porte; a produção com orçamento executado de até R$ 500 mil só afasta a regra de concentração por fornecedor." },
+    fonte: in150("art. 29, VI, g; art. 43, § 1º, II, c", "g) produção com orçamento executado de até R$ 500.000,00 (quinhentos mil reais);"),
+  },
   // ausente
   { caminho: "objeto.regras[desenvolvimento].fonte", fonte: { documento: "IN ANCINE 125/2015", dispositivo: "art. 85 (remissão do Anexo, art. 1º, VIII, da IN 150)", aConfirmar: true, nota: "A IN 150 não lista o material por modalidade e remete à IN 125/2015, art. 85, cujo texto não foi conferido." } },
   // ausente
