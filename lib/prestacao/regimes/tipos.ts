@@ -2,8 +2,8 @@
 // norma. Cada valor carrega a fonte (documento, dispositivo e trecho), para a
 // tela mostrar de onde veio a regra e para o agente normativo propor mudanças.
 //
-// Por enquanto os regimes vivem em TypeScript; na P1.1 completa viram linhas
-// de prestacao_regimes geradas a partir destes arquivos.
+// Os regimes nascem em TypeScript e viram linhas de prestacao_regimes pelo
+// seed gerado em scripts/prestacao-gerar-seed-regimes.ts (P1.1).
 
 import type { RegraPrazo } from "../prazos";
 
@@ -60,6 +60,12 @@ export type Faixa = { nome: string; ate: number | null };
 
 export type RegimeNormativo = {
   codigo: string;
+  /**
+   * Versão dos parâmetros. Mudou um valor publicado? Suba a versão e gere um
+   * seed novo: a anterior vira obsoleta e as prestações em andamento podem
+   * continuar nela (P1.1).
+   */
+  versao: number;
   nome: string;
   area: Area;
   /** Chave de captacoes.lei (lib/constants/lei.ts). */

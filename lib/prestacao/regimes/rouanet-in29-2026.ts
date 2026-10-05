@@ -8,6 +8,7 @@ const IN29 = "IN MinC 29/2026";
 
 export const ROUANET_IN29_2026 = {
   codigo: "rouanet_in29_2026",
+  versao: 1,
   nome: "Lei Rouanet — IN MinC 29/2026",
   area: "cultura",
   mecanismo: "rouanet",

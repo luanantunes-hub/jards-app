@@ -1,5 +1,5 @@
-// Catálogo de regimes disponível no código. Na P1.1 completa, vira a fonte
-// do seed de prestacao_regimes.
+// Catálogo de regimes disponível no código. É a fonte do seed de
+// prestacao_regimes (scripts/prestacao-gerar-seed-regimes.ts).
 
 import { ROUANET_IN29_2026 } from "./rouanet-in29-2026";
 import type { RegimeNormativo } from "./tipos";
@@ -9,6 +9,7 @@ export type { Fonte, LimitePercentual, PrazoRegime, RegimeNormativo } from "./ti
 /** Patrocínio direto e leis ainda não modeladas: sem checagens normativas. */
 export const GENERICO = {
   codigo: "generico",
+  versao: 1,
   nome: "Genérico (sem regras de lei)",
   area: "outro",
   mecanismo: "outros",
