@@ -862,30 +862,46 @@
     }
 
     /* Leis: seletor ao lado da tabela no desktop; no celular, abas roláveis acima dela */
-    /* Leis: índice de prancheta. Réguas finas, ícone de traço em quadrado de 4px;
-       a lei ativa ganha o quadrado preenchido na cor dela e uma linha de construção
-       tracejada até a demo. No celular, abas roláveis acima da lista. */
-    .leis-seletor { position:relative; display:flex; flex-direction:column; border-top:1px solid rgba(13,13,13,.12); }
+    /* Leis: legenda da prancha. O seletor é a legenda da demo ao lado: cabeçalho no
+       padrão da tabela (LEI · 01 / 04), réguas finas, ícones de traço em quadrados
+       de 4px e registros nos cantos, no traço da prancheta. A lei ativa preenche o
+       quadrado na cor dela, liga-se à demo por uma guia tracejada com registro na
+       borda do painel e mostra, numa régua de 2px, o andamento real da demo
+       (linhas entram → cursor clica → perfil abre). */
+    .leis-seletor { --leis-topo:40px; position:relative; display:flex; flex-direction:column; border-top:1px solid rgba(13,13,13,.12); }
+    .leis-legenda-topo { display:flex; flex:0 0 var(--leis-topo); align-items:center; justify-content:space-between; padding:0 14px; border-bottom:1px solid rgba(13,13,13,.12); color:rgba(13,13,13,.36); font-size:10px; font-weight:700; letter-spacing:.08em; line-height:1; text-transform:uppercase; font-variant-numeric:tabular-nums; }
+    .leis-contador { display:inline-flex; gap:5px; overflow:hidden; }
+    .leis-contador-atual { display:inline-block; color:var(--alt-ink); }
+    .leis-registro { position:absolute; right:-5px; width:9px; height:9px; pointer-events:none;
+      background:linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 1px 100% no-repeat,
+                 linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 100% 1px no-repeat; }
+    .leis-registro--topo { top:-5px; }
+    .leis-registro--base { bottom:-5px; }
     #leis-painel { background:#fff; }
-    .lei-card-btn { position:relative; display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:14px 16px 14px 14px; border:0; border-bottom:1px solid rgba(13,13,13,.12); border-radius:0; background:transparent; color:rgba(13,13,13,.62); text-align:left; cursor:pointer; transition:background-color .18s ease, color .18s ease; }
+    .lei-card-btn { position:relative; display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:14px 16px 14px 14px; border:0; border-bottom:1px solid rgba(13,13,13,.12); border-radius:0; background:transparent; color:rgba(13,13,13,.6); text-align:left; cursor:pointer; transition:background-color .18s ease, color .18s ease; }
     .lei-card-btn:hover { background:rgba(255,255,255,.6); color:var(--alt-ink); }
     .lei-card-btn.is-active { background:#fff; color:var(--alt-ink); }
-    .lei-card-btn.is-active::before { content:''; position:absolute; top:50%; left:-24px; width:24px; border-top:1px dashed var(--lei-cor); }
-    @media (min-width:768px) { .leis-seletor.alt-scroll-x { overflow:visible; -webkit-mask-image:none; mask-image:none; } }
+    .lei-card-btn::before { content:''; position:absolute; top:50%; left:-24px; width:24px; height:1px; background:repeating-linear-gradient(90deg, var(--lei-cor) 0 3px, transparent 3px 7px); transform:scaleX(0); transform-origin:right center; transition:transform .3s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    .lei-card-btn::after { content:''; position:absolute; top:calc(50% - 4px); left:-28px; width:9px; height:9px; opacity:0; pointer-events:none; transition:opacity .2s ease .2s;
+      background:linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 1px 100% no-repeat,
+                 linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 100% 1px no-repeat; }
+    .lei-card-btn.is-active::before { transform:scaleX(1); }
+    .lei-card-btn.is-active::after { opacity:1; }
     .lei-card-btn:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:-2px; }
     .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid rgba(13,13,13,.14); border-radius:4px; background:#fff; color:rgba(13,13,13,.58); font-size:19px; transition:background-color .18s ease, border-color .18s ease, color .18s ease; }
     .lei-card-btn:hover .lei-icone { border-color:var(--lei-cor); color:var(--lei-cor); }
     .lei-card-btn.is-active .lei-icone { border-color:var(--lei-cor); background:var(--lei-cor); color:#fff; }
     .lei-nome { font-size:17px; font-weight:500; line-height:1.3; letter-spacing:-.01em; }
-    .lei-seta { margin-left:auto; color:var(--lei-cor); font-size:16px; opacity:0; transform:translateX(-4px); transition:opacity .18s ease, transform .18s ease; }
-    .lei-card-btn:hover .lei-seta, .lei-card-btn.is-active .lei-seta { opacity:1; transform:none; }
-    @media (prefers-reduced-motion: reduce) { .lei-icone, .lei-seta { transition:none; } }
+    .lei-progresso { position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--lei-cor); transform:scaleX(0); transform-origin:left center; transition:transform .6s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    @media (prefers-reduced-motion: reduce) { .lei-icone, .lei-card-btn::before, .lei-card-btn::after, .lei-progresso { transition:none; } }
+    @media (min-width:768px) { .leis-seletor.alt-scroll-x { overflow:visible; -webkit-mask-image:none; mask-image:none; } }
     @media (max-width:767px) {
+      .leis-legenda-topo, .leis-registro { display:none; }
       .leis-seletor { order:-1; flex-direction:row; gap:4px; border-top:0; border-bottom:1px solid rgba(13,13,13,.10); overflow:hidden; overflow-x:auto; }
-      .lei-card-btn { flex:0 0 auto; width:auto; gap:8px; min-height:44px; padding:8px 12px 10px; border-bottom:2px solid transparent; background:none; color:rgba(13,13,13,.55); }
-      .lei-card-btn:hover { background:none; color:var(--alt-ink); }
-      .lei-card-btn.is-active { border-bottom-color:var(--lei-cor); background:none; color:var(--alt-ink); }
-      .lei-card-btn.is-active::before, .lei-seta { display:none; }
+      .lei-card-btn { flex:0 0 auto; width:auto; gap:8px; min-height:44px; padding:8px 12px 10px; border-bottom:0; background:none; color:rgba(13,13,13,.55); }
+      .lei-card-btn:hover, .lei-card-btn.is-active { background:none; color:var(--alt-ink); }
+      .lei-card-btn::before, .lei-card-btn::after { display:none; }
+      .lei-progresso { bottom:0; }
       .lei-icone { width:26px; height:26px; font-size:14px; }
       .lei-nome { font-size:14px; font-weight:500; white-space:nowrap; }
     }
@@ -1318,26 +1334,29 @@
 
       <!-- Leis cobertas: coluna ao lado da tabela no desktop, abas roláveis acima dela no celular -->
       <div class="leis-seletor alt-scroll-x reveal" role="group" aria-label="Lei de incentivo">
+        <div class="leis-legenda-topo" aria-hidden="true"><span>Lei</span><span class="leis-contador"><span class="leis-contador-atual">01</span><span>/ 04</span></span></div>
         <button type="button" class="lei-card-btn is-active" style="--lei-cor:#684DB0" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
           <span class="lei-icone"><i class="ph ph-piano-keys" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Cultura</span>
-          <i class="ph ph-arrow-right lei-seta" aria-hidden="true"></i>
+          <span class="lei-progresso" aria-hidden="true"></span>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#2D72B0" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
           <span class="lei-icone"><i class="ph ph-soccer-ball" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Esporte</span>
-          <i class="ph ph-arrow-right lei-seta" aria-hidden="true"></i>
+          <span class="lei-progresso" aria-hidden="true"></span>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#D94A4A" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
           <span class="lei-icone"><i class="ph ph-film-slate" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Audiovisual</span>
-          <i class="ph ph-arrow-right lei-seta" aria-hidden="true"></i>
+          <span class="lei-progresso" aria-hidden="true"></span>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#1A8B7A" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
           <span class="lei-icone"><i class="ph ph-stethoscope" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Saúde</span>
-          <i class="ph ph-arrow-right lei-seta" aria-hidden="true"></i>
+          <span class="lei-progresso" aria-hidden="true"></span>
         </button>
+        <span class="leis-registro leis-registro--topo" aria-hidden="true"></span>
+        <span class="leis-registro leis-registro--base" aria-hidden="true"></span>
       </div>
     </div>
   </div>
@@ -1667,8 +1686,10 @@
     new Image().src = logoUrl(empresa.dominio, 128);
     fecharPerfil(minha);
     renderLista(leiAtual, false);
+    andamento(.12);
     await entrarLinhas(modo);
     if(!vivo()) return;
+    andamento(.45);
     await esperar(240);
     if(!vivo()) return;
 
@@ -1683,6 +1704,7 @@
 
     await moverCursor(inicio, alvo);
     if(!vivo()) return;
+    andamento(.8);
     linha.style.backgroundColor = 'rgba(104,77,176,.05)';
     montarPerfil(empresa, meta);
     await esperar(300);
@@ -1691,17 +1713,52 @@
     await esperar(160);
     if(!vivo()) return;
     abrirPerfil(linha, empresa);
+    andamento(1);
     sairCursor(alvo);
   }
 
   // A cor da lei ativa vem de --lei-cor: quadrado do ícone e linha até a demo no desktop, sublinhado nas abas do celular
+  // A régua de 2px da lei ativa acompanha a demo: linhas → cursor → perfil
+  function andamento(v){
+    var r = document.querySelector('.lei-card-btn.is-active .lei-progresso');
+    if(r) r.style.transform = 'scaleX(' + v + ')';
+  }
+
+  var contador = document.querySelector('.leis-contador-atual');
   function marcarLei(btn){
-    document.querySelectorAll('.lei-card-btn').forEach(function(b){
+    var botoes = Array.prototype.slice.call(document.querySelectorAll('.lei-card-btn'));
+    botoes.forEach(function(b){
       var ativo = b === btn;
       b.classList.toggle('is-active', ativo);
       b.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+      var r = b.querySelector('.lei-progresso');
+      if(r) r.style.transform = 'scaleX(' + (ativo && semAnimacao ? 1 : 0) + ')';
     });
+    if(contador){
+      var n = String(botoes.indexOf(btn) + 1).padStart(2, '0');
+      if(contador.textContent !== n){
+        contador.textContent = n;
+        if(!semAnimacao && contador.animate) contador.animate([{ transform:'translateY(80%)', opacity:0 }, { transform:'none', opacity:1 }], { duration:280, easing:'cubic-bezier(.2,.7,.2,1)' });
+      }
+    }
   }
+
+  // Setas e Home/End percorrem as leis, como numa lista de abas
+  var seletorLeis = document.querySelector('.leis-seletor');
+  if(seletorLeis) seletorLeis.addEventListener('keydown', function(e){
+    var botoes = Array.prototype.slice.call(seletorLeis.querySelectorAll('.lei-card-btn'));
+    var i = botoes.indexOf(document.activeElement);
+    if(i < 0) return;
+    var alvo = null;
+    if(e.key === 'ArrowDown' || e.key === 'ArrowRight') alvo = botoes[(i + 1) % botoes.length];
+    else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft') alvo = botoes[(i - 1 + botoes.length) % botoes.length];
+    else if(e.key === 'Home') alvo = botoes[0];
+    else if(e.key === 'End') alvo = botoes[botoes.length - 1];
+    if(!alvo) return;
+    e.preventDefault();
+    alvo.focus();
+    alvo.click();
+  });
 
   window.selecionarLei = function(lei, btn){
     leiAtual = lei;
