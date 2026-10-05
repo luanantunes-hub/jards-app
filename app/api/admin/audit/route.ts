@@ -6,7 +6,7 @@ import { writeAdminAuditLog } from "@/lib/admin/audit";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 const ALLOWED_ACTIONS = new Set(["create", "update", "delete", "impersonate", "view", "approve", "reject"]);
-const ALLOWED_RESOURCES = new Set(["patrocinador", "usuario", "pedido", "blog", "sistema"]);
+const ALLOWED_RESOURCES = new Set(["patrocinador", "usuario", "pedido", "blog", "organizacao", "sistema"]);
 
 async function getAdminContext() {
   const supabase = await createClient();

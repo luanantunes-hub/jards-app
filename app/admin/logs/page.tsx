@@ -20,13 +20,13 @@ type AuditLog = {
 };
 
 const ACTIONS = ["create", "update", "delete", "impersonate", "view", "approve", "reject"];
-const RESOURCES = ["patrocinador", "usuario", "pedido", "blog", "sistema"];
+const RESOURCES = ["patrocinador", "usuario", "pedido", "blog", "organizacao", "sistema"];
 const ACTION_LABELS: Record<string, string> = {
   create: "Criou", update: "Atualizou", delete: "Excluiu", impersonate: "Acessou como",
   view: "Visualizou", approve: "Aprovou", reject: "Rejeitou",
 };
 const RESOURCE_LABELS: Record<string, string> = {
-  patrocinador: "Patrocinador", usuario: "Usuário", pedido: "Pedido", blog: "Blog", sistema: "Sistema",
+  patrocinador: "Patrocinador", usuario: "Usuário", pedido: "Pedido", blog: "Blog", organizacao: "Organização", sistema: "Sistema",
 };
 
 function formatDate(value: string) {

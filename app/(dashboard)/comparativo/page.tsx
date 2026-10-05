@@ -10,6 +10,7 @@ import { colorFrom } from "@/lib/colorFrom";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
+import { AcessoContatosModal } from "@/components/modals/AcessoContatosModal";
 
 type EmpresaOption = { id: string; nome: string; site: string | null; logo_url: string | null };
 type Lei = "cultura" | "ancine" | "esporte" | "saude";
@@ -201,6 +202,7 @@ function ComparativoContent() {
   const [valores, setValores] = useState<Valores>({});
   const [crescimentos, setCrescimentos] = useState<Record<string, Partial<Record<Lei, Crescimento>>>>({});
   const [loadingValores, setLoadingValores] = useState(false);
+  const [limiteAtingido, setLimiteAtingido] = useState(false);
   const [viewMode, setViewMode] = usePersistedViewMode<ViewMode>("jards:comparativo:view", VIEW_MODES, "tabela");
   const [metricaExtra, setMetricaExtra] = usePersistedViewMode<MetricaExtra>("jards:comparativo:metrica", METRICA_EXTRA_MODES, "nenhuma");
 
@@ -211,10 +213,13 @@ function ComparativoContent() {
   useEffect(() => {
     const ids = searchParams.get("empresas")?.split(",").filter(Boolean) ?? [];
     if (ids.length === 0) { setHidratado(true); return; }
-    supabase.from("empresas").select("id, nome, site, logo_url").in("id", ids).then(({ data }) => {
+    supabase.from("empresas").select("id, nome, site, logo_url").in("id", ids).then(async ({ data }) => {
       const linhas = (data ?? []) as EmpresaOption[];
       const porId = new Map(linhas.map((e) => [e.id, e]));
-      setSelecionadas(ids.map((id) => porId.get(id)).filter((e): e is EmpresaOption => !!e));
+      const doLink = ids.map((id) => porId.get(id)).filter((e): e is EmpresaOption => !!e);
+      const bloqueadas = await registrarComparacoes(doLink.map((e) => e.id));
+      if (bloqueadas.size > 0) setLimiteAtingido(true);
+      setSelecionadas(doLink.filter((e) => !bloqueadas.has(e.id)));
       setHidratado(true);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -273,9 +278,29 @@ function ComparativoContent() {
     return () => { cancelled = true; };
   }, [selecionadas, supabase]);
 
-  function adicionar(empresa: EmpresaOption) {
+  // Conta cada empresa nova no limite do plano gratuito e devolve as que ficaram de fora.
+  // Quem decide é o banco (plano pago nunca é barrado); se a chamada falhar, não travamos
+  // o usuário por um problema nosso.
+  async function registrarComparacoes(ids: string[]): Promise<Set<string>> {
+    if (ids.length === 0) return new Set();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc("fn_registrar_comparacoes", { p_empresa_ids: ids });
+    if (error) {
+      console.error("Erro ao registrar comparação:", error.message);
+      return new Set();
+    }
+    return new Set<string>(data?.bloqueadas ?? []);
+  }
+
+  async function adicionar(empresa: EmpresaOption) {
     if (selecionadas.length >= MAX_EMPRESAS) return;
-    setSelecionadas((prev) => [...prev, empresa]);
+    const bloqueadas = await registrarComparacoes([empresa.id]);
+    if (bloqueadas.has(empresa.id)) {
+      setLimiteAtingido(true);
+      return;
+    }
+    // O clique é assíncrono agora: dois cliques seguidos não podem duplicar a empresa nem furar o máximo.
+    setSelecionadas((prev) => (prev.length >= MAX_EMPRESAS || prev.some((e) => e.id === empresa.id) ? prev : [...prev, empresa]));
     setBusca("");
     setResultados([]);
   }
@@ -518,6 +543,17 @@ function ComparativoContent() {
           </div>
         )}
       </div>
+
+      {limiteAtingido && (
+        <AcessoContatosModal
+          variant="limite_comparacoes"
+          onClose={() => setLimiteAtingido(false)}
+          onPrimary={() => {
+            setLimiteAtingido(false);
+            router.push("/meu-plano?acao=assinar");
+          }}
+        />
+      )}
     </div>
   );
 }

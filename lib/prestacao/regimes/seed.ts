@@ -1,0 +1,77 @@
+// Gera o seed SQL de prestacao_regimes e calendario_regulatorio a partir do
+// código (P1.1). O script scripts/prestacao-gerar-seed-regimes.ts grava o
+// resultado em ARQUIVO_SEED, e um teste confere que o arquivo está igual.
+//
+// Mudou um parâmetro publicado? Suba `versao` no regime, aponte ARQUIVO_SEED
+// para uma migration nova e rode o script: a versão anterior vira obsoleta.
+
+import { entradasDoCalendario } from "../calendario-regulatorio";
+import { REGIMES } from "./index";
+import { validarRegime } from "./schema";
+import { definida, type RegimeNormativo } from "./tipos";
+
+// v1 em 20261005150100_prestacao_regimes_seed.sql (aplicada); v2 com todas as dimensões (P1.11).
+export const ARQUIVO_SEED = "supabase/migrations/20261006100100_prestacao_regimes_seed_v2.sql";
+
+function texto(valor: string | null): string {
+  return valor === null ? "null" : `'${valor.replace(/'/g, "''")}'`;
+}
+
+/** JSON compacto entre delimitadores $marca$: o seed v2 tem 8 regimes e precisa caber no envio. */
+function json(valor: unknown, marca: string): string {
+  const conteudo = JSON.stringify(valor);
+  if (conteudo.includes(`$${marca}$`)) throw new Error(`O texto contém o delimitador $${marca}$`);
+  return `$${marca}$${conteudo}$${marca}$::jsonb`;
+}
+
+/**
+ * Fontes, checklist de envio e modelos de saída saem do próprio regime
+ * (parametros), em vez de repetir o JSON.
+ */
+function sqlDoRegime(regime: RegimeNormativo): string {
+  const aplicabilidade = definida(regime.aplicabilidade);
+  return [
+    `-- ${regime.nome} (versão ${regime.versao})`,
+    `update public.prestacao_regimes set status = 'obsoleto'`,
+    `where codigo = ${texto(regime.codigo)} and versao < ${regime.versao} and status = 'publicado';`,
+    ``,
+    `insert into public.prestacao_regimes`,
+    `  (codigo, versao, nome, area, mecanismo, esfera, orgao, sistema_oficial, norma_referencia,`,
+    `   vigente_desde, vigente_ate, status, parametros, fontes, checklist_envio, modelos_saida, publicado_em)`,
+    `select`,
+    `  ${texto(regime.codigo)}, ${regime.versao}, ${texto(regime.nome)}, ${texto(regime.area)}, ${texto(regime.mecanismo)},`,
+    `  ${texto(regime.esfera)}, ${texto(regime.orgao)}, ${texto(regime.sistemaOficial)}, ${texto(regime.normaReferencia)},`,
+    `  ${regime.vigenteDesde === null ? "null" : `${texto(regime.vigenteDesde)}::date`}, ${aplicabilidade?.ate ? `${texto(aplicabilidade.ate)}::date` : "null"}, 'publicado',`,
+    `  p, coalesce(p->'fontes', '[]'), coalesce(p->'envio'->'documentos', '[]'), coalesce(p->'envio'->'modelos', '[]'), now()`,
+    `from (select ${json(regime, "regime")} as p) dados`,
+    `on conflict (codigo, versao) do nothing;`,
+  ].join("\n");
+}
+
+function sqlDoCalendario(): string {
+  const linhas = entradasDoCalendario().map(e =>
+    `  (${texto(e.tipo)}, ${texto(e.esfera)}, ${texto(e.uf)}, ${texto(e.municipio)}, '${e.inicio}', '${e.fim}', ${texto(e.descricao)}, ${texto(e.fonte)})`);
+  return [
+    `insert into public.calendario_regulatorio (tipo, esfera, uf, municipio, inicio, fim, descricao, fonte)`,
+    `values`,
+    linhas.join(",\n"),
+    `on conflict (tipo, esfera, coalesce(uf, ''), coalesce(municipio, ''), inicio) do nothing;`,
+  ].join("\n");
+}
+
+export function gerarSeedRegimes(): string {
+  for (const regime of REGIMES) {
+    const resultado = validarRegime(regime);
+    if (!resultado.ok) throw new Error(`Regime ${regime.codigo} inválido:\n${resultado.erros.join("\n")}`);
+  }
+  return [
+    `-- Gerado por scripts/prestacao-gerar-seed-regimes.ts a partir de lib/prestacao/regimes`,
+    `-- e lib/prestacao/calendario-regulatorio.ts. Não edite à mão: mude o código e`,
+    `-- gere de novo. Idempotente.`,
+    ``,
+    ...REGIMES.map(regime => sqlDoRegime(regime) + "\n"),
+    `-- Calendário: feriados nacionais e defeso eleitoral`,
+    sqlDoCalendario(),
+    ``,
+  ].join("\n");
+}

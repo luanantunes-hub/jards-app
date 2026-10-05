@@ -49,6 +49,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   propostas: "Propostas",
   patrocinadores: "Patrocinadores",
   integracoes: "Integrações",
+  prestacao: "Prestação de contas",
   sistema: "Sistema",
 };
 

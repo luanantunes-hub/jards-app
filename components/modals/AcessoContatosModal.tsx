@@ -6,7 +6,7 @@ import { ArrowRight, CalendarDays, X } from "lucide-react";
 import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
-export type AcessoContatosModalVariant = "sem_creditos" | "sem_plano" | "mcp_gpt";
+export type AcessoContatosModalVariant = "sem_creditos" | "sem_plano" | "mcp_gpt" | "limite_comparacoes";
 
 type AcessoContatosModalProps = {
   variant: AcessoContatosModalVariant;
@@ -46,6 +46,13 @@ const CONTEUDO: Record<
     titulo: "Assine para conectar o Jards ao Claude e ao ChatGPT.",
     descricao:
       "A integração via MCP e a Custom GPT do Jards estão disponíveis nos planos ativos. Assine para consultar seus projetos, propostas e contatos direto de um assistente de IA.",
+    botao: "Assinar um plano",
+  },
+  limite_comparacoes: {
+    eyebrow: "Plano gratuito",
+    titulo: "Você chegou ao limite de comparações.",
+    descricao:
+      "O plano gratuito permite comparar um número limitado de empresas. As que você já comparou continuam disponíveis; para incluir novas, assine um plano.",
     botao: "Assinar um plano",
   },
 };

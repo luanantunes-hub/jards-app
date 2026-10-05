@@ -1,644 +1,427 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Plus, Pencil, Trash2, AlertTriangle, Check, Upload } from "lucide-react";
+import { CheckCircle2, ChevronsDownUp, ChevronsUpDown, CopyPlus, FolderPlus, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { PrestacaoItem } from "@/lib/supabase/types";
-import { Select } from "@/components/ui/Select";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import {
+  linhasVisiveis,
+  montarArvore,
+  percentualPago,
+  rotuloTipoNo,
+  basesDoOrcamento,
+  tetosPorGrupo,
+  type ComprovanteDoOrcamento,
+  type LinhaOrcamento,
+  type NoOrcamento,
+  type TipoNo,
+  type VersaoOrcamento,
+} from "@/lib/prestacao/orcamento";
+import { AlteracoesOrcamento, type PrestacaoDaAlteracao } from "@/components/prestacao/orcamento/AlteracoesOrcamento";
+import { ArvoreOrcamento } from "@/components/prestacao/orcamento/ArvoreOrcamento";
+import { EditorNoOrcamento, type NoEmEdicao } from "@/components/prestacao/orcamento/EditorNoOrcamento";
+import { ImportarOrcamento } from "@/components/prestacao/orcamento/ImportarOrcamento";
+import { TetosDoRegime } from "@/components/prestacao/orcamento/TetosDoRegime";
+import { nomeDaVersao, VersaoOrcamentoModal } from "@/components/prestacao/orcamento/VersaoOrcamentoModal";
 
-type ImportItem = {
-  rubrica: string;
-  descricao: string | null;
-  valor_aprovado: number;
-  tolerancia_pct: number;
-};
+type NoComOrigem = NoOrcamento & { origem_no_id?: string | null };
 
-const fmt = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
+const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const dataBR = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
 
-function pctColor(pct: number, tolerancia: number) {
-  if (pct > 100 + tolerancia) return "#D94E4E";
-  if (pct > 100) return "#B07A14";
-  if (pct >= 80) return "#2E8932";
-  return "rgba(13,13,13,.40)";
-}
-
-type EditingItem = Partial<PrestacaoItem> & { _new?: boolean };
+const CARTAO = "rounded border bg-white";
+const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const SECUNDARIO = "flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/65 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function OrcamentoPage() {
   const { id } = useParams<{ id: string }>();
-  const supabase = createClient();
-  const [itens, setItens] = useState<PrestacaoItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editing, setEditing] = useState<EditingItem | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const supabase = useMemo(() => createClient(), []);
+  const organizationId = usePrestacaoOrganizacao(id);
+  const permissoes = usePermissoesPrestacao(id);
+  const regimes = useRegimesPublicados();
+  const { confirmDelete } = useDeleteConfirm();
 
-  // Importação
-  const importRef = useRef<HTMLInputElement>(null);
-  const [importing, setImporting] = useState(false);
-  const [importStatus, setImportStatus] = useState("");
-  const [preview, setPreview] = useState<ImportItem[] | null>(null);
-  const [confirmando, setConfirmando] = useState(false);
-  // Mapeamento de colunas CSV (valores são índices como string)
-  const [csvRaw, setCsvRaw] = useState<{ headers: string[]; rows: string[][] } | null>(null);
-  const [mapRubrica, setMapRubrica] = useState("");
-  const [mapDesc, setMapDesc] = useState("");
-  const [mapValor, setMapValor] = useState("");
-  const [mapTol, setMapTol] = useState("");
+  const [recarga, setRecarga] = useState(0);
+  const [base, setBase] = useState<{
+    prestacaoId: string;
+    regimeId: string | null;
+    prestacao: PrestacaoDaAlteracao | null;
+    versoes: VersaoOrcamento[];
+    comprovantes: ComprovanteDoOrcamento[];
+  } | null>(null);
+  const [nosCarregados, setNosCarregados] = useState<{ versaoId: string; nos: NoComOrigem[] } | null>(null);
+  const [versaoEscolhida, setVersaoEscolhida] = useState<string | null>(null);
+  const [fechados, setFechados] = useState<Set<string>>(new Set());
+  const [edicao, setEdicao] = useState<{ versaoId: string; edicao: NoEmEdicao } | null>(null);
+  const [versaoModal, setVersaoModal] = useState<"nova" | "editar" | null>(null);
+  const [ativando, setAtivando] = useState(false);
+  const [erro, setErro] = useState("");
+  const [aviso, setAviso] = useState("");
 
-  const fetch = useCallback(async () => {
-    const { data } = await (supabase as any)
-      .from("prestacao_itens")
+  const recarregar = () => setRecarga(n => n + 1);
+
+  useEffect(() => {
+    let ativo = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
+    const db = supabase as any;
+    Promise.all([
+      db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, data_liberacao, data_termo, data_fim_execucao").eq("id", id).maybeSingle(),
+      db.from("prestacao_orcamento_versoes").select("*").eq("prestacao_id", id).order("created_at"),
+      db.from("prestacao_comprovantes").select("no_id, status, valor_extraido").eq("prestacao_id", id),
+    ]).then(([prestacao, versoes, comprovantes]) => {
+      if (!ativo) return;
+      setBase({
+        prestacaoId: id,
+        regimeId: prestacao.data?.regime_id ?? null,
+        prestacao: prestacao.data ?? null,
+        versoes: (versoes.data as VersaoOrcamento[]) ?? [],
+        comprovantes: (comprovantes.data as ComprovanteDoOrcamento[]) ?? [],
+      });
+      if (versoes.error) setErro(mensagemErroPrestacao(versoes.error, "Não foi possível carregar o orçamento"));
+    });
+    return () => { ativo = false; };
+  }, [id, supabase, recarga]);
+
+  const versoes = useMemo(() => (base?.prestacaoId === id ? base.versoes : []), [base, id]);
+  const versao = versoes.find(v => v.id === versaoEscolhida) ?? versoes.find(v => v.ativa) ?? versoes[0] ?? null;
+  const versaoId = versao?.id ?? null;
+  const versaoAtiva = versoes.find(v => v.ativa) ?? null;
+
+  useEffect(() => {
+    if (!versaoId) return;
+    let ativo = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- idem
+    (supabase as any)
+      .from("prestacao_orcamento_nos")
       .select("*")
-      .eq("prestacao_id", id)
-      .order("ordem", { ascending: true });
-    setItens((data as PrestacaoItem[]) ?? []);
-    setLoading(false);
-  }, [id, supabase]);
+      .eq("versao_id", versaoId)
+      .then(({ data }: { data: NoComOrigem[] | null }) => {
+        if (ativo) setNosCarregados({ versaoId, nos: data ?? [] });
+      });
+    return () => { ativo = false; };
+  }, [supabase, versaoId, recarga]);
 
-  useEffect(() => { fetch(); }, [fetch]);
+  const nos = useMemo(() => (versaoId && nosCarregados?.versaoId === versaoId ? nosCarregados.nos : []), [nosCarregados, versaoId]);
+  const carregando = !base || base.prestacaoId !== id || (versaoId !== null && nosCarregados?.versaoId !== versaoId);
 
-  function novoItem() {
-    setEditing({
-      _new: true,
-      prestacao_id: id,
-      rubrica: "",
-      descricao: "",
-      valor_aprovado: 0,
-      valor_realizado: 0,
-      tolerancia_pct: 15,
-      ordem: itens.length,
+  // Numa versão que não está em uso, os comprovantes aparecem no item copiado do que está em uso.
+  const comprovantes = useMemo(() => {
+    const todos = base?.prestacaoId === id ? base.comprovantes : [];
+    if (!versao || versao.ativa) return todos;
+    const correspondente = new Map(nos.filter(no => no.origem_no_id).map(no => [no.origem_no_id as string, no.id]));
+    return todos.map(c => (c.no_id && correspondente.has(c.no_id) ? { ...c, no_id: correspondente.get(c.no_id)! } : c));
+  }, [base, id, nos, versao]);
+
+  const arvore = useMemo(() => montarArvore(nos, comprovantes), [nos, comprovantes]);
+  const linhas = linhasVisiveis(arvore.raizes, fechados);
+  const regime = regimes.find(r => r.id === base?.regimeId)?.regime ?? null;
+  const tetos = useMemo(() => tetosPorGrupo(arvore.raizes, regime), [arvore, regime]);
+  const bases = useMemo(() => basesDoOrcamento(arvore.raizes, regime), [arvore, regime]);
+  const agrupadores = nos.filter(no => no.tipo !== "item").map(no => no.id);
+  const percentual = percentualPago(arvore.total);
+  const podeEditar = permissoes.editar;
+
+  async function garantirVersao(): Promise<string | null> {
+    if (versaoId) return versaoId;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- idem
+    const { data, error } = await (supabase as any)
+      .from("prestacao_orcamento_versoes")
+      .insert({ prestacao_id: id, tipo: "aprovada" })
+      .select("id")
+      .single();
+    if (error || !data) { setErro(mensagemErroPrestacao(error, "Não foi possível criar o orçamento")); return null; }
+    setVersaoEscolhida(data.id);
+    recarregar();
+    return data.id as string;
+  }
+
+  async function abrirNovo(parentId: string | null, tipo: TipoNo) {
+    setErro("");
+    const alvo = await garantirVersao();
+    if (alvo) setEdicao({ versaoId: alvo, edicao: { modo: "novo", parentId, tipo } });
+  }
+
+  function excluir(linha: LinhaOrcamento) {
+    const { no } = linha;
+    const agrupador = no.tipo !== "item";
+    confirmDelete({
+      title: agrupador ? `Excluir ${rotuloTipoNo(no.tipo).toLowerCase()} “${no.nome}”?` : `Excluir “${no.nome}”?`,
+      description: agrupador
+        ? `Tudo o que está dentro (${linha.totais.itens} ${linha.totais.itens === 1 ? "item" : "itens"}, ${fmt(linha.totais.vigente)}) sai desta versão. Comprovantes ligados a esses itens ficam sem item.`
+        : "O item sai desta versão. Comprovantes ligados a ele ficam sem item.",
+      onConfirm: async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- idem
+        const { error } = await (supabase as any).from("prestacao_orcamento_nos").delete().eq("id", no.id);
+        if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir"));
+        recarregar();
+      },
     });
   }
 
-  async function salvar() {
-    if (!editing || !editing.rubrica?.trim()) return;
-    setSaving(true);
-    if (editing._new) {
-      await (supabase as any).from("prestacao_itens").insert({
-        prestacao_id: id,
-        rubrica: editing.rubrica,
-        descricao: editing.descricao || null,
-        valor_aprovado: Number(editing.valor_aprovado ?? 0),
-        tolerancia_pct: Number(editing.tolerancia_pct ?? 15),
-        ordem: editing.ordem ?? itens.length,
-      });
-    } else {
-      await (supabase as any).from("prestacao_itens").update({
-        rubrica: editing.rubrica,
-        descricao: editing.descricao || null,
-        valor_aprovado: Number(editing.valor_aprovado ?? 0),
-        tolerancia_pct: Number(editing.tolerancia_pct ?? 15),
-      }).eq("id", editing.id);
-    }
-    setEditing(null);
-    setSaving(false);
-    fetch();
+  function excluirVersao() {
+    if (!versao || versao.ativa) return;
+    confirmDelete({
+      title: `Excluir a versão ${nomeDaVersao(versao)}?`,
+      description: `Os ${arvore.total.itens} itens desta versão saem junto. A versão em uso não muda.`,
+      onConfirm: async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- idem
+        const { error } = await (supabase as any).from("prestacao_orcamento_versoes").delete().eq("id", versao.id);
+        if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir a versão"));
+        setVersaoEscolhida(null);
+        recarregar();
+      },
+    });
   }
 
-  async function excluir(itemId: string) {
-    setDeletingId(itemId);
-    await (supabase as any).from("prestacao_itens").delete().eq("id", itemId);
-    setDeletingId(null);
-    fetch();
-  }
-
-  // ─── Importação CSV ──────────────────────────────────────────────────────────
-  function detectSeparator(line: string): string {
-    const counts = { "\t": 0, ";": 0, ",": 0, "|": 0 };
-    for (const ch of line) if (ch in counts) counts[ch as keyof typeof counts]++;
-    return (Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0]);
-  }
-
-  function splitLine(line: string, sep: string): string[] {
-    // suporte básico a campos entre aspas
-    const result: string[] = [];
-    let cur = "", inQ = false;
-    for (let i = 0; i < line.length; i++) {
-      const c = line[i];
-      if (c === '"') { inQ = !inQ; continue; }
-      if (c === sep && !inQ) { result.push(cur.trim()); cur = ""; continue; }
-      cur += c;
-    }
-    result.push(cur.trim());
-    return result;
-  }
-
-  function parseRawCSV(text: string) {
-    const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
-    if (lines.length < 2) return null;
-    const sep = detectSeparator(lines[0]);
-    const headers = splitLine(lines[0], sep);
-    const rows = lines.slice(1).map(l => splitLine(l, sep));
-    return { headers, rows };
-  }
-
-  function guessColIdx(headers: string[], candidates: string[]): string {
-    const norm = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
-    for (const c of candidates) {
-      const idx = headers.findIndex(h => norm(h).includes(norm(c)));
-      if (idx >= 0) return String(idx);
-    }
-    return "";
-  }
-
-  function buildPreviewFromMapping(raw: { headers: string[]; rows: string[][] }, rubrica: string, valor: string, desc: string, tol: string): ImportItem[] {
-    const iR = parseInt(rubrica);
-    const iV = parseInt(valor);
-    const iD = desc !== "" ? parseInt(desc) : -1;
-    const iT = tol !== "" ? parseInt(tol) : -1;
-    if (isNaN(iR) || isNaN(iV)) return [];
-    return raw.rows.map(cols => {
-      const rawVal = (cols[iV] ?? "").replace(/[R$\s]/g, "").replace(/\./g, "").replace(",", ".");
-      return {
-        rubrica: (cols[iR] ?? "").trim(),
-        descricao: iD >= 0 ? ((cols[iD] ?? "").trim() || null) : null,
-        valor_aprovado: parseFloat(rawVal) || 0,
-        tolerancia_pct: iT >= 0 ? parseInt(cols[iT] ?? "15") || 15 : 15,
-      };
-    }).filter(r => r.rubrica && r.valor_aprovado > 0);
-  }
-
-  function aplicarMapeamento() {
-    if (!csvRaw || mapRubrica === "" || mapValor === "") return;
-    const rows = buildPreviewFromMapping(csvRaw, mapRubrica, mapValor, mapDesc, mapTol);
-    if (rows.length === 0) {
-      setImportStatus("Nenhuma linha válida com essa combinação de colunas.");
+  async function tornarAtiva() {
+    if (!versao) return;
+    setAtivando(true);
+    setErro("");
+    const { error } = await supabase.rpc("fn_prestacao_orcamento_ativar_versao" as never, { p_versao_id: versao.id } as never);
+    setAtivando(false);
+    if (error) {
+      setErro(error.message?.includes("sem_permissao")
+        ? "Tornar uma versão a que está em uso cabe ao administrador ou ao responsável pela prestação."
+        : mensagemErroPrestacao(error, "Não foi possível trocar a versão em uso"));
       return;
     }
-    setCsvRaw(null);
-    setPreview(rows);
+    setAviso(`${nomeDaVersao(versao)} passou a ser o orçamento em uso. Os comprovantes foram para os itens correspondentes.`);
+    recarregar();
   }
 
-  async function handleImportFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    e.target.value = "";
-    if (!file) return;
-
-    setImporting(true);
-    setImportStatus("");
-
-    if (file.name.endsWith(".csv") || file.name.endsWith(".tsv") || file.name.endsWith(".txt")) {
-      const text = await file.text();
-      const raw = parseRawCSV(text);
-      if (!raw || raw.headers.length < 2) {
-        setImportStatus("Não foi possível ler o arquivo. Verifique se é um CSV ou TSV válido.");
-        setImporting(false);
-        return;
-      }
-      // Tenta adivinhar colunas automaticamente (retorna índice como string)
-      const autoRubrica = guessColIdx(raw.headers, ["despesa", "rubrica", "categoria", "item", "nome", "descricao"]);
-      const autoValor   = guessColIdx(raw.headers, ["total", "valor", "aprovado", "previsto", "orcado", "proposto"]);
-      const autoDesc    = guessColIdx(raw.headers, ["justificativa", "detalhe", "especificacao", "obs"]);
-      setMapRubrica(autoRubrica);
-      setMapValor(autoValor);
-      setMapDesc(autoDesc);
-      setMapTol("");
-      setCsvRaw(raw);
-      setImporting(false);
-    } else if (file.name.endsWith(".pdf")) {
-      setImportStatus("Enviando PDF para análise…");
-      const path = `orcamentos/${id}/${Date.now()}.pdf`;
-      const { error: upErr } = await supabase.storage.from("documentos").upload(path, file, { upsert: false });
-      if (upErr) {
-        setImportStatus("Erro ao enviar PDF.");
-        setImporting(false);
-        return;
-      }
-      setImportStatus("Analisando orçamento com IA…");
-      try {
-        const { data: fnData, error: fnErr } = await supabase.functions.invoke("importar-orcamento", {
-          body: { storage_path: path },
-        });
-        if (fnErr || !fnData?.itens?.length) {
-          setImportStatus("Não foi possível extrair rubricas do PDF. Tente um CSV.");
-          setImporting(false);
-          return;
-        }
-        setPreview(fnData.itens as ImportItem[]);
-      } catch {
-        setImportStatus("Erro na análise. Tente um CSV.");
-      }
-      await supabase.storage.from("documentos").remove([path]);
-      setImporting(false);
-      setImportStatus("");
-    } else {
-      setImportStatus("Formato não suportado. Use CSV ou PDF.");
-      setImporting(false);
-    }
+  function alternar(noId: string) {
+    setFechados(atual => {
+      const proximo = new Set(atual);
+      if (proximo.has(noId)) proximo.delete(noId); else proximo.add(noId);
+      return proximo;
+    });
   }
 
-  async function confirmarImport() {
-    if (!preview?.length) return;
-    setConfirmando(true);
-    const rows = preview.map((item, i) => ({
-      prestacao_id: id,
-      rubrica: item.rubrica,
-      descricao: item.descricao || null,
-      valor_aprovado: item.valor_aprovado,
-      valor_realizado: 0,
-      tolerancia_pct: item.tolerancia_pct ?? 15,
-      ordem: itens.length + i,
-    }));
-    await (supabase as any).from("prestacao_itens").insert(rows);
-    setConfirmando(false);
-    setPreview(null);
-    fetch();
-  }
-
-  // ─────────────────────────────────────────────────────────────────────────────
-
-  const totalAprovado  = itens.reduce((s, i) => s + i.valor_aprovado, 0);
-  const totalRealizado = itens.reduce((s, i) => s + i.valor_realizado, 0);
-  const totalPct       = totalAprovado > 0 ? Math.round((totalRealizado / totalAprovado) * 100) : null;
+  const ordemNova = nos.reduce((maior, no) => Math.max(maior, no.ordem), -1) + 1;
+  const editorRaizes = edicao?.versaoId === versaoId ? arvore.raizes : [];
 
   return (
-    <div className="px-8 py-6">
-      {/* Totais */}
-      {itens.length > 0 && (
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          {[
-            { label: "Total aprovado",  value: fmt(totalAprovado),  color: undefined },
-            { label: "Total realizado", value: fmt(totalRealizado), color: totalPct !== null ? pctColor(totalPct, 15) : undefined },
-            { label: "% executado",     value: totalPct !== null ? `${totalPct}%` : "—", color: totalPct !== null ? pctColor(totalPct, 15) : undefined },
-          ].map(c => (
-            <div key={c.label} className="bg-white rounded border p-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[0.5625rem] font-bold uppercase tracking-wide text-black/30 mb-1">{c.label}</p>
-              <p className="text-[1.0625rem] font-bold" style={{ color: c.color ?? "#0D0D0D", fontVariantNumeric: "tabular-nums" }}>{c.value}</p>
-            </div>
-          ))}
-        </div>
+    <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
+      {erro && (
+        <p role="alert" className="rounded border px-4 py-3 text-[0.75rem]" style={{ background: "#D94A4A08", borderColor: "#D94A4A30", color: "#B23B3B" }}>{erro}</p>
+      )}
+      {aviso && (
+        <p role="status" className="flex items-center gap-2 rounded border px-4 py-3 text-[0.75rem]" style={{ background: "#2E893208", borderColor: "#2E893230", color: "#24702A" }}>
+          <CheckCircle2 size={14} aria-hidden /> {aviso}
+        </p>
       )}
 
-      {/* Tabela */}
-      <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="flex items-center justify-between px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p className="text-[0.75rem] font-semibold text-black">Rubricas orçamentárias</p>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => importRef.current?.click()}
-              disabled={importing}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[0.6875rem] font-semibold transition border"
-              style={{ borderColor: "rgba(13,13,13,.15)", color: "rgba(13,13,13,.60)" }}
-            >
-              {importing
-                ? <><span className="w-3 h-3 border-2 border-black/20 border-t-black/60 rounded-full animate-spin" />{importStatus || "Importando…"}</>
-                : <><Upload size={12} /> Importar CSV / PDF</>
-              }
-            </button>
-            <input
-              ref={importRef}
-              type="file"
-              accept=".csv,.pdf"
-              className="hidden"
-              onChange={handleImportFile}
+      {/* Versão e ações */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          {versoes.length > 0 && (
+            <Dropdown
+              className="w-[18rem] max-w-full"
+              value={versaoId ?? ""}
+              onChange={valor => { setVersaoEscolhida(valor); setAviso(""); setFechados(new Set()); }}
+              ariaLabel="Versão do orçamento"
+              options={versoes.map(v => ({ value: v.id, label: `${nomeDaVersao(v)}${v.ativa ? " · em uso" : ""}` }))}
             />
-            <button
-              onClick={novoItem}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[0.6875rem] font-semibold text-white transition hover:opacity-90"
-              style={{ background: "#7259B5" }}
+          )}
+          {versao && (
+            <span
+              className="rounded border bg-white px-2 py-1 text-[0.625rem] font-medium"
+              style={versao.ativa ? { borderColor: "#2E893247", color: "#2E8932" } : { borderColor: "rgba(13,13,13,.15)", color: "rgba(13,13,13,.5)" }}
             >
-              <Plus size={12} /> Adicionar rubrica
+              {versao.ativa ? "Em uso" : "Não está em uso"}
+            </span>
+          )}
+          {versao?.ato && (
+            <span className="text-[0.6875rem] text-black/45">{versao.ato}{versao.data_ato ? ` de ${dataBR(versao.data_ato)}` : ""}</span>
+          )}
+          {podeEditar && versao && (
+            <>
+              <button type="button" onClick={() => setVersaoModal("editar")} className={SECUNDARIO} style={BORDA}>
+                <Pencil size={12} aria-hidden /> Dados da versão
+              </button>
+              <button type="button" onClick={() => setVersaoModal("nova")} className={SECUNDARIO} style={BORDA}>
+                <CopyPlus size={13} aria-hidden /> Nova versão
+              </button>
+            </>
+          )}
+          {versao && !versao.ativa && permissoes.decidir && (
+            <button
+              type="button"
+              onClick={tornarAtiva}
+              disabled={ativando}
+              className="flex h-9 items-center gap-1.5 rounded bg-[#2E8932] px-3 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50"
+            >
+              <CheckCircle2 size={13} aria-hidden /> {ativando ? "Trocando…" : "Tornar ativa"}
             </button>
-          </div>
+          )}
+          {versao && !versao.ativa && podeEditar && (
+            <button type="button" onClick={excluirVersao} className="flex h-9 items-center gap-1.5 rounded px-2 text-[0.75rem] text-[#B23B3B]/80 transition hover:bg-[#D94A4A]/[.06] hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
+              <Trash2 size={12} aria-hidden /> Excluir versão
+            </button>
+          )}
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-10">
-            <div className="w-4 h-4 border-2 border-black/10 border-t-[#7259B5] rounded-full animate-spin" />
-          </div>
-        ) : itens.length === 0 && !editing ? (
-          <div className="text-center py-10">
-            <p className="text-[0.75rem] text-black/30">Nenhuma rubrica cadastrada.</p>
-            <p className="text-[0.6875rem] text-black/20 mt-1">Adicione as linhas do orçamento aprovado.</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr style={{ background: "#F9F9F8" }}>
-                  {["Rubrica", "Aprovado", "Realizado", "% exec.", "Tolerância", ""].map(col => (
-                    <th key={col} className="px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      {col}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {itens.map((item, i) => {
-                  const pct = item.valor_aprovado > 0 ? Math.round((item.valor_realizado / item.valor_aprovado) * 100) : null;
-                  const cor = pct !== null ? pctColor(pct, item.tolerancia_pct) : "rgba(13,13,13,.35)";
-                  const excedido = pct !== null && pct > 100 + item.tolerancia_pct;
-                  return (
-                    <tr key={item.id} className="hover:bg-black/[.02] transition" style={{ borderBottom: i < itens.length - 1 ? "1px solid rgba(13,13,13,.05)" : undefined }}>
-                      <td className="px-4 py-3">
-                        <p className="text-[0.75rem] font-semibold text-black">{item.rubrica}</p>
-                        {item.descricao && <p className="text-[0.625rem] text-black/35 mt-0.5">{item.descricao}</p>}
-                      </td>
-                      <td className="px-4 py-3 text-[0.75rem] text-black/60 font-medium tabular-nums">{fmt(item.valor_aprovado)}</td>
-                      <td className="px-4 py-3 text-[0.75rem] font-semibold tabular-nums" style={{ color: cor }}>{fmt(item.valor_realizado)}</td>
-                      <td className="px-4 py-3">
-                        {pct !== null ? (
-                          <div className="flex items-center gap-1.5">
-                            <div className="w-16 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,13,13,.07)" }}>
-                              <div className="h-full rounded-full" style={{ width: `${Math.min(pct, 100)}%`, background: cor }} />
-                            </div>
-                            <span className="text-[0.625rem] font-bold tabular-nums" style={{ color: cor }}>{pct}%</span>
-                            {excedido && <AlertTriangle size={10} style={{ color: "#D94E4E" }} />}
-                          </div>
-                        ) : <span className="text-[0.625rem] text-black/25">—</span>}
-                      </td>
-                      <td className="px-4 py-3 text-[0.6875rem] text-black/35">{item.tolerancia_pct}%</td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1">
-                          <button onClick={() => setEditing(item)} className="p-1.5 rounded hover:bg-black/5 transition text-black/30 hover:text-black/60">
-                            <Pencil size={12} />
-                          </button>
-                          <button
-                            onClick={() => excluir(item.id)}
-                            disabled={deletingId === item.id}
-                            className="p-1.5 rounded hover:bg-[#D94E4E]/10 transition text-black/20 hover:text-[#D94E4E]"
-                          >
-                            <Trash2 size={12} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-
-                {/* Linha de totais */}
-                {itens.length > 0 && (
-                  <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
-                    <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50">Total</td>
-                    <td className="px-4 py-2.5 text-[0.75rem] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
-                    <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums" style={{ color: totalPct !== null ? pctColor(totalPct, 15) : "rgba(13,13,13,.4)" }}>{fmt(totalRealizado)}</td>
-                    <td className="px-4 py-2.5 text-[0.6875rem] font-bold tabular-nums" style={{ color: totalPct !== null ? pctColor(totalPct, 15) : "rgba(13,13,13,.35)" }}>{totalPct !== null ? `${totalPct}%` : "—"}</td>
-                    <td colSpan={2} />
-                  </tr>
-                )}
-              </tbody>
-            </table>
+        {podeEditar && (
+          <div className="flex flex-wrap items-center gap-2">
+            <ImportarOrcamento
+              prestacaoId={id}
+              organizationId={organizationId}
+              versaoId={versaoId}
+              garantirVersao={garantirVersao}
+              nos={nos}
+              regime={regime}
+              disabled={carregando}
+              onImported={mensagem => { setAviso(mensagem); recarregar(); }}
+            />
+            <button type="button" onClick={() => abrirNovo(null, "etapa")} disabled={carregando} className={SECUNDARIO} style={BORDA}>
+              <FolderPlus size={13} aria-hidden /> Agrupador
+            </button>
+            <button
+              type="button"
+              onClick={() => abrirNovo(null, "item")}
+              disabled={carregando}
+              className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:opacity-50"
+            >
+              <Plus size={13} aria-hidden /> Adicionar item
+            </button>
           </div>
         )}
       </div>
 
-      {/* Form inline de edição */}
-      {editing && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setEditing(null)}>
-          <div className="bg-white rounded shadow-2xl w-full max-w-md p-6" onClick={e => e.stopPropagation()}>
-            <h3 className="text-[0.875rem] font-semibold text-black mb-4">{editing._new ? "Nova rubrica" : "Editar rubrica"}</h3>
-            <div className="space-y-3">
-              <div>
-                <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Rubrica *</label>
-                <input
-                  value={editing.rubrica ?? ""}
-                  onChange={e => setEditing({ ...editing, rubrica: e.target.value })}
-                  className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  placeholder="Ex: Cachê artístico"
-                />
-              </div>
-              <div>
-                <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Descrição</label>
-                <input
-                  value={editing.descricao ?? ""}
-                  onChange={e => setEditing({ ...editing, descricao: e.target.value })}
-                  className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  placeholder="Detalhamento opcional"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Aprovado (R$)</label>
-                  <input
-                    type="number"
-                    value={editing.valor_aprovado ?? 0}
-                    onChange={e => setEditing({ ...editing, valor_aprovado: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none tabular-nums"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Tolerância %</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={editing.tolerancia_pct ?? 15}
-                    onChange={e => setEditing({ ...editing, tolerancia_pct: Number(e.target.value) })}
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                </div>
-              </div>
-              <p className="text-[0.625rem] text-black/35 -mt-1">O valor realizado é calculado automaticamente pelos comprovantes aceitos vinculados a esta rubrica.</p>
-            </div>
-            <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => setEditing(null)} className="px-4 py-2 text-[0.75rem] text-black/35 hover:text-black/55 transition">Cancelar</button>
-              <button
-                onClick={salvar}
-                disabled={saving || !editing.rubrica?.trim()}
-                className="flex items-center gap-1.5 px-4 py-2 text-[0.75rem] font-semibold text-white rounded transition hover:opacity-90 disabled:opacity-40"
-                style={{ background: "#7259B5" }}
-              >
-                {saving ? <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Check size={12} />}
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Alerta de erro de importação */}
-      {importStatus && !importing && (
-        <p className="mt-3 text-[0.6875rem] px-3 py-2 rounded border"
-          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
-          {importStatus}
+      {versao && !versao.ativa && versaoAtiva && (
+        <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">
+          <Info size={13} className="mt-px shrink-0 text-[#2D72B0]" aria-hidden />
+          Você está vendo uma versão que não está em uso. O orçamento em uso é {nomeDaVersao(versaoAtiva)}; os comprovantes aparecem aqui nos itens copiados dele.
         </p>
       )}
+      {!podeEditar && !carregando && (
+        <p className="text-[0.6875rem] text-black/45">Você pode consultar o orçamento. Editar cabe ao administrador ou ao colaborador com a prestação.</p>
+      )}
 
-      {/* Modal de mapeamento de colunas */}
-      {csvRaw && (() => {
-        const namedCols = csvRaw.headers
-          .map((h, i) => ({ h, i }))
-          .filter(({ h }) => h.trim() !== "");
-        const previewCols = [
-          { idx: mapRubrica !== "" ? parseInt(mapRubrica) : -1, label: "Rubrica" },
-          { idx: mapValor !== "" ? parseInt(mapValor) : -1, label: "Valor" },
-          { idx: mapDesc !== "" ? parseInt(mapDesc) : -1, label: "Descrição" },
-        ].filter(c => c.idx >= 0);
-        return (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-            style={{ background: "rgba(13,13,13,.40)" }}>
-            <div className="bg-white rounded w-full max-w-lg" style={{ boxShadow: "0 8px 32px rgba(13,13,13,.15)" }}>
-              <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <p className="text-[0.8125rem] font-bold text-black/80">Mapear colunas do arquivo</p>
-                <p className="text-[0.6875rem] text-black/40 mt-0.5">
-                  {namedCols.length} colunas identificadas · {csvRaw.rows.length} linhas
-                </p>
-              </div>
-              <div className="p-5">
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div>
-                    <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Rubrica / Despesa *</label>
-                    <Select value={mapRubrica} onChange={e => setMapRubrica(e.target.value)}
-                      className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none bg-white"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                      <option value="">— selecione —</option>
-                      {namedCols.map(({ h, i }) => <option key={i} value={String(i)}>{h}</option>)}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Valor aprovado *</label>
-                    <Select value={mapValor} onChange={e => setMapValor(e.target.value)}
-                      className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none bg-white"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                      <option value="">— selecione —</option>
-                      {namedCols.map(({ h, i }) => <option key={i} value={String(i)}>{h}</option>)}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Descrição / Justificativa</label>
-                    <Select value={mapDesc} onChange={e => setMapDesc(e.target.value)}
-                      className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none bg-white"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                      <option value="">— não usar —</option>
-                      {namedCols.map(({ h, i }) => <option key={i} value={String(i)}>{h}</option>)}
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Tolerância (%)</label>
-                    <Select value={mapTol} onChange={e => setMapTol(e.target.value)}
-                      className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none bg-white"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                      <option value="">— não usar —</option>
-                      {namedCols.map(({ h, i }) => <option key={i} value={String(i)}>{h}</option>)}
-                    </Select>
-                  </div>
-                </div>
-                {/* Prévia das primeiras linhas com colunas mapeadas */}
-                {previewCols.length > 0 && csvRaw.rows.length > 0 && (
-                  <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                    <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 px-3 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)", background: "rgba(13,13,13,.02)" }}>
-                      Prévia ({Math.min(3, csvRaw.rows.length)} primeiras linhas)
-                    </p>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-[0.6875rem]">
-                        <thead>
-                          <tr style={{ background: "rgba(13,13,13,.02)" }}>
-                            {previewCols.map(c => (
-                              <th key={c.idx} className="px-3 py-1.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>{c.label}</th>
-                            ))}
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {csvRaw.rows.slice(0, 3).map((row, ri) => (
-                            <tr key={ri} className="border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
-                              {previewCols.map(c => (
-                                <td key={c.idx} className="px-3 py-1.5 text-black/60 max-w-[10rem] truncate">{row[c.idx] || "—"}</td>
-                              ))}
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                )}
-              </div>
-              <div className="px-5 py-4 border-t flex items-center justify-end gap-4"
-                style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <button
-                  onClick={() => { setCsvRaw(null); setImportStatus(""); }}
-                  className="text-[0.75rem] font-medium transition"
-                  style={{ color: "rgba(13,13,13,.35)" }}
-                  onMouseOver={e => (e.currentTarget.style.color = "rgba(13,13,13,.55)")}
-                  onMouseOut={e => (e.currentTarget.style.color = "rgba(13,13,13,.35)")}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={aplicarMapeamento}
-                  disabled={mapRubrica === "" || mapValor === ""}
-                  className="px-4 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
-                  style={{ background: "#7259B5" }}
-                >
-                  Ver prévia →
-                </button>
-              </div>
-            </div>
+      {carregando ? (
+        <div aria-busy="true" aria-label="Carregando o orçamento" className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            {Array.from({ length: 5 }, (_, i) => <div key={i} className="h-[4.25rem] animate-pulse rounded bg-black/[.05] motion-reduce:animate-none" />)}
           </div>
-        );
-      })()}
-
-      {/* Modal de preview da importação */}
-      {preview && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(13,13,13,.40)" }}>
-          <div className="bg-white rounded w-full max-w-2xl max-h-[80vh] flex flex-col"
-            style={{ boxShadow: "0 8px 32px rgba(13,13,13,.15)" }}>
-            <div className="px-5 py-4 border-b flex items-center justify-between"
-              style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <div>
-                <p className="text-[0.8125rem] font-bold text-black/80">Pré-visualização da importação</p>
-                <p className="text-[0.6875rem] text-black/40 mt-0.5">{preview.length} rubrica{preview.length > 1 ? "s" : ""} encontrada{preview.length > 1 ? "s" : ""}</p>
-              </div>
-            </div>
-            <div className="overflow-y-auto flex-1">
-              <table className="w-full text-[0.75rem]">
-                <thead className="sticky top-0 bg-white">
-                  <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                    {["Rubrica", "Descrição", "Valor aprovado", "Tolerância"].map(h => (
-                      <th key={h} className="px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {preview.map((item, i) => (
-                    <tr key={i} className="border-b last:border-0 hover:bg-black/[.015]"
-                      style={{ borderColor: "rgba(13,13,13,.05)" }}>
-                      <td className="px-4 py-2.5 font-medium text-black/80">{item.rubrica}</td>
-                      <td className="px-4 py-2.5 text-black/50 max-w-[12.5rem] truncate">{item.descricao || "—"}</td>
-                      <td className="px-4 py-2.5 font-semibold tabular-nums text-black/80">
-                        {fmt(item.valor_aprovado)}
-                      </td>
-                      <td className="px-4 py-2.5 text-black/45">{item.tolerancia_pct}%</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="px-5 py-4 border-t flex items-center justify-between"
-              style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[0.6875rem] text-black/40">
-                Total: <strong>{fmt(preview.reduce((s, r) => s + r.valor_aprovado, 0))}</strong>
-              </p>
-              <div className="flex items-center gap-4">
-                <button
-                  onClick={() => setPreview(null)}
-                  className="text-[0.75rem] font-medium transition"
-                  style={{ color: "rgba(13,13,13,.35)" }}
-                  onMouseOver={e => (e.currentTarget.style.color = "rgba(13,13,13,.55)")}
-                  onMouseOut={e => (e.currentTarget.style.color = "rgba(13,13,13,.35)")}
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={confirmarImport}
-                  disabled={confirmando}
-                  className="flex items-center gap-1.5 px-4 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
-                  style={{ background: "#7259B5" }}
-                >
-                  {confirmando
-                    ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Importando…</>
-                    : <><Check size={12} /> Confirmar importação</>}
-                </button>
-              </div>
-            </div>
+          <div className={`${CARTAO} space-y-2 p-4`} style={BORDA}>
+            {Array.from({ length: 8 }, (_, i) => <div key={i} className="h-7 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}
           </div>
         </div>
+      ) : nos.length === 0 ? (
+        <div className={`${CARTAO} px-6 py-12 text-center`} style={BORDA}>
+          <p className="text-[0.875rem] font-medium text-black/60">{versao ? "Nenhum item nesta versão." : "O orçamento ainda não foi cadastrado."}</p>
+          <p className="mx-auto mt-1 max-w-[32rem] text-[0.75rem] leading-5 text-black/40">
+            {podeEditar
+              ? "Importe o orçamento aprovado (CSV ou PDF) ou adicione os itens. Etapas e produtos agrupam os itens; o grupo de custo de cada item alimenta os tetos do regime."
+              : "Quando o orçamento for cadastrado, ele aparece aqui com o executado de cada item."}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
+            {[
+              {
+                rotulo: "Vigente",
+                valor: fmt(arvore.total.vigente),
+                nota: arvore.total.remanejado !== 0 ? `Aprovado ${fmt(arvore.total.aprovado)}` : `${arvore.total.itens} itens`,
+              },
+              { rotulo: "Comprometido", valor: fmt(arvore.total.comprometido), nota: "Comprovantes em análise" },
+              { rotulo: "Pago", valor: fmt(arvore.total.pago), nota: "Comprovantes aceitos" },
+              { rotulo: "Saldo", valor: fmt(arvore.total.saldo), nota: "Vigente − comprometido − pago", alerta: arvore.total.saldo < 0 },
+              { rotulo: "% pago", valor: percentual !== null ? `${percentual}%` : "—", nota: "Sobre o vigente" },
+            ].map(cartao => (
+              <div key={cartao.rotulo} className={`${CARTAO} p-3`} style={BORDA}>
+                <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">{cartao.rotulo}</p>
+                <p className={`mt-1 text-[1rem] font-semibold tabular-nums ${cartao.alerta ? "text-[#B23B3B]" : "text-[#0D0D0D]"}`}>{cartao.valor}</p>
+                <p className="mt-0.5 text-[0.625rem] text-black/35">{cartao.nota}</p>
+              </div>
+            ))}
+          </div>
+
+          <TetosDoRegime tetos={tetos} regimeNome={regime?.nome ?? null} bases={bases} />
+
+          <section aria-labelledby="itens-titulo" className={`${CARTAO} overflow-hidden`} style={BORDA}>
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+              <h2 id="itens-titulo" className="text-[0.75rem] font-semibold text-[#0D0D0D]">Itens do orçamento</h2>
+              {agrupadores.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFechados(fechados.size > 0 ? new Set() : new Set(agrupadores))}
+                  className="flex items-center gap-1 rounded px-2 py-1 text-[0.6875rem] text-black/45 transition hover:bg-black/5 hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+                >
+                  {fechados.size > 0 ? <><ChevronsUpDown size={12} aria-hidden /> Expandir tudo</> : <><ChevronsDownUp size={12} aria-hidden /> Recolher tudo</>}
+                </button>
+              )}
+            </div>
+            <ArvoreOrcamento
+              linhas={linhas}
+              regime={regime}
+              fechados={fechados}
+              onAlternar={alternar}
+              total={arvore.total}
+              podeEditar={podeEditar}
+              onEditar={no => versaoId && setEdicao({ versaoId, edicao: { modo: "editar", no } })}
+              onAdicionarDentro={no => abrirNovo(no.id, "item")}
+              onExcluir={excluir}
+            />
+          </section>
+
+          <AlteracoesOrcamento
+            prestacaoId={id}
+            organizationId={organizationId}
+            prestacao={base?.prestacao ?? null}
+            regime={regime}
+            versaoAtiva={versaoAtiva}
+            nosAtivos={versao?.ativa ? nos : null}
+            permissoes={permissoes}
+            recarga={recarga}
+            onChanged={mensagem => { if (mensagem) setAviso(mensagem); recarregar(); }}
+          />
+
+          {arvore.foraDaVersao.quantidade > 0 && (
+            <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">
+              <Info size={13} className="mt-px shrink-0 text-[#B07A14]" aria-hidden />
+              <span>
+                {arvore.foraDaVersao.quantidade} {arvore.foraDaVersao.quantidade === 1 ? "comprovante não está ligado" : "comprovantes não estão ligados"} a um item desta versão
+                ({fmt(arvore.foraDaVersao.pago)} aceitos, {fmt(arvore.foraDaVersao.comprometido)} em análise) e não entram nas colunas acima.{" "}
+                <Link href={`/prestacoes/${id}/comprovantes`} className="text-[#684DB0] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">Ligar em Comprovantes</Link>
+              </span>
+            </p>
+          )}
+        </>
+      )}
+
+      {edicao && (
+        <EditorNoOrcamento
+          versaoId={edicao.versaoId}
+          raizes={editorRaizes}
+          edicao={edicao.edicao}
+          ordemNova={ordemNova}
+          regime={regime}
+          onClose={() => setEdicao(null)}
+          onSaved={() => { setEdicao(null); recarregar(); }}
+        />
+      )}
+      {versaoModal && (
+        <VersaoOrcamentoModal
+          prestacaoId={id}
+          editando={versaoModal === "editar" ? versao : null}
+          base={versaoModal === "nova" ? versao : null}
+          onClose={() => setVersaoModal(null)}
+          onSaved={novaId => {
+            setVersaoModal(null);
+            setVersaoEscolhida(novaId);
+            setAviso(versaoModal === "nova" ? "Versão criada. Ela não muda o orçamento em uso até ser tornada ativa." : "");
+            recarregar();
+          }}
+        />
       )}
     </div>
   );

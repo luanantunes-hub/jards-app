@@ -22,6 +22,8 @@ import { TaxonomiasComerciaisConfig } from "@/components/TaxonomiasComerciaisCon
 import { RenewalDecisionTreeConfig } from "@/components/customer-success/RenewalDecisionTreeConfig";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { Select } from "@/components/ui/Select";
+import { FUNCOES_PRESTACAO, MODULO_LABEL, PAPEIS_EXTERNOS } from "@/lib/equipe-modulos";
+import type { ModuloId } from "@/lib/modulos";
 
 const MOSTRAR_VISIBILIDADE_EQUIPE = false;
 
@@ -32,6 +34,8 @@ const MOSTRAR_VISIBILIDADE_EQUIPE = false;
 interface MembroOrg {
   user_id: string;
   papel: string;
+  modulos_acesso?: string[];
+  prestacao_funcao?: string | null;
   full_name: string | null;
   email: string | null;
   created_at: string;
@@ -93,6 +97,7 @@ export default function ConfiguracoesPage() {
   const [savingAvatar, setSavingAvatar] = useState(false);
   const [orgNome, setOrgNome] = useState("");
   const [orgAvatarUrl, setOrgAvatarUrl] = useState<string | null>(null);
+  const [orgTemPrestacao, setOrgTemPrestacao] = useState(false);
   const [savingOrg, setSavingOrg] = useState(false);
   const [cancelando, setCancelando] = useState(false);
 
@@ -146,12 +151,13 @@ const { data: perfilData } = await (supabase as any)
 
       const { data: orgData } = await (supabase as any)
         .from("organizations")
-        .select("nome, avatar_url")
+        .select("nome, avatar_url, modulos_ativos")
         .eq("id", organizationId)
         .maybeSingle();
       if (orgData) {
         setOrgNome(orgData.nome ?? "");
         setOrgAvatarUrl(orgData.avatar_url ?? null);
+        setOrgTemPrestacao((orgData.modulos_ativos ?? []).includes("prestacao"));
       }
 
       await loadMembers();
@@ -382,6 +388,22 @@ const { data: perfilData } = await (supabase as any)
     if (!response.ok) { setErro(body.error ?? "Não foi possível alterar o papel"); }
     else { showSuccess("Papel alterado"); }
     if (response.ok) await loadMembers();
+    setSalvando(false);
+  }
+
+  /** Módulos e função na prestação de um membro (P0.6); o servidor confere as vagas. */
+  async function handleAlterarModulos(userId: string, modulos: string[], funcao: string | null) {
+    if (!organizationId) return;
+    setSalvando(true);
+    setErro(null);
+    const response = await fetch(`/api/members/${encodeURIComponent(userId)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ organization_id: organizationId, modulos, prestacao_funcao: funcao }),
+    });
+    const body = await response.json().catch(() => ({}));
+    if (!response.ok) setErro(body.error ?? "Não foi possível alterar os módulos");
+    else { showSuccess("Acesso atualizado"); await loadMembers(); }
     setSalvando(false);
   }
 
@@ -932,6 +954,14 @@ const { data: perfilData } = await (supabase as any)
                 <div className="flex-1 min-w-0">
                   <p className="text-[0.8125rem] font-semibold text-black">{m.full_name ?? "Sem nome"}</p>
                   <p className="text-[0.6875rem] text-black/40 truncate">{m.email}</p>
+                  {(orgTemPrestacao || m.modulos_acesso?.includes("prestacao")) && (
+                    <ModulosDoMembro
+                      membro={m}
+                      editavel={isAdmin}
+                      ocupado={salvando}
+                      onChange={(modulos, funcao) => handleAlterarModulos(m.user_id, modulos, funcao)}
+                    />
+                  )}
                 </div>
                 {isAdmin ? (
                   <div className="flex items-center gap-2">
@@ -1048,6 +1078,74 @@ const { data: perfilData } = await (supabase as any)
         onClose={() => setShowMembroModal(false)}
         onSaved={loadMembers}
       />
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/*                         MÓDULOS DE CADA MEMBRO                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Módulos que a pessoa usa e a função dela na prestação (P0.6). Admin liga e
+ * desliga cada módulo; o servidor confere as vagas e recusa deixar alguém sem
+ * nenhum. Captador e proponente externos usam só a captação.
+ */
+function ModulosDoMembro({ membro, editavel, ocupado, onChange }: {
+  membro: MembroOrg;
+  editavel: boolean;
+  ocupado: boolean;
+  onChange: (modulos: string[], funcao: string | null) => void;
+}) {
+  const modulos = membro.modulos_acesso?.length ? membro.modulos_acesso : ["captacao"];
+  const externo = PAPEIS_EXTERNOS.includes(membro.papel);
+  const funcao = membro.prestacao_funcao ?? "";
+
+  function alternar(modulo: ModuloId) {
+    const novos = modulos.includes(modulo) ? modulos.filter(m => m !== modulo) : [...modulos, modulo];
+    if (novos.length === 0) return;
+    onChange(novos, novos.includes("prestacao") ? funcao || null : null);
+  }
+
+  return (
+    <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+      {(["captacao", "prestacao"] as ModuloId[]).map(modulo => {
+        const ativo = modulos.includes(modulo);
+        const bloqueado = !editavel || ocupado || (modulo === "prestacao" && externo) || (ativo && modulos.length === 1);
+        if (!editavel && !ativo) return null;
+        return (
+          <button
+            key={modulo}
+            type="button"
+            aria-pressed={ativo}
+            disabled={bloqueado}
+            onClick={() => alternar(modulo)}
+            title={ativo && modulos.length === 1 && editavel ? "A pessoa precisa de ao menos um módulo" : undefined}
+            className={`rounded border px-2 py-0.5 text-[0.625rem] transition focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-default ${
+              ativo ? "border-[#7259B5]/40 bg-[#7259B5]/[.06] text-[#684DB0]" : "border-black/10 bg-white text-black/35 hover:text-black/60"
+            } ${bloqueado && !ativo ? "opacity-50" : ""}`}
+          >
+            {MODULO_LABEL[modulo]}
+          </button>
+        );
+      })}
+      {modulos.includes("prestacao") && (editavel ? (
+        <Select
+          block={false}
+          value={funcao}
+          disabled={ocupado}
+          onChange={event => onChange(modulos, event.target.value || null)}
+          aria-label="Função na prestação"
+          className="py-0.5 pl-2 text-[0.625rem]"
+        >
+          <option value="">Função na prestação</option>
+          {FUNCOES_PRESTACAO.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+        </Select>
+      ) : funcao && (
+        <span className="text-[0.625rem] text-black/45">
+          {FUNCOES_PRESTACAO.find(f => f.value === funcao)?.label}
+        </span>
+      ))}
     </div>
   );
 }

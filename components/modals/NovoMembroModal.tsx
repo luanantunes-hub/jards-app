@@ -4,7 +4,10 @@ import { useCallback, useEffect, useId, useState } from "react";
 import { Check, CheckCircle2, Copy, CreditCard, Eye, Handshake, Mail, Minus, Plus, ShieldCheck, UserPlus, Users, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { BoasVindasEquipeModal } from "@/components/modals/BoasVindasEquipeModal";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { FUNCOES_PRESTACAO, MODULO_LABEL } from "@/lib/equipe-modulos";
+import type { ModuloId } from "@/lib/modulos";
 
 interface NovoMembroModalProps {
   open: boolean;
@@ -23,6 +26,17 @@ type SeatSummary = {
   unit_price: number;
 };
 
+/** Vagas da prestação de contas (GET /api/members/seats?modulo=prestacao). */
+type PrestacaoSummary = {
+  ativo: boolean;
+  status: string | null;
+  cortesia_ate: string | null;
+  total: number;
+  occupied: number;
+  pending: number;
+  available: number;
+};
+
 type Role = "admin" | "colaborador" | "leitor";
 
 const ROLE_LABELS: Record<Role, string> = {
@@ -35,12 +49,6 @@ const ROLE_DESCRIPTIONS: Record<Role, string> = {
   admin: "Acesso completo, equipe, configurações e cobrança.",
   colaborador: "Cria e edita projetos, atividades, inscrições e negociações.",
   leitor: "Apenas consulta as informações da organização.",
-};
-
-const ROLE_CAPACITY: Record<Role, string> = {
-  admin: "Usa 1 vaga",
-  colaborador: "Usa 1 vaga",
-  leitor: "Usa 1 vaga",
 };
 
 function RoleIcon({ role }: { role: Role }) {
@@ -68,17 +76,24 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
   const [celebrationQuantity, setCelebrationQuantity] = useState<number | null>(null);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("colaborador");
+  const [prestacao, setPrestacao] = useState<PrestacaoSummary | null>(null);
+  const [modulos, setModulos] = useState<ModuloId[]>(["captacao"]);
+  const [funcao, setFuncao] = useState("");
 
   const loadSummary = useCallback(async (orgId: string) => {
     setLoading(true);
-    const response = await fetch(`/api/members/seats?organization_id=${encodeURIComponent(orgId)}`);
+    const base = `/api/members/seats?organization_id=${encodeURIComponent(orgId)}`;
+    const [response, prestacaoResponse] = await Promise.all([fetch(base), fetch(`${base}&modulo=prestacao`)]);
     const body = await response.json().catch(() => ({}));
+    const prestacaoBody = await prestacaoResponse.json().catch(() => ({}));
     setLoading(false);
     if (!response.ok) {
       setError(body.error ?? "Não foi possível consultar os usuários extras");
       return;
     }
     setSummary(body as SeatSummary);
+    // A escolha de módulos só aparece com a prestação ativa na organização.
+    setPrestacao(prestacaoResponse.ok && prestacaoBody.ativo ? prestacaoBody as PrestacaoSummary : null);
   }, []);
 
   useEffect(() => {
@@ -147,7 +162,12 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
     const response = await fetch("/api/members/invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ organization_id: organizationId, email, role }),
+      body: JSON.stringify({
+        organization_id: organizationId,
+        email,
+        role,
+        ...(prestacao ? { modulos, prestacao_funcao: modulos.includes("prestacao") ? funcao || null : null } : {}),
+      }),
     });
     const body = await response.json().catch(() => ({}));
     setSaving(false);
@@ -174,6 +194,8 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
     setMode("invite");
     setEmail("");
     setRole("colaborador");
+    setModulos(["captacao"]);
+    setFuncao("");
     setQuantity(3);
     setError(null);
     setSuccess(null);
@@ -185,6 +207,20 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
 
   const titleId = useId();
   useModalDismiss(close, { enabled: open && celebrationQuantity === null });
+
+  // Com a prestação ativa, cada módulo escolhido ocupa uma vaga própria.
+  const usaCaptacao = prestacao === null || modulos.includes("captacao");
+  const usaPrestacao = prestacao !== null && modulos.includes("prestacao");
+  const semVagaCaptacao = usaCaptacao && (summary?.available ?? 0) === 0;
+  const semVagaPrestacao = usaPrestacao && (prestacao?.available ?? 0) === 0;
+  const capacidade = prestacao && modulos.length > 1 ? "Usa 1 vaga em cada módulo" : "Usa 1 vaga";
+
+  function alternarModulo(modulo: ModuloId) {
+    setModulos(atual => {
+      if (atual.includes(modulo)) return atual.length > 1 ? atual.filter(m => m !== modulo) : atual;
+      return (["captacao", "prestacao"] as ModuloId[]).filter(m => m === modulo || atual.includes(m));
+    });
+  }
 
   if (!open) return null;
 
@@ -221,6 +257,30 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
+          {prestacao ? (
+            <table className="mb-5 w-full overflow-hidden rounded border text-left" style={{ borderColor: "rgba(13,13,13,.09)" }}>
+              <thead>
+                <tr className="bg-black/[.02]">
+                  {["Módulo", "Contratadas", "Ocupadas", "Disponíveis"].map((titulo, index) => (
+                    <th key={titulo} className={`px-3 py-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40 ${index > 0 ? "text-right" : ""}`}>{titulo}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {([
+                  ["captacao", summary?.total, (summary?.occupied ?? 0) + (summary?.pending ?? 0), summary?.available],
+                  ["prestacao", prestacao.total, prestacao.occupied + prestacao.pending, prestacao.available],
+                ] as const).map(([modulo, total, ocupadas, disponiveis]) => (
+                  <tr key={modulo} className="border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                    <td className="px-3 py-2.5 text-[0.75rem] font-medium text-black/75">{MODULO_LABEL[modulo]}</td>
+                    <td className="px-3 py-2.5 text-right text-[0.75rem] tabular-nums text-black/55">{loading ? "…" : total ?? "—"}</td>
+                    <td className="px-3 py-2.5 text-right text-[0.75rem] tabular-nums text-black/55">{loading ? "…" : ocupadas}</td>
+                    <td className="px-3 py-2.5 text-right text-[0.75rem] font-semibold tabular-nums text-black/80">{loading ? "…" : disponiveis ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
           <div className="mb-5 grid grid-cols-3 overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.09)" }}>
             {[
               [summary?.total ?? "—", "Contratados"],
@@ -233,7 +293,8 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
               </div>
             ))}
           </div>
-          {!!summary?.pending && (
+          )}
+          {!prestacao && !!summary?.pending && (
             <p className="-mt-3 mb-5 text-center text-[0.625rem] text-black/35">
               {summary.pending} vaga{summary.pending > 1 ? "s" : ""} reservada{summary.pending > 1 ? "s" : ""} por convite{summary.pending > 1 ? "s" : ""} pendente{summary.pending > 1 ? "s" : ""}.
             </p>
@@ -253,11 +314,17 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
 
           {mode === "invite" ? (
             <div className="space-y-4">
-              {(summary?.available ?? 0) === 0 && !loading && (
+              {semVagaCaptacao && !loading && (
                 <div className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.04] px-4 py-3">
-                  <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas disponíveis</p>
+                  <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas {prestacao ? "da captação" : "disponíveis"}</p>
                   <p className="mt-1 text-[0.6875rem] leading-5 text-black/45">Adicione um ou mais usuários extras antes de enviar o próximo convite.</p>
                   <button onClick={() => setMode("buy")} className="mt-2 text-[0.6875rem] font-semibold text-[#B07A14] hover:underline">Comprar usuários extras</button>
+                </div>
+              )}
+              {semVagaPrestacao && !loading && (
+                <div className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.04] px-4 py-3">
+                  <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas da prestação de contas</p>
+                  <p className="mt-1 text-[0.6875rem] leading-5 text-black/45">Todas as vagas do módulo estão em uso ou reservadas por convites. Para ampliar, fale com o suporte do Jards.</p>
                 </div>
               )}
               <div>
@@ -267,6 +334,38 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
                   <input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="pessoa@empresa.com" className="w-full rounded border bg-white py-2.5 pl-9 pr-3 text-[0.8125rem] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.12)" }} />
                 </div>
               </div>
+              {prestacao && (
+                <div>
+                  <p className="mb-2 block text-[0.6875rem] font-bold uppercase tracking-widest text-black/30">Módulos</p>
+                  <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="Módulos que a pessoa usa">
+                    {(["captacao", "prestacao"] as ModuloId[]).map(modulo => {
+                      const marcado = modulos.includes(modulo);
+                      const livres = modulo === "captacao" ? summary?.available : prestacao.available;
+                      return (
+                        <button
+                          key={modulo}
+                          type="button"
+                          role="checkbox"
+                          aria-checked={marcado}
+                          onClick={() => alternarModulo(modulo)}
+                          className={`flex items-center gap-2.5 rounded border px-3 py-2.5 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${marcado ? "border-[#7259B5] bg-[#7259B5]/[.035]" : "border-black/10 bg-white hover:bg-black/[.025]"}`}
+                        >
+                          <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm border ${marcado ? "border-[#7259B5] bg-[#7259B5] text-white" : "border-black/25 bg-white"}`}>
+                            {marcado && <Check size={11} />}
+                          </span>
+                          <span className="min-w-0">
+                            <span className={`block text-[0.75rem] ${marcado ? "text-[#684DB0]" : "text-black/70"}`}>{MODULO_LABEL[modulo]}</span>
+                            <span className="block text-[0.625rem] text-black/40">{livres ?? "—"} {livres === 1 ? "vaga livre" : "vagas livres"}</span>
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!modulos.includes("captacao") && (
+                    <p className="mt-2 text-[0.6875rem] leading-5 text-black/45">Usuário só da prestação: entra direto nas prestações de contas e não vê a captação.</p>
+                  )}
+                </div>
+              )}
               <div>
                 <p className="mb-2 block text-[0.6875rem] font-bold uppercase tracking-widest text-black/30">Papel do usuário</p>
                 <div className="space-y-2" role="radiogroup" aria-label="Papel do usuário">
@@ -287,7 +386,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center justify-between gap-3">
                             <strong className={`text-[0.75rem] ${selected ? "text-[#7259B5]" : "text-black/75"}`}>{ROLE_LABELS[value]}</strong>
-                            <span className="whitespace-nowrap text-[0.625rem] font-semibold text-black/35">{ROLE_CAPACITY[value]}</span>
+                            <span className="whitespace-nowrap text-[0.625rem] font-semibold text-black/35">{capacidade}</span>
                           </span>
                           <span className="mt-0.5 block text-[0.65625rem] leading-4 text-black/40">{ROLE_DESCRIPTIONS[value]}</span>
                         </span>
@@ -297,6 +396,20 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
                   })}
                 </div>
               </div>
+              {usaPrestacao && (
+                <div>
+                  <p className="mb-1.5 block text-[0.6875rem] font-bold uppercase tracking-widest text-black/30">Função na prestação</p>
+                  <Dropdown
+                    value={funcao}
+                    onChange={setFuncao}
+                    ariaLabel="Função na prestação"
+                    options={[{ value: "", label: "Definir depois" }, ...FUNCOES_PRESTACAO.map(f => ({ value: f.value, label: f.label }))]}
+                  />
+                  <p className="mt-1.5 text-[0.6875rem] leading-5 text-black/40">
+                    {FUNCOES_PRESTACAO.find(f => f.value === funcao)?.descricao ?? "Preparador lança, revisor aceita as despesas e responsável envia ao órgão."}
+                  </p>
+                </div>
+              )}
               <p className="text-[0.6875rem] leading-5 text-black/35">Se a pessoa ainda não tiver conta, receberá um convite por e-mail.</p>
               {!!summary?.pending && <p className="text-[0.6875rem] leading-5 text-[#B07A14]">O e-mail não chegou? Informe novamente o mesmo endereço e clique em “Enviar convite” para gerar um link manual.</p>}
             </div>
@@ -321,7 +434,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
         <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={close} className="px-4 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
           {mode === "invite" ? (
-            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || (summary?.available ?? 0) < 1} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
+            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVagaCaptacao || semVagaPrestacao} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
           ) : (
             <button onClick={buySeats} disabled={saving || loading} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
           )}

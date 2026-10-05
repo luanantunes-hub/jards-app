@@ -4,6 +4,9 @@ import { useParams } from "next/navigation";
 import { Plus, Upload, Image, Trash2, X, MapPin, Users, CalendarDays, ChevronDown, ChevronUp, Briefcase, HandHeart, Accessibility } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoAtividade, PrestacaoAtividadeEvidencia } from "@/lib/supabase/types";
+import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
+import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
 type AtividadeComEvidencias = PrestacaoAtividade & { evidencias: PrestacaoAtividadeEvidencia[] };
 
@@ -36,6 +39,9 @@ export default function AtividadesPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const organizationId = usePrestacaoOrganizacao(id);
+  const { confirmDelete } = useDeleteConfirm();
+  const [erro, setErro] = useState("");
 
   const [atividades, setAtividades] = useState<AtividadeComEvidencias[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,9 +78,9 @@ export default function AtividadesPage() {
   async function salvar() {
     if (!form || !form.titulo?.trim() || !form.data_realizacao) return;
     setSaving(true);
+    setErro("");
     const { data: { user } } = await supabase.auth.getUser();
     const payload = {
-      prestacao_id: id,
       titulo: form.titulo.trim(),
       descricao: form.descricao?.trim() || null,
       data_realizacao: form.data_realizacao,
@@ -93,56 +99,91 @@ export default function AtividadesPage() {
       justificativa_nao_realizacao: form.status_realizacao === "nao_realizado"
         ? (form.justificativa_nao_realizacao?.trim() || null)
         : null,
-      ordem: atividades.length,
-      criado_por: user?.id ?? null,
     };
-    if (form._new) {
-      await (supabase as any).from("prestacao_atividades").insert(payload);
-    } else {
-      await (supabase as any).from("prestacao_atividades").update(payload).eq("id", form.id);
+    // Edição não mexe na ordem nem em quem criou.
+    const { error } = form._new
+      ? await (supabase as any).from("prestacao_atividades").insert({
+          ...payload,
+          prestacao_id: id,
+          ordem: atividades.length,
+          criado_por: user?.id ?? null,
+        })
+      : await (supabase as any).from("prestacao_atividades").update(payload).eq("id", form.id);
+    setSaving(false);
+    if (error) {
+      setErro(`Não foi possível salvar a atividade: ${error.message}`);
+      return;
     }
     setForm(null);
-    setSaving(false);
     fetchAll();
   }
 
-  async function excluir(atId: string) {
+  function excluir(atId: string) {
     const at = atividades.find(a => a.id === atId);
-    if (at) {
-      for (const ev of at.evidencias) {
-        await supabase.storage.from("documentos").remove([ev.storage_path]);
-      }
-    }
-    await (supabase as any).from("prestacao_atividades").delete().eq("id", atId);
-    fetchAll();
+    if (!at) return;
+    confirmDelete({
+      title: "Excluir atividade?",
+      description: at.evidencias.length > 0
+        ? `"${at.titulo}" e ${at.evidencias.length} evidência${at.evidencias.length > 1 ? "s" : ""} serão apagadas.`
+        : `"${at.titulo}" será apagada.`,
+      onConfirm: async () => {
+        const { error } = await (supabase as any).from("prestacao_atividades").delete().eq("id", atId);
+        if (error) throw new Error(error.message);
+        const caminhos = at.evidencias.map(ev => ev.storage_path);
+        if (caminhos.length > 0) await supabase.storage.from("documentos").remove(caminhos);
+        fetchAll();
+      },
+    });
   }
 
   async function uploadEvidencia(atId: string, file: File) {
+    if (!organizationId) return;
     setUploadingFor(atId);
-    const ext = file.name.split(".").pop() ?? "bin";
-    const path = `prestacoes/${id}/atividades/${atId}/${Date.now()}.${ext}`;
+    const path = montarCaminhoPrestacao({
+      organizationId,
+      prestacaoId: id,
+      pasta: { tipo: "atividade", atividadeId: atId },
+      nomeOriginal: file.name,
+    });
+    setErro("");
     const { error } = await supabase.storage.from("documentos").upload(path, file, { upsert: false });
-    if (!error) {
-      await (supabase as any).from("prestacao_atividade_evidencias").insert({
-        atividade_id: atId,
-        nome_arquivo: file.name,
-        storage_path: path,
-        tipo: file.type.startsWith("video") ? "video" : "foto",
-      });
-      fetchAll();
+    if (error) {
+      setErro(`Não foi possível enviar a evidência: ${error.message}`);
+      setUploadingFor(null);
+      return;
     }
+    const { error: linhaErro } = await (supabase as any).from("prestacao_atividade_evidencias").insert({
+      atividade_id: atId,
+      nome_arquivo: file.name,
+      storage_path: path,
+      tipo: file.type.startsWith("video") ? "video" : "foto",
+    });
+    if (linhaErro) {
+      await supabase.storage.from("documentos").remove([path]);
+      setErro(`Não foi possível registrar a evidência: ${linhaErro.message}`);
+    }
+    fetchAll();
     setUploadingFor(null);
   }
 
-  async function excluirEvidencia(ev: PrestacaoAtividadeEvidencia) {
-    await supabase.storage.from("documentos").remove([ev.storage_path]);
-    await (supabase as any).from("prestacao_atividade_evidencias").delete().eq("id", ev.id);
-    fetchAll();
+  function excluirEvidencia(ev: PrestacaoAtividadeEvidencia) {
+    confirmDelete({
+      title: "Excluir evidência?",
+      description: `"${ev.nome_arquivo}" será apagada.`,
+      onConfirm: async () => {
+        const { error } = await (supabase as any).from("prestacao_atividade_evidencias").delete().eq("id", ev.id);
+        if (error) throw new Error(error.message);
+        await supabase.storage.from("documentos").remove([ev.storage_path]);
+        fetchAll();
+      },
+    });
   }
 
   async function getImgUrl(path: string) {
-    const { data } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
+    setErro("");
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    else setErro(`Não foi possível abrir o arquivo${error ? `: ${error.message}` : ""}.`);
   }
 
   function toggle(atId: string) {
@@ -168,6 +209,13 @@ export default function AtividadesPage() {
           <Plus size={12} /> Nova atividade
         </button>
       </div>
+
+      {erro && !form && (
+        <p role="alert" className="px-4 py-3 rounded border text-[0.75rem]"
+          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+          {erro}
+        </p>
+      )}
 
       {/* Timeline */}
       {loading ? (
@@ -232,6 +280,7 @@ export default function AtividadesPage() {
                         </button>
                         <button
                           onClick={e => { e.stopPropagation(); excluir(at.id); }}
+                          aria-label={`Excluir atividade ${at.titulo}`}
                           className="p-1.5 rounded hover:bg-[#D94E4E]/10 text-black/20 hover:text-[#D94E4E] transition"
                         >
                           <Trash2 size={12} />
@@ -303,6 +352,7 @@ export default function AtividadesPage() {
                                 type="file"
                                 className="hidden"
                                 accept="image/*,video/*"
+                                disabled={!organizationId || uploadingFor === at.id}
                                 onChange={e => {
                                   const f = e.target.files?.[0];
                                   if (f) uploadEvidencia(at.id, f);
@@ -326,6 +376,7 @@ export default function AtividadesPage() {
                                   </button>
                                   <button
                                     onClick={() => excluirEvidencia(ev)}
+                                    aria-label={`Excluir evidência ${ev.nome_arquivo}`}
                                     className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#D94E4E] text-white hidden group-hover:flex items-center justify-center"
                                   >
                                     <X size={8} />
@@ -347,7 +398,7 @@ export default function AtividadesPage() {
 
       {/* Modal de criação/edição */}
       {form && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setForm(null)}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setForm(null); setErro(""); }}>
           <div className="bg-white rounded shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <h3 className="text-[0.875rem] font-semibold text-black mb-4">
               {form._new ? "Nova atividade" : "Editar atividade"}
@@ -558,8 +609,14 @@ export default function AtividadesPage() {
                 />
               </div>
             </div>
+            {erro && (
+              <p role="alert" className="mt-4 text-[0.6875rem] px-3 py-2 rounded border"
+                style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+                {erro}
+              </p>
+            )}
             <div className="flex justify-end gap-3 mt-5">
-              <button onClick={() => setForm(null)} className="px-4 py-2 text-[0.75rem] text-black/35 hover:text-black/55 transition">Cancelar</button>
+              <button onClick={() => { setForm(null); setErro(""); }} className="px-4 py-2 text-[0.75rem] text-black/35 hover:text-black/55 transition">Cancelar</button>
               <button
                 onClick={salvar}
                 disabled={saving || !form.titulo?.trim() || !form.data_realizacao}
