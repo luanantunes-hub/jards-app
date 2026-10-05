@@ -804,6 +804,7 @@ export interface Atividade {
   contrato_id: string | null;
   compromisso_id: string | null;
   plano_parceria_id: string | null;
+  prestacao_id: string | null;
   origem_automatica: boolean;
   regra_origem: string | null;
   hora_inicio: string | null;
