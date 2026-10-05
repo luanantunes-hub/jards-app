@@ -5,6 +5,7 @@
 // da árvore, as somas por nó e os tetos por grupo de custo, para a tela e os
 // testes. Valores somam em centavos para não acumular erro de ponto flutuante.
 
+import { limparCnaesAceitos } from "./cnae";
 import { definida, type RegimeNormativo } from "./regimes";
 import { BASES_DO_ORCAMENTO, type BaseCalculo, type BaseDefinida, type BaseDoOrcamento, type Severidade } from "./regimes/tipos";
 
@@ -98,6 +99,8 @@ export type NoOrcamento = {
   valor_total: number;
   valor_remanejado: number;
   ordem: number;
+  /** CNAEs aceitos (P2.4), só algarismos; vazio ou null herda do agrupador. */
+  cnaes_aceitos?: string[] | null;
 };
 
 export type ComprovanteDoOrcamento = {
@@ -126,6 +129,10 @@ export type LinhaOrcamento = {
   /** Grupo de custo que vale para o nó: o próprio ou o do agrupador mais próximo. */
   grupo: GrupoCusto | null;
   grupoHerdado: boolean;
+  /** CNAEs aceitos que valem para o nó: os próprios ou os do agrupador mais próximo que definir. */
+  cnaes: string[];
+  /** Nó que definiu os CNAEs (o próprio, quando não herdou). */
+  cnaesDe: { id: string; nome: string } | null;
   filhos: LinhaOrcamento[];
   totais: Totais;
 };
@@ -202,9 +209,12 @@ export function montarArvore(nos: readonly NoOrcamento[], comprovantes: readonly
   }
 
   const visitados = new Set<string>();
-  function montar(no: NoOrcamento, nivel: number, caminho: string[], grupoAcima: GrupoCusto | null): [LinhaOrcamento, Centavos] {
+  type CnaesAcima = { cnaes: string[]; de: { id: string; nome: string } | null };
+  function montar(no: NoOrcamento, nivel: number, caminho: string[], grupoAcima: GrupoCusto | null, cnaesAcima: CnaesAcima): [LinhaOrcamento, Centavos] {
     visitados.add(no.id);
     const grupo = no.grupo_custo ?? grupoAcima;
+    const proprios = limparCnaesAceitos(no.cnaes_aceitos ?? []);
+    const cnaes: CnaesAcima = proprios.length ? { cnaes: proprios, de: { id: no.id, nome: no.nome } } : cnaesAcima;
     let soma: Centavos = ZERO;
     if (no.tipo === "item") {
       const mov = movimento.get(no.id);
@@ -219,13 +229,15 @@ export function montarArvore(nos: readonly NoOrcamento[], comprovantes: readonly
     const filhos: LinhaOrcamento[] = [];
     for (const filho of [...(filhosDe.get(no.id) ?? [])].sort(porOrdem)) {
       if (visitados.has(filho.id)) continue;
-      const [linha, somaFilho] = montar(filho, nivel + 1, [...caminho, no.nome], grupo);
+      const [linha, somaFilho] = montar(filho, nivel + 1, [...caminho, no.nome], grupo, cnaes);
       filhos.push(linha);
       soma = somar(soma, somaFilho);
     }
     return [{
       no, nivel, caminho, grupo,
       grupoHerdado: !no.grupo_custo && grupo !== null,
+      cnaes: cnaes.cnaes,
+      cnaesDe: cnaes.de,
       filhos,
       totais: emReais(soma),
     }, soma];
@@ -234,7 +246,7 @@ export function montarArvore(nos: readonly NoOrcamento[], comprovantes: readonly
   const raizes: LinhaOrcamento[] = [];
   let total: Centavos = ZERO;
   for (const no of [...(filhosDe.get(null) ?? [])].sort(porOrdem)) {
-    const [linha, soma] = montar(no, 0, [], null);
+    const [linha, soma] = montar(no, 0, [], null, { cnaes: [], de: null });
     raizes.push(linha);
     total = somar(total, soma);
   }

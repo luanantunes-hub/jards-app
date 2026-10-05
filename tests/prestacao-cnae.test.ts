@@ -117,3 +117,23 @@ test("busca de quem escolhe: código de qualquer nível ou palavras pela metade"
   assert.ok(buscarCnaes("produção teatral", indice).some(r => r.codigo === "9001901"));
   assert.deepEqual(buscarCnaes("   ", indice), []);
 });
+
+test("árvore do orçamento: cada linha sabe os CNAEs que valem e de onde vieram", async () => {
+  const { montarArvore, itensDaArvore } = await import("../lib/prestacao/orcamento");
+  const no = (id: string, parent_id: string | null, tipo: "etapa" | "item", cnaes_aceitos: string[] | null) => ({
+    id, versao_id: "v", parent_id, tipo, codigo: null, nome: id, descricao: null, uf: null, municipio: null, grupo_custo: null,
+    unidade: null, quantidade: null, ocorrencias: null, valor_unitario: null, valor_total: 10, valor_remanejado: 0, ordem: 0, cnaes_aceitos,
+  });
+  const arvore = montarArvore([
+    no("producao", null, "etapa", ["90"]),
+    no("ator", "producao", "item", null),
+    no("foto", "producao", "item", ["7420001"]),
+    no("seguro", null, "item", []),
+  ], []);
+  const porId = Object.fromEntries(itensDaArvore(arvore.raizes).map(l => [l.no.id, [l.cnaes, l.cnaesDe?.id ?? null]]));
+  assert.deepEqual(porId, {
+    ator: [["90"], "producao"],
+    foto: [["7420001"], "foto"],
+    seguro: [[], null],
+  });
+});

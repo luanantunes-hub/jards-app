@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
-import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, Clock, ExternalLink } from "lucide-react";
+import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, Clock, ExternalLink, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoComprovante, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
 import { useItensDoOrcamento, type ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
@@ -12,6 +12,11 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
+import { useFornecedoresDaOrganizacao } from "@/hooks/useFornecedoresDaOrganizacao";
+import { DespesaModal } from "@/components/prestacao/despesas/DespesaModal";
+import { FornecedorCombobox } from "@/components/prestacao/despesas/FornecedorCombobox";
+import { alertasDaDespesa, ehDespesa, TIPOS_COMPLEMENTARES, TIPOS_FISCAIS } from "@/lib/prestacao/despesas";
+import { nomeDoFornecedor } from "@/lib/prestacao/fornecedores";
 
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
   nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
@@ -47,6 +52,8 @@ const fmt = (v: number | null) =>
 const fmtDate = (d: string | null) =>
   d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
+const TIPOS_OPCOES = [...TIPOS_FISCAIS, ...TIPOS_COMPLEMENTARES].map(t => ({ value: t, label: TIPO_META[t].label }));
+
 /** Item com o agrupador mais próximo, para distinguir nomes repetidos. */
 function rotuloDoItem(item: ItemDoOrcamento): string {
   return item.caminho.length ? `${item.caminho[item.caminho.length - 1]} › ${item.nome}` : item.nome;
@@ -70,6 +77,9 @@ export default function ComprovantesPage() {
   const [erroLista, setErroLista] = useState("");
 
   const [comprovantes, setComprovantes] = useState<PrestacaoComprovante[]>([]);
+  // Despesa v2 (P2.4): fornecedores da organização e o comprovante aberto como despesa.
+  const { fornecedores, documentosDe } = useFornecedoresDaOrganizacao(organizationId);
+  const [despesaAberta, setDespesaAberta] = useState<PrestacaoComprovante | null>(null);
   // Itens da versão em uso do orçamento em árvore (P1.6).
   const { itens } = useItensDoOrcamento(id);
   const [periodo, setPeriodo] = useState<{ inicio: string | null; fim: string | null }>({ inicio: null, fim: null });
@@ -87,6 +97,7 @@ export default function ComprovantesPage() {
   const [tipo, setTipo] = useState<TipoComprovante>("nfe");
   const [origem, setOrigem] = useState<"nacional" | "internacional">("nacional");
   const [itemId, setItemId] = useState("");
+  const [fornecedorId, setFornecedorId] = useState<string | null>(null);
   const [valorExtraido, setValorExtraido] = useState("");
   const [dataDoc, setDataDoc] = useState("");
   const [descricaoServico, setDescricaoServico] = useState("");
@@ -221,6 +232,7 @@ export default function ComprovantesPage() {
     const { error: insertErro } = await (supabase as any).from("prestacao_comprovantes").insert({
       prestacao_id: id,
       no_id: itemId || null,
+      fornecedor_id: fornecedorId,
       tipo,
       origem,
       nome_arquivo: pendingFile.name,
@@ -248,6 +260,7 @@ export default function ComprovantesPage() {
     setObservacao("");
     setOrigem("nacional");
     setItemId("");
+    setFornecedorId(null);
     setUploadProgress("");
     setRiscoGlosa(null);
     setMotivosGlosa([]);
@@ -267,6 +280,7 @@ export default function ComprovantesPage() {
     setObservacao("");
     setOrigem("nacional");
     setItemId("");
+    setFornecedorId(null);
     setUploadProgress("");
     setUploadError("");
     setRiscoGlosa(null);
@@ -349,12 +363,12 @@ export default function ComprovantesPage() {
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   >
                     <optgroup label="Fiscais">
-                      {(["nfe","recibo","rpa","invoice","folha_pagamento","guia_tributo"] as TipoComprovante[]).map(k => (
+                      {TIPOS_FISCAIS.map(k => (
                         <option key={k} value={k}>{TIPO_META[k].label}</option>
                       ))}
                     </optgroup>
                     <optgroup label="Complementares">
-                      {(["extrato","contrato","cartao_embarque","print_screenshot","foto","planilha","outro"] as TipoComprovante[]).map(k => (
+                      {TIPOS_COMPLEMENTARES.map(k => (
                         <option key={k} value={k}>{TIPO_META[k].label}</option>
                       ))}
                     </optgroup>
@@ -427,6 +441,13 @@ export default function ComprovantesPage() {
                   />
                 </div>
               </div>
+
+              {ehDespesa(tipo) && (
+                <div>
+                  <label htmlFor="fornecedor-envio" className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Fornecedor</label>
+                  <FornecedorCombobox id="fornecedor-envio" fornecedores={fornecedores} valor={fornecedorId} onChange={setFornecedorId} />
+                </div>
+              )}
 
               {/* Descrição do serviço */}
               <div>
@@ -556,6 +577,18 @@ export default function ComprovantesPage() {
               const tipoM = TIPO_META[c.tipo];
               const statusM = STATUS_META[c.status];
               const rubrica = itens.find(it => it.id === c.no_id);
+              const fornecedorC = fornecedores.find(f => f.id === c.fornecedor_id) ?? null;
+              const alertas = ehDespesa(c.tipo)
+                ? alertasDaDespesa({
+                  despesa: c,
+                  fornecedor: fornecedorC,
+                  documentosDoFornecedor: documentosDe(c.fornecedor_id),
+                  item: rubrica ? { nome: rubrica.nome, cnaes: rubrica.cnaes, origem: rubrica.cnaesDe } : null,
+                  outrasChaves: comprovantes.filter(o => o.id !== c.id && o.chave_acesso).map(o => o.chave_acesso!),
+                })
+                : [];
+              const graves = alertas.filter(a => a.nivel === "alerta").length;
+              const justificada = graves > 0 && Boolean(c.justificativa?.trim());
               return (
                 <div key={c.id} className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-x-4 gap-y-2 px-5 py-4 transition hover:bg-black/[.02] sm:grid-cols-[2rem_minmax(0,1fr)_auto]">
                   {/* Ícone tipo */}
@@ -595,6 +628,11 @@ export default function ComprovantesPage() {
                       ) : (
                         <span>{rubrica ? rotuloDoItem(rubrica) : "Sem item"}</span>
                       )}
+                      {fornecedorC ? (
+                        <span className="max-w-[12rem] truncate text-black/55" title={nomeDoFornecedor(fornecedorC)}>{nomeDoFornecedor(fornecedorC)}</span>
+                      ) : ehDespesa(c.tipo) && c.tipo !== "guia_tributo" && c.tipo !== "folha_pagamento" ? (
+                        <span className="text-[#B07A14]">Sem fornecedor</span>
+                      ) : null}
                       {c.origem === "internacional" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #1A8B7A47", color: "#1A8B7A" }}>Internacional</span>
                       )}
@@ -627,7 +665,21 @@ export default function ComprovantesPage() {
                   </div>
 
                   {/* Status + ações: no celular descem para baixo das informações */}
-                  <div className="col-start-2 flex items-center gap-2 sm:col-start-auto">
+                  <div className="col-start-2 flex flex-wrap items-center gap-2 sm:col-start-auto">
+                    <button
+                      type="button"
+                      onClick={() => setDespesaAberta(c)}
+                      aria-label={`Despesa de ${c.nome_arquivo}${graves ? `: ${graves} ${graves === 1 ? "alerta" : "alertas"}${justificada ? " justificados" : ""}` : ""}`}
+                      title={justificada ? `Com justificativa: ${c.justificativa}` : undefined}
+                      className="flex items-center gap-1 whitespace-nowrap rounded border bg-white px-2 py-1 text-[0.625rem] font-medium transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+                      style={{
+                        borderColor: graves && !justificada ? "#D94A4A47" : "rgba(13,13,13,.12)",
+                        color: graves && !justificada ? "#B23B3B" : "rgba(13,13,13,.55)",
+                      }}
+                    >
+                      <Receipt size={11} aria-hidden />
+                      {graves ? `${graves} ${graves === 1 ? "alerta" : "alertas"}${justificada ? " justificados" : ""}` : "Despesa"}
+                    </button>
                     {c.avaliado_em && (
                       <span className="hidden text-right text-[0.5625rem] leading-tight text-black/35 sm:block">
                         {c.status === "aceito" ? "Aceito" : "Rejeitado"} por {nomes[c.avaliado_por ?? ""] ?? "membro"}
@@ -666,6 +718,23 @@ export default function ComprovantesPage() {
           </div>
         )}
       </div>
+
+      {despesaAberta && (
+        <DespesaModal
+          comprovante={despesaAberta}
+          tipos={TIPOS_OPCOES}
+          itens={itens}
+          fornecedores={fornecedores}
+          documentosDe={documentosDe}
+          outrasChaves={comprovantes.filter(o => o.id !== despesaAberta.id && o.chave_acesso).map(o => o.chave_acesso!)}
+          podeEditar={permissoes.editar}
+          onClose={() => setDespesaAberta(null)}
+          onSalvo={atualizado => {
+            setComprovantes(lista => lista.map(x => (x.id === atualizado.id ? atualizado : x)));
+            setDespesaAberta(null);
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -73,6 +73,13 @@ const ERROS: Record<string, string> = {
   caminho_invalido: "O arquivo do extrato precisa ser enviado pela própria tela.",
   extrato_ja_importado: "Esse arquivo já foi importado nesta conta.",
   extrato_sem_novos: "Todos os lançamentos desse arquivo já estavam importados nesta conta.",
+  // Despesas (P2.4)
+  fornecedor_de_outra_organizacao: "Escolha um fornecedor desta organização.",
+  prestacao_comprovantes_chave_acesso_key: "Esta chave de acesso já está em outra despesa da prestação.",
+  prestacao_comprovantes_chave_acesso_check: "A chave de acesso tem 44 posições (NF-e) ou 50 (NFS-e nacional).",
+  prestacao_comprovantes_retencoes_check: "As retenções passam do valor do documento.",
+  prestacao_comprovantes_fornecedor_id_fkey: "O fornecedor está ligado a despesas. Troque o fornecedor nelas antes de excluir.",
+  prestacao_orcamento_nos_cnaes_aceitos_check: "Há um CNAE fora do formato; escolha pela busca.",
 };
 
 export function mensagemErroPrestacao(erro: { message?: string } | null | undefined, padrao: string): string {

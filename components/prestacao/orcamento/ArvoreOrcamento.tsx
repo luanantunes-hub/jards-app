@@ -9,6 +9,7 @@ import {
   type NoOrcamento,
   type Totais,
 } from "@/lib/prestacao/orcamento";
+import { formatarCodigoCnae } from "@/lib/prestacao/cnae";
 import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -134,11 +135,16 @@ export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEdita
                         {!agrupador && no.codigo && <span className="mr-1.5 text-black/35 tabular-nums">{no.codigo}</span>}
                         {no.nome}
                       </p>
-                      {!agrupador && (no.descricao || linha.grupo || no.uf || no.municipio) && (
+                      {!agrupador && (no.descricao || linha.grupo || linha.cnaes.length > 0 || no.uf || no.municipio) && (
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.625rem] text-black/40">
                           {linha.grupo && (
                             <span className={linha.grupoHerdado ? "text-black/35" : "text-[#684DB0]"} title={linha.grupoHerdado ? "Grupo herdado do agrupador" : "Grupo de custo do item"}>
                               {rotuloGrupo(linha.grupo, regime)}
+                            </span>
+                          )}
+                          {linha.cnaes.length > 0 && (
+                            <span className="tabular-nums" title={linha.cnaesDe && linha.cnaesDe.id !== no.id ? `CNAEs aceitos, herdados de ${linha.cnaesDe.nome}` : "CNAEs aceitos pelo item"}>
+                              CNAE {linha.cnaes.map(formatarCodigoCnae).join(", ")}
                             </span>
                           )}
                           {(no.uf || no.municipio) && (
@@ -149,6 +155,9 @@ export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEdita
                       )}
                       {agrupador && no.grupo_custo && (
                         <p className="mt-0.5 text-[0.625rem] text-[#684DB0]">{rotuloGrupo(no.grupo_custo, regime)} para os itens dentro</p>
+                      )}
+                      {agrupador && linha.cnaesDe?.id === no.id && (
+                        <p className="mt-0.5 text-[0.625rem] tabular-nums text-black/45">CNAE {linha.cnaes.map(formatarCodigoCnae).join(", ")} para os itens dentro</p>
                       )}
                     </div>
                   </div>
