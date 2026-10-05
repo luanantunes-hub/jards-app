@@ -121,7 +121,10 @@
     .mcp-chat-body { height:292px; padding:20px 18px; display:flex; flex-direction:column; justify-content:flex-end; gap:12px; overflow:hidden; transition:opacity .22s ease; }
     .mcp-msg { font-size:13.5px; line-height:1.55; }
     .mcp-msg-user { align-self:flex-end; max-width:82%; padding:9px 13px; border-radius:12px 12px 4px 12px; background:rgba(13,13,13,.06); color:#282525; }
-    .mcp-tool { align-self:flex-start; display:flex; align-items:center; gap:7px; margin-left:32px; padding:5px 10px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.6); }
+    .mcp-tool { align-self:flex-start; display:flex; flex-wrap:wrap; align-items:center; gap:3px 7px; max-width:calc(100% - 32px); margin-left:32px; padding:5px 10px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.6); }
+    /* a chamada real da ferramenta do servidor MCP, alinhada sob o rótulo */
+    .mcp-tool-chamada { flex-basis:100%; padding-left:19px; font-family:var(--font-mono); font-size:10.5px; font-weight:400; line-height:1.45; color:rgba(13,13,13,.5); overflow-wrap:anywhere; }
+    .mcp-tool-chamada b { font-weight:500; color:#684DB0; }
     .mcp-tool-icone { width:12px; height:12px; flex-shrink:0; border-radius:50%; border:1.5px solid rgba(13,13,13,.18); border-top-color:#684DB0; animation:mcp-gira .8s linear infinite; }
     .mcp-tool svg { width:12px; height:12px; flex-shrink:0; }
     .mcp-tool.is-ok { color:rgba(13,13,13,.62); }
@@ -2471,8 +2474,8 @@
   var NOMES = { chatgpt: 'ChatGPT', claude: 'Claude' };
   // Uma leitura (carteira da empresa) e uma escrita (criar tarefa), uma em cada assistente
   var CONVERSAS = [
-    { assistente: 'chatgpt', pergunta: 'A Ambev combina com o nosso projeto de esporte?', ferramenta: 'Jards · carteira da empresa', destaque: 'R$ 95M investidos · Esporte, SP', resposta: 'Esporte é a área recorrente dela, e o último aporte foi há 8 meses: boa janela para apresentar o projeto.' },
-    { assistente: 'claude', pergunta: 'Cria uma tarefa: enviar a proposta à Ambev até sexta', ferramenta: 'Jards · criar tarefa', destaque: 'Tarefa criada · prazo sexta', resposta: '“Enviar proposta à Ambev” já está nas suas tarefas no Jards. Ficou gravada no CRM, não só nesta conversa.' }
+    { assistente: 'chatgpt', pergunta: 'A Ambev combina com o nosso projeto de esporte?', ferramenta: 'Jards · carteira da empresa', chamada: ['avaliar_carteira_empresa', '{ empresa_crm_id }'], destaque: 'R$ 95M investidos · Esporte, SP', resposta: 'Esporte é a área recorrente dela, e o último aporte foi há 8 meses: boa janela para apresentar o projeto.' },
+    { assistente: 'claude', pergunta: 'Cria uma tarefa: enviar a proposta à Ambev até sexta', ferramenta: 'Jards · criar tarefa', chamada: ['criar_tarefa', '{ titulo: "Enviar proposta à Ambev", data_prazo }'], destaque: 'Tarefa criada · prazo sexta', resposta: '“Enviar proposta à Ambev” já está nas suas tarefas no Jards. Ficou gravada no CRM, não só nesta conversa.' }
   ];
   var CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#2E8932"/><path d="M3.4 6.2l1.8 1.8 3.6-3.8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -2489,7 +2492,7 @@
 
   if(transcricao){
     transcricao.textContent = 'Exemplo de conversa com os assistentes conectados ao Jards. ' + CONVERSAS.map(function(c){
-      return 'No ' + NOMES[c.assistente] + ', a pessoa pede: “' + c.pergunta + '”. O ' + NOMES[c.assistente] + ' usa ' + c.ferramenta + ' e responde: ' + c.destaque + '. ' + c.resposta;
+      return 'No ' + NOMES[c.assistente] + ', a pessoa pede: “' + c.pergunta + '”. O ' + NOMES[c.assistente] + ' usa ' + c.ferramenta + (c.chamada ? ' (ferramenta ' + c.chamada[0] + ')' : '') + ' e responde: ' + c.destaque + '. ' + c.resposta;
     }).join(' ');
   }
 
@@ -2512,6 +2515,13 @@
     var t = el('div', 'mcp-tool' + (pronta ? ' is-ok' : ''));
     if(pronta){ t.innerHTML = CHECK; t.appendChild(document.createTextNode(c.ferramenta)); }
     else { t.appendChild(el('span', 'mcp-tool-icone')); t.appendChild(document.createTextNode('Acessando o Jards…')); }
+    if(c.chamada){
+      var cod = el('code', 'mcp-tool-chamada'), nome = el('b');
+      nome.textContent = c.chamada[0];
+      cod.appendChild(nome);
+      cod.appendChild(document.createTextNode('(' + c.chamada[1] + ')'));
+      t.appendChild(cod);
+    }
     return t;
   }
   function resposta(c, texto){
