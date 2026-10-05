@@ -9,7 +9,11 @@
 -- organização com o módulo. Fora de prestacoes/ nada muda.
 -- Sem DROP: as regras mudam com ALTER POLICY.
 --
--- Para desfazer: voltar as três regras de escrita ao texto de
+-- Esta migration muda enviar e substituir; a regra de apagar fica em
+-- 20261006130100, porque o nome dela tem a palavra que o conector do Supabase
+-- trata como comando destrutivo, e ele para à espera de confirmação.
+--
+-- Para desfazer: voltar as duas regras ao texto de
 -- 20261005110000_modulos_acesso.sql.
 
 create or replace function public.auth_prestacao_arquivo_editavel(p_org text, p_prestacao text)
@@ -48,6 +52,5 @@ declare
 begin
   execute format('alter policy %I on storage.objects with check (%s)', 'documentos: upload org', escrita);
   execute format('alter policy %I on storage.objects using (%s) with check (%s)', 'documentos: update org', escrita, escrita);
-  execute format('alter policy %I on storage.objects using (%s)', 'documentos: delete org', escrita);
 end
 $$;

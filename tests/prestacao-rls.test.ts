@@ -35,7 +35,10 @@ test("o plano do teste de acesso bate com as verificações e tudo é desfeito",
 });
 
 test("arquivo da prestação: escrever no bucket pede o papel de quem edita", async () => {
-  const sql = await readFile("supabase/migrations/20261006130000_prestacao_arquivos_por_papel.sql", "utf8");
+  const sql = [
+    await readFile("supabase/migrations/20261006130000_prestacao_arquivos_por_papel.sql", "utf8"),
+    await readFile("supabase/migrations/20261006130100_prestacao_arquivos_por_papel_exclusao.sql", "utf8"),
+  ].join("\n");
   const codigo = sql.replace(/--.*$/gm, "");
   assert.match(codigo, /security definer/);
   assert.match(codigo, /public\.auth_prestacao_pode\(p_prestacao::uuid, 'editar'\)/);
