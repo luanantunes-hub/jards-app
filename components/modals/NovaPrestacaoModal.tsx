@@ -1,230 +1,403 @@
 "use client";
-import { useState, useEffect, useId } from "react";
-import { X, ClipboardCheck } from "lucide-react";
+import { useEffect, useId, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { Check, ClipboardCheck, FileSpreadsheet, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Select } from "@/components/ui/Select";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import {
+  PASSOS, previaDoPrazo, tituloSugerido, validarPasso, valorInicial,
+  type CaptacaoParaCriacao, type DadosCriacao, type PassoId, type ProjetoParaCriacao,
+} from "@/lib/prestacao/criacao";
+import { descreverRegra } from "@/lib/prestacao/prazo-final";
+import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
-type CaptacaoOption = { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null };
-type ProjetoOption  = { id: string; nome: string };
+// Criação guiada (P1.4): origem → regime → dados oficiais → orçamento →
+// marcos. O primeiro passo cria o rascunho; cada passo seguinte grava o que
+// foi preenchido. Fechar no meio deixa o rascunho na lista.
 
 type Props = {
   onClose: () => void;
   onSaved: () => void;
 };
 
-const inputCls = "w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-1 focus:ring-[#7259B5]/20 bg-white";
-const inputStyle = { borderColor: "rgba(13,13,13,.12)" };
+type Opcao = { value: string; label: string };
+
+const ROTULO = "mb-1.5 block text-[0.625rem] font-semibold uppercase tracking-wide text-black/40";
+const CAMPO = "w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.8125rem] outline-none focus:border-[#7259B5] focus:ring-1 focus:ring-[#7259B5]/20";
+const dataBr = (data: string | null) => (data ? data.split("-").reverse().join("/") : "—");
 
 export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const organizationId = useOrganizationId();
+  const regimes = useRegimesPublicados();
+  const titleId = useId();
 
-  const [titulo, setTitulo] = useState("");
+  const [passo, setPasso] = useState(0);
+  const [prestacaoId, setPrestacaoId] = useState<string | null>(null);
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const [captacoes, setCaptacoes] = useState<CaptacaoParaCriacao[]>([]);
+  const [projetos, setProjetos] = useState<ProjetoParaCriacao[]>([]);
+  const [proponentes, setProponentes] = useState<Opcao[]>([]);
+
   const [captacaoId, setCaptacaoId] = useState("");
   const [projetoId, setProjetoId] = useState("");
-  const [prazo, setPrazo] = useState("");
-  const [valorAprovado, setValorAprovado] = useState("");
+  const [proponenteId, setProponenteId] = useState("");
+  const [identificador, setIdentificador] = useState("");
+  const [fonteRecurso, setFonteRecurso] = useState("");
   const [observacoes, setObservacoes] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const titleId = useId();
-  useModalDismiss(onClose);
+  const [abrirOrcamento, setAbrirOrcamento] = useState(true);
+  const [marcos, setMarcos] = useState({ aprovacao: "", liberacao: "", termo: "" });
+  const [dados, setDados] = useState<DadosCriacao>({
+    titulo: "", regimeId: "", valorAprovado: "", inicioExecucao: "", fimExecucao: "", prazoInformado: "", justificativa: "",
+  });
+  const atualizar = (parcial: Partial<DadosCriacao>) => setDados(atual => ({ ...atual, ...parcial }));
 
-  const [captacoes, setCaptacoes] = useState<CaptacaoOption[]>([]);
-  const [projetos, setProjetos] = useState<ProjetoOption[]>([]);
+  function fechar() {
+    // Um rascunho já criado aparece na lista.
+    if (prestacaoId) onSaved();
+    onClose();
+  }
+  useModalDismiss(fechar);
 
   useEffect(() => {
     if (!organizationId) return;
-    // Restrito à organização atual — captações e projetos são visíveis em
-    // todas as organizações de que o usuário participa (RLS por membership,
-    // não pela organização ativa na tela), então sem esse filtro dava pra
-    // vincular a prestação a um projeto/captação de outra organização.
+    // Só da organização atual: o RLS mostra captações e projetos de todas as
+    // organizações da pessoa, e o vínculo tem de ser com a atual.
     supabase
       .from("captacoes")
-      .select("id, titulo, lei, valor_solicitado")
+      .select("id, titulo, lei, valor_aprovado, valor_solicitado, projeto_id")
       .eq("organization_id", organizationId)
       .eq("status", "aprovado")
       .order("titulo")
-      .then(({ data }) => setCaptacoes((data as CaptacaoOption[]) ?? []));
+      .then(({ data }) => setCaptacoes((data as CaptacaoParaCriacao[] | null) ?? []));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- projetos_crm e proponentes fora do tipo Database
+    const sb = supabase as any;
+    sb.from("projetos_crm").select("id, nome, proponente_id").eq("organization_id", organizationId).order("nome")
+      .then(({ data }: { data: ProjetoParaCriacao[] | null }) => setProjetos(data ?? []));
+    sb.from("proponentes").select("id, nome").eq("organization_id", organizationId).order("nome")
+      .then(({ data }: { data: { id: string; nome: string }[] | null }) =>
+        setProponentes((data ?? []).map(p => ({ value: p.id, label: p.nome }))));
+  }, [organizationId, supabase]);
 
-    (supabase as any)
-      .from("projetos_crm")
-      .select("id, nome")
-      .eq("organization_id", organizationId)
-      .order("nome")
-      .then(({ data }: any) => setProjetos((data as ProjetoOption[]) ?? []));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [organizationId]);
+  const captacao = captacoes.find(c => c.id === captacaoId) ?? null;
+  const regime = regimes.find(r => r.id === dados.regimeId)?.regime ?? null;
+  const prazoCalculado = previaDoPrazo(regime, dados.fimExecucao);
+  const atual = PASSOS[passo];
 
-  // Ao selecionar captação, pré-preenche valor — inclusive limpando quando a
-  // captação é desmarcada ou não tem valor_solicitado, pra não deixar o valor
-  // de uma captação anterior "grudado" sem relação com a seleção atual.
-  function handleCaptacaoChange(id: string) {
+  function escolherCaptacao(id: string) {
+    const nova = captacoes.find(c => c.id === id) ?? null;
     setCaptacaoId(id);
-    const cap = captacoes.find(c => c.id === id);
-    setValorAprovado(cap?.valor_solicitado ? String(cap.valor_solicitado) : "");
+    // A negociação traz o projeto, e o projeto traz o proponente.
+    const idProjeto = projetoId || nova?.projeto_id || "";
+    const projetoDaCaptacao = projetos.find(p => p.id === idProjeto) ?? null;
+    if (!projetoId && nova?.projeto_id) setProjetoId(nova.projeto_id);
+    if (!proponenteId && projetoDaCaptacao?.proponente_id) setProponenteId(projetoDaCaptacao.proponente_id);
+    if (!dados.titulo.trim()) atualizar({ titulo: tituloSugerido(nova, projetoDaCaptacao) });
+    if (!dados.valorAprovado) atualizar({ valorAprovado: valorInicial(nova) });
   }
 
-  async function handleSubmit() {
-    if (!titulo.trim()) return;
-    if (!organizationId) { setErro("Selecione uma organização antes de criar a prestação."); return; }
-    setSaving(true);
+  function escolherProjeto(id: string) {
+    const novo = projetos.find(p => p.id === id) ?? null;
+    setProjetoId(id);
+    if (!dados.titulo.trim()) atualizar({ titulo: tituloSugerido(captacao, novo) });
+    if (novo?.proponente_id && !proponenteId) setProponenteId(novo.proponente_id);
+  }
+
+  /** Grava o passo atual; devolve false quando não deu. */
+  async function gravarPasso(): Promise<boolean> {
+    const problema = validarPasso(atual.id, dados, regime);
+    if (problema) { setErro(problema); return false; }
+    if (!organizationId) { setErro("Selecione uma organização antes de criar a prestação."); return false; }
     setErro(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacoes_contas fora do tipo Database
+    const tabela = (supabase as any).from("prestacoes_contas");
 
-    const { data: { user } } = await supabase.auth.getUser();
+    if (atual.id === "origem" && !prestacaoId) {
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data, error } = await tabela.insert({
+        titulo: dados.titulo.trim(),
+        captacao_id: captacaoId || null,
+        projeto_id: projetoId || null,
+        criado_por: user?.id ?? null,
+        organization_id: organizationId,
+      }).select("id, regime_id").single();
+      if (error) { setErro(mensagemErroPrestacao(error, "Não foi possível criar a prestação")); return false; }
+      setPrestacaoId(data.id);
+      // O banco sugere o regime pela lei da captação.
+      atualizar({ regimeId: data.regime_id ?? "" });
+      return true;
+    }
 
-    const { error } = await (supabase as any).from("prestacoes_contas").insert({
-      titulo: titulo.trim(),
-      captacao_id: captacaoId || null,
-      projeto_id: projetoId || null,
-      prazo: prazo || null,
-      valor_aprovado: valorAprovado ? Number(valorAprovado) : null,
-      observacoes: observacoes.trim() || null,
-      criado_por: user?.id ?? null,
-      organization_id: organizationId,
-    });
+    const porPasso: Record<PassoId, Record<string, unknown> | null> = {
+      origem: { titulo: dados.titulo.trim(), captacao_id: captacaoId || null, projeto_id: projetoId || null },
+      regime: { regime_id: dados.regimeId, identificador_tipo: regime?.identificadorOficial?.tipo ?? null },
+      dados: {
+        identificador_oficial: identificador.trim() || null,
+        identificador_tipo: regime?.identificadorOficial?.tipo ?? null,
+        fonte_recurso: fonteRecurso.trim() || null,
+        proponente_id: proponenteId || null,
+        valor_aprovado: dados.valorAprovado === "" ? null : Number(dados.valorAprovado),
+        observacoes: observacoes.trim() || null,
+      },
+      importacao: null,
+      marcos: {
+        data_aprovacao: marcos.aprovacao || null,
+        data_liberacao: marcos.liberacao || null,
+        data_termo: marcos.termo || null,
+        data_inicio_execucao: dados.inicioExecucao || null,
+        data_fim_execucao: dados.fimExecucao || null,
+        prazo_final_override: dados.prazoInformado || null,
+        prazo_final_justificativa: dados.justificativa.trim() || null,
+      },
+    };
+    const campos = porPasso[atual.id];
+    if (!campos) return true;
 
-    setSaving(false);
-    if (error) { setErro("Não foi possível criar a prestação de contas. Tente novamente."); return; }
+    const { error } = await tabela.update(campos).eq("id", prestacaoId);
+    if (error) { setErro(mensagemErroPrestacao(error, "Não foi possível salvar")); return false; }
+    return true;
+  }
+
+  async function continuar() {
+    setSalvando(true);
+    const ok = await gravarPasso();
+    setSalvando(false);
+    if (!ok) return;
+    if (passo < PASSOS.length - 1) { setPasso(passo + 1); return; }
     onSaved();
+    router.push(`/prestacoes/${prestacaoId}${abrirOrcamento ? "/orcamento" : ""}`);
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={fechar}>
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded shadow-2xl w-full max-w-lg"
+        className="flex max-h-[92dvh] w-full max-w-[36rem] flex-col overflow-hidden rounded bg-white shadow-2xl"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded flex items-center justify-center" style={{ background: "#7259B514" }}>
+            <div className="flex h-7 w-7 items-center justify-center rounded" style={{ background: "#7259B514" }}>
               <ClipboardCheck size={14} className="text-[#7259B5]" />
             </div>
-            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#0D0D0D]">Nova prestação de contas</h2>
+            <div>
+              <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#0D0D0D]">Nova prestação de contas</h2>
+              {prestacaoId && <p className="text-[0.625rem] text-black/40">Rascunho salvo. Você pode fechar e continuar depois.</p>}
+            </div>
           </div>
-          <button type="button" onClick={onClose} aria-label="Fechar" className="p-1.5 rounded hover:bg-black/5 transition text-black/35 hover:text-black/55">
+          <button type="button" onClick={fechar} aria-label="Fechar" className="rounded p-1.5 text-black/35 transition hover:bg-black/5 hover:text-black/55">
             <X size={15} />
           </button>
         </div>
 
-        <div className="p-6 space-y-4">
-          {/* Título */}
-          <div>
-            <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">
-              Título <span className="text-[#D94E4E]">*</span>
-            </label>
-            <input
-              value={titulo}
-              onChange={e => setTitulo(e.target.value)}
-              placeholder="Ex: Prestação Rouanet 2024 — Festival Cultural"
-              className={inputCls}
-              style={inputStyle}
-            />
-          </div>
+        {/* Passos */}
+        <ol className="flex shrink-0 items-center gap-1 overflow-x-auto border-b px-6 py-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+          {PASSOS.map((p, i) => (
+            <li key={p.id} className="flex shrink-0 items-center gap-1.5" aria-current={i === passo ? "step" : undefined}>
+              <span className={`flex h-5 w-5 items-center justify-center rounded-full text-[0.625rem] ${
+                i < passo ? "bg-[#2E8932] text-white" : i === passo ? "bg-[#7259B5] text-white" : "bg-black/[.06] text-black/40"}`}>
+                {i < passo ? <Check size={11} /> : i + 1}
+              </span>
+              <span className={`text-[0.6875rem] ${i === passo ? "text-[#684DB0]" : "text-black/40"}`}>{p.titulo}</span>
+              {i < PASSOS.length - 1 && <span className="mx-1 h-px w-4 bg-black/10" aria-hidden="true" />}
+            </li>
+          ))}
+        </ol>
 
-          {/* Captação */}
-          <div>
-            <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">
-              Negociação aprovada
-            </label>
-            <Select
-              value={captacaoId}
-              onChange={e => handleCaptacaoChange(e.target.value)}
-              className={inputCls}
-              style={{ ...inputStyle, color: captacaoId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
-            >
-              <option value="">Selecionar negociação</option>
-              {captacoes.map(c => (
-                <option key={c.id} value={c.id}>{c.titulo ?? "Sem título"} {c.lei ? `(${c.lei})` : ""}</option>
-              ))}
-            </Select>
-            {captacoes.length === 0 && (
-              <p className="text-[0.625rem] text-black/30 mt-1">Nenhuma negociação com status “aprovado” encontrada.</p>
-            )}
-          </div>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-6">
+          {atual.id === "origem" && (
+            <>
+              <div>
+                <span className={ROTULO}>Negociação aprovada</span>
+                <Dropdown
+                  value={captacaoId}
+                  onChange={escolherCaptacao}
+                  ariaLabel="Negociação aprovada"
+                  placeholder={captacoes.length ? "Selecionar negociação" : "Nenhuma negociação aprovada"}
+                  options={captacoes.map(c => ({ value: c.id, label: `${c.titulo ?? "Sem título"}${c.lei ? ` (${c.lei})` : ""}` }))}
+                />
+                <p className="mt-1 text-[0.625rem] text-black/35">A lei da negociação define o regime sugerido.</p>
+              </div>
+              <div>
+                <span className={ROTULO}>Projeto</span>
+                <Dropdown
+                  value={projetoId}
+                  onChange={escolherProjeto}
+                  ariaLabel="Projeto"
+                  placeholder="Selecionar projeto"
+                  options={projetos.map(p => ({ value: p.id, label: p.nome }))}
+                />
+              </div>
+              <label className="block">
+                <span className={ROTULO}>Título <span className="text-[#D94A4A]">*</span></span>
+                <input value={dados.titulo} onChange={e => atualizar({ titulo: e.target.value })} placeholder="Ex.: Prestação de contas — Festival de Inverno" className={CAMPO} />
+              </label>
+            </>
+          )}
 
-          {/* Projeto */}
-          <div>
-            <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">
-              Projeto
-            </label>
-            <Select
-              value={projetoId}
-              onChange={e => setProjetoId(e.target.value)}
-              className={inputCls}
-              style={{ ...inputStyle, color: projetoId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
-            >
-              <option value="">Selecionar projeto</option>
-              {projetos.map(p => (
-                <option key={p.id} value={p.id}>{p.nome}</option>
-              ))}
-            </Select>
-          </div>
+          {atual.id === "regime" && (
+            <>
+              <div>
+                <span className={ROTULO}>Regime</span>
+                <Dropdown
+                  value={dados.regimeId}
+                  onChange={valor => atualizar({ regimeId: valor })}
+                  ariaLabel="Regime"
+                  placeholder="Escolher regime"
+                  options={regimes.map(r => ({ value: r.id, label: r.regime.nome }))}
+                />
+              </div>
+              {regime && (
+                <div className="space-y-1.5 rounded border border-black/[.08] bg-black/[.015] p-3 text-[0.6875rem] leading-5 text-black/55">
+                  <p>{regime.normaReferencia}</p>
+                  {regime.sistemaOficial && <p>Envio pelo {regime.sistemaOficial}.</p>}
+                  {regime.prazos.prestacaoFinal ? (
+                    <p>Prazo de envio: {descreverRegra(regime.prazos.prestacaoFinal)} ({regime.prazos.prestacaoFinal.fonte.dispositivo}).</p>
+                  ) : (
+                    <p>Sem regras de lei: o prazo e os limites vêm do contrato ou do edital.</p>
+                  )}
+                  {captacao?.lei && regime.mecanismo !== captacao.lei && regime.codigo !== "generico" && (
+                    <p className="text-[#B07A14]">A negociação é de outra lei ({captacao.lei}). Confira o regime.</p>
+                  )}
+                </div>
+              )}
+            </>
+          )}
 
-          <div className="grid grid-cols-2 gap-3">
-            {/* Prazo */}
-            <div>
-              <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Prazo</label>
-              <input
-                type="date"
-                value={prazo}
-                onChange={e => setPrazo(e.target.value)}
-                className={inputCls}
-                style={inputStyle}
-              />
+          {atual.id === "dados" && (
+            <>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className={ROTULO}>{regime?.identificadorOficial?.rotulo ?? "Identificador oficial"}</span>
+                  <input value={identificador} onChange={e => setIdentificador(e.target.value)} className={CAMPO} />
+                </label>
+                <label className="block">
+                  <span className={ROTULO}>Valor aprovado (R$)</span>
+                  <input type="number" inputMode="decimal" min={0} value={dados.valorAprovado} onChange={e => atualizar({ valorAprovado: e.target.value })} placeholder="0,00" className={`${CAMPO} tabular-nums`} />
+                </label>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <span className={ROTULO}>Proponente</span>
+                  <Dropdown
+                    value={proponenteId}
+                    onChange={setProponenteId}
+                    ariaLabel="Proponente"
+                    placeholder={proponentes.length ? "Selecionar proponente" : "Nenhum proponente cadastrado"}
+                    options={proponentes}
+                  />
+                </div>
+                <label className="block">
+                  <span className={ROTULO}>Fonte do recurso</span>
+                  <input value={fonteRecurso} onChange={e => setFonteRecurso(e.target.value)} placeholder="Ex.: incentivo fiscal" className={CAMPO} />
+                </label>
+              </div>
+              <label className="block">
+                <span className={ROTULO}>Observações</span>
+                <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={2} placeholder="Contexto, exigências do patrocinador…" className={`${CAMPO} resize-none`} />
+              </label>
+            </>
+          )}
+
+          {atual.id === "importacao" && (
+            <div className="space-y-3">
+              <p className="text-[0.75rem] leading-5 text-black/60">
+                O orçamento aprovado é a base das rubricas, dos limites e do executado. Você pode importar a planilha
+                ou o PDF aprovado (CSV, XLSX ou PDF) na aba Orçamento, que lê o arquivo e propõe os itens para revisar.
+              </p>
+              <button
+                type="button"
+                role="checkbox"
+                aria-checked={abrirOrcamento}
+                onClick={() => setAbrirOrcamento(v => !v)}
+                className={`flex w-full items-start gap-3 rounded border px-3.5 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${abrirOrcamento ? "border-[#7259B5] bg-[#7259B5]/[.035]" : "border-black/10 bg-white"}`}
+              >
+                <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${abrirOrcamento ? "border-[#7259B5] bg-[#7259B5] text-white" : "border-black/25"}`}>
+                  {abrirOrcamento && <Check size={11} />}
+                </span>
+                <span>
+                  <span className="flex items-center gap-1.5 text-[0.75rem] text-black/75"><FileSpreadsheet size={13} /> Importar o orçamento ao terminar</span>
+                  <span className="mt-0.5 block text-[0.6875rem] text-black/40">Abre a aba Orçamento desta prestação depois do último passo.</span>
+                </span>
+              </button>
+              {regime?.identificadorOficial?.tipo === "pronac" && (
+                <p className="text-[0.6875rem] text-black/40">A importação direta do Salic pelo Pronac entra numa próxima versão.</p>
+              )}
             </div>
-            {/* Valor aprovado */}
-            <div>
-              <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Valor aprovado (R$)</label>
-              <input
-                type="number"
-                value={valorAprovado}
-                onChange={e => setValorAprovado(e.target.value)}
-                placeholder="0,00"
-                className={inputCls}
-                style={inputStyle}
-              />
-            </div>
-          </div>
+          )}
 
-          {/* Observações */}
-          <div>
-            <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Observações</label>
-            <textarea
-              value={observacoes}
-              onChange={e => setObservacoes(e.target.value)}
-              rows={2}
-              placeholder="Contexto, requisitos específicos do patrocinador..."
-              className={`${inputCls} resize-none`}
-              style={inputStyle}
-            />
-          </div>
+          {atual.id === "marcos" && (
+            <>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {([["aprovacao", "Aprovação"], ["liberacao", "Liberação"], ["termo", "Termo ou contrato"]] as const).map(([campo, rotulo]) => (
+                  <label key={campo} className="block">
+                    <span className={ROTULO}>{rotulo}</span>
+                    <input type="date" value={marcos[campo]} onChange={e => setMarcos(m => ({ ...m, [campo]: e.target.value }))} className={CAMPO} />
+                  </label>
+                ))}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className={ROTULO}>Início da execução</span>
+                  <input type="date" value={dados.inicioExecucao} onChange={e => atualizar({ inicioExecucao: e.target.value })} className={CAMPO} />
+                </label>
+                <label className="block">
+                  <span className={ROTULO}>Fim da execução</span>
+                  <input type="date" value={dados.fimExecucao} onChange={e => atualizar({ fimExecucao: e.target.value })} className={CAMPO} />
+                </label>
+              </div>
+              <div className="rounded border border-black/[.08] bg-black/[.015] p-3 text-[0.6875rem] leading-5 text-black/55">
+                {regime?.prazos.prestacaoFinal ? (
+                  prazoCalculado
+                    ? <p>Prazo de envio calculado: <strong className="tabular-nums text-black/80">{dataBr(prazoCalculado)}</strong> ({descreverRegra(regime.prazos.prestacaoFinal)}).</p>
+                    : <p>Informe o fim da execução para calcular o prazo de envio.</p>
+                ) : (
+                  <p>Este regime não define prazo de envio. Informe o do contrato ou do edital abaixo.</p>
+                )}
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block">
+                  <span className={ROTULO}>{prazoCalculado ? "Outro prazo (opcional)" : "Prazo de envio"}</span>
+                  <input type="date" value={dados.prazoInformado} onChange={e => atualizar({ prazoInformado: e.target.value })} className={CAMPO} />
+                </label>
+                {dados.prazoInformado && prazoCalculado && dados.prazoInformado !== prazoCalculado && (
+                  <label className="block">
+                    <span className={ROTULO}>Justificativa <span className="text-[#D94A4A]">*</span></span>
+                    <input value={dados.justificativa} onChange={e => atualizar({ justificativa: e.target.value })} placeholder="Ex.: prorrogação deferida" className={CAMPO} />
+                  </label>
+                )}
+              </div>
+            </>
+          )}
 
           {erro && <p role="alert" className="text-[0.75rem] text-[#B23A3A]">{erro}</p>}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-between gap-4 px-6 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          {erro ? <p className="min-w-0 text-[0.75rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
-          <div className="ml-auto flex shrink-0 items-center gap-3">
-          <button onClick={onClose} className="px-4 py-2 text-[0.8125rem] font-medium text-black/35 hover:text-black/55 transition">
-            Cancelar
+        <div className="flex shrink-0 items-center justify-between gap-4 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          <button
+            type="button"
+            onClick={() => (passo === 0 ? fechar() : (setErro(null), setPasso(passo - 1)))}
+            className="px-2 py-2 text-[0.8125rem] font-medium text-black/40 transition hover:text-black/65"
+          >
+            {passo === 0 ? "Cancelar" : "Voltar"}
           </button>
           <button
-            onClick={handleSubmit}
-            disabled={saving || !titulo.trim()}
-            className="flex items-center gap-1.5 px-5 py-2 text-[0.8125rem] font-semibold text-white rounded bg-[#2E8932] transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed"
+            type="button"
+            onClick={() => void continuar()}
+            disabled={salvando || (atual.id === "origem" && !dados.titulo.trim())}
+            className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
-            {saving && <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-            Criar prestação
+            {salvando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
+            {passo === 0 && !prestacaoId ? "Criar rascunho" : passo === PASSOS.length - 1 ? "Concluir" : "Continuar"}
           </button>
-          </div>
         </div>
       </div>
     </div>

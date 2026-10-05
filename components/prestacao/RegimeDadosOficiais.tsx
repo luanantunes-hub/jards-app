@@ -1,10 +1,8 @@
 "use client";
 
 import { Dropdown } from "@/components/ui/Dropdown";
-import type { RegimeNormativo } from "@/lib/prestacao/regimes";
+import type { RegimePublicado } from "@/hooks/useRegimesPublicados";
 import type { PrestacaoContas } from "@/lib/supabase/types";
-
-export type RegimePublicado = { id: string; regime: RegimeNormativo };
 
 type Campos = Partial<Pick<PrestacaoContas,
   "regime_id" | "identificador_oficial" | "identificador_tipo" | "fonte_recurso"

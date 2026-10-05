@@ -10,8 +10,8 @@ import { executadoPorItem, percentualExecutado, totalExecutado, type Comprovante
 import { mensagemErroPrestacao, proximosBloqueados, proximosStatus } from "@/lib/prestacao/status";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
-import { RegimeDadosOficiais, type RegimePublicado } from "@/components/prestacao/RegimeDadosOficiais";
-import { regimeSchema } from "@/lib/prestacao/regimes/schema";
+import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -83,22 +83,7 @@ export default function PrestacaoDetalhe() {
   const [comentario, setComentario] = useState("");
   const [saving, setSaving] = useState(false);
   const permissoes = usePermissoesPrestacao(id);
-  // Regimes publicados (P1.2), validados pelo schema antes de ir para a tela.
-  const [regimes, setRegimes] = useState<RegimePublicado[]>([]);
-  useEffect(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_regimes ainda não está no tipo Database
-    (supabase as any)
-      .from("prestacao_regimes")
-      .select("id, parametros")
-      .eq("status", "publicado")
-      .order("nome")
-      .then(({ data }: { data: { id: string; parametros: unknown }[] | null }) => {
-        setRegimes((data ?? []).flatMap(linha => {
-          const lido = regimeSchema.safeParse(linha.parametros);
-          return lido.success ? [{ id: linha.id, regime: lido.data }] : [];
-        }));
-      });
-  }, [supabase]);
+  const regimes = useRegimesPublicados();
 
   const fetch = useCallback(async () => {
     const [

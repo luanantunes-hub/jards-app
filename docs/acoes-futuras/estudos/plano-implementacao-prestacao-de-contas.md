@@ -12,7 +12,7 @@
 
 ## Andamento
 
-Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 136 passando no `npm test`.
+Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 141 passando no `npm test`.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
@@ -20,7 +20,8 @@ Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 136
 | P0.4 Funções de IA com autorização | Feita (`c64f0f2`) | Publicar as funções: `supabase functions deploy extrair-comprovante importar-orcamento` |
 | P0.10 Correções no módulo | Tela feita (`356941e`); banco feito e aplicado em produção em 05/10/2026 | Publicar o app: até lá, a tela antiga não muda status nem avalia comprovante, porque ainda grava direto na tabela |
 | P0.7 Acesso por módulo e bloqueio no servidor | Feita (`48447a7`) | Nada para o que existe hoje; quem não é super admin precisa da prestação liberada em `organizations.modulos_ativos` e `organization_members.modulos_acesso` para abrir `/prestacoes`. O e2e com três tipos de usuário espera a P0.5 |
-| P1.2 Prestação ligada ao regime | Feita e aplicada em produção em 05/10/2026 | Publicar o app. Escolher o proponente fica para a criação guiada (P1.4) |
+| P1.2 Prestação ligada ao regime | Feita e aplicada em produção em 05/10/2026 | Publicar o app |
+| P1.4 Criação guiada | Feita | Publicar o app. A importação direta do Salic é a P1.5; o passo de orçamento leva à importação de planilha ou PDF que já existe |
 | P1.3 Prazos e calendário | Feita (`0fb0697`) | `calendario_regulatorio` já existe (P1.1); a contagem passa a ler dele os feriados locais quando a prestação ganhar regime e local (P1.2) |
 | P1.1 Catálogo de regimes | Feita; tabelas e seed aplicados em produção em 05/10/2026 | Nada. Feriados estaduais e municipais entram por regime ou pelo super admin; o segundo turno de 2026 (até 25/10), onde houver, ainda não está no calendário |
 | P0.1 Estrutura versionada | Feita (`ec22685`) | Nada; tipar as tabelas em `lib/supabase/types.ts` fica para quando cada tela for reescrita |
