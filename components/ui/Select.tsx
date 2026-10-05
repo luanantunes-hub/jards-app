@@ -11,13 +11,14 @@ interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
  * Para filtros de toolbar com largura automática, use block={false}.
  * Para dropdowns com ícone/busca, use CustomDropdown.
  */
-export function Select({ className = "", children, block = true, ...props }: SelectProps) {
+export function Select({ className = "", children, block = true, style, ...props }: SelectProps) {
+  // A seta ocupa a direita: o style de quem chama soma ao respiro, não o apaga.
   return (
     <div className={`relative ${block ? "w-full" : "inline-block"}`}>
       <select
         className={`appearance-none rounded border border-black/[.12] bg-white text-[0.75rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:cursor-not-allowed disabled:opacity-50 ${block ? "w-full" : ""} ${className}`}
-        style={{ paddingRight: "2rem" }}
         {...props}
+        style={{ paddingRight: "2rem", ...style }}
       >
         {children}
       </select>

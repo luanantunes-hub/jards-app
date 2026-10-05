@@ -12,31 +12,31 @@
 
 ## Andamento
 
-Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 203 passando no `npm test`.
+Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 236 passando no `npm test`. O app (PR #13) e as funções `extrair-comprovante` e `importar-orcamento` estão publicados desde 05/10/2026.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
-| P1.11 Regimes em todas as dimensões | Feita; as três migrations de 06/10 foram ensaiadas e aplicadas em produção em 05/10/2026: 8 regimes publicados (Rouanet v2, LIE P10 e P424, saúde LXXXVI-A e LXXXVI, ANCINE IN 159 e IN 150, genérico v2), as versões 1 da Rouanet e do genérico obsoletas, a prestação da Platibanda no genérico v2 | Decidir se a P424 vale na redação da data do protocolo (versões por data); "saude" não existe em `captacoes.lei`, então o regime de saúde é escolhido à mão |
-| P1.9 Lista e visão geral | Feita (`7cf9efa`); build conferido na P1.11 | Publicar o app |
-| P0.3 Arquivos no caminho da organização | Feita (`2e5d186`) | Rodar `npx tsx scripts/prestacao-migrar-arquivos.ts` (ensaio) e depois com `--live`, com acesso ao banco |
-| P0.4 Funções de IA com autorização | Feita (`c64f0f2`) | Publicar as funções: `supabase functions deploy extrair-comprovante importar-orcamento` |
-| P0.10 Correções no módulo | Tela feita (`356941e`); banco feito e aplicado em produção em 05/10/2026 | Publicar o app: até lá, a tela antiga não muda status nem avalia comprovante, porque ainda grava direto na tabela |
+| P1.11 Regimes em todas as dimensões | Feita; as três migrations de 06/10 foram ensaiadas e aplicadas em produção em 05/10/2026: 8 regimes publicados (Rouanet v2, LIE P10 e P424, saúde LXXXVI-A e LXXXVI, ANCINE IN 159 e IN 150, genérico v2), as versões 1 da Rouanet e do genérico obsoletas, a prestação da Platibanda no genérico v2. Em 05/10/2026 a P424, o Anexo LXXXVI e a IN 150 ganharam a versão 2, conferida na própria norma | Nada para a P424: vale a redação atual (decisão de 05/10/2026). "saude" não existe em `captacoes.lei`, então o regime de saúde é escolhido à mão |
+| P1.9 Lista e visão geral | Feita (`7cf9efa`) e publicada. Conferida na tela em 05/10/2026 com o usuário de teste, no computador e no celular; as correções (prazo da lista em duas linhas, filtros e abas que rolam no celular, seta dos seletores que encobria o texto, linha do comprovante) estão no PR #14 | Publicar o PR #14 |
+| P0.3 Arquivos no caminho da organização | Feita (`2e5d186`). Em 05/10/2026 o comprovante que estava no caminho antigo foi para `{organização}/prestacoes/{prestação}/comprovantes/`, por uma função temporária; o sha256 conferiu, o usuário de teste o abre, e o original e duas cópias órfãs foram apagados | Apagar no painel do Supabase a função `mover-comprovante-antigo`, que hoje só responde 410 |
+| P0.4 Funções de IA com autorização | Feita (`c64f0f2`) e publicada, com verificação de JWT | Nada |
+| P0.10 Correções no módulo | Tela feita (`356941e`) e publicada; banco aplicado em produção em 05/10/2026 | Nada |
 | P0.7 Acesso por módulo e bloqueio no servidor | Feita (`48447a7`) | Nada para o que existe hoje; quem não é super admin precisa da prestação liberada em `organizations.modulos_ativos` e `organization_members.modulos_acesso` para abrir `/prestacoes`. O e2e com três tipos de usuário espera a P0.5 |
-| P1.2 Prestação ligada ao regime | Feita e aplicada em produção em 05/10/2026 | Publicar o app |
-| P1.4 Criação guiada | Feita | Publicar o app. O passo de orçamento leva à importação de planilha ou PDF |
-| P1.7 Alterações de orçamento | Feita e aplicada em produção em 05/10/2026 | Publicar o app |
+| P1.2 Prestação ligada ao regime | Feita, aplicada e publicada em 05/10/2026 | Nada |
+| P1.4 Criação guiada | Feita e publicada | Nada. O passo de orçamento leva à importação de planilha ou PDF |
+| P1.7 Alterações de orçamento | Feita, aplicada e publicada em 05/10/2026 | Nada |
 | P1.5 Importação do Salic | Eliminada em 05/10/2026 | Nada. A API pública do Salic não funciona mais: em 05/10/2026 as consultas de projetos e de proponentes devolviam erro 503. O Pronac continua sendo digitado na criação, e o orçamento entra por planilha ou PDF (P1.6) |
-| P1.8 Prazos viram atividades e avisos | Feita e aplicada em produção em 05/10/2026 | Publicar o app (categoria nas notificações e atalho da atividade para a prestação) |
-| P1.6 Orçamento em árvore | Feita e aplicada em produção em 05/10/2026 | Publicar o app e as funções `extrair-comprovante` e `importar-orcamento` (sugestão de item e leitura do PDF com etapa e grupo de custo). Até o deploy, a tela antiga grava na tabela antiga, que espelha na árvore. Classificar os 37 itens da Platibanda por grupo de custo para os tetos ficarem completos |
+| P1.8 Prazos viram atividades e avisos | Feita, aplicada e publicada em 05/10/2026 | Nada |
+| P1.6 Orçamento em árvore | Feita, aplicada e publicada (app e funções) em 05/10/2026; os 37 itens da Platibanda têm grupo de custo | Nada. A tabela antiga `prestacao_itens` ainda espelha na árvore e sai na contração |
 | P1.3 Prazos e calendário | Feita (`0fb0697`) | `calendario_regulatorio` já existe (P1.1); a contagem passa a ler dele os feriados locais quando a prestação ganhar regime e local (P1.2) |
 | P1.1 Catálogo de regimes | Feita; tabelas e seed aplicados em produção em 05/10/2026 | Nada. Feriados estaduais e municipais entram por regime ou pelo super admin; o segundo turno de 2026 (até 25/10), onde houver, ainda não está no calendário |
 | P0.1 Estrutura versionada | Feita (`ec22685`) | Nada; tipar as tabelas em `lib/supabase/types.ts` fica para quando cada tela for reescrita |
 | Tipos de comprovante (achado na P0.1) | Feita (`414bdb3`) e aplicada em produção em 04/10/2026 | Nada; um comprovante RPA salvo como quem criou a prestação passou (teste desfeito) |
-| P0.2 Prestação pertence à organização (expansão) | Feita e aplicada em produção em 05/10/2026 | Contração: `organization_id not null` e fim da exceção de quem criou, depois do deploy do app. A permissão de escrita por papel (leitor só lê) espera a correção dos papéis |
+| P0.2 Prestação pertence à organização (expansão) | Feita e aplicada em produção em 05/10/2026 | Contração: `organization_id not null` e fim da exceção de quem criou; o app já está publicado, então pode ser feita. A permissão de escrita por papel (leitor só lê) espera a correção dos papéis |
 | P0.5 Acesso por módulo nos dados | Feita e aplicada em produção em 05/10/2026 | Nada. Mudança de rota: `prestacao_funcao`, as colunas de módulo nos convites e a tabela `organization_modulos` vão para a P0.6 e a P0.9, onde são usadas |
-| P0.9 Liberação pelo super admin (cortesia) | Feita e aplicada em produção em 05/10/2026 | Publicar o app para a tela `/admin/organizacoes` aparecer. A Platibanda virou cortesia sem prazo: definir o prazo na tela |
-| P0.6 Convite e equipe por módulo | Feita e aplicada em produção em 05/10/2026 | Publicar o app. O e2e "do convite ao primeiro acesso" com e-mail real fica para a P0.8. Na captação, o resto da reconciliação de papéis (leitor só lê, colaborador escreve) continua na tarefa própria; na prestação, a P0.10 já aplica |
-| P0.8 | Não iniciada | Precisa do ambiente de teste do banco (pré-requisito 4) |
+| P0.9 Liberação pelo super admin (cortesia) | Feita e aplicada em produção em 05/10/2026 | Nada. A cortesia da Platibanda vai até 31/12/2026 |
+| P0.6 Convite e equipe por módulo | Feita, aplicada e publicada em 05/10/2026 | O e2e "do convite ao primeiro acesso" com e-mail real fica para a P0.8. Na captação, o resto da reconciliação de papéis (leitor só lê, colaborador escreve) continua na tarefa própria; na prestação, a P0.10 já aplica |
+| P0.8 | Não iniciada | Roda no banco de produção, dentro de transações desfeitas: não há usuários reais (decisão de 05/10/2026), então o ambiente de teste do pré-requisito 4 deixa de bloquear |
 
 ### Banco de produção (leitura de 04/10/2026)
 

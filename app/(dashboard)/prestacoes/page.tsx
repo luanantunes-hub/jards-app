@@ -68,6 +68,13 @@ const COLUNAS: ColumnDefinition<string>[] = [
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
 const dataCurta = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+const dataNumerica = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
+
+/** "Venceu há 45 dias", "Vence hoje", "Vence em 12 dias": cabe numa linha da coluna. */
+function vencimento(dias: number): string {
+  const texto = quandoVence(dias);
+  return dias < 0 ? texto.charAt(0).toUpperCase() + texto.slice(1) : `Vence ${texto}`;
+}
 
 function hojeEmBrasilia(): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
@@ -116,11 +123,9 @@ function BarraProntidao({ prontidao }: { prontidao: Prontidao }) {
 function PrazoCelula({ prazo }: { prazo: PrazoDaPrestacao | null }) {
   if (!prazo) return <span className="text-[0.6875rem] text-black/25">—</span>;
   return (
-    <div className="min-w-0">
-      <p className="whitespace-nowrap text-[0.6875rem] font-medium tabular-nums" style={{ color: corDoPrazo(prazo) }}>
-        {dataCurta(prazo.data)} · {quandoVence(prazo.dias)}
-      </p>
-      <p className="truncate text-[0.625rem] text-black/40">{prazo.rotulo}</p>
+    <div className="min-w-0" title={`${prazo.rotulo}: ${dataCurta(prazo.data)}`}>
+      <p className="truncate text-[0.6875rem] font-medium" style={{ color: corDoPrazo(prazo) }}>{vencimento(prazo.dias)}</p>
+      <p className="truncate text-[0.625rem] tabular-nums text-black/40">{dataNumerica(prazo.data)} · {prazo.rotulo}</p>
     </div>
   );
 }
@@ -261,7 +266,7 @@ export default function PrestacoesList() {
       />
 
       <ListToolbar search={<ListSearch value={busca} onChange={setBusca} placeholder="Buscar prestação, projeto ou identificador" />}>
-        <div role="group" aria-label="Filtrar por status" className="flex gap-2">
+        <div role="group" aria-label="Filtrar por status" className="flex shrink-0 gap-2">
           <button
             type="button"
             aria-pressed={filtroStatus === "todos"}
