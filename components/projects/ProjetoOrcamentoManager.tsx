@@ -329,11 +329,11 @@ export function ProjetoOrcamentoManager({
 
       {haCotaFlexivel && <p className="text-[0.6875rem] text-black/40">O rateio por cota é uma simulação individual pelo valor de referência mínimo. Cotas por nível e por produto podem coexistir; seus valores não devem ser somados como receita projetada.</p>}
 
-      {erro && <p className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.04] px-3 py-2 text-[0.6875rem] text-[#991B1B]">{erro}</p>}
+      {erro && <p className="rounded border border-[#D94E4E]/20 bg-white px-3 py-2 text-[0.6875rem] text-[#991B1B]">{erro}</p>}
 
       {/* Cabeçalho do filtro ativo */}
       {activeCota && (
-        <div className="flex items-center justify-between rounded border px-4 py-3" style={{ borderColor: "rgba(114,89,181,.2)", background: "rgba(114,89,181,.04)" }}>
+        <div className="flex items-center justify-between rounded border px-4 py-3" style={{ borderColor: "rgba(114,89,181,.2)", background: "#fff" }}>
           <div>
             <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-[#7259B5]">{activeCota.nome}</p>
             <p className="mt-0.5 text-[0.75rem] text-black/50">
@@ -393,7 +393,7 @@ export function ProjetoOrcamentoManager({
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-0.5">
                         <button title="Editar" onClick={() => openEdit(item)} className="rounded p-1.5 text-black/25 transition hover:bg-black/5 hover:text-black/60"><Pencil size={12} /></button>
-                        <button title="Excluir" aria-label={`Excluir a rubrica ${item.rubrica}`} onClick={() => deleteItem(item)} className="rounded p-1.5 text-black/20 transition hover:bg-[#D94E4E]/10 hover:text-[#D94E4E]"><Trash2 size={12} /></button>
+                        <button title="Excluir" aria-label={`Excluir a rubrica ${item.rubrica}`} onClick={() => deleteItem(item)} className="rounded p-1.5 text-black/20 transition hover:bg-black/[.04] hover:text-[#D94E4E]"><Trash2 size={12} /></button>
                       </div>
                     </td>
                   </tr>

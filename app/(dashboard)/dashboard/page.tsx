@@ -799,7 +799,7 @@ export default function DashboardPage() {
                 <span className="text-[0.6875rem] font-semibold w-[8.25rem] flex-shrink-0 whitespace-nowrap text-[#2E8932]">
                   Aprovado
                 </span>
-                <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(46,137,50,.12)" }}>
+                <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(13,13,13,.06)" }}>
                   <div
                     className="h-full rounded-full"
                     style={{ width: `${aprovadoBarPct}%`, background: "#2E8932", opacity: 0.7 }}
@@ -843,7 +843,7 @@ export default function DashboardPage() {
                     >
                       <div
                         className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
-                        style={{ background: urgente ? "rgba(217,78,78,.08)" : "rgba(122,96,64,.07)" }}
+                        style={{ background: "rgba(13,13,13,.04)" }}
                       >
                         <Clock size={13} style={{ color: urgente ? "#D94E4E" : "#B07A14" }} />
                       </div>
@@ -890,7 +890,7 @@ export default function DashboardPage() {
                       <div key={a.id} className="px-5 py-3 flex items-start gap-3">
                         <div
                           className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
-                          style={{ background: tc.color + "14" }}
+                          style={{ background: "rgba(13,13,13,.04)" }}
                         >
                           <Icon size={12} style={{ color: tc.color }} />
                         </div>

@@ -66,7 +66,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-[#7259B5]/10 flex items-center justify-center">
+            <div className="w-9 h-9 rounded bg-black/[.04] flex items-center justify-center">
               <Building2 size={16} className="text-[#7259B5]" />
             </div>
             <div>

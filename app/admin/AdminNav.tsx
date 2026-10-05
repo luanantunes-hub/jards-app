@@ -46,7 +46,7 @@ export default function AdminNav() {
             className="flex shrink-0 items-center gap-1.5 px-3 py-1.5 rounded text-[0.75rem] font-medium whitespace-nowrap transition"
             style={
               active
-                ? { background: "rgba(114,89,181,.25)", color: "#C4B5FD" }
+                ? { background: "rgba(255,255,255,.10)", color: "#fff" }
                 : { color: "rgba(255,255,255,.45)" }
             }
             onMouseEnter={(e) => { if (!active) e.currentTarget.style.color = "rgba(255,255,255,.75)"; }}

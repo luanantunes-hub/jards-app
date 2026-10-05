@@ -226,7 +226,7 @@ function Section({ id, num, title, children }: { id: string; num: string; title:
   return (
     <section id={id} className="scroll-mt-20">
       <h2 className="mb-3 flex items-center gap-2.5 text-base font-bold text-[#0D0D0D]">
-        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#F0EDFB] text-[0.6875rem] font-bold text-[#7259B5]">{num}</span>
+        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-black/[.04] text-[0.6875rem] font-bold text-[#7259B5]">{num}</span>
         {title}
       </h2>
       <div className="space-y-3">{children}</div>

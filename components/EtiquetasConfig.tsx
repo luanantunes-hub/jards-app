@@ -43,7 +43,7 @@ function IconePickerPopup({ current, position, onSelect, onClose }: {
               <button key={name} onClick={() => { onSelect(name); onClose(); }}
                 className="w-8 h-8 flex items-center justify-center rounded transition"
                 style={isActive
-                  ? { background: "rgba(114,89,181,.12)", color: "#7259B5" }
+                  ? { background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }
                   : { color: "rgba(13,13,13,.45)" }}
                 title={name}>
                 <Icon size={14} strokeWidth={2} />
@@ -148,7 +148,7 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
       {/* Delete */}
       {etiqueta.deletavel ? (
         <button onClick={() => onDelete(etiqueta.id)}
-          className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition flex-shrink-0">
+          className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 p-1.5 rounded hover:bg-black/[.04] text-black/20 hover:text-[#D94E4E] transition flex-shrink-0">
           <Trash2 size={13} />
         </button>
       ) : (
@@ -305,7 +305,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
           />
           {novaLabel.trim() && (
             <button onClick={handleCriar} disabled={criando}
-              className="px-3 py-1 text-[0.6875rem] font-bold text-[#7259B5] hover:bg-[#7259B5]/8 rounded transition disabled:opacity-40">
+              className="px-3 py-1 text-[0.6875rem] font-bold text-[#7259B5] hover:bg-black/[.04] rounded transition disabled:opacity-40">
               {criando ? "Criando…" : "Criar"}
             </button>
           )}

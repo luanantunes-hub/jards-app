@@ -23,7 +23,7 @@ export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }:
         onClick={event => event.stopPropagation()}
       >
         <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#2E8932]/15">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/[.04]">
             <Check size={26} className="text-black" strokeWidth={2.5} />
           </span>
           <h2 id="contato-exportado-title" className="mt-4 text-[0.9375rem] font-bold text-black">Contato salvo</h2>
@@ -43,7 +43,7 @@ export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }:
           <button
             type="button"
             onClick={() => router.push(`/contatos/${contatoId}`)}
-            className="flex items-center gap-1.5 rounded border border-[#7259B5] px-4 py-2.5 text-[0.75rem] font-bold text-[#7259B5] transition hover:bg-[#7259B5]/5 active:translate-y-px"
+            className="flex items-center gap-1.5 rounded border border-[#7259B5] px-4 py-2.5 text-[0.75rem] font-bold text-[#7259B5] transition hover:bg-black/[.04] active:translate-y-px"
           >
             Ir até o contato
             <ArrowRight size={13} />

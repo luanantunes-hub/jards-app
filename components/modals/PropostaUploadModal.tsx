@@ -181,7 +181,7 @@ export function PropostaUploadModal({
                 style={{
                   borderColor: dragging ? "#7259B5" : "rgba(13,13,13,.12)",
                   borderStyle: "dashed",
-                  background: dragging ? "rgba(114,89,181,.04)" : "transparent",
+                  background: dragging ? "rgba(13,13,13,.03)" : "transparent",
                 }}
               >
                 <Upload size={18} className="text-black/25" />

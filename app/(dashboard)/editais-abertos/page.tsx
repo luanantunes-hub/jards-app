@@ -65,9 +65,9 @@ function temPeriodoCompleto(item: { data_abertura: string | null; data_fechament
 
 function urgency(dias: number) {
   if (dias <= 0)  return { bg: "rgba(13,13,13,.40)14", text: "rgba(13,13,13,.40)", label: "Encerrado" };
-  if (dias <= 14) return { bg: "#D94E4E14", text: "#D94E4E",  label: "Urgente"   };
-  if (dias <= 30) return { bg: "#B07A1414", text: "#B07A14",  label: "Próximo"   };
-  return           { bg: "#2E893214", text: "#2E8932",  label: "Aberto"    };
+  if (dias <= 14) return { bg: "#fff", text: "#D94E4E",  label: "Urgente"   };
+  if (dias <= 30) return { bg: "#fff", text: "#B07A14",  label: "Próximo"   };
+  return           { bg: "#fff", text: "#2E8932",  label: "Aberto"    };
 }
 
 type SortOpt = "prazo_asc" | "prazo_desc" | "nome_asc" | "aporte_desc";
@@ -389,6 +389,7 @@ export default function EditaisAbertosPage() {
           dataAberturaPre={selectedEdital.data_abertura ?? ""}
           dataFechamentoPre={selectedEdital.data_fechamento ?? ""}
           nomePreEmpresa={selectedEdital.empresas?.nome}
+          sitePreEmpresa={selectedEdital.empresas?.site ?? undefined}
           empresaPubId={selectedEdital.empresas?.id}
           empresaPreId={empresaCrmIdExport ?? undefined}
           onClose={() => { setShowInscricaoModal(false); setSelectedEdital(null); setEmpresaCrmIdExport(null); }}
@@ -419,7 +420,7 @@ export default function EditaisAbertosPage() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: "rgba(114,89,181,0.08)" }}>
+                <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: "rgba(13,13,13,.04)" }}>
                   <UserPlus size={14} style={{ color: "#7259B5" }} />
                 </div>
                 <h2 className="text-[0.875rem] font-bold text-black">Sugerir edital</h2>
@@ -608,7 +609,7 @@ export default function EditaisAbertosPage() {
                     ) : (
                       <div
                         className="w-11 h-11 rounded border border-black/8 flex-shrink-0 flex items-center justify-center text-sm font-bold"
-                        style={{ background: "rgba(45,114,176,.06)", color: "#2D72B0" }}
+                        style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}
                       >
                         {nome.charAt(0).toUpperCase()}
                       </div>
@@ -626,14 +627,14 @@ export default function EditaisAbertosPage() {
                       className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide"
                       style={isADM
                         ? { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.50)" }
-                        : { background: "rgba(45,114,176,.10)", color: "#2D72B0" }}
+                        : { background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}
                     >
                       {isADM ? "ADM" : "COMUNIDADE"}
                     </span>
                     <span
                       className="text-[0.625rem] font-bold px-2 py-0.5 rounded"
                       style={dias > 0
-                        ? { background: "rgba(46,137,50,.10)", color: "#2E8932" }
+                        ? { background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }
                         : { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.40)" }}
                     >
                       {dias > 0 ? "Aberto" : "Fechado"}
@@ -667,13 +668,13 @@ export default function EditaisAbertosPage() {
                       <div className="flex items-center gap-1.5">
                         <button type="button" aria-label={`Funciona (${v.funciona})`} aria-pressed={v.meu === true} onClick={ev => { ev.stopPropagation(); handleVotoEdital(adm!.id, true); }}
                           className="flex items-center gap-1 px-2 py-1 rounded border transition text-[0.625rem] font-semibold"
-                          style={{ borderColor: v.meu === true ? "#2E8932" : "rgba(13,13,13,.12)", color: v.meu === true ? "#2E8932" : "rgba(13,13,13,.35)", background: v.meu === true ? "rgba(46,137,50,.06)" : "transparent" }}>
+                          style={{ borderColor: v.meu === true ? "#2E8932" : "rgba(13,13,13,.12)", color: v.meu === true ? "#2E8932" : "rgba(13,13,13,.35)", background: "transparent" }}>
                           <ThumbsUp size={10} />
                           {v.funciona > 0 && <span className="tabular-nums">{v.funciona}</span>}
                         </button>
                         <button type="button" aria-label={`Não funciona (${v.nao_funciona})`} aria-pressed={v.meu === false} onClick={ev => { ev.stopPropagation(); handleVotoEdital(adm!.id, false); }}
                           className="flex items-center gap-1 px-2 py-1 rounded border transition text-[0.625rem] font-semibold"
-                          style={{ borderColor: v.meu === false ? "#D94E4E" : "rgba(13,13,13,.12)", color: v.meu === false ? "#D94E4E" : "rgba(13,13,13,.35)", background: v.meu === false ? "rgba(217,78,78,.06)" : "transparent" }}>
+                          style={{ borderColor: v.meu === false ? "#D94E4E" : "rgba(13,13,13,.12)", color: v.meu === false ? "#D94E4E" : "rgba(13,13,13,.35)", background: "transparent" }}>
                           <ThumbsDown size={10} />
                           {v.nao_funciona > 0 && <span className="tabular-nums">{v.nao_funciona}</span>}
                         </button>
@@ -706,13 +707,13 @@ export default function EditaisAbertosPage() {
                       <div className="flex items-center gap-1.5">
                         <button type="button" aria-label={`Votar a favor (${com!.votos_positivos})`} aria-pressed={meuVoto === 1} onClick={() => handleVotar(com!.id, 1)}
                           className="flex items-center gap-1 px-2 py-1 rounded border transition text-[0.625rem] font-semibold"
-                          style={{ borderColor: meuVoto === 1 ? "#2E8932" : "rgba(13,13,13,.12)", color: meuVoto === 1 ? "#2E8932" : "rgba(13,13,13,.35)", background: meuVoto === 1 ? "rgba(46,137,50,.06)" : "transparent" }}>
+                          style={{ borderColor: meuVoto === 1 ? "#2E8932" : "rgba(13,13,13,.12)", color: meuVoto === 1 ? "#2E8932" : "rgba(13,13,13,.35)", background: "transparent" }}>
                           <ChevronUp size={12} />
                           {com!.votos_positivos > 0 && <span className="tabular-nums">{com!.votos_positivos}</span>}
                         </button>
                         <button type="button" aria-label={`Votar contra (${com!.votos_negativos})`} aria-pressed={meuVoto === -1} onClick={() => handleVotar(com!.id, -1)}
                           className="flex items-center gap-1 px-2 py-1 rounded border transition text-[0.625rem] font-semibold"
-                          style={{ borderColor: meuVoto === -1 ? "#D94E4E" : "rgba(13,13,13,.12)", color: meuVoto === -1 ? "#D94E4E" : "rgba(13,13,13,.35)", background: meuVoto === -1 ? "rgba(217,78,78,.06)" : "transparent" }}>
+                          style={{ borderColor: meuVoto === -1 ? "#D94E4E" : "rgba(13,13,13,.12)", color: meuVoto === -1 ? "#D94E4E" : "rgba(13,13,13,.35)", background: "transparent" }}>
                           <ChevronDown size={12} />
                           {com!.votos_negativos > 0 && <span className="tabular-nums">{com!.votos_negativos}</span>}
                         </button>
@@ -781,7 +782,7 @@ export default function EditaisAbertosPage() {
                         <span
                           className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0"
                           style={dias > 0
-                            ? { background: "rgba(46,137,50,.10)", color: "#2E8932" }
+                            ? { background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }
                             : { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.40)" }}
                         >
                           {dias > 0 ? "Aberto" : "Fechado"}
@@ -810,7 +811,7 @@ export default function EditaisAbertosPage() {
                       </a>
                     )}
                     <div className="flex items-center gap-2 mt-1.5">
-                      <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide" style={{ background: "rgba(45,114,176,.10)", color: "#2D72B0" }}>COMUNIDADE</span>
+                      <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>COMUNIDADE</span>
                       {s.votos_negativos > 0 && (
                         <span className="text-[0.5625rem] text-black/25">{s.votos_negativos}/5 reportados</span>
                       )}

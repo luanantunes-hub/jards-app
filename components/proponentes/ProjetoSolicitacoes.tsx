@@ -88,7 +88,7 @@ export function ProjetoSolicitacoes({ projetoId, isOrganizacao, proponenteNome }
                     <p className="text-[0.6875rem] font-medium text-black/50">Para {nomeDestinatario(acao.destinatario)}</p>
                     {acao.prazo && <p className="mt-0.5 text-[0.6875rem] text-black/40">Até {dataCurta(acao.prazo)}</p>}
                   </div>
-                  <span className="shrink-0 rounded px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide" style={{ background: acao.status === "pendente" ? "#B07A1414" : "rgba(13,13,13,.06)", color: acao.status === "pendente" ? "#B07A14" : "rgba(13,13,13,.45)" }}>
+                  <span className="shrink-0 rounded px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-wide" style={{ background: acao.status === "pendente" ? "#fff" : "rgba(13,13,13,.06)", color: acao.status === "pendente" ? "#B07A14" : "rgba(13,13,13,.45)" }}>
                     {acao.status === "pendente" ? "Aguardando resposta" : "Respondido"}
                   </span>
                 </div>

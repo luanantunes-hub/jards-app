@@ -27,6 +27,9 @@
   <link rel="icon" href="/assets/jards-icon-final.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -118,7 +121,10 @@
     .mcp-chat-body { height:292px; padding:20px 18px; display:flex; flex-direction:column; justify-content:flex-end; gap:12px; overflow:hidden; transition:opacity .22s ease; }
     .mcp-msg { font-size:13.5px; line-height:1.55; }
     .mcp-msg-user { align-self:flex-end; max-width:82%; padding:9px 13px; border-radius:12px 12px 4px 12px; background:rgba(13,13,13,.06); color:#282525; }
-    .mcp-tool { align-self:flex-start; display:flex; align-items:center; gap:7px; margin-left:32px; padding:5px 10px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.6); }
+    .mcp-tool { align-self:flex-start; display:flex; flex-wrap:wrap; align-items:center; gap:3px 7px; max-width:calc(100% - 32px); margin-left:32px; padding:5px 10px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.6); }
+    /* a chamada real da ferramenta do servidor MCP, alinhada sob o rótulo */
+    .mcp-tool-chamada { flex-basis:100%; padding-left:19px; font-family:var(--font-mono); font-size:10.5px; font-weight:400; line-height:1.45; color:rgba(13,13,13,.5); overflow-wrap:anywhere; }
+    .mcp-tool-chamada b { font-weight:500; color:#684DB0; }
     .mcp-tool-icone { width:12px; height:12px; flex-shrink:0; border-radius:50%; border:1.5px solid rgba(13,13,13,.18); border-top-color:#684DB0; animation:mcp-gira .8s linear infinite; }
     .mcp-tool svg { width:12px; height:12px; flex-shrink:0; }
     .mcp-tool.is-ok { color:rgba(13,13,13,.62); }
@@ -260,8 +266,8 @@
       font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
       padding: 3px 8px; border-radius: 20px;
     }
-    .edital-status.aberto  { background: #DCFCE7; color: #166534; }
-    .edital-status.fechado { background: #FEE2E2; color: #991B1B; }
+    .edital-status.aberto  { background: #fff; border: 1px solid #16653447; color: #166534; }
+    .edital-status.fechado { background: #fff; border: 1px solid #991B1B47; color: #991B1B; }
     .edital-body {
       flex: 1; padding: 10px 14px 8px;
       display: flex; flex-direction: column; gap: 5px;
@@ -413,7 +419,10 @@
     .photo-overlay { background:linear-gradient(to right, rgba(0,0,0,.62) 0%, rgba(0,0,0,.25) 60%, transparent 100%); }
 
     /* ── Large number ── */
-    .stat-num { font-family:'Google Sans',system-ui,sans-serif; font-weight:700; font-variant-numeric: tabular-nums; }
+    /* Mono só para dados: numerais, contadores, notas da prancheta e chamadas do MCP.
+       Títulos e texto seguem em Google Sans, que é o lado amigável. */
+    :root { --font-mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .stat-num { font-family:'Google Sans',system-ui,sans-serif; font-weight:700; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
 
     /* ── Product stories ── */
     .section-space { padding-top:clamp(6rem,8vw,9rem); padding-bottom:clamp(6rem,8vw,9rem); }
@@ -470,7 +479,7 @@
     .pr-arco { fill:none; stroke:rgba(40,37,37,.2); stroke-width:1; stroke-dasharray:2 6; }
     .pr-marca { fill:none; stroke:rgba(40,37,37,.5); stroke-width:1; }
     .pr-contorno { fill:none; stroke-width:1.25; }
-    .pr-nota { fill:rgba(40,37,37,.5); font-family:'Google Sans',system-ui,sans-serif; font-size:11px; font-weight:500; letter-spacing:.06em; }
+    .pr-nota { fill:rgba(40,37,37,.5); font-family:var(--font-mono); font-size:10.5px; font-weight:500; letter-spacing:.04em; }
     .pr-host { position:relative; isolation:isolate; }
     /* A linha que chega ao botão principal fica roxa quando ele é apontado. */
     .pr-cta, .pr-aguada-cor, line[data-forca] { transition:stroke .2s ease, fill-opacity .2s ease; }
@@ -493,7 +502,7 @@
     .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(40,37,37,.10); }
     .ledger-side { display:grid; grid-template-rows:repeat(3,auto); }
     .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(40,37,37,.10); transition:background-color .25s ease; }
-    .ledger-item:hover { background:rgba(104,77,176,.035); }
+    .ledger-item:hover { background:rgba(13,13,13,.025); }
     .ledger-item:last-child { border-bottom:0; }
     .ledger-item .ledger-num { margin-bottom:10px; font-size:11px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:rgba(40,37,37,.48); }
     .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.1; letter-spacing:-.015em; margin-bottom:8px; }
@@ -527,7 +536,7 @@
     .blog-index-link:hover { gap:13px; border-color:#684DB0; }
     .blog-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr; border-top:1px solid rgba(40,37,37,.12); border-bottom:1px solid rgba(40,37,37,.12); }
     .blog-story { display:flex; min-width:0; min-height:390px; flex-direction:column; padding:34px 28px 30px; color:#282525; border-right:1px solid rgba(40,37,37,.12); transition:background-color .25s ease; }
-    .blog-story:hover { background:rgba(104,77,176,.035); }
+    .blog-story:hover { background:rgba(13,13,13,.025); }
     .blog-story:first-child { padding-left:0; }
     .blog-story:last-child { padding-right:0; border-right:0; }
     .blog-topic { display:block; margin-bottom:13px; color:#684DB0; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
@@ -741,13 +750,22 @@
     .art-foot { display:flex; align-items:center; justify-content:space-between; min-height:34px; padding:0 16px; border-top:1px solid rgba(40,37,37,.09); color:rgba(40,37,37,.32); background:#fff; font-size:7.5px; }
     .art-foot strong { color:#684DB0; font-weight:600; }
     .landing-proof { border-top:1px solid rgba(40,37,37,.09); border-bottom:1px solid rgba(40,37,37,.09); }
+    /* Números grandes com o gradiente roxo da marca (Google Sans bold) */
+    .accent-gradient-text,
     .stat-accent,
-    .flow-index { color:var(--alt-purple); }
+    .flow-index {
+      color:#684DB0;
+      background:var(--accent-gradient);
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
     .rounded-xl,.rounded-2xl,.rounded-lg { border-radius:4px !important; }
     @media (max-width:767px) { .landing-nav-shell { margin:8px 8px 0; padding-left:14px; padding-right:10px; } .landing-hero { min-height:auto; }                             .brand-visual { min-height:680px; } .brand-visual img { object-position:82% center; } .brand-visual::after { background:linear-gradient(180deg,rgba(40,37,37,.88) 0%,rgba(40,37,37,.66) 54%,rgba(40,37,37,.18) 100%); } .brand-visual.is-light::after { background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.92) 52%,rgba(255,255,255,.20) 100%); } .brand-caption { left:24px; right:24px; top:72px; transform:none; } }
 
     /* ── Alternativa: tokens ── */
     :root {
+      --accent-gradient: linear-gradient(90deg,#7B35E8 0%,#B875FF 38%,#9145F5 68%,#684DB0 100%);
       --alt-ink: #0D0D0D;
       --alt-ink-hover: #2B2828;
       --alt-purple: #684DB0;
@@ -814,6 +832,10 @@
     /* Um roxo só: numerais sólidos, ícone da faixa de prova e check único */
     .alt-proof-icon { display:block; flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); height:var(--alt-proof-mark); color:var(--alt-purple); }
     .alt-proof-mark { flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); }
+    /* Faixa de prova como leitura de instrumento: rótulo em mono, valor grande, descrição */
+    .proof-rotulo { margin:0 0 18px; font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.08em; line-height:1.3; text-transform:uppercase; color:rgba(13,13,13,.55); }
+    .proof-valor { display:flex; align-items:center; height:52px; margin:0 0 16px; font-size:52px; line-height:1; }
+    .proof-valor .alt-proof-icon { flex:0 0 44px; width:44px; height:44px; }
     .alt-check { flex:0 0 auto; width:16px; height:16px; margin-top:2px; color:var(--alt-purple); }
     .pricing-pro-card .alt-check { color:var(--alt-purple-on-dark); }
 
@@ -862,25 +884,47 @@
     }
 
     /* Leis: seletor ao lado da tabela no desktop; no celular, abas roláveis acima dela */
-    .leis-seletor { position:relative; display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(13,13,13,.08); border-radius:var(--alt-radius); }
-    /* a seção fica sobre a superfície cinza: tabela e botões brancos para não se fundirem com o fundo */
+    /* Leis: legenda da prancha. O seletor é a legenda da demo ao lado: cabeçalho no
+       padrão da tabela (LEI · 01 / 04), réguas finas, ícones de traço em quadrados
+       de 4px e registros nos cantos, no traço da prancheta. A lei ativa preenche o
+       quadrado na cor dela, liga-se à demo por uma guia tracejada com registro na
+       borda do painel e mostra, numa régua de 2px, o andamento real da demo
+       (linhas entram → cursor clica → perfil abre). */
+    .leis-seletor { --leis-topo:40px; position:relative; display:flex; flex-direction:column; border-top:1px solid rgba(13,13,13,.12); }
+    .leis-legenda-topo { display:flex; flex:0 0 var(--leis-topo); align-items:center; justify-content:space-between; padding:0 14px; border-bottom:1px solid rgba(13,13,13,.12); color:rgba(13,13,13,.42); font-family:var(--font-mono); font-size:10.5px; font-weight:500; letter-spacing:.06em; line-height:1; text-transform:uppercase; font-variant-numeric:tabular-nums; }
+    .leis-contador { display:inline-flex; gap:5px; overflow:hidden; }
+    .leis-contador-atual { display:inline-block; color:var(--alt-ink); }
+    .leis-registro { position:absolute; right:-5px; width:9px; height:9px; pointer-events:none;
+      background:linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 1px 100% no-repeat,
+                 linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 100% 1px no-repeat; }
+    .leis-registro--topo { top:-5px; }
+    .leis-registro--base { bottom:-5px; }
     #leis-painel { background:#fff; }
-    .lei-card-btn { display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:20px; border:0; border-left:3px solid transparent; background:#fff; color:var(--alt-ink); text-align:left; cursor:pointer; transition:border-color .18s ease, background-color .18s ease; }
-    .lei-card-btn + .lei-card-btn { border-top:1px solid rgba(13,13,13,.08); }
-    .lei-card-btn:hover { background:#FAFAF9; }
-    .lei-card-btn.is-active { border-left-color:var(--lei-cor); }
+    .lei-card-btn { position:relative; display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:14px 16px 14px 14px; border:0; border-bottom:1px solid rgba(13,13,13,.12); border-radius:0; background:transparent; color:rgba(13,13,13,.6); text-align:left; cursor:pointer; transition:background-color .18s ease, color .18s ease; }
+    .lei-card-btn:hover { background:rgba(255,255,255,.6); color:var(--alt-ink); }
+    .lei-card-btn.is-active { background:#fff; color:var(--alt-ink); }
+    .lei-card-btn::before { content:''; position:absolute; top:50%; left:-24px; width:24px; height:1px; background:repeating-linear-gradient(90deg, var(--lei-cor) 0 3px, transparent 3px 7px); transform:scaleX(0); transform-origin:right center; transition:transform .3s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    .lei-card-btn::after { content:''; position:absolute; top:calc(50% - 4px); left:-28px; width:9px; height:9px; opacity:0; pointer-events:none; transition:opacity .2s ease .2s;
+      background:linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 1px 100% no-repeat,
+                 linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 100% 1px no-repeat; }
+    .lei-card-btn.is-active::before { transform:scaleX(1); }
+    .lei-card-btn.is-active::after { opacity:1; }
     .lei-card-btn:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:-2px; }
-    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:44px; height:44px; overflow:hidden; border-radius:50%; background:var(--lei-cor); }
-    .lei-icone img { width:34px; height:34px; object-fit:contain; }
-    .lei-nome { font-size:18px; font-weight:600; line-height:1.3; }
+    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid rgba(13,13,13,.14); border-radius:4px; background:#fff; color:rgba(13,13,13,.58); font-size:19px; transition:background-color .18s ease, border-color .18s ease, color .18s ease; }
+    .lei-card-btn:hover .lei-icone { border-color:var(--lei-cor); color:var(--lei-cor); }
+    .lei-card-btn.is-active .lei-icone { border-color:var(--lei-cor); background:var(--lei-cor); color:#fff; }
+    .lei-nome { font-size:17px; font-weight:500; line-height:1.3; letter-spacing:-.01em; }
+    .lei-progresso { position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--lei-cor); transform:scaleX(0); transform-origin:left center; transition:transform .6s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    @media (prefers-reduced-motion: reduce) { .lei-icone, .lei-card-btn::before, .lei-card-btn::after, .lei-progresso { transition:none; } }
+    @media (min-width:768px) { .leis-seletor.alt-scroll-x { overflow:visible; -webkit-mask-image:none; mask-image:none; } }
     @media (max-width:767px) {
-      .leis-seletor { order:-1; flex-direction:row; gap:4px; border:0; border-bottom:1px solid rgba(13,13,13,.10); border-radius:0; overflow:hidden; overflow-x:auto; }
-      .lei-card-btn { flex:0 0 auto; width:auto; gap:8px; min-height:44px; padding:8px 12px 10px; border-left:0; border-bottom:2px solid transparent; background:none; color:rgba(13,13,13,.55); }
-      .lei-card-btn + .lei-card-btn { border-top:0; }
-      .lei-card-btn:hover { background:none; color:var(--alt-ink); }
-      .lei-card-btn.is-active { border-bottom-color:var(--lei-cor); color:var(--alt-ink); }
-      .lei-icone { width:24px; height:24px; }
-      .lei-icone img { width:19px; height:19px; }
+      .leis-legenda-topo, .leis-registro { display:none; }
+      .leis-seletor { order:-1; flex-direction:row; gap:4px; border-top:0; border-bottom:1px solid rgba(13,13,13,.10); overflow:hidden; overflow-x:auto; }
+      .lei-card-btn { flex:0 0 auto; width:auto; gap:8px; min-height:44px; padding:8px 12px 10px; border-bottom:0; background:none; color:rgba(13,13,13,.55); }
+      .lei-card-btn:hover, .lei-card-btn.is-active { background:none; color:var(--alt-ink); }
+      .lei-card-btn::before, .lei-card-btn::after { display:none; }
+      .lei-progresso { bottom:0; }
+      .lei-icone { width:26px; height:26px; font-size:14px; }
       .lei-nome { font-size:14px; font-weight:500; white-space:nowrap; }
     }
 
@@ -1062,24 +1106,18 @@
   <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 sm:grid-cols-3">
       <div class="py-10 sm:pr-8 sm:border-r border-black/10">
-        <div class="flex items-end gap-3 mb-3">
-          <p class="stat-num stat-accent alt-proof-mark text-5xl leading-none">7</p>
-          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">etapas conectadas</p>
-        </div>
+        <p class="proof-rotulo">Etapas conectadas</p>
+        <p class="stat-num stat-accent proof-valor"><span aria-hidden="true">07</span><span class="sr-only">7</span></p>
         <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Da prospecção à renovação, cada fase continua a anterior.</p>
       </div>
       <div class="py-10 sm:px-8 border-t sm:border-t-0 sm:border-r border-black/10">
-        <div class="flex items-end gap-3 mb-3">
-          <p class="stat-num stat-accent alt-proof-mark text-5xl leading-none">1</p>
-          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">histórico compartilhado</p>
-        </div>
+        <p class="proof-rotulo">Histórico compartilhado</p>
+        <p class="stat-num stat-accent proof-valor"><span aria-hidden="true">01</span><span class="sr-only">1</span></p>
         <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Projetos, negociações, atividades e entregas no mesmo contexto.</p>
       </div>
       <div class="py-10 sm:pl-8 border-t sm:border-t-0 border-black/10">
-        <div class="flex items-end gap-3 mb-3">
-          <svg class="alt-proof-icon" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,112.49l-48,48a12,12,0,0,1-17-17L195,116H128a84.09,84.09,0,0,0-84,84,12,12,0,0,1-24,0A108.12,108.12,0,0,1,128,92h67L167.51,64.48a12,12,0,0,1,17-17l48,48A12,12,0,0,1,232.49,112.49Z"/></svg>
-          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">Próximo passo visível</p>
-        </div>
+        <p class="proof-rotulo">Próximo passo visível</p>
+        <p class="proof-valor"><svg class="alt-proof-icon" viewBox="0 0 256 256" aria-hidden="true"><defs><linearGradient id="prova-gradiente" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7B35E8"/><stop offset=".38" stop-color="#B875FF"/><stop offset=".68" stop-color="#9145F5"/><stop offset="1" stop-color="#684DB0"/></linearGradient></defs><path fill="url(#prova-gradiente)" d="M232.49,112.49l-48,48a12,12,0,0,1-17-17L195,116H128a84.09,84.09,0,0,0-84,84,12,12,0,0,1-24,0A108.12,108.12,0,0,1,128,92h67L167.51,64.48a12,12,0,0,1,17-17l48,48A12,12,0,0,1,232.49,112.49Z"/></svg></p>
         <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Responsáveis, prazos e alertas mantêm a equipe em movimento.</p>
       </div>
     </div>
@@ -1312,22 +1350,29 @@
 
       <!-- Leis cobertas: coluna ao lado da tabela no desktop, abas roláveis acima dela no celular -->
       <div class="leis-seletor alt-scroll-x reveal" role="group" aria-label="Lei de incentivo">
+        <div class="leis-legenda-topo" aria-hidden="true"><span>Lei</span><span class="leis-contador"><span class="leis-contador-atual">01</span><span>/ 04</span></span></div>
         <button type="button" class="lei-card-btn is-active" style="--lei-cor:#684DB0" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
-          <span class="lei-icone"><img src="assets/icons/icon-piano.png" alt="" width="34" height="34" /></span>
+          <span class="lei-icone"><i class="ph ph-piano-keys" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Cultura</span>
+          <span class="lei-progresso" aria-hidden="true"></span>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#2D72B0" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
-          <span class="lei-icone"><img src="assets/icons/icon-ball.png" alt="" width="34" height="34" /></span>
+          <span class="lei-icone"><i class="ph ph-soccer-ball" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Esporte</span>
+          <span class="lei-progresso" aria-hidden="true"></span>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#D94A4A" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
-          <span class="lei-icone"><img src="assets/icons/icon-chat.png" alt="" width="34" height="34" /></span>
+          <span class="lei-icone"><i class="ph ph-film-slate" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Audiovisual</span>
+          <span class="lei-progresso" aria-hidden="true"></span>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#1A8B7A" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
-          <span class="lei-icone"><img src="assets/icons/icon-stethoscope.png" alt="" width="34" height="34" /></span>
+          <span class="lei-icone"><i class="ph ph-stethoscope" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Saúde</span>
+          <span class="lei-progresso" aria-hidden="true"></span>
         </button>
+        <span class="leis-registro leis-registro--topo" aria-hidden="true"></span>
+        <span class="leis-registro leis-registro--base" aria-hidden="true"></span>
       </div>
     </div>
   </div>
@@ -1470,13 +1515,13 @@
         '<span data-p class="lp-perfil-comparar flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold bg-white border rounded flex-shrink-0" style="border-color:rgba(13,13,13,.12)"><i class="ph ph-arrows-left-right text-[12px]"></i>Comparar</span>' +
       '</div>' +
       '<div data-p class="flex items-center gap-2 flex-wrap pb-3">' + tag('Setor', e.setor) + tag('Estado', e.uf) +
-        '<span class="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded" style="background:' + meta.cor + '14;color:' + meta.cor + '">' + meta.label + '</span>' +
+        '<span class="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded" style="background:#fff;border:1px solid ' + meta.cor + '47;color:' + meta.cor + '">' + meta.label + '</span>' +
       '</div>' +
       '<div class="-mx-[18px] mb-3" style="border-top:1px solid rgba(13,13,13,.08)"></div>' +
       '<div class="lp-perfil-body">' +
         '<div data-p class="rounded border flex flex-col min-h-0" style="border-color:rgba(13,13,13,.08)">' +
           '<div class="flex items-center justify-between px-3.5 pt-3"><p class="text-[9px] font-bold text-black/30 uppercase tracking-wide">Investimento anual</p>' +
-          '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded" style="background:#2E893214;color:#2E8932">' + pill + '</span></div>' +
+          '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded" style="background:#fff;border:1px solid #2E893247;color:#2E8932">' + pill + '</span></div>' +
           '<div class="lp-perfil-grafico flex-1 min-h-0"></div>' +
         '</div>' +
         '<div data-p class="lp-perfil-contatos rounded border flex flex-col min-h-0 overflow-hidden" style="border-color:rgba(13,13,13,.08)">' +
@@ -1589,7 +1634,7 @@
   }
 
   function clicar(ponto, linha){
-    linha.style.backgroundColor = 'rgba(104,77,176,.09)';
+    linha.style.backgroundColor = 'rgba(13,13,13,.06)';
     animar(cursor, [
       { transform: translate(ponto.x, ponto.y) + ' scale(1)' },
       { transform: translate(ponto.x, ponto.y) + ' scale(.84)', offset: .45 },
@@ -1657,8 +1702,10 @@
     new Image().src = logoUrl(empresa.dominio, 128);
     fecharPerfil(minha);
     renderLista(leiAtual, false);
+    andamento(.12);
     await entrarLinhas(modo);
     if(!vivo()) return;
+    andamento(.45);
     await esperar(240);
     if(!vivo()) return;
 
@@ -1673,7 +1720,8 @@
 
     await moverCursor(inicio, alvo);
     if(!vivo()) return;
-    linha.style.backgroundColor = 'rgba(104,77,176,.05)';
+    andamento(.8);
+    linha.style.backgroundColor = 'rgba(13,13,13,.04)';
     montarPerfil(empresa, meta);
     await esperar(300);
     if(!vivo()) return;
@@ -1681,17 +1729,52 @@
     await esperar(160);
     if(!vivo()) return;
     abrirPerfil(linha, empresa);
+    andamento(1);
     sairCursor(alvo);
   }
 
-  // A cor da lei ativa vem de --lei-cor: borda esquerda no desktop, sublinhado nas abas do celular
+  // A cor da lei ativa vem de --lei-cor: quadrado do ícone e linha até a demo no desktop, sublinhado nas abas do celular
+  // A régua de 2px da lei ativa acompanha a demo: linhas → cursor → perfil
+  function andamento(v){
+    var r = document.querySelector('.lei-card-btn.is-active .lei-progresso');
+    if(r) r.style.transform = 'scaleX(' + v + ')';
+  }
+
+  var contador = document.querySelector('.leis-contador-atual');
   function marcarLei(btn){
-    document.querySelectorAll('.lei-card-btn').forEach(function(b){
+    var botoes = Array.prototype.slice.call(document.querySelectorAll('.lei-card-btn'));
+    botoes.forEach(function(b){
       var ativo = b === btn;
       b.classList.toggle('is-active', ativo);
       b.setAttribute('aria-pressed', ativo ? 'true' : 'false');
+      var r = b.querySelector('.lei-progresso');
+      if(r) r.style.transform = 'scaleX(' + (ativo && semAnimacao ? 1 : 0) + ')';
     });
+    if(contador){
+      var n = String(botoes.indexOf(btn) + 1).padStart(2, '0');
+      if(contador.textContent !== n){
+        contador.textContent = n;
+        if(!semAnimacao && contador.animate) contador.animate([{ transform:'translateY(80%)', opacity:0 }, { transform:'none', opacity:1 }], { duration:280, easing:'cubic-bezier(.2,.7,.2,1)' });
+      }
+    }
   }
+
+  // Setas e Home/End percorrem as leis, como numa lista de abas
+  var seletorLeis = document.querySelector('.leis-seletor');
+  if(seletorLeis) seletorLeis.addEventListener('keydown', function(e){
+    var botoes = Array.prototype.slice.call(seletorLeis.querySelectorAll('.lei-card-btn'));
+    var i = botoes.indexOf(document.activeElement);
+    if(i < 0) return;
+    var alvo = null;
+    if(e.key === 'ArrowDown' || e.key === 'ArrowRight') alvo = botoes[(i + 1) % botoes.length];
+    else if(e.key === 'ArrowUp' || e.key === 'ArrowLeft') alvo = botoes[(i - 1 + botoes.length) % botoes.length];
+    else if(e.key === 'Home') alvo = botoes[0];
+    else if(e.key === 'End') alvo = botoes[botoes.length - 1];
+    if(!alvo) return;
+    e.preventDefault();
+    alvo.focus();
+    alvo.click();
+  });
 
   window.selecionarLei = function(lei, btn){
     leiAtual = lei;
@@ -1905,7 +1988,7 @@
       .ms-profile-tag small{font-size:8px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(13,13,13,.28)}
       .ms-quarter{display:flex;gap:3px;margin-left:2px}
       .ms-quarter span{padding:3px 7px;border-radius:4px;background:rgba(13,13,13,.055);font-size:9px;font-weight:700;color:rgba(13,13,13,.32)}
-      .ms-quarter .on{background:rgba(46,137,50,.08);color:#2E8932}
+      .ms-quarter .on{background:#fff;box-shadow:inset 0 0 0 1px rgba(46,137,50,.35);color:#2E8932}
       .ms-profile-body{display:grid;grid-template-columns:235px minmax(0,1fr);gap:14px;min-height:0;padding:14px 26px 20px;background:#F7F7F5;overflow:hidden}
       .ms-profile-stack{display:flex;min-width:0;flex-direction:column;gap:10px}
       .ms-profile-card{overflow:hidden;border:1px solid rgba(13,13,13,.08);border-radius:4px;background:#fff}
@@ -2100,7 +2183,7 @@
         ['Petrobras','assets/petrobras.svg'],
         ['Bradesco','https://www.google.com/s2/favicons?domain=bradesco.com.br&sz=128'],
         ['Natura','assets/natura-logo.svg'],
-        ['Ambev','https://commons.wikimedia.org/wiki/Special:Redirect/file/Ambev_logo_2015.svg'],
+        ['Ambev','https://www.google.com/s2/favicons?domain=ambev.com.br&sz=128'],
         ['Vale','assets/vale-logo.png'],
         ['TV Cultura','https://www.google.com/s2/favicons?domain=tvcultura.com.br&sz=128'],
         ['Sabesp','https://www.google.com/s2/favicons?domain=sabesp.com.br&sz=128'],
@@ -2285,7 +2368,7 @@
       ];
       document.getElementById('ms-ativ-body').innerHTML=ATIVS.map(function(a){
         return '<tr>'+
-          '<td><div style="width:17px;height:17px;border-radius:50%;border:'+(a.done?'1.5px solid #2E8932':'1.5px solid rgba(40,37,37,.20)')+';background:'+(a.done?'rgba(46,137,50,.10)':'transparent')+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#2E8932">'+(a.done?'✓':'')+'</div></td>'+
+          '<td><div style="width:17px;height:17px;border-radius:50%;border:'+(a.done?'1.5px solid #2E8932':'1.5px solid rgba(40,37,37,.20)')+';background:transparent;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#2E8932">'+(a.done?'✓':'')+'</div></td>'+
           '<td><p style="font-size:12.5px;font-weight:600;color:'+(a.done?'rgba(40,37,37,.30)':'rgba(40,37,37,.75)')+';text-decoration:'+(a.done?'line-through':'none')+'">'+a.nome+'</p><p style="font-size:10px;color:rgba(40,37,37,.30)">'+a.tipo+'</p></td>'+
           '<td style="font-size:11.5px;font-weight:500;color:rgba(40,37,37,.55);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.neg+'</td>'+
           '<td><div style="display:flex;align-items:center;gap:7px">'+logo(a.co,22)+'<span style="font-size:11.5px;font-weight:500;color:rgba(40,37,37,.60)">'+a.co+'</span></div></td>'+
@@ -2398,8 +2481,8 @@
   var NOMES = { chatgpt: 'ChatGPT', claude: 'Claude' };
   // Uma leitura (carteira da empresa) e uma escrita (criar tarefa), uma em cada assistente
   var CONVERSAS = [
-    { assistente: 'chatgpt', pergunta: 'A Ambev combina com o nosso projeto de esporte?', ferramenta: 'Jards · carteira da empresa', destaque: 'R$ 95M investidos · Esporte, SP', resposta: 'Esporte é a área recorrente dela, e o último aporte foi há 8 meses: boa janela para apresentar o projeto.' },
-    { assistente: 'claude', pergunta: 'Cria uma tarefa: enviar a proposta à Ambev até sexta', ferramenta: 'Jards · criar tarefa', destaque: 'Tarefa criada · prazo sexta', resposta: '“Enviar proposta à Ambev” já está nas suas tarefas no Jards. Ficou gravada no CRM, não só nesta conversa.' }
+    { assistente: 'chatgpt', pergunta: 'A Ambev combina com o nosso projeto de esporte?', ferramenta: 'Jards · carteira da empresa', chamada: ['avaliar_carteira_empresa', '{ empresa_crm_id }'], destaque: 'R$ 95M investidos · Esporte, SP', resposta: 'Esporte é a área recorrente dela, e o último aporte foi há 8 meses: boa janela para apresentar o projeto.' },
+    { assistente: 'claude', pergunta: 'Cria uma tarefa: enviar a proposta à Ambev até sexta', ferramenta: 'Jards · criar tarefa', chamada: ['criar_tarefa', '{ titulo: "Enviar proposta à Ambev", data_prazo }'], destaque: 'Tarefa criada · prazo sexta', resposta: '“Enviar proposta à Ambev” já está nas suas tarefas no Jards. Ficou gravada no CRM, não só nesta conversa.' }
   ];
   var CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#2E8932"/><path d="M3.4 6.2l1.8 1.8 3.6-3.8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -2416,7 +2499,7 @@
 
   if(transcricao){
     transcricao.textContent = 'Exemplo de conversa com os assistentes conectados ao Jards. ' + CONVERSAS.map(function(c){
-      return 'No ' + NOMES[c.assistente] + ', a pessoa pede: “' + c.pergunta + '”. O ' + NOMES[c.assistente] + ' usa ' + c.ferramenta + ' e responde: ' + c.destaque + '. ' + c.resposta;
+      return 'No ' + NOMES[c.assistente] + ', a pessoa pede: “' + c.pergunta + '”. O ' + NOMES[c.assistente] + ' usa ' + c.ferramenta + (c.chamada ? ' (ferramenta ' + c.chamada[0] + ')' : '') + ' e responde: ' + c.destaque + '. ' + c.resposta;
     }).join(' ');
   }
 
@@ -2439,6 +2522,13 @@
     var t = el('div', 'mcp-tool' + (pronta ? ' is-ok' : ''));
     if(pronta){ t.innerHTML = CHECK; t.appendChild(document.createTextNode(c.ferramenta)); }
     else { t.appendChild(el('span', 'mcp-tool-icone')); t.appendChild(document.createTextNode('Acessando o Jards…')); }
+    if(c.chamada){
+      var cod = el('code', 'mcp-tool-chamada'), nome = el('b');
+      nome.textContent = c.chamada[0];
+      cod.appendChild(nome);
+      cod.appendChild(document.createTextNode('(' + c.chamada[1] + ')'));
+      t.appendChild(cod);
+    }
     return t;
   }
   function resposta(c, texto){
@@ -2759,7 +2849,7 @@
   function renderBiContent(el, cfg) {
     if (cfg.stat) {
       el.innerHTML =
-        '<div class="stat-accent" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
+        '<div class="stat-accent" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;letter-spacing:-.03em;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
         '<div>' +
           '<div style="font-size:12px;font-weight:700;color:#282525;margin-bottom:4px;">' + cfg.title + '</div>' +
           '<p style="font-size:9.5px;color:rgba(40,37,37,0.45);line-height:1.6;">' + cfg.sub + '</p>' +

@@ -51,10 +51,10 @@ type Props = {
 
 const STATUS_COLOR: Record<StatusEdital, { bg: string; text: string }> = {
   interesse:  { bg: "rgba(13,13,13,.40)14", text: "rgba(13,13,13,.40)" },
-  inscrito:   { bg: "#2D72B014", text: "#2D72B0" },
-  em_analise: { bg: "#B07A1414", text: "#B07A14" },
-  aprovado:   { bg: "#2E893214", text: "#2E8932" },
-  reprovado:  { bg: "#D94E4E14", text: "#D94E4E" },
+  inscrito:   { bg: "#fff", text: "#2D72B0" },
+  em_analise: { bg: "#fff", text: "#B07A14" },
+  aprovado:   { bg: "#fff", text: "#2E8932" },
+  reprovado:  { bg: "#fff", text: "#D94E4E" },
   cancelado:  { bg: "rgba(13,13,13,.40)14", text: "rgba(13,13,13,.40)" },
 };
 

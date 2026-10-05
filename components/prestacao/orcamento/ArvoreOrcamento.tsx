@@ -169,7 +169,7 @@ export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEdita
                       onClick={() => onExcluir(linha)}
                       aria-label={`Excluir ${no.nome}`}
                       title="Excluir"
-                      className="rounded p-1.5 text-black/25 transition hover:bg-[#D94A4A]/10 hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]"
+                      className="rounded p-1.5 text-black/25 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]"
                     >
                       <Trash2 size={12} />
                     </button>

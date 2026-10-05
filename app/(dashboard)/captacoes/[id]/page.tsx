@@ -31,6 +31,7 @@ import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, D
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
 import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
 import { PropostaDaNegociacao } from "@/components/captacoes/PropostaDaNegociacao";
+import { FecharNegocioSheet, useRecusarNegociacao } from "@/components/captacoes/FechamentoNegociacao";
 import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
 
 const RESULTADO_NEGATIVO = new Set(["recusado"]);
@@ -78,12 +79,12 @@ type Historico = {
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   prospeccao:       { label: "Prospecção",   color: "rgba(13,13,13,.40)", bg: "rgba(13,13,13,.05)" },
-  primeiro_contato: { label: "1º Contato",   color: "#2D72B0", bg: "#2D72B014" },
+  primeiro_contato: { label: "1º Contato",   color: "#2D72B0", bg: "#fff" },
   proposta_enviada: { label: "Proposta",     color: "#B07A14", bg: "#FFFBEB" },
-  em_negociacao:    { label: "Negociação",   color: "#B07A14", bg: "#B07A1414" },
+  em_negociacao:    { label: "Negociação",   color: "#B07A14", bg: "#fff" },
   aprovado:         { label: "Aprovado",     color: "#2E8932", bg: "#F0FDF4" },
   recusado:         { label: "Recusado",     color: "#D94E4E", bg: "#FEF2F2" },
-  renovacao:        { label: "Renovação",    color: "#1A8B7A", bg: "#1A8B7A14" },
+  renovacao:        { label: "Renovação",    color: "#1A8B7A", bg: "#fff" },
 };
 
 const PRIO_META: Record<string, { label: string; color: string; Icon: React.ElementType }> = {
@@ -186,7 +187,7 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
       <div className="flex flex-col items-center">
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: iconColor + "15", color: iconColor }}
+          style={{ background: "#fff", border: `1px solid ${iconColor}47`, color: iconColor }}
         >
           <Icon size={13} />
         </div>
@@ -227,6 +228,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   } | null>(null);
   const [atividades, setAtividades] = useState<(Atividade & { contato: { nome: string } | null })[]>([]);
   const [notas, setNotas] = useState<Nota[]>([]);
+  const [fechandoPeloStatus, setFechandoPeloStatus] = useState(false);
+  const { recusar, novoCicloSheet } = useRecusarNegociacao();
   const [contatos, setContatos] = useState<Contato[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [propostas, setPropostas] = useState<PropostaDocumento[]>([]);
@@ -496,6 +499,9 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     if (!captacao || captacao.status === newStatus) {
       return;
     }
+    // Desfecho tem fluxo próprio: aprovar pede o valor fechado; recusar, confirmação.
+    if (newStatus === "aprovado") { setFechandoPeloStatus(true); return; }
+    if (newStatus === "recusado") { recusar(captacao.id, fetchData); return; }
     await (supabase.from("captacoes") as any)
       .update({ status: newStatus })
       .eq("id", captacao.id);
@@ -636,6 +642,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               projetoNome={captacao.projeto?.nome ?? null}
               propostas={propostas}
               onChanged={fetchData}
+              onRecusar={() => recusar(captacao.id, fetchData)}
             />
             {proximoCiclo ? (
               <DetailHeaderAction label={`Ver ciclo ${proximoCiclo.ciclo_ano}`} icon={RotateCw} onClick={() => router.push(`/captacoes/${proximoCiclo.id}`)} />
@@ -775,7 +782,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 </div>
                 <Link
                   href={captacao.projeto_id ? `/projetos/${captacao.projeto_id}` : "#"}
-                  className={`block rounded border bg-white p-5 transition ${captacao.projeto_id ? "hover:border-[#7259B5]/30 hover:bg-[#7259B5]/[.03]" : "pointer-events-none"}`}
+                  className={`block rounded border bg-white p-5 transition ${captacao.projeto_id ? "hover:border-[#7259B5]/30 hover:bg-black/[.04]" : "pointer-events-none"}`}
                   style={{ borderColor: "rgba(13,13,13,.08)" }}
                 >
                   <div className="flex items-center gap-3">
@@ -958,7 +965,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                       <div key={atv.id} className="flex items-center gap-3 px-4 py-3 border-b last:border-b-0 group" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                         <button
                           onClick={() => handleToggleAtividade(atv.id, atv.feita)}
-                          className="w-5 h-5 rounded border-2 border-black/15 hover:border-[#7259B5] hover:bg-[#7259B5]/5 flex-shrink-0 transition flex items-center justify-center"
+                          className="w-5 h-5 rounded border-2 border-black/15 hover:border-[#7259B5] hover:bg-black/[.04] flex-shrink-0 transition flex items-center justify-center"
                         />
                         <Icon size={13} className="text-black/30 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
@@ -1015,14 +1022,14 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               </div>
 
               {uploadandoDoc && (
-                <div className="bg-[#7259B5]/5 border border-[#7259B5]/20 rounded p-3 mb-3 flex items-center gap-3">
+                <div className="bg-white border border-[#7259B5]/20 rounded p-3 mb-3 flex items-center gap-3">
                   <RefreshCw size={14} className="text-[#7259B5] animate-spin" />
                   <span className="text-[0.75rem] text-[#7259B5] font-medium">Enviando arquivo…</span>
                 </div>
               )}
 
               {documentoErro && (
-                <div className="mb-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[0.6875rem] font-medium text-[#B23A3A]">
+                <div className="mb-3 rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.6875rem] font-medium text-[#B23A3A]">
                   {documentoErro}
                 </div>
               )}
@@ -1048,13 +1055,13 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                             const { data } = await supabase.storage.from("documentos").createSignedUrl(doc.url, 3600);
                             if (data?.signedUrl) window.open(data.signedUrl, "_blank");
                           }}
-                          className="p-1.5 rounded hover:bg-[#7259B5]/10 text-black/25 hover:text-[#7259B5] transition"
+                          className="p-1.5 rounded hover:bg-black/[.04] text-black/25 hover:text-[#7259B5] transition"
                         >
                           <ExternalLink size={12} />
                         </button>
                         <button
                           onClick={() => handleExcluirDocumento(doc.id, doc.url, doc.nome)}
-                          className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/25 hover:text-[#D94E4E] transition"
+                          className="p-1.5 rounded hover:bg-black/[.04] text-black/25 hover:text-[#D94E4E] transition"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -1164,6 +1171,15 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           onCompleted={() => { setAtividadeConcluir(null); void fetchData(); }}
         />
       )}
+      {fechandoPeloStatus && (
+        <FecharNegocioSheet
+          captacao={captacao}
+          empresaNome={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || "Empresa"}
+          propostaAceitaId={propostas.find(p => p.status === "aceita")?.id ?? null}
+          onClose={() => setFechandoPeloStatus(false)}
+          onChanged={fetchData}
+        />
+      )}
       {showEditModal && (
         <NovaCaptacaoModal
           editData={{
@@ -1247,6 +1263,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           onRenovado={() => { setShowRenovarModal(false); void fetchData(); }}
         />
       )}
+      {novoCicloSheet}
     </div>
   );
 }

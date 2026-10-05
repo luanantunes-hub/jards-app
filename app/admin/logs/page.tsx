@@ -103,7 +103,7 @@ export default function AdminLogsPage() {
         </div>
       </form>
 
-      {error && <div className="mb-4 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.04] px-4 py-3 text-[0.75rem] text-[#991B1B]">{error}</div>}
+      {error && <div className="mb-4 rounded border border-[#D94E4E]/20 bg-white px-4 py-3 text-[0.75rem] text-[#991B1B]">{error}</div>}
 
       <div className="overflow-hidden rounded border border-black/[.08] bg-white">
         <div className="flex items-center justify-between border-b bg-[#FAFAFA] px-4 py-3" style={{ borderColor: "rgba(13,13,13,.06)" }}><span className="text-[0.6875rem] font-semibold text-black/45">{total.toLocaleString("pt-BR")} evento{total === 1 ? "" : "s"}</span><span className="text-[0.625rem] text-black/30">Página {page} de {pageCount}</span></div>
@@ -112,7 +112,7 @@ export default function AdminLogsPage() {
             {logs.map(log => <div key={log.id} className="px-4 py-3.5 transition hover:bg-black/[.015]">
               <div className="flex flex-col gap-2 md:flex-row md:items-start md:gap-4">
                 <div className="w-36 shrink-0"><p className="text-[0.6875rem] text-black/45">{formatDate(log.created_at)}</p><p className="mt-1 truncate text-[0.625rem] text-black/25" title={displayPerson(log.actor, log.actor_user_id)}>{displayPerson(log.actor, log.actor_user_id)}</p></div>
-                <div className="flex min-w-0 flex-1 items-start gap-3"><span className="shrink-0 rounded bg-[#7259B5]/[.09] px-2 py-1 text-[0.625rem] font-semibold text-[#7259B5]">{ACTION_LABELS[log.action] ?? log.action}</span><div className="min-w-0"><p className="text-[0.75rem] font-medium text-black/75">{log.summary}</p><p className="mt-1 text-[0.625rem] text-black/35">{RESOURCE_LABELS[log.resource_type] ?? log.resource_type}{log.resource_id ? ` · ${log.resource_id.slice(0, 12)}…` : ""}{log.target ? ` · alvo: ${displayPerson(log.target, log.target_user_id)}` : ""}</p></div></div>
+                <div className="flex min-w-0 flex-1 items-start gap-3"><span className="shrink-0 rounded border border-[#7259B5]/30 bg-white px-2 py-1 text-[0.625rem] font-semibold text-[#7259B5]">{ACTION_LABELS[log.action] ?? log.action}</span><div className="min-w-0"><p className="text-[0.75rem] font-medium text-black/75">{log.summary}</p><p className="mt-1 text-[0.625rem] text-black/35">{RESOURCE_LABELS[log.resource_type] ?? log.resource_type}{log.resource_id ? ` · ${log.resource_id.slice(0, 12)}…` : ""}{log.target ? ` · alvo: ${displayPerson(log.target, log.target_user_id)}` : ""}</p></div></div>
                 {Object.keys(log.metadata ?? {}).length > 0 && <details className="shrink-0"><summary className="cursor-pointer text-[0.625rem] font-medium text-black/30 hover:text-black/60">detalhes</summary><pre className="mt-2 max-w-[17.5rem] overflow-auto rounded bg-black/[.03] p-2 text-[0.5625rem] text-black/50">{JSON.stringify(log.metadata, null, 2)}</pre></details>}
               </div>
             </div>)}

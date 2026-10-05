@@ -164,7 +164,7 @@ export function Dropdown({
               aria-selected={opt.value === value}
               onMouseDown={e => e.preventDefault()}
               onClick={() => choose(opt.value)}
-              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.8125rem] outline-none transition hover:bg-black/[.04] focus-visible:bg-[#7259B5]/[.07]"
+              className="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.8125rem] outline-none transition hover:bg-black/[.04] focus-visible:bg-black/[.04]"
               style={{ color: opt.value === value ? "#0D0D0D" : "rgba(13,13,13,.60)" }}
             >
               <span className="flex-1 truncate">{opt.label}</span>

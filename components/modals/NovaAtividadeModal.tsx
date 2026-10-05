@@ -369,7 +369,7 @@ export function NovaAtividadeModal({
         {/* Body — 2 colunas */}
         <div className="min-h-0 flex-1 overflow-y-auto px-8 pt-5 pb-4">
           {erro && (
-            <div role="alert" className="text-[0.75rem] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
+            <div role="alert" className="text-[0.75rem] font-semibold text-[#D94E4E] border border-[#D94E4E]/30 bg-white rounded px-3 py-2 mb-4">
               {erro}
             </div>
           )}
@@ -430,7 +430,7 @@ export function NovaAtividadeModal({
                   </div>
                 )}
                 {criandoTipo && (
-                  <div className="mt-2 border rounded p-3 space-y-2" style={{ borderColor: "rgba(114,89,181,.25)", background: "rgba(114,89,181,.025)" }}>
+                  <div className="mt-2 border rounded p-3 space-y-2" style={{ borderColor: "rgba(114,89,181,.25)", background: "#fff" }}>
                     <input value={novoTipoNome} onChange={e => setNovoTipoNome(e.target.value)} placeholder="Ex: Visita técnica"
                       className="w-full border rounded px-2.5 py-1.5 text-[0.75rem] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.15)" }} />
                     <div className="flex items-center gap-1.5 flex-wrap">
@@ -700,7 +700,7 @@ function Dropdown({
           {value && (
             <button
               onClick={() => { onChange(null); onClose(); }}
-              className="w-full text-left px-3 py-2 text-[0.75rem] text-[#D94E4E] hover:bg-[#D94E4E]/5 transition border-b"
+              className="w-full text-left px-3 py-2 text-[0.75rem] text-[#D94E4E] hover:bg-black/[.04] transition border-b"
               style={{ borderColor: "rgba(13,13,13,.06)" }}
             >
               Limpar seleção
@@ -728,7 +728,7 @@ function Dropdown({
           {onCreateClick && createLabel && (
             <button
               onMouseDown={e => { e.preventDefault(); onCreateClick(); }}
-              className="w-full flex items-center gap-1.5 text-left px-3 py-2 text-[0.75rem] font-semibold text-[#7259B5] hover:bg-[#7259B5]/5 transition border-t"
+              className="w-full flex items-center gap-1.5 text-left px-3 py-2 text-[0.75rem] font-semibold text-[#7259B5] hover:bg-black/[.04] transition border-t"
               style={{ borderColor: "rgba(13,13,13,.06)" }}
             >
               <Plus size={12} /> {createLabel}

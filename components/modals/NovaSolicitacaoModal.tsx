@@ -195,7 +195,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded flex items-center justify-center" style={{ background: "rgba(114,89,181,0.08)" }}>
+            <div className="w-9 h-9 rounded flex items-center justify-center" style={{ background: "rgba(13,13,13,.04)" }}>
               <ArrowRightLeft size={16} style={{ color: "#7259B5" }} />
             </div>
             <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Solicitar transferência</h2>
@@ -209,7 +209,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
         <div className="min-h-0 flex-1 p-6 space-y-4 overflow-y-auto">
           {/* Erro */}
           {erro && (
-            <div role="alert" className="px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+            <div role="alert" className="px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#fff", border: "1px solid #D94E4E47", color: "#D94E4E" }}>
               {erro}
             </div>
           )}

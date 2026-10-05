@@ -190,7 +190,7 @@ export function DecisaoAlteracao({ alteracao, acao, regime, prestacaoId, organiz
           )}
 
           {erro && (
-            <p role="alert" className="rounded border px-3 py-2 text-[0.75rem]" style={{ background: "#D94A4A08", borderColor: "#D94A4A30", color: "#B23B3B" }}>{erro}</p>
+            <p role="alert" className="rounded border px-3 py-2 text-[0.75rem]" style={{ background: "#fff", borderColor: "#D94A4A30", color: "#B23B3B" }}>{erro}</p>
           )}
         </div>
 

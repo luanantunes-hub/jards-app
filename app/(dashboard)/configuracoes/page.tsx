@@ -508,13 +508,13 @@ const { data: perfilData } = await (supabase as any)
 
       {/* Feedback */}
       {erro && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded text-[0.75rem] font-medium mb-4" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+        <div className="flex items-center gap-2 px-4 py-3 rounded text-[0.75rem] font-medium mb-4" style={{ background: "#fff", border: "1px solid #D94E4E47", color: "#D94E4E" }}>
           <AlertCircle size={14} />
           {erro}
         </div>
       )}
       {sucesso && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded text-[0.75rem] font-medium mb-4" style={{ background: "#2E893214", color: "#2E8932" }}>
+        <div className="flex items-center gap-2 px-4 py-3 rounded text-[0.75rem] font-medium mb-4" style={{ background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }}>
           <Check size={14} />
           {sucesso}
         </div>
@@ -649,7 +649,7 @@ const { data: perfilData } = await (supabase as any)
         <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <CreditCard size={14} className="text-black/30" />
           <span className="text-[0.75rem] font-bold text-black">Plano e créditos</span>
-          <span className="ml-auto text-[0.6875rem] font-semibold px-2 py-0.5 rounded" style={{ background: "#7259B515", color: "#7259B5" }}>
+          <span className="ml-auto text-[0.6875rem] font-semibold px-2 py-0.5 rounded" style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
             {PLANO_LABEL[assinatura?.plano ?? "gratuito"] ?? assinatura?.plano ?? "Gratuito"}
           </span>
         </div>
@@ -767,7 +767,7 @@ const { data: perfilData } = await (supabase as any)
                   className="flex items-start gap-3 p-4 rounded border text-left transition"
                   style={{
                     borderColor: config?.visibilidade_captacoes === "admin_only" ? "#7259B5" : "rgba(13,13,13,.10)",
-                    background: config?.visibilidade_captacoes === "admin_only" ? "rgba(114,89,181,0.04)" : "white",
+                    background: "white",
                   }}
                 >
                   <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#D94E4E66" }}>
@@ -788,7 +788,7 @@ const { data: perfilData } = await (supabase as any)
                   className="flex items-start gap-3 p-4 rounded border text-left transition"
                   style={{
                     borderColor: config?.visibilidade_captacoes === "team_shared" ? "#7259B5" : "rgba(13,13,13,.10)",
-                    background: config?.visibilidade_captacoes === "team_shared" ? "rgba(114,89,181,0.04)" : "white",
+                    background: "white",
                   }}
                 >
                   <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#1A8B7A66" }}>
@@ -815,7 +815,7 @@ const { data: perfilData } = await (supabase as any)
                   className="flex items-start gap-3 p-4 rounded border text-left transition"
                   style={{
                     borderColor: config?.acesso_contatos === "admin_only" ? "#7259B5" : "rgba(13,13,13,.10)",
-                    background: config?.acesso_contatos === "admin_only" ? "rgba(114,89,181,0.04)" : "white",
+                    background: "white",
                   }}
                 >
                   <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#D94E4E66" }}>
@@ -836,7 +836,7 @@ const { data: perfilData } = await (supabase as any)
                   className="flex items-start gap-3 p-4 rounded border text-left transition"
                   style={{
                     borderColor: config?.acesso_contatos === "team_with_credits" ? "#7259B5" : "rgba(13,13,13,.10)",
-                    background: config?.acesso_contatos === "team_with_credits" ? "rgba(114,89,181,0.04)" : "white",
+                    background: "white",
                   }}
                 >
                   <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#7259B566" }}>
@@ -862,7 +862,7 @@ const { data: perfilData } = await (supabase as any)
           <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <MessageSquare size={14} className="text-black/30" />
             <span className="text-[0.75rem] font-bold text-black">Contribuições pendentes</span>
-            <span className="ml-2 text-[0.625rem] font-bold px-2 py-0.5 rounded-full bg-[#B07A14]/10 text-[#B07A14]">
+            <span className="ml-2 text-[0.625rem] font-bold px-2 py-0.5 rounded-full border border-[#B07A14]/30 bg-white text-[#B07A14]">
               {contribuicoesPendentes.length}
             </span>
           </div>
@@ -874,7 +874,8 @@ const { data: perfilData } = await (supabase as any)
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-[0.625rem] font-bold px-1.5 py-0.5 rounded" style={{
-                        background: c.tipo === "adicao" ? "#1A8B7A14" : c.tipo === "correcao" ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                        background: "#fff",
+                        border: `1px solid ${c.tipo === "adicao" ? "#1A8B7A47" : c.tipo === "correcao" ? "#B07A1447" : "#D94E4E47"}`,
                         color: c.tipo === "adicao" ? "#1A8B7A" : c.tipo === "correcao" ? "#B07A14" : "#D94E4E",
                       }}>
                         {c.tipo === "adicao" ? "ADIÇÃO" : c.tipo === "correcao" ? "CORREÇÃO" : "SINALIZAÇÃO"}
@@ -899,7 +900,7 @@ const { data: perfilData } = await (supabase as any)
                       onClick={() => handleAprovarContribuicao(c.id)}
                       disabled={salvando}
                       className="flex items-center gap-1 px-2.5 py-1.5 text-[0.625rem] font-semibold rounded transition disabled:opacity-40"
-                      style={{ background: "#1A8B7A14", color: "#1A8B7A" }}
+                      style={{ background: "#fff", border: "1px solid #1A8B7A47", color: "#1A8B7A" }}
                     >
                       <CheckCircle size={11} /> Aprovar
                     </button>
@@ -907,7 +908,7 @@ const { data: perfilData } = await (supabase as any)
                       onClick={() => handleRejeitarContribuicao(c.id)}
                       disabled={salvando}
                       className="flex items-center gap-1 px-2.5 py-1.5 text-[0.625rem] font-semibold rounded transition disabled:opacity-40"
-                      style={{ background: "rgba(239,68,68,0.1)", color: "#D94E4E" }}
+                      style={{ background: "#fff", border: "1px solid #D94E4E47", color: "#D94E4E" }}
                     >
                       <XCircle size={11} /> Rejeitar
                     </button>
@@ -1122,7 +1123,7 @@ function ModulosDoMembro({ membro, editavel, ocupado, onChange }: {
             onClick={() => alternar(modulo)}
             title={ativo && modulos.length === 1 && editavel ? "A pessoa precisa de ao menos um módulo" : undefined}
             className={`rounded border px-2 py-0.5 text-[0.625rem] transition focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-default ${
-              ativo ? "border-[#7259B5]/40 bg-[#7259B5]/[.06] text-[#684DB0]" : "border-black/10 bg-white text-black/35 hover:text-black/60"
+              ativo ? "border-[#7259B5]/40 bg-white text-[#684DB0]" : "border-black/10 bg-white text-black/35 hover:text-black/60"
             } ${bloqueado && !ativo ? "opacity-50" : ""}`}
           >
             {MODULO_LABEL[modulo]}

@@ -238,7 +238,7 @@ function NovoComentarioModal({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
         <div className="bg-white rounded shadow-2xl w-full max-w-md p-8 text-center" onClick={e => e.stopPropagation()}>
-          <div className="w-10 h-10 rounded flex items-center justify-center mx-auto mb-4" style={{ background: "#2E893214" }}>
+          <div className="w-10 h-10 rounded flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(13,13,13,.04)" }}>
             <MessageCircle size={18} className="text-[#2E8932]" />
           </div>
           <h2 className="text-[0.9375rem] font-bold text-[#0D0D0D] mb-1">Obrigado por compartilhar!</h2>
@@ -282,7 +282,7 @@ function NovoComentarioModal({
                 >
                   <div
                     className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0"
-                    style={{ background: isSelected ? `${m.color}1a` : "rgba(13,13,13,.05)" }}
+                    style={{ background: "rgba(13,13,13,.05)" }}
                   >
                     <Icon size={12} style={{ color: isSelected ? m.color : "rgba(0,0,0,.30)" }} />
                   </div>

@@ -81,7 +81,7 @@ export function AdicionarSiteProjetoModal({ projetoId, projetoNome, organization
 
         <div className="space-y-3 px-5 py-5">
           {erro && (
-            <div className="rounded px-3 py-2 text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+            <div className="rounded px-3 py-2 text-[0.75rem] font-medium" style={{ background: "#fff", border: "1px solid #D94E4E47", color: "#D94E4E" }}>
               {erro}
             </div>
           )}

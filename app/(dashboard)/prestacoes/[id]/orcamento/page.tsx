@@ -210,10 +210,10 @@ export default function OrcamentoPage() {
   return (
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       {erro && (
-        <p role="alert" className="rounded border px-4 py-3 text-[0.75rem]" style={{ background: "#D94A4A08", borderColor: "#D94A4A30", color: "#B23B3B" }}>{erro}</p>
+        <p role="alert" className="rounded border px-4 py-3 text-[0.75rem]" style={{ background: "#fff", borderColor: "#D94A4A30", color: "#B23B3B" }}>{erro}</p>
       )}
       {aviso && (
-        <p role="status" className="flex items-center gap-2 rounded border px-4 py-3 text-[0.75rem]" style={{ background: "#2E893208", borderColor: "#2E893230", color: "#24702A" }}>
+        <p role="status" className="flex items-center gap-2 rounded border px-4 py-3 text-[0.75rem]" style={{ background: "#fff", borderColor: "#2E893230", color: "#24702A" }}>
           <CheckCircle2 size={14} aria-hidden /> {aviso}
         </p>
       )}
@@ -262,7 +262,7 @@ export default function OrcamentoPage() {
             </button>
           )}
           {versao && !versao.ativa && podeEditar && (
-            <button type="button" onClick={excluirVersao} className="flex h-9 items-center gap-1.5 rounded px-2 text-[0.75rem] text-[#B23B3B]/80 transition hover:bg-[#D94A4A]/[.06] hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
+            <button type="button" onClick={excluirVersao} className="flex h-9 items-center gap-1.5 rounded px-2 text-[0.75rem] text-[#B23B3B]/80 transition hover:bg-black/[.04] hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
               <Trash2 size={12} aria-hidden /> Excluir versão
             </button>
           )}

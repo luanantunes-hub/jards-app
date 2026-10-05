@@ -112,7 +112,7 @@ export function SugerirContribuicaoModal({
           className="bg-white rounded shadow-2xl w-full max-w-md p-8 text-center"
           onClick={(e) => e.stopPropagation()}
         >
-          <div className="w-12 h-12 rounded-full bg-[#1A8B7A]/10 flex items-center justify-center mx-auto mb-4">
+          <div className="w-12 h-12 rounded-full bg-black/[.04] flex items-center justify-center mx-auto mb-4">
             <Plus size={20} className="text-[#1A8B7A]" />
           </div>
           <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#0D0D0D] mb-1">Contribuição enviada</h2>
@@ -136,7 +136,7 @@ export function SugerirContribuicaoModal({
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-[#7259B5]/10 flex items-center justify-center">
+            <div className="w-9 h-9 rounded bg-black/[.04] flex items-center justify-center">
               <Users size={16} className="text-[#7259B5]" />
             </div>
             <div>

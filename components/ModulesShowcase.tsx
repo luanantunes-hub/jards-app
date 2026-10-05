@@ -350,7 +350,7 @@ function AtividadesPanel() {
             {ATIVS.map((a, i) => (
               <tr key={i} style={{ borderBottom: "1px solid rgba(13,13,13,.045)" }}>
                 <td style={{ padding: "11px 14px" }}>
-                  <div style={{ width: 17, height: 17, borderRadius: "50%", border: a.done ? "1.5px solid #2E8932" : "1.5px solid rgba(13,13,13,.20)", background: a.done ? "rgba(46,137,50,.10)" : "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#2E8932" }}>
+                  <div style={{ width: 17, height: 17, borderRadius: "50%", border: a.done ? "1.5px solid #2E8932" : "1.5px solid rgba(13,13,13,.20)", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: 700, color: "#2E8932" }}>
                     {a.done ? "✓" : ""}
                   </div>
                 </td>

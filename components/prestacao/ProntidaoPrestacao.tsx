@@ -35,7 +35,7 @@ function Linha({ checagem, prestacaoId }: { checagem: Checagem; prestacaoId: str
       {!ok && (
         <Link
           href={destino(prestacaoId, checagem.destino, checagem.codigo)}
-          className="flex shrink-0 items-center gap-1 rounded px-1.5 py-1 text-[0.6875rem] text-[#684DB0] transition hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+          className="flex shrink-0 items-center gap-1 rounded px-1.5 py-1 text-[0.6875rem] text-[#684DB0] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]"
         >
           Resolver <ArrowRight size={11} aria-hidden />
         </Link>

@@ -186,7 +186,7 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
                 <Link
                   href={passo.feito ? passo.hrefFeito : passo.href}
                   aria-current={atual ? "step" : undefined}
-                  className={`group flex min-h-10 items-center gap-3 px-5 py-2 transition-colors hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none ${atual ? "bg-[#7259B5]/[.05]" : ""}`}
+                  className={`group flex min-h-10 items-center gap-3 px-5 py-2 transition-colors hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none ${atual ? "bg-black/[.03]" : ""}`}
                 >
                   <span
                     aria-hidden="true"

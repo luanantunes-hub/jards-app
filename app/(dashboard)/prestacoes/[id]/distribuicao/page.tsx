@@ -20,9 +20,9 @@ type DistItem = {
 };
 
 const TIPO_META: Record<Tipo, { label: string; color: string; bg: string }> = {
-  pago:      { label: "Pago",      color: "#2D72B0", bg: "#2D72B010" },
-  gratuito:  { label: "Gratuito",  color: "#2E8932", bg: "#2E893210" },
-  cortesia:  { label: "Cortesia",  color: "#7259B5", bg: "#7259B510" },
+  pago:      { label: "Pago",      color: "#2D72B0", bg: "#fff" },
+  gratuito:  { label: "Gratuito",  color: "#2E8932", bg: "#fff" },
+  cortesia:  { label: "Cortesia",  color: "#7259B5", bg: "#fff" },
 };
 
 const PUBLICO_LABEL: Record<PublicoAlvo, string> = {
@@ -127,7 +127,7 @@ export default function DistribuicaoPage() {
     <div className="px-8 py-6 max-w-4xl">
 
       {erro && (
-        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-4 py-3 text-[0.75rem] font-medium text-[#B23A3A]">
+        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-white px-4 py-3 text-[0.75rem] font-medium text-[#B23A3A]">
           Não foi possível concluir a operação: {erro}
         </div>
       )}

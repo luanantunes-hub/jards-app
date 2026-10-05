@@ -180,7 +180,7 @@ function BlockEditor({
       {/* Delete */}
       <button
         onClick={onDelete}
-        className="flex-shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition hover:bg-[#D94E4E]/[.06]"
+        className="flex-shrink-0 p-1 rounded opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition hover:bg-black/[.04]"
       >
         <Trash2 size={13} className="text-[#D94E4E]/75" />
       </button>
@@ -371,7 +371,7 @@ export default function BlogEditorPage() {
           <button
             onClick={handleDelete}
             disabled={deleting}
-            className="px-3 py-1.5 rounded text-sm transition hover:bg-[#D94E4E]/[.06]"
+            className="px-3 py-1.5 rounded text-sm transition hover:bg-black/[.04]"
             style={{ color: "#D94E4E", border: "1px solid rgba(217,78,78,.20)" }}
           >
             <Trash2 size={13} />

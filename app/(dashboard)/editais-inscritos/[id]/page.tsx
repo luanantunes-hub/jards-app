@@ -697,7 +697,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 <div className="mb-3"><h2 className="text-[0.6875rem] font-bold uppercase tracking-[.12em] text-black/35">Projeto</h2></div>
                 <Link
                   href={inscricao.projeto_id ? `/projetos/${inscricao.projeto_id}` : "#"}
-                  className={`block rounded border bg-white p-5 transition ${inscricao.projeto_id ? "hover:border-[#7259B5]/30 hover:bg-[#7259B5]/[.03]" : "pointer-events-none"}`}
+                  className={`block rounded border bg-white p-5 transition ${inscricao.projeto_id ? "hover:border-[#7259B5]/30 hover:bg-black/[.04]" : "pointer-events-none"}`}
                   style={{ borderColor: "rgba(13,13,13,.08)" }}
                 >
                   <div className="flex items-center gap-3">
@@ -725,7 +725,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 <div className="mb-3 flex items-center justify-between"><h2 className="text-[0.6875rem] font-bold uppercase tracking-[.12em] text-black/35">Documentos do projeto</h2><span className="text-[0.625rem] text-black/25">{documentos.length}</span></div>
                 <div className="overflow-hidden rounded border border-black/[.08] bg-white">
                   {documentos.map(documento => (
-                    <div key={documento.id} className="flex items-center gap-3 border-b border-black/[.06] px-4 py-3 last:border-b-0"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/35"><FileCheck size={14} /></span><div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black/70">{documento.nome}</p><p className="mt-0.5 text-[0.625rem] text-black/25">{documento.categoria || "Outro"} · {documento.edital_user_id === id ? "Desta inscrição" : "Compartilhado pelo projeto"}</p></div><button onClick={async () => { const { data } = await supabase.storage.from("documentos").createSignedUrl(documento.url, 3600); if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer"); }} className="rounded p-2 text-black/25 hover:bg-[#7259B5]/10 hover:text-[#7259B5]" title="Abrir documento"><ExternalLink size={12} /></button></div>
+                    <div key={documento.id} className="flex items-center gap-3 border-b border-black/[.06] px-4 py-3 last:border-b-0"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/35"><FileCheck size={14} /></span><div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black/70">{documento.nome}</p><p className="mt-0.5 text-[0.625rem] text-black/25">{documento.categoria || "Outro"} · {documento.edital_user_id === id ? "Desta inscrição" : "Compartilhado pelo projeto"}</p></div><button onClick={async () => { const { data } = await supabase.storage.from("documentos").createSignedUrl(documento.url, 3600); if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer"); }} className="rounded p-2 text-black/25 hover:bg-black/[.04] hover:text-[#7259B5]" title="Abrir documento"><ExternalLink size={12} /></button></div>
                   ))}
                 </div>
               </section>
@@ -832,10 +832,10 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                       >
                         <button
                           onClick={() => handleToggleAtividade(atv.id, atv.feita)}
-                          className="w-5 h-5 rounded border-2 border-black/15 hover:border-[#7259B5] hover:bg-[#7259B5]/5 flex-shrink-0 transition flex items-center justify-center"
+                          className="w-5 h-5 rounded border-2 border-black/15 hover:border-[#7259B5] hover:bg-black/[.04] flex-shrink-0 transition flex items-center justify-center"
                           title="Marcar como feita"
                         />
-                        <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: `${color}18` }}>
+                        <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(13,13,13,.04)" }}>
                           <Icon size={12} style={{ color }} />
                         </div>
                         <div className="flex-1 min-w-0">
@@ -883,7 +883,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                         )}
                         {/* Icon */}
                         <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 mt-0.5 z-10"
-                          style={{ background: `${color}18`, border: `1px solid ${color}25` }}>
+                          style={{ background: "#fff", border: `1px solid ${color}47` }}>
                           <Icon size={12} style={{ color }} />
                         </div>
                         {/* Content */}

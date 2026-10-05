@@ -536,7 +536,7 @@ export default function ContatosPage() {
                         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                           <button
                             onClick={e => { e.stopPropagation(); handleDelete(c.id, c.nome ?? "—"); }}
-                            className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition"
+                            className="p-1.5 rounded hover:bg-black/[.04] text-black/20 hover:text-[#D94E4E] transition"
                             title="Excluir"
                           >
                             <Trash2 size={13} />

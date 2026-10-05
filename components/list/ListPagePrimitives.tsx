@@ -47,7 +47,7 @@ export function ListEmptyState({ icon: Icon, title, description, action, filtere
       {(action || (filtered && onClearFilters)) && (
         <div className="mt-5 flex flex-wrap items-center justify-center gap-3">
           {filtered && onClearFilters && (
-            <button type="button" onClick={onClearFilters} className="h-9 rounded px-3 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+            <button type="button" onClick={onClearFilters} className="h-9 rounded px-3 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
               Limpar filtros
             </button>
           )}

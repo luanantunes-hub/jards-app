@@ -278,13 +278,13 @@ export function CalendarConnections() {
 
       <div className="p-6 space-y-4">
         {erro && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+          <div className="flex items-center gap-2 px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#fff", border: "1px solid #D94E4E47", color: "#D94E4E" }}>
             <AlertCircle size={14} className="flex-shrink-0" />
             {erro}
           </div>
         )}
         {sucesso && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#2E893214", color: "#2E8932" }}>
+          <div className="flex items-center gap-2 px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }}>
             <Check size={14} />
             {sucesso}
           </div>

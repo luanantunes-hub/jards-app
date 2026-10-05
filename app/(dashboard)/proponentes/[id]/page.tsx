@@ -121,10 +121,10 @@ const FASE_LABEL: Record<string, string> = {
 };
 const FASE_COLOR: Record<string, { bg: string; text: string }> = {
   planejamento: { bg: "rgba(13,13,13,.07)", text: "rgba(13,13,13,.45)" },
-  captacao:     { bg: "#7259B514",          text: "#7259B5" },
-  execucao:     { bg: "#2D72B014",          text: "#2D72B0" },
-  prestacao:    { bg: "#B07A1414",          text: "#B07A14" },
-  concluido:    { bg: "#2E893214",          text: "#2E8932" },
+  captacao:     { bg: "#fff",          text: "#7259B5" },
+  execucao:     { bg: "#fff",          text: "#2D72B0" },
+  prestacao:    { bg: "#fff",          text: "#B07A14" },
+  concluido:    { bg: "#fff",          text: "#2E8932" },
 };
 
 const CAPTADOR_STATUS_COLOR: Record<string, string> = {
@@ -666,7 +666,7 @@ function ProjetosView({ projetos, onOpen }: {
                   <tr key={project.id} onClick={() => onOpen(project.id)} className="group cursor-pointer transition hover:bg-black/[.018]">
                     <td className="max-w-[16.25rem] px-5 py-4"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{project.nome}</p>{project.mecanismo && <p className="mt-0.5 truncate text-[0.625rem] text-black/30">{project.mecanismo}</p>}</td>
                     <td className="px-5 py-4"><span className="rounded px-1.5 py-0.5 text-[0.625rem] font-medium" style={{ background: fase.bg, color: fase.text }}>{FASE_LABEL[project.fase]}</span></td>
-                    <td className="max-w-[13.125rem] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded bg-[#7259B5]/[.08] px-1.5 py-0.5 text-[0.5625rem] font-medium text-[#7259B5]">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[0.5625rem] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
+                    <td className="max-w-[13.125rem] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded border border-[#7259B5]/30 bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium text-[#7259B5]">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[0.5625rem] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
                     <td className="px-5 py-4 text-[0.75rem] tabular-nums text-black/50">{fmtValor(project.valor_alvo)}</td>
                     <td className="px-5 py-4 text-[0.75rem] font-medium tabular-nums text-[#2E8932]">{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
                   </tr>
@@ -696,7 +696,7 @@ function DocumentosView({ documentos, onOpen }: { documentos: DocumentoRow[]; on
                 <p className="mt-0.5 truncate text-[0.625rem] text-black/30">{documento.categoria || "Outro"} · {fmtFileSize(documento.tamanho)} · {fmtDate(documento.created_at)} · {documento.projeto?.nome ?? "Projeto"}</p>
               </div>
               {documento.projeto && <Link href={`/projetos/${documento.projeto.id}`} className="hidden text-[0.6875rem] font-medium text-black/30 transition hover:text-[#7259B5] sm:inline">Ver projeto</Link>}
-              <button type="button" onClick={() => void onOpen(documento)} className="rounded p-2 text-black/25 transition hover:bg-[#7259B5]/10 hover:text-[#7259B5]" title="Abrir documento" aria-label={`Abrir ${documento.nome}`}><Download size={13} /></button>
+              <button type="button" onClick={() => void onOpen(documento)} className="rounded p-2 text-black/25 transition hover:bg-black/[.04] hover:text-[#7259B5]" title="Abrir documento" aria-label={`Abrir ${documento.nome}`}><Download size={13} /></button>
             </div>
           ))}
         </div>

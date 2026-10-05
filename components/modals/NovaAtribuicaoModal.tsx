@@ -337,7 +337,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
                     type="button"
                     onClick={() => setTipo(t.value)}
                     className="rounded border px-3 py-3 text-left transition"
-                    style={{ borderColor: active ? t.color : "rgba(13,13,13,.15)", background: active ? `${t.color}0D` : "white" }}
+                    style={{ borderColor: active ? t.color : "rgba(13,13,13,.15)", background: "white" }}
                   >
                     <div className="mb-1 flex items-center gap-1.5">
                       <t.Icon size={12} style={{ color: active ? t.color : "rgba(13,13,13,.35)" }} />

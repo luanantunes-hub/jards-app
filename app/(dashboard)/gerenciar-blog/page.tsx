@@ -84,7 +84,7 @@ export default function BlogAdminPage() {
       />
       <ListContent>
         <div className="mx-auto max-w-4xl">
-          {error && <p role="alert" className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{error}</p>}
+          {error && <p role="alert" className="mb-4 rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.75rem] text-[#B23A3A]">{error}</p>}
           {!isAdmin || loading ? (
             <div className="space-y-2" aria-busy="true" aria-label="Carregando posts">
               {Array.from({ length: 4 }).map((_, index) => (

@@ -208,7 +208,7 @@ export function CotasProjetoManager({
                     {cota.modelo === "produto" && <span className="text-[0.625rem] font-medium text-[#7259B5]">{cota.produto_nome}</span>}
                     <span
                       className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: `${st.color}14`, color: st.color }}
+                      style={{ background: "#fff", border: `1px solid ${st.color}47`, color: st.color }}
                     >
                       {st.label}
                     </span>
@@ -243,7 +243,7 @@ export function CotasProjetoManager({
                   </button>
                   <button
                     onClick={() => handleDelete(cota.id, cota.nome)}
-                    className="group w-7 h-7 flex items-center justify-center rounded hover:bg-[#D94E4E]/10 transition"
+                    className="group w-7 h-7 flex items-center justify-center rounded hover:bg-black/[.04] transition"
                     title="Excluir"
                   >
                     <Trash2 size={12} className="text-black/25 group-hover:text-[#D94E4E] transition-colors" />
@@ -329,7 +329,7 @@ export function CotasProjetoManager({
 
             <div className="p-6 space-y-4 overflow-y-auto">
               {erro && (
-                <div className="text-[0.75rem] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2">
+                <div className="text-[0.75rem] font-semibold text-[#D94E4E] border border-[#D94E4E]/30 bg-white rounded px-3 py-2">
                   {erro}
                 </div>
               )}

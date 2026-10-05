@@ -394,7 +394,7 @@ export default function ProponentesPage() {
                               <button
                                 disabled={deletingId === p.id}
                                 onClick={e => { e.stopPropagation(); void handleDelete(p); }}
-                                className="p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition disabled:cursor-wait disabled:opacity-30"
+                                className="p-1.5 rounded hover:bg-black/[.04] text-black/20 hover:text-[#D94E4E] transition disabled:cursor-wait disabled:opacity-30"
                                 title="Excluir"
                                 aria-label={`Excluir ${p.nome}`}
                               >

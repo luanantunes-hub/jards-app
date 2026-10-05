@@ -109,7 +109,7 @@ export function PropostaValuePanel({
     return (
       <div
         className="flex h-11 items-center gap-2 rounded border px-4"
-        style={{ borderColor: aprovado ? "#2E893240" : "#D94E4E40", background: aprovado ? "#2E893208" : "#D94E4E08" }}
+        style={{ borderColor: aprovado ? "#2E893240" : "#D94E4E40", background: aprovado ? "#fff" : "#fff" }}
       >
         <span className="text-[0.75rem] font-bold" style={{ color: aprovado ? "#2E8932" : "#D94E4E" }}>
           {aprovado ? `Aprovado · ${formatCurrency(valorFinal)}` : "Recusado"}
@@ -261,9 +261,9 @@ export function PropostaValuePanel({
           <p className="text-[0.75rem] font-bold tabular-nums text-[#B07A14]">{formatCurrency(propostaAtual.valor_proposto)}</p>
         </div>
         <div className="h-6 w-px bg-black/10" />
-        <button disabled={salvandoDesfecho} onClick={handleAceitar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-[#2E8932]/10 disabled:opacity-40">Aceitar</button>
-        <button disabled={salvandoDesfecho} onClick={() => setShowNegociarProposta(true)} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#7259B5] transition hover:bg-[#7259B5]/10 disabled:opacity-40">Negociar</button>
-        <button disabled={salvandoDesfecho} onClick={handleRecusar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#D94E4E] transition hover:bg-[#D94E4E]/10 disabled:opacity-40">Recusar</button>
+        <button disabled={salvandoDesfecho} onClick={handleAceitar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-black/[.04] disabled:opacity-40">Aceitar</button>
+        <button disabled={salvandoDesfecho} onClick={() => setShowNegociarProposta(true)} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">Negociar</button>
+        <button disabled={salvandoDesfecho} onClick={handleRecusar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#D94E4E] transition hover:bg-black/[.04] disabled:opacity-40">Recusar</button>
       </div>
       {erroDesfecho && <p className="mt-1 max-w-sm text-[0.625rem] font-medium text-[#B23A3A]">{erroDesfecho}</p>}
       {showNegociarProposta && (

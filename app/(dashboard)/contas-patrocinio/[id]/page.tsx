@@ -202,7 +202,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
             className={`flex h-11 shrink-0 items-center gap-2 rounded border bg-white px-4 text-[0.75rem] font-medium transition active:scale-[.98] ${pageTab===value?'border-[#7259B5]/40 text-[#7259B5]':'border-transparent text-black/40 hover:bg-black/[.04] hover:text-black/60'}`}
           >
             <Icon size={12}/>{label}
-            {count > 0 && <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#7259B5]/10 px-1 text-[0.5625rem] font-semibold tabular-nums text-[#7259B5]">{count}</span>}
+            {count > 0 && <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-black/[.06] px-1 text-[0.5625rem] font-semibold tabular-nums text-black/55">{count}</span>}
           </button>
         ))}
       </nav>

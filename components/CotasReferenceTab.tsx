@@ -103,7 +103,7 @@ export function CotasReferenceTab({
                         {STATUS_META[cota.status].label}
                       </span>
                       {vinculada && (
-                        <span className="rounded border border-[#7259B5]/30 bg-[#7259B5]/5 px-2 py-0.5 text-[0.625rem] font-medium text-[#7259B5]">
+                        <span className="rounded border border-[#7259B5]/30 bg-white px-2 py-0.5 text-[0.625rem] font-medium text-[#7259B5]">
                           Vinculada a esta negociação
                         </span>
                       )}

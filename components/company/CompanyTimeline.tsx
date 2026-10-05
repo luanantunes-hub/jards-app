@@ -72,7 +72,7 @@ function EventIcon({ tipo }: { tipo: string }) {
   return (
     <div
       className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-      style={{ background: color + "15", color }}
+      style={{ background: "#fff", border: `1px solid ${color}47`, color }}
     >
       <Icon size={13} />
     </div>

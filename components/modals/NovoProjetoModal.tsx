@@ -480,7 +480,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                         className="rounded border px-2.5 py-1.5 text-[0.625rem] font-medium transition"
                         style={{
                           borderColor: active ? "rgba(114,89,181,.40)" : "rgba(13,13,13,.10)",
-                          background: active ? "rgba(114,89,181,.07)" : "white",
+                          background: "white",
                           color: active ? "#7259B5" : "rgba(13,13,13,.50)",
                         }}>
                         {option.label}
@@ -491,7 +491,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     .filter(value => !SPONSORSHIP_TYPE_OPTIONS.some(option => option.value === value))
                     .map(value => (
                       <button key={value} type="button" aria-pressed="true" onClick={() => toggleTipoPatrocinio(value)}
-                        className="rounded border border-[#7259B5]/40 bg-[#7259B5]/[.07] px-2.5 py-1.5 text-[0.625rem] font-medium text-[#7259B5] transition">
+                        className="rounded border border-[#7259B5]/40 bg-white px-2.5 py-1.5 text-[0.625rem] font-medium text-[#7259B5] transition">
                         {sponsorshipTypeLabel(value)} ×
                       </button>
                     ))}

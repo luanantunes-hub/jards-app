@@ -436,7 +436,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
               return (
                 <section key={dateStr}
                   className="min-h-[24.375rem] border-l first:border-l-0 flex flex-col"
-                  style={{ borderColor: "rgba(13,13,13,.06)", background: isToday ? "rgba(114,89,181,.035)" : "white" }}
+                  style={{ borderColor: "rgba(13,13,13,.06)", background: isToday ? "rgba(13,13,13,.03)" : "white" }}
                   onMouseEnter={() => setHoveredDate(dateStr)}
                   onMouseLeave={() => setHoveredDate(null)}
                 >
@@ -452,7 +452,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
                     <button
                       type="button"
                       onClick={() => onNew(dateStr)}
-                      className="w-full flex items-center justify-center gap-1 py-1 rounded text-[0.59375rem] font-medium text-black/20 hover:text-[#7259B5] hover:bg-[#7259B5]/5 transition"
+                      className="w-full flex items-center justify-center gap-1 py-1 rounded text-[0.59375rem] font-medium text-black/20 hover:text-[#7259B5] hover:bg-black/[.04] transition"
                       style={{ opacity: hoveredDate === dateStr ? 1 : 0, pointerEvents: hoveredDate === dateStr ? "auto" : "none" }}
                     >
                       <Plus size={10} /> Nova
@@ -532,7 +532,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
                 <button
                   type="button"
                   onClick={() => onNew(dateStr)}
-                  className="w-full flex items-center justify-center gap-0.5 py-0.5 rounded text-[0.5625rem] font-medium text-black/20 hover:text-[#7259B5] hover:bg-[#7259B5]/5 transition"
+                  className="w-full flex items-center justify-center gap-0.5 py-0.5 rounded text-[0.5625rem] font-medium text-black/20 hover:text-[#7259B5] hover:bg-black/[.04] transition"
                   style={{ opacity: hoveredDate === dateStr ? 1 : 0, pointerEvents: hoveredDate === dateStr ? "auto" : "none" }}
                 >
                   <Plus size={9} /> Nova
@@ -585,7 +585,7 @@ function MemberAvatar({ name, avatarUrl, unassigned = false }: {
     <span
       className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-[0.6875rem] font-semibold"
       style={{
-        background: unassigned ? "rgba(176,122,20,.10)" : "rgba(114,89,181,.08)",
+        background: "rgba(13,13,13,.05)",
         color: unassigned ? "#B07A14" : "#7259B5",
       }}
       aria-label={unassigned ? "Sem responsável" : name}
@@ -794,7 +794,7 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
           <div className="min-w-[61.25rem]">
             <div className="grid grid-cols-[13.75rem_repeat(7,minmax(6rem,1fr))_6.875rem] border-b bg-black/[.012]" style={{ borderColor: "rgba(13,13,13,.06)" }}>
               <div className="px-4 py-2.5 text-[0.625rem] font-medium uppercase tracking-[.1em] text-black/30">Responsável</div>
-              {days.map(({ date, key }) => <div key={key} className={`border-l px-2 py-2.5 text-center ${key === todayStr ? "bg-[#7259B5]/[.05]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}><p className={`text-[0.5625rem] font-medium uppercase ${key === todayStr ? "text-[#7259B5]" : "text-black/30"}`}>{DAY_NAMES_SHORT[date.getDay()]}</p><p className={`mt-0.5 text-[0.6875rem] font-semibold tabular-nums ${key === todayStr ? "text-[#7259B5]" : "text-black/55"}`}>{date.getDate()}</p></div>)}
+              {days.map(({ date, key }) => <div key={key} className={`border-l px-2 py-2.5 text-center ${key === todayStr ? "bg-black/[.03]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}><p className={`text-[0.5625rem] font-medium uppercase ${key === todayStr ? "text-[#7259B5]" : "text-black/30"}`}>{DAY_NAMES_SHORT[date.getDay()]}</p><p className={`mt-0.5 text-[0.6875rem] font-semibold tabular-nums ${key === todayStr ? "text-[#7259B5]" : "text-black/55"}`}>{date.getDate()}</p></div>)}
               <div className="border-l px-3 py-2.5 text-center text-[0.625rem] font-medium uppercase tracking-[.1em] text-black/30" style={{ borderColor: "rgba(13,13,13,.05)" }}>Semana</div>
             </div>
             <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
@@ -809,7 +809,7 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
                     </div>
                     {days.map(({ key }) => {
                       const dayItems = weeklyItems.filter(item => normDate(scheduledDate(item)!) === key);
-                      return <div key={key} className={`space-y-1 border-l p-1.5 ${key === todayStr ? "bg-[#7259B5]/[.025]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}>{dayItems.map(item => <DraggablePill key={item.id} item={item} onEdit={onEdit} />)}</div>;
+                      return <div key={key} className={`space-y-1 border-l p-1.5 ${key === todayStr ? "bg-black/[.015]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}>{dayItems.map(item => <DraggablePill key={item.id} item={item} onEdit={onEdit} />)}</div>;
                     })}
                     <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className="text-[1.125rem] font-semibold tabular-nums" style={{ color: status.color }}>{weeklyItems.length}</span><span className="text-[0.5625rem] font-medium" style={{ color: status.color }}>{status.label}</span></div>
                   </MemberDropRow>
@@ -835,7 +835,7 @@ function MemberDropRow({ memberId, children }: { memberId: string; children: Rea
   return (
     <div
       ref={setNodeRef}
-      className={`grid min-h-[4.375rem] grid-cols-[13.75rem_repeat(7,minmax(6rem,1fr))_6.875rem] border-b last:border-b-0 transition-colors ${isOver ? "bg-[#7259B5]/[.06]" : ""}`}
+      className={`grid min-h-[4.375rem] grid-cols-[13.75rem_repeat(7,minmax(6rem,1fr))_6.875rem] border-b last:border-b-0 transition-colors ${isOver ? "bg-black/[.04]" : ""}`}
       style={{ borderColor: "rgba(13,13,13,.05)" }}
     >
       {children}
@@ -1018,7 +1018,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
               const isWeekend = d.getDay() === 0 || d.getDay() === 6;
               return (
                 <div key={str} style={{ width: remDe(GANTT_DAY_W), flexShrink: 0, borderLeft: "1px solid rgba(13,13,13,.05)" }}
-                  className={`py-2 text-center ${isToday ? "bg-[#7259B514]" : isWeekend ? "bg-black/[.015]" : ""}`}>
+                  className={`py-2 text-center ${isToday ? "bg-black/[.03]" : isWeekend ? "bg-black/[.015]" : ""}`}>
                   <div className={`text-[0.625rem] font-bold ${isToday ? "text-[#7259B5]" : "text-black/35"}`}>
                     {d.getDate()}
                   </div>

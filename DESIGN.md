@@ -26,6 +26,9 @@ Princípios:
 | Teal | `#1A8B7A` | relacionamento e sinais positivos |
 
 - fundos são brancos ou neutros levemente tingidos;
+- **nunca tom sobre tom**: texto ou ícone colorido não fica sobre fundo claro da mesma cor (roxo sobre lilás, verde sobre verde-claro). A cor fica no texto, no ícone ou numa borda fina, sobre branco ou cinza neutro (`bg-black/[.04]`); quando precisa de peso, usa preenchimento sólido com texto branco;
+- passar o mouse, item selecionado, dia de hoje e linha arrastada usam cinza neutro, nunca a cor da marca diluída;
+- avisos de erro, alerta e sucesso: fundo branco, borda fina na cor e texto na cor;
 - bordas usam preto com baixa opacidade;
 - sombras devem ser discretas e comunicar elevação real;
 - cartões não recebem cor ou sombra sem função hierárquica.
@@ -142,6 +145,20 @@ Exceções:
 - menus internos não podem ser cortados pelo overflow do painel;
 - formulários extensos são agrupados por assunto, não por decoração;
 - erros aparecem junto ao formulário, nunca em `window.alert()`.
+
+## Formulários de cadastro
+
+Referência: `NovaCaptacaoModal` e `NovaInscricaoModal`.
+
+- o essencial vem primeiro, numa lista direta, sem título de seção;
+- campos opcionais ficam em "Mais detalhes", recolhido; ele já abre quando há algo preenchido lá dentro;
+- o formulário é o mesmo para todo mundo: sem botão para esconder ou personalizar blocos;
+- registros ligados (empresa, projeto, agência) são criados digitando o nome e escolhendo `Criar "Nome"` no menu; nada é criado ao clicar num botão com o campo vazio;
+- o cadastro não oferece etapas de desfecho (aprovado, recusado, reprovado, cancelado); desfecho tem fluxo próprio (`lib/etapas.ts`) e a coluna de desfecho do kanban não tem "+";
+- ganhar uma negociação é sempre "Fechar negócio" (`FecharNegocioSheet`), venha do topo, do menu de status ou do kanban;
+- responsável e supervisor só aparecem quando a organização tem equipe; o responsável já vem preenchido com quem está criando;
+- todo campo exibido é salvo;
+- o botão principal diz o que acontece: "Criar negociação" no cadastro, "Salvar" na edição.
 
 ## Páginas de detalhe
 

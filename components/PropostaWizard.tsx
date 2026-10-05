@@ -204,7 +204,7 @@ export function PropostaWizard({
                   href={`/p/${proposta.slug}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#7259B5] border rounded hover:bg-[#7259B5]/5 transition"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#7259B5] border rounded hover:bg-black/[.04] transition"
                   style={{ borderColor: "rgba(114,89,181,.3)" }}
                 >
                   <ExternalLink size={11} /> Abrir
@@ -224,7 +224,7 @@ export function PropostaWizard({
               key={s.key}
               onClick={() => setStep(s.key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-[0.6875rem] font-semibold rounded transition ${
-                step === s.key ? "bg-[#7259B5]/10 text-[#7259B5]" : "text-black/40 hover:bg-black/5"
+                step === s.key ? "bg-black/[.05] text-[#7259B5]" : "text-black/40 hover:bg-black/5"
               }`}
             >
               <span className="w-4 h-4 rounded-full flex items-center justify-center text-[0.5625rem] font-bold"
@@ -243,7 +243,7 @@ export function PropostaWizard({
         {/* Body */}
         <div className="flex-1 overflow-y-auto p-7">
           {erro && (
-            <div className="text-[0.75rem] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
+            <div className="text-[0.75rem] font-semibold text-[#D94E4E] border border-[#D94E4E]/30 bg-white rounded px-3 py-2 mb-4">
               {erro}
             </div>
           )}
@@ -473,7 +473,7 @@ export function PropostaWizard({
                 </button>
                 <button
                   onClick={handleExcluir}
-                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#D94E4E]/60 rounded hover:bg-[#D94E4E]/5 transition"
+                  className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#D94E4E]/60 rounded hover:bg-black/[.04] transition"
                 >
                   <Trash2 size={11} /> Excluir
                 </button>

@@ -174,7 +174,7 @@ export function PedidoConversa({ pedido, isGestor, onChange, onOpenAtribuicao }:
           <MensagemBubble key={m.id} autor={m.autor_email} texto={m.texto} data={m.created_at} />
         ))}
         {pedido.status === "aprovado" && (
-          <div className="flex items-center gap-2 rounded border px-3.5 py-2.5" style={{ borderColor: "#2E893230", background: "#2E893208" }}>
+          <div className="flex items-center gap-2 rounded border px-3.5 py-2.5" style={{ borderColor: "#2E893230", background: "#fff" }}>
             <Check size={13} className="shrink-0 text-[#2E8932]" />
             <p className="text-[0.75rem] font-medium text-black/70">Aprovado. O acompanhamento continua na atribuição.</p>
           </div>

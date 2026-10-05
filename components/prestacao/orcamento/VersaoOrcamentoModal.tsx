@@ -102,7 +102,7 @@ export function VersaoOrcamentoModal({ prestacaoId, editando, base, onClose, onS
                       aria-checked={ativo}
                       disabled={opcao.valor && !base}
                       onClick={() => setCopiar(opcao.valor)}
-                      className={`rounded border px-3 py-2 text-left transition focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40 ${ativo ? "border-[#7259B5] bg-[#7259B5]/[.04]" : "border-black/[.12] hover:border-black/25"}`}
+                      className={`rounded border px-3 py-2 text-left transition focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40 ${ativo ? "border-[#7259B5] bg-white" : "border-black/[.12] hover:border-black/25"}`}
                     >
                       <span className={`block text-[0.75rem] ${ativo ? "text-[#684DB0]" : "text-black/70"}`}>{opcao.rotulo}</span>
                       <span className="block text-[0.625rem] leading-4 text-black/40">{opcao.ajuda}</span>
@@ -138,7 +138,7 @@ export function VersaoOrcamentoModal({ prestacaoId, editando, base, onClose, onS
             </p>
           )}
           {erro && (
-            <p role="alert" className="rounded border px-3 py-2 text-[0.75rem]" style={{ background: "#D94A4A08", borderColor: "#D94A4A30", color: "#B23B3B" }}>{erro}</p>
+            <p role="alert" className="rounded border px-3 py-2 text-[0.75rem]" style={{ background: "#fff", borderColor: "#D94A4A30", color: "#B23B3B" }}>{erro}</p>
           )}
         </div>
 

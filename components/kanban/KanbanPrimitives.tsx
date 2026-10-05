@@ -16,7 +16,7 @@ export function KanbanColumn({ label, count, total, forecast, accent, iconName, 
   onDrop?: (event: DragEvent<HTMLDivElement>) => void; children: ReactNode;
 }) {
   const HeaderIcon = iconName ? (Icons as any)[iconName] as LucideIcon | undefined : undefined;
-  return <section className={`flex shrink-0 snap-start flex-col overflow-hidden rounded border transition-colors ${compact ? "min-h-[18.75rem] w-[82vw] max-w-[19rem] md:w-[18.75rem]" : "min-h-[25rem] w-[84vw] max-w-[19rem] md:w-72"}`} style={{ borderColor: active ? "#7259B570" : "rgba(13,13,13,.07)", background: active ? "#7259B508" : "rgba(13,13,13,.018)" }} aria-label={`${label}: ${count ?? 0} itens`}>
+  return <section className={`flex shrink-0 snap-start flex-col overflow-hidden rounded border transition-colors ${compact ? "min-h-[18.75rem] w-[82vw] max-w-[19rem] md:w-[18.75rem]" : "min-h-[25rem] w-[84vw] max-w-[19rem] md:w-72"}`} style={{ borderColor: active ? "#7259B570" : "rgba(13,13,13,.07)", background: active ? "#fff" : "rgba(13,13,13,.018)" }} aria-label={`${label}: ${count ?? 0} itens`}>
     <header className={`flex items-center justify-between gap-3 border-b bg-white/80 ${compact ? "min-h-[3.375rem] px-3.5 py-2.5" : "min-h-[3.875rem] items-start px-4 py-3"}`} style={{ borderColor: "rgba(13,13,13,.06)" }}>
       <div className="min-w-0">
         <div className="flex items-center gap-2">{HeaderIcon ? <HeaderIcon size={14} strokeWidth={2.2} className="shrink-0" style={{ color: accent }}/> : <span className="h-[0.4375rem] w-[0.4375rem] shrink-0 rounded" style={{ background: accent }}/>}<h2 className="truncate text-[0.75rem] font-semibold text-black/75">{label}</h2></div>

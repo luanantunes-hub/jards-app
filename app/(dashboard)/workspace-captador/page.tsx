@@ -54,7 +54,7 @@ function StatusAtribuicaoBadge({ status }: { status: string }) {
   return (
     <span
       className="shrink-0 rounded px-2 py-1 text-[0.625rem] font-semibold uppercase tracking-wide"
-      style={ativa ? { color: "#2E8932", background: "#2E893214" } : { color: "rgba(0,0,0,.5)", background: "rgba(0,0,0,.04)" }}
+      style={ativa ? { color: "#2E8932", background: "#fff", boxShadow: "inset 0 0 0 1px #2E893247" } : { color: "rgba(0,0,0,.5)", background: "rgba(0,0,0,.04)" }}
     >
       {status}
     </span>

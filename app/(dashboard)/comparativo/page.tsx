@@ -701,6 +701,7 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
     {modal?.tipo === "captacao" && (
       <NovaCaptacaoModal
         nomePreEmpresa={modal.empresa.nome}
+        sitePreEmpresa={modal.empresa.site ?? undefined}
         empresaPubId={modal.empresa.id}
         onClose={() => setModal(null)}
         onSaved={() => setModal(null)}
@@ -709,6 +710,7 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
     {modal?.tipo === "inscricao" && (
       <NovaInscricaoModal
         nomePreEmpresa={modal.empresa.nome}
+        sitePreEmpresa={modal.empresa.site ?? undefined}
         empresaPubId={modal.empresa.id}
         onClose={() => setModal(null)}
         onSaved={() => setModal(null)}

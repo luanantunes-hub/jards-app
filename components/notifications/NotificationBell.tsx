@@ -328,11 +328,11 @@ export function NotificationBell({ userId }: { userId: string }) {
                   key={notification.id}
                   onClick={() => openNotification(notification)}
                   className="flex w-full items-start gap-3 border-b border-black/[.055] px-4 py-3 text-left transition last:border-0 hover:bg-black/[.025]"
-                  style={{ background: notification.lida ? "#FFFFFF" : critical ? "rgba(217,78,78,.035)" : "rgba(114,89,181,.028)" }}
+                  style={{ background: notification.lida ? "#FFFFFF" : "rgba(13,13,13,.025)" }}
                 >
                   <span
                     className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded"
-                    style={{ background: critical ? "rgba(217,78,78,.09)" : "rgba(114,89,181,.08)" }}
+                    style={{ background: "rgba(13,13,13,.04)" }}
                   >
                     <Icon size={14} style={{ color: critical ? "#B83E3E" : "#7259B5" }} />
                   </span>

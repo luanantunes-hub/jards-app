@@ -26,6 +26,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { getInscricaoTiming } from "@/lib/inscricoes/timing";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
+import { DESFECHOS_INSCRICAO, ehDesfecho } from "@/lib/etapas";
 
 type EditalInscrito = {
   id: string;
@@ -171,13 +172,13 @@ export default function EditaisInscritosPage() {
   const { options: leiOptions, create: createLei } = useLeiOptions();
   const leiMap = Object.fromEntries(leiOptions.map(option => [option.status, {
     label: option.label,
-    bg: `${option.bg}14`,
+    bg: "#fff",
     text: option.bg,
   }]));
   const kanbanCols = etiquetasInscricao.map((etiqueta) => etiqueta.key as StatusEdital);
   const statusConfig = Object.fromEntries(etiquetasInscricao.map((etiqueta) => [
     etiqueta.key,
-    { label: etiqueta.label, bg: `${etiqueta.cor}14`, text: etiqueta.cor, accent: etiqueta.cor, iconName: etiqueta.icone },
+    { label: etiqueta.label, bg: "#fff", text: etiqueta.cor, accent: etiqueta.cor, iconName: etiqueta.icone },
   ])) as Record<StatusEdital, { label: string; bg: string; text: string; accent: string; iconName: string }>;
   const statusFilterOptions: { value: StatusEdital | "todos"; label: string }[] = [
     { value: "todos", label: "Todos" },
@@ -397,7 +398,7 @@ export default function EditaisInscritosPage() {
           {atividade && (
             <div className="group/atividade relative shrink-0">
               <span
-                className={`flex h-5 w-5 items-center justify-center rounded-full border transition ${atividade.atrasada ? "border-[#B07A14]/30 bg-[#B07A14]/12 text-[#B07A14]" : "border-black/10 bg-white text-black/30"}`}
+                className={`flex h-5 w-5 items-center justify-center rounded-full border transition ${atividade.atrasada ? "border-[#B07A14]/30 bg-white text-[#B07A14]" : "border-black/10 bg-white text-black/30"}`}
                 aria-label={atividade.atrasada ? "Atividade atrasada" : "Atividade em dia"}
               >
                 <Clock3 size={11}/>
@@ -772,7 +773,7 @@ export default function EditaisInscritosPage() {
                           <td className="px-3 py-3.5">
                             <button
                               onClick={ev => { ev.stopPropagation(); handleDelete(e.id, rotulo); }}
-                              className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition p-1.5 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E]"
+                              className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition p-1.5 rounded hover:bg-black/[.04] text-black/20 hover:text-[#D94E4E]"
                               title="Excluir"
                             >
                               <Trash2 size={13} />
@@ -806,7 +807,7 @@ export default function EditaisInscritosPage() {
                   iconName={cfg.iconName}
                   active={dragOverStatus === status && Boolean(draggingId)}
                   addLabel={`Nova inscrição em ${cfg.label}`}
-                  onAdd={() => { setPreStatus(status); setShowModal(true); }}
+                  onAdd={ehDesfecho(status, DESFECHOS_INSCRICAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}
                   onDragOver={e => { e.preventDefault(); setDragOverStatus(status); }}
                   onDragLeave={() => setDragOverStatus(null)}
                   onDrop={e => { e.preventDefault(); if (draggingId) moveEdital(draggingId, status); setDraggingId(null); setDragOverStatus(null); }}
@@ -816,7 +817,7 @@ export default function EditaisInscritosPage() {
                         ? Array.from({ length: 2 }).map((_, i) => <KanbanSkeleton key={i} />)
                         : null
                     ) : cards.length === 0 ? (
-                      <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={() => { setPreStatus(status); setShowModal(true); }}/>
+                      <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_INSCRICAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
                     ) : (
                       cards.slice(0, getVisible(status)).map((e) => {
                         const projeto = e.projetos_crm?.nome ?? "Sem projeto";

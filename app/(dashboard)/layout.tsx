@@ -524,7 +524,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/admin"
               title={!isExpanded ? "Admin" : undefined}
               aria-label={!isExpanded ? "Admin" : undefined}
-              className="flex items-center rounded text-[0.8125rem] font-medium transition whitespace-nowrap overflow-hidden hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+              className="flex items-center rounded text-[0.8125rem] font-medium transition whitespace-nowrap overflow-hidden hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
               style={{
                 gap: isExpanded ? 10 : 0,
                 padding: isExpanded ? "8px 10px" : "8px 0",
@@ -633,7 +633,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   {label}
                   {!orgTem && (
                     <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded"
-                      style={{ background: "#7259B514", color: "#7259B5" }}>
+                      style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
                       Pro
                     </span>
                   )}

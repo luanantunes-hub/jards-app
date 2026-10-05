@@ -122,7 +122,7 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
             );
           })}
           {onCreate && !creating && (
-            <button type="button" onClick={() => setCreating(true)} className="flex min-h-[4.375rem] flex-col items-center justify-center gap-1.5 rounded border border-dashed border-black/20 bg-white px-1 py-2.5 text-black/35 transition hover:border-[#7259B5]/45 hover:bg-[#7259B5]/[.025] hover:text-[#7259B5]">
+            <button type="button" onClick={() => setCreating(true)} className="flex min-h-[4.375rem] flex-col items-center justify-center gap-1.5 rounded border border-dashed border-black/20 bg-white px-1 py-2.5 text-black/35 transition hover:border-[#7259B5]/45 hover:bg-black/[.04] hover:text-[#7259B5]">
               <Icons.Plus size={15}/>
               <span className="text-[0.5625rem] font-bold uppercase tracking-wide">Adicionar</span>
             </button>
@@ -135,7 +135,7 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
             <div className="mt-2.5 flex items-center justify-between gap-3">
               <div className="flex gap-1">{CREATE_COLORS.map(color => <button key={color} type="button" title={color} onClick={() => setNewColor(color)} className="flex h-6 w-6 items-center justify-center rounded border" style={{ background: color, borderColor: newColor === color ? "#0D0D0D" : "transparent" }}>{newColor === color && <Icons.Check size={10} color="white"/>}</button>)}</div>
             </div>
-            <div className="mt-2 flex gap-1">{CREATE_ICONS.map(iconName => { const Icon = (Icons as any)[iconName] as LucideIcon; return <button key={iconName} type="button" title={iconName} onClick={() => setNewIcon(iconName)} className={`flex h-7 w-7 items-center justify-center rounded border ${newIcon === iconName ? "border-[#7259B5]/45 bg-[#7259B5]/[.06] text-[#7259B5]" : "border-black/[.07] text-black/35 hover:bg-black/[.03]"}`}><Icon size={12}/></button>; })}</div>
+            <div className="mt-2 flex gap-1">{CREATE_ICONS.map(iconName => { const Icon = (Icons as any)[iconName] as LucideIcon; return <button key={iconName} type="button" title={iconName} onClick={() => setNewIcon(iconName)} className={`flex h-7 w-7 items-center justify-center rounded border ${newIcon === iconName ? "border-[#7259B5]/45 bg-white text-[#7259B5]" : "border-black/[.07] text-black/35 hover:bg-black/[.03]"}`}><Icon size={12}/></button>; })}</div>
             {error && <p className="mt-2 text-[0.625rem] font-medium text-[#C84242]">{error}</p>}
             <div className="mt-3 flex items-center justify-end gap-2">
               <button type="button" onClick={() => { setCreating(false); setError(null); }} className="h-8 px-2 text-[0.6875rem] font-medium text-black/35 hover:text-black/60">Cancelar</button>

@@ -634,7 +634,7 @@ export default function ContasPatrocinioPage() {
                         type="button"
                         disabled={deletingId === c.id}
                         onClick={(event) => { event.stopPropagation(); void handleDelete(c); }}
-                        className="flex h-7 w-7 items-center justify-center rounded text-black/25 opacity-100 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] disabled:cursor-wait disabled:opacity-30 md:opacity-0 md:group-hover:opacity-100"
+                        className="flex h-7 w-7 items-center justify-center rounded text-black/25 opacity-100 transition hover:bg-black/[.04] hover:text-[#D94E4E] disabled:cursor-wait disabled:opacity-30 md:opacity-0 md:group-hover:opacity-100"
                         title="Excluir cliente"
                         aria-label={`Excluir ${c.nome || c.empresa_crm?.nome || "cliente"}`}
                       >
