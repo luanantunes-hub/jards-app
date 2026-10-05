@@ -4,7 +4,7 @@ import test from "node:test";
 import { DEFESO_ELEITORAL_2026, entradasDoCalendario } from "../lib/prestacao/calendario-regulatorio";
 import { REGIMES } from "../lib/prestacao/regimes";
 import { validarRegime } from "../lib/prestacao/regimes/schema";
-import { ARQUIVO_SEED, gerarSeedRegimes } from "../lib/prestacao/regimes/seed";
+import { ARQUIVO_SEED, CODIGOS_DO_SEED, SEED_ANTERIOR, gerarSeedRegimes } from "../lib/prestacao/regimes/seed";
 import { ROUANET_IN29_2026 } from "../lib/prestacao/regimes/rouanet-in29-2026";
 
 const MIGRATION = "supabase/migrations/20261005150000_prestacao_regimes.sql";
@@ -17,6 +17,22 @@ const erros = (valor: unknown) => {
 test("o seed versionado está igual ao código", async () => {
   const arquivo = await readFile(ARQUIVO_SEED, "utf8");
   assert.equal(arquivo, gerarSeedRegimes(), "rode: npx tsx scripts/prestacao-gerar-seed-regimes.ts");
+});
+
+test("o regime fora do seed novo está publicado, igual, na migration anterior", async () => {
+  const anterior = await readFile(SEED_ANTERIOR, "utf8");
+  const publicados = new Map([...anterior.matchAll(/\$regime\$(.*?)\$regime\$/g)].map(m => {
+    const regime = JSON.parse(m[1]) as { codigo: string };
+    return [regime.codigo, regime];
+  }));
+  for (const regime of REGIMES) {
+    const publicado = publicados.get(regime.codigo) as { versao: number } | undefined;
+    if (CODIGOS_DO_SEED.includes(regime.codigo)) {
+      assert.ok((publicado?.versao ?? 0) < regime.versao, `${regime.codigo}: suba a versão para publicar de novo`);
+    } else {
+      assert.deepEqual(publicado, JSON.parse(JSON.stringify(regime)), `${regime.codigo} mudou: suba a versão e inclua em CODIGOS_DO_SEED`);
+    }
+  }
 });
 
 test("os regimes do código passam no schema", () => {

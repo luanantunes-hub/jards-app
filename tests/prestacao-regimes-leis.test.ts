@@ -87,6 +87,22 @@ test("LIE P424: qualquer um dos dois remanejamentos até 20%, sem mexer em elabo
   assert.ok(codigos(elaboracao).includes("formal:muda_grupos"));
 });
 
+test("LIE P424 (conferida): elaboração sobre fim + meio, sem item novo, saldo pelo art. 59 e PCF omissa sem prazo extra", () => {
+  const tetos = tetosPorGrupo(montarArvore(LIE, []).raizes, P424);
+  assert.equal(tetos.find(t => t.grupo === "elaboracao")?.limite?.maximo, 11400, "10% de fim + meio: o § 1º do art. 26 foi revogado");
+  const novo = calcularAlteracao(LIE, [movLie("material", 40000, 35000), { no_id: null, nome: "Bolas", parent_id: null, grupo_custo: "execucao", de: 0, para: 5000 }], P424, CTX_LIE);
+  assert.equal(novo.tipo, "inclusao");
+  assert.ok(codigos(novo).includes("bloqueio:tipo_nao_permitido"), "a P424 só remaneja itens previstos (art. 57, § 2º)");
+  assert.match(prazoDoRegime(P424, "transferenciaSaldo")?.fonte.dispositivo ?? "", /art\. 59, I/);
+  assert.equal(prazoDoRegime(P424, "notificacaoOmissao"), null, "desde 2021 o DIFE recolhe o saldo e recomenda a TCE");
+  const envio = P424 && definida(P424.envio);
+  assert.ok(!envio?.documentos.some(d => d.codigo === "grade_rh"), "a grade de RH é só da P10");
+  assert.deepEqual(envio?.documentos.find(d => d.codigo === "bens")?.em, ["final"]);
+  assert.equal(envio?.regras.find(r => r.codigo === "arquivos")?.parametros?.mb, 10);
+  const parcial = P424 && definida(P424.prestacaoParcial);
+  assert.ok(parcial?.regras.some(r => r.codigo === "pcp_pelo_sistema") && !parcial.regras.some(r => r.codigo === "pcp_pelo_sei"));
+});
+
 test("LIE P10: readequação até 90 dias antes do fim e uma só; janela começa no termo", () => {
   const readequacao = calcularAlteracao(LIE, [movLie("material", 40000, 50000)], P10, { ...CTX_LIE, hoje: "2026-11-01" });
   assert.equal(readequacao.tipo, "complementacao");
@@ -150,8 +166,10 @@ test("saúde: custos indiretos até 15% e elaboração até 5% e R$ 50 mil", () 
   const elaboracao = tetos.find(t => t.grupo === "elaboracao");
   assert.equal(elaboracao?.limite?.maximo, 50000, "5% dá 51.500, acima do teto de R$ 50 mil");
   const antigo = tetosPorGrupo(montarArvore(SAUDE_NOS, []).raizes, SAUDE_ANTIGO);
-  assert.equal(antigo.find(t => t.grupo === "administracao")?.limite, null, "o regime anterior não tinha custos indiretos");
-  assert.ok(!SAUDE_ANTIGO || !definida(SAUDE_ANTIGO.orcamento)?.grupos.some(g => g.codigo === "administracao"));
+  const administrativas = antigo.find(t => t.grupo === "administracao");
+  assert.equal(administrativas?.rotulo, "Despesas administrativas", "o regime anterior admitia despesas administrativas (art. 28)");
+  assert.equal(administrativas?.limite, null, "sem teto: o de 15% é do anexo novo");
+  assert.equal(antigo.find(t => t.grupo === "elaboracao")?.limite?.maximo, 50000);
 });
 
 test("saúde: toda alteração depende de autorização; redução exige 60% e complementação vai até 20%", () => {
@@ -166,13 +184,18 @@ test("saúde: toda alteração depende de autorização; redução exige 60% e c
   assert.ok(!codigos(antigo).includes("bloqueio:complementacao_acima"), "200 mil ≤ 20% (art. 70 do regime anterior)");
 });
 
-test("saúde: o regime anterior vale até 07/09/2025 e as fontes herdadas ficam a confirmar", () => {
+test("saúde: o regime anterior vale até 07/09/2025, com as regras conferidas no anexo anterior", () => {
   const aplicabilidade = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.aplicabilidade);
   assert.equal(aplicabilidade?.ate, "2025-09-07");
   const pagamentos = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.pagamentos);
   assert.deepEqual(pagamentos?.meiosVedados, [], "o regime anterior não proibia saque nem cheque");
-  const divulgacao = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.divulgacao);
-  assert.equal(divulgacao?.fonte.aConfirmar, true, "regra herdada e não conferida no anexo anterior");
+  assert.equal(SAUDE_ANTIGO?.divulgacao && "lacuna" in SAUDE_ANTIGO.divulgacao ? SAUDE_ANTIGO.divulgacao.lacuna : null, "norma_silente", "o anexo anterior não tem regras de divulgação");
+  assert.equal(prazoDoRegime(SAUDE_ANTIGO, "recurso")?.quantidade, 10, "Lei 9.784/1999, pelo art. 113");
+  assert.equal(prazoDoRegime(SAUDE_ANTIGO, "certidoes"), null, "os 20 dias são da minuta do Termo de 2025");
+  const despesas = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.despesas);
+  assert.equal(despesas?.vedadas.find(v => v.codigo === "obras")?.descricao, "Ampliação e construção de imóveis", "reforma era admitida");
+  const contas = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.contas);
+  assert.equal(contas?.rendimentos.contamComoCaptado, false, "art. 82, § 3º, I, b");
 });
 
 // ─── Audiovisual (ANCINE) ───────────────────────────────────────────────────
@@ -241,4 +264,17 @@ test("ANCINE: cheque e saque glosados, concentração por fornecedor em duas fai
   assert.ok(!despesasAntigas?.vedadas.some(v => v.codigo === "folha_da_proponente"), "a IN 150 admitia folha de pessoal");
   const despesasNovas = ANCINE && definida(ANCINE.despesas);
   assert.ok(despesasNovas?.vedadas.some(v => v.codigo === "folha_da_proponente"));
+});
+
+test("ANCINE IN 150 (conferida): oito exceções na concentração, tarifas glosadas e modelos próprios", () => {
+  const fornecedores = ANCINE_ANTIGA && definida(ANCINE_ANTIGA.fornecedores);
+  assert.equal(fornecedores?.limites[0].excecoes.length, 8, "art. 29, VI, a a h");
+  const contas = ANCINE_ANTIGA && definida(ANCINE_ANTIGA.contas);
+  assert.equal(contas?.tarifas.regra, "vedadas", "sem a exceção da manutenção, que veio com a IN 167/2023");
+  const envio = ANCINE_ANTIGA && definida(ANCINE_ANTIGA.envio);
+  assert.equal(envio?.modelos.find(m => m.codigo === "rp")?.arquivo, "ancine/IN_150_Relacao_de_Pagamentos.xls");
+  assert.ok(envio?.documentos.some(d => d.codigo === "reducao_orcamento"), "Anexo, art. 1º, VII");
+  assert.ok(!envio?.regras.some(r => r.codigo === "documentos_em_180_dias"), "regra só da IN 159");
+  const parcial = ANCINE_ANTIGA && definida(ANCINE_ANTIGA.prestacaoParcial);
+  assert.ok(parcial?.regras.some(r => r.codigo === "sem_reanalise_na_final"), "art. 58");
 });

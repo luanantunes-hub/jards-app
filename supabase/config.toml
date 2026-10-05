@@ -400,6 +400,12 @@ verify_jwt = true
 [functions.importar-orcamento]
 verify_jwt = true
 
+[functions.ler-extrato-pdf]
+verify_jwt = true
+
+[functions.consultar-fornecedor]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

@@ -2,7 +2,7 @@
 import { useParams, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, LayoutGrid, DollarSign, FileText, CalendarDays, BookOpen, Ticket, Megaphone } from "lucide-react";
+import { ArrowLeft, LayoutGrid, DollarSign, FileText, Landmark, CalendarDays, BookOpen, Ticket, Megaphone } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { createClient } from "@/lib/supabase/client";
 import type { StatusPrestacao } from "@/lib/supabase/types";
@@ -33,6 +33,7 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
     { href: base,                    label: "Visão geral",  icon: LayoutGrid, exact: true },
     { href: `${base}/orcamento`,     label: "Orçamento",   icon: DollarSign, exact: false },
     { href: `${base}/comprovantes`,  label: "Comprovantes", icon: FileText,    exact: false },
+    { href: `${base}/extrato`,       label: "Extrato",      icon: Landmark,    exact: false },
     { href: `${base}/atividades`,    label: "Atividades",   icon: CalendarDays, exact: false },
     { href: `${base}/relatorio`,     label: "Relatório",    icon: BookOpen,    exact: false },
     { href: `${base}/distribuicao`,  label: "Distribuição", icon: Ticket,      exact: false },
@@ -57,15 +58,16 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
           <h1 className="font-bold text-[1.25rem] text-[#0D0D0D] truncate">{titulo || "…"}</h1>
           {status && <StatusBadge status={status} size="sm" />}
         </div>
-        {/* Tabs */}
-        <div className="flex gap-0">
+        {/* Abas: no celular a linha rola na horizontal, sem quebrar o rótulo. */}
+        <nav aria-label="Seções da prestação" className="flex gap-0 overflow-x-auto">
           {tabs.map(({ href, label, icon: Icon, exact }) => {
             const active = isActive(href, exact);
             return (
               <Link
                 key={href}
                 href={href}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-[0.75rem] font-medium border-b-2 transition-colors"
+                aria-current={active ? "page" : undefined}
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap px-4 py-2.5 text-[0.75rem] font-medium border-b-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
                 style={{
                   borderColor: active ? "#7259B5" : "transparent",
                   color: active ? "#7259B5" : "rgba(13,13,13,.45)",
@@ -76,7 +78,7 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
               </Link>
             );
           })}
-        </div>
+        </nav>
       </div>
 
       {/* Conteúdo */}

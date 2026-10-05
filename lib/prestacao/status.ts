@@ -67,6 +67,12 @@ const ERROS: Record<string, string> = {
   versao_nao_ativa: "A alteração é de uma versão que não está mais em uso. Monte de novo na versão em uso.",
   documento_invalido: "Envie o documento pela própria alteração.",
   acao_invalida: "Ação desconhecida. Atualize a página.",
+  // Extrato (P2.1)
+  conta_inexistente: "Conta bancária não encontrada ou sem acesso.",
+  extrato_invalido: "O arquivo não tem lançamentos que dê para importar (ou passa de 5 mil linhas).",
+  caminho_invalido: "O arquivo do extrato precisa ser enviado pela própria tela.",
+  extrato_ja_importado: "Esse arquivo já foi importado nesta conta.",
+  extrato_sem_novos: "Todos os lançamentos desse arquivo já estavam importados nesta conta.",
 };
 
 export function mensagemErroPrestacao(erro: { message?: string } | null | undefined, padrao: string): string {

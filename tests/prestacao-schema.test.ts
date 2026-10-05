@@ -75,7 +75,24 @@ test("P0.2: o modal grava a organização atual", async () => {
   const modal = await readFile("components/modals/NovaPrestacaoModal.tsx", "utf8");
   assert.match(modal, /organization_id: organizationId/);
   const lista = await readFile("app/(dashboard)/prestacoes/page.tsx", "utf8");
-  assert.match(lista, /organization_id\.eq\.\$\{organizationId\},organization_id\.is\.null/);
+  assert.match(lista, /\.eq\("organization_id", organizationId\)/);
+  assert.doesNotMatch(lista, /organization_id\.is\.null/, "depois da contração não há prestação sem organização");
+});
+
+test("P0.2 contração: organização obrigatória e acesso só por ela", async () => {
+  const sql = await readFile("supabase/migrations/20261006120000_prestacao_organizacao_contracao.sql", "utf8");
+  const codigo = sql.replace(/--.*$/gm, "");
+  // A trava vem antes do not null: com linha sem organização, nada é aplicado.
+  assert.ok(codigo.indexOf("where organization_id is null") < codigo.indexOf("set not null"));
+  assert.match(codigo, /alter column organization_id set not null/);
+  assert.doesNotMatch(codigo, /criado_por/, "quem criou deixa de ter acesso próprio");
+  assert.doesNotMatch(codigo, /organization_id is null or|or organization_id is null/i);
+  // A regra permissiva olha a linha: no insert, can_access_prestacao(id) ainda não a encontra.
+  assert.match(codigo, /alter policy "auth users can manage prestacoes"[\s\S]*?with check \(\s*organization_id = any\(array\(select public\.auth_org_ids\(\)\)\)\s*and public\.auth_tem_modulo\(organization_id, 'prestacao'\)/);
+  for (const regra of ["organizacao do usuario ao criar", "organizacao do usuario ao alterar", "papel cria"]) {
+    assert.match(codigo, new RegExp(`alter policy "prestacoes_contas: ${regra}"`), `regra "${regra}" não foi contraída`);
+  }
+  assert.doesNotMatch(codigo, /\bdrop\b/i, "sem DROP: o conector trava em comandos destrutivos");
 });
 
 test("P0.5: dados e arquivos da prestação exigem o módulo", async () => {

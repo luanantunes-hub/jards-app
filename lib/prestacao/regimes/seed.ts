@@ -3,15 +3,22 @@
 // resultado em ARQUIVO_SEED, e um teste confere que o arquivo está igual.
 //
 // Mudou um parâmetro publicado? Suba `versao` no regime, aponte ARQUIVO_SEED
-// para uma migration nova e rode o script: a versão anterior vira obsoleta.
+// para uma migration nova, liste o código em CODIGOS_DO_SEED e rode o script:
+// a versão anterior vira obsoleta. Os demais regimes ficam na migration em
+// que foram publicados (SEED_ANTERIOR), e um teste confere que a versão de lá
+// é a do código.
 
 import { entradasDoCalendario } from "../calendario-regulatorio";
 import { REGIMES } from "./index";
 import { validarRegime } from "./schema";
 import { definida, type RegimeNormativo } from "./tipos";
 
-// v1 em 20261005150100_prestacao_regimes_seed.sql (aplicada); v2 com todas as dimensões (P1.11).
-export const ARQUIVO_SEED = "supabase/migrations/20261006100100_prestacao_regimes_seed_v2.sql";
+// v1 em 20261005150100_prestacao_regimes_seed.sql e v2, com todas as
+// dimensões (P1.11), em 20261006100100_prestacao_regimes_seed_v2.sql, ambas
+// aplicadas. Esta publica a versão conferida dos três regimes derivados.
+export const ARQUIVO_SEED = "supabase/migrations/20261006110000_prestacao_regimes_conferidos.sql";
+export const SEED_ANTERIOR = "supabase/migrations/20261006100100_prestacao_regimes_seed_v2.sql";
+export const CODIGOS_DO_SEED: readonly string[] = ["lie_p424_2020", "pronon_pronas_lxxxvi_2017", "ancine_in150_2019"];
 
 function texto(valor: string | null): string {
   return valor === null ? "null" : `'${valor.replace(/'/g, "''")}'`;
@@ -64,12 +71,13 @@ export function gerarSeedRegimes(): string {
     const resultado = validarRegime(regime);
     if (!resultado.ok) throw new Error(`Regime ${regime.codigo} inválido:\n${resultado.erros.join("\n")}`);
   }
+  const doSeed = REGIMES.filter(regime => CODIGOS_DO_SEED.includes(regime.codigo));
   return [
     `-- Gerado por scripts/prestacao-gerar-seed-regimes.ts a partir de lib/prestacao/regimes`,
     `-- e lib/prestacao/calendario-regulatorio.ts. Não edite à mão: mude o código e`,
     `-- gere de novo. Idempotente.`,
     ``,
-    ...REGIMES.map(regime => sqlDoRegime(regime) + "\n"),
+    ...doSeed.map(regime => sqlDoRegime(regime) + "\n"),
     `-- Calendário: feriados nacionais e defeso eleitoral`,
     sqlDoCalendario(),
     ``,

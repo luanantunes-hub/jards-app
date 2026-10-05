@@ -551,7 +551,7 @@ export default function ComprovantesPage() {
               const statusM = STATUS_META[c.status];
               const rubrica = itens.find(it => it.id === c.no_id);
               return (
-                <div key={c.id} className="px-5 py-4 flex items-start gap-4 hover:bg-black/[.02] transition">
+                <div key={c.id} className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-x-4 gap-y-2 px-5 py-4 transition hover:bg-black/[.02] sm:grid-cols-[2rem_minmax(0,1fr)_auto]">
                   {/* Ícone tipo */}
                   <div className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
                     style={{ background: "#fff", border: `1px solid ${tipoM.color}47`, color: tipoM.color }}>
@@ -563,11 +563,12 @@ export default function ComprovantesPage() {
                     <div className="flex items-center gap-2 mb-0.5">
                       <button
                         onClick={() => getUrl(c.storage_path)}
-                        className="text-[0.75rem] font-semibold text-black hover:text-[#7259B5] transition truncate max-w-xs flex items-center gap-1"
+                        title={c.nome_arquivo}
+                        className="flex min-w-0 max-w-xs items-center gap-1 rounded text-[0.75rem] font-semibold text-black transition hover:text-[#7259B5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                       >
-                        {c.nome_arquivo} <ExternalLink size={10} className="flex-shrink-0 opacity-50" />
+                        <span className="truncate">{c.nome_arquivo}</span> <ExternalLink size={10} className="flex-shrink-0 opacity-50" />
                       </button>
-                      <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded"
+                      <span className="shrink-0 whitespace-nowrap text-[0.5625rem] font-bold px-1.5 py-0.5 rounded"
                         style={{ background: "#fff", border: `1px solid ${tipoM.color}47`, color: tipoM.color }}>
                         {tipoM.label}
                       </span>
@@ -578,7 +579,8 @@ export default function ComprovantesPage() {
                           value={c.no_id ?? ""}
                           onChange={e => mudarItem(c, e.target.value)}
                           aria-label={`Item do orçamento de ${c.nome_arquivo}`}
-                          className="max-w-[16rem] truncate rounded border px-1.5 py-0.5 text-[0.625rem] focus:outline-none"
+                          block={false}
+                          className="max-w-[11rem] truncate rounded border px-1.5 py-0.5 text-[0.625rem] focus:outline-none sm:max-w-[16rem]"
                           style={{ borderColor: "rgba(13,13,13,.12)", color: rubrica ? "rgba(13,13,13,.65)" : "#B07A14" }}
                         >
                           <option value="">{c.no_id ? "Item de outra versão" : "Sem item"}</option>
@@ -618,8 +620,8 @@ export default function ComprovantesPage() {
                     </div>
                   </div>
 
-                  {/* Status + ações */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  {/* Status + ações: no celular descem para baixo das informações */}
+                  <div className="col-start-2 flex items-center gap-2 sm:col-start-auto">
                     {c.avaliado_em && (
                       <span className="hidden text-right text-[0.5625rem] leading-tight text-black/35 sm:block">
                         {c.status === "aceito" ? "Aceito" : "Rejeitado"} por {nomes[c.avaliado_por ?? ""] ?? "membro"}
@@ -631,6 +633,8 @@ export default function ComprovantesPage() {
                       disabled={!permissoes.avaliar}
                       title={permissoes.avaliar ? undefined : "Aceitar ou rejeitar cabe ao administrador, revisor ou responsável"}
                       onChange={e => mudarStatus(c.id, e.target.value as StatusComprovante)}
+                      aria-label={`Situação de ${c.nome_arquivo}`}
+                      block={false}
                       className="text-[0.625rem] font-semibold px-2 py-1 rounded border focus:outline-none"
                       style={{
                         borderColor: `${statusM.color}30`,

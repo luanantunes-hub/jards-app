@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { correspondeRota, itemAtivoDoMenu, tituloDaPagina } from "../lib/navigation/rotas";
+import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu, tituloDaPagina } from "../lib/navigation/rotas";
 
 test("título da aba usa o nome da seção do menu", () => {
   assert.equal(tituloDaPagina("/captacoes"), "Negociações — Jards");
@@ -33,4 +33,12 @@ test("contratos, entregas e ativações destacam Clientes no menu", () => {
 test("rotas da prestação usam o título do módulo", () => {
   assert.equal(tituloDaPagina("/prestacoes"), "Prestações — Jards");
   assert.equal(tituloDaPagina("/prestacoes/abc/comprovantes"), "Prestações — Jards");
+});
+
+test("fornecedores: título próprio e só o item mais específico fica ativo", () => {
+  assert.equal(tituloDaPagina("/prestacoes/fornecedores"), "Fornecedores — Jards");
+  const hrefs = ["/prestacoes", "/prestacoes/fornecedores"];
+  assert.equal(hrefAtivoDoMenu("/prestacoes/fornecedores", hrefs), "/prestacoes/fornecedores");
+  assert.equal(hrefAtivoDoMenu("/prestacoes/abc/extrato", hrefs), "/prestacoes");
+  assert.equal(hrefAtivoDoMenu("/dashboard", hrefs), null);
 });

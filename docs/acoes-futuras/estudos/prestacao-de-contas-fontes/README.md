@@ -17,6 +17,9 @@ São extrações assistidas: antes de virar regra no sistema, cada número deve 
 | [ancine-manual-pc-v2.11-e-lie-divulgacao.md](./ancine-manual-pc-v2.11-e-lie-divulgacao.md) | Manual de Prestação de Contas ANCINE v2.11 (23/09/2026) e Manual de Divulgação da LIE (versão defeso) | Audiovisual e Esporte (federal) |
 | [rouanet-manual-vale-2021-obsoleto.md](./rouanet-manual-vale-2021-obsoleto.md) | Manual de Projetos Culturais (Instituto Cultural Vale, 2021, IN 02/2019) — obsoleto, só histórico | Cultura |
 | [saude-pronon-pronas-manual-2019.md](./saude-pronon-pronas-manual-2019.md) | Manual de análise contábil e financeira PRONON e PRONAS/PCD (MS/FNS, 2019) | Saúde |
+| [lie-p424-2020-conferencia.md](./lie-p424-2020-conferencia.md) | Conferência na Portaria 424/2020 (com as alterações até a Portaria MESP 33/2025) das regras herdadas da P10 (05/10/2026) | Esporte (federal) |
+| [saude-lxxxvi-2017-conferencia.md](./saude-lxxxvi-2017-conferencia.md) | Conferência no Anexo LXXXVI da PRC 5/2017 (revogado) das regras herdadas do Anexo LXXXVI-A (05/10/2026) | Saúde |
+| [ancine-in150-2019-conferencia.md](./ancine-in150-2019-conferencia.md) | Conferência na IN ANCINE 150/2019 das regras herdadas da IN 159 (05/10/2026) | Audiovisual |
 
 ### Mercado, referências e dados abertos
 
