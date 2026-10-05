@@ -122,7 +122,7 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
       supabase.from("contatos").select("id,nome,cargo").eq("empresa_crm_id", accountData.empresa_crm_id).eq("ativo_na_empresa", true).order("nome"),
       (supabase as any).from("captacoes").select("projeto:projetos_crm!projeto_id(id,nome)").eq("empresa_crm_id", accountData.empresa_crm_id).not("projeto_id", "is", null),
       (supabase as any).from("captacoes").select("id,titulo,status,valor_solicitado,potencial_fechamento,proxima_prospeccao,data_previsao,created_at,updated_at,ciclo_ano,ciclo_anterior_id,projeto:projetos_crm!projeto_id(id,nome,created_at)").eq("empresa_crm_id", accountData.empresa_crm_id).order("updated_at", { ascending: false }),
-      (supabase as any).from("editais_user").select("id,titulo,status,created_at,valor,data_fechamento,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)").eq("empresa_crm_id", accountData.empresa_crm_id).order("updated_at", { ascending: false }),
+      (supabase as any).from("editais_user").select("id,status,created_at,valor,data_fechamento,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)").eq("empresa_crm_id", accountData.empresa_crm_id).order("updated_at", { ascending: false }),
       (supabase as any).from("saude_conta").select("*").eq("conta_patrocinio_id", id).order("created_at", { ascending: false }),
       (supabase as any).from("saude_parceria_scorecards").select("peso,ativo,criterios:saude_parceria_criterios(peso,nota,ativo)").eq("conta_patrocinio_id", id).eq("ativo", true),
     ]);

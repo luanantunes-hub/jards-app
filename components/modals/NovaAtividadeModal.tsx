@@ -170,7 +170,7 @@ export function NovaAtividadeModal({
           .limit(50),
         (supabase as any)
           .from("editais_user")
-          .select("id, titulo, edital:editais!edital_pub_id(titulo), empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_pub_id(nome), projeto:projetos_crm!projeto_id(nome)")
+          .select("id, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_pub_id(nome), projeto:projetos_crm!projeto_id(nome)")
           .eq("organization_id", organizationId)
           .order("created_at", { ascending: false })
           .limit(50),
@@ -203,7 +203,6 @@ export function NovaAtividadeModal({
       }
       if (insc) {
         setInscricoes((insc as any[]).map(i => vinculoOpcao(i.id, {
-          titulo: i.edital?.titulo ?? i.titulo,
           projeto: i.projeto?.nome,
           empresa: i.empresa_crm?.nome ?? i.empresa?.nome,
         })));

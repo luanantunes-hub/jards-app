@@ -71,13 +71,11 @@ type CaptacaoLinked = {
 
 type InscricaoLinked = {
   id: string;
-  edital: { nome: string; lei: string | null } | null;
   lei: string | null;
   status: string;
   data_submissao: string | null;
   empresa_crm_id: string | null;
   empresa_crm: { nome: string } | null;
-  titulo: string | null;
   valor: number | null;
   data_abertura: string | null;
   data_fechamento: string | null;
@@ -238,7 +236,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
         .order("created_at", { ascending: false }),
       supabase
         .from("editais_user")
-        .select("id, status, data_submissao, lei, edital:editais!edital_id(nome, lei), empresa_crm_id, empresa_crm:empresas_crm!empresa_crm_id(nome), titulo, valor, data_abertura, data_fechamento, data_resultado, potencial_fechamento, responsavel_tipo, responsavel_id, cota_id")
+        .select("id, status, data_submissao, lei, empresa_crm_id, empresa_crm:empresas_crm!empresa_crm_id(nome), valor, data_abertura, data_fechamento, data_resultado, potencial_fechamento, responsavel_tipo, responsavel_id, cota_id")
         .eq("projeto_id", id)
         .order("created_at", { ascending: false }),
       supabase
@@ -550,7 +548,6 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             projeto_id: projeto.id,
             projeto_nome: projeto.nome,
             cota_id: editingInscricao.cota_id,
-            titulo: editingInscricao.titulo,
             lei: editingInscricao.lei,
             valor: editingInscricao.valor,
             status: editingInscricao.status as any,
@@ -639,8 +636,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
           }))}
           inscricoes={inscricoes.map(inscricao => ({
             id: inscricao.id,
-            titulo: inscricao.edital?.nome || "Inscrição sem título",
-            complemento: inscricao.lei ?? inscricao.edital?.lei,
+            titulo: inscricao.empresa_crm?.nome || "Inscrição sem empresa",
+            complemento: inscricao.lei,
           }))}
           onClose={() => { setShowPropostaModal(false); setEditingProposta(null); }}
           onSaved={() => { setShowPropostaModal(false); setEditingProposta(null); fetchAll(); }}
@@ -1182,7 +1179,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           style={{ borderBottom: i < inscricoes.length - 1 ? "1px solid rgba(13,13,13,.06)" : "none" }}
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-[0.8125rem] font-semibold text-black line-clamp-1">{insc.edital?.nome ?? insc.titulo ?? "Edital"}</p>
+                            <p className="text-[0.8125rem] font-semibold text-black line-clamp-1">{insc.empresa_crm?.nome ?? "Inscrição sem empresa"}</p>
                             {insc.data_submissao && (
                               <p className="text-[0.6875rem] text-black/35 flex items-center gap-1">
                                 <Calendar size={9} /> {fmtDate(insc.data_submissao)}
@@ -1213,8 +1210,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             }))}
             inscricoes={inscricoes.map(inscricao => ({
               id: inscricao.id,
-              titulo: inscricao.edital?.nome || "Inscrição sem título",
-              complemento: inscricao.lei ?? inscricao.edital?.lei,
+              titulo: inscricao.empresa_crm?.nome || "Inscrição sem empresa",
+              complemento: inscricao.lei,
             }))}
           />
         )}
@@ -1254,7 +1251,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                       const statusMeta = STATUS_PROPOSTA[proposta.status] ?? { label: proposta.status, color: "rgba(13,13,13,.40)" };
                       return (
                         <button key={proposta.id} onClick={() => { setEditingProposta(proposta); setShowPropostaModal(true); }} className="rounded border border-black/[.08] bg-white p-5 text-left transition hover:bg-black/[.018] active:scale-[.995]">
-                          <div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{captacao ? `Negociação · ${captacao.empresa_crm?.nome || captacao.titulo}` : inscricao ? `Inscrição · ${inscricao.edital?.nome || "Edital"}` : "Sem vínculo definido"}</p></div><span className="shrink-0 rounded px-2 py-1 text-[0.5625rem] font-semibold" style={{ color: statusMeta.color, background: `${statusMeta.color}12` }}>{statusMeta.label}</span></div>
+                          <div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{captacao ? `Negociação · ${captacao.empresa_crm?.nome || captacao.titulo}` : inscricao ? `Inscrição · ${inscricao.empresa_crm?.nome || "sem empresa"}` : "Sem vínculo definido"}</p></div><span className="shrink-0 rounded px-2 py-1 text-[0.5625rem] font-semibold" style={{ color: statusMeta.color, background: `${statusMeta.color}12` }}>{statusMeta.label}</span></div>
                           <div className="mt-5 grid grid-cols-3 gap-3 border-t border-black/[.06] pt-4"><MiniInfo label="Cota-base" value={cota?.nome ?? "Sem cota"} /><MiniInfo label="Valor" value={fmtValor(proposta.valor_proposto)} /><MiniInfo label="Contrapartidas" value={String(proposta.contrapartidas?.length ?? 0)} /></div>
                         </button>
                       );

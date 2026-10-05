@@ -13,7 +13,7 @@ import { KanbanBoard, KanbanColumn, KanbanCard, KanbanEmpty } from "@/components
 import { ProjetoSolicitacoes } from "@/components/proponentes/ProjetoSolicitacoes";
 
 type NegociacaoRow = { id: string; titulo: string | null; status: string; valorSolicitado: number | null; empresaNome: string; updatedAt: string };
-type InscricaoRow = { id: string; titulo: string; status: string; valor: number | null; dataSubmissao: string | null; updatedAt: string };
+type InscricaoRow = { id: string; empresaNome: string; status: string; valor: number | null; dataSubmissao: string | null; updatedAt: string };
 type ResultadoRow = { id: string; valorCaptado: number | null; valorExecutado: number | null; dataResultado: string | null };
 
 type ProjetoDetalhe = {
@@ -219,7 +219,7 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
                   const st = etiqueta ? { label: etiqueta.label, color: etiqueta.cor, iconName: etiqueta.icone } : { ...(STATUS_INSC[insc.status] ?? { label: insc.status, color: "#888888" }), iconName: undefined };
                   return (
                     <div>
-                      <p className="truncate text-[0.78125rem] font-semibold text-black/80">{insc.titulo}</p>
+                      <p className="truncate text-[0.78125rem] font-semibold text-black/80">{insc.empresaNome}</p>
                       {insc.dataSubmissao && <p className="mt-0.5 flex items-center gap-1 text-[0.6875rem] text-black/45"><Calendar size={9} /> {fmtDate(insc.dataSubmissao)}</p>}
                       <div className="mt-2.5 border-t border-black/[.06] pt-2">
                         <StatusBadge status={insc.status} label={st.label} bg={st.color} iconName={st.iconName} size="sm" />

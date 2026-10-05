@@ -6,7 +6,6 @@ import StatusBadge from "@/components/ui/StatusBadge";
 
 export type EditalRow = {
   id: string;
-  titulo: string | null;
   status: string;
   created_at: string;
   valor: number | null;
@@ -65,7 +64,7 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
           <table className="w-full min-w-[58.75rem] border-collapse text-left">
             <thead>
               <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                {["Edital", "Projeto", "Status", "Valor", "Fechamento", "Último avanço"].map(label => (
+                {["Projeto", "Status", "Valor", "Fechamento", "Último avanço"].map(label => (
                   <th key={label} className="px-5 py-3 text-[0.625rem] font-medium text-black/30">{label}</th>
                 ))}
               </tr>
@@ -81,7 +80,7 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
                     key={row.id}
                     role="link"
                     tabIndex={0}
-                    aria-label={`Abrir inscrição ${row.titulo || "Edital sem título"}`}
+                    aria-label={`Abrir inscrição ${row.projeto?.nome || "sem projeto"}`}
                     onClick={() => router.push(`/editais-inscritos/${row.id}`)}
                     onKeyDown={event => {
                       if (event.key === "Enter" || event.key === " ") {
@@ -93,10 +92,9 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
                   >
                     <td className="px-5 py-4">
                       <span className="text-[0.8125rem] font-semibold text-black/75">
-                        {row.titulo || "Edital sem título"}
+                        {row.projeto?.nome || "Sem projeto"}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-[0.6875rem] text-black/45">{row.projeto?.nome || "—"}</td>
                     <td className="px-5 py-4">
                       <StatusBadge status={row.status} label={s.label} bg={s.color} iconName={s.iconName} size="sm" />
                     </td>

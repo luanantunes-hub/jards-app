@@ -98,7 +98,7 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
     const [contactsResult, negotiationsResult, noticesResult, clientResult, atribuicaoResult, followupsResult] = await Promise.all([
       supabase.from("contatos").select("id,nome,cargo,email,score").eq("empresa_crm_id", id).order("score", { ascending: false }).limit(20),
       (supabase as any).from("captacoes").select("id,titulo,status,valor_solicitado,potencial_fechamento,proxima_prospeccao,data_previsao,created_at,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)").eq("empresa_crm_id", id).order("updated_at", { ascending: false }),
-      (supabase as any).from("editais_user").select("id,titulo,status,created_at,valor,data_fechamento,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)").eq("empresa_crm_id", id).order("created_at", { ascending: false }),
+      (supabase as any).from("editais_user").select("id,status,created_at,valor,data_fechamento,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)").eq("empresa_crm_id", id).order("created_at", { ascending: false }),
       (supabase as any).from("contas_patrocinio").select("id,nome,status").eq("empresa_crm_id", id).in("status", ["ativa", "pausada"]).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       (supabase as any).from("atribuicoes").select("id,tipo,captador_user_id,captadores!captador_user_id(nome)").eq("empresa_crm_id", id).eq("status", "ativa").order("created_at", { ascending: false }).limit(1).maybeSingle(),
       (supabase as any).from("crm_followups").select("id,titulo,previsto_para").eq("empresa_crm_id", id).eq("status", "pendente").order("previsto_para", { ascending: true }),
@@ -224,7 +224,7 @@ function CommercialOverview({empresa,companyId,contacts,negotiations,projects,no
           {nextOpening ? (
             <NextStepRow
               label="Inscrição"
-              title={nextOpening.titulo || "Edital em aberto"}
+              title={nextOpening.projeto?.nome || "Inscrição em andamento"}
               subtitle={`Inscrita em ${fmtDate(nextOpening.created_at)}`}
               actionLabel="Ver inscrição"
               href={`/editais-inscritos/${nextOpening.id}`}

@@ -220,7 +220,7 @@ export default function ProponenteDetailPage() {
       const [docsResult, negotiationsResult, registrationsResult, salesResult] = await Promise.all([
         (supabase as any).from("documentos").select("id,nome,arquivo_nome,categoria,tipo,tamanho,url,created_at,projeto:projetos_crm!projeto_id(id,nome)").in("projeto_id", projectIds).order("created_at", { ascending: false }),
         (supabase as any).from("captacoes").select("id,titulo,status,valor_solicitado,potencial_fechamento,proxima_prospeccao,data_previsao,created_at,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)").in("projeto_id", projectIds).order("updated_at", { ascending: false }),
-        (supabase as any).from("editais_user").select("id,titulo,status,created_at,valor,data_fechamento,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)").in("projeto_id", projectIds).order("updated_at", { ascending: false }),
+        (supabase as any).from("editais_user").select("id,status,created_at,valor,data_fechamento,updated_at,projeto:projetos_crm!projeto_id(id,nome,created_at)").in("projeto_id", projectIds).order("updated_at", { ascending: false }),
         (supabase as any).from("vendas_patrocinio").select("id,projeto_id,valor_vendido,vendida_em,empresa_crm_id,empresa_crm:empresas_crm!empresa_crm_id(id,nome,domain_key,site,setor),projeto:projetos_crm!projeto_id(id,nome)").in("projeto_id", projectIds).order("vendida_em", { ascending: false }),
       ]);
       setDocumentos((docsResult.data ?? []) as DocumentoRow[]);
