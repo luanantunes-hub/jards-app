@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { CampoValor } from "@/components/ui/CampoValor";
+import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 
 // Supabase sem a tipagem das RPCs usadas aqui.
@@ -109,10 +110,23 @@ export function FecharNegocioSheet({ captacao, empresaNome, propostaAceitaId, on
   );
 }
 
-/** Recusa com confirmação, a mesma em qualquer tela. */
+type NovoCicloAposRecusa = {
+  id: string;
+  anoNovo: number;
+  retomadaProgramadaEm: string | null;
+  onChanged: () => Promise<void> | void;
+};
+
+/**
+ * Recusa com confirmação, a mesma em qualquer tela. Confirmada a recusa, abre o topsheet
+ * de novo ciclo (retomada): quem usa o hook renderiza `novoCicloSheet` na própria tela,
+ * que precisa continuar montada durante o `onChanged`.
+ */
 export function useRecusarNegociacao() {
   const { confirmDelete } = useDeleteConfirm();
-  return useCallback((captacaoId: string, onChanged: () => Promise<void> | void) => {
+  const [novoCiclo, setNovoCiclo] = useState<NovoCicloAposRecusa | null>(null);
+
+  const recusar = useCallback((captacaoId: string, onChanged: () => Promise<void> | void) => {
     confirmDelete({
       title: "Marcar a negociação como recusada?",
       description: "",
@@ -121,10 +135,32 @@ export function useRecusarNegociacao() {
       illustration: false,
       onConfirm: async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await (createClient() as any).from("captacoes").update({ status: "recusado" }).eq("id", captacaoId).select("id").maybeSingle();
+        const { data, error } = await (createClient() as any).from("captacoes").update({ status: "recusado" }).eq("id", captacaoId)
+          .select("id, ciclo_ano, created_at, retomada_programada_em").maybeSingle();
         if (error || !data) throw new Error("Não foi possível atualizar a negociação. Tente novamente.");
         await onChanged();
+        setNovoCiclo({
+          id: data.id,
+          anoNovo: (data.ciclo_ano ?? new Date(data.created_at).getFullYear()) + 1,
+          retomadaProgramadaEm: data.retomada_programada_em,
+          onChanged,
+        });
       },
     });
   }, [confirmDelete]);
+
+  const novoCicloSheet = novoCiclo && (
+    <RenovarCicloModal
+      tipo="captacao"
+      id={novoCiclo.id}
+      anoNovo={novoCiclo.anoNovo}
+      resultadoNegativo
+      dataRetomadaInicial={novoCiclo.retomadaProgramadaEm}
+      resultadoLabel="Recusado"
+      onClose={() => setNovoCiclo(null)}
+      onRenovado={() => { setNovoCiclo(null); void novoCiclo.onChanged(); }}
+    />
+  );
+
+  return { recusar, novoCicloSheet };
 }

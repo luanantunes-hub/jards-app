@@ -229,7 +229,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const [atividades, setAtividades] = useState<(Atividade & { contato: { nome: string } | null })[]>([]);
   const [notas, setNotas] = useState<Nota[]>([]);
   const [fechandoPeloStatus, setFechandoPeloStatus] = useState(false);
-  const recusar = useRecusarNegociacao();
+  const { recusar, novoCicloSheet } = useRecusarNegociacao();
   const [contatos, setContatos] = useState<Contato[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [propostas, setPropostas] = useState<PropostaDocumento[]>([]);
@@ -642,6 +642,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               projetoNome={captacao.projeto?.nome ?? null}
               propostas={propostas}
               onChanged={fetchData}
+              onRecusar={() => recusar(captacao.id, fetchData)}
             />
             {proximoCiclo ? (
               <DetailHeaderAction label={`Ver ciclo ${proximoCiclo.ciclo_ano}`} icon={RotateCw} onClick={() => router.push(`/captacoes/${proximoCiclo.id}`)} />
@@ -1262,6 +1263,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           onRenovado={() => { setShowRenovarModal(false); void fetchData(); }}
         />
       )}
+      {novoCicloSheet}
     </div>
   );
 }

@@ -9,7 +9,7 @@ import { CampoValor } from "@/components/ui/CampoValor";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 import { PropostaOperacionalModal, type PropostaOperacionalDraft } from "@/components/projects/PropostaOperacionalModal";
-import { FecharNegocioSheet, useRecusarNegociacao } from "@/components/captacoes/FechamentoNegociacao";
+import { FecharNegocioSheet } from "@/components/captacoes/FechamentoNegociacao";
 import { cotaTemDisponibilidade, formatCotaValor } from "@/lib/cotas";
 import { propostaAtivaDe } from "@/lib/propostas";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
@@ -41,15 +41,16 @@ type Db = any;
  * "Fechar negócio" (FechamentoNegociacao) é o único caminho para ganhar: registra a venda (com
  * proposta), aprova a negociação e o banco cria o cliente.
  */
-export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propostas, onChanged }: {
+export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propostas, onChanged, onRecusar }: {
   captacao: Captacao;
   empresaNome: string;
   projetoNome: string | null;
   propostas: PropostaDaNegociacaoRow[];
   onChanged: () => Promise<void> | void;
+  /** Recusa (confirmação e novo ciclo) fica na tela, que segue montada enquanto recarrega. */
+  onRecusar: () => void;
 }) {
   const db: Db = useMemo(() => createClient(), []);
-  const recusar = useRecusarNegociacao();
   const menu = useAnchoredPopover();
   const [cotas, setCotas] = useState<CotaPatrocinio[]>([]);
   const [editando, setEditando] = useState(false);
@@ -82,7 +83,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
 
   function marcarRecusada() {
     menu.fechar();
-    recusar(captacao.id, onChanged);
+    onRecusar();
   }
 
   const valor = captacao.valor_solicitado;

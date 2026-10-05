@@ -172,7 +172,7 @@ function getInitialCap(nome: string) {
 export default function CaptacoesPage() {
   const supabase = createClient();
   const { confirmDelete } = useDeleteConfirm();
-  const recusar = useRecusarNegociacao();
+  const { recusar, novoCicloSheet } = useRecusarNegociacao();
   const [fechando, setFechando] = useState<CaptacaoRow | null>(null);
   const router = useRouter();
   const organizationId = useOrganizationId();
@@ -501,6 +501,7 @@ export default function CaptacoesPage() {
           onChanged={refetch}
         />
       )}
+      {novoCicloSheet}
 
       {/* Dropdown de lei — fixed, inline edit */}
       {leiMenuId && leiMenuPos && (
