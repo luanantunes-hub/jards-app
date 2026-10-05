@@ -311,17 +311,29 @@ export type BasesDoOrcamento = {
   valorTotalProjeto: number;
 };
 
-/** Bases de cálculo dos limites, sobre o vigente dos itens. */
-export function basesDoOrcamento(raizes: readonly LinhaOrcamento[], regime: RegimeNormativo | null): BasesDoOrcamento {
+/** Item resumido: o grupo de custo que vale para ele e o vigente. */
+export type ItemResumido = { grupo: GrupoCusto | null; vigente: number };
+
+/** Itens da árvore no formato resumido, para as contas que não precisam da hierarquia. */
+export function itensResumidos(raizes: readonly LinhaOrcamento[]): ItemResumido[] {
+  return itensDaArvore(raizes).map(linha => ({ grupo: linha.grupo, vigente: linha.totais.vigente }));
+}
+
+function bases(itens: readonly ItemResumido[], regime: RegimeNormativo | null): BasesDoOrcamento {
   const fora = new Set(regime ? FORA_DO_VALOR_DO_PROJETO[regime.codigo] ?? [] : []);
   let total = 0;
   let projeto = 0;
-  for (const linha of itensDaArvore(raizes)) {
-    const valor = centavos(linha.totais.vigente);
+  for (const item of itens) {
+    const valor = centavos(item.vigente);
     total += valor;
-    if (!linha.grupo || !fora.has(linha.grupo)) projeto += valor;
+    if (!item.grupo || !fora.has(item.grupo)) projeto += valor;
   }
   return { valorProjeto: projeto / 100, valorTotalProjeto: total / 100 };
+}
+
+/** Bases de cálculo dos limites, sobre o vigente dos itens. */
+export function basesDoOrcamento(raizes: readonly LinhaOrcamento[], regime: RegimeNormativo | null): BasesDoOrcamento {
+  return bases(itensResumidos(raizes), regime);
 }
 
 const ROTULO_DA_BASE: Partial<Record<string, string>> = {
@@ -354,20 +366,24 @@ export type TetoDoGrupo = {
  * quando há um. "Sem grupo de custo" aparece por último, para ser classificado.
  */
 export function tetosPorGrupo(raizes: readonly LinhaOrcamento[], regime: RegimeNormativo | null): TetoDoGrupo[] {
-  const itens = itensDaArvore(raizes);
-  const total = itens.reduce((soma, linha) => soma + centavos(linha.totais.vigente), 0);
+  return tetosDosItens(itensResumidos(raizes), regime);
+}
+
+/** O mesmo de tetosPorGrupo, a partir dos itens resumidos. */
+export function tetosDosItens(itens: readonly ItemResumido[], regime: RegimeNormativo | null): TetoDoGrupo[] {
+  const total = itens.reduce((soma, item) => soma + centavos(item.vigente), 0);
   const porGrupo = new Map<GrupoCusto | null, { valor: number; itens: number }>();
-  for (const linha of itens) {
-    const atual = porGrupo.get(linha.grupo) ?? { valor: 0, itens: 0 };
-    atual.valor += centavos(linha.totais.vigente);
+  for (const item of itens) {
+    const atual = porGrupo.get(item.grupo) ?? { valor: 0, itens: 0 };
+    atual.valor += centavos(item.vigente);
     atual.itens += 1;
-    porGrupo.set(linha.grupo, atual);
+    porGrupo.set(item.grupo, atual);
   }
 
-  const bases = basesDoOrcamento(raizes, regime);
+  const calculadas = bases(itens, regime);
   const baseEmCentavos: Partial<Record<string, number>> = {
-    valor_projeto: centavos(bases.valorProjeto),
-    valor_total_projeto: centavos(bases.valorTotalProjeto),
+    valor_projeto: centavos(calculadas.valorProjeto),
+    valor_total_projeto: centavos(calculadas.valorTotalProjeto),
   };
   const ligacoes = regime ? LIMITE_DO_GRUPO[regime.codigo] ?? {} : {};
   const grupos: (GrupoCusto | null)[] = [

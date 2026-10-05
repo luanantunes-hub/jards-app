@@ -13,6 +13,9 @@ import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
 import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { avaliarProntidao, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
+import { ProntidaoPrestacao } from "@/components/prestacao/ProntidaoPrestacao";
+import { MarcosDaPrestacao, ProximosPrazos } from "@/components/prestacao/PrazosEMarcos";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -61,6 +64,7 @@ export default function PrestacaoDetalhe() {
   const { itens } = useItensDoOrcamento(id);
   const [atividadesCount, setAtividadesCount] = useState(0);
   const [comprovantes, setComprovantes] = useState<ComprovanteParaExecucao[]>([]);
+  const [alteracoesAguardando, setAlteracoesAguardando] = useState<{ numero: number; solicitada_em: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
   const [avancarOpen, setAvancarOpen] = useState(false);
@@ -93,6 +97,7 @@ export default function PrestacaoDetalhe() {
       { data: logData },
       { count: atCount },
       { data: compData },
+      { data: alteracoesData },
     ] = await Promise.all([
       (supabase as any)
         .from("prestacoes_contas")
@@ -112,6 +117,12 @@ export default function PrestacaoDetalhe() {
         .from("prestacao_comprovantes")
         .select("no_id, status, valor_extraido")
         .eq("prestacao_id", id),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_alteracoes ainda não está no tipo Database
+      (supabase as any)
+        .from("prestacao_alteracoes")
+        .select("numero, solicitada_em")
+        .eq("prestacao_id", id)
+        .eq("status", "solicitada"),
     ]);
 
     setPrestacao(data as PrestacaoDetalhe);
@@ -119,6 +130,7 @@ export default function PrestacaoDetalhe() {
 
     setAtividadesCount(atCount ?? 0);
     setComprovantes((compData as ComprovanteParaExecucao[]) ?? []);
+    setAlteracoesAguardando(alteracoesData ?? []);
 
     setLoading(false);
   }, [id, supabase]);
@@ -182,6 +194,20 @@ export default function PrestacaoDetalhe() {
   const totalAComprovar = totalAprovado - totalComprovado;
   const pct = percentualExecutado(totalComprovado, totalAprovado) ?? 0;
 
+  // Prontidão e prazos (P1.9).
+  const regime = regimes.find(r => r.id === prestacao.regime_id)?.regime ?? null;
+  const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
+  const prontidao = avaliarProntidao({
+    regime,
+    identificadorOficial: prestacao.identificador_oficial ?? null,
+    prazo: prestacao.prazo,
+    itens: itens.map(item => ({ id: item.id, grupo: item.grupo, vigente: item.vigente })),
+    comprovantes,
+    atividades: atividadesCount,
+    alteracoesAguardando: alteracoesAguardando.length,
+  });
+  const prazos = prazosDaPrestacao(prestacao, regime, alteracoesAguardando, hoje);
+
   // Alerta de prazo (60 dias após data_fim_execucao, ou campo prazo)
   const vencida = prestacao.prazo && new Date(prestacao.prazo) < new Date()
     && prestacao.status !== "aprovado" && prestacao.status !== "arquivado";
@@ -196,9 +222,9 @@ export default function PrestacaoDetalhe() {
     && prestacao.status !== "aprovado" && prestacao.status !== "arquivado";
 
   return (
-    <div className="px-8 py-6">
+    <div className="mx-auto max-w-pagina px-4 py-6 md:px-8">
       {/* Avançar status */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="text-[0.6875rem] text-black/40">
           {prestacao.captacao && <span>Negociação: {prestacao.captacao.titulo ?? "—"}</span>}
           {prestacao.projeto && <span className="ml-2">· Projeto: {prestacao.projeto.nome}</span>}
@@ -208,10 +234,10 @@ export default function PrestacaoDetalhe() {
           <div className="relative flex-shrink-0" ref={avancarBoxRef}>
             <button
               onClick={() => setAvancarOpen(!avancarOpen)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded text-[0.8125rem] font-semibold text-white transition hover:opacity-90"
-              style={{ background: "#7259B5" }}
+              aria-expanded={avancarOpen}
+              className="flex items-center gap-2 rounded bg-[#0D0D0D] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
             >
-              Avançar status <ChevronDown size={13} />
+              Avançar status <ChevronDown size={13} aria-hidden />
             </button>
 
             {avancarOpen && avancarMenuPos && createPortal(
@@ -292,16 +318,18 @@ export default function PrestacaoDetalhe() {
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-5">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
         {/* Coluna principal */}
-        <div className="col-span-2 space-y-4">
+        <div className="min-w-0 space-y-4 lg:col-span-2">
+
+          <ProntidaoPrestacao prontidao={prontidao} prestacaoId={id} />
 
           {/* Painel de comprovação financeira */}
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {/* Header */}
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
               <p className="text-[0.6875rem] font-semibold text-black/50 mb-3">Comprovação financeira</p>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                   <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">Aprovado</p>
                   <p className="text-[1.0625rem] font-bold text-black/80">{fmt(totalAprovado)}</p>
@@ -386,7 +414,7 @@ export default function PrestacaoDetalhe() {
           </div>
 
           {/* Prazo */}
-          <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <div id="prazo" className="scroll-mt-4 bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <PrazoPrestacao
               prestacao={prestacao}
               regime={regimes.find(r => r.id === prestacao.regime_id)?.regime ?? null}
@@ -427,12 +455,14 @@ export default function PrestacaoDetalhe() {
             </div>
           </div>
 
-          <RegimeDadosOficiais
-            prestacao={prestacao}
-            regimes={regimes}
-            podeEditar={permissoes.editar}
-            onSalvar={campos => void salvarCampos(campos)}
-          />
+          <div id="dados-oficiais" className="scroll-mt-4">
+            <RegimeDadosOficiais
+              prestacao={prestacao}
+              regimes={regimes}
+              podeEditar={permissoes.editar}
+              onSalvar={campos => void salvarCampos(campos)}
+            />
+          </div>
 
           {/* Observações */}
           {prestacao.observacoes && (
@@ -445,7 +475,7 @@ export default function PrestacaoDetalhe() {
         </div>
 
         {/* Coluna lateral */}
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
 
           {/* Info do status */}
           <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -472,42 +502,8 @@ export default function PrestacaoDetalhe() {
             <p className="text-[0.6875rem] font-semibold mt-2" style={{ color: meta.color }}>{meta.label}</p>
           </div>
 
-          {/* Checklist de prontidão */}
-          <div className="bg-white rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <div className="px-4 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <p className="text-[0.6875rem] font-semibold text-black/50">Prontidão para envio</p>
-            </div>
-            <div className="p-4 space-y-2.5">
-              {[
-                {
-                  label: "Atividades cadastradas",
-                  ok: atividadesCount > 0,
-                  detail: atividadesCount > 0 ? `${atividadesCount} atividade${atividadesCount > 1 ? "s" : ""}` : "Nenhuma cadastrada",
-                },
-                {
-                  label: "Comprovantes enviados",
-                  ok: comprovantes.length > 0,
-                  detail: comprovantes.length > 0 ? `${comprovantes.length} comprovante${comprovantes.length > 1 ? "s" : ""}` : "Nenhum enviado",
-                },
-                {
-                  label: "Orçamento em comprovação",
-                  ok: pct >= 50,
-                  detail: `${pct}% comprovado`,
-                },
-              ].map(item => (
-                <div key={item.label} className="flex items-start gap-2.5">
-                  <span
-                    className="w-2 h-2 rounded-full flex-shrink-0 mt-1"
-                    style={{ background: item.ok ? "#2E8932" : "#D94E4E" }}
-                  />
-                  <div>
-                    <p className="text-[0.6875rem] font-medium text-black/70">{item.label}</p>
-                    <p className="text-[0.625rem]" style={{ color: item.ok ? "#2E8932" : "#D94E4E" }}>{item.detail}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ProximosPrazos prazos={prazos} />
+          <MarcosDaPrestacao prestacao={prestacao} hoje={hoje} />
 
           {/* Histórico */}
           <div className="bg-white rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
