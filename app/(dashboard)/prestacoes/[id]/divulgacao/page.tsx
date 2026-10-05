@@ -124,7 +124,7 @@ export default function DivulgacaoPage() {
     <div className="px-8 py-6 max-w-4xl">
 
       {erro && (
-        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-4 py-3 text-[0.75rem] font-medium text-[#B23A3A]">
+        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-white px-4 py-3 text-[0.75rem] font-medium text-[#B23A3A]">
           Não foi possível concluir a operação: {erro}
         </div>
       )}
@@ -132,7 +132,7 @@ export default function DivulgacaoPage() {
       {/* Alertas de conformidade */}
       {semLei > 0 && (
         <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
-          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+          style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
           <span className="font-semibold flex-shrink-0">Atenção:</span>
           <span>
             {semLei} material{semLei > 1 ? "is" : ""} sem menção à Lei Rouanet / Lei de Incentivo à Cultura.
@@ -142,7 +142,7 @@ export default function DivulgacaoPage() {
       )}
       {semLogo > 0 && (
         <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
-          style={{ background: "#B07A1408", borderColor: "#B07A1430", color: "#B07A14" }}>
+          style={{ background: "#fff", borderColor: "#B07A1430", color: "#B07A14" }}>
           <span className="font-semibold flex-shrink-0">Atenção:</span>
           <span>
             {semLogo} material{semLogo > 1 ? "is" : ""} sem logo do MinC.
@@ -194,7 +194,7 @@ export default function DivulgacaoPage() {
                   style={{ borderColor: "rgba(13,13,13,.05)" }}>
                   <td className="px-4 py-3">
                     <span className="px-2 py-0.5 rounded text-[0.625rem] font-semibold"
-                      style={{ background: "rgba(114,89,181,.08)", color: "#7259B5" }}>
+                      style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
                       {TIPO_LABEL[item.tipo]}
                     </span>
                   </td>

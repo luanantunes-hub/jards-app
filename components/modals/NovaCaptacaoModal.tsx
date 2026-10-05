@@ -778,8 +778,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
 
             {(blindagem || exclusividade) && (
               <div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
-                {blindagem && <p className="rounded bg-[#FEF3C7] px-3 py-2 text-[0.6875rem] font-medium text-[#9A6710]">Empresa já prospectada por {blindagem.captadorNome}.</p>}
-                {exclusividade && <p role="alert" className="rounded bg-[#D94E4E12] px-3 py-2 text-[0.6875rem] font-medium text-[#B83E3E]">{EXCLUSAO_LABELS[exclusividade.tipo] || exclusividade.tipo} ativa com {exclusividade.captadorNome}.</p>}
+                {blindagem && <p className="rounded border border-[#B07A14]/30 bg-white px-3 py-2 text-[0.6875rem] font-medium text-[#9A6710]">Empresa já prospectada por {blindagem.captadorNome}.</p>}
+                {exclusividade && <p role="alert" className="rounded border border-[#D94E4E]/30 bg-white px-3 py-2 text-[0.6875rem] font-medium text-[#B83E3E]">{EXCLUSAO_LABELS[exclusividade.tipo] || exclusividade.tipo} ativa com {exclusividade.captadorNome}.</p>}
               </div>
             )}
 
@@ -954,7 +954,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
           {!editData && !registrarContato && (
             <div className="mt-5 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <button type="button" onClick={() => setRegistrarContato(true)}
-                className="inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+                className="inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                 <Plus size={12} aria-hidden="true" /> Registrar um contato que já aconteceu
               </button>
             </div>

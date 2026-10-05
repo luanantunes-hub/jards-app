@@ -262,7 +262,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
                       );
                     })}
                     {acoes.includes("excluir") && (
-                      <button type="button" onClick={() => excluir(alt)} className="h-8 rounded px-2 text-[0.6875rem] text-[#B23B3B]/80 transition hover:bg-[#D94A4A]/[.06] hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
+                      <button type="button" onClick={() => excluir(alt)} className="h-8 rounded px-2 text-[0.6875rem] text-[#B23B3B]/80 transition hover:bg-black/[.04] hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
                         Excluir
                       </button>
                     )}

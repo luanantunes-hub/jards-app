@@ -16,10 +16,10 @@ type Usuario = {
 };
 
 const PAPEL_COLOR: Record<string, { bg: string; text: string }> = {
-  admin:       { bg: "rgba(114,89,181,.10)", text: "#7259B5" },
-  colaborador: { bg: "rgba(46,137,50,.10)",  text: "#2E8932" },
+  admin:       { bg: "#fff", text: "#7259B5" },
+  colaborador: { bg: "#fff",  text: "#2E8932" },
   leitor:      { bg: "rgba(13,13,13,.06)",  text: "rgba(13,13,13,.50)" },
-  captador:    { bg: "rgba(45,114,176,.10)", text: "#2D72B0" },
+  captador:    { bg: "#fff", text: "#2D72B0" },
   visualizador:{ bg: "rgba(13,13,13,.06)",  text: "rgba(13,13,13,.50)" },
 };
 
@@ -117,7 +117,7 @@ export default function AdminUsuariosPage() {
       </div>
 
       {entryError && (
-        <div className="mb-4 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.04] px-4 py-2.5 text-[0.75rem] text-[#991B1B]">
+        <div className="mb-4 rounded border border-[#D94E4E]/20 bg-white px-4 py-2.5 text-[0.75rem] text-[#991B1B]">
           {entryError}
         </div>
       )}
@@ -156,7 +156,7 @@ export default function AdminUsuariosPage() {
                     {papelStyle ? (
                       <span
                         className="text-[0.625rem] font-semibold px-2 py-0.5 rounded"
-                        style={{ background: papelStyle.bg, color: papelStyle.text }}
+                        style={{ background: papelStyle.bg, color: papelStyle.text, border: `1px solid ${papelStyle.text.startsWith("#") ? papelStyle.text + "47" : "rgba(13,13,13,.12)"}` }}
                       >
                         {PAPEL_LABEL[u.papel ?? ""] ?? u.papel}
                       </span>

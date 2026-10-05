@@ -205,7 +205,7 @@ export function NovoProspectModal({ onClose, onSaved, nomePreEmpresa, empresaPub
                     {showCreate && (
                       <button type="button"
                         onMouseDown={e => { e.preventDefault(); setSetorDropdown(false); }}
-                        className="block w-full px-3 py-2 text-left text-[0.75rem] text-[#7259B5] transition hover:bg-[#7259B5]/[.05]">
+                        className="block w-full px-3 py-2 text-left text-[0.75rem] text-[#7259B5] transition hover:bg-black/[.04]">
                         Criar "<span className="font-semibold">{setor.trim()}</span>"
                       </button>
                     )}

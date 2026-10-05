@@ -95,7 +95,7 @@ function StatusPill({ status }: { status: string }) {
   return (
     <span
       className="rounded-full px-2 py-1 text-[0.5625rem] font-bold uppercase tracking-[.05em]"
-      style={{ color: item.color, background: `${item.color}10` }}
+      style={{ color: item.color, background: "#fff", border: `1px solid ${item.color}47` }}
     >
       {item.label}
     </span>

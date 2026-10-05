@@ -284,7 +284,7 @@ export function EditarAtividadeModal({
           ) : (
             <>
               {erro && (
-                <div role="alert" className="text-[0.75rem] font-semibold text-[#D94E4E] bg-[#D94E4E]/8 rounded px-3 py-2 mb-4">
+                <div role="alert" className="text-[0.75rem] font-semibold text-[#D94E4E] border border-[#D94E4E]/30 bg-white rounded px-3 py-2 mb-4">
                   {erro}
                 </div>
               )}
@@ -484,7 +484,7 @@ export function EditarAtividadeModal({
           <button
             onClick={handleDelete}
             disabled={deleting || loadingAtividade}
-            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#D94E4E]/70 hover:text-[#D94E4E] hover:bg-[#D94E4E]/6 rounded transition disabled:opacity-40"
+            className="flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-[#D94E4E]/70 hover:text-[#D94E4E] hover:bg-black/[.04] rounded transition disabled:opacity-40"
           >
             <Trash2 size={12} />
             {deleting ? "Excluindo…" : "Excluir"}
@@ -574,7 +574,7 @@ function Dropdown({
         <div className="fixed z-[999] bg-white border rounded shadow-lg max-h-48 overflow-y-auto" style={{ ...menuStyle, borderColor: "rgba(13,13,13,.1)" }}>
           {value && (
             <button onClick={() => { onChange(null); onClose(); }}
-              className="w-full text-left px-3 py-2 text-[0.75rem] text-[#D94E4E] hover:bg-[#D94E4E]/5 transition border-b"
+              className="w-full text-left px-3 py-2 text-[0.75rem] text-[#D94E4E] hover:bg-black/[.04] transition border-b"
               style={{ borderColor: "rgba(13,13,13,.06)" }}>
               Limpar seleção
             </button>

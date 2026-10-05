@@ -192,7 +192,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                     const mov = movimentos.find(m => m.no_id === linha.no.id);
                     const diferenca = mov ? mov.para - mov.de : 0;
                     return (
-                      <tr key={linha.no.id} className={`border-b ${mov ? "bg-[#7259B5]/[.035]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}>
+                      <tr key={linha.no.id} className={`border-b ${mov ? "bg-black/[.03]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}>
                         <td className="px-3 py-2">
                           {linha.caminho.length > 0 && <p className="text-[0.5625rem] uppercase tracking-[.08em] text-black/30">{linha.caminho.join(" › ")}</p>}
                           <p className="text-[0.75rem] text-black/80">{linha.no.nome}</p>
@@ -252,7 +252,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                     <span className={ROTULO}>Valor</span>
                     <input inputMode="decimal" value={novo.valor} onChange={e => setNovos(novos.map(n => n.chave === novo.chave ? { ...n, valor: e.target.value } : n))} className={`${CAMPO} text-right tabular-nums`} placeholder="R$ 0,00" />
                   </label>
-                  <button type="button" onClick={() => setNovos(novos.filter(n => n.chave !== novo.chave))} aria-label="Tirar o item novo" className="h-9 rounded px-2 text-black/30 transition hover:bg-[#D94A4A]/10 hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
+                  <button type="button" onClick={() => setNovos(novos.filter(n => n.chave !== novo.chave))} aria-label="Tirar o item novo" className="h-9 rounded px-2 text-black/30 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
                     <Trash2 size={13} />
                   </button>
                 </div>
@@ -260,7 +260,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
               <button
                 type="button"
                 onClick={() => setNovos([...novos, { chave: Date.now(), nome: "", parent_id: "", grupo_custo: "", valor: "" }])}
-                className="flex items-center gap-1.5 rounded px-2 py-1.5 text-[0.75rem] text-[#684DB0] transition hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+                className="flex items-center gap-1.5 rounded px-2 py-1.5 text-[0.75rem] text-[#684DB0] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]"
               >
                 <Plus size={13} aria-hidden /> Incluir item novo
               </button>
@@ -287,7 +287,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                         role="radio"
                         aria-checked={classificacaoManual === valor}
                         onClick={() => setClassificacaoManual(valor)}
-                        className={`rounded border px-2 py-1.5 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${classificacaoManual === valor ? "border-[#7259B5] bg-[#7259B5]/[.05] text-[#684DB0]" : "border-black/[.12] text-black/60 hover:border-black/25"}`}
+                        className={`rounded border px-2 py-1.5 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${classificacaoManual === valor ? "border-[#7259B5] bg-white text-[#684DB0]" : "border-black/[.12] text-black/60 hover:border-black/25"}`}
                       >
                         {rotulo}
                       </button>

@@ -255,7 +255,7 @@ export function TextosManager({ projetoId }: { projetoId: string }) {
                       <button onClick={() => openEditSheet(item)} className="flex h-7 w-7 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05]" aria-label={`Editar ${item.campo_nome}`}>
                         <Pencil size={12} />
                       </button>
-                      <button onClick={() => removeItem(item)} className="group flex h-7 w-7 items-center justify-center rounded transition hover:bg-[#D94E4E]/10">
+                      <button onClick={() => removeItem(item)} className="group flex h-7 w-7 items-center justify-center rounded transition hover:bg-black/[.04]">
                         <Trash2 size={13} className="text-black/25 transition-colors group-hover:text-[#D94E4E]" />
                       </button>
                     </div>

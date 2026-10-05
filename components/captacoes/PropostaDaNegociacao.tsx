@@ -71,7 +71,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
   if (captacao.status === "aprovado" || captacao.status === "recusado") {
     const ganho = captacao.status === "aprovado";
     return (
-      <div className="flex h-11 items-center gap-2 rounded border px-4" style={{ borderColor: ganho ? "#2E893240" : "#D94E4E40", background: ganho ? "#2E893208" : "#D94E4E08" }}>
+      <div className="flex h-11 items-center gap-2 rounded border px-4" style={{ borderColor: ganho ? "#2E893240" : "#D94E4E40", background: "#fff" }}>
         {ganho && <Check size={13} className="text-[#2E8932]" aria-hidden="true" />}
         <span className="text-[0.75rem] font-bold tabular-nums" style={{ color: ganho ? "#2E8932" : "#B23A3A" }}>
           {ganho ? `Negócio fechado · ${moeda(captacao.valor_aprovado ?? captacao.valor_solicitado)}` : "Negociação recusada"}
@@ -131,7 +131,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
             </button>
           )}
           <button type="button" onClick={marcarRecusada}
-            className="rounded px-3 py-2 text-left text-[0.8125rem] text-[#B23A3A] transition hover:bg-[#D94E4E]/[.06] focus-visible:bg-[#D94E4E]/[.06] focus-visible:outline-none">
+            className="rounded px-3 py-2 text-left text-[0.8125rem] text-[#B23A3A] transition hover:bg-black/[.04] focus-visible:bg-black/[.04] focus-visible:outline-none">
             Marcar como recusada
           </button>
         </div>
@@ -248,7 +248,7 @@ function ValorSheet({ db, captacao, empresaNome, comProjeto, cotas, cotaAtual, o
           <CampoValor id={campoValor} value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!lido.valido} autoFocus />
         </div>
       </div>
-      {erro && <p role="alert" className="mt-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
+      {erro && <p role="alert" className="mt-4 rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
     </BottomSheet>
   );
 }

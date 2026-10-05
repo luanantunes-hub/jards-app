@@ -268,11 +268,11 @@ export default function NotificacoesPage() {
       </div>
 
       {!migrationReady && (
-        <div className="mt-6 rounded border border-[#B07A14]/20 bg-[#B07A14]/[.05] px-4 py-3 text-[0.6875rem] text-[#805A12]">
+        <div className="mt-6 rounded border border-[#B07A14]/20 bg-white px-4 py-3 text-[0.6875rem] text-[#805A12]">
           A central está em modo compatível. Aplique a migration Notification Inbox v2 para ativar prioridade, arquivo, adiamento e novos eventos.
         </div>
       )}
-      {error && <div className="mt-6 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.05] px-4 py-3 text-[0.6875rem] text-[#A33A3A]">{error}</div>}
+      {error && <div className="mt-6 rounded border border-[#D94E4E]/20 bg-white px-4 py-3 text-[0.6875rem] text-[#A33A3A]">{error}</div>}
 
       <div className="mt-7 flex flex-wrap items-center justify-between gap-3 border-b border-black/[.08] pb-3">
         <SegmentedControl
@@ -322,17 +322,17 @@ export default function NotificacoesPage() {
                       className="group flex cursor-pointer items-start gap-3 px-4 py-4 outline-none transition hover:bg-black/[.02] focus-visible:bg-black/[.03]"
                       style={{
                         borderBottom: index < grouped[group].length - 1 ? "1px solid rgba(13,13,13,.055)" : undefined,
-                        background: item.lida ? "#FFFFFF" : critical ? "rgba(217,78,78,.025)" : "rgba(114,89,181,.02)",
+                        background: item.lida ? "#FFFFFF" : "rgba(13,13,13,.025)",
                       }}
                     >
-                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded" style={{ background: critical ? "rgba(217,78,78,.09)" : "rgba(114,89,181,.08)" }}>
+                      <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded" style={{ background: "rgba(13,13,13,.04)" }}>
                         <Icon size={15} style={{ color: critical ? "#B83E3E" : "#7259B5" }} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="truncate text-[0.8125rem] font-semibold text-black/80">{item.titulo}</p>
                           {!item.lida && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#7259B5]" />}
-                          {critical && <span className="rounded bg-[#D94E4E]/[.09] px-1.5 py-0.5 text-[0.5rem] font-bold uppercase tracking-wide text-[#A33A3A]">Crítica</span>}
+                          {critical && <span className="rounded border border-[#D94E4E]/30 bg-white px-1.5 py-0.5 text-[0.5rem] font-bold uppercase tracking-wide text-[#A33A3A]">Crítica</span>}
                         </div>
                         <p className="mt-0.5 text-[0.75rem] leading-5 text-black/48">{item.mensagem}</p>
                         <div className="mt-1.5 flex items-center gap-2 text-[0.5625rem] text-black/28">

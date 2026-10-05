@@ -301,7 +301,7 @@ export default function RelatorioPage() {
                           </td>
                           <td className="px-4 py-3">
                             <span className="text-[0.625rem] font-semibold px-1.5 py-0.5 rounded uppercase tracking-wide"
-                              style={{ background: "rgba(114,89,181,.10)", color: "#7259B5" }}>
+                              style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
                               {c.tipo}
                             </span>
                           </td>

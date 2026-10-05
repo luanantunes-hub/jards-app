@@ -82,7 +82,7 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
               Abrir vínculo <ExternalLink size={12} />
             </Link>
           ) : (
-            <p className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.05] px-3 py-2 text-[0.6875rem] text-black/55">
+            <p className="rounded border border-[#B07A14]/25 bg-white px-3 py-2 text-[0.6875rem] text-black/55">
               O vínculo original não está disponível. Você ainda pode concluir ou excluir este follow-up aqui.
             </p>
           )}

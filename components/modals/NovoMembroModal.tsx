@@ -243,7 +243,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[35rem] flex-col overflow-hidden rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between border-b px-6 pb-4 pt-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded bg-[#7259B5]/[.08]">
+            <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.04]">
               <Users size={16} className="text-[#7259B5]" />
             </div>
             <div>
@@ -309,20 +309,20 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
             </button>
           </div>
 
-          {error && <div role="alert" className="mb-4 rounded bg-[#D94E4E]/[.08] px-3 py-2.5 text-[0.75rem] font-medium text-[#D94E4E]">{error}</div>}
-          {success && <div className="mb-4 rounded bg-[#2E8932]/[.08] px-3 py-2.5 text-[0.75rem] font-medium text-[#2E8932]"><div className="flex items-center gap-2"><CheckCircle2 size={14} />{success}</div>{manualInviteUrl && <button onClick={async () => { await navigator.clipboard.writeText(manualInviteUrl); setCopied(true); }} className="mt-2 flex items-center gap-1.5 rounded border border-[#2E8932]/30 bg-white px-3 py-2 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-black/[.04]"><Copy size={12} />{copied ? "Link copiado" : "Copiar link do convite"}</button>}</div>}
+          {error && <div role="alert" className="mb-4 rounded border border-[#D94E4E]/30 bg-white px-3 py-2.5 text-[0.75rem] font-medium text-[#D94E4E]">{error}</div>}
+          {success && <div className="mb-4 rounded border border-[#2E8932]/30 bg-white px-3 py-2.5 text-[0.75rem] font-medium text-[#2E8932]"><div className="flex items-center gap-2"><CheckCircle2 size={14} />{success}</div>{manualInviteUrl && <button onClick={async () => { await navigator.clipboard.writeText(manualInviteUrl); setCopied(true); }} className="mt-2 flex items-center gap-1.5 rounded border border-[#2E8932]/30 bg-white px-3 py-2 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-black/[.04]"><Copy size={12} />{copied ? "Link copiado" : "Copiar link do convite"}</button>}</div>}
 
           {mode === "invite" ? (
             <div className="space-y-4">
               {semVagaCaptacao && !loading && (
-                <div className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.04] px-4 py-3">
+                <div className="rounded border border-[#B07A14]/25 bg-white px-4 py-3">
                   <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas {prestacao ? "da captação" : "disponíveis"}</p>
                   <p className="mt-1 text-[0.6875rem] leading-5 text-black/45">Adicione um ou mais usuários extras antes de enviar o próximo convite.</p>
                   <button onClick={() => setMode("buy")} className="mt-2 text-[0.6875rem] font-semibold text-[#B07A14] hover:underline">Comprar usuários extras</button>
                 </div>
               )}
               {semVagaPrestacao && !loading && (
-                <div className="rounded border border-[#B07A14]/25 bg-[#B07A14]/[.04] px-4 py-3">
+                <div className="rounded border border-[#B07A14]/25 bg-white px-4 py-3">
                   <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas da prestação de contas</p>
                   <p className="mt-1 text-[0.6875rem] leading-5 text-black/45">Todas as vagas do módulo estão em uso ou reservadas por convites. Para ampliar, fale com o suporte do Jards.</p>
                 </div>
@@ -348,7 +348,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
                           role="checkbox"
                           aria-checked={marcado}
                           onClick={() => alternarModulo(modulo)}
-                          className={`flex items-center gap-2.5 rounded border px-3 py-2.5 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${marcado ? "border-[#7259B5] bg-[#7259B5]/[.035]" : "border-black/10 bg-white hover:bg-black/[.025]"}`}
+                          className={`flex items-center gap-2.5 rounded border px-3 py-2.5 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${marcado ? "border-[#7259B5] bg-white" : "border-black/10 bg-white hover:bg-black/[.025]"}`}
                         >
                           <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm border ${marcado ? "border-[#7259B5] bg-[#7259B5] text-white" : "border-black/25 bg-white"}`}>
                             {marcado && <Check size={11} />}
@@ -378,7 +378,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
                         role="radio"
                         aria-checked={selected}
                         onClick={() => setRole(value)}
-                        className={`flex w-full items-start gap-3 rounded border px-3.5 py-3 text-left transition ${selected ? "border-[#7259B5] bg-[#7259B5]/[.035]" : "border-black/10 bg-white hover:bg-black/[.025]"}`}
+                        className={`flex w-full items-start gap-3 rounded border px-3.5 py-3 text-left transition ${selected ? "border-[#7259B5] bg-white" : "border-black/10 bg-white hover:bg-black/[.025]"}`}
                       >
                         <span className={`mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded ${selected ? "bg-[#7259B5] text-white" : "bg-black/[.045] text-black/35"}`}>
                           <RoleIcon role={value} />

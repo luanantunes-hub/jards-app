@@ -132,7 +132,7 @@ export default function AdminOrganizacoesPage() {
                 type="button"
                 aria-pressed={soPrestacao === opcao.v}
                 onClick={() => setSoPrestacao(opcao.v)}
-                className={`h-8 rounded px-3 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] ${soPrestacao === opcao.v ? "bg-[#7259B5]/[.10] text-[#684DB0]" : "text-black/50 hover:text-black/75"}`}
+                className={`h-8 rounded px-3 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] ${soPrestacao === opcao.v ? "bg-black/[.05] text-[#684DB0]" : "text-black/50 hover:text-black/75"}`}
               >
                 {opcao.l}
               </button>
@@ -152,7 +152,7 @@ export default function AdminOrganizacoesPage() {
       </div>
 
       {erro && (
-        <div role="alert" className="mb-4 rounded border border-[#D94A4A]/20 bg-[#D94A4A]/[.04] px-4 py-2.5 text-[0.75rem] text-[#991B1B]">
+        <div role="alert" className="mb-4 rounded border border-[#D94A4A]/20 bg-white px-4 py-2.5 text-[0.75rem] text-[#991B1B]">
           {erro}
         </div>
       )}

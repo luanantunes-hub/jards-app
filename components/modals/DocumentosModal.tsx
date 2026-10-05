@@ -44,9 +44,9 @@ const ICONES = Object.keys(ICONE_MAP);
 
 const COR_MAP: Record<string, { bg: string; text: string; border: string }> = {
   azul:    { bg: "#DBEAFE", text: "#2D72B0", border: "#93C5FD" },
-  pessego: { bg: "#D94E4E14", text: "#D94E4E", border: "#D94E4E80" },
-  verde:   { bg: "#2E893214", text: "#2E8932", border: "#2E893280" },
-  roxo:    { bg: "#7259B514", text: "#7259B5", border: "#7259B580" },
+  pessego: { bg: "#fff", text: "#D94E4E", border: "#D94E4E80" },
+  verde:   { bg: "#fff", text: "#2E8932", border: "#2E893280" },
+  roxo:    { bg: "#fff", text: "#7259B5", border: "#7259B580" },
 };
 const CORES = Object.keys(COR_MAP);
 

@@ -744,7 +744,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
         <TabBtn active={tab === "proposta"} onClick={() => setTab("proposta")} icon={<BriefcaseBusiness size={12} />}>
           Cotas
           {(propostas.length + cotas.length) > 0 && (
-            <span className="ml-1.5 w-4 h-4 rounded bg-[#7259B5]/10 text-[#7259B5] text-[0.5625rem] font-bold flex items-center justify-center">
+            <span className="ml-1.5 w-4 h-4 rounded bg-black/[.06] text-black/55 text-[0.5625rem] font-bold flex items-center justify-center">
               {propostas.length + cotas.length}
             </span>
           )}
@@ -1036,7 +1036,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                                 <span className="text-[0.8125rem] font-semibold" style={{ color: "#2E8932" }}>{fmtValor(real)}</span>
                                 <span className="text-[0.6875rem] font-bold" style={{ color: "#2E8932" }}>{projeto.valor_alvo ? `${pct.toFixed(0)}%` : "—"}</span>
                               </div>
-                              <div className="h-2 rounded bg-[#2E8932]/10 overflow-hidden">
+                              <div className="h-2 rounded bg-black/[.06] overflow-hidden">
                                 <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${pct}%` }} />
                               </div>
                             </>
@@ -1060,7 +1060,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                                 <span className="text-[0.8125rem] font-semibold" style={{ color: "#7259B5" }}>{fmtValor(neg)}</span>
                                 <span className="text-[0.6875rem] font-bold" style={{ color: "#7259B5" }}>{projeto.valor_alvo ? `${pct.toFixed(0)}%` : "—"}</span>
                               </div>
-                              <div className="h-2 rounded bg-[#7259B5]/10 overflow-hidden">
+                              <div className="h-2 rounded bg-black/[.06] overflow-hidden">
                                 <div className="h-full rounded bg-[#7259B5] transition-all" style={{ width: `${pct}%` }} />
                               </div>
                             </>
@@ -1251,7 +1251,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                       const statusMeta = STATUS_PROPOSTA[proposta.status] ?? { label: proposta.status, color: "rgba(13,13,13,.40)" };
                       return (
                         <button key={proposta.id} onClick={() => { setEditingProposta(proposta); setShowPropostaModal(true); }} className="rounded border border-black/[.08] bg-white p-5 text-left transition hover:bg-black/[.018] active:scale-[.995]">
-                          <div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{captacao ? `Negociação · ${captacao.empresa_crm?.nome || captacao.titulo}` : inscricao ? `Inscrição · ${inscricao.empresa_crm?.nome || "sem empresa"}` : "Sem vínculo definido"}</p></div><span className="shrink-0 rounded px-2 py-1 text-[0.5625rem] font-semibold" style={{ color: statusMeta.color, background: `${statusMeta.color}12` }}>{statusMeta.label}</span></div>
+                          <div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{captacao ? `Negociação · ${captacao.empresa_crm?.nome || captacao.titulo}` : inscricao ? `Inscrição · ${inscricao.empresa_crm?.nome || "sem empresa"}` : "Sem vínculo definido"}</p></div><span className="shrink-0 rounded px-2 py-1 text-[0.5625rem] font-semibold" style={{ color: statusMeta.color, background: "#fff", border: `1px solid ${statusMeta.color}47` }}>{statusMeta.label}</span></div>
                           <div className="mt-5 grid grid-cols-3 gap-3 border-t border-black/[.06] pt-4"><MiniInfo label="Cota-base" value={cota?.nome ?? "Sem cota"} /><MiniInfo label="Valor" value={fmtValor(proposta.valor_proposto)} /><MiniInfo label="Contrapartidas" value={String(proposta.contrapartidas?.length ?? 0)} /></div>
                         </button>
                       );

@@ -164,7 +164,7 @@ function DeliveryListItem({ item, canWrite, updating, onComplete }: { item: Deli
       onClick={onComplete}
       aria-label={completed ? "Entrega concluída" : `Concluir ${item.titulo}`}
       title={completed ? "Entrega concluída" : canWrite ? "Marcar como entregue" : "Sem permissão para concluir"}
-      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] ${completed ? "border-[#2E8932] bg-[#2E8932] text-white" : cancelled ? "cursor-default border-black/[.08] bg-black/[.035] text-black/20" : "border-black/[.16] bg-white text-transparent hover:border-[#2E8932] hover:bg-[#2E8932]/[.06] hover:text-[#2E8932] active:scale-95 disabled:cursor-default disabled:hover:border-black/[.16] disabled:hover:bg-white disabled:hover:text-transparent"} ${updating ? "opacity-45" : ""}`}
+      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded border transition-[background-color,border-color,color,transform] duration-150 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] ${completed ? "border-[#2E8932] bg-[#2E8932] text-white" : cancelled ? "cursor-default border-black/[.08] bg-black/[.035] text-black/20" : "border-black/[.16] bg-white text-transparent hover:border-[#2E8932] hover:bg-black/[.04] hover:text-[#2E8932] active:scale-95 disabled:cursor-default disabled:hover:border-black/[.16] disabled:hover:bg-white disabled:hover:text-transparent"} ${updating ? "opacity-45" : ""}`}
     >
       {cancelled ? <X size={12} /> : <Check size={13} strokeWidth={2.5} />}
     </button>

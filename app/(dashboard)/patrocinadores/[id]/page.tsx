@@ -93,20 +93,20 @@ function sectorPlaceholder(setor: string | null | undefined) {
 
 const STATUS_CAP: Record<StatusCaptacao, { label: string; bg: string; text: string }> = {
   prospeccao:       { label: "Prospecção",  bg: "rgba(13,13,13,.07)", text: "rgba(13,13,13,.40)" },
-  primeiro_contato: { label: "1º Contato",  bg: "#7259B514",          text: "#7259B5" },
-  proposta_enviada: { label: "Proposta",    bg: "#2D72B014",          text: "#2D72B0" },
-  em_negociacao:    { label: "Negociação",  bg: "#B07A1414",          text: "#B07A14" },
-  aprovado:         { label: "Aprovado",    bg: "#2E893214",          text: "#2E8932" },
-  recusado:         { label: "Recusado",    bg: "#D94E4E14",          text: "#D94E4E" },
-  renovacao:        { label: "Renovação",   bg: "#2D72B014",          text: "#2D72B0" },
+  primeiro_contato: { label: "1º Contato",  bg: "#fff",          text: "#7259B5" },
+  proposta_enviada: { label: "Proposta",    bg: "#fff",          text: "#2D72B0" },
+  em_negociacao:    { label: "Negociação",  bg: "#fff",          text: "#B07A14" },
+  aprovado:         { label: "Aprovado",    bg: "#fff",          text: "#2E8932" },
+  recusado:         { label: "Recusado",    bg: "#fff",          text: "#D94E4E" },
+  renovacao:        { label: "Renovação",   bg: "#fff",          text: "#2D72B0" },
 };
 
 const STATUS_EDITAL: Record<string, { label: string; bg: string; text: string }> = {
   interesse:  { label: "Interesse",   bg: "rgba(13,13,13,.07)", text: "rgba(13,13,13,.40)" },
-  inscrito:   { label: "Inscrito",    bg: "#2D72B014",          text: "#2D72B0" },
-  em_analise: { label: "Em análise",  bg: "#B07A1414",          text: "#B07A14" },
-  aprovado:   { label: "Aprovado",    bg: "#2E893214",          text: "#2E8932" },
-  reprovado:  { label: "Reprovado",   bg: "#D94E4E14",          text: "#D94E4E" },
+  inscrito:   { label: "Inscrito",    bg: "#fff",          text: "#2D72B0" },
+  em_analise: { label: "Em análise",  bg: "#fff",          text: "#B07A14" },
+  aprovado:   { label: "Aprovado",    bg: "#fff",          text: "#2E8932" },
+  reprovado:  { label: "Reprovado",   bg: "#fff",          text: "#D94E4E" },
 };
 
 const TIPO_LABELS: (keyof Tipologia)[] = [
@@ -330,7 +330,7 @@ function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
         {total > 0 && diffPct !== 0 && (
           <span
             className="text-[0.625rem] font-bold px-2 py-0.5 rounded"
-            style={{ background: diffPct >= 0 ? "#2E893214" : "#D94E4E14", color: diffPct >= 0 ? "#2E8932" : "#D94E4E" }}
+            style={{ background: diffPct >= 0 ? "#fff" : "#fff", color: diffPct >= 0 ? "#2E8932" : "#D94E4E" }}
           >
             {diffPct >= 0 ? "+" : ""}{diffPct.toFixed(2).replace(".", ",")}%
           </span>
@@ -1147,7 +1147,7 @@ export default function PatrocinadorPage() {
                   key={label}
                   className="text-[0.625rem] font-bold px-2 py-0.5 rounded"
                   style={active
-                    ? { background: "#2E893214", color: "#2E8932" }
+                    ? { background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }
                     : { background: "rgba(13,13,13,.06)", color: "rgba(13,13,13,.35)" }}
                 >
                   {label}
@@ -1414,7 +1414,7 @@ export default function PatrocinadorPage() {
                               className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide"
                               style={isAdm
                                 ? { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.50)" }
-                                : { background: "rgba(45,114,176,.10)", color: "#2D72B0" }}
+                                : { background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}
                             >
                               {isAdm ? "ADM" : "COMUNIDADE"}
                             </span>
@@ -1439,7 +1439,7 @@ export default function PatrocinadorPage() {
                             <button
                               onClick={() => mostraContatos && void handleExportarContato(r)}
                               disabled={!mostraContatos || exportandoContatoId === r.id}
-                              className="w-7 h-7 flex items-center justify-center rounded border border-black/10 text-black/25 hover:text-[#7259B5] hover:border-[#7259B5]/30 hover:bg-[#7259B5]/5 transition disabled:opacity-30 disabled:pointer-events-none"
+                              className="w-7 h-7 flex items-center justify-center rounded border border-black/10 text-black/25 hover:text-[#7259B5] hover:border-[#7259B5]/30 hover:bg-black/[.04] transition disabled:opacity-30 disabled:pointer-events-none"
                               title={mostraContatos ? "Salvar nos contatos" : "Desbloqueie os contatos para exportar"}
                             >
                               {exportandoContatoId === r.id
@@ -1527,7 +1527,7 @@ export default function PatrocinadorPage() {
                           <td className="px-5 py-3.5">
                             <span
                               className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded tracking-wide"
-                              style={{ background: "rgba(45,114,176,.10)", color: "#2D72B0" }}
+                              style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}
                             >
                               COMUNIDADE
                             </span>
@@ -1552,7 +1552,7 @@ export default function PatrocinadorPage() {
                             <button
                               onClick={() => mostraContatos && void handleExportarContato(s)}
                               disabled={!mostraContatos || exportandoContatoId === s.id}
-                              className="w-7 h-7 flex items-center justify-center rounded border border-black/10 text-black/25 hover:text-[#7259B5] hover:border-[#7259B5]/30 hover:bg-[#7259B5]/5 transition disabled:opacity-30 disabled:pointer-events-none"
+                              className="w-7 h-7 flex items-center justify-center rounded border border-black/10 text-black/25 hover:text-[#7259B5] hover:border-[#7259B5]/30 hover:bg-black/[.04] transition disabled:opacity-30 disabled:pointer-events-none"
                               title="Salvar nos contatos"
                             >
                               {exportandoContatoId === s.id
@@ -1653,9 +1653,9 @@ export default function PatrocinadorPage() {
                                   className="text-[0.625rem] font-bold px-2 py-0.5 rounded whitespace-nowrap"
                                   style={
                                     dias < 0   ? { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.35)" } :
-                                    dias <= 14 ? { background: "#D94E4E14", color: "#D94E4E" } :
-                                    dias <= 30 ? { background: "#B07A1414", color: "#B07A14" } :
-                                                 { background: "#2E893214", color: "#2E8932" }
+                                    dias <= 14 ? { background: "#fff", border: "1px solid #D94E4E47", color: "#D94E4E" } :
+                                    dias <= 30 ? { background: "#fff", border: "1px solid #B07A1447", color: "#B07A14" } :
+                                                 { background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }
                                   }
                                 >
                                   {dias < 0 ? "Encerrado" : `${dias}d`}
@@ -1663,7 +1663,7 @@ export default function PatrocinadorPage() {
                               ) : (
                                 <span
                                   className="text-[0.625rem] font-bold px-2 py-0.5 rounded whitespace-nowrap"
-                                  style={{ background: aberto ? "#2E893214" : "rgba(13,13,13,.07)", color: aberto ? "#2E8932" : "rgba(13,13,13,.35)" }}
+                                  style={{ background: aberto ? "#fff" : "rgba(13,13,13,.07)", color: aberto ? "#2E8932" : "rgba(13,13,13,.35)" }}
                                 >
                                   {aberto ? "Aberto" : "Encerrado"}
                                 </span>
@@ -1785,7 +1785,7 @@ export default function PatrocinadorPage() {
                     <div>
                       {/* Upload area */}
                       {relatorios.length === 0 && <label
-                        className={`flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed rounded cursor-pointer transition mb-4 py-6 ${uploadingRel ? "opacity-50 pointer-events-none" : "hover:border-[#7259B5]/40 hover:bg-[#7259B5]/[.03]"}`}
+                        className={`flex flex-col items-center justify-center gap-2 w-full border-2 border-dashed rounded cursor-pointer transition mb-4 py-6 ${uploadingRel ? "opacity-50 pointer-events-none" : "hover:border-[#7259B5]/40 hover:bg-black/[.04]"}`}
                         style={{ borderColor: "rgba(13,13,13,.12)" }}
                       >
                         <input
@@ -1806,7 +1806,7 @@ export default function PatrocinadorPage() {
                         <span className="text-[0.625rem] text-black/25">PDF, DOC ou DOCX · máx. 50 MB</span>
                       </label>}
 
-                      {reportError && <div role="alert" className="mb-4 rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2.5 text-[0.6875rem] text-[#D94E4E]">{reportError}</div>}
+                      {reportError && <div role="alert" className="mb-4 rounded border border-[#D94E4E]/20 bg-white px-3 py-2.5 text-[0.6875rem] text-[#D94E4E]">{reportError}</div>}
 
                       {/* Lista de relatórios */}
                       {relatorios.length > 0 ? (
@@ -1861,7 +1861,7 @@ export default function PatrocinadorPage() {
                                 </label>
                                 <button
                                   onClick={() => handleDeleteRelatorio(rel)}
-                                  className="rounded p-1.5 text-black/30 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D94E4E]/25"
+                                  className="rounded p-1.5 text-black/30 transition hover:bg-black/[.04] hover:text-[#D94E4E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D94E4E]/25"
                                   title="Remover relatório"
                                 >
                                   <Trash2 size={12} />

@@ -715,7 +715,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                     const dataStr   = a.data_realizada ?? a.data_prevista;
                     return (
                       <div key={a.id} className="relative flex gap-4 pb-5 pl-6">
-                        <div className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-sm" style={{ background: `${tipoColor}15` }}>
+                        <div className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-sm" style={{ background: "#fff" }}>
                           <TipoIcon size={11} style={{ color: tipoColor }} />
                         </div>
                         <div className="min-w-0 flex-1 rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -751,7 +751,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                       const etiqueta = etiquetasCaptacao[c.status];
                       return (
                         <Link key={c.id} href={`/captacoes/${c.id}`}
-                          className="block rounded border px-3 py-2.5 transition hover:border-[#7259B5]/30 hover:bg-[#7259B5]/[.02]"
+                          className="block rounded border px-3 py-2.5 transition hover:border-[#7259B5]/30 hover:bg-black/[.04]"
                           style={{ borderColor: "rgba(13,13,13,.09)" }}>
                           <div className="flex items-start justify-between gap-2">
                             <p className="text-[0.75rem] font-semibold text-[#0D0D0D] leading-snug">{c.titulo ?? c.projeto?.nome ?? "Sem título"}</p>
@@ -772,7 +772,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                     })}
                     {captacoes.length > 5 && (
                       <button type="button" onClick={() => setPageTab("captacoes")}
-                        className="w-full rounded border border-dashed py-2 text-[0.6875rem] text-[#7259B5] transition hover:bg-[#7259B5]/[.03]"
+                        className="w-full rounded border border-dashed py-2 text-[0.6875rem] text-[#7259B5] transition hover:bg-black/[.04]"
                         style={{ borderColor: "rgba(114,89,181,.2)" }}>
                         Ver todas ({captacoes.length})
                       </button>

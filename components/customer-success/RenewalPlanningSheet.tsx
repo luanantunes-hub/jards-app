@@ -246,7 +246,7 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
             <FieldLabel label="Nota para a negociação"><textarea value={note} onChange={event => setNote(event.target.value)} rows={4} placeholder="Contexto e abordagem para o próximo ciclo" className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.75rem] leading-5 text-black/70 outline-none focus:border-black/30" /></FieldLabel>
             <FieldLabel label="Riscos"><textarea value={risks} onChange={event => setRisks(event.target.value)} rows={4} placeholder="Objeções, orçamento ou mudanças de cenário" className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.75rem] leading-5 text-black/70 outline-none focus:border-black/30" /></FieldLabel>
           </div>
-          {error && <p role="alert" className="rounded border border-[#D94E4E]/20 bg-[#D94E4E]/[.025] px-3 py-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
+          {error && <p role="alert" className="rounded border border-[#D94E4E]/20 bg-white px-3 py-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
         </div>
 
         <footer className="sticky bottom-0 flex items-center justify-end gap-3 border-t border-black/[.07] bg-white px-5 py-4 sm:px-6">

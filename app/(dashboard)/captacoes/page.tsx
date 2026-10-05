@@ -179,7 +179,7 @@ export default function CaptacoesPage() {
   const { options: leiOptions, create: createLei } = useLeiOptions();
   const leiMap = Object.fromEntries(leiOptions.map(option => [option.status, {
     label: option.label,
-    bg: `${option.bg}14`,
+    bg: "#fff",
     text: option.bg,
   }]));
   const { etiquetas } = useEtiquetas();
@@ -427,7 +427,7 @@ export default function CaptacoesPage() {
             {atividade && (
               <div className="group/atividade relative">
                 <span
-                  className={`flex h-5 w-5 items-center justify-center rounded-full border transition ${atividade.atrasada ? "border-[#B07A14]/30 bg-[#B07A14]/12 text-[#B07A14]" : "border-black/10 bg-white text-black/30"}`}
+                  className={`flex h-5 w-5 items-center justify-center rounded-full border transition ${atividade.atrasada ? "border-[#B07A14]/30 bg-white text-[#B07A14]" : "border-black/10 bg-white text-black/30"}`}
                   aria-label={atividade.atrasada ? "Atividade atrasada" : "Atividade em dia"}
                 >
                   <Clock3 size={11}/>
@@ -872,7 +872,7 @@ export default function CaptacoesPage() {
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                               <button
                                 onClick={e => { e.stopPropagation(); handleDelete(c.id, c.titulo ?? "sem título"); }}
-                                className="p-1 rounded hover:bg-[#D94E4E]/[.06] text-black/20 hover:text-[#D94E4E] transition"
+                                className="p-1 rounded hover:bg-black/[.04] text-black/20 hover:text-[#D94E4E] transition"
                                 title="Excluir"
                               >
                                 <Trash2 size={13} />

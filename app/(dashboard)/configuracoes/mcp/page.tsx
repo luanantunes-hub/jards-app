@@ -131,7 +131,7 @@ export default function ConfiguracoesMcpPage() {
         Gere uma chave pessoal para usar os dados do Jards em um assistente externo (Claude, Custom GPT). A chave dá
         acesso apenas às organizações das quais você é membro — o mesmo que você já vê logado no Jards.
       </p>
-      <p className="mt-2 rounded border border-[#B07A14]/25 bg-[#B07A14]/5 p-3 text-sm text-[#8a5f0f]">
+      <p className="mt-2 rounded border border-[#B07A14]/25 bg-white p-3 text-sm text-[#8a5f0f]">
         Se for usar no ChatGPT com a Custom GPT do Jards já configurada com <strong>OAuth</strong> (recomendado —
         veja o card abaixo), cada pessoa do time entra com a própria conta ao autorizar, sem precisar gerar chave
         aqui. Gere uma chave manual só se for usar em outro assistente (ex. Claude Desktop) ou numa GPT própria sem
@@ -184,7 +184,7 @@ export default function ConfiguracoesMcpPage() {
         {erro && <p className="mt-2 text-sm text-[#D94A4A]">{erro}</p>}
 
         {chaveGerada && (
-          <div className="mt-4 rounded border border-[#2E8932]/30 bg-[#2E8932]/5 p-3">
+          <div className="mt-4 rounded border border-[#2E8932]/30 bg-white p-3">
             <p className="text-sm font-medium text-[#26752A]">
               Copie agora — por segurança, essa chave não será mostrada de novo.
             </p>
@@ -243,7 +243,7 @@ export default function ConfiguracoesMcpPage() {
                   </div>
                   <button
                     onClick={() => revogar(c.id)}
-                    className="flex h-9 w-9 items-center justify-center rounded text-[#D94A4A] hover:bg-[#D94A4A]/10"
+                    className="flex h-9 w-9 items-center justify-center rounded text-[#D94A4A] hover:bg-black/[.04]"
                     title="Revogar"
                     aria-label="Revogar chave"
                   >
@@ -256,7 +256,7 @@ export default function ConfiguracoesMcpPage() {
         )}
       </div>
 
-      <div className="mt-8 rounded border border-[#684DB0]/25 bg-[#684DB0]/5 p-4 text-sm text-black/70">
+      <div className="mt-8 rounded border border-[#684DB0]/25 bg-white p-4 text-sm text-black/70">
         <p className="flex items-center gap-2 font-medium text-black">
           <OpenAIMark size={14} />
           Opção recomendada — Custom GPT do time com OAuth

@@ -103,7 +103,7 @@ export function FecharNegocioSheet({ captacao, empresaNome, propostaAceitaId, on
           <label htmlFor={campoValor} className="mb-1.5 block text-[0.6875rem] font-medium text-black/45">Valor fechado</label>
           <CampoValor id={campoValor} value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!lido.valido} autoFocus disabled={Boolean(aceitaId)} />
         </div>
-        {erro && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
+        {erro && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
       </div>
     </BottomSheet>
   );

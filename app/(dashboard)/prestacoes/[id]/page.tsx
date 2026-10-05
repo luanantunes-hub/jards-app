@@ -36,10 +36,10 @@ const STATUS_ORDER: StatusPrestacao[] = [
 
 const STATUS_META: Record<StatusPrestacao, { label: string; color: string; bg: string }> = {
   rascunho:         { label: "Rascunho",          color: "rgba(13,13,13,.45)", bg: "rgba(13,13,13,.06)"  },
-  revisao_interna:  { label: "Revisão interna",   color: "#2D72B0",            bg: "#2D72B010"            },
-  enviado:          { label: "Enviado",            color: "#B07A14",            bg: "#B07A1410"            },
-  ajuste_solicitado:{ label: "Ajuste solicitado", color: "#D94E4E",            bg: "#D94E4E10"            },
-  aprovado:         { label: "Aprovado",           color: "#2E8932",            bg: "#2E893210"            },
+  revisao_interna:  { label: "Revisão interna",   color: "#2D72B0",            bg: "#fff"            },
+  enviado:          { label: "Enviado",            color: "#B07A14",            bg: "#fff"            },
+  ajuste_solicitado:{ label: "Ajuste solicitado", color: "#D94E4E",            bg: "#fff"            },
+  aprovado:         { label: "Aprovado",           color: "#2E8932",            bg: "#fff"            },
   arquivado:        { label: "Arquivado",          color: "rgba(13,13,13,.35)", bg: "rgba(13,13,13,.05)"  },
 };
 
@@ -297,7 +297,7 @@ export default function PrestacaoDetalhe() {
 
       {erro && (
         <p role="alert" className="mb-4 px-4 py-3 rounded border text-[0.75rem]"
-          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+          style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
           {erro}
         </p>
       )}
@@ -305,14 +305,14 @@ export default function PrestacaoDetalhe() {
       {/* Alerta de prazo próximo */}
       {prazoAlerta && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
-          style={{ background: "#B07A1408", borderColor: "#B07A1430", color: "#B07A14" }}>
+          style={{ background: "#fff", borderColor: "#B07A1430", color: "#B07A14" }}>
           <AlertCircle size={13} />
           <span>Prazo em <strong>{diasRestantes} dia{diasRestantes !== 1 ? "s" : ""}</strong> — {fmtDate(prestacao.prazo)}</span>
         </div>
       )}
       {vencida && (
         <div className="flex items-center gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
-          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+          style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
           <AlertCircle size={13} />
           <span>Prazo vencido em {fmtDate(prestacao.prazo)} — regularize o envio o quanto antes.</span>
         </div>

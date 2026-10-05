@@ -244,7 +244,7 @@ function CaptadoresList({
       <div className="flex items-center justify-end gap-1 opacity-100 transition md:opacity-0 md:group-hover:opacity-100">
         {captador.email && <a href={`mailto:${captador.email}`} onClick={event => event.stopPropagation()} className="flex h-7 w-7 items-center justify-center rounded text-black/25 transition hover:bg-black/[.04] hover:text-black/60" title="Enviar e-mail"><Mail size={13} /></a>}
         <button type="button" onClick={event => { event.stopPropagation(); onEdit(captador); }} className="flex h-7 w-7 items-center justify-center rounded text-black/25 transition hover:bg-black/[.04] hover:text-black/60" title="Editar captador"><Pencil size={13} /></button>
-        <button type="button" onClick={event => { event.stopPropagation(); onDelete(captador.id, captador.nome); }} className="flex h-7 w-7 items-center justify-center rounded text-black/20 transition hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E]" title="Excluir captador"><Trash2 size={13} /></button>
+        <button type="button" onClick={event => { event.stopPropagation(); onDelete(captador.id, captador.nome); }} className="flex h-7 w-7 items-center justify-center rounded text-black/20 transition hover:bg-black/[.04] hover:text-[#D94E4E]" title="Excluir captador"><Trash2 size={13} /></button>
       </div>
     );
   }

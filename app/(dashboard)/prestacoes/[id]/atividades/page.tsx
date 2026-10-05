@@ -212,7 +212,7 @@ export default function AtividadesPage() {
 
       {erro && !form && (
         <p role="alert" className="px-4 py-3 rounded border text-[0.75rem]"
-          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+          style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
           {erro}
         </p>
       )}
@@ -281,7 +281,7 @@ export default function AtividadesPage() {
                         <button
                           onClick={e => { e.stopPropagation(); excluir(at.id); }}
                           aria-label={`Excluir atividade ${at.titulo}`}
-                          className="p-1.5 rounded hover:bg-[#D94E4E]/10 text-black/20 hover:text-[#D94E4E] transition"
+                          className="p-1.5 rounded hover:bg-black/[.04] text-black/20 hover:text-[#D94E4E] transition"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -294,7 +294,7 @@ export default function AtividadesPage() {
                         {/* Status */}
                         {at.status_realizacao === "nao_realizado" && (
                           <div className="flex items-start gap-2 px-3 py-2 rounded text-[0.6875rem]"
-                            style={{ background: "#D94E4E08", borderLeft: "2px solid #D94E4E40", color: "#D94E4E" }}>
+                            style={{ background: "#fff", borderLeft: "2px solid #D94E4E40", color: "#D94E4E" }}>
                             <span className="font-semibold">Não realizado</span>
                             {at.justificativa_nao_realizacao && (
                               <span className="text-[#D94E4E]/70">— {at.justificativa_nao_realizacao}</span>
@@ -344,7 +344,7 @@ export default function AtividadesPage() {
                           <div className="flex items-center justify-between mb-2">
                             <p className="text-[0.625rem] font-bold uppercase tracking-wide text-black/30">Evidências</p>
                             <label className="flex items-center gap-1 px-2.5 py-1 rounded text-[0.625rem] font-semibold cursor-pointer transition hover:opacity-80"
-                              style={{ background: "#7259B514", color: "#7259B5" }}>
+                              style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
                               {uploadingFor === at.id
                                 ? <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin" />
                                 : <><Upload size={10} /> Adicionar</>}
@@ -436,7 +436,7 @@ export default function AtividadesPage() {
                       onClick={() => setForm({ ...form, status_realizacao: s })}
                       className="px-3 py-1.5 rounded text-[0.6875rem] font-semibold border transition"
                       style={{
-                        background: form.status_realizacao === s ? (s === "realizado" ? "#2E893218" : "#D94E4E18") : "white",
+                        background: form.status_realizacao === s ? "white" : "white",
                         borderColor: form.status_realizacao === s ? (s === "realizado" ? "#2E8932" : "#D94E4E") : "rgba(13,13,13,.12)",
                         color: form.status_realizacao === s ? (s === "realizado" ? "#2E8932" : "#D94E4E") : "rgba(13,13,13,.45)",
                       }}
@@ -611,7 +611,7 @@ export default function AtividadesPage() {
             </div>
             {erro && (
               <p role="alert" className="mt-4 text-[0.6875rem] px-3 py-2 rounded border"
-                style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+                style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
                 {erro}
               </p>
             )}

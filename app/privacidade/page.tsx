@@ -65,7 +65,7 @@ export default function PrivacidadePage() {
           </Section>
 
           <Section id="s3" num="3" title="Integrações externas — Google, Claude e ChatGPT">
-            <div className="my-4 rounded border border-[#7259B5]/20 border-l-2 border-l-[#7259B5] bg-[#F5F3FC] px-4 py-3">
+            <div className="my-4 rounded border border-[#7259B5]/20 border-l-2 border-l-[#7259B5] bg-white px-4 py-3">
               <p className="mb-1 text-xs font-semibold text-[#0D0D0D]">Declaração de uso limitado dos dados do Google</p>
               <p className="text-xs text-black/55">
                 O uso dos dados obtidos pelas APIs do Google pela Jards está em conformidade com a{" "}
@@ -231,7 +231,7 @@ function Section({ id, num, title, children }: { id: string; num: string; title:
   return (
     <section id={id} className="scroll-mt-20">
       <h2 className="mb-3 flex items-center gap-2.5 text-base font-bold text-[#0D0D0D]">
-        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-[#F0EDFB] text-[0.6875rem] font-bold text-[#7259B5]">{num}</span>
+        <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded bg-black/[.04] text-[0.6875rem] font-bold text-[#7259B5]">{num}</span>
         {title}
       </h2>
       <div className="space-y-3">{children}</div>

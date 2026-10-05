@@ -195,7 +195,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
       >
         <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
-            <div className="flex h-7 w-7 items-center justify-center rounded" style={{ background: "#7259B514" }}>
+            <div className="flex h-7 w-7 items-center justify-center rounded" style={{ background: "rgba(13,13,13,.04)" }}>
               <ClipboardCheck size={14} className="text-[#7259B5]" />
             </div>
             <div>
@@ -332,7 +332,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
                 role="checkbox"
                 aria-checked={abrirOrcamento}
                 onClick={() => setAbrirOrcamento(v => !v)}
-                className={`flex w-full items-start gap-3 rounded border px-3.5 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${abrirOrcamento ? "border-[#7259B5] bg-[#7259B5]/[.035]" : "border-black/10 bg-white"}`}
+                className={`flex w-full items-start gap-3 rounded border px-3.5 py-3 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${abrirOrcamento ? "border-[#7259B5] bg-white" : "border-black/10 bg-white"}`}
               >
                 <span className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${abrirOrcamento ? "border-[#7259B5] bg-[#7259B5] text-white" : "border-black/25"}`}>
                   {abrirOrcamento && <Check size={11} />}

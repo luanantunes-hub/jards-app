@@ -88,7 +88,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
                   className="flex gap-3 p-3 rounded border transition"
                   style={{
                     borderColor: isPromovido ? "#2E8932" : "rgba(13,13,13,.06)",
-                    background: isPromovido ? "#2E89320a" : "white",
+                    background: isPromovido ? "#fff" : "white",
                   }}
                 >
                   {/* Votos */}
@@ -115,7 +115,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
                     <div className="flex items-center gap-2 mb-0.5">
                       <p className="text-[0.75rem] font-semibold text-black">{s.nome}</p>
                       {isPromovido && (
-                        <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: "#2E893214", color: "#2E8932" }}>
+                        <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex items-center gap-0.5" style={{ background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }}>
                           <Check size={9} /> Adicionado
                         </span>
                       )}

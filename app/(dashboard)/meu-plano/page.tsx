@@ -223,7 +223,7 @@ function MeuPlanoInner() {
 
       {/* Alerts */}
       {success && (
-        <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded px-5 py-4 mb-6">
+        <div className="flex items-center gap-3 bg-white border border-green-200 rounded px-5 py-4 mb-6">
           <CheckCircle2 size={18} className="text-green-600 flex-shrink-0" />
           <div>
             <p className="text-sm font-bold text-green-900">Pagamento recebido pelo Stripe</p>
@@ -238,16 +238,16 @@ function MeuPlanoInner() {
         </div>
       )}
       {!stripeAtivo && (
-        <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded px-5 py-4 mb-6">
+        <div className="flex items-center gap-3 bg-white border border-amber-200 rounded px-5 py-4 mb-6">
           <AlertCircle size={18} className="text-amber-600 flex-shrink-0" />
           <div>
             <p className="text-sm font-bold text-amber-900">Pagamentos não configurados</p>
-            <p className="text-xs text-amber-700 mt-0.5">Adicione as chaves Stripe ao <code className="bg-amber-100 px-1 rounded">.env.local</code> para ativar upgrades.</p>
+            <p className="text-xs text-amber-700 mt-0.5">Adicione as chaves Stripe ao <code className="rounded bg-black/[.05] px-1">.env.local</code> para ativar upgrades.</p>
           </div>
         </div>
       )}
       {profile && ["past_due", "unpaid", "paused", "incomplete", "incomplete_expired"].includes(profile.stripe_subscription_status) && (
-        <div className="flex items-center gap-3 bg-[#D94E4E]/[.06] border border-[#D94E4E]/25 rounded px-5 py-4 mb-6">
+        <div className="flex items-center gap-3 bg-white border border-[#D94E4E]/25 rounded px-5 py-4 mb-6">
           <AlertCircle size={18} className="text-[#B23A3A] flex-shrink-0" />
           <div>
             <p className="text-sm font-bold text-[#7A2626]">Assinatura temporariamente suspensa</p>
@@ -318,7 +318,7 @@ function MeuPlanoInner() {
                   {isAtual ? (
                     <div
                       className="w-full rounded py-2.5 text-center text-xs font-bold"
-                      style={dark ? { background: "rgba(255,255,255,.12)", color: "#fff" } : { background: plan.cor + "10", color: plan.cor }}
+                      style={dark ? { background: "rgba(255,255,255,.12)", color: "#fff" } : { background: "#fff", border: `1px solid ${plan.cor}47`, color: plan.cor }}
                     >
                       Ativo
                     </div>

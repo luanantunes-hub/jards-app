@@ -26,6 +26,9 @@ Princípios:
 | Teal | `#1A8B7A` | relacionamento e sinais positivos |
 
 - fundos são brancos ou neutros levemente tingidos;
+- **nunca tom sobre tom**: texto ou ícone colorido não fica sobre fundo claro da mesma cor (roxo sobre lilás, verde sobre verde-claro). A cor fica no texto, no ícone ou numa borda fina, sobre branco ou cinza neutro (`bg-black/[.04]`); quando precisa de peso, usa preenchimento sólido com texto branco;
+- passar o mouse, item selecionado, dia de hoje e linha arrastada usam cinza neutro, nunca a cor da marca diluída;
+- avisos de erro, alerta e sucesso: fundo branco, borda fina na cor e texto na cor;
 - bordas usam preto com baixa opacidade;
 - sombras devem ser discretas e comunicar elevação real;
 - cartões não recebem cor ou sombra sem função hierárquica.

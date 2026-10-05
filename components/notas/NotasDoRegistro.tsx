@@ -167,7 +167,7 @@ function NotaSheet({ nota, escopo, organizationId, contexto, onClose, onChanged 
               type="button"
               onClick={() => excluir(close)}
               disabled={salvando}
-              className="mr-auto rounded px-2 py-2 text-[0.75rem] font-medium text-[#B23A3A] transition hover:bg-[#D94E4E]/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D94E4E] disabled:opacity-50"
+              className="mr-auto rounded px-2 py-2 text-[0.75rem] font-medium text-[#B23A3A] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#D94E4E] disabled:opacity-50"
             >
               Excluir
             </button>
@@ -215,7 +215,7 @@ function NotaSheet({ nota, escopo, organizationId, contexto, onClose, onChanged 
             style={{ borderColor: "rgba(13,13,13,.12)", minHeight: "9rem" }}
           />
         </div>
-        {erro && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
+        {erro && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-white px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
       </div>
     </BottomSheet>
   );

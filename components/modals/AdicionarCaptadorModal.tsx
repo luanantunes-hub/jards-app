@@ -228,7 +228,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
             {step === "form" || isEdit ? (
               <div className="space-y-4">
                 {erro && (
-                  <div className="px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#D94E4E14", color: "#D94E4E" }}>
+                  <div className="px-3 py-2 rounded text-[0.75rem] font-medium" style={{ background: "#fff", border: "1px solid #D94E4E47", color: "#D94E4E" }}>
                     {erro}
                   </div>
                 )}
@@ -313,7 +313,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                         className={`relative flex flex-1 items-center justify-center gap-1.5 border px-3 py-2 text-[0.75rem] font-semibold transition hover:z-10 hover:bg-black/[.025] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === PRIORIDADE_OPTS.length - 1 ? "rounded-r" : ""}`}
                         style={{
                           borderColor: prioridade === opt.value ? `${opt.color}70` : "rgba(13,13,13,.10)",
-                          background: prioridade === opt.value ? `${opt.color}0A` : "white",
+                          background: "white",
                           color: opt.color,
                         }}
                       >
@@ -327,8 +327,8 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
             ) : (
               <div className="space-y-5">
                 {/* Success banner */}
-                <div className="flex items-center gap-3 p-4 rounded" style={{ background: "#2E893210", border: "1px solid #2E893230" }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "#2E893218" }}>
+                <div className="flex items-center gap-3 p-4 rounded" style={{ background: "#fff", border: "1px solid #2E893230" }}>
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(13,13,13,.04)" }}>
                     <Check size={18} style={{ color: "#2E8932" }} />
                   </div>
                   <div>
@@ -357,7 +357,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                     <div className="space-y-2">
                       {contatos.map(c => (
                         <div key={c.id} className="flex items-center gap-3 px-3 py-2.5 rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(114,89,181,0.10)" }}>
+                          <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: "rgba(13,13,13,.04)" }}>
                             <User size={12} style={{ color: "#7259B5" }} />
                           </div>
                           <div className="min-w-0 flex-1">

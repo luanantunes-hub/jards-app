@@ -39,7 +39,7 @@ export function DetailTabs({
               {Icon && <Icon size={13} strokeWidth={1.8} />}
               {label}
               {typeof count === "number" && count > 0 && (
-                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-[#7259B5]/10 px-1 text-[0.5625rem] font-bold text-[#7259B5]">
+                <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-black/[.06] px-1 text-[0.5625rem] font-bold text-black/55">
                   {count}
                 </span>
               )}
