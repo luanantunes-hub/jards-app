@@ -9,6 +9,9 @@ import type { PrestacaoContas, StatusPrestacao, PrestacaoItem } from "@/lib/supa
 import { executadoPorItem, percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
 import { mensagemErroPrestacao, proximosBloqueados, proximosStatus } from "@/lib/prestacao/status";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
+import { RegimeDadosOficiais, type RegimePublicado } from "@/components/prestacao/RegimeDadosOficiais";
+import { regimeSchema } from "@/lib/prestacao/regimes/schema";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -80,6 +83,22 @@ export default function PrestacaoDetalhe() {
   const [comentario, setComentario] = useState("");
   const [saving, setSaving] = useState(false);
   const permissoes = usePermissoesPrestacao(id);
+  // Regimes publicados (P1.2), validados pelo schema antes de ir para a tela.
+  const [regimes, setRegimes] = useState<RegimePublicado[]>([]);
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_regimes ainda não está no tipo Database
+    (supabase as any)
+      .from("prestacao_regimes")
+      .select("id, parametros")
+      .eq("status", "publicado")
+      .order("nome")
+      .then(({ data }: { data: { id: string; parametros: unknown }[] | null }) => {
+        setRegimes((data ?? []).flatMap(linha => {
+          const lido = regimeSchema.safeParse(linha.parametros);
+          return lido.success ? [{ id: linha.id, regime: lido.data }] : [];
+        }));
+      });
+  }, [supabase]);
 
   const fetch = useCallback(async () => {
     const [
@@ -147,10 +166,21 @@ export default function PrestacaoDetalhe() {
     fetch();
   }
 
-  async function salvarPeriodo(campo: "data_inicio_execucao" | "data_fim_execucao", valor: string) {
+  /** Grava campos da prestação; o banco refaz o prazo final, então recarrega. */
+  async function salvarCampos(campos: Record<string, unknown>): Promise<boolean> {
     setErro("");
-    const { error } = await (supabase as any).from("prestacoes_contas").update({ [campo]: valor || null }).eq("id", id);
-    if (error) setErro(`Não foi possível salvar o período de execução: ${error.message}`);
+    const { error } = await (supabase as any).from("prestacoes_contas").update(campos).eq("id", id);
+    if (error) {
+      setErro(mensagemErroPrestacao(error, "Não foi possível salvar"));
+      return false;
+    }
+    await fetch();
+    return true;
+  }
+
+  async function salvarPeriodo(campo: "data_inicio_execucao" | "data_fim_execucao", valor: string) {
+    if ((prestacao?.[campo] ?? "") === valor) return;
+    await salvarCampos({ [campo]: valor || null });
   }
 
   if (loading) return <DetailPageSkeleton />;
@@ -377,15 +407,12 @@ export default function PrestacaoDetalhe() {
 
           {/* Prazo */}
           <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-2">Prazo de envio</p>
-            <p className="text-[0.9375rem] font-bold" style={{ color: vencida ? "#D94E4E" : "rgba(13,13,13,.75)" }}>
-              {fmtDate(prestacao.prazo)}
-            </p>
-            {diasRestantes !== null && !vencida && (
-              <p className="text-[0.625rem] mt-1" style={{ color: diasRestantes <= 15 ? "#B07A14" : "rgba(13,13,13,.30)" }}>
-                {diasRestantes > 0 ? `${diasRestantes} dias restantes` : "Vence hoje"}
-              </p>
-            )}
+            <PrazoPrestacao
+              prestacao={prestacao}
+              regime={regimes.find(r => r.id === prestacao.regime_id)?.regime ?? null}
+              podeEditar={permissoes.editar}
+              onSalvar={salvarCampos}
+            />
             {prestacao.captacao && (
               <p className="text-[0.625rem] text-black/30 mt-0.5">Negociação: {prestacao.captacao.titulo ?? "—"}</p>
             )}
@@ -396,7 +423,9 @@ export default function PrestacaoDetalhe() {
                   <p className="text-[0.5625rem] text-black/30 mb-1">Início</p>
                   <input
                     type="date"
+                    key={`inicio-${prestacao.data_inicio_execucao ?? ""}`}
                     defaultValue={prestacao.data_inicio_execucao ?? ""}
+                    disabled={!permissoes.editar}
                     onBlur={e => salvarPeriodo("data_inicio_execucao", e.target.value)}
                     className="w-full border rounded px-2 py-1.5 text-[0.6875rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
@@ -406,7 +435,9 @@ export default function PrestacaoDetalhe() {
                   <p className="text-[0.5625rem] text-black/30 mb-1">Fim</p>
                   <input
                     type="date"
+                    key={`fim-${prestacao.data_fim_execucao ?? ""}`}
                     defaultValue={prestacao.data_fim_execucao ?? ""}
+                    disabled={!permissoes.editar}
                     onBlur={e => salvarPeriodo("data_fim_execucao", e.target.value)}
                     className="w-full border rounded px-2 py-1.5 text-[0.6875rem] focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
@@ -415,6 +446,13 @@ export default function PrestacaoDetalhe() {
               </div>
             </div>
           </div>
+
+          <RegimeDadosOficiais
+            prestacao={prestacao}
+            regimes={regimes}
+            podeEditar={permissoes.editar}
+            onSalvar={campos => void salvarCampos(campos)}
+          />
 
           {/* Observações */}
           {prestacao.observacoes && (

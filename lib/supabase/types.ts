@@ -634,9 +634,25 @@ export interface PrestacaoContas {
   projeto_id: string | null;
   titulo: string;
   status: StatusPrestacao;
+  /** Prazo vigente: o informado à mão, senão o calculado pelo regime (P1.2). */
   prazo: string | null;
   data_inicio_execucao: string | null;
   data_fim_execucao: string | null;
+  /** Regime normativo (prestacao_regimes) e dados oficiais (P1.2). */
+  regime_id?: string | null;
+  identificador_oficial?: string | null;
+  identificador_tipo?: string | null;
+  fonte_recurso?: string | null;
+  proponente_id?: string | null;
+  data_aprovacao?: string | null;
+  data_liberacao?: string | null;
+  data_termo?: string | null;
+  data_conclusao_objeto?: string | null;
+  data_envio?: string | null;
+  /** Calculado pelo banco a partir do regime e dos marcos. */
+  prazo_final?: string | null;
+  prazo_final_override?: string | null;
+  prazo_final_justificativa?: string | null;
   valor_aprovado: number | null;
   valor_realizado: number;
   observacoes: string | null;

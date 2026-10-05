@@ -42,6 +42,7 @@ const ERROS: Record<string, string> = {
   prestacao_inexistente: "Prestação não encontrada ou sem acesso.",
   comprovante_inexistente: "Comprovante não encontrado ou sem acesso.",
   transicao_invalida: "Essa mudança de status não existe a partir do status atual. Atualize a página.",
+  prazo_sem_justificativa: "Explique por que o prazo é diferente do calculado pelo regime.",
   sem_permissao: "Seu papel não permite essa ação. Enviar ao órgão e registrar a decisão cabem ao administrador ou ao responsável; aceitar comprovantes, ao administrador, revisor ou responsável.",
 };
 
