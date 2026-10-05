@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import type { PrestacaoContas, StatusPrestacao, PrestacaoItem } from "@/lib/supabase/types";
 import { executadoPorItem, percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
+import { mensagemErroPrestacao, proximosBloqueados, proximosStatus } from "@/lib/prestacao/status";
+import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -32,16 +34,6 @@ const STATUS_META: Record<StatusPrestacao, { label: string; color: string; bg: s
   ajuste_solicitado:{ label: "Ajuste solicitado", color: "#D94E4E",            bg: "#D94E4E10"            },
   aprovado:         { label: "Aprovado",           color: "#2E8932",            bg: "#2E893210"            },
   arquivado:        { label: "Arquivado",          color: "rgba(13,13,13,.35)", bg: "rgba(13,13,13,.05)"  },
-};
-
-// Transições permitidas por status
-const PROXIMOS: Record<StatusPrestacao, StatusPrestacao[]> = {
-  rascunho:          ["revisao_interna"],
-  revisao_interna:   ["enviado", "rascunho"],
-  enviado:           ["ajuste_solicitado", "aprovado"],
-  ajuste_solicitado: ["revisao_interna"],
-  aprovado:          ["arquivado"],
-  arquivado:         [],
 };
 
 const fmt = (v: number | null) => {
@@ -87,6 +79,7 @@ export default function PrestacaoDetalhe() {
   const [rubricsOpen, setRubricsOpen] = useState(false);
   const [comentario, setComentario] = useState("");
   const [saving, setSaving] = useState(false);
+  const permissoes = usePermissoesPrestacao(id);
 
   const fetch = useCallback(async () => {
     const [
@@ -137,27 +130,20 @@ export default function PrestacaoDetalhe() {
     if (!prestacao) return;
     setSaving(true);
     setErro("");
-    const { data: { user } } = await supabase.auth.getUser();
-
-    // Duas escritas separadas até a mudança de status virar função no banco (P0.10).
-    const { error: statusErro } = await (supabase as any).from("prestacoes_contas").update({ status: novoStatus }).eq("id", id);
-    if (statusErro) {
-      setErro(`Não foi possível mudar o status: ${statusErro.message}`);
-      setSaving(false);
+    // Status e histórico mudam juntos, numa função do banco que confere a
+    // transição e o papel (P0.10).
+    const { error } = await (supabase as any).rpc("fn_prestacao_mudar_status", {
+      p_prestacao_id: id,
+      p_novo_status: novoStatus,
+      p_comentario: comentario.trim() || null,
+    });
+    setSaving(false);
+    if (error) {
+      setErro(mensagemErroPrestacao(error, "Não foi possível mudar o status"));
       return;
     }
-    const { error: logErro } = await (supabase as any).from("prestacao_status_log").insert({
-      prestacao_id: id,
-      status_anterior: prestacao.status,
-      status_novo: novoStatus,
-      usuario_id: user?.id ?? null,
-      comentario: comentario.trim() || null,
-    });
-    if (logErro) setErro(`O status mudou, mas o histórico não foi gravado: ${logErro.message}`);
-
     setComentario("");
     setAvancarOpen(false);
-    setSaving(false);
     fetch();
   }
 
@@ -174,7 +160,8 @@ export default function PrestacaoDetalhe() {
   }
 
   const meta = STATUS_META[prestacao.status];
-  const proximos = PROXIMOS[prestacao.status];
+  const proximos = proximosStatus(prestacao.status, permissoes);
+  const bloqueados = proximosBloqueados(prestacao.status, permissoes);
 
   // Totais de comprovação financeira: soma dos comprovantes aceitos
   const totalAprovado = itens.length > 0
@@ -247,10 +234,28 @@ export default function PrestacaoDetalhe() {
                     {STATUS_META[s].label}
                   </button>
                 ))}
+                {bloqueados.map(s => (
+                  <div
+                    key={s}
+                    className="flex items-start gap-2 px-4 py-3 text-[0.75rem] text-black/35 border-b last:border-0"
+                    style={{ borderColor: "rgba(13,13,13,.05)" }}
+                  >
+                    <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0 bg-black/15" />
+                    <span>
+                      {STATUS_META[s].label}
+                      <span className="block text-[0.625rem]">Cabe ao administrador ou ao responsável pela prestação.</span>
+                    </span>
+                  </div>
+                ))}
               </div>,
               document.body,
             )}
           </div>
+        )}
+        {proximos.length === 0 && bloqueados.length > 0 && (
+          <p className="max-w-[20rem] text-right text-[0.6875rem] text-black/40">
+            Próximo passo: {bloqueados.map(s => STATUS_META[s].label.toLowerCase()).join(" ou ")}. Cabe ao administrador ou ao responsável pela prestação.
+          </p>
         )}
       </div>
 

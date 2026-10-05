@@ -697,6 +697,9 @@ export interface PrestacaoComprovante {
   status: StatusComprovante;
   observacao: string | null;
   enviado_por: string | null;
+  /** Quem aceitou ou rejeitou, e quando (P0.10). */
+  avaliado_por?: string | null;
+  avaliado_em?: string | null;
   created_at: string;
 }
 // ─── Prestação de contas — Phase 3 ──────────────────────────────────────────

@@ -8,6 +8,9 @@ import { Select } from "@/components/ui/Select";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { fetchOrganizationMembers } from "@/lib/organization/members";
 
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
   nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
@@ -42,6 +45,15 @@ export default function ComprovantesPage() {
   const supabase = createClient();
   const fileRef = useRef<HTMLInputElement>(null);
   const organizationId = usePrestacaoOrganizacao(id);
+  const permissoes = usePermissoesPrestacao(id);
+  // Nome de quem avaliou cada comprovante (P0.10).
+  const [nomes, setNomes] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!organizationId) return;
+    fetchOrganizationMembers(organizationId)
+      .then(membros => setNomes(Object.fromEntries(membros.map(m => [m.user_id, m.full_name || m.email || "Membro"]))))
+      .catch(() => setNomes({}));
+  }, [organizationId]);
   const { confirmDelete } = useDeleteConfirm();
   const [erroLista, setErroLista] = useState("");
 
@@ -267,8 +279,12 @@ export default function ComprovantesPage() {
 
   async function mudarStatus(compId: string, status: StatusComprovante) {
     setErroLista("");
-    const { error } = await (supabase as any).from("prestacao_comprovantes").update({ status }).eq("id", compId);
-    if (error) setErroLista(`Não foi possível mudar o status: ${error.message}`);
+    // Aceitar ou rejeitar grava quem e quando, numa função do banco (P0.10).
+    const { error } = await (supabase as any).rpc("fn_prestacao_avaliar_comprovante", {
+      p_comprovante_id: compId,
+      p_status: status,
+    });
+    if (error) setErroLista(mensagemErroPrestacao(error, "Não foi possível mudar o status"));
     fetch();
   }
 
@@ -579,8 +595,16 @@ export default function ComprovantesPage() {
 
                   {/* Status + ações */}
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {c.avaliado_em && (
+                      <span className="hidden text-right text-[0.5625rem] leading-tight text-black/35 sm:block">
+                        {c.status === "aceito" ? "Aceito" : "Rejeitado"} por {nomes[c.avaliado_por ?? ""] ?? "membro"}
+                        <span className="block">{new Date(c.avaliado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</span>
+                      </span>
+                    )}
                     <Select
                       value={c.status}
+                      disabled={!permissoes.avaliar}
+                      title={permissoes.avaliar ? undefined : "Aceitar ou rejeitar cabe ao administrador, revisor ou responsável"}
                       onChange={e => mudarStatus(c.id, e.target.value as StatusComprovante)}
                       className="text-[0.625rem] font-semibold px-2 py-1 rounded border focus:outline-none"
                       style={{
