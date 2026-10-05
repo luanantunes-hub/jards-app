@@ -78,7 +78,8 @@ test("assentos são comprados em lote e convites apenas consomem capacidade", as
   assert.match(memberRoute, /Não há vagas disponíveis/);
   assert.match(memberRoute, /add_organization_member_with_seat/);
   assert.match(inviteRoute, /inviteUserByEmail/);
-  assert.match(inviteRoute, /reserve_organization_invitation/);
+  // P0.6: a reserva com vaga por módulo substituiu reserve_organization_invitation.
+  assert.match(inviteRoute, /reservar_convite_com_modulos|reserve_organization_invitation/);
   assert.match(memberModal, /setCelebrationQuantity\(quantity\)/);
   assert.match(memberModal, /BoasVindasEquipeModal/);
   assert.match(welcomeModal, /Convidar membros/);

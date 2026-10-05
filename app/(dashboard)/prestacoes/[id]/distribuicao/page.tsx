@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { Plus, Trash2, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
 type Tipo = "pago" | "gratuito" | "cortesia";
 type PublicoAlvo = "geral" | "idosos" | "pne" | "estudantes" | "professores" | "outro";
@@ -48,6 +49,7 @@ const fmt = (v: number) =>
 export default function DistribuicaoPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
 
   const [items, setItems] = useState<DistItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -95,16 +97,19 @@ export default function DistribuicaoPage() {
     load();
   }
 
-  async function remover(itemId: string) {
-    setDeletingId(itemId);
-    setErro(null);
-    const { error } = await (supabase as any).from("prestacao_distribuicao").delete().eq("id", itemId);
-    setDeletingId(null);
-    if (error) {
-      setErro(error.message);
-      return;
-    }
-    load();
+  function remover(itemId: string) {
+    confirmDelete({
+      title: "Excluir categoria?",
+      description: "A categoria sai do plano de distribuição desta prestação.",
+      onConfirm: async () => {
+        setDeletingId(itemId);
+        setErro(null);
+        const { error } = await (supabase as any).from("prestacao_distribuicao").delete().eq("id", itemId);
+        setDeletingId(null);
+        if (error) throw new Error(error.message);
+        load();
+      },
+    });
   }
 
   // Totais
@@ -142,18 +147,6 @@ export default function DistribuicaoPage() {
               {c.sub && <p className="text-[0.625rem] text-black/35 mt-0.5">{c.sub}</p>}
             </div>
           ))}
-        </div>
-      )}
-
-      {/* Alerta MinC */}
-      {items.length > 0 && pctGratuito < 20 && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-5 text-[0.75rem]"
-          style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
-          <span className="font-semibold flex-shrink-0">Atenção:</span>
-          <span>
-            Apenas <strong>{pctGratuito}%</strong> dos acessos são gratuitos ou cortesia. A Lei Rouanet recomenda
-            ao menos 20% de acesso gratuito para democratizar o acesso à cultura.
-          </span>
         </div>
       )}
 

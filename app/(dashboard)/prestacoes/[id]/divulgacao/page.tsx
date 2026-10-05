@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { Plus, Trash2, Megaphone, Check, X, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
 type TipoDivulgacao =
   | "cartaz" | "folder" | "banner" | "programa"
@@ -51,6 +52,7 @@ const Bool = ({ ok }: { ok: boolean }) =>
 export default function DivulgacaoPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
+  const { confirmDelete } = useDeleteConfirm();
 
   const [items, setItems] = useState<DivItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -98,16 +100,19 @@ export default function DivulgacaoPage() {
     load();
   }
 
-  async function remover(itemId: string) {
-    setDeletingId(itemId);
-    setErro(null);
-    const { error } = await (supabase as any).from("prestacao_divulgacao").delete().eq("id", itemId);
-    setDeletingId(null);
-    if (error) {
-      setErro(error.message);
-      return;
-    }
-    load();
+  function remover(itemId: string) {
+    confirmDelete({
+      title: "Excluir material?",
+      description: "O material sai da lista de divulgação desta prestação.",
+      onConfirm: async () => {
+        setDeletingId(itemId);
+        setErro(null);
+        const { error } = await (supabase as any).from("prestacao_divulgacao").delete().eq("id", itemId);
+        setDeletingId(null);
+        if (error) throw new Error(error.message);
+        load();
+      },
+    });
   }
 
   const semLei = items.filter(i => !i.lei_mencionada).length;

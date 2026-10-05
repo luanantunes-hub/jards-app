@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect, useId, useRef } from "react";
+import Link from "next/link";
 import {
   X, Mail, Phone, Users, Calendar, MoreHorizontal, CheckSquare,
   ChevronDown, Check, CalendarDays, Trash2,
@@ -79,6 +80,7 @@ export function EditarAtividadeModal({
   const [prioridade, setPrioridade] = useState<Prioridade | null>(null);
   const [nota, setNota] = useState("");
   const [calendarSyncRequested, setCalendarSyncRequested] = useState(false);
+  const [prestacaoId, setPrestacaoId] = useState<string | null>(null);
 
   // Dropdown data
   const [captacoes,          setCaptacoes]          = useState<Opcao[]>([]);
@@ -105,7 +107,7 @@ export function EditarAtividadeModal({
         { data: atv },
         { data: caps }, { data: insc }, { data: emps }, { data: projs },
         { data: capsAgencias }, { data: props }, { data: cons },
-        { data: customTypes }, { data: orgMembers },
+        { data: customTypes }, { data: orgMembers }, { data: origem },
       ] = await Promise.all([
         (supabase as any).from("atividades").select(`
           id, nome, tipo, tipo_custom_id, data_inicio, data_prevista,
@@ -132,7 +134,11 @@ export function EditarAtividadeModal({
         supabase.from("contatos").select("id, nome, email").eq("organization_id", organizationId).order("nome").limit(100),
         (supabase as any).from("atividade_tipos").select("id, nome, icone, cor").eq("organization_id", organizationId).order("nome"),
         (supabase as any).rpc("get_organization_members", { org_id: organizationId }),
+        // Consulta à parte: sem a coluna (banco sem a P1.8), só não mostra o atalho.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_id ainda não está no tipo Database
+        (supabase as any).from("atividades").select("prestacao_id").eq("id", atividadeId).maybeSingle(),
       ]);
+      setPrestacaoId(origem?.prestacao_id ?? null);
 
       // Prefill form
       if (atv) {
@@ -342,6 +348,14 @@ export function EditarAtividadeModal({
                     <label className="text-[0.75rem] font-semibold text-black mb-2 block">
                       Vínculo
                     </label>
+                    {prestacaoId && (
+                      <Link
+                        href={`/prestacoes/${prestacaoId}`}
+                        className="mb-2 inline-flex rounded text-[0.6875rem] font-medium text-[#684DB0] hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                      >
+                        Criada pelo prazo da prestação de contas · abrir a prestação
+                      </Link>
+                    )}
                     <div className="flex items-center gap-1 flex-wrap mb-2">
                       {VINCULO_OPTIONS.map(option => {
                         const active = vinculoTipo === option.key;

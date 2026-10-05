@@ -3,8 +3,15 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, Clock, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { PrestacaoComprovante, PrestacaoItem, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
+import type { PrestacaoComprovante, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
+import { useItensDoOrcamento, type ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { Select } from "@/components/ui/Select";
+import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
+import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
+import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { fetchOrganizationMembers } from "@/lib/organization/members";
 
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
   nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
@@ -34,13 +41,31 @@ const fmt = (v: number | null) =>
 const fmtDate = (d: string | null) =>
   d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
+/** Item com o agrupador mais próximo, para distinguir nomes repetidos. */
+function rotuloDoItem(item: ItemDoOrcamento): string {
+  return item.caminho.length ? `${item.caminho[item.caminho.length - 1]} › ${item.nome}` : item.nome;
+}
+
 export default function ComprovantesPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
   const fileRef = useRef<HTMLInputElement>(null);
+  const organizationId = usePrestacaoOrganizacao(id);
+  const permissoes = usePermissoesPrestacao(id);
+  // Nome de quem avaliou cada comprovante (P0.10).
+  const [nomes, setNomes] = useState<Record<string, string>>({});
+  useEffect(() => {
+    if (!organizationId) return;
+    fetchOrganizationMembers(organizationId)
+      .then(membros => setNomes(Object.fromEntries(membros.map(m => [m.user_id, m.full_name || m.email || "Membro"]))))
+      .catch(() => setNomes({}));
+  }, [organizationId]);
+  const { confirmDelete } = useDeleteConfirm();
+  const [erroLista, setErroLista] = useState("");
 
   const [comprovantes, setComprovantes] = useState<PrestacaoComprovante[]>([]);
-  const [itens, setItens] = useState<PrestacaoItem[]>([]);
+  // Itens da versão em uso do orçamento em árvore (P1.6).
+  const { itens } = useItensDoOrcamento(id);
   const [periodo, setPeriodo] = useState<{ inicio: string | null; fim: string | null }>({ inicio: null, fim: null });
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -63,18 +88,23 @@ export default function ComprovantesPage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const fetch = useCallback(async () => {
-    const [{ data: comp }, { data: it }, { data: prest }] = await Promise.all([
+    const [{ data: comp }, { data: prest }] = await Promise.all([
       (supabase as any).from("prestacao_comprovantes").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
-      (supabase as any).from("prestacao_itens").select("id, rubrica").eq("prestacao_id", id).order("ordem"),
       (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
     ]);
     setComprovantes((comp as PrestacaoComprovante[]) ?? []);
-    setItens((it as PrestacaoItem[]) ?? []);
     if (prest) setPeriodo({ inicio: prest.data_inicio_execucao, fim: prest.data_fim_execucao });
     setLoading(false);
   }, [id, supabase]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  async function mudarItem(comprovante: PrestacaoComprovante, noId: string) {
+    setErroLista("");
+    const { error } = await (supabase as any).from("prestacao_comprovantes").update({ no_id: noId || null }).eq("id", comprovante.id);
+    if (error) { setErroLista(mensagemErroPrestacao(error, "Não foi possível trocar o item")); return; }
+    setComprovantes(lista => lista.map(c => (c.id === comprovante.id ? { ...c, no_id: noId || null } : c)));
+  }
 
   // Caminho do arquivo já enviado ao storage (aguardando confirmação)
   const [storagePath, setStoragePath] = useState<string | null>(null);
@@ -83,6 +113,10 @@ export default function ComprovantesPage() {
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
+    if (!organizationId) {
+      setUploadError("A prestação ainda está carregando. Tente de novo em instantes.");
+      return;
+    }
     setUploadError("");
     setRiscoGlosa(null);
     setMotivosGlosa([]);
@@ -91,8 +125,12 @@ export default function ComprovantesPage() {
     // 1. Sobe o arquivo
     setExtraindo(true);
     setUploadProgress("Enviando arquivo…");
-    const ext = file.name.split(".").pop() ?? "bin";
-    const path = `prestacoes/${id}/${Date.now()}.${ext}`;
+    const path = montarCaminhoPrestacao({
+      organizationId,
+      prestacaoId: id,
+      pasta: { tipo: "comprovantes" },
+      nomeOriginal: file.name,
+    });
     const { error: storageErr } = await supabase.storage
       .from("documentos")
       .upload(path, file, { upsert: false });
@@ -174,9 +212,9 @@ export default function ComprovantesPage() {
 
     const { data: { user } } = await supabase.auth.getUser();
 
-    await (supabase as any).from("prestacao_comprovantes").insert({
+    const { error: insertErro } = await (supabase as any).from("prestacao_comprovantes").insert({
       prestacao_id: id,
-      item_id: itemId || null,
+      no_id: itemId || null,
       tipo,
       origem,
       nome_arquivo: pendingFile.name,
@@ -189,6 +227,12 @@ export default function ComprovantesPage() {
       risco_glosa: riscoGlosa || null,
       motivos_glosa: motivosGlosa.length > 0 ? motivosGlosa : [],
     });
+    if (insertErro) {
+      setUploadError(`Não foi possível salvar o comprovante: ${insertErro.message}`);
+      setUploadProgress("");
+      setUploading(false);
+      return;
+    }
 
     setPendingFile(null);
     setStoragePath(null);
@@ -224,19 +268,35 @@ export default function ComprovantesPage() {
     setExtraindo(false);
   }
 
-  async function excluir(comprovante: PrestacaoComprovante) {
-    await supabase.storage.from("documentos").remove([comprovante.storage_path]);
-    await (supabase as any).from("prestacao_comprovantes").delete().eq("id", comprovante.id);
-    fetch();
+  function excluir(comprovante: PrestacaoComprovante) {
+    confirmDelete({
+      title: "Excluir comprovante?",
+      description: `"${comprovante.nome_arquivo}" e o arquivo enviado serão apagados.`,
+      onConfirm: async () => {
+        // Apaga a linha antes do arquivo: se a linha falhar, o arquivo continua acessível.
+        const { error } = await (supabase as any).from("prestacao_comprovantes").delete().eq("id", comprovante.id);
+        if (error) throw new Error(error.message);
+        await supabase.storage.from("documentos").remove([comprovante.storage_path]);
+        fetch();
+      },
+    });
   }
 
   async function getUrl(path: string) {
-    const { data } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
+    setErroLista("");
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
     if (data?.signedUrl) window.open(data.signedUrl, "_blank");
+    else setErroLista(`Não foi possível abrir o arquivo${error ? `: ${error.message}` : ""}.`);
   }
 
   async function mudarStatus(compId: string, status: StatusComprovante) {
-    await (supabase as any).from("prestacao_comprovantes").update({ status }).eq("id", compId);
+    setErroLista("");
+    // Aceitar ou rejeitar grava quem e quando, numa função do banco (P0.10).
+    const { error } = await (supabase as any).rpc("fn_prestacao_avaliar_comprovante", {
+      p_comprovante_id: compId,
+      p_status: status,
+    });
+    if (error) setErroLista(mensagemErroPrestacao(error, "Não foi possível mudar o status"));
     fetch();
   }
 
@@ -324,15 +384,15 @@ export default function ComprovantesPage() {
 
                 {/* Rubrica */}
                 <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Rubrica</label>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Item do orçamento</label>
                   <Select
                     value={itemId}
                     onChange={e => setItemId(e.target.value)}
                     className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
                   >
-                    <option value="">Sem rubrica</option>
-                    {itens.map(it => <option key={it.id} value={it.id}>{it.rubrica}</option>)}
+                    <option value="">Sem item</option>
+                    {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
                   </Select>
                 </div>
 
@@ -469,6 +529,13 @@ export default function ComprovantesPage() {
           </p>
         </div>
 
+        {erroLista && (
+          <p role="alert" className="mx-5 mt-4 px-3 py-2 rounded border text-[0.6875rem]"
+            style={{ background: "#D94E4E08", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+            {erroLista}
+          </p>
+        )}
+
         {loading ? (
           <div className="flex justify-center py-8">
             <div className="w-4 h-4 border-2 border-black/10 border-t-[#7259B5] rounded-full animate-spin" />
@@ -482,7 +549,7 @@ export default function ComprovantesPage() {
             {comprovantes.map(c => {
               const tipoM = TIPO_META[c.tipo];
               const statusM = STATUS_META[c.status];
-              const rubrica = itens.find(it => it.id === c.item_id);
+              const rubrica = itens.find(it => it.id === c.no_id);
               return (
                 <div key={c.id} className="px-5 py-4 flex items-start gap-4 hover:bg-black/[.02] transition">
                   {/* Ícone tipo */}
@@ -506,7 +573,20 @@ export default function ComprovantesPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-[0.625rem] text-black/35 flex-wrap">
-                      {rubrica && <span>{rubrica.rubrica}</span>}
+                      {permissoes.editar && itens.length > 0 ? (
+                        <Select
+                          value={c.no_id ?? ""}
+                          onChange={e => mudarItem(c, e.target.value)}
+                          aria-label={`Item do orçamento de ${c.nome_arquivo}`}
+                          className="max-w-[16rem] truncate rounded border px-1.5 py-0.5 text-[0.625rem] focus:outline-none"
+                          style={{ borderColor: "rgba(13,13,13,.12)", color: rubrica ? "rgba(13,13,13,.65)" : "#B07A14" }}
+                        >
+                          <option value="">{c.no_id ? "Item de outra versão" : "Sem item"}</option>
+                          {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
+                        </Select>
+                      ) : (
+                        <span>{rubrica ? rotuloDoItem(rubrica) : "Sem item"}</span>
+                      )}
                       {c.origem === "internacional" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#1A8B7A14", color: "#1A8B7A" }}>Internacional</span>
                       )}
@@ -540,8 +620,16 @@ export default function ComprovantesPage() {
 
                   {/* Status + ações */}
                   <div className="flex items-center gap-2 flex-shrink-0">
+                    {c.avaliado_em && (
+                      <span className="hidden text-right text-[0.5625rem] leading-tight text-black/35 sm:block">
+                        {c.status === "aceito" ? "Aceito" : "Rejeitado"} por {nomes[c.avaliado_por ?? ""] ?? "membro"}
+                        <span className="block">{new Date(c.avaliado_em).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}</span>
+                      </span>
+                    )}
                     <Select
                       value={c.status}
+                      disabled={!permissoes.avaliar}
+                      title={permissoes.avaliar ? undefined : "Aceitar ou rejeitar cabe ao administrador, revisor ou responsável"}
                       onChange={e => mudarStatus(c.id, e.target.value as StatusComprovante)}
                       className="text-[0.625rem] font-semibold px-2 py-1 rounded border focus:outline-none"
                       style={{
@@ -556,6 +644,7 @@ export default function ComprovantesPage() {
                     </Select>
                     <button
                       onClick={() => excluir(c)}
+                      aria-label={`Excluir comprovante ${c.nome_arquivo}`}
                       className="p-1.5 rounded hover:bg-[#D94E4E]/10 text-black/20 hover:text-[#D94E4E] transition"
                     >
                       <X size={12} />

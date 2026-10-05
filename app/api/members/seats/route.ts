@@ -46,11 +46,10 @@ async function seatSummary(organizationId: string) {
     { count: pendingCount, error: pendingError },
   ] = await Promise.all([
     admin.from("organization_seats").select("purchased_seats, billing_user_id, stripe_subscription_item_id").eq("organization_id", organizationId).maybeSingle(),
-    // Mesma exclusão usada pelos RPCs que de fato validam capacidade
-    // (add_organization_member_with_seat / reserve_organization_invitation):
-    // captador e proponente não consomem assento.
-    admin.from("organization_members").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).not("papel", "in", "(captador,proponente)"),
-    admin.from("organization_invitations").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("status", "pending").not("role", "in", "(captador,proponente)"),
+    // Mesma contagem de modulo_vagas_em_uso (20261005130000): só quem usa a
+    // captação, sem captador e proponente, que não consomem assento.
+    admin.from("organization_members").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).contains("modulos_acesso", ["captacao"]).not("papel", "in", "(captador,proponente)"),
+    admin.from("organization_invitations").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("status", "pending").contains("modulos_acesso", ["captacao"]).not("role", "in", "(captador,proponente)"),
   ]);
   if (seatError) throw seatError;
   if (countError) throw countError;
@@ -59,6 +58,7 @@ async function seatSummary(organizationId: string) {
   const occupied = count ?? 0;
   const pending = pendingCount ?? 0;
   return {
+    modulo: "captacao" as const,
     included: 1,
     purchased,
     total: 1 + purchased,
@@ -71,6 +71,34 @@ async function seatSummary(organizationId: string) {
   };
 }
 
+/**
+ * Vagas da prestação de contas: vêm do contrato do módulo (cortesia ou
+ * assinatura), contadas pelas mesmas funções que o banco usa ao convidar.
+ */
+async function prestacaoSummary(organizationId: string) {
+  const admin = adminClient();
+  const [limite, emUso, contrato, membros, pendentes] = await Promise.all([
+    admin.rpc("modulo_vagas_limite", { p_org: organizationId, p_modulo: "prestacao" }),
+    admin.rpc("modulo_vagas_em_uso", { p_org: organizationId, p_modulo: "prestacao" }),
+    admin.from("organization_modulos").select("status, cortesia_ate").eq("organization_id", organizationId).eq("modulo", "prestacao").maybeSingle(),
+    admin.from("organization_members").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).contains("modulos_acesso", ["prestacao"]).not("papel", "in", "(captador,proponente)"),
+    admin.from("organization_invitations").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("status", "pending").contains("modulos_acesso", ["prestacao"]).not("role", "in", "(captador,proponente)"),
+  ]);
+  const erro = limite.error ?? emUso.error ?? contrato.error ?? membros.error ?? pendentes.error;
+  if (erro) throw erro;
+  const total = Number(limite.data ?? 0);
+  return {
+    modulo: "prestacao" as const,
+    ativo: total > 0,
+    status: contrato.data?.status ?? null,
+    cortesia_ate: contrato.data?.cortesia_ate ?? null,
+    total,
+    occupied: membros.count ?? 0,
+    pending: pendentes.count ?? 0,
+    available: Math.max(0, total - Number(emUso.data ?? 0)),
+  };
+}
+
 export async function GET(req: NextRequest) {
   const user = await authenticatedUser();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
@@ -79,8 +107,12 @@ export async function GET(req: NextRequest) {
   if (!await requireAdmin(organizationId, user.id)) {
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
+  const modulo = req.nextUrl.searchParams.get("modulo") ?? "captacao";
+  if (modulo !== "captacao" && modulo !== "prestacao") {
+    return NextResponse.json({ error: "Módulo inválido" }, { status: 400 });
+  }
   try {
-    return NextResponse.json(await seatSummary(organizationId));
+    return NextResponse.json(modulo === "prestacao" ? await prestacaoSummary(organizationId) : await seatSummary(organizationId));
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Falha ao consultar usuários extras" }, { status: 500 });
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { destinoDoConvite, lerPedidoModulos, respostaErroEquipe } from "@/lib/equipe-modulos";
 
 type MemberRole = "admin" | "colaborador" | "leitor" | "captador" | "proponente";
 
@@ -20,14 +21,8 @@ function emailLiteral(email: string) {
 }
 
 function rpcErrorResponse(error: { code?: string; message?: string }) {
-  const noSeat = error.code === "23514" || error.message?.includes("assentos disponiveis");
-  const duplicate = error.code === "23505";
-  return NextResponse.json({
-    error: noSeat
-      ? "Não há vagas disponíveis. Compre usuários extras antes de convidar."
-      : duplicate ? "Esta pessoa já faz parte da equipe ou possui um convite pendente." : error.message,
-    ...(noSeat ? { code: "NO_SEATS" } : {}),
-  }, { status: noSeat || duplicate ? 409 : 500 });
+  const { status, ...corpo } = respostaErroEquipe(error);
+  return NextResponse.json(corpo, { status });
 }
 
 export async function POST(req: NextRequest) {
@@ -46,6 +41,8 @@ export async function POST(req: NextRequest) {
     role?: MemberRole;
     captador_id?: string;
     proponente_id?: string;
+    modulos?: unknown;
+    prestacao_funcao?: unknown;
   } | null;
   const organizationId = body?.organization_id ?? "";
   const email = body?.email?.trim().toLowerCase() ?? "";
@@ -68,9 +65,15 @@ export async function POST(req: NextRequest) {
   if (requesterError) return NextResponse.json({ error: requesterError.message }, { status: 500 });
   if (requester?.papel !== "admin") return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
 
-  const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin}/api/auth/callback?next=${
-    role === "captador" ? "/workspace-captador" : role === "proponente" ? "/workspace-proponente" : "/configuracoes"
-  }`;
+  // Módulos e função na prestação (P0.6). Sem módulos, "só captação".
+  const { data: org, error: orgError } = await admin.from("organizations")
+    .select("modulos_ativos").eq("id", organizationId).maybeSingle();
+  if (orgError) return NextResponse.json({ error: orgError.message }, { status: 500 });
+  const pedido = lerPedidoModulos(role, body?.modulos, body?.prestacao_funcao, org?.modulos_ativos ?? ["captacao"]);
+  if (!pedido.ok) return NextResponse.json({ error: pedido.erro }, { status: 400 });
+  const { modulos, funcao } = pedido.valor;
+
+  const redirectTo = `${process.env.NEXT_PUBLIC_APP_URL ?? req.nextUrl.origin}/api/auth/callback?next=${destinoDoConvite(role, modulos)}`;
 
   async function linkCaptador(userId: string) {
     if (role !== "captador") return null;
@@ -124,10 +127,12 @@ export async function POST(req: NextRequest) {
   if (profileError) return NextResponse.json({ error: profileError.message }, { status: 500 });
 
   if (existingProfile) {
-    const { error: memberError } = await (admin as any).rpc("add_organization_member_with_seat", {
+    const { error: memberError } = await admin.rpc("adicionar_membro_com_modulos", {
       target_org: organizationId,
       target_user: existingProfile.id,
       target_role: role,
+      target_modulos: modulos,
+      target_funcao: funcao,
     });
     if (memberError) return rpcErrorResponse(memberError);
 
@@ -145,21 +150,25 @@ export async function POST(req: NextRequest) {
       invited_by: user.id,
       invited_user_id: existingProfile.id,
       accepted_at: new Date().toISOString(),
+      modulos_acesso: modulos,
+      prestacao_funcao: funcao,
     });
     return NextResponse.json({ ok: true, status: "accepted", email });
   }
 
-  const { data: invitationId, error: reserveError } = await (admin as any).rpc("reserve_organization_invitation", {
+  const { data: invitationId, error: reserveError } = await admin.rpc("reservar_convite_com_modulos", {
     target_org: organizationId,
     target_email: email,
     target_role: role,
     inviter: user.id,
+    target_modulos: modulos,
+    target_funcao: funcao,
   });
   if (reserveError) return rpcErrorResponse(reserveError);
 
   const { data, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
     redirectTo,
-    data: { organization_id: organizationId, organization_role: role },
+    data: { organization_id: organizationId, organization_role: role, organization_modules: modulos },
   });
   if (inviteError || !data.user) {
     await admin.from("organization_invitations").update({

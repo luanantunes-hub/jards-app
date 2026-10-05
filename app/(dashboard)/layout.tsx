@@ -38,11 +38,10 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, itemAtivoDoMenu } from "@/lib/navigation/rotas";
+import { destinoSemAcesso, moduloDaRota, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 // ─── Definição dos módulos ──────────────────────────────────────────────────
-
-type ModuloId = "captacao" | "prestacao";
 
 const MODULOS: { id: ModuloId; label: string; descricao: string }[] = [
   { id: "captacao",  label: "Captação",  descricao: "Gestão de patrocinadores, editais e negociações" },
@@ -95,18 +94,6 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
   ],
 };
 
-// Mapa de rota → módulo (para detectar módulo ativo pela URL)
-const ROTA_MODULO: Record<string, ModuloId> = {
-  "/prestacoes": "prestacao",
-};
-
-function detectarModulo(path: string): ModuloId {
-  for (const [prefix, modulo] of Object.entries(ROTA_MODULO)) {
-    if (path === prefix || path.startsWith(prefix + "/")) return modulo;
-  }
-  return "captacao";
-}
-
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function getAvatar(user: User | null): string | null {
@@ -142,15 +129,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser]                     = useState<User | null>(null);
   const [expanded, setExpanded]             = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
-  const [moduloAtivo, setModuloAtivo]       = useState<ModuloId>(() => detectarModulo(path));
+  const [moduloAtivo, setModuloAtivo]       = useState<ModuloId>(() => moduloDaRota(path));
   const [modulosOrg, setModulosOrg]         = useState<ModuloId[]>(["captacao"]);
   const [modulosUser, setModulosUser]       = useState<ModuloId[]>(["captacao"]);
+  // Só redireciona por módulo depois de saber os módulos reais da organização atual.
+  const [modulosCarregados, setModulosCarregados] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin]     = useState(false);
   const [plan, setPlan]                     = useState<PlanTipo | null>(null);
   const [org, setOrg]                       = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
   const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
   const [orgSwitcherOpen, setOrgSwitcherOpen] = useState(false);
   const [mobileOpen, setMobileOpen]         = useState(false);
+
+  const carregarModulosOrg = useCallback(async (orgId: string) => {
+    setModulosCarregados(false);
+    const supabase = createClient();
+    const { data: orgData } = await (supabase as any)
+      .from("organizations")
+      .select("modulos_ativos")
+      .eq("id", orgId)
+      .maybeSingle();
+    setModulosOrg(normalizarModulos(orgData?.modulos_ativos));
+    setModulosCarregados(true);
+  }, []);
 
   useEffect(() => {
     const supabase = createClient();
@@ -171,7 +172,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const memberList = ((memberRows ?? []) as any[]).map(m => ({
         organizationId: m.organization_id as string,
         papel: m.papel as string,
-        modulosAcesso: (m.modulos_acesso ?? ["captacao"]) as ModuloId[],
+        modulosAcesso: normalizarModulos(m.modulos_acesso),
         nome: (m.organizations?.nome ?? "") as string,
         avatarUrl: (m.organizations?.avatar_url ?? null) as string | null,
       }));
@@ -201,12 +202,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setModulosUser(escolhido.modulosAcesso);
         setOrg({ nome: escolhido.nome, avatar_url: escolhido.avatarUrl });
 
-        const { data: orgData } = await (supabase as any)
-          .from("organizations")
-          .select("modulos_ativos")
-          .eq("id", escolhido.organizationId)
-          .single();
-        if (orgData) setModulosOrg((orgData.modulos_ativos ?? ["captacao"]) as ModuloId[]);
+        await carregarModulosOrg(escolhido.organizationId);
 
         if (escolhido.papel === "captador" && !path.startsWith("/workspace-captador")) {
           router.replace("/workspace-captador");
@@ -229,10 +225,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Sync módulo ativo quando a rota muda externamente (ex: link direto)
   useEffect(() => {
-    const modulo = detectarModulo(path);
+    const modulo = moduloDaRota(path);
     setModuloAtivo(modulo);
     setMobileOpen(false);
   }, [path]);
+
+  // Quem não usa o módulo da rota vai para o módulo que usa (ex.: usuário só da
+  // prestação abrindo /dashboard). A proteção dos dados continua no banco.
+  const papelAtual = memberships.find(m => m.organizationId === organizationId)?.papel ?? null;
+  useEffect(() => {
+    if (!modulosCarregados || papelAtual === "captador") return;
+    const destino = destinoSemAcesso(path, {
+      superAdmin: isSuperAdmin,
+      modulosOrganizacao: modulosOrg,
+      modulosMembro: modulosUser,
+    });
+    if (destino && destino !== path) router.replace(destino);
+  }, [path, modulosCarregados, papelAtual, isSuperAdmin, modulosOrg, modulosUser, router]);
 
   useModalDismiss(() => setMobileOpen(false), { enabled: mobileOpen });
 
@@ -266,8 +275,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [organizationId, loadOrg]);
 
   function trocarModulo(id: ModuloId) {
-    if (!isSuperAdmin && !modulosOrg.includes(id)) return; // org não tem o módulo
-    if (!isSuperAdmin && !modulosUser.includes(id)) return; // user não tem acesso
+    if (!podeUsarModulo({ superAdmin: isSuperAdmin, modulosOrganizacao: modulosOrg, modulosMembro: modulosUser }, id)) return;
     setModuloAtivo(id);
     // Navega para a home do módulo
     const nav = NAV_POR_MODULO[id];
@@ -282,6 +290,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setModulosUser(alvo.modulosAcesso);
     setOrg({ nome: alvo.nome, avatar_url: alvo.avatarUrl });
     setOrgSwitcherOpen(false);
+    // Os módulos ativos são da organização: relê para a nova, antes de redirecionar por módulo.
+    void carregarModulosOrg(alvo.organizationId);
     router.push(alvo.papel === "captador" ? "/workspace-captador" : "/dashboard");
   }
 
@@ -294,7 +304,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const initial     = getInitial(user);
   const userAvatar  = getAvatar(user);
   const displayName = getDisplayName(user);
-  const navGroups   = NAV_POR_MODULO[moduloAtivo];
+  const acessoModulos = { superAdmin: isSuperAdmin, modulosOrganizacao: modulosOrg, modulosMembro: modulosUser };
+  // Em rotas comuns (configurações, plano) o menu mostra o módulo que a pessoa usa.
+  const moduloDoMenu = modulosCarregados && !podeUsarModulo(acessoModulos, moduloAtivo)
+    ? (modulosDisponiveis(acessoModulos)[0] ?? moduloAtivo)
+    : moduloAtivo;
+  const navGroups   = NAV_POR_MODULO[moduloDoMenu];
+  const usaCaptacao = podeUsarModulo(acessoModulos, "captacao");
   // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
   const isExpanded  = expanded || mobileOpen;
   const menuPath    = itemAtivoDoMenu(path);
@@ -302,7 +318,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
   // organização que convidou (essas continuam existindo, só não fazem
   // sentido pra alguém com acesso limitado a um único workspace).
-  const papelAtual = memberships.find(m => m.organizationId === organizationId)?.papel ?? null;
   const isWorkspaceCaptador = papelAtual === "captador";
 
   return (
@@ -481,7 +496,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
           ))}
-          {plan === "gratuito" && (
+          {plan === "gratuito" && usaCaptacao && (
             <Link
               href="/meu-plano"
               title={!isExpanded ? "Fazer upgrade" : undefined}

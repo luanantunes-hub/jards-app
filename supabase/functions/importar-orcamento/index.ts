@@ -1,9 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { autorizarArquivoDaPrestacao, corsHeaders } from "../_shared/prestacao-acesso.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -11,12 +6,16 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { storage_path } = await req.json() as { storage_path: string };
+    const { storage_path, prestacao_id } = await req.json() as { storage_path: string; prestacao_id: string };
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    // Confere quem chama antes de usar a chave de serviço.
+    const acesso = await autorizarArquivoDaPrestacao(req, {
+      prestacaoId: prestacao_id,
+      storagePath: storage_path,
+      pastas: ["orcamento"],
+    });
+    if (!acesso.ok) return acesso.resposta;
+    const supabase = acesso.admin;
 
     // Baixa o PDF do Storage
     const { data: fileData, error: dlErr } = await supabase.storage
@@ -37,27 +36,35 @@ Deno.serve(async (req) => {
     const base64 = btoa(binary);
 
     const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: "GOOGLE_AI_API_KEY não configurada" }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const model = Deno.env.get("GOOGLE_AI_MODEL") || "gemini-2.5-flash";
     const geminiUrl =
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    const prompt = `Este documento é um orçamento de projeto cultural (planilha ou tabela de rubricas).
-Extraia todas as rubricas orçamentárias e retorne APENAS um array JSON, sem markdown, sem explicação:
+    const prompt = `Este documento é o orçamento de um projeto incentivado (planilha orçamentária, por exemplo a do Salic).
+Extraia os itens com valor e retorne APENAS um array JSON, sem markdown, sem explicação:
 
 [
   {
-    "rubrica": <nome da rubrica/categoria, string>,
-    "descricao": <descrição detalhada se houver, string ou null>,
-    "valor_aprovado": <valor numérico com ponto decimal, ex: 15000.00>,
-    "tolerancia_pct": <percentual de tolerância se informado, número inteiro, default 15>
+    "nome": <nome do item de despesa, string>,
+    "descricao": <especificação ou justificativa, se houver, string ou null>,
+    "valor": <valor total aprovado do item, número com ponto decimal, ex: 15000.00>,
+    "etapa": <etapa, fase ou produto em que o item aparece no documento (ex.: "Pré-produção", "Divulgação/Comercialização", "Custos administrativos"), string ou null>,
+    "grupo_custo": <"execucao"|"administracao"|"divulgacao"|"captacao"|"elaboracao"|"agenciamento"|"gerenciamento"|"colocacao"|"direitos"|"recolhimentos" ou null>
   }
 ]
 
 Regras:
-- Inclua TODAS as linhas que representem uma rubrica com valor.
-- Ignore linhas de total, subtotal ou cabeçalho.
-- Se o documento tiver colunas como "Valor Previsto", "Valor Aprovado", "Orçado" ou "Proposto", use esse valor em valor_aprovado.
-- Se houver percentual de tolerância ou variação permitida, use em tolerancia_pct; caso contrário use 15.
-- Retorne array vazio [] se não encontrar nenhuma rubrica.`;
+- Inclua TODOS os itens que tenham valor; ignore linhas de total, subtotal e cabeçalho.
+- Se houver colunas como "Valor total", "Valor aprovado", "Orçado" ou "Proposto", use a do valor aprovado; se houver quantidade, ocorrência e valor unitário, use o total da linha.
+- Em "etapa", repita exatamente o nome da etapa ou produto do documento, para os itens da mesma etapa ficarem juntos.
+- Em "grupo_custo": custos administrativos e taxa de administração = "administracao"; divulgação, comunicação, assessoria de imprensa e acessibilidade comunicacional = "divulgacao"; remuneração de captação = "captacao"; elaboração do projeto = "elaboracao"; agenciamento = "agenciamento"; gerenciamento ou coordenação geral = "gerenciamento"; coordenação e colocação de quotas (audiovisual) = "colocacao"; direitos autorais e conexos = "direitos"; tributos e recolhimentos = "recolhimentos"; demais custos da atividade-fim = "execucao". Use null se não der para saber.
+- Retorne array vazio [] se não encontrar nenhum item.`;
 
     const geminiRes = await fetch(geminiUrl, {
       method: "POST",

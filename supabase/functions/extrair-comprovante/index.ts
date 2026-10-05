@@ -1,9 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { autorizarArquivoDaPrestacao, corsHeaders } from "../_shared/prestacao-acesso.ts";
 
 type Rubrica = { id: string; rubrica: string; descricao: string | null };
 
@@ -16,13 +11,17 @@ Deno.serve(async (req) => {
     const { storage_path, mime_type, prestacao_id } = await req.json() as {
       storage_path: string;
       mime_type: string;
-      prestacao_id?: string;
+      prestacao_id: string;
     };
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
+    // Confere quem chama antes de usar a chave de serviço.
+    const acesso = await autorizarArquivoDaPrestacao(req, {
+      prestacaoId: prestacao_id,
+      storagePath: storage_path,
+      pastas: ["comprovantes"],
+    });
+    if (!acesso.ok) return acesso.resposta;
+    const supabase = acesso.admin;
 
     // Baixa o arquivo do Storage
     const { data: fileData, error: dlErr } = await supabase.storage
@@ -36,15 +35,24 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Busca rubricas da prestação (se informada)
-    let rubricas: Rubrica[] = [];
-    if (prestacao_id) {
-      const { data } = await supabase
+    // Itens da versão em uso do orçamento em árvore (P1.6), para a IA sugerir
+    // o mais adequado. Sem orçamento em árvore, cai nas rubricas antigas.
+    const { data: itensData } = await supabase
+      .from("prestacao_orcamento_nos")
+      .select("id, nome, descricao, versao:prestacao_orcamento_versoes!inner(ativa)")
+      .eq("prestacao_id", prestacao_id)
+      .eq("tipo", "item")
+      .eq("versao.ativa", true)
+      .order("ordem");
+    let rubricas: Rubrica[] = ((itensData ?? []) as { id: string; nome: string; descricao: string | null }[])
+      .map(item => ({ id: item.id, rubrica: item.nome, descricao: item.descricao }));
+    if (rubricas.length === 0) {
+      const { data: rubricasData } = await supabase
         .from("prestacao_itens")
         .select("id, rubrica, descricao")
         .eq("prestacao_id", prestacao_id)
         .order("ordem");
-      rubricas = (data as Rubrica[]) ?? [];
+      rubricas = (rubricasData as Rubrica[]) ?? [];
     }
 
     // Converte para base64
