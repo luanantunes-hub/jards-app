@@ -1,6 +1,8 @@
 // Catálogo de regimes disponível no código. É a fonte do seed de
 // prestacao_regimes (scripts/prestacao-gerar-seed-regimes.ts).
 
+import { LIE_P10_2026 } from "./lie-p10-2026";
+import { LIE_P424_2020 } from "./lie-p424-2020";
 import { ROUANET_IN29_2026 } from "./rouanet-in29-2026";
 import { definida, ehLacuna, type Fonte, type Lacuna, type PrazoRegime, type RegimeNormativo } from "./tipos";
 
@@ -72,7 +74,8 @@ export const GENERICO = {
   guarda: semNorma("Guarda pelo contrato e pela legislação fiscal."),
 } satisfies RegimeNormativo;
 
-export const REGIMES: readonly RegimeNormativo[] = [ROUANET_IN29_2026, GENERICO];
+/** Na mesma lei, a versão mais recente vem primeiro: é a sugerida quando não há data. */
+export const REGIMES: readonly RegimeNormativo[] = [ROUANET_IN29_2026, LIE_P10_2026, LIE_P424_2020, GENERICO];
 
 export function regimePorCodigo(codigo: string): RegimeNormativo | null {
   return REGIMES.find(regime => regime.codigo === codigo) ?? null;
