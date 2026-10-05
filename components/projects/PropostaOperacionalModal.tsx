@@ -44,6 +44,7 @@ export function PropostaOperacionalModal({
   captacoes,
   inscricoes,
   fixedCase,
+  valorInicial,
   onClose,
   onSaved,
 }: {
@@ -54,6 +55,8 @@ export function PropostaOperacionalModal({
   captacoes: CaseOption[];
   inscricoes: CaseOption[];
   fixedCase?: FixedProposalCase;
+  /** Valor atual da negociação/inscrição: ponto de partida de uma proposta nova. */
+  valorInicial?: number | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -65,7 +68,11 @@ export function PropostaOperacionalModal({
   const [caseKind, setCaseKind] = useState<"negociacao" | "edital">(initialKind);
   const [caseId, setCaseId] = useState(fixedCase?.id ?? proposta?.captacao_id ?? proposta?.edital_user_id ?? "");
   const [cotaId, setCotaId] = useState(proposta?.cota_id ?? "");
-  const [valor, setValor] = useState(proposta?.valor_proposto != null ? String(proposta.valor_proposto) : "");
+  // Mesmo formato que o campo lê (vírgula decimal): String(120000.5) virava 1.200.005 ao salvar.
+  const [valor, setValor] = useState(() => {
+    const inicial = proposta ? proposta.valor_proposto : valorInicial ?? null;
+    return inicial != null ? inicial.toLocaleString("pt-BR", { useGrouping: false, minimumFractionDigits: 2 }) : "";
+  });
   const [contrapartidas, setContrapartidas] = useState<string[]>(proposta?.contrapartidas ?? []);
   const [observacoes, setObservacoes] = useState(proposta?.observacoes_comerciais ?? "");
   const [status, setStatus] = useState(proposta?.status === "aceita" || proposta?.status === "arquivada" ? proposta.status : "rascunho");

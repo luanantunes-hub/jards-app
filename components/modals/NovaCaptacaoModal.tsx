@@ -21,6 +21,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { contatoSalvoCorrespondente, rotuloContato, semContatosJaSalvos, type ContatoSugerido } from "@/lib/contatos-sugeridos";
 import { CampoValor } from "@/components/ui/CampoValor";
+import { useValorDefinidoPorProposta } from "@/hooks/useValorDefinidoPorProposta";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 
 type EmpresaCRM   = { id: string; nome: string };
@@ -275,6 +276,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   // Valor da negociação digitado direto aqui; a proposta continua opcional.
   const [valorTexto, setValorTexto]           = useState(() => formatarValorBRL(editData?.valor_solicitado));
   const valorLido = lerValorBRL(valorTexto);
+  // Com proposta ativa o valor vem dela e só muda negociando a proposta.
+  const valorDaProposta = useValorDefinidoPorProposta("captacoes", editData?.id);
   // "Contato realizado" fica recolhido: só quem já falou com a empresa abre.
   const [registrarContato, setRegistrarContato] = useState(false);
   const [canalRealizado, setCanalRealizado] = useState<CanalContato | null>(null);
@@ -468,7 +471,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado"); setSaving(false); return; }
 
-    if (!valorLido.valido) {
+    if (!valorDaProposta && !valorLido.valido) {
       setErro(MENSAGEM_VALOR_INVALIDO);
       setSaving(false); return;
     }
@@ -524,7 +527,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       empresa_crm_id:      empresaFinal || null,
       empresa_id:          empresaPubId || null,
       projeto_id:          projetoId || null,
-      valor_solicitado:    valorLido.valor,
+      ...(valorDaProposta ? {} : { valor_solicitado: valorLido.valor }),
       // Campo legado mantido durante a transição entre versões do banco.
       meio_contato:        legacyMeio(null),
       status,
@@ -773,8 +776,10 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
 
               <div>
                 <FieldLabel>Valor da negociação</FieldLabel>
-                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!valorLido.valido} ariaLabel="Valor da negociação" />
-                {!valorLido.valido && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>}
+                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!valorDaProposta && !valorLido.valido} ariaLabel="Valor da negociação" disabled={valorDaProposta} />
+                {valorDaProposta
+                  ? <p className="mt-1 text-[0.6875rem] text-black/40">Vem da proposta. Para mudar, use Negociar na proposta.</p>
+                  : !valorLido.valido && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>}
               </div>
             </div>
           </section>

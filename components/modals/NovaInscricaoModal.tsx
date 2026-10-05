@@ -17,6 +17,7 @@ import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMen
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { cotaTemDisponibilidade, formatCotaValor, valorForaDaFaixa } from "@/lib/cotas";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { useValorDefinidoPorProposta } from "@/hooks/useValorDefinidoPorProposta";
 
 const CRIAR_NOVA_COTA = "__criar_nova_cota__";
 
@@ -128,6 +129,8 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   const projetoMenuPos = usePortalPosition(projetoBoxRef, projetoOpen);
   const [cotaId, setCotaId]               = useState(editData?.cota_id ?? "");
   const [valorInput, setValorInput] = useState(editData?.valor != null ? editData.valor.toLocaleString("pt-BR", { useGrouping: false, minimumFractionDigits: 2 }) : "");
+  // Com proposta ativa o valor vem dela e só muda negociando a proposta.
+  const valorDaProposta = useValorDefinidoPorProposta("editais_user", editData?.id);
   const [status, setStatus]               = useState<StatusEdital>(editData?.status ?? statusPre ?? "interesse");
   const [potencialFechamento, setPotencialFechamento] = useState<PotencialFechamento>(editData?.potencial_fechamento ?? potentialPre ?? "medio");
   const [dataAbertura, setDataAbertura]   = useState(editData?.data_abertura ?? dataAberturaPre ?? "");
@@ -553,7 +556,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   }
                   setCotaId(value);
                   const selecionada = cotas.find(cota => cota.id === value);
-                  if (selecionada) setValorInput(selecionada.valor.toLocaleString("pt-BR", { useGrouping: false, minimumFractionDigits: 2 }));
+                  if (selecionada && !valorDaProposta) setValorInput(selecionada.valor.toLocaleString("pt-BR", { useGrouping: false, minimumFractionDigits: 2 }));
                 }}
                 placeholder={!projetoId ? "Selecione um projeto primeiro" : loadingCotas ? "Carregando cotas…" : cotas.length === 0 ? "Nenhuma cota neste projeto" : "Selecionar cota"}
                 compact
@@ -576,8 +579,9 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                     <span className="text-[0.75rem] font-semibold tabular-nums text-black/70">{formatCotaValor(cotaSelecionada)}</span>
                   </div>
                   <label className="mt-2 block text-[0.625rem] font-medium text-black/45">Valor desta inscrição (R$)</label>
-                  <input inputMode="decimal" value={valorInput} onChange={event => setValorInput(event.target.value)}
-                    className="mt-1 w-full rounded border border-black/15 bg-white px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5]" />
+                  <input inputMode="decimal" value={valorInput} onChange={event => setValorInput(event.target.value)} disabled={valorDaProposta}
+                    className="mt-1 w-full rounded border border-black/15 bg-white px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] disabled:cursor-not-allowed disabled:bg-black/[.02] disabled:text-black/60" />
+                  {valorDaProposta && <p className="mt-1 text-[0.625rem] text-black/40">Vem da proposta. Para mudar, use Negociar na proposta.</p>}
                   {valorForaDaFaixa(cotaSelecionada, valorInput.trim() ? Number(valorInput.replace(/\./g, "").replace(",", ".")) : null) &&
                     <p className="mt-1.5 text-[0.625rem] text-[#B07A14]">Fora da faixa sugerida; confira se outra cota é mais adequada.</p>}
                   <p className="mt-1.5 text-[0.625rem] leading-4 text-black/40">

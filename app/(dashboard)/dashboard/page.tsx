@@ -379,7 +379,7 @@ export default function DashboardPage() {
         // Todos os captações (exceto recusado): status + valor → funil + KPIs
         supabase
           .from("captacoes")
-          .select("id, status, valor_solicitado, potencial_fechamento"),
+          .select("id, status, valor_solicitado, valor_aprovado, potencial_fechamento"),
 
         // Recusado count → taxa de conversão
         supabase
@@ -454,6 +454,7 @@ export default function DashboardPage() {
         id: string;
         status: StatusCaptacao;
         valor_solicitado: number | null;
+        valor_aprovado: number | null;
         potencial_fechamento: PotencialFechamento | null;
       }>;
 
@@ -468,7 +469,8 @@ export default function DashboardPage() {
       setPipelineCount(pipelineCaps.length);
 
       const aprovadoCaps = allCaps.filter(c => c.status === "aprovado");
-      setAprovadoValor(aprovadoCaps.reduce((s, c) => s + (c.valor_solicitado ?? 0), 0));
+      // Vale o valor aceito; sem ele (fechada à mão), o valor da negociação.
+      setAprovadoValor(aprovadoCaps.reduce((s, c) => s + (c.valor_aprovado ?? c.valor_solicitado ?? 0), 0));
       setAprovadoCount(aprovadoCaps.length);
 
       const recusadoCount = recusadoRes.count ?? 0;
