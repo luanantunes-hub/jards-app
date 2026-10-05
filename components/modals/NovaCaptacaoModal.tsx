@@ -4,14 +4,14 @@ import {
   X, Building2, FolderOpen,
   Users, CalendarDays, Save, Lightbulb, Briefcase,
   MessageSquare, TrendingUp, Check, Ban, Plus, UserPlus,
-  SlidersHorizontal, Contact, UserRoundCog, Clock3, Circle, ArrowDown, Minus, ArrowUp,
+  SlidersHorizontal, Contact, UserRoundCog, Clock3, Circle, ArrowDown, Minus, ArrowUp, Layers,
 } from "lucide-react";
 import * as Icons from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import type {
   StatusCaptacao, MeioContato, PotencialFechamento, CanalContato,
-  OrigemOportunidade, ResultadoInteracao,
+  OrigemOportunidade, ResultadoInteracao, CotaPatrocinio,
 } from "@/lib/supabase/types";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
@@ -19,11 +19,17 @@ import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMen
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { contatoSalvoCorrespondente, rotuloContato, semContatosJaSalvos, type ContatoSugerido } from "@/lib/contatos-sugeridos";
+import { CampoValor } from "@/components/ui/CampoValor";
+import { cotaTemDisponibilidade, formatCotaValor } from "@/lib/cotas";
+import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 
 type EmpresaCRM   = { id: string; nome: string };
 type Projeto      = { id: string; nome: string };
-type ContatoItem  = { id: string; nome: string; cargo: string | null; email: string | null };
+type ContatoItem  = { id: string; nome: string; cargo: string | null; email: string | null; responsavel_id?: string | null };
 type CaptadorExt  = { id: string; nome: string; agencia: string | null };
+
+const CRIAR_NOVA_COTA = "__criar_nova_cota__";
 
 const ETAPAS: { status: StatusCaptacao; Icon: React.ElementType; label: string; color: string }[] = [
   { status: "prospeccao",       Icon: Lightbulb,    label: "Prospecção", color: "rgba(13,13,13,.40)" },
@@ -97,6 +103,15 @@ const DEFAULT_MODULE_VISIBILITY: Record<CaptacaoModule, boolean> = {
   equipe: true,
   cronograma: false,
 };
+
+/* ─── Rótulos (fora do modal: componentes não são recriados a cada render) ─── */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+}
 
 /* ─── Mini-form inline para novo contato ─────────────────────────── */
 function NovoContatoInline({
@@ -174,12 +189,14 @@ function NovoContatoInline({
 }
 
 /* ─── Modal principal ─────────────────────────────────────────────── */
-export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
+export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, contatosSugeridos, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
   onSaved: (id?: string) => void;
   empresaPreId?: string;
   nomePreEmpresa?: string;
   empresaPubId?: string;
+  /** Responsáveis do patrocinador já liberados para a pessoa (página do patrocinador). */
+  contatosSugeridos?: ContatoSugerido[];
   statusPre?: StatusCaptacao;
   potentialPre?: PotencialFechamento;
   editData?: EditDataCaptacao;
@@ -240,6 +257,12 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [contatoEmpresaId, setContatoEmpresaId]   = useState<string | null>(editData?.contato_empresa_id ?? null);
   const [contatosEmpresa, setContatosEmpresa]     = useState<ContatoItem[]>([]);
   const [showNovoContato, setShowNovoContato]     = useState(false);
+  // Responsável do patrocinador escolhido; vira contato salvo só ao salvar a negociação.
+  // O principal (primeiro da lista do patrocinador) já vem escolhido.
+  const [contatoSugeridoChave, setContatoSugeridoChave] = useState<string | null>(() => editData ? null : contatosSugeridos?.[0]?.chave ?? null);
+  // empresas_crm que corresponde ao patrocinador aberto (empresa_pub_id), quando existe.
+  const [empresaDoPatrocinadorId, setEmpresaDoPatrocinadorId] = useState<string | null>(empresaPreId ?? null);
+  const empresaTocada = useRef(false);
 
   const [origem, setOrigem] = useState<OrigemOportunidade | null>(
     editData?.origem_oportunidade ?? (editData?.meio_contato === "indicacao" ? "indicacao" : null),
@@ -252,6 +275,21 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [trimestre, setTrimestre] = useState("");
   const [proximoFollowup, setProximoFollowup] = useState(editData?.proxima_prospeccao ?? "");
   const [previsao, setPrevisao]               = useState(editData?.data_previsao ?? "");
+  // Valor da negociação digitado direto aqui; a proposta continua opcional.
+  const [valorTexto, setValorTexto]           = useState(() => formatarValorBRL(editData?.valor_solicitado));
+  const valorLido = lerValorBRL(valorTexto);
+  // Cota (opcional) → Proposta: o valor da negociação é a proposta simplificada.
+  const [cotas, setCotas] = useState<CotaPatrocinio[]>([]);
+  const [cotasDoProjeto, setCotasDoProjeto] = useState<string | null>(null);
+  const [recargaCotas, setRecargaCotas] = useState(0);
+  const [cotaId, setCotaId] = useState("");
+  const [propostaAtiva, setPropostaAtiva] = useState<{ status: string; cota_id: string | null } | null>(null);
+  const propostaAceita = propostaAtiva?.status === "aceita";
+  // Só as cotas do projeto escolhido agora (a lista anterior some ao trocar de projeto).
+  const cotasVisiveis = projetoId && cotasDoProjeto === projetoId ? cotas : [];
+  const carregandoCotas = Boolean(projetoId) && cotasDoProjeto !== projetoId;
+  // "Contato realizado" fica recolhido: só quem já falou com a empresa abre.
+  const [registrarContato, setRegistrarContato] = useState(false);
   const [canalRealizado, setCanalRealizado] = useState<CanalContato | null>(null);
   const [resultadoContato, setResultadoContato] = useState<ResultadoInteracao | null>(null);
   const [dataContato, setDataContato] = useState(() => new Date().toISOString().slice(0, 16));
@@ -299,9 +337,67 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     }
 
     const preEmpresa = editData?.empresa_crm_id ?? empresaPreId;
-    if (preEmpresa) loadContatosEmpresa(preEmpresa);
+    if (preEmpresa) loadContatosEmpresa(preEmpresa, { doPatrocinador: !editData && Boolean(empresaPubId) });
+    else if (empresaPubId && organizationId) {
+      // Aberto pela página do patrocinador: usa a empresa que já está no CRM.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).from("empresas_crm").select("id, nome")
+        .eq("organization_id", organizationId).eq("empresa_pub_id", empresaPubId)
+        .order("created_at", { ascending: true }).limit(1).maybeSingle()
+        .then(({ data }: { data: EmpresaCRM | null }) => {
+          if (empresaTocada.current || !data) return;
+          setEmpresaDoPatrocinadorId(data.id);
+          setEmpresaId(data.id);
+          setEmpresaSearch(data.nome);
+          checkBlindagem(data.id);
+          checkExclusividade(data.id, projetoId);
+          loadContatosEmpresa(data.id, { doPatrocinador: true });
+        });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
+
+  useEffect(() => {
+    if (!editData?.id) return;
+    let ativo = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from("propostas").select("status, cota_id, created_at")
+      .eq("captacao_id", editData.id).not("status", "in", "(recusada,expirada,arquivada)")
+      .order("created_at", { ascending: false })
+      .then(({ data }: { data: { status: string; cota_id: string | null }[] | null }) => {
+        if (!ativo || !data?.length) return;
+        const ativa = data.find(p => p.status === "aceita") ?? data[0];
+        setPropostaAtiva(ativa);
+        setCotaId(ativa.cota_id ?? "");
+      });
+    return () => { ativo = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editData?.id]);
+
+  useEffect(() => {
+    if (!projetoId) return;
+    let ativo = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from("cotas_patrocinio")
+      .select("id,nome,valor,valor_maximo,modelo,produto_nome,status,unidades,unidades_ilimitadas,unidades_vendidas,contrapartidas,ordem")
+      .eq("projeto_id", projetoId).order("ordem")
+      .then(({ data }: { data: CotaPatrocinio[] | null }) => {
+        if (!ativo) return;
+        setCotas(data ?? []);
+        setCotasDoProjeto(projetoId);
+        // Trocar de projeto descarta a cota do projeto anterior.
+        setCotaId(current => current && !(data ?? []).some(cota => cota.id === current) ? "" : current);
+      });
+    return () => { ativo = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projetoId, recargaCotas]);
+
+  // Cota criada em outra aba ("+ Criar nova cota…"): ao voltar, a lista se atualiza.
+  useEffect(() => {
+    const aoVoltar = () => setRecargaCotas(n => n + 1);
+    window.addEventListener("focus", aoVoltar);
+    return () => window.removeEventListener("focus", aoVoltar);
+  }, []);
 
   async function checkBlindagem(eId: string, responsavelId: string | null = captadorId) {
     if (!responsavelId || !eId) { setBlindagem(null); return; }
@@ -356,23 +452,38 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     } else setExclusividade(null);
   }
 
-  async function loadContatosEmpresa(empresaCrmId: string) {
+  async function loadContatosEmpresa(empresaCrmId: string, { doPatrocinador = false }: { doPatrocinador?: boolean } = {}) {
     if (!empresaCrmId) { setContatosEmpresa([]); setContatoEmpresaId(null); return; }
     const { data } = await (supabase as any)
-      .from("contatos").select("id, nome, cargo, email")
+      .from("contatos").select("id, nome, cargo, email, responsavel_id")
       .eq("empresa_crm_id", empresaCrmId).order("nome");
-    const result = data ?? [];
+    const result: ContatoItem[] = data ?? [];
     setContatosEmpresa(result);
     // O contato selecionado pode ser de outra empresa (campo dependente trocando
     // de pai) — mantém só se ainda existir na lista desta empresa.
-    setContatoEmpresaId(current => current && result.some((c: ContatoItem) => c.id === current) ? current : null);
-    if (result.length === 0) setShowNovoContato(true);
+    setContatoEmpresaId(current => current && result.some(c => c.id === current) ? current : null);
+    const sugeridos = doPatrocinador ? semContatosJaSalvos(contatosSugeridos ?? [], result) : [];
+    const principal = doPatrocinador ? contatosSugeridos?.[0] : undefined;
+    const principalSalvo = principal ? contatoSalvoCorrespondente(principal, result) : null;
+    if (principalSalvo) {
+      // O responsável principal já está nos contatos: usa o contato salvo.
+      setContatoSugeridoChave(current => current === principal?.chave ? null : current);
+      setContatoEmpresaId(current => current ?? principalSalvo.id);
+    }
+    if (result.length === 0 && sugeridos.length === 0) setShowNovoContato(true);
   }
 
   const empresasFiltradas   = empresas.filter(e => e.nome.toLowerCase().includes(empresaSearch.toLowerCase()));
   const hasExactMatch       = empresas.some(e => e.nome.toLowerCase() === empresaSearch.trim().toLowerCase());
   const projetosFiltrados   = projetos.filter(p => p.nome.toLowerCase().includes(projetoSearch.toLowerCase()));
   const hasExactMatchProjeto = projetos.some(p => p.nome.toLowerCase() === projetoSearch.trim().toLowerCase());
+
+  const nomePatrocinador = (nomePreEmpresa ?? "").trim();
+  const empresaEhDoPatrocinador = Boolean(empresaPubId) && (empresaId
+    ? empresaId === empresaDoPatrocinadorId
+    : nomePatrocinador !== "" && empresaSearch.trim() === nomePatrocinador);
+  const sugeridosDisponiveis = empresaEhDoPatrocinador ? semContatosJaSalvos(contatosSugeridos ?? [], contatosEmpresa) : [];
+  const contatoSugerido = sugeridosDisponiveis.find(contato => contato.chave === contatoSugeridoChave) ?? null;
 
   async function handleCriarProjeto(nome: string) {
     if (!nome.trim() || criandoProjeto) return;
@@ -391,14 +502,16 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     if (!nome.trim() || criandoEmpresa) return;
     setCriandoEmpresa(true);
     const { data: { user } } = await supabase.auth.getUser();
+    const doPatrocinador = Boolean(empresaPubId) && nome.trim() === nomePatrocinador;
     const { data } = await (supabase as any)
-      .from("empresas_crm").insert({ nome: nome.trim(), account_id: user?.id, organization_id: organizationId })
+      .from("empresas_crm").insert({ nome: nome.trim(), account_id: user?.id, organization_id: organizationId, ...(doPatrocinador ? { empresa_pub_id: empresaPubId } : {}) })
       .select("id, nome").single();
     setCriandoEmpresa(false);
     if (!data) return;
     setEmpresas(prev => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
+    if (doPatrocinador) setEmpresaDoPatrocinadorId(data.id);
     setEmpresaId(data.id); setEmpresaSearch(data.nome); setEmpresaOpen(false);
-    loadContatosEmpresa(data.id);
+    loadContatosEmpresa(data.id, { doPatrocinador });
   }
 
   async function handleSalvar() {
@@ -410,16 +523,62 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado"); setSaving(false); return; }
 
+    if (!propostaAceita && !valorLido.valido) {
+      setErro(MENSAGEM_VALOR_INVALIDO);
+      setSaving(false); return;
+    }
+
     if (canalRealizado && !resultadoContato) {
       setErro("Informe o resultado do contato realizado.");
       setSaving(false); return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
+
+    // Patrocinador ainda fora do CRM: entra agora, ligado à base (empresa_pub_id).
+    let empresaFinal = empresaId;
+    if (!empresaFinal && empresaEhDoPatrocinador && empresaPubId) {
+      const existente = await sb.from("empresas_crm").select("id")
+        .eq("organization_id", organizationId).eq("empresa_pub_id", empresaPubId).limit(1).maybeSingle();
+      const criada = existente.data?.id ? null : await sb.from("empresas_crm")
+        .insert({ nome: nomePatrocinador, account_id: user.id, organization_id: organizationId, empresa_pub_id: empresaPubId })
+        .select("id").single();
+      empresaFinal = existente.data?.id ?? criada?.data?.id ?? "";
+      if (!empresaFinal) { setErro("Não foi possível adicionar o patrocinador ao seu CRM. Tente novamente."); setSaving(false); return; }
+      // Se algo falhar adiante, uma nova tentativa reaproveita a empresa.
+      setEmpresaDoPatrocinadorId(empresaFinal);
+      setEmpresaId(empresaFinal);
+    }
+
+    // Responsável do patrocinador escolhido: vira contato salvo da empresa.
+    let contatoFinal = contatoEmpresaId;
+    if (!contatoFinal && contatoSugerido && empresaFinal) {
+      const novo = await sb.from("contatos").insert({
+        nome: contatoSugerido.nome,
+        cargo: contatoSugerido.cargo,
+        email: contatoSugerido.email,
+        telefone: contatoSugerido.telefone,
+        linkedin_url: contatoSugerido.linkedin_url,
+        responsavel_id: contatoSugerido.responsavel_id,
+        empresa_crm_id: empresaFinal,
+        account_id: user.id,
+        organization_id: organizationId,
+        origem: "jards",
+      }).select("id").single();
+      if (novo.error || !novo.data?.id) { setErro("Não foi possível salvar o contato escolhido. Tente de novo ou escolha outro."); setSaving(false); return; }
+      contatoFinal = novo.data.id;
+      // Já é um contato salvo: uma nova tentativa não o duplica.
+      const salvo: ContatoItem = { id: novo.data.id, nome: contatoSugerido.nome, cargo: contatoSugerido.cargo, email: contatoSugerido.email, responsavel_id: contatoSugerido.responsavel_id };
+      setContatosEmpresa(current => [...current, salvo].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setContatoSugeridoChave(null);
+      setContatoEmpresaId(novo.data.id);
+    }
+
     const payload = {
-      empresa_crm_id:      empresaId || null,
+      empresa_crm_id:      empresaFinal || null,
       empresa_id:          empresaPubId || null,
       projeto_id:          projetoId || null,
-      valor_solicitado:    null,
       // Campo legado mantido durante a transição entre versões do banco.
       meio_contato:        legacyMeio(null),
       status,
@@ -427,13 +586,12 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       captador_id:         captacaoTipo === "interna" ? captadorId : null,
       captador_externo_id: captacaoTipo === "externa" ? captadorExternoId : null,
       supervisor_id:       supervisorId,
-      contato_empresa_id:  contatoEmpresaId,
+      contato_empresa_id:  contatoFinal,
       // Mantido como espelho pelo trigger de crm_followups.
       proxima_prospeccao:  null,
       data_previsao:       previsao || null,
     };
 
-    const sb = supabase as any;
     let captacaoId = editData?.id ?? null;
     let createdNow = false;
     let result = editData?.id
@@ -460,6 +618,21 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       }
     }
 
+    // Valor e cota vão para a proposta simplificada (ou direto, sem projeto).
+    const cotaFinal = projetoId ? cotaId : "";
+    const mudouValor = editData?.id ? valorLido.valor !== (editData.valor_solicitado ?? null) : valorLido.valor != null;
+    const mudouCota = cotaFinal !== (propostaAtiva?.cota_id ?? "");
+    if (!error && captacaoId && !propostaAceita && (mudouValor || mudouCota)) {
+      const proposta = await sb.rpc("fn_salvar_proposta_simplificada", {
+        p_captacao_id: captacaoId, p_valor: valorLido.valor, p_cota_id: cotaFinal || null, p_alterar_cota: true,
+      });
+      if (proposta.error) {
+        // Evita deixar uma negociação recém-criada sem o valor que a pessoa digitou.
+        if (createdNow) await sb.from("captacoes").delete().eq("id", captacaoId);
+        error = { message: proposta.error.message || "Não foi possível salvar o valor da proposta." };
+      }
+    }
+
     if (!error && captacaoId && canalRealizado && resultadoContato) {
       const legacyTipo = canalRealizado === "whatsapp" ? "mensagem"
         : canalRealizado === "videoconferencia" || canalRealizado === "presencial" ? "reuniao"
@@ -467,8 +640,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       const interaction = await sb.from("crm_interacoes").insert({
         organization_id: organizationId,
         account_id: user.id,
-        empresa_crm_id: empresaId || null,
-        contato_id: contatoEmpresaId,
+        empresa_crm_id: empresaFinal || null,
+        contato_id: contatoFinal,
         captacao_id: captacaoId,
         tipo: legacyTipo,
         canal: canalRealizado,
@@ -502,8 +675,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
         const followupPayload = {
           organization_id: organizationId,
           account_id: user.id,
-          empresa_crm_id: empresaId || null,
-          contato_id: contatoEmpresaId,
+          empresa_crm_id: empresaFinal || null,
+          contato_id: contatoFinal,
           captacao_id: captacaoId,
           canal: canalPlanejado || "email",
           previsto_para: new Date(`${proximoFollowup}T12:00:00`).toISOString(),
@@ -522,15 +695,6 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     setSaving(false);
     if (error) { setErro((error as Error).message); return; }
     onSaved(captacaoId ?? undefined); onClose();
-  }
-
-  /* ── Helpers de render ── */
-  function SectionLabel({ children }: { children: React.ReactNode }) {
-    return <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
-  }
-
-  function FieldLabel({ children }: { children: React.ReactNode }) {
-    return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
   }
 
   return (
@@ -601,17 +765,18 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   style={{ borderColor: empresaOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
                   <Building2 size={13} className="flex-shrink-0 text-black/35" />
                   <input type="text" placeholder="Buscar ou criar…" value={empresaSearch}
-                    onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
+                    onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
                     onFocus={() => setEmpresaOpen(true)} onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
                     className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
-                  {empresaSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
+                  {empresaSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
                 </div>
                 {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
                   <PortalMenu position={empresaMenuPos}>
                     {empresasFiltradas.map(empresa => (
                       <button key={empresa.id} type="button" onMouseDown={event => {
                         event.preventDefault(); setEmpresaId(empresa.id); setEmpresaSearch(empresa.nome); setEmpresaOpen(false);
-                        checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id);
+                        setContatoSugeridoChave(null); empresaTocada.current = true;
+                        checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id, { doPatrocinador: empresa.id === empresaDoPatrocinadorId });
                       }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
                         {empresa.nome}
                       </button>
@@ -666,6 +831,38 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                     )}
                   </PortalMenu>
                 )}
+              </div>
+
+
+              <div>
+                <FieldLabel>Cota <span className="ml-1 font-normal text-black/35">(opcional)</span></FieldLabel>
+                <CustomDropdown value={cotaId} disabled={!projetoId || propostaAceita || carregandoCotas}
+                  onChange={value => {
+                    if (value === CRIAR_NOVA_COTA) {
+                      window.open(`/projetos/${projetoId}?tab=proposta`, "_blank");
+                      return;
+                    }
+                    setCotaId(value);
+                    const cota = cotasVisiveis.find(item => item.id === value);
+                    if (cota) setValorTexto(formatarValorBRL(cota.valor));
+                  }}
+                  className="[&>button]:w-full" compact icon={<Layers size={13} />}
+                  placeholder={!projetoId ? "Selecione um projeto primeiro" : carregandoCotas ? "Carregando cotas…" : cotasVisiveis.length === 0 ? "Nenhuma cota neste projeto" : "Sem cota"}
+                  options={[
+                    ...(cotasVisiveis.length > 0 ? [{ value: "", label: "Sem cota" }] : []),
+                    ...cotasVisiveis.map(cota => ({
+                      value: cota.id,
+                      label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
+                      disabled: !cotaTemDisponibilidade(cota) && cota.id !== propostaAtiva?.cota_id,
+                    })),
+                    { value: CRIAR_NOVA_COTA, label: "Criar nova cota…", icon: <Plus size={12} /> },
+                  ]} />
+              </div>
+
+              <div>
+                <FieldLabel>Valor</FieldLabel>
+                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!propostaAceita && !valorLido.valido} ariaLabel="Valor" disabled={propostaAceita} />
+                {!propostaAceita && !valorLido.valido && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>}
               </div>
 
               <div>
@@ -726,10 +923,21 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                         setContatoEmpresaId(contato.id); setShowNovoContato(false);
                       }} onCancel={() => setShowNovoContato(false)} />
                   ) : (
-                    <CustomDropdown value={contatoEmpresaId ?? ""} onChange={value => setContatoEmpresaId(value || null)}
-                      className="[&>button]:w-full" compact icon={<Contact size={13} />}
-                      placeholder={empresaId ? "Nenhum contato" : "Selecione um patrocinador primeiro"}
-                      options={[{ value: "", label: "Nenhum" }, ...contatosEmpresa.map(contato => ({ value: contato.id, label: contato.cargo ? `${contato.nome} · ${contato.cargo}` : contato.nome }))]} />
+                    <>
+                      <CustomDropdown
+                        value={contatoEmpresaId ?? (contatoSugerido ? `sugerido:${contatoSugerido.chave}` : "")}
+                        onChange={value => {
+                          if (value.startsWith("sugerido:")) { setContatoEmpresaId(null); setContatoSugeridoChave(value.slice("sugerido:".length)); }
+                          else { setContatoSugeridoChave(null); setContatoEmpresaId(value || null); }
+                        }}
+                        className="[&>button]:w-full" compact icon={<Contact size={13} />}
+                        placeholder={empresaId || sugeridosDisponiveis.length > 0 ? "Nenhum contato" : "Selecione um patrocinador primeiro"}
+                        options={[
+                          { value: "", label: "Nenhum" },
+                          ...contatosEmpresa.map(contato => ({ value: contato.id, label: rotuloContato({ nome: contato.nome, cargo: contato.cargo }) })),
+                          ...sugeridosDisponiveis.map(contato => ({ value: `sugerido:${contato.chave}`, label: rotuloContato(contato), icon: <Building2 size={12} className="text-[#7259B5]" aria-hidden="true" /> })),
+                        ]} />
+                    </>
                   )}
                 </div>
 
@@ -810,8 +1018,26 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             </section>
           )}
 
+          {!editData && !registrarContato && (
+            <div className="mt-5 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+              <button type="button" onClick={() => setRegistrarContato(true)}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+                <Plus size={12} aria-hidden="true" /> Registrar um contato que já aconteceu
+              </button>
+            </div>
+          )}
+
+          {!editData && registrarContato && (
           <section className="mt-5 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <SectionLabel>Contato realizado</SectionLabel>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <SectionLabel>Contato já realizado</SectionLabel>
+              <button type="button" onClick={() => {
+                setRegistrarContato(false); setCanalRealizado(null); setResultadoContato(null); setResumoContato("");
+                setDataContato(new Date().toISOString().slice(0, 16));
+              }} className="-mt-1.5 rounded px-1.5 py-1 text-[0.6875rem] text-black/40 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                Não registrar
+              </button>
+            </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <FieldLabel>Canal utilizado</FieldLabel>
@@ -837,6 +1063,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               </div>
             </div>
           </section>
+          )}
         </main>
 
         <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>

@@ -15,6 +15,7 @@ import { useCreditos } from "@/contexts/CreditosContext";
 import type { Empresa, Responsavel, Edital, Tipologia, InvestimentoTrimestre, StatusCaptacao, ContatoSugestao } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
+import { contatosSugeridosDoPatrocinador } from "@/lib/contatos-sugeridos";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { ContatoExportadoModal } from "@/components/modals/ContatoExportadoModal";
@@ -900,6 +901,7 @@ export default function PatrocinadorPage() {
           nomePreEmpresa={empresa?.nome}
           empresaPreId={empresaCrmId ?? undefined}
           empresaPubId={id}
+          contatosSugeridos={contatosSugeridosDoPatrocinador(responsaveis, sugestoes, mostraContatos)}
           onClose={() => setShowCaptacaoModal(false)}
           onSaved={() => { setShowCaptacaoModal(false); reloadActivity(); }}
         />

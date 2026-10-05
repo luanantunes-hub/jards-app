@@ -5,15 +5,18 @@ import test from "node:test";
 const root = new URL("../", import.meta.url);
 
 test("negociação reutiliza a adaptação comercial completa", async () => {
+  const negociacao = await readFile(new URL("components/captacoes/PropostaDaNegociacao.tsx", root), "utf8");
   const panel = await readFile(new URL("components/PropostaValuePanel.tsx", root), "utf8");
   const modal = await readFile(new URL("components/projects/PropostaOperacionalModal.tsx", root), "utf8");
 
-  assert.match(panel, /PropostaOperacionalModal/);
-  assert.doesNotMatch(panel, /NovaPropostaModal/);
-  assert.match(modal, /Título interno/);
-  assert.match(modal, /Cota-base/);
-  assert.match(modal, /Contrapartidas adaptadas/);
-  assert.match(modal, /Decisões e ressalvas/);
+  for (const origem of [negociacao, panel]) {
+    assert.match(origem, /PropostaOperacionalModal/);
+    assert.doesNotMatch(origem, /NovaPropostaModal/);
+  }
+  assert.match(modal, />Título</);
+  assert.match(modal, />Cota </);
+  assert.match(modal, />Contrapartidas</);
+  assert.match(modal, />Observações</);
 });
 
 test("aceite registra comprador e venda de forma atômica e idempotente", async () => {

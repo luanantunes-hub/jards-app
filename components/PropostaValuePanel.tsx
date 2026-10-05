@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Plus } from "lucide-react";
+import { Pencil, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CotaPatrocinio } from "@/lib/supabase/types";
 import { PropostaOperacionalModal, type PropostaOperacionalDraft } from "@/components/projects/PropostaOperacionalModal";
@@ -27,6 +27,7 @@ export function PropostaValuePanel({
   propostas,
   onCreated,
   onResolved,
+  onEditarValor,
 }: {
   parentField: "captacao_id" | "edital_user_id";
   parentId: string;
@@ -43,6 +44,11 @@ export function PropostaValuePanel({
   propostas: PropostaRow[];
   onCreated: () => void;
   onResolved: (payload: { status: string; valorFinal: number | null }) => Promise<void>;
+  /**
+   * Sem proposta, o valor é editado direto (negociação); a proposta vira um
+   * botão à parte. Sem este callback, criar a proposta é o caminho do valor.
+   */
+  onEditarValor?: () => void;
 }) {
   const supabase = useMemo(() => createClient(), []);
   const [cotas, setCotas] = useState<CotaPatrocinio[]>([]);
@@ -112,6 +118,49 @@ export function PropostaValuePanel({
     );
   }
 
+  const modalNovaProposta = showNovaProposta && (
+    <PropostaOperacionalModal
+      projetoId={projetoId}
+      projetoNome={projetoNome}
+      proposta={null}
+      cotas={cotas}
+      captacoes={[]}
+      inscricoes={[]}
+      fixedCase={{ kind: parentField === "captacao_id" ? "negociacao" : "edital", id: parentId, titulo: projetoNome, complemento: empresaNome }}
+      valorInicial={valorAtual}
+      onClose={() => setShowNovaProposta(false)}
+      onSaved={onCreated}
+    />
+  );
+
+  // Sem proposta: o valor se edita ali mesmo, e a proposta é opcional.
+  if (!propostaAtual && onEditarValor) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={onEditarValor}
+          className="flex h-11 items-center gap-3 rounded border border-black/[.12] bg-white px-4 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+          aria-label={valorAtual ? `Valor da negociação: ${formatCurrency(valorAtual)}. Editar` : "Definir o valor da negociação"}
+        >
+          <div className="text-left">
+            <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Valor</p>
+            <p className={`text-[0.75rem] font-bold tabular-nums ${valorAtual ? "text-[#B07A14]" : "text-black/35"}`}>{valorAtual ? formatCurrency(valorAtual) : "Definir"}</p>
+          </div>
+          <Pencil size={11} className="text-black/25" aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          onClick={() => setShowNovaProposta(true)}
+          className="flex h-11 items-center gap-2 rounded border border-dashed border-black/[.18] bg-white px-4 text-[0.75rem] font-medium text-black/45 transition hover:border-[#7259B5]/40 hover:text-[#7259B5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+        >
+          <Plus size={12} aria-hidden="true" /> Proposta
+        </button>
+        {modalNovaProposta}
+      </>
+    );
+  }
+
   // Nenhuma proposta formal ainda, mas existe valor legado (registro antigo) — preserva a visibilidade
   if (!propostaAtual && valorAtual) {
     return (
@@ -136,6 +185,7 @@ export function PropostaValuePanel({
             captacoes={[]}
             inscricoes={[]}
             fixedCase={{ kind: parentField === "captacao_id" ? "negociacao" : "edital", id: parentId, titulo: projetoNome, complemento: empresaNome }}
+            valorInicial={valorAtual}
             onClose={() => setShowNovaProposta(false)}
             onSaved={onCreated}
           />
@@ -163,6 +213,7 @@ export function PropostaValuePanel({
             captacoes={[]}
             inscricoes={[]}
             fixedCase={{ kind: parentField === "captacao_id" ? "negociacao" : "edital", id: parentId, titulo: projetoNome, complemento: empresaNome }}
+            valorInicial={valorAtual}
             onClose={() => setShowNovaProposta(false)}
             onSaved={onCreated}
           />
@@ -199,12 +250,15 @@ export function PropostaValuePanel({
   }
 
   // Proposta com valor definido — decisão de desfecho
+  const cotaDaProposta = propostaAtual.cota_id ? cotas.find(cota => cota.id === propostaAtual.cota_id) ?? null : null;
   return (
     <>
       <div className="flex h-11 items-center gap-1 rounded border border-black/[.12] bg-white pl-3 pr-1.5">
         <div className="pr-2 text-left">
-          <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Proposto</p>
-          <p className="text-[0.75rem] font-bold text-[#B07A14]">{formatCurrency(propostaAtual.valor_proposto)}</p>
+          <p className="max-w-[12rem] truncate text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">
+            Proposta{cotaDaProposta && <span className="font-normal normal-case tracking-normal text-black/30"> · {cotaDaProposta.nome}</span>}
+          </p>
+          <p className="text-[0.75rem] font-bold tabular-nums text-[#B07A14]">{formatCurrency(propostaAtual.valor_proposto)}</p>
         </div>
         <div className="h-6 w-px bg-black/10" />
         <button disabled={salvandoDesfecho} onClick={handleAceitar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-[#2E8932]/10 disabled:opacity-40">Aceitar</button>

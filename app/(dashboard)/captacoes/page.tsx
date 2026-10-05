@@ -47,6 +47,7 @@ type CaptacaoRow = {
   captador_id: string | null;
   supervisor_id: string | null;
   captador_externo_id: string | null;
+  contato_empresa_id: string | null;
   ciclo_ano: number | null;
   ciclo_anterior_id: string | null;
   created_at: string;
@@ -69,7 +70,7 @@ const CAPTACOES_SELECT = `
   id, titulo, lei, valor_solicitado, status, prioridade, potencial_fechamento, proxima_prospeccao, created_at, updated_at,
   ciclo_ano, ciclo_anterior_id,
   empresa_crm_id, projeto_id, meio_contato, origem_oportunidade, canal_planejado, data_previsao,
-  captador_id, supervisor_id, captador_externo_id,
+  captador_id, supervisor_id, captador_externo_id, contato_empresa_id,
   empresa_pub:empresas!empresa_id(nome, logo_url, site),
   empresa_crm:empresas_crm!empresa_crm_id(nome, domain_key, site),
   projeto:projetos_crm!projeto_id(nome, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor),
@@ -254,6 +255,14 @@ export default function CaptacoesPage() {
     return (result.data as unknown as Array<Omit<CaptacaoRow, "potencial_fechamento"> & { potencial_fechamento?: PotencialFechamento | null }>)
       .map(item => ({ ...item, potencial_fechamento: item.potencial_fechamento ?? "medio" }));
   }
+
+  // /captacoes?novo=1 (vindo dos primeiros passos) abre o cadastro direto.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("novo") !== "1") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowModal(true);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
 
   useEffect(() => {
     async function fetchData() {
@@ -526,7 +535,7 @@ export default function CaptacoesPage() {
             captador_id:      editingRecord.captador_id,
             captador_externo_id: editingRecord.captador_externo_id,
             supervisor_id:    editingRecord.supervisor_id,
-            contato_empresa_id: null,
+            contato_empresa_id: editingRecord.contato_empresa_id,
             proxima_prospeccao: editingRecord.proxima_prospeccao,
             data_previsao:    editingRecord.data_previsao,
             potencial_fechamento: editingRecord.potencial_fechamento,

@@ -232,7 +232,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   // Quem não usa o módulo da rota vai para o módulo que usa (ex.: usuário só da
   // prestação abrindo /dashboard). A proteção dos dados continua no banco.
-  const papelAtual = memberships.find(m => m.organizationId === organizationId)?.papel;
+  const papelAtual = memberships.find(m => m.organizationId === organizationId)?.papel ?? null;
   useEffect(() => {
     if (!modulosCarregados || papelAtual === "captador") return;
     const destino = destinoSemAcesso(path, {
@@ -318,10 +318,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
   // organização que convidou (essas continuam existindo, só não fazem
   // sentido pra alguém com acesso limitado a um único workspace).
-  const isWorkspaceCaptador = memberships.find(m => m.organizationId === organizationId)?.papel === "captador";
+  const isWorkspaceCaptador = papelAtual === "captador";
 
   return (
-    <OrganizationContext.Provider value={{ organizationId, organizationName: org.nome }}>
+    <OrganizationContext.Provider value={{ organizationId, organizationName: org.nome, papel: papelAtual }}>
       <DeleteConfirmProvider>
       <CreditosProvider>
       <EtiquetasProvider>

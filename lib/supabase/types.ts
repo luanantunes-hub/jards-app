@@ -104,6 +104,8 @@ export interface Responsavel {
   votos_negativos: number;
   created_at: string;
   updated_at: string;
+  /** fn_responsaveis_empresa: nome mascarado e e-mail/LinkedIn ocultos enquanto a empresa não foi desbloqueada. */
+  mascarado?: boolean;
 }
 
 export interface Tipologia {
@@ -929,6 +931,7 @@ export interface Profile {
   tamanho_equipe: string | null;
   objetivo_principal: string | null;
   onboarding_completed: boolean;
+  primeiros_passos_ocultos_em: string | null;
   plano: PlanTipo;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;

@@ -6,7 +6,7 @@ import {
   ArrowLeft, Pencil, Plus, RefreshCw, Mail, Phone,
   Users, Calendar, MoreHorizontal, FileText, ExternalLink,
   FolderOpen, Star, Clock, Send,
-  X, Upload, Trash2, Coins, Trophy,
+  X, Upload, Trash2,
   LayoutDashboard, MessagesSquare, RotateCw, Tag, Info, Layers,
   ChevronDown, ArrowUp, ArrowDown, Minus, Check,
 } from "lucide-react";
@@ -16,7 +16,6 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { Captacao, Atividade } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
-import { PropostaValuePanel } from "@/components/PropostaValuePanel";
 import { CotasReferenceTab } from "@/components/CotasReferenceTab";
 import PrioBadge from "@/components/ui/PrioBadge";
 import SharedStatusBadge from "@/components/ui/StatusBadge";
@@ -24,22 +23,19 @@ import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
-import { AbrirContaModal } from "@/components/modals/AbrirContaModal";
 import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RelationshipWorkspace } from "@/components/relationship/RelationshipWorkspace";
 import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeModal";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
+import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
+import { PropostaDaNegociacao } from "@/components/captacoes/PropostaDaNegociacao";
+import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
 
 const RESULTADO_NEGATIVO = new Set(["recusado"]);
 
-type Nota = {
-  id: string;
-  conteudo: string;
-  created_at: string;
-  user: { full_name: string } | null;
-};
+type Nota = NotaRegistro;
 
 type Contato = {
   id: string;
@@ -209,26 +205,6 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
   );
 }
 
-function ValorManualPanel({ captacao, onEditarManual }: {
-  captacao: { valor_solicitado: number | null; valor_aprovado: number | null };
-  onEditarManual: () => void;
-}) {
-  return (
-    <button onClick={onEditarManual} className="flex h-11 items-center gap-3 rounded border border-black/[.12] bg-white px-4 transition hover:bg-black/[.04]">
-      <div className="text-left">
-        <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Solicitado</p>
-        <p className="text-[0.75rem] font-bold text-[#B07A14]">{captacao.valor_solicitado ? formatCurrency(captacao.valor_solicitado) : "—"}</p>
-      </div>
-      <div className="h-6 w-px bg-black/10" />
-      <div className="text-left">
-        <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Aprovado</p>
-        <p className="text-[0.75rem] font-bold text-[#1A8B7A]">{captacao.valor_aprovado ? formatCurrency(captacao.valor_aprovado) : "—"}</p>
-      </div>
-      <Pencil size={11} className="text-black/25" />
-    </button>
-  );
-}
-
 export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -265,13 +241,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const [newAtividadeData, setNewAtividadeData] = useState("");
   const [salvandoAtividade, setSalvandoAtividade] = useState(false);
   const [atividadeConcluir, setAtividadeConcluir] = useState<(Atividade & { contato: { nome: string } | null }) | null>(null);
-  const [editingFinanceiro, setEditingFinanceiro] = useState(false);
-  const [editValorSolicitado, setEditValorSolicitado] = useState("");
-  const [editValorAprovado, setEditValorAprovado] = useState("");
-  const [salvandoFinanceiro, setSalvandoFinanceiro] = useState(false);
   const [uploadandoDoc, setUploadandoDoc] = useState(false);
   const [documentoErro, setDocumentoErro] = useState<string | null>(null);
-  const [showCriarCliente, setShowCriarCliente] = useState(false);
   const [showRenovarModal, setShowRenovarModal] = useState(false);
   const [proximoCiclo, setProximoCiclo] = useState<{ id: string; ciclo_ano: number } | null>(null);
   const [ciclos, setCiclos] = useState<CommercialCycle[]>([]);
@@ -335,7 +306,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         .order("data_prevista", { ascending: true }),
       supabase
         .from("notas")
-        .select("id, conteudo, created_at, user:profiles!user_id(full_name)")
+        .select(CAMPOS_NOTA)
         .eq("captacao_id", id)
         .order("created_at", { ascending: false }),
       supabase
@@ -406,6 +377,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     if (new URLSearchParams(window.location.search).get("tab") === "relacionamento") setActiveTab("relacionamento");
   }, []);
 
+  async function recarregarNotas() {
+    try { setNotas(await buscarNotas(supabase, { coluna: "captacao_id", id })); } catch { /* a lista anterior continua na tela */ }
+  }
+
   async function handleSalvarAtividade() {
     if (!newAtividadeNome.trim()) return;
     setSalvandoAtividade(true);
@@ -448,41 +423,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     await (supabase as any).rpc("fn_set_atividade_concluida", {
       p_atividade_id: atividadeId, p_feita: false, p_data_realizada: null,
     });
-    await fetchData();
-  }
-
-  function handleOpenFinanceiro() {
-    setEditValorSolicitado(captacao?.valor_solicitado?.toString() || "");
-    setEditValorAprovado(captacao?.valor_aprovado?.toString() || "");
-    setEditingFinanceiro(true);
-  }
-
-  async function handleSalvarFinanceiro() {
-    if (!captacao) return;
-    setSalvandoFinanceiro(true);
-
-    const valorSolicitado = editValorSolicitado ? parseFloat(editValorSolicitado) : null;
-    const valorAprovado = editValorAprovado ? parseFloat(editValorAprovado) : null;
-
-    const { error } = await (supabase.from("captacoes") as any)
-      .update({
-        valor_solicitado: valorSolicitado,
-        valor_aprovado: valorAprovado,
-      })
-      .eq("id", captacao.id);
-
-    if (!error) {
-      setEditingFinanceiro(false);
-      await fetchData();
-    }
-    setSalvandoFinanceiro(false);
-  }
-
-  async function handleResolverProposta({ status, valorFinal }: { status: string; valorFinal: number | null }) {
-    if (!captacao) return;
-    await (supabase.from("captacoes") as any)
-      .update({ status, valor_aprovado: valorFinal })
-      .eq("id", captacao.id);
     await fetchData();
   }
 
@@ -610,10 +550,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     ...notas.map(n => ({
       tipo: "nota",
       atividade_tipo: "nota",
-      titulo: n.conteudo.length > 80 ? n.conteudo.slice(0, 80) + "…" : n.conteudo,
-      descricao: null,
+      titulo: n.titulo || resumoNota(n.conteudo),
+      descricao: n.titulo ? resumoNota(n.conteudo) : null,
       data: n.created_at,
-      usuario: n.user?.full_name || null,
+      usuario: null,
       created_at: n.created_at,
     })),
     ...historico.map(h => ({
@@ -690,25 +630,13 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           </div>
 
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            {captacao.projeto_id ? (
-              <PropostaValuePanel
-                parentField="captacao_id"
-                parentId={captacao.id}
-                projetoId={captacao.projeto_id}
-                projetoNome={captacao.projeto?.nome || "Projeto"}
-                organizationId={captacao.organization_id}
-                empresaNome={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || "negociação"}
-                status={captacao.status}
-                statusRecusado="recusado"
-                valorAtual={captacao.valor_solicitado}
-                valorFinal={captacao.valor_aprovado}
-                propostas={propostas}
-                onCreated={() => void fetchData()}
-                onResolved={handleResolverProposta}
-              />
-            ) : (
-              <ValorManualPanel captacao={captacao} onEditarManual={handleOpenFinanceiro} />
-            )}
+            <PropostaDaNegociacao
+              captacao={captacao}
+              empresaNome={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || "Empresa"}
+              projetoNome={captacao.projeto?.nome ?? null}
+              propostas={propostas}
+              onChanged={fetchData}
+            />
             {proximoCiclo ? (
               <DetailHeaderAction label={`Ver ciclo ${proximoCiclo.ciclo_ano}`} icon={RotateCw} onClick={() => router.push(`/captacoes/${proximoCiclo.id}`)} />
             ) : RESULTADO_NEGATIVO.has(captacao.status) ? (
@@ -721,14 +649,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 tone="black"
               />
             ) : null}
-            {!['aprovado', 'recusado'].includes(captacao.status) && (
-              <DetailHeaderAction
-                label="Ganhar cliente"
-                icon={Trophy}
-                accent
-                onClick={() => captacao.empresa_crm_id && setShowCriarCliente(true)}
-              />
-            )}
             <button
               onClick={() => setShowEditModal(true)}
               className="flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04]"
@@ -1016,6 +936,14 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               )}
             </section>
 
+            <NotasDoRegistro
+              escopo={{ coluna: "captacao_id", id }}
+              organizationId={captacao.organization_id}
+              notas={notas}
+              onChanged={recarregarNotas}
+              contexto={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || undefined}
+            />
+
             {/* Atividades Pendentes */}
             {atvsPendentes.length > 0 && (
               <section>
@@ -1261,14 +1189,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           onSaved={() => { setShowEditModal(false); fetchData(); }}
         />
       )}
-      {showCriarCliente && captacao.empresa_crm_id && (
-        <AbrirContaModal
-          empresaCrmId={captacao.empresa_crm_id}
-          empresaNome={captacao.empresa_crm?.nome ?? ""}
-          onClose={() => setShowCriarCliente(false)}
-          onSaved={() => setShowCriarCliente(false)}
-        />
-      )}
       {leiMenuPos && (
         <StatusDropdown
           title="Tipo de patrocínio"
@@ -1326,54 +1246,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           onClose={() => setShowRenovarModal(false)}
           onRenovado={() => { setShowRenovarModal(false); void fetchData(); }}
         />
-      )}
-      {editingFinanceiro && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={() => setEditingFinanceiro(false)}>
-          <div className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: "25rem" }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
-                  <Coins size={16} className="text-black/50" />
-                </div>
-                <h2 className="text-[0.9375rem] font-bold text-black">Financeiro</h2>
-              </div>
-              <button onClick={() => setEditingFinanceiro(false)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
-                <X size={15} className="text-black/40" />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="text-[0.625rem] text-black/40 mb-1 block">Valor solicitado (R$)</label>
-                <input
-                  type="number"
-                  value={editValorSolicitado}
-                  onChange={(e) => setEditValorSolicitado(e.target.value)}
-                  placeholder="0,00"
-                  className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-              <div>
-                <label className="text-[0.625rem] text-black/40 mb-1 block">Valor aprovado (R$)</label>
-                <input
-                  type="number"
-                  value={editValorAprovado}
-                  onChange={(e) => setEditValorAprovado(e.target.value)}
-                  placeholder="0,00"
-                  className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-              <button
-                onClick={handleSalvarFinanceiro}
-                disabled={salvandoFinanceiro}
-                className="w-full px-3 py-2 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
-              >
-                {salvandoFinanceiro ? "Salvando…" : "Salvar"}
-              </button>
-            </div>
-          </div>
-        </div>
       )}
     </div>
   );
