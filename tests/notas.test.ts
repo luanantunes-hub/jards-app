@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { CAMPOS_NOTA, atualizarNota, criarNota, normalizarNota, resumoNota } from "../lib/notas";
+import { CAMPOS_NOTA, atualizarNota, autorDaNota, criarNota, normalizarNota, notaEditavel, resumoNota } from "../lib/notas";
 
 function clienteFalso({ user = { id: "u1" } as { id: string } | null, erro = null as { message: string } | null, linha = { id: "n1" } as { id: string } | null } = {}) {
   const chamadas: { tabela?: string; insert?: Record<string, unknown>; update?: Record<string, unknown> } = {};
@@ -27,7 +27,7 @@ test("a nota é gravada com account_id (a tabela não tem user_id) e no escopo c
 });
 
 test("as colunas lidas existem na tabela notas", () => {
-  assert.equal(CAMPOS_NOTA, "id, titulo, conteudo, created_at");
+  assert.equal(CAMPOS_NOTA, "id, titulo, conteudo, created_at, account_id");
   assert.ok(!CAMPOS_NOTA.includes("user"));
 });
 
@@ -51,4 +51,15 @@ test("o histórico mostra um trecho de uma linha", () => {
   const longa = "palavra ".repeat(40);
   const resumo = resumoNota(longa, 30);
   assert.ok(resumo.length <= 30 && resumo.endsWith("…"));
+});
+
+test("nota da equipe aparece com o nome de quem escreveu e não é editável", () => {
+  const nomes = { u2: "Ana Souza" };
+  assert.equal(notaEditavel({ account_id: "u1" }, "u1"), true);
+  assert.equal(autorDaNota({ account_id: "u1" }, "u1", nomes), null);
+  assert.equal(notaEditavel({ account_id: "u2" }, "u1"), false);
+  assert.equal(autorDaNota({ account_id: "u2" }, "u1", nomes), "Ana Souza");
+  assert.equal(autorDaNota({ account_id: "u3" }, "u1", nomes), "Outra pessoa da equipe");
+  // Antes de saber quem está logado, nada fica travado (o banco decide).
+  assert.equal(notaEditavel({ account_id: "u2" }, null), true);
 });

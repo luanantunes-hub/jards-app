@@ -6,7 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { BottomSheet } from "@/components/ui/BottomSheet";
-import { atualizarNota, criarNota, normalizarNota, type EscopoNota, type NotaRegistro } from "@/lib/notas";
+import { atualizarNota, autorDaNota, criarNota, normalizarNota, notaEditavel, type EscopoNota, type NotaRegistro } from "@/lib/notas";
+import { useAutoriaDasNotas } from "@/hooks/useAutoriaDasNotas";
 
 function quando(iso: string) {
   const data = new Date(iso);
@@ -32,6 +33,7 @@ export function NotasDoRegistro({ escopo, organizationId, notas, onChanged, cont
 }) {
   const [editando, setEditando] = useState<NotaRegistro | "nova" | null>(null);
   const tituloId = useId();
+  const { usuarioId, nomes } = useAutoriaDasNotas(notas);
 
   return (
     <section aria-labelledby={tituloId}>
@@ -58,25 +60,38 @@ export function NotasDoRegistro({ escopo, organizationId, notas, onChanged, cont
         >
           <StickyNote size={20} className="mb-2 text-black/20" aria-hidden="true" />
           <span className="text-[0.8125rem] font-medium text-black/55">Nenhuma nota ainda</span>
-          <span className="mt-1 text-[0.75rem] text-black/35">Guarde combinados, impressões e detalhes que não cabem nos campos.</span>
         </button>
       ) : (
         <ul className="space-y-2">
-          {notas.map(nota => (
-            <li key={nota.id}>
-              <button
-                type="button"
-                onClick={() => setEditando(nota)}
-                className="block w-full rounded border bg-white px-4 py-3 text-left transition hover:border-black/15 hover:bg-black/[.01] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
-                style={{ borderColor: "rgba(13,13,13,.08)" }}
-                aria-label={`Editar nota${nota.titulo ? ` ${nota.titulo}` : ""}`}
-              >
+          {notas.map(nota => {
+            const autor = autorDaNota(nota, usuarioId, nomes);
+            const corpo = (
+              <>
                 {nota.titulo && <p className="mb-1 text-[0.8125rem] font-semibold text-[#0D0D0D]">{nota.titulo}</p>}
                 <p className="line-clamp-4 whitespace-pre-line text-[0.8125rem] leading-relaxed text-black/70">{nota.conteudo}</p>
-                <p className="mt-1.5 text-[0.6875rem] text-black/30">{quando(nota.created_at)}</p>
-              </button>
-            </li>
-          ))}
+                <p className="mt-1.5 text-[0.6875rem] text-black/30">{autor ? `${autor} · ` : ""}{quando(nota.created_at)}</p>
+              </>
+            );
+            return (
+              <li key={nota.id}>
+                {notaEditavel(nota, usuarioId) ? (
+                  <button
+                    type="button"
+                    onClick={() => setEditando(nota)}
+                    className="block w-full rounded border bg-white px-4 py-3 text-left transition hover:border-black/15 hover:bg-black/[.01] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                    style={{ borderColor: "rgba(13,13,13,.08)" }}
+                    aria-label={`Editar nota${nota.titulo ? ` ${nota.titulo}` : ""}`}
+                  >
+                    {corpo}
+                  </button>
+                ) : (
+                  <div className="rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                    {corpo}
+                  </div>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -132,7 +147,6 @@ function NotaSheet({ nota, escopo, organizationId, contexto, onClose, onChanged 
     if (!nota) return;
     confirmDelete({
       title: "Excluir esta nota?",
-      description: "A nota sai da página e do histórico. Esta ação não pode ser desfeita.",
       onConfirm: async () => {
         await excluirPorId(supabase, "notas", nota.id);
         await onChanged();
@@ -185,7 +199,6 @@ function NotaSheet({ nota, escopo, organizationId, contexto, onClose, onChanged 
             value={titulo}
             onChange={event => setTitulo(event.target.value)}
             maxLength={120}
-            placeholder="Ex.: Reunião com o marketing"
             className="h-10 w-full rounded border bg-white px-3 text-[0.8125rem] text-[#0D0D0D] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/15"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
@@ -198,7 +211,6 @@ function NotaSheet({ nota, escopo, organizationId, contexto, onClose, onChanged 
             onChange={event => { setConteudo(event.target.value); setErro(null); }}
             autoFocus
             rows={7}
-            placeholder="O que foi combinado, o que ficou de fora, próximos detalhes…"
             className="w-full resize-y rounded border bg-white px-3 py-2.5 text-[0.8125rem] leading-relaxed text-[#0D0D0D] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/15"
             style={{ borderColor: "rgba(13,13,13,.12)", minHeight: "9rem" }}
           />
