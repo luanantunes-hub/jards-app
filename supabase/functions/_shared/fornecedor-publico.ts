@@ -158,3 +158,100 @@ export function resumoDasCertidoes(certidoes: readonly Pick<Certidao, "resultado
   if (certidoes.length > 0 && certidoes.every(c => c.resultado === "nada_consta")) return "nada_consta";
   return "a_conferir";
 }
+
+// ─── Comprovantes do fornecedor (P2.3b) ─────────────────────────────────────
+
+/** {organização}/fornecedores/{fornecedor}/{arquivo}.{ext}: a pasta que o bucket protege por papel. */
+export function caminhoDocumentoFornecedor(organizationId: string, fornecedorId: string, extensao: string): string {
+  const ext = /^[a-z0-9]{1,8}$/.test(extensao.toLowerCase()) ? extensao.toLowerCase() : "bin";
+  return `${organizationId.toLowerCase()}/fornecedores/${fornecedorId.toLowerCase()}/${globalThis.crypto.randomUUID()}.${ext}`;
+}
+
+/** A certidão vem em base64, às vezes com o prefixo "data:"; null quando não é um PDF. */
+export function pdfDaCertidao(base64: unknown): Uint8Array | null {
+  if (typeof base64 !== "string" || base64.length < 100) return null;
+  try {
+    const binario = atob(base64.replace(/^data:[^,]*,/, "").replace(/\s+/g, ""));
+    const bytes = Uint8Array.from(binario, c => c.charCodeAt(0));
+    return binario.startsWith("%PDF") ? bytes : null;
+  } catch {
+    return null;
+  }
+}
+
+/** A fonte padrão do PDF (Helvetica, WinAnsi) não tem todos os caracteres: o que falta vira "?". */
+export function paraWinAnsi(texto: string): string {
+  return texto
+    .normalize("NFC")
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, "-")
+    .replace(/\u2026/g, "...")
+    .replace(/[^\x20-\x7E\xA0-\xFF]/gu, "?");
+}
+
+export type LinhaComprovante = { texto: string; estilo: "titulo" | "secao" | "texto" | "nota" };
+
+const dataBr = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "-");
+const formatarCnpj = (c: string) => (c.length === 14 ? `${c.slice(0, 2)}.${c.slice(2, 5)}.${c.slice(5, 8)}/${c.slice(8, 12)}-${c.slice(12)}` : c);
+const ROTULO_RESULTADO: Record<ResultadoCertidao, string> = { nada_consta: "Nada consta", consta: "Consta", a_conferir: "A conferir" };
+
+/**
+ * O texto do comprovante da consulta, na ordem do PDF. Registra o que as
+ * fontes públicas devolveram no momento; não é o comprovante de inscrição
+ * emitido pela Receita.
+ */
+export function linhasDoComprovante(p: {
+  cnpj: string;
+  consultadoEm: Date;
+  dados: DadosCnpj | null;
+  certidoes: Certidao[] | null;
+  hashRespostas: string;
+}): LinhaComprovante[] {
+  const quando = p.consultadoEm.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "short" });
+  const linhas: LinhaComprovante[] = [
+    { texto: "Comprovante de consulta pública do fornecedor", estilo: "titulo" },
+    { texto: `CNPJ ${formatarCnpj(p.cnpj)} · consulta em ${quando} (horário de Brasília)`, estilo: "texto" },
+    { texto: "Receita Federal (dados abertos, pela BrasilAPI)", estilo: "secao" },
+  ];
+  const d = p.dados;
+  if (!d) {
+    linhas.push({ texto: "A consulta da Receita não respondeu.", estilo: "texto" });
+  } else {
+    const campo = (rotulo: string, valor: string | null | undefined) => linhas.push({ texto: `${rotulo}: ${valor || "-"}`, estilo: "texto" });
+    campo("Razão social", d.razao_social);
+    campo("Nome fantasia", d.nome_fantasia);
+    campo("Situação cadastral", d.situacao_cadastral ? `${d.situacao_cadastral} desde ${dataBr(d.data_situacao)}` : null);
+    campo("Abertura", dataBr(d.data_abertura));
+    campo("Natureza jurídica", d.natureza_juridica);
+    campo("Porte", d.porte);
+    campo("Opção pelo MEI", d.opcao_mei === null ? null : d.opcao_mei ? "sim" : "não");
+    campo("Município", [d.municipio, d.uf].filter(Boolean).join(" / "));
+    campo("CNAE principal", d.cnae_principal ? `${d.cnae_principal} · ${d.cnae_descricao ?? ""}` : null);
+    if (d.cnaes_secundarios.length) {
+      linhas.push({ texto: "CNAEs secundários:", estilo: "texto" });
+      for (const c of d.cnaes_secundarios) linhas.push({ texto: `  ${c.codigo} · ${c.descricao}`, estilo: "texto" });
+    }
+    if (d.socios.length) {
+      linhas.push({ texto: `Quadro societário (${d.socios.length}):`, estilo: "texto" });
+      for (const s of d.socios) linhas.push({ texto: `  ${[s.nome, s.qualificacao, s.documento].filter(Boolean).join(" · ")}`, estilo: "texto" });
+    }
+  }
+  linhas.push({ texto: "Sanções (consulta consolidada de pessoa jurídica do TCU)", estilo: "secao" });
+  if (!p.certidoes) {
+    linhas.push({ texto: "A consulta do TCU não respondeu.", estilo: "texto" });
+  } else if (p.certidoes.length === 0) {
+    linhas.push({ texto: "A consulta voltou sem certidões.", estilo: "texto" });
+  } else {
+    for (const c of p.certidoes) {
+      const emitida = c.emitida_em ? ` · emitida em ${c.emitida_em}` : "";
+      linhas.push({ texto: `${c.descricao ?? c.tipo ?? "Certidão"} (${c.emissor ?? "-"}): ${ROTULO_RESULTADO[c.resultado]}${emitida}`, estilo: "texto" });
+      if (c.observacao) linhas.push({ texto: `  ${c.observacao}`, estilo: "texto" });
+    }
+  }
+  linhas.push(
+    { texto: "Fontes: brasilapi.com.br/api/cnpj/v1 e certidoes-apf.apps.tcu.gov.br. Este documento registra o que as fontes públicas devolveram no momento da consulta; não substitui o Comprovante de Inscrição e de Situação Cadastral emitido pela Receita Federal.", estilo: "nota" },
+    { texto: `SHA-256 das respostas das fontes: ${p.hashRespostas}`, estilo: "nota" },
+  );
+  return linhas;
+}

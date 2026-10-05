@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(67);
+select plan(72);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -96,10 +96,15 @@ begin
      'f0000000-0000-4000-8000-0000000011a0', current_date, 'debito', 10, 'RLS tarifa', 'rls-1');
   insert into public.prestacao_fornecedores (id, organization_id, tipo_pessoa, documento, nome) values
     ('f0000000-0000-4000-8000-0000000013a0', org_a, 'pj', '11222333000181', 'RLS fornecedor');
+  insert into public.prestacao_fornecedor_documentos (id, fornecedor_id, tipo, nome_arquivo, storage_path) values
+    ('f0000000-0000-4000-8000-0000000014a0', 'f0000000-0000-4000-8000-0000000013a0', 'cartao_cnpj', 'cartao.pdf',
+     org_a || '/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014a0.pdf');
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
-    ('documentos', org_a || '/outros/f0000000-0000-4000-8000-000000000cb0.pdf', admin_a);
+    ('documentos', org_a || '/outros/f0000000-0000-4000-8000-000000000cb0.pdf', admin_a),
+    ('documentos', org_a || '/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014a0.pdf', admin_a),
+    ('documentos', org_a || '/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014e0.pdf', admin_a);
 end
 $cenario$;
 
@@ -116,7 +121,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_atividades', 'prestacao_atividade_evidencias', 'prestacao_relatorio',
     'prestacao_distribuicao', 'prestacao_divulgacao', 'prestacao_alteracoes',
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
-    'prestacao_fornecedores'
+    'prestacao_fornecedores', 'prestacao_fornecedor_documentos'
   ];
 $$;
 
@@ -187,7 +192,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_contas_bancarias where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_extrato_importacoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_lancamentos where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_fornecedores where organization_id = %L', rls_teste.org_da(p)))
+    rls_teste.efeito(format('select 1 from public.prestacao_fornecedores where organization_id = %L', rls_teste.org_da(p))),
+    rls_teste.efeito(format('select 1 from public.prestacao_fornecedor_documentos where organization_id = %L', rls_teste.org_da(p)))
   ]);
 $$;
 
@@ -208,7 +214,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_contas_bancarias (prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000001a0', 'captacao')$c$),
     rls_teste.efeito($c$insert into public.prestacao_extrato_importacoes (prestacao_id, conta_id, formato) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000010a0', 'ofx')$c$),
     rls_teste.efeito($c$insert into public.prestacao_lancamentos (prestacao_id, conta_id, data, natureza, valor, chave) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000010a0', current_date, 'credito', 5, 'rls-2')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_fornecedores (organization_id, tipo_pessoa, documento, nome) values ('f0000000-0000-4000-8000-0000000000a0', 'pj', '00000000000191', 'RLS novo')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_fornecedores (organization_id, tipo_pessoa, documento, nome) values ('f0000000-0000-4000-8000-0000000000a0', 'pj', '00000000000191', 'RLS novo')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_fornecedor_documentos (fornecedor_id, tipo, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000013a0', 'outro', 'novo.pdf', 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014b0.pdf')$c$)
   ]);
 $$;
 
@@ -229,7 +236,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_contas_bancarias set apelido = apelido where id = 'f0000000-0000-4000-8000-0000000010a0'$c$),
     rls_teste.efeito($c$update public.prestacao_extrato_importacoes set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000011a0'$c$),
     rls_teste.efeito($c$update public.prestacao_lancamentos set historico = historico where id = 'f0000000-0000-4000-8000-0000000012a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_fornecedores set observacoes = observacoes where id = 'f0000000-0000-4000-8000-0000000013a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_fornecedores set observacoes = observacoes where id = 'f0000000-0000-4000-8000-0000000013a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_fornecedor_documentos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000014a0'$c$)
   ]);
 $$;
 
@@ -250,7 +258,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_contas_bancarias where id = 'f0000000-0000-4000-8000-0000000010a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_extrato_importacoes where id = 'f0000000-0000-4000-8000-0000000011a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_lancamentos where id = 'f0000000-0000-4000-8000-0000000012a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_fornecedores where id = 'f0000000-0000-4000-8000-0000000013a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_fornecedores where id = 'f0000000-0000-4000-8000-0000000013a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_fornecedor_documentos where id = 'f0000000-0000-4000-8000-0000000014a0'$c$)
   ]);
 $$;
 
@@ -261,6 +270,19 @@ create function rls_teste.arquivos() returns text[] language sql as $$
     rls_teste.efeito($c$insert into storage.objects (bucket_id, name) values ('documentos', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000cd0.pdf')$c$),
     rls_teste.efeito($c$update storage.objects set metadata = metadata where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf'$c$),
     rls_teste.efeito($c$delete from storage.objects where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf'$c$)
+  ]);
+$$;
+
+-- O que quem está logado faz na pasta de fornecedores da organização A: …14a0
+-- é o comprovante registrado na tabela; …14e0 é um arquivo solto na pasta.
+create function rls_teste.arquivos_fornecedor() returns text[] language sql as $$
+  select rls_teste.resumo(array['le', 'envia', 'troca', 'troca registrado', 'apaga', 'apaga registrado'], array[
+    rls_teste.efeito($c$select 1 from storage.objects where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014a0.pdf'$c$),
+    rls_teste.efeito($c$insert into storage.objects (bucket_id, name) values ('documentos', 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014c0.pdf')$c$),
+    rls_teste.efeito($c$update storage.objects set metadata = metadata where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014e0.pdf'$c$),
+    rls_teste.efeito($c$update storage.objects set metadata = metadata where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014a0.pdf'$c$),
+    rls_teste.efeito($c$delete from storage.objects where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014e0.pdf'$c$),
+    rls_teste.efeito($c$delete from storage.objects where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014a0.pdf'$c$)
   ]);
 $$;
 
@@ -279,6 +301,7 @@ select is(rls_teste.insere(), rls_teste.editaveis(), 'admin: cria em tudo, menos
 select is(rls_teste.altera(), rls_teste.editaveis(), 'admin: altera tudo, menos o histórico e o extrato');
 select is(rls_teste.apaga(), rls_teste.apagaveis(), 'admin: apaga tudo, menos o histórico e o lançamento avulso');
 select is(rls_teste.arquivos(), array['le', 'envia', 'troca', 'apaga'], 'admin: lê, envia, troca e apaga arquivos da prestação');
+select is(rls_teste.arquivos_fornecedor(), array['le', 'envia', 'troca', 'apaga'], 'admin: lê, anexa e mexe no arquivo solto, mas não no comprovante registrado');
 reset role;
 
 -- ─── Organização A: colaborador preparador ──────────────────────────────────
@@ -312,6 +335,7 @@ select is(rls_teste.insere(), '{}'::text[], 'leitor: não cria nada');
 select is(rls_teste.altera(), '{}'::text[], 'leitor: não altera nada');
 select is(rls_teste.apaga(), '{}'::text[], 'leitor: não apaga nada');
 select is(rls_teste.arquivos(), array['le'], 'leitor: só lê os arquivos da prestação');
+select is(rls_teste.arquivos_fornecedor(), array['le'], 'leitor: só lê os comprovantes de fornecedor');
 reset role;
 
 -- ─── Organização A: colaborador sem o módulo da prestação ───────────────────
@@ -323,6 +347,7 @@ select is(rls_teste.insere(), '{}'::text[], 'sem o módulo: não cria nada');
 select is(rls_teste.altera(), '{}'::text[], 'sem o módulo: não altera nada');
 select is(rls_teste.apaga(), '{}'::text[], 'sem o módulo: não apaga nada');
 select is(rls_teste.arquivos(), '{}'::text[], 'sem o módulo: não mexe nos arquivos da prestação');
+select is(rls_teste.arquivos_fornecedor(), '{}'::text[], 'sem o módulo: não vê os comprovantes de fornecedor');
 select ok(exists (select 1 from storage.objects where bucket_id = 'documentos'
   and name = 'f0000000-0000-4000-8000-0000000000a0/outros/f0000000-0000-4000-8000-000000000cb0.pdf'),
   'sem o módulo: continua lendo os outros arquivos da organização');
@@ -348,6 +373,7 @@ select is(rls_teste.insere(), '{}'::text[], 'outra organização: não cria nada
 select is(rls_teste.altera(), '{}'::text[], 'outra organização: não altera nada de A');
 select is(rls_teste.apaga(), '{}'::text[], 'outra organização: não apaga nada de A');
 select is(rls_teste.arquivos(), '{}'::text[], 'outra organização: não mexe nos arquivos de A');
+select is(rls_teste.arquivos_fornecedor(), '{}'::text[], 'outra organização: não vê os comprovantes de fornecedor de A');
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001b0'), array['prestacoes_contas', 'prestacao_status_log'],
   'outra organização: vê a própria prestação');
 reset role;
@@ -440,6 +466,8 @@ select throws_ok($t$update public.prestacao_fornecedores set situacao_cadastral 
   '42501', null, 'quem edita: não grava a situação da Receita na mão');
 select throws_ok($t$insert into public.prestacao_fornecedores (organization_id, documento, sancoes_situacao) values ('f0000000-0000-4000-8000-0000000000a0', '00000000000191', 'nada_consta')$t$,
   '42501', null, 'quem edita: não cria fornecedor com sanção já consultada');
+select throws_ok($t$insert into public.prestacao_fornecedor_documentos (fornecedor_id, origem, tipo, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000013a0', 'consulta', 'certidao_tcu', 'falsa.pdf', 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014d0.pdf')$t$,
+  '42501', null, 'quem edita: não cria comprovante como se viesse da consulta');
 reset role;
 
 -- A função grava a consulta (aqui, como dono do banco); quem edita troca o documento.

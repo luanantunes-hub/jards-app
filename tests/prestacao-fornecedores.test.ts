@@ -15,6 +15,7 @@ import {
   resumoDasCertidoes,
 } from "../lib/prestacao/fornecedores";
 import type { PrestacaoFornecedor } from "../lib/supabase/types";
+import { caminhoDocumentoFornecedor, linhasDoComprovante, paraWinAnsi, pdfDaCertidao } from "../supabase/functions/_shared/fornecedor-publico";
 
 // Fixtures fictícias no formato real das respostas (BrasilAPI e TCU).
 const exemplo = async (nome: string) => JSON.parse(await readFile(`tests/fixtures/fornecedores/${nome}`, "utf8"));
@@ -135,4 +136,66 @@ test("banco: a consulta pública só entra pela função, com papel de quem edit
   assert.match(funcao, /from\("prestacao_fornecedores"\)\s*\.select\("id, organization_id, tipo_pessoa, documento"\)/, "lê o fornecedor com o token de quem chama");
   const config = await readFile("supabase/config.toml", "utf8");
   assert.match(config, /\[functions\.consultar-fornecedor\]\s+verify_jwt = true/);
+});
+
+test("comprovante da consulta: o que a Receita e o TCU devolveram, com a ressalva e o hash", async () => {
+  const dados = lerCnpjBrasilApi(await exemplo("brasilapi-exemplo.json"));
+  const { certidoes } = lerCertidoesTcu(await exemplo("tcu-exemplo.json"));
+  const linhas = linhasDoComprovante({ cnpj: "11222333000181", consultadoEm: new Date("2026-10-05T21:30:00Z"), dados, certidoes, hashRespostas: "abc123" });
+  const texto = linhas.map(l => l.texto).join("\n");
+  assert.equal(linhas[0].estilo, "titulo");
+  assert.match(texto, /CNPJ 11\.222\.333\/0001-81 · consulta em 05\/10\/2026,? 18:30/, "hora de Brasília");
+  assert.match(texto, /Situação cadastral: ATIVA desde 11\/03\/2019/);
+  assert.match(texto, /CNAE principal: 9001-9\/01 · Produção teatral/);
+  assert.match(texto, /FULANA DE TAL EXEMPLO · Sócio-Administrador · \*\*\*456789\*\*/);
+  assert.match(texto, /Cadastro Nacional de Empresas Inidôneas e Suspensas \(Portal da Transparência\): Consta/);
+  assert.match(texto, /Suspensão temporária até 31\/12\/2026/);
+  assert.match(texto, /não substitui o Comprovante de Inscrição/);
+  assert.match(texto, /SHA-256 das respostas das fontes: abc123/);
+
+  const semResposta = linhasDoComprovante({ cnpj: "11222333000181", consultadoEm: new Date(), dados: null, certidoes: null, hashRespostas: "x" }).map(l => l.texto);
+  assert.ok(semResposta.includes("A consulta da Receita não respondeu."));
+  assert.ok(semResposta.includes("A consulta do TCU não respondeu."));
+});
+
+test("certidão em PDF, caminho do arquivo e texto para a fonte do PDF", () => {
+  const pdf = "%PDF-1.4\n" + "x".repeat(200);
+  const base64 = Buffer.from(pdf, "latin1").toString("base64");
+  assert.equal(pdfDaCertidao(base64)?.length, pdf.length);
+  assert.equal(pdfDaCertidao(`data:application/pdf;base64,${base64}`)?.length, pdf.length);
+  assert.equal(pdfDaCertidao(Buffer.from("<html>" + "x".repeat(200)).toString("base64")), null, "não é PDF");
+  assert.equal(pdfDaCertidao(null), null);
+  assert.equal(pdfDaCertidao("@@@ não é base64 @@@".repeat(10)), null);
+
+  const caminho = caminhoDocumentoFornecedor("BE9C680A-AC2D-4447-865D-64BB00EE87CD", "F0000000-0000-4000-8000-0000000013A0", "PDF");
+  assert.match(caminho, /^be9c680a-ac2d-4447-865d-64bb00ee87cd\/fornecedores\/f0000000-0000-4000-8000-0000000013a0\/[0-9a-f-]{36}\.pdf$/);
+
+  assert.equal(paraWinAnsi("Produção · “aspas” — ok…"), 'Produção · "aspas" - ok...');
+  assert.equal(paraWinAnsi("≤ 20% 🎭"), "? 20% ?");
+});
+
+test("banco: comprovante da consulta só pela função, e arquivo registrado não muda no bucket", async () => {
+  const docs = (await readFile("supabase/migrations/20261006160000_prestacao_fornecedor_documentos.sql", "utf8")).replace(/--.*$/gm, "");
+  assert.match(docs, /alter table public\.prestacao_fornecedor_documentos enable row level security/);
+  const concedidas = [...docs.matchAll(/grant (insert|update) \(([^)]+)\)/g)].flatMap(m => m[2].split(",").map(c => c.trim()));
+  for (const coluna of ["origem", "organization_id", "documento", "criado_por"]) {
+    assert.ok(!concedidas.includes(coluna), `o navegador não pode gravar ${coluna}`);
+  }
+  assert.match(docs, /as restrictive for insert to authenticated\s+with check \(origem = 'pessoa' and public\.auth_prestacao_org_pode\(organization_id, 'editar'\)\)/);
+  assert.match(docs, /as restrictive for delete to authenticated\s+using \(origem = 'pessoa'/);
+  assert.match(docs, /storage_path like organization_id::text \|\| '\/fornecedores\/' \|\| fornecedor_id::text \|\| '\/%'/);
+  assert.match(docs, /when 'fornecedores' then public\.auth_prestacao_pasta_org_pode\(\(storage\.foldername\(name\)\)\[1\], 'editar'\)/);
+  assert.doesNotMatch(docs, /\bdrop\b/i);
+
+  const registrado = (await readFile("supabase/migrations/20261006170000_prestacao_fornecedor_arquivo_registrado.sql", "utf8")).replace(/--.*$/gm, "");
+  assert.match(registrado, /create unique index if not exists \w+\s+on public\.prestacao_fornecedor_documentos \(storage_path\)/);
+  assert.match(registrado, /auth_prestacao_pasta_org_pode\(\(storage\.foldername\(name\)\)\[1\], 'editar'\)\s+and public\.auth_prestacao_fornecedor_arquivo_livre\(name\)/);
+  assert.match(registrado, /'documentos: update org'/);
+  assert.match(registrado, /'documentos: delete org'/);
+  assert.doesNotMatch(registrado, /'documentos: upload org'/, "enviar arquivo novo não muda");
+  assert.doesNotMatch(registrado, /\bdrop\b/i);
+
+  const funcao = await readFile("supabase/functions/consultar-fornecedor/index.ts", "utf8");
+  assert.match(funcao, /origem: "consulta"/);
+  assert.match(funcao, /if \(error\) \{[^}]*storage\.from\("documentos"\)\.remove\(\[caminho\]\)/, "registro que falha não deixa arquivo solto");
 });
