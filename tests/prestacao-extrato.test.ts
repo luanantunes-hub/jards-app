@@ -11,6 +11,7 @@ import {
   lerCsvExtrato,
   lerData,
   lerExtrato,
+  lerLeituraDoPdf,
   lerOfx,
   lerValorComSinal,
   normalizarDocumento,
@@ -147,6 +148,69 @@ test("número do documento normalizado e mapa de colunas", async () => {
   const mapa = adivinharMapaExtrato(["Data_Mov", "Nr_Doc", "Historico", "Valor", "Deb_Cred"]);
   assert.deepEqual(mapa, { data: "0", historico: "2", detalhe: "", documento: "1", valor: "3", credito: "", debito: "", natureza: "4", saldo: "" });
   assert.equal((await hashDoArquivo(new TextEncoder().encode("abc"))).length, 64);
+});
+
+// bb-exemplo.pdf é um extrato fictício no layout do BB; bb-exemplo-leitura.json
+// é o que a função ler-extrato-pdf deve devolver para ele.
+test("PDF lido pela IA: lançamentos, saldos e conta no mesmo formato do OFX e do CSV", async () => {
+  const leitura = JSON.parse(await readFile("tests/fixtures/extrato/bb-exemplo-leitura.json", "utf8"));
+  const extrato = lerLeituraDoPdf(leitura);
+  assert.equal(extrato.formato, "pdf");
+  assert.deepEqual(extrato.conta, { banco: "Banco do Brasil", agencia: "1234-5", conta: "98765-4" });
+  assert.deepEqual(extrato.periodo, { inicio: "2026-09-01", fim: "2026-09-30" });
+  assert.equal(extrato.lancamentos.length, 8, "lançamentos futuros e linhas de saldo não entram");
+  assert.deepEqual(totaisDoExtrato(extrato.lancamentos), { creditos: 55012.34, debitos: 40102.9, quantidade: 8 });
+  assert.deepEqual(conferirSaldo(extrato), { situacao: "confere" });
+  const [recebida, pix, tarifa, boleto, aplicacao, , resgate, rendimento] = extrato.lancamentos;
+  assert.equal(recebida.natureza, "credito");
+  assert.equal(pix.natureza, "debito");
+  assert.equal(pix.valor, 2057);
+  assert.equal(pix.documentoNormalizado, "123456");
+  assert.equal(pix.saldoApos, null);
+  assert.equal(tarifa.categoria, "tarifa");
+  assert.equal(boleto.categoria, "pagamento");
+  assert.equal(aplicacao.categoria, "aplicacao", "BB Rende Fácil a débito é aplicação");
+  assert.equal(resgate.categoria, "resgate");
+  assert.equal(rendimento.categoria, "rendimento");
+  assert.match(extrato.avisos[0], /IA/);
+});
+
+test("PDF: valor em texto, linhas incompletas e resposta vazia", () => {
+  const extrato = lerLeituraDoPdf({
+    saldo_inicial: "1.000,00 C",
+    saldo_final: null,
+    periodo_inicio: "2026-09-30",
+    periodo_fim: "2026-09-01",
+    lancamentos: [
+      { data: "02/09/2026", historico: "  Pix  -  Enviado ", documento: "", valor: "1.200,50 D", saldo: "-200,50" },
+      { data: "2026-09-03", historico: "sem valor", valor: null },
+      { data: "31/09/2026", historico: "data impossível", valor: 10 },
+      { historico: "sem data", valor: 10 },
+      { data: "2026-09-04", historico: "zero", valor: 0 },
+      "lixo",
+    ],
+  });
+  assert.equal(extrato.lancamentos.length, 1);
+  assert.deepEqual([extrato.lancamentos[0].natureza, extrato.lancamentos[0].valor, extrato.lancamentos[0].historico], ["debito", 1200.5, "Pix - Enviado"]);
+  assert.equal(extrato.lancamentos[0].documento, null);
+  assert.equal(extrato.saldoInicial, 1000);
+  assert.equal(extrato.saldoFinal, -200.5, "sem saldo final, vale o saldo da última linha");
+  assert.deepEqual(extrato.periodo, { inicio: "2026-09-02", fim: "2026-09-02" }, "período invertido cai para as datas dos lançamentos");
+  assert.ok(extrato.avisos.some(a => /5 linha/.test(a)));
+  assert.equal(extrato.conta, null);
+
+  const vazio = lerLeituraDoPdf(null);
+  assert.equal(vazio.lancamentos.length, 0);
+  assert.equal(vazio.periodo, null);
+  assert.deepEqual(conferirSaldo(vazio), { situacao: "sem_saldos" });
+});
+
+test("chave do PDF ignora o histórico, que a IA pode escrever de outro jeito", () => {
+  const base = { data: "2026-09-02", natureza: "debito" as const, valor: 2057, documento: "123.456", documentoNormalizado: "123456", idExterno: null, saldoApos: null, categoria: "pagamento" as const };
+  const umaLeitura = [{ ...base, historico: "Pix - Enviado · 02/09 10:31 Equipamento de Som Ltda" }];
+  const outraLeitura = [{ ...base, historico: "PIX ENVIADO Equipamento de Som" }];
+  assert.deepEqual(chavesDosLancamentos(umaLeitura, "pdf"), chavesDosLancamentos(outraLeitura, "pdf"));
+  assert.notDeepEqual(chavesDosLancamentos(umaLeitura, "csv"), chavesDosLancamentos(outraLeitura, "csv"));
 });
 
 test("banco do extrato: contas por papel, importação e lançamentos só pela função", async () => {

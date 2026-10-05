@@ -7,7 +7,10 @@
 // 3. que a pessoa é membro da organização da primeira pasta;
 // 4. que a pessoa acessa a prestação, pela própria função do banco
 //    (can_access_prestacao, chamada com o token dela);
-// 5. que a pasta é da organização dona da prestação.
+// 5. que a pasta é da organização dona da prestação;
+// 6. quando a função grava ou gasta uma leitura em nome de quem edita
+//    (extrato em PDF), que o papel da pessoa permite editar a prestação
+//    (auth_prestacao_pode, também com o token dela).
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import {
   ehUuid,
@@ -39,7 +42,7 @@ function negar(status: number, error: string): Negado {
 
 export async function autorizarArquivoDaPrestacao(
   req: Request,
-  params: { prestacaoId: unknown; storagePath: unknown; pastas: PastaPrestacao["tipo"][] },
+  params: { prestacaoId: unknown; storagePath: unknown; pastas: PastaPrestacao["tipo"][]; exigirEdicao?: boolean },
 ): Promise<Autorizado | Negado> {
   const url = Deno.env.get("SUPABASE_URL")!;
   const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "").trim();
@@ -81,6 +84,15 @@ export async function autorizarArquivoDaPrestacao(
   });
   if (acessoErro) throw acessoErro;
   if (podeAcessar !== true) return negar(403, "Sem acesso a esta prestação");
+
+  if (params.exigirEdicao) {
+    const { data: podeEditar, error: edicaoErro } = await comoUsuario.rpc("auth_prestacao_pode", {
+      p_prestacao_id: prestacaoId,
+      p_acao: "editar",
+    });
+    if (edicaoErro) throw edicaoErro;
+    if (podeEditar !== true) return negar(403, "Sem permissão para editar esta prestação");
+  }
 
   const { data: prestacao, error: prestacaoErro } = await admin
     .from("prestacoes_contas")

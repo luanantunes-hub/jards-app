@@ -13,7 +13,7 @@ Deno.env.set("SUPABASE_URL", "https://exemplo.supabase.co");
 Deno.env.set("SUPABASE_SERVICE_ROLE_KEY", "service");
 Deno.env.set("SUPABASE_ANON_KEY", "anon");
 
-type Cenario = { tokenValido: boolean; membro: boolean; podeAcessar: boolean; orgDaPrestacao: string | null };
+type Cenario = { tokenValido: boolean; membro: boolean; podeAcessar: boolean; podeEditar: boolean; orgDaPrestacao: string | null };
 let cenario: Cenario;
 const chamadas: string[] = [];
 
@@ -33,6 +33,12 @@ globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     if (headers.get("Authorization") !== "Bearer token-usuario") throw new Error("rpc deve usar o token do usuário");
     return json(cenario.podeAcessar);
   }
+  if (url.pathname === "/rest/v1/rpc/auth_prestacao_pode") {
+    if (headers.get("Authorization") !== "Bearer token-usuario") throw new Error("rpc deve usar o token do usuário");
+    const corpo = JSON.parse(String(init?.body ?? "{}"));
+    if (corpo.p_acao !== "editar" || corpo.p_prestacao_id !== PREST) throw new Error("rpc com parâmetros errados");
+    return json(cenario.podeEditar);
+  }
   if (url.pathname === "/rest/v1/prestacoes_contas") {
     return json([{ id: PREST, projeto: cenario.orgDaPrestacao ? { organization_id: cenario.orgDaPrestacao } : null, captacao: null }]);
   }
@@ -43,11 +49,20 @@ function req(token?: string) {
   return new Request("https://f/x", { method: "POST", headers: token ? { Authorization: `Bearer ${token}` } : {} });
 }
 const caminhoOk = `${ORG}/prestacoes/${PREST}/comprovantes/${ARQ}.pdf`;
-const base: Cenario = { tokenValido: true, membro: true, podeAcessar: true, orgDaPrestacao: ORG };
+const caminhoExtrato = `${ORG}/prestacoes/${PREST}/extratos/${ARQ}.pdf`;
+const base: Cenario = { tokenValido: true, membro: true, podeAcessar: true, podeEditar: true, orgDaPrestacao: ORG };
 
-async function status(c: Partial<Cenario>, token: string | undefined, prestacaoId: unknown, storagePath: unknown, pastas: ("comprovantes" | "orcamento")[] = ["comprovantes"]) {
+async function status(
+  c: Partial<Cenario>,
+  token: string | undefined,
+  prestacaoId: unknown,
+  storagePath: unknown,
+  pastas: ("comprovantes" | "orcamento" | "extratos")[] = ["comprovantes"],
+  exigirEdicao?: boolean,
+) {
   cenario = { ...base, ...c };
-  const r = await autorizarArquivoDaPrestacao(req(token), { prestacaoId, storagePath, pastas });
+  chamadas.length = 0;
+  const r = await autorizarArquivoDaPrestacao(req(token), { prestacaoId, storagePath, pastas, exigirEdicao });
   return r.ok ? 200 : r.resposta.status;
 }
 
@@ -67,3 +82,13 @@ Deno.test("não é membro da organização da pasta: 403", async () => { if (awa
 Deno.test("banco nega acesso à prestação: 403", async () => { if (await status({ podeAcessar: false }, "token-usuario", PREST, caminhoOk) !== 403) throw new Error(); });
 Deno.test("pasta de organização diferente da dona: 403", async () => { if (await status({ orgDaPrestacao: OUTRA }, "token-usuario", PREST, caminhoOk) !== 403) throw new Error(); });
 Deno.test("prestação sem organização conhecida: vale a pasta do membro", async () => { if (await status({ orgDaPrestacao: null }, "token-usuario", PREST, caminhoOk) !== 200) throw new Error(); });
+Deno.test("extrato em PDF: quem edita passa", async () => {
+  if (await status({}, "token-usuario", PREST, caminhoExtrato, ["extratos"], true) !== 200) throw new Error();
+});
+Deno.test("extrato em PDF: quem só lê a prestação recebe 403", async () => {
+  if (await status({ podeEditar: false }, "token-usuario", PREST, caminhoExtrato, ["extratos"], true) !== 403) throw new Error();
+});
+Deno.test("sem exigir edição, o papel não é consultado", async () => {
+  await status({ podeEditar: false }, "token-usuario", PREST, caminhoOk);
+  if (chamadas.some(c => c.includes("auth_prestacao_pode"))) throw new Error("não deveria consultar o papel");
+});

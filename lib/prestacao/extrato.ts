@@ -1,6 +1,7 @@
-// Leitura de extrato bancário (P2.1): OFX e CSV viram uma lista única de
-// lançamentos, com período, saldos, conferência de saldo e chave para não
-// gravar o mesmo lançamento duas vezes. Sem React e sem Supabase.
+// Leitura de extrato bancário (P2.1 e P2.2): OFX, CSV e a leitura do PDF pela
+// IA viram uma lista única de lançamentos, com período, saldos, conferência de
+// saldo e chave para não gravar o mesmo lançamento duas vezes. Sem React e sem
+// Supabase.
 //
 // A origem fica registrada (formato da importação). Um agregador de Open
 // Finance, quando entrar, entrega a mesma ExtratoLido.
@@ -49,7 +50,7 @@ export type LancamentoLido = {
 };
 
 export type ExtratoLido = {
-  formato: "ofx" | "csv";
+  formato: "ofx" | "csv" | "pdf";
   conta: { banco: string | null; agencia: string | null; conta: string | null } | null;
   periodo: { inicio: string; fim: string } | null;
   saldoInicial: number | null;
@@ -114,7 +115,7 @@ const PISTAS_DE_CATEGORIA: [CategoriaLancamento, RegExp, NaturezaLancamento | nu
   ["tarifa", /\btarifa|\btar\b|\bpacote de servicos|\bcesta\b|\biof\b|\bmanutencao de conta/, "debito"],
   ["rendimento", /\brendimento|\brend\b|\bjuros|\bremuneracao/, "credito"],
   ["resgate", /\bresgate|\bresg\b/, "credito"],
-  ["aplicacao", /\baplicacao|\bapl\b|\bbb rf\b|\bcdb\b|\bfundo de invest/, "debito"],
+  ["aplicacao", /\baplicacao|\bapl\b|\bbb rf\b|\bcdb\b|\bfundo de invest|\brende facil/, "debito"],
   ["devolucao", /\bdevolucao|\bgru\b|\brecolhimento/, null],
   ["transferencia", /\btransf\w* entre contas|\btransf\w* (de|para) conta|\bmesma titularidade/, null],
   ["pagamento", /\bpix\b|\bted\b|\bdoc\b|\bboleto|\bpagamento|\bpagto|\bpgto|\bcheque|\bcompra/, "debito"],
@@ -318,18 +319,75 @@ export function lerCsvExtrato(texto: string, mapaInformado?: MapaExtrato): CsvEx
   }
 
   if (ignoradas > 0) avisos.push(`${ignoradas} linha(s) sem data ou sem valor ficaram de fora.`);
-  // Sem linhas de saldo, a coluna de saldo da primeira e da última linha dá os dois saldos.
+  return {
+    tabela,
+    mapa,
+    extrato: { formato: "csv", conta: null, periodo: periodoDos(lancamentos), ...completarSaldos(lancamentos, saldoInicial, saldoFinal), lancamentos, avisos },
+  };
+}
+
+/** Sem linhas de saldo, o saldo da primeira e da última linha dá os dois saldos. */
+function completarSaldos(
+  lancamentos: readonly LancamentoLido[],
+  saldoInicial: number | null,
+  saldoFinal: number | null,
+): Pick<ExtratoLido, "saldoInicial" | "saldoFinal"> {
   const primeiro = lancamentos[0];
   const ultimo = lancamentos[lancamentos.length - 1];
   if (saldoInicial === null && primeiro?.saldoApos != null) {
     saldoInicial = reais(centavos(primeiro.saldoApos) - (primeiro.natureza === "credito" ? 1 : -1) * centavos(primeiro.valor));
   }
   if (saldoFinal === null && ultimo?.saldoApos != null) saldoFinal = ultimo.saldoApos;
+  return { saldoInicial, saldoFinal };
+}
 
+// ─── PDF (leitura pela IA) ──────────────────────────────────────────────────
+
+const textoOuNulo = (valor: unknown) => (typeof valor === "string" && valor.trim() ? valor.trim() : null);
+
+/** Número da leitura: a IA devolve número, mas às vezes manda o texto do PDF ("1.200,50 D"). */
+function numeroOuNulo(valor: unknown): number | null {
+  if (typeof valor === "number") return Number.isFinite(valor) ? valor : null;
+  if (typeof valor === "string" && /\d/.test(valor)) return lerValorComSinal(valor);
+  return null;
+}
+
+/**
+ * O que a função ler-extrato-pdf devolve (o JSON da IA) na mesma forma do OFX
+ * e do CSV. A IA transcreve; a prévia e a conferência de saldo mostram à
+ * pessoa o que foi lido antes de gravar. Linhas sem data ou sem valor saem.
+ */
+export function lerLeituraDoPdf(bruto: unknown): ExtratoLido {
+  const leitura = (bruto && typeof bruto === "object" ? bruto : {}) as Record<string, unknown>;
+  const linhas = Array.isArray(leitura.lancamentos) ? leitura.lancamentos : [];
+  const lancamentos: LancamentoLido[] = [];
+  let ignoradas = 0;
+  for (const item of linhas) {
+    const linha = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+    const data = lerData(textoOuNulo(linha.data));
+    const valorComSinal = numeroOuNulo(linha.valor);
+    if (!data || !valorComSinal) { ignoradas++; continue; }
+    lancamentos.push(lancamento({
+      data,
+      valorComSinal,
+      historico: textoOuNulo(linha.historico) ?? "",
+      documento: textoOuNulo(linha.documento),
+      saldoApos: numeroOuNulo(linha.saldo),
+    }));
+  }
+
+  const avisos = ["Lido pela IA a partir do PDF: confira os valores com o arquivo antes de importar."];
+  if (ignoradas > 0) avisos.push(`${ignoradas} linha(s) sem data ou sem valor ficaram de fora.`);
+  const inicio = lerData(textoOuNulo(leitura.periodo_inicio));
+  const fim = lerData(textoOuNulo(leitura.periodo_fim));
+  const conta = { banco: textoOuNulo(leitura.banco), agencia: textoOuNulo(leitura.agencia), conta: textoOuNulo(leitura.conta) };
   return {
-    tabela,
-    mapa,
-    extrato: { formato: "csv", conta: null, periodo: periodoDos(lancamentos), saldoInicial, saldoFinal, lancamentos, avisos },
+    formato: "pdf",
+    conta: conta.banco || conta.agencia || conta.conta ? conta : null,
+    periodo: inicio && fim && inicio <= fim ? { inicio, fim } : periodoDos(lancamentos),
+    ...completarSaldos(lancamentos, numeroOuNulo(leitura.saldo_inicial), numeroOuNulo(leitura.saldo_final)),
+    lancamentos,
+    avisos,
   };
 }
 
@@ -373,13 +431,16 @@ export function conferirSaldo(extrato: Pick<ExtratoLido, "saldoInicial" | "saldo
  * Chave de cada lançamento dentro da conta, para importar de novo um período
  * que se sobrepõe sem duplicar. Com FITID, ele manda; sem, data, sentido,
  * valor, documento e histórico, numerados quando se repetem no mesmo arquivo
- * (duas tarifas iguais no mesmo dia continuam sendo duas).
+ * (duas tarifas iguais no mesmo dia continuam sendo duas). Na leitura do PDF
+ * o histórico fica de fora: a IA pode escrevê-lo de outro jeito em outra
+ * leitura do mesmo período.
  */
-export function chavesDosLancamentos(lancamentos: readonly LancamentoLido[]): string[] {
+export function chavesDosLancamentos(lancamentos: readonly LancamentoLido[], formato?: ExtratoLido["formato"]): string[] {
   const vistas = new Map<string, number>();
   return lancamentos.map(l => {
     if (l.idExterno) return `fitid:${l.idExterno}`;
-    const base = [l.data, l.natureza, centavos(l.valor), l.documentoNormalizado ?? "", semAcento(l.historico).replace(/[^a-z0-9]/g, "")].join("|");
+    const historico = formato === "pdf" ? "" : semAcento(l.historico).replace(/[^a-z0-9]/g, "");
+    const base = [l.data, l.natureza, centavos(l.valor), l.documentoNormalizado ?? "", historico].join("|");
     const ordem = (vistas.get(base) ?? 0) + 1;
     vistas.set(base, ordem);
     return `${base}|${ordem}`;

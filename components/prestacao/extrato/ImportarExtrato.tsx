@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FileUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -15,6 +15,7 @@ import {
   ehOfx,
   hashDoArquivo,
   lerCsvExtrato,
+  lerLeituraDoPdf,
   lerOfx,
   normalizarDocumento,
   totaisDoExtrato,
@@ -29,6 +30,7 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 const dataCurta = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
 const MAX_PREVIA = 60;
+const LIMITE_PDF = 15 * 1024 * 1024;
 
 const CAMPOS_DO_MAPA: [keyof MapaExtrato, string][] = [
   ["data", "Data *"],
@@ -42,7 +44,25 @@ const CAMPOS_DO_MAPA: [keyof MapaExtrato, string][] = [
   ["saldo", "Saldo"],
 ];
 
-type Lido = { arquivo: File; bytes: Uint8Array; texto: string; extrato: ExtratoLido; csv: { tabela: TabelaLida; mapa: MapaExtrato } | null };
+type Lido = {
+  arquivo: File;
+  bytes: Uint8Array;
+  texto: string;
+  extrato: ExtratoLido;
+  csv: { tabela: TabelaLida; mapa: MapaExtrato } | null;
+  /** PDF já enviado para a leitura pela IA; o OFX e o CSV só sobem ao importar. */
+  caminho?: string;
+};
+
+/** Resposta de erro da função ler-extrato-pdf em frase para a pessoa. */
+async function mensagemDaLeitura(erro: unknown): Promise<string> {
+  const resposta = (erro as { context?: Response })?.context;
+  const corpo = await resposta?.json?.().catch(() => null) as { error?: string } | null;
+  if (resposta?.status === 403) return "Seu papel nesta prestação não permite importar extratos.";
+  if (corpo?.error === "pdf_grande_demais") return "O PDF passa de 15 MB. Exporte um período menor.";
+  if (corpo?.error === "extrato_longo_demais") return "O extrato tem lançamentos demais para uma leitura. Exporte um período menor ou use o OFX ou o CSV.";
+  return "Não foi possível ler o PDF agora. Tente de novo ou use o OFX ou o CSV do banco.";
+}
 
 /** Conta do arquivo (OFX) diferente da escolhida, comparando só os algarismos. */
 function contaDiferente(extrato: ExtratoLido, conta: PrestacaoContaBancaria | undefined): boolean {
@@ -66,6 +86,27 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
   const [verColunas, setVerColunas] = useState(false);
   const [erro, setErro] = useState("");
   const [gravando, setGravando] = useState(false);
+  const [lendo, setLendo] = useState("");
+  // PDF enviado para leitura e ainda não importado: sai do storage se a pessoa
+  // fechar a janela, inclusive no meio da leitura.
+  const enviadoRef = useRef<string | null>(null);
+  const abertoRef = useRef(true);
+
+  useEffect(() => {
+    abertoRef.current = true;
+    return () => {
+      abertoRef.current = false;
+      const caminho = enviadoRef.current;
+      enviadoRef.current = null;
+      if (caminho) void supabase.storage.from("documentos").remove([caminho]);
+    };
+  }, [supabase]);
+
+  async function descartarEnvio() {
+    const caminho = enviadoRef.current;
+    enviadoRef.current = null;
+    if (caminho) await supabase.storage.from("documentos").remove([caminho]);
+  }
 
   const conta = contas.find(c => c.id === contaId);
   const extrato = lido?.extrato ?? null;
@@ -77,6 +118,8 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
     e.target.value = "";
     if (!arquivo) return;
     setErro("");
+    await descartarEnvio();
+    if (/\.pdf$/i.test(arquivo.name) || arquivo.type === "application/pdf") { await lerPdf(arquivo); return; }
     const bytes = new Uint8Array(await arquivo.arrayBuffer());
     const texto = decodificarArquivo(bytes);
     if (ehOfx(texto)) {
@@ -86,10 +129,43 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
       return;
     }
     const csv = lerCsvExtrato(texto);
-    if (!csv) { setErro("Não foi possível ler o arquivo. Use o OFX do banco ou um CSV com cabeçalho."); setLido(null); return; }
+    if (!csv) { setErro("Não foi possível ler o arquivo. Use o OFX ou o PDF do banco, ou um CSV com cabeçalho."); setLido(null); return; }
     setLido({ arquivo, bytes, texto, extrato: csv.extrato, csv: { tabela: csv.tabela, mapa: csv.mapa } });
     setVerColunas(csv.extrato.lancamentos.length === 0);
     if (csv.extrato.lancamentos.length === 0) setErro("Nenhum lançamento reconhecido. Indique as colunas abaixo.");
+  }
+
+  async function lerPdf(arquivo: File) {
+    if (!organizationId) { setErro("A prestação ainda está carregando. Tente de novo em instantes."); return; }
+    if (arquivo.size > LIMITE_PDF) { setErro("O PDF passa de 15 MB. Exporte um período menor."); return; }
+    setLido(null);
+    const bytes = new Uint8Array(await arquivo.arrayBuffer());
+
+    // O mesmo arquivo já importado nesta conta é avisado antes de gastar a leitura.
+    setLendo("Conferindo o arquivo…");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas do extrato ainda não estão no tipo Database
+    const { data: repetido } = await (supabase as any).from("prestacao_extrato_importacoes")
+      .select("id").eq("conta_id", contaId).eq("hash_arquivo", await hashDoArquivo(bytes)).maybeSingle();
+    if (repetido) { setLendo(""); setErro("Esse arquivo já foi importado nesta conta."); return; }
+
+    setLendo("Enviando o PDF…");
+    const caminho = montarCaminhoPrestacao({ organizationId, prestacaoId, pasta: { tipo: "extratos" }, nomeOriginal: arquivo.name });
+    const { error: erroEnvio } = await supabase.storage.from("documentos").upload(caminho, arquivo, { upsert: false });
+    if (erroEnvio) { setLendo(""); setErro("Não foi possível enviar o PDF."); return; }
+    if (!abertoRef.current) { await supabase.storage.from("documentos").remove([caminho]); return; }
+    enviadoRef.current = caminho;
+
+    setLendo("Lendo o extrato com IA…");
+    const { data, error } = await supabase.functions.invoke("ler-extrato-pdf", { body: { storage_path: caminho, prestacao_id: prestacaoId } });
+    if (!abertoRef.current) return;
+    const extratoLido = error ? null : lerLeituraDoPdf(data?.extrato);
+    setLendo("");
+    if (!extratoLido || extratoLido.lancamentos.length === 0) {
+      await descartarEnvio();
+      setErro(error ? await mensagemDaLeitura(error) : "Não encontramos lançamentos no PDF. Se o banco oferecer, use o OFX ou o CSV.");
+      return;
+    }
+    setLido({ arquivo, bytes, texto: "", extrato: extratoLido, csv: null, caminho });
   }
 
   function trocarColuna(campo: keyof MapaExtrato, valor: string) {
@@ -106,11 +182,14 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
     if (!organizationId) { setErro("A prestação ainda está carregando. Tente de novo em instantes."); return; }
     setGravando(true);
     setErro("");
-    const caminho = montarCaminhoPrestacao({ organizationId, prestacaoId, pasta: { tipo: "extratos" }, nomeOriginal: lido.arquivo.name });
-    const { error: erroEnvio } = await supabase.storage.from("documentos").upload(caminho, lido.arquivo, { upsert: false });
-    if (erroEnvio) { setGravando(false); setErro("Não foi possível enviar o arquivo."); return; }
+    let caminho = lido.caminho;
+    if (!caminho) {
+      caminho = montarCaminhoPrestacao({ organizationId, prestacaoId, pasta: { tipo: "extratos" }, nomeOriginal: lido.arquivo.name });
+      const { error: erroEnvio } = await supabase.storage.from("documentos").upload(caminho, lido.arquivo, { upsert: false });
+      if (erroEnvio) { setGravando(false); setErro("Não foi possível enviar o arquivo."); return; }
+    }
 
-    const chaves = chavesDosLancamentos(extrato.lancamentos);
+    const chaves = chavesDosLancamentos(extrato.lancamentos, extrato.formato);
     const { data, error } = await supabase.rpc("fn_prestacao_extrato_importar" as never, {
       p_conta_id: contaId,
       p_importacao: {
@@ -138,11 +217,13 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
     } as never);
     setGravando(false);
     if (error) {
-      // Nada foi gravado: o arquivo enviado sai do storage.
-      await supabase.storage.from("documentos").remove([caminho]);
+      // Nada foi gravado: o OFX ou CSV enviado agora sai do storage. O PDF fica
+      // até a pessoa trocar de conta e tentar de novo, ou desistir.
+      if (!lido.caminho) await supabase.storage.from("documentos").remove([caminho]);
       setErro(mensagemErroPrestacao(error, "Não foi possível importar o extrato"));
       return;
     }
+    enviadoRef.current = null;
     const resultado = data as { novos: number; repetidos: number } | null;
     const novos = resultado?.novos ?? extrato.lancamentos.length;
     const repetidos = resultado?.repetidos ?? 0;
@@ -155,19 +236,19 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
   return (
     <ModalPrestacao
       titulo="Importar extrato"
-      subtitulo="OFX ou CSV exportado do banco. Lançamentos que já estão no extrato ficam de fora."
+      subtitulo="OFX, CSV ou PDF do banco. Lançamentos que já estão no extrato ficam de fora."
       onClose={onClose}
       largura="max-w-[48rem]"
       rodape={<>
         <p className="text-[0.75rem] text-black/50">
-          {quantidade > 0 ? <><strong className="tabular-nums text-black/75">{quantidade}</strong> {quantidade === 1 ? "lançamento" : "lançamentos"}</> : "Escolha o arquivo"}
+          {quantidade > 0 ? <><strong className="tabular-nums text-black/75">{quantidade}</strong> {quantidade === 1 ? "lançamento" : "lançamentos"}</> : lendo ? "Aguarde a leitura do arquivo" : "Escolha o arquivo"}
         </p>
         <div className="flex items-center gap-4">
           <button type="button" onClick={onClose} className="rounded px-2 py-2 text-[0.8125rem] text-black/45 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar</button>
           <button
             type="button"
             onClick={importar}
-            disabled={gravando || quantidade === 0 || !contaId}
+            disabled={gravando || Boolean(lendo) || quantidade === 0 || !contaId}
             className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {gravando && <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />}
@@ -190,12 +271,15 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
           <button
             type="button"
             onClick={() => arquivoRef.current?.click()}
-            className="flex h-10 items-center justify-center gap-1.5 rounded border bg-white px-4 text-[0.75rem] text-black/70 transition hover:border-black/25 hover:text-black/90 focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+            disabled={Boolean(lendo) || gravando}
+            className="flex h-10 items-center justify-center gap-1.5 rounded border bg-white px-4 text-[0.75rem] text-black/70 transition hover:border-black/25 hover:text-black/90 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-wait disabled:text-black/45"
             style={{ borderColor: "rgba(13,13,13,.14)" }}
           >
-            <FileUp size={14} aria-hidden /> {lido ? "Trocar arquivo" : "Escolher arquivo"}
+            {lendo
+              ? <><span className="h-3 w-3 animate-spin rounded-full border-2 border-black/15 border-t-black/55 motion-reduce:animate-none" aria-hidden />{lendo}</>
+              : <><FileUp size={14} aria-hidden /> {lido ? "Trocar arquivo" : "Escolher arquivo"}</>}
           </button>
-          <input ref={arquivoRef} type="file" accept=".ofx,.csv,.txt,.tsv" className="hidden" onChange={escolherArquivo} />
+          <input ref={arquivoRef} type="file" accept=".ofx,.csv,.txt,.tsv,.pdf" className="hidden" onChange={escolherArquivo} />
         </div>
 
         {lido && extrato && totais && conferencia && (
@@ -212,7 +296,7 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
               </dl>
               <p className="mt-2 text-[0.6875rem]" role="status">
                 {conferencia.situacao === "confere" && <span className="text-[#2E8932]">Saldo inicial + créditos − débitos bate com o saldo final do arquivo.</span>}
-                {conferencia.situacao === "diverge" && <span className="text-[#B23B3B]">O saldo não bate: o arquivo diz {fmt(conferencia.informado)}, a soma dá {fmt(conferencia.esperado)} (diferença de {fmt(conferencia.diferenca)}). Confira se o arquivo está completo.</span>}
+                {conferencia.situacao === "diverge" && <span className="text-[#B23B3B]">O saldo não bate: o arquivo diz {fmt(conferencia.informado)}, a soma dá {fmt(conferencia.esperado)} (diferença de {fmt(conferencia.diferenca)}). {extrato.formato === "pdf" ? "Compare a prévia com o PDF: a leitura pode ter errado algum valor." : "Confira se o arquivo está completo."}</span>}
                 {conferencia.situacao === "sem_saldos" && <span className="text-black/45">O arquivo não traz saldo inicial e final, então a soma não pôde ser conferida.</span>}
               </p>
               {contaDiferente(extrato, conta) && (

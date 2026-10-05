@@ -1,0 +1,19 @@
+{
+  "banco": "Banco do Brasil",
+  "agencia": "1234-5",
+  "conta": "98765-4",
+  "periodo_inicio": "2026-09-01",
+  "periodo_fim": "2026-09-30",
+  "saldo_inicial": 10000,
+  "saldo_final": 24909.44,
+  "lancamentos": [
+    { "data": "2026-09-01", "historico": "Transferência recebida · 01/09 Patrocinadora Exemplo SA", "documento": "1.234", "valor": 50000, "saldo": 60000 },
+    { "data": "2026-09-02", "historico": "Pix - Enviado · 02/09 10:31 Equipamento de Som Ltda", "documento": "123.456", "valor": -2057, "saldo": null },
+    { "data": "2026-09-02", "historico": "Tarifa Pacote de Serviços", "documento": "90.201", "valor": -45.9, "saldo": 57897.1 },
+    { "data": "2026-09-05", "historico": "Pagamento de Boleto · GRAFICA EXEMPLO LTDA", "documento": "45.678", "valor": -3200, "saldo": 54697.1 },
+    { "data": "2026-09-10", "historico": "BB Rende Fácil · Rende Facil", "documento": "9.903", "valor": -30000, "saldo": 24697.1 },
+    { "data": "2026-09-15", "historico": "Pix - Enviado · 15/09 14:02 Produtora Exemplo Ltda", "documento": "778.120", "valor": -4800, "saldo": 19897.1 },
+    { "data": "2026-09-20", "historico": "BB Rende Fácil · Resgate Rende Facil", "documento": "9.903", "valor": 5000, "saldo": 24897.1 },
+    { "data": "2026-09-30", "historico": "Rendimento Rende Fácil", "documento": "9.903", "valor": 12.34, "saldo": null }
+  ]
+}

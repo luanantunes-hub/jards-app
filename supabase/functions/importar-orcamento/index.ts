@@ -1,3 +1,4 @@
+import { modeloDaIa } from "../_shared/modelo-ia.ts";
 import { autorizarArquivoDaPrestacao, corsHeaders } from "../_shared/prestacao-acesso.ts";
 
 Deno.serve(async (req) => {
@@ -42,7 +43,7 @@ Deno.serve(async (req) => {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const model = Deno.env.get("GOOGLE_AI_MODEL") || "gemini-2.5-flash";
+    const model = modeloDaIa();
     const geminiUrl =
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
@@ -79,7 +80,6 @@ Regras:
           },
         ],
         generationConfig: {
-          temperature: 0,
           response_mime_type: "application/json",
         },
       }),
