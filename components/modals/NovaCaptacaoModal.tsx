@@ -29,6 +29,8 @@ type Projeto      = { id: string; nome: string };
 type ContatoItem  = { id: string; nome: string; cargo: string | null; email: string | null; responsavel_id?: string | null };
 type CaptadorExt  = { id: string; nome: string; agencia: string | null };
 
+const CRIAR_NOVA_COTA = "__criar_nova_cota__";
+
 const ETAPAS: { status: StatusCaptacao; Icon: React.ElementType; label: string; color: string }[] = [
   { status: "prospeccao",       Icon: Lightbulb,    label: "Prospecção", color: "rgba(13,13,13,.40)" },
   { status: "primeiro_contato", Icon: MessageSquare, label: "1º Contato", color: "#2D72B0" },
@@ -278,9 +280,14 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const valorLido = lerValorBRL(valorTexto);
   // Cota (opcional) → Proposta: o valor da negociação é a proposta simplificada.
   const [cotas, setCotas] = useState<CotaPatrocinio[]>([]);
+  const [cotasDoProjeto, setCotasDoProjeto] = useState<string | null>(null);
+  const [recargaCotas, setRecargaCotas] = useState(0);
   const [cotaId, setCotaId] = useState("");
   const [propostaAtiva, setPropostaAtiva] = useState<{ status: string; cota_id: string | null } | null>(null);
   const propostaAceita = propostaAtiva?.status === "aceita";
+  // Só as cotas do projeto escolhido agora (a lista anterior some ao trocar de projeto).
+  const cotasVisiveis = projetoId && cotasDoProjeto === projetoId ? cotas : [];
+  const carregandoCotas = Boolean(projetoId) && cotasDoProjeto !== projetoId;
   // "Contato realizado" fica recolhido: só quem já falou com a empresa abre.
   const [registrarContato, setRegistrarContato] = useState(false);
   const [canalRealizado, setCanalRealizado] = useState<CanalContato | null>(null);
@@ -377,12 +384,20 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       .then(({ data }: { data: CotaPatrocinio[] | null }) => {
         if (!ativo) return;
         setCotas(data ?? []);
+        setCotasDoProjeto(projetoId);
         // Trocar de projeto descarta a cota do projeto anterior.
         setCotaId(current => current && !(data ?? []).some(cota => cota.id === current) ? "" : current);
       });
     return () => { ativo = false; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [projetoId]);
+  }, [projetoId, recargaCotas]);
+
+  // Cota criada em outra aba ("+ Criar nova cota…"): ao voltar, a lista se atualiza.
+  useEffect(() => {
+    const aoVoltar = () => setRecargaCotas(n => n + 1);
+    window.addEventListener("focus", aoVoltar);
+    return () => window.removeEventListener("focus", aoVoltar);
+  }, []);
 
   async function checkBlindagem(eId: string, responsavelId: string | null = captadorId) {
     if (!responsavelId || !eId) { setBlindagem(null); return; }
@@ -825,26 +840,30 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   options={etapas.map(({ status: value, label, Icon }) => ({ value, label, icon: <Icon size={13} /> }))} />
               </div>
 
-              {projetoId && cotas.length > 0 && (
-                <div>
-                  <FieldLabel>Cota <span className="ml-1 font-normal text-black/35">(opcional)</span></FieldLabel>
-                  <CustomDropdown value={cotaId} disabled={propostaAceita}
-                    onChange={value => {
-                      setCotaId(value);
-                      const cota = cotas.find(item => item.id === value);
-                      if (cota) setValorTexto(formatarValorBRL(cota.valor));
-                    }}
-                    className="[&>button]:w-full" compact icon={<Layers size={13} />} placeholder="Sem cota"
-                    options={[
-                      { value: "", label: "Sem cota" },
-                      ...cotas.map(cota => ({
-                        value: cota.id,
-                        label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
-                        disabled: !cotaTemDisponibilidade(cota) && cota.id !== propostaAtiva?.cota_id,
-                      })),
-                    ]} />
-                </div>
-              )}
+              <div>
+                <FieldLabel>Cota <span className="ml-1 font-normal text-black/35">(opcional)</span></FieldLabel>
+                <CustomDropdown value={cotaId} disabled={!projetoId || propostaAceita || carregandoCotas}
+                  onChange={value => {
+                    if (value === CRIAR_NOVA_COTA) {
+                      window.open(`/projetos/${projetoId}?tab=proposta`, "_blank");
+                      return;
+                    }
+                    setCotaId(value);
+                    const cota = cotasVisiveis.find(item => item.id === value);
+                    if (cota) setValorTexto(formatarValorBRL(cota.valor));
+                  }}
+                  className="[&>button]:w-full" compact icon={<Layers size={13} />}
+                  placeholder={!projetoId ? "Selecione um projeto primeiro" : carregandoCotas ? "Carregando cotas…" : cotasVisiveis.length === 0 ? "Nenhuma cota neste projeto" : "Sem cota"}
+                  options={[
+                    ...(cotasVisiveis.length > 0 ? [{ value: "", label: "Sem cota" }] : []),
+                    ...cotasVisiveis.map(cota => ({
+                      value: cota.id,
+                      label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
+                      disabled: !cotaTemDisponibilidade(cota) && cota.id !== propostaAtiva?.cota_id,
+                    })),
+                    { value: CRIAR_NOVA_COTA, label: "+ Criar nova cota…", icon: <Plus size={12} /> },
+                  ]} />
+              </div>
 
               <div>
                 <FieldLabel>{projetoId ? "Valor da proposta" : "Valor da negociação"}</FieldLabel>
