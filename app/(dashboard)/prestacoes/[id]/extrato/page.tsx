@@ -193,7 +193,7 @@ export default function ExtratoPage() {
                     <button type="button" onClick={() => setEditandoConta(conta)} aria-label={`Editar ${rotuloDaConta(conta)}`} className="rounded p-2 text-black/35 transition hover:bg-black/5 hover:text-black/65 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                       <Pencil size={13} />
                     </button>
-                    <button type="button" onClick={() => excluirConta(conta)} aria-label={`Excluir ${rotuloDaConta(conta)}`} className="rounded p-2 text-black/25 transition hover:bg-[#D94A4A]/10 hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
+                    <button type="button" onClick={() => excluirConta(conta)} aria-label={`Excluir ${rotuloDaConta(conta)}`} className="rounded p-2 text-black/25 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
                       <Trash2 size={13} />
                     </button>
                   </div>
@@ -318,7 +318,7 @@ export default function ExtratoPage() {
                   <button
                     type="button"
                     onClick={() => desfazerImportacao(imp)}
-                    className="flex h-8 items-center gap-1.5 rounded px-2 text-[0.6875rem] text-black/45 transition hover:bg-[#D94A4A]/10 hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]"
+                    className="flex h-8 items-center gap-1.5 rounded px-2 text-[0.6875rem] text-black/45 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]"
                   >
                     <Undo2 size={12} aria-hidden /> Desfazer
                   </button>

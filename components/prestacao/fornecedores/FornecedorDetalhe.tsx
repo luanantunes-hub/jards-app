@@ -54,7 +54,7 @@ export function FornecedorDetalhe({ fornecedor, podeEditar, onClose, onEditar, o
       onClose={onClose}
       largura="max-w-[44rem]"
       rodape={podeEditar ? <>
-        <button type="button" onClick={onExcluir} className="flex items-center gap-1.5 rounded px-2 py-2 text-[0.75rem] text-[#B23B3B]/80 transition hover:bg-[#D94A4A]/10 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
+        <button type="button" onClick={onExcluir} className="flex items-center gap-1.5 rounded px-2 py-2 text-[0.75rem] text-[#B23B3B]/80 transition hover:bg-black/[.04] hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
           <Trash2 size={13} aria-hidden /> Excluir
         </button>
         <div className="flex flex-wrap items-center justify-end gap-2">
