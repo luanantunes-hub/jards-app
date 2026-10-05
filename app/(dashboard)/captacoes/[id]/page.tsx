@@ -31,15 +31,12 @@ import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeMod
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
+import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
+import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
 
 const RESULTADO_NEGATIVO = new Set(["recusado"]);
 
-type Nota = {
-  id: string;
-  conteudo: string;
-  created_at: string;
-  user: { full_name: string } | null;
-};
+type Nota = NotaRegistro;
 
 type Contato = {
   id: string;
@@ -335,7 +332,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         .order("data_prevista", { ascending: true }),
       supabase
         .from("notas")
-        .select("id, conteudo, created_at, user:profiles!user_id(full_name)")
+        .select(CAMPOS_NOTA)
         .eq("captacao_id", id)
         .order("created_at", { ascending: false }),
       supabase
@@ -405,6 +402,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("tab") === "relacionamento") setActiveTab("relacionamento");
   }, []);
+
+  async function recarregarNotas() {
+    try { setNotas(await buscarNotas(supabase, { coluna: "captacao_id", id })); } catch { /* a lista anterior continua na tela */ }
+  }
 
   async function handleSalvarAtividade() {
     if (!newAtividadeNome.trim()) return;
@@ -610,10 +611,10 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     ...notas.map(n => ({
       tipo: "nota",
       atividade_tipo: "nota",
-      titulo: n.conteudo.length > 80 ? n.conteudo.slice(0, 80) + "…" : n.conteudo,
-      descricao: null,
+      titulo: n.titulo || resumoNota(n.conteudo),
+      descricao: n.titulo ? resumoNota(n.conteudo) : null,
       data: n.created_at,
-      usuario: n.user?.full_name || null,
+      usuario: null,
       created_at: n.created_at,
     })),
     ...historico.map(h => ({
@@ -1015,6 +1016,14 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 </div>
               )}
             </section>
+
+            <NotasDoRegistro
+              escopo={{ coluna: "captacao_id", id }}
+              organizationId={captacao.organization_id}
+              notas={notas}
+              onChanged={recarregarNotas}
+              contexto={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || undefined}
+            />
 
             {/* Atividades Pendentes */}
             {atvsPendentes.length > 0 && (

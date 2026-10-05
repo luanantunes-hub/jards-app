@@ -24,6 +24,9 @@ import { CotasReferenceTab } from "@/components/CotasReferenceTab";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
+import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
+import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
 
 const RESULTADO_NEGATIVO = new Set(["reprovado", "cancelado"]);
 
@@ -74,12 +77,7 @@ type Atividade = {
   created_at: string;
 };
 
-type Nota = {
-  id: string;
-  conteudo: string;
-  created_at: string;
-  user: { full_name: string } | null;
-};
+type Nota = NotaRegistro;
 
 type PropostaInterna = {
   id: string;
@@ -165,6 +163,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
   const { id } = use(params);
   const router = useRouter();
   const supabase = createClient();
+  const organizacaoAtual = useOrganizationId();
   const { etiquetasInscricao } = useEtiquetas();
   const { options: leiOptions, create: createLei } = useLeiOptions();
   const statusOptions = etiquetasInscricao.map((etiqueta) => ({
@@ -200,8 +199,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
   const [leiMenuPos, setLeiMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [prioMenuPos, setPrioMenuPos] = useState<{ top: number; left: number } | null>(null);
 
-  const [novaNotaTexto, setNovaNotaTexto]   = useState("");
-  const [salvandoNota, setSalvandoNota]     = useState(false);
 
   /* ── Fetch ── */
   const fetchData = useCallback(async () => {
@@ -239,7 +236,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
         .order("data_prevista", { ascending: true }),
       (supabase as any)
         .from("notas")
-        .select("id, conteudo, created_at, user:profiles!user_id(full_name)")
+        .select(CAMPOS_NOTA)
         .eq("edital_user_id", id)
         .order("created_at", { ascending: false }),
       (supabase as any)
@@ -342,26 +339,8 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     await fetchData();
   }
 
-  async function handleSalvarNota() {
-    if (!novaNotaTexto.trim()) return;
-    setSalvandoNota(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSalvandoNota(false); return; }
-    const { data: orgData } = await (supabase as any)
-      .from("organization_members")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .single();
-    await (supabase as any).from("notas").insert({
-      user_id:         user.id,
-      organization_id: orgData?.organization_id ?? null,
-      conteudo:        novaNotaTexto.trim(),
-      edital_user_id:  id,
-    });
-    setNovaNotaTexto("");
-    setSalvandoNota(false);
-    await fetchData();
+  async function recarregarNotas() {
+    try { setNotas(await buscarNotas(supabase, { coluna: "edital_user_id", id })); } catch { /* a lista anterior continua na tela */ }
   }
 
   if (loading) return <DetailPageSkeleton />;
@@ -393,8 +372,8 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     ...notas.map(n => ({
       tipo: "nota" as const,
       id: n.id,
-      titulo: n.conteudo.length > 120 ? n.conteudo.slice(0, 120) + "…" : n.conteudo,
-      descricao: n.user?.full_name ?? null,
+      titulo: n.titulo || resumoNota(n.conteudo),
+      descricao: n.titulo ? resumoNota(n.conteudo) : null,
       data: n.created_at,
     })),
   ].sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
@@ -927,48 +906,13 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               )}
             </section>
 
-            {/* Notas rápidas */}
-            <section>
-              <h2 className="text-[0.6875rem] font-bold uppercase tracking-[.12em] text-black/35 mb-3">Notas</h2>
-              <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <textarea
-                  value={novaNotaTexto}
-                  onChange={e => setNovaNotaTexto(e.target.value)}
-                  placeholder="Adicione uma nota sobre esta inscrição..."
-                  rows={3}
-                  className="w-full px-3 py-2.5 text-[0.8125rem] border rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
-                  style={{ borderColor: "rgba(13,13,13,.10)" }}
-                />
-                {novaNotaTexto.trim() && (
-                  <div className="flex justify-end gap-2 mt-2">
-                    <button onClick={() => setNovaNotaTexto("")} className="px-3 py-1.5 text-[0.6875rem] font-medium text-black/40 hover:text-black/60 transition">
-                      Limpar
-                    </button>
-                    <button
-                      onClick={handleSalvarNota}
-                      disabled={salvandoNota}
-                      className="flex items-center gap-1.5 px-4 py-1.5 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
-                    >
-                      {salvandoNota ? <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin" /> : <Send size={11} />}
-                      Salvar
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {notas.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {notas.map(n => (
-                    <div key={n.id} className="bg-white rounded border px-4 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="text-[0.8125rem] text-[#0D0D0D] leading-relaxed">{n.conteudo}</p>
-                      <p className="text-[0.625rem] text-black/25 mt-1.5">
-                        {n.user?.full_name && <span>{n.user.full_name} · </span>}{timeAgo(n.created_at)}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
+            <NotasDoRegistro
+              escopo={{ coluna: "edital_user_id", id }}
+              organizationId={organizacaoAtual}
+              notas={notas}
+              onChanged={recarregarNotas}
+              contexto={empresa !== "—" ? empresa : undefined}
+            />
           </div>
 
           {/* ── Sidebar ── */}
