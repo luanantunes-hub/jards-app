@@ -2,12 +2,14 @@
 
 import { useId, useMemo, useState } from "react";
 import { X } from "lucide-react";
+import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import {
-  GRUPOS_CUSTO,
+  gruposDoRegime,
+  grupoNoRegime,
   lerValor,
   paisPossiveis,
   rotuloGrupo,
@@ -43,8 +45,10 @@ export type NoEmEdicao =
  * mesma versão, sem ciclo, item com comprovante não vira agrupador) e calcula
  * o total do item quando há valor unitário; a tela mostra a mesma conta.
  */
-export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, onClose, onSaved }: {
+export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime = null, onClose, onSaved }: {
   versaoId: string;
+  /** Regime da prestação: os grupos de custo e os nomes vêm dele. */
+  regime?: RegimeNormativo | null;
   raizes: LinhaOrcamento[];
   edicao: NoEmEdicao;
   ordemNova: number;
@@ -178,12 +182,14 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, onClose
               onChange={setGrupo}
               ariaLabel="Grupo de custo"
               options={[
-                { value: "", label: grupoDeCima ? `Herdar de cima: ${rotuloGrupo(grupoDeCima)}` : ehItem ? "Sem grupo de custo" : "Sem grupo (cada item define o seu)" },
-                ...GRUPOS_CUSTO.map(g => ({ value: g.id, label: g.rotulo })),
+                { value: "", label: grupoDeCima ? `Herdar de cima: ${rotuloGrupo(grupoDeCima, regime)}` : ehItem ? "Sem grupo de custo" : "Sem grupo (cada item define o seu)" },
+                ...gruposDoRegime(regime).map(g => ({ value: g.id, label: g.rotulo })),
+                // Grupo antigo, fora do regime: continua na lista para não sumir da tela.
+                ...(grupo && !grupoNoRegime(grupo, regime) ? [{ value: grupo, label: `${rotuloGrupo(grupo)} (fora do regime)` }] : []),
               ]}
             />
             <p className="mt-1 text-[0.625rem] leading-4 text-black/40">
-              {ehItem ? "Os tetos do regime (administração, divulgação, captação) somam os itens pelo grupo." : "Os itens dentro deste agrupador herdam o grupo, salvo os que tiverem o próprio."}
+              {ehItem ? "Os tetos e as bases do regime somam os itens pelo grupo de custo." : "Os itens dentro deste agrupador herdam o grupo, salvo os que tiverem o próprio."}
             </p>
           </div>
 

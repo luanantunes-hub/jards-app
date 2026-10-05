@@ -4,7 +4,7 @@ import { useState } from "react";
 import { hojeEmBrasilia } from "@/lib/modulos-contrato";
 import { descreverRegra, prazoFinalCalculado, ROTULO_DO_MARCO } from "@/lib/prestacao/prazo-final";
 import { situacaoDoPrazo } from "@/lib/prestacao/prazos";
-import type { RegimeNormativo } from "@/lib/prestacao/regimes";
+import { prazoDoRegime, type RegimeNormativo } from "@/lib/prestacao/regimes";
 import type { PrestacaoContas } from "@/lib/supabase/types";
 
 const dataBr = (data: string | null | undefined) => (data ? data.split("-").reverse().join("/") : "—");
@@ -29,7 +29,7 @@ export function PrazoPrestacao({ prestacao, regime, podeEditar, onSalvar }: {
 
   const calculado = prestacao.prazo_final ?? null;
   const informado = prestacao.prazo_final_override ?? null;
-  const regra = regime?.prazos.prestacaoFinal ?? null;
+  const regra = prazoDoRegime(regime, "prestacaoFinal");
   const explicacao = prazoFinalCalculado(regime, prestacao);
   const situacao = prestacao.prazo ? situacaoDoPrazo(hojeEmBrasilia(), prestacao.prazo) : null;
   const encerrada = prestacao.status === "aprovado" || prestacao.status === "arquivado";

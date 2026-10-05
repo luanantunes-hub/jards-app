@@ -54,14 +54,14 @@ test("remanejamento entre itens de execução dispensa autorização (art. 64, �
   assert.equal(calculo.movido, 10000);
   assert.equal(calculo.itensAlterados, 2);
   assert.equal(calculo.bloqueado, false);
-  assert.deepEqual(codigos(calculo), ["ok:remanejamento_livre"], "50% exatos não alertam");
+  assert.deepEqual(codigos(calculo), ["ok:dispensa_pedido"], "50% exatos não alertam");
   assert.match(calculo.verificacoes[0].fonte ?? "", /art\. 64, § 3º, I e II/);
 });
 
 test("mais de 50% do item vira só alerta do Salic, com a fonte do manual", () => {
   const calculo = calcularAlteracao(NOS, [mov("cache", 50000, 39000), mov("cenario", 20000, 31000)], ROUANET, CONTEXTO);
   assert.equal(calculo.classificacao, "administrativa");
-  const alerta = calculo.verificacoes.find(v => v.codigo === "salic_50");
+  const alerta = calculo.verificacoes.find(v => v.codigo === "variacao_item");
   assert.equal(alerta?.nivel, "alerta");
   assert.match(alerta?.texto ?? "", /“Cenário”/);
   assert.match(alerta?.fonte ?? "", /Módulo II/);
@@ -72,8 +72,9 @@ test("remanejamento que mexe em custo vinculado precisa de pedido e mostra o tet
   assert.equal(calculo.tipo, "remanejamento");
   assert.equal(calculo.classificacao, "formal");
   assert.equal(calculo.depois.valorProjeto, 69500, "o valor do projeto cai junto");
-  assert.ok(codigos(calculo).includes("formal:muda_vinculados"));
-  assert.match(calculo.verificacoes.find(v => v.codigo === "muda_vinculados")?.texto ?? "", /administração \(custos vinculados\)/);
+  assert.ok(codigos(calculo).includes("formal:muda_grupos"));
+  assert.match(calculo.verificacoes.find(v => v.codigo === "muda_grupos")?.texto ?? "", /Muda o valor aprovado de custos administrativos: precisa de autorização do Ministério da Cultura/);
+  assert.match(calculo.verificacoes.find(v => v.codigo === "muda_grupos")?.fonte ?? "", /art\. 64, § 3º, II/);
   assert.ok(codigos(calculo).includes("alerta:teto_depois"), "10.500 passa de 15% de 69.500");
   assert.ok(codigos(calculo).includes("info:prazo_orgao"));
 });
@@ -188,7 +189,11 @@ test("acumulado aprovado e prazo de análise do MinC", () => {
     { status: "aprovada", tipo: "reducao", calculo: { diferenca: -3000 } },
     { status: "solicitada", tipo: "complementacao", calculo: { diferenca: 99999 } },
     { status: "aprovada", tipo: "remanejamento", calculo: { diferenca: 0 } },
-  ]), { complementado: 10000.5, reduzido: 3000 });
+  ]), { complementado: 10000.5, reduzido: 3000, movido: 0, pedidos: { complementacao: 2, reducao: 1, remanejamento: 1 } });
+  assert.equal(acumuladoAprovado([
+    { status: "aprovada", tipo: "remanejamento", classificacao: "administrativa", calculo: { diferenca: 0, movido: 2500 } },
+    { status: "negada", tipo: "remanejamento", classificacao: "formal", calculo: { diferenca: 0, movido: 9999 } },
+  ]).movido, 2500, "só o movido das administrativas aplicadas");
   assert.equal(prazoDaAnalise(ROUANET, "2026-10-05"), "2026-11-04", "30 dias corridos");
   assert.equal(prazoDaAnalise(GENERICO, "2026-10-05"), null);
   assert.equal(prazoDaAnalise(ROUANET, null), null);

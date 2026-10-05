@@ -9,9 +9,9 @@
 import type { StatusPrestacao } from "@/lib/supabase/types";
 import { prazoDaAnalise } from "./alteracoes";
 import { diferencaEmDias } from "./calendario";
-import { FORA_DO_VALOR_DO_PROJETO, LIMITE_DO_GRUPO, tetosDosItens, type ItemResumido } from "./orcamento";
+import { grupoNoRegime, tetosDosItens, type ItemResumido } from "./orcamento";
 import { calcularVencimento } from "./prazos";
-import type { RegimeNormativo } from "./regimes";
+import { definida, prazoDoRegime, type RegimeNormativo } from "./regimes";
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const dataBR = (d: string) => d.split("-").reverse().join("/");
@@ -84,16 +84,17 @@ export function avaliarProntidao(dados: DadosProntidao): Prontidao {
   add("orcamento", "Orçamento", 1, itens.length > 0 ? 1 : 0,
     itens.length > 0 ? `${plural(itens.length, "item", "itens")}, ${fmt(vigente / 100)} vigente.` : "Cadastre ou importe o orçamento aprovado.", "orcamento");
 
-  // Grupos de custo e tetos, quando o regime tem limites por grupo.
-  const temTetos = Boolean(regime && (LIMITE_DO_GRUPO[regime.codigo] || FORA_DO_VALOR_DO_PROJETO[regime.codigo]));
+  // Grupos de custo e tetos, quando o regime tem tetos ou bases por grupo.
+  const orcamento = regime ? definida(regime.orcamento) : null;
+  const temTetos = Boolean(orcamento && (orcamento.tetos.length > 0 || Object.values(orcamento.bases).some(b => b && (b.soma !== "todos" || b.exceto.length > 0))));
   if (temTetos && itens.length > 0) {
-    const semGrupo = itens.filter(item => !item.grupo).length;
+    const semGrupo = itens.filter(item => !grupoNoRegime(item.grupo, regime)).length;
     add("grupos", "Grupos de custo", 1, (itens.length - semGrupo) / itens.length,
-      semGrupo ? `${plural(semGrupo, "item está", "itens estão")} sem grupo de custo; os tetos dependem dessa classificação.` : "Todos os itens têm grupo de custo.", "orcamento");
-    const excedidos = tetosDosItens(itens, regime).filter(t => t.excedido && t.limite);
+      semGrupo ? `${plural(semGrupo, "item está", "itens estão")} sem grupo de custo do regime; os tetos dependem dessa classificação.` : "Todos os itens têm grupo de custo.", "orcamento");
+    const excedidos = tetosDosItens(itens, regime).filter(t => t.excedido && t.limite?.maximo !== null && t.limite?.maximo !== undefined);
     add("tetos", "Tetos do regime", 1, excedidos.length ? 0 : 1,
       excedidos.length
-        ? `${excedidos.map(t => `${t.rotulo} acima do teto em ${fmt((centavos(t.valor) - centavos(t.limite?.maximo ?? 0)) / 100)}`).join("; ")}.`
+        ? `${excedidos.map(t => `${t.rotulo} acima do teto em ${fmt((centavos(t.limite?.valorLimitado ?? t.valor) - centavos(t.limite?.maximo ?? 0)) / 100)}`).join("; ")}.`
         : "Dentro dos tetos.", "orcamento");
   }
 
@@ -166,7 +167,7 @@ export function prazosDaPrestacao(
   if (EM_PREPARO.includes(prestacao.status) && prestacao.prazo) {
     prazos.push({ data: prestacao.prazo, rotulo: "Envio da prestação", quem: "proponente" });
   }
-  const analise = regime?.prazos.analisePrestacao;
+  const analise = prazoDoRegime(regime, "analisePrestacao");
   if (prestacao.status === "enviado" && prestacao.data_envio && analise) {
     prazos.push({ data: calcularVencimento(prestacao.data_envio, analise).data, rotulo: "Análise do órgão", quem: "orgao" });
   }

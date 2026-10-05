@@ -6,33 +6,48 @@
 // marco, dia em que caiu e por que foi prorrogado).
 
 import { calcularVencimento, type Vencimento } from "./prazos";
-import type { PrazoRegime, RegimeNormativo } from "./regimes";
+import { prazoDoRegime, type PrazoRegime, type RegimeNormativo } from "./regimes";
 
 export type MarcosPrestacao = {
   data_fim_execucao?: string | null;
+  data_conclusao_objeto?: string | null;
   data_envio?: string | null;
 };
 
 /** Marcos do regime que a prestação guarda, e em qual coluna. */
 export const COLUNA_DO_MARCO: Partial<Record<PrazoRegime["marco"], keyof MarcosPrestacao>> = {
   fim_vigencia: "data_fim_execucao",
+  // O exercício é o ano em que a execução terminou; o marco é 31/12 dele.
+  fim_exercicio: "data_fim_execucao",
+  conclusao_objeto: "data_conclusao_objeto",
   envio_prestacao: "data_envio",
 };
 
 export const ROTULO_DO_MARCO: Partial<Record<PrazoRegime["marco"], string>> = {
   fim_vigencia: "fim da execução",
+  fim_exercicio: "fim do exercício em que a execução terminou",
+  conclusao_objeto: "conclusão do objeto",
   envio_prestacao: "envio da prestação",
+  assinatura_termo: "assinatura do termo",
+  liberacao_recursos: "liberação dos recursos",
+  fim_captacao: "fim da captação",
 };
+
+/** Data em que o prazo começa a correr, a partir da coluna do marco. */
+function dataDoMarco(marco: PrazoRegime["marco"], valor: string): string {
+  return marco === "fim_exercicio" ? `${valor.slice(0, 4)}-12-31` : valor;
+}
 
 export type PrazoFinal = Vencimento & { regra: PrazoRegime; marco: string };
 
 /** null quando o regime não tem prazo final ou o marco ainda não foi informado. */
 export function prazoFinalCalculado(regime: RegimeNormativo | null, marcos: MarcosPrestacao): PrazoFinal | null {
-  const regra = regime?.prazos.prestacaoFinal;
+  const regra = prazoDoRegime(regime, "prestacaoFinal");
   if (!regra) return null;
   const coluna = COLUNA_DO_MARCO[regra.marco];
-  const marco = coluna ? marcos[coluna] ?? null : null;
-  if (!marco) return null;
+  const valor = coluna ? marcos[coluna] ?? null : null;
+  if (!valor) return null;
+  const marco = dataDoMarco(regra.marco, valor);
   return { ...calcularVencimento(marco, regra), regra, marco };
 }
 

@@ -55,7 +55,7 @@ test("cada lacuna vira pendência com o que fazer e onde", () => {
   assert.deepEqual(codigos({ ...PRONTA, itens: [{ id: "a", grupo: null, vigente: 70000 }, PRONTA.itens[1]] }), ["grupos"]);
   const acimaDoTeto = avaliarProntidao({ ...PRONTA, itens: [PRONTA.itens[0], { id: "b", grupo: "administracao", vigente: 12000 }], comprovantes: [{ no_id: "a", status: "aceito", valor_extraido: 70000 }, { no_id: "b", status: "aceito", valor_extraido: 12000 }] });
   assert.deepEqual(acimaDoTeto.pendencias.map(p => p.codigo), ["tetos"]);
-  assert.match(acimaDoTeto.pendencias[0].detalhe, /Administração acima do teto em R\$\s1\.500,00/);
+  assert.match(acimaDoTeto.pendencias[0].detalhe, /Custos administrativos acima do teto em R\$\s1\.500,00/);
   assert.deepEqual(codigos({ ...PRONTA, comprovantes: [...PRONTA.comprovantes, { no_id: "a", status: "pendente", valor_extraido: 10 }] }), ["avaliacao"]);
   assert.deepEqual(codigos({ ...PRONTA, comprovantes: [...PRONTA.comprovantes, { no_id: null, status: "aceito", valor_extraido: 10 }] }), ["vinculo"]);
   assert.deepEqual(codigos({ ...PRONTA, atividades: 0 }), ["objeto"]);

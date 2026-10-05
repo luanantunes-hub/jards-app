@@ -14,7 +14,7 @@ import {
   type MovimentoAlteracao,
 } from "@/lib/prestacao/alteracoes";
 import {
-  GRUPOS_CUSTO,
+  gruposDoRegime,
   itensDaArvore,
   lerValor,
   montarArvore,
@@ -196,7 +196,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                         <td className="px-3 py-2">
                           {linha.caminho.length > 0 && <p className="text-[0.5625rem] uppercase tracking-[.08em] text-black/30">{linha.caminho.join(" › ")}</p>}
                           <p className="text-[0.75rem] text-black/80">{linha.no.nome}</p>
-                          <p className="text-[0.625rem] text-black/35">{linha.grupo ? rotuloGrupo(linha.grupo) : "Sem grupo de custo"}</p>
+                          <p className="text-[0.625rem] text-black/35">{linha.grupo ? rotuloGrupo(linha.grupo, regime) : "Sem grupo de custo"}</p>
                         </td>
                         <td className="whitespace-nowrap px-3 py-2 text-right text-[0.75rem] tabular-nums text-black/55">{fmt(linha.totais.vigente)}</td>
                         <td className="w-[9.5rem] px-3 py-2">
@@ -245,7 +245,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                       value={novo.grupo_custo}
                       onChange={valor => setNovos(novos.map(n => n.chave === novo.chave ? { ...n, grupo_custo: valor } : n))}
                       ariaLabel="Grupo de custo do item novo"
-                      options={[{ value: "", label: "Do agrupador" }, ...GRUPOS_CUSTO.map(g => ({ value: g.id, label: g.rotulo }))]}
+                      options={[{ value: "", label: "Do agrupador" }, ...gruposDoRegime(regime).map(g => ({ value: g.id, label: g.rotulo }))]}
                     />
                   </div>
                   <label className="block">

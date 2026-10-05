@@ -36,6 +36,7 @@ export type PrestacaoDaAlteracao = {
   titulo: string;
   identificador_oficial: string | null;
   data_liberacao: string | null;
+  data_termo?: string | null;
   data_fim_execucao: string | null;
 };
 
@@ -92,11 +93,14 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
 
   const alteracoes = useMemo(() => (lidas?.chave === chave ? lidas.lista : lidas?.lista ?? []), [lidas, chave]);
   const hoje = hojeEmBrasilia();
-  const acumulado = acumuladoAprovado(alteracoes.map(a => ({ status: a.status, tipo: a.tipo, calculo: a.calculo as Partial<CalculoAlteracao> })));
+  const acumulado = acumuladoAprovado(alteracoes.map(a => ({ status: a.status, tipo: a.tipo, classificacao: a.classificacao, calculo: a.calculo as Partial<CalculoAlteracao> })));
   const contexto: Omit<ContextoAlteracao, "captado"> = {
     hoje,
     dataLiberacao: prestacao?.data_liberacao ?? null,
+    dataTermo: prestacao?.data_termo ?? null,
     fimExecucao: prestacao?.data_fim_execucao ?? null,
+    movidoAntes: acumulado.movido,
+    pedidosAnteriores: acumulado.pedidos,
     homologado: (nosAtivos ?? []).filter(no => no.tipo === "item").reduce((soma, no) => soma + Math.round(no.valor_total * 100), 0) / 100,
     complementadoAntes: acumulado.complementado,
     reduzidoAntes: acumulado.reduzido,

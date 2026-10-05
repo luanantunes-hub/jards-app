@@ -41,10 +41,25 @@ test("o banco usa os mesmos feriados fixos do código", async () => {
 });
 
 test("o banco liga os marcos às mesmas colunas", async () => {
-  const sql = await readFile(MIGRATION, "utf8");
-  const doBanco = Object.fromEntries([...sql.matchAll(/when '([a-z_]+)' then p_(fim_execucao|envio)/g)]
-    .map(r => [r[1], r[2] === "fim_execucao" ? "data_fim_execucao" : "data_envio"]));
+  // P1.11: conclusão do objeto (ANCINE) e fim do exercício (saúde) entraram.
+  const sql = await readFile("supabase/migrations/20261006100000_prestacao_regimes_dimensoes.sql", "utf8");
+  const coluna = { fim_execucao: "data_fim_execucao", conclusao_objeto: "data_conclusao_objeto", envio: "data_envio" } as const;
+  const doBanco = Object.fromEntries([...sql.matchAll(/when '([a-z_]+)' then (?:make_date\(extract\(year from )?p_(fim_execucao|conclusao_objeto|envio)/g)]
+    .map(r => [r[1], coluna[r[2] as keyof typeof coluna]]));
   assert.deepEqual(doBanco, COLUNA_DO_MARCO);
+  assert.match(sql, /make_date\(extract\(year from p_fim_execucao\)::integer, 12, 31\)/, "fim do exercício é 31/12 do ano em que a execução terminou");
+  assert.match(sql, /where regra \? 'marco'/, "prazo em lacuna não calcula");
+  assert.match(sql, /prestacao_prazo_final\(new\.regime_id, new\.data_fim_execucao, new\.data_conclusao_objeto, new\.data_envio\)/);
+});
+
+test("prazo final pelos marcos novos", () => {
+  const ancine = { ...ROUANET_IN29_2026, prazos: { ...ROUANET_IN29_2026.prazos, prestacaoFinal: { ...ROUANET_IN29_2026.prazos.prestacaoFinal, marco: "conclusao_objeto" as const, quantidade: 180 } } };
+  assert.equal(prazoFinalCalculado(ancine, { data_fim_execucao: "2026-03-01" }), null, "sem a conclusão do objeto, sem prazo");
+  assert.equal(prazoFinalCalculado(ancine, { data_conclusao_objeto: "2026-03-02" })?.data, "2026-08-31", "180 dias de 02/03 caem em 29/08, um sábado");
+  const saude = { ...ROUANET_IN29_2026, prazos: { ...ROUANET_IN29_2026.prazos, prestacaoFinal: { ...ROUANET_IN29_2026.prazos.prestacaoFinal, marco: "fim_exercicio" as const, quantidade: 4, unidade: "meses" as const } } };
+  const anual = prazoFinalCalculado(saude, { data_fim_execucao: "2026-08-15" });
+  assert.equal(anual?.marco, "2026-12-31");
+  assert.equal(anual?.data, "2027-04-30", "30/04 do ano seguinte");
 });
 
 test("prazo vigente, justificativa e histórico no banco", async () => {

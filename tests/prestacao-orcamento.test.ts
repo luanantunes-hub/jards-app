@@ -3,12 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   agrupadorPorNome,
+  ajustarAoRegime,
   basesDoOrcamento,
-  FORA_DO_VALOR_DO_PROJETO,
   etapasParaCriar,
   GRUPOS_CUSTO,
+  gruposDoRegime,
   itensDaArvore,
-  LIMITE_DO_GRUPO,
   lerTabela,
   lerValor,
   linhasDaLeitura,
@@ -24,9 +24,11 @@ import {
   valorDoItem,
   type NoOrcamento,
 } from "../lib/prestacao/orcamento";
-import { regimePorCodigo } from "../lib/prestacao/regimes";
+import { definida, REGIMES, regimePorCodigo } from "../lib/prestacao/regimes";
 
 const MIGRATION = "supabase/migrations/20261005180000_prestacao_orcamento_arvore.sql";
+/** P1.11: o vocabulário de grupos de custo cresceu (direitos autorais, coordenação e colocação). */
+const MIGRATION_GRUPOS = "supabase/migrations/20261006100000_prestacao_regimes_dimensoes.sql";
 
 function no(campos: Partial<NoOrcamento> & Pick<NoOrcamento, "id" | "nome">): NoOrcamento {
   return {
@@ -101,8 +103,11 @@ test("linhas visíveis respeitam os agrupadores fechados e os pais possíveis ex
 test("tetos da Rouanet sobre o valor do projeto, sem custos vinculados e captação", () => {
   const rouanet = regimePorCodigo("rouanet_in29_2026");
   const { raizes } = montarArvore(NOS, []);
-  assert.deepEqual(basesDoOrcamento(raizes, rouanet), { valorProjeto: 70000.2, valorTotalProjeto: 100000.3 });
-  assert.deepEqual(basesDoOrcamento(raizes, null), { valorProjeto: 100000.3, valorTotalProjeto: 100000.3 }, "sem regime não há o que tirar");
+  const comRegime = basesDoOrcamento(raizes, rouanet);
+  assert.deepEqual([comRegime.valorProjeto, comRegime.valorTotalProjeto], [70000.2, 100000.3]);
+  assert.equal(comRegime.porBase.valor_aprovado_execucao, 100000.3);
+  const semRegime = basesDoOrcamento(raizes, null);
+  assert.deepEqual([semRegime.valorProjeto, semRegime.valorTotalProjeto], [100000.3, 100000.3], "sem regime não há o que tirar");
 
   const tetos = tetosPorGrupo(raizes, rouanet);
   const porGrupo = Object.fromEntries(tetos.map(t => [String(t.grupo), t]));
@@ -117,6 +122,10 @@ test("tetos da Rouanet sobre o valor do projeto, sem custos vinculados e captaç
   assert.equal(porGrupo.captacao.valor, 0, "grupo com limite aparece mesmo sem itens");
   assert.equal(porGrupo.captacao.limite?.teto, 150000);
   assert.equal(porGrupo.execucao.limite, null);
+  assert.equal(porGrupo.administracao.rotulo, "Custos administrativos", "o nome vem da norma do regime");
+  assert.equal(porGrupo.administracao.limite?.proporcionalAoCaptado, true);
+  assert.ok(porGrupo.direitos.limite, "direitos autorais aparecem com o teto de 10% mesmo sem itens");
+  assert.equal(porGrupo.direitos.limite?.base, "do valor aprovado para execução");
   assert.equal(tetos.at(-1)?.grupo, null, "sem grupo por último");
 
   const grande = tetosPorGrupo(montarArvore([
@@ -131,20 +140,29 @@ test("tetos da Rouanet sobre o valor do projeto, sem custos vinculados e captaç
 });
 
 test("os grupos fora do valor do projeto são os custos vinculados e a captação da IN 29", async () => {
-  assert.deepEqual([...FORA_DO_VALOR_DO_PROJETO.rouanet_in29_2026].sort(), ["administracao", "captacao", "divulgacao"]);
+  const rouanet = regimePorCodigo("rouanet_in29_2026");
+  const orcamento = rouanet && definida(rouanet.orcamento);
+  assert.deepEqual([...(orcamento?.bases.valor_projeto?.exceto ?? [])].sort(), ["administracao", "captacao", "divulgacao"]);
   const fonte = await readFile("docs/acoes-futuras/estudos/prestacao-de-contas-fontes/rouanet-in29-texto-integral.md", "utf8");
   assert.match(fonte, /Custos vinculados\*\* \(art\. 17, § 1º\) = administração \+ acessibilidade, comunicação e divulgação acessíveis/);
 });
 
-test("cada limite ligado a um grupo existe no regime e mede sobre o total do projeto", () => {
-  for (const [codigo, ligacoes] of Object.entries(LIMITE_DO_GRUPO)) {
-    const regime = regimePorCodigo(codigo);
-    assert.ok(regime, codigo);
-    for (const chave of Object.values(ligacoes)) {
-      assert.ok(regime.limites[chave!], `${codigo}.${chave}`);
-      assert.match(regime.limites[chave!].base, /^valor_(total_)?projeto$/);
-    }
+test("os grupos de todos os regimes estão no vocabulário do banco", () => {
+  const vocabulario = new Set<string>(GRUPOS_CUSTO.map(g => g.id));
+  for (const regime of REGIMES) {
+    for (const grupo of gruposDoRegime(regime)) assert.ok(vocabulario.has(grupo.id), `${regime.codigo}: ${grupo.id}`);
   }
+  assert.deepEqual(gruposDoRegime(null).map(g => g.id), GRUPOS_CUSTO.map(g => g.id), "sem regime, todos");
+});
+
+test("importação: grupo fora do regime vira a sugestão do regime", () => {
+  const rouanet = regimePorCodigo("rouanet_in29_2026");
+  const linhas = ajustarAoRegime([
+    { nome: "Gerenciamento", descricao: null, valor: 10, etapa: null, grupo_custo: "gerenciamento" },
+    { nome: "Direitos autorais da trilha", descricao: null, valor: 10, etapa: null, grupo_custo: "agenciamento" },
+    { nome: "Cachê", descricao: null, valor: 10, etapa: null, grupo_custo: "execucao" },
+  ], rouanet);
+  assert.deepEqual(linhas.map(l => l.grupo_custo), [null, "direitos", "execucao"]);
 });
 
 test("valor do item e percentual pago", () => {
@@ -215,7 +233,8 @@ test("tipos, grupos e regras da tela são os mesmos do banco", async () => {
   const lista = (re: RegExp) => [...(sql.match(re)?.[1] ?? "").matchAll(/'([a-z_]+)'/g)].map(r => r[1]).sort();
   assert.deepEqual(lista(/tipo text not null check \(tipo in \(([^)]+)\)\)/), TIPOS_VERSAO.map(t => t.id).sort());
   assert.deepEqual(lista(/tipo text not null default 'item' check \(tipo in \(([^)]+)\)\)/), TIPOS_NO.map(t => t.id).sort());
-  assert.deepEqual(lista(/grupo_custo in \(([^)]+)\)/), GRUPOS_CUSTO.map(g => g.id).sort());
+  const grupos = await readFile(MIGRATION_GRUPOS, "utf8");
+  assert.deepEqual([...(grupos.match(/grupo_custo in \(([^)]+)\)/)?.[1] ?? "").matchAll(/'([a-z_]+)'/g)].map(r => r[1]).sort(), GRUPOS_CUSTO.map(g => g.id).sort(), "o vocabulário de grupos vale no banco");
   assert.match(sql, /round\(coalesce\(new\.quantidade, 1\) \* coalesce\(new\.ocorrencias, 1\) \* new\.valor_unitario, 2\)/, "mesma conta de valorDoItem");
 });
 

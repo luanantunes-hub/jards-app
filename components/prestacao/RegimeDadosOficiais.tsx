@@ -52,7 +52,9 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
               onChange={trocarRegime}
               ariaLabel="Regime normativo"
               placeholder="Escolher regime"
-              options={regimes.map(r => ({ value: r.id, label: r.regime.nome }))}
+              options={regimes
+                .filter(r => r.publicado || r.id === prestacao.regime_id)
+                .map(r => ({ value: r.id, label: r.publicado ? r.regime.nome : `${r.regime.nome} (versão ${r.regime.versao}, substituída)` }))}
             />
           ) : (
             <p className="text-[0.75rem] text-black/70">{atual?.nome ?? "—"}</p>

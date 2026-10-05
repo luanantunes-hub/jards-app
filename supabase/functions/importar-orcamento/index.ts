@@ -55,7 +55,7 @@ Extraia os itens com valor e retorne APENAS um array JSON, sem markdown, sem exp
     "descricao": <especificação ou justificativa, se houver, string ou null>,
     "valor": <valor total aprovado do item, número com ponto decimal, ex: 15000.00>,
     "etapa": <etapa, fase ou produto em que o item aparece no documento (ex.: "Pré-produção", "Divulgação/Comercialização", "Custos administrativos"), string ou null>,
-    "grupo_custo": <"execucao"|"administracao"|"divulgacao"|"captacao"|"elaboracao"|"agenciamento"|"gerenciamento"|"recolhimentos" ou null>
+    "grupo_custo": <"execucao"|"administracao"|"divulgacao"|"captacao"|"elaboracao"|"agenciamento"|"gerenciamento"|"colocacao"|"direitos"|"recolhimentos" ou null>
   }
 ]
 
@@ -63,7 +63,7 @@ Regras:
 - Inclua TODOS os itens que tenham valor; ignore linhas de total, subtotal e cabeçalho.
 - Se houver colunas como "Valor total", "Valor aprovado", "Orçado" ou "Proposto", use a do valor aprovado; se houver quantidade, ocorrência e valor unitário, use o total da linha.
 - Em "etapa", repita exatamente o nome da etapa ou produto do documento, para os itens da mesma etapa ficarem juntos.
-- Em "grupo_custo": custos administrativos e taxa de administração = "administracao"; divulgação, comunicação, assessoria de imprensa e acessibilidade comunicacional = "divulgacao"; remuneração de captação = "captacao"; elaboração do projeto = "elaboracao"; agenciamento = "agenciamento"; gerenciamento ou coordenação geral = "gerenciamento"; tributos e recolhimentos = "recolhimentos"; demais custos da atividade-fim = "execucao". Use null se não der para saber.
+- Em "grupo_custo": custos administrativos e taxa de administração = "administracao"; divulgação, comunicação, assessoria de imprensa e acessibilidade comunicacional = "divulgacao"; remuneração de captação = "captacao"; elaboração do projeto = "elaboracao"; agenciamento = "agenciamento"; gerenciamento ou coordenação geral = "gerenciamento"; coordenação e colocação de quotas (audiovisual) = "colocacao"; direitos autorais e conexos = "direitos"; tributos e recolhimentos = "recolhimentos"; demais custos da atividade-fim = "execucao". Use null se não der para saber.
 - Retorne array vazio [] se não encontrar nenhum item.`;
 
     const geminiRes = await fetch(geminiUrl, {

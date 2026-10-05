@@ -8,9 +8,10 @@
 import { entradasDoCalendario } from "../calendario-regulatorio";
 import { REGIMES } from "./index";
 import { validarRegime } from "./schema";
-import type { RegimeNormativo } from "./tipos";
+import { definida, type RegimeNormativo } from "./tipos";
 
-export const ARQUIVO_SEED = "supabase/migrations/20261005150100_prestacao_regimes_seed.sql";
+// v1 em 20261005150100_prestacao_regimes_seed.sql (aplicada); v2 com todas as dimensões (P1.11).
+export const ARQUIVO_SEED = "supabase/migrations/20261006100100_prestacao_regimes_seed_v2.sql";
 
 function texto(valor: string | null): string {
   return valor === null ? "null" : `'${valor.replace(/'/g, "''")}'`;
@@ -23,6 +24,8 @@ function json(valor: unknown, marca: string): string {
 }
 
 function sqlDoRegime(regime: RegimeNormativo): string {
+  const aplicabilidade = definida(regime.aplicabilidade);
+  const envio = definida(regime.envio);
   return [
     `-- ${regime.nome} (versão ${regime.versao})`,
     `update public.prestacao_regimes set status = 'obsoleto'`,
@@ -30,13 +33,15 @@ function sqlDoRegime(regime: RegimeNormativo): string {
     ``,
     `insert into public.prestacao_regimes`,
     `  (codigo, versao, nome, area, mecanismo, esfera, orgao, sistema_oficial, norma_referencia,`,
-    `   vigente_desde, status, parametros, fontes, publicado_em)`,
+    `   vigente_desde, vigente_ate, status, parametros, fontes, checklist_envio, modelos_saida, publicado_em)`,
     `values (`,
     `  ${texto(regime.codigo)}, ${regime.versao}, ${texto(regime.nome)}, ${texto(regime.area)}, ${texto(regime.mecanismo)},`,
     `  ${texto(regime.esfera)}, ${texto(regime.orgao)}, ${texto(regime.sistemaOficial)}, ${texto(regime.normaReferencia)},`,
-    `  ${regime.vigenteDesde === null ? "null" : `${texto(regime.vigenteDesde)}::date`}, 'publicado',`,
+    `  ${regime.vigenteDesde === null ? "null" : `${texto(regime.vigenteDesde)}::date`}, ${aplicabilidade?.ate ? `${texto(aplicabilidade.ate)}::date` : "null"}, 'publicado',`,
     `  ${json(regime, "regime")},`,
     `  ${json(regime.fontes, "fontes")},`,
+    `  ${json(envio?.documentos ?? [], "checklist")},`,
+    `  ${json(envio?.modelos ?? [], "modelos")},`,
     `  now()`,
     `)`,
     `on conflict (codigo, versao) do nothing;`,

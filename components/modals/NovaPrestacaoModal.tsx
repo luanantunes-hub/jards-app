@@ -11,7 +11,8 @@ import {
   PASSOS, previaDoPrazo, tituloSugerido, validarPasso, valorInicial,
   type CaptacaoParaCriacao, type DadosCriacao, type PassoId, type ProjetoParaCriacao,
 } from "@/lib/prestacao/criacao";
-import { descreverRegra } from "@/lib/prestacao/prazo-final";
+import { descreverRegra, ROTULO_DO_MARCO } from "@/lib/prestacao/prazo-final";
+import { prazoDoRegime } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 // Criação guiada (P1.4): origem → regime → dados oficiais → orçamento →
@@ -33,7 +34,9 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
   const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
   const organizationId = useOrganizationId();
-  const regimes = useRegimesPublicados();
+  const todosRegimes = useRegimesPublicados();
+  // Versões substituídas ficam fora da escolha de uma prestação nova.
+  const regimes = useMemo(() => todosRegimes.filter(r => r.publicado), [todosRegimes]);
   const titleId = useId();
 
   const [passo, setPasso] = useState(0);
@@ -88,6 +91,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
   const captacao = captacoes.find(c => c.id === captacaoId) ?? null;
   const regime = regimes.find(r => r.id === dados.regimeId)?.regime ?? null;
   const prazoCalculado = previaDoPrazo(regime, dados.fimExecucao);
+  const regraFinal = prazoDoRegime(regime, "prestacaoFinal");
   const atual = PASSOS[passo];
 
   function escolherCaptacao(id: string) {
@@ -259,8 +263,8 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
                 <div className="space-y-1.5 rounded border border-black/[.08] bg-black/[.015] p-3 text-[0.6875rem] leading-5 text-black/55">
                   <p>{regime.normaReferencia}</p>
                   {regime.sistemaOficial && <p>Envio pelo {regime.sistemaOficial}.</p>}
-                  {regime.prazos.prestacaoFinal ? (
-                    <p>Prazo de envio: {descreverRegra(regime.prazos.prestacaoFinal)} ({regime.prazos.prestacaoFinal.fonte.dispositivo}).</p>
+                  {regraFinal ? (
+                    <p>Prazo de envio: {descreverRegra(regraFinal)} ({regraFinal.fonte.dispositivo}).</p>
                   ) : (
                     <p>Sem regras de lei: o prazo e os limites vêm do contrato ou do edital.</p>
                   )}
@@ -355,10 +359,12 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
                 </label>
               </div>
               <div className="rounded border border-black/[.08] bg-black/[.015] p-3 text-[0.6875rem] leading-5 text-black/55">
-                {regime?.prazos.prestacaoFinal ? (
+                {regraFinal ? (
                   prazoCalculado
-                    ? <p>Prazo de envio calculado: <strong className="tabular-nums text-black/80">{dataBr(prazoCalculado)}</strong> ({descreverRegra(regime.prazos.prestacaoFinal)}).</p>
-                    : <p>Informe o fim da execução para calcular o prazo de envio.</p>
+                    ? <p>Prazo de envio calculado: <strong className="tabular-nums text-black/80">{dataBr(prazoCalculado)}</strong> ({descreverRegra(regraFinal)}).</p>
+                    : regraFinal.marco === "conclusao_objeto"
+                      ? <p>O prazo de envio conta da {ROTULO_DO_MARCO.conclusao_objeto} ({descreverRegra(regraFinal)}): informe a data na prestação, depois de criada.</p>
+                      : <p>Informe o fim da execução para calcular o prazo de envio.</p>
                 ) : (
                   <p>Este regime não define prazo de envio. Informe o do contrato ou do edital abaixo.</p>
                 )}

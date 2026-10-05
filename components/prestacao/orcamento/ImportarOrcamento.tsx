@@ -7,15 +7,17 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 import {
   adivinharColuna,
+  ajustarAoRegime,
   agrupadorPorNome,
   etapasParaCriar,
   lerTabela,
   linhasDaLeitura,
   linhasDaTabela,
   rotuloGrupo,
-  sugerirGrupoCusto,
+  sugerirGrupoDoRegime,
   type GrupoCusto,
   type LinhaImportada,
   type MapaDeColunas,
@@ -68,8 +70,10 @@ function Modal({ titulo, subtitulo, onClose, children, rodape, largura = "max-w-
  * colunas, ou PDF lido pela IA (importar-orcamento). Uma coluna de etapa vira
  * agrupador; o grupo de custo é sugerido pelo nome e pode ser revisto depois.
  */
-export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garantirVersao, nos, onImported, disabled }: {
+export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garantirVersao, nos, onImported, disabled, regime = null }: {
   prestacaoId: string;
+  /** Regime da prestação: o grupo de custo sugerido é um dos dele. */
+  regime?: RegimeNormativo | null;
   organizationId: string | null;
   versaoId: string | null;
   garantirVersao: () => Promise<string | null>;
@@ -118,7 +122,7 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
       let linhas: LinhaImportada[] = [];
       try {
         const { data } = await supabase.functions.invoke("importar-orcamento", { body: { storage_path: caminho, prestacao_id: prestacaoId } });
-        linhas = linhasDaLeitura(data?.itens);
+        linhas = ajustarAoRegime(linhasDaLeitura(data?.itens), regime);
       } catch {
         linhas = [];
       }
@@ -135,7 +139,7 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
 
   function verPrevia() {
     if (!tabela) return;
-    const linhas = linhasDaTabela(tabela, mapa);
+    const linhas = ajustarAoRegime(linhasDaTabela(tabela, mapa), regime);
     if (linhas.length === 0) { setErro("Nenhuma linha com nome e valor nessa combinação de colunas."); return; }
     setErro("");
     setTabela(null);
@@ -156,7 +160,7 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
     let criadas: NoOrcamento[] = [];
     if (novas.length) {
       const { data, error } = await tabelaNos
-        .insert(novas.map(nome => ({ versao_id: versao, tipo: "etapa", nome, grupo_custo: sugerirGrupoCusto(nome), ordem: ordem++ })))
+        .insert(novas.map(nome => ({ versao_id: versao, tipo: "etapa", nome, grupo_custo: sugerirGrupoDoRegime(regime, nome), ordem: ordem++ })))
         .select("*");
       if (error) { setGravando(false); setErro(mensagemErroPrestacao(error, "Não foi possível criar as etapas")); return; }
       criadas = (data as NoOrcamento[]) ?? [];
@@ -303,7 +307,7 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
                     {linha.descricao && <p className="max-w-[16rem] truncate text-[0.625rem] text-black/40">{linha.descricao}</p>}
                   </td>
                   <td className="px-4 py-2 text-black/50">{linha.etapa ?? "—"}</td>
-                  <td className={`px-4 py-2 ${linha.grupo_custo ? "text-[#684DB0]" : "text-black/30"}`}>{linha.grupo_custo ? rotuloGrupo(linha.grupo_custo) : "Sem grupo"}</td>
+                  <td className={`px-4 py-2 ${linha.grupo_custo ? "text-[#684DB0]" : "text-black/30"}`}>{linha.grupo_custo ? rotuloGrupo(linha.grupo_custo, regime) : "Sem grupo"}</td>
                   <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-black/75">{fmt(linha.valor)}</td>
                 </tr>
               ))}

@@ -23,41 +23,41 @@ test("os regimes do código passam no schema", () => {
   for (const regime of REGIMES) assert.deepEqual(erros(regime), [], regime.codigo);
 });
 
-test("o schema recusa parâmetro faltando ou fora do tipo", () => {
+test("o schema recusa parâmetro faltando, fora do tipo ou sem fonte", () => {
   const semPrazos: Partial<typeof ROUANET_IN29_2026> = structuredClone(ROUANET_IN29_2026);
   delete semPrazos.prazos;
   assert.match(erros(semPrazos).join("\n"), /^prazos:/m);
+
+  const semDimensao: Partial<typeof ROUANET_IN29_2026> = structuredClone(ROUANET_IN29_2026);
+  delete semDimensao.contas;
+  assert.match(erros(semDimensao).join("\n"), /^contas:/m, "dimensão ausente não passa: precisa das regras ou da lacuna");
 
   const prazoTexto = structuredClone(ROUANET_IN29_2026) as unknown as { prazos: { prestacaoFinal: { quantidade: unknown } } };
   prazoTexto.prazos.prestacaoFinal.quantidade = "60";
   assert.match(erros(prazoTexto).join("\n"), /prazos\.prestacaoFinal\.quantidade/);
 
   const percentual = structuredClone(ROUANET_IN29_2026);
-  percentual.limites.fornecedor.percentual = 120;
-  assert.match(erros(percentual).join("\n"), /limites\.fornecedor\.percentual/);
+  percentual.fornecedores.limites[0].faixas[0].percentual = 120;
+  assert.match(erros(percentual).join("\n"), /fornecedores\.limites\.0\.faixas\.0\.percentual/);
 
-  const semFonte = structuredClone(ROUANET_IN29_2026) as unknown as { limites: { fornecedor: { fonte?: unknown } } };
-  delete semFonte.limites.fornecedor.fonte;
-  assert.match(erros(semFonte).join("\n"), /limites\.fornecedor\.fonte/);
+  const semFonte = structuredClone(ROUANET_IN29_2026) as unknown as { orcamento: { tetos: { fonte?: unknown }[] } };
+  delete semFonte.orcamento.tetos[0].fonte;
+  assert.match(erros(semFonte).join("\n"), /orcamento\.tetos\.0\.fonte/);
 
-  const pagamento = { ...structuredClone(ROUANET_IN29_2026), pagamentos: { meiosPermitidos: ["pix"], fonte: null } };
-  assert.match(erros(pagamento).join("\n"), /precisa de fonte/);
+  const lacunaSemFonte = { ...structuredClone(ROUANET_IN29_2026), porte: { lacuna: "norma_silente", motivo: "não diz" } };
+  assert.match(erros(lacunaSemFonte).join("\n"), /^porte\.fonte/m, "lacuna também precisa de fonte");
+
+  const grupoInexistente = structuredClone(ROUANET_IN29_2026);
+  grupoInexistente.orcamento.tetos[0].grupos = ["inexistente"];
+  assert.match(erros(grupoInexistente).join("\n"), /orcamento\.tetos\.0\.grupos: grupo "inexistente" não está em orcamento\.grupos/);
+
+  const prazoInexistente = structuredClone(ROUANET_IN29_2026) as unknown as { alteracoes: { prazoAnalise: string } };
+  prazoInexistente.alteracoes.prazoAnalise = "naoExiste";
+  assert.match(erros(prazoInexistente).join("\n"), /alteracoes\.prazoAnalise: prazo "naoExiste" não existe em prazos/);
 
   assert.match(erros({ ...ROUANET_IN29_2026, vigenteDesde: "30/01/2026" }).join("\n"), /vigenteDesde/);
   assert.match(erros({ ...ROUANET_IN29_2026, versao: 0 }).join("\n"), /versao/);
   assert.match(erros({ ...ROUANET_IN29_2026, fontes: [{ documento: "x", url: "não é url" }] }).join("\n"), /fontes\.0\.url/);
-});
-
-test("cada valor da Rouanet tem fonte com dispositivo", () => {
-  const valores = [
-    ...Object.values(ROUANET_IN29_2026.prazos),
-    ...Object.values(ROUANET_IN29_2026.limites),
-    ROUANET_IN29_2026.contas,
-    ROUANET_IN29_2026.guarda,
-    ROUANET_IN29_2026.porte,
-    { fonte: ROUANET_IN29_2026.pagamentos.fonte },
-  ];
-  for (const valor of valores) assert.ok(valor?.fonte?.dispositivo, JSON.stringify(valor).slice(0, 80));
 });
 
 test("calendário: feriados nacionais de 2026 e 2027 com fonte, e o defeso de 2026", () => {

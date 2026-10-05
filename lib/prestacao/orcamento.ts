@@ -5,7 +5,8 @@
 // da árvore, as somas por nó e os tetos por grupo de custo, para a tela e os
 // testes. Valores somam em centavos para não acumular erro de ponto flutuante.
 
-import type { RegimeNormativo } from "./regimes";
+import { definida, type RegimeNormativo } from "./regimes";
+import { BASES_DO_ORCAMENTO, type BaseCalculo, type BaseDefinida, type BaseDoOrcamento, type Severidade } from "./regimes/tipos";
 
 export const TIPOS_VERSAO = [
   { id: "solicitada", rotulo: "Solicitada" },
@@ -26,7 +27,11 @@ export const TIPOS_NO = [
 ] as const;
 export type TipoNo = (typeof TIPOS_NO)[number]["id"];
 
-/** Grupos de custo; os mesmos códigos da coluna grupo_custo no banco. */
+/**
+ * Vocabulário dos grupos de custo: os mesmos códigos da coluna grupo_custo no
+ * banco. Cada regime escolhe os seus e dá o nome que a norma usa (na LIE,
+ * "administracao" é a atividade-meio; na saúde, os custos indiretos).
+ */
 export const GRUPOS_CUSTO = [
   { id: "execucao", rotulo: "Execução" },
   { id: "administracao", rotulo: "Administração" },
@@ -35,9 +40,12 @@ export const GRUPOS_CUSTO = [
   { id: "elaboracao", rotulo: "Elaboração" },
   { id: "agenciamento", rotulo: "Agenciamento" },
   { id: "gerenciamento", rotulo: "Gerenciamento" },
+  { id: "colocacao", rotulo: "Coordenação e colocação" },
+  { id: "direitos", rotulo: "Direitos autorais e conexos" },
   { id: "recolhimentos", rotulo: "Recolhimentos" },
 ] as const;
-export type GrupoCusto = (typeof GRUPOS_CUSTO)[number]["id"];
+/** Código de grupo; o regime pode usar qualquer um do vocabulário. */
+export type GrupoCusto = string;
 
 export const UFS = [
   "AC", "AL", "AM", "AP", "BA", "CE", "DF", "ES", "GO", "MA", "MG", "MS", "MT", "PA",
@@ -52,9 +60,11 @@ export function rotuloTipoNo(tipo: string): string {
   return TIPOS_NO.find(t => t.id === tipo)?.rotulo ?? tipo;
 }
 
-export function rotuloGrupo(grupo: string | null | undefined): string {
+/** Nome do grupo: o da norma do regime, quando há, senão o geral. */
+export function rotuloGrupo(grupo: string | null | undefined, regime?: RegimeNormativo | null): string {
   if (!grupo) return "Sem grupo de custo";
-  return GRUPOS_CUSTO.find(g => g.id === grupo)?.rotulo ?? grupo;
+  const daNorma = regime ? definida(regime.orcamento)?.grupos.find(g => g.codigo === grupo)?.rotulo : undefined;
+  return daNorma ?? GRUPOS_CUSTO.find(g => g.id === grupo)?.rotulo ?? grupo;
 }
 
 export type VersaoOrcamento = {
@@ -281,35 +291,22 @@ export function valorDoItem(campos: {
   return Math.round((campos.quantidade ?? 1) * (campos.ocorrencias ?? 1) * campos.valor_unitario * 100) / 100;
 }
 
-// ─── Tetos do regime por grupo de custo ─────────────────────────────────────
-// Qual limite do regime vale para cada grupo. Fica aqui até o editor de
-// regimes (fase 6) guardar essa ligação no próprio regime.
+// ─── Grupos, bases e tetos do regime ────────────────────────────────────────
+// Desde a P1.11, o regime traz os grupos de custo da lei (com o nome que a
+// norma usa), as bases de cálculo (que grupos somam o "valor do projeto", a
+// "atividade-fim"...) e os tetos. Aqui ficam só as contas.
 
-export const LIMITE_DO_GRUPO: Record<string, Partial<Record<GrupoCusto, string>>> = {
-  rouanet_in29_2026: {
-    administracao: "administracao",
-    divulgacao: "acessibilidadeDivulgacao",
-    captacao: "captacao",
-  },
-};
+/** Grupos que a prestação usa: os do regime ou, sem regime, todos. */
+export function gruposDoRegime(regime: RegimeNormativo | null | undefined): { id: string; rotulo: string; descricao: string | null }[] {
+  const orcamento = regime ? definida(regime.orcamento) : null;
+  if (!orcamento) return GRUPOS_CUSTO.map(g => ({ id: g.id, rotulo: g.rotulo, descricao: null }));
+  return orcamento.grupos.map(g => ({ id: g.codigo, rotulo: g.rotulo, descricao: g.descricao }));
+}
 
-/**
- * Grupos que ficam fora do "valor do projeto". Na Rouanet, o valor do projeto
- * soma pré-produção, produção, pós-produção, recolhimentos e assessoria
- * contábil e jurídica, "sem custos vinculados e captação de recursos"
- * (IN MinC 29/2026, art. 17 e Anexo I, LXXV); custos vinculados são
- * administração e divulgação (art. 17, § 1º). O valor total do projeto
- * inclui tudo (Anexo I, LXXVII).
- */
-export const FORA_DO_VALOR_DO_PROJETO: Record<string, readonly GrupoCusto[]> = {
-  rouanet_in29_2026: ["administracao", "divulgacao", "captacao"],
-};
-
-export type BasesDoOrcamento = {
-  /** Total sem os grupos de FORA_DO_VALOR_DO_PROJETO (sem regime, igual ao total). */
-  valorProjeto: number;
-  valorTotalProjeto: number;
-};
+/** O grupo está entre os do regime (sem regime, entre todos)? */
+export function grupoNoRegime(grupo: string | null | undefined, regime: RegimeNormativo | null | undefined): boolean {
+  return Boolean(grupo) && gruposDoRegime(regime).some(g => g.id === grupo);
+}
 
 /** Item resumido: o grupo de custo que vale para ele e o vigente. */
 export type ItemResumido = { grupo: GrupoCusto | null; vigente: number };
@@ -319,16 +316,40 @@ export function itensResumidos(raizes: readonly LinhaOrcamento[]): ItemResumido[
   return itensDaArvore(raizes).map(linha => ({ grupo: linha.grupo, vigente: linha.totais.vigente }));
 }
 
-function bases(itens: readonly ItemResumido[], regime: RegimeNormativo | null): BasesDoOrcamento {
-  const fora = new Set(regime ? FORA_DO_VALOR_DO_PROJETO[regime.codigo] ?? [] : []);
+export type BasesDoOrcamento = {
+  /** Valor do projeto do regime; sem a base no regime, igual ao total. */
+  valorProjeto: number;
+  valorTotalProjeto: number;
+  /** Todas as bases que o regime define, em reais. */
+  porBase: Partial<Record<BaseDoOrcamento, number>>;
+};
+
+function somaDaBase(itens: readonly ItemResumido[], definicao: BaseDefinida): number {
+  const exceto = new Set(definicao.exceto);
+  const soma = definicao.soma === "todos" ? null : new Set(definicao.soma);
   let total = 0;
-  let projeto = 0;
   for (const item of itens) {
-    const valor = centavos(item.vigente);
-    total += valor;
-    if (!item.grupo || !fora.has(item.grupo)) projeto += valor;
+    if (item.grupo && exceto.has(item.grupo)) continue;
+    // Item sem grupo entra só nas bases que somam tudo.
+    if (soma && (!item.grupo || !soma.has(item.grupo))) continue;
+    total += centavos(item.vigente);
   }
-  return { valorProjeto: projeto / 100, valorTotalProjeto: total / 100 };
+  return total;
+}
+
+function bases(itens: readonly ItemResumido[], regime: RegimeNormativo | null): BasesDoOrcamento {
+  const total = itens.reduce((soma, item) => soma + centavos(item.vigente), 0);
+  const definicoes = regime ? definida(regime.orcamento)?.bases ?? {} : {};
+  const porBase: Partial<Record<BaseDoOrcamento, number>> = {};
+  for (const chave of BASES_DO_ORCAMENTO) {
+    const definicao = definicoes[chave];
+    if (definicao) porBase[chave] = somaDaBase(itens, definicao) / 100;
+  }
+  return {
+    valorProjeto: porBase.valor_projeto ?? total / 100,
+    valorTotalProjeto: porBase.valor_total_projeto ?? total / 100,
+    porBase,
+  };
 }
 
 /** Bases de cálculo dos limites, sobre o vigente dos itens. */
@@ -336,10 +357,20 @@ export function basesDoOrcamento(raizes: readonly LinhaOrcamento[], regime: Regi
   return bases(itensResumidos(raizes), regime);
 }
 
-const ROTULO_DA_BASE: Partial<Record<string, string>> = {
+/** "do valor do projeto", "da atividade-fim"... para o texto do limite. */
+export const ROTULO_DA_BASE: Record<BaseCalculo, string> = {
+  valor_captado: "do valor captado",
   valor_projeto: "do valor do projeto",
   valor_total_projeto: "do valor total do projeto",
+  valor_aprovado_execucao: "do valor aprovado para execução",
+  valor_homologado_execucao: "do valor homologado para execução",
+  valor_autorizado_captacao: "do valor autorizado para captação",
+  valor_atividade_fim: "da atividade-fim",
+  orcamento_producao: "do orçamento de produção",
 };
+
+/** Bases que não saem do orçamento (captado, autorizado), quando a tela as conhece. */
+export type BasesExternas = Partial<Record<BaseCalculo, number | null>>;
 
 export type TetoDoGrupo = {
   grupo: GrupoCusto | null;
@@ -352,10 +383,14 @@ export type TetoDoGrupo = {
     descricao: string;
     percentual: number;
     teto: number | null;
-    /** O menor entre o percentual sobre a base e o teto em reais. */
-    maximo: number;
-    /** "do valor do projeto" ou "do valor total do projeto". */
+    /** O menor entre o percentual sobre a base e o teto em reais; null sem o valor da base. */
+    maximo: number | null;
+    /** "do valor do projeto", "da atividade-fim"... */
     base: string;
+    /** Soma dos grupos que o teto limita (igual a `valor` quando é um grupo só). */
+    valorLimitado: number;
+    severidade: Severidade;
+    proporcionalAoCaptado: boolean;
     norma: string;
   } | null;
   excedido: boolean;
@@ -365,12 +400,12 @@ export type TetoDoGrupo = {
  * Valor de cada grupo de custo no orçamento vigente, com o limite do regime
  * quando há um. "Sem grupo de custo" aparece por último, para ser classificado.
  */
-export function tetosPorGrupo(raizes: readonly LinhaOrcamento[], regime: RegimeNormativo | null): TetoDoGrupo[] {
-  return tetosDosItens(itensResumidos(raizes), regime);
+export function tetosPorGrupo(raizes: readonly LinhaOrcamento[], regime: RegimeNormativo | null, externas: BasesExternas = {}): TetoDoGrupo[] {
+  return tetosDosItens(itensResumidos(raizes), regime, externas);
 }
 
 /** O mesmo de tetosPorGrupo, a partir dos itens resumidos. */
-export function tetosDosItens(itens: readonly ItemResumido[], regime: RegimeNormativo | null): TetoDoGrupo[] {
+export function tetosDosItens(itens: readonly ItemResumido[], regime: RegimeNormativo | null, externas: BasesExternas = {}): TetoDoGrupo[] {
   const total = itens.reduce((soma, item) => soma + centavos(item.vigente), 0);
   const porGrupo = new Map<GrupoCusto | null, { valor: number; itens: number }>();
   for (const item of itens) {
@@ -381,39 +416,53 @@ export function tetosDosItens(itens: readonly ItemResumido[], regime: RegimeNorm
   }
 
   const calculadas = bases(itens, regime);
-  const baseEmCentavos: Partial<Record<string, number>> = {
-    valor_projeto: centavos(calculadas.valorProjeto),
-    valor_total_projeto: centavos(calculadas.valorTotalProjeto),
+  const baseEmCentavos = (base: BaseCalculo): number | null => {
+    const doOrcamento = calculadas.porBase[base as BaseDoOrcamento];
+    if (doOrcamento !== undefined) return centavos(doOrcamento);
+    const externa = externas[base];
+    return externa === null || externa === undefined ? null : centavos(externa);
   };
-  const ligacoes = regime ? LIMITE_DO_GRUPO[regime.codigo] ?? {} : {};
+  const tetos = regime ? definida(regime.orcamento)?.tetos ?? [] : [];
+  const daLista = gruposDoRegime(regime);
+  const comTeto = new Set(tetos.flatMap(t => t.grupos));
   const grupos: (GrupoCusto | null)[] = [
-    ...GRUPOS_CUSTO.map(g => g.id).filter(id => porGrupo.has(id) || ligacoes[id]),
+    ...daLista.map(g => g.id).filter(id => porGrupo.has(id) || comTeto.has(id)),
+    // Grupo fora do regime (de outro regime ou antigo) aparece para ser reclassificado.
+    ...[...porGrupo.keys()].filter((id): id is string => id !== null && !daLista.some(g => g.id === id)),
     ...(porGrupo.has(null) ? [null] : []),
   ];
 
   return grupos.map(grupo => {
     const soma = porGrupo.get(grupo) ?? { valor: 0, itens: 0 };
-    const chave = grupo ? ligacoes[grupo] : undefined;
-    const regra = chave && regime ? regime.limites[chave] : undefined;
-    const base = regra ? baseEmCentavos[regra.base] : undefined;
-    const limite = regra && base !== undefined
-      ? {
-          descricao: regra.descricao,
-          percentual: regra.percentual,
-          teto: regra.teto ?? null,
-          maximo: Math.min(Math.round(base * regra.percentual / 100), regra.teto !== undefined ? Math.round(regra.teto * 100) : Infinity) / 100,
-          base: ROTULO_DA_BASE[regra.base] ?? "da base",
-          norma: `${regra.fonte.documento}, ${regra.fonte.dispositivo}`,
-        }
-      : null;
+    // Com mais de um teto no grupo, vale o mais apertado.
+    const candidatos = grupo ? tetos.filter(t => t.grupos.includes(grupo)) : [];
+    const limites = candidatos.map(regra => {
+      const base = baseEmCentavos(regra.base);
+      const valorLimitado = regra.grupos.reduce((s, g) => s + (porGrupo.get(g)?.valor ?? 0), 0);
+      const porPercentual = base === null ? null : Math.round(base * regra.percentual / 100);
+      const emReais = regra.teto !== undefined ? Math.round(regra.teto * 100) : null;
+      const maximo = porPercentual === null ? emReais : emReais === null ? porPercentual : Math.min(porPercentual, emReais);
+      return {
+        descricao: regra.descricao,
+        percentual: regra.percentual,
+        teto: regra.teto ?? null,
+        maximo: maximo === null ? null : maximo / 100,
+        base: ROTULO_DA_BASE[regra.base],
+        valorLimitado: valorLimitado / 100,
+        severidade: regra.severidade,
+        proporcionalAoCaptado: regra.proporcionalAoCaptado ?? false,
+        norma: `${regra.fonte.documento}, ${regra.fonte.dispositivo}`,
+      };
+    });
+    const limite = limites.sort((a, b) => (a.maximo ?? Infinity) - (b.maximo ?? Infinity))[0] ?? null;
     return {
       grupo,
-      rotulo: rotuloGrupo(grupo),
+      rotulo: grupo === null ? "Sem grupo de custo" : rotuloGrupo(grupo, regime),
       valor: soma.valor / 100,
       itens: soma.itens,
       percentual: total > 0 ? Math.round((soma.valor / total) * 1000) / 10 : null,
       limite,
-      excedido: limite !== null && soma.valor > Math.round(limite.maximo * 100),
+      excedido: limite !== null && limite.maximo !== null && centavos(limite.valorLimitado) > centavos(limite.maximo),
     };
   });
 }
@@ -434,12 +483,14 @@ function semAcento(texto: string): string {
 }
 
 const PISTAS_DE_GRUPO: [GrupoCusto, RegExp][] = [
+  ["direitos", /\bdireitos? (autora|conexo)|\becad\b/],
   ["administracao", /\b(administra|custos? adm|taxa adm|adm\.)/],
   ["divulgacao", /\b(divulga|comunica|acessib|imprensa|publicidade|midia)/],
   ["captacao", /\b(captac|captador)/],
   ["elaboracao", /\belabora/],
   ["agenciamento", /\bagencia(mento|dor)/],
   ["gerenciamento", /\bgerencia(mento)?\b/],
+  ["colocacao", /\bcoloca(cao)?\b|\bcoordenad(or|ora) lider/],
   ["recolhimentos", /\b(recolhimento|tributo|imposto|encargo)/],
 ];
 
@@ -447,6 +498,12 @@ const PISTAS_DE_GRUPO: [GrupoCusto, RegExp][] = [
 export function sugerirGrupoCusto(...textos: (string | null | undefined)[]): GrupoCusto | null {
   const alvo = semAcento(textos.filter(Boolean).join(" "));
   return PISTAS_DE_GRUPO.find(([, pista]) => pista.test(alvo))?.[0] ?? null;
+}
+
+/** A primeira pista que leva a um grupo do regime (na LIE, "elaboração e captação" é um grupo só). */
+export function sugerirGrupoDoRegime(regime: RegimeNormativo | null | undefined, ...textos: (string | null | undefined)[]): GrupoCusto | null {
+  const alvo = semAcento(textos.filter(Boolean).join(" "));
+  return PISTAS_DE_GRUPO.find(([grupo, pista]) => pista.test(alvo) && grupoNoRegime(grupo, regime))?.[0] ?? null;
 }
 
 /**
@@ -554,6 +611,13 @@ export function linhasDaLeitura(itens: unknown): LinhaImportada[] {
       grupo_custo: grupoLido ?? sugerirGrupoCusto(nome, etapa),
     }];
   });
+}
+
+/** Linhas importadas com o grupo de custo trocado pelo do regime (ou nenhum) quando não pertence a ele. */
+export function ajustarAoRegime(linhas: readonly LinhaImportada[], regime: RegimeNormativo | null | undefined): LinhaImportada[] {
+  return linhas.map(linha => grupoNoRegime(linha.grupo_custo, regime)
+    ? linha
+    : { ...linha, grupo_custo: sugerirGrupoDoRegime(regime, linha.nome, linha.etapa) });
 }
 
 /**

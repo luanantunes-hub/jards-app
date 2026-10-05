@@ -9,6 +9,7 @@ import {
   type NoOrcamento,
   type Totais,
 } from "@/lib/prestacao/orcamento";
+import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const fmtSinal = (v: number) => (v > 0 ? `+${fmt(v)}` : fmt(v));
@@ -66,8 +67,10 @@ const BOTAO_ICONE = "rounded p-1.5 text-black/30 transition hover:bg-black/5 hov
  * vigente, comprometido, pago, saldo, % pago). Agrupadores mostram a soma do
  * que está dentro e podem ser recolhidos.
  */
-export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEditar, onEditar, onAdicionarDentro, onExcluir }: {
+export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEditar, onEditar, onAdicionarDentro, onExcluir, regime = null }: {
   linhas: LinhaOrcamento[];
+  /** Regime da prestação, para o nome dos grupos de custo. */
+  regime?: RegimeNormativo | null;
   fechados: ReadonlySet<string>;
   onAlternar: (id: string) => void;
   total: Totais;
@@ -135,7 +138,7 @@ export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEdita
                         <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.625rem] text-black/40">
                           {linha.grupo && (
                             <span className={linha.grupoHerdado ? "text-black/35" : "text-[#684DB0]"} title={linha.grupoHerdado ? "Grupo herdado do agrupador" : "Grupo de custo do item"}>
-                              {rotuloGrupo(linha.grupo)}
+                              {rotuloGrupo(linha.grupo, regime)}
                             </span>
                           )}
                           {(no.uf || no.municipio) && (
@@ -145,7 +148,7 @@ export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEdita
                         </div>
                       )}
                       {agrupador && no.grupo_custo && (
-                        <p className="mt-0.5 text-[0.625rem] text-[#684DB0]">{rotuloGrupo(no.grupo_custo)} para os itens dentro</p>
+                        <p className="mt-0.5 text-[0.625rem] text-[#684DB0]">{rotuloGrupo(no.grupo_custo, regime)} para os itens dentro</p>
                       )}
                     </div>
                   </div>

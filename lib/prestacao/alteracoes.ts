@@ -4,21 +4,20 @@
 // O banco (supabase/migrations/20261005190000_prestacao_alteracoes.sql) guarda
 // o pedido e aplica os valores no remanejado dos itens quando a alteração é
 // aprovada; aqui fica o cálculo que a tela mostra antes de salvar e que vai
-// junto do pedido. A classificação (administrativa ou formal) segue a norma do
-// regime; regime sem regras de alteração deixa a escolha com a pessoa.
+// junto do pedido.
 //
-// Rouanet (IN MinC 29/2026, art. 64; texto em docs/acoes-futuras/estudos/
-// prestacao-de-contas-fontes/rouanet-in29-texto-integral.md):
-// - § 3º: remanejamento que não muda o valor do projeto nem o valor aprovado
-//   dos custos vinculados e da captação dispensa autorização;
-// - § 4º: complementação exige captado >= 50% do homologado e soma até 50%;
-// - § 5º: redução soma até 50% do valor total do projeto;
-// - §§ 7º a 9º: o MinC tem 30 dias; sem resposta, a alteração pode ser executada.
-// O "50% do item" do Manual Módulo II (p. 36) não está na IN: vira alerta.
+// Desde a P1.11 as regras vêm do regime (dimensão `alteracoes`): a janela em
+// que a alteração cabe e, para cada tipo (remanejamento, complementação,
+// redução, inclusão), se é permitido, se dispensa o órgão e em que condições,
+// os requisitos (captado mínimo, acumulado máximo, tetos, número de pedidos,
+// antecedência), as orientações e os alertas por item. Este arquivo só
+// interpreta; não há regra de lei aqui. Regime sem a dimensão deixa a
+// classificação com a pessoa.
 
 import { calcularVencimento } from "./prazos";
 import {
   basesDoOrcamento,
+  grupoNoRegime,
   itensDaArvore,
   montarArvore,
   rotuloGrupo,
@@ -27,7 +26,8 @@ import {
   type GrupoCusto,
   type NoOrcamento,
 } from "./orcamento";
-import type { RegimeNormativo } from "./regimes";
+import { definida, prazoDoRegime, type RegimeNormativo } from "./regimes";
+import type { BaseCalculo, CondicaoAdministrativa, Fonte, RequisitoAlteracao } from "./regimes/tipos";
 
 export const TIPOS_ALTERACAO = [
   { id: "remanejamento", rotulo: "Remanejamento" },
@@ -71,14 +71,23 @@ export type MovimentoAlteracao = {
 export type ContextoAlteracao = {
   hoje: string;
   dataLiberacao: string | null;
+  /** Assinatura do termo (LIE, saúde); a janela de alguns regimes começa nela. */
+  dataTermo?: string | null;
   fimExecucao: string | null;
-  /** Total aprovado da versão homologada (ou, sem ela, da versão em uso). */
+  /**
+   * Total aprovado da versão homologada (ou, sem ela, da versão em uso). É a
+   * base dos limites acumulados: não encolhe a cada pedido.
+   */
   homologado: number;
   /** Informado no pedido; pesa na complementação. */
   captado: number | null;
   /** Soma das complementações e das reduções já aprovadas. */
   complementadoAntes: number;
   reduzidoAntes: number;
+  /** Soma do que já foi movido em alterações administrativas aplicadas. */
+  movidoAntes?: number;
+  /** Pedidos de cada tipo já feitos (pedidos ou aprovados), para o nº de ordem. */
+  pedidosAnteriores?: Partial<Record<TipoAlteracao, number>>;
 };
 
 export type NivelVerificacao = "bloqueio" | "formal" | "alerta" | "ok" | "info";
@@ -147,9 +156,48 @@ function foto(nos: readonly NoOrcamento[], regime: RegimeNormativo | null): Foto
   return { ...basesDoOrcamento(raizes, regime), porGrupo };
 }
 
-const IN29 = "IN MinC 29/2026";
-const MODULO_II = "Manual do Proponente, Módulo II (ago/2026), p. 36";
-const VINCULADOS_E_CAPTACAO: GrupoCusto[] = ["administracao", "divulgacao", "captacao"];
+const ROTULO_DA_BASE: Record<BaseCalculo, string> = {
+  valor_captado: "do valor captado",
+  valor_projeto: "do valor do projeto",
+  valor_total_projeto: "do valor total do projeto",
+  valor_aprovado_execucao: "do valor aprovado para execução",
+  valor_homologado_execucao: "do valor homologado para execução",
+  valor_autorizado_captacao: "do valor autorizado para captação",
+  valor_atividade_fim: "da atividade-fim",
+  orcamento_producao: "do orçamento de produção",
+};
+
+const NOME_DO_TIPO: Record<TipoAlteracao, string> = {
+  remanejamento: "remanejamento",
+  complementacao: "complementação",
+  reducao: "redução",
+  inclusao: "inclusão de item",
+};
+
+function citar(fonte: Fonte): string {
+  return `${fonte.documento}, ${fonte.dispositivo}`;
+}
+
+function somarMeses(data: string, meses: number): string {
+  const [ano, mes, dia] = data.split("-").map(Number);
+  const alvo = new Date(Date.UTC(ano, mes - 1 + meses, 1));
+  const ultimo = new Date(Date.UTC(alvo.getUTCFullYear(), alvo.getUTCMonth() + 1, 0)).getUTCDate();
+  alvo.setUTCDate(Math.min(dia, ultimo));
+  return alvo.toISOString().slice(0, 10);
+}
+
+function capitalizar(texto: string): string {
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
+}
+
+/** Baixa a primeira letra de palavra comum; mantém siglas (MinC, ATO). */
+function minuscula(texto: string): string {
+  return /^[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç]/.test(texto) ? texto.charAt(0).toLowerCase() + texto.slice(1) : texto;
+}
+
+function semPonto(texto: string): string {
+  return texto.replace(/\.$/, "");
+}
 
 /**
  * Calcula o pedido: o que muda, o tipo, a classificação e as verificações do
@@ -182,125 +230,256 @@ export function calcularAlteracao(
     add("desatualizada", "bloqueio", `O vigente de ${listaDeNomes(desatualizados.map(m => m.nome))} mudou desde que o pedido foi montado. Revise os valores.`);
   }
 
+  const validos = efetivos.filter(m => !m.no_id || itens.has(m.no_id));
   const antes = foto(nos, regime);
-  const depois = foto(nosDepois(nos, efetivos.filter(m => !m.no_id || itens.has(m.no_id))), regime);
+  const depois = foto(nosDepois(nos, validos), regime);
   const diferenca = (centavos(depois.valorTotalProjeto) - centavos(antes.valorTotalProjeto)) / 100;
   const movido = efetivos.reduce((soma, m) => soma + Math.max(0, centavos(m.para) - centavos(m.de)), 0) / 100;
   const novos = efetivos.filter(m => !m.no_id);
   const tipo: TipoAlteracao = diferenca > 0 ? "complementacao" : diferenca < 0 ? "reducao" : novos.length ? "inclusao" : "remanejamento";
 
+  const regras = regime ? definida(regime.alteracoes) : null;
   let classificacao: ClassificacaoAlteracao | null = null;
 
   if (efetivos.length === 0) {
     // Nada a classificar.
-  } else if (regime?.codigo === "rouanet_in29_2026") {
-    // Período: depois da liberação para execução e até o fim da execução (caput).
-    if (!contexto.dataLiberacao) {
-      add("sem_liberacao", "alerta", "Sem a data de liberação para execução na prestação: a readequação só cabe depois dela.", `${IN29}, art. 64, caput`);
-    } else if (contexto.hoje < contexto.dataLiberacao) {
-      add("antes_da_liberacao", "alerta", `A liberação para execução é em ${dataBR(contexto.dataLiberacao)}: a readequação só cabe depois dela.`, `${IN29}, art. 64, caput`);
+  } else if (!regime || !regras) {
+    add("regime_sem_regra", "info",
+      regime
+        ? `${regime.nome} não traz regras de alteração no Jards. Siga o termo, o convênio ou o edital e escolha se a alteração é administrativa ou precisa de pedido ao órgão.`
+        : "Escolha o regime da prestação para conferir a alteração. Enquanto isso, indique se ela é administrativa ou precisa de pedido ao órgão.");
+  } else {
+    const orgao = regime.orgao;
+    const regra = regras.tipos[tipo];
+    const anteriores = contexto.pedidosAnteriores?.[tipo] ?? 0;
+
+    // Bases dos limites. As acumuladas usam o aprovado (homologado), que não
+    // encolhe a cada pedido; o valor do projeto e as demais saem do orçamento antes da alteração.
+    const base = (b: BaseCalculo): number | null => {
+      switch (b) {
+        case "valor_homologado_execucao":
+        case "valor_total_projeto":
+        case "valor_aprovado_execucao":
+          return contexto.homologado;
+        case "valor_projeto":
+          return antes.valorProjeto;
+        case "valor_captado":
+          return contexto.captado;
+        case "valor_autorizado_captacao":
+          return null;
+        default:
+          return antes.porBase[b] ?? null;
+      }
+    };
+    const movidoTotal = (acumulado: boolean) => centavos(movido) + (acumulado ? centavos(contexto.movidoAntes ?? 0) : 0);
+
+    const condicaoVale = (c: CondicaoAdministrativa): boolean => {
+      switch (c.tipo) {
+        case "mantem_grupos":
+          return c.grupos.every(g => centavos(antes.porGrupo[g] ?? 0) === centavos(depois.porGrupo[g] ?? 0));
+        case "movido_ate": {
+          const b = base(c.base);
+          return b !== null && movidoTotal(c.acumulado) * 100 <= centavos(b) * c.percentual;
+        }
+        case "pedido_numero":
+          return c.numeros.includes(anteriores + 1);
+      }
+    };
+
+    const explicarFalha = (c: CondicaoAdministrativa) => {
+      switch (c.tipo) {
+        case "mantem_grupos": {
+          const mudados = c.grupos.filter(g => centavos(antes.porGrupo[g] ?? 0) !== centavos(depois.porGrupo[g] ?? 0));
+          add("muda_grupos", "formal",
+            `Muda o valor aprovado de ${mudados.map(g => minuscula(rotuloGrupo(g, regime))).join(" e ")}: precisa de autorização do ${orgao}.`,
+            citar(c.fonte));
+          break;
+        }
+        case "movido_ate": {
+          const b = base(c.base);
+          add("movido_acima", "formal",
+            b === null
+              ? `Sem a base ${ROTULO_DA_BASE[c.base]} para conferir o limite de ${c.percentual}%: trate como pedido ao ${orgao}.`
+              : `${c.acumulado ? "Somado às alterações já feitas, o movido chega a" : "Move"} ${fmt(movidoTotal(c.acumulado) / 100)}, acima de ${c.percentual}% ${ROTULO_DA_BASE[c.base]} (${fmt(Math.round(centavos(b) * c.percentual / 100) / 100)}): precisa de autorização do ${orgao}.`,
+            citar(c.fonte));
+          break;
+        }
+        case "pedido_numero":
+          add("pedido_numero", "formal",
+            `Este é o ${anteriores + 1}º pedido de ${NOME_DO_TIPO[tipo]}: só o ${c.numeros.map(n => `${n}º`).join(" ou o ")} dispensa a anuência prévia do ${orgao}.`,
+            citar(c.fonte));
+          break;
+      }
+    };
+
+    const textoDoPedido = (): string => {
+      switch (tipo) {
+        case "complementacao":
+          return `Aumenta o valor total do projeto em ${fmt(diferenca)}: pedido de complementação ao ${orgao}.`;
+        case "reducao":
+          return `Diminui o valor total do projeto em ${fmt(-diferenca)}: pedido de redução ao ${orgao}.`;
+        case "inclusao":
+          return `Item novo: pedido de inclusão ao ${orgao}.`;
+        case "remanejamento":
+          return `Remanejamento com autorização prévia do ${orgao}.`;
+      }
+    };
+
+    const verificarRequisito = (req: RequisitoAlteracao) => {
+      const fonte = citar(req.fonte);
+      switch (req.tipo) {
+        case "captado_minimo": {
+          const b = base(req.base);
+          if (b === null) break;
+          const minimo = Math.round(centavos(b) * req.percentual / 100) / 100;
+          if (contexto.captado === null) {
+            add("informe_captado", "alerta", `Informe o valor captado: exige ${minuscula(semPonto(req.descricao))} (${fmt(minimo)}).`, fonte);
+          } else if (centavos(contexto.captado) < centavos(minimo)) {
+            add("captacao_insuficiente", req.severidade, `Captado ${fmt(contexto.captado)}, menos que ${req.percentual}% ${ROTULO_DA_BASE[req.base]} (${fmt(minimo)}).`, fonte);
+          }
+          break;
+        }
+        case "acumulado_maximo": {
+          const b = base(req.base);
+          if (b === null || (tipo !== "complementacao" && tipo !== "reducao")) break;
+          const maximo = Math.round(centavos(b) * req.percentual / 100) / 100;
+          const jaFeito = tipo === "complementacao" ? contexto.complementadoAntes : contexto.reduzidoAntes;
+          const acumulado = (centavos(jaFeito) + Math.abs(centavos(diferenca))) / 100;
+          if (centavos(acumulado) > centavos(maximo)) {
+            add(`${tipo}_acima`, req.severidade,
+              `Com esta, as ${tipo === "complementacao" ? "complementações" : "reduções"} somam ${fmt(acumulado)}, acima de ${req.percentual}% ${ROTULO_DA_BASE[req.base]} (${fmt(maximo)}).`, fonte);
+          }
+          break;
+        }
+        case "tetos": {
+          // Teto que a mudança estoura ou piora; excesso que já existia e não piora não é desta alteração.
+          const excesso = (t: { limite: { maximo: number | null; valorLimitado: number } | null }) =>
+            t.limite && t.limite.maximo !== null ? centavos(t.limite.valorLimitado) - centavos(t.limite.maximo) : Number.NEGATIVE_INFINITY;
+          const tetosAntes = new Map(tetosPorGrupo(montarArvore(nos, []).raizes, regime).map(t => [t.grupo, excesso(t)]));
+          const excedidos = tetosPorGrupo(montarArvore(nosDepois(nos, validos), []).raizes, regime)
+            .filter(t => excesso(t) > 0 && excesso(t) > (tetosAntes.get(t.grupo) ?? Number.NEGATIVE_INFINITY));
+          if (excedidos.length) {
+            add("teto_depois", req.severidade,
+              `Depois da alteração, ${excedidos.map(t => `${minuscula(t.rotulo)} (${fmt(t.limite?.valorLimitado ?? t.valor)}, máximo ${fmt(t.limite?.maximo ?? 0)})`).join(" e ")} passa do teto.`,
+              req.severidade === "bloqueio" ? fonte : excedidos[0].limite?.norma ?? fonte);
+          }
+          break;
+        }
+        case "maximo_pedidos":
+          if (anteriores + 1 > req.quantidade) {
+            add("pedidos_esgotados", req.severidade,
+              `Já ${anteriores === 1 ? "houve 1 pedido" : `houve ${anteriores} pedidos`} de ${NOME_DO_TIPO[tipo]}; a norma admite ${req.quantidade}.`, fonte);
+          }
+          break;
+        case "antecedencia": {
+          if (!contexto.fimExecucao) {
+            add("sem_fim_execucao", "alerta", `Informe o fim da execução: ${minuscula(semPonto(req.descricao))}.`, fonte);
+            break;
+          }
+          const limite = req.unidade === "meses"
+            ? somarMeses(contexto.fimExecucao, -req.quantidade)
+            : new Date(Date.parse(`${contexto.fimExecucao}T00:00:00Z`) - req.quantidade * 86_400_000).toISOString().slice(0, 10);
+          if (contexto.hoje > limite) {
+            add("fora_da_antecedencia", req.severidade, `${semPonto(req.descricao)}: o limite era ${dataBR(limite)}.`, fonte);
+          }
+          break;
+        }
+      }
+    };
+
+    // Janela: quando a alteração cabe.
+    const fonteJanela = citar(regras.janela.fonte);
+    if (regras.janela.aPartirDe === "liberacao") {
+      if (!contexto.dataLiberacao) {
+        add("sem_liberacao", "alerta", "Sem a data de liberação para execução na prestação: a alteração só cabe depois dela.", fonteJanela);
+      } else if (contexto.hoje < contexto.dataLiberacao) {
+        add("antes_da_liberacao", "alerta", `A liberação para execução é em ${dataBR(contexto.dataLiberacao)}: a alteração só cabe depois dela.`, fonteJanela);
+      }
+    } else if (regras.janela.aPartirDe === "assinatura_termo") {
+      if (!contexto.dataTermo) {
+        add("sem_termo", "alerta", "Sem a data do termo na prestação: a alteração só cabe depois da assinatura.", fonteJanela);
+      } else if (contexto.hoje < contexto.dataTermo) {
+        add("antes_do_termo", "alerta", `O termo é de ${dataBR(contexto.dataTermo)}: a alteração só cabe depois dele.`, fonteJanela);
+      }
     }
-    if (contexto.fimExecucao && contexto.hoje > contexto.fimExecucao) {
-      add("apos_execucao", "alerta", `A execução terminou em ${dataBR(contexto.fimExecucao)}: a readequação cabe até o fim do período de execução.`, `${IN29}, art. 64, caput`);
+    if (regras.janela.ate === "fim_execucao" && contexto.fimExecucao && contexto.hoje > contexto.fimExecucao) {
+      add("apos_execucao", "alerta", `A execução terminou em ${dataBR(contexto.fimExecucao)}: a alteração cabe até o fim do período de execução.`, fonteJanela);
     }
 
-    const mudados = VINCULADOS_E_CAPTACAO.filter(g => centavos(antes.porGrupo[g] ?? 0) !== centavos(depois.porGrupo[g] ?? 0));
-    const semGrupo = efetivos.filter(m => (m.no_id ? !grupoDe(nos, m.no_id) : !m.grupo_custo && !(m.parent_id && grupoDe(nos, m.parent_id))));
-
-    if (tipo === "remanejamento") {
-      if (mudados.length) {
-        classificacao = "formal";
-        add("muda_vinculados", "formal",
-          `Muda o valor aprovado de ${mudados.map(g => rotuloGrupo(g).toLowerCase()).join(" e ")}${mudados.some(g => g !== "captacao") ? " (custos vinculados)" : ""}: precisa de autorização do MinC.`,
-          `${IN29}, art. 64, § 3º, II`);
-      } else {
+    // Classificação: proibido, administrativo (quando as condições valem) ou formal.
+    if (!regra.permitido) {
+      classificacao = "formal";
+      add("tipo_nao_permitido", "bloqueio", `${regime.nome} não admite ${NOME_DO_TIPO[tipo]}.`, citar(regra.fonte));
+    } else if (regra.classificacao === "administrativa") {
+      const falhas = regra.condicoes.filter(c => !condicaoVale(c));
+      if (falhas.length === 0) {
         classificacao = "administrativa";
-        add("remanejamento_livre", "ok",
-          "Remanejamento entre itens que mantém o valor do projeto, os custos vinculados e a captação: dispensa autorização do MinC.",
-          `${IN29}, art. 64, § 3º, I e II`);
+        add("dispensa_pedido", "ok",
+          `${capitalizar(NOME_DO_TIPO[tipo])} que dispensa autorização do ${orgao}${regra.condicoes.length ? `: ${regra.condicoes.map(c => minuscula(semPonto(c.descricao))).join("; ")}` : ""}.`,
+          citar(regra.fonte));
+      } else {
+        classificacao = "formal";
+        for (const c of falhas) explicarFalha(c);
       }
-    } else if (tipo === "inclusao") {
-      classificacao = "formal";
-      add("inclusao", "formal",
-        "Item novo entra por readequação no Salic, com análise do MinC: o remanejamento sem autorização vale só para itens da planilha aprovada.",
-        `${MODULO_II}–37`);
-    } else if (tipo === "complementacao") {
-      classificacao = "formal";
-      add("complementacao", "formal", `Aumenta o valor total do projeto em ${fmt(diferenca)}: pedido de complementação ao MinC, com o detalhamento das ações e dos custos adicionais.`, `${IN29}, art. 64, § 4º`);
-      const metade = Math.round(centavos(contexto.homologado) / 2) / 100;
-      if (contexto.captado === null) {
-        add("informe_captado", "alerta", `Informe o valor captado: a complementação exige ter captado ao menos 50% do homologado (${fmt(metade)}).`, `${IN29}, art. 64, § 4º`);
-      } else if (centavos(contexto.captado) < centavos(metade)) {
-        add("captacao_insuficiente", "bloqueio", `Captado ${fmt(contexto.captado)}, menos que 50% do homologado (${fmt(metade)}).`, `${IN29}, art. 64, § 4º`);
-      }
-      const acumulado = (centavos(contexto.complementadoAntes) + centavos(diferenca)) / 100;
-      if (centavos(acumulado) > centavos(metade)) {
-        add("complementacao_acima", "bloqueio", `Com esta, as complementações somam ${fmt(acumulado)}, acima de 50% do homologado (${fmt(metade)}).`, `${IN29}, art. 64, § 4º, I`);
-      }
-      add("reinclusao", "info", "Não reinclua itens retirados na análise do MinC.", `${IN29}, art. 64, § 4º, III`);
     } else {
       classificacao = "formal";
-      add("reducao", "formal", `Diminui o valor total do projeto em ${fmt(-diferenca)}: pedido de redução ao MinC, com a lista dos itens e o redimensionamento do escopo.`, `${IN29}, art. 64, § 5º`);
-      const metade = Math.round(centavos(contexto.homologado) / 2) / 100;
-      const acumulado = (centavos(contexto.reduzidoAntes) - centavos(diferenca)) / 100;
-      if (centavos(acumulado) > centavos(metade)) {
-        add("reducao_acima", "bloqueio", `Com esta, as reduções somam ${fmt(acumulado)}, acima de 50% do valor total do projeto (${fmt(metade)}).`, `${IN29}, art. 64, § 5º, II`);
-      }
-      add("execucao_proporcional", "info", "Para só executar menos, sem itens novos, a execução proporcional dispensa o pedido de redução.", `${IN29}, art. 64, § 6º`);
-      add("selecao_publica", "info", "Projeto de seleção pública homologada não pode ser reduzido.", `${IN29}, art. 64, § 5º, V`);
+      add(tipo, "formal", textoDoPedido(), citar(regra.fonte));
+    }
+
+    if (regra.permitido) {
+      for (const req of regra.requisitos) verificarRequisito(req);
+      for (const o of regra.orientacoes) add(o.codigo, o.severidade, o.descricao, citar(o.fonte));
     }
 
     if (novos.length && tipo !== "inclusao") {
       add("inclui_item", "info", `Inclui ${novos.length === 1 ? "1 item novo" : `${novos.length} itens novos`}, que entram no mesmo pedido.`);
     }
 
-    // Tetos que a mudança estoura ou piora: bloqueio na complementação (§ 4º, IV),
-    // alerta nas demais. Excesso que já existia e não piora não é desta alteração.
-    const excesso = (t: { valor: number; limite: { maximo: number } | null }) =>
-      t.limite ? centavos(t.valor) - centavos(t.limite.maximo) : Number.NEGATIVE_INFINITY;
-    const tetosAntes = new Map(tetosPorGrupo(montarArvore(nos, []).raizes, regime).map(t => [t.grupo, excesso(t)]));
-    const excedidos = tetosPorGrupo(montarArvore(nosDepois(nos, efetivos.filter(m => !m.no_id || itens.has(m.no_id))), []).raizes, regime)
-      .filter(t => excesso(t) > 0 && excesso(t) > (tetosAntes.get(t.grupo) ?? Number.NEGATIVE_INFINITY));
-    if (excedidos.length) {
-      add("teto_depois", tipo === "complementacao" ? "bloqueio" : "alerta",
-        `Depois da alteração, ${excedidos.map(t => `${t.rotulo.toLowerCase()} (${fmt(t.valor)}, máximo ${fmt(t.limite?.maximo ?? 0)})`).join(" e ")} passa do teto.`,
-        tipo === "complementacao" ? `${IN29}, art. 64, § 4º, IV` : excedidos[0].limite?.norma ?? null);
-    }
-
+    // Alertas por item, nos tipos que mexem em itens sem mudar o total.
     if (tipo === "remanejamento" || tipo === "inclusao") {
-      const acimaDe50 = efetivos.filter(m => {
-        const no = m.no_id ? itens.get(m.no_id) : null;
-        return no && centavos(no.valor_total) > 0 && Math.abs(centavos(m.para) - centavos(no.valor_total)) * 2 > centavos(no.valor_total);
-      });
-      if (acimaDe50.length) {
-        add("salic_50", "alerta",
-          `No Salic, ${listaDeNomes(acimaDe50.map(m => m.nome))} muda mais de 50% do valor aprovado: o sistema pode exigir readequação. A IN 29 não fixa esse limite.`,
-          MODULO_II);
-      }
-      const jaRemanejados = efetivos.filter(m => m.no_id && centavos(itens.get(m.no_id)?.valor_remanejado ?? 0) !== 0);
-      if (jaRemanejados.length) {
-        add("ja_remanejado", "alerta", `${listaDeNomes(jaRemanejados.map(m => m.nome))} já foi alterado antes; o Salic não deixa remanejar de novo item readequado.`, MODULO_II);
+      for (const alerta of regras.alertasPorItem) {
+        if (alerta.tipo === "variacao_item") {
+          const acima = efetivos.filter(m => {
+            const no = m.no_id ? itens.get(m.no_id) : null;
+            return no && centavos(no.valor_total) > 0
+              && Math.abs(centavos(m.para) - centavos(no.valor_total)) * 100 > centavos(no.valor_total) * alerta.percentual;
+          });
+          if (acima.length) {
+            add("variacao_item", "alerta", `${listaDeNomes(acima.map(m => m.nome))} muda mais de ${alerta.percentual}% do valor aprovado. ${alerta.descricao}`, citar(alerta.fonte));
+          }
+        } else {
+          const ja = efetivos.filter(m => m.no_id && centavos(itens.get(m.no_id)?.valor_remanejado ?? 0) !== 0);
+          if (ja.length) add("item_ja_alterado", "alerta", `${listaDeNomes(ja.map(m => m.nome))} já foi alterado antes. ${alerta.descricao}`, citar(alerta.fonte));
+        }
       }
     }
 
-    if (semGrupo.length) {
+    // Itens sem grupo do regime, quando as condições ou os tetos dependem do grupo.
+    const dependeDeGrupo = regra.condicoes.some(c => c.tipo === "mantem_grupos") || regra.requisitos.some(r => r.tipo === "tetos");
+    const semGrupo = efetivos.filter(m => {
+      const grupo = m.no_id ? grupoDe(nos, m.no_id) : m.grupo_custo ?? (m.parent_id ? grupoDe(nos, m.parent_id) : null);
+      return !grupoNoRegime(grupo, regime);
+    });
+    if (dependeDeGrupo && semGrupo.length) {
       add("itens_sem_grupo", "alerta",
-        `${semGrupo.length === 1 ? "1 item alterado está" : `${semGrupo.length} itens alterados estão`} sem grupo de custo: classifique para a conferência de custos vinculados e captação valer.`);
+        `${semGrupo.length === 1 ? "1 item alterado está" : `${semGrupo.length} itens alterados estão`} sem grupo de custo do regime: classifique para a conferência valer.`);
     }
 
     if (classificacao === "formal") {
-      const prazo = regime.prazos.analiseAlteracao;
+      const prazo = regras.prazoAnalise ? prazoDoRegime(regime, regras.prazoAnalise) : null;
+      const unidade = prazo ? { dias_corridos: "dias", dias_uteis: "dias úteis", meses: "meses", anos: "anos" }[prazo.unidade] : "";
       add("prazo_orgao", "info",
         prazo
-          ? [`O MinC tem ${prazo.quantidade} dias para analisar, a contar do protocolo.`, prazo.fonte.nota, "Sem resposta no prazo, a alteração pode ser executada."].filter(Boolean).join(" ")
-          : "Sem resposta do órgão no prazo, confira na norma se a alteração pode ser executada.",
-        prazo ? `${prazo.fonte.documento}, ${prazo.fonte.dispositivo}` : null);
+          ? [
+              `O ${orgao} tem ${prazo.quantidade} ${unidade} para analisar, a contar do protocolo.`,
+              prazo.fonte.nota,
+              regras.silencioAprova ? "Sem resposta no prazo, a alteração pode ser executada." : "Sem resposta, a alteração não pode ser executada.",
+            ].filter(Boolean).join(" ")
+          : regras.silencioAprova
+            ? "Sem resposta do órgão no prazo, a alteração pode ser executada."
+            : "A norma não fixa prazo de resposta do órgão, e a alteração só pode ser executada depois da autorização.",
+        prazo ? citar(prazo.fonte) : citar(regras.fonte));
     }
-  } else {
-    add("regime_sem_regra", "info",
-      regime
-        ? `${regime.nome} não traz regras de alteração no Jards. Siga o termo, o convênio ou o edital e escolha se a alteração é administrativa ou precisa de pedido ao órgão.`
-        : "Escolha o regime da prestação para conferir a alteração. Enquanto isso, indique se ela é administrativa ou precisa de pedido ao órgão.");
   }
 
   return {
@@ -329,22 +508,43 @@ function grupoDe(nos: readonly NoOrcamento[], noId: string): GrupoCusto | null {
   return null;
 }
 
-/** Soma das complementações e das reduções já aprovadas, pela diferença gravada em cada cálculo. */
-export function acumuladoAprovado(alteracoes: readonly { status: string; tipo: string; calculo: Partial<CalculoAlteracao> | null }[]): { complementado: number; reduzido: number } {
+export type Acumulado = {
+  complementado: number;
+  reduzido: number;
+  /** Movido em alterações administrativas aplicadas. */
+  movido: number;
+  /** Pedidos feitos ou aprovados, por tipo. */
+  pedidos: Partial<Record<TipoAlteracao, number>>;
+};
+
+/**
+ * Soma das complementações e das reduções já aprovadas (pela diferença
+ * gravada em cada cálculo), do que já foi movido sem pedido e quantos pedidos
+ * de cada tipo já houve. Rascunho e negado não contam.
+ */
+export function acumuladoAprovado(alteracoes: readonly { status: string; tipo: string; classificacao?: string | null; calculo: Partial<CalculoAlteracao> | null }[]): Acumulado {
   let complementado = 0;
   let reduzido = 0;
+  let movido = 0;
+  const pedidos: Partial<Record<TipoAlteracao, number>> = {};
   for (const alt of alteracoes) {
+    if (alt.status === "solicitada" || alt.status === "aprovada") {
+      const tipo = alt.tipo as TipoAlteracao;
+      pedidos[tipo] = (pedidos[tipo] ?? 0) + 1;
+    }
     if (alt.status !== "aprovada") continue;
     const diferenca = centavos(alt.calculo?.diferenca ?? 0);
     if (alt.tipo === "complementacao" && diferenca > 0) complementado += diferenca;
     if (alt.tipo === "reducao" && diferenca < 0) reduzido -= diferenca;
+    if ((alt.classificacao ?? alt.calculo?.classificacao) === "administrativa") movido += centavos(alt.calculo?.movido ?? 0);
   }
-  return { complementado: complementado / 100, reduzido: reduzido / 100 };
+  return { complementado: complementado / 100, reduzido: reduzido / 100, movido: movido / 100, pedidos };
 }
 
 /** Data em que vence a análise do órgão, pela regra do regime; null sem regra ou sem protocolo. */
 export function prazoDaAnalise(regime: RegimeNormativo | null, solicitadaEm: string | null): string | null {
-  const regra = regime?.prazos.analiseAlteracao;
+  const alteracoes = regime ? definida(regime.alteracoes) : null;
+  const regra = alteracoes?.prazoAnalise ? prazoDoRegime(regime, alteracoes.prazoAnalise) : null;
   if (!regra || !solicitadaEm) return null;
   return calcularVencimento(solicitadaEm, regra).data;
 }

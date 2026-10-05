@@ -12,10 +12,12 @@
 
 ## Andamento
 
-Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 175 passando no `npm test`.
+Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 189 passando no `npm test`.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
+| P1.11 Regimes em todas as dimensões | Em andamento: modelo ampliado, teste de cobertura, matriz e Rouanet v2 feitos; migrations prontas, ainda não aplicadas | Modelar LIE (P424 e P10), saúde (Anexos LXXXVI e LXXXVI-A) e ANCINE (IN 159); ensaiar e aplicar as três migrations de 06/10 (com aprovação); publicar o app |
+| P1.9 Lista e visão geral | Feita (`7cf9efa`); build conferido na P1.11 | Publicar o app |
 | P0.3 Arquivos no caminho da organização | Feita (`2e5d186`) | Rodar `npx tsx scripts/prestacao-migrar-arquivos.ts` (ensaio) e depois com `--live`, com acesso ao banco |
 | P0.4 Funções de IA com autorização | Feita (`c64f0f2`) | Publicar as funções: `supabase functions deploy extrair-comprovante importar-orcamento` |
 | P0.10 Correções no módulo | Tela feita (`356941e`); banco feito e aplicado em produção em 05/10/2026 | Publicar o app: até lá, a tela antiga não muda status nem avalia comprovante, porque ainda grava direto na tabela |
@@ -242,7 +244,7 @@ Com duas pessoas: A faz P0.1, P0.2, P0.3, P0.4 e P0.10; B faz P0.5, P0.6, P0.7, 
 
 ---
 
-## 5. Fase 1 — Núcleo multi-regime e Rouanet (≈ 24 dias)
+## 5. Fase 1 — Núcleo multi-regime e Rouanet (≈ 36 dias)
 
 ### P1.1 — Catálogo de regimes (3 dias)
 
@@ -294,9 +296,20 @@ Com duas pessoas: A faz P0.1, P0.2, P0.3, P0.4 e P0.10; B faz P0.5, P0.6, P0.7, 
 - `normas_fontes` e `normas_documentos`; edge function `agente-normativo` só com coleta do DOU pelo INLABS e triagem por órgão e palavra-chave, sem IA; aviso ao super admin pelas notificações.
 - Rotina diária `jards-agente-normativo` às 8h, depois da publicação do DOU.
 
+### P1.11 — Regimes em todas as dimensões (12 dias)
+
+Pedida em 05/10/2026: esporte, saúde e audiovisual não podiam esperar as fases 7 a 9 para existir como regime, e as regras da Rouanet não podiam continuar no código.
+
+- O regime passa a ter 15 dimensões, todas obrigatórias: versão da norma pela data, prazos, prestação parcial, orçamento (estrutura, grupos de custo com o nome da norma, bases e tetos), alterações, fornecedores e partes relacionadas, contas e rendimentos, pagamentos e documento fiscal, período e despesas vedadas, porte, objeto, divulgação e defeso, envio (documentos e modelos oficiais), pós-envio (resultados, devolução e GRU) e guarda. Cada dimensão traz as regras com fonte ou uma lacuna explicada ("não se aplica" ou "a norma não trata"), também com fonte; fonte secundária fica "a confirmar" e só alerta.
+- As regras saem do código: os grupos de custo, as bases (o "valor do projeto" da Rouanet, a atividade-fim da LIE) e os tetos vêm do regime; o cálculo das alterações passa a interpretar a dimensão `alteracoes` (janela, condições para dispensar o órgão, captado mínimo, acumulado máximo, tetos, número de pedidos, antecedência, alertas por item, prazo e silêncio do órgão).
+- Teste de cobertura (`tests/prestacao-regimes-cobertura.test.ts`): falha se um regime deixar uma dimensão sem regras e sem lacuna, se uma lacuna vier sem motivo ou fonte, se faltar um prazo essencial ou se uma lei não disser a que projetos se aplica, como é o orçamento, como se entrega e que resultados existem.
+- Matriz de cobertura gerada do código: [`matriz-cobertura-regimes.md`](./matriz-cobertura-regimes.md).
+- Regimes: `rouanet_in29_2026` v2; `lie_p10_2026` e `lie_p424_2020` (pela data de protocolo); `pronon_pronas_lxxxvi_a_2025` e o anexo anterior; `ancine_in159_2021`.
+- Banco: vocabulário de grupos de custo com direitos autorais e coordenação e colocação; quem vê a prestação lê a versão do regime dela mesmo obsoleta; prazo final com conclusão do objeto (ANCINE) e fim do exercício (saúde); as prestações passam da versão 1 para a 2 do mesmo regime.
+
 ### Ordem
 
-P1.1 → P1.2 → (P1.3, P1.6) → P1.4 → P1.7 → P1.8 → P1.9. A P1.10 é independente e pode ir em paralelo.
+P1.1 → P1.2 → (P1.3, P1.6) → P1.4 → P1.7 → P1.8 → P1.9 → P1.11. A P1.10 é independente e pode ir em paralelo.
 
 **Marco M1:** uma prestação Rouanet criada com o Pronac, com o orçamento importado de planilha ou PDF em árvore, prazos calculados, tarefas e avisos funcionando, e o vigia mandando o resumo diário do DOU.
 
@@ -319,9 +332,9 @@ P4.1 checklist de envio · P4.2 espelho Salic · P4.3 rascunho do relatório do 
 P5.1 carteira · P5.2 relatório do patrocinador por link · P5.3 convidados com escopo e validade · P5.4 espaço do proponente com as próprias prestações · P5.5 captura por e-mail · P5.6 cobrança: preço `STRIPE_PRICE_MODULO_PRESTACAO`, checkout do módulo na edge function `stripe-checkout`, webhook nos dois arquivos reconhecendo o módulo e atualizando `organization_modulos`, compra de vagas, "Meu plano", cadastro por `/cadastro?modulo=prestacao`, somente leitura após cancelamento.
 
 **Fase 6 — Agente normativo e editor de regimes (≈ 3 semanas)**
-P6.1 coleta das páginas e arquivos dos órgãos com hash · P6.2 leitura dos atos pela IA e propostas com citação conferida · P6.3 tela de revisão e publicação em `app/admin/regimes/`, com segunda aprovação para regras que bloqueiam envio · P6.4 aviso aos clientes afetados · P6.5 conjunto de teste com as mudanças de 2026 e rascunho dos regimes de ANCINE, LIE e saúde.
+P6.1 coleta das páginas e arquivos dos órgãos com hash · P6.2 leitura dos atos pela IA e propostas com citação conferida · P6.3 tela de revisão e publicação em `app/admin/regimes/`, com segunda aprovação para regras que bloqueiam envio · P6.4 aviso aos clientes afetados · P6.5 conjunto de teste com as mudanças de 2026 (os regimes de ANCINE, LIE e saúde já existem desde a P1.11; o agente propõe as versões seguintes).
 
-**Fases 7, 8 e 9 — ANCINE, LIE federal e saúde (≈ 3 semanas cada)**
+**Fases 7, 8 e 9 — ANCINE, LIE federal e saúde (≈ 2 semanas cada; os regimes saíram para a P1.11)**
 Para cada área: regimes e seed revisados a partir do rascunho do agente · checagens próprias · saídas nos modelos oficiais (`prestacao-de-contas-fontes/modelos-oficiais/`) · integrações de leitura (dados abertos da ANCINE; Transferegov para a saúde) · testes com os exemplos dos manuais.
 
 **Fase 10 — Expansão contínua:** captura automática de notas, extrato automático, assistente, estados e municípios.
@@ -335,9 +348,9 @@ Para cada área: regimes e seed revisados a partir do rascunho do agente · chec
 | Fase | Estudo | Este plano | Diferença |
 |---|---|---|---|
 | 0 | 3 semanas | ≈ 4,5 semanas (22 dias) | Papéis de equipe divergentes, migração de arquivos e testes de RLS que não existiam |
-| 1 | 4 semanas | ≈ 5 semanas (24 dias) | Seed gerado do TypeScript; a importação do Salic saiu (−3 dias) |
-| 2 a 9 | 26 semanas | 26 semanas | Revisar no início de cada fase |
-| **Total** | **33 semanas** | **≈ 35 semanas** de uma pessoa; ≈ 6 meses com duas | |
+| 1 | 4 semanas | ≈ 7 semanas (36 dias) | Seed gerado do TypeScript; a importação do Salic saiu (−3 dias); os regimes de todas as leis entraram (P1.11, +12 dias) |
+| 2 a 9 | 26 semanas | 23 semanas | Fases 7 a 9 com 2 semanas cada (os regimes saíram para a P1.11); revisar no início de cada fase |
+| **Total** | **33 semanas** | **≈ 34,5 semanas** de uma pessoa; ≈ 6 meses com duas | As fases 7 a 9 encolhem uma semana cada, porque os regimes saíram para a P1.11 |
 
 Com duas pessoas, o caminho crítico é 0 → 1 → 2 → 4 (piloto). Em paralelo: P0.5 a P0.9 com a outra pessoa; P1.10 e a fase 6 fora do caminho crítico; fase 5 em paralelo com a 3.
 
