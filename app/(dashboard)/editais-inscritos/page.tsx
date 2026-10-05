@@ -26,6 +26,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { getInscricaoTiming } from "@/lib/inscricoes/timing";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
+import { DESFECHOS_INSCRICAO, ehDesfecho } from "@/lib/etapas";
 
 type EditalInscrito = {
   id: string;
@@ -806,7 +807,7 @@ export default function EditaisInscritosPage() {
                   iconName={cfg.iconName}
                   active={dragOverStatus === status && Boolean(draggingId)}
                   addLabel={`Nova inscrição em ${cfg.label}`}
-                  onAdd={() => { setPreStatus(status); setShowModal(true); }}
+                  onAdd={ehDesfecho(status, DESFECHOS_INSCRICAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}
                   onDragOver={e => { e.preventDefault(); setDragOverStatus(status); }}
                   onDragLeave={() => setDragOverStatus(null)}
                   onDrop={e => { e.preventDefault(); if (draggingId) moveEdital(draggingId, status); setDraggingId(null); setDragOverStatus(null); }}
@@ -816,7 +817,7 @@ export default function EditaisInscritosPage() {
                         ? Array.from({ length: 2 }).map((_, i) => <KanbanSkeleton key={i} />)
                         : null
                     ) : cards.length === 0 ? (
-                      <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={() => { setPreStatus(status); setShowModal(true); }}/>
+                      <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_INSCRICAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
                     ) : (
                       cards.slice(0, getVisible(status)).map((e) => {
                         const projeto = e.projetos_crm?.nome ?? "Sem projeto";

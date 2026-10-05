@@ -143,6 +143,20 @@ Exceções:
 - formulários extensos são agrupados por assunto, não por decoração;
 - erros aparecem junto ao formulário, nunca em `window.alert()`.
 
+## Formulários de cadastro
+
+Referência: `NovaCaptacaoModal` e `NovaInscricaoModal`.
+
+- o essencial vem primeiro, numa lista direta, sem título de seção;
+- campos opcionais ficam em "Mais detalhes", recolhido; ele já abre quando há algo preenchido lá dentro;
+- o formulário é o mesmo para todo mundo: sem botão para esconder ou personalizar blocos;
+- registros ligados (empresa, projeto, agência) são criados digitando o nome e escolhendo `Criar "Nome"` no menu; nada é criado ao clicar num botão com o campo vazio;
+- o cadastro não oferece etapas de desfecho (aprovado, recusado, reprovado, cancelado); desfecho tem fluxo próprio (`lib/etapas.ts`) e a coluna de desfecho do kanban não tem "+";
+- ganhar uma negociação é sempre "Fechar negócio" (`FecharNegocioSheet`), venha do topo, do menu de status ou do kanban;
+- responsável e supervisor só aparecem quando a organização tem equipe; o responsável já vem preenchido com quem está criando;
+- todo campo exibido é salvo;
+- o botão principal diz o que acontece: "Criar negociação" no cadastro, "Salvar" na edição.
+
 ## Páginas de detalhe
 
 Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:

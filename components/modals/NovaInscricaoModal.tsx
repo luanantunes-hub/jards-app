@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect, useId, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 import {
-  X, Building2, FolderOpen, Layers, Plus,
+  X, Building2, FolderOpen, Layers, Plus, ChevronDown, TrendingUp,
   CalendarDays, Save, Circle, Users, UserRound, Tag, ArrowDown, Minus, ArrowUp,
 } from "lucide-react";
 import * as Icons from "lucide-react";
@@ -14,10 +13,12 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
-import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
 import { cotaTemDisponibilidade, formatCotaValor, valorForaDaFaixa } from "@/lib/cotas";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useValorDefinidoPorProposta } from "@/hooks/useValorDefinidoPorProposta";
+import { CampoValor } from "@/components/ui/CampoValor";
+import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
+import { DESFECHOS_INSCRICAO, etapaInicial, etapasDoFormulario } from "@/lib/etapas";
 
 const CRIAR_NOVA_COTA = "__criar_nova_cota__";
 
@@ -62,17 +63,22 @@ const POTENCIAL_OPTIONS: { value: PotencialFechamento; label: string; color: str
   { value: "alto", label: "Alto", color: "#D94E4E", Icon: ArrowUp },
 ];
 
+function Rotulo({ children }: { children: React.ReactNode }) {
+  return <p className="mb-1.5 text-[0.75rem] font-semibold text-black">{children}</p>;
+}
+
 function DateField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <div>
-      <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">{label}</label>
-      <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
-        <CalendarDays size={13} className="text-black/35 flex-shrink-0" />
+      <Rotulo>{label}</Rotulo>
+      <div className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
+        <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
         <input
           type="date"
           value={value}
+          aria-label={label}
           onChange={event => onChange(event.target.value)}
-          className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
+          className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none"
         />
       </div>
     </div>
@@ -124,14 +130,16 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   const [projetoSearch, setProjetoSearch] = useState(editData?.projeto_nome ?? initialProjetoNome ?? "");
   const [projetoOpen, setProjetoOpen]     = useState(false);
   const [criandoProjeto, setCriandoProjeto] = useState(false);
-  const [showNovoProjeto, setShowNovoProjeto] = useState(false);
   const projetoBoxRef = useRef<HTMLDivElement>(null);
   const projetoMenuPos = usePortalPosition(projetoBoxRef, projetoOpen);
   const [cotaId, setCotaId]               = useState(editData?.cota_id ?? "");
-  const [valorInput, setValorInput] = useState(editData?.valor != null ? editData.valor.toLocaleString("pt-BR", { useGrouping: false, minimumFractionDigits: 2 }) : "");
+  const [valorTexto, setValorTexto] = useState(() => formatarValorBRL(editData?.valor));
+  const valorLido = lerValorBRL(valorTexto);
   // Com proposta ativa o valor vem dela e só muda negociando a proposta.
   const valorDaProposta = useValorDefinidoPorProposta("editais_user", editData?.id);
-  const [status, setStatus]               = useState<StatusEdital>(editData?.status ?? statusPre ?? "interesse");
+  // Desfechos (aprovado, reprovado, cancelado) não entram no cadastro.
+  const etapasForm = etapasDoFormulario(etapas, DESFECHOS_INSCRICAO, editData?.status);
+  const [status, setStatus]               = useState<StatusEdital>(() => editData?.status ?? ((etapaInicial(etapas, DESFECHOS_INSCRICAO, statusPre) || "interesse") as StatusEdital));
   const [potencialFechamento, setPotencialFechamento] = useState<PotencialFechamento>(editData?.potencial_fechamento ?? potentialPre ?? "medio");
   const [dataAbertura, setDataAbertura]   = useState(editData?.data_abertura ?? dataAberturaPre ?? "");
   const [dataFechamento, setDataFechamento] = useState(editData?.data_fechamento ?? dataFechamentoPre ?? "");
@@ -147,6 +155,12 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   const [criandoAgencia, setCriandoAgencia] = useState(false);
   const responsavelBoxRef = useRef<HTMLDivElement>(null);
   const responsavelMenuPos = usePortalPosition(responsavelBoxRef, responsavelOpen);
+  // "Mais detalhes" já abre quando há algo preenchido lá dentro.
+  const [maisDetalhes, setMaisDetalhes] = useState(() => Boolean(
+    potentialPre || dataAberturaPre
+    || editData?.data_abertura || editData?.data_resultado || editData?.responsavel_tipo
+    || (editData?.potencial_fechamento && editData.potencial_fechamento !== "medio"),
+  ));
 
   useEffect(() => {
     supabase.from("empresas_crm").select("id, nome").order("nome").limit(200)
@@ -160,10 +174,22 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
         .then(({ data }: { data: { id: string; nome: string; agencia: string | null }[] | null }) =>
           setAgencias((data ?? []).map((a) => ({ id: a.id, label: a.agencia || a.nome, sublabel: a.agencia ? a.nome : undefined })))
         );
-      (supabase as any).rpc("get_organization_members", { org_id: organizationId })
-        .then(({ data }: { data: { user_id: string; full_name: string; email: string | null }[] | null }) =>
-          setMembros((data ?? []).filter((m) => m.full_name).map((m) => ({ id: m.user_id, label: m.full_name, sublabel: m.email ?? undefined })))
-        );
+      Promise.all([
+        supabase.auth.getUser(),
+        // A tipagem manual do Supabase não tem esta RPC.
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (supabase as any).rpc("get_organization_members", { org_id: organizationId }),
+      ]).then(([{ data: { user } }, { data }]: [{ data: { user: { id: string } | null } }, { data: { user_id: string; full_name: string; email: string | null }[] | null }]) => {
+        const lista = (data ?? []).filter((m) => m.full_name).map((m) => ({ id: m.user_id, label: m.full_name, sublabel: m.email ?? undefined }));
+        setMembros(lista);
+        // Quem cria a inscrição é o responsável, até alguém escolher outra pessoa.
+        const eu = !editData && user ? lista.find(m => m.id === user.id) : undefined;
+        if (eu) {
+          setResponsavelTipo(current => current ?? "membro");
+          setResponsavelId(current => current || eu.id);
+          setResponsavelPesquisa(current => current || eu.label);
+        }
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -204,6 +230,8 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   }, [projetoId, fetchCotas]);
 
   const cotaSelecionada = cotas.find(cota => cota.id === cotaId) ?? null;
+  // Responsável só aparece quando há equipe: mais de uma pessoa ou agências.
+  const temEquipe = membros.length > 1 || agencias.length > 0 || Boolean(editData?.responsavel_tipo);
   const responsavelBase = responsavelTipo === "agencia" ? agencias : membros;
   const responsavelFiltrados = responsavelBase.filter(r =>
     (r.label + (r.sublabel ?? "")).toLowerCase().includes(responsavelPesquisa.toLowerCase())
@@ -264,25 +292,6 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
     setProjetoOpen(false);
   }
 
-  async function handleNovoProjetoCompletoSalvo(novoProjetoId?: string) {
-    setShowNovoProjeto(false);
-    if (!novoProjetoId) return;
-    // Usa o id que o próprio modal de criação já devolve, em vez de "adivinhar"
-    // o projeto mais recente da conta — duas criações quase simultâneas
-    // (duas abas, duplo clique) podiam fazer a consulta por recência pegar o
-    // projeto errado, além de não filtrar por organização.
-    const { data } = await (supabase as any)
-      .from("projetos_crm")
-      .select("id, nome")
-      .eq("id", novoProjetoId)
-      .maybeSingle();
-    if (!data) return;
-    setProjetos(prev => prev.some(p => p.id === data.id) ? prev : [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
-    setProjetoId(data.id);
-    setProjetoSearch(data.nome);
-    setCotaId("");
-  }
-
   // Reaproveita uma empresa_crm já existente com esse nome (ex.: já criada por outro
   // caminho) em vez de duplicar, e só cria uma nova se realmente não houver uma.
   // Quando vinculada a uma empresa "Base" (empresaPubId), grava esse vínculo direto —
@@ -321,9 +330,8 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
   async function handleSalvar() {
     setSaving(true);
     setErro(null);
-    const valorNegociado = valorInput.trim() ? Number(valorInput.replace(/\./g, "").replace(",", ".")) : null;
-    if (valorNegociado != null && (!Number.isFinite(valorNegociado) || valorNegociado < 0)) {
-      setErro("Informe um valor de inscrição válido."); setSaving(false); return;
+    if (!valorDaProposta && !valorLido.valido) {
+      setErro(MENSAGEM_VALOR_INVALIDO); setSaving(false); return;
     }
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado"); setSaving(false); return; }
@@ -346,7 +354,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
       projeto_id:      projetoId      || null,
       cota_id:         cotaId         || null,
       lei:             lei            || null,
-      valor:           valorNegociado ?? cotaSelecionada?.valor ?? editData?.valor ?? null,
+      valor:           valorDaProposta ? editData?.valor ?? null : valorLido.valor,
       status,
       potencial_fechamento: potencialFechamento,
       data_abertura:   dataAbertura   || null,
@@ -397,46 +405,43 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex w-[calc(100%_-_24px)] flex-col overflow-hidden rounded-b bg-white"
-        style={{ maxWidth: "61.25rem", maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
+        className="flex w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white"
+        style={{ maxHeight: "100vh", boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex shrink-0 items-center justify-between px-7 pt-6 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
+        <header className="flex shrink-0 items-center justify-between border-b px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/5">
               <FolderOpen size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{editData ? "Editar inscrição" : "Nova inscrição"}</h2>
+            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-black">{editData ? "Editar inscrição" : "Nova inscrição"}</h2>
           </div>
-          <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
+          <button type="button" onClick={onClose} aria-label="Fechar"
+            className="flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
             <X size={15} className="text-black/40" />
           </button>
-        </div>
+        </header>
 
-        {/* Body */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto md:flex-row md:overflow-hidden">
-          {/* Col 1 — dados */}
-          <div className="min-w-0 shrink-0 space-y-4 p-6 md:flex-[0_0_56%] md:overflow-y-auto">
-            {/* Patrocinador — combobox */}
+        <main className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="relative">
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Patrocinador</label>
-              <div ref={empresaBoxRef} className="flex items-center border rounded px-3 py-2.5 gap-2 bg-white" style={{ borderColor: empresaOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
-                <Building2 size={13} className="text-black/35 flex-shrink-0" />
+              <Rotulo>Patrocinador</Rotulo>
+              <div ref={empresaBoxRef} className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: empresaOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
+                <Building2 size={13} className="flex-shrink-0 text-black/35" />
                 <input
                   type="text"
-                  placeholder="Buscar ou criar empresa…"
+                  placeholder="Buscar ou criar…"
+                  aria-label="Patrocinador"
                   value={empresaSearch}
                   onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); }}
                   onFocus={() => setEmpresaOpen(true)}
                   onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
-                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
                 />
                 {empresaSearch && (
-                  <button
+                  <button type="button" aria-label="Limpar patrocinador"
                     onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); }}
-                    className="text-black/25 hover:text-black/50 transition flex-shrink-0"
-                  >
+                    className="flex-shrink-0 text-black/25 transition hover:text-black/50">
                     <X size={12} />
                   </button>
                 )}
@@ -444,31 +449,27 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
               {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
                 <PortalMenu position={empresaMenuPos}>
                   {empresasFiltradas.map(e => (
-                    <button
-                      key={e.id}
+                    <button key={e.id} type="button"
                       onMouseDown={ev => { ev.preventDefault(); setEmpresaId(e.id); setEmpresaSearch(e.nome); setEmpresaOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-[0.8125rem] text-black hover:bg-black/[0.04] transition"
-                    >
+                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[0.04]">
                       {e.nome}
                     </button>
                   ))}
                   {empresaSearch.trim() && !hasExactMatch && (
-                    <button
+                    <button type="button"
                       onMouseDown={ev => { ev.preventDefault(); handleCriarEmpresa(empresaSearch.trim()); }}
                       disabled={criandoEmpresa}
-                      className="w-full text-left px-3 py-2 text-[0.8125rem] font-semibold text-[#7259B5] hover:bg-black/[0.04] transition border-t disabled:opacity-50"
-                      style={{ borderColor: "rgba(13,13,13,.08)" }}
-                    >
-                      {criandoEmpresa ? "Criando…" : `+ Criar "${empresaSearch.trim()}"`}
+                      className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[0.04] disabled:opacity-50"
+                      style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                      {criandoEmpresa ? "Criando…" : `Criar "${empresaSearch.trim()}"`}
                     </button>
                   )}
                 </PortalMenu>
               )}
             </div>
 
-            {/* Tipo de patrocínio */}
             <div>
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Tipo de patrocínio</label>
+              <Rotulo>Tipo de patrocínio</Rotulo>
               <CustomDropdown
                 value={lei}
                 onChange={setLei}
@@ -489,64 +490,52 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
               />
             </div>
 
-            {/* Projeto — combobox */}
             <div className="relative">
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Projeto</label>
-              <div ref={projetoBoxRef} className="flex items-center border rounded px-3 py-2.5 gap-2 bg-white" style={{ borderColor: projetoOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
-                <FolderOpen size={13} className="text-black/35 flex-shrink-0" />
+              <Rotulo>Projeto</Rotulo>
+              <div ref={projetoBoxRef} className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: projetoOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
+                <FolderOpen size={13} className="flex-shrink-0 text-black/35" />
                 <input
                   type="text"
-                  placeholder="Buscar ou criar projeto…"
+                  placeholder="Buscar ou criar…"
+                  aria-label="Projeto"
                   value={projetoSearch}
                   onChange={e => { setProjetoSearch(e.target.value); setProjetoId(""); setCotaId(""); setProjetoOpen(true); }}
                   onFocus={() => setProjetoOpen(true)}
                   onBlur={() => setTimeout(() => setProjetoOpen(false), 150)}
-                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
                 />
                 {projetoSearch && (
-                  <button
+                  <button type="button" aria-label="Limpar projeto"
                     onMouseDown={e => { e.preventDefault(); setProjetoSearch(""); setProjetoId(""); setCotaId(""); }}
-                    className="text-black/25 hover:text-black/50 transition flex-shrink-0"
-                  >
+                    className="flex-shrink-0 text-black/25 transition hover:text-black/50">
                     <X size={12} />
                   </button>
                 )}
               </div>
-              {projetoOpen && (
+              {projetoOpen && (projetosFiltrados.length > 0 || (projetoSearch.trim() && !hasExactMatchProjeto)) && (
                 <PortalMenu position={projetoMenuPos}>
                   {projetosFiltrados.map(p => (
-                    <button
-                      key={p.id}
+                    <button key={p.id} type="button"
                       onMouseDown={ev => { ev.preventDefault(); setProjetoId(p.id); setProjetoSearch(p.nome); setCotaId(""); setProjetoOpen(false); }}
-                      className="w-full text-left px-3 py-2 text-[0.8125rem] text-black hover:bg-black/[0.04] transition"
-                    >
+                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[0.04]">
                       {p.nome}
                     </button>
                   ))}
                   {projetoSearch.trim() && !hasExactMatchProjeto && (
-                    <button
+                    <button type="button"
                       onMouseDown={ev => { ev.preventDefault(); handleCriarProjeto(projetoSearch.trim()); }}
                       disabled={criandoProjeto}
-                      className="w-full text-left px-3 py-2 text-[0.8125rem] font-semibold text-[#7259B5] hover:bg-black/[0.04] transition border-t disabled:opacity-50"
-                      style={{ borderColor: "rgba(13,13,13,.08)" }}
-                    >
-                      {criandoProjeto ? "Criando…" : `+ Criar "${projetoSearch.trim()}"`}
+                      className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[0.04] disabled:opacity-50"
+                      style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                      {criandoProjeto ? "Criando…" : `Criar "${projetoSearch.trim()}"`}
                     </button>
                   )}
-                  <button
-                    onMouseDown={ev => { ev.preventDefault(); setProjetoOpen(false); setShowNovoProjeto(true); }}
-                    className="w-full text-left px-3 py-2 text-[0.8125rem] font-semibold text-black/55 hover:bg-black/[0.04] transition border-t flex items-center gap-1.5"
-                    style={{ borderColor: "rgba(13,13,13,.08)" }}
-                  >
-                    <Plus size={12} /> Criar novo projeto…
-                  </button>
                 </PortalMenu>
               )}
             </div>
 
-            {/* Cota — fonte do valor e das contrapartidas */}
             <div>
-              <label className="mb-1.5 block text-[0.75rem] font-semibold text-black">Cota</label>
+              <Rotulo>Cota <span className="ml-1 font-normal text-black/35">(opcional)</span></Rotulo>
               <CustomDropdown
                 value={cotaId}
                 onChange={value => {
@@ -556,14 +545,15 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   }
                   setCotaId(value);
                   const selecionada = cotas.find(cota => cota.id === value);
-                  if (selecionada && !valorDaProposta) setValorInput(selecionada.valor.toLocaleString("pt-BR", { useGrouping: false, minimumFractionDigits: 2 }));
+                  if (selecionada && !valorDaProposta) setValorTexto(formatarValorBRL(selecionada.valor));
                 }}
-                placeholder={!projetoId ? "Selecione um projeto primeiro" : loadingCotas ? "Carregando cotas…" : cotas.length === 0 ? "Nenhuma cota neste projeto" : "Selecionar cota"}
+                placeholder={!projetoId ? "Selecione um projeto primeiro" : loadingCotas ? "Carregando cotas…" : cotas.length === 0 ? "Nenhuma cota neste projeto" : "Sem cota"}
                 compact
                 disabled={!projetoId || loadingCotas}
-                className="[&>button]:w-full [&>button:disabled]:bg-white"
+                className="[&>button]:w-full"
                 icon={<Layers size={13} />}
                 options={[
+                  ...(cotas.length > 0 ? [{ value: "", label: "Sem cota" }] : []),
                   ...cotas.map(cota => ({
                     value: cota.id,
                     label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
@@ -572,203 +562,146 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   { value: CRIAR_NOVA_COTA, label: "Criar nova cota…", icon: <Plus size={12} /> },
                 ]}
               />
-              {cotaSelecionada && (
-                <div className="mt-2 rounded border border-black/[.07] bg-black/[.018] px-3 py-2.5">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[0.625rem] font-medium text-black/35">Referência da cota</span>
-                    <span className="text-[0.75rem] font-semibold tabular-nums text-black/70">{formatCotaValor(cotaSelecionada)}</span>
-                  </div>
-                  <label className="mt-2 block text-[0.625rem] font-medium text-black/45">Valor desta inscrição (R$)</label>
-                  <input inputMode="decimal" value={valorInput} onChange={event => setValorInput(event.target.value)} disabled={valorDaProposta}
-                    className="mt-1 w-full rounded border border-black/15 bg-white px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] disabled:cursor-not-allowed disabled:bg-black/[.02] disabled:text-black/60" />
-                  {valorForaDaFaixa(cotaSelecionada, valorInput.trim() ? Number(valorInput.replace(/\./g, "").replace(",", ".")) : null) &&
-                    <p className="mt-1.5 text-[0.625rem] text-[#B07A14]">Fora da faixa sugerida; confira se outra cota é mais adequada.</p>}
-                  <p className="mt-1.5 text-[0.625rem] leading-4 text-black/40">
-                    {cotaSelecionada.contrapartidas.length > 0
-                      ? `${cotaSelecionada.contrapartidas.length} contrapartida${cotaSelecionada.contrapartidas.length === 1 ? "" : "s"} serão transformadas em entregas se a inscrição for aprovada.`
-                      : "Esta cota ainda não possui contrapartidas."}
-                  </p>
-                </div>
-              )}
             </div>
 
-            {/* Responsável — agência ou membro */}
             <div>
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Responsável</label>
-              <div className="flex rounded overflow-hidden border mb-2" style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                {(["agencia", "membro"] as const).map(tipo => (
-                  <button
-                    key={tipo}
-                    type="button"
-                    onClick={() => trocarResponsavelTipo(tipo)}
-                    className="flex-1 flex items-center justify-center gap-1.5 px-2 py-2 text-[0.6875rem] font-semibold transition"
-                    style={responsavelTipo === tipo
-                      ? { background: "#0D0D0D", color: "#fff" }
-                      : { background: "#fff", color: "rgba(13,13,13,.45)" }}
-                  >
-                    {tipo === "agencia" ? <Building2 size={12} /> : <Users size={12} />}
-                    {tipo === "agencia" ? "Agência" : "Equipe"}
-                  </button>
-                ))}
-              </div>
-              {responsavelTipo && (
-                <div className="relative">
-                  <div ref={responsavelBoxRef} className="flex items-center border rounded px-3 py-2.5 gap-2 bg-white" style={{ borderColor: responsavelOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
-                    {responsavelTipo === "agencia"
-                      ? <Building2 size={13} className="text-black/35 flex-shrink-0" />
-                      : <UserRound size={13} className="text-black/35 flex-shrink-0" />}
-                    <input
-                      type="text"
-                      placeholder={responsavelTipo === "agencia" ? "Buscar ou criar agência…" : "Buscar membro da equipe…"}
-                      value={responsavelPesquisa}
-                      onChange={e => { const v = e.target.value; setResponsavelPesquisa(v); setResponsavelId(""); setResponsavelOpen(v.trim().length > 0); }}
-                      onFocus={() => { if (responsavelPesquisa.trim()) setResponsavelOpen(true); }}
-                      onBlur={() => setTimeout(() => setResponsavelOpen(false), 150)}
-                      className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
-                    />
-                    {responsavelPesquisa && (
-                      <button
-                        onMouseDown={e => { e.preventDefault(); setResponsavelPesquisa(""); setResponsavelId(""); }}
-                        className="text-black/25 hover:text-black/50 transition flex-shrink-0"
-                      >
-                        <X size={12} />
-                      </button>
-                    )}
-                  </div>
-                  {responsavelOpen && (responsavelFiltrados.length > 0 || (responsavelTipo === "agencia" && responsavelPesquisa.trim() && !hasExactMatchResponsavel)) && (
-                    <PortalMenu position={responsavelMenuPos}>
-                      {responsavelFiltrados.map(r => (
-                        <button
-                          key={r.id}
-                          onMouseDown={ev => { ev.preventDefault(); selecionarResponsavel(r); }}
-                          className="w-full text-left px-3 py-2 hover:bg-black/[0.04] transition"
-                        >
-                          <span className="block text-[0.8125rem] text-black">{r.label}</span>
-                          {r.sublabel && <span className="block text-[0.625rem] text-black/35">{r.sublabel}</span>}
-                        </button>
-                      ))}
-                      {responsavelTipo === "agencia" && responsavelPesquisa.trim() && !hasExactMatchResponsavel && (
-                        <button
-                          type="button"
-                          onMouseDown={ev => { ev.preventDefault(); handleCriarAgencia(responsavelPesquisa.trim()); }}
-                          disabled={criandoAgencia}
-                          className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
-                          style={{ borderColor: "rgba(13,13,13,.08)" }}
-                        >
-                          {criandoAgencia ? "Criando…" : `+ Criar "${responsavelPesquisa.trim()}"`}
-                        </button>
-                      )}
-                    </PortalMenu>
-                  )}
-                </div>
-              )}
+              <Rotulo>Valor</Rotulo>
+              <CampoValor value={valorTexto} onChange={setValorTexto} invalido={!valorDaProposta && !valorLido.valido} ariaLabel="Valor" disabled={valorDaProposta} />
+              {!valorDaProposta && !valorLido.valido
+                ? <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>
+                : cotaSelecionada && valorForaDaFaixa(cotaSelecionada, valorLido.valor) && <p className="mt-1 text-[0.6875rem] text-[#B07A14]">Fora da faixa da cota.</p>}
             </div>
 
+            <div>
+              <Rotulo>Etapa</Rotulo>
+              <CustomDropdown value={status} onChange={value => setStatus(value as StatusEdital)}
+                className="[&>button]:w-full" compact icon={<TrendingUp size={13} />}
+                options={etapasForm.map(({ status: value, label, Icon }) => ({ value, label, icon: <Icon size={13} /> }))} />
+            </div>
+
+            <DateField label="Data de fechamento" value={dataFechamento} onChange={setDataFechamento} />
           </div>
 
-          {/* Divider */}
-          <div className="h-px shrink-0 md:h-auto md:w-px" style={{ background: "rgba(13,13,13,.07)" }} />
-
-          {/* Col 2 — decisão e cronograma */}
-          <div className="min-w-0 shrink-0 space-y-5 p-6 md:flex-[0_0_44%] md:overflow-y-auto">
-            <section>
-              <p className="mb-4 text-[0.625rem] font-bold uppercase tracking-widest text-black/30">Definição comercial</p>
-              <div>
-                <label className="mb-2 block text-[0.75rem] font-semibold text-black">Etapa da inscrição</label>
-                <div className="flex">
-                  {(() => {
-                    const currentIdx = etapas.findIndex(e => e.status === status);
-                    const currentColor = etapas[currentIdx]?.color;
-                    const isReprovado = status === "reprovado";
-                    return etapas.map(({ status: s, Icon, label }, idx) => {
-                      const isActive = isReprovado ? s === "reprovado" : idx <= currentIdx;
-                      return (
-                        <button
-                          key={s}
-                          type="button"
-                          onClick={() => setStatus(s)}
-                          title={label}
-                          className={[
-                            "relative flex h-9 w-9 items-center justify-center border-b border-t transition",
-                            idx === 0 ? "rounded-l border-l" : "",
-                            idx === etapas.length - 1 ? "rounded-r border-r" : "",
-                            isActive ? "z-10" : "",
-                          ].join(" ")}
-                          style={isActive
-                            ? { background: currentColor, color: "#fff", borderColor: currentColor }
-                            : { background: "#fff", color: "rgba(13,13,13,.35)", borderColor: "rgba(13,13,13,.12)" }}
-                        >
-                          <Icon size={15} />
-                        </button>
-                      );
-                    });
-                  })()}
-                </div>
-                <p className="mt-1.5 text-[0.625rem] font-medium" style={{ color: etapas.find(e => e.status === status)?.color ?? "rgba(13,13,13,.3)" }}>
-                  {etapas.find(e => e.status === status)?.label}
-                </p>
-              </div>
-
-              <div className="mt-5">
-                <label className="mb-2 block text-[0.75rem] font-semibold text-black">Potencial de fechamento</label>
-                <div className="flex">
-                  {POTENCIAL_OPTIONS.map((option, index) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() => setPotencialFechamento(option.value)}
-                      className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[0.6875rem] font-semibold transition hover:z-10 hover:bg-black/[.025] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
-                      style={potencialFechamento === option.value
-                        ? { color: option.color, borderColor: `${option.color}70` }
-                        : { color: option.color, borderColor: "rgba(13,13,13,.10)" }}
-                    >
-                      <option.Icon size={12} strokeWidth={2.4} />
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </section>
-
-            <section className="border-t border-black/[.07] pt-5">
-              <p className="mb-4 text-[0.625rem] font-bold uppercase tracking-widest text-black/30">Cronograma de captação</p>
-              <div className="space-y-4">
-            <DateField label="Data de abertura"   value={dataAbertura}   onChange={setDataAbertura} />
-            <DateField label="Data de fechamento" value={dataFechamento}  onChange={setDataFechamento} />
-            <DateField label="Data do resultado"  value={dataResultado}   onChange={setDataResultado} />
-              </div>
-            </section>
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div className="flex shrink-0 items-center justify-between px-7 py-4 border-t" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          {erro && <p role="alert" className="text-xs text-[#D94E4E] font-medium">{erro}</p>}
-          {!erro && <div />}
-          <div className="flex items-center gap-3">
-            <button onClick={onClose} className="px-4 py-2.5 text-[0.75rem] font-semibold text-black/35 hover:text-black/55 transition">
-              Cancelar
+          <div className="mt-5 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+            <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes}
+              className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              <ChevronDown size={13} aria-hidden="true" className={`transition-transform duration-200 motion-reduce:transition-none ${maisDetalhes ? "rotate-180" : ""}`} />
+              Mais detalhes
             </button>
-            <button
-              onClick={handleSalvar}
-              disabled={saving}
-              className="flex items-center gap-1.5 px-5 py-2.5 text-[0.75rem] font-bold bg-[#2E8932] text-white rounded hover:bg-[#26752A] transition disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
+            {maisDetalhes && (
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="sm:col-span-2">
+                  <Rotulo>Potencial de fechamento</Rotulo>
+                  <div className="flex" role="radiogroup" aria-label="Potencial de fechamento">
+                    {POTENCIAL_OPTIONS.map((option, index) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        role="radio"
+                        aria-checked={potencialFechamento === option.value}
+                        onClick={() => setPotencialFechamento(option.value)}
+                        className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[0.6875rem] font-semibold transition hover:z-10 hover:bg-black/[.025] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[#7259B5] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
+                        style={potencialFechamento === option.value
+                          ? { color: option.color, borderColor: `${option.color}70` }
+                          : { color: option.color, borderColor: "rgba(13,13,13,.10)" }}
+                      >
+                        <option.Icon size={12} strokeWidth={2.4} />
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <DateField label="Data de abertura" value={dataAbertura} onChange={setDataAbertura} />
+                <DateField label="Data do resultado" value={dataResultado} onChange={setDataResultado} />
+
+                {temEquipe && (
+                  <div className="sm:col-span-2">
+                    <Rotulo>Responsável</Rotulo>
+                    {(agencias.length > 0 || responsavelTipo === "agencia") && (
+                      <div className="mb-2 flex w-fit overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+                        {(["membro", "agencia"] as const).map(tipo => (
+                          <button
+                            key={tipo}
+                            type="button"
+                            aria-pressed={responsavelTipo === tipo}
+                            onClick={() => trocarResponsavelTipo(tipo)}
+                            className="flex items-center gap-1.5 border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
+                            style={responsavelTipo === tipo
+                              ? { background: "#0D0D0D", color: "#fff", borderColor: "#0D0D0D" }
+                              : { background: "#fff", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}
+                          >
+                            {tipo === "agencia" ? <Building2 size={12} /> : <Users size={12} />}
+                            {tipo === "agencia" ? "Agência" : "Equipe"}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    <div className="relative">
+                      <div ref={responsavelBoxRef} className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: responsavelOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
+                        {responsavelTipo === "agencia"
+                          ? <Building2 size={13} className="flex-shrink-0 text-black/35" />
+                          : <UserRound size={13} className="flex-shrink-0 text-black/35" />}
+                        <input
+                          type="text"
+                          aria-label="Responsável"
+                          placeholder={responsavelTipo === "agencia" ? "Buscar ou criar agência…" : "Buscar pessoa da equipe…"}
+                          value={responsavelPesquisa}
+                          onChange={e => { const v = e.target.value; if (!responsavelTipo) setResponsavelTipo("membro"); setResponsavelPesquisa(v); setResponsavelId(""); setResponsavelOpen(v.trim().length > 0); }}
+                          onFocus={() => { if (responsavelPesquisa.trim()) setResponsavelOpen(true); }}
+                          onBlur={() => setTimeout(() => setResponsavelOpen(false), 150)}
+                          className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
+                        />
+                        {responsavelPesquisa && (
+                          <button type="button" aria-label="Limpar responsável"
+                            onMouseDown={e => { e.preventDefault(); setResponsavelPesquisa(""); setResponsavelId(""); }}
+                            className="flex-shrink-0 text-black/25 transition hover:text-black/50">
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                      {responsavelOpen && (responsavelFiltrados.length > 0 || (responsavelTipo === "agencia" && responsavelPesquisa.trim() && !hasExactMatchResponsavel)) && (
+                        <PortalMenu position={responsavelMenuPos}>
+                          {responsavelFiltrados.map(r => (
+                            <button key={r.id} type="button"
+                              onMouseDown={ev => { ev.preventDefault(); selecionarResponsavel(r); }}
+                              className="w-full px-3 py-2 text-left transition hover:bg-black/[0.04]">
+                              <span className="block text-[0.8125rem] text-black">{r.label}</span>
+                              {r.sublabel && <span className="block text-[0.625rem] text-black/35">{r.sublabel}</span>}
+                            </button>
+                          ))}
+                          {responsavelTipo === "agencia" && responsavelPesquisa.trim() && !hasExactMatchResponsavel && (
+                            <button
+                              type="button"
+                              onMouseDown={ev => { ev.preventDefault(); handleCriarAgencia(responsavelPesquisa.trim()); }}
+                              disabled={criandoAgencia}
+                              className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
+                              style={{ borderColor: "rgba(13,13,13,.08)" }}
+                            >
+                              {criandoAgencia ? "Criando…" : `Criar "${responsavelPesquisa.trim()}"`}
+                            </button>
+                          )}
+                        </PortalMenu>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </main>
+
+        <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          {erro ? <p role="alert" className="min-w-0 text-[0.6875rem] font-medium text-[#D94E4E]">{erro}</p> : <div />}
+          <div className="ml-auto flex flex-shrink-0 items-center gap-2">
+            <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
+            <button type="button" onClick={handleSalvar} disabled={saving}
+              className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:cursor-not-allowed disabled:opacity-60">
+              <Save size={12} /> {saving ? "Salvando…" : editData ? "Salvar" : "Criar inscrição"}
             </button>
           </div>
-        </div>
+        </footer>
       </div>
-      {showNovoProjeto && createPortal(
-        // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
-        <div onClick={e => e.stopPropagation()}>
-          <NovoProjetoModal
-            onClose={() => setShowNovoProjeto(false)}
-            onSaved={handleNovoProjetoCompletoSalvo}
-          />
-        </div>,
-        document.body,
-      )}
     </div>
   );
 }

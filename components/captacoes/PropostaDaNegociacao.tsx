@@ -4,12 +4,12 @@ import { useEffect, useId, useMemo, useState } from "react";
 import { Check, Layers, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CotaPatrocinio } from "@/lib/supabase/types";
-import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { BottomSheet } from "@/components/ui/BottomSheet";
 import { CampoValor } from "@/components/ui/CampoValor";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 import { PropostaOperacionalModal, type PropostaOperacionalDraft } from "@/components/projects/PropostaOperacionalModal";
+import { FecharNegocioSheet, useRecusarNegociacao } from "@/components/captacoes/FechamentoNegociacao";
 import { cotaTemDisponibilidade, formatCotaValor } from "@/lib/cotas";
 import { propostaAtivaDe } from "@/lib/propostas";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
@@ -38,7 +38,7 @@ type Db = any;
 /**
  * Topo da negociação: Cota (opcional) → Proposta → Venda num bloco só.
  * Com projeto, o valor é a proposta simplificada; sem projeto, é só o valor.
- * "Fechar negócio" é o único caminho para ganhar: registra a venda (com
+ * "Fechar negócio" (FechamentoNegociacao) é o único caminho para ganhar: registra a venda (com
  * proposta), aprova a negociação e o banco cria o cliente.
  */
 export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propostas, onChanged }: {
@@ -49,7 +49,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
   onChanged: () => Promise<void> | void;
 }) {
   const db: Db = useMemo(() => createClient(), []);
-  const { confirmDelete } = useDeleteConfirm();
+  const recusar = useRecusarNegociacao();
   const menu = useAnchoredPopover();
   const [cotas, setCotas] = useState<CotaPatrocinio[]>([]);
   const [editando, setEditando] = useState(false);
@@ -82,18 +82,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
 
   function marcarRecusada() {
     menu.fechar();
-    confirmDelete({
-      title: "Marcar a negociação como recusada?",
-      description: "",
-      confirmLabel: "Marcar como recusada",
-      pendingLabel: "Salvando…",
-      illustration: false,
-      onConfirm: async () => {
-        const { data, error } = await db.from("captacoes").update({ status: "recusado" }).eq("id", captacao.id).select("id").maybeSingle();
-        if (error || !data) throw new Error("Não foi possível atualizar a negociação. Tente novamente.");
-        await onChanged();
-      },
-    });
+    recusar(captacao.id, onChanged);
   }
 
   const valor = captacao.valor_solicitado;
@@ -153,7 +142,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
           onAbrirCompleta={() => setCompleta(true)} onClose={() => setEditando(false)} onChanged={onChanged} />
       )}
       {fechando && (
-        <FecharSheet db={db} captacao={captacao} empresaNome={empresaNome} comProjeto={comProjeto}
+        <FecharNegocioSheet captacao={captacao} empresaNome={empresaNome}
           propostaAceitaId={proposta?.status === "aceita" ? proposta.id ?? null : null}
           onClose={() => setFechando(false)} onChanged={onChanged} />
       )}
@@ -260,79 +249,6 @@ function ValorSheet({ db, captacao, empresaNome, comProjeto, cotas, cotaAtual, o
         </div>
       </div>
       {erro && <p role="alert" className="mt-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
-    </BottomSheet>
-  );
-}
-
-function FecharSheet({ db, captacao, empresaNome, comProjeto, propostaAceitaId, onClose, onChanged }: {
-  db: Db;
-  captacao: Captacao;
-  empresaNome: string;
-  comProjeto: boolean;
-  /** Proposta marcada como aceita antes do "Fechar negócio" existir: só conclui o aceite. */
-  propostaAceitaId: string | null;
-  onClose: () => void;
-  onChanged: () => Promise<void> | void;
-}) {
-  const [valorTexto, setValorTexto] = useState(() => formatarValorBRL(captacao.valor_solicitado));
-  const [salvando, setSalvando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-  const campoValor = useId();
-  const lido = lerValorBRL(valorTexto);
-
-  async function fechar(close: () => void) {
-    if (!lido.valido) { setErro(MENSAGEM_VALOR_INVALIDO); return; }
-    if (lido.valor == null) { setErro("Informe o valor fechado."); return; }
-    setSalvando(true);
-    setErro(null);
-    let falha: string | null = null;
-    if (comProjeto) {
-      // A proposta recebe o valor final e é aceita: venda, cliente e entregas.
-      let propostaId = propostaAceitaId;
-      if (!propostaId) {
-        const proposta = await db.rpc("fn_salvar_proposta_simplificada", { p_captacao_id: captacao.id, p_valor: lido.valor });
-        if (proposta.error || !proposta.data) falha = proposta.error?.message ?? "Não foi possível registrar a proposta.";
-        else propostaId = proposta.data;
-      }
-      if (propostaId) {
-        const aceite = await db.rpc("fn_aceitar_proposta_comercial", { p_proposta_id: propostaId });
-        if (aceite.error) falha = aceite.error.message;
-      }
-    } else {
-      const { data, error } = await db.from("captacoes").update({ status: "aprovado", valor_aprovado: lido.valor }).eq("id", captacao.id).select("id").maybeSingle();
-      if (error || !data) falha = error?.message ?? "Não foi possível fechar a negociação.";
-    }
-    setSalvando(false);
-    if (falha) { setErro(falha); return; }
-    await onChanged();
-    close();
-  }
-
-  return (
-    <BottomSheet
-      titulo="Fechar negócio"
-      subtitulo={empresaNome}
-      onClose={onClose}
-      footer={close => (
-        <>
-          <button type="button" onClick={close} disabled={salvando}
-            className="rounded px-2 py-2 text-[0.75rem] font-medium text-black/45 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">
-            Cancelar
-          </button>
-          <button type="button" onClick={() => void fechar(close)} disabled={salvando}
-            className="min-h-10 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
-            {salvando ? "Fechando…" : "Fechar negócio"}
-          </button>
-        </>
-      )}
-    >
-      <div className="space-y-4">
-        <div className="sm:max-w-[16rem]">
-          <label htmlFor={campoValor} className="mb-1.5 block text-[0.6875rem] font-medium text-black/45">Valor fechado</label>
-          <CampoValor id={campoValor} value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!lido.valido} autoFocus disabled={Boolean(propostaAceitaId)} />
-        </div>
-        {erro && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erro}</p>}
-      </div>
     </BottomSheet>
   );
 }

@@ -31,6 +31,7 @@ import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, D
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
 import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
 import { PropostaDaNegociacao } from "@/components/captacoes/PropostaDaNegociacao";
+import { FecharNegocioSheet, useRecusarNegociacao } from "@/components/captacoes/FechamentoNegociacao";
 import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
 
 const RESULTADO_NEGATIVO = new Set(["recusado"]);
@@ -227,6 +228,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   } | null>(null);
   const [atividades, setAtividades] = useState<(Atividade & { contato: { nome: string } | null })[]>([]);
   const [notas, setNotas] = useState<Nota[]>([]);
+  const [fechandoPeloStatus, setFechandoPeloStatus] = useState(false);
+  const recusar = useRecusarNegociacao();
   const [contatos, setContatos] = useState<Contato[]>([]);
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [propostas, setPropostas] = useState<PropostaDocumento[]>([]);
@@ -496,6 +499,9 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     if (!captacao || captacao.status === newStatus) {
       return;
     }
+    // Desfecho tem fluxo próprio: aprovar pede o valor fechado; recusar, confirmação.
+    if (newStatus === "aprovado") { setFechandoPeloStatus(true); return; }
+    if (newStatus === "recusado") { recusar(captacao.id, fetchData); return; }
     await (supabase.from("captacoes") as any)
       .update({ status: newStatus })
       .eq("id", captacao.id);
@@ -1162,6 +1168,15 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           atividade={{ id: atividadeConcluir.id, nome: atividadeConcluir.nome, tipo: atividadeConcluir.tipo, captacao_id: atividadeConcluir.captacao_id }}
           onClose={() => setAtividadeConcluir(null)}
           onCompleted={() => { setAtividadeConcluir(null); void fetchData(); }}
+        />
+      )}
+      {fechandoPeloStatus && (
+        <FecharNegocioSheet
+          captacao={captacao}
+          empresaNome={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || "Empresa"}
+          propostaAceitaId={propostas.find(p => p.status === "aceita")?.id ?? null}
+          onClose={() => setFechandoPeloStatus(false)}
+          onChanged={fetchData}
         />
       )}
       {showEditModal && (

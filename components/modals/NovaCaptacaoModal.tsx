@@ -4,7 +4,7 @@ import {
   X, Building2, FolderOpen,
   Users, CalendarDays, Save, Lightbulb, Briefcase,
   MessageSquare, TrendingUp, Check, Ban, Plus, UserPlus,
-  SlidersHorizontal, Contact, UserRoundCog, Clock3, Circle, ArrowDown, Minus, ArrowUp, Layers,
+  Contact, UserRoundCog, Circle, ArrowDown, Minus, ArrowUp, Layers, ChevronDown,
 } from "lucide-react";
 import * as Icons from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -23,6 +23,7 @@ import { contatoSalvoCorrespondente, rotuloContato, semContatosJaSalvos, type Co
 import { CampoValor } from "@/components/ui/CampoValor";
 import { cotaTemDisponibilidade, formatCotaValor } from "@/lib/cotas";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
+import { DESFECHOS_NEGOCIACAO, etapaInicial, etapasDoFormulario } from "@/lib/etapas";
 
 type EmpresaCRM   = { id: string; nome: string };
 type Projeto      = { id: string; nome: string };
@@ -53,8 +54,6 @@ function legacyMeio(canal: CanalContato | null): MeioContato | null {
   if (canal === "email" || canal === "telefone" || canal === "linkedin" || canal === "outro") return canal;
   return "outro";
 }
-
-const TRIMESTRES = ["1º Trimestre", "2º Trimestre", "3º Trimestre", "4º Trimestre"];
 
 const EXCLUSAO_LABELS: Record<string, string> = {
   exclusividade_empresa: "Exclusividade por Empresa",
@@ -90,20 +89,6 @@ const POTENCIAL_OPTIONS: { value: PotencialFechamento; label: string; color: str
 ];
 
 type MembroOption = { user_id: string; nome: string; email: string; papel: string };
-type CaptacaoModule = "estrategia" | "equipe" | "cronograma";
-
-const CAPTACAO_MODULES: { key: CaptacaoModule; label: string; Icon: React.ElementType }[] = [
-  { key: "estrategia", label: "Potencial de fechamento", Icon: TrendingUp },
-  { key: "equipe", label: "Pessoas e atribuições", Icon: Users },
-  { key: "cronograma", label: "Cronograma", Icon: Clock3 },
-];
-
-const DEFAULT_MODULE_VISIBILITY: Record<CaptacaoModule, boolean> = {
-  estrategia: true,
-  equipe: true,
-  cronograma: false,
-};
-
 /* ─── Rótulos (fora do modal: componentes não são recriados a cada render) ─── */
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
@@ -218,18 +203,18 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [captadoresExt, setCaptadoresExt] = useState<CaptadorExt[]>([]);
   const [saving, setSaving]         = useState(false);
   const [erro, setErro]             = useState<string | null>(null);
-  const [showModuleMenu, setShowModuleMenu] = useState(false);
   const titleId = useId();
-  useModalDismiss(() => { if (showModuleMenu) setShowModuleMenu(false); else onClose(); });
-  const [visibleModules, setVisibleModules] = useState<Record<CaptacaoModule, boolean>>(() => {
-    if (typeof window === "undefined") return DEFAULT_MODULE_VISIBILITY;
-    try {
-      const saved = window.localStorage.getItem("jards:nova-captacao-modulos");
-      return saved ? { ...DEFAULT_MODULE_VISIBILITY, ...JSON.parse(saved) } : DEFAULT_MODULE_VISIBILITY;
-    } catch {
-      return DEFAULT_MODULE_VISIBILITY;
-    }
-  });
+  useModalDismiss(onClose);
+  // Desfechos (aprovar, recusar) têm fluxo próprio e não entram no cadastro.
+  const etapasForm = etapasDoFormulario(etapas, DESFECHOS_NEGOCIACAO, editData?.status);
+  // "Mais detalhes" já abre quando há algo preenchido lá dentro.
+  const [maisDetalhes, setMaisDetalhes] = useState(() => Boolean(
+    potentialPre
+    || editData?.data_previsao
+    || editData?.supervisor_id
+    || editData?.captador_externo_id
+    || (editData?.potencial_fechamento && editData.potencial_fechamento !== "medio"),
+  ));
   const [blindagem, setBlindagem]   = useState<{ captadorNome: string } | null>(null);
   const [exclusividade, setExclusividade] = useState<{ tipo: string; captadorNome: string; dataFim: string | null; diasSemAvanco: number | null } | null>(null);
 
@@ -270,9 +255,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [canalPlanejado, setCanalPlanejado] = useState<CanalContato | null>(
     editData?.canal_planejado ?? legacyCanal(editData?.meio_contato),
   );
-  const [status, setStatus]   = useState<StatusCaptacao>(editData?.status ?? statusPre ?? "prospeccao");
+  const [status, setStatus]   = useState<StatusCaptacao>(() => editData?.status ?? etapaInicial(etapas, DESFECHOS_NEGOCIACAO, statusPre) as StatusCaptacao);
   const [potencialFechamento, setPotencialFechamento] = useState<PotencialFechamento>(editData?.potencial_fechamento ?? potentialPre ?? "medio");
-  const [trimestre, setTrimestre] = useState("");
   const [proximoFollowup, setProximoFollowup] = useState(editData?.proxima_prospeccao ?? "");
   const [previsao, setPrevisao]               = useState(editData?.data_previsao ?? "");
   // Valor da negociação digitado direto aqui; a proposta continua opcional.
@@ -298,14 +282,10 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const canaisAtivos = canais.filter(item => item.ativo || item.chave === canalPlanejado || item.chave === canalRealizado);
   const resultadosAtivos = resultados.filter(item => item.ativo || item.chave === resultadoContato);
   const supervisores = membros.filter(membro => membro.papel !== "captador");
-
-  function toggleModule(module: CaptacaoModule) {
-    setVisibleModules(current => {
-      const next = { ...current, [module]: !current[module] };
-      window.localStorage.setItem("jards:nova-captacao-modulos", JSON.stringify(next));
-      return next;
-    });
-  }
+  // Responsável e supervisor só aparecem quando há equipe: mais de uma pessoa
+  // ou captadores externos (quase todas as organizações têm uma pessoa só).
+  const temEquipe = membros.length > 1 || captadoresExt.length > 0 || Boolean(editData?.supervisor_id || editData?.captador_externo_id);
+  const mostrarTipoResponsavel = captadoresExt.length > 0 || captacaoTipo === "externa";
 
   useEffect(() => {
     if (organizationId) {
@@ -334,6 +314,13 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
         .eq("ativo", true)
         .order("nome")
         .then(({ data }: any) => setCaptadoresExt(data ?? []));
+    }
+
+    // Quem cria a negociação é o responsável, até alguém escolher outra pessoa.
+    if (!editData) {
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user) setCaptadorId(current => current ?? user.id);
+      });
     }
 
     const preEmpresa = editData?.empresa_crm_id ?? empresaPreId;
@@ -708,315 +695,261 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/5">
               <Building2 size={16} className="text-black/50" />
             </div>
-            <div className="min-w-0">
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{editData ? "Editar negociação" : "Nova negociação"}</h2>
-            </div>
+            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-black">{editData ? "Editar negociação" : "Nova negociação"}</h2>
           </div>
-
-          <div className="flex items-center gap-1.5">
-            <div className="relative">
-              <button type="button" onClick={() => setShowModuleMenu(current => !current)}
-                aria-expanded={showModuleMenu}
-                className="flex items-center gap-1.5 rounded border border-black/[.12] bg-white px-3 py-2 text-[0.6875rem] font-semibold text-black/45 transition hover:bg-black/[.04] hover:text-black/65 focus:outline-none focus:ring-2 focus:ring-black/[.06]">
-                <SlidersHorizontal size={13} /> Campos
-              </button>
-              {showModuleMenu && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-[16.875rem] rounded border bg-white p-2 shadow-xl" style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                  <div className="px-2 pb-2 pt-1">
-                    <p className="text-[0.6875rem] font-bold text-black">Escolha o que deseja ver</p>
-                  </div>
-                  {CAPTACAO_MODULES.map(({ key, label, Icon }) => (
-                    <button key={key} type="button" onClick={() => toggleModule(key)}
-                      className="flex w-full items-center gap-2.5 rounded px-2 py-2 text-left transition hover:bg-black/[.04]">
-                      <Icon size={14} className={visibleModules[key] ? "text-[#7259B5]" : "text-black/25"} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[0.6875rem] font-semibold text-black">{label}</span>
-                      </span>
-                      <span className={`relative h-5 w-9 flex-shrink-0 rounded-full transition ${visibleModules[key] ? "bg-[#7259B5]" : "bg-black/15"}`}>
-                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow-sm transition-transform ${visibleModules[key] ? "translate-x-[1.125rem]" : "translate-x-0.5"}`} />
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <button type="button" onClick={onClose} aria-label="Fechar"
-              className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06] focus:outline-none focus:ring-2 focus:ring-black/10">
-              <X size={15} className="text-black/40" />
-            </button>
-          </div>
+          <button type="button" onClick={onClose} aria-label="Fechar"
+            className="flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+            <X size={15} className="text-black/40" />
+          </button>
         </header>
 
         <main className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-6">
-          <section>
-            <SectionLabel>Informações principais</SectionLabel>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="relative">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <FieldLabel>Patrocinador</FieldLabel>
-                  {!empresaId && (
-                    <button type="button" onMouseDown={e => { e.preventDefault(); handleCriarEmpresa(empresaSearch.trim() || "Nova empresa"); }}
-                      className="flex items-center gap-1 text-[0.625rem] font-bold text-[#7259B5] transition hover:opacity-70">
-                      <Plus size={10} /> Novo
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="relative">
+              <FieldLabel>Patrocinador</FieldLabel>
+              <div ref={empresaBoxRef} className="flex items-center gap-2 rounded border bg-white px-3 py-2.5"
+                style={{ borderColor: empresaOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
+                <Building2 size={13} className="flex-shrink-0 text-black/35" />
+                <input type="text" placeholder="Buscar ou criar…" value={empresaSearch} aria-label="Patrocinador"
+                  onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
+                  onFocus={() => setEmpresaOpen(true)} onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
+                {empresaSearch && <button type="button" aria-label="Limpar patrocinador" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
+              </div>
+              {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
+                <PortalMenu position={empresaMenuPos}>
+                  {empresasFiltradas.map(empresa => (
+                    <button key={empresa.id} type="button" onMouseDown={event => {
+                      event.preventDefault(); setEmpresaId(empresa.id); setEmpresaSearch(empresa.nome); setEmpresaOpen(false);
+                      setContatoSugeridoChave(null); empresaTocada.current = true;
+                      checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id, { doPatrocinador: empresa.id === empresaDoPatrocinadorId });
+                    }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
+                      {empresa.nome}
+                    </button>
+                  ))}
+                  {empresaSearch.trim() && !hasExactMatch && (
+                    <button type="button" onMouseDown={event => { event.preventDefault(); handleCriarEmpresa(empresaSearch.trim()); }} disabled={criandoEmpresa}
+                      className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
+                      style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                      {criandoEmpresa ? "Criando…" : `Criar "${empresaSearch.trim()}"`}
                     </button>
                   )}
-                </div>
-                <div ref={empresaBoxRef} className="flex items-center gap-2 rounded border bg-white px-3 py-2.5"
-                  style={{ borderColor: empresaOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
-                  <Building2 size={13} className="flex-shrink-0 text-black/35" />
-                  <input type="text" placeholder="Buscar ou criar…" value={empresaSearch}
-                    onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
-                    onFocus={() => setEmpresaOpen(true)} onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
-                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
-                  {empresaSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
-                </div>
-                {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
-                  <PortalMenu position={empresaMenuPos}>
-                    {empresasFiltradas.map(empresa => (
-                      <button key={empresa.id} type="button" onMouseDown={event => {
-                        event.preventDefault(); setEmpresaId(empresa.id); setEmpresaSearch(empresa.nome); setEmpresaOpen(false);
-                        setContatoSugeridoChave(null); empresaTocada.current = true;
-                        checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id, { doPatrocinador: empresa.id === empresaDoPatrocinadorId });
-                      }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
-                        {empresa.nome}
-                      </button>
-                    ))}
-                    {empresaSearch.trim() && !hasExactMatch && (
-                      <button type="button" onMouseDown={event => { event.preventDefault(); handleCriarEmpresa(empresaSearch.trim()); }} disabled={criandoEmpresa}
-                        className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
-                        style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                        {criandoEmpresa ? "Criando…" : `+ Criar "${empresaSearch.trim()}"`}
-                      </button>
-                    )}
-                  </PortalMenu>
+                </PortalMenu>
+              )}
+            </div>
+
+            <div>
+              <div className="mb-1.5 flex items-center justify-between">
+                <FieldLabel>Contato</FieldLabel>
+                {!showNovoContato && (
+                  <button
+                    type="button"
+                    onClick={() => { if (empresaId) setShowNovoContato(true); }}
+                    disabled={!empresaId}
+                    title={empresaId ? "Cadastrar novo contato" : "Selecione um patrocinador primeiro"}
+                    className="-mt-1.5 flex items-center gap-1 rounded px-1 py-0.5 text-[0.625rem] font-semibold text-[#7259B5] transition hover:opacity-70 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-30"
+                  >
+                    <UserPlus size={10} /> Novo
+                  </button>
                 )}
               </div>
-
-              <div className="relative">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <FieldLabel>Projeto</FieldLabel>
-                  {!projetoId && (
-                    <button type="button" onMouseDown={e => { e.preventDefault(); handleCriarProjeto(projetoSearch.trim() || "Novo projeto"); }}
-                      className="flex items-center gap-1 text-[0.625rem] font-bold text-[#7259B5] transition hover:opacity-70">
-                      <Plus size={10} /> Novo
-                    </button>
-                  )}
-                </div>
-                <div ref={projetoBoxRef} className="flex items-center gap-2 rounded border bg-white px-3 py-2.5"
-                  style={{ borderColor: projetoOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
-                  <FolderOpen size={13} className="flex-shrink-0 text-black/35" />
-                  <input type="text" placeholder="Buscar ou criar…" value={projetoSearch}
-                    onChange={e => { setProjetoSearch(e.target.value); setProjetoId(""); setProjetoOpen(true); }}
-                    onFocus={() => setProjetoOpen(true)} onBlur={() => setTimeout(() => setProjetoOpen(false), 150)}
-                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
-                  {projetoSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setProjetoSearch(""); setProjetoId(""); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
-                </div>
-                {projetoOpen && (projetosFiltrados.length > 0 || (projetoSearch.trim() && !hasExactMatchProjeto)) && (
-                  <PortalMenu position={projetoMenuPos}>
-                    {projetosFiltrados.map(projeto => (
-                      <button key={projeto.id} type="button" onMouseDown={event => {
-                        event.preventDefault(); setProjetoId(projeto.id); setProjetoSearch(projeto.nome); setProjetoOpen(false);
-                        if (empresaId) checkExclusividade(empresaId, projeto.id);
-                      }}
-                        className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
-                        {projeto.nome}
-                      </button>
-                    ))}
-                    {projetoSearch.trim() && !hasExactMatchProjeto && (
-                      <button type="button" onMouseDown={event => { event.preventDefault(); handleCriarProjeto(projetoSearch.trim()); }} disabled={criandoProjeto}
-                        className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
-                        style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                        {criandoProjeto ? "Criando…" : `+ Criar "${projetoSearch.trim()}"`}
-                      </button>
-                    )}
-                  </PortalMenu>
-                )}
-              </div>
-
-
-              <div>
-                <FieldLabel>Cota <span className="ml-1 font-normal text-black/35">(opcional)</span></FieldLabel>
-                <CustomDropdown value={cotaId} disabled={!projetoId || propostaAceita || carregandoCotas}
+              {showNovoContato && empresaId ? (
+                <NovoContatoInline empresaCrmId={empresaId} organizationId={organizationId}
+                  onCreated={contato => {
+                    setContatosEmpresa(current => [...current, contato].sort((a, b) => a.nome.localeCompare(b.nome)));
+                    setContatoEmpresaId(contato.id); setShowNovoContato(false);
+                  }} onCancel={() => setShowNovoContato(false)} />
+              ) : (
+                <CustomDropdown
+                  value={contatoEmpresaId ?? (contatoSugerido ? `sugerido:${contatoSugerido.chave}` : "")}
                   onChange={value => {
-                    if (value === CRIAR_NOVA_COTA) {
-                      window.open(`/projetos/${projetoId}?tab=proposta`, "_blank");
-                      return;
-                    }
-                    setCotaId(value);
-                    const cota = cotasVisiveis.find(item => item.id === value);
-                    if (cota) setValorTexto(formatarValorBRL(cota.valor));
+                    if (value.startsWith("sugerido:")) { setContatoEmpresaId(null); setContatoSugeridoChave(value.slice("sugerido:".length)); }
+                    else { setContatoSugeridoChave(null); setContatoEmpresaId(value || null); }
                   }}
-                  className="[&>button]:w-full" compact icon={<Layers size={13} />}
-                  placeholder={!projetoId ? "Selecione um projeto primeiro" : carregandoCotas ? "Carregando cotas…" : cotasVisiveis.length === 0 ? "Nenhuma cota neste projeto" : "Sem cota"}
+                  className="[&>button]:w-full" compact icon={<Contact size={13} />}
+                  placeholder={empresaId || sugeridosDisponiveis.length > 0 ? "Nenhum contato" : "Selecione um patrocinador primeiro"}
                   options={[
-                    ...(cotasVisiveis.length > 0 ? [{ value: "", label: "Sem cota" }] : []),
-                    ...cotasVisiveis.map(cota => ({
-                      value: cota.id,
-                      label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
-                      disabled: !cotaTemDisponibilidade(cota) && cota.id !== propostaAtiva?.cota_id,
-                    })),
-                    { value: CRIAR_NOVA_COTA, label: "Criar nova cota…", icon: <Plus size={12} /> },
+                    { value: "", label: "Nenhum" },
+                    ...contatosEmpresa.map(contato => ({ value: contato.id, label: rotuloContato({ nome: contato.nome, cargo: contato.cargo }) })),
+                    ...sugeridosDisponiveis.map(contato => ({ value: `sugerido:${contato.chave}`, label: rotuloContato(contato), icon: <Building2 size={12} className="text-[#7259B5]" aria-hidden="true" /> })),
                   ]} />
-              </div>
+              )}
+            </div>
 
-              <div>
-                <FieldLabel>Valor</FieldLabel>
-                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!propostaAceita && !valorLido.valido} ariaLabel="Valor" disabled={propostaAceita} />
-                {!propostaAceita && !valorLido.valido && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>}
+            {(blindagem || exclusividade) && (
+              <div className="grid gap-2 sm:col-span-2 sm:grid-cols-2">
+                {blindagem && <p className="rounded bg-[#FEF3C7] px-3 py-2 text-[0.6875rem] font-medium text-[#9A6710]">Empresa já prospectada por {blindagem.captadorNome}.</p>}
+                {exclusividade && <p role="alert" className="rounded bg-[#D94E4E12] px-3 py-2 text-[0.6875rem] font-medium text-[#B83E3E]">{EXCLUSAO_LABELS[exclusividade.tipo] || exclusividade.tipo} ativa com {exclusividade.captadorNome}.</p>}
               </div>
+            )}
 
-              <div>
-                <FieldLabel>Etapa atual</FieldLabel>
-                <CustomDropdown value={status} onChange={value => setStatus(value as StatusCaptacao)}
-                  className="[&>button]:w-full" compact icon={<TrendingUp size={13} />}
-                  options={etapas.map(({ status: value, label, Icon }) => ({ value, label, icon: <Icon size={13} /> }))} />
+            <div className="relative">
+              <FieldLabel>Projeto</FieldLabel>
+              <div ref={projetoBoxRef} className="flex items-center gap-2 rounded border bg-white px-3 py-2.5"
+                style={{ borderColor: projetoOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
+                <FolderOpen size={13} className="flex-shrink-0 text-black/35" />
+                <input type="text" placeholder="Buscar ou criar…" value={projetoSearch} aria-label="Projeto"
+                  onChange={e => { setProjetoSearch(e.target.value); setProjetoId(""); setProjetoOpen(true); }}
+                  onFocus={() => setProjetoOpen(true)} onBlur={() => setTimeout(() => setProjetoOpen(false), 150)}
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
+                {projetoSearch && <button type="button" aria-label="Limpar projeto" onMouseDown={e => { e.preventDefault(); setProjetoSearch(""); setProjetoId(""); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
+              </div>
+              {projetoOpen && (projetosFiltrados.length > 0 || (projetoSearch.trim() && !hasExactMatchProjeto)) && (
+                <PortalMenu position={projetoMenuPos}>
+                  {projetosFiltrados.map(projeto => (
+                    <button key={projeto.id} type="button" onMouseDown={event => {
+                      event.preventDefault(); setProjetoId(projeto.id); setProjetoSearch(projeto.nome); setProjetoOpen(false);
+                      if (empresaId) checkExclusividade(empresaId, projeto.id);
+                    }}
+                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
+                      {projeto.nome}
+                    </button>
+                  ))}
+                  {projetoSearch.trim() && !hasExactMatchProjeto && (
+                    <button type="button" onMouseDown={event => { event.preventDefault(); handleCriarProjeto(projetoSearch.trim()); }} disabled={criandoProjeto}
+                      className="w-full border-t px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-50"
+                      style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                      {criandoProjeto ? "Criando…" : `Criar "${projetoSearch.trim()}"`}
+                    </button>
+                  )}
+                </PortalMenu>
+              )}
+            </div>
+
+            <div>
+              <FieldLabel>Cota <span className="ml-1 font-normal text-black/35">(opcional)</span></FieldLabel>
+              <CustomDropdown value={cotaId} disabled={!projetoId || propostaAceita || carregandoCotas}
+                onChange={value => {
+                  if (value === CRIAR_NOVA_COTA) {
+                    window.open(`/projetos/${projetoId}?tab=proposta`, "_blank");
+                    return;
+                  }
+                  setCotaId(value);
+                  const cota = cotasVisiveis.find(item => item.id === value);
+                  if (cota) setValorTexto(formatarValorBRL(cota.valor));
+                }}
+                className="[&>button]:w-full" compact icon={<Layers size={13} />}
+                placeholder={!projetoId ? "Selecione um projeto primeiro" : carregandoCotas ? "Carregando cotas…" : cotasVisiveis.length === 0 ? "Nenhuma cota neste projeto" : "Sem cota"}
+                options={[
+                  ...(cotasVisiveis.length > 0 ? [{ value: "", label: "Sem cota" }] : []),
+                  ...cotasVisiveis.map(cota => ({
+                    value: cota.id,
+                    label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
+                    disabled: !cotaTemDisponibilidade(cota) && cota.id !== propostaAtiva?.cota_id,
+                  })),
+                  { value: CRIAR_NOVA_COTA, label: "Criar nova cota…", icon: <Plus size={12} /> },
+                ]} />
+            </div>
+
+            <div>
+              <FieldLabel>Valor</FieldLabel>
+              <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!propostaAceita && !valorLido.valido} ariaLabel="Valor" disabled={propostaAceita} />
+              {!propostaAceita && !valorLido.valido && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>}
+            </div>
+
+            <div>
+              <FieldLabel>Etapa</FieldLabel>
+              <CustomDropdown value={status} onChange={value => setStatus(value as StatusCaptacao)}
+                className="[&>button]:w-full" compact icon={<TrendingUp size={13} />}
+                options={etapasForm.map(({ status: value, label, Icon }) => ({ value, label, icon: <Icon size={13} /> }))} />
+            </div>
+
+            <div>
+              <FieldLabel>Próximo contato</FieldLabel>
+              <div className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
+                <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
+                <input type="date" value={proximoFollowup} onChange={e => setProximoFollowup(e.target.value)} aria-label="Próximo contato"
+                  className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
               </div>
             </div>
-          </section>
+          </div>
 
-          {visibleModules.estrategia && (
-            <section className="mt-5 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <SectionLabel>Potencial de fechamento</SectionLabel>
-              <div className="flex">
-                {POTENCIAL_OPTIONS.map((option, index) => (
-                  <button key={option.value} type="button" onClick={() => setPotencialFechamento(option.value)}
-                    className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[0.6875rem] font-semibold transition hover:z-10 hover:bg-black/[.04] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
-                    style={potencialFechamento === option.value
-                      ? { color: option.color, borderColor: `${option.color}70` }
-                      : { color: option.color, borderColor: "rgba(13,13,13,.10)" }}>
-                    <option.Icon size={12} strokeWidth={2.5}/>{option.label}
-                  </button>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {visibleModules.equipe && (
-            <section className="mt-5 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <SectionLabel>Pessoas e atribuições</SectionLabel>
-              {(blindagem || exclusividade) && (
-                <div className="mb-3 grid gap-2 sm:grid-cols-2">
-                  {blindagem && <div className="rounded bg-[#FEF3C7] px-3 py-2 text-[0.625rem] font-semibold text-[#9A6710]">Empresa já prospectada por {blindagem.captadorNome}.</div>}
-                  {exclusividade && <div className="rounded bg-[#D94E4E12] px-3 py-2 text-[0.625rem] font-semibold text-[#B83E3E]">{EXCLUSAO_LABELS[exclusividade.tipo] || exclusividade.tipo} ativa com {exclusividade.captadorNome}.</div>}
-                </div>
-              )}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <FieldLabel>Contato da empresa</FieldLabel>
-                    {!showNovoContato && (
-                      <button
-                        type="button"
-                        onClick={() => { if (empresaId) setShowNovoContato(true); }}
-                        disabled={!empresaId}
-                        title={empresaId ? "Cadastrar novo contato" : "Selecione uma empresa primeiro"}
-                        className="flex items-center gap-1 text-[0.625rem] font-semibold text-[#7259B5] transition hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-30"
-                      >
-                        <UserPlus size={10} /> Novo
-                      </button>
-                    )}
-                  </div>
-                  {showNovoContato && empresaId ? (
-                    <NovoContatoInline empresaCrmId={empresaId} organizationId={organizationId}
-                      onCreated={contato => {
-                        setContatosEmpresa(current => [...current, contato].sort((a, b) => a.nome.localeCompare(b.nome)));
-                        setContatoEmpresaId(contato.id); setShowNovoContato(false);
-                      }} onCancel={() => setShowNovoContato(false)} />
-                  ) : (
-                    <>
-                      <CustomDropdown
-                        value={contatoEmpresaId ?? (contatoSugerido ? `sugerido:${contatoSugerido.chave}` : "")}
-                        onChange={value => {
-                          if (value.startsWith("sugerido:")) { setContatoEmpresaId(null); setContatoSugeridoChave(value.slice("sugerido:".length)); }
-                          else { setContatoSugeridoChave(null); setContatoEmpresaId(value || null); }
-                        }}
-                        className="[&>button]:w-full" compact icon={<Contact size={13} />}
-                        placeholder={empresaId || sugeridosDisponiveis.length > 0 ? "Nenhum contato" : "Selecione um patrocinador primeiro"}
-                        options={[
-                          { value: "", label: "Nenhum" },
-                          ...contatosEmpresa.map(contato => ({ value: contato.id, label: rotuloContato({ nome: contato.nome, cargo: contato.cargo }) })),
-                          ...sugeridosDisponiveis.map(contato => ({ value: `sugerido:${contato.chave}`, label: rotuloContato(contato), icon: <Building2 size={12} className="text-[#7259B5]" aria-hidden="true" /> })),
-                        ]} />
-                    </>
-                  )}
-                </div>
-
-                <div>
-                  <FieldLabel>Supervisor</FieldLabel>
-                  <CustomDropdown value={supervisorId ?? ""} onChange={value => setSupervisorId(value || null)}
-                    className="[&>button]:w-full" compact icon={<UserRoundCog size={13} />}
-                    placeholder="Sem supervisor"
-                    options={[{ value: "", label: "Sem supervisor" }, ...supervisores.map(membro => ({ value: membro.user_id, label: membro.nome }))]} />
-                </div>
-
+          <div className="mt-5 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+            <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes}
+              className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              <ChevronDown size={13} aria-hidden="true" className={`transition-transform duration-200 motion-reduce:transition-none ${maisDetalhes ? "rotate-180" : ""}`} />
+              Mais detalhes
+            </button>
+            {maisDetalhes && (
+              <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
-                  <FieldLabel>Responsável pela captação</FieldLabel>
-                  <div className="mb-2 flex w-fit overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.12)" }}>
-                    {(["interna", "externa"] as const).map(tipo => (
-                      <button key={tipo} type="button" onClick={() => {
-                        setCaptacaoTipo(tipo);
-                        if (empresaId) checkExclusividade(empresaId, projetoId, undefined, undefined, tipo);
-                      }}
-                        className="border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
-                        style={captacaoTipo === tipo
-                          ? { background: "#0D0D0D", color: "white", borderColor: "#0D0D0D" }
-                          : { background: "white", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}>
-                        {tipo === "interna" ? "Equipe interna" : "Captador externo"}
+                  <FieldLabel>Potencial de fechamento</FieldLabel>
+                  <div className="flex" role="radiogroup" aria-label="Potencial de fechamento">
+                    {POTENCIAL_OPTIONS.map((option, index) => (
+                      <button key={option.value} type="button" role="radio" aria-checked={potencialFechamento === option.value} onClick={() => setPotencialFechamento(option.value)}
+                        className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[0.6875rem] font-semibold transition hover:z-10 hover:bg-black/[.04] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[#7259B5] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
+                        style={potencialFechamento === option.value
+                          ? { color: option.color, borderColor: `${option.color}70` }
+                          : { color: option.color, borderColor: "rgba(13,13,13,.10)" }}>
+                        <option.Icon size={12} strokeWidth={2.5}/>{option.label}
                       </button>
                     ))}
                   </div>
-                  {captacaoTipo === "interna" ? (
-                    <CustomDropdown value={captadorId ?? ""} onChange={value => {
-                      const nextCaptadorId = value || null;
-                      setCaptadorId(nextCaptadorId);
-                      if (!nextCaptadorId) setBlindagem(null);
-                      else if (empresaId) {
-                        checkBlindagem(empresaId, nextCaptadorId);
-                        checkExclusividade(empresaId, projetoId, nextCaptadorId);
-                      }
-                    }} className="[&>button]:w-full" compact icon={<Users size={13} />} placeholder="Não atribuído"
-                      options={[{ value: "", label: "Não atribuído" }, ...membros.map(membro => ({ value: membro.user_id, label: membro.nome }))]} />
-                  ) : (
-                    <CustomDropdown value={captadorExternoId ?? ""} onChange={value => {
-                      const nextExternoId = value || null;
-                      setCaptadorExternoId(nextExternoId);
-                      if (empresaId) checkExclusividade(empresaId, projetoId, undefined, nextExternoId);
-                    }}
-                      className="[&>button]:w-full" compact icon={<Briefcase size={13} />} placeholder="Não atribuído"
-                      options={[{ value: "", label: "Não atribuído" }, ...captadoresExt.map(captador => ({ value: captador.id, label: captador.agencia ? `${captador.nome} · ${captador.agencia}` : captador.nome }))]} />
-                  )}
                 </div>
-              </div>
-            </section>
-          )}
 
-          {visibleModules.cronograma && (
-            <section className="mt-5 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <SectionLabel>Cronograma</SectionLabel>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <FieldLabel>Trimestre</FieldLabel>
-                  <CustomDropdown value={trimestre} onChange={setTrimestre} className="[&>button]:w-full" compact
-                    options={[{ value: "", label: "Definir depois" }, ...TRIMESTRES.map(item => ({ value: item, label: item }))]}
-                    placeholder="Definir depois" icon={<CalendarDays size={13} />} />
-                </div>
-                <div>
-                  <FieldLabel>Próximo follow-up</FieldLabel>
-                  <div className="flex items-center gap-2 rounded border px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
+                  <FieldLabel>Previsão de fechamento</FieldLabel>
+                  <div className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                     <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
-                    <input type="date" value={proximoFollowup} onChange={e => setProximoFollowup(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
+                    <input type="date" value={previsao} onChange={e => setPrevisao(e.target.value)} aria-label="Previsão de fechamento"
+                      className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
                   </div>
                 </div>
-                <div>
-                  <FieldLabel>Previsão</FieldLabel>
-                  <div className="flex items-center gap-2 rounded border px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
-                    <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
-                    <input type="date" value={previsao} onChange={e => setPrevisao(e.target.value)} className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
+
+                {temEquipe && (
+                  <div>
+                    <FieldLabel>Supervisor</FieldLabel>
+                    <CustomDropdown value={supervisorId ?? ""} onChange={value => setSupervisorId(value || null)}
+                      className="[&>button]:w-full" compact icon={<UserRoundCog size={13} />}
+                      placeholder="Sem supervisor"
+                      options={[{ value: "", label: "Sem supervisor" }, ...supervisores.map(membro => ({ value: membro.user_id, label: membro.nome }))]} />
                   </div>
-                </div>
+                )}
+
+                {temEquipe && (
+                  <div className="sm:col-span-2">
+                    <FieldLabel>Responsável pela captação</FieldLabel>
+                    {mostrarTipoResponsavel && (
+                      <div className="mb-2 flex w-fit overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+                        {(["interna", "externa"] as const).map(tipo => (
+                          <button key={tipo} type="button" aria-pressed={captacaoTipo === tipo} onClick={() => {
+                            setCaptacaoTipo(tipo);
+                            if (empresaId) checkExclusividade(empresaId, projetoId, undefined, undefined, tipo);
+                          }}
+                            className="border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
+                            style={captacaoTipo === tipo
+                              ? { background: "#0D0D0D", color: "white", borderColor: "#0D0D0D" }
+                              : { background: "white", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}>
+                            {tipo === "interna" ? "Equipe interna" : "Captador externo"}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {captacaoTipo === "interna" ? (
+                      <CustomDropdown value={captadorId ?? ""} onChange={value => {
+                        const nextCaptadorId = value || null;
+                        setCaptadorId(nextCaptadorId);
+                        if (!nextCaptadorId) setBlindagem(null);
+                        else if (empresaId) {
+                          checkBlindagem(empresaId, nextCaptadorId);
+                          checkExclusividade(empresaId, projetoId, nextCaptadorId);
+                        }
+                      }} className="[&>button]:w-full" compact icon={<Users size={13} />} placeholder="Não atribuído"
+                        options={[{ value: "", label: "Não atribuído" }, ...membros.map(membro => ({ value: membro.user_id, label: membro.nome }))]} />
+                    ) : (
+                      <CustomDropdown value={captadorExternoId ?? ""} onChange={value => {
+                        const nextExternoId = value || null;
+                        setCaptadorExternoId(nextExternoId);
+                        if (empresaId) checkExclusividade(empresaId, projetoId, undefined, nextExternoId);
+                      }}
+                        className="[&>button]:w-full" compact icon={<Briefcase size={13} />} placeholder="Não atribuído"
+                        options={[{ value: "", label: "Não atribuído" }, ...captadoresExt.map(captador => ({ value: captador.id, label: captador.agencia ? `${captador.nome} · ${captador.agencia}` : captador.nome }))]} />
+                    )}
+                  </div>
+                )}
               </div>
-            </section>
-          )}
+            )}
+          </div>
 
           {!editData && !registrarContato && (
             <div className="mt-5 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
@@ -1072,7 +1005,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             <button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-semibold text-black/35 transition hover:text-black/55">Cancelar</button>
             <button type="button" onClick={handleSalvar} disabled={saving}
               className="flex items-center gap-1.5 rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-bold text-white transition hover:bg-[#26752A] active:translate-y-px disabled:opacity-60 disabled:cursor-not-allowed">
-              <Save size={12} /> {saving ? "Salvando…" : "Salvar"}
+              <Save size={12} /> {saving ? "Salvando…" : editData ? "Salvar" : "Criar negociação"}
             </button>
           </div>
         </footer>

@@ -24,6 +24,8 @@ import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
+import { DESFECHOS_NEGOCIACAO, ehDesfecho } from "@/lib/etapas";
+import { FecharNegocioSheet, useRecusarNegociacao } from "@/components/captacoes/FechamentoNegociacao";
 
 const CAPTACOES_COLUMNS = [
   { id: "empresa", label: "Empresa", width: "13.75rem", grow: true, hideable: false }, { id: "titulo", label: "Projeto", width: "15.625rem", grow: true }, { id: "lei", label: "Tipo de patrocínio", width: "10.3125rem" }, { id: "status", label: "Status", width: "8.75rem", hideable: false }, { id: "valor", label: "Valor", width: "7.5rem" }, { id: "prioridade", label: "Prioridade", width: "6.875rem" }, { id: "responsavel", label: "Responsável", width: "11.25rem" }, { id: "agencia", label: "Agência", width: "10rem" }, { id: "contato", label: "Próx. contato", width: "8.75rem" }, { id: "adicionado_em", label: "Adicionado em", width: "7.8125rem" }, { id: "atualizado_em", label: "Atualizado em", width: "7.8125rem" }, { id: "acoes", label: "Ações", width: "5rem" },
@@ -170,6 +172,8 @@ function getInitialCap(nome: string) {
 export default function CaptacoesPage() {
   const supabase = createClient();
   const { confirmDelete } = useDeleteConfirm();
+  const recusar = useRecusarNegociacao();
+  const [fechando, setFechando] = useState<CaptacaoRow | null>(null);
   const router = useRouter();
   const organizationId = useOrganizationId();
   const { options: leiOptions, create: createLei } = useLeiOptions();
@@ -226,6 +230,16 @@ export default function CaptacoesPage() {
   }
 
   async function moveCard(id: string, newStatus: StatusCaptacao) {
+    // Desfecho tem fluxo próprio: aprovar pede o valor fechado; recusar, confirmação.
+    if (newStatus === "aprovado") {
+      const alvo = captacoes.find(c => c.id === id);
+      if (alvo && alvo.status !== "aprovado") setFechando(alvo);
+      return;
+    }
+    if (newStatus === "recusado") {
+      if (captacoes.find(c => c.id === id)?.status !== "recusado") recusar(id, refetch);
+      return;
+    }
     const previous = captacoes;
     setCaptacoes(prev => prev.map(c => c.id === id ? { ...c, status: newStatus } : c));
     const { error } = await (supabase as any).from("captacoes").update({ status: newStatus }).eq("id", id);
@@ -479,6 +493,15 @@ export default function CaptacoesPage() {
         />
       )}
 
+      {fechando && (
+        <FecharNegocioSheet
+          captacao={fechando}
+          empresaNome={fechando.empresa_crm?.nome ?? fechando.empresa_pub?.nome ?? fechando.titulo ?? "Negociação"}
+          onClose={() => setFechando(null)}
+          onChanged={refetch}
+        />
+      )}
+
       {/* Dropdown de lei — fixed, inline edit */}
       {leiMenuId && leiMenuPos && (
         <StatusDropdown
@@ -604,7 +627,7 @@ export default function CaptacoesPage() {
                   iconName={iconName}
                   active={dragOverStatus === status && Boolean(draggingId)}
                   addLabel={`Nova negociação em ${label}`}
-                  onAdd={() => { setPreStatus(status); setShowModal(true); }}
+                  onAdd={ehDesfecho(status, DESFECHOS_NEGOCIACAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}
                   onDragOver={e => { e.preventDefault(); setDragOverStatus(status); }}
                   onDragLeave={() => setDragOverStatus(null)}
                   onDrop={e => { e.preventDefault(); if (draggingId) moveCard(draggingId, status); setDraggingId(null); setDragOverStatus(null); }}
@@ -614,7 +637,7 @@ export default function CaptacoesPage() {
                         ? Array.from({ length: 2 }).map((_, i) => <KanbanSkeleton key={i} />)
                         : null
                     ) : cards.length === 0 ? (
-                      <KanbanEmpty label="Nenhuma negociação" actionLabel="Adicionar primeira" onAction={() => { setPreStatus(status); setShowModal(true); }}/>
+                      <KanbanEmpty label="Nenhuma negociação" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_NEGOCIACAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
                     ) : (
                       <>
                         {cards.slice(0, getVisible(status)).map((c) => renderCard(c, false, { onDragStart: () => setDraggingId(c.id), onDragEnd: () => { setDraggingId(null); setDragOverStatus(null); } }))}
