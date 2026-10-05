@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(72);
+select plan(81);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -483,6 +483,43 @@ select is(
     where id = 'f0000000-0000-4000-8000-0000000013a0'),
   array[null, null, null]::text[],
   'trocar o documento apaga a consulta do documento anterior');
+
+-- ─── Despesa (P2.4): fornecedor da organização, chave, retenções e CNAEs ───
+
+-- Um fornecedor da organização B, para a despesa de A tentar usar.
+insert into public.prestacao_fornecedores (id, organization_id, tipo_pessoa, documento, nome) values
+  ('f0000000-0000-4000-8000-0000000013b0', 'f0000000-0000-4000-8000-0000000000b0', 'pj', '11444777000161', 'RLS fornecedor B');
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$update public.prestacao_comprovantes
+    set fornecedor_id = 'f0000000-0000-4000-8000-0000000013a0', valor_extraido = 100, iss = 5, inss = 11,
+        chave_acesso = '52060433009911002506550120000007800267301615'
+  where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  'quem edita: liga a despesa a um fornecedor da organização, com chave e retenções');
+select is((select valor_liquido from public.prestacao_comprovantes where id = 'f0000000-0000-4000-8000-0000000005a0'),
+  84.00::numeric, 'o valor líquido é o bruto menos as retenções');
+select throws_ok($t$update public.prestacao_comprovantes set fornecedor_id = 'f0000000-0000-4000-8000-0000000013b0' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  '23514', 'fornecedor_de_outra_organizacao', 'a despesa não usa fornecedor de outra organização');
+select throws_ok($t$update public.prestacao_comprovantes set iss = 200 where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  '23514', null, 'as retenções não passam do valor do documento');
+select throws_ok($t$insert into public.prestacao_comprovantes (prestacao_id, nome_arquivo, storage_path, chave_acesso) values
+    ('f0000000-0000-4000-8000-0000000001a0', 'repetida.pdf',
+     'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000cf0.pdf',
+     '52060433009911002506550120000007800267301615')$t$,
+  '23505', null, 'a mesma chave de acesso não entra duas vezes na prestação');
+select throws_ok($t$update public.prestacao_orcamento_nos set cnaes_aceitos = array['9001-9/01'] where id = 'f0000000-0000-4000-8000-0000000003a0'$t$,
+  '23514', null, 'o CNAE aceito fica só com os algarismos');
+select lives_ok($t$update public.prestacao_orcamento_nos set cnaes_aceitos = array['90', '7420001'] where id = 'f0000000-0000-4000-8000-0000000003a0'$t$,
+  'quem edita: define os CNAEs aceitos do item');
+select lives_ok($t$select public.fn_prestacao_orcamento_copiar_versao('f0000000-0000-4000-8000-0000000002a0', 'readequada', 'RLS cópia')$t$,
+  'quem edita: copia a versão do orçamento');
+select is(
+  (select n.cnaes_aceitos from public.prestacao_orcamento_nos n
+     join public.prestacao_orcamento_versoes v on v.id = n.versao_id
+    where v.nome = 'RLS cópia' and n.origem_no_id = 'f0000000-0000-4000-8000-0000000003a0'),
+  array['90', '7420001'], 'copiar a versão leva os CNAEs aceitos');
+reset role;
 
 select * from finish();
 rollback;

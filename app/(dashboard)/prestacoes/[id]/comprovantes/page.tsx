@@ -27,6 +27,12 @@ const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: R
   foto:            { label: "Foto",              color: "#B07A14", icon: <Image size={13} />,         hint: "Evidência de execução. Fotos devem mostrar banner/marca do projeto visível." },
   planilha:        { label: "Planilha",          color: "#2E8932", icon: <FileSpreadsheet size={13} /> },
   outro:           { label: "Outro",             color: "rgba(13,13,13,.40)", icon: <File size={13} /> },
+  nfse:            { label: "NFS-e",             color: "#7259B5", icon: <FileText size={13} />,      hint: "Nota de serviço em nome do proponente. Confira as retenções (ISS, INSS e IRRF)." },
+  cupom:           { label: "Cupom (NFC-e)",     color: "#2D72B0", icon: <FileText size={13} />,      hint: "Compra no varejo. Alguns regimes só aceitam para valores pequenos." },
+  rpci:            { label: "RPCI",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Recibo de pagamento a contribuinte individual, com INSS retido." },
+  fatura:          { label: "Fatura",            color: "#2D72B0", icon: <FileText size={13} />,      hint: "Cobrança de serviço contínuo (telefone, energia, locação). De PJ, peça a nota fiscal." },
+  apolice:         { label: "Apólice de seguro", color: "#1A8B7A", icon: <File size={13} />,          hint: "Seguro contratado para o projeto, com o período coberto." },
+  nota_debito:     { label: "Nota de débito",    color: "#B07A14", icon: <File size={13} />,          hint: "Reembolso ou repasse sem tributo. Não substitui a nota fiscal de serviço." },
 };
 
 const STATUS_META: Record<StatusComprovante, { label: string; color: string; icon: React.ReactNode }> = {

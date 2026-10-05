@@ -698,7 +698,14 @@ export type TipoComprovante =
   | "rpa"
   | "foto"
   | "planilha"
-  | "outro";
+  | "outro"
+  // Despesa v2 (P2.4)
+  | "nfse"
+  | "cupom"
+  | "rpci"
+  | "fatura"
+  | "apolice"
+  | "nota_debito";
 export type StatusComprovante = "pendente" | "aceito" | "rejeitado";
 
 export interface PrestacaoComprovante {
@@ -720,6 +727,20 @@ export interface PrestacaoComprovante {
   /** Quem aceitou ou rejeitou, e quando (P0.10). */
   avaliado_por?: string | null;
   avaliado_em?: string | null;
+  // Despesa v2 (P2.4): o comprovante fiscal vira a despesa.
+  fornecedor_id?: string | null;
+  numero_documento?: string | null;
+  serie?: string | null;
+  chave_acesso?: string | null;
+  iss?: number;
+  inss?: number;
+  irrf?: number;
+  outras_retencoes?: number;
+  /** valor_extraido (bruto) menos as retenções; o banco calcula. */
+  valor_liquido?: number | null;
+  identificacao_projeto?: "presente" | "declaracao" | "ausente" | null;
+  /** Por que a despesa segue apesar dos alertas. */
+  justificativa?: string | null;
   created_at: string;
 }
 // ─── Prestação de contas — Phase 3 ──────────────────────────────────────────
