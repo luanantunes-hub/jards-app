@@ -899,6 +899,7 @@ export default function PatrocinadorPage() {
       {showCaptacaoModal && (
         <NovaCaptacaoModal
           nomePreEmpresa={empresa?.nome}
+          sitePreEmpresa={empresa?.site ?? undefined}
           empresaPreId={empresaCrmId ?? undefined}
           empresaPubId={id}
           contatosSugeridos={contatosSugeridosDoPatrocinador(responsaveis, sugestoes, mostraContatos)}
@@ -909,6 +910,7 @@ export default function PatrocinadorPage() {
       {showInscricaoModal && (
         <NovaInscricaoModal
           nomePreEmpresa={empresa?.nome}
+          sitePreEmpresa={empresa?.site ?? undefined}
           empresaPreId={empresaCrmId ?? undefined}
           empresaPubId={id}
           dataAberturaPre={inscricaoEdital?.data_abertura ?? ""}

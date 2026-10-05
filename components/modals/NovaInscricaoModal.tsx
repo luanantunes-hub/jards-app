@@ -17,6 +17,7 @@ import { cotaTemDisponibilidade, formatCotaValor, valorForaDaFaixa } from "@/lib
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useValorDefinidoPorProposta } from "@/hooks/useValorDefinidoPorProposta";
 import { CampoValor } from "@/components/ui/CampoValor";
+import { resolveCompanyDomain } from "@/components/CompanyLogo";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 import { DESFECHOS_INSCRICAO, etapaInicial, etapasDoFormulario } from "@/lib/etapas";
 
@@ -85,12 +86,14 @@ function DateField({ label, value, onChange }: { label: string; value: string; o
   );
 }
 
-export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPreId, empresaPubId, statusPre, potentialPre, leiPre, dataAberturaPre, dataFechamentoPre, editData, initialProjetoId, initialProjetoNome }: {
+export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPreId, empresaPubId, sitePreEmpresa, statusPre, potentialPre, leiPre, dataAberturaPre, dataFechamentoPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
   onSaved: (id?: string) => void;
   nomePreEmpresa?: string;
   empresaPreId?: string;
   empresaPubId?: string;
+  /** Site da empresa-base: gravado junto com a empresa do CRM (dá o logo), sem campo na tela. */
+  sitePreEmpresa?: string;
   statusPre?: StatusEdital;
   potentialPre?: PotencialFechamento;
   leiPre?: string;
@@ -306,9 +309,13 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
       .limit(1)
       .maybeSingle();
     if (existente) return existente;
+    const siteDaBase = (sitePreEmpresa ?? "").trim();
     const { data: criada } = await (supabase as any)
       .from("empresas_crm")
-      .insert({ nome: nomeTrim, account_id: userId, organization_id: organizationId, empresa_pub_id: empresaPubId || null })
+      .insert({
+        nome: nomeTrim, account_id: userId, organization_id: organizationId, empresa_pub_id: empresaPubId || null,
+        ...(empresaPubId && siteDaBase ? { site: siteDaBase, domain_key: resolveCompanyDomain(siteDaBase) } : {}),
+      })
       .select("id, nome")
       .single();
     return criada ?? null;

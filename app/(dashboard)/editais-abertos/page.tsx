@@ -389,6 +389,7 @@ export default function EditaisAbertosPage() {
           dataAberturaPre={selectedEdital.data_abertura ?? ""}
           dataFechamentoPre={selectedEdital.data_fechamento ?? ""}
           nomePreEmpresa={selectedEdital.empresas?.nome}
+          sitePreEmpresa={selectedEdital.empresas?.site ?? undefined}
           empresaPubId={selectedEdital.empresas?.id}
           empresaPreId={empresaCrmIdExport ?? undefined}
           onClose={() => { setShowInscricaoModal(false); setSelectedEdital(null); setEmpresaCrmIdExport(null); }}

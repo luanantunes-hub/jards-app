@@ -21,6 +21,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { contatoSalvoCorrespondente, rotuloContato, semContatosJaSalvos, type ContatoSugerido } from "@/lib/contatos-sugeridos";
 import { CampoValor } from "@/components/ui/CampoValor";
+import { resolveCompanyDomain } from "@/components/CompanyLogo";
 import { cotaTemDisponibilidade, formatCotaValor } from "@/lib/cotas";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 import { DESFECHOS_NEGOCIACAO, etapaInicial, etapasDoFormulario } from "@/lib/etapas";
@@ -174,12 +175,14 @@ function NovoContatoInline({
 }
 
 /* ─── Modal principal ─────────────────────────────────────────────── */
-export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, contatosSugeridos, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
+export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, sitePreEmpresa, contatosSugeridos, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
   onSaved: (id?: string) => void;
   empresaPreId?: string;
   nomePreEmpresa?: string;
   empresaPubId?: string;
+  /** Site da empresa-base: gravado junto com a empresa do CRM (dá o logo), sem campo na tela. */
+  sitePreEmpresa?: string;
   /** Responsáveis do patrocinador já liberados para a pessoa (página do patrocinador). */
   contatosSugeridos?: ContatoSugerido[];
   statusPre?: StatusCaptacao;
@@ -466,6 +469,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const hasExactMatchProjeto = projetos.some(p => p.nome.toLowerCase() === projetoSearch.trim().toLowerCase());
 
   const nomePatrocinador = (nomePreEmpresa ?? "").trim();
+  const siteDoPatrocinador = (sitePreEmpresa ?? "").trim();
+  const camposDoSite = siteDoPatrocinador ? { site: siteDoPatrocinador, domain_key: resolveCompanyDomain(siteDoPatrocinador) } : {};
   const empresaEhDoPatrocinador = Boolean(empresaPubId) && (empresaId
     ? empresaId === empresaDoPatrocinadorId
     : nomePatrocinador !== "" && empresaSearch.trim() === nomePatrocinador);
@@ -491,7 +496,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     const { data: { user } } = await supabase.auth.getUser();
     const doPatrocinador = Boolean(empresaPubId) && nome.trim() === nomePatrocinador;
     const { data } = await (supabase as any)
-      .from("empresas_crm").insert({ nome: nome.trim(), account_id: user?.id, organization_id: organizationId, ...(doPatrocinador ? { empresa_pub_id: empresaPubId } : {}) })
+      .from("empresas_crm").insert({ nome: nome.trim(), account_id: user?.id, organization_id: organizationId, ...(doPatrocinador ? { empresa_pub_id: empresaPubId, ...camposDoSite } : {}) })
       .select("id, nome").single();
     setCriandoEmpresa(false);
     if (!data) return;
@@ -529,7 +534,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       const existente = await sb.from("empresas_crm").select("id")
         .eq("organization_id", organizationId).eq("empresa_pub_id", empresaPubId).limit(1).maybeSingle();
       const criada = existente.data?.id ? null : await sb.from("empresas_crm")
-        .insert({ nome: nomePatrocinador, account_id: user.id, organization_id: organizationId, empresa_pub_id: empresaPubId })
+        .insert({ nome: nomePatrocinador, account_id: user.id, organization_id: organizationId, empresa_pub_id: empresaPubId, ...camposDoSite })
         .select("id").single();
       empresaFinal = existente.data?.id ?? criada?.data?.id ?? "";
       if (!empresaFinal) { setErro("Não foi possível adicionar o patrocinador ao seu CRM. Tente novamente."); setSaving(false); return; }
