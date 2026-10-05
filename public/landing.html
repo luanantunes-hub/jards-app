@@ -27,6 +27,9 @@
   <link rel="icon" href="/assets/jards-icon-final.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -382,7 +385,7 @@
       .alt-fluxo .jards-flow-step:not(:last-child)::before { content:""; position:absolute; right:-1px; bottom:100%; width:1px; height:48px; pointer-events:none;
         background:linear-gradient(to top,rgba(40,37,37,.26) 0 10px,transparent 10px),repeating-linear-gradient(to top,transparent 0 7px,rgba(40,37,37,.17) 7px 10px); }
     }
-    .flow-index { display:block; margin-bottom:28px; font-size:clamp(34px,3.4vw,48px); line-height:.9; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
+    .flow-index { display:block; margin-bottom:28px; font-family:var(--font-mono); font-size:clamp(34px,3.4vw,48px); line-height:.9; font-weight:500; letter-spacing:-.05em; font-variant-numeric:tabular-nums; }
     .jards-flow-step strong { display:block; margin-bottom:10px; font-size:20px; }
     .jards-flow-step p { color:rgba(40,37,37,.58); font-size:14px; line-height:1.6; }
     .flow-journey-art { position:relative; height:clamp(120px,18vw,210px); margin-top:40px; overflow:hidden; }
@@ -413,7 +416,10 @@
     .photo-overlay { background:linear-gradient(to right, rgba(0,0,0,.62) 0%, rgba(0,0,0,.25) 60%, transparent 100%); }
 
     /* ── Large number ── */
-    .stat-num { font-family:'Google Sans',system-ui,sans-serif; font-weight:700; font-variant-numeric: tabular-nums; }
+    /* Mono só para dados: numerais, contadores, notas da prancheta e chamadas do MCP.
+       Títulos e texto seguem em Google Sans, que é o lado amigável. */
+    :root { --font-mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .stat-num { font-family:var(--font-mono); font-weight:500; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
 
     /* ── Product stories ── */
     .section-space { padding-top:clamp(6rem,8vw,9rem); padding-bottom:clamp(6rem,8vw,9rem); }
@@ -470,7 +476,7 @@
     .pr-arco { fill:none; stroke:rgba(40,37,37,.2); stroke-width:1; stroke-dasharray:2 6; }
     .pr-marca { fill:none; stroke:rgba(40,37,37,.5); stroke-width:1; }
     .pr-contorno { fill:none; stroke-width:1.25; }
-    .pr-nota { fill:rgba(40,37,37,.5); font-family:'Google Sans',system-ui,sans-serif; font-size:11px; font-weight:500; letter-spacing:.06em; }
+    .pr-nota { fill:rgba(40,37,37,.5); font-family:var(--font-mono); font-size:10.5px; font-weight:500; letter-spacing:.04em; }
     .pr-host { position:relative; isolation:isolate; }
     /* A linha que chega ao botão principal fica roxa quando ele é apontado. */
     .pr-cta, .pr-aguada-cor, line[data-forca] { transition:stroke .2s ease, fill-opacity .2s ease; }
@@ -869,7 +875,7 @@
        borda do painel e mostra, numa régua de 2px, o andamento real da demo
        (linhas entram → cursor clica → perfil abre). */
     .leis-seletor { --leis-topo:40px; position:relative; display:flex; flex-direction:column; border-top:1px solid rgba(13,13,13,.12); }
-    .leis-legenda-topo { display:flex; flex:0 0 var(--leis-topo); align-items:center; justify-content:space-between; padding:0 14px; border-bottom:1px solid rgba(13,13,13,.12); color:rgba(13,13,13,.36); font-size:10px; font-weight:700; letter-spacing:.08em; line-height:1; text-transform:uppercase; font-variant-numeric:tabular-nums; }
+    .leis-legenda-topo { display:flex; flex:0 0 var(--leis-topo); align-items:center; justify-content:space-between; padding:0 14px; border-bottom:1px solid rgba(13,13,13,.12); color:rgba(13,13,13,.42); font-family:var(--font-mono); font-size:10.5px; font-weight:500; letter-spacing:.06em; line-height:1; text-transform:uppercase; font-variant-numeric:tabular-nums; }
     .leis-contador { display:inline-flex; gap:5px; overflow:hidden; }
     .leis-contador-atual { display:inline-block; color:var(--alt-ink); }
     .leis-registro { position:absolute; right:-5px; width:9px; height:9px; pointer-events:none;
@@ -2826,7 +2832,7 @@
   function renderBiContent(el, cfg) {
     if (cfg.stat) {
       el.innerHTML =
-        '<div class="stat-accent" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
+        '<div class="stat-accent" style="font-family:var(--font-mono);font-weight:500;letter-spacing:-.04em;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
         '<div>' +
           '<div style="font-size:12px;font-weight:700;color:#282525;margin-bottom:4px;">' + cfg.title + '</div>' +
           '<p style="font-size:9.5px;color:rgba(40,37,37,0.45);line-height:1.6;">' + cfg.sub + '</p>' +
