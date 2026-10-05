@@ -77,3 +77,17 @@ test("P0.2: o modal grava a organização atual", async () => {
   const lista = await readFile("app/(dashboard)/prestacoes/page.tsx", "utf8");
   assert.match(lista, /organization_id\.eq\.\$\{organizationId\},organization_id\.is\.null/);
 });
+
+test("P0.5: dados e arquivos da prestação exigem o módulo", async () => {
+  const sql = await readFile("supabase/migrations/20261005110000_modulos_acesso.sql", "utf8");
+  // Mesma regra de lib/modulos.ts: organização com o módulo e vínculo com acesso; super admin usa todos.
+  assert.match(sql, /public\.is_jards_super_admin\(\)\s+or exists/);
+  assert.match(sql, /modulo = any\(organizacao\.modulos_ativos\)\s+and modulo = any\(membro\.modulos_acesso\)/);
+  assert.match(sql, /and public\.auth_tem_modulo\(p\.organization_id, 'prestacao'\)/);
+  for (const regra of ["read", "delete", "update", "upload"]) {
+    assert.match(sql, new RegExp(`'documentos: ${regra} org'`), `regra do storage "${regra}" sem o módulo`);
+  }
+  assert.match(sql, /revoke execute on function public\.auth_tem_modulo\(uuid, text\) from public, anon/);
+  assert.match(sql, /before update of modulos_ativos on public\.organizations/);
+  assert.doesNotMatch(sql.replace(/--.*$/gm, ""), /\bdrop\b/i, "sem DROP: o conector trava em comandos destrutivos");
+});
