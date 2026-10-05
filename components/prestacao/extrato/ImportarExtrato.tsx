@@ -251,10 +251,10 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
 
             {quantidade > 0 && (
               <div className="overflow-x-auto rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <table className="w-full text-[0.6875rem]">
-                  <caption className="border-b px-3 py-2 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                    {quantidade > MAX_PREVIA ? `Primeiros ${MAX_PREVIA} de ${quantidade}` : "Lançamentos"}
-                  </caption>
+                <p className="border-b px-3 py-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                  {quantidade > MAX_PREVIA ? `Primeiros ${MAX_PREVIA} de ${quantidade}` : "Lançamentos"}
+                </p>
+                <table className="hidden w-full text-[0.6875rem] sm:table" aria-label="Prévia dos lançamentos">
                   <thead>
                     <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                       {["Data", "Histórico", "Categoria", "Valor"].map(titulo => (
@@ -278,6 +278,22 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
                     ))}
                   </tbody>
                 </table>
+                <ul className="divide-y divide-black/[.05] sm:hidden">
+                  {extrato.lancamentos.slice(0, MAX_PREVIA).map((l, i) => (
+                    <li key={i} className="flex items-start justify-between gap-3 px-3 py-2">
+                      <div className="min-w-0">
+                        <p className="truncate text-[0.6875rem] text-black/75">{l.historico || "—"}</p>
+                        <p className="text-[0.625rem] text-black/40">
+                          <span className="tabular-nums">{dataCurta(l.data)}</span> · {CATEGORIAS_LANCAMENTO.find(c => c.id === l.categoria)?.rotulo}
+                          {l.documento && <> · Doc. {l.documento}</>}
+                        </p>
+                      </div>
+                      <p className={`shrink-0 text-[0.6875rem] tabular-nums ${l.natureza === "credito" ? "text-[#1A8B7A]" : "text-black/75"}`}>
+                        {l.natureza === "credito" ? "+" : "−"} {fmt(l.valor)}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </>

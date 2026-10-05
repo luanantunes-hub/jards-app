@@ -178,7 +178,7 @@ export default function ExtratoPage() {
             <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre a conta do projeto para importar o extrato do banco." : "Quem edita a prestação cadastra as contas."}</p>
           </div>
         ) : (
-          <ul className="divide-y" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+          <ul className="divide-y divide-black/[.05]">
             {contas.map(conta => (
               <li key={conta.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
                 <div className="min-w-0">
@@ -229,7 +229,7 @@ export default function ExtratoPage() {
               </button>
             ))}
           </div>
-          <label className="relative block w-full sm:w-[15rem]">
+          <label className="relative block w-full sm:w-[17.5rem]">
             <Search size={13} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-black/25" aria-hidden />
             <input type="search" value={busca} onChange={e => setBusca(e.target.value)} aria-label="Buscar no histórico ou no documento" placeholder="Buscar no histórico ou documento" className="h-9 w-full rounded border border-black/10 bg-white pl-9 pr-3 text-[0.75rem] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10" />
           </label>
@@ -277,7 +277,7 @@ export default function ExtratoPage() {
                 ))}
               </tbody>
             </table>
-            <ul className="divide-y md:hidden" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+            <ul className="divide-y divide-black/[.05] md:hidden">
               {filtrados.map(l => (
                 <li key={l.id} className="flex items-start justify-between gap-3 px-4 py-3">
                   <div className="min-w-0">
@@ -300,7 +300,7 @@ export default function ExtratoPage() {
           <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <h3 id="importacoes-titulo" className="text-[0.75rem] font-semibold text-black">Arquivos importados</h3>
           </div>
-          <ul className="divide-y" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+          <ul className="divide-y divide-black/[.05]">
             {importacoes.map(imp => (
               <li key={imp.id} className="flex flex-wrap items-center justify-between gap-3 px-5 py-3">
                 <div className="min-w-0">
