@@ -823,6 +823,10 @@
     /* Um roxo só: numerais sólidos, ícone da faixa de prova e check único */
     .alt-proof-icon { display:block; flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); height:var(--alt-proof-mark); color:var(--alt-purple); }
     .alt-proof-mark { flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); }
+    /* Faixa de prova como leitura de instrumento: rótulo em mono, valor grande, descrição */
+    .proof-rotulo { margin:0 0 18px; font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.08em; line-height:1.3; text-transform:uppercase; color:rgba(13,13,13,.55); }
+    .proof-valor { display:flex; align-items:center; height:52px; margin:0 0 16px; font-size:52px; line-height:1; }
+    .proof-valor .alt-proof-icon { flex:0 0 44px; width:44px; height:44px; }
     .alt-check { flex:0 0 auto; width:16px; height:16px; margin-top:2px; color:var(--alt-purple); }
     .pricing-pro-card .alt-check { color:var(--alt-purple-on-dark); }
 
@@ -1093,24 +1097,18 @@
   <div class="max-w-6xl mx-auto">
     <div class="grid grid-cols-1 sm:grid-cols-3">
       <div class="py-10 sm:pr-8 sm:border-r border-black/10">
-        <div class="flex items-end gap-3 mb-3">
-          <p class="stat-num stat-accent alt-proof-mark text-5xl leading-none">7</p>
-          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">etapas conectadas</p>
-        </div>
+        <p class="proof-rotulo">Etapas conectadas</p>
+        <p class="stat-num stat-accent proof-valor"><span aria-hidden="true">07</span><span class="sr-only">7</span></p>
         <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Da prospecção à renovação, cada fase continua a anterior.</p>
       </div>
       <div class="py-10 sm:px-8 border-t sm:border-t-0 sm:border-r border-black/10">
-        <div class="flex items-end gap-3 mb-3">
-          <p class="stat-num stat-accent alt-proof-mark text-5xl leading-none">1</p>
-          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">histórico compartilhado</p>
-        </div>
+        <p class="proof-rotulo">Histórico compartilhado</p>
+        <p class="stat-num stat-accent proof-valor"><span aria-hidden="true">01</span><span class="sr-only">1</span></p>
         <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Projetos, negociações, atividades e entregas no mesmo contexto.</p>
       </div>
       <div class="py-10 sm:pl-8 border-t sm:border-t-0 border-black/10">
-        <div class="flex items-end gap-3 mb-3">
-          <svg class="alt-proof-icon" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,112.49l-48,48a12,12,0,0,1-17-17L195,116H128a84.09,84.09,0,0,0-84,84,12,12,0,0,1-24,0A108.12,108.12,0,0,1,128,92h67L167.51,64.48a12,12,0,0,1,17-17l48,48A12,12,0,0,1,232.49,112.49Z"/></svg>
-          <p class="font-display text-lg font-semibold text-[#0D0D0D] leading-tight pb-1">Próximo passo visível</p>
-        </div>
+        <p class="proof-rotulo">Próximo passo visível</p>
+        <p class="proof-valor"><svg class="alt-proof-icon" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,112.49l-48,48a12,12,0,0,1-17-17L195,116H128a84.09,84.09,0,0,0-84,84,12,12,0,0,1-24,0A108.12,108.12,0,0,1,128,92h67L167.51,64.48a12,12,0,0,1,17-17l48,48A12,12,0,0,1,232.49,112.49Z"/></svg></p>
         <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Responsáveis, prazos e alertas mantêm a equipe em movimento.</p>
       </div>
     </div>
