@@ -569,7 +569,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                     label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
                     disabled: !cotaTemDisponibilidade(cota) && cota.id !== editData?.cota_id,
                   })),
-                  { value: CRIAR_NOVA_COTA, label: "+ Criar nova cota…", icon: <Plus size={12} /> },
+                  { value: CRIAR_NOVA_COTA, label: "Criar nova cota…", icon: <Plus size={12} /> },
                 ]}
               />
               {cotaSelecionada && (
@@ -581,7 +581,6 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   <label className="mt-2 block text-[0.625rem] font-medium text-black/45">Valor desta inscrição (R$)</label>
                   <input inputMode="decimal" value={valorInput} onChange={event => setValorInput(event.target.value)} disabled={valorDaProposta}
                     className="mt-1 w-full rounded border border-black/15 bg-white px-2.5 py-2 text-[0.75rem] text-black outline-none focus:border-[#7259B5] disabled:cursor-not-allowed disabled:bg-black/[.02] disabled:text-black/60" />
-                  {valorDaProposta && <p className="mt-1 text-[0.625rem] text-black/40">Vem da proposta. Para mudar, use Negociar na proposta.</p>}
                   {valorForaDaFaixa(cotaSelecionada, valorInput.trim() ? Number(valorInput.replace(/\./g, "").replace(",", ".")) : null) &&
                     <p className="mt-1.5 text-[0.625rem] text-[#B07A14]">Fora da faixa sugerida; confira se outra cota é mais adequada.</p>}
                   <p className="mt-1.5 text-[0.625rem] leading-4 text-black/40">

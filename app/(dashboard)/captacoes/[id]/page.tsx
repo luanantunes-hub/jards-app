@@ -6,7 +6,7 @@ import {
   ArrowLeft, Pencil, Plus, RefreshCw, Mail, Phone,
   Users, Calendar, MoreHorizontal, FileText, ExternalLink,
   FolderOpen, Star, Clock, Send,
-  X, Upload, Trash2, Coins, Trophy,
+  X, Upload, Trash2,
   LayoutDashboard, MessagesSquare, RotateCw, Tag, Info, Layers,
   ChevronDown, ArrowUp, ArrowDown, Minus, Check,
 } from "lucide-react";
@@ -16,7 +16,6 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { Captacao, Atividade } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
-import { PropostaValuePanel } from "@/components/PropostaValuePanel";
 import { CotasReferenceTab } from "@/components/CotasReferenceTab";
 import PrioBadge from "@/components/ui/PrioBadge";
 import SharedStatusBadge from "@/components/ui/StatusBadge";
@@ -24,7 +23,6 @@ import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
-import { AbrirContaModal } from "@/components/modals/AbrirContaModal";
 import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RelationshipWorkspace } from "@/components/relationship/RelationshipWorkspace";
 import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeModal";
@@ -32,9 +30,7 @@ import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext"
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
 import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
-import { BottomSheet } from "@/components/ui/BottomSheet";
-import { CampoValor } from "@/components/ui/CampoValor";
-import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
+import { PropostaDaNegociacao } from "@/components/captacoes/PropostaDaNegociacao";
 import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
 
 const RESULTADO_NEGATIVO = new Set(["recusado"]);
@@ -209,26 +205,6 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
   );
 }
 
-function ValorManualPanel({ captacao, onEditarManual }: {
-  captacao: { valor_solicitado: number | null; valor_aprovado: number | null };
-  onEditarManual: () => void;
-}) {
-  return (
-    <button onClick={onEditarManual} className="flex h-11 items-center gap-3 rounded border border-black/[.12] bg-white px-4 transition hover:bg-black/[.04]">
-      <div className="text-left">
-        <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Solicitado</p>
-        <p className="text-[0.75rem] font-bold text-[#B07A14]">{captacao.valor_solicitado ? formatCurrency(captacao.valor_solicitado) : "—"}</p>
-      </div>
-      <div className="h-6 w-px bg-black/10" />
-      <div className="text-left">
-        <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Aprovado</p>
-        <p className="text-[0.75rem] font-bold text-[#1A8B7A]">{captacao.valor_aprovado ? formatCurrency(captacao.valor_aprovado) : "—"}</p>
-      </div>
-      <Pencil size={11} className="text-black/25" />
-    </button>
-  );
-}
-
 export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
@@ -265,14 +241,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const [newAtividadeData, setNewAtividadeData] = useState("");
   const [salvandoAtividade, setSalvandoAtividade] = useState(false);
   const [atividadeConcluir, setAtividadeConcluir] = useState<(Atividade & { contato: { nome: string } | null }) | null>(null);
-  const [editingFinanceiro, setEditingFinanceiro] = useState(false);
-  const [editValorSolicitado, setEditValorSolicitado] = useState("");
-  const [erroFinanceiro, setErroFinanceiro] = useState<string | null>(null);
-  const [editValorAprovado, setEditValorAprovado] = useState("");
-  const [salvandoFinanceiro, setSalvandoFinanceiro] = useState(false);
   const [uploadandoDoc, setUploadandoDoc] = useState(false);
   const [documentoErro, setDocumentoErro] = useState<string | null>(null);
-  const [showCriarCliente, setShowCriarCliente] = useState(false);
   const [showRenovarModal, setShowRenovarModal] = useState(false);
   const [proximoCiclo, setProximoCiclo] = useState<{ id: string; ciclo_ano: number } | null>(null);
   const [ciclos, setCiclos] = useState<CommercialCycle[]>([]);
@@ -453,52 +423,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     await (supabase as any).rpc("fn_set_atividade_concluida", {
       p_atividade_id: atividadeId, p_feita: false, p_data_realizada: null,
     });
-    await fetchData();
-  }
-
-  function handleOpenFinanceiro() {
-    setEditValorSolicitado(formatarValorBRL(captacao?.valor_solicitado));
-    setEditValorAprovado(formatarValorBRL(captacao?.valor_aprovado));
-    setErroFinanceiro(null);
-    setEditingFinanceiro(true);
-  }
-
-  async function handleSalvarFinanceiro(close: () => void) {
-    if (!captacao) return;
-    const solicitado = lerValorBRL(editValorSolicitado);
-    const aprovado = lerValorBRL(editValorAprovado);
-    if (!solicitado.valido || !aprovado.valido) { setErroFinanceiro(MENSAGEM_VALOR_INVALIDO); return; }
-    setSalvandoFinanceiro(true);
-    setErroFinanceiro(null);
-
-    // O valor pedido é a proposta simplificada (ou fica direto, sem projeto).
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const db = supabase as any;
-    if (solicitado.valor !== (captacao.valor_solicitado ?? null)) {
-      const proposta = await db.rpc("fn_salvar_proposta_simplificada", { p_captacao_id: captacao.id, p_valor: solicitado.valor });
-      if (proposta.error) {
-        setSalvandoFinanceiro(false);
-        setErroFinanceiro(proposta.error.message || "Não foi possível salvar o valor. Tente novamente.");
-        return;
-      }
-    }
-    const { data, error } = await db.from("captacoes")
-      .update({ valor_aprovado: aprovado.valor })
-      .eq("id", captacao.id)
-      .select("id")
-      .maybeSingle();
-
-    setSalvandoFinanceiro(false);
-    if (error || !data) { setErroFinanceiro("Não foi possível salvar o valor. Tente novamente."); return; }
-    await fetchData();
-    close();
-  }
-
-  async function handleResolverProposta({ status, valorFinal }: { status: string; valorFinal: number | null }) {
-    if (!captacao) return;
-    await (supabase.from("captacoes") as any)
-      .update({ status, valor_aprovado: valorFinal })
-      .eq("id", captacao.id);
     await fetchData();
   }
 
@@ -706,26 +630,13 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           </div>
 
           <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-            {captacao.projeto_id ? (
-              <PropostaValuePanel
-                parentField="captacao_id"
-                parentId={captacao.id}
-                projetoId={captacao.projeto_id}
-                projetoNome={captacao.projeto?.nome || "Projeto"}
-                organizationId={captacao.organization_id}
-                empresaNome={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || "negociação"}
-                status={captacao.status}
-                statusRecusado="recusado"
-                valorAtual={captacao.valor_solicitado}
-                valorFinal={captacao.valor_aprovado}
-                propostas={propostas}
-                onCreated={() => void fetchData()}
-                onResolved={handleResolverProposta}
-                onEditarValor={handleOpenFinanceiro}
-              />
-            ) : (
-              <ValorManualPanel captacao={captacao} onEditarManual={handleOpenFinanceiro} />
-            )}
+            <PropostaDaNegociacao
+              captacao={captacao}
+              empresaNome={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || "Empresa"}
+              projetoNome={captacao.projeto?.nome ?? null}
+              propostas={propostas}
+              onChanged={fetchData}
+            />
             {proximoCiclo ? (
               <DetailHeaderAction label={`Ver ciclo ${proximoCiclo.ciclo_ano}`} icon={RotateCw} onClick={() => router.push(`/captacoes/${proximoCiclo.id}`)} />
             ) : RESULTADO_NEGATIVO.has(captacao.status) ? (
@@ -738,14 +649,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 tone="black"
               />
             ) : null}
-            {!['aprovado', 'recusado'].includes(captacao.status) && (
-              <DetailHeaderAction
-                label="Ganhar cliente"
-                icon={Trophy}
-                accent
-                onClick={() => captacao.empresa_crm_id && setShowCriarCliente(true)}
-              />
-            )}
             <button
               onClick={() => setShowEditModal(true)}
               className="flex h-11 items-center gap-2 rounded border border-black/[.12] bg-white px-4 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04]"
@@ -1286,14 +1189,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           onSaved={() => { setShowEditModal(false); fetchData(); }}
         />
       )}
-      {showCriarCliente && captacao.empresa_crm_id && (
-        <AbrirContaModal
-          empresaCrmId={captacao.empresa_crm_id}
-          empresaNome={captacao.empresa_crm?.nome ?? ""}
-          onClose={() => setShowCriarCliente(false)}
-          onSaved={() => setShowCriarCliente(false)}
-        />
-      )}
       {leiMenuPos && (
         <StatusDropdown
           title="Tipo de patrocínio"
@@ -1351,37 +1246,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           onClose={() => setShowRenovarModal(false)}
           onRenovado={() => { setShowRenovarModal(false); void fetchData(); }}
         />
-      )}
-      {editingFinanceiro && (
-        <BottomSheet
-          titulo="Valor da negociação"
-          subtitulo={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || undefined}
-          onClose={() => setEditingFinanceiro(false)}
-          footer={close => (
-            <>
-              <button type="button" onClick={close} disabled={salvandoFinanceiro}
-                className="rounded px-2 py-2 text-[0.75rem] font-medium text-black/45 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">
-                Cancelar
-              </button>
-              <button type="button" onClick={() => void handleSalvarFinanceiro(close)} disabled={salvandoFinanceiro}
-                className="min-h-10 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
-                {salvandoFinanceiro ? "Salvando…" : "Salvar valor"}
-              </button>
-            </>
-          )}
-        >
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label htmlFor="valor-solicitado" className="mb-1.5 block text-[0.6875rem] font-medium text-black/45">Solicitado</label>
-              <CampoValor id="valor-solicitado" value={editValorSolicitado} onChange={texto => { setEditValorSolicitado(texto); setErroFinanceiro(null); }} invalido={!lerValorBRL(editValorSolicitado).valido} autoFocus />
-            </div>
-            <div>
-              <label htmlFor="valor-aprovado" className="mb-1.5 block text-[0.6875rem] font-medium text-black/45">Aprovado <span className="font-normal text-black/30">(quando fechar)</span></label>
-              <CampoValor id="valor-aprovado" value={editValorAprovado} onChange={texto => { setEditValorAprovado(texto); setErroFinanceiro(null); }} invalido={!lerValorBRL(editValorAprovado).valido} />
-            </div>
-          </div>
-          {erroFinanceiro && <p role="alert" className="mt-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erroFinanceiro}</p>}
-        </BottomSheet>
       )}
     </div>
   );

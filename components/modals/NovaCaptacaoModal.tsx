@@ -833,12 +833,6 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                 )}
               </div>
 
-              <div>
-                <FieldLabel>Etapa atual</FieldLabel>
-                <CustomDropdown value={status} onChange={value => setStatus(value as StatusCaptacao)}
-                  className="[&>button]:w-full" compact icon={<TrendingUp size={13} />}
-                  options={etapas.map(({ status: value, label, Icon }) => ({ value, label, icon: <Icon size={13} /> }))} />
-              </div>
 
               <div>
                 <FieldLabel>Cota <span className="ml-1 font-normal text-black/35">(opcional)</span></FieldLabel>
@@ -861,18 +855,21 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                       label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
                       disabled: !cotaTemDisponibilidade(cota) && cota.id !== propostaAtiva?.cota_id,
                     })),
-                    { value: CRIAR_NOVA_COTA, label: "+ Criar nova cota…", icon: <Plus size={12} /> },
+                    { value: CRIAR_NOVA_COTA, label: "Criar nova cota…", icon: <Plus size={12} /> },
                   ]} />
               </div>
 
               <div>
-                <FieldLabel>{projetoId ? "Valor da proposta" : "Valor da negociação"}</FieldLabel>
-                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!propostaAceita && !valorLido.valido} ariaLabel={projetoId ? "Valor da proposta" : "Valor da negociação"} disabled={propostaAceita} />
-                {propostaAceita
-                  ? <p className="mt-1 text-[0.6875rem] text-black/40">Proposta aceita: o valor faz parte da venda.</p>
-                  : !valorLido.valido
-                    ? <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>
-                    : projetoId && <p className="mt-1 text-[0.6875rem] text-black/40">Vira a proposta desta negociação. Contrapartidas e detalhes em Negociar.</p>}
+                <FieldLabel>Valor</FieldLabel>
+                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!propostaAceita && !valorLido.valido} ariaLabel="Valor" disabled={propostaAceita} />
+                {!propostaAceita && !valorLido.valido && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>}
+              </div>
+
+              <div>
+                <FieldLabel>Etapa atual</FieldLabel>
+                <CustomDropdown value={status} onChange={value => setStatus(value as StatusCaptacao)}
+                  className="[&>button]:w-full" compact icon={<TrendingUp size={13} />}
+                  options={etapas.map(({ status: value, label, Icon }) => ({ value, label, icon: <Icon size={13} /> }))} />
               </div>
             </div>
           </section>
@@ -940,14 +937,6 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                           ...contatosEmpresa.map(contato => ({ value: contato.id, label: rotuloContato({ nome: contato.nome, cargo: contato.cargo }) })),
                           ...sugeridosDisponiveis.map(contato => ({ value: `sugerido:${contato.chave}`, label: rotuloContato(contato), icon: <Building2 size={12} className="text-[#7259B5]" aria-hidden="true" /> })),
                         ]} />
-                      {sugeridosDisponiveis.length > 0 && (
-                        <p className="mt-1.5 flex items-start gap-1.5 text-[0.6875rem] leading-snug text-black/40">
-                          <Building2 size={11} className="mt-px flex-shrink-0 text-[#7259B5]" aria-hidden="true" />
-                          {contatoSugerido
-                            ? "Responsável do patrocinador. Ao salvar, entra nos seus contatos."
-                            : `${sugeridosDisponiveis.length === 1 ? "1 responsável" : `${sugeridosDisponiveis.length} responsáveis`} do patrocinador na lista.`}
-                        </p>
-                      )}
                     </>
                   )}
                 </div>

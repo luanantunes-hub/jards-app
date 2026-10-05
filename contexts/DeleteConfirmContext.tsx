@@ -130,7 +130,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
             role="alertdialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            aria-describedby={descriptionId}
+            aria-describedby={opts.description === "" ? undefined : descriptionId}
             className={`w-full max-w-[22.5rem] overflow-hidden rounded bg-white shadow-2xl transition duration-200 ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none ${visible ? "translate-y-0 scale-100 opacity-100" : "translate-y-3 scale-[.97] opacity-0"}`}
             onClick={e => e.stopPropagation()}
           >
@@ -149,9 +149,11 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
               <h2 id={titleId} className="text-[0.9375rem] font-bold text-black/80 [text-wrap:balance]">
                 {opts.title ?? "Excluir este item?"}
               </h2>
-              <p id={descriptionId} className="mt-2 text-[0.75rem] leading-relaxed text-black/45">
-                {opts.description ?? "Apagado de vez, sem volta atrás."}
-              </p>
+              {opts.description !== "" && (
+                <p id={descriptionId} className="mt-2 text-[0.75rem] leading-relaxed text-black/45">
+                  {opts.description ?? "Apagado de vez, sem volta atrás."}
+                </p>
+              )}
               {error && (
                 <p role="alert" className="mt-3 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-left text-[0.75rem] text-[#B23A3A]">
                   {error}

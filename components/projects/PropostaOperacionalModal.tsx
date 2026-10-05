@@ -10,6 +10,7 @@ import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { CotaPatrocinio, Proposta, StatusProposta } from "@/lib/supabase/types";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { formatCotaValor, valorForaDaFaixa } from "@/lib/cotas";
+import { SITUACAO_PROPOSTA } from "@/lib/propostas";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 type CaseOption = { id: string; titulo: string; complemento?: string | null };
@@ -25,11 +26,9 @@ export type PropostaOperacionalDraft = Pick<
 
 export type FixedProposalCase = CaseOption & { kind: "negociacao" | "edital" };
 
-const STATUS_OPTIONS = [
-  ["rascunho", "Em elaboração"],
-  ["aceita", "Validada internamente"],
-  ["arquivada", "Arquivada"],
-] as const;
+// Aceitar não é uma situação escolhida aqui: é "Fechar negócio", que registra
+// a venda. Uma proposta já aceita aparece como tal, sem poder voltar.
+const SITUACOES_EDITAVEIS = ["rascunho", "enviada", "arquivada"] as const;
 
 function money(value: number | null) {
   if (value == null) return "—";
@@ -64,7 +63,7 @@ export function PropostaOperacionalModal({
   const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
   const initialKind = fixedCase?.kind ?? (proposta?.edital_user_id ? "edital" : "negociacao");
-  const [titulo, setTitulo] = useState(proposta?.titulo ?? `${projetoNome} — adaptação comercial`);
+  const [titulo, setTitulo] = useState(proposta?.titulo ?? `${projetoNome} — proposta`);
   const [caseKind, setCaseKind] = useState<"negociacao" | "edital">(initialKind);
   const [caseId, setCaseId] = useState(fixedCase?.id ?? proposta?.captacao_id ?? proposta?.edital_user_id ?? "");
   const [cotaId, setCotaId] = useState(proposta?.cota_id ?? "");
@@ -75,7 +74,9 @@ export function PropostaOperacionalModal({
   });
   const [contrapartidas, setContrapartidas] = useState<string[]>(proposta?.contrapartidas ?? []);
   const [observacoes, setObservacoes] = useState(proposta?.observacoes_comerciais ?? "");
-  const [status, setStatus] = useState(proposta?.status === "aceita" || proposta?.status === "arquivada" ? proposta.status : "rascunho");
+  const [status, setStatus] = useState<string>(proposta?.status ?? "rascunho");
+  const situacaoTravada = proposta?.status === "aceita";
+  const situacoes = [...SITUACOES_EDITAVEIS, ...(SITUACOES_EDITAVEIS.includes(status as typeof SITUACOES_EDITAVEIS[number]) ? [] : [status])];
   const [saving, setSaving] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const titleId = useId();
@@ -143,7 +144,7 @@ export function PropostaOperacionalModal({
   function remove() {
     if (!proposta) return;
     confirmDelete({
-      title: "Excluir esta adaptação comercial?",
+      title: "Excluir esta proposta?",
       description: "Esta ação não pode ser desfeita.",
       onConfirm: async () => {
         await excluirPorId(supabase, "propostas", proposta.id);
@@ -157,15 +158,15 @@ export function PropostaOperacionalModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded border border-black/[.09] bg-white shadow-xl" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between border-b border-black/[.07] px-6 py-4">
-          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">{proposta ? "Editar adaptação" : "Nova adaptação comercial"}</h2><p className="mt-0.5 text-[0.625rem] text-black/30">Uso interno</p></div></div>
+          <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">{proposta ? "Proposta completa" : "Nova proposta"}</h2></div></div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="rounded p-2 text-black/30 hover:bg-black/[.05]"><X size={14} /></button>
         </div>
 
         <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-6">
-          <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Título interno</label><input value={titulo} onChange={event => setTitulo(event.target.value)} className="h-10 w-full rounded border border-black/[.12] px-3 text-[0.8125rem] outline-none focus:border-[#7259B5]/60" /></div>
+          <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Título</label><input value={titulo} onChange={event => setTitulo(event.target.value)} className="h-10 w-full rounded border border-black/[.12] px-3 text-[0.8125rem] outline-none focus:border-[#7259B5]/60" /></div>
 
           <div>
-            <label className="mb-2 block text-[0.6875rem] font-semibold text-black/55">Aplicar a</label>
+            <label className="mb-2 block text-[0.6875rem] font-semibold text-black/55">Para</label>
             {fixedCase ? (
               <div className="rounded border border-black/[.09] bg-black/[.025] px-3 py-2.5">
                 <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30">{fixedCase.kind === "negociacao" ? "Negociação" : "Inscrição"}</p>
@@ -185,15 +186,15 @@ export function PropostaOperacionalModal({
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
-            <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Cota-base</label><Dropdown value={cotaId} onChange={selectCota} options={[{ value: "", label: "Construir sem cota-base" }, ...cotas.map(item => ({ value: item.id, label: `${item.nome}${item.modelo === "produto" && item.produto_nome ? ` · ${item.produto_nome}` : ""} · ${formatCotaValor(item)}` }))]} /></div>
-            <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Valor adaptado</label><div className="flex h-10 items-center rounded border border-black/[.12] px-3 focus-within:border-[#7259B5]/60"><span className="mr-2 text-[0.6875rem] text-black/30">R$</span><input inputMode="decimal" value={valor} onChange={event => setValor(event.target.value)} className="min-w-0 flex-1 bg-transparent text-[0.8125rem] outline-none" /></div></div>
+            <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Cota <span className="font-normal text-black/35">(opcional)</span></label><Dropdown value={cotaId} onChange={selectCota} options={[{ value: "", label: "Sem cota" }, ...cotas.map(item => ({ value: item.id, label: `${item.nome}${item.modelo === "produto" && item.produto_nome ? ` · ${item.produto_nome}` : ""} · ${formatCotaValor(item)}` }))]} /></div>
+            <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Valor</label><div className="flex h-10 items-center rounded border border-black/[.12] px-3 focus-within:border-[#7259B5]/60"><span className="mr-2 text-[0.6875rem] text-black/30">R$</span><input inputMode="decimal" value={valor} onChange={event => setValor(event.target.value)} className="min-w-0 flex-1 bg-transparent text-[0.8125rem] outline-none" /></div></div>
           </div>
           {cotaBase && valorForaDaFaixa(cotaBase, numericValue) && (
             <p className="text-[0.6875rem] text-[#B07A14]">O valor está fora da faixa de {formatCotaValor(cotaBase)}. Confira se outra cota é mais adequada; você ainda pode salvar esta proposta.</p>
           )}
 
           <div>
-            <div className="mb-2 flex items-center justify-between"><label className="text-[0.6875rem] font-semibold text-black/55">Contrapartidas adaptadas</label><button type="button" onClick={() => setContrapartidas(items => [...items, ""])} className="flex items-center gap-1 text-[0.6875rem] font-semibold text-[#7259B5]"><Plus size={11} /> Adicionar</button></div>
+            <div className="mb-2 flex items-center justify-between"><label className="text-[0.6875rem] font-semibold text-black/55">Contrapartidas</label><button type="button" onClick={() => setContrapartidas(items => [...items, ""])} className="flex items-center gap-1 text-[0.6875rem] font-semibold text-[#7259B5]"><Plus size={11} /> Adicionar</button></div>
             <div className="space-y-2">{contrapartidas.length === 0 ? <button type="button" onClick={() => setContrapartidas([""])} className="w-full rounded border border-dashed border-black/[.12] py-5 text-[0.6875rem] text-black/35">Adicionar contrapartida</button> : contrapartidas.map((item, index) => <div key={index} className="flex gap-2"><input value={item} onChange={event => setContrapartidas(items => items.map((current, position) => position === index ? event.target.value : current))} className="h-9 min-w-0 flex-1 rounded border border-black/[.12] px-3 text-[0.75rem] outline-none focus:border-[#7259B5]/60" /><button type="button" onClick={() => setContrapartidas(items => items.filter((_, position) => position !== index))} aria-label="Remover contrapartida" className="rounded p-2 text-black/20 hover:bg-[#D94E4E]/[.06] hover:text-[#D94E4E]"><X size={12} /></button></div>)}</div>
           </div>
 
@@ -201,8 +202,8 @@ export function PropostaOperacionalModal({
             <div className="rounded border border-[#7259B5]/15 bg-[#7259B5]/[.035] p-4"><p className="text-[0.6875rem] font-semibold text-black/60">Ajustes sobre {cotaBase.nome}</p><div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-black/40">{valueDelta !== null && valueDelta !== 0 && <span>Valor {valueDelta > 0 ? "+" : ""}{money(valueDelta)}</span>}{added.length > 0 && <span>{added.length} adicionada{added.length === 1 ? "" : "s"}</span>}{removed.length > 0 && <span>{removed.length} removida{removed.length === 1 ? "" : "s"}</span>}</div></div>
           )}
 
-          <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Decisões e ressalvas</label><textarea value={observacoes} onChange={event => setObservacoes(event.target.value)} rows={4} placeholder="Registre limites, concessões, dependências e pontos ainda em aberto." className="w-full resize-none rounded border border-black/[.12] px-3 py-2.5 text-[0.8125rem] outline-none focus:border-[#7259B5]/60" /></div>
-          <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Estado interno</label><Dropdown value={status} onChange={value => setStatus(value as "rascunho" | "aceita" | "arquivada")} options={STATUS_OPTIONS.map(item => ({ value: item[0], label: item[1] }))} /></div>
+          <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Observações</label><textarea value={observacoes} onChange={event => setObservacoes(event.target.value)} rows={4} placeholder="Limites, concessões, dependências e pontos ainda em aberto." className="w-full resize-none rounded border border-black/[.12] px-3 py-2.5 text-[0.8125rem] outline-none focus:border-[#7259B5]/60" /></div>
+          <div><label className="mb-1.5 block text-[0.6875rem] font-semibold text-black/55">Situação</label><Dropdown value={status} onChange={setStatus} disabled={situacaoTravada} options={situacoes.map(item => ({ value: item, label: SITUACAO_PROPOSTA[item] ?? item }))} /></div>
           {erro && <p role="alert" className="rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.06] px-3 py-2 text-[0.6875rem] text-[#B23A3A]">{erro}</p>}
         </div>
 
