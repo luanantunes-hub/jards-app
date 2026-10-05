@@ -4,9 +4,11 @@
 //
 // A fonte conferiu, no texto da P424, as diferenças para a P10 (tabela 1.2 de
 // docs/acoes-futuras/estudos/prestacao-de-contas-fontes/lie-federal-2026-oficial.md).
-// O resto vem da P10 marcado "a confirmar": a regra é a mesma na prática, mas
-// o dispositivo da P424 não foi conferido.
+// O resto vem da P10 e passou pela conferência regra a regra na P424
+// (conferencias/lie-p424-2020.ts, versão 2).
 
+import { aplicarConferencia } from "./conferencia";
+import { CONFERENCIA_LIE_P424_2020 } from "./conferencias/lie-p424-2020";
 import { herdarRegime } from "./herdar";
 import { LIE_P10_2026 } from "./lie-p10-2026";
 import { definida, type AlteracoesRegime, type RegimeNormativo } from "./tipos";
@@ -26,10 +28,10 @@ const basePosEnvio = definida(base.posEnvio)!;
 // A P424 tem só a reconsideração de 30 dias; o recurso administrativo de 10 dias é da P10.
 const prazosHerdados = Object.fromEntries(Object.entries(base.prazos).filter(([chave]) => chave !== "recursoAdministrativo"));
 
-export const LIE_P424_2020: RegimeNormativo = {
+const montado: RegimeNormativo = {
   ...base,
   codigo: "lie_p424_2020",
-  versao: 1,
+  versao: 2,
   nome: "Lei de Incentivo ao Esporte — Portaria 424/2020",
   sistemaOficial: "SLI",
   normaReferencia: "LC 222/2025; Portaria MC 424/2020, com as alterações até a Portaria MESP 33/2025",
@@ -52,7 +54,7 @@ export const LIE_P424_2020: RegimeNormativo = {
       dispositivo: "art. 102",
       citacao: "terão sua análise, acompanhamento e prestação de contas regidos pelas disposições nela previstas",
       aConfirmar: true,
-      nota: "O corte em 03/03/2026 é leitura dos arts. 102 a 104 da P10.",
+      nota: "O corte em 03/03/2026 é leitura dos arts. 102 a 104 da P10; a P424 só tem o início de vigência (art. 104). \"Observado o normativo vigente à época do protocolo\" pode querer dizer a P424 na redação da data do protocolo, e aí as alterações de 2021 a 2025 não alcançariam os projetos mais antigos.",
     },
   },
 
@@ -75,20 +77,17 @@ export const LIE_P424_2020: RegimeNormativo = {
       fonte: { documento: P424, dispositivo: "art. 84, § 5º" },
     },
     transferenciaSaldo: {
-      descricao: "Pedir a transferência do saldo remanescente para outro projeto da entidade",
+      descricao: "Transferência do saldo da conta CAPTAÇÃO para outro projeto da entidade em captação, uma única vez, a critério do DIFE",
       responsavel: "proponente",
       marco: "fim_vigencia",
       quantidade: 120,
       unidade: "dias_corridos",
-      fonte: { documento: P424, dispositivo: "art. 60, § 2º" },
-    },
-    notificacaoOmissao: {
-      descricao: "Apresentar a PCF ou recolher depois da notificação do DIFE por omissão, sob pena de TCE",
-      responsavel: "proponente",
-      marco: "ciencia_diligencia",
-      quantidade: 30,
-      unidade: "dias_corridos",
-      fonte: { documento: P424, dispositivo: "art. 71, § 3º" },
+      fonte: {
+        documento: P424,
+        dispositivo: "art. 59, I, na redação da Portaria 638/2021",
+        citacao: "no período de cento e vinte dias a contar da data de encerramento da execução do projeto",
+        nota: "O art. 60, § 2º, que tinha a mesma regra, foi revogado pela Portaria 638/2021.",
+      },
     },
     analisePrestacao: {
       descricao: "Análise técnica e análise financeira da PCF (cada uma)",
@@ -98,29 +97,32 @@ export const LIE_P424_2020: RegimeNormativo = {
       unidade: "dias_corridos",
       fonte: {
         documento: P424_33,
-        dispositivo: "prazo de análise da PCF",
-        aConfirmar: true,
-        nota: "A redação original dava 360 dias para a técnica e 180 para a financeira; a fonte não registra o artigo.",
+        dispositivo: "art. 86, caput",
+        nota: "A redação original dava 360 dias para a técnica e 180 para a financeira.",
       },
     },
   },
 
+  // Elaboração e captação sobre fim + meio, como na P10. A versão 1 usava o
+  // valor captado do art. 26, § 1º, revogado pela Portaria MC 834/2022.
   orcamento: {
     ...baseOrcamento,
     tetos: baseOrcamento.tetos.map(teto => teto.codigo !== "elaboracao_captacao" ? teto : {
       ...teto,
-      base: "valor_captado",
+      base: "valor_projeto",
       fonte: {
         documento: P424,
-        dispositivo: "art. 26 e § 1º",
-        nota: "Mesmos percentuais por manifestação (educacional 10%, participação 7%, rendimento 5%, N/NE/CO 15%) e teto de R$ 100 mil, sobre o valor efetivamente captado, sem rendimentos.",
+        dispositivo: "art. 26, I a IV e § 2º",
+        citacao: "do somatório do valor da atividade fim e da atividade meio",
+        aConfirmar: true,
+        nota: "Mesmos percentuais por manifestação (educacional 10%, participação 7%, rendimento 5%, N/NE/CO 15%) e teto de R$ 100 mil. O texto compilado ainda traz o § 1º (só o valor captado, sem rendimentos); a revogação pela Portaria MC 834/2022 foi vista no DOU, mas não no texto compilado.",
       },
     }),
     regras: baseOrcamento.regras.map(regra => regra.codigo !== "elaboracao_por_nivel" ? regra : {
       ...regra,
-      descricao: "Elaboração e captação até 10% (educacional), 7% (participação), 5% (rendimento) ou 15% (projeto só no N, NE ou CO) do valor efetivamente captado, sem rendimentos, até R$ 100 mil.",
+      descricao: "Elaboração e captação até 10% (educacional), 7% (participação), 5% (rendimento) ou 15% (projeto só no N, NE ou CO) de fim + meio, até R$ 100 mil.",
       parametros: { educacional: 10, participacao: 7, rendimento: 5, norteNordesteCentroOeste: 15, teto: 100_000 },
-      fonte: { documento: P424, dispositivo: "art. 26 e § 1º" },
+      fonte: { documento: P424, dispositivo: "art. 26, I a IV e § 2º", aConfirmar: true, nota: "Base sem o § 1º, revogado pela Portaria MC 834/2022." },
     }),
   },
 
@@ -160,14 +162,14 @@ export const LIE_P424_2020: RegimeNormativo = {
       complementacao: {
         ...baseAlteracoes.tipos.complementacao,
         requisitos: [
-          { tipo: "maximo_pedidos", quantidade: 1, severidade: "bloqueio", descricao: "Uma única readequação.", fonte: { documento: TUTORIAL, dispositivo: "art. 57-A, § 1º (citado)", aConfirmar: true } },
+          { tipo: "maximo_pedidos", quantidade: 1, severidade: "bloqueio", descricao: "Uma única readequação.", fonte: { documento: P424, dispositivo: "art. 57-A, § 1º", citacao: "somente uma readequação no plano de trabalho", nota: "Artigo incluído pela Portaria MC 638/2021; § 1º reescrito pela Portaria MC 834/2022." } },
           {
             tipo: "antecedencia",
             quantidade: 60,
             unidade: "dias_corridos",
             severidade: "alerta",
-            descricao: "Pedido até 60 dias antes do fim do Termo.",
-            fonte: { documento: TUTORIAL, dispositivo: "art. 57-A, § 1º (citado)", aConfirmar: true, nota: "Não foi achado no DOU o ato que incluiu o art. 57-A." },
+            descricao: "Pedido até 60 dias antes do fim do termo vigente, inclusive aditivos.",
+            fonte: { documento: P424, dispositivo: "art. 57-A, § 1º", citacao: "até sessenta dias antes do término do Termo de Compromisso assinado", nota: "A Portaria MC 834/2022 passou a contar da data final do termo anteriormente pactuado." },
           },
           { tipo: "tetos", severidade: "bloqueio", descricao: "A readequação respeita os tetos.", fonte: { documento: P424, dispositivo: "art. 26; art. 57" } },
         ],
@@ -180,13 +182,18 @@ export const LIE_P424_2020: RegimeNormativo = {
     rendimentos: {
       aplicacao: "obrigatoria",
       contamComoCaptado: false,
-      uso: "Poupança se o uso for em um mês ou mais, fundo de curto prazo se em menos; rendimentos não pagam despesa administrativa, elaboração e captação nem pessoal sem autorização.",
-      fonte: { documento: P424, dispositivo: "art. 29, §§ 1º a 3º" },
+      uso: "Poupança se o uso for em um mês ou mais, fundo de curto prazo se em menos; rendimentos só nas ações do projeto, e em despesa administrativa, elaboração e captação ou pessoal quando forem item necessário e ligado à execução.",
+      fonte: {
+        documento: P424,
+        dispositivo: "art. 29, §§ 1º a 4º, na redação da Portaria 638/2021",
+        aConfirmar: true,
+        nota: "O texto compilado ainda veda esse uso \"a não ser que expressamente autorizado pelo DIFE\"; o texto da Portaria 638/2021 no DOU o permite quando o item é necessário e tem relação direta com a execução. Na dúvida, peça a autorização.",
+      },
     },
     saldo: {
-      descricao: "Transferência do saldo para outro projeto da entidade em até 120 dias; senão, GRU.",
+      descricao: "Conta CAPTAÇÃO: o DIFE recolhe o saldo ao Tesouro ou, a critério dele, o transfere uma única vez, em até 120 dias do fim da execução, para outro projeto da entidade em captação. Conta MOVIMENTO: GRU pelo proponente ou volta à CAPTAÇÃO para pedir a transferência.",
       prazo: "transferenciaSaldo",
-      fonte: { documento: P424, dispositivo: "art. 60, § 2º" },
+      fonte: { documento: P424, dispositivo: "art. 59, I e II, e parágrafo único, na redação da Portaria 638/2021" },
     },
     regras: [
       ...baseContas.regras.filter(regra => regra.codigo !== "deposito_identificado"),
@@ -215,7 +222,19 @@ export const LIE_P424_2020: RegimeNormativo = {
     ...basePosEnvio,
     regras: [
       ...basePosEnvio.regras.filter(regra => regra.codigo !== "pcf_fora_do_prazo"),
-      { codigo: "pcf_fora_do_prazo", descricao: "PCF não apresentada: o DIFE dá 30 dias para apresentar ou recolher, sob pena de TCE.", severidade: "bloqueio", fonte: { documento: P424, dispositivo: "art. 71, § 3º" } },
+      {
+        codigo: "pcf_fora_do_prazo",
+        descricao: "PCF não apresentada no prazo: o DIFE recolhe ao Tesouro o saldo das contas CAPTAÇÃO e MOVIMENTO, com os rendimentos, e recomenda a TCE; o acesso ao SLI fica suspenso até o saneamento, e o saldo não vai para outro projeto.",
+        severidade: "bloqueio",
+        fonte: {
+          documento: P424,
+          dispositivo: "art. 71, §§ 3º e 4º, na redação da Portaria 638/2021",
+          citacao: "o DIFE recolherá ao Tesouro Nacional o saldo existente à época nas contas CAPTAÇÃO e MOVIMENTO, incluindo rendimentos, e recomendará a instauração de Tomadas de Contas Especial",
+          nota: "A redação original dava 30 dias para apresentar ou recolher. As Portarias 62/2023 e MESP 33/2025 acrescentaram a paralisação dos outros projetos e a volta do acesso depois de sanada a PCF; esses parágrafos não foram conferidos no texto compilado.",
+        },
+      },
     ],
   },
 };
+
+export const LIE_P424_2020: RegimeNormativo = aplicarConferencia(montado, CONFERENCIA_LIE_P424_2020);

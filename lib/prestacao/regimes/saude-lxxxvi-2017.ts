@@ -6,8 +6,11 @@
 // As diferenças para o Anexo LXXXVI-A foram conferidas no quadro "Antes ×
 // agora" de saude-anexo-lxxxvi-a-oficial.md (seção 11) e no manual do FNS de
 // 2019 (saude-pronon-pronas-manual-2019.md, roteiro da PRC 5); o resto vem do
-// anexo novo marcado "a confirmar".
+// anexo novo e passou pela conferência regra a regra no anexo anterior
+// (conferencias/saude-lxxxvi-2017.ts, versão 2).
 
+import { aplicarConferencia } from "./conferencia";
+import { CONFERENCIA_SAUDE_LXXXVI_2017 } from "./conferencias/saude-lxxxvi-2017";
 import { herdarRegime } from "./herdar";
 import { SAUDE_LXXXVI_A_2025 } from "./saude-lxxxvi-a-2025";
 import { definida, type AlteracoesRegime, type RegimeNormativo } from "./tipos";
@@ -26,14 +29,14 @@ const baseEnvio = definida(base.envio)!;
 const basePosEnvio = definida(base.posEnvio)!;
 const baseParcial = definida(base.prestacaoParcial)!;
 
-// Prazos que só existem no anexo novo.
-const SO_NO_NOVO = new Set(["saneamento", "complementacaoAlteracao"]);
+// Prazos que só existem no anexo novo (as certidões em 20 dias vêm da minuta do Termo de 2025).
+const SO_NO_NOVO = new Set(["saneamento", "complementacaoAlteracao", "certidoes"]);
 const prazosHerdados = Object.fromEntries(Object.entries(base.prazos).filter(([chave]) => !SO_NO_NOVO.has(chave)));
 
-export const SAUDE_LXXXVI_2017: RegimeNormativo = {
+const montado: RegimeNormativo = {
   ...base,
   codigo: "pronon_pronas_lxxxvi_2017",
-  versao: 1,
+  versao: 2,
   nome: "PRONON e PRONAS/PCD — Anexo LXXXVI (anterior)",
   sistemaOficial: "SIPAR (protocolo)",
   normaReferencia: "Lei 12.715/2012; Decreto 7.988/2013; Anexo LXXXVI da PRC GM/MS 5/2017 (origem na PRT GM/MS 1.550/2014), revogado pela Portaria GM/MS 8.031/2025",
@@ -131,10 +134,26 @@ export const SAUDE_LXXXVI_2017: RegimeNormativo = {
       descricao: "Orçamento detalhado com todos os custos, a natureza das despesas e as categorias dos gastos.",
       fonte: { documento: ANTIGO, dispositivo: "art. 27" },
     },
-    grupos: baseOrcamento.grupos.filter(grupo => grupo.codigo !== "administracao").map(grupo => grupo.codigo !== "execucao" ? grupo : {
-      ...grupo,
-      rotulo: "Custos do projeto",
-      descricao: "Custos de execução do projeto; o regime não previa custos indiretos.",
+    // As despesas administrativas eram admitidas, detalhadas e sem teto; o
+    // teto de 15% de custos indiretos é do anexo novo.
+    grupos: baseOrcamento.grupos.map(grupo => {
+      if (grupo.codigo === "execucao") {
+        return {
+          ...grupo,
+          rotulo: "Custos do projeto",
+          descricao: "Custos de execução do projeto, por natureza da despesa e categoria de gasto; no modelo, os bens de capital aparecem como custos indiretos.",
+          fonte: { documento: ANTIGO, dispositivo: "art. 27; Anexo 6 (modelo de orçamento)" },
+        };
+      }
+      if (grupo.codigo === "administracao") {
+        return {
+          ...grupo,
+          rotulo: "Despesas administrativas",
+          descricao: "Escritório, aluguel, correios, transporte administrativo, telefone, água, luz, internet e honorários administrativos, contábeis e advocatícios, detalhados no orçamento.",
+          fonte: { documento: ANTIGO, dispositivo: "art. 28", citacao: "Serão admitidas como despesas administrativas:" },
+        };
+      }
+      return grupo;
     }),
     tetos: [
       {
@@ -150,7 +169,7 @@ export const SAUDE_LXXXVI_2017: RegimeNormativo = {
     ],
     regras: [
       ...baseOrcamento.regras,
-      { codigo: "sem_custos_indiretos", descricao: "O regime não previa custos indiretos, e a taxa de administração era vedada.", severidade: "alerta", fonte: { documento: "Anexo LXXXVI-A da PRC 5/2017", dispositivo: "seção 11 da conferência (antes × agora)", aConfirmar: true } },
+      { codigo: "despesas_administrativas", descricao: "Despesas administrativas indispensáveis entram detalhadas no orçamento, sem teto percentual; taxa de administração é vedada.", severidade: "info", fonte: { documento: ANTIGO, dispositivo: "art. 28; art. 44, I", citacao: "a título de taxa de administração ou similar" } },
     ],
   },
 
@@ -174,10 +193,10 @@ export const SAUDE_LXXXVI_2017: RegimeNormativo = {
         fonte: { documento: ANTIGO, dispositivo: "arts. 68 e 69" },
       },
     },
+    // O remanejamento entre projetos (art. 75) vem da conferência, sobre a regra herdada.
     regras: [
       ...baseAlteracoes.regras.filter(regra => regra.codigo !== "prorrogacao"),
       { codigo: "prorrogacao", descricao: "Pedido de prorrogação até 60 dias antes do fim do prazo.", severidade: "alerta", parametros: { diasAntes: 60 }, fonte: { documento: ANTIGO, dispositivo: "art. 86" } },
-      { codigo: "remanejamento_entre_projetos", descricao: "No remanejamento entre projetos, o ganho do beneficiário ficava limitado a 20% do aprovado.", severidade: "alerta", parametros: { percentual: 20 }, fonte: { documento: ANTIGO, dispositivo: "art. 75, § 3º" } },
     ],
   },
 
@@ -191,9 +210,14 @@ export const SAUDE_LXXXVI_2017: RegimeNormativo = {
     },
     rendimentos: {
       aplicacao: "obrigatoria",
-      contamComoCaptado: null,
-      uso: "Aplicação obrigatória em fundo de curto prazo ou em operação de mercado aberto lastreada em título público federal; os rendimentos somam no total de recursos e voltam com o saldo.",
-      fonte: { documento: ANTIGO, dispositivo: "art. 82" },
+      contamComoCaptado: false,
+      uso: "Aplicação automática em poupança; na Conta Movimento, opção entre poupança e fundo de curto prazo. Rendimentos da Conta Captação não contam para os 60% nem para os 100% e voltam com o saldo.",
+      fonte: {
+        documento: ANTIGO,
+        dispositivo: "art. 82, caput e § 3º, I, b, na redação da PRT GM/MS 751/2020",
+        citacao: "não serão computados no cálculo dos montantes captados para fins de apuração da captação integral ou captação mínima",
+        nota: "A redação original pedia fundo de curto prazo ou operação de mercado aberto lastreada em título público federal.",
+      },
     },
     saldo: {
       descricao: "Saldos das contas Captação e Movimento, com rendimentos, recolhidos à Conta Única do Tesouro por GRU em 30 dias da notificação, sem prejuízo ao doador; recursos não usados podem voltar da Conta Movimento para a Captação.",
@@ -227,10 +251,20 @@ export const SAUDE_LXXXVI_2017: RegimeNormativo = {
       descricao: "Da celebração do Termo de Compromisso ao fim do prazo de execução, sob pena de ressarcimento.",
       fonte: { documento: ANTIGO, dispositivo: "art. 84" },
     },
-    vedadas: baseDespesas.vedadas.filter(vedada => vedada.codigo !== "obras"),
+    // Reforma era admitida com requisitos; ampliação e construção, não.
+    vedadas: baseDespesas.vedadas.map(vedada => vedada.codigo !== "obras" ? vedada : {
+      codigo: "obras",
+      descricao: "Ampliação e construção de imóveis",
+      fonte: { documento: ANTIGO, dispositivo: "art. 34", citacao: "ficando vedada a realização de investimentos com ampliação e construção de imóveis" },
+    }),
     regras: [
       ...baseDespesas.regras,
-      { codigo: "obras_com_requisitos", descricao: "Obras e reformas eram admitidas com requisitos (vedadas só no anexo novo).", severidade: "info", fonte: { documento: "Anexo LXXXVI-A da PRC 5/2017", dispositivo: "seção 11 da conferência (antes × agora)", aConfirmar: true } },
+      {
+        codigo: "obras_com_requisitos",
+        descricao: "Reformas (conservação, manutenção e reparos, sem mudar a área) com declaração do responsável técnico e custo pelo SINAPI ou, na falta dele, por 3 propostas.",
+        severidade: "alerta",
+        fonte: { documento: ANTIGO, dispositivo: "arts. 34 e 35; art. 2º, XX", citacao: "somente será permitida a realização de despesas com obras em imóveis, no âmbito do Pronon e do Pronas/PCD, se referentes a reformas" },
+      },
     ],
   },
 
@@ -241,6 +275,16 @@ export const SAUDE_LXXXVI_2017: RegimeNormativo = {
       descricao: "Produção médico-assistencial registrada exclusivamente no CMD também nos projetos antigos (antes, no CIHA).",
       fonte: { documento: "Portaria GM/MS 8.031/2025", dispositivo: "art. 3º" },
     }),
+  },
+
+  divulgacao: {
+    lacuna: "norma_silente",
+    motivo: "O anexo anterior não tem regras de divulgação, aprovação de peças nem logotipo; continua vedado dar ao doador vantagem em razão da doação.",
+    fonte: {
+      documento: ANTIGO,
+      dispositivo: "texto integral; arts. 44, IV, 105, X, e 110",
+      nota: "O logotipo e a menção ao MS vêm da minuta do Termo de 2025; o Termo que o projeto assinou pode ter cláusula parecida.",
+    },
   },
 
   envio: {
@@ -272,9 +316,9 @@ export const SAUDE_LXXXVI_2017: RegimeNormativo = {
     ...basePosEnvio,
     devolucao: {
       descricao: "GRU para a Conta Única do Tesouro, sem prejuízo ao benefício fiscal do doador, em 30 dias da notificação: saldo do orçamento, saldo ao fim da execução e reprovação parcial ou final.",
-      atualizacao: "O regime anterior não fixa índice; o roteiro do FNS soma recursos iniciais e rendimentos.",
+      atualizacao: "Na reprovação, o valor irregular é atualizado desde a captação pelo índice da caderneta de poupança.",
       gru: [],
-      fonte: { documento: ANTIGO, dispositivo: "art. 88, V a VII e §§ 1º e 2º" },
+      fonte: { documento: ANTIGO, dispositivo: "art. 88, V a VII e §§ 1º e 2º; art. 101" },
     },
     regras: [
       ...basePosEnvio.regras.filter(regra => regra.codigo !== "inabilitacao" && regra.codigo !== "analise_por_resultados" && regra.codigo !== "diligencia_por_email"),
@@ -292,3 +336,5 @@ export const SAUDE_LXXXVI_2017: RegimeNormativo = {
     fonte: { documento: ANTIGO, dispositivo: "art. 95" },
   },
 };
+
+export const SAUDE_LXXXVI_2017: RegimeNormativo = aplicarConferencia(montado, CONFERENCIA_SAUDE_LXXXVI_2017);
