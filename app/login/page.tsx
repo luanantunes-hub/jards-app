@@ -74,7 +74,7 @@ function PasswordResetModal({
               </h2>
               <p className="mt-2.5 text-sm leading-6 text-black/50">
                 Para garantir sua segurança nesta nova versão, você precisa confirmar seu acesso por e-mail e criar uma nova senha.{" "}
-                Enviamos um link para{" "}
+                Vamos enviar um link para{" "}
                 <span className="font-semibold text-black/75">{email}</span>.
               </p>
 
@@ -106,6 +106,20 @@ function PasswordResetModal({
       </div>
     </div>
   );
+}
+
+async function contaSemSenha(email: string): Promise<boolean> {
+  try {
+    const resposta = await fetch("/api/auth/conta-sem-senha", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    if (!resposta.ok) return false;
+    return (await resposta.json()).semSenha === true;
+  } catch {
+    return false;
+  }
 }
 
 // Só caminhos do próprio site: "?next=https://outro.site" ou "//outro.site"
@@ -163,11 +177,19 @@ function LoginForm() {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      setLoading(false);
       if (error.message === "Invalid login credentials") {
-        setResetSent(false);
-        setShowResetModal(true);
+        // O Supabase dá o mesmo erro para senha errada e para conta ainda sem senha; o aviso de
+        // "criar nova senha" é só para quem não tem uma.
+        const semSenha = await contaSemSenha(email);
+        setLoading(false);
+        if (semSenha) {
+          setResetSent(false);
+          setShowResetModal(true);
+        } else {
+          setError("E-mail ou senha incorretos.");
+        }
       } else {
+        setLoading(false);
         setError(error.message);
       }
       return;

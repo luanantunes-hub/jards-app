@@ -16,6 +16,7 @@ const API_LIMITS: [string, number][] = [
   ["/api/mcp/oauth/token", 20],
   ["/api/mcp/oauth/consent", 20],
   ["/api/mcp", 60],
+  ["/api/auth/conta-sem-senha", 10],
   ["/api/", 60],
 ];
 
