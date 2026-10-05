@@ -302,10 +302,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
   // organização que convidou (essas continuam existindo, só não fazem
   // sentido pra alguém com acesso limitado a um único workspace).
-  const isWorkspaceCaptador = memberships.find(m => m.organizationId === organizationId)?.papel === "captador";
+  const papelAtual = memberships.find(m => m.organizationId === organizationId)?.papel ?? null;
+  const isWorkspaceCaptador = papelAtual === "captador";
 
   return (
-    <OrganizationContext.Provider value={{ organizationId, organizationName: org.nome }}>
+    <OrganizationContext.Provider value={{ organizationId, organizationName: org.nome, papel: papelAtual }}>
       <DeleteConfirmProvider>
       <CreditosProvider>
       <EtiquetasProvider>

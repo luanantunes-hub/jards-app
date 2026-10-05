@@ -9,6 +9,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import type { PotencialFechamento, StatusCaptacao, TipoAtividade } from "@/lib/supabase/types";
 import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer";
+import { PrimeirosPassos } from "@/components/onboarding/PrimeirosPassos";
 import { useDashboardPreferences } from "@/components/dashboard/useDashboardPreferences";
 import type { DashboardModuleId } from "@/components/dashboard/dashboardModules";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
@@ -644,6 +645,8 @@ export default function DashboardPage() {
         </div>
         <DashboardCustomizer open={customizerOpen} onOpenChange={setCustomizerOpen} preferences={dashboardPreferences.preferences} onToggle={dashboardPreferences.toggle} onMove={dashboardPreferences.move} onReset={dashboardPreferences.reset} />
       </div>
+
+      <PrimeirosPassos />
 
       <div className="flex flex-col">
 

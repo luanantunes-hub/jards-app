@@ -255,6 +255,14 @@ export default function CaptacoesPage() {
       .map(item => ({ ...item, potencial_fechamento: item.potencial_fechamento ?? "medio" }));
   }
 
+  // /captacoes?novo=1 (vindo dos primeiros passos) abre o cadastro direto.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("novo") !== "1") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowModal(true);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
   useEffect(() => {
     async function fetchData() {
       setLoading(true);

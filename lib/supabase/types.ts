@@ -905,6 +905,7 @@ export interface Profile {
   tamanho_equipe: string | null;
   objetivo_principal: string | null;
   onboarding_completed: boolean;
+  primeiros_passos_ocultos_em: string | null;
   plano: PlanTipo;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;

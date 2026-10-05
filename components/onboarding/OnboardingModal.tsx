@@ -5,6 +5,7 @@ import { ArrowRight } from "lucide-react";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { EVENTO_PERFIL_CONCLUIDO } from "@/lib/onboarding/primeiros-passos";
 
 type Props = {
   user: User;
@@ -133,6 +134,7 @@ export function OnboardingModal({ user, organizationId, onComplete }: Props) {
 
     setVisible(false);
     onComplete(name.trim());
+    window.dispatchEvent(new Event(EVENTO_PERFIL_CONCLUIDO));
   }
 
   return (

@@ -1244,6 +1244,14 @@ export default function AtividadesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // /atividades?novo=1 (vindo dos primeiros passos) abre o cadastro direto.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("novo") !== "1") return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setShowNovaAtividade(true);
+    window.history.replaceState({}, "", window.location.pathname);
+  }, []);
+
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { if (viewMode !== "lista") fetchAll(); }, [viewMode, fetchAll]);
   useEffect(() => {
