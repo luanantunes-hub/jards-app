@@ -165,6 +165,7 @@ const ROTULO_DA_BASE: Record<BaseCalculo, string> = {
   valor_autorizado_captacao: "do valor autorizado para captação",
   valor_atividade_fim: "da atividade-fim",
   orcamento_producao: "do orçamento de produção",
+  valor_executado: "do total executado",
 };
 
 const NOME_DO_TIPO: Record<TipoAlteracao, string> = {
@@ -266,6 +267,7 @@ export function calcularAlteracao(
         case "valor_captado":
           return contexto.captado;
         case "valor_autorizado_captacao":
+        case "valor_executado":
           return null;
         default:
           return antes.porBase[b] ?? null;

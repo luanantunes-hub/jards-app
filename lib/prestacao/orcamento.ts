@@ -367,6 +367,7 @@ export const ROTULO_DA_BASE: Record<BaseCalculo, string> = {
   valor_autorizado_captacao: "do valor autorizado para captação",
   valor_atividade_fim: "da atividade-fim",
   orcamento_producao: "do orçamento de produção",
+  valor_executado: "do total executado",
 };
 
 /** Bases que não saem do orçamento (captado, autorizado), quando a tela as conhece. */

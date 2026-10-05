@@ -174,3 +174,71 @@ test("saúde: o regime anterior vale até 07/09/2025 e as fontes herdadas ficam 
   const divulgacao = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.divulgacao);
   assert.equal(divulgacao?.fonte.aConfirmar, true, "regra herdada e não conferida no anexo anterior");
 });
+
+// ─── Audiovisual (ANCINE) ───────────────────────────────────────────────────
+
+const ANCINE = regimePorCodigo("ancine_in159_2021");
+const ANCINE_ANTIGA = regimePorCodigo("ancine_in150_2019");
+
+// Produção 900 mil, gerenciamento 80 mil, agenciamento 20 mil. Total 1 milhão.
+const ANCINE_NOS: NoOrcamento[] = [
+  no({ id: "filmagem", nome: "Filmagem", grupo_custo: "execucao", valor_total: 600000 }),
+  no({ id: "pos", nome: "Pós-produção", grupo_custo: "execucao", valor_total: 300000 }),
+  no({ id: "ger", nome: "Gerenciamento", grupo_custo: "gerenciamento", valor_total: 80000 }),
+  no({ id: "ag", nome: "Agenciamento", grupo_custo: "agenciamento", valor_total: 20000 }),
+];
+
+const CTX_ANCINE: ContextoAlteracao = {
+  hoje: "2026-06-01", dataLiberacao: null, fimExecucao: "2027-06-30",
+  homologado: 1000000, captado: null, complementadoAntes: 0, reduzidoAntes: 0,
+};
+
+const movAncine = (id: string, de: number, para: number): MovimentoAlteracao => ({
+  no_id: id, nome: ANCINE_NOS.find(n => n.id === id)?.nome ?? id, parent_id: null, grupo_custo: null, de, para,
+});
+
+test("ANCINE: prestação em 180 dias da conclusão do objeto; a IN 159 não fixa prazo de análise", () => {
+  assert.equal(regimeSugeridoParaLei("audiovisual").codigo, "ancine_in159_2021");
+  assert.equal(prazoFinalCalculado(ANCINE, { data_fim_execucao: "2026-03-01" }), null, "o marco é a conclusão do objeto, não o fim da execução");
+  assert.equal(prazoFinalCalculado(ANCINE, { data_conclusao_objeto: "2026-03-02" })?.data, "2026-08-31");
+  assert.equal(prazoDoRegime(ANCINE, "analisePrestacao"), null);
+  assert.equal(ANCINE?.prazos.analisePrestacao && "lacuna" in ANCINE.prazos.analisePrestacao ? ANCINE.prazos.analisePrestacao.lacuna : null, "norma_silente");
+  assert.equal(prazoDoRegime(ANCINE, "respostaDiligencia")?.quantidade, 30);
+});
+
+test("ANCINE: gerenciamento até 10% do orçamento de produção; agenciamento depende do autorizado", () => {
+  const raizes = montarArvore(ANCINE_NOS, []).raizes;
+  const tetos = tetosPorGrupo(raizes, ANCINE);
+  assert.equal(tetos.find(t => t.grupo === "gerenciamento")?.limite?.maximo, 90000, "10% de 900 mil");
+  const agenciamento = tetos.find(t => t.grupo === "agenciamento");
+  assert.equal(agenciamento?.limite?.maximo, null, "sem o valor autorizado, não há máximo");
+  assert.equal(agenciamento?.excedido, false);
+  const comAutorizado = tetosPorGrupo(raizes, ANCINE, { valor_autorizado_captacao: 150000 });
+  assert.equal(comAutorizado.find(t => t.grupo === "agenciamento")?.limite?.maximo, 15000);
+  assert.equal(comAutorizado.find(t => t.grupo === "agenciamento")?.excedido, true, "20 mil > 15 mil");
+});
+
+test("ANCINE: remanejamento dispensa pedido enquanto o conjunto de alterações fica abaixo de 20%", () => {
+  const pequeno = calcularAlteracao(ANCINE_NOS, [movAncine("filmagem", 600000, 550000), movAncine("pos", 300000, 350000)], ANCINE, CTX_ANCINE);
+  assert.equal(pequeno.classificacao, "administrativa");
+  assert.ok(codigos(pequeno).includes("alerta:justificar_na_pc"));
+  const acumulado = calcularAlteracao(ANCINE_NOS, [movAncine("filmagem", 600000, 550000), movAncine("pos", 300000, 350000)], ANCINE, { ...CTX_ANCINE, movidoAntes: 160000 });
+  assert.equal(acumulado.classificacao, "formal", "50 mil + 160 mil passa de 200 mil");
+  assert.ok(codigos(acumulado).includes("formal:movido_acima"));
+  assert.match(acumulado.verificacoes.find(v => v.codigo === "prazo_orgao")?.texto ?? "", /90 dias/);
+  const novo = calcularAlteracao(ANCINE_NOS, [movAncine("filmagem", 600000, 590000), { no_id: null, nome: "Trilha", parent_id: null, grupo_custo: "execucao", de: 0, para: 10000 }], ANCINE, CTX_ANCINE);
+  assert.equal(novo.tipo, "inclusao");
+  assert.equal(novo.classificacao, "administrativa", "rubrica nova também conta nos 20%");
+});
+
+test("ANCINE: cheque e saque glosados, concentração por fornecedor em duas faixas, IN 150 com folha", () => {
+  const pagamentos = ANCINE && definida(ANCINE.pagamentos);
+  assert.deepEqual(pagamentos?.meiosVedados, ["cheque", "saque"]);
+  const fornecedores = ANCINE && definida(ANCINE.fornecedores);
+  assert.deepEqual(fornecedores?.limites[0].faixas.map(f => [f.percentual, f.severidade]), [[25, "alerta"], [50, "bloqueio"]]);
+  assert.equal(fornecedores?.limites[0].base, "valor_executado");
+  const despesasAntigas = ANCINE_ANTIGA && definida(ANCINE_ANTIGA.despesas);
+  assert.ok(!despesasAntigas?.vedadas.some(v => v.codigo === "folha_da_proponente"), "a IN 150 admitia folha de pessoal");
+  const despesasNovas = ANCINE && definida(ANCINE.despesas);
+  assert.ok(despesasNovas?.vedadas.some(v => v.codigo === "folha_da_proponente"));
+});

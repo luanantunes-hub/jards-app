@@ -4,25 +4,25 @@
 
 Cada célula resume o que o regime traz na dimensão. "Não se aplica" e "a norma não trata" vêm com o motivo e a fonte no detalhe abaixo. "A confirmar" conta as regras que vieram de fonte secundária ou ambígua: a checagem só alerta.
 
-| Dimensão | Lei Rouanet — IN MinC 29/2026 (v2) | Lei de Incentivo ao Esporte — Portaria MESP 10/2026 (v1) | Lei de Incentivo ao Esporte — Portaria 424/2020 (v1) | PRONON e PRONAS/PCD — Anexo LXXXVI-A (v1) | PRONON e PRONAS/PCD — Anexo LXXXVI (anterior) (v1) | Genérico (sem regras de lei) (v2) |
-|---|---|---|---|---|---|---|
-| Versão da norma pela data | atos desde 30/jan/2026 | protocolo desde 04/mar/2026 (1 a confirmar) | protocolo de 23/jun/2020 a 03/mar/2026 (1 a confirmar) | atos desde 08/set/2025 | aprovação de 28/set/2017 a 07/set/2025 | não se aplica |
-| Prazos | 8 prazos; envio em 60 dias do fim da execução | 10 prazos; envio em 60 dias do fim da execução | 10 prazos; envio em 60 dias do fim da execução (6 a confirmar) | 13 prazos; envio em 4 meses do fim do exercício | 11 prazos; envio em 4 meses do fim do exercício (4 a confirmar) | nenhum prazo de lei; os essenciais dizem por quê |
-| Prestação parcial | contínua (1 a confirmar) | a pedido do órgão, por parcela | a pedido do órgão, por parcela (4 a confirmar) | periódica | periódica (3 a confirmar) | não se aplica |
-| Orçamento, grupos e tetos | 6 grupos, 4 tetos (custos de administração 15%, acessibilidade 20%…) | 3 grupos, 2 tetos (despesas administrativas (atividade-meio) 15%, elaboração e captação 10%) | 3 grupos, 2 tetos (despesas administrativas (atividade-meio) 15%, elaboração e captação 10%) (13 a confirmar) | 3 grupos, 2 tetos (custos indiretos 15%, elaboração da proposta e captação 5%) | 2 grupos, 1 teto (elaboração do projeto e captação 5%) (11 a confirmar) | 6 grupos, 0 tetos |
-| Alterações do orçamento | remanejamento livre com condições; silêncio aprova (1 a confirmar) | remanejamento livre com condições; silêncio não aprova (1 a confirmar) | remanejamento livre com condições; silêncio não aprova (15 a confirmar) | remanejamento com pedido; silêncio não aprova | remanejamento com pedido; silêncio não aprova (14 a confirmar) | não se aplica |
-| Fornecedores e partes relacionadas | fornecedor 20%, proponente 20%, proponente 30% | 4 regras, sem limite percentual | 4 regras, sem limite percentual (6 a confirmar) | 4 regras, sem limite percentual | 4 regras, sem limite percentual (6 a confirmar) | não se aplica |
-| Contas, liberação e rendimentos | 2 contas (Banco do Brasil), liberação com 20% (1 a confirmar) | 2 contas (Banco do Brasil ou Caixa Econômica Federal), liberação sem percentual | 2 contas (Banco do Brasil ou Caixa Econômica Federal), liberação sem percentual (8 a confirmar) | 2 contas (Instituição financeira oficial (na prática, Banco do Brasil)), liberação com 100% (1 a confirmar) | 2 contas (Banco do Brasil), liberação com 100% (8 a confirmar) | não se aplica |
-| Meios de pagamento e documento fiscal | pix, ted, doc, boleto, debito_automatico (2 a confirmar) | qualquer meio bancário; vedado: saque | qualquer meio bancário; vedado: saque (13 a confirmar) | qualquer meio bancário; vedado: saque (1 a confirmar) | qualquer meio bancário | não se aplica |
-| Período e despesas vedadas | 13 vedações, 4 regras | 12 vedações, 4 regras (1 a confirmar) | 12 vedações, 4 regras (17 a confirmar) | 13 vedações, 2 regras | 12 vedações, 3 regras (16 a confirmar) | não se aplica |
-| Porte | pequeno até R$ 750.000, medio até R$ 5.000.000, grande (1 a confirmar) | não se aplica | não se aplica (1 a confirmar) | não se aplica | não se aplica (1 a confirmar) | não se aplica |
-| Objeto, metas e contrapartidas | 15 regras | 9 regras | 9 regras (10 a confirmar) | 11 regras | 11 regras (11 a confirmar) | não se aplica |
-| Divulgação, marcas e defeso | 3 marcas, aprovação prévia, defeso (2 a confirmar) | 4 marcas, aprovação prévia, defeso (1 a confirmar) | 4 marcas, aprovação prévia, defeso (11 a confirmar) | 1 marcas (1 a confirmar) | 1 marcas (5 a confirmar) | não se aplica |
-| Envio, documentos e modelos | Salic; 11 documentos, 1 modelo | SEI (PCP) e protocolo digital (PCF); 19 documentos, 6 modelos (1 a confirmar) | Sistema eletrônico, remessa postal ou e-mail; 18 documentos, 6 modelos (29 a confirmar) | Transferegov; 16 documentos, 0 modelos | AR, Sedex ou protocolo; 15 documentos, 0 modelos (2 a confirmar) | não se aplica |
-| Análise, resultado e devolução | 3 resultados, GRU 019473 | 4 resultados, GRU 18004-1 (1 a confirmar) | 4 resultados, GRU 18004-1 (12 a confirmar) | 3 resultados (1 a confirmar) | 3 resultados (7 a confirmar) | não se aplica |
-| Guarda de documentos | 5 anos do fim da execução | 10 anos da decisão | 10 anos da decisão (1 a confirmar) | 5 anos da decisão | 5 anos da decisão | não se aplica |
-| **Regras com fonte** | 180 | 171 | 168 | 145 | 136 | 26 |
-| **A confirmar** | 8 | 6 | 147 | 4 | 88 | 0 |
+| Dimensão | Lei Rouanet — IN MinC 29/2026 (v2) | Lei de Incentivo ao Esporte — Portaria MESP 10/2026 (v1) | Lei de Incentivo ao Esporte — Portaria 424/2020 (v1) | PRONON e PRONAS/PCD — Anexo LXXXVI-A (v1) | PRONON e PRONAS/PCD — Anexo LXXXVI (anterior) (v1) | Audiovisual (ANCINE) — IN 159/2021 (v1) | Audiovisual (ANCINE) — IN 150/2019 (v1) | Genérico (sem regras de lei) (v2) |
+|---|---|---|---|---|---|---|---|---|
+| Versão da norma pela data | atos desde 30/jan/2026 | protocolo desde 04/mar/2026 (1 a confirmar) | protocolo de 23/jun/2020 a 03/mar/2026 (1 a confirmar) | atos desde 08/set/2025 | aprovação de 28/set/2017 a 07/set/2025 | aprovação desde 17/jan/2022 | aprovação até 16/jan/2022 | não se aplica |
+| Prazos | 8 prazos; envio em 60 dias do fim da execução | 10 prazos; envio em 60 dias do fim da execução | 10 prazos; envio em 60 dias do fim da execução (6 a confirmar) | 13 prazos; envio em 4 meses do fim do exercício | 11 prazos; envio em 4 meses do fim do exercício (4 a confirmar) | 8 prazos; envio em 180 dias da conclusão do objeto; 1 sem prazo na norma | 8 prazos; envio em 180 dias da conclusão do objeto; 1 sem prazo na norma (9 a confirmar) | nenhum prazo de lei; os essenciais dizem por quê |
+| Prestação parcial | contínua (1 a confirmar) | a pedido do órgão, por parcela | a pedido do órgão, por parcela (4 a confirmar) | periódica | periódica (3 a confirmar) | a pedido do órgão | a pedido do órgão (5 a confirmar) | não se aplica |
+| Orçamento, grupos e tetos | 6 grupos, 4 tetos (custos de administração 15%, acessibilidade 20%…) | 3 grupos, 2 tetos (despesas administrativas (atividade-meio) 15%, elaboração e captação 10%) | 3 grupos, 2 tetos (despesas administrativas (atividade-meio) 15%, elaboração e captação 10%) (13 a confirmar) | 3 grupos, 2 tetos (custos indiretos 15%, elaboração da proposta e captação 5%) | 2 grupos, 1 teto (elaboração do projeto e captação 5%) (11 a confirmar) | 4 grupos, 3 tetos (gerenciamento 10%, agenciamento 10%…) (1 a confirmar) | 4 grupos, 3 tetos (gerenciamento 10%, agenciamento 10%…) (14 a confirmar) | 6 grupos, 0 tetos |
+| Alterações do orçamento | remanejamento livre com condições; silêncio aprova (1 a confirmar) | remanejamento livre com condições; silêncio não aprova (1 a confirmar) | remanejamento livre com condições; silêncio não aprova (15 a confirmar) | remanejamento com pedido; silêncio não aprova | remanejamento com pedido; silêncio não aprova (14 a confirmar) | remanejamento livre com condições; silêncio não aprova (2 a confirmar) | remanejamento livre com condições; silêncio não aprova (17 a confirmar) | não se aplica |
+| Fornecedores e partes relacionadas | fornecedor 20%, proponente 20%, proponente 30% | 4 regras, sem limite percentual | 4 regras, sem limite percentual (6 a confirmar) | 4 regras, sem limite percentual | 4 regras, sem limite percentual (6 a confirmar) | fornecedor 25% | fornecedor 25% (10 a confirmar) | não se aplica |
+| Contas, liberação e rendimentos | 2 contas (Banco do Brasil), liberação com 20% (1 a confirmar) | 2 contas (Banco do Brasil ou Caixa Econômica Federal), liberação sem percentual | 2 contas (Banco do Brasil ou Caixa Econômica Federal), liberação sem percentual (8 a confirmar) | 2 contas (Instituição financeira oficial (na prática, Banco do Brasil)), liberação com 100% (1 a confirmar) | 2 contas (Banco do Brasil), liberação com 100% (8 a confirmar) | 4 contas (Banco do Brasil), liberação sem percentual | 4 contas (Banco do Brasil), liberação sem percentual (9 a confirmar) | não se aplica |
+| Meios de pagamento e documento fiscal | pix, ted, doc, boleto, debito_automatico (2 a confirmar) | qualquer meio bancário; vedado: saque | qualquer meio bancário; vedado: saque (13 a confirmar) | qualquer meio bancário; vedado: saque (1 a confirmar) | qualquer meio bancário | ted, doc, pix, boleto, cambio; vedado: cheque, saque | ted, doc, pix, boleto, cambio; vedado: cheque, saque (13 a confirmar) | não se aplica |
+| Período e despesas vedadas | 13 vedações, 4 regras | 12 vedações, 4 regras (1 a confirmar) | 12 vedações, 4 regras (17 a confirmar) | 13 vedações, 2 regras | 12 vedações, 3 regras (16 a confirmar) | 18 vedações, 4 regras | 17 vedações, 5 regras (22 a confirmar) | não se aplica |
+| Porte | pequeno até R$ 750.000, medio até R$ 5.000.000, grande (1 a confirmar) | não se aplica | não se aplica (1 a confirmar) | não se aplica | não se aplica (1 a confirmar) | não se aplica | não se aplica (1 a confirmar) | não se aplica |
+| Objeto, metas e contrapartidas | 15 regras | 9 regras | 9 regras (10 a confirmar) | 11 regras | 11 regras (11 a confirmar) | 11 regras | 11 regras (12 a confirmar) | não se aplica |
+| Divulgação, marcas e defeso | 3 marcas, aprovação prévia, defeso (2 a confirmar) | 4 marcas, aprovação prévia, defeso (1 a confirmar) | 4 marcas, aprovação prévia, defeso (11 a confirmar) | 1 marcas (1 a confirmar) | 1 marcas (5 a confirmar) | 3 marcas | 3 marcas (10 a confirmar) | não se aplica |
+| Envio, documentos e modelos | Salic; 11 documentos, 1 modelo | SEI (PCP) e protocolo digital (PCF); 19 documentos, 6 modelos (1 a confirmar) | Sistema eletrônico, remessa postal ou e-mail; 18 documentos, 6 modelos (29 a confirmar) | Transferegov; 16 documentos, 0 modelos | AR, Sedex ou protocolo; 15 documentos, 0 modelos (2 a confirmar) | STR (planilhas e documentos fiscais) e Protocolo Digital; 10 documentos, 3 modelos | STR (planilhas e documentos fiscais) e Protocolo Digital; 10 documentos, 3 modelos (20 a confirmar) | não se aplica |
+| Análise, resultado e devolução | 3 resultados, GRU 019473 | 4 resultados, GRU 18004-1 (1 a confirmar) | 4 resultados, GRU 18004-1 (12 a confirmar) | 3 resultados (1 a confirmar) | 3 resultados (7 a confirmar) | 3 resultados, GRU 019401/026642/026667/026674 | 3 resultados, GRU 019401/026642/026667/026674 (16 a confirmar) | não se aplica |
+| Guarda de documentos | 5 anos do fim da execução | 10 anos da decisão | 10 anos da decisão (1 a confirmar) | 5 anos da decisão | 5 anos da decisão | 5 anos da decisão | 5 anos da decisão (1 a confirmar) | não se aplica |
+| **Regras com fonte** | 180 | 171 | 168 | 145 | 136 | 164 | 165 | 26 |
+| **A confirmar** | 8 | 6 | 147 | 4 | 88 | 3 | 159 | 0 |
 
 ## Lei Rouanet — IN MinC 29/2026 (v2)
 
@@ -392,6 +392,210 @@ A confirmar:
 - Análise, resultado e devolução: Anexo LXXXVI-A da PRC 5/2017, art. 87, § 2º (Conferido no Anexo LXXXVI-A; no Anexo LXXXVI a regra equivalente não foi conferida.)
 - Análise, resultado e devolução: Minuta do Termo de Compromisso (Editais MS 2/2025 e 3/2025), cl. 12ª (Conferido no Anexo LXXXVI-A; no Anexo LXXXVI a regra equivalente não foi conferida. Redação mais dura que a do anexo.)
 - Análise, resultado e devolução: Anexo LXXXVI-A da PRC 5/2017, arts. 81 a 95 (Conferido no Anexo LXXXVI-A; no Anexo LXXXVI a regra equivalente não foi conferida.)
+
+## Audiovisual (ANCINE) — IN 159/2021 (v1)
+
+- Código: `ancine_in159_2021`. Órgão: ANCINE. Sistema: STR e Protocolo Digital.
+- Norma: Lei 8.685/1993; Lei 8.313/1991, arts. 18 e 25; MP 2.228-1/2001; IN ANCINE 159/2021 (alterada pelas INs 160, 164, 167 e 176); IN ANCINE 158/2021; IN ANCINE 130/2016.
+
+| Dimensão | Situação | Fontes | A confirmar |
+|---|---|---|---|
+| Versão da norma pela data | aprovação desde 17/jan/2022 | 1 | 0 |
+| Prazos | 8 prazos; envio em 180 dias da conclusão do objeto; 1 sem prazo na norma | 9 | 0 |
+| Prestação parcial | a pedido do órgão | 5 | 0 |
+| Orçamento, grupos e tetos | 4 grupos, 3 tetos (gerenciamento 10%, agenciamento 10%…) | 14 | 1 |
+| Alterações do orçamento | remanejamento livre com condições; silêncio não aprova | 17 | 2 |
+| Fornecedores e partes relacionadas | fornecedor 25% | 10 | 0 |
+| Contas, liberação e rendimentos | 4 contas (Banco do Brasil), liberação sem percentual | 10 | 0 |
+| Meios de pagamento e documento fiscal | ted, doc, pix, boleto, cambio; vedado: cheque, saque | 14 | 0 |
+| Período e despesas vedadas | 18 vedações, 4 regras | 24 | 0 |
+| Porte | Não se aplica: A IN 159 não classifica projetos por porte; o orçamento abaixo de R$ 500 mil só afasta a regra de concentração por fornecedor. | 1 | 0 |
+| Objeto, metas e contrapartidas | 11 regras | 12 | 0 |
+| Divulgação, marcas e defeso | 3 marcas | 10 | 0 |
+| Envio, documentos e modelos | STR (planilhas e documentos fiscais) e Protocolo Digital; 10 documentos, 3 modelos | 20 | 0 |
+| Análise, resultado e devolução | 3 resultados, GRU 019401/026642/026667/026674 | 16 | 0 |
+| Guarda de documentos | 5 anos da decisão | 1 | 0 |
+
+A confirmar:
+
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31, I (A fonte não detalha o que entra no orçamento de produção; o limite também se prende ao executado com recursos ANCINE.)
+- Alterações do orçamento: Guia de Acompanhamento de Projetos do FSA (BRDE, jan/2025), § 4.10; IN 158, arts. 49 e 50 (Redimensionamento do orçamento depende de aprovação prévia; o texto da IN 158 não foi lido.)
+
+## Audiovisual (ANCINE) — IN 150/2019 (v1)
+
+- Código: `ancine_in150_2019`. Órgão: ANCINE. Sistema: STR e Protocolo Digital.
+- Norma: Lei 8.685/1993; Lei 8.313/1991, arts. 18 e 25; MP 2.228-1/2001; IN ANCINE 150/2019 (IN 125/2015 para despesas até 2019).
+
+| Dimensão | Situação | Fontes | A confirmar |
+|---|---|---|---|
+| Versão da norma pela data | aprovação até 16/jan/2022 | 1 | 0 |
+| Prazos | 8 prazos; envio em 180 dias da conclusão do objeto; 1 sem prazo na norma | 9 | 9 |
+| Prestação parcial | a pedido do órgão | 5 | 5 |
+| Orçamento, grupos e tetos | 4 grupos, 3 tetos (gerenciamento 10%, agenciamento 10%…) | 14 | 14 |
+| Alterações do orçamento | remanejamento livre com condições; silêncio não aprova | 17 | 17 |
+| Fornecedores e partes relacionadas | fornecedor 25% | 10 | 10 |
+| Contas, liberação e rendimentos | 4 contas (Banco do Brasil), liberação sem percentual | 10 | 9 |
+| Meios de pagamento e documento fiscal | ted, doc, pix, boleto, cambio; vedado: cheque, saque | 14 | 13 |
+| Período e despesas vedadas | 17 vedações, 5 regras | 24 | 22 |
+| Porte | Não se aplica: A IN 159 não classifica projetos por porte; o orçamento abaixo de R$ 500 mil só afasta a regra de concentração por fornecedor. | 1 | 1 |
+| Objeto, metas e contrapartidas | 11 regras | 12 | 12 |
+| Divulgação, marcas e defeso | 3 marcas | 10 | 10 |
+| Envio, documentos e modelos | STR (planilhas e documentos fiscais) e Protocolo Digital; 10 documentos, 3 modelos | 21 | 20 |
+| Análise, resultado e devolução | 3 resultados, GRU 019401/026642/026667/026674 | 16 | 16 |
+| Guarda de documentos | 5 anos da decisão | 1 | 1 |
+
+A confirmar:
+
+- Prazos: IN ANCINE 159/2021, arts. 3º a 5º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Se a 1ª liberação for posterior à conclusão, conta da liberação. Vários processos do mesmo objeto: vale o último prazo, com uma prestação por processo. No FSA, o prazo do contrato.)
+- Prazos: IN ANCINE 158/2021, art. 57; FAQ SPR 2.10 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prazos: IN ANCINE 159/2021, art. 45 e § 3º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Omissão leva a inadimplência; mais 30 dias sem saneamento, a proposta de não aprovação.)
+- Prazos: IN ANCINE 159/2021, art. 6º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prazos: IN ANCINE 159/2021, texto integral; FAQ SPR (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prazos: IN ANCINE 158/2021, art. 3º, II e § 3º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prazos: IN ANCINE 159/2021, arts. 48 a 50 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prazos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 69; IN 159, arts. 31 e 32 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Sem pagamento, recurso ou parcelamento, a prestação é não aprovada e incide multa.)
+- Prazos: IN ANCINE 130/2016, com a IN 152/2020, art. 9º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prestação parcial: IN ANCINE 159/2021, Anexo, art. 2º, § 3º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prestação parcial: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 18, nota 3 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prestação parcial: IN ANCINE 159/2021, arts. 54 a 56 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prestação parcial: IN ANCINE 159/2021, art. 57 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Prestação parcial: IN ANCINE 159/2021, arts. 54 a 57 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 12 e 60; Demonstrativo Orçamentário e Financeiro, seção IV (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31, I (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31, II (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31, III (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31, I (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. A fonte não detalha o que entra no orçamento de produção; o limite também se prende ao executado com recursos ANCINE.)
+- Orçamento, grupos e tetos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 27–28 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31, I; Lei 11.437/2006, art. 12 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Limitado ao executado com recursos ANCINE; na coprodução internacional, só a parte brasileira. O excesso é glosado (IN 159, art. 18, VI).)
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31, II (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Proporcional ao captado: R$ 100 mil autorizados e R$ 80 mil captados dão teto de R$ 8 mil.)
+- Orçamento, grupos e tetos: IN ANCINE 158/2021, art. 31, III (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Sobre o autorizado pelo art. 1º da Lei 8.685, limitado ao captado.)
+- Orçamento, grupos e tetos: Lei 8.685/1993, art. 4º, § 2º, I; IN 159, art. 16, § 1º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 159/2021, art. 18, IV (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 159/2021, art. 18, V (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Orçamento, grupos e tetos: IN ANCINE 159/2021, art. 18, XIX (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Alterações do orçamento: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 27–28 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Alterações do orçamento: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 27–28 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Vale para projetos fora dos limites de grandes itens da IN 158 (arts. 49 e 50).)
+- Alterações do orçamento: IN ANCINE 159/2021, art. 18, VI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Alterações do orçamento: IN ANCINE 159/2021, art. 20; Manual v2.11, p. 20 e 28 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Alterações do orçamento: IN ANCINE 159/2021, art. 18, XXXII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Alterações do orçamento: Guia de Acompanhamento de Projetos do FSA (BRDE, jan/2025), § 4.10; IN 158, arts. 49 e 50 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Redimensionamento do orçamento depende de aprovação prévia; o texto da IN 158 não foi lido.)
+- Alterações do orçamento: IN ANCINE 159/2021, art. 20 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Alterações do orçamento: IN ANCINE 159/2021, art. 28, X; art. 42, II (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Alterações do orçamento: Guia de Acompanhamento de Projetos do FSA (BRDE, jan/2025), § 4.10 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Alterações do orçamento: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 20 e 27–28 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Fornecedores e partes relacionadas: IN ANCINE 159/2021, art. 28, VI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Fornecedores e partes relacionadas: IN ANCINE 159/2021, art. 28, VI; art. 42 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Fornecedores e partes relacionadas: IN ANCINE 159/2021, art. 18, IV, c; Manual v2.11, p. 56 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Fornecedores e partes relacionadas: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 26 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Fornecedores e partes relacionadas: IN ANCINE 159/2021, art. 18, XXVI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Fornecedores e partes relacionadas: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 26–27 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Fornecedores e partes relacionadas: IN ANCINE 159/2021, art. 42, II (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Fornecedores e partes relacionadas: IN ANCINE 159/2021, arts. 18, 28 e 42 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: IN ANCINE 159/2021, art. 18, VII (red. IN 167/2023); Manual v2.11, p. 24–25 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 22 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 14 e 18; IN 159, Anexo, art. 1º, IV e V (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: IN ANCINE 159/2021, art. 18, XXX; Manual v2.11, p. 23 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 23 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 25 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: IN ANCINE 159/2021, art. 28, VIII e XII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 18 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Contas, liberação e rendimentos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 22 a 25 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: IN ANCINE 159/2021, arts. 9º e 10; Manual v2.11, p. 27 e 56 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: IN ANCINE 159/2021, art. 18, XXI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: IN ANCINE 159/2021, art. 18, XXII a XXIV (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: IN ANCINE 159/2021, art. 11 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 41–42 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 60 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 49–50 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: Manual de Envio de Documentos Fiscais – STR (04/05/2021), §§ 2 e 6 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: IN ANCINE 159/2021, art. 15; art. 18, X; DDC 1965-E/2023 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 23–24, 27 e 49 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 4 e 24 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: IN ANCINE 159/2021, art. 15, VI; art. 18, VIII e IX (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Meios de pagamento e documento fiscal: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 22–24 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, I (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, II e III (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, VI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, VII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XIII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XIV (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XV (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XVI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XVII e XVIII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XX (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XXVII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XXVIII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 18, XXXV (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 19 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 20; Lei 12.485/2011, art. 2º, XII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 28 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 34–35 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 33–34 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, art. 20 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Período e despesas vedadas: IN ANCINE 159/2021, arts. 18 a 20 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Porte: IN ANCINE 159/2021, art. 28, VI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, Anexo, art. 1º, VII, a (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, Anexo, art. 1º, VII, b; art. 3º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, Anexo, art. 1º, VII, c (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, Anexo, art. 1º, VII, d (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, Anexo, art. 1º, VII, e (red. IN 176/2026) (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, Anexo, art. 1º, VII, f (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, Anexo, art. 1º, VII, g e h (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, art. 18, XXXIV; Manual v2.11, p. 65–66 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, art. 21, parágrafo único (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 109/2012, art. 26; Manual v2.11, p. 11 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 158/2021, art. 53 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Objeto, metas e contrapartidas: IN ANCINE 159/2021, Anexo, art. 1º, VII; art. 3º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: Manual de Aplicação da Logomarca v3.0 (24/08/2022), aprovação prévia (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: IN ANCINE 130/2016, com a IN 152/2020, art. 4º (red. IN 152/2020) (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: Lei 5.700/1971, art. 3º-A; IN 152/2020 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: Manual de Aplicação da Logomarca v3.0 (24/08/2022), créditos (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: Manual de Aplicação da Logomarca v3.0 (24/08/2022), conjunto, visibilidade e cor (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: Manual de Aplicação da Logomarca v3.0 (24/08/2022), placa de infraestrutura (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: IN ANCINE 130/2016, com a IN 152/2020, art. 6º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: IN ANCINE 159/2021, art. 28, XI; art. 31, III (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), parte B.8 da conferência (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Divulgação, marcas e defeso: IN ANCINE 130/2016, com a IN 152/2020, arts. 2º a 6º; Manual de Aplicação da Logomarca v3.0 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, I (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, II (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, III (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, IV; art. 2º, § 3º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, V; art. 2º, § 3º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, VI (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, VII (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, VIII; art. 2º, § 1º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, art. 1º, parágrafo único (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: Manual STR – Planilhas v2.2 (30/09/2025), §§ 6.1 e 6.3 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, formulário I (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, formulário II (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, formulário III (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: Manual STR – Planilhas v2.2 (30/09/2025), §§ 3.1 e 3.2 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: Manual STR – Planilhas v2.2 (30/09/2025), §§ 2.3 e 3.2.1 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: Manual STR – Planilhas v2.2 (30/09/2025), § 5.3 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 10 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: Manual STR – Planilhas v2.2 (30/09/2025), §§ 3.1 e 4.1.1 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: Manual STR – Planilhas v2.2 (30/09/2025), § 6.3 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Envio, documentos e modelos: IN ANCINE 159/2021, Anexo, arts. 1º a 4º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 20 e 68 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: IN ANCINE 159/2021, arts. 22 e 28 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: IN ANCINE 159/2021, art. 29 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 14–17 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Lei 8.313/1991, arts. 18 e 25: órgão 34902 (Fundo Nacional de Cultura).)
+- Análise, resultado e devolução: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 14–17 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Lei 8.685/1993, arts. 1º, 1º-A, 3º e 3º-A: órgão 20203 (ANCINE).)
+- Análise, resultado e devolução: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 14–17 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. PAR/PAQ, orçamento da ANCINE.)
+- Análise, resultado e devolução: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 14–17 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida. Editais FSA, MP 2.228-1 (art. 39, X) e Funcines.)
+- Análise, resultado e devolução: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 14–17 e 69 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: IN ANCINE 159/2021, arts. 31 a 36 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: Manual de Prestação de Contas ANCINE v2.11 (23/09/2026), p. 68 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: IN ANCINE 159/2021, art. 42 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: IN ANCINE 164/2022, parcelamento (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: IN TCU 98/2024, art. 6º, I; Manual v2.11, p. 71–73 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: Res. TCU 344/2022, arts. 2º e 8º; DDC ANCINE 110-E/2023 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: IN ANCINE 159/2021, arts. 58 a 60 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Análise, resultado e devolução: IN ANCINE 159/2021, arts. 22 a 50 (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
+- Guarda de documentos: IN ANCINE 159/2021, art. 8º (Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.)
 
 ## Genérico (sem regras de lei) (v2)
 

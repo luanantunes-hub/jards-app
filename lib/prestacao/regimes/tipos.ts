@@ -68,7 +68,8 @@ export type BaseCalculo =
   | "valor_homologado_execucao"
   | "valor_autorizado_captacao"
   | "valor_atividade_fim"
-  | "orcamento_producao";
+  | "orcamento_producao"
+  | "valor_executado";
 
 /** Bases que o orçamento em árvore calcula pela soma de grupos de custo. */
 export const BASES_DO_ORCAMENTO = [

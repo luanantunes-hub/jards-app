@@ -1,6 +1,8 @@
 // Catálogo de regimes disponível no código. É a fonte do seed de
 // prestacao_regimes (scripts/prestacao-gerar-seed-regimes.ts).
 
+import { ANCINE_IN150_2019 } from "./ancine-in150-2019";
+import { ANCINE_IN159_2021 } from "./ancine-in159-2021";
 import { LIE_P10_2026 } from "./lie-p10-2026";
 import { LIE_P424_2020 } from "./lie-p424-2020";
 import { ROUANET_IN29_2026 } from "./rouanet-in29-2026";
@@ -83,6 +85,8 @@ export const REGIMES: readonly RegimeNormativo[] = [
   LIE_P424_2020,
   SAUDE_LXXXVI_A_2025,
   SAUDE_LXXXVI_2017,
+  ANCINE_IN159_2021,
+  ANCINE_IN150_2019,
   GENERICO,
 ];
 

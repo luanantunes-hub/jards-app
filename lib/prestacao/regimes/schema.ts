@@ -48,6 +48,7 @@ const area = z.enum(["cultura", "esporte", "audiovisual", "saude", "outro"]);
 const base = z.enum([
   "valor_captado", "valor_projeto", "valor_total_projeto", "valor_aprovado_execucao",
   "valor_homologado_execucao", "valor_autorizado_captacao", "valor_atividade_fim", "orcamento_producao",
+  "valor_executado",
 ]);
 
 const marco = z.enum([
