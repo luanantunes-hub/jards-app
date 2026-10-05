@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { FornecedorCombobox } from "@/components/prestacao/despesas/FornecedorCombobox";
+import { PagamentosDaDespesa } from "@/components/prestacao/despesas/PagamentosDaDespesa";
 import { EtiquetaSancoes, EtiquetaSituacao } from "@/components/prestacao/fornecedores/EtiquetasFornecedor";
 import type { DocumentoResumido } from "@/hooks/useFornecedoresDaOrganizacao";
 import type { ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
@@ -24,8 +25,10 @@ import {
 } from "@/lib/prestacao/despesas";
 import { formatarDocumento } from "@/lib/prestacao/fornecedores";
 import { lerValor } from "@/lib/prestacao/orcamento";
+import { alertasDosPagamentos } from "@/lib/prestacao/pagamentos";
+import type { PagamentosRegime } from "@/lib/prestacao/regimes/tipos";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
-import type { PrestacaoComprovante, PrestacaoFornecedor, TipoComprovante } from "@/lib/supabase/types";
+import type { PrestacaoComprovante, PrestacaoFornecedor, PrestacaoPagamento, TipoComprovante } from "@/lib/supabase/types";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
 const CAMPO = "w-full rounded border border-black/[.12] px-3 py-2 text-[0.8125rem] outline-none transition focus:border-[#7259B5] focus-visible:ring-2 focus-visible:ring-[#7259B5]/20 disabled:bg-black/[.02] disabled:text-black/50";
@@ -62,13 +65,17 @@ export function ListaAlertasDespesa({ alertas }: { alertas: readonly AlertaDespe
  * retenções e o que precisa de justificativa. Os alertas mudam enquanto a
  * pessoa preenche; salvar não depende deles.
  */
-export function DespesaModal({ comprovante, tipos, itens, fornecedores, documentosDe, outrasChaves, podeEditar, onClose, onSalvo }: {
+export function DespesaModal({ comprovante, tipos, itens, fornecedores, documentosDe, outrasChaves, pagamentos, regimePagamentos, onPagamentosMudaram, podeEditar, onClose, onSalvo }: {
   comprovante: PrestacaoComprovante;
   tipos: { value: TipoComprovante; label: string }[];
   itens: readonly ItemDoOrcamento[];
   fornecedores: readonly PrestacaoFornecedor[];
   documentosDe: (fornecedorId: string | null | undefined) => DocumentoResumido[];
   outrasChaves: readonly string[];
+  /** Pagamentos desta despesa (P2.5) e os meios que o regime aceita. */
+  pagamentos: readonly PrestacaoPagamento[];
+  regimePagamentos: PagamentosRegime | null;
+  onPagamentosMudaram: () => void;
   podeEditar: boolean;
   onClose: () => void;
   onSalvo: (comprovante: PrestacaoComprovante) => void;
@@ -109,16 +116,19 @@ export function DespesaModal({ comprovante, tipos, itens, fornecedores, document
     outras_retencoes: valorOuZero(outras),
     identificacao_projeto: (identificacao || null) as DespesaParaChecar["identificacao_projeto"],
   };
-  const alertas = alertasDaDespesa({
-    despesa,
-    fornecedor,
-    documentosDoFornecedor: documentosDe(fornecedorId),
-    item: item ? { nome: item.nome, cnaes: item.cnaes, origem: item.cnaesDe } : null,
-    outrasChaves,
-  });
   const chaveLida = lerChaveAcesso(chave);
   const retido = totalRetido(despesa);
-  const liquido = despesa.valor_extraido !== null ? despesa.valor_extraido - retido : null;
+  const liquido = despesa.valor_extraido !== null ? Math.round((despesa.valor_extraido - retido) * 100) / 100 : null;
+  const alertas = [
+    ...alertasDaDespesa({
+      despesa,
+      fornecedor,
+      documentosDoFornecedor: documentosDe(fornecedorId),
+      item: item ? { nome: item.nome, cnaes: item.cnaes, origem: item.cnaesDe } : null,
+      outrasChaves,
+    }),
+    ...alertasDosPagamentos({ despesa, liquido, fornecedor, pagamentos, regime: regimePagamentos }),
+  ];
   const fiscal = ehDespesa(tipo);
   const pedeJustificativa = faltaJustificativa(alertas, justificativa);
 
@@ -295,6 +305,13 @@ export function DespesaModal({ comprovante, tipos, itens, fornecedores, document
             </p>
           )}
         </section>
+
+        {fiscal && (
+          <section aria-labelledby={`${idBase}-pagamentos`}>
+            <h3 id={`${idBase}-pagamentos`} className={SECAO}>Pagamentos</h3>
+            <PagamentosDaDespesa despesaId={c.id} liquido={liquido} fornecedor={fornecedor} pagamentos={pagamentos} podeEditar={podeEditar} onMudou={onPagamentosMudaram} />
+          </section>
+        )}
 
         {fiscal && (
           <section aria-labelledby={`${idBase}-justificativa`}>

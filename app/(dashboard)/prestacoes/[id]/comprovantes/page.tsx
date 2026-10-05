@@ -17,6 +17,10 @@ import { DespesaModal } from "@/components/prestacao/despesas/DespesaModal";
 import { FornecedorCombobox } from "@/components/prestacao/despesas/FornecedorCombobox";
 import { alertasDaDespesa, ehDespesa, TIPOS_COMPLEMENTARES, TIPOS_FISCAIS } from "@/lib/prestacao/despesas";
 import { nomeDoFornecedor } from "@/lib/prestacao/fornecedores";
+import { alertasDosPagamentos, situacaoDosPagamentos } from "@/lib/prestacao/pagamentos";
+import { definida } from "@/lib/prestacao/regimes/tipos";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import type { PrestacaoPagamento } from "@/lib/supabase/types";
 
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
   nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
@@ -80,6 +84,12 @@ export default function ComprovantesPage() {
   // Despesa v2 (P2.4): fornecedores da organização e o comprovante aberto como despesa.
   const { fornecedores, documentosDe } = useFornecedoresDaOrganizacao(organizationId);
   const [despesaAberta, setDespesaAberta] = useState<PrestacaoComprovante | null>(null);
+  // Pagamentos (P2.5) e os meios de pagamento do regime da prestação.
+  const [pagamentos, setPagamentos] = useState<PrestacaoPagamento[]>([]);
+  const [regimeId, setRegimeId] = useState<string | null>(null);
+  const regimes = useRegimesPublicados();
+  const regime = regimes.find(r => r.id === regimeId)?.regime ?? null;
+  const regimePagamentos = regime ? definida(regime.pagamentos) : null;
   // Itens da versão em uso do orçamento em árvore (P1.6).
   const { itens } = useItensDoOrcamento(id);
   const [periodo, setPeriodo] = useState<{ inicio: string | null; fim: string | null }>({ inicio: null, fim: null });
@@ -105,12 +115,18 @@ export default function ComprovantesPage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const fetch = useCallback(async () => {
-    const [{ data: comp }, { data: prest }] = await Promise.all([
+    const [{ data: comp }, { data: prest }, { data: pags }] = await Promise.all([
       (supabase as any).from("prestacao_comprovantes").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
-      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
+      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id").eq("id", id).maybeSingle(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela ainda não está no tipo Database
+      (supabase as any).from("prestacao_pagamentos").select("*").eq("prestacao_id", id),
     ]);
     setComprovantes((comp as PrestacaoComprovante[]) ?? []);
-    if (prest) setPeriodo({ inicio: prest.data_inicio_execucao, fim: prest.data_fim_execucao });
+    setPagamentos((pags as PrestacaoPagamento[]) ?? []);
+    if (prest) {
+      setPeriodo({ inicio: prest.data_inicio_execucao, fim: prest.data_fim_execucao });
+      setRegimeId(prest.regime_id ?? null);
+    }
     setLoading(false);
   }, [id, supabase]);
 
@@ -587,6 +603,12 @@ export default function ComprovantesPage() {
                   outrasChaves: comprovantes.filter(o => o.id !== c.id && o.chave_acesso).map(o => o.chave_acesso!),
                 })
                 : [];
+              const pagamentosC = pagamentos.filter(p => p.despesa_id === c.id);
+              const liquidoC = c.valor_liquido ?? c.valor_extraido;
+              if (ehDespesa(c.tipo)) {
+                alertas.push(...alertasDosPagamentos({ despesa: c, liquido: liquidoC, fornecedor: fornecedorC, pagamentos: pagamentosC, regime: regimePagamentos }));
+              }
+              const pagamentoC = situacaoDosPagamentos(liquidoC, pagamentosC);
               const graves = alertas.filter(a => a.nivel === "alerta").length;
               const justificada = graves > 0 && Boolean(c.justificativa?.trim());
               return (
@@ -637,6 +659,12 @@ export default function ComprovantesPage() {
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #1A8B7A47", color: "#1A8B7A" }}>Internacional</span>
                       )}
                       {c.valor_extraido !== null && <span className="tabular-nums">{fmt(c.valor_extraido)}</span>}
+                      {ehDespesa(c.tipo) && (
+                        pagamentoC.situacao === "pago" ? <span className="text-[#2E8932]">Pago</span>
+                          : pagamentoC.situacao === "parcial" ? <span className="tabular-nums">Pago {fmt(pagamentoC.pago)}</span>
+                            : pagamentoC.situacao === "excedido" ? <span className="text-[#B23B3B]">Pago acima do líquido</span>
+                              : <span>A pagar</span>
+                      )}
                       {c.data_doc && <span>{fmtDate(c.data_doc)}</span>}
                       {c.data_doc && (() => {
                         const d = c.data_doc!;
@@ -727,6 +755,9 @@ export default function ComprovantesPage() {
           fornecedores={fornecedores}
           documentosDe={documentosDe}
           outrasChaves={comprovantes.filter(o => o.id !== despesaAberta.id && o.chave_acesso).map(o => o.chave_acesso!)}
+          pagamentos={pagamentos.filter(p => p.despesa_id === despesaAberta.id)}
+          regimePagamentos={regimePagamentos}
+          onPagamentosMudaram={fetch}
           podeEditar={permissoes.editar}
           onClose={() => setDespesaAberta(null)}
           onSalvo={atualizado => {

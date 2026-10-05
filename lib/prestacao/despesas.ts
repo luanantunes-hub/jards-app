@@ -140,7 +140,14 @@ export type CodigoAlertaDespesa =
   | "NFE_CHAVE_REPETIDA"
   | "DOC_RETENCOES"
   | "DOC_PJ_SEM_NF"
-  | "DOC_IDENTIFICACAO_PROJETO";
+  | "DOC_IDENTIFICACAO_PROJETO"
+  // Pagamentos (P2.5, lib/prestacao/pagamentos.ts)
+  | "PAGAMENTO_FALTANDO"
+  | "PAGAMENTO_EXCEDE"
+  | "PAGAMENTO_ANTECIPADO"
+  | "PAGAMENTO_MEIO"
+  | "PAGAMENTO_SEM_NUMERO"
+  | "FAVORECIDO_DIFERENTE";
 
 export type AlertaDespesa = {
   codigo: CodigoAlertaDespesa | ReturnType<typeof alertasDoFornecedor>[number]["codigo"];

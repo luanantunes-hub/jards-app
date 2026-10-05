@@ -1976,6 +1976,24 @@ export interface PrestacaoFornecedor {
   updated_at: string;
 }
 
+/** Pagamento de uma despesa (P2.5); lancamento_id liga ao extrato na conciliação (P2.6). */
+export interface PrestacaoPagamento {
+  id: string;
+  prestacao_id: string;
+  despesa_id: string;
+  lancamento_id: string | null;
+  forma: "pix" | "ted" | "doc" | "boleto" | "cheque" | "saque" | "cartao" | "debito_automatico" | "cambio";
+  data: string;
+  valor: number;
+  favorecido_documento: string | null;
+  favorecido_nome: string | null;
+  numero_documento: string | null;
+  observacao: string | null;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Comprovante do fornecedor (P2.3b): o que a consulta guardou ou a pessoa anexou. */
 export interface PrestacaoFornecedorDocumento {
   id: string;
