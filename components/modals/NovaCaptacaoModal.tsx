@@ -19,10 +19,11 @@ import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMen
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { contatoSalvoCorrespondente, rotuloContato, semContatosJaSalvos, type ContatoSugerido } from "@/lib/contatos-sugeridos";
 
 type EmpresaCRM   = { id: string; nome: string };
 type Projeto      = { id: string; nome: string };
-type ContatoItem  = { id: string; nome: string; cargo: string | null; email: string | null };
+type ContatoItem  = { id: string; nome: string; cargo: string | null; email: string | null; responsavel_id?: string | null };
 type CaptadorExt  = { id: string; nome: string; agencia: string | null };
 
 const ETAPAS: { status: StatusCaptacao; Icon: React.ElementType; label: string; color: string }[] = [
@@ -174,12 +175,14 @@ function NovoContatoInline({
 }
 
 /* ─── Modal principal ─────────────────────────────────────────────── */
-export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
+export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpresa, empresaPubId, contatosSugeridos, statusPre, potentialPre, editData, initialProjetoId, initialProjetoNome }: {
   onClose: () => void;
   onSaved: (id?: string) => void;
   empresaPreId?: string;
   nomePreEmpresa?: string;
   empresaPubId?: string;
+  /** Responsáveis do patrocinador já liberados para a pessoa (página do patrocinador). */
+  contatosSugeridos?: ContatoSugerido[];
   statusPre?: StatusCaptacao;
   potentialPre?: PotencialFechamento;
   editData?: EditDataCaptacao;
@@ -240,6 +243,12 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [contatoEmpresaId, setContatoEmpresaId]   = useState<string | null>(editData?.contato_empresa_id ?? null);
   const [contatosEmpresa, setContatosEmpresa]     = useState<ContatoItem[]>([]);
   const [showNovoContato, setShowNovoContato]     = useState(false);
+  // Responsável do patrocinador escolhido; vira contato salvo só ao salvar a negociação.
+  // O principal (primeiro da lista do patrocinador) já vem escolhido.
+  const [contatoSugeridoChave, setContatoSugeridoChave] = useState<string | null>(() => editData ? null : contatosSugeridos?.[0]?.chave ?? null);
+  // empresas_crm que corresponde ao patrocinador aberto (empresa_pub_id), quando existe.
+  const [empresaDoPatrocinadorId, setEmpresaDoPatrocinadorId] = useState<string | null>(empresaPreId ?? null);
+  const empresaTocada = useRef(false);
 
   const [origem, setOrigem] = useState<OrigemOportunidade | null>(
     editData?.origem_oportunidade ?? (editData?.meio_contato === "indicacao" ? "indicacao" : null),
@@ -299,7 +308,23 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     }
 
     const preEmpresa = editData?.empresa_crm_id ?? empresaPreId;
-    if (preEmpresa) loadContatosEmpresa(preEmpresa);
+    if (preEmpresa) loadContatosEmpresa(preEmpresa, { doPatrocinador: !editData && Boolean(empresaPubId) });
+    else if (empresaPubId && organizationId) {
+      // Aberto pela página do patrocinador: usa a empresa que já está no CRM.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).from("empresas_crm").select("id, nome")
+        .eq("organization_id", organizationId).eq("empresa_pub_id", empresaPubId)
+        .order("created_at", { ascending: true }).limit(1).maybeSingle()
+        .then(({ data }: { data: EmpresaCRM | null }) => {
+          if (empresaTocada.current || !data) return;
+          setEmpresaDoPatrocinadorId(data.id);
+          setEmpresaId(data.id);
+          setEmpresaSearch(data.nome);
+          checkBlindagem(data.id);
+          checkExclusividade(data.id, projetoId);
+          loadContatosEmpresa(data.id, { doPatrocinador: true });
+        });
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
@@ -356,23 +381,38 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     } else setExclusividade(null);
   }
 
-  async function loadContatosEmpresa(empresaCrmId: string) {
+  async function loadContatosEmpresa(empresaCrmId: string, { doPatrocinador = false }: { doPatrocinador?: boolean } = {}) {
     if (!empresaCrmId) { setContatosEmpresa([]); setContatoEmpresaId(null); return; }
     const { data } = await (supabase as any)
-      .from("contatos").select("id, nome, cargo, email")
+      .from("contatos").select("id, nome, cargo, email, responsavel_id")
       .eq("empresa_crm_id", empresaCrmId).order("nome");
-    const result = data ?? [];
+    const result: ContatoItem[] = data ?? [];
     setContatosEmpresa(result);
     // O contato selecionado pode ser de outra empresa (campo dependente trocando
     // de pai) — mantém só se ainda existir na lista desta empresa.
-    setContatoEmpresaId(current => current && result.some((c: ContatoItem) => c.id === current) ? current : null);
-    if (result.length === 0) setShowNovoContato(true);
+    setContatoEmpresaId(current => current && result.some(c => c.id === current) ? current : null);
+    const sugeridos = doPatrocinador ? semContatosJaSalvos(contatosSugeridos ?? [], result) : [];
+    const principal = doPatrocinador ? contatosSugeridos?.[0] : undefined;
+    const principalSalvo = principal ? contatoSalvoCorrespondente(principal, result) : null;
+    if (principalSalvo) {
+      // O responsável principal já está nos contatos: usa o contato salvo.
+      setContatoSugeridoChave(current => current === principal?.chave ? null : current);
+      setContatoEmpresaId(current => current ?? principalSalvo.id);
+    }
+    if (result.length === 0 && sugeridos.length === 0) setShowNovoContato(true);
   }
 
   const empresasFiltradas   = empresas.filter(e => e.nome.toLowerCase().includes(empresaSearch.toLowerCase()));
   const hasExactMatch       = empresas.some(e => e.nome.toLowerCase() === empresaSearch.trim().toLowerCase());
   const projetosFiltrados   = projetos.filter(p => p.nome.toLowerCase().includes(projetoSearch.toLowerCase()));
   const hasExactMatchProjeto = projetos.some(p => p.nome.toLowerCase() === projetoSearch.trim().toLowerCase());
+
+  const nomePatrocinador = (nomePreEmpresa ?? "").trim();
+  const empresaEhDoPatrocinador = Boolean(empresaPubId) && (empresaId
+    ? empresaId === empresaDoPatrocinadorId
+    : nomePatrocinador !== "" && empresaSearch.trim() === nomePatrocinador);
+  const sugeridosDisponiveis = empresaEhDoPatrocinador ? semContatosJaSalvos(contatosSugeridos ?? [], contatosEmpresa) : [];
+  const contatoSugerido = sugeridosDisponiveis.find(contato => contato.chave === contatoSugeridoChave) ?? null;
 
   async function handleCriarProjeto(nome: string) {
     if (!nome.trim() || criandoProjeto) return;
@@ -391,14 +431,16 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     if (!nome.trim() || criandoEmpresa) return;
     setCriandoEmpresa(true);
     const { data: { user } } = await supabase.auth.getUser();
+    const doPatrocinador = Boolean(empresaPubId) && nome.trim() === nomePatrocinador;
     const { data } = await (supabase as any)
-      .from("empresas_crm").insert({ nome: nome.trim(), account_id: user?.id, organization_id: organizationId })
+      .from("empresas_crm").insert({ nome: nome.trim(), account_id: user?.id, organization_id: organizationId, ...(doPatrocinador ? { empresa_pub_id: empresaPubId } : {}) })
       .select("id, nome").single();
     setCriandoEmpresa(false);
     if (!data) return;
     setEmpresas(prev => [...prev, data].sort((a, b) => a.nome.localeCompare(b.nome)));
+    if (doPatrocinador) setEmpresaDoPatrocinadorId(data.id);
     setEmpresaId(data.id); setEmpresaSearch(data.nome); setEmpresaOpen(false);
-    loadContatosEmpresa(data.id);
+    loadContatosEmpresa(data.id, { doPatrocinador });
   }
 
   async function handleSalvar() {
@@ -415,8 +457,50 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       setSaving(false); return;
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sb = supabase as any;
+
+    // Patrocinador ainda fora do CRM: entra agora, ligado à base (empresa_pub_id).
+    let empresaFinal = empresaId;
+    if (!empresaFinal && empresaEhDoPatrocinador && empresaPubId) {
+      const existente = await sb.from("empresas_crm").select("id")
+        .eq("organization_id", organizationId).eq("empresa_pub_id", empresaPubId).limit(1).maybeSingle();
+      const criada = existente.data?.id ? null : await sb.from("empresas_crm")
+        .insert({ nome: nomePatrocinador, account_id: user.id, organization_id: organizationId, empresa_pub_id: empresaPubId })
+        .select("id").single();
+      empresaFinal = existente.data?.id ?? criada?.data?.id ?? "";
+      if (!empresaFinal) { setErro("Não foi possível adicionar o patrocinador ao seu CRM. Tente novamente."); setSaving(false); return; }
+      // Se algo falhar adiante, uma nova tentativa reaproveita a empresa.
+      setEmpresaDoPatrocinadorId(empresaFinal);
+      setEmpresaId(empresaFinal);
+    }
+
+    // Responsável do patrocinador escolhido: vira contato salvo da empresa.
+    let contatoFinal = contatoEmpresaId;
+    if (!contatoFinal && contatoSugerido && empresaFinal) {
+      const novo = await sb.from("contatos").insert({
+        nome: contatoSugerido.nome,
+        cargo: contatoSugerido.cargo,
+        email: contatoSugerido.email,
+        telefone: contatoSugerido.telefone,
+        linkedin_url: contatoSugerido.linkedin_url,
+        responsavel_id: contatoSugerido.responsavel_id,
+        empresa_crm_id: empresaFinal,
+        account_id: user.id,
+        organization_id: organizationId,
+        origem: "jards",
+      }).select("id").single();
+      if (novo.error || !novo.data?.id) { setErro("Não foi possível salvar o contato escolhido. Tente de novo ou escolha outro."); setSaving(false); return; }
+      contatoFinal = novo.data.id;
+      // Já é um contato salvo: uma nova tentativa não o duplica.
+      const salvo: ContatoItem = { id: novo.data.id, nome: contatoSugerido.nome, cargo: contatoSugerido.cargo, email: contatoSugerido.email, responsavel_id: contatoSugerido.responsavel_id };
+      setContatosEmpresa(current => [...current, salvo].sort((a, b) => a.nome.localeCompare(b.nome)));
+      setContatoSugeridoChave(null);
+      setContatoEmpresaId(novo.data.id);
+    }
+
     const payload = {
-      empresa_crm_id:      empresaId || null,
+      empresa_crm_id:      empresaFinal || null,
       empresa_id:          empresaPubId || null,
       projeto_id:          projetoId || null,
       valor_solicitado:    null,
@@ -427,13 +511,12 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       captador_id:         captacaoTipo === "interna" ? captadorId : null,
       captador_externo_id: captacaoTipo === "externa" ? captadorExternoId : null,
       supervisor_id:       supervisorId,
-      contato_empresa_id:  contatoEmpresaId,
+      contato_empresa_id:  contatoFinal,
       // Mantido como espelho pelo trigger de crm_followups.
       proxima_prospeccao:  null,
       data_previsao:       previsao || null,
     };
 
-    const sb = supabase as any;
     let captacaoId = editData?.id ?? null;
     let createdNow = false;
     let result = editData?.id
@@ -467,8 +550,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       const interaction = await sb.from("crm_interacoes").insert({
         organization_id: organizationId,
         account_id: user.id,
-        empresa_crm_id: empresaId || null,
-        contato_id: contatoEmpresaId,
+        empresa_crm_id: empresaFinal || null,
+        contato_id: contatoFinal,
         captacao_id: captacaoId,
         tipo: legacyTipo,
         canal: canalRealizado,
@@ -502,8 +585,8 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
         const followupPayload = {
           organization_id: organizationId,
           account_id: user.id,
-          empresa_crm_id: empresaId || null,
-          contato_id: contatoEmpresaId,
+          empresa_crm_id: empresaFinal || null,
+          contato_id: contatoFinal,
           captacao_id: captacaoId,
           canal: canalPlanejado || "email",
           previsto_para: new Date(`${proximoFollowup}T12:00:00`).toISOString(),
@@ -601,17 +684,18 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   style={{ borderColor: empresaOpen ? "rgba(13,13,13,.35)" : "rgba(13,13,13,.15)" }}>
                   <Building2 size={13} className="flex-shrink-0 text-black/35" />
                   <input type="text" placeholder="Buscar ou criar…" value={empresaSearch}
-                    onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
+                    onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
                     onFocus={() => setEmpresaOpen(true)} onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
                     className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
-                  {empresaSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
+                  {empresaSearch && <button type="button" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
                 </div>
                 {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
                   <PortalMenu position={empresaMenuPos}>
                     {empresasFiltradas.map(empresa => (
                       <button key={empresa.id} type="button" onMouseDown={event => {
                         event.preventDefault(); setEmpresaId(empresa.id); setEmpresaSearch(empresa.nome); setEmpresaOpen(false);
-                        checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id);
+                        setContatoSugeridoChave(null); empresaTocada.current = true;
+                        checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id, { doPatrocinador: empresa.id === empresaDoPatrocinadorId });
                       }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
                         {empresa.nome}
                       </button>
@@ -726,10 +810,29 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                         setContatoEmpresaId(contato.id); setShowNovoContato(false);
                       }} onCancel={() => setShowNovoContato(false)} />
                   ) : (
-                    <CustomDropdown value={contatoEmpresaId ?? ""} onChange={value => setContatoEmpresaId(value || null)}
-                      className="[&>button]:w-full" compact icon={<Contact size={13} />}
-                      placeholder={empresaId ? "Nenhum contato" : "Selecione um patrocinador primeiro"}
-                      options={[{ value: "", label: "Nenhum" }, ...contatosEmpresa.map(contato => ({ value: contato.id, label: contato.cargo ? `${contato.nome} · ${contato.cargo}` : contato.nome }))]} />
+                    <>
+                      <CustomDropdown
+                        value={contatoEmpresaId ?? (contatoSugerido ? `sugerido:${contatoSugerido.chave}` : "")}
+                        onChange={value => {
+                          if (value.startsWith("sugerido:")) { setContatoEmpresaId(null); setContatoSugeridoChave(value.slice("sugerido:".length)); }
+                          else { setContatoSugeridoChave(null); setContatoEmpresaId(value || null); }
+                        }}
+                        className="[&>button]:w-full" compact icon={<Contact size={13} />}
+                        placeholder={empresaId || sugeridosDisponiveis.length > 0 ? "Nenhum contato" : "Selecione um patrocinador primeiro"}
+                        options={[
+                          { value: "", label: "Nenhum" },
+                          ...contatosEmpresa.map(contato => ({ value: contato.id, label: rotuloContato({ nome: contato.nome, cargo: contato.cargo }) })),
+                          ...sugeridosDisponiveis.map(contato => ({ value: `sugerido:${contato.chave}`, label: rotuloContato(contato), icon: <Building2 size={12} className="text-[#7259B5]" aria-hidden="true" /> })),
+                        ]} />
+                      {sugeridosDisponiveis.length > 0 && (
+                        <p className="mt-1.5 flex items-start gap-1.5 text-[0.6875rem] leading-snug text-black/40">
+                          <Building2 size={11} className="mt-px flex-shrink-0 text-[#7259B5]" aria-hidden="true" />
+                          {contatoSugerido
+                            ? "Responsável do patrocinador. Ao salvar, entra nos seus contatos."
+                            : `${sugeridosDisponiveis.length === 1 ? "1 responsável" : `${sugeridosDisponiveis.length} responsáveis`} do patrocinador na lista.`}
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
 

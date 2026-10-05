@@ -104,6 +104,8 @@ export interface Responsavel {
   votos_negativos: number;
   created_at: string;
   updated_at: string;
+  /** fn_responsaveis_empresa: nome mascarado e e-mail/LinkedIn ocultos enquanto a empresa não foi desbloqueada. */
+  mascarado?: boolean;
 }
 
 export interface Tipologia {
