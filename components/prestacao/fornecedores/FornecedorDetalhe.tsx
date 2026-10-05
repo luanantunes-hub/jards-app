@@ -5,6 +5,7 @@ import { AlertTriangle, Info, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { consultarFornecedor } from "@/components/prestacao/fornecedores/FornecedorModal";
+import { ComprovantesFornecedor } from "@/components/prestacao/fornecedores/ComprovantesFornecedor";
 import { EtiquetaResultadoCertidao, EtiquetaSancoes, EtiquetaSituacao } from "@/components/prestacao/fornecedores/EtiquetasFornecedor";
 import { alertasDoFornecedor, cnpjValido, formatarDocumento, nomeDoFornecedor, TIPOS_PESSOA } from "@/lib/prestacao/fornecedores";
 import type { PrestacaoFornecedor } from "@/lib/supabase/types";
@@ -22,7 +23,7 @@ function Dado({ rotulo, children }: { rotulo: string; children: React.ReactNode 
   );
 }
 
-/** Tudo o que se sabe do fornecedor: alertas, Receita, sócios e certidões de sanções. */
+/** Tudo o que se sabe do fornecedor: alertas, Receita, sanções, comprovantes e sócios. */
 export function FornecedorDetalhe({ fornecedor, podeEditar, onClose, onEditar, onExcluir, onAtualizado }: {
   fornecedor: PrestacaoFornecedor;
   podeEditar: boolean;
@@ -138,6 +139,8 @@ export function FornecedorDetalhe({ fornecedor, podeEditar, onClose, onEditar, o
             <p className="mt-2 text-[0.625rem] text-black/35">Consulta consolidada do TCU: inidôneos do TCU, CNIA do CNJ, CEIS e CNEP da CGU.</p>
           </section>
         )}
+
+        <ComprovantesFornecedor fornecedor={f} podeEditar={podeEditar} />
 
         {(f.socios?.length ?? 0) > 0 && (
           <section aria-labelledby="socios-titulo">

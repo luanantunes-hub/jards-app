@@ -1954,3 +1954,18 @@ export interface PrestacaoFornecedor {
   created_at: string;
   updated_at: string;
 }
+
+/** Comprovante do fornecedor (P2.3b): o que a consulta guardou ou a pessoa anexou. */
+export interface PrestacaoFornecedorDocumento {
+  id: string;
+  organization_id: string;
+  fornecedor_id: string;
+  origem: "consulta" | "pessoa";
+  tipo: "certidao_tcu" | "consulta_receita" | "cartao_cnpj" | "certidao" | "outro";
+  nome_arquivo: string;
+  storage_path: string;
+  documento: string | null;
+  hash_sha256: string | null;
+  criado_por: string | null;
+  created_at: string;
+}

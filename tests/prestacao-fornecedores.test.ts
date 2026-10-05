@@ -6,13 +6,18 @@ import {
   cnpjValido,
   cpfValido,
   documentoValido,
+  extensaoDoAnexo,
+  faltaCartaoCnpj,
   formatarCnae,
   formatarDocumento,
   lerCertidoesTcu,
   lerCnpjBrasilApi,
   limparDocumento,
   nomeDoFornecedor,
+  problemaDoAnexo,
   resumoDasCertidoes,
+  ROTULOS_DOCUMENTO_FORNECEDOR,
+  TIPOS_ANEXO_FORNECEDOR,
 } from "../lib/prestacao/fornecedores";
 import type { PrestacaoFornecedor } from "../lib/supabase/types";
 import { caminhoDocumentoFornecedor, linhasDoComprovante, paraWinAnsi, pdfDaCertidao } from "../supabase/functions/_shared/fornecedor-publico";
@@ -198,4 +203,24 @@ test("banco: comprovante da consulta só pela função, e arquivo registrado nã
   const funcao = await readFile("supabase/functions/consultar-fornecedor/index.ts", "utf8");
   assert.match(funcao, /origem: "consulta"/);
   assert.match(funcao, /if \(error\) \{[^}]*storage\.from\("documentos"\)\.remove\(\[caminho\]\)/, "registro que falha não deixa arquivo solto");
+});
+
+test("anexo do fornecedor: PDF ou imagem até 10 MB, e o aviso de cartão CNPJ que falta", () => {
+  assert.equal(problemaDoAnexo({ name: "cartao.pdf", type: "application/pdf", size: 120_000 }), null);
+  assert.equal(problemaDoAnexo({ name: "cartao.PDF", type: "", size: 120_000 }), null, "PDF sem tipo informado pelo navegador");
+  assert.equal(problemaDoAnexo({ name: "foto.jpg", type: "image/jpeg", size: 2_000_000 }), null);
+  assert.match(problemaDoAnexo({ name: "planilha.xlsx", type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", size: 10 }) ?? "", /PDF ou uma imagem/);
+  assert.match(problemaDoAnexo({ name: "grande.pdf", type: "application/pdf", size: 10 * 1024 * 1024 + 1 }) ?? "", /10 MB/);
+  assert.match(problemaDoAnexo({ name: "vazio.pdf", type: "application/pdf", size: 0 }) ?? "", /vazio/);
+  assert.equal(extensaoDoAnexo({ name: "x", type: "image/jpeg" }), "jpg");
+  assert.equal(extensaoDoAnexo({ name: "cartao.pdf", type: "" }), "pdf");
+
+  const pj = { tipo_pessoa: "pj" as const, documento: "11222333000181" };
+  assert.equal(faltaCartaoCnpj(pj, [{ tipo: "certidao_tcu" }, { tipo: "consulta_receita" }]), true, "a consulta não substitui o cartão");
+  assert.equal(faltaCartaoCnpj(pj, [{ tipo: "cartao_cnpj" }]), false);
+  assert.equal(faltaCartaoCnpj({ tipo_pessoa: "pf", documento: "52998224725" }, []), false);
+  assert.equal(faltaCartaoCnpj({ tipo_pessoa: "pj", documento: null }, []), false, "sem CNPJ, nada a pedir");
+
+  assert.deepEqual(TIPOS_ANEXO_FORNECEDOR, ["cartao_cnpj", "certidao", "outro"], "a pessoa não anexa como se fosse da consulta");
+  for (const tipo of ["certidao_tcu", "consulta_receita", ...TIPOS_ANEXO_FORNECEDOR] as const) assert.ok(ROTULOS_DOCUMENTO_FORNECEDOR[tipo]);
 });

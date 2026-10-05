@@ -27,7 +27,7 @@ const COLUNAS: ColumnDefinition<string>[] = [
 type Filtro = "todos" | "alerta" | "relacionadas";
 type Linha = PrestacaoFornecedor & { nomeExibido: string; alertas: AlertaFornecedor[] };
 
-const semAcento = (t: string) => t.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const semAcento = (t: string) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 const dataCurta = (d: string | null) => (d ? new Date(d).toLocaleDateString("pt-BR") : "—");
 const rotuloTipo = (id: string) => TIPOS_PESSOA.find(t => t.id === id)?.rotulo ?? id;
 
@@ -110,11 +110,16 @@ export default function FornecedoresPage() {
   function excluir(fornecedor: PrestacaoFornecedor) {
     confirmDelete({
       title: "Excluir fornecedor?",
-      description: `"${nomeDoFornecedor(fornecedor)}" sai do cadastro da organização.`,
+      description: `"${nomeDoFornecedor(fornecedor)}" sai do cadastro da organização, com os comprovantes guardados.`,
       onConfirm: async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela ainda não está no tipo Database
-        const { error } = await (supabase as any).from("prestacao_fornecedores").delete().eq("id", fornecedor.id);
+        const tabela = (nome: string) => (supabase as any).from(nome);
+        const { data: documentos } = await tabela("prestacao_fornecedor_documentos").select("storage_path").eq("fornecedor_id", fornecedor.id);
+        const { error } = await tabela("prestacao_fornecedores").delete().eq("id", fornecedor.id);
         if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir o fornecedor"));
+        // Os registros saem com o fornecedor; só então o bucket deixa apagar os arquivos.
+        const caminhos = ((documentos ?? []) as { storage_path: string }[]).map(d => d.storage_path);
+        if (caminhos.length) await supabase.storage.from("documentos").remove(caminhos);
         setAberto(null);
         setFornecedores(atual => atual.filter(f => f.id !== fornecedor.id));
         setAviso("Fornecedor excluído.");
