@@ -12,6 +12,9 @@ export type ItemDoOrcamento = {
   /** Agrupadores acima do item, do mais alto ao mais próximo. */
   caminho: string[];
   grupo: GrupoCusto | null;
+  /** CNAEs aceitos que valem para o item (P2.4) e o nó que os definiu. */
+  cnaes: string[];
+  cnaesDe: { id: string; nome: string } | null;
   aprovado: number;
   vigente: number;
 };
@@ -43,6 +46,8 @@ export function useItensDoOrcamento(prestacaoId: string, recarga = 0): { itens: 
           descricao: linha.no.descricao,
           caminho: linha.caminho,
           grupo: linha.grupo,
+          cnaes: linha.cnaes,
+          cnaesDe: linha.cnaesDe,
           aprovado: linha.totais.aprovado,
           vigente: linha.totais.vigente,
         }));

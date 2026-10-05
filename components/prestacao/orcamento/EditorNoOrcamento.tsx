@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { limparCnaesAceitos } from "@/lib/prestacao/cnae";
+import { CnaesAceitosCampo } from "@/components/prestacao/orcamento/CnaesAceitosCampo";
 import {
   gruposDoRegime,
   grupoNoRegime,
@@ -66,6 +68,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
   const [descricao, setDescricao] = useState(inicial?.descricao ?? "");
   const [paiId, setPaiId] = useState(inicial ? inicial.parent_id ?? "" : edicao.modo === "novo" ? edicao.parentId ?? "" : "");
   const [grupo, setGrupo] = useState<string>(inicial?.grupo_custo ?? "");
+  const [cnaes, setCnaes] = useState<string[]>(limparCnaesAceitos(inicial?.cnaes_aceitos ?? []));
   const [uf, setUf] = useState(inicial?.uf ?? "");
   const [municipio, setMunicipio] = useState(inicial?.municipio ?? "");
   const [unidade, setUnidade] = useState(inicial?.unidade ?? "");
@@ -100,6 +103,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
       codigo: codigo.trim() || null,
       descricao: descricao.trim() || null,
       grupo_custo: (grupo || null) as GrupoCusto | null,
+      cnaes_aceitos: cnaes.length ? cnaes : null,
       uf: uf || null,
       municipio: municipio.trim() || null,
       unidade: ehItem ? unidade.trim() || null : null,
@@ -192,6 +196,14 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
               {ehItem ? "Os tetos e as bases do regime somam os itens pelo grupo de custo." : "Os itens dentro deste agrupador herdam o grupo, salvo os que tiverem o próprio."}
             </p>
           </div>
+
+          <CnaesAceitosCampo
+            valor={cnaes}
+            onChange={setCnaes}
+            textoDoItem={[nome, descricao].filter(Boolean).join(" ")}
+            herdados={{ cnaes: pai?.cnaes ?? [], de: pai?.cnaesDe?.nome ?? null }}
+            ehItem={ehItem}
+          />
 
           {ehItem && (
             <fieldset className="rounded border p-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>

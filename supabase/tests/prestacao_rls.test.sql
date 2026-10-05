@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(72);
+select plan(84);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -99,6 +99,8 @@ begin
   insert into public.prestacao_fornecedor_documentos (id, fornecedor_id, tipo, nome_arquivo, storage_path) values
     ('f0000000-0000-4000-8000-0000000014a0', 'f0000000-0000-4000-8000-0000000013a0', 'cartao_cnpj', 'cartao.pdf',
      org_a || '/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014a0.pdf');
+  insert into public.prestacao_pagamentos (id, despesa_id, forma, data, valor) values
+    ('f0000000-0000-4000-8000-0000000015a0', 'f0000000-0000-4000-8000-0000000005a0', 'pix', current_date, 10);
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -121,7 +123,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_atividades', 'prestacao_atividade_evidencias', 'prestacao_relatorio',
     'prestacao_distribuicao', 'prestacao_divulgacao', 'prestacao_alteracoes',
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
-    'prestacao_fornecedores', 'prestacao_fornecedor_documentos'
+    'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos'
   ];
 $$;
 
@@ -193,7 +195,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_extrato_importacoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_lancamentos where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_fornecedores where organization_id = %L', rls_teste.org_da(p))),
-    rls_teste.efeito(format('select 1 from public.prestacao_fornecedor_documentos where organization_id = %L', rls_teste.org_da(p)))
+    rls_teste.efeito(format('select 1 from public.prestacao_fornecedor_documentos where organization_id = %L', rls_teste.org_da(p))),
+    rls_teste.efeito(format('select 1 from public.prestacao_pagamentos where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -215,7 +218,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_extrato_importacoes (prestacao_id, conta_id, formato) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000010a0', 'ofx')$c$),
     rls_teste.efeito($c$insert into public.prestacao_lancamentos (prestacao_id, conta_id, data, natureza, valor, chave) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000010a0', current_date, 'credito', 5, 'rls-2')$c$),
     rls_teste.efeito($c$insert into public.prestacao_fornecedores (organization_id, tipo_pessoa, documento, nome) values ('f0000000-0000-4000-8000-0000000000a0', 'pj', '00000000000191', 'RLS novo')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_fornecedor_documentos (fornecedor_id, tipo, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000013a0', 'outro', 'novo.pdf', 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014b0.pdf')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_fornecedor_documentos (fornecedor_id, tipo, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000013a0', 'outro', 'novo.pdf', 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014b0.pdf')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_pagamentos (despesa_id, forma, data, valor) values ('f0000000-0000-4000-8000-0000000005a0', 'ted', current_date, 5)$c$)
   ]);
 $$;
 
@@ -237,7 +241,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_extrato_importacoes set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000011a0'$c$),
     rls_teste.efeito($c$update public.prestacao_lancamentos set historico = historico where id = 'f0000000-0000-4000-8000-0000000012a0'$c$),
     rls_teste.efeito($c$update public.prestacao_fornecedores set observacoes = observacoes where id = 'f0000000-0000-4000-8000-0000000013a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_fornecedor_documentos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000014a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_fornecedor_documentos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000014a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_pagamentos set observacao = observacao where id = 'f0000000-0000-4000-8000-0000000015a0'$c$)
   ]);
 $$;
 
@@ -259,7 +264,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_extrato_importacoes where id = 'f0000000-0000-4000-8000-0000000011a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_lancamentos where id = 'f0000000-0000-4000-8000-0000000012a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_fornecedores where id = 'f0000000-0000-4000-8000-0000000013a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_fornecedor_documentos where id = 'f0000000-0000-4000-8000-0000000014a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_fornecedor_documentos where id = 'f0000000-0000-4000-8000-0000000014a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_pagamentos where id = 'f0000000-0000-4000-8000-0000000015a0'$c$)
   ]);
 $$;
 
@@ -483,6 +489,58 @@ select is(
     where id = 'f0000000-0000-4000-8000-0000000013a0'),
   array[null, null, null]::text[],
   'trocar o documento apaga a consulta do documento anterior');
+
+-- ─── Despesa (P2.4): fornecedor da organização, chave, retenções e CNAEs ───
+
+-- Um fornecedor da organização B, para a despesa de A tentar usar.
+insert into public.prestacao_fornecedores (id, organization_id, tipo_pessoa, documento, nome) values
+  ('f0000000-0000-4000-8000-0000000013b0', 'f0000000-0000-4000-8000-0000000000b0', 'pj', '11444777000161', 'RLS fornecedor B');
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$update public.prestacao_comprovantes
+    set fornecedor_id = 'f0000000-0000-4000-8000-0000000013a0', valor_extraido = 100, iss = 5, inss = 11,
+        chave_acesso = '52060433009911002506550120000007800267301615'
+  where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  'quem edita: liga a despesa a um fornecedor da organização, com chave e retenções');
+select is((select valor_liquido from public.prestacao_comprovantes where id = 'f0000000-0000-4000-8000-0000000005a0'),
+  84.00::numeric, 'o valor líquido é o bruto menos as retenções');
+select throws_ok($t$update public.prestacao_comprovantes set fornecedor_id = 'f0000000-0000-4000-8000-0000000013b0' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  '23514', 'fornecedor_de_outra_organizacao', 'a despesa não usa fornecedor de outra organização');
+select throws_ok($t$update public.prestacao_comprovantes set iss = 200 where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  '23514', null, 'as retenções não passam do valor do documento');
+select throws_ok($t$insert into public.prestacao_comprovantes (prestacao_id, nome_arquivo, storage_path, chave_acesso) values
+    ('f0000000-0000-4000-8000-0000000001a0', 'repetida.pdf',
+     'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000cf0.pdf',
+     '52060433009911002506550120000007800267301615')$t$,
+  '23505', null, 'a mesma chave de acesso não entra duas vezes na prestação');
+select throws_ok($t$update public.prestacao_orcamento_nos set cnaes_aceitos = array['9001-9/01'] where id = 'f0000000-0000-4000-8000-0000000003a0'$t$,
+  '23514', null, 'o CNAE aceito fica só com os algarismos');
+select lives_ok($t$update public.prestacao_orcamento_nos set cnaes_aceitos = array['90', '7420001'] where id = 'f0000000-0000-4000-8000-0000000003a0'$t$,
+  'quem edita: define os CNAEs aceitos do item');
+select lives_ok($t$select public.fn_prestacao_orcamento_copiar_versao('f0000000-0000-4000-8000-0000000002a0', 'readequada', 'RLS cópia')$t$,
+  'quem edita: copia a versão do orçamento');
+select is(
+  (select n.cnaes_aceitos from public.prestacao_orcamento_nos n
+     join public.prestacao_orcamento_versoes v on v.id = n.versao_id
+    where v.nome = 'RLS cópia' and n.origem_no_id = 'f0000000-0000-4000-8000-0000000003a0'),
+  array['90', '7420001'], 'copiar a versão leva os CNAEs aceitos');
+
+-- ─── Pagamentos (P2.5): prestação vem da despesa, lançamento da mesma prestação ─
+select lives_ok($t$update public.prestacao_pagamentos set lancamento_id = 'f0000000-0000-4000-8000-0000000012a0' where id = 'f0000000-0000-4000-8000-0000000015a0'$t$,
+  'quem edita: liga o pagamento a um lançamento da prestação');
+select throws_ok($t$update public.prestacao_pagamentos set valor = 0 where id = 'f0000000-0000-4000-8000-0000000015a0'$t$,
+  '23514', null, 'pagamento tem valor positivo');
+reset role;
+-- Uma despesa da prestação B, para A tentar pagar.
+insert into public.prestacao_comprovantes (id, prestacao_id, nome_arquivo, storage_path) values
+  ('f0000000-0000-4000-8000-0000000005b0', 'f0000000-0000-4000-8000-0000000001b0', 'rls-b.pdf',
+   'f0000000-0000-4000-8000-0000000000b0/prestacoes/f0000000-0000-4000-8000-0000000001b0/comprovantes/f0000000-0000-4000-8000-000000000cb1.pdf');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$insert into public.prestacao_pagamentos (despesa_id, forma, data, valor) values ('f0000000-0000-4000-8000-0000000005b0', 'pix', current_date, 1)$t$,
+  '42501', null, 'outra organização: não lança pagamento na despesa de B');
+reset role;
 
 select * from finish();
 rollback;

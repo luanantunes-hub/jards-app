@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
-import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, Clock, ExternalLink } from "lucide-react";
+import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, Clock, ExternalLink, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoComprovante, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
 import { useItensDoOrcamento, type ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
@@ -12,6 +12,15 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
+import { useFornecedoresDaOrganizacao } from "@/hooks/useFornecedoresDaOrganizacao";
+import { DespesaModal } from "@/components/prestacao/despesas/DespesaModal";
+import { FornecedorCombobox } from "@/components/prestacao/despesas/FornecedorCombobox";
+import { alertasDaDespesa, ehDespesa, TIPOS_COMPLEMENTARES, TIPOS_FISCAIS } from "@/lib/prestacao/despesas";
+import { nomeDoFornecedor } from "@/lib/prestacao/fornecedores";
+import { alertasDosPagamentos, situacaoDosPagamentos } from "@/lib/prestacao/pagamentos";
+import { definida } from "@/lib/prestacao/regimes/tipos";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import type { PrestacaoPagamento } from "@/lib/supabase/types";
 
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
   nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
@@ -27,6 +36,12 @@ const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: R
   foto:            { label: "Foto",              color: "#B07A14", icon: <Image size={13} />,         hint: "Evidência de execução. Fotos devem mostrar banner/marca do projeto visível." },
   planilha:        { label: "Planilha",          color: "#2E8932", icon: <FileSpreadsheet size={13} /> },
   outro:           { label: "Outro",             color: "rgba(13,13,13,.40)", icon: <File size={13} /> },
+  nfse:            { label: "NFS-e",             color: "#7259B5", icon: <FileText size={13} />,      hint: "Nota de serviço em nome do proponente. Confira as retenções (ISS, INSS e IRRF)." },
+  cupom:           { label: "Cupom (NFC-e)",     color: "#2D72B0", icon: <FileText size={13} />,      hint: "Compra no varejo. Alguns regimes só aceitam para valores pequenos." },
+  rpci:            { label: "RPCI",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Recibo de pagamento a contribuinte individual, com INSS retido." },
+  fatura:          { label: "Fatura",            color: "#2D72B0", icon: <FileText size={13} />,      hint: "Cobrança de serviço contínuo (telefone, energia, locação). De PJ, peça a nota fiscal." },
+  apolice:         { label: "Apólice de seguro", color: "#1A8B7A", icon: <File size={13} />,          hint: "Seguro contratado para o projeto, com o período coberto." },
+  nota_debito:     { label: "Nota de débito",    color: "#B07A14", icon: <File size={13} />,          hint: "Reembolso ou repasse sem tributo. Não substitui a nota fiscal de serviço." },
 };
 
 const STATUS_META: Record<StatusComprovante, { label: string; color: string; icon: React.ReactNode }> = {
@@ -40,6 +55,8 @@ const fmt = (v: number | null) =>
 
 const fmtDate = (d: string | null) =>
   d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
+
+const TIPOS_OPCOES = [...TIPOS_FISCAIS, ...TIPOS_COMPLEMENTARES].map(t => ({ value: t, label: TIPO_META[t].label }));
 
 /** Item com o agrupador mais próximo, para distinguir nomes repetidos. */
 function rotuloDoItem(item: ItemDoOrcamento): string {
@@ -64,6 +81,15 @@ export default function ComprovantesPage() {
   const [erroLista, setErroLista] = useState("");
 
   const [comprovantes, setComprovantes] = useState<PrestacaoComprovante[]>([]);
+  // Despesa v2 (P2.4): fornecedores da organização e o comprovante aberto como despesa.
+  const { fornecedores, documentosDe } = useFornecedoresDaOrganizacao(organizationId);
+  const [despesaAberta, setDespesaAberta] = useState<PrestacaoComprovante | null>(null);
+  // Pagamentos (P2.5) e os meios de pagamento do regime da prestação.
+  const [pagamentos, setPagamentos] = useState<PrestacaoPagamento[]>([]);
+  const [regimeId, setRegimeId] = useState<string | null>(null);
+  const regimes = useRegimesPublicados();
+  const regime = regimes.find(r => r.id === regimeId)?.regime ?? null;
+  const regimePagamentos = regime ? definida(regime.pagamentos) : null;
   // Itens da versão em uso do orçamento em árvore (P1.6).
   const { itens } = useItensDoOrcamento(id);
   const [periodo, setPeriodo] = useState<{ inicio: string | null; fim: string | null }>({ inicio: null, fim: null });
@@ -81,6 +107,7 @@ export default function ComprovantesPage() {
   const [tipo, setTipo] = useState<TipoComprovante>("nfe");
   const [origem, setOrigem] = useState<"nacional" | "internacional">("nacional");
   const [itemId, setItemId] = useState("");
+  const [fornecedorId, setFornecedorId] = useState<string | null>(null);
   const [valorExtraido, setValorExtraido] = useState("");
   const [dataDoc, setDataDoc] = useState("");
   const [descricaoServico, setDescricaoServico] = useState("");
@@ -88,12 +115,18 @@ export default function ComprovantesPage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const fetch = useCallback(async () => {
-    const [{ data: comp }, { data: prest }] = await Promise.all([
+    const [{ data: comp }, { data: prest }, { data: pags }] = await Promise.all([
       (supabase as any).from("prestacao_comprovantes").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
-      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
+      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id").eq("id", id).maybeSingle(),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela ainda não está no tipo Database
+      (supabase as any).from("prestacao_pagamentos").select("*").eq("prestacao_id", id),
     ]);
     setComprovantes((comp as PrestacaoComprovante[]) ?? []);
-    if (prest) setPeriodo({ inicio: prest.data_inicio_execucao, fim: prest.data_fim_execucao });
+    setPagamentos((pags as PrestacaoPagamento[]) ?? []);
+    if (prest) {
+      setPeriodo({ inicio: prest.data_inicio_execucao, fim: prest.data_fim_execucao });
+      setRegimeId(prest.regime_id ?? null);
+    }
     setLoading(false);
   }, [id, supabase]);
 
@@ -215,6 +248,7 @@ export default function ComprovantesPage() {
     const { error: insertErro } = await (supabase as any).from("prestacao_comprovantes").insert({
       prestacao_id: id,
       no_id: itemId || null,
+      fornecedor_id: fornecedorId,
       tipo,
       origem,
       nome_arquivo: pendingFile.name,
@@ -242,6 +276,7 @@ export default function ComprovantesPage() {
     setObservacao("");
     setOrigem("nacional");
     setItemId("");
+    setFornecedorId(null);
     setUploadProgress("");
     setRiscoGlosa(null);
     setMotivosGlosa([]);
@@ -261,6 +296,7 @@ export default function ComprovantesPage() {
     setObservacao("");
     setOrigem("nacional");
     setItemId("");
+    setFornecedorId(null);
     setUploadProgress("");
     setUploadError("");
     setRiscoGlosa(null);
@@ -343,12 +379,12 @@ export default function ComprovantesPage() {
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
                   >
                     <optgroup label="Fiscais">
-                      {(["nfe","recibo","rpa","invoice","folha_pagamento","guia_tributo"] as TipoComprovante[]).map(k => (
+                      {TIPOS_FISCAIS.map(k => (
                         <option key={k} value={k}>{TIPO_META[k].label}</option>
                       ))}
                     </optgroup>
                     <optgroup label="Complementares">
-                      {(["extrato","contrato","cartao_embarque","print_screenshot","foto","planilha","outro"] as TipoComprovante[]).map(k => (
+                      {TIPOS_COMPLEMENTARES.map(k => (
                         <option key={k} value={k}>{TIPO_META[k].label}</option>
                       ))}
                     </optgroup>
@@ -421,6 +457,13 @@ export default function ComprovantesPage() {
                   />
                 </div>
               </div>
+
+              {ehDespesa(tipo) && (
+                <div>
+                  <label htmlFor="fornecedor-envio" className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Fornecedor</label>
+                  <FornecedorCombobox id="fornecedor-envio" fornecedores={fornecedores} valor={fornecedorId} onChange={setFornecedorId} />
+                </div>
+              )}
 
               {/* Descrição do serviço */}
               <div>
@@ -550,6 +593,24 @@ export default function ComprovantesPage() {
               const tipoM = TIPO_META[c.tipo];
               const statusM = STATUS_META[c.status];
               const rubrica = itens.find(it => it.id === c.no_id);
+              const fornecedorC = fornecedores.find(f => f.id === c.fornecedor_id) ?? null;
+              const alertas = ehDespesa(c.tipo)
+                ? alertasDaDespesa({
+                  despesa: c,
+                  fornecedor: fornecedorC,
+                  documentosDoFornecedor: documentosDe(c.fornecedor_id),
+                  item: rubrica ? { nome: rubrica.nome, cnaes: rubrica.cnaes, origem: rubrica.cnaesDe } : null,
+                  outrasChaves: comprovantes.filter(o => o.id !== c.id && o.chave_acesso).map(o => o.chave_acesso!),
+                })
+                : [];
+              const pagamentosC = pagamentos.filter(p => p.despesa_id === c.id);
+              const liquidoC = c.valor_liquido ?? c.valor_extraido;
+              if (ehDespesa(c.tipo)) {
+                alertas.push(...alertasDosPagamentos({ despesa: c, liquido: liquidoC, fornecedor: fornecedorC, pagamentos: pagamentosC, regime: regimePagamentos }));
+              }
+              const pagamentoC = situacaoDosPagamentos(liquidoC, pagamentosC);
+              const graves = alertas.filter(a => a.nivel === "alerta").length;
+              const justificada = graves > 0 && Boolean(c.justificativa?.trim());
               return (
                 <div key={c.id} className="grid grid-cols-[2rem_minmax(0,1fr)] items-start gap-x-4 gap-y-2 px-5 py-4 transition hover:bg-black/[.02] sm:grid-cols-[2rem_minmax(0,1fr)_auto]">
                   {/* Ícone tipo */}
@@ -589,10 +650,21 @@ export default function ComprovantesPage() {
                       ) : (
                         <span>{rubrica ? rotuloDoItem(rubrica) : "Sem item"}</span>
                       )}
+                      {fornecedorC ? (
+                        <span className="max-w-[12rem] truncate text-black/55" title={nomeDoFornecedor(fornecedorC)}>{nomeDoFornecedor(fornecedorC)}</span>
+                      ) : ehDespesa(c.tipo) && c.tipo !== "guia_tributo" && c.tipo !== "folha_pagamento" ? (
+                        <span className="text-[#B07A14]">Sem fornecedor</span>
+                      ) : null}
                       {c.origem === "internacional" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #1A8B7A47", color: "#1A8B7A" }}>Internacional</span>
                       )}
                       {c.valor_extraido !== null && <span className="tabular-nums">{fmt(c.valor_extraido)}</span>}
+                      {ehDespesa(c.tipo) && (
+                        pagamentoC.situacao === "pago" ? <span className="text-[#2E8932]">Pago</span>
+                          : pagamentoC.situacao === "parcial" ? <span className="tabular-nums">Pago {fmt(pagamentoC.pago)}</span>
+                            : pagamentoC.situacao === "excedido" ? <span className="text-[#B23B3B]">Pago acima do líquido</span>
+                              : <span>A pagar</span>
+                      )}
                       {c.data_doc && <span>{fmtDate(c.data_doc)}</span>}
                       {c.data_doc && (() => {
                         const d = c.data_doc!;
@@ -621,7 +693,21 @@ export default function ComprovantesPage() {
                   </div>
 
                   {/* Status + ações: no celular descem para baixo das informações */}
-                  <div className="col-start-2 flex items-center gap-2 sm:col-start-auto">
+                  <div className="col-start-2 flex flex-wrap items-center gap-2 sm:col-start-auto">
+                    <button
+                      type="button"
+                      onClick={() => setDespesaAberta(c)}
+                      aria-label={`Despesa de ${c.nome_arquivo}${graves ? `: ${graves} ${graves === 1 ? "alerta" : "alertas"}${justificada ? " justificados" : ""}` : ""}`}
+                      title={justificada ? `Com justificativa: ${c.justificativa}` : undefined}
+                      className="flex items-center gap-1 whitespace-nowrap rounded border bg-white px-2 py-1 text-[0.625rem] font-medium transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+                      style={{
+                        borderColor: graves && !justificada ? "#D94A4A47" : "rgba(13,13,13,.12)",
+                        color: graves && !justificada ? "#B23B3B" : "rgba(13,13,13,.55)",
+                      }}
+                    >
+                      <Receipt size={11} aria-hidden />
+                      {graves ? `${graves} ${graves === 1 ? "alerta" : "alertas"}${justificada ? " justificados" : ""}` : "Despesa"}
+                    </button>
                     {c.avaliado_em && (
                       <span className="hidden text-right text-[0.5625rem] leading-tight text-black/35 sm:block">
                         {c.status === "aceito" ? "Aceito" : "Rejeitado"} por {nomes[c.avaliado_por ?? ""] ?? "membro"}
@@ -660,6 +746,26 @@ export default function ComprovantesPage() {
           </div>
         )}
       </div>
+
+      {despesaAberta && (
+        <DespesaModal
+          comprovante={despesaAberta}
+          tipos={TIPOS_OPCOES}
+          itens={itens}
+          fornecedores={fornecedores}
+          documentosDe={documentosDe}
+          outrasChaves={comprovantes.filter(o => o.id !== despesaAberta.id && o.chave_acesso).map(o => o.chave_acesso!)}
+          pagamentos={pagamentos.filter(p => p.despesa_id === despesaAberta.id)}
+          regimePagamentos={regimePagamentos}
+          onPagamentosMudaram={fetch}
+          podeEditar={permissoes.editar}
+          onClose={() => setDespesaAberta(null)}
+          onSalvo={atualizado => {
+            setComprovantes(lista => lista.map(x => (x.id === atualizado.id ? atualizado : x)));
+            setDespesaAberta(null);
+          }}
+        />
+      )}
     </div>
   );
 }

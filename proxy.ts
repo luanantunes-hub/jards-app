@@ -201,6 +201,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ttf|woff|woff2|otf|eot)$).*)",
+    // dados/: tabelas públicas que a tela baixa (CNAE do IBGE), sem passar pela sessão.
+    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|dados/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|ttf|woff|woff2|otf|eot)$).*)",
   ],
 };
