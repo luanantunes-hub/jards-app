@@ -260,8 +260,8 @@
       font-size: 9px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;
       padding: 3px 8px; border-radius: 20px;
     }
-    .edital-status.aberto  { background: #DCFCE7; color: #166534; }
-    .edital-status.fechado { background: #FEE2E2; color: #991B1B; }
+    .edital-status.aberto  { background: #fff; border: 1px solid #16653447; color: #166534; }
+    .edital-status.fechado { background: #fff; border: 1px solid #991B1B47; color: #991B1B; }
     .edital-body {
       flex: 1; padding: 10px 14px 8px;
       display: flex; flex-direction: column; gap: 5px;
@@ -493,7 +493,7 @@
     .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(40,37,37,.10); }
     .ledger-side { display:grid; grid-template-rows:repeat(3,auto); }
     .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(40,37,37,.10); transition:background-color .25s ease; }
-    .ledger-item:hover { background:rgba(104,77,176,.035); }
+    .ledger-item:hover { background:rgba(13,13,13,.025); }
     .ledger-item:last-child { border-bottom:0; }
     .ledger-item .ledger-num { margin-bottom:10px; font-size:11px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:rgba(40,37,37,.48); }
     .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.1; letter-spacing:-.015em; margin-bottom:8px; }
@@ -527,7 +527,7 @@
     .blog-index-link:hover { gap:13px; border-color:#684DB0; }
     .blog-grid { display:grid; grid-template-columns:1.4fr 1fr 1fr; border-top:1px solid rgba(40,37,37,.12); border-bottom:1px solid rgba(40,37,37,.12); }
     .blog-story { display:flex; min-width:0; min-height:390px; flex-direction:column; padding:34px 28px 30px; color:#282525; border-right:1px solid rgba(40,37,37,.12); transition:background-color .25s ease; }
-    .blog-story:hover { background:rgba(104,77,176,.035); }
+    .blog-story:hover { background:rgba(13,13,13,.025); }
     .blog-story:first-child { padding-left:0; }
     .blog-story:last-child { padding-right:0; border-right:0; }
     .blog-topic { display:block; margin-bottom:13px; color:#684DB0; font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
@@ -1499,13 +1499,13 @@
         '<span data-p class="lp-perfil-comparar flex items-center gap-1.5 px-3 py-2 text-[11px] font-bold bg-white border rounded flex-shrink-0" style="border-color:rgba(13,13,13,.12)"><i class="ph ph-arrows-left-right text-[12px]"></i>Comparar</span>' +
       '</div>' +
       '<div data-p class="flex items-center gap-2 flex-wrap pb-3">' + tag('Setor', e.setor) + tag('Estado', e.uf) +
-        '<span class="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded" style="background:' + meta.cor + '14;color:' + meta.cor + '">' + meta.label + '</span>' +
+        '<span class="text-[9px] font-bold uppercase tracking-wide px-2 py-1 rounded" style="background:#fff;border:1px solid ' + meta.cor + '47;color:' + meta.cor + '">' + meta.label + '</span>' +
       '</div>' +
       '<div class="-mx-[18px] mb-3" style="border-top:1px solid rgba(13,13,13,.08)"></div>' +
       '<div class="lp-perfil-body">' +
         '<div data-p class="rounded border flex flex-col min-h-0" style="border-color:rgba(13,13,13,.08)">' +
           '<div class="flex items-center justify-between px-3.5 pt-3"><p class="text-[9px] font-bold text-black/30 uppercase tracking-wide">Investimento anual</p>' +
-          '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded" style="background:#2E893214;color:#2E8932">' + pill + '</span></div>' +
+          '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded" style="background:#fff;border:1px solid #2E893247;color:#2E8932">' + pill + '</span></div>' +
           '<div class="lp-perfil-grafico flex-1 min-h-0"></div>' +
         '</div>' +
         '<div data-p class="lp-perfil-contatos rounded border flex flex-col min-h-0 overflow-hidden" style="border-color:rgba(13,13,13,.08)">' +
@@ -1618,7 +1618,7 @@
   }
 
   function clicar(ponto, linha){
-    linha.style.backgroundColor = 'rgba(104,77,176,.09)';
+    linha.style.backgroundColor = 'rgba(13,13,13,.06)';
     animar(cursor, [
       { transform: translate(ponto.x, ponto.y) + ' scale(1)' },
       { transform: translate(ponto.x, ponto.y) + ' scale(.84)', offset: .45 },
@@ -1705,7 +1705,7 @@
     await moverCursor(inicio, alvo);
     if(!vivo()) return;
     andamento(.8);
-    linha.style.backgroundColor = 'rgba(104,77,176,.05)';
+    linha.style.backgroundColor = 'rgba(13,13,13,.04)';
     montarPerfil(empresa, meta);
     await esperar(300);
     if(!vivo()) return;
@@ -1972,7 +1972,7 @@
       .ms-profile-tag small{font-size:8px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:rgba(13,13,13,.28)}
       .ms-quarter{display:flex;gap:3px;margin-left:2px}
       .ms-quarter span{padding:3px 7px;border-radius:4px;background:rgba(13,13,13,.055);font-size:9px;font-weight:700;color:rgba(13,13,13,.32)}
-      .ms-quarter .on{background:rgba(46,137,50,.08);color:#2E8932}
+      .ms-quarter .on{background:#fff;box-shadow:inset 0 0 0 1px rgba(46,137,50,.35);color:#2E8932}
       .ms-profile-body{display:grid;grid-template-columns:235px minmax(0,1fr);gap:14px;min-height:0;padding:14px 26px 20px;background:#F7F7F5;overflow:hidden}
       .ms-profile-stack{display:flex;min-width:0;flex-direction:column;gap:10px}
       .ms-profile-card{overflow:hidden;border:1px solid rgba(13,13,13,.08);border-radius:4px;background:#fff}
@@ -2167,7 +2167,7 @@
         ['Petrobras','assets/petrobras.svg'],
         ['Bradesco','https://www.google.com/s2/favicons?domain=bradesco.com.br&sz=128'],
         ['Natura','assets/natura-logo.svg'],
-        ['Ambev','https://commons.wikimedia.org/wiki/Special:Redirect/file/Ambev_logo_2015.svg'],
+        ['Ambev','https://www.google.com/s2/favicons?domain=ambev.com.br&sz=128'],
         ['Vale','assets/vale-logo.png'],
         ['TV Cultura','https://www.google.com/s2/favicons?domain=tvcultura.com.br&sz=128'],
         ['Sabesp','https://www.google.com/s2/favicons?domain=sabesp.com.br&sz=128'],
@@ -2352,7 +2352,7 @@
       ];
       document.getElementById('ms-ativ-body').innerHTML=ATIVS.map(function(a){
         return '<tr>'+
-          '<td><div style="width:17px;height:17px;border-radius:50%;border:'+(a.done?'1.5px solid #2E8932':'1.5px solid rgba(40,37,37,.20)')+';background:'+(a.done?'rgba(46,137,50,.10)':'transparent')+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#2E8932">'+(a.done?'✓':'')+'</div></td>'+
+          '<td><div style="width:17px;height:17px;border-radius:50%;border:'+(a.done?'1.5px solid #2E8932':'1.5px solid rgba(40,37,37,.20)')+';background:transparent;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#2E8932">'+(a.done?'✓':'')+'</div></td>'+
           '<td><p style="font-size:12.5px;font-weight:600;color:'+(a.done?'rgba(40,37,37,.30)':'rgba(40,37,37,.75)')+';text-decoration:'+(a.done?'line-through':'none')+'">'+a.nome+'</p><p style="font-size:10px;color:rgba(40,37,37,.30)">'+a.tipo+'</p></td>'+
           '<td style="font-size:11.5px;font-weight:500;color:rgba(40,37,37,.55);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+a.neg+'</td>'+
           '<td><div style="display:flex;align-items:center;gap:7px">'+logo(a.co,22)+'<span style="font-size:11.5px;font-weight:500;color:rgba(40,37,37,.60)">'+a.co+'</span></div></td>'+
