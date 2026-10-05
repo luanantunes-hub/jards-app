@@ -862,25 +862,31 @@
     }
 
     /* Leis: seletor ao lado da tabela no desktop; no celular, abas roláveis acima dela */
-    .leis-seletor { position:relative; display:flex; flex-direction:column; overflow:hidden; border:1px solid rgba(13,13,13,.08); border-radius:var(--alt-radius); }
-    /* a seção fica sobre a superfície cinza: tabela e botões brancos para não se fundirem com o fundo */
+    /* Leis: índice de prancheta. Réguas finas, ícone de traço em quadrado de 4px;
+       a lei ativa ganha o quadrado preenchido na cor dela e uma linha de construção
+       tracejada até a demo. No celular, abas roláveis acima da lista. */
+    .leis-seletor { position:relative; display:flex; flex-direction:column; border-top:1px solid rgba(13,13,13,.12); }
     #leis-painel { background:#fff; }
-    .lei-card-btn { display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:20px; border:0; border-left:3px solid transparent; background:#fff; color:var(--alt-ink); text-align:left; cursor:pointer; transition:border-color .18s ease, background-color .18s ease; }
-    .lei-card-btn + .lei-card-btn { border-top:1px solid rgba(13,13,13,.08); }
-    .lei-card-btn:hover { background:#FAFAF9; }
-    .lei-card-btn.is-active { border-left-color:var(--lei-cor); }
+    .lei-card-btn { position:relative; display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:14px 16px 14px 14px; border:0; border-bottom:1px solid rgba(13,13,13,.12); border-radius:0; background:transparent; color:rgba(13,13,13,.62); text-align:left; cursor:pointer; transition:background-color .18s ease, color .18s ease; }
+    .lei-card-btn:hover { background:rgba(255,255,255,.6); color:var(--alt-ink); }
+    .lei-card-btn.is-active { background:#fff; color:var(--alt-ink); }
+    .lei-card-btn.is-active::before { content:''; position:absolute; top:50%; left:-24px; width:24px; border-top:1px dashed var(--lei-cor); }
+    @media (min-width:768px) { .leis-seletor.alt-scroll-x { overflow:visible; -webkit-mask-image:none; mask-image:none; } }
     .lei-card-btn:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:-2px; }
-    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:44px; height:44px; overflow:hidden; border-radius:50%; background:var(--lei-cor); }
-    .lei-icone img { width:34px; height:34px; object-fit:contain; }
-    .lei-nome { font-size:18px; font-weight:600; line-height:1.3; }
+    .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid rgba(13,13,13,.14); border-radius:4px; background:#fff; color:rgba(13,13,13,.58); font-size:19px; transition:background-color .18s ease, border-color .18s ease, color .18s ease; }
+    .lei-card-btn:hover .lei-icone { border-color:var(--lei-cor); color:var(--lei-cor); }
+    .lei-card-btn.is-active .lei-icone { border-color:var(--lei-cor); background:var(--lei-cor); color:#fff; }
+    .lei-nome { font-size:17px; font-weight:500; line-height:1.3; letter-spacing:-.01em; }
+    .lei-seta { margin-left:auto; color:var(--lei-cor); font-size:16px; opacity:0; transform:translateX(-4px); transition:opacity .18s ease, transform .18s ease; }
+    .lei-card-btn:hover .lei-seta, .lei-card-btn.is-active .lei-seta { opacity:1; transform:none; }
+    @media (prefers-reduced-motion: reduce) { .lei-icone, .lei-seta { transition:none; } }
     @media (max-width:767px) {
-      .leis-seletor { order:-1; flex-direction:row; gap:4px; border:0; border-bottom:1px solid rgba(13,13,13,.10); border-radius:0; overflow:hidden; overflow-x:auto; }
-      .lei-card-btn { flex:0 0 auto; width:auto; gap:8px; min-height:44px; padding:8px 12px 10px; border-left:0; border-bottom:2px solid transparent; background:none; color:rgba(13,13,13,.55); }
-      .lei-card-btn + .lei-card-btn { border-top:0; }
+      .leis-seletor { order:-1; flex-direction:row; gap:4px; border-top:0; border-bottom:1px solid rgba(13,13,13,.10); overflow:hidden; overflow-x:auto; }
+      .lei-card-btn { flex:0 0 auto; width:auto; gap:8px; min-height:44px; padding:8px 12px 10px; border-bottom:2px solid transparent; background:none; color:rgba(13,13,13,.55); }
       .lei-card-btn:hover { background:none; color:var(--alt-ink); }
-      .lei-card-btn.is-active { border-bottom-color:var(--lei-cor); color:var(--alt-ink); }
-      .lei-icone { width:24px; height:24px; }
-      .lei-icone img { width:19px; height:19px; }
+      .lei-card-btn.is-active { border-bottom-color:var(--lei-cor); background:none; color:var(--alt-ink); }
+      .lei-card-btn.is-active::before, .lei-seta { display:none; }
+      .lei-icone { width:26px; height:26px; font-size:14px; }
       .lei-nome { font-size:14px; font-weight:500; white-space:nowrap; }
     }
 
@@ -1313,20 +1319,24 @@
       <!-- Leis cobertas: coluna ao lado da tabela no desktop, abas roláveis acima dela no celular -->
       <div class="leis-seletor alt-scroll-x reveal" role="group" aria-label="Lei de incentivo">
         <button type="button" class="lei-card-btn is-active" style="--lei-cor:#684DB0" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
-          <span class="lei-icone"><img src="assets/icons/icon-piano.png" alt="" width="34" height="34" /></span>
+          <span class="lei-icone"><i class="ph ph-piano-keys" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Cultura</span>
+          <i class="ph ph-arrow-right lei-seta" aria-hidden="true"></i>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#2D72B0" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
-          <span class="lei-icone"><img src="assets/icons/icon-ball.png" alt="" width="34" height="34" /></span>
+          <span class="lei-icone"><i class="ph ph-soccer-ball" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Esporte</span>
+          <i class="ph ph-arrow-right lei-seta" aria-hidden="true"></i>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#D94A4A" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
-          <span class="lei-icone"><img src="assets/icons/icon-chat.png" alt="" width="34" height="34" /></span>
+          <span class="lei-icone"><i class="ph ph-film-slate" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Audiovisual</span>
+          <i class="ph ph-arrow-right lei-seta" aria-hidden="true"></i>
         </button>
         <button type="button" class="lei-card-btn" style="--lei-cor:#1A8B7A" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
-          <span class="lei-icone"><img src="assets/icons/icon-stethoscope.png" alt="" width="34" height="34" /></span>
+          <span class="lei-icone"><i class="ph ph-stethoscope" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Saúde</span>
+          <i class="ph ph-arrow-right lei-seta" aria-hidden="true"></i>
         </button>
       </div>
     </div>
@@ -1684,7 +1694,7 @@
     sairCursor(alvo);
   }
 
-  // A cor da lei ativa vem de --lei-cor: borda esquerda no desktop, sublinhado nas abas do celular
+  // A cor da lei ativa vem de --lei-cor: quadrado do ícone e linha até a demo no desktop, sublinhado nas abas do celular
   function marcarLei(btn){
     document.querySelectorAll('.lei-card-btn').forEach(function(b){
       var ativo = b === btn;
