@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import Link from "next/link";
 import AdminNav from "./AdminNav";
+import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -20,7 +20,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen" style={{ background: "#FAFAFA" }}>
       <AdminNav />
-      <main>{children}</main>
+      {/* Confirmações do admin (ex.: encerrar cortesia) usam o diálogo global. */}
+      <DeleteConfirmProvider>
+        <main>{children}</main>
+      </DeleteConfirmProvider>
     </div>
   );
 }

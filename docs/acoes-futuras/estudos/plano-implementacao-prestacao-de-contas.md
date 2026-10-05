@@ -12,7 +12,7 @@
 
 ## Andamento
 
-Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 100 passando no `npm test`.
+Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 109 passando no `npm test`.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
@@ -26,7 +26,8 @@ Atualizado em 04/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 100
 | Tipos de comprovante (achado na P0.1) | Feita (`414bdb3`) e aplicada em produção em 04/10/2026 | Nada; um comprovante RPA salvo como quem criou a prestação passou (teste desfeito) |
 | P0.2 Prestação pertence à organização (expansão) | Feita e aplicada em produção em 05/10/2026 | Contração: `organization_id not null` e fim da exceção de quem criou, depois do deploy do app. A permissão de escrita por papel (leitor só lê) espera a correção dos papéis |
 | P0.5 Acesso por módulo nos dados | Feita e aplicada em produção em 05/10/2026 | Nada. Mudança de rota: `prestacao_funcao`, as colunas de módulo nos convites e a tabela `organization_modulos` vão para a P0.6 e a P0.9, onde são usadas |
-| P0.6, P0.8, P0.9 | Não iniciadas | Desbloqueadas: o banco de produção pode ser lido |
+| P0.9 Liberação pelo super admin (cortesia) | Feita e aplicada em produção em 05/10/2026 | Publicar o app para a tela `/admin/organizacoes` aparecer. A Platibanda virou cortesia sem prazo: definir o prazo na tela |
+| P0.6, P0.8 | Não iniciadas | Desbloqueadas: o banco de produção pode ser lido |
 
 ### Banco de produção (leitura de 04/10/2026)
 
@@ -40,6 +41,8 @@ O acesso de leitura ao projeto `ykaymbmybellixxvtasi` foi liberado. O que a leit
 - **Dados da prestação:** 1 prestação (sem projeto e sem captação), 37 itens, 1 comprovante no caminho antigo e 3 arquivos nos prefixos antigos. As colunas de módulo existem (`text[] not null default '{captacao}'`); 1 organização e 1 pessoa já têm a prestação.
 - **Papéis:** membros aceitam `colaborador` e `leitor`, mas `organization_invitations` ainda não. Isso está registrado num cartão de tarefa separado.
 - **P0.5 em produção (05/10/2026):** a função `auth_tem_modulo` aplica a mesma regra de `lib/modulos.ts`. `can_access_prestacao` passou a exigir o módulo. As 4 regras do bucket `documentos` exigem o módulo para `{org}/prestacoes/...`; antes, um membro sem o módulo conseguia listar e baixar esses arquivos. Um gatilho impede que alguém se dê módulo pago pelo navegador. Hoje isso já não era possível, porque `organizations` não aceita alteração do cliente; o gatilho é a segunda barreira. Teste numa transação desfeita: quem criou vê 1 prestação e 37 itens e envia arquivo; o colega da mesma organização sem o módulo vê 0 e não envia; os 2 documentos fora da prestação continuam visíveis; com uma regra temporária de alteração, mudar o nome passa e mudar os módulos é recusado. Efeito: 4 dos 5 membros da organização da prestação deixam de ver os dados dela, como já acontecia na tela.
+- **P0.9 em produção (05/10/2026):** a tabela `organization_modulos` guarda o contrato de cada módulo, e um gatilho mantém `organizations.modulos_ativos` igual a ele: liberar, alterar ou encerrar a cortesia muda o acesso na hora, sem deploy. O navegador não escreve na tabela e só o super admin a lê. As vagas são conferidas por `admin_definir_acesso_modulo` (só a chave de serviço chama), que trava o contrato para duas liberações simultâneas não passarem do limite, recusa captador e não deixa ninguém sem módulo. A rotina `jards-prestacao-cortesias` roda às 00h10 de Brasília: avisa os administradores da organização 7 dias antes do fim e encerra as vencidas, com registro sem autor na auditoria. A Platibanda, liberada à mão antes, virou cortesia sem prazo com 1 vaga. Ensaio numa transação desfeita: liberar dá o módulo à organização; com 1 vaga, o segundo membro é recusado; tirar o único módulo de alguém é recusado; a rotina gera 1 aviso por administrador e não repete; vencida, a organização perde o módulo e a rotina registra o encerramento; renovada, volta. Depois de aplicada: um admin comum lê 0 contratos e não roda a rotina nem as funções; visitante não lê; o super admin lê.
+- **Achado na P0.9:** a regra que deixa o admin da organização inserir membros direto do navegador (`20260726000008`) dá "infinite recursion detected in policy" e nunca funcionou; o app adiciona membros pela rota do servidor. A P0.9 somou uma regra restritiva que impede incluir a prestação por esse caminho, para quando a recursão for corrigida. O conector também travou num ensaio com `DELETE` e `revoke ... truncate`; sem os dois, passou. Por isso a migration usa `revoke all` e o teste não apaga linhas.
 - **Achado no caminho:** o onboarding grava o nome da organização direto do navegador, mas `organizations` não aceita alteração do cliente; o nome nunca é salvo e nenhum erro aparece. Registrado como tarefa separada.
 - **P0.2 em produção (05/10/2026):** a coluna `organization_id` foi criada e a única prestação recebeu a organização de quem a criou. Um gatilho preenche a organização pelo projeto ou pela captação e recusa vínculo de outra organização. A função `can_access_prestacao` passou a olhar a organização. Duas regras restritivas impedem criar ou mover prestação para organização alheia. Teste numa transação desfeita: quem criou vê 1 prestação e 37 itens; criar na própria organização funciona; criar ou mover para organização alheia é recusado; pessoa de outra organização vê 0. `auth_can_write_org` não foi usada porque em produção só libera `admin` e `captador`, e bloquearia colaboradores.
 
