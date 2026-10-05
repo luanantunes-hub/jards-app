@@ -1,0 +1,8 @@
+Extrato de conta corrente
+Agência: 0001 Conta: 123456-7
+Período: 01/10/2026 a 31/10/2026
+
+Data_Mov;Nr_Doc;Historico;Valor;Deb_Cred
+01/10/2026;000001;CRED TED;"15.000,00";C
+03/10/2026;000045;PAG BOLETO;"1.200,50";D
+10/10/2026;;TAR MANUT CONTA;"12,00";D

@@ -748,6 +748,60 @@ export interface PrestacaoAtividade {
   created_at: string;
 }
 
+/** Conta bancária do projeto (P2.1). */
+export interface PrestacaoContaBancaria {
+  id: string;
+  prestacao_id: string;
+  tipo: "captacao" | "movimento" | "unica" | "recolhimento" | "aplicacao";
+  banco: string | null;
+  agencia: string | null;
+  conta: string | null;
+  apelido: string | null;
+  data_abertura: string | null;
+  data_encerramento: string | null;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Um arquivo de extrato importado; apagar desfaz a importação e leva os lançamentos dela. */
+export interface PrestacaoExtratoImportacao {
+  id: string;
+  prestacao_id: string;
+  conta_id: string;
+  formato: "ofx" | "csv" | "pdf" | "agregador";
+  nome_arquivo: string | null;
+  storage_path: string | null;
+  hash_arquivo: string | null;
+  periodo_inicio: string | null;
+  periodo_fim: string | null;
+  saldo_inicial: number | null;
+  saldo_final: number | null;
+  lancamentos_novos: number;
+  lancamentos_repetidos: number;
+  criado_por: string | null;
+  created_at: string;
+}
+
+/** Linha do extrato. Só entra por fn_prestacao_extrato_importar. */
+export interface PrestacaoLancamento {
+  id: string;
+  prestacao_id: string;
+  conta_id: string;
+  importacao_id: string | null;
+  data: string;
+  natureza: "credito" | "debito";
+  valor: number;
+  historico: string;
+  numero_documento: string | null;
+  numero_normalizado: string | null;
+  id_externo: string | null;
+  categoria: string;
+  saldo_apos: number | null;
+  chave: string;
+  created_at: string;
+}
+
 export interface PrestacaoAtividadeEvidencia {
   id: string;
   atividade_id: string;
