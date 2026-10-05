@@ -488,7 +488,8 @@ const PISTAS_DE_GRUPO: [GrupoCusto, RegExp][] = [
   ["administracao", /\b(administra|custos? adm|taxa adm|adm\.)/],
   ["divulgacao", /\b(divulga|comunica|acessib|imprensa|publicidade|midia)/],
   ["captacao", /\b(captac|captador)/],
-  ["elaboracao", /\belabora/],
+  // Elaboração do projeto ou da proposta, não o verbo ("elaboração de peças").
+  ["elaboracao", /\belaboracao (do|da|de) (projeto|proposta)|\belaboracao e captacao/],
   ["agenciamento", /\bagencia(mento|dor)/],
   ["gerenciamento", /\bgerencia(mento)?\b/],
   ["colocacao", /\bcoloca(cao)?\b|\bcoordenad(or|ora) lider/],

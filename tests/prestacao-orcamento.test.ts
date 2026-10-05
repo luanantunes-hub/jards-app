@@ -18,6 +18,7 @@ import {
   paisPossiveis,
   percentualPago,
   sugerirGrupoCusto,
+  sugerirGrupoDoRegime,
   tetosPorGrupo,
   TIPOS_NO,
   TIPOS_VERSAO,
@@ -192,6 +193,10 @@ test("grupo de custo sugerido pelo nome", () => {
   assert.equal(sugerirGrupoCusto("Remuneração de captação de recursos"), "captacao");
   assert.equal(sugerirGrupoCusto("Cachê", "Custos Administrativos"), "administracao", "a etapa também conta");
   assert.equal(sugerirGrupoCusto("Ator 1"), null);
+  assert.equal(sugerirGrupoCusto("Elaboração do projeto"), "elaboracao");
+  assert.equal(sugerirGrupoDoRegime(regimePorCodigo("lie_p10_2026"), "Elaboração e captação"), "elaboracao", "na LIE é um grupo só");
+  assert.equal(sugerirGrupoCusto("Designer", "elaboração de peças gráficas, vídeos e redes sociais"), null, "o verbo não é o grupo");
+  assert.equal(sugerirGrupoCusto("Professor Pedagógo", "elaborar o projeto pedagogico"), null);
 });
 
 test("importação de CSV com etapa: separador, aspas, totais e etapas novas", () => {
