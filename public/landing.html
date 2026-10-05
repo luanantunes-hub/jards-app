@@ -2176,19 +2176,22 @@
     <script>
     (function(){
       /* helpers */
+      // Logos em 128px pelo Logo.dev (token público, o mesmo da demo de leis); o favicon do
+      // Google caía para 16px em algumas empresas. Sem logo confiável, vale a inicial (fallback abaixo).
+      var LOGODEV='https://img.logo.dev/';
+      var LOGODEV_Q='?token=pk_A2QRZaI_S5urxuYmsI6baQ&size=128&format=png';
       var COMPANY_LOGOS=[
-        ['Itaú Cultural','https://www.google.com/s2/favicons?domain=itaucultural.org.br&sz=128'],
-        ['Itaú BBA','https://www.google.com/s2/favicons?domain=itau.com.br&sz=128'],
-        ['Itaú','https://www.google.com/s2/favicons?domain=itau.com.br&sz=128'],
+        ['Itaú Cultural',LOGODEV+'itaucultural.org.br'+LOGODEV_Q],
+        ['Itaú BBA',LOGODEV+'itau.com.br'+LOGODEV_Q],
+        ['Itaú',LOGODEV+'itau.com.br'+LOGODEV_Q],
         ['Petrobras','assets/petrobras.svg'],
-        ['Bradesco','https://www.google.com/s2/favicons?domain=bradesco.com.br&sz=128'],
-        ['Natura','assets/natura-logo.svg'],
-        ['Ambev','https://www.google.com/s2/favicons?domain=ambev.com.br&sz=128'],
+        ['Bradesco',LOGODEV+'bradesco.com.br'+LOGODEV_Q],
+        ['Natura',LOGODEV+'natura.com.br'+LOGODEV_Q],
+        ['Ambev',LOGODEV+'ambev.com.br'+LOGODEV_Q],
         ['Vale','assets/vale-logo.png'],
-        ['TV Cultura','https://www.google.com/s2/favicons?domain=tvcultura.com.br&sz=128'],
-        ['Sabesp','https://www.google.com/s2/favicons?domain=sabesp.com.br&sz=128'],
-        ['Porto Seguro','https://www.google.com/s2/favicons?domain=portoseguro.com.br&sz=128'],
-        ['Embraer','https://www.google.com/s2/favicons?domain=embraer.com&sz=128'],
+        ['Sabesp',LOGODEV+'sabesp.com.br'+LOGODEV_Q],
+        ['Porto Seguro',LOGODEV+'portoseguro.com.br'+LOGODEV_Q],
+        ['Embraer',LOGODEV+'embraer.com'+LOGODEV_Q],
         ['Interno','assets/jards-logo.svg']
       ];
       function logo(name,size){
