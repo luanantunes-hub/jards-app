@@ -1908,3 +1908,49 @@ export interface Database {
     CompositeTypes: Record<string, never>;
   };
 }
+
+/**
+ * Fornecedor da organização (P2.3). Os dados da Receita e das sanções só são
+ * gravados pela função consultar-fornecedor; a pessoa edita o resto.
+ */
+export interface PrestacaoFornecedor {
+  id: string;
+  organization_id: string;
+  tipo_pessoa: "pj" | "mei" | "pf" | "estrangeiro";
+  documento: string | null;
+  nome: string | null;
+  parte_relacionada: boolean;
+  tipo_relacao: "proponente" | "conjuge" | "coligada" | "socio_em_comum" | "dirigente" | "parente" | null;
+  grupo_economico: string | null;
+  observacoes: string | null;
+  razao_social: string | null;
+  nome_fantasia: string | null;
+  situacao_cadastral: string | null;
+  data_situacao: string | null;
+  data_abertura: string | null;
+  cnae_principal: string | null;
+  cnae_descricao: string | null;
+  cnaes_secundarios: { codigo: string; descricao: string }[] | null;
+  natureza_juridica: string | null;
+  porte: string | null;
+  opcao_mei: boolean | null;
+  uf: string | null;
+  municipio: string | null;
+  socios: { nome: string; qualificacao: string | null; documento: string | null; entrada: string | null }[] | null;
+  cnpj_consultado_em: string | null;
+  cnpj_erro: string | null;
+  sancoes: {
+    emissor: string | null;
+    tipo: string | null;
+    descricao: string | null;
+    situacao: string | null;
+    observacao: string | null;
+    emitida_em: string | null;
+    resultado: "nada_consta" | "consta" | "a_conferir";
+  }[] | null;
+  sancoes_situacao: "nada_consta" | "consta" | "a_conferir" | "indisponivel" | null;
+  sancoes_consultadas_em: string | null;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}

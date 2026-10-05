@@ -1,0 +1,41 @@
+{
+  "razaoSocial": "PRODUTORA EXEMPLO LTDA",
+  "nomeFantasia": "EXEMPLO PRODUCOES",
+  "cnpj": "11222333000181",
+  "uf": "SP",
+  "certidoes": [
+    {
+      "emissor": "TCU",
+      "tipo": "Inidôneos",
+      "dataHoraEmissao": "05/10/2026 18:30",
+      "descricao": "Licitantes Inidôneos",
+      "situacao": "NADA_CONSTA",
+      "observacao": null
+    },
+    {
+      "emissor": "CNJ",
+      "tipo": "CNIA",
+      "dataHoraEmissao": "05/10/2026 18:30",
+      "descricao": "CNIA - Cadastro Nacional de Condenações Cíveis por Ato de Improbidade Administrativa e Inelegibilidade",
+      "situacao": "NADA_CONSTA",
+      "observacao": null
+    },
+    {
+      "emissor": "Portal da Transparência",
+      "tipo": "CEIS",
+      "dataHoraEmissao": "05/10/2026 18:30",
+      "descricao": "Cadastro Nacional de Empresas Inidôneas e Suspensas",
+      "situacao": "CONSTA",
+      "observacao": "Suspensão temporária até 31/12/2026"
+    },
+    {
+      "emissor": "Portal da Transparência",
+      "tipo": "CNEP",
+      "dataHoraEmissao": "05/10/2026 18:30",
+      "descricao": "CNEP - Cadastro Nacional de Empresas Punidas",
+      "situacao": "NADA_CONSTA",
+      "observacao": null
+    }
+  ],
+  "certidaoPDF": null
+}

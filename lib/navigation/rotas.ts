@@ -21,6 +21,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/contratos", "Contrato"],
   ["/entregas", "Entrega"],
   ["/ativacoes", "Ativação"],
+  ["/prestacoes/fornecedores", "Fornecedores"],
   ["/prestacoes", "Prestações"],
   ["/configuracoes/mcp", "Claude e ChatGPT (MCP)"],
   ["/configuracoes", "Configurações"],
@@ -48,6 +49,14 @@ export function itemAtivoDoMenu(path: string): string {
     if (correspondeRota(path, prefixo)) return secao;
   }
   return path;
+}
+
+/**
+ * Entre os itens do menu que casam com o caminho, o mais específico: em
+ * /prestacoes/fornecedores, "Fornecedores" fica ativo e "Prestações" não.
+ */
+export function hrefAtivoDoMenu(path: string, hrefs: readonly string[]): string | null {
+  return hrefs.filter(href => correspondeRota(path, href)).sort((a, b) => b.length - a.length)[0] ?? null;
 }
 
 export function tituloDaPagina(path: string): string {

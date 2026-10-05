@@ -26,6 +26,7 @@ import {
   Sparkles,
   ArrowLeftRight,
   Menu,
+  Store,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -37,7 +38,7 @@ import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
-import { correspondeRota, itemAtivoDoMenu } from "@/lib/navigation/rotas";
+import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
 import { destinoSemAcesso, moduloDaRota, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
@@ -88,7 +89,8 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
     {
       section: "Prestações",
       items: [
-        { label: "Prestações",  href: "/prestacoes", icon: ClipboardCheck },
+        { label: "Prestações",   href: "/prestacoes",              icon: ClipboardCheck },
+        { label: "Fornecedores", href: "/prestacoes/fornecedores", icon: Store },
       ],
     },
   ],
@@ -314,6 +316,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
   const isExpanded  = expanded || mobileOpen;
   const menuPath    = itemAtivoDoMenu(path);
+  const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
   // EXPERIMENTAL: dentro de uma organização onde o papel é "captador", o
   // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
   // organização que convidou (essas continuam existindo, só não fazem
@@ -471,7 +474,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
               <div className="space-y-0.5">
                 {items.map(({ label, href, icon: Icon }) => {
-                  const active = correspondeRota(menuPath, href);
+                  const active = href === hrefAtivo;
                   return (
                     <Link
                       key={href}
