@@ -46,24 +46,25 @@ Deno.serve(async (req) => {
     const geminiUrl =
       `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
-    const prompt = `Este documento é um orçamento de projeto cultural (planilha ou tabela de rubricas).
-Extraia todas as rubricas orçamentárias e retorne APENAS um array JSON, sem markdown, sem explicação:
+    const prompt = `Este documento é o orçamento de um projeto incentivado (planilha orçamentária, por exemplo a do Salic).
+Extraia os itens com valor e retorne APENAS um array JSON, sem markdown, sem explicação:
 
 [
   {
-    "rubrica": <nome da rubrica/categoria, string>,
-    "descricao": <descrição detalhada se houver, string ou null>,
-    "valor_aprovado": <valor numérico com ponto decimal, ex: 15000.00>,
-    "tolerancia_pct": <percentual de tolerância se informado, número inteiro, default 15>
+    "nome": <nome do item de despesa, string>,
+    "descricao": <especificação ou justificativa, se houver, string ou null>,
+    "valor": <valor total aprovado do item, número com ponto decimal, ex: 15000.00>,
+    "etapa": <etapa, fase ou produto em que o item aparece no documento (ex.: "Pré-produção", "Divulgação/Comercialização", "Custos administrativos"), string ou null>,
+    "grupo_custo": <"execucao"|"administracao"|"divulgacao"|"captacao"|"elaboracao"|"agenciamento"|"gerenciamento"|"recolhimentos" ou null>
   }
 ]
 
 Regras:
-- Inclua TODAS as linhas que representem uma rubrica com valor.
-- Ignore linhas de total, subtotal ou cabeçalho.
-- Se o documento tiver colunas como "Valor Previsto", "Valor Aprovado", "Orçado" ou "Proposto", use esse valor em valor_aprovado.
-- Se houver percentual de tolerância ou variação permitida, use em tolerancia_pct; caso contrário use 15.
-- Retorne array vazio [] se não encontrar nenhuma rubrica.`;
+- Inclua TODOS os itens que tenham valor; ignore linhas de total, subtotal e cabeçalho.
+- Se houver colunas como "Valor total", "Valor aprovado", "Orçado" ou "Proposto", use a do valor aprovado; se houver quantidade, ocorrência e valor unitário, use o total da linha.
+- Em "etapa", repita exatamente o nome da etapa ou produto do documento, para os itens da mesma etapa ficarem juntos.
+- Em "grupo_custo": custos administrativos e taxa de administração = "administracao"; divulgação, comunicação, assessoria de imprensa e acessibilidade comunicacional = "divulgacao"; remuneração de captação = "captacao"; elaboração do projeto = "elaboracao"; agenciamento = "agenciamento"; gerenciamento ou coordenação geral = "gerenciamento"; tributos e recolhimentos = "recolhimentos"; demais custos da atividade-fim = "execucao". Use null se não der para saber.
+- Retorne array vazio [] se não encontrar nenhum item.`;
 
     const geminiRes = await fetch(geminiUrl, {
       method: "POST",

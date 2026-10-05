@@ -8,12 +8,12 @@ import {
 } from "../lib/prestacao/execucao";
 
 const comprovantes = [
-  { item_id: "a", status: "aceito", valor_extraido: 1000 },
-  { item_id: "a", status: "aceito", valor_extraido: 250.5 },
-  { item_id: "a", status: "pendente", valor_extraido: 999 },
-  { item_id: "b", status: "rejeitado", valor_extraido: 500 },
-  { item_id: "b", status: "aceito", valor_extraido: null },
-  { item_id: null, status: "aceito", valor_extraido: 300 },
+  { no_id: "a", status: "aceito", valor_extraido: 1000 },
+  { no_id: "a", status: "aceito", valor_extraido: 250.5 },
+  { no_id: "a", status: "pendente", valor_extraido: 999 },
+  { no_id: "b", status: "rejeitado", valor_extraido: 500 },
+  { no_id: "b", status: "aceito", valor_extraido: null },
+  { no_id: null, status: "aceito", valor_extraido: 300 },
 ];
 
 test("só comprovantes aceitos entram no executado do item", () => {

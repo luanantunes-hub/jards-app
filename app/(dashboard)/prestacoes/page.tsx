@@ -61,7 +61,7 @@ export default function PrestacoesList() {
     const { data: comps } = ids.length > 0
       ? await (supabase as any)
           .from("prestacao_comprovantes")
-          .select("prestacao_id, item_id, status, valor_extraido")
+          .select("prestacao_id, no_id, status, valor_extraido")
           .eq("status", "aceito")
           .in("prestacao_id", ids)
       : { data: [] };

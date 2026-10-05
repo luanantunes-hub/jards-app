@@ -35,13 +35,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Rubricas da prestação, para a IA sugerir a mais adequada
-    const { data: rubricasData } = await supabase
-      .from("prestacao_itens")
-      .select("id, rubrica, descricao")
+    // Itens da versão em uso do orçamento em árvore (P1.6), para a IA sugerir
+    // o mais adequado. Sem orçamento em árvore, cai nas rubricas antigas.
+    const { data: itensData } = await supabase
+      .from("prestacao_orcamento_nos")
+      .select("id, nome, descricao, versao:prestacao_orcamento_versoes!inner(ativa)")
       .eq("prestacao_id", prestacao_id)
+      .eq("tipo", "item")
+      .eq("versao.ativa", true)
       .order("ordem");
-    const rubricas = (rubricasData as Rubrica[]) ?? [];
+    let rubricas: Rubrica[] = ((itensData ?? []) as { id: string; nome: string; descricao: string | null }[])
+      .map(item => ({ id: item.id, rubrica: item.nome, descricao: item.descricao }));
+    if (rubricas.length === 0) {
+      const { data: rubricasData } = await supabase
+        .from("prestacao_itens")
+        .select("id, rubrica, descricao")
+        .eq("prestacao_id", prestacao_id)
+        .order("ordem");
+      rubricas = (rubricasData as Rubrica[]) ?? [];
+    }
 
     // Converte para base64
     const buffer = await fileData.arrayBuffer();

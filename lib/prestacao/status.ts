@@ -44,6 +44,17 @@ const ERROS: Record<string, string> = {
   transicao_invalida: "Essa mudança de status não existe a partir do status atual. Atualize a página.",
   prazo_sem_justificativa: "Explique por que o prazo é diferente do calculado pelo regime.",
   sem_permissao: "Seu papel não permite essa ação. Enviar ao órgão e registrar a decisão cabem ao administrador ou ao responsável; aceitar comprovantes, ao administrador, revisor ou responsável.",
+  // Orçamento em árvore (P1.6)
+  versao_ativa: "A versão ativa não pode ser excluída. Torne outra versão ativa antes.",
+  use_ativar_versao: "Use “Tornar ativa” para trocar a versão ativa do orçamento.",
+  versao_imutavel: "Um nó não muda de versão. Copie a versão para trabalhar numa nova.",
+  orcamento_pai_invalido: "Escolha um agrupador da mesma versão: um item não fica dentro de outro item.",
+  orcamento_ciclo: "Um agrupador não pode ficar dentro de algo que está abaixo dele.",
+  item_com_filhos: "Esse agrupador tem nós dentro. Mova-os antes de transformá-lo em item.",
+  item_com_comprovantes: "Esse item tem comprovantes ligados e não pode virar agrupador.",
+  item_com_remanejamento: "Esse item tem remanejamento e não pode virar agrupador.",
+  remanejamento_pela_alteracao: "O remanejado muda pelas alterações de orçamento, não pela edição do item.",
+  item_invalido: "Escolha um item do orçamento desta prestação.",
 };
 
 export function mensagemErroPrestacao(erro: { message?: string } | null | undefined, padrao: string): string {

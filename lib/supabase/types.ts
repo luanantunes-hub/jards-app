@@ -702,6 +702,8 @@ export type StatusComprovante = "pendente" | "aceito" | "rejeitado";
 export interface PrestacaoComprovante {
   id: string;
   prestacao_id: string;
+  /** Item do orçamento em árvore (P1.6). item_id é o vínculo antigo, igual a ele enquanto existir. */
+  no_id: string | null;
   item_id: string | null;
   tipo: TipoComprovante;
   origem: "nacional" | "internacional";

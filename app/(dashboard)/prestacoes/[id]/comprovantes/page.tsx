@@ -3,7 +3,8 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, Clock, ExternalLink } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { PrestacaoComprovante, PrestacaoItem, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
+import type { PrestacaoComprovante, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
+import { useItensDoOrcamento, type ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { Select } from "@/components/ui/Select";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
@@ -40,6 +41,11 @@ const fmt = (v: number | null) =>
 const fmtDate = (d: string | null) =>
   d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
 
+/** Item com o agrupador mais próximo, para distinguir nomes repetidos. */
+function rotuloDoItem(item: ItemDoOrcamento): string {
+  return item.caminho.length ? `${item.caminho[item.caminho.length - 1]} › ${item.nome}` : item.nome;
+}
+
 export default function ComprovantesPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = createClient();
@@ -58,7 +64,8 @@ export default function ComprovantesPage() {
   const [erroLista, setErroLista] = useState("");
 
   const [comprovantes, setComprovantes] = useState<PrestacaoComprovante[]>([]);
-  const [itens, setItens] = useState<PrestacaoItem[]>([]);
+  // Itens da versão em uso do orçamento em árvore (P1.6).
+  const { itens } = useItensDoOrcamento(id);
   const [periodo, setPeriodo] = useState<{ inicio: string | null; fim: string | null }>({ inicio: null, fim: null });
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -81,18 +88,23 @@ export default function ComprovantesPage() {
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const fetch = useCallback(async () => {
-    const [{ data: comp }, { data: it }, { data: prest }] = await Promise.all([
+    const [{ data: comp }, { data: prest }] = await Promise.all([
       (supabase as any).from("prestacao_comprovantes").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
-      (supabase as any).from("prestacao_itens").select("id, rubrica").eq("prestacao_id", id).order("ordem"),
       (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
     ]);
     setComprovantes((comp as PrestacaoComprovante[]) ?? []);
-    setItens((it as PrestacaoItem[]) ?? []);
     if (prest) setPeriodo({ inicio: prest.data_inicio_execucao, fim: prest.data_fim_execucao });
     setLoading(false);
   }, [id, supabase]);
 
   useEffect(() => { fetch(); }, [fetch]);
+
+  async function mudarItem(comprovante: PrestacaoComprovante, noId: string) {
+    setErroLista("");
+    const { error } = await (supabase as any).from("prestacao_comprovantes").update({ no_id: noId || null }).eq("id", comprovante.id);
+    if (error) { setErroLista(mensagemErroPrestacao(error, "Não foi possível trocar o item")); return; }
+    setComprovantes(lista => lista.map(c => (c.id === comprovante.id ? { ...c, no_id: noId || null } : c)));
+  }
 
   // Caminho do arquivo já enviado ao storage (aguardando confirmação)
   const [storagePath, setStoragePath] = useState<string | null>(null);
@@ -202,7 +214,7 @@ export default function ComprovantesPage() {
 
     const { error: insertErro } = await (supabase as any).from("prestacao_comprovantes").insert({
       prestacao_id: id,
-      item_id: itemId || null,
+      no_id: itemId || null,
       tipo,
       origem,
       nome_arquivo: pendingFile.name,
@@ -372,15 +384,15 @@ export default function ComprovantesPage() {
 
                 {/* Rubrica */}
                 <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Rubrica</label>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Item do orçamento</label>
                   <Select
                     value={itemId}
                     onChange={e => setItemId(e.target.value)}
                     className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
                   >
-                    <option value="">Sem rubrica</option>
-                    {itens.map(it => <option key={it.id} value={it.id}>{it.rubrica}</option>)}
+                    <option value="">Sem item</option>
+                    {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
                   </Select>
                 </div>
 
@@ -537,7 +549,7 @@ export default function ComprovantesPage() {
             {comprovantes.map(c => {
               const tipoM = TIPO_META[c.tipo];
               const statusM = STATUS_META[c.status];
-              const rubrica = itens.find(it => it.id === c.item_id);
+              const rubrica = itens.find(it => it.id === c.no_id);
               return (
                 <div key={c.id} className="px-5 py-4 flex items-start gap-4 hover:bg-black/[.02] transition">
                   {/* Ícone tipo */}
@@ -561,7 +573,20 @@ export default function ComprovantesPage() {
                       </span>
                     </div>
                     <div className="flex items-center gap-3 text-[0.625rem] text-black/35 flex-wrap">
-                      {rubrica && <span>{rubrica.rubrica}</span>}
+                      {permissoes.editar && itens.length > 0 ? (
+                        <Select
+                          value={c.no_id ?? ""}
+                          onChange={e => mudarItem(c, e.target.value)}
+                          aria-label={`Item do orçamento de ${c.nome_arquivo}`}
+                          className="max-w-[16rem] truncate rounded border px-1.5 py-0.5 text-[0.625rem] focus:outline-none"
+                          style={{ borderColor: "rgba(13,13,13,.12)", color: rubrica ? "rgba(13,13,13,.65)" : "#B07A14" }}
+                        >
+                          <option value="">{c.no_id ? "Item de outra versão" : "Sem item"}</option>
+                          {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
+                        </Select>
+                      ) : (
+                        <span>{rubrica ? rotuloDoItem(rubrica) : "Sem item"}</span>
+                      )}
                       {c.origem === "internacional" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#1A8B7A14", color: "#1A8B7A" }}>Internacional</span>
                       )}

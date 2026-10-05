@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
-import type { PrestacaoContas, StatusPrestacao, PrestacaoItem } from "@/lib/supabase/types";
+import type { PrestacaoContas, StatusPrestacao } from "@/lib/supabase/types";
+import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { executadoPorItem, percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
 import { mensagemErroPrestacao, proximosBloqueados, proximosStatus } from "@/lib/prestacao/status";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -56,7 +57,8 @@ export default function PrestacaoDetalhe() {
 
   const [prestacao, setPrestacao] = useState<PrestacaoDetalhe | null>(null);
   const [log, setLog] = useState<LogEntry[]>([]);
-  const [itens, setItens] = useState<PrestacaoItem[]>([]);
+  // Itens da versão em uso do orçamento em árvore (P1.6).
+  const { itens } = useItensDoOrcamento(id);
   const [atividadesCount, setAtividadesCount] = useState(0);
   const [comprovantes, setComprovantes] = useState<ComprovanteParaExecucao[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +91,6 @@ export default function PrestacaoDetalhe() {
     const [
       { data },
       { data: logData },
-      { data: itensData },
       { count: atCount },
       { data: compData },
     ] = await Promise.all([
@@ -104,23 +105,17 @@ export default function PrestacaoDetalhe() {
         .eq("prestacao_id", id)
         .order("created_at", { ascending: false }),
       (supabase as any)
-        .from("prestacao_itens")
-        .select("*")
-        .eq("prestacao_id", id)
-        .order("ordem"),
-      (supabase as any)
         .from("prestacao_atividades")
         .select("*", { count: "exact", head: true })
         .eq("prestacao_id", id),
       (supabase as any)
         .from("prestacao_comprovantes")
-        .select("item_id, status, valor_extraido")
+        .select("no_id, status, valor_extraido")
         .eq("prestacao_id", id),
     ]);
 
     setPrestacao(data as PrestacaoDetalhe);
     setLog((logData as LogEntry[]) ?? []);
-    setItens((itensData as PrestacaoItem[]) ?? []);
 
     setAtividadesCount(atCount ?? 0);
     setComprovantes((compData as ComprovanteParaExecucao[]) ?? []);
@@ -180,7 +175,7 @@ export default function PrestacaoDetalhe() {
 
   // Totais de comprovação financeira: soma dos comprovantes aceitos
   const totalAprovado = itens.length > 0
-    ? itens.reduce((s, i) => s + i.valor_aprovado, 0)
+    ? itens.reduce((s, i) => s + i.vigente, 0)
     : (prestacao.valor_aprovado ?? 0);
   const totalComprovado = totalExecutado(comprovantes);
   const executadoItem = executadoPorItem(comprovantes);
@@ -360,13 +355,13 @@ export default function PrestacaoDetalhe() {
                   <div className="border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                     {itens.map(item => {
                       const itemExecutado = executadoItem.get(item.id) ?? 0;
-                      const itemPct = percentualExecutado(itemExecutado, item.valor_aprovado) ?? 0;
+                      const itemPct = percentualExecutado(itemExecutado, item.vigente) ?? 0;
                       return (
                         <div key={item.id} className="px-5 py-3 border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                           <div className="flex items-center justify-between mb-1">
-                            <p className="text-[0.6875rem] font-medium text-black/70 truncate">{item.rubrica}</p>
+                            <p className="text-[0.6875rem] font-medium text-black/70 truncate" title={item.caminho.length ? `${item.caminho.join(" › ")} › ${item.nome}` : item.nome}>{item.nome}</p>
                             <div className="flex items-center gap-3 flex-shrink-0 ml-4">
-                              <span className="text-[0.625rem] text-black/35 tabular-nums">{fmt(itemExecutado)} / {fmt(item.valor_aprovado)}</span>
+                              <span className="text-[0.625rem] text-black/35 tabular-nums">{fmt(itemExecutado)} / {fmt(item.vigente)}</span>
                               <span className="text-[0.625rem] font-semibold tabular-nums" style={{
                                 color: itemPct >= 90 ? "#2E8932" : itemPct >= 50 ? "#B07A14" : "rgba(13,13,13,.35)"
                               }}>{itemPct}%</span>

@@ -1,14 +1,13 @@
 // Execução financeira provisória: soma dos comprovantes aceitos.
 //
-// O banco mantém `valor_realizado` por gatilho (recalcular_valor_realizado e
-// sync_prestacao_valor_realizado, versionados em 20260827074320): por item, a
-// mesma soma daqui; na prestação, a soma dos itens, sem os comprovantes
-// aceitos que ainda não têm rubrica. As telas somam direto dos comprovantes
-// para mostrar esses também. Na fase 2 o executado passa a vir dos
-// pagamentos conciliados com o extrato.
+// O comprovante aponta para o item do orçamento por `no_id` (P1.6). O banco
+// mantém `prestacoes_contas.valor_realizado` com a mesma soma de
+// totalExecutado (fn_prestacao_recalcular_realizado, em
+// 20261005180000_prestacao_orcamento_arvore). Na fase 2 o executado passa a
+// vir dos pagamentos conciliados com o extrato.
 
 export type ComprovanteParaExecucao = {
-  item_id: string | null;
+  no_id: string | null;
   status: string;
   valor_extraido: number | null;
 };
@@ -25,8 +24,8 @@ function valor(c: ComprovanteParaExecucao): number {
 export function executadoPorItem(comprovantes: readonly ComprovanteParaExecucao[]): Map<string, number> {
   const mapa = new Map<string, number>();
   for (const c of aceitos(comprovantes)) {
-    if (!c.item_id) continue;
-    mapa.set(c.item_id, (mapa.get(c.item_id) ?? 0) + valor(c));
+    if (!c.no_id) continue;
+    mapa.set(c.no_id, (mapa.get(c.no_id) ?? 0) + valor(c));
   }
   return mapa;
 }
@@ -38,7 +37,7 @@ export function totalExecutado(comprovantes: readonly ComprovanteParaExecucao[])
 
 /** Total aceito sem rubrica: aparece à parte para não sumir das telas por item. */
 export function executadoSemRubrica(comprovantes: readonly ComprovanteParaExecucao[]): number {
-  return aceitos(comprovantes).filter(c => !c.item_id).reduce((soma, c) => soma + valor(c), 0);
+  return aceitos(comprovantes).filter(c => !c.no_id).reduce((soma, c) => soma + valor(c), 0);
 }
 
 /** Percentual inteiro; null quando não há valor aprovado para comparar. */
