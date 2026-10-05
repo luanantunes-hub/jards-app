@@ -69,6 +69,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
 
   async function handleSubmit() {
     if (!titulo.trim()) return;
+    if (!organizationId) { setErro("Selecione uma organização antes de criar a prestação."); return; }
     setSaving(true);
     setErro(null);
 
@@ -82,6 +83,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
       valor_aprovado: valorAprovado ? Number(valorAprovado) : null,
       observacoes: observacoes.trim() || null,
       criado_por: user?.id ?? null,
+      organization_id: organizationId,
     });
 
     setSaving(false);

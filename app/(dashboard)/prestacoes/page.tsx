@@ -7,14 +7,12 @@ import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoContas, StatusPrestacao } from "@/lib/supabase/types";
 import { NovaPrestacaoModal } from "@/components/modals/NovaPrestacaoModal";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
-import { organizacaoDaPrestacao } from "@/lib/prestacao/armazenamento";
 import { percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
 import { LIST_HEADER_CELL, ListContent, ListEmptyState, ListPageHeader, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 
 type PrestacaoRow = PrestacaoContas & {
-  organization_id?: string | null;
-  captacao: { titulo: string | null; lei: string | null; organization_id: string | null } | null;
-  projeto: { nome: string; organization_id: string | null } | null;
+  captacao: { titulo: string | null; lei: string | null } | null;
+  projeto: { nome: string } | null;
   executado: number;
 };
 
@@ -49,16 +47,14 @@ export default function PrestacoesList() {
   const fetch = useCallback(async () => {
     if (!organizationId) return;
     setLoading(true);
+    // O acesso vale para todas as organizações da pessoa; a lista mostra só a atual.
+    // Prestação sem organização (antiga) só é visível para quem criou e continua na lista.
     const { data } = await (supabase as any)
       .from("prestacoes_contas")
-      .select("*, captacao:captacao_id(titulo, lei, organization_id), projeto:projeto_id(nome, organization_id)")
+      .select("*, captacao:captacao_id(titulo, lei), projeto:projeto_id(nome)")
+      .or(`organization_id.eq.${organizationId},organization_id.is.null`)
       .order("created_at", { ascending: false });
-    // O acesso vale para todas as organizações da pessoa; a lista mostra só a atual.
-    // Prestação sem organização conhecida só é visível para quem criou e continua na lista.
-    const daOrganizacao = ((data ?? []) as Omit<PrestacaoRow, "executado">[]).filter(p => {
-      const org = organizacaoDaPrestacao(p);
-      return org === null || org === organizationId;
-    });
+    const daOrganizacao = (data ?? []) as Omit<PrestacaoRow, "executado">[];
 
     // Executado: soma dos comprovantes aceitos, incluindo os sem rubrica, que o valor_realizado do banco não conta.
     const ids = daOrganizacao.map(p => p.id);

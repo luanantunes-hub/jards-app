@@ -628,6 +628,8 @@ export type StatusPrestacao =
 
 export interface PrestacaoContas {
   id: string;
+  /** Null só em prestações antigas sem projeto, captação ou organização única de quem criou. */
+  organization_id: string | null;
   captacao_id: string | null;
   projeto_id: string | null;
   titulo: string;

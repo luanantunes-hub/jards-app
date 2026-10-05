@@ -40,8 +40,10 @@ test("a estrutura vem antes da primeira migration que usa as tabelas", async () 
 
 test("nenhuma migration abre a prestação para qualquer conta logada", async () => {
   for (const { nome, sql } of await todasAsMigrations()) {
-    const aberta = /create policy[^;]*on public\.prestac[a-z_]+[^;]*using \(true\)/i.test(sql);
-    assert.equal(aberta, false, `${nome} cria regra using (true) na prestação`);
+    // Regra RESTRICTIVE com using (true) só soma restrição; o perigo é a permissiva.
+    const aberta = sql.split(";").some(comando =>
+      /create policy[\s\S]*on public\.prestac[a-z_]+[\s\S]*using \(true\)/i.test(comando) && !/as restrictive/i.test(comando));
+    assert.equal(aberta, false, `${nome} cria regra permissiva using (true) na prestação`);
   }
 });
 
@@ -57,4 +59,21 @@ test("o app só usa tipos de comprovante que o banco aceita", async () => {
   for (const [, tipo] of declarados.matchAll(/"([a-z_]+)"/g)) {
     assert.ok(aceitos.has(tipo), `tipo "${tipo}" está no app mas não no enum tipo_comprovante`);
   }
+});
+
+test("P0.2: prestação ganha organização, preenchida e protegida", async () => {
+  const sql = await readFile("supabase/migrations/20261005100000_prestacao_organizacao.sql", "utf8");
+  assert.match(sql, /add column if not exists organization_id uuid references public\.organizations\(id\)/);
+  assert.match(sql, /update public\.prestacoes_contas p\s+set organization_id = coalesce\(/);
+  assert.match(sql, /p\.organization_id = any\(array\(select public\.auth_org_ids\(\)\)\)/);
+  assert.match(sql, /as restrictive for insert to authenticated/);
+  assert.match(sql, /as restrictive for update to authenticated/);
+  assert.doesNotMatch(sql.replace(/--.*$/gm, ""), /\bdrop\b/i, "sem DROP: o conector trava em comandos destrutivos");
+});
+
+test("P0.2: o modal grava a organização atual", async () => {
+  const modal = await readFile("components/modals/NovaPrestacaoModal.tsx", "utf8");
+  assert.match(modal, /organization_id: organizationId/);
+  const lista = await readFile("app/(dashboard)/prestacoes/page.tsx", "utf8");
+  assert.match(lista, /organization_id\.eq\.\$\{organizationId\},organization_id\.is\.null/);
 });
