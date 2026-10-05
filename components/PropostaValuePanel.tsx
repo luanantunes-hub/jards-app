@@ -250,11 +250,14 @@ export function PropostaValuePanel({
   }
 
   // Proposta com valor definido — decisão de desfecho
+  const cotaDaProposta = propostaAtual.cota_id ? cotas.find(cota => cota.id === propostaAtual.cota_id) ?? null : null;
   return (
     <>
       <div className="flex h-11 items-center gap-1 rounded border border-black/[.12] bg-white pl-3 pr-1.5">
         <div className="pr-2 text-left">
-          <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Valor <span className="font-normal normal-case tracking-normal text-black/30">· da proposta</span></p>
+          <p className="max-w-[12rem] truncate text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">
+            Proposta{cotaDaProposta && <span className="font-normal normal-case tracking-normal text-black/30"> · {cotaDaProposta.nome}</span>}
+          </p>
           <p className="text-[0.75rem] font-bold tabular-nums text-[#B07A14]">{formatCurrency(propostaAtual.valor_proposto)}</p>
         </div>
         <div className="h-6 w-px bg-black/10" />

@@ -471,12 +471,19 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
     setSalvandoFinanceiro(true);
     setErroFinanceiro(null);
 
+    // O valor pedido é a proposta simplificada (ou fica direto, sem projeto).
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data, error } = await (supabase.from("captacoes") as any)
-      .update({
-        valor_solicitado: solicitado.valor,
-        valor_aprovado: aprovado.valor,
-      })
+    const db = supabase as any;
+    if (solicitado.valor !== (captacao.valor_solicitado ?? null)) {
+      const proposta = await db.rpc("fn_salvar_proposta_simplificada", { p_captacao_id: captacao.id, p_valor: solicitado.valor });
+      if (proposta.error) {
+        setSalvandoFinanceiro(false);
+        setErroFinanceiro(proposta.error.message || "Não foi possível salvar o valor. Tente novamente.");
+        return;
+      }
+    }
+    const { data, error } = await db.from("captacoes")
+      .update({ valor_aprovado: aprovado.valor })
       .eq("id", captacao.id)
       .select("id")
       .maybeSingle();

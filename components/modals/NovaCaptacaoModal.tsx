@@ -4,14 +4,14 @@ import {
   X, Building2, FolderOpen,
   Users, CalendarDays, Save, Lightbulb, Briefcase,
   MessageSquare, TrendingUp, Check, Ban, Plus, UserPlus,
-  SlidersHorizontal, Contact, UserRoundCog, Clock3, Circle, ArrowDown, Minus, ArrowUp,
+  SlidersHorizontal, Contact, UserRoundCog, Clock3, Circle, ArrowDown, Minus, ArrowUp, Layers,
 } from "lucide-react";
 import * as Icons from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import type {
   StatusCaptacao, MeioContato, PotencialFechamento, CanalContato,
-  OrigemOportunidade, ResultadoInteracao,
+  OrigemOportunidade, ResultadoInteracao, CotaPatrocinio,
 } from "@/lib/supabase/types";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
@@ -21,7 +21,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { contatoSalvoCorrespondente, rotuloContato, semContatosJaSalvos, type ContatoSugerido } from "@/lib/contatos-sugeridos";
 import { CampoValor } from "@/components/ui/CampoValor";
-import { useValorDefinidoPorProposta } from "@/hooks/useValorDefinidoPorProposta";
+import { cotaTemDisponibilidade, formatCotaValor } from "@/lib/cotas";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 
 type EmpresaCRM   = { id: string; nome: string };
@@ -276,8 +276,11 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   // Valor da negociação digitado direto aqui; a proposta continua opcional.
   const [valorTexto, setValorTexto]           = useState(() => formatarValorBRL(editData?.valor_solicitado));
   const valorLido = lerValorBRL(valorTexto);
-  // Com proposta ativa o valor vem dela e só muda negociando a proposta.
-  const valorDaProposta = useValorDefinidoPorProposta("captacoes", editData?.id);
+  // Cota (opcional) → Proposta: o valor da negociação é a proposta simplificada.
+  const [cotas, setCotas] = useState<CotaPatrocinio[]>([]);
+  const [cotaId, setCotaId] = useState("");
+  const [propostaAtiva, setPropostaAtiva] = useState<{ status: string; cota_id: string | null } | null>(null);
+  const propostaAceita = propostaAtiva?.status === "aceita";
   // "Contato realizado" fica recolhido: só quem já falou com a empresa abre.
   const [registrarContato, setRegistrarContato] = useState(false);
   const [canalRealizado, setCanalRealizado] = useState<CanalContato | null>(null);
@@ -346,6 +349,40 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
+
+  useEffect(() => {
+    if (!editData?.id) return;
+    let ativo = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from("propostas").select("status, cota_id, created_at")
+      .eq("captacao_id", editData.id).not("status", "in", "(recusada,expirada,arquivada)")
+      .order("created_at", { ascending: false })
+      .then(({ data }: { data: { status: string; cota_id: string | null }[] | null }) => {
+        if (!ativo || !data?.length) return;
+        const ativa = data.find(p => p.status === "aceita") ?? data[0];
+        setPropostaAtiva(ativa);
+        setCotaId(ativa.cota_id ?? "");
+      });
+    return () => { ativo = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editData?.id]);
+
+  useEffect(() => {
+    if (!projetoId) return;
+    let ativo = true;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (supabase as any).from("cotas_patrocinio")
+      .select("id,nome,valor,valor_maximo,modelo,produto_nome,status,unidades,unidades_ilimitadas,unidades_vendidas,contrapartidas,ordem")
+      .eq("projeto_id", projetoId).order("ordem")
+      .then(({ data }: { data: CotaPatrocinio[] | null }) => {
+        if (!ativo) return;
+        setCotas(data ?? []);
+        // Trocar de projeto descarta a cota do projeto anterior.
+        setCotaId(current => current && !(data ?? []).some(cota => cota.id === current) ? "" : current);
+      });
+    return () => { ativo = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [projetoId]);
 
   async function checkBlindagem(eId: string, responsavelId: string | null = captadorId) {
     if (!responsavelId || !eId) { setBlindagem(null); return; }
@@ -471,7 +508,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado"); setSaving(false); return; }
 
-    if (!valorDaProposta && !valorLido.valido) {
+    if (!propostaAceita && !valorLido.valido) {
       setErro(MENSAGEM_VALOR_INVALIDO);
       setSaving(false); return;
     }
@@ -527,7 +564,6 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       empresa_crm_id:      empresaFinal || null,
       empresa_id:          empresaPubId || null,
       projeto_id:          projetoId || null,
-      ...(valorDaProposta ? {} : { valor_solicitado: valorLido.valor }),
       // Campo legado mantido durante a transição entre versões do banco.
       meio_contato:        legacyMeio(null),
       status,
@@ -564,6 +600,21 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       if (!error && result.data?.id) {
         captacaoId = result.data.id;
         createdNow = !editData?.id;
+      }
+    }
+
+    // Valor e cota vão para a proposta simplificada (ou direto, sem projeto).
+    const cotaFinal = projetoId ? cotaId : "";
+    const mudouValor = editData?.id ? valorLido.valor !== (editData.valor_solicitado ?? null) : valorLido.valor != null;
+    const mudouCota = cotaFinal !== (propostaAtiva?.cota_id ?? "");
+    if (!error && captacaoId && !propostaAceita && (mudouValor || mudouCota)) {
+      const proposta = await sb.rpc("fn_salvar_proposta_simplificada", {
+        p_captacao_id: captacaoId, p_valor: valorLido.valor, p_cota_id: cotaFinal || null, p_alterar_cota: true,
+      });
+      if (proposta.error) {
+        // Evita deixar uma negociação recém-criada sem o valor que a pessoa digitou.
+        if (createdNow) await sb.from("captacoes").delete().eq("id", captacaoId);
+        error = { message: proposta.error.message || "Não foi possível salvar o valor da proposta." };
       }
     }
 
@@ -774,12 +825,35 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   options={etapas.map(({ status: value, label, Icon }) => ({ value, label, icon: <Icon size={13} /> }))} />
               </div>
 
+              {projetoId && cotas.length > 0 && (
+                <div>
+                  <FieldLabel>Cota <span className="ml-1 font-normal text-black/35">(opcional)</span></FieldLabel>
+                  <CustomDropdown value={cotaId} disabled={propostaAceita}
+                    onChange={value => {
+                      setCotaId(value);
+                      const cota = cotas.find(item => item.id === value);
+                      if (cota) setValorTexto(formatarValorBRL(cota.valor));
+                    }}
+                    className="[&>button]:w-full" compact icon={<Layers size={13} />} placeholder="Sem cota"
+                    options={[
+                      { value: "", label: "Sem cota" },
+                      ...cotas.map(cota => ({
+                        value: cota.id,
+                        label: `${cota.nome}${cota.modelo === "produto" && cota.produto_nome ? ` · ${cota.produto_nome}` : ""} · ${formatCotaValor(cota)}`,
+                        disabled: !cotaTemDisponibilidade(cota) && cota.id !== propostaAtiva?.cota_id,
+                      })),
+                    ]} />
+                </div>
+              )}
+
               <div>
-                <FieldLabel>Valor da negociação</FieldLabel>
-                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!valorDaProposta && !valorLido.valido} ariaLabel="Valor da negociação" disabled={valorDaProposta} />
-                {valorDaProposta
-                  ? <p className="mt-1 text-[0.6875rem] text-black/40">Vem da proposta. Para mudar, use Negociar na proposta.</p>
-                  : !valorLido.valido && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>}
+                <FieldLabel>{projetoId ? "Valor da proposta" : "Valor da negociação"}</FieldLabel>
+                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!propostaAceita && !valorLido.valido} ariaLabel={projetoId ? "Valor da proposta" : "Valor da negociação"} disabled={propostaAceita} />
+                {propostaAceita
+                  ? <p className="mt-1 text-[0.6875rem] text-black/40">Proposta aceita: o valor faz parte da venda.</p>
+                  : !valorLido.valido
+                    ? <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>
+                    : projetoId && <p className="mt-1 text-[0.6875rem] text-black/40">Vira a proposta desta negociação. Contrapartidas e detalhes em Negociar.</p>}
               </div>
             </div>
           </section>
