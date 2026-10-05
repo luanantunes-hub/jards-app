@@ -150,11 +150,10 @@ export default function PrestacoesList() {
     const db = supabase as any;
     (async () => {
       // O acesso vale para todas as organizações da pessoa; a lista mostra só a atual.
-      // Prestação sem organização (antiga) só é visível para quem criou e continua na lista.
       const { data } = await db
         .from("prestacoes_contas")
         .select("id, titulo, status, prazo, data_envio, regime_id, identificador_oficial, created_at, captacao:captacao_id(titulo), projeto:projeto_id(nome)")
-        .or(`organization_id.eq.${organizationId},organization_id.is.null`)
+        .eq("organization_id", organizationId)
         .order("created_at", { ascending: false });
       const prestacoes = (data ?? []) as PrestacaoLida[];
       const ids = prestacoes.map(p => p.id);
