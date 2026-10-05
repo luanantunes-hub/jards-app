@@ -2,19 +2,36 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
  * Notas livres de uma negociação ou de uma inscrição em edital.
- * A tabela não tem `user_id`: a autoria fica em `account_id`, que o RLS exige
- * igual ao usuário logado — cada pessoa vê e edita as próprias notas.
+ * A tabela não tem `user_id`: a autoria fica em `account_id`. Quem vê o
+ * registro vê as notas dele (inclusive as da equipe); editar e excluir são só
+ * de quem escreveu.
  */
 export type NotaRegistro = {
   id: string;
   titulo: string | null;
   conteudo: string;
   created_at: string;
+  account_id: string;
 };
 
 export type EscopoNota = { coluna: "captacao_id" | "edital_user_id"; id: string };
 
-export const CAMPOS_NOTA = "id, titulo, conteudo, created_at";
+export const CAMPOS_NOTA = "id, titulo, conteudo, created_at, account_id";
+
+/** Sem saber ainda quem está logado, a nota fica editável: o banco recusa se não for. */
+export function notaEditavel(nota: { account_id?: string | null }, usuarioId: string | null): boolean {
+  return usuarioId === null || !nota.account_id || nota.account_id === usuarioId;
+}
+
+/** Nome de quem escreveu, só quando não foi a pessoa logada. */
+export function autorDaNota(
+  nota: { account_id?: string | null },
+  usuarioId: string | null,
+  nomes: Record<string, string>,
+): string | null {
+  if (notaEditavel(nota, usuarioId)) return null;
+  return nomes[nota.account_id as string] ?? "Outra pessoa da equipe";
+}
 
 // A tipagem manual do Supabase ainda não expõe a tabela notas.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -162,7 +162,6 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
             <>
               <p className="text-[0.6875rem] font-medium text-[#7259B5]">Próximo passo</p>
               <p className="mt-1 text-[1.125rem] font-semibold tracking-[-.015em] text-[#0D0D0D] [text-wrap:balance]">{proximo.titulo}</p>
-              <p className="mt-1.5 max-w-[26rem] text-[0.75rem] leading-relaxed text-black/50">{proximo.descricao}</p>
               <Link
                 href={proximo.href}
                 className="mt-4 inline-flex min-h-10 items-center gap-2 self-start rounded bg-[#0D0D0D] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]"
@@ -174,9 +173,6 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
             <>
               <p className="text-[0.6875rem] font-medium text-[#2E8932]">Concluído</p>
               <p className="mt-1 text-[1.125rem] font-semibold tracking-[-.015em] text-[#0D0D0D] [text-wrap:balance]">Seu Jards está montado</p>
-              <p className="mt-1.5 max-w-[26rem] text-[0.75rem] leading-relaxed text-black/50">
-                A partir de agora, a Visão geral acompanha suas negociações, prazos e prioridades do dia.
-              </p>
             </>
           )}
           <p className="mt-4 text-[0.6875rem] tabular-nums text-black/40 sm:hidden">{feitos} de {total} concluídos</p>

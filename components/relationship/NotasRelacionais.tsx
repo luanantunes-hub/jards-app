@@ -1,10 +1,13 @@
 "use client";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { autorDaNota, notaEditavel } from "@/lib/notas";
+import { useAutoriaDasNotas } from "@/hooks/useAutoriaDasNotas";
 
-type NotaRow = { id: string; titulo: string | null; conteudo: string };
+type NotaRow = { id: string; titulo: string | null; conteudo: string; account_id: string };
 
 export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, setShowNew }: { empresaCrmId: string | null; proponenteId?: string | null; showNew: boolean; setShowNew: (value: boolean) => void }) {
   const supabase = useMemo(() => createClient(), []);
@@ -15,16 +18,17 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
   const [erro, setErro] = useState<string | null>(null);
   const scopeColumn = proponenteId ? "proponente_id" : "empresa_crm_id";
   const scopeId = proponenteId ?? empresaCrmId;
+  const { usuarioId, nomes } = useAutoriaDasNotas(notas);
 
   const fetchNotas = useCallback(async () => {
     if (!scopeId) { setLoading(false); return; }
     setLoading(true);
-    const result = await (supabase as any).from("notas").select("id,titulo,conteudo").eq(scopeColumn, scopeId).order("created_at", { ascending: true });
+    const result = await (supabase as any).from("notas").select("id,titulo,conteudo,account_id").eq(scopeColumn, scopeId).order("created_at", { ascending: true });
     let rows = (result.data as NotaRow[] | null) ?? [];
     if (rows.length === 0 && empresaCrmId && !proponenteId) {
       const { data: { user } } = await supabase.auth.getUser();
       await (supabase as any).rpc("fn_seed_notas_modelo", { p_empresa_crm_id: empresaCrmId, p_account_id: user?.id });
-      const refetch = await (supabase as any).from("notas").select("id,titulo,conteudo").eq("empresa_crm_id", empresaCrmId).order("created_at", { ascending: true });
+      const refetch = await (supabase as any).from("notas").select("id,titulo,conteudo,account_id").eq("empresa_crm_id", empresaCrmId).order("created_at", { ascending: true });
       rows = (refetch.data as NotaRow[] | null) ?? [];
     }
     setNotas(rows);
@@ -63,7 +67,6 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
 
   return (
     <div className="p-5">
-      <p className="mb-4 text-[0.6875rem] leading-relaxed text-black/40">Contexto qualitativo sobre {proponenteId ? "o proponente" : "a empresa"}. Livre para editar, apagar ou criar novas notas.</p>
       {showNew && (
         <div className="mb-4">
           <div className="flex gap-2">
@@ -97,6 +100,8 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
             <NotaItem
               key={nota.id}
               nota={nota}
+              editavel={notaEditavel(nota, usuarioId)}
+              autor={autorDaNota(nota, usuarioId, nomes)}
               outrosTitulos={notas.filter(n => n.id !== nota.id).map(n => n.titulo)}
               onChanged={fetchNotas}
               onDelete={() => void excluirNota(nota.id)}
@@ -108,7 +113,7 @@ export function NotasRelacionais({ empresaCrmId, proponenteId = null, showNew, s
   );
 }
 
-function NotaItem({ nota, outrosTitulos, onChanged, onDelete }: { nota: NotaRow; outrosTitulos: (string | null)[]; onChanged: () => void; onDelete: () => void }) {
+function NotaItem({ nota, editavel, autor, outrosTitulos, onChanged, onDelete }: { nota: NotaRow; editavel: boolean; autor: string | null; outrosTitulos: (string | null)[]; onChanged: () => void; onDelete: () => void }) {
   const supabase = createClient();
   const [titulo, setTitulo] = useState(nota.titulo ?? "");
   const [conteudo, setConteudo] = useState(nota.conteudo);
@@ -126,6 +131,16 @@ function NotaItem({ nota, outrosTitulos, onChanged, onDelete }: { nota: NotaRow;
     setTituloErro(duplicado);
     if (duplicado) return;
     if (t !== (nota.titulo ?? "")) void salvar({ titulo: t || null });
+  }
+
+  if (!editavel) {
+    return (
+      <div className="rounded border p-3.5" style={{ borderColor: "rgba(13,13,13,.08)", background: "rgba(13,13,13,.015)" }}>
+        {nota.titulo && <p className="text-[0.8125rem] font-semibold text-black/75">{nota.titulo}</p>}
+        {nota.conteudo.trim() && <p className="mt-1.5 whitespace-pre-line text-[0.75rem] text-black/65">{nota.conteudo}</p>}
+        <p className="mt-2 text-[0.625rem] text-black/35">{autor}</p>
+      </div>
+    );
   }
 
   return (

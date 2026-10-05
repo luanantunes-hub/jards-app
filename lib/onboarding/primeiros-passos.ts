@@ -9,7 +9,6 @@ export type PassoId = "projeto" | "empresa" | "negociacao" | "atividade" | "edit
 export type Passo = {
   id: PassoId;
   titulo: string;
-  descricao: string;
   acao: string;
   href: string;
   /** Onde ver o que já foi feito, depois de concluído. */
@@ -22,7 +21,6 @@ export const PASSOS: Record<PassoId, Passo> = {
   projeto: {
     id: "projeto",
     titulo: "Cadastre seu projeto",
-    descricao: "Nome, lei de incentivo e quanto você quer captar. Tudo no Jards parte dele.",
     acao: "Cadastrar projeto",
     href: "/projetos?novo=1",
     hrefFeito: "/projetos",
@@ -31,7 +29,6 @@ export const PASSOS: Record<PassoId, Passo> = {
   empresa: {
     id: "empresa",
     titulo: "Encontre empresas que patrocinam",
-    descricao: "Veja quem investe na sua área pelo banco de patrocinadores e salve como prospect.",
     acao: "Buscar patrocinadores",
     href: "/patrocinadores",
     hrefFeito: "/empresas-crm",
@@ -40,7 +37,6 @@ export const PASSOS: Record<PassoId, Passo> = {
   negociacao: {
     id: "negociacao",
     titulo: "Abra uma negociação",
-    descricao: "Acompanhe a conversa com cada empresa, do primeiro contato ao contrato.",
     acao: "Nova negociação",
     href: "/captacoes?novo=1",
     hrefFeito: "/captacoes",
@@ -49,7 +45,6 @@ export const PASSOS: Record<PassoId, Passo> = {
   atividade: {
     id: "atividade",
     titulo: "Agende o próximo passo",
-    descricao: "Registre a ligação, a reunião ou o e-mail que vem a seguir para não perder o ritmo.",
     acao: "Nova atividade",
     href: "/atividades?novo=1",
     hrefFeito: "/atividades",
@@ -58,7 +53,6 @@ export const PASSOS: Record<PassoId, Passo> = {
   edital: {
     id: "edital",
     titulo: "Acompanhe um edital",
-    descricao: "Encontre editais abertos para o seu projeto e traga os que interessam para suas inscrições.",
     acao: "Ver editais abertos",
     href: "/editais-abertos",
     hrefFeito: "/editais-inscritos",
