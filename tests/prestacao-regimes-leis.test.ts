@@ -109,3 +109,68 @@ test("LIE: prazos de envio, diligência, recurso e guarda", () => {
   const pagamentos = P10 && definida(P10.pagamentos);
   assert.deepEqual(pagamentos?.meiosVedados, ["saque"]);
 });
+
+// ─── Saúde (PRONON e PRONAS/PCD) ────────────────────────────────────────────
+
+const SAUDE = regimePorCodigo("pronon_pronas_lxxxvi_a_2025");
+const SAUDE_ANTIGO = regimePorCodigo("pronon_pronas_lxxxvi_2017");
+
+// Diretos 850 mil, indiretos 140 mil, elaboração 40 mil. Total 1.030.000.
+const SAUDE_NOS: NoOrcamento[] = [
+  no({ id: "diretos", nome: "Equipe e consumo", grupo_custo: "execucao", valor_total: 850000 }),
+  no({ id: "indiretos", nome: "Aluguel e energia", grupo_custo: "administracao", valor_total: 140000 }),
+  no({ id: "elab", nome: "Elaboração e captação", grupo_custo: "elaboracao", valor_total: 40000 }),
+];
+
+const CTX_SAUDE: ContextoAlteracao = {
+  hoje: "2026-06-01", dataLiberacao: null, dataTermo: "2026-02-01", fimExecucao: "2027-01-31",
+  homologado: 1030000, captado: null, complementadoAntes: 0, reduzidoAntes: 0,
+};
+
+const movSaude = (id: string, de: number, para: number): MovimentoAlteracao => ({
+  no_id: id, nome: SAUDE_NOS.find(n => n.id === id)?.nome ?? id, parent_id: null, grupo_custo: null, de, para,
+});
+
+test("saúde: prestação até 30/04 do ano seguinte ao fim da execução", () => {
+  const prazo = prazoFinalCalculado(SAUDE, { data_fim_execucao: "2027-01-31" });
+  assert.equal(prazo?.marco, "2027-12-31");
+  assert.equal(prazo?.dataOriginal, "2028-04-30");
+  assert.equal(prazo?.data, "2028-05-02", "30/04/2028 é domingo e 01/05 é feriado");
+  assert.equal(prazoDoRegime(SAUDE, "analisePrestacao")?.quantidade, 150);
+  assert.equal(prazoDoRegime(SAUDE_ANTIGO, "analisePrestacao")?.quantidade, 90);
+  assert.equal(prazoDoRegime(SAUDE_ANTIGO, "respostaDiligencia")?.quantidade, 30);
+});
+
+test("saúde: custos indiretos até 15% e elaboração até 5% e R$ 50 mil", () => {
+  const tetos = tetosPorGrupo(montarArvore(SAUDE_NOS, []).raizes, SAUDE);
+  const indiretos = tetos.find(t => t.grupo === "administracao");
+  assert.equal(indiretos?.rotulo, "Custos indiretos");
+  assert.equal(indiretos?.limite?.maximo, 154500, "15% de 1.030.000");
+  assert.equal(indiretos?.excedido, false);
+  const elaboracao = tetos.find(t => t.grupo === "elaboracao");
+  assert.equal(elaboracao?.limite?.maximo, 50000, "5% dá 51.500, acima do teto de R$ 50 mil");
+  const antigo = tetosPorGrupo(montarArvore(SAUDE_NOS, []).raizes, SAUDE_ANTIGO);
+  assert.equal(antigo.find(t => t.grupo === "administracao")?.limite, null, "o regime anterior não tinha custos indiretos");
+  assert.ok(!SAUDE_ANTIGO || !definida(SAUDE_ANTIGO.orcamento)?.grupos.some(g => g.codigo === "administracao"));
+});
+
+test("saúde: toda alteração depende de autorização; redução exige 60% e complementação vai até 20%", () => {
+  const remanejamento = calcularAlteracao(SAUDE_NOS, [movSaude("diretos", 850000, 840000), movSaude("indiretos", 140000, 150000)], SAUDE, CTX_SAUDE);
+  assert.equal(remanejamento.classificacao, "formal");
+  assert.ok(codigos(remanejamento).includes("bloqueio:termo_de_apostilamento"));
+  const reducao = calcularAlteracao(SAUDE_NOS, [movSaude("diretos", 850000, 500000)], SAUDE, { ...CTX_SAUDE, captado: 500000 });
+  assert.ok(codigos(reducao).includes("bloqueio:captacao_insuficiente"), "500 mil < 60% de 1.030.000");
+  const maior = calcularAlteracao(SAUDE_NOS, [movSaude("diretos", 850000, 1100000)], SAUDE, CTX_SAUDE);
+  assert.ok(codigos(maior).includes("bloqueio:complementacao_acima"), "250 mil > 20% de 1.030.000");
+  const antigo = calcularAlteracao(SAUDE_NOS, [movSaude("diretos", 850000, 1050000)], SAUDE_ANTIGO, CTX_SAUDE);
+  assert.ok(!codigos(antigo).includes("bloqueio:complementacao_acima"), "200 mil ≤ 20% (art. 70 do regime anterior)");
+});
+
+test("saúde: o regime anterior vale até 07/09/2025 e as fontes herdadas ficam a confirmar", () => {
+  const aplicabilidade = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.aplicabilidade);
+  assert.equal(aplicabilidade?.ate, "2025-09-07");
+  const pagamentos = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.pagamentos);
+  assert.deepEqual(pagamentos?.meiosVedados, [], "o regime anterior não proibia saque nem cheque");
+  const divulgacao = SAUDE_ANTIGO && definida(SAUDE_ANTIGO.divulgacao);
+  assert.equal(divulgacao?.fonte.aConfirmar, true, "regra herdada e não conferida no anexo anterior");
+});

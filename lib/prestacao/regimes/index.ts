@@ -4,6 +4,8 @@
 import { LIE_P10_2026 } from "./lie-p10-2026";
 import { LIE_P424_2020 } from "./lie-p424-2020";
 import { ROUANET_IN29_2026 } from "./rouanet-in29-2026";
+import { SAUDE_LXXXVI_2017 } from "./saude-lxxxvi-2017";
+import { SAUDE_LXXXVI_A_2025 } from "./saude-lxxxvi-a-2025";
 import { definida, ehLacuna, type Fonte, type Lacuna, type PrazoRegime, type RegimeNormativo } from "./tipos";
 
 export type { Fonte, Lacuna, PrazoRegime, RegimeNormativo, TetoDoRegime } from "./tipos";
@@ -75,7 +77,14 @@ export const GENERICO = {
 } satisfies RegimeNormativo;
 
 /** Na mesma lei, a versão mais recente vem primeiro: é a sugerida quando não há data. */
-export const REGIMES: readonly RegimeNormativo[] = [ROUANET_IN29_2026, LIE_P10_2026, LIE_P424_2020, GENERICO];
+export const REGIMES: readonly RegimeNormativo[] = [
+  ROUANET_IN29_2026,
+  LIE_P10_2026,
+  LIE_P424_2020,
+  SAUDE_LXXXVI_A_2025,
+  SAUDE_LXXXVI_2017,
+  GENERICO,
+];
 
 export function regimePorCodigo(codigo: string): RegimeNormativo | null {
   return REGIMES.find(regime => regime.codigo === codigo) ?? null;
