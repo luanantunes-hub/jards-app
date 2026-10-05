@@ -17,15 +17,19 @@ function texto(valor: string | null): string {
   return valor === null ? "null" : `'${valor.replace(/'/g, "''")}'`;
 }
 
+/** JSON compacto entre delimitadores $marca$: o seed v2 tem 8 regimes e precisa caber no envio. */
 function json(valor: unknown, marca: string): string {
-  const conteudo = JSON.stringify(valor, null, 2);
+  const conteudo = JSON.stringify(valor);
   if (conteudo.includes(`$${marca}$`)) throw new Error(`O texto contém o delimitador $${marca}$`);
   return `$${marca}$${conteudo}$${marca}$::jsonb`;
 }
 
+/**
+ * Fontes, checklist de envio e modelos de saída saem do próprio regime
+ * (parametros), em vez de repetir o JSON.
+ */
 function sqlDoRegime(regime: RegimeNormativo): string {
   const aplicabilidade = definida(regime.aplicabilidade);
-  const envio = definida(regime.envio);
   return [
     `-- ${regime.nome} (versão ${regime.versao})`,
     `update public.prestacao_regimes set status = 'obsoleto'`,
@@ -34,16 +38,12 @@ function sqlDoRegime(regime: RegimeNormativo): string {
     `insert into public.prestacao_regimes`,
     `  (codigo, versao, nome, area, mecanismo, esfera, orgao, sistema_oficial, norma_referencia,`,
     `   vigente_desde, vigente_ate, status, parametros, fontes, checklist_envio, modelos_saida, publicado_em)`,
-    `values (`,
+    `select`,
     `  ${texto(regime.codigo)}, ${regime.versao}, ${texto(regime.nome)}, ${texto(regime.area)}, ${texto(regime.mecanismo)},`,
     `  ${texto(regime.esfera)}, ${texto(regime.orgao)}, ${texto(regime.sistemaOficial)}, ${texto(regime.normaReferencia)},`,
     `  ${regime.vigenteDesde === null ? "null" : `${texto(regime.vigenteDesde)}::date`}, ${aplicabilidade?.ate ? `${texto(aplicabilidade.ate)}::date` : "null"}, 'publicado',`,
-    `  ${json(regime, "regime")},`,
-    `  ${json(regime.fontes, "fontes")},`,
-    `  ${json(envio?.documentos ?? [], "checklist")},`,
-    `  ${json(envio?.modelos ?? [], "modelos")},`,
-    `  now()`,
-    `)`,
+    `  p, coalesce(p->'fontes', '[]'), coalesce(p->'envio'->'documentos', '[]'), coalesce(p->'envio'->'modelos', '[]'), now()`,
+    `from (select ${json(regime, "regime")} as p) dados`,
     `on conflict (codigo, versao) do nothing;`,
   ].join("\n");
 }

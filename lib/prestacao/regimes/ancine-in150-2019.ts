@@ -10,7 +10,6 @@ import { ANCINE_IN159_2021 } from "./ancine-in159-2021";
 import { herdarRegime } from "./herdar";
 import { definida, type RegimeNormativo } from "./tipos";
 
-const IN150 = "IN ANCINE 150/2019";
 const MANUAL = "Manual de Prestação de Contas ANCINE v2.11 (23/09/2026)";
 
 const base = herdarRegime(ANCINE_IN159_2021, "Conferido na IN 159/2021; na IN 150/2019 a regra equivalente não foi conferida.");

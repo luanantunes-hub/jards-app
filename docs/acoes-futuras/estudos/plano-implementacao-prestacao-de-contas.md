@@ -12,11 +12,11 @@
 
 ## Andamento
 
-Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 189 passando no `npm test`.
+Atualizado em 05/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 203 passando no `npm test`.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
-| P1.11 Regimes em todas as dimensões | Em andamento: modelo ampliado, teste de cobertura, matriz e Rouanet v2 feitos; migrations prontas, ainda não aplicadas | Modelar LIE (P424 e P10), saúde (Anexos LXXXVI e LXXXVI-A) e ANCINE (IN 159); ensaiar e aplicar as três migrations de 06/10 (com aprovação); publicar o app |
+| P1.11 Regimes em todas as dimensões | Feita; as três migrations de 06/10 foram ensaiadas e aplicadas em produção em 05/10/2026: 8 regimes publicados (Rouanet v2, LIE P10 e P424, saúde LXXXVI-A e LXXXVI, ANCINE IN 159 e IN 150, genérico v2), as versões 1 da Rouanet e do genérico obsoletas, a prestação da Platibanda no genérico v2 | Publicar o app; conferir as regras "a confirmar" da P424, do Anexo LXXXVI e da IN 150 (ver a matriz); "saude" não existe em `captacoes.lei`, então o regime de saúde é escolhido à mão |
 | P1.9 Lista e visão geral | Feita (`7cf9efa`); build conferido na P1.11 | Publicar o app |
 | P0.3 Arquivos no caminho da organização | Feita (`2e5d186`) | Rodar `npx tsx scripts/prestacao-migrar-arquivos.ts` (ensaio) e depois com `--live`, com acesso ao banco |
 | P0.4 Funções de IA com autorização | Feita (`c64f0f2`) | Publicar as funções: `supabase functions deploy extrair-comprovante importar-orcamento` |
@@ -304,8 +304,10 @@ Pedida em 05/10/2026: esporte, saúde e audiovisual não podiam esperar as fases
 - As regras saem do código: os grupos de custo, as bases (o "valor do projeto" da Rouanet, a atividade-fim da LIE) e os tetos vêm do regime; o cálculo das alterações passa a interpretar a dimensão `alteracoes` (janela, condições para dispensar o órgão, captado mínimo, acumulado máximo, tetos, número de pedidos, antecedência, alertas por item, prazo e silêncio do órgão).
 - Teste de cobertura (`tests/prestacao-regimes-cobertura.test.ts`): falha se um regime deixar uma dimensão sem regras e sem lacuna, se uma lacuna vier sem motivo ou fonte, se faltar um prazo essencial ou se uma lei não disser a que projetos se aplica, como é o orçamento, como se entrega e que resultados existem.
 - Matriz de cobertura gerada do código: [`matriz-cobertura-regimes.md`](./matriz-cobertura-regimes.md).
-- Regimes: `rouanet_in29_2026` v2; `lie_p10_2026` e `lie_p424_2020` (pela data de protocolo); `pronon_pronas_lxxxvi_a_2025` e o anexo anterior; `ancine_in159_2021`.
+- Regimes: `rouanet_in29_2026` v2; `lie_p10_2026` e `lie_p424_2020` (pela data de protocolo); `pronon_pronas_lxxxvi_a_2025` e o anexo anterior; `ancine_in159_2021` e `ancine_in150_2019` (pela data de aprovação). As versões anteriores herdam o regime novo com toda fonte "a confirmar" e só trocam o que foi conferido na norma antiga.
 - Banco: vocabulário de grupos de custo com direitos autorais e coordenação e colocação; quem vê a prestação lê a versão do regime dela mesmo obsoleta; prazo final com conclusão do objeto (ANCINE) e fim do exercício (saúde); as prestações passam da versão 1 para a 2 do mesmo regime.
+- Aplicação em 05/10/2026: ensaio com rollback (prazos pelos marcos novos, grupo inventado recusado, leitura do membro antes e depois, idempotência); o seed foi enviado regime a regime e cada `parametros` conferido pelo md5 contra um Postgres local que rodou o mesmo arquivo.
+- Com duas versões publicadas da mesma lei, o banco sugere a mais recente (`prestacao_regime_sugerido`); a criação guiada mostra a quem a versão se aplica e avisa que há outra, para a pessoa escolher pela data do projeto.
 
 ### Ordem
 

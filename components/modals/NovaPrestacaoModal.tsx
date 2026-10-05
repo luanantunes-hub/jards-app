@@ -12,7 +12,7 @@ import {
   type CaptacaoParaCriacao, type DadosCriacao, type PassoId, type ProjetoParaCriacao,
 } from "@/lib/prestacao/criacao";
 import { descreverRegra, ROTULO_DO_MARCO } from "@/lib/prestacao/prazo-final";
-import { prazoDoRegime } from "@/lib/prestacao/regimes";
+import { definida, prazoDoRegime } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 // Criação guiada (P1.4): origem → regime → dados oficiais → orçamento →
@@ -92,6 +92,12 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
   const regime = regimes.find(r => r.id === dados.regimeId)?.regime ?? null;
   const prazoCalculado = previaDoPrazo(regime, dados.fimExecucao);
   const regraFinal = prazoDoRegime(regime, "prestacaoFinal");
+  const aplicabilidade = regime ? definida(regime.aplicabilidade) : null;
+  // A mesma lei pode ter mais de uma versão publicada (LIE pela data do
+  // protocolo, ANCINE pela da aprovação): o banco sugere a mais recente.
+  const outrasVersoes = regime && regime.codigo !== "generico"
+    ? regimes.filter(r => r.regime.mecanismo === regime.mecanismo && r.regime.codigo !== regime.codigo).map(r => r.regime.nome)
+    : [];
   const atual = PASSOS[passo];
 
   function escolherCaptacao(id: string) {
@@ -262,6 +268,10 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
               {regime && (
                 <div className="space-y-1.5 rounded border border-black/[.08] bg-black/[.015] p-3 text-[0.6875rem] leading-5 text-black/55">
                   <p>{regime.normaReferencia}</p>
+                  {aplicabilidade && <p>{aplicabilidade.descricao}</p>}
+                  {outrasVersoes.length > 0 && (
+                    <p className="text-[#B07A14]">Esta lei também tem {outrasVersoes.join(" e ")}. Escolha pela data do projeto.</p>
+                  )}
                   {regime.sistemaOficial && <p>Envio pelo {regime.sistemaOficial}.</p>}
                   {regraFinal ? (
                     <p>Prazo de envio: {descreverRegra(regraFinal)} ({regraFinal.fonte.dispositivo}).</p>
