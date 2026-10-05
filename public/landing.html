@@ -388,7 +388,7 @@
       .alt-fluxo .jards-flow-step:not(:last-child)::before { content:""; position:absolute; right:-1px; bottom:100%; width:1px; height:48px; pointer-events:none;
         background:linear-gradient(to top,rgba(40,37,37,.26) 0 10px,transparent 10px),repeating-linear-gradient(to top,transparent 0 7px,rgba(40,37,37,.17) 7px 10px); }
     }
-    .flow-index { display:block; margin-bottom:28px; font-family:var(--font-mono); font-size:clamp(34px,3.4vw,48px); line-height:.9; font-weight:500; letter-spacing:-.05em; font-variant-numeric:tabular-nums; }
+    .flow-index { display:block; margin-bottom:28px; font-size:clamp(34px,3.4vw,48px); line-height:.9; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
     .jards-flow-step strong { display:block; margin-bottom:10px; font-size:20px; }
     .jards-flow-step p { color:rgba(40,37,37,.58); font-size:14px; line-height:1.6; }
     .flow-journey-art { position:relative; height:clamp(120px,18vw,210px); margin-top:40px; overflow:hidden; }
@@ -422,7 +422,7 @@
     /* Mono só para dados: numerais, contadores, notas da prancheta e chamadas do MCP.
        Títulos e texto seguem em Google Sans, que é o lado amigável. */
     :root { --font-mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
-    .stat-num { font-family:var(--font-mono); font-weight:500; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+    .stat-num { font-family:'Google Sans',system-ui,sans-serif; font-weight:700; letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
 
     /* ── Product stories ── */
     .section-space { padding-top:clamp(6rem,8vw,9rem); padding-bottom:clamp(6rem,8vw,9rem); }
@@ -750,13 +750,22 @@
     .art-foot { display:flex; align-items:center; justify-content:space-between; min-height:34px; padding:0 16px; border-top:1px solid rgba(40,37,37,.09); color:rgba(40,37,37,.32); background:#fff; font-size:7.5px; }
     .art-foot strong { color:#684DB0; font-weight:600; }
     .landing-proof { border-top:1px solid rgba(40,37,37,.09); border-bottom:1px solid rgba(40,37,37,.09); }
+    /* Números grandes com o gradiente roxo da marca (Google Sans bold) */
+    .accent-gradient-text,
     .stat-accent,
-    .flow-index { color:var(--alt-purple); }
+    .flow-index {
+      color:#684DB0;
+      background:var(--accent-gradient);
+      -webkit-background-clip:text;
+      background-clip:text;
+      -webkit-text-fill-color:transparent;
+    }
     .rounded-xl,.rounded-2xl,.rounded-lg { border-radius:4px !important; }
     @media (max-width:767px) { .landing-nav-shell { margin:8px 8px 0; padding-left:14px; padding-right:10px; } .landing-hero { min-height:auto; }                             .brand-visual { min-height:680px; } .brand-visual img { object-position:82% center; } .brand-visual::after { background:linear-gradient(180deg,rgba(40,37,37,.88) 0%,rgba(40,37,37,.66) 54%,rgba(40,37,37,.18) 100%); } .brand-visual.is-light::after { background:linear-gradient(180deg,#fff 0%,rgba(255,255,255,.92) 52%,rgba(255,255,255,.20) 100%); } .brand-caption { left:24px; right:24px; top:72px; transform:none; } }
 
     /* ── Alternativa: tokens ── */
     :root {
+      --accent-gradient: linear-gradient(90deg,#7B35E8 0%,#B875FF 38%,#9145F5 68%,#684DB0 100%);
       --alt-ink: #0D0D0D;
       --alt-ink-hover: #2B2828;
       --alt-purple: #684DB0;
@@ -1108,7 +1117,7 @@
       </div>
       <div class="py-10 sm:pl-8 border-t sm:border-t-0 border-black/10">
         <p class="proof-rotulo">Próximo passo visível</p>
-        <p class="proof-valor"><svg class="alt-proof-icon" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,112.49l-48,48a12,12,0,0,1-17-17L195,116H128a84.09,84.09,0,0,0-84,84,12,12,0,0,1-24,0A108.12,108.12,0,0,1,128,92h67L167.51,64.48a12,12,0,0,1,17-17l48,48A12,12,0,0,1,232.49,112.49Z"/></svg></p>
+        <p class="proof-valor"><svg class="alt-proof-icon" viewBox="0 0 256 256" aria-hidden="true"><defs><linearGradient id="prova-gradiente" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7B35E8"/><stop offset=".38" stop-color="#B875FF"/><stop offset=".68" stop-color="#9145F5"/><stop offset="1" stop-color="#684DB0"/></linearGradient></defs><path fill="url(#prova-gradiente)" d="M232.49,112.49l-48,48a12,12,0,0,1-17-17L195,116H128a84.09,84.09,0,0,0-84,84,12,12,0,0,1-24,0A108.12,108.12,0,0,1,128,92h67L167.51,64.48a12,12,0,0,1,17-17l48,48A12,12,0,0,1,232.49,112.49Z"/></svg></p>
         <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Responsáveis, prazos e alertas mantêm a equipe em movimento.</p>
       </div>
     </div>
@@ -2840,7 +2849,7 @@
   function renderBiContent(el, cfg) {
     if (cfg.stat) {
       el.innerHTML =
-        '<div class="stat-accent" style="font-family:var(--font-mono);font-weight:500;letter-spacing:-.04em;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
+        '<div class="stat-accent" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;letter-spacing:-.03em;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
         '<div>' +
           '<div style="font-size:12px;font-weight:700;color:#282525;margin-bottom:4px;">' + cfg.title + '</div>' +
           '<p style="font-size:9.5px;color:rgba(40,37,37,0.45);line-height:1.6;">' + cfg.sub + '</p>' +
