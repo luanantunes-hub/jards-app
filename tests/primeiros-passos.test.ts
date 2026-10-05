@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { PASSOS, comEstado, ordemDosPassos, proximoPasso, type PassoId } from "../lib/onboarding/primeiros-passos";
+import { PASSOS, comEstado, contaRecebePrimeirosPassos, ordemDosPassos, proximoPasso, type PassoId } from "../lib/onboarding/primeiros-passos";
 
 const ids = (objetivo: string | null) => ordemDosPassos(objetivo).map(passo => passo.id);
 
@@ -36,4 +36,13 @@ test("passo pendente abre o cadastro; passo feito leva à lista", () => {
   assert.equal(PASSOS.negociacao.href, "/captacoes?novo=1");
   assert.equal(PASSOS.negociacao.hrefFeito, "/captacoes");
   for (const passo of Object.values(PASSOS)) assert.ok(!passo.hrefFeito.includes("novo=1"), passo.id);
+});
+
+test("só contas criadas a partir do lançamento recebem o guia", () => {
+  assert.equal(contaRecebePrimeirosPassos("2026-10-05T03:00:00Z"), true);
+  assert.equal(contaRecebePrimeirosPassos("2026-11-20T15:42:10.123+00:00"), true);
+  assert.equal(contaRecebePrimeirosPassos("2026-10-05T02:59:59Z"), false);
+  assert.equal(contaRecebePrimeirosPassos("2026-09-02T10:00:00+00:00"), false);
+  assert.equal(contaRecebePrimeirosPassos(null), false);
+  assert.equal(contaRecebePrimeirosPassos("data inválida"), false);
 });

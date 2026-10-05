@@ -92,3 +92,11 @@ export function proximoPasso(passos: PassoComEstado[]): PassoComEstado | null {
 
 /** Disparado quando o questionário de boas-vindas é salvo: o objetivo muda a ordem dos passos. */
 export const EVENTO_PERFIL_CONCLUIDO = "jards:perfil-concluido";
+
+/** Só contas criadas a partir do lançamento do guia o recebem: quem já usava o Jards não é interrompido. */
+export const INICIO_PRIMEIROS_PASSOS = "2026-10-05T03:00:00Z"; // 05/10/2026, 0h em Brasília
+
+export function contaRecebePrimeirosPassos(criadaEm: string | null | undefined): boolean {
+  const criada = criadaEm ? Date.parse(criadaEm) : Number.NaN;
+  return Number.isFinite(criada) && criada >= Date.parse(INICIO_PRIMEIROS_PASSOS);
+}

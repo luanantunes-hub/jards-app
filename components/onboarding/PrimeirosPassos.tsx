@@ -8,6 +8,7 @@ import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationC
 import {
   EVENTO_PERFIL_CONCLUIDO,
   comEstado,
+  contaRecebePrimeirosPassos,
   ordemDosPassos,
   proximoPasso,
   type PassoComEstado,
@@ -28,9 +29,9 @@ function marcarVisto(organizationId: string) {
 type Estado = { userId: string; passos: PassoComEstado[] };
 
 /**
- * Guia da Visão geral para quem administra uma organização recém-criada.
- * Some quando a pessoa o oculta. Quem já tinha tudo pronto antes de vê-lo
- * não recebe o cartão de conclusão.
+ * Guia da Visão geral para quem administra a organização de uma conta nova
+ * (criada a partir de INICIO_PRIMEIROS_PASSOS). Some quando a pessoa o oculta.
+ * Quem já tinha tudo pronto antes de vê-lo não recebe o cartão de conclusão.
  */
 export function PrimeirosPassos() {
   const organizationId = useOrganizationId();
@@ -59,13 +60,13 @@ export function PrimeirosPassos() {
       if (!user) return;
       const { data: perfil, error } = await db
         .from("profiles")
-        .select("objetivo_principal, onboarding_completed, primeiros_passos_ocultos_em")
+        .select("created_at, objetivo_principal, onboarding_completed, primeiros_passos_ocultos_em")
         .eq("id", user.id)
         .single();
       if (cancelado) return;
       // O questionário de boas-vindas vem antes; sem a coluna (migration
       // pendente) o cartão simplesmente não aparece.
-      if (error || !perfil?.onboarding_completed || perfil.primeiros_passos_ocultos_em) {
+      if (error || !perfil?.onboarding_completed || perfil.primeiros_passos_ocultos_em || !contaRecebePrimeirosPassos(perfil.created_at)) {
         setEstado(null);
         return;
       }
