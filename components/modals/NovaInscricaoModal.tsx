@@ -2,7 +2,7 @@
 import { useState, useEffect, useId, useRef, useCallback } from "react";
 import {
   X, Building2, FolderOpen, Layers, Plus, ChevronDown, TrendingUp,
-  CalendarDays, Save, Circle, Users, UserRound, Tag, ArrowDown, Minus, ArrowUp,
+  CalendarDays, Save, Circle, Users, UserRound, Tag,
 } from "lucide-react";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -17,6 +17,7 @@ import { cotaTemDisponibilidade, formatCotaValor, valorForaDaFaixa } from "@/lib
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useValorDefinidoPorProposta } from "@/hooks/useValorDefinidoPorProposta";
 import { CampoValor } from "@/components/ui/CampoValor";
+import { PotencialSegmentado } from "@/components/ui/PotencialSegmentado";
 import { resolveCompanyDomain } from "@/components/CompanyLogo";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 import { DESFECHOS_INSCRICAO, etapaInicial, etapasDoFormulario } from "@/lib/etapas";
@@ -57,12 +58,6 @@ export type EditDataInscricao = {
   responsavel_id?: string | null;
   responsavel_nome?: string | null;
 };
-
-const POTENCIAL_OPTIONS: { value: PotencialFechamento; label: string; color: string; Icon: LucideIcon }[] = [
-  { value: "baixo", label: "Baixo", color: "#777777", Icon: ArrowDown },
-  { value: "medio", label: "Médio", color: "#B07A14", Icon: Minus },
-  { value: "alto", label: "Alto", color: "#D94E4E", Icon: ArrowUp },
-];
 
 function Rotulo({ children }: { children: React.ReactNode }) {
   return <p className="mb-1.5 text-[0.75rem] font-semibold text-black">{children}</p>;
@@ -599,24 +594,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
               <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <Rotulo>Potencial de fechamento</Rotulo>
-                  <div className="flex" role="radiogroup" aria-label="Potencial de fechamento">
-                    {POTENCIAL_OPTIONS.map((option, index) => (
-                      <button
-                        key={option.value}
-                        type="button"
-                        role="radio"
-                        aria-checked={potencialFechamento === option.value}
-                        onClick={() => setPotencialFechamento(option.value)}
-                        className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[0.6875rem] font-semibold transition hover:z-10 hover:bg-black/[.025] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[#7259B5] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
-                        style={potencialFechamento === option.value
-                          ? { color: option.color, borderColor: `${option.color}70` }
-                          : { color: option.color, borderColor: "rgba(13,13,13,.10)" }}
-                      >
-                        <option.Icon size={12} strokeWidth={2.4} />
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
+                  <PotencialSegmentado value={potencialFechamento} onChange={setPotencialFechamento} />
                 </div>
 
                 <DateField label="Data de abertura" value={dataAbertura} onChange={setDataAbertura} />

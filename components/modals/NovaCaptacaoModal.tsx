@@ -4,7 +4,7 @@ import {
   X, Building2, FolderOpen,
   Users, CalendarDays, Save, Lightbulb, Briefcase,
   MessageSquare, TrendingUp, Check, Ban, Plus, UserPlus,
-  Contact, UserRoundCog, Circle, ArrowDown, Minus, ArrowUp, Layers, ChevronDown,
+  Contact, UserRoundCog, Circle, Layers, ChevronDown,
 } from "lucide-react";
 import * as Icons from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +21,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { contatoSalvoCorrespondente, rotuloContato, semContatosJaSalvos, type ContatoSugerido } from "@/lib/contatos-sugeridos";
 import { CampoValor } from "@/components/ui/CampoValor";
+import { PotencialSegmentado } from "@/components/ui/PotencialSegmentado";
 import { resolveCompanyDomain } from "@/components/CompanyLogo";
 import { cotaTemDisponibilidade, formatCotaValor } from "@/lib/cotas";
 import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
@@ -82,12 +83,6 @@ export type EditDataCaptacao = {
   data_previsao: string | null;
   potencial_fechamento?: PotencialFechamento | null;
 };
-
-const POTENCIAL_OPTIONS: { value: PotencialFechamento; label: string; color: string; Icon: React.ElementType }[] = [
-  { value: "baixo", label: "Baixo", color: "#777777", Icon: ArrowDown },
-  { value: "medio", label: "Médio", color: "#B07A14", Icon: Minus },
-  { value: "alto", label: "Alto", color: "#D94E4E", Icon: ArrowUp },
-];
 
 type MembroOption = { user_id: string; nome: string; email: string; papel: string };
 /* ─── Rótulos (fora do modal: componentes não são recriados a cada render) ─── */
@@ -879,17 +874,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div className="sm:col-span-2">
                   <FieldLabel>Potencial de fechamento</FieldLabel>
-                  <div className="flex" role="radiogroup" aria-label="Potencial de fechamento">
-                    {POTENCIAL_OPTIONS.map((option, index) => (
-                      <button key={option.value} type="button" role="radio" aria-checked={potencialFechamento === option.value} onClick={() => setPotencialFechamento(option.value)}
-                        className={`relative flex flex-1 items-center justify-center gap-1.5 border bg-white px-2 py-2 text-[0.6875rem] font-semibold transition hover:z-10 hover:bg-black/[.04] focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-[#7259B5] ${index > 0 ? "-ml-px" : ""} ${index === 0 ? "rounded-l" : index === POTENCIAL_OPTIONS.length - 1 ? "rounded-r" : ""}`}
-                        style={potencialFechamento === option.value
-                          ? { color: option.color, borderColor: `${option.color}70` }
-                          : { color: option.color, borderColor: "rgba(13,13,13,.10)" }}>
-                        <option.Icon size={12} strokeWidth={2.5}/>{option.label}
-                      </button>
-                    ))}
-                  </div>
+                  <PotencialSegmentado value={potencialFechamento} onChange={setPotencialFechamento} />
                 </div>
 
                 <div>
