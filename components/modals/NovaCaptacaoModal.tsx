@@ -20,6 +20,8 @@ import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext"
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { contatoSalvoCorrespondente, rotuloContato, semContatosJaSalvos, type ContatoSugerido } from "@/lib/contatos-sugeridos";
+import { CampoValor } from "@/components/ui/CampoValor";
+import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 
 type EmpresaCRM   = { id: string; nome: string };
 type Projeto      = { id: string; nome: string };
@@ -98,6 +100,15 @@ const DEFAULT_MODULE_VISIBILITY: Record<CaptacaoModule, boolean> = {
   equipe: true,
   cronograma: false,
 };
+
+/* ─── Rótulos (fora do modal: componentes não são recriados a cada render) ─── */
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+}
 
 /* ─── Mini-form inline para novo contato ─────────────────────────── */
 function NovoContatoInline({
@@ -261,6 +272,11 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
   const [trimestre, setTrimestre] = useState("");
   const [proximoFollowup, setProximoFollowup] = useState(editData?.proxima_prospeccao ?? "");
   const [previsao, setPrevisao]               = useState(editData?.data_previsao ?? "");
+  // Valor da negociação digitado direto aqui; a proposta continua opcional.
+  const [valorTexto, setValorTexto]           = useState(() => formatarValorBRL(editData?.valor_solicitado));
+  const valorLido = lerValorBRL(valorTexto);
+  // "Contato realizado" fica recolhido: só quem já falou com a empresa abre.
+  const [registrarContato, setRegistrarContato] = useState(false);
   const [canalRealizado, setCanalRealizado] = useState<CanalContato | null>(null);
   const [resultadoContato, setResultadoContato] = useState<ResultadoInteracao | null>(null);
   const [dataContato, setDataContato] = useState(() => new Date().toISOString().slice(0, 16));
@@ -452,6 +468,11 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErro("Usuário não autenticado"); setSaving(false); return; }
 
+    if (!valorLido.valido) {
+      setErro(MENSAGEM_VALOR_INVALIDO);
+      setSaving(false); return;
+    }
+
     if (canalRealizado && !resultadoContato) {
       setErro("Informe o resultado do contato realizado.");
       setSaving(false); return;
@@ -503,7 +524,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
       empresa_crm_id:      empresaFinal || null,
       empresa_id:          empresaPubId || null,
       projeto_id:          projetoId || null,
-      valor_solicitado:    null,
+      valor_solicitado:    valorLido.valor,
       // Campo legado mantido durante a transição entre versões do banco.
       meio_contato:        legacyMeio(null),
       status,
@@ -605,15 +626,6 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
     setSaving(false);
     if (error) { setErro((error as Error).message); return; }
     onSaved(captacaoId ?? undefined); onClose();
-  }
-
-  /* ── Helpers de render ── */
-  function SectionLabel({ children }: { children: React.ReactNode }) {
-    return <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
-  }
-
-  function FieldLabel({ children }: { children: React.ReactNode }) {
-    return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
   }
 
   return (
@@ -757,6 +769,12 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                 <CustomDropdown value={status} onChange={value => setStatus(value as StatusCaptacao)}
                   className="[&>button]:w-full" compact icon={<TrendingUp size={13} />}
                   options={etapas.map(({ status: value, label, Icon }) => ({ value, label, icon: <Icon size={13} /> }))} />
+              </div>
+
+              <div>
+                <FieldLabel>Valor da negociação</FieldLabel>
+                <CampoValor value={valorTexto} onChange={texto => { setValorTexto(texto); setErro(null); }} invalido={!valorLido.valido} ariaLabel="Valor da negociação" />
+                {!valorLido.valido && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23A3A]">{MENSAGEM_VALOR_INVALIDO}</p>}
               </div>
             </div>
           </section>
@@ -913,8 +931,26 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             </section>
           )}
 
+          {!editData && !registrarContato && (
+            <div className="mt-5 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+              <button type="button" onClick={() => setRegistrarContato(true)}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-[#7259B5]/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+                <Plus size={12} aria-hidden="true" /> Registrar um contato que já aconteceu
+              </button>
+            </div>
+          )}
+
+          {!editData && registrarContato && (
           <section className="mt-5 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <SectionLabel>Contato realizado</SectionLabel>
+            <div className="mb-1.5 flex items-center justify-between gap-3">
+              <SectionLabel>Contato já realizado</SectionLabel>
+              <button type="button" onClick={() => {
+                setRegistrarContato(false); setCanalRealizado(null); setResultadoContato(null); setResumoContato("");
+                setDataContato(new Date().toISOString().slice(0, 16));
+              }} className="-mt-1.5 rounded px-1.5 py-1 text-[0.6875rem] text-black/40 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                Não registrar
+              </button>
+            </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
                 <FieldLabel>Canal utilizado</FieldLabel>
@@ -940,6 +976,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               </div>
             </div>
           </section>
+          )}
         </main>
 
         <footer className="flex shrink-0 items-center justify-between gap-4 border-t px-5 py-3.5 sm:px-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>

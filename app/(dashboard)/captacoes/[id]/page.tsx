@@ -32,6 +32,9 @@ import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext"
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { CommercialCycleHistory, type CommercialCycle } from "@/components/commercial/CommercialCycleHistory";
 import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
+import { BottomSheet } from "@/components/ui/BottomSheet";
+import { CampoValor } from "@/components/ui/CampoValor";
+import { MENSAGEM_VALOR_INVALIDO, formatarValorBRL, lerValorBRL } from "@/lib/valor";
 import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
 
 const RESULTADO_NEGATIVO = new Set(["recusado"]);
@@ -264,6 +267,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const [atividadeConcluir, setAtividadeConcluir] = useState<(Atividade & { contato: { nome: string } | null }) | null>(null);
   const [editingFinanceiro, setEditingFinanceiro] = useState(false);
   const [editValorSolicitado, setEditValorSolicitado] = useState("");
+  const [erroFinanceiro, setErroFinanceiro] = useState<string | null>(null);
   const [editValorAprovado, setEditValorAprovado] = useState("");
   const [salvandoFinanceiro, setSalvandoFinanceiro] = useState(false);
   const [uploadandoDoc, setUploadandoDoc] = useState(false);
@@ -453,30 +457,34 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   }
 
   function handleOpenFinanceiro() {
-    setEditValorSolicitado(captacao?.valor_solicitado?.toString() || "");
-    setEditValorAprovado(captacao?.valor_aprovado?.toString() || "");
+    setEditValorSolicitado(formatarValorBRL(captacao?.valor_solicitado));
+    setEditValorAprovado(formatarValorBRL(captacao?.valor_aprovado));
+    setErroFinanceiro(null);
     setEditingFinanceiro(true);
   }
 
-  async function handleSalvarFinanceiro() {
+  async function handleSalvarFinanceiro(close: () => void) {
     if (!captacao) return;
+    const solicitado = lerValorBRL(editValorSolicitado);
+    const aprovado = lerValorBRL(editValorAprovado);
+    if (!solicitado.valido || !aprovado.valido) { setErroFinanceiro(MENSAGEM_VALOR_INVALIDO); return; }
     setSalvandoFinanceiro(true);
+    setErroFinanceiro(null);
 
-    const valorSolicitado = editValorSolicitado ? parseFloat(editValorSolicitado) : null;
-    const valorAprovado = editValorAprovado ? parseFloat(editValorAprovado) : null;
-
-    const { error } = await (supabase.from("captacoes") as any)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase.from("captacoes") as any)
       .update({
-        valor_solicitado: valorSolicitado,
-        valor_aprovado: valorAprovado,
+        valor_solicitado: solicitado.valor,
+        valor_aprovado: aprovado.valor,
       })
-      .eq("id", captacao.id);
+      .eq("id", captacao.id)
+      .select("id")
+      .maybeSingle();
 
-    if (!error) {
-      setEditingFinanceiro(false);
-      await fetchData();
-    }
     setSalvandoFinanceiro(false);
+    if (error || !data) { setErroFinanceiro("Não foi possível salvar o valor. Tente novamente."); return; }
+    await fetchData();
+    close();
   }
 
   async function handleResolverProposta({ status, valorFinal }: { status: string; valorFinal: number | null }) {
@@ -706,6 +714,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 propostas={propostas}
                 onCreated={() => void fetchData()}
                 onResolved={handleResolverProposta}
+                onEditarValor={handleOpenFinanceiro}
               />
             ) : (
               <ValorManualPanel captacao={captacao} onEditarManual={handleOpenFinanceiro} />
@@ -1337,52 +1346,35 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         />
       )}
       {editingFinanceiro && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={() => setEditingFinanceiro(false)}>
-          <div className="bg-white rounded shadow-2xl w-full overflow-hidden" style={{ maxWidth: "25rem" }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
-                  <Coins size={16} className="text-black/50" />
-                </div>
-                <h2 className="text-[0.9375rem] font-bold text-black">Financeiro</h2>
-              </div>
-              <button onClick={() => setEditingFinanceiro(false)} className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
-                <X size={15} className="text-black/40" />
+        <BottomSheet
+          titulo="Valor da negociação"
+          subtitulo={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || undefined}
+          onClose={() => setEditingFinanceiro(false)}
+          footer={close => (
+            <>
+              <button type="button" onClick={close} disabled={salvandoFinanceiro}
+                className="rounded px-2 py-2 text-[0.75rem] font-medium text-black/45 transition hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">
+                Cancelar
               </button>
+              <button type="button" onClick={() => void handleSalvarFinanceiro(close)} disabled={salvandoFinanceiro}
+                className="min-h-10 rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-40">
+                {salvandoFinanceiro ? "Salvando…" : "Salvar valor"}
+              </button>
+            </>
+          )}
+        >
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="valor-solicitado" className="mb-1.5 block text-[0.6875rem] font-medium text-black/45">Solicitado</label>
+              <CampoValor id="valor-solicitado" value={editValorSolicitado} onChange={texto => { setEditValorSolicitado(texto); setErroFinanceiro(null); }} invalido={!lerValorBRL(editValorSolicitado).valido} autoFocus />
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="text-[0.625rem] text-black/40 mb-1 block">Valor solicitado (R$)</label>
-                <input
-                  type="number"
-                  value={editValorSolicitado}
-                  onChange={(e) => setEditValorSolicitado(e.target.value)}
-                  placeholder="0,00"
-                  className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-              <div>
-                <label className="text-[0.625rem] text-black/40 mb-1 block">Valor aprovado (R$)</label>
-                <input
-                  type="number"
-                  value={editValorAprovado}
-                  onChange={(e) => setEditValorAprovado(e.target.value)}
-                  placeholder="0,00"
-                  className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5]"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-              <button
-                onClick={handleSalvarFinanceiro}
-                disabled={salvandoFinanceiro}
-                className="w-full px-3 py-2 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
-              >
-                {salvandoFinanceiro ? "Salvando…" : "Salvar"}
-              </button>
+            <div>
+              <label htmlFor="valor-aprovado" className="mb-1.5 block text-[0.6875rem] font-medium text-black/45">Aprovado <span className="font-normal text-black/30">(quando fechar)</span></label>
+              <CampoValor id="valor-aprovado" value={editValorAprovado} onChange={texto => { setEditValorAprovado(texto); setErroFinanceiro(null); }} invalido={!lerValorBRL(editValorAprovado).valido} />
             </div>
           </div>
-        </div>
+          {erroFinanceiro && <p role="alert" className="mt-4 rounded border border-[#D94E4E]/25 bg-[#D94E4E]/[.05] px-3 py-2 text-[0.75rem] text-[#B23A3A]">{erroFinanceiro}</p>}
+        </BottomSheet>
       )}
     </div>
   );
