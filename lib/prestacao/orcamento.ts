@@ -293,8 +293,41 @@ export const LIMITE_DO_GRUPO: Record<string, Partial<Record<GrupoCusto, string>>
   },
 };
 
-/** Bases que equivalem ao total do orçamento vigente. */
-const BASES_DO_PROJETO = new Set(["valor_projeto", "valor_total_projeto"]);
+/**
+ * Grupos que ficam fora do "valor do projeto". Na Rouanet, o valor do projeto
+ * soma pré-produção, produção, pós-produção, recolhimentos e assessoria
+ * contábil e jurídica, "sem custos vinculados e captação de recursos"
+ * (IN MinC 29/2026, art. 17 e Anexo I, LXXV); custos vinculados são
+ * administração e divulgação (art. 17, § 1º). O valor total do projeto
+ * inclui tudo (Anexo I, LXXVII).
+ */
+export const FORA_DO_VALOR_DO_PROJETO: Record<string, readonly GrupoCusto[]> = {
+  rouanet_in29_2026: ["administracao", "divulgacao", "captacao"],
+};
+
+export type BasesDoOrcamento = {
+  /** Total sem os grupos de FORA_DO_VALOR_DO_PROJETO (sem regime, igual ao total). */
+  valorProjeto: number;
+  valorTotalProjeto: number;
+};
+
+/** Bases de cálculo dos limites, sobre o vigente dos itens. */
+export function basesDoOrcamento(raizes: readonly LinhaOrcamento[], regime: RegimeNormativo | null): BasesDoOrcamento {
+  const fora = new Set(regime ? FORA_DO_VALOR_DO_PROJETO[regime.codigo] ?? [] : []);
+  let total = 0;
+  let projeto = 0;
+  for (const linha of itensDaArvore(raizes)) {
+    const valor = centavos(linha.totais.vigente);
+    total += valor;
+    if (!linha.grupo || !fora.has(linha.grupo)) projeto += valor;
+  }
+  return { valorProjeto: projeto / 100, valorTotalProjeto: total / 100 };
+}
+
+const ROTULO_DA_BASE: Partial<Record<string, string>> = {
+  valor_projeto: "do valor do projeto",
+  valor_total_projeto: "do valor total do projeto",
+};
 
 export type TetoDoGrupo = {
   grupo: GrupoCusto | null;
@@ -307,8 +340,10 @@ export type TetoDoGrupo = {
     descricao: string;
     percentual: number;
     teto: number | null;
-    /** O menor entre o percentual sobre o total e o teto em reais. */
+    /** O menor entre o percentual sobre a base e o teto em reais. */
     maximo: number;
+    /** "do valor do projeto" ou "do valor total do projeto". */
+    base: string;
     norma: string;
   } | null;
   excedido: boolean;
@@ -329,6 +364,11 @@ export function tetosPorGrupo(raizes: readonly LinhaOrcamento[], regime: RegimeN
     porGrupo.set(linha.grupo, atual);
   }
 
+  const bases = basesDoOrcamento(raizes, regime);
+  const baseEmCentavos: Partial<Record<string, number>> = {
+    valor_projeto: centavos(bases.valorProjeto),
+    valor_total_projeto: centavos(bases.valorTotalProjeto),
+  };
   const ligacoes = regime ? LIMITE_DO_GRUPO[regime.codigo] ?? {} : {};
   const grupos: (GrupoCusto | null)[] = [
     ...GRUPOS_CUSTO.map(g => g.id).filter(id => porGrupo.has(id) || ligacoes[id]),
@@ -339,12 +379,14 @@ export function tetosPorGrupo(raizes: readonly LinhaOrcamento[], regime: RegimeN
     const soma = porGrupo.get(grupo) ?? { valor: 0, itens: 0 };
     const chave = grupo ? ligacoes[grupo] : undefined;
     const regra = chave && regime ? regime.limites[chave] : undefined;
-    const limite = regra && BASES_DO_PROJETO.has(regra.base)
+    const base = regra ? baseEmCentavos[regra.base] : undefined;
+    const limite = regra && base !== undefined
       ? {
           descricao: regra.descricao,
           percentual: regra.percentual,
           teto: regra.teto ?? null,
-          maximo: Math.min(Math.round(total * regra.percentual / 100), regra.teto !== undefined ? Math.round(regra.teto * 100) : Infinity) / 100,
+          maximo: Math.min(Math.round(base * regra.percentual / 100), regra.teto !== undefined ? Math.round(regra.teto * 100) : Infinity) / 100,
+          base: ROTULO_DA_BASE[regra.base] ?? "da base",
           norma: `${regra.fonte.documento}, ${regra.fonte.dispositivo}`,
         }
       : null;

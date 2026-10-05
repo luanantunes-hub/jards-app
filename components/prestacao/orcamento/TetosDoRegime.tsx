@@ -1,7 +1,7 @@
 "use client";
 
 import { AlertTriangle, Check, Tag } from "lucide-react";
-import type { TetoDoGrupo } from "@/lib/prestacao/orcamento";
+import type { BasesDoOrcamento, TetoDoGrupo } from "@/lib/prestacao/orcamento";
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const pct = (v: number) => `${v.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
@@ -11,7 +11,7 @@ const pct = (v: number) => `${v.toLocaleString("pt-BR", { maximumFractionDigits:
  * fixa, o teto (percentual sobre o total e teto em reais). O estado vem em
  * texto e ícone, não só na cor.
  */
-export function TetosDoRegime({ tetos, regimeNome }: { tetos: TetoDoGrupo[]; regimeNome: string | null }) {
+export function TetosDoRegime({ tetos, regimeNome, bases }: { tetos: TetoDoGrupo[]; regimeNome: string | null; bases: BasesDoOrcamento }) {
   if (tetos.length === 0) return null;
   const semGrupo = tetos.find(t => t.grupo === null);
   const comGrupo = tetos.filter(t => t.grupo !== null);
@@ -21,7 +21,11 @@ export function TetosDoRegime({ tetos, regimeNome }: { tetos: TetoDoGrupo[]; reg
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <h2 id="tetos-titulo" className="text-[0.75rem] font-semibold text-[#0D0D0D]">Grupos de custo e tetos</h2>
         <p className="text-[0.625rem] text-black/40">
-          {regimeNome ? `Limites de ${regimeNome}, sobre o total vigente` : "Escolha o regime na visão geral para conferir os tetos"}
+          {regimeNome
+            ? bases.valorProjeto !== bases.valorTotalProjeto
+              ? `Limites de ${regimeNome} · valor do projeto ${fmt(bases.valorProjeto)} (sem custos vinculados e captação), valor total ${fmt(bases.valorTotalProjeto)}`
+              : `Limites de ${regimeNome}, sobre o vigente`
+            : "Escolha o regime na visão geral para conferir os tetos"}
         </p>
       </div>
 
@@ -56,7 +60,7 @@ export function TetosDoRegime({ tetos, regimeNome }: { tetos: TetoDoGrupo[]; reg
                 )}
                 {teto.limite && (
                   <p className="mt-1 text-[0.625rem] leading-4 text-black/40" title={teto.limite.norma}>
-                    Até {pct(teto.limite.percentual)} do total{teto.limite.teto ? ` e ${fmt(teto.limite.teto)}` : ""}: no máximo {fmt(teto.limite.maximo)} · {teto.limite.norma}
+                    Até {pct(teto.limite.percentual)} {teto.limite.base}{teto.limite.teto ? ` e ${fmt(teto.limite.teto)}` : ""}: no máximo {fmt(teto.limite.maximo)} · {teto.limite.norma}
                   </p>
                 )}
               </div>

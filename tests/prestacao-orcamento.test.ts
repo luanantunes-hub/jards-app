@@ -3,6 +3,8 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   agrupadorPorNome,
+  basesDoOrcamento,
+  FORA_DO_VALOR_DO_PROJETO,
   etapasParaCriar,
   GRUPOS_CUSTO,
   itensDaArvore,
@@ -96,26 +98,42 @@ test("linhas visíveis respeitam os agrupadores fechados e os pais possíveis ex
   assert.deepEqual(paisPossiveis(raizes, null).map(linha => linha.no.id), ["prod", "adm"]);
 });
 
-test("tetos da Rouanet por grupo, sobre o total vigente, com o teto em reais da captação", () => {
+test("tetos da Rouanet sobre o valor do projeto, sem custos vinculados e captação", () => {
   const rouanet = regimePorCodigo("rouanet_in29_2026");
-  const tetos = tetosPorGrupo(montarArvore(NOS, []).raizes, rouanet);
-  const porGrupo = Object.fromEntries(tetos.map(t => [String(t.grupo), t]));
+  const { raizes } = montarArvore(NOS, []);
+  assert.deepEqual(basesDoOrcamento(raizes, rouanet), { valorProjeto: 70000.2, valorTotalProjeto: 100000.3 });
+  assert.deepEqual(basesDoOrcamento(raizes, null), { valorProjeto: 100000.3, valorTotalProjeto: 100000.3 }, "sem regime não há o que tirar");
 
+  const tetos = tetosPorGrupo(raizes, rouanet);
+  const porGrupo = Object.fromEntries(tetos.map(t => [String(t.grupo), t]));
   assert.equal(porGrupo.administracao.valor, 20000.1);
-  assert.equal(porGrupo.administracao.percentual, 20);
+  assert.equal(porGrupo.administracao.percentual, 20, "participação no total vigente");
   assert.equal(porGrupo.administracao.limite?.percentual, 15);
-  assert.equal(porGrupo.administracao.limite?.maximo, 15000.05);
+  assert.equal(porGrupo.administracao.limite?.maximo, 10500.03, "15% de 70.000,20");
+  assert.equal(porGrupo.administracao.limite?.base, "do valor do projeto");
   assert.equal(porGrupo.administracao.excedido, true);
+  assert.equal(porGrupo.divulgacao.limite?.maximo, 14000.04);
   assert.equal(porGrupo.divulgacao.excedido, false);
   assert.equal(porGrupo.captacao.valor, 0, "grupo com limite aparece mesmo sem itens");
   assert.equal(porGrupo.captacao.limite?.teto, 150000);
   assert.equal(porGrupo.execucao.limite, null);
   assert.equal(tetos.at(-1)?.grupo, null, "sem grupo por último");
 
-  const grande = tetosPorGrupo(montarArvore([no({ id: "x", nome: "Captação", grupo_custo: "captacao", valor_total: 2_000_000 })], []).raizes, rouanet);
-  assert.equal(grande.find(t => t.grupo === "captacao")?.limite?.maximo, 150000, "10% de 2 milhões passa do teto de R$ 150 mil");
+  const grande = tetosPorGrupo(montarArvore([
+    no({ id: "x", nome: "Produção", grupo_custo: "execucao", valor_total: 2_000_000 }),
+    no({ id: "y", nome: "Captação", grupo_custo: "captacao", valor_total: 160_000 }),
+  ], []).raizes, rouanet);
+  const captacao = grande.find(t => t.grupo === "captacao");
+  assert.equal(captacao?.limite?.maximo, 150000, "10% de 2 milhões passa do teto de R$ 150 mil");
+  assert.equal(captacao?.excedido, true);
 
-  assert.ok(tetosPorGrupo(montarArvore(NOS, []).raizes, null).every(t => t.limite === null), "sem regime, sem limite");
+  assert.ok(tetosPorGrupo(raizes, null).every(t => t.limite === null), "sem regime, sem limite");
+});
+
+test("os grupos fora do valor do projeto são os custos vinculados e a captação da IN 29", async () => {
+  assert.deepEqual([...FORA_DO_VALOR_DO_PROJETO.rouanet_in29_2026].sort(), ["administracao", "captacao", "divulgacao"]);
+  const fonte = await readFile("docs/acoes-futuras/estudos/prestacao-de-contas-fontes/rouanet-in29-texto-integral.md", "utf8");
+  assert.match(fonte, /Custos vinculados\*\* \(art\. 17, § 1º\) = administração \+ acessibilidade, comunicação e divulgação acessíveis/);
 });
 
 test("cada limite ligado a um grupo existe no regime e mede sobre o total do projeto", () => {

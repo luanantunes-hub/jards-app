@@ -16,6 +16,7 @@ import {
   montarArvore,
   percentualPago,
   rotuloTipoNo,
+  basesDoOrcamento,
   tetosPorGrupo,
   type ComprovanteDoOrcamento,
   type LinhaOrcamento,
@@ -23,6 +24,7 @@ import {
   type TipoNo,
   type VersaoOrcamento,
 } from "@/lib/prestacao/orcamento";
+import { AlteracoesOrcamento, type PrestacaoDaAlteracao } from "@/components/prestacao/orcamento/AlteracoesOrcamento";
 import { ArvoreOrcamento } from "@/components/prestacao/orcamento/ArvoreOrcamento";
 import { EditorNoOrcamento, type NoEmEdicao } from "@/components/prestacao/orcamento/EditorNoOrcamento";
 import { ImportarOrcamento } from "@/components/prestacao/orcamento/ImportarOrcamento";
@@ -50,6 +52,7 @@ export default function OrcamentoPage() {
   const [base, setBase] = useState<{
     prestacaoId: string;
     regimeId: string | null;
+    prestacao: PrestacaoDaAlteracao | null;
     versoes: VersaoOrcamento[];
     comprovantes: ComprovanteDoOrcamento[];
   } | null>(null);
@@ -69,7 +72,7 @@ export default function OrcamentoPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     Promise.all([
-      db.from("prestacoes_contas").select("regime_id").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, data_liberacao, data_fim_execucao").eq("id", id).maybeSingle(),
       db.from("prestacao_orcamento_versoes").select("*").eq("prestacao_id", id).order("created_at"),
       db.from("prestacao_comprovantes").select("no_id, status, valor_extraido").eq("prestacao_id", id),
     ]).then(([prestacao, versoes, comprovantes]) => {
@@ -77,6 +80,7 @@ export default function OrcamentoPage() {
       setBase({
         prestacaoId: id,
         regimeId: prestacao.data?.regime_id ?? null,
+        prestacao: prestacao.data ?? null,
         versoes: (versoes.data as VersaoOrcamento[]) ?? [],
         comprovantes: (comprovantes.data as ComprovanteDoOrcamento[]) ?? [],
       });
@@ -119,6 +123,7 @@ export default function OrcamentoPage() {
   const linhas = linhasVisiveis(arvore.raizes, fechados);
   const regime = regimes.find(r => r.id === base?.regimeId)?.regime ?? null;
   const tetos = useMemo(() => tetosPorGrupo(arvore.raizes, regime), [arvore, regime]);
+  const bases = useMemo(() => basesDoOrcamento(arvore.raizes, regime), [arvore, regime]);
   const agrupadores = nos.filter(no => no.tipo !== "item").map(no => no.id);
   const percentual = percentualPago(arvore.total);
   const podeEditar = permissoes.editar;
@@ -339,7 +344,7 @@ export default function OrcamentoPage() {
             ))}
           </div>
 
-          <TetosDoRegime tetos={tetos} regimeNome={regime?.nome ?? null} />
+          <TetosDoRegime tetos={tetos} regimeNome={regime?.nome ?? null} bases={bases} />
 
           <section aria-labelledby="itens-titulo" className={`${CARTAO} overflow-hidden`} style={BORDA}>
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
@@ -365,6 +370,18 @@ export default function OrcamentoPage() {
               onExcluir={excluir}
             />
           </section>
+
+          <AlteracoesOrcamento
+            prestacaoId={id}
+            organizationId={organizationId}
+            prestacao={base?.prestacao ?? null}
+            regime={regime}
+            versaoAtiva={versaoAtiva}
+            nosAtivos={versao?.ativa ? nos : null}
+            permissoes={permissoes}
+            recarga={recarga}
+            onChanged={mensagem => { if (mensagem) setAviso(mensagem); recarregar(); }}
+          />
 
           {arvore.foraDaVersao.quantidade > 0 && (
             <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">

@@ -55,6 +55,18 @@ const ERROS: Record<string, string> = {
   item_com_remanejamento: "Esse item tem remanejamento e não pode virar agrupador.",
   remanejamento_pela_alteracao: "O remanejado muda pelas alterações de orçamento, não pela edição do item.",
   item_invalido: "Escolha um item do orçamento desta prestação.",
+  // Alterações de orçamento (P1.7)
+  alteracao_fechada: "Essa alteração já foi pedida ou decidida e não pode mais ser editada.",
+  use_registrar_alteracao: "Pedir, aplicar e registrar a decisão usam os botões da alteração.",
+  alteracao_imutavel: "Uma alteração não muda de prestação nem de versão.",
+  alteracao_sem_justificativa: "Escreva a justificativa antes de pedir ou aplicar.",
+  alteracao_sem_motivo: "Informe o motivo da negativa.",
+  alteracao_vazia: "A alteração não muda nenhum item.",
+  alteracao_desatualizada: "O valor de algum item mudou desde que a alteração foi montada. Abra, revise os valores e salve de novo.",
+  alteracao_valor_invalido: "Há um valor inválido na alteração.",
+  versao_nao_ativa: "A alteração é de uma versão que não está mais em uso. Monte de novo na versão em uso.",
+  documento_invalido: "Envie o documento pela própria alteração.",
+  acao_invalida: "Ação desconhecida. Atualize a página.",
 };
 
 export function mensagemErroPrestacao(erro: { message?: string } | null | undefined, padrao: string): string {

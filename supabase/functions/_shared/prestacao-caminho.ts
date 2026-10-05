@@ -13,6 +13,7 @@ const NOME_ARQUIVO = /^[0-9a-f-]{36}\.[a-z0-9]{1,8}$/;
 export type PastaPrestacao =
   | { tipo: "comprovantes" }
   | { tipo: "orcamento" }
+  | { tipo: "alteracoes" }
   | { tipo: "atividade"; atividadeId: string };
 
 export type CaminhoPrestacao = {
@@ -83,7 +84,7 @@ export function lerCaminhoPrestacao(caminho: unknown): CaminhoPrestacao | null {
 
   let pasta: PastaPrestacao;
   let arquivo: string;
-  if (partes.length === 5 && (partes[3] === "comprovantes" || partes[3] === "orcamento")) {
+  if (partes.length === 5 && (partes[3] === "comprovantes" || partes[3] === "orcamento" || partes[3] === "alteracoes")) {
     pasta = { tipo: partes[3] };
     arquivo = partes[4];
   } else if (partes.length === 6 && partes[3] === "atividades" && ehUuid(partes[4])) {
