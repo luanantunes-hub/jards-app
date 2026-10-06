@@ -3,6 +3,7 @@
  * Após conectar ao Supabase, substitua por:
  *   npx supabase gen types typescript --project-id <id> > lib/supabase/types.ts
  */
+import type { MotivoLido } from "@/supabase/functions/_shared/leitura-documento";
 
 export type Json = string | number | boolean | null | { [key: string]: Json } | Json[];
 
@@ -741,6 +742,8 @@ export interface PrestacaoComprovante {
   identificacao_projeto?: "presente" | "declaracao" | "ausente" | null;
   /** Por que a despesa segue apesar dos alertas. */
   justificativa?: string | null;
+  /** O que a leitura por IA apontou, com códigos do catálogo de checagens (P2.10b). */
+  motivos_ia?: MotivoLido[];
   created_at: string;
 }
 // ─── Prestação de contas — Phase 3 ──────────────────────────────────────────

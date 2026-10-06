@@ -52,6 +52,13 @@ export const CATALOGO_CHECAGENS = {
   DOC_PJ_SEM_NF: { titulo: "Fornecedor com CNPJ sem nota fiscal", grupo: "despesa", resultado: "revisar", destino: "comprovantes", regras: ["em_nome_do_proponente"] },
   DOC_IDENTIFICACAO_PROJETO: { titulo: "Projeto identificado no documento", grupo: "despesa", resultado: "revisar", destino: "comprovantes", regras: ["pronac_na_nota"] },
   DOC_FORA_VIGENCIA: { titulo: "Documento fora do período", grupo: "despesa", resultado: "revisar", destino: "comprovantes", regras: ["data_de_emissao"], dimensao: "despesas" },
+  // Leitura por IA (P2.10b): o que a IA aponta no documento; as regras são as de MOTIVOS_DA_LEITURA.
+  DOC_ILEGIVEL: { titulo: "Documento ilegível", grupo: "despesa", resultado: "revisar", destino: "comprovantes" },
+  DOC_SEM_VALOR_FISCAL: { titulo: "Documento sem valor fiscal", grupo: "despesa", resultado: "revisar", destino: "comprovantes" },
+  DOC_TOMADOR: { titulo: "Documento em nome de outra pessoa", grupo: "despesa", resultado: "revisar", destino: "comprovantes", regras: ["em_nome_do_proponente"] },
+  DOC_DESCRICAO_VAGA: { titulo: "Descrição vaga no documento", grupo: "despesa", resultado: "revisar", destino: "comprovantes", regras: ["em_nome_do_proponente"] },
+  DOC_RECIBO_INCOMPLETO: { titulo: "Recibo incompleto", grupo: "despesa", resultado: "revisar", destino: "comprovantes" },
+  DESPESA_VEDADA: { titulo: "Despesa possivelmente vedada", grupo: "despesa", resultado: "revisar", destino: "comprovantes", dimensao: "despesas" },
   // Fornecedor (P2.3)
   FORNECEDOR_DOCUMENTO: { titulo: "CPF ou CNPJ do fornecedor", grupo: "fornecedor", resultado: "nao_conforme", destino: "comprovantes" },
   FORNECEDOR_NAO_CONSULTADO: { titulo: "Fornecedor sem consulta na Receita", grupo: "fornecedor", resultado: "nao_calculavel", destino: "comprovantes" },
@@ -123,7 +130,7 @@ export type Achado = {
 
 export type DespesaDoEstado = DespesaParaChecar &
   Pick<PrestacaoComprovante, "id" | "nome_arquivo" | "status" | "no_id"> &
-  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido">>;
+  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia">>;
 
 export type ItemDoEstado = { id: string; nome: string; cnaes: readonly string[]; cnaesDe: { id: string; nome: string } | null };
 

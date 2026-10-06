@@ -48,7 +48,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       : Promise.resolve(null),
     uma<{ id: string }>(db.from("prestacao_orcamento_versoes").select("id").eq("prestacao_id", prestacaoId).eq("ativa", true).maybeSingle()),
     todas<EstadoDaPrestacao["despesas"][number]>(() => db.from("prestacao_comprovantes")
-      .select("id, nome_arquivo, status, no_id, tipo, data_doc, valor_extraido, valor_liquido, fornecedor_id, numero_documento, chave_acesso, iss, inss, irrf, outras_retencoes, identificacao_projeto, justificativa")
+      .select("id, nome_arquivo, status, no_id, tipo, data_doc, valor_extraido, valor_liquido, fornecedor_id, numero_documento, chave_acesso, iss, inss, irrf, outras_retencoes, identificacao_projeto, justificativa, motivos_ia")
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<EstadoDaPrestacao["pagamentos"][number]>(() => db.from("prestacao_pagamentos")
       .select("id, despesa_id, lancamento_id, forma, data, valor, favorecido_documento, numero_documento")

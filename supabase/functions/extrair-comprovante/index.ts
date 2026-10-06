@@ -1,6 +1,36 @@
-import { autorizarArquivoDaPrestacao, corsHeaders } from "../_shared/prestacao-acesso.ts";
+// Leitura de comprovante pela IA (P2.10b). Lê o documento com o regime da
+// prestação no prompt e devolve os campos fiscais (emitente, tomador,
+// número, chave, retenções) e os motivos, cada um com um código do catálogo
+// de checagens; a fonte de cada motivo vem da regra do regime, no app. A IA
+// sugere e a pessoa confirma: nada é gravado aqui além do custo da chamada.
+// XML de NF-e e NFS-e é lido no app, sem IA (lib/prestacao/documento-fiscal.ts).
+import { emBase64, registrarChamadaIa } from "../_shared/chamadas-ia.ts";
+import {
+  ESQUEMA_DA_LEITURA,
+  lerRespostaDaLeitura,
+  promptDaLeitura,
+  vedadasDoRegimeJson,
+  type ContextoDaLeitura,
+} from "../_shared/leitura-documento.ts";
+import { modeloDaIa } from "../_shared/modelo-ia.ts";
+import { autorizarArquivoDaPrestacao, corsHeaders, respostaJson } from "../_shared/prestacao-acesso.ts";
 
-type Rubrica = { id: string; rubrica: string; descricao: string | null };
+const LIMITE_BYTES = 15 * 1024 * 1024;
+
+/** O que o Gemini lê como arquivo: PDF, imagem e texto (XML e CSV vão como texto). */
+function mimeParaLeitura(informado: string | null | undefined, caminho: string): string | null {
+  const extensao = caminho.split(".").pop()?.toLowerCase() ?? "";
+  const porExtensao: Record<string, string> = {
+    pdf: "application/pdf", png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp",
+    heic: "image/heic", heif: "image/heif", xml: "text/plain", csv: "text/plain", txt: "text/plain",
+  };
+  const mime = (informado || "").toLowerCase();
+  if (mime === "application/pdf" || /^image\/(png|jpeg|webp|heic|heif)$/.test(mime)) return mime;
+  if (/xml|csv|^text\//.test(mime)) return "text/plain";
+  return porExtensao[extensao] ?? null;
+}
+
+type Item = { id: string; nome: string; descricao: string | null };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -10,195 +40,150 @@ Deno.serve(async (req) => {
   try {
     const { storage_path, mime_type, prestacao_id } = await req.json() as {
       storage_path: string;
-      mime_type: string;
+      mime_type?: string;
       prestacao_id: string;
     };
 
-    // Confere quem chama antes de usar a chave de serviço.
+    // A leitura tem custo e serve para cadastrar a despesa: só quem edita.
     const acesso = await autorizarArquivoDaPrestacao(req, {
       prestacaoId: prestacao_id,
       storagePath: storage_path,
       pastas: ["comprovantes"],
+      exigirEdicao: true,
     });
     if (!acesso.ok) return acesso.resposta;
-    const supabase = acesso.admin;
+    const admin = acesso.admin;
 
-    // Baixa o arquivo do Storage
-    const { data: fileData, error: dlErr } = await supabase.storage
-      .from("documentos")
-      .download(storage_path);
+    const mime = mimeParaLeitura(mime_type, storage_path);
+    if (!mime) return respostaJson({ error: "Este tipo de arquivo não é lido pela IA; preencha os campos à mão." }, 415);
 
-    if (dlErr || !fileData) {
-      return new Response(JSON.stringify({ error: "Arquivo não encontrado" }), {
-        status: 404,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    const { data: arquivo, error: erroDownload } = await admin.storage.from("documentos").download(storage_path);
+    if (erroDownload || !arquivo) return respostaJson({ error: "Arquivo não encontrado" }, 404);
+    if (arquivo.size > LIMITE_BYTES) return respostaJson({ error: "Arquivo grande demais para a leitura (até 15 MB)." }, 413);
 
-    // Itens da versão em uso do orçamento em árvore (P1.6), para a IA sugerir
-    // o mais adequado. Sem orçamento em árvore, cai nas rubricas antigas.
-    const { data: itensData } = await supabase
+    // Contexto: regime, proponente, número do projeto, período e itens do orçamento em uso.
+    const { data: prestacao, error: erroPrestacao } = await admin
+      .from("prestacoes_contas")
+      .select("identificador_oficial, identificador_tipo, data_inicio_execucao, data_fim_execucao, regime:prestacao_regimes(nome, parametros), proponente:proponentes(nome, cnpj)")
+      .eq("id", prestacao_id)
+      .maybeSingle();
+    if (erroPrestacao) throw erroPrestacao;
+    const p = (prestacao ?? {}) as {
+      identificador_oficial?: string | null;
+      identificador_tipo?: string | null;
+      data_inicio_execucao?: string | null;
+      data_fim_execucao?: string | null;
+      regime?: { nome: string; parametros: unknown } | null;
+      proponente?: { nome: string | null; cnpj: string | null } | null;
+    };
+
+    const { data: nos } = await admin
       .from("prestacao_orcamento_nos")
       .select("id, nome, descricao, versao:prestacao_orcamento_versoes!inner(ativa)")
       .eq("prestacao_id", prestacao_id)
       .eq("tipo", "item")
       .eq("versao.ativa", true)
       .order("ordem");
-    let rubricas: Rubrica[] = ((itensData ?? []) as { id: string; nome: string; descricao: string | null }[])
-      .map(item => ({ id: item.id, rubrica: item.nome, descricao: item.descricao }));
-    if (rubricas.length === 0) {
-      const { data: rubricasData } = await supabase
+    let itens: Item[] = ((nos ?? []) as Item[]).map(n => ({ id: n.id, nome: n.nome, descricao: n.descricao }));
+    if (itens.length === 0) {
+      // Sem orçamento em árvore, as rubricas antigas (até a P2.11).
+      const { data: rubricas } = await admin
         .from("prestacao_itens")
         .select("id, rubrica, descricao")
         .eq("prestacao_id", prestacao_id)
         .order("ordem");
-      rubricas = (rubricasData as Rubrica[]) ?? [];
+      itens = ((rubricas ?? []) as { id: string; rubrica: string; descricao: string | null }[])
+        .map(r => ({ id: r.id, nome: r.rubrica, descricao: r.descricao }));
     }
 
-    // Converte para base64
-    const buffer = await fileData.arrayBuffer();
-    const bytes = new Uint8Array(buffer);
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-    const base64 = btoa(binary);
+    const contexto: ContextoDaLeitura = {
+      regime: p.regime ?? null,
+      identificador: p.identificador_oficial ? { valor: p.identificador_oficial, tipo: p.identificador_tipo ?? null } : null,
+      proponente: p.proponente ? { nome: p.proponente.nome, documento: p.proponente.cnpj } : null,
+      periodo: { inicio: p.data_inicio_execucao ?? null, fim: p.data_fim_execucao ?? null },
+      itens: itens.slice(0, 400),
+    };
 
-    const geminiMime = mime_type || detectMime(storage_path);
     const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
-    if (!apiKey) {
-      return new Response(JSON.stringify({ error: "GOOGLE_AI_API_KEY não configurada" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!apiKey) return respostaJson({ error: "GOOGLE_AI_API_KEY não configurada" }, 500);
+    const modelo = modeloDaIa();
+    const registro = {
+      funcao: "extrair-comprovante" as const,
+      organizationId: acesso.caminho.organizationId,
+      prestacaoId: prestacao_id,
+      userId: acesso.userId,
+      modelo,
+      arquivo: storage_path,
+      tamanhoBytes: arquivo.size,
+      inicio: Date.now(),
+    };
 
-    const preferredModel = Deno.env.get("GOOGLE_AI_MODEL") || "gemini-3.6-flash";
-
-    const rubricasJson = rubricas.length > 0
-      ? JSON.stringify(rubricas.map((r, i) => ({ idx: i, id: r.id, rubrica: r.rubrica, descricao: r.descricao })))
-      : "[]";
-
-    const prompt = `Você é um especialista em prestação de contas da Lei Rouanet (Lei 8.313/91) e normas do MinC.
-Analise este documento fiscal/comprovante e retorne APENAS um JSON, sem markdown, sem explicação.
-
-Rubricas orçamentárias aprovadas neste projeto:
-${rubricasJson}
-
-Retorne exatamente neste formato:
-{
-  "valor": <número decimal com ponto, ex: 1500.00, ou null>,
-  "data_doc": <data no formato YYYY-MM-DD, ou null>,
-  "tipo_sugerido": <"nfe"|"recibo"|"contrato"|"extrato"|"invoice"|"cartao_embarque"|"print_screenshot"|"folha_pagamento"|"guia_tributo"|"rpa"|"foto"|"planilha"|"outro">,
-  "descricao_servico": <descrição do serviço/produto em até 120 caracteres, ou null>,
-  "rubrica_sugerida_id": <id UUID da rubrica mais adequada da lista acima, ou null se nenhuma se aplica>,
-  "rubrica_confianca": <inteiro de 0 a 100 indicando a confiança na sugestão de rubrica>,
-  "risco_glosa": <"baixo"|"medio"|"alto">,
-  "motivos_glosa": <array de strings com os motivos de risco, vazio se risco baixo>
-}
-
-Regras para risco de glosa:
-- ALTO: pagamento em espécie detectado, NF com CNPJ errado, documento ilegível, data fora do comum, RPA sem dados completos, valor muito acima do mercado, documento de origem duvidosa
-- MÉDIO: ausência de CNPJ/CPF do prestador, data de emissão suspeita, descrição vaga do serviço, falta assinatura em recibo, NF cancelada ou com rasura visível, valor sem comprovante bancário correspondente
-- BAIXO: documento fiscal completo, dados consistentes, valor razoável para o serviço descrito
-
-Exemplos de motivos_glosa: "RPA sem número de CPF do prestador", "Descrição do serviço muito genérica", "Valor acima do praticado no mercado para o serviço", "Data de emissão fora do período de execução", "Ausência de assinatura do recebedor"
-
-Para tipo_sugerido:
-- NF-e/NFS-e: "nfe". RPA: "rpa". Extrato bancário: "extrato". Foto/evidência: "foto". Recibo simples: "recibo".`;
-
-    const requestBody = JSON.stringify({
-      contents: [
-        {
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: geminiMime, data: base64 } },
-          ],
-        },
-      ],
-      generationConfig: {
-        temperature: 0,
-        response_mime_type: "application/json",
-      },
-    });
-
-    const modelCandidates = [...new Set([preferredModel, "gemini-2.5-flash"])];
-    let geminiRes: Response | null = null;
-    let providerError = "";
-    let attemptedModel = preferredModel;
-
-    for (const model of modelCandidates) {
-      attemptedModel = model;
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-      geminiRes = await fetch(url, {
+    const resposta = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: requestBody,
-      });
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: promptDaLeitura(contexto) },
+              { inline_data: { mime_type: mime, data: emBase64(new Uint8Array(await arquivo.arrayBuffer())) } },
+            ],
+          }],
+          generationConfig: {
+            response_mime_type: "application/json",
+            response_schema: ESQUEMA_DA_LEITURA,
+          },
+        }),
+      },
+    );
 
-      if (geminiRes.ok) break;
-      providerError = await geminiRes.text();
-      console.error(`Gemini error (${model}):`, providerError);
-    }
-
-    if (!geminiRes?.ok) {
-      let providerMessage = "";
+    if (!resposta.ok) {
+      const textoErro = await resposta.text();
+      console.error(`Gemini error (${modelo}):`, textoErro);
+      let mensagem = "";
       try {
-        const parsed = JSON.parse(providerError);
-        providerMessage = parsed?.error?.message ?? "";
+        mensagem = JSON.parse(textoErro)?.error?.message ?? "";
       } catch {
-        providerMessage = providerError.slice(0, 300);
+        mensagem = textoErro.slice(0, 300);
       }
-
-      return new Response(JSON.stringify({
-        error: "Erro na análise pelo Gemini",
-        provider_status: geminiRes?.status ?? 502,
-        provider_model: attemptedModel,
-        provider_message: providerMessage,
-      }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      await registrarChamadaIa(admin, { ...registro, corpo: null, sucesso: false, erro: `HTTP ${resposta.status}: ${mensagem}` });
+      return respostaJson({ error: "Erro na leitura pela IA", provider_status: resposta.status, provider_model: modelo, provider_message: mensagem }, 502);
     }
 
-    const geminiData = await geminiRes.json();
-    const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "{}";
-
-    let extracted: Record<string, unknown> = {};
+    const corpo = await resposta.json();
+    const candidato = corpo?.candidates?.[0];
+    let bruta: unknown = null;
     try {
-      extracted = JSON.parse(rawText);
+      bruta = JSON.parse(candidato?.content?.parts?.[0]?.text ?? "null");
     } catch {
-      const match = rawText.match(/\{[\s\S]*\}/);
-      if (match) extracted = JSON.parse(match[0]);
+      bruta = null;
     }
+    await registrarChamadaIa(admin, {
+      ...registro,
+      corpo,
+      sucesso: bruta !== null,
+      erro: bruta === null ? `resposta sem JSON (${candidato?.finishReason ?? "sem candidato"})` : null,
+    });
+    if (bruta === null) return respostaJson({ error: "A IA não devolveu uma leitura do documento" }, 502);
 
-    if (Object.keys(extracted).length === 0) {
-      return new Response(JSON.stringify({ error: "A IA não encontrou dados legíveis no documento" }), {
-        status: 422,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    return new Response(JSON.stringify(extracted), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    const leitura = lerRespostaDaLeitura(
+      bruta,
+      contexto.itens.map(i => i.id),
+      vedadasDoRegimeJson(contexto.regime?.parametros).map(v => v.codigo),
+    );
+    return respostaJson({
+      leitura,
+      modelo,
+      // Campos da versão anterior, para o app publicado antes da P2.10b.
+      valor: leitura.valor,
+      data_doc: leitura.data_doc,
+      descricao_servico: leitura.descricao_servico,
+      tipo_sugerido: leitura.tipo,
+      rubrica_sugerida_id: leitura.item_sugerido_id,
     });
   } catch (err) {
     console.error(err);
-    return new Response(JSON.stringify({ error: String(err) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return respostaJson({ error: String(err) }, 500);
   }
 });
-
-function detectMime(path: string): string {
-  const ext = path.split(".").pop()?.toLowerCase() ?? "";
-  const map: Record<string, string> = {
-    pdf: "application/pdf",
-    png: "image/png",
-    jpg: "image/jpeg",
-    jpeg: "image/jpeg",
-    webp: "image/webp",
-    gif: "image/gif",
-    xml: "application/xml",
-  };
-  return map[ext] ?? "application/octet-stream";
-}

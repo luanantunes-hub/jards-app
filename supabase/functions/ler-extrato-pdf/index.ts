@@ -2,6 +2,7 @@
 // do extrato; quem transforma em lançamentos e confere o saldo é o app
 // (lerLeituraDoPdf em lib/prestacao/extrato.ts), e quem grava é a função do
 // banco fn_prestacao_extrato_importar.
+import { emBase64, registrarChamadaIa } from "../_shared/chamadas-ia.ts";
 import { modeloDaIa } from "../_shared/modelo-ia.ts";
 import { autorizarArquivoDaPrestacao, corsHeaders, respostaJson } from "../_shared/prestacao-acesso.ts";
 
@@ -53,14 +54,6 @@ const ESQUEMA = {
   propertyOrdering: ["banco", "agencia", "conta", "periodo_inicio", "periodo_fim", "saldo_inicial", "saldo_final", "lancamentos"],
 };
 
-function emBase64(bytes: Uint8Array): string {
-  let binario = "";
-  for (let i = 0; i < bytes.length; i += 0x8000) {
-    binario += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-  }
-  return btoa(binario);
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -87,6 +80,16 @@ Deno.serve(async (req) => {
     const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
     if (!apiKey) return respostaJson({ error: "GOOGLE_AI_API_KEY não configurada" }, 500);
     const modelo = modeloDaIa();
+    const registro = {
+      funcao: "ler-extrato-pdf" as const,
+      organizationId: acesso.caminho.organizationId,
+      prestacaoId: prestacao_id,
+      userId: acesso.userId,
+      modelo,
+      arquivo: storage_path,
+      tamanhoBytes: arquivo.size,
+      inicio: Date.now(),
+    };
 
     const resposta = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent?key=${apiKey}`,
@@ -108,22 +111,28 @@ Deno.serve(async (req) => {
       },
     );
     if (!resposta.ok) {
-      console.error("Gemini error:", await resposta.text());
+      const textoErro = await resposta.text();
+      console.error("Gemini error:", textoErro);
+      await registrarChamadaIa(acesso.admin, { ...registro, corpo: null, sucesso: false, erro: `HTTP ${resposta.status}: ${textoErro.slice(0, 300)}` });
       return respostaJson({ error: "Erro na leitura pela IA" }, 502);
     }
 
     const corpo = await resposta.json();
     const candidato = corpo?.candidates?.[0];
-    // Custo por chamada (P2.10 vai registrar; por enquanto fica no log da função).
-    console.log("ler-extrato-pdf", modelo, JSON.stringify(corpo?.usageMetadata ?? {}));
-    if (candidato?.finishReason === "MAX_TOKENS") return respostaJson({ error: "extrato_longo_demais" }, 422);
+    if (candidato?.finishReason === "MAX_TOKENS") {
+      await registrarChamadaIa(acesso.admin, { ...registro, corpo, sucesso: false, erro: "MAX_TOKENS" });
+      return respostaJson({ error: "extrato_longo_demais" }, 422);
+    }
 
     let extrato: unknown = null;
     try {
       extrato = JSON.parse(candidato?.content?.parts?.[0]?.text ?? "null");
     } catch {
+      await registrarChamadaIa(acesso.admin, { ...registro, corpo, sucesso: false, erro: "resposta sem JSON" });
       return respostaJson({ error: "Erro na leitura pela IA" }, 502);
     }
+    // Custo por chamada (P2.10b).
+    await registrarChamadaIa(acesso.admin, { ...registro, corpo, sucesso: true });
     return respostaJson({ extrato });
   } catch (err) {
     console.error(err);

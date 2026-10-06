@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(96);
+select plan(101);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -607,6 +607,24 @@ select is(
   'sincronizar: a decisão das pessoas fica, a justificativa da despesa vale e o que sumiu se resolve');
 select ok((select verificada_em is not null from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
   'sincronizar grava a hora da verificação');
+
+-- ─── Leitura por IA (P2.10b): chamadas só do servidor; motivos na despesa ──
+set local role service_role;
+select lives_ok($t$insert into public.prestacao_ia_chamadas (organization_id, prestacao_id, funcao, modelo, sucesso, tokens_entrada, tokens_saida)
+    values ('f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000001a0', 'extrair-comprovante', 'modelo-teste', true, 10, 5)$t$,
+  'o servidor registra a chamada à IA');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select 1 from public.prestacao_ia_chamadas$t$,
+  '42501', null, 'admin: não lê as chamadas à IA (só o servidor)');
+select throws_ok($t$insert into public.prestacao_ia_chamadas (funcao, modelo, sucesso) values ('extrair-comprovante', 'x', true)$t$,
+  '42501', null, 'admin: não grava chamada à IA');
+select lives_ok($t$update public.prestacao_comprovantes set motivos_ia = '[]' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  'quem edita: descarta os motivos da leitura por IA');
+select throws_ok($t$update public.prestacao_comprovantes set motivos_ia = '{"codigo":"DOC_ILEGIVEL"}' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  '23514', null, 'motivos da IA são uma lista');
+reset role;
 
 select * from finish();
 rollback;
