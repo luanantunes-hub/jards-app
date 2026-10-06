@@ -12,6 +12,7 @@ import { ContaBancariaModal, rotuloDaConta } from "@/components/prestacao/extrat
 import { ImportarExtrato } from "@/components/prestacao/extrato/ImportarExtrato";
 import { CATEGORIAS_LANCAMENTO } from "@/lib/prestacao/extrato";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
 import type { PrestacaoContaBancaria, PrestacaoExtratoImportacao, PrestacaoLancamento } from "@/lib/supabase/types";
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -110,6 +111,7 @@ export default function ExtratoPage() {
         if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir a conta"));
         if (caminhos.length) await supabase.storage.from("documentos").remove(caminhos);
         await carregar();
+        pedirVerificacao(id);
       },
     });
   }
@@ -125,6 +127,7 @@ export default function ExtratoPage() {
         if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível desfazer a importação"));
         if (importacao.storage_path) await supabase.storage.from("documentos").remove([importacao.storage_path]);
         await carregar();
+        pedirVerificacao(id);
       },
     });
   }
@@ -344,7 +347,7 @@ export default function ExtratoPage() {
           contas={contas}
           contaInicial={filtroConta === "todas" ? "" : filtroConta}
           onClose={() => setImportando(false)}
-          onImported={mensagem => { setImportando(false); setAviso(mensagem); void carregar(); }}
+          onImported={mensagem => { setImportando(false); setAviso(mensagem); void carregar(); pedirVerificacao(id); }}
         />
       )}
     </div>

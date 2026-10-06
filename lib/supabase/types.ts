@@ -1995,6 +1995,29 @@ export interface PrestacaoPagamento {
 }
 
 /** Comprovante do fornecedor (P2.3b): o que a consulta guardou ou a pessoa anexou. */
+/** Achado do motor de checagens (P2.7). Só o servidor grava; decidir é pela função. */
+export interface PrestacaoVerificacao {
+  id: string;
+  prestacao_id: string;
+  chave: string;
+  check_codigo: string;
+  severidade: "bloqueio" | "alerta" | "justificativa" | "info";
+  resultado: "nao_conforme" | "revisar" | "nao_calculavel";
+  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento";
+  entidade_id: string | null;
+  mensagem: string;
+  fonte: { documento: string; dispositivo: string; citacao?: string; aConfirmar?: boolean; regra?: { codigo: string; descricao: string } } | null;
+  dados: Record<string, string | number | null>;
+  status: "aberta" | "justificada" | "dispensada" | "resolvida";
+  justificativa: string | null;
+  resolvida_por: string | null;
+  resolvida_em: string | null;
+  detectada_em: string;
+  visto_em: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface PrestacaoFornecedorDocumento {
   id: string;
   organization_id: string;

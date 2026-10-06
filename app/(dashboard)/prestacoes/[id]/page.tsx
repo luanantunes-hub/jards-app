@@ -15,6 +15,7 @@ import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais"
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import { avaliarProntidao, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
 import { ProntidaoPrestacao } from "@/components/prestacao/ProntidaoPrestacao";
+import { VerificacoesPrestacao } from "@/components/prestacao/VerificacoesPrestacao";
 import { MarcosDaPrestacao, ProximosPrazos } from "@/components/prestacao/PrazosEMarcos";
 
 type PrestacaoDetalhe = PrestacaoContas & {
@@ -323,6 +324,8 @@ export default function PrestacaoDetalhe() {
         <div className="min-w-0 space-y-4 lg:col-span-2">
 
           <ProntidaoPrestacao prontidao={prontidao} prestacaoId={id} />
+
+          <VerificacoesPrestacao prestacaoId={id} permissoes={permissoes} />
 
           {/* Painel de comprovação financeira */}
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
