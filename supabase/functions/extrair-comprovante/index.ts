@@ -84,17 +84,7 @@ Deno.serve(async (req) => {
       .eq("tipo", "item")
       .eq("versao.ativa", true)
       .order("ordem");
-    let itens: Item[] = ((nos ?? []) as Item[]).map(n => ({ id: n.id, nome: n.nome, descricao: n.descricao }));
-    if (itens.length === 0) {
-      // Sem orçamento em árvore, as rubricas antigas (até a P2.11).
-      const { data: rubricas } = await admin
-        .from("prestacao_itens")
-        .select("id, rubrica, descricao")
-        .eq("prestacao_id", prestacao_id)
-        .order("ordem");
-      itens = ((rubricas ?? []) as { id: string; rubrica: string; descricao: string | null }[])
-        .map(r => ({ id: r.id, nome: r.rubrica, descricao: r.descricao }));
-    }
+    const itens: Item[] = ((nos ?? []) as Item[]).map(n => ({ id: n.id, nome: n.nome, descricao: n.descricao }));
 
     const contexto: ContextoDaLeitura = {
       regime: p.regime ?? null,
@@ -172,16 +162,7 @@ Deno.serve(async (req) => {
       contexto.itens.map(i => i.id),
       vedadasDoRegimeJson(contexto.regime?.parametros).map(v => v.codigo),
     );
-    return respostaJson({
-      leitura,
-      modelo,
-      // Campos da versão anterior, para o app publicado antes da P2.10b.
-      valor: leitura.valor,
-      data_doc: leitura.data_doc,
-      descricao_servico: leitura.descricao_servico,
-      tipo_sugerido: leitura.tipo,
-      rubrica_sugerida_id: leitura.item_sugerido_id,
-    });
+    return respostaJson({ leitura, modelo });
   } catch (err) {
     console.error(err);
     return respostaJson({ error: String(err) }, 500);

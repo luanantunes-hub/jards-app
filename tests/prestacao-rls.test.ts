@@ -14,7 +14,10 @@ async function migrations(): Promise<string> {
 }
 
 test("toda tabela da prestação tem sonda no teste de acesso", async () => {
-  const tabelas = new Set([...(await migrations()).matchAll(/create table if not exists public\.(prestac[a-z_]+)/g)].map(m => m[1]));
+  const sql = await migrations();
+  const tabelas = new Set([...sql.matchAll(/create table if not exists public\.(prestac[a-z_]+)/g)].map(m => m[1]));
+  // Tabela apagada numa contração (P2.11) não tem mais o que sondar.
+  for (const apagada of sql.matchAll(/drop table if exists public\.(prestac[a-z_]+)/g)) tabelas.delete(apagada[1]);
   // O catálogo de regimes não pertence a uma prestação, e as chamadas à IA só o servidor lê:
   // o teste confere cada um à parte.
   tabelas.delete("prestacao_regimes");
