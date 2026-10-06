@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { AlertTriangle, CheckCircle2, Info } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Info, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
@@ -24,6 +24,8 @@ import {
   type DespesaParaChecar,
 } from "@/lib/prestacao/despesas";
 import { formatarDocumento } from "@/lib/prestacao/fornecedores";
+import { citacaoDaFonte, motivosDaIa, motivosParaMostrar } from "@/lib/prestacao/leitura-ia";
+import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 import { lerValor } from "@/lib/prestacao/orcamento";
 import { alertasDosPagamentos } from "@/lib/prestacao/pagamentos";
 import type { PagamentosRegime } from "@/lib/prestacao/regimes/tipos";
@@ -65,7 +67,7 @@ export function ListaAlertasDespesa({ alertas }: { alertas: readonly AlertaDespe
  * retenções e o que precisa de justificativa. Os alertas mudam enquanto a
  * pessoa preenche; salvar não depende deles.
  */
-export function DespesaModal({ comprovante, tipos, itens, fornecedores, documentosDe, outrasChaves, pagamentos, regimePagamentos, onPagamentosMudaram, podeEditar, onClose, onSalvo }: {
+export function DespesaModal({ comprovante, tipos, itens, fornecedores, documentosDe, outrasChaves, pagamentos, regimePagamentos, regime = null, onPagamentosMudaram, podeEditar, onClose, onSalvo }: {
   comprovante: PrestacaoComprovante;
   tipos: { value: TipoComprovante; label: string }[];
   itens: readonly ItemDoOrcamento[];
@@ -75,6 +77,8 @@ export function DespesaModal({ comprovante, tipos, itens, fornecedores, document
   /** Pagamentos desta despesa (P2.5) e os meios que o regime aceita. */
   pagamentos: readonly PrestacaoPagamento[];
   regimePagamentos: PagamentosRegime | null;
+  /** Regime da prestação, para a fonte do que a leitura por IA apontou (P2.10b). */
+  regime?: RegimeNormativo | null;
   onPagamentosMudaram: () => void;
   podeEditar: boolean;
   onClose: () => void;
@@ -98,6 +102,8 @@ export function DespesaModal({ comprovante, tipos, itens, fornecedores, document
   const [irrf, setIrrf] = useState(texto(c.irrf || null));
   const [outras, setOutras] = useState(texto(c.outras_retencoes || null));
   const [justificativa, setJustificativa] = useState(c.justificativa ?? "");
+  // O que a leitura por IA apontou; descartar tira da despesa ao salvar.
+  const [motivosIa, setMotivosIa] = useState(() => motivosDaIa(c.motivos_ia));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -154,6 +160,7 @@ export function DespesaModal({ comprovante, tipos, itens, fornecedores, document
         irrf: despesa.irrf,
         outras_retencoes: despesa.outras_retencoes,
         justificativa: justificativa.trim() || null,
+        motivos_ia: motivosIa,
       })
       .eq("id", c.id)
       .select("*")
@@ -194,6 +201,37 @@ export function DespesaModal({ comprovante, tipos, itens, fornecedores, document
           <section aria-labelledby={`${idBase}-conferencia`}>
             <h3 id={`${idBase}-conferencia`} className={SECAO}>Conferência</h3>
             <ListaAlertasDespesa alertas={alertas} />
+            {motivosIa.length > 0 && (
+              <div className="mt-3 space-y-1.5">
+                <p className="flex items-center gap-1.5 text-[0.6875rem] text-black/55">
+                  <Sparkles size={12} className="shrink-0 text-black/40" aria-hidden /> A leitura por IA apontou para revisar
+                </p>
+                <ul className="space-y-1.5">
+                  {motivosParaMostrar(motivosIa, regime).map((m, i) => {
+                    const citacao = citacaoDaFonte(m.fonte);
+                    return (
+                      <li key={`${m.codigo}-${i}`} className="flex items-start gap-3 rounded border bg-white px-3 py-2 text-[0.75rem]" style={{ borderColor: "#B07A1447" }}>
+                        <span className="min-w-0 flex-1">
+                          <span className="font-medium text-[#B07A14]">{m.titulo}:</span> <span className="text-black/70">{m.texto}</span>
+                          {citacao && <span className="mt-0.5 block text-[0.625rem] text-black/45">{citacao}</span>}
+                        </span>
+                        {podeEditar && (
+                          <button
+                            type="button"
+                            onClick={() => setMotivosIa(atual => atual.filter((_, j) => j !== i))}
+                            className="shrink-0 rounded px-1.5 py-0.5 text-[0.6875rem] text-black/50 transition hover:bg-black/[.04] hover:text-black/75 focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+                            aria-label={`Descartar: ${m.titulo}`}
+                          >
+                            Descartar
+                          </button>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {podeEditar && <p className="text-[0.625rem] text-black/40">Descarte o que você conferiu no documento; vale ao salvar.</p>}
+              </div>
+            )}
           </section>
         ) : (
           <p className="text-[0.75rem] text-black/50">Documento complementar: não é a despesa. Ligue-o ao item e use a nota ou o recibo para os dados fiscais.</p>

@@ -12,7 +12,7 @@
 // Supabase.
 
 import { formatarDocumento, limparDocumento } from "./fornecedores";
-import type { PrestacaoFornecedor } from "@/lib/supabase/types";
+import type { PrestacaoFornecedor, TipoComprovante } from "@/lib/supabase/types";
 
 // ─── XML ────────────────────────────────────────────────────────────────────
 
@@ -157,15 +157,16 @@ function data(bruto: string | null): string | null {
 
 // ─── Documento fiscal ───────────────────────────────────────────────────────
 
-export type FormatoFiscal = "nfe" | "nfse_nacional" | "nfse_abrasf" | "nfse_sp";
+/** ia: o documento lido pela IA (P2.10b), no mesmo formato, para as mesmas conferências. */
+export type FormatoFiscal = "nfe" | "nfse_nacional" | "nfse_abrasf" | "nfse_sp" | "ia";
 
 
 export type ParteDoDocumento = { documento: string | null; nome: string | null };
 
 export type DocumentoFiscalLido = {
   formato: FormatoFiscal;
-  /** Tipo de comprovante: a NFC-e (modelo 65) é cupom. */
-  tipo: "nfe" | "nfse" | "cupom";
+  /** Tipo de comprovante: a NFC-e (modelo 65) é cupom; na leitura por IA, o que ela viu. */
+  tipo: TipoComprovante;
   modelo: string | null;
   numero: string | null;
   serie: string | null;
@@ -181,6 +182,8 @@ export type DocumentoFiscalLido = {
   descricao: string | null;
   /** Descrição e informações complementares: onde o número do projeto costuma aparecer. */
   textos: string[];
+  /** Na leitura por IA, se o número do projeto aparece no documento; no XML, a busca é nos textos. */
+  identificadorVisto?: boolean | null;
   /** false quando cancelada ou não autorizada; null quando o XML não traz a situação. */
   autorizada: boolean | null;
   situacao: string | null;
@@ -192,6 +195,7 @@ const ROTULO_DO_FORMATO: Record<FormatoFiscal, string> = {
   nfse_nacional: "NFS-e nacional",
   nfse_abrasf: "NFS-e no padrão ABRASF",
   nfse_sp: "NFS-e de São Paulo",
+  ia: "leitura por IA",
 };
 
 /** "NF-e", "NFC-e", "NFS-e nacional"… */
@@ -407,7 +411,7 @@ export type AvisoDoDocumento = { nivel: "alerta" | "info"; texto: string };
 
 export type DespesaSugerida = {
   campos: {
-    tipo: DocumentoFiscalLido["tipo"];
+    tipo: TipoComprovante;
     valor_extraido: number | null;
     data_doc: string | null;
     descricao_servico: string | null;
@@ -475,7 +479,7 @@ export function despesaDoDocumento(doc: DocumentoFiscalLido, contexto: {
     avisos.push({ nivel: "info", texto: "A nota não identifica o tomador; o comprovante tem de estar em nome do proponente." });
   }
 
-  const presente = identificadorNoTexto(contexto.identificador, doc.textos);
+  const presente = doc.identificadorVisto ?? identificadorNoTexto(contexto.identificador, doc.textos);
   if (contexto.identificador && !presente) {
     avisos.push({ nivel: "info", texto: `O número do projeto (${contexto.identificador}) não aparece na nota.` });
   }

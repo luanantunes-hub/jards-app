@@ -15,13 +15,16 @@ async function migrations(): Promise<string> {
 
 test("toda tabela da prestação tem sonda no teste de acesso", async () => {
   const tabelas = new Set([...(await migrations()).matchAll(/create table if not exists public\.(prestac[a-z_]+)/g)].map(m => m[1]));
-  // O catálogo de regimes não pertence a uma prestação: o teste confere à parte quem lê.
+  // O catálogo de regimes não pertence a uma prestação, e as chamadas à IA só o servidor lê:
+  // o teste confere cada um à parte.
   tabelas.delete("prestacao_regimes");
+  tabelas.delete("prestacao_ia_chamadas");
   const teste = await readFile(TESTE_RLS, "utf8");
   const lista = /function rls_teste\.todas\(\)[\s\S]*?array\[([\s\S]*?)\]/.exec(teste)?.[1] ?? "";
   const cobertas = new Set([...lista.matchAll(/'(prestac[a-z_]+)'/g)].map(m => m[1]));
   for (const tabela of tabelas) assert.ok(cobertas.has(tabela), `${tabela} sem sonda em ${TESTE_RLS}`);
   assert.match(teste, /prestacao_regimes/, "o catálogo de regimes também precisa de caso");
+  assert.match(teste, /não lê as chamadas à IA/, "as chamadas à IA também precisam de caso");
 });
 
 test("o plano do teste de acesso bate com as verificações e tudo é desfeito", async () => {

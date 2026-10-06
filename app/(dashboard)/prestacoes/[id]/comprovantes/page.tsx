@@ -16,8 +16,10 @@ import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useFornecedoresDaOrganizacao } from "@/hooks/useFornecedoresDaOrganizacao";
 import { DespesaModal } from "@/components/prestacao/despesas/DespesaModal";
 import { FornecedorCombobox } from "@/components/prestacao/despesas/FornecedorCombobox";
-import { LidoDoXml } from "@/components/prestacao/despesas/LidoDoXml";
-import { despesaDoDocumento, ehXml, lerDocumentoFiscal, type DespesaSugerida, type DocumentoFiscalLido, type ParteDoDocumento } from "@/lib/prestacao/documento-fiscal";
+import { DocumentoLido } from "@/components/prestacao/despesas/DocumentoLido";
+import { despesaDoDocumento, ehXml, lerDocumentoFiscal, type AvisoDoDocumento, type DespesaSugerida, type DocumentoFiscalLido, type ParteDoDocumento } from "@/lib/prestacao/documento-fiscal";
+import { documentoDaLeituraIa, motivosDaIa, motivosParaMostrar } from "@/lib/prestacao/leitura-ia";
+import type { LeituraDoComprovante, MotivoLido } from "@/supabase/functions/_shared/leitura-documento";
 import { decodificarArquivo } from "@/lib/prestacao/extrato";
 import { alertasDaDespesa, ehDespesa, TIPOS_COMPLEMENTARES, TIPOS_FISCAIS } from "@/lib/prestacao/despesas";
 import { nomeDoFornecedor } from "@/lib/prestacao/fornecedores";
@@ -104,9 +106,6 @@ export default function ComprovantesPage() {
   const [extraindo, setExtraindo] = useState(false);
   const [uploadError, setUploadError] = useState("");
 
-  type RiscoGlosa = "baixo" | "medio" | "alto";
-  const [riscoGlosa, setRiscoGlosa] = useState<RiscoGlosa | null>(null);
-  const [motivosGlosa, setMotivosGlosa] = useState<string[]>([]);
 
   // Form de upload
   const [tipo, setTipo] = useState<TipoComprovante>("nfe");
@@ -118,8 +117,9 @@ export default function ComprovantesPage() {
   const [descricaoServico, setDescricaoServico] = useState("");
   const [observacao, setObservacao] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  // Leitura do XML da nota, sem IA (P2.10), e o que ela confere: o proponente e o número do projeto.
-  const [lidoDoXml, setLidoDoXml] = useState<{ documento: DocumentoFiscalLido; sugestao: DespesaSugerida } | null>(null);
+  // Documento lido do XML (sem IA) ou pela IA (P2.10), com os motivos que a IA apontou, e o que a
+  // leitura confere: o proponente e o número do projeto.
+  const [lido, setLido] = useState<{ documento: DocumentoFiscalLido; sugestao: DespesaSugerida; motivos: MotivoLido[] } | null>(null);
   const [dadosFiscais, setDadosFiscais] = useState<{ identificador: string | null; proponente: ParteDoDocumento | null }>({ identificador: null, proponente: null });
 
   const fetch = useCallback(async () => {
@@ -162,6 +162,24 @@ export default function ComprovantesPage() {
   // Caminho do arquivo já enviado ao storage (aguardando confirmação)
   const [storagePath, setStoragePath] = useState<string | null>(null);
 
+  /** Preenche o formulário com o documento lido (XML ou IA) e guarda o que mostrar para conferir. */
+  function aplicarLeitura(documento: DocumentoFiscalLido, opcoes: { tipo: boolean; motivos?: MotivoLido[]; avisos?: AvisoDoDocumento[]; item?: string | null }) {
+    const sugestao = despesaDoDocumento(documento, {
+      fornecedores,
+      proponente: dadosFiscais.proponente,
+      identificador: dadosFiscais.identificador,
+      chavesUsadas: comprovantes.filter(c => c.chave_acesso).map(c => ({ chave: c.chave_acesso!, nome: c.nome_arquivo })),
+    });
+    const campos = sugestao.campos;
+    if (opcoes.tipo && campos.tipo in TIPO_META) setTipo(campos.tipo);
+    if (campos.valor_extraido !== null) setValorExtraido(String(campos.valor_extraido));
+    if (campos.data_doc) setDataDoc(campos.data_doc);
+    if (campos.descricao_servico) setDescricaoServico(campos.descricao_servico);
+    if (sugestao.fornecedorId) setFornecedorId(sugestao.fornecedorId);
+    if (opcoes.item && itens.some(it => it.id === opcoes.item)) setItemId(opcoes.item);
+    setLido({ documento, sugestao: { ...sugestao, avisos: [...(opcoes.avisos ?? []), ...sugestao.avisos] }, motivos: opcoes.motivos ?? [] });
+  }
+
   async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -171,9 +189,7 @@ export default function ComprovantesPage() {
       return;
     }
     setUploadError("");
-    setRiscoGlosa(null);
-    setMotivosGlosa([]);
-    setLidoDoXml(null);
+    setLido(null);
     setPendingFile(file);
 
     // 1. Sobe o arquivo
@@ -204,19 +220,7 @@ export default function ComprovantesPage() {
       setUploadProgress("Lendo o XML…");
       const leitura = lerDocumentoFiscal(decodificarArquivo(new Uint8Array(await file.arrayBuffer())));
       if (leitura.ok) {
-        const sugestao = despesaDoDocumento(leitura.documento, {
-          fornecedores,
-          proponente: dadosFiscais.proponente,
-          identificador: dadosFiscais.identificador,
-          chavesUsadas: comprovantes.filter(c => c.chave_acesso).map(c => ({ chave: c.chave_acesso!, nome: c.nome_arquivo })),
-        });
-        const campos = sugestao.campos;
-        setTipo(campos.tipo);
-        if (campos.valor_extraido !== null) setValorExtraido(String(campos.valor_extraido));
-        if (campos.data_doc) setDataDoc(campos.data_doc);
-        if (campos.descricao_servico) setDescricaoServico(campos.descricao_servico);
-        if (sugestao.fornecedorId) setFornecedorId(sugestao.fornecedorId);
-        setLidoDoXml({ documento: leitura.documento, sugestao });
+        aplicarLeitura(leitura.documento, { tipo: true });
         setExtraindo(false);
         setUploadProgress("");
         return;
@@ -250,32 +254,18 @@ export default function ComprovantesPage() {
       }
       if (!fnData || fnData.error) throw new Error(fnData?.error || "Resposta vazia da IA");
 
-      const hasExtractedData =
-        fnData.valor != null ||
-        Boolean(fnData.data_doc) ||
-        Boolean(fnData.descricao_servico) ||
-        Boolean(fnData.tipo_sugerido) ||
-        Boolean(fnData.rubrica_sugerida_id);
-
-      if (!hasExtractedData) {
+      const leituraIa = fnData.leitura as LeituraDoComprovante | undefined;
+      if (!leituraIa) throw new Error("Resposta da IA sem leitura");
+      const { documento, avisos } = documentoDaLeituraIa(leituraIa);
+      if (documento.valor === null && !documento.emissao && !documento.descricao && !leituraIa.tipo) {
         throw new Error("Não foram encontrados campos legíveis no documento");
       }
-
-      if (fnData.valor != null) setValorExtraido(String(fnData.valor));
-      if (fnData.data_doc) setDataDoc(String(fnData.data_doc).slice(0, 10));
-      if (fnData.descricao_servico) setDescricaoServico(String(fnData.descricao_servico));
-      if (fnData.tipo_sugerido && fnData.tipo_sugerido in TIPO_META) {
-        setTipo(fnData.tipo_sugerido as TipoComprovante);
-      }
-      if (fnData.rubrica_sugerida_id && itens.some(it => it.id === fnData.rubrica_sugerida_id)) {
-        setItemId(fnData.rubrica_sugerida_id);
-      }
-      if (["baixo", "medio", "alto"].includes(fnData.risco_glosa)) {
-        setRiscoGlosa(fnData.risco_glosa as RiscoGlosa);
-      }
-      if (Array.isArray(fnData.motivos_glosa)) {
-        setMotivosGlosa(fnData.motivos_glosa.map(String));
-      }
+      aplicarLeitura(documento, {
+        tipo: Boolean(leituraIa.tipo),
+        motivos: leituraIa.motivos,
+        avisos,
+        item: leituraIa.item_sugerido_id,
+      });
     } catch (error) {
       console.error("Erro ao extrair comprovante:", error);
       setUploadError(
@@ -309,18 +299,17 @@ export default function ComprovantesPage() {
       descricao_servico: descricaoServico.trim() || null,
       observacao: observacao.trim() || null,
       enviado_por: user?.id ?? null,
-      risco_glosa: riscoGlosa || null,
-      motivos_glosa: motivosGlosa.length > 0 ? motivosGlosa : [],
-      // Documento fiscal e retenções que vieram do XML.
-      ...(lidoDoXml ? {
-        numero_documento: lidoDoXml.sugestao.campos.numero_documento,
-        serie: lidoDoXml.sugestao.campos.serie,
-        chave_acesso: lidoDoXml.sugestao.campos.chave_acesso,
-        iss: lidoDoXml.sugestao.campos.iss,
-        inss: lidoDoXml.sugestao.campos.inss,
-        irrf: lidoDoXml.sugestao.campos.irrf,
-        outras_retencoes: lidoDoXml.sugestao.campos.outras_retencoes,
-        identificacao_projeto: lidoDoXml.sugestao.campos.identificacao_projeto,
+      // Documento fiscal, retenções e motivos que vieram da leitura (XML ou IA), conferidos na tela.
+      ...(lido ? {
+        numero_documento: lido.sugestao.campos.numero_documento,
+        serie: lido.sugestao.campos.serie,
+        chave_acesso: lido.sugestao.campos.chave_acesso,
+        iss: lido.sugestao.campos.iss,
+        inss: lido.sugestao.campos.inss,
+        irrf: lido.sugestao.campos.irrf,
+        outras_retencoes: lido.sugestao.campos.outras_retencoes,
+        identificacao_projeto: lido.sugestao.campos.identificacao_projeto,
+        motivos_ia: lido.motivos,
       } : {}),
     });
     if (insertErro) {
@@ -340,9 +329,7 @@ export default function ComprovantesPage() {
     setItemId("");
     setFornecedorId(null);
     setUploadProgress("");
-    setRiscoGlosa(null);
-    setMotivosGlosa([]);
-    setLidoDoXml(null);
+    setLido(null);
     setUploading(false);
     fetch();
     pedirVerificacao(id);
@@ -363,9 +350,7 @@ export default function ComprovantesPage() {
     setFornecedorId(null);
     setUploadProgress("");
     setUploadError("");
-    setRiscoGlosa(null);
-    setMotivosGlosa([]);
-    setLidoDoXml(null);
+    setLido(null);
     setExtraindo(false);
   }
 
@@ -558,36 +543,12 @@ export default function ComprovantesPage() {
                 />
               </div>
 
-              {lidoDoXml && <LidoDoXml documento={lidoDoXml.documento} avisos={lidoDoXml.sugestao.avisos} />}
-
-              {/* Risco de glosa */}
-              {riscoGlosa && (
-                <div className="rounded border p-3 space-y-1.5"
-                  style={{
-                    background: riscoGlosa === "alto" ? "#fff" : riscoGlosa === "medio" ? "#fff" : "#fff",
-                    borderColor: riscoGlosa === "alto" ? "#D94E4E30" : riscoGlosa === "medio" ? "#B07A1430" : "#2E893230",
-                  }}>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[0.625rem] font-bold uppercase tracking-wide px-2 py-0.5 rounded"
-                      style={{
-                        background: riscoGlosa === "alto" ? "#D94E4E" : riscoGlosa === "medio" ? "#B07A14" : "#2E8932",
-                        color: "white",
-                      }}>
-                      Risco de glosa {riscoGlosa === "alto" ? "ALTO" : riscoGlosa === "medio" ? "MÉDIO" : "BAIXO"}
-                    </span>
-                    <span className="text-[0.625rem] text-black/40">análise da IA</span>
-                  </div>
-                  {motivosGlosa.length > 0 && (
-                    <ul className="space-y-0.5">
-                      {motivosGlosa.map((m, i) => (
-                        <li key={i} className="text-[0.6875rem] flex items-start gap-1.5"
-                          style={{ color: riscoGlosa === "alto" ? "#D94E4E" : riscoGlosa === "medio" ? "#B07A14" : "#2E8932" }}>
-                          <span className="mt-0.5">•</span>{m}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+              {lido && (
+                <DocumentoLido
+                  documento={lido.documento}
+                  avisos={lido.sugestao.avisos}
+                  motivos={motivosParaMostrar(lido.motivos, regime)}
+                />
               )}
 
               {/* Erro de upload */}
@@ -749,13 +710,13 @@ export default function ComprovantesPage() {
                       })()}
                       {c.descricao_servico && <span className="truncate max-w-[12.5rem]">{c.descricao_servico}</span>}
                       {c.observacao && <span className="italic">"{c.observacao}"</span>}
-                      {(c as any).risco_glosa && (c as any).risco_glosa !== "baixo" && (
-                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-bold uppercase"
-                          style={{
-                            background: (c as any).risco_glosa === "alto" ? "#fff" : "#fff",
-                            color: (c as any).risco_glosa === "alto" ? "#D94E4E" : "#B07A14",
-                          }}>
-                          Glosa {(c as any).risco_glosa}
+                      {motivosDaIa(c.motivos_ia).length > 0 && (
+                        <span
+                          className="rounded border bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium"
+                          style={{ borderColor: "#B07A1447", color: "#B07A14" }}
+                          title={motivosDaIa(c.motivos_ia).map(m => m.texto).join("\n")}
+                        >
+                          IA: {motivosDaIa(c.motivos_ia).length} {motivosDaIa(c.motivos_ia).length === 1 ? "ponto a revisar" : "pontos a revisar"}
                         </span>
                       )}
                     </div>
@@ -826,6 +787,7 @@ export default function ComprovantesPage() {
           outrasChaves={comprovantes.filter(o => o.id !== despesaAberta.id && o.chave_acesso).map(o => o.chave_acesso!)}
           pagamentos={pagamentos.filter(p => p.despesa_id === despesaAberta.id)}
           regimePagamentos={regimePagamentos}
+          regime={regime}
           onPagamentosMudaram={() => { fetch(); pedirVerificacao(id); }}
           podeEditar={permissoes.editar}
           onClose={() => setDespesaAberta(null)}

@@ -3,6 +3,7 @@
 // pagamentos.ts), viradas em achados com chave estável.
 
 import { alertasDaDespesa, ehDespesa, type AlertaDespesa } from "../despesas";
+import { achadosDaLeituraIa } from "../leitura-ia";
 import { alertasDosPagamentos } from "../pagamentos";
 import { definida, type RegimeNormativo } from "../regimes";
 import { CATALOGO_CHECAGENS, justificativaDaDespesa, novoAchado, type Achado, type CodigoChecagem, type DespesaDoEstado, type EstadoDaPrestacao } from "./catalogo";
@@ -58,6 +59,8 @@ export function checarDespesas(estado: EstadoDaPrestacao): Achado[] {
       }),
     ];
     achados.push(...alertas.map(a => achadoDoAlerta(a, despesa, estado.regime)));
+    // O que a leitura por IA apontou e a pessoa ainda não descartou (P2.10b).
+    achados.push(...achadosDaLeituraIa(despesa, estado.regime));
   }
   return achados;
 }
