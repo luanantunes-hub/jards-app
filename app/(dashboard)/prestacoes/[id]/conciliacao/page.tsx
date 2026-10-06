@@ -20,6 +20,7 @@ import { ehDespesa } from "@/lib/prestacao/despesas";
 import { nomeDoFornecedor } from "@/lib/prestacao/fornecedores";
 import { rotuloDaForma, situacaoDosPagamentos } from "@/lib/prestacao/pagamentos";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
 import type { PrestacaoComprovante, PrestacaoContaBancaria, PrestacaoLancamento, PrestacaoPagamento } from "@/lib/supabase/types";
 
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -135,6 +136,7 @@ export default function ConciliacaoPage() {
     const falha = r && (r as { error: unknown }).error;
     // Recarrega antes do aviso, para o resumo e a mensagem mudarem juntos.
     await recarregar();
+    pedirVerificacao(id);
     setOcupado("");
     if (falha) { setErro(mensagemErroPrestacao(falha as { message?: string }, "Não foi possível conciliar")); return; }
     setAviso(mensagem);

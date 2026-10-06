@@ -31,7 +31,7 @@ export function rotuloDaForma(forma: string): string {
 /** Sem regime: meios que pedem justificativa na maioria das normas. */
 const MEIOS_QUE_PEDEM_JUSTIFICATIVA: MeioPagamento[] = ["saque", "cheque", "cartao"];
 
-export type PagamentoParaChecar = Pick<PrestacaoPagamento, "forma" | "data" | "valor" | "favorecido_documento" | "numero_documento">;
+export type PagamentoParaChecar = Pick<PrestacaoPagamento, "forma" | "data" | "valor" | "favorecido_documento" | "numero_documento"> & { id?: string };
 
 const centavos = (v: unknown) => Math.round((Number(v) || 0) * 100);
 const reais = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -83,7 +83,8 @@ export function alertasDosPagamentos(p: {
 }): AlertaDespesa[] {
   if (!ehDespesa(p.despesa.tipo)) return [];
   const alertas: AlertaDespesa[] = [];
-  const add = (codigo: AlertaDespesa["codigo"], nivel: AlertaDespesa["nivel"], texto: string) => alertas.push({ codigo, nivel, texto });
+  const add = (codigo: AlertaDespesa["codigo"], nivel: AlertaDespesa["nivel"], texto: string, ref?: string) =>
+    alertas.push(ref ? { codigo, nivel, texto, ref } : { codigo, nivel, texto });
 
   if (!p.pagamentos.length) {
     add("PAGAMENTO_FALTANDO", "info", "Registre o pagamento: forma, data, valor e o número do documento, igual ao do extrato.");
@@ -100,19 +101,19 @@ export function alertasDosPagamentos(p: {
   for (const pag of p.pagamentos) {
     const quando = dataBr(pag.data);
     if (p.despesa.data_doc && pag.data < p.despesa.data_doc) {
-      add("PAGAMENTO_ANTECIPADO", "alerta", `Pagamento de ${quando} antes da emissão do documento (${dataBr(p.despesa.data_doc)}).`);
+      add("PAGAMENTO_ANTECIPADO", "alerta", `Pagamento de ${quando} antes da emissão do documento (${dataBr(p.despesa.data_doc)}).`, pag.id ?? pag.data);
     }
     const meio = avaliarMeio(pag.forma, p.regime);
     if (meio && !vistos.has(`meio:${pag.forma}`)) {
       vistos.add(`meio:${pag.forma}`);
-      add("PAGAMENTO_MEIO", meio.nivel, meio.texto);
+      add("PAGAMENTO_MEIO", meio.nivel, meio.texto, pag.forma);
     }
     const favorecido = limparDocumento(pag.favorecido_documento);
     // MEI pode receber na conta do CPF do titular.
     const meiNoCpf = p.fornecedor?.tipo_pessoa === "mei" && favorecido.length === 11;
     if (favorecido && documentoDoFornecedor && favorecido !== documentoDoFornecedor && !meiNoCpf && !vistos.has(`fav:${favorecido}`)) {
       vistos.add(`fav:${favorecido}`);
-      add("FAVORECIDO_DIFERENTE", "alerta", `O pagamento de ${quando} foi para outro CPF ou CNPJ, não para o fornecedor.`);
+      add("FAVORECIDO_DIFERENTE", "alerta", `O pagamento de ${quando} foi para outro CPF ou CNPJ, não para o fornecedor.`, favorecido);
     }
     if (!(pag.numero_documento ?? "").trim() && !vistos.has("sem_numero")) {
       vistos.add("sem_numero");

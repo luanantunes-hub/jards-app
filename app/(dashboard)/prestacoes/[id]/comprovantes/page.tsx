@@ -11,6 +11,7 @@ import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useFornecedoresDaOrganizacao } from "@/hooks/useFornecedoresDaOrganizacao";
 import { DespesaModal } from "@/components/prestacao/despesas/DespesaModal";
@@ -282,6 +283,7 @@ export default function ComprovantesPage() {
     setMotivosGlosa([]);
     setUploading(false);
     fetch();
+    pedirVerificacao(id);
   }
 
   async function cancelarUpload() {
@@ -314,6 +316,7 @@ export default function ComprovantesPage() {
         if (error) throw new Error(error.message);
         await supabase.storage.from("documentos").remove([comprovante.storage_path]);
         fetch();
+        pedirVerificacao(id);
       },
     });
   }
@@ -334,6 +337,7 @@ export default function ComprovantesPage() {
     });
     if (error) setErroLista(mensagemErroPrestacao(error, "Não foi possível mudar o status"));
     fetch();
+    pedirVerificacao(id);
   }
 
   return (
@@ -757,12 +761,13 @@ export default function ComprovantesPage() {
           outrasChaves={comprovantes.filter(o => o.id !== despesaAberta.id && o.chave_acesso).map(o => o.chave_acesso!)}
           pagamentos={pagamentos.filter(p => p.despesa_id === despesaAberta.id)}
           regimePagamentos={regimePagamentos}
-          onPagamentosMudaram={fetch}
+          onPagamentosMudaram={() => { fetch(); pedirVerificacao(id); }}
           podeEditar={permissoes.editar}
           onClose={() => setDespesaAberta(null)}
           onSalvo={atualizado => {
             setComprovantes(lista => lista.map(x => (x.id === atualizado.id ? atualizado : x)));
             setDespesaAberta(null);
+            pedirVerificacao(id);
           }}
         />
       )}

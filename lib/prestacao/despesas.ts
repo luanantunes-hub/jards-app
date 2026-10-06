@@ -153,6 +153,11 @@ export type AlertaDespesa = {
   codigo: CodigoAlertaDespesa | ReturnType<typeof alertasDoFornecedor>[number]["codigo"];
   nivel: "alerta" | "info";
   texto: string;
+  /**
+   * Separa achados do mesmo código na mesma despesa (o pagamento, a parte da
+   * chave), para a verificação guardada (P2.7) não trocar a decisão de um pelo outro.
+   */
+  ref?: string;
 };
 
 export type DespesaParaChecar = Pick<
@@ -192,12 +197,13 @@ export function alertasDaDespesa(p: {
   const { despesa: d, fornecedor: f, item } = p;
   if (!ehDespesa(d.tipo)) return [];
   const alertas: AlertaDespesa[] = [];
-  const add = (codigo: AlertaDespesa["codigo"], nivel: AlertaDespesa["nivel"], texto: string) => alertas.push({ codigo, nivel, texto });
+  const add = (codigo: AlertaDespesa["codigo"], nivel: AlertaDespesa["nivel"], texto: string, ref?: string) =>
+    alertas.push(ref ? { codigo, nivel, texto, ref } : { codigo, nivel, texto });
 
   if (d.valor_extraido === null || d.valor_extraido === undefined) {
     add("DESPESA_SEM_VALOR", "alerta", "Informe o valor do documento.");
   } else if (totalRetido(d) > numero(d.valor_extraido)) {
-    add("DOC_RETENCOES", "alerta", "As retenções passam do valor do documento.");
+    add("DOC_RETENCOES", "alerta", "As retenções passam do valor do documento.", "excede");
   }
   if (!item) add("DESPESA_SEM_ITEM", "alerta", "Ligue a despesa a um item do orçamento.");
 
@@ -245,34 +251,34 @@ export function alertasDaDespesa(p: {
       add("DOC_PJ_SEM_NF", "alerta", "Fornecedor com CNPJ e despesa sem nota fiscal: anexe a dispensa legal ou troque pela nota.");
     }
     if (f.tipo_pessoa === "pf" && d.tipo === "rpa" && numero(d.inss) === 0) {
-      add("DOC_RETENCOES", "alerta", "RPA sem INSS retido do autônomo (11%, até o teto).");
+      add("DOC_RETENCOES", "alerta", "RPA sem INSS retido do autônomo (11%, até o teto).", "rpa_inss");
     }
     if (f.tipo_pessoa === "pj" && d.tipo === "nfse" && totalRetido(d) === 0) {
-      add("DOC_RETENCOES", "info", "Serviço sem ISS, INSS ou IRRF retidos: confira se o fornecedor é do Simples ou se a retenção não se aplica.");
+      add("DOC_RETENCOES", "info", "Serviço sem ISS, INSS ou IRRF retidos: confira se o fornecedor é do Simples ou se a retenção não se aplica.", "servico");
     }
   }
 
   const chave = limparChave(d.chave_acesso);
   const lida = lerChaveAcesso(chave);
   if (lida && !lida.ok) {
-    add("DOC_CHAVE_INVALIDA", "alerta", lida.motivo);
+    add("DOC_CHAVE_INVALIDA", "alerta", lida.motivo, "chave");
   } else if (lida?.ok) {
     const documento = f ? limparDocumento(f.documento) : "";
     if (documento && lida.emitente.replace(/^0+/, "") !== documento.replace(/^0+/, "")) {
-      add("DOC_CHAVE_INVALIDA", "alerta", "A chave de acesso é de outro emitente, não do fornecedor ligado.");
+      add("DOC_CHAVE_INVALIDA", "alerta", "A chave de acesso é de outro emitente, não do fornecedor ligado.", "emitente");
     }
     if (d.data_doc && d.data_doc.slice(0, 7) !== lida.anoMes) {
-      add("DOC_CHAVE_INVALIDA", "info", `A chave indica emissão em ${mesBr(lida.anoMes)}, e a data do documento é ${dataBr(d.data_doc)}.`);
+      add("DOC_CHAVE_INVALIDA", "info", `A chave indica emissão em ${mesBr(lida.anoMes)}, e a data do documento é ${dataBr(d.data_doc)}.`, "mes");
     }
     const informado = (d.numero_documento ?? "").replace(/\D/g, "").replace(/^0+/, "");
     if (informado && informado !== lida.numero.replace(/^0+/, "")) {
-      add("DOC_CHAVE_INVALIDA", "info", `O número na chave é ${lida.numero.replace(/^0+/, "")}, e o informado é ${informado}.`);
+      add("DOC_CHAVE_INVALIDA", "info", `O número na chave é ${lida.numero.replace(/^0+/, "")}, e o informado é ${informado}.`, "numero");
     }
     if (p.outrasChaves?.some(c => limparChave(c) === chave)) {
       add("NFE_CHAVE_REPETIDA", "alerta", "Esta chave de acesso já está em outra despesa da prestação.");
     }
   } else if ((d.tipo === "nfe" || d.tipo === "cupom") && f && f.tipo_pessoa !== "pf") {
-    add("DOC_CHAVE_INVALIDA", "info", "Informe a chave de acesso (44 posições) para conferir emitente, data e número.");
+    add("DOC_CHAVE_INVALIDA", "info", "Informe a chave de acesso (44 posições) para conferir emitente, data e número.", "ausente");
   }
 
   if (d.identificacao_projeto === "ausente") {

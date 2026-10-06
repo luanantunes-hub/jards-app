@@ -80,6 +80,12 @@ const ERROS: Record<string, string> = {
   prestacao_comprovantes_retencoes_check: "As retenções passam do valor do documento.",
   prestacao_comprovantes_fornecedor_id_fkey: "O fornecedor está ligado a despesas. Troque o fornecedor nelas antes de excluir.",
   prestacao_orcamento_nos_cnaes_aceitos_check: "Há um CNAE fora do formato; escolha pela busca.",
+  // Verificações (P2.7)
+  verificacao_inexistente: "Verificação não encontrada ou sem acesso. Atualize a página.",
+  verificacao_resolvida: "Essa pendência já se resolveu. Atualize a página.",
+  bloqueio_nao_se_justifica: "Pendência que bloqueia o envio não se justifica: resolva, ou peça ao revisor para dispensar com o motivo.",
+  justificativa_obrigatoria: "Escreva o motivo (pelo menos 5 letras).",
+  verificacao_falhou: "Não foi possível verificar agora. Tente de novo em instantes.",
 };
 
 export function mensagemErroPrestacao(erro: { message?: string } | null | undefined, padrao: string): string {

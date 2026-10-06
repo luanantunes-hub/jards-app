@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(84);
+select plan(96);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -101,6 +101,10 @@ begin
      org_a || '/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014a0.pdf');
   insert into public.prestacao_pagamentos (id, despesa_id, forma, data, valor) values
     ('f0000000-0000-4000-8000-0000000015a0', 'f0000000-0000-4000-8000-0000000005a0', 'pix', current_date, 10);
+  insert into public.prestacao_verificacoes (id, prestacao_id, chave, check_codigo, severidade, resultado, entidade_tipo, entidade_id, mensagem) values
+    ('f0000000-0000-4000-8000-0000000016a0', pa, 'RLS:alerta', 'DOC_PJ_SEM_NF', 'alerta', 'revisar', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'RLS alerta'),
+    ('f0000000-0000-4000-8000-0000000016b0', pa, 'RLS:bloqueio', 'DEBITO_SEM_COMPROVANTE', 'bloqueio', 'nao_conforme', 'lancamento', 'f0000000-0000-4000-8000-0000000012a0', 'RLS bloqueio'),
+    ('f0000000-0000-4000-8000-0000000016c0', pa, 'RLS:sumiu', 'DESPESA_SEM_VALOR', 'alerta', 'nao_calculavel', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'RLS sumiu');
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -123,7 +127,8 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_atividades', 'prestacao_atividade_evidencias', 'prestacao_relatorio',
     'prestacao_distribuicao', 'prestacao_divulgacao', 'prestacao_alteracoes',
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
-    'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos'
+    'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
+    'prestacao_verificacoes'
   ];
 $$;
 
@@ -134,16 +139,17 @@ create function rls_teste.org_da(p uuid) returns uuid language sql immutable as 
 $$;
 
 -- O que quem edita cria e altera direto: tudo, menos o histórico de status, a
--- importação e os lançamentos do extrato, que só as funções do banco escrevem.
+-- importação e os lançamentos do extrato e as verificações, que só as funções
+-- do banco escrevem.
 create function rls_teste.editaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(rls_teste.todas(),
-    'prestacao_status_log'), 'prestacao_extrato_importacoes'), 'prestacao_lancamentos');
+  select array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
+    'prestacao_status_log'), 'prestacao_extrato_importacoes'), 'prestacao_lancamentos'), 'prestacao_verificacoes');
 $$;
 
 -- O que quem edita apaga: também a importação (desfaz o arquivo e leva os
--- lançamentos dela); o lançamento sozinho e o histórico, não.
+-- lançamentos dela); o lançamento sozinho, o histórico e a verificação, não.
 create function rls_teste.apagaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos');
+  select array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'), 'prestacao_verificacoes');
 $$;
 
 -- Roda o comando e desfaz. 'sim' se leu ou atingiu alguma linha; '' se a
@@ -196,7 +202,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_lancamentos where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_fornecedores where organization_id = %L', rls_teste.org_da(p))),
     rls_teste.efeito(format('select 1 from public.prestacao_fornecedor_documentos where organization_id = %L', rls_teste.org_da(p))),
-    rls_teste.efeito(format('select 1 from public.prestacao_pagamentos where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_pagamentos where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_verificacoes where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -219,7 +226,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_lancamentos (prestacao_id, conta_id, data, natureza, valor, chave) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000010a0', current_date, 'credito', 5, 'rls-2')$c$),
     rls_teste.efeito($c$insert into public.prestacao_fornecedores (organization_id, tipo_pessoa, documento, nome) values ('f0000000-0000-4000-8000-0000000000a0', 'pj', '00000000000191', 'RLS novo')$c$),
     rls_teste.efeito($c$insert into public.prestacao_fornecedor_documentos (fornecedor_id, tipo, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000013a0', 'outro', 'novo.pdf', 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014b0.pdf')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_pagamentos (despesa_id, forma, data, valor) values ('f0000000-0000-4000-8000-0000000005a0', 'ted', current_date, 5)$c$)
+    rls_teste.efeito($c$insert into public.prestacao_pagamentos (despesa_id, forma, data, valor) values ('f0000000-0000-4000-8000-0000000005a0', 'ted', current_date, 5)$c$),
+    rls_teste.efeito($c$insert into public.prestacao_verificacoes (prestacao_id, chave, check_codigo, severidade, resultado, entidade_tipo, mensagem) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS:nova', 'X', 'info', 'revisar', 'prestacao', 'x')$c$)
   ]);
 $$;
 
@@ -242,7 +250,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_lancamentos set historico = historico where id = 'f0000000-0000-4000-8000-0000000012a0'$c$),
     rls_teste.efeito($c$update public.prestacao_fornecedores set observacoes = observacoes where id = 'f0000000-0000-4000-8000-0000000013a0'$c$),
     rls_teste.efeito($c$update public.prestacao_fornecedor_documentos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000014a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_pagamentos set observacao = observacao where id = 'f0000000-0000-4000-8000-0000000015a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_pagamentos set observacao = observacao where id = 'f0000000-0000-4000-8000-0000000015a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_verificacoes set status = 'dispensada' where id = 'f0000000-0000-4000-8000-0000000016a0'$c$)
   ]);
 $$;
 
@@ -265,7 +274,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_lancamentos where id = 'f0000000-0000-4000-8000-0000000012a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_fornecedores where id = 'f0000000-0000-4000-8000-0000000013a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_fornecedor_documentos where id = 'f0000000-0000-4000-8000-0000000014a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_pagamentos where id = 'f0000000-0000-4000-8000-0000000015a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_pagamentos where id = 'f0000000-0000-4000-8000-0000000015a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_verificacoes where id = 'f0000000-0000-4000-8000-0000000016a0'$c$)
   ]);
 $$;
 
@@ -303,9 +313,9 @@ set local storage.allow_delete_query = 'true';
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
 set local role authenticated;
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), rls_teste.todas(), 'admin: vê tudo da prestação');
-select is(rls_teste.insere(), rls_teste.editaveis(), 'admin: cria em tudo, menos no histórico e no extrato (só pelas funções)');
-select is(rls_teste.altera(), rls_teste.editaveis(), 'admin: altera tudo, menos o histórico e o extrato');
-select is(rls_teste.apaga(), rls_teste.apagaveis(), 'admin: apaga tudo, menos o histórico e o lançamento avulso');
+select is(rls_teste.insere(), rls_teste.editaveis(), 'admin: cria em tudo, menos no histórico, no extrato e nas verificações (só pelas funções)');
+select is(rls_teste.altera(), rls_teste.editaveis(), 'admin: altera tudo, menos o histórico, o extrato e as verificações');
+select is(rls_teste.apaga(), rls_teste.apagaveis(), 'admin: apaga tudo, menos o histórico, o lançamento avulso e as verificações');
 select is(rls_teste.arquivos(), array['le', 'envia', 'troca', 'apaga'], 'admin: lê, envia, troca e apaga arquivos da prestação');
 select is(rls_teste.arquivos_fornecedor(), array['le', 'envia', 'troca', 'apaga'], 'admin: lê, anexa e mexe no arquivo solto, mas não no comprovante registrado');
 reset role;
@@ -315,9 +325,9 @@ reset role;
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a2","role":"authenticated"}';
 set local role authenticated;
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), rls_teste.todas(), 'colaborador: vê tudo da prestação');
-select is(rls_teste.insere(), rls_teste.editaveis(), 'colaborador: cria em tudo, menos no histórico e no extrato (só pelas funções)');
-select is(rls_teste.altera(), rls_teste.editaveis(), 'colaborador: altera tudo, menos o histórico e o extrato');
-select is(rls_teste.apaga(), rls_teste.apagaveis(), 'colaborador: apaga tudo, menos o histórico e o lançamento avulso');
+select is(rls_teste.insere(), rls_teste.editaveis(), 'colaborador: cria em tudo, menos no histórico, no extrato e nas verificações (só pelas funções)');
+select is(rls_teste.altera(), rls_teste.editaveis(), 'colaborador: altera tudo, menos o histórico, o extrato e as verificações');
+select is(rls_teste.apaga(), rls_teste.apagaveis(), 'colaborador: apaga tudo, menos o histórico, o lançamento avulso e as verificações');
 select is(rls_teste.arquivos(), array['le', 'envia', 'troca', 'apaga'], 'colaborador: lê, envia, troca e apaga arquivos da prestação');
 reset role;
 
@@ -326,9 +336,9 @@ reset role;
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a3","role":"authenticated"}';
 set local role authenticated;
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), rls_teste.todas(), 'revisor: vê tudo da prestação');
-select is(rls_teste.insere(), rls_teste.editaveis(), 'revisor: cria em tudo, menos no histórico e no extrato (só pelas funções)');
-select is(rls_teste.altera(), rls_teste.editaveis(), 'revisor: altera tudo, menos o histórico e o extrato');
-select is(rls_teste.apaga(), rls_teste.apagaveis(), 'revisor: apaga tudo, menos o histórico e o lançamento avulso');
+select is(rls_teste.insere(), rls_teste.editaveis(), 'revisor: cria em tudo, menos no histórico, no extrato e nas verificações (só pelas funções)');
+select is(rls_teste.altera(), rls_teste.editaveis(), 'revisor: altera tudo, menos o histórico, o extrato e as verificações');
+select is(rls_teste.apaga(), rls_teste.apagaveis(), 'revisor: apaga tudo, menos o histórico, o lançamento avulso e as verificações');
 select is(rls_teste.arquivos(), array['le', 'envia', 'troca', 'apaga'], 'revisor: lê, envia, troca e apaga arquivos da prestação');
 reset role;
 
@@ -541,6 +551,62 @@ set local role authenticated;
 select throws_ok($t$insert into public.prestacao_pagamentos (despesa_id, forma, data, valor) values ('f0000000-0000-4000-8000-0000000005b0', 'pix', current_date, 1)$t$,
   '42501', null, 'outra organização: não lança pagamento na despesa de B');
 reset role;
+
+-- ─── Verificações (P2.7): o servidor grava; as pessoas decidem pela função ──
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a2","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_verificacoes_sincronizar('f0000000-0000-4000-8000-0000000001a0', '[]')$t$,
+  '42501', null, 'quem usa o app: não sincroniza verificações (só o servidor)');
+select throws_ok($t$select public.fn_prestacao_verificacao_decidir('f0000000-0000-4000-8000-0000000016a0', 'justificada', ' ')$t$,
+  '23514', 'justificativa_obrigatoria', 'justificar pede texto');
+select lives_ok($t$select public.fn_prestacao_verificacao_decidir('f0000000-0000-4000-8000-0000000016a0', 'justificada', 'Dispensa legal anexada ao documento.')$t$,
+  'preparador: justifica um alerta');
+select throws_ok($t$select public.fn_prestacao_verificacao_decidir('f0000000-0000-4000-8000-0000000016b0', 'justificada', 'Explicação qualquer.')$t$,
+  '23514', 'bloqueio_nao_se_justifica', 'bloqueio não se justifica');
+select throws_ok($t$select public.fn_prestacao_verificacao_decidir('f0000000-0000-4000-8000-0000000016b0', 'dispensada', 'Débito estornado no dia seguinte.')$t$,
+  '42501', null, 'preparador: não dispensa (é do revisor)');
+reset role;
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a3","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$select public.fn_prestacao_verificacao_decidir('f0000000-0000-4000-8000-0000000016b0', 'dispensada', 'Débito estornado no dia seguinte.')$t$,
+  'revisor: dispensa com o motivo');
+reset role;
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a4","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_verificacao_decidir('f0000000-0000-4000-8000-0000000016a0', 'aberta')$t$,
+  '42501', null, 'leitor: não decide verificação');
+reset role;
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000b1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_verificacao_decidir('f0000000-0000-4000-8000-0000000016a0', 'aberta')$t$,
+  'P0002', null, 'outra organização: a função nem encontra a verificação');
+reset role;
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$update public.prestacoes_contas set verificada_em = now() where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
+  '42501', null, 'quem edita: não grava a hora da verificação na mão');
+reset role;
+
+-- O servidor manda o alerta justificado de novo (com outro texto), um achado
+-- novo que a despesa já justifica e deixa de mandar o "sumiu" e o bloqueio dispensado.
+set local role service_role;
+select lives_ok($t$select public.fn_prestacao_verificacoes_sincronizar('f0000000-0000-4000-8000-0000000001a0', '[
+    {"chave":"RLS:alerta","codigo":"DOC_PJ_SEM_NF","severidade":"alerta","resultado":"revisar","entidade_tipo":"despesa","entidade_id":"f0000000-0000-4000-8000-0000000005a0","mensagem":"RLS alerta, texto novo"},
+    {"chave":"RLS:nova","codigo":"DESPESA_SEM_ITEM","severidade":"alerta","resultado":"nao_calculavel","entidade_tipo":"despesa","entidade_id":"f0000000-0000-4000-8000-0000000005a0","mensagem":"RLS nova","justificativa":"Já explicado na despesa."}
+  ]')$t$,
+  'o servidor sincroniza as verificações');
+reset role;
+select is(
+  (select array_agg(chave || '=' || status order by chave) from public.prestacao_verificacoes
+    where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0'),
+  array['RLS:alerta=justificada', 'RLS:bloqueio=dispensada', 'RLS:nova=justificada', 'RLS:sumiu=resolvida'],
+  'sincronizar: a decisão das pessoas fica, a justificativa da despesa vale e o que sumiu se resolve');
+select ok((select verificada_em is not null from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
+  'sincronizar grava a hora da verificação');
 
 select * from finish();
 rollback;
