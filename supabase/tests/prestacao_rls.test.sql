@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(101);
+select plan(103);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -471,10 +471,27 @@ select throws_ok($t$select public.fn_prestacao_extrato_importar('f0000000-0000-4
   'P0002', null, 'outra organização: a função de importar nem encontra a conta');
 reset role;
 
+-- Enviar pede uma verificação e nenhum bloqueio aberto (o cenário traz um).
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_mudar_status('f0000000-0000-4000-8000-0000000001a0', 'enviado', null)$t$,
+  'P0001', 'verificacao_pendente', 'admin: não envia a prestação que nunca foi verificada');
+reset role;
+update public.prestacoes_contas set verificada_em = now() where id = 'f0000000-0000-4000-8000-0000000001a0';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_mudar_status('f0000000-0000-4000-8000-0000000001a0', 'enviado', null)$t$,
+  'P0001', 'bloqueios_abertos', 'admin: não envia com bloqueio aberto nas verificações');
+reset role;
+-- Sem o bloqueio (resolvido só aqui; volta a abrir logo depois para os casos das verificações).
+update public.prestacao_verificacoes set status = 'resolvida' where id = 'f0000000-0000-4000-8000-0000000016b0';
 set local role authenticated;
 select lives_ok($t$select public.fn_prestacao_mudar_status('f0000000-0000-4000-8000-0000000001a0', 'enviado', null)$t$,
   'admin: envia a prestação');
+reset role;
+update public.prestacao_verificacoes set status = 'aberta' where id = 'f0000000-0000-4000-8000-0000000016b0';
+update public.prestacoes_contas set verificada_em = null where id = 'f0000000-0000-4000-8000-0000000001a0';
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
 
 -- ─── Fornecedores: a consulta pública só pela função ────────────────────────
 

@@ -86,6 +86,9 @@ const ERROS: Record<string, string> = {
   bloqueio_nao_se_justifica: "Pendência que bloqueia o envio não se justifica: resolva, ou peça ao revisor para dispensar com o motivo.",
   justificativa_obrigatoria: "Escreva o motivo (pelo menos 5 letras).",
   verificacao_falhou: "Não foi possível verificar agora. Tente de novo em instantes.",
+  // Envio (bloqueio aberto impede)
+  verificacao_pendente: "Rode a verificação da prestação antes de enviar (painel Verificações, na visão geral).",
+  bloqueios_abertos: "Há bloqueios abertos nas verificações. Resolva cada um, ou peça ao revisor para dispensar com o motivo, e envie de novo.",
 };
 
 export function mensagemErroPrestacao(erro: { message?: string } | null | undefined, padrao: string): string {

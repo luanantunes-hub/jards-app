@@ -652,6 +652,8 @@ export interface PrestacaoContas {
   data_termo?: string | null;
   data_conclusao_objeto?: string | null;
   data_envio?: string | null;
+  /** Última verificação do motor de checagens (P2.7); só o servidor grava. */
+  verificada_em?: string | null;
   /** Calculado pelo banco a partir do regime e dos marcos. */
   prazo_final?: string | null;
   prazo_final_override?: string | null;
