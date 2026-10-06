@@ -20,6 +20,7 @@ import {
   tetosPorGrupo,
   type ComprovanteDoOrcamento,
   type LinhaOrcamento,
+  type PagamentoDoOrcamento,
   type NoOrcamento,
   type TipoNo,
   type VersaoOrcamento,
@@ -55,6 +56,7 @@ export default function OrcamentoPage() {
     prestacao: PrestacaoDaAlteracao | null;
     versoes: VersaoOrcamento[];
     comprovantes: ComprovanteDoOrcamento[];
+    pagamentos: PagamentoDoOrcamento[];
   } | null>(null);
   const [nosCarregados, setNosCarregados] = useState<{ versaoId: string; nos: NoComOrigem[] } | null>(null);
   const [versaoEscolhida, setVersaoEscolhida] = useState<string | null>(null);
@@ -74,8 +76,9 @@ export default function OrcamentoPage() {
     Promise.all([
       db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, data_liberacao, data_termo, data_fim_execucao").eq("id", id).maybeSingle(),
       db.from("prestacao_orcamento_versoes").select("*").eq("prestacao_id", id).order("created_at"),
-      db.from("prestacao_comprovantes").select("no_id, status, valor_extraido").eq("prestacao_id", id),
-    ]).then(([prestacao, versoes, comprovantes]) => {
+      db.from("prestacao_comprovantes").select("id, no_id, status, valor_extraido, valor_liquido").eq("prestacao_id", id),
+      db.from("prestacao_pagamentos").select("despesa_id, valor, lancamento_id").eq("prestacao_id", id),
+    ]).then(([prestacao, versoes, comprovantes, pagamentos]) => {
       if (!ativo) return;
       setBase({
         prestacaoId: id,
@@ -83,6 +86,7 @@ export default function OrcamentoPage() {
         prestacao: prestacao.data ?? null,
         versoes: (versoes.data as VersaoOrcamento[]) ?? [],
         comprovantes: (comprovantes.data as ComprovanteDoOrcamento[]) ?? [],
+        pagamentos: (pagamentos.data as PagamentoDoOrcamento[]) ?? [],
       });
       if (versoes.error) setErro(mensagemErroPrestacao(versoes.error, "Não foi possível carregar o orçamento"));
     });
@@ -119,7 +123,13 @@ export default function OrcamentoPage() {
     return todos.map(c => (c.no_id && correspondente.has(c.no_id) ? { ...c, no_id: correspondente.get(c.no_id)! } : c));
   }, [base, id, nos, versao]);
 
-  const arvore = useMemo(() => montarArvore(nos, comprovantes), [nos, comprovantes]);
+  const pagamentos = useMemo(() => (base?.prestacaoId === id ? base.pagamentos : []), [base, id]);
+  const arvore = useMemo(() => montarArvore(nos, comprovantes, pagamentos), [nos, comprovantes, pagamentos]);
+  // Pagamentos registrados que ainda não acharam o débito no extrato: contam como comprometido até a conciliação.
+  const semLancamento = useMemo(() => {
+    const soltos = pagamentos.filter(p => !p.lancamento_id);
+    return { quantidade: soltos.length, valor: soltos.reduce((soma, p) => soma + Math.round(Number(p.valor) * 100), 0) / 100 };
+  }, [pagamentos]);
   const linhas = linhasVisiveis(arvore.raizes, fechados);
   const regime = regimes.find(r => r.id === base?.regimeId)?.regime ?? null;
   const tetos = useMemo(() => tetosPorGrupo(arvore.raizes, regime), [arvore, regime]);
@@ -332,8 +342,8 @@ export default function OrcamentoPage() {
                 valor: fmt(arvore.total.vigente),
                 nota: arvore.total.remanejado !== 0 ? `Aprovado ${fmt(arvore.total.aprovado)}` : `${arvore.total.itens} itens`,
               },
-              { rotulo: "Comprometido", valor: fmt(arvore.total.comprometido), nota: "Comprovantes em análise" },
-              { rotulo: "Pago", valor: fmt(arvore.total.pago), nota: "Comprovantes aceitos" },
+              { rotulo: "Comprometido", valor: fmt(arvore.total.comprometido), nota: "Despesas ainda sem pagamento conciliado" },
+              { rotulo: "Pago", valor: fmt(arvore.total.pago), nota: "Conciliado com o extrato" },
               { rotulo: "Saldo", valor: fmt(arvore.total.saldo), nota: "Vigente − comprometido − pago", alerta: arvore.total.saldo < 0 },
               { rotulo: "% pago", valor: percentual !== null ? `${percentual}%` : "—", nota: "Sobre o vigente" },
             ].map(cartao => (
@@ -344,6 +354,16 @@ export default function OrcamentoPage() {
               </div>
             ))}
           </div>
+
+          {semLancamento.quantidade > 0 && (
+            <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">
+              <Info size={13} className="mt-px shrink-0 text-[#2D72B0]" aria-hidden />
+              <span>
+                {semLancamento.quantidade === 1 ? "1 pagamento registrado" : `${semLancamento.quantidade} pagamentos registrados`} (<span className="tabular-nums">{fmt(semLancamento.valor)}</span>) ainda sem o débito do extrato; {semLancamento.quantidade === 1 ? "ele conta" : "eles contam"} como comprometido até a conciliação.{" "}
+                <Link href={`/prestacoes/${id}/conciliacao`} className="text-[#684DB0] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">Conciliar</Link>
+              </span>
+            </p>
+          )}
 
           <TetosDoRegime tetos={tetos} regimeNome={regime?.nome ?? null} bases={bases} />
 
@@ -389,8 +409,8 @@ export default function OrcamentoPage() {
             <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">
               <Info size={13} className="mt-px shrink-0 text-[#B07A14]" aria-hidden />
               <span>
-                {arvore.foraDaVersao.quantidade} {arvore.foraDaVersao.quantidade === 1 ? "comprovante não está ligado" : "comprovantes não estão ligados"} a um item desta versão
-                ({fmt(arvore.foraDaVersao.pago)} aceitos, {fmt(arvore.foraDaVersao.comprometido)} em análise) e não entram nas colunas acima.{" "}
+                {arvore.foraDaVersao.quantidade} {arvore.foraDaVersao.quantidade === 1 ? "despesa não está ligada" : "despesas não estão ligadas"} a um item desta versão
+                ({fmt(arvore.foraDaVersao.pago)} pagos, {fmt(arvore.foraDaVersao.comprometido)} comprometidos) e não entram nas colunas acima.{" "}
                 <Link href={`/prestacoes/${id}/comprovantes`} className="text-[#684DB0] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">Ligar em Comprovantes</Link>
               </span>
             </p>
