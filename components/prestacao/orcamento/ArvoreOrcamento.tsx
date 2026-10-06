@@ -90,8 +90,8 @@ export function ArvoreOrcamento({ linhas, fechados, onAlternar, total, podeEdita
             <th scope="col" className={`${CABECALHO} ${SO_MD} text-right`}>Aprovado</th>
             <th scope="col" className={`${CABECALHO} ${SO_MD} text-right`}>Remanejado</th>
             <th scope="col" className={`${CABECALHO} text-right`}>Vigente</th>
-            <th scope="col" className={`${CABECALHO} ${SO_MD} text-right`} title="Comprovantes enviados, ainda em análise">Comprometido</th>
-            <th scope="col" className={`${CABECALHO} text-right`} title="Comprovantes aceitos">Pago</th>
+            <th scope="col" className={`${CABECALHO} ${SO_MD} text-right`} title="Despesas ainda sem pagamento conciliado com o extrato">Comprometido</th>
+            <th scope="col" className={`${CABECALHO} text-right`} title="Pagamentos conciliados com o extrato">Pago</th>
             <th scope="col" className={`${CABECALHO} text-right`}>Saldo</th>
             <th scope="col" className={`${CABECALHO} text-right`}>% pago</th>
             {podeEditar && <th scope="col" className={CABECALHO}><span className="sr-only">Ações</span></th>}

@@ -104,18 +104,29 @@ export type NoOrcamento = {
 };
 
 export type ComprovanteDoOrcamento = {
+  /** Liga a despesa aos pagamentos (P2.5); sem ele, a despesa fica toda comprometida. */
+  id?: string;
   no_id: string | null;
   status: string;
   valor_extraido: number | null;
+  /** Bruto menos retenções (P2.4), calculado pelo banco; sem ele, vale o bruto. */
+  valor_liquido?: number | null;
+};
+
+/** Pagamento da despesa (P2.5). Só o que está ligado a um lançamento do extrato (P2.6) conta como pago. */
+export type PagamentoDoOrcamento = {
+  despesa_id: string;
+  valor: number;
+  lancamento_id: string | null;
 };
 
 export type Totais = {
   aprovado: number;
   remanejado: number;
   vigente: number;
-  /** Comprovantes enviados, ainda em análise. Na fase 2: despesas sem pagamento. */
+  /** Despesas não recusadas, na parte ainda sem pagamento conciliado com o extrato. */
   comprometido: number;
-  /** Comprovantes aceitos. Na fase 2: pagamentos conciliados. */
+  /** Despesas na parte paga e conciliada com o extrato (P2.6). */
   pago: number;
   saldo: number;
   itens: number;
@@ -140,9 +151,39 @@ export type LinhaOrcamento = {
 export type Arvore = {
   raizes: LinhaOrcamento[];
   total: Totais;
-  /** Comprovantes sem item desta versão (sem rubrica ou de item de outra versão). */
+  /** Despesas sem item desta versão (sem rubrica ou de item de outra versão). */
   foraDaVersao: { pago: number; comprometido: number; quantidade: number };
 };
+
+/**
+ * Quanto da despesa está pago e quanto está comprometido, em centavos do valor
+ * bruto. A fração do líquido coberta por pagamentos conciliados vale a mesma
+ * fração do bruto: as retenções acompanham o pagamento ao fornecedor. Sem valor
+ * no documento, conta o que saiu da conta. Recusada não entra. `conciliado`
+ * vem em reais; o resultado sai em centavos, como as somas da árvore.
+ */
+export function execucaoDaDespesa(
+  despesa: Pick<ComprovanteDoOrcamento, "status" | "valor_extraido" | "valor_liquido">,
+  conciliado: number,
+): { pago: number; comprometido: number } | null {
+  if (despesa.status !== "aceito" && despesa.status !== "pendente") return null;
+  const bruto = Math.max(centavos(despesa.valor_extraido), 0);
+  const pagoCentavos = Math.max(centavos(conciliado), 0);
+  if (!bruto) return { pago: pagoCentavos, comprometido: 0 };
+  const liquido = despesa.valor_liquido === null || despesa.valor_liquido === undefined ? bruto : centavos(despesa.valor_liquido);
+  const pago = liquido > 0 ? Math.round((bruto * Math.min(pagoCentavos, liquido)) / liquido) : 0;
+  return { pago, comprometido: bruto - pago };
+}
+
+/** Soma, por despesa, dos pagamentos ligados a um lançamento do extrato. */
+export function conciliadoPorDespesa(pagamentos: readonly PagamentoDoOrcamento[]): Map<string, number> {
+  const mapa = new Map<string, number>();
+  for (const p of pagamentos) {
+    if (!p.lancamento_id) continue;
+    mapa.set(p.despesa_id, (mapa.get(p.despesa_id) ?? 0) + centavos(p.valor));
+  }
+  return new Map([...mapa].map(([id, total]) => [id, total / 100]));
+}
 
 type Centavos = { aprovado: number; remanejado: number; comprometido: number; pago: number; itens: number };
 
@@ -184,7 +225,11 @@ function porOrdem(a: NoOrcamento, b: NoOrcamento): number {
  * Monta a árvore de uma versão com as somas de cada nó. Nó cujo pai não está
  * na lista vira raiz, e um ciclo (que o banco já impede) é cortado.
  */
-export function montarArvore(nos: readonly NoOrcamento[], comprovantes: readonly ComprovanteDoOrcamento[]): Arvore {
+export function montarArvore(
+  nos: readonly NoOrcamento[],
+  comprovantes: readonly ComprovanteDoOrcamento[],
+  pagamentos: readonly PagamentoDoOrcamento[] = [],
+): Arvore {
   const ids = new Set(nos.map(no => no.id));
   const itens = new Set(nos.filter(no => no.tipo === "item").map(no => no.id));
   const filhosDe = new Map<string | null, NoOrcamento[]>();
@@ -193,18 +238,21 @@ export function montarArvore(nos: readonly NoOrcamento[], comprovantes: readonly
     filhosDe.set(pai, [...(filhosDe.get(pai) ?? []), no]);
   }
 
+  const conciliado = conciliadoPorDespesa(pagamentos);
   const movimento = new Map<string, { comprometido: number; pago: number }>();
   const fora = { pago: 0, comprometido: 0, quantidade: 0 };
   for (const c of comprovantes) {
-    if (c.status !== "aceito" && c.status !== "pendente") continue;
-    const valor = centavos(c.valor_extraido);
+    const execucao = execucaoDaDespesa(c, (c.id && conciliado.get(c.id)) || 0);
+    if (!execucao) continue;
     if (!c.no_id || !itens.has(c.no_id)) {
       fora.quantidade += 1;
-      if (c.status === "aceito") fora.pago += valor; else fora.comprometido += valor;
+      fora.pago += execucao.pago;
+      fora.comprometido += execucao.comprometido;
       continue;
     }
     const atual = movimento.get(c.no_id) ?? { comprometido: 0, pago: 0 };
-    if (c.status === "aceito") atual.pago += valor; else atual.comprometido += valor;
+    atual.pago += execucao.pago;
+    atual.comprometido += execucao.comprometido;
     movimento.set(c.no_id, atual);
   }
 

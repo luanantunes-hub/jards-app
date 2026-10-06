@@ -5,7 +5,9 @@ import {
   agrupadorPorNome,
   ajustarAoRegime,
   basesDoOrcamento,
+  conciliadoPorDespesa,
   etapasParaCriar,
+  execucaoDaDespesa,
   GRUPOS_CUSTO,
   gruposDoRegime,
   itensDaArvore,
@@ -50,29 +52,64 @@ const NOS: NoOrcamento[] = [
 ];
 
 const COMPROVANTES = [
-  { no_id: "cache", status: "aceito", valor_extraido: 20000.1 },
-  { no_id: "cache", status: "pendente", valor_extraido: 5000 },
-  { no_id: "cache", status: "rejeitado", valor_extraido: 999 },
-  { no_id: "taxa", status: "aceito", valor_extraido: 0.1 },
-  { no_id: "adm", status: "aceito", valor_extraido: 7 },
-  { no_id: null, status: "aceito", valor_extraido: 300 },
-  { no_id: "outra-versao", status: "pendente", valor_extraido: 50 },
+  { id: "d1", no_id: "cache", status: "aceito", valor_extraido: 20000.1 },
+  { id: "d2", no_id: "cache", status: "pendente", valor_extraido: 5000 },
+  { id: "d3", no_id: "cache", status: "rejeitado", valor_extraido: 999 },
+  { id: "d4", no_id: "taxa", status: "aceito", valor_extraido: 0.1 },
+  { id: "d5", no_id: "adm", status: "aceito", valor_extraido: 7 },
+  { id: "d6", no_id: null, status: "aceito", valor_extraido: 300 },
+  { id: "d7", no_id: "outra-versao", status: "pendente", valor_extraido: 50 },
+];
+
+/** Pago é o que foi conciliado com o extrato; d2 tem pagamento sem lançamento e continua comprometida. */
+const PAGAMENTOS = [
+  { despesa_id: "d1", valor: 20000, lancamento_id: "l1" },
+  { despesa_id: "d1", valor: 0.1, lancamento_id: "l2" },
+  { despesa_id: "d2", valor: 5000, lancamento_id: null },
+  { despesa_id: "d3", valor: 999, lancamento_id: "l3" },
+  { despesa_id: "d4", valor: 0.1, lancamento_id: "l4" },
+  { despesa_id: "d5", valor: 7, lancamento_id: "l5" },
+  { despesa_id: "d6", valor: 300, lancamento_id: "l6" },
 ];
 
 test("a árvore soma aprovado, remanejado, vigente, comprometido, pago e saldo por nó", () => {
-  const { raizes, total, foraDaVersao } = montarArvore(NOS, COMPROVANTES);
+  const { raizes, total, foraDaVersao } = montarArvore(NOS, COMPROVANTES, PAGAMENTOS);
   assert.deepEqual(raizes.map(linha => linha.no.id), ["prod", "adm", "solto"], "ordem e depois nome");
 
   const adm = raizes.find(linha => linha.no.id === "adm")!;
   assert.deepEqual(adm.totais, { aprovado: 21000.1, remanejado: -1000, vigente: 20000.1, comprometido: 0, pago: 0.1, saldo: 20000, itens: 2 });
   const prod = raizes.find(linha => linha.no.id === "prod")!;
   assert.equal(prod.totais.pago, 20000.1);
-  assert.equal(prod.totais.comprometido, 5000, "pendente é comprometido; rejeitado não conta");
+  assert.equal(prod.totais.comprometido, 5000, "pagamento sem lançamento é comprometido; recusada não conta");
   assert.equal(prod.totais.saldo, 54999.9);
 
   assert.equal(total.vigente, 100000.3, "soma em centavos, sem erro de ponto flutuante");
   assert.equal(total.itens, 5);
   assert.deepEqual(foraDaVersao, { pago: 307, comprometido: 50, quantidade: 3 }, "agrupador, sem item e outra versão ficam fora");
+});
+
+test("pago é a parte conciliada da despesa, na proporção do líquido", () => {
+  const despesa = { status: "aceito", valor_extraido: 1000, valor_liquido: 900 };
+  assert.deepEqual(execucaoDaDespesa(despesa, 0), { pago: 0, comprometido: 100000 }, "aceita sem pagamento conciliado fica comprometida");
+  assert.deepEqual(execucaoDaDespesa(despesa, 450), { pago: 50000, comprometido: 50000 }, "metade do líquido vale metade do bruto");
+  assert.deepEqual(execucaoDaDespesa(despesa, 900), { pago: 100000, comprometido: 0 }, "líquido pago leva as retenções junto");
+  assert.deepEqual(execucaoDaDespesa(despesa, 1200), { pago: 100000, comprometido: 0 }, "pagamento acima do líquido não passa do bruto");
+  assert.deepEqual(execucaoDaDespesa({ status: "pendente", valor_extraido: 300 }, 100), { pago: 10000, comprometido: 20000 }, "sem líquido, vale o bruto");
+  assert.deepEqual(execucaoDaDespesa({ status: "aceito", valor_extraido: null }, 120), { pago: 12000, comprometido: 0 }, "sem valor no documento, conta o que saiu");
+  assert.equal(execucaoDaDespesa({ status: "rejeitado", valor_extraido: 500 }, 500), null);
+
+  const conciliado = conciliadoPorDespesa([
+    { despesa_id: "a", valor: 0.1, lancamento_id: "l1" },
+    { despesa_id: "a", valor: 0.2, lancamento_id: "l2" },
+    { despesa_id: "a", valor: 50, lancamento_id: null },
+  ]);
+  assert.equal(conciliado.get("a"), 0.3, "soma em centavos; só o que tem lançamento");
+
+  const { total } = montarArvore([no({ id: "som", nome: "Som", valor_total: 3000 })], [
+    { id: "x", no_id: "som", status: "aceito", valor_extraido: 2000, valor_liquido: 1800 },
+  ], [{ despesa_id: "x", valor: 900, lancamento_id: "l9" }]);
+  assert.deepEqual([total.pago, total.comprometido, total.saldo], [1000, 1000, 1000]);
+  assert.deepEqual([montarArvore(NOS, COMPROVANTES).total.pago, montarArvore(NOS, COMPROVANTES).total.comprometido], [0, 25000.2], "sem pagamentos, tudo comprometido");
 });
 
 test("o grupo de custo vem do próprio nó ou do agrupador mais próximo", () => {
