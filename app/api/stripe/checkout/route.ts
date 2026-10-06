@@ -10,6 +10,9 @@ const PRICE_IDS: Record<string, string> = {
   profissional: process.env.STRIPE_PRICE_PROFISSIONAL!,
 };
 
+// Status em que a assinatura ainda existe no Stripe (cobrando ou aguardando pagamento).
+const ASSINATURA_VIGENTE = ["active", "trialing", "past_due", "unpaid", "paused", "incomplete"];
+
 export async function HEAD() {
   const configured = !!process.env.STRIPE_SECRET_KEY;
   return new NextResponse(null, { status: configured ? 200 : 503 });
@@ -26,6 +29,17 @@ export async function POST(req: NextRequest) {
 
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) return NextResponse.json({ error: "Sessão expirada" }, { status: 401 });
+
+  // Quem já tem assinatura troca de plano pelo portal: um checkout novo criaria
+  // uma segunda assinatura, cobrada junto com a primeira.
+  const { data: perfil } = await supabase
+    .from("profiles")
+    .select("stripe_subscription_id, stripe_subscription_status")
+    .eq("id", user.id)
+    .maybeSingle();
+  if (perfil?.stripe_subscription_id && ASSINATURA_VIGENTE.includes(perfil.stripe_subscription_status)) {
+    return NextResponse.json({ error: "Você já tem uma assinatura. Para trocar de plano, use Gerenciar assinatura." }, { status: 409 });
+  }
 
   const { plano } = await req.json() as { plano: string };
   const price_id = PRICE_IDS[plano];

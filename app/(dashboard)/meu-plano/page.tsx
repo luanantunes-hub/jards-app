@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 import {
-  Check, Zap, Crown, Building2, Lock, ExternalLink,
+  Check, Zap, Telescope, Building2, Lock, ExternalLink,
   AlertCircle, CheckCircle2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -76,7 +76,7 @@ const PLANS: PlanDef[] = [
     preco: "R$ 92,80",
     precoLegenda: "por mês",
     precoMensal: 92.8,
-    icon: Crown,
+    icon: Telescope,
     cor: "#7259B5",
     destaque: true,
     features: [
@@ -88,6 +88,10 @@ const PLANS: PlanDef[] = [
     limites: { desbloqueios: 200 },
   },
 ];
+
+// Status em que a assinatura ainda existe no Stripe: trocar de plano é pelo
+// portal, nunca por um checkout novo (geraria uma segunda assinatura).
+const ASSINATURA_VIGENTE = ["active", "trialing", "past_due", "unpaid", "paused", "incomplete"];
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -142,6 +146,7 @@ function MeuPlanoInner() {
   const [upgrading, setUpgrading]         = useState<PlanTipo | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
   const [stripeAtivo, setStripeAtivo]     = useState(true);
+  const [erro, setErro]                   = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -149,10 +154,14 @@ function MeuPlanoInner() {
       setLoading(true);
       const hoje = new Date();
       const mesIni = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-01`;
+      // Só o próprio perfil: a policy de equipe (e a de super admin) libera
+      // outros perfis, e sem o filtro o .single() falhava e a tela caía em "Gratuito".
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setLoading(false); return; }
 
       const [profileRes, projetosRes, atividadesRes, inscricoesRes, captadoresRes, proponentesRes, clientesRes, desbRes] = await Promise.all([
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (supabase as any).from("profiles").select("*").single() as Promise<{ data: Profile | null; error: unknown }>,
+        (supabase as any).from("profiles").select("*").eq("id", user.id).maybeSingle() as Promise<{ data: Profile | null; error: unknown }>,
         supabase.from("projetos_crm").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).neq("status_operacional", "arquivado"),
         supabase.from("atividades").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).eq("feita", false),
         supabase.from("editais_user").select("id", { count: "exact", head: true }).eq("organization_id", organizationId).in("status", ["interesse", "inscrito", "em_analise"]),
@@ -185,6 +194,7 @@ function MeuPlanoInner() {
 
   async function handleUpgrade(plano: PlanTipo) {
     if (!stripeAtivo) return;
+    setErro(null);
     setUpgrading(plano);
     try {
       const res  = await fetch("/api/stripe/checkout", {
@@ -192,20 +202,33 @@ function MeuPlanoInner() {
         headers: { "Content-Type": "application/json" },
         body:    JSON.stringify({ plano }),
       });
-      const json = await res.json() as { url?: string; error?: string };
-      if (json.url) window.location.href = json.url;
-    } finally {
+      const json = await res.json().catch(() => ({})) as { url?: string; error?: string };
+      if (!res.ok || !json.url) {
+        setErro(res.status === 409 && json.error ? json.error : res.status === 401 ? "Sua sessão expirou. Entre de novo para assinar." : "Não foi possível abrir o pagamento. Tente de novo.");
+        setUpgrading(null);
+        return;
+      }
+      window.location.assign(json.url);
+    } catch {
+      setErro("Não foi possível abrir o pagamento. Tente de novo.");
       setUpgrading(null);
     }
   }
 
   async function handlePortal() {
+    setErro(null);
     setPortalLoading(true);
     try {
       const res  = await fetch("/api/stripe/portal", { method: "POST" });
-      const json = await res.json() as { url?: string };
-      if (json.url) window.location.href = json.url;
-    } finally {
+      const json = await res.json().catch(() => ({})) as { url?: string };
+      if (!res.ok || !json.url) {
+        setErro(res.status === 401 ? "Sua sessão expirou. Entre de novo para gerenciar a assinatura." : "Não foi possível abrir o gerenciamento da assinatura. Tente de novo.");
+        setPortalLoading(false);
+        return;
+      }
+      window.location.assign(json.url);
+    } catch {
+      setErro("Não foi possível abrir o gerenciamento da assinatura. Tente de novo.");
       setPortalLoading(false);
     }
   }
@@ -213,6 +236,7 @@ function MeuPlanoInner() {
   const planoAtual = profile?.plano ?? "gratuito";
   const planDef    = PLANS.find((p) => p.key === planoAtual)!;
   const usageEntries = (Object.entries(planDef.limites) as Array<[UsageKey, number | null]>);
+  const temAssinatura = !!profile?.stripe_subscription_id && ASSINATURA_VIGENTE.includes(profile.stripe_subscription_status);
 
   return (
     <div className="px-8 py-8 max-w-5xl">
@@ -253,6 +277,13 @@ function MeuPlanoInner() {
             <p className="text-sm font-bold text-[#7A2626]">Assinatura temporariamente suspensa</p>
             <p className="text-xs text-[#B23A3A] mt-0.5">Regularize o pagamento no portal para restaurar o plano e renovar os créditos automaticamente.</p>
           </div>
+        </div>
+      )}
+
+      {erro && (
+        <div role="alert" className="flex items-center gap-3 bg-white border border-[#D94E4E]/25 rounded px-5 py-4 mb-6">
+          <AlertCircle size={18} className="text-[#B23A3A] flex-shrink-0" />
+          <p className="text-sm text-[#B23A3A]">{erro}</p>
         </div>
       )}
 
@@ -324,14 +355,15 @@ function MeuPlanoInner() {
                     </div>
                   ) : isUpgrade ? (
                     <button
-                      onClick={() => handleUpgrade(plan.key)}
-                      disabled={!!upgrading || !stripeAtivo}
+                      type="button"
+                      onClick={() => temAssinatura ? handlePortal() : handleUpgrade(plan.key)}
+                      disabled={!!upgrading || portalLoading || !stripeAtivo}
                       className="w-full rounded py-2.5 text-xs font-bold transition disabled:opacity-50"
                       style={dark
                         ? { background: stripeAtivo ? "#fff" : "rgba(255,255,255,.25)", color: "#0D0D0D" }
                         : { background: stripeAtivo ? plan.cor : "rgba(13,13,13,.35)", color: "#fff" }}
                     >
-                      {isLoading ? "Redirecionando…" : stripeAtivo ? `Assinar ${plan.label}` : <span className="flex items-center justify-center gap-1"><Lock size={11} /> Stripe pendente</span>}
+                      {isLoading || (temAssinatura && portalLoading) ? "Redirecionando…" : stripeAtivo ? `${temAssinatura ? "Mudar para" : "Assinar"} ${plan.label}` : <span className="flex items-center justify-center gap-1"><Lock size={11} /> Stripe pendente</span>}
                     </button>
                   ) : (
                     <div
@@ -373,7 +405,7 @@ function MeuPlanoInner() {
                     Renova em {new Date(profile.periodo_fim).toLocaleDateString("pt-BR")}
                   </p>
                 )}
-                {planoAtual !== "gratuito" && profile?.stripe_subscription_id && (
+                {(planoAtual !== "gratuito" || temAssinatura) && profile?.stripe_subscription_id && (
                   <button
                     onClick={handlePortal}
                     disabled={portalLoading || !stripeAtivo}
