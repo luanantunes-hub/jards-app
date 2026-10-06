@@ -1,12 +1,13 @@
-// Monta o estado da prestação que o motor de checagens recebe (P2.7): despesas,
-// fornecedores e documentos, itens da versão em uso do orçamento com os CNAEs,
-// pagamentos, lançamentos do extrato e o regime. A rota de verificação usa o
+// Monta o estado da prestação que o motor de checagens recebe (P2.7, P2.8):
+// despesas, fornecedores e documentos, nós e itens da versão em uso do
+// orçamento com os CNAEs, pagamentos, lançamentos do extrato, alterações do
+// orçamento, as datas da prestação e o regime. A rota de verificação usa o
 // cliente do service role; o mesmo código roda com qualquer cliente do
 // Supabase que enxergue a prestação.
 
 import { itensDaArvore, montarArvore, type NoOrcamento } from "../orcamento";
 import { regimeSchema } from "../regimes/schema";
-import type { EstadoDaPrestacao } from "./index";
+import type { AlteracaoDoEstado, DatasDaPrestacao, EstadoDaPrestacao } from "./catalogo";
 
 const PAGINA = 1000;
 
@@ -35,11 +36,13 @@ async function uma<T>(consulta: PromiseLike<Resposta>): Promise<T | null> {
 export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, hoje: Date = new Date()): Promise<EstadoDaPrestacao> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
   const db = cliente as any;
-  const prestacao = await uma<{ organization_id: string; regime_id: string | null }>(
-    db.from("prestacoes_contas").select("organization_id, regime_id").eq("id", prestacaoId).single());
+  const prestacao = await uma<{ organization_id: string; regime_id: string | null } & DatasDaPrestacao>(
+    db.from("prestacoes_contas")
+      .select("organization_id, regime_id, data_aprovacao, data_liberacao, data_inicio_execucao, data_fim_execucao")
+      .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -53,6 +56,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     todas<EstadoDaPrestacao["lancamentos"][number]>(() => db.from("prestacao_lancamentos")
       .select("id, data, natureza, valor, historico, numero_documento, numero_normalizado, categoria")
       .eq("prestacao_id", prestacaoId).order("id")),
+    todas<AlteracaoDoEstado>(() => db.from("prestacao_alteracoes")
+      .select("id, numero, status, solicitada_em").eq("prestacao_id", prestacaoId).order("id")),
   ]);
 
   const nos = versao
@@ -74,12 +79,20 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
   const regime = regimeLinha ? regimeSchema.safeParse(regimeLinha.parametros) : null;
   return {
     regime: regime?.success ? regime.data : null,
+    prestacao: {
+      data_aprovacao: prestacao.data_aprovacao ?? null,
+      data_liberacao: prestacao.data_liberacao ?? null,
+      data_inicio_execucao: prestacao.data_inicio_execucao ?? null,
+      data_fim_execucao: prestacao.data_fim_execucao ?? null,
+    },
     despesas,
     fornecedores,
     documentosDosFornecedores: documentos,
     itens,
+    nos,
     pagamentos,
     lancamentos,
+    alteracoes,
     hoje,
   };
 }
