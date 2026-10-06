@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<RetornoConsulta xmlns="http://www.prefeitura.sp.gov.br/nfe">
+  <Cabecalho Versao="1"><Sucesso>true</Sucesso></Cabecalho>
+  <NFe>
+    <Assinatura>abc=</Assinatura>
+    <ChaveNFe>
+      <InscricaoPrestador>12345678</InscricaoPrestador>
+      <NumeroNFe>8812</NumeroNFe>
+      <CodigoVerificacao>XYZ9ABCD</CodigoVerificacao>
+    </ChaveNFe>
+    <DataEmissaoNFe>2026-02-10T11:00:00</DataEmissaoNFe>
+    <CPFCNPJPrestador><CNPJ>11222333000181</CNPJ></CPFCNPJPrestador>
+    <RazaoSocialPrestador>Design Exemplo Ltda</RazaoSocialPrestador>
+    <StatusNFe>N</StatusNFe>
+    <ValorServicos>800</ValorServicos>
+    <ValorISS>16</ValorISS>
+    <ISSRetido>false</ISSRetido>
+    <ValorINSS>0</ValorINSS>
+    <ValorIR>12</ValorIR>
+    <CPFCNPJTomador><CNPJ>11444777000161</CNPJ></CPFCNPJTomador>
+    <RazaoSocialTomador>Associação Cultural Exemplo</RazaoSocialTomador>
+    <Discriminacao>Design gráfico das peças de divulgação|PRONAC 235678</Discriminacao>
+  </NFe>
+</RetornoConsulta>
