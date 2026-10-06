@@ -22,6 +22,23 @@ interface ChaveMcp {
   expirada?: boolean;
 }
 
+function CaixaCopiavel({ texto, rotulo, copiado, onCopiar }: { texto: string; rotulo: string; copiado: boolean; onCopiar: () => void }) {
+  return (
+    <div className="mt-2 flex items-center gap-2">
+      <code className="min-w-0 flex-1 overflow-x-auto whitespace-nowrap rounded border border-black/10 bg-black/[0.02] px-3 py-2.5 text-xs">{texto}</code>
+      <button
+        type="button"
+        onClick={onCopiar}
+        title={rotulo}
+        aria-label={rotulo}
+        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded border border-black/15 bg-white hover:bg-black/5"
+      >
+        {copiado ? <Check size={16} className="text-[#2E8932]" /> : <Copy size={16} />}
+      </button>
+    </div>
+  );
+}
+
 export default function ConfiguracoesMcpPage() {
   const router = useRouter();
   const { confirmDelete } = useDeleteConfirm();
@@ -35,6 +52,8 @@ export default function ConfiguracoesMcpPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [chaveGerada, setChaveGerada] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [origem, setOrigem] = useState("");
+  const [copiadoId, setCopiadoId] = useState<string | null>(null);
 
   const carregar = useCallback(async () => {
     setCarregando(true);
@@ -53,6 +72,7 @@ export default function ConfiguracoesMcpPage() {
   }, []);
 
   useEffect(() => { void carregar(); }, [carregar]); // eslint-disable-line react-hooks/set-state-in-effect
+  useEffect(() => { setOrigem(window.location.origin); }, []); // eslint-disable-line react-hooks/set-state-in-effect
 
   async function criarChave() {
     setCriando(true);
@@ -99,6 +119,14 @@ export default function ConfiguracoesMcpPage() {
     setTimeout(() => setCopiado(false), 2000);
   }
 
+  async function copiarTexto(id: string, texto: string) {
+    await navigator.clipboard.writeText(texto);
+    setCopiadoId(id);
+    setTimeout(() => setCopiadoId((atual) => (atual === id ? null : atual)), 2000);
+  }
+
+  const urlServidor = `${origem}/api/mcp/server`;
+  const comandoClaudeCode = `claude mcp add --transport http jards ${urlServidor}`;
   const chavesAtivas = chaves.filter((c) => !c.revoked_at);
 
   if (loadingAssinatura) return null;
@@ -128,14 +156,63 @@ export default function ConfiguracoesMcpPage() {
         Claude e ChatGPT (MCP)
       </h1>
       <p className="mt-2 text-sm text-black/60">
-        Gere uma chave pessoal para usar os dados do Jards em um assistente externo (Claude, Custom GPT). A chave dá
-        acesso apenas às organizações das quais você é membro — o mesmo que você já vê logado no Jards.
+        Conecte um assistente de IA aos dados do Jards. Ele só acessa as organizações de que você é membro, o mesmo
+        que você já vê logado no Jards, e cada pessoa conecta com a própria conta.
       </p>
+
+      <section aria-labelledby="titulo-claude" className="mt-8 rounded border border-black/10 bg-white p-4">
+        <h2 id="titulo-claude" className="flex items-center gap-2 text-[0.9375rem] font-semibold">
+          <span className="flex h-7 w-7 items-center justify-center rounded border border-black/15 bg-white">
+            <ClaudeMark size={15} />
+          </span>
+          Conectar o Claude
+        </h2>
+        <p className="mt-2 text-sm text-black/60">
+          Funciona no claude.ai, no Claude Desktop e no Claude Code. Não precisa de chave: você entra na sua conta do
+          Jards e autoriza.
+        </p>
+
+        <p className="mt-4 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/50">Endereço do servidor</p>
+        <CaixaCopiavel
+          texto={urlServidor}
+          rotulo="Copiar endereço do servidor"
+          copiado={copiadoId === "url"}
+          onCopiar={() => void copiarTexto("url", urlServidor)}
+        />
+
+        <ol className="mt-4 list-decimal space-y-1 pl-5 text-sm text-black/70">
+          <li>No Claude, abra Configurações → Conectores e escolha Adicionar conector personalizado.</li>
+          <li>Cole o endereço acima, dê o nome Jards e confirme.</li>
+          <li>Clique em Conectar, entre na sua conta do Jards e autorize.</li>
+          <li>Pronto: peça, por exemplo, &ldquo;liste meus projetos em captação&rdquo;.</li>
+        </ol>
+
+        <p className="mt-4 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/50">No Claude Code</p>
+        <CaixaCopiavel
+          texto={comandoClaudeCode}
+          rotulo="Copiar comando do Claude Code"
+          copiado={copiadoId === "cmd"}
+          onCopiar={() => void copiarTexto("cmd", comandoClaudeCode)}
+        />
+        <p className="mt-2 text-sm text-black/70">Depois, no Claude Code, rode /mcp, escolha jards e autorize.</p>
+
+        <p className="mt-4 text-xs text-black/50">
+          O Claude só lê por padrão. Para criar contatos e tarefas, ou ver os contatos de uma empresa (consome
+          crédito), marque a permissão extra na tela de autorização. Para desconectar, revogue a conexão &ldquo;Claude
+          (OAuth)&rdquo; em Chaves ativas, abaixo.
+        </p>
+      </section>
+
+      <h2 className="mt-10 flex items-center gap-2 text-[0.9375rem] font-semibold">
+        <span className="flex h-7 w-7 items-center justify-center rounded border border-black/15 bg-white">
+          <OpenAIMark size={14} />
+        </span>
+        ChatGPT
+      </h2>
       <p className="mt-2 rounded border border-[#B07A14]/25 bg-white p-3 text-sm text-[#8a5f0f]">
-        Se for usar no ChatGPT com a Custom GPT do Jards já configurada com <strong>OAuth</strong> (recomendado —
-        veja o card abaixo), cada pessoa do time entra com a própria conta ao autorizar, sem precisar gerar chave
-        aqui. Gere uma chave manual só se for usar em outro assistente (ex. Claude Desktop) ou numa GPT própria sem
-        OAuth — nesse caso, nunca compartilhe a GPT configurada com sua chave.
+        O jeito recomendado é a Custom GPT do time com <strong>OAuth</strong> (veja o card abaixo): cada pessoa entra
+        com a própria conta ao autorizar, sem gerar chave. Gere uma chave manual só para uma GPT própria sem OAuth, e
+        nunca compartilhe uma GPT configurada com a sua chave.
       </p>
 
       <div className="mt-8 rounded border border-black/10 bg-white p-4">
@@ -207,6 +284,7 @@ export default function ConfiguracoesMcpPage() {
 
       <div className="mt-8">
         <h2 className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/50">Chaves ativas</h2>
+        <p className="mt-1 text-xs text-black/50">Inclui as conexões do Claude e do ChatGPT. Revogue para desconectar.</p>
         {carregando ? (
           <p className="mt-3 text-sm text-black/50">Carregando…</p>
         ) : chavesAtivas.length === 0 ? (

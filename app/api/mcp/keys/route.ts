@@ -81,11 +81,23 @@ export async function DELETE(req: NextRequest) {
   if (!id) return NextResponse.json({ error: "Informe id" }, { status: 400 });
 
   const admin = adminClient();
+  const agora = new Date().toISOString();
   const { error } = await admin
     .from("mcp_api_keys")
-    .update({ revoked_at: new Date().toISOString() })
+    .update({ revoked_at: agora })
     .eq("id", id)
     .eq("user_id", user.id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Conexão OAuth (Claude, ChatGPT): sem revogar também o refresh token, o assistente renovaria o
+  // acesso sozinho logo depois e "desconectar" não adiantaria nada.
+  const { error: refreshError } = await admin
+    .from("oauth_refresh_tokens")
+    .update({ revoked_at: agora })
+    .eq("access_key_id", id)
+    .eq("user_id", user.id)
+    .is("revoked_at", null);
+  if (refreshError) return NextResponse.json({ error: refreshError.message }, { status: 500 });
+
   return NextResponse.json({ ok: true });
 }

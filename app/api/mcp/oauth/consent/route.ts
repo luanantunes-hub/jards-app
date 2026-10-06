@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { OAUTH_CODE_TTL_MS, generateOpaqueToken, isAllowedRedirectUri, normalizeScope } from "@/lib/mcp/oauth";
+import { OAUTH_CODE_TTL_MS, generateOpaqueToken, normalizeScope, validateAuthorizationRequest } from "@/lib/mcp/oauth";
 import { userHasPaidOrg } from "@/lib/mcp/auth";
 
 /** Processa o botão Permitir/Negar da tela de consentimento OAuth. */
@@ -16,14 +16,30 @@ export async function POST(req: NextRequest) {
   const clientId = String(form.get("client_id") ?? "");
   const redirectUri = String(form.get("redirect_uri") ?? "");
   const state = String(form.get("state") ?? "");
-  const scope = normalizeScope(String(form.get("scope") ?? ""));
   const codeChallenge = form.get("code_challenge") ? String(form.get("code_challenge")) : null;
   const codeChallengeMethod = form.get("code_challenge_method") ? String(form.get("code_challenge_method")) : null;
+  const resource = form.get("resource") ? String(form.get("resource")) : undefined;
   const negado = form.has("deny");
 
-  if (clientId !== process.env.OAUTH_CHATGPT_CLIENT_ID || !isAllowedRedirectUri(redirectUri)) {
-    return NextResponse.json({ error: "Pedido de autorização inválido" }, { status: 400 });
+  const admin = createAdminClient();
+  const validacao = await validateAuthorizationRequest(
+    admin,
+    {
+      responseType: "code",
+      clientId,
+      redirectUri,
+      codeChallenge: codeChallenge ?? undefined,
+      codeChallengeMethod: codeChallengeMethod ?? undefined,
+      resource,
+    },
+    req.nextUrl.origin
+  );
+  if (!validacao.ok) {
+    return NextResponse.json({ error: "Pedido de autorização inválido", detalhes: validacao.errors }, { status: 400 });
   }
+
+  // ChatGPT: o escopo vem do pedido. Assistentes MCP (Claude): quem autoriza decide, e o padrão é só leitura.
+  const scope = validacao.client.kind === "chatgpt" ? normalizeScope(String(form.get("scope") ?? "")) : form.has("escrita") ? "write" : "read";
 
   const callback = new URL(redirectUri);
   if (state) callback.searchParams.set("state", state);
@@ -33,7 +49,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.redirect(callback, { status: 303 });
   }
 
-  const admin = createAdminClient();
   if (!(await userHasPaidOrg(admin, user.id))) {
     callback.searchParams.set("error", "access_denied");
     callback.searchParams.set("error_description", "Assinatura necessária");

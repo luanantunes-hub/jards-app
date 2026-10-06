@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isRateLimited } from "@/lib/mcp/rateLimit";
 
@@ -78,16 +78,20 @@ export async function authenticateMcpRequest(
     return NextResponse.json({ error: "Limite de requisições da chave excedido. Aguarde um momento." }, { status: 429 });
   }
 
-  void admin.from("mcp_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id);
-
-  // Trilha de auditoria — "quem acessou o quê, quando". Fire-and-forget: não
-  // atrasa a resposta nem derruba a requisição se a gravação falhar.
-  void admin.from("mcp_api_key_usage").insert({
-    key_id: key.id,
-    user_id: key.user_id,
-    method: req.method,
-    path: req.nextUrl.pathname,
-    ip,
+  // Último uso e trilha de auditoria ("quem acessou o quê, quando"), gravados depois da resposta:
+  // não atrasam a requisição nem a derrubam se falharem. O construtor de consultas do Supabase só
+  // envia quando é aguardado; um `void` solto, como era aqui, nunca gravava nada.
+  after(async () => {
+    await Promise.all([
+      admin.from("mcp_api_keys").update({ last_used_at: new Date().toISOString() }).eq("id", key.id),
+      admin.from("mcp_api_key_usage").insert({
+        key_id: key.id,
+        user_id: key.user_id,
+        method: req.method,
+        path: req.nextUrl.pathname,
+        ip,
+      }),
+    ]).catch(() => undefined);
   });
 
   const { data: memberships, error: membershipError } = await admin

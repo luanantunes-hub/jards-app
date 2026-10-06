@@ -13,8 +13,10 @@ const API_LIMITS: [string, number][] = [
   ["/api/calendar", 30],
   ["/api/email", 30],
   ["/api/mcp/keys", 10],
-  ["/api/mcp/oauth/token", 20],
+  ["/api/mcp/oauth/token", 60],
+  ["/api/mcp/oauth/register", 30],
   ["/api/mcp/oauth/consent", 20],
+  ["/api/mcp/server", 600],
   ["/api/mcp", 60],
   ["/api/auth/conta-sem-senha", 10],
   ["/api/", 60],
@@ -138,6 +140,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
         pathname.startsWith("/confirmacao-email") ||
+        pathname.startsWith("/.well-known") ||
         pathname.startsWith("/blog");
 
       const publicBucket = pathname.startsWith("/p/")
@@ -170,6 +173,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/nova-senha") ||
     pathname.startsWith("/blog") ||
     pathname.startsWith("/p/") ||
+    pathname.startsWith("/.well-known") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||
     pathname === "/favicon.ico" ||

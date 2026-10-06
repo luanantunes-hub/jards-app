@@ -4,9 +4,11 @@ import { generateApiKey, hashApiKey } from "@/lib/mcp/auth";
 import {
   OAUTH_ACCESS_TOKEN_TTL_MS,
   OAUTH_REFRESH_TOKEN_TTL_MS,
+  findOAuthClient,
   generateOpaqueToken,
   validClientCredentials,
   verifyPkce,
+  verifyPkceS256,
 } from "@/lib/mcp/oauth";
 
 /** Aceita form-urlencoded (padrão OAuth) ou JSON, e client_secret no body OU em Basic auth. */
@@ -29,7 +31,7 @@ async function readParams(req: NextRequest): Promise<Record<string, string>> {
 }
 
 /** Cria um access token (linha em mcp_api_keys) + refresh token para um usuário/escopo. */
-async function issueTokens(admin: ReturnType<typeof createAdminClient>, userId: string, clientId: string, scope: "read" | "write") {
+async function issueTokens(admin: ReturnType<typeof createAdminClient>, userId: string, clientId: string, scope: "read" | "write", label: string) {
   const { raw: rawAccess, hash: accessHash, prefix } = generateApiKey();
   const { data: keyRow, error: keyError } = await admin
     .from("mcp_api_keys")
@@ -37,7 +39,7 @@ async function issueTokens(admin: ReturnType<typeof createAdminClient>, userId: 
       user_id: userId,
       key_hash: accessHash,
       key_prefix: prefix,
-      label: "ChatGPT (OAuth)",
+      label,
       scope,
       source: "oauth",
       oauth_client_id: clientId,
@@ -73,11 +75,15 @@ export async function POST(req: NextRequest) {
   const clientId = params.client_id ?? "";
   const clientSecret = params.client_secret ?? "";
 
-  if (!validClientCredentials(clientId, clientSecret)) {
+  const admin = createAdminClient();
+
+  // ChatGPT: cliente fixo com segredo. Assistentes MCP (Claude): cliente público registrado, sem
+  // segredo, protegido por PKCE S256 (exigido abaixo).
+  const client = await findOAuthClient(admin, clientId);
+  if (!client || (client.kind === "chatgpt" && !validClientCredentials(clientId, clientSecret))) {
     return NextResponse.json({ error: "invalid_client" }, { status: 401 });
   }
-
-  const admin = createAdminClient();
+  const label = client.kind === "chatgpt" ? "ChatGPT (OAuth)" : `${client.name} (OAuth)`;
 
   if (grantType === "authorization_code") {
     const code = params.code ?? "";
@@ -101,7 +107,11 @@ export async function POST(req: NextRequest) {
     ) {
       return NextResponse.json({ error: "invalid_grant" }, { status: 400 });
     }
-    if (codeRow.code_challenge) {
+    if (client.kind === "public") {
+      if (codeRow.code_challenge_method !== "S256" || !verifyPkceS256(codeVerifier, codeRow.code_challenge ?? "")) {
+        return NextResponse.json({ error: "invalid_grant", error_description: "PKCE inválido" }, { status: 400 });
+      }
+    } else if (codeRow.code_challenge) {
       if (!codeVerifier || !verifyPkce(codeVerifier, codeRow.code_challenge, codeRow.code_challenge_method)) {
         return NextResponse.json({ error: "invalid_grant", error_description: "PKCE inválido" }, { status: 400 });
       }
@@ -117,7 +127,7 @@ export async function POST(req: NextRequest) {
     if (markError || !marked || marked.length === 0) return NextResponse.json({ error: "invalid_grant" }, { status: 400 });
 
     try {
-      const tokens = await issueTokens(admin, codeRow.user_id, clientId, codeRow.scope);
+      const tokens = await issueTokens(admin, codeRow.user_id, clientId, codeRow.scope, label);
       return NextResponse.json(tokens);
     } catch {
       return NextResponse.json({ error: "server_error" }, { status: 500 });
@@ -151,7 +161,7 @@ export async function POST(req: NextRequest) {
     }
 
     try {
-      const tokens = await issueTokens(admin, tokenRow.user_id, clientId, tokenRow.scope);
+      const tokens = await issueTokens(admin, tokenRow.user_id, clientId, tokenRow.scope, label);
       return NextResponse.json(tokens);
     } catch {
       return NextResponse.json({ error: "server_error" }, { status: 500 });
