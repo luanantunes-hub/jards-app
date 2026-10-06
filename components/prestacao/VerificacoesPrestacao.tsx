@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, ArrowRight, Ban, CheckCircle2, ChevronDown, Info, RefreshCw, RotateCcw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { pendenciasPorSeveridade, tituloDaChecagem } from "@/lib/prestacao/checagens";
+import { destinoDaChecagem, pendenciasPorSeveridade, tituloDaChecagem, type DestinoDaChecagem } from "@/lib/prestacao/checagens";
 import { mensagemErroPrestacao, type PermissoesPrestacao } from "@/lib/prestacao/status";
 import { EVENTO_VERIFICADA, verificarAgora } from "@/lib/prestacao/verificar-cliente";
 import type { PrestacaoVerificacao } from "@/lib/supabase/types";
@@ -22,10 +22,17 @@ const SEVERIDADE = {
 const ORDEM: Record<PrestacaoVerificacao["severidade"], number> = { bloqueio: 0, alerta: 1, justificativa: 1, info: 2 };
 const LIMITE = 8;
 
+const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> = {
+  visao_geral: { caminho: "#dados-oficiais", rotulo: "Preencher dados" },
+  orcamento: { caminho: "/orcamento", rotulo: "Abrir orçamento" },
+  comprovantes: { caminho: "/comprovantes", rotulo: "Abrir despesas" },
+  extrato: { caminho: "/extrato", rotulo: "Abrir extrato" },
+  conciliacao: { caminho: "/conciliacao", rotulo: "Conciliar" },
+};
+
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {
-  if (v.entidade_tipo === "despesa") return { href: `/prestacoes/${prestacaoId}/comprovantes`, rotulo: "Abrir despesas" };
-  if (v.check_codigo === "EXTRATO_AUSENTE") return { href: `/prestacoes/${prestacaoId}/extrato`, rotulo: "Importar extrato" };
-  return { href: `/prestacoes/${prestacaoId}/conciliacao`, rotulo: "Conciliar" };
+  const { caminho, rotulo } = DESTINOS[destinoDaChecagem(v.check_codigo)];
+  return { href: caminho.startsWith("#") ? caminho : `/prestacoes/${prestacaoId}${caminho}`, rotulo };
 }
 
 function quando(iso: string | null): string {
