@@ -1,5 +1,9 @@
 # Jards MCP Server
 
+> **Para o dia a dia, use o conector remoto do Jards** (Configurações → Claude e ChatGPT (MCP)): não instala
+> nada nem pede senha, cada pessoa só autoriza com a própria conta. Este servidor local serve para
+> desenvolvimento e para quem não pode usar o conector.
+
 Servidor MCP (Model Context Protocol) para os dados do Jards no Supabase: projetos,
 empresas (CRM), contatos, propostas, tarefas, captadores, proponentes, editais e a
 base pública de patrocinadores.

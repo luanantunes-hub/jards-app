@@ -1,5 +1,8 @@
 import crypto from "crypto";
 import { hashApiKey } from "@/lib/mcp/auth";
+import type { createAdminClient } from "@/lib/supabase/admin";
+
+type Admin = ReturnType<typeof createAdminClient>;
 
 export const OAUTH_CODE_TTL_MS = 10 * 60_000; // 10 min
 export const OAUTH_ACCESS_TOKEN_TTL_MS = 60 * 60_000; // 1h
@@ -50,4 +53,113 @@ export type OAuthScope = "read" | "write";
 
 export function normalizeScope(raw: string | null | undefined): OAuthScope {
   return raw === "write" ? "write" : "read";
+}
+
+/* ─── Clientes públicos registrados dinamicamente (RFC 7591) — Claude e outros assistentes MCP ─── */
+
+/** PKCE S256 obrigatório para clientes públicos: sem segredo, é o que protege o código de autorização. */
+export function verifyPkceS256(codeVerifier: string, codeChallenge: string): boolean {
+  if (!codeVerifier || !codeChallenge) return false;
+  return timingSafeEqualStr(crypto.createHash("sha256").update(codeVerifier).digest("base64url"), codeChallenge);
+}
+
+export function isLoopbackRedirectUri(uri: string): boolean {
+  try {
+    const url = new URL(uri);
+    return url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  } catch {
+    return false;
+  }
+}
+
+// Callback oficial do Claude (claude.ai e o domínio novo claude.com).
+const CLAUDE_REDIRECT_URI = /^https:\/\/(claude\.ai|claude\.com)\/api\/mcp\/auth_callback$/;
+
+/** O que um cliente pode registrar: callback do Claude ou loopback (Claude Code e ferramentas locais). */
+export function isRegistrableRedirectUri(uri: string): boolean {
+  if (typeof uri !== "string" || uri.length > 300) return false;
+  if (CLAUDE_REDIRECT_URI.test(uri)) return true;
+  return isLoopbackRedirectUri(uri) && !new URL(uri).hash;
+}
+
+/** Igual ao registrado; para loopback a porta é livre (RFC 8252 §7.3), o resto precisa bater. */
+export function redirectUriMatchesRegistered(registered: string[], requested: string): boolean {
+  if (registered.includes(requested)) return true;
+  if (!isLoopbackRedirectUri(requested)) return false;
+  const pedido = new URL(requested);
+  return registered.some((uri) => {
+    if (!isLoopbackRedirectUri(uri)) return false;
+    const base = new URL(uri);
+    return base.hostname === pedido.hostname && base.pathname === pedido.pathname;
+  });
+}
+
+export type OAuthClient =
+  | { kind: "chatgpt"; clientId: string }
+  | { kind: "public"; clientId: string; name: string; redirectUris: string[] };
+
+/** Cliente fixo do ChatGPT (variáveis de ambiente) ou cliente público registrado em oauth_clients. */
+export async function findOAuthClient(admin: Admin, clientId: string): Promise<OAuthClient | null> {
+  if (!clientId) return null;
+  const chatgptId = process.env.OAUTH_CHATGPT_CLIENT_ID;
+  if (chatgptId && timingSafeEqualStr(clientId, chatgptId)) return { kind: "chatgpt", clientId };
+  const { data } = await admin
+    .from("oauth_clients")
+    .select("client_id,client_name,redirect_uris")
+    .eq("client_id", clientId)
+    .maybeSingle();
+  if (!data) return null;
+  return { kind: "public", clientId: data.client_id, name: data.client_name, redirectUris: data.redirect_uris };
+}
+
+export interface AuthorizationRequest {
+  responseType: string;
+  clientId: string;
+  redirectUri: string;
+  codeChallenge?: string;
+  codeChallengeMethod?: string;
+  resource?: string;
+}
+
+/**
+ * Valida um pedido de autorização (tela de consentimento e botão Permitir usam a mesma regra).
+ * ChatGPT: callback oficial. Cliente público: callback registrado + PKCE S256 obrigatório.
+ */
+export async function validateAuthorizationRequest(
+  admin: Admin,
+  request: AuthorizationRequest,
+  origin: string
+): Promise<{ ok: true; client: OAuthClient } | { ok: false; errors: string[] }> {
+  const errors: string[] = [];
+  if (request.responseType !== "code") errors.push("response_type deve ser 'code'.");
+
+  const client = await findOAuthClient(admin, request.clientId);
+  if (!client) {
+    errors.push("client_id desconhecido.");
+    return { ok: false, errors };
+  }
+
+  if (client.kind === "chatgpt") {
+    if (!request.redirectUri || !isAllowedRedirectUri(request.redirectUri)) {
+      errors.push("redirect_uri não é um callback válido do ChatGPT.");
+    }
+  } else {
+    if (!request.redirectUri || !redirectUriMatchesRegistered(client.redirectUris, request.redirectUri)) {
+      errors.push("redirect_uri não corresponde ao callback registrado do aplicativo.");
+    }
+    if (!request.codeChallenge || request.codeChallengeMethod !== "S256") {
+      errors.push("PKCE obrigatório: envie code_challenge com code_challenge_method=S256.");
+    }
+    if (request.resource) {
+      let recursoValido = false;
+      try {
+        recursoValido = new URL(request.resource).origin === origin;
+      } catch {
+        recursoValido = false;
+      }
+      if (!recursoValido) errors.push("resource não pertence a este servidor.");
+    }
+  }
+
+  return errors.length > 0 ? { ok: false, errors } : { ok: true, client };
 }
