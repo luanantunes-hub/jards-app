@@ -37,10 +37,12 @@ export type DadosProntidao = {
   comprovantes: ComprovanteParaProntidao[];
   atividades: number;
   alteracoesAguardando: number;
+  /** Verificações do motor de checagens: sem elas, o item não aparece. Bloqueio aberto impede o envio. */
+  verificacoes?: { verificada: boolean; bloqueios: number };
 };
 
 /** Aba onde a pendência se resolve. */
-export type DestinoPendencia = "visao_geral" | "orcamento" | "comprovantes" | "atividades";
+export type DestinoPendencia = "visao_geral" | "orcamento" | "comprovantes" | "atividades" | "pendencias";
 
 export type Checagem = {
   codigo: string;
@@ -130,6 +132,18 @@ export function avaliarProntidao(dados: DadosProntidao): Prontidao {
   // Alterações em aberto.
   add("alteracoes", "Alterações do orçamento", 1, dados.alteracoesAguardando ? 0 : 1,
     dados.alteracoesAguardando ? `${plural(dados.alteracoesAguardando, "alteração aguarda", "alterações aguardam")} resposta do órgão.` : "Nenhuma alteração aguardando o órgão.", "orcamento");
+
+  // Verificações: bloqueio aberto impede o envio (fn_prestacao_mudar_status).
+  if (dados.verificacoes) {
+    const { verificada, bloqueios } = dados.verificacoes;
+    add("verificacoes", "Verificações sem bloqueio", 2, verificada && !bloqueios ? 1 : 0,
+      !verificada
+        ? "Rode a verificação da prestação."
+        : bloqueios
+          ? `${plural(bloqueios, "bloqueio aberto impede", "bloqueios abertos impedem")} o envio: resolva ou peça a dispensa ao revisor.`
+          : "Nenhum bloqueio aberto.",
+      "pendencias");
+  }
 
   const pesoTotal = checagens.reduce((soma, c) => soma + c.peso, 0);
   const feito = checagens.reduce((soma, c) => soma + c.peso * c.progresso, 0);

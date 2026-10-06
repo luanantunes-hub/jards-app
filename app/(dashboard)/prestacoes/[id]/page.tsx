@@ -2,7 +2,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronDown, ChevronRight, AlertCircle } from "lucide-react";
+import { ChevronDown, ChevronRight, AlertCircle, ArrowRight } from "lucide-react";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import type { PrestacaoContas, StatusPrestacao } from "@/lib/supabase/types";
@@ -16,7 +17,7 @@ import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import { avaliarProntidao, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
 import { ProntidaoPrestacao } from "@/components/prestacao/ProntidaoPrestacao";
 import { VerificacoesPrestacao } from "@/components/prestacao/VerificacoesPrestacao";
-import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
+import { EVENTO_VERIFICADA, pedirVerificacao, verificarAgora } from "@/lib/prestacao/verificar-cliente";
 import { MarcosDaPrestacao, ProximosPrazos } from "@/components/prestacao/PrazosEMarcos";
 
 type PrestacaoDetalhe = PrestacaoContas & {
@@ -67,6 +68,8 @@ export default function PrestacaoDetalhe() {
   const [atividadesCount, setAtividadesCount] = useState(0);
   const [comprovantes, setComprovantes] = useState<ComprovanteParaExecucao[]>([]);
   const [alteracoesAguardando, setAlteracoesAguardando] = useState<{ numero: number; solicitada_em: string | null }[]>([]);
+  // Bloqueios abertos nas verificações (null até a primeira leitura).
+  const [bloqueiosAbertos, setBloqueiosAbertos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
   const [avancarOpen, setAvancarOpen] = useState(false);
@@ -100,6 +103,7 @@ export default function PrestacaoDetalhe() {
       { count: atCount },
       { data: compData },
       { data: alteracoesData },
+      { count: bloqueiosCount },
     ] = await Promise.all([
       (supabase as any)
         .from("prestacoes_contas")
@@ -125,6 +129,13 @@ export default function PrestacaoDetalhe() {
         .select("numero, solicitada_em")
         .eq("prestacao_id", id)
         .eq("status", "solicitada"),
+      // Bloqueios abertos nas verificações: impedem o envio.
+      (supabase as any)
+        .from("prestacao_verificacoes")
+        .select("id", { count: "exact", head: true })
+        .eq("prestacao_id", id)
+        .eq("status", "aberta")
+        .eq("severidade", "bloqueio"),
     ]);
 
     setPrestacao(data as PrestacaoDetalhe);
@@ -133,18 +144,30 @@ export default function PrestacaoDetalhe() {
     setAtividadesCount(atCount ?? 0);
     setComprovantes((compData as ComprovanteParaExecucao[]) ?? []);
     setAlteracoesAguardando(alteracoesData ?? []);
+    setBloqueiosAbertos(bloqueiosCount ?? 0);
 
     setLoading(false);
   }, [id, supabase]);
 
   useEffect(() => { fetch(); }, [fetch]);
 
+  // Cada verificação pode abrir ou fechar bloqueios: a trava do envio acompanha.
+  useEffect(() => {
+    const aoVerificar = (e: Event) => {
+      if ((e as CustomEvent<{ prestacaoId: string }>).detail?.prestacaoId === id) fetch();
+    };
+    window.addEventListener(EVENTO_VERIFICADA, aoVerificar);
+    return () => window.removeEventListener(EVENTO_VERIFICADA, aoVerificar);
+  }, [fetch, id]);
+
   async function avancar(novoStatus: StatusPrestacao) {
     if (!prestacao) return;
     setSaving(true);
     setErro("");
+    // Antes de enviar, uma verificação nova: o banco recusa o envio com bloqueio aberto.
+    if (novoStatus === "enviado") await verificarAgora(id).catch(() => null);
     // Status e histórico mudam juntos, numa função do banco que confere a
-    // transição e o papel (P0.10).
+    // transição, o papel (P0.10) e, no envio, os bloqueios.
     const { error } = await (supabase as any).rpc("fn_prestacao_mudar_status", {
       p_prestacao_id: id,
       p_novo_status: novoStatus,
@@ -186,7 +209,10 @@ export default function PrestacaoDetalhe() {
   }
 
   const meta = STATUS_META[prestacao.status];
-  const proximos = proximosStatus(prestacao.status, permissoes);
+  // O envio fica travado enquanto houver bloqueio aberto ou nenhuma verificação.
+  const envioTravado = bloqueiosAbertos === null ? false : bloqueiosAbertos > 0 || !prestacao.verificada_em;
+  const proximos = proximosStatus(prestacao.status, permissoes).filter(s => !(s === "enviado" && envioTravado));
+  const travados = proximosStatus(prestacao.status, permissoes).filter(s => s === "enviado" && envioTravado);
   const bloqueados = proximosBloqueados(prestacao.status, permissoes);
 
   // Totais de comprovação financeira: soma dos comprovantes aceitos
@@ -209,6 +235,7 @@ export default function PrestacaoDetalhe() {
     comprovantes,
     atividades: atividadesCount,
     alteracoesAguardando: alteracoesAguardando.length,
+    verificacoes: bloqueiosAbertos === null ? undefined : { verificada: Boolean(prestacao.verificada_em), bloqueios: bloqueiosAbertos },
   });
   const prazos = prazosDaPrestacao(prestacao, regime, alteracoesAguardando, hoje);
 
@@ -234,7 +261,7 @@ export default function PrestacaoDetalhe() {
           {prestacao.projeto && <span className="ml-2">· Projeto: {prestacao.projeto.nome}</span>}
         </div>
 
-        {proximos.length > 0 && (
+        {proximos.length + travados.length > 0 && (
           <div className="relative flex-shrink-0" ref={avancarBoxRef}>
             <button
               onClick={() => setAvancarOpen(!avancarOpen)}
@@ -274,6 +301,29 @@ export default function PrestacaoDetalhe() {
                     {STATUS_META[s].label}
                   </button>
                 ))}
+                {travados.map(s => (
+                  <div
+                    key={s}
+                    className="flex items-start gap-2 px-4 py-3 text-[0.75rem] text-black/45 border-b last:border-0"
+                    style={{ borderColor: "rgba(13,13,13,.05)" }}
+                  >
+                    <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0 bg-black/15" />
+                    <span>
+                      {STATUS_META[s].label}
+                      <span className="block text-[0.625rem] text-[#B23B3B]">
+                        {prestacao.verificada_em
+                          ? `${bloqueiosAbertos} ${bloqueiosAbertos === 1 ? "bloqueio aberto impede" : "bloqueios abertos impedem"} o envio.`
+                          : "Rode a verificação antes de enviar."}
+                      </span>
+                      <Link
+                        href={`/prestacoes/${id}/pendencias`}
+                        className="mt-1 inline-flex items-center gap-1 rounded text-[0.625rem] text-[#684DB0] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+                      >
+                        Ver pendências <ArrowRight size={10} aria-hidden />
+                      </Link>
+                    </span>
+                  </div>
+                ))}
                 {bloqueados.map(s => (
                   <div
                     key={s}
@@ -292,7 +342,7 @@ export default function PrestacaoDetalhe() {
             )}
           </div>
         )}
-        {proximos.length === 0 && bloqueados.length > 0 && (
+        {proximos.length + travados.length === 0 && bloqueados.length > 0 && (
           <p className="max-w-[20rem] text-right text-[0.6875rem] text-black/40">
             Próximo passo: {bloqueados.map(s => STATUS_META[s].label.toLowerCase()).join(" ou ")}. Cabe ao administrador ou ao responsável pela prestação.
           </p>

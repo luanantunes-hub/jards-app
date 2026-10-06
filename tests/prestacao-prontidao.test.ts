@@ -95,3 +95,13 @@ test("prazo vencido do proponente vem antes de qualquer outro", () => {
   assert.equal(proximoPrazo([]), null);
   assert.deepEqual([0, 1, 12, -1, -45].map(quandoVence), ["hoje", "amanhã", "em 12 dias", "venceu ontem", "venceu há 45 dias"]);
 });
+
+test("verificações: sem verificação ou com bloqueio aberto, o envio fica pendente e leva às pendências", () => {
+  const semVerificar = avaliarProntidao({ ...PRONTA, verificacoes: { verificada: false, bloqueios: 0 } });
+  assert.deepEqual(semVerificar.pendencias.map(p => [p.codigo, p.destino, p.detalhe]), [["verificacoes", "pendencias", "Rode a verificação da prestação."]]);
+  const comBloqueio = avaliarProntidao({ ...PRONTA, verificacoes: { verificada: true, bloqueios: 2 } });
+  assert.equal(comBloqueio.pendencias[0].detalhe, "2 bloqueios abertos impedem o envio: resolva ou peça a dispensa ao revisor.");
+  assert.equal(comBloqueio.percentual, 86, "peso 2 de 15 pendente");
+  const limpa = avaliarProntidao({ ...PRONTA, verificacoes: { verificada: true, bloqueios: 0 } });
+  assert.deepEqual([limpa.percentual, limpa.checagens.at(-1)?.detalhe], [100, "Nenhum bloqueio aberto."]);
+});
