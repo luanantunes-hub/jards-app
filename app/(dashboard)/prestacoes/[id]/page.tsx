@@ -16,6 +16,7 @@ import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import { avaliarProntidao, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
 import { ProntidaoPrestacao } from "@/components/prestacao/ProntidaoPrestacao";
 import { VerificacoesPrestacao } from "@/components/prestacao/VerificacoesPrestacao";
+import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
 import { MarcosDaPrestacao, ProximosPrazos } from "@/components/prestacao/PrazosEMarcos";
 
 type PrestacaoDetalhe = PrestacaoContas & {
@@ -168,6 +169,8 @@ export default function PrestacaoDetalhe() {
       return false;
     }
     await fetch();
+    // Datas e regime mudam as checagens de período, liberação e limites.
+    pedirVerificacao(id);
     return true;
   }
 
@@ -325,7 +328,7 @@ export default function PrestacaoDetalhe() {
 
           <ProntidaoPrestacao prontidao={prontidao} prestacaoId={id} />
 
-          <VerificacoesPrestacao prestacaoId={id} permissoes={permissoes} />
+          <VerificacoesPrestacao prestacaoId={id} permissoes={permissoes} resumo />
 
           {/* Painel de comprovação financeira */}
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>

@@ -31,7 +31,12 @@ const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> =
 };
 
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {
-  const { caminho, rotulo } = DESTINOS[destinoDaChecagem(v.check_codigo)];
+  const qual = destinoDaChecagem(v.check_codigo);
+  // O achado de uma despesa abre a própria despesa na aba de comprovantes.
+  if (qual === "comprovantes" && v.entidade_tipo === "despesa" && v.entidade_id) {
+    return { href: `/prestacoes/${prestacaoId}/comprovantes?despesa=${v.entidade_id}`, rotulo: "Abrir despesa" };
+  }
+  const { caminho, rotulo } = DESTINOS[qual];
   return { href: caminho.startsWith("#") ? caminho : `/prestacoes/${prestacaoId}${caminho}`, rotulo };
 }
 
@@ -186,8 +191,9 @@ function Grupo({ titulo, itens, aberto: abertoInicial, children }: { titulo: str
  * Verificações do motor de checagens (P2.7): o que bloqueia o envio, o que
  * pede revisão ou justificativa e os avisos, cada um com a fonte e o caminho
  * para resolver. Justificar pede o papel de editar; dispensar, o de avaliar.
+ * Em `resumo` (visão geral), só as contagens e o caminho para a aba Pendências.
  */
-export function VerificacoesPrestacao({ prestacaoId, permissoes }: { prestacaoId: string; permissoes: PermissoesPrestacao }) {
+export function VerificacoesPrestacao({ prestacaoId, permissoes, resumo = false }: { prestacaoId: string; permissoes: PermissoesPrestacao; resumo?: boolean }) {
   const supabase = useMemo(() => createClient(), []);
   const [dados, setDados] = useState<{ prestacaoId: string; lista: PrestacaoVerificacao[]; verificadaEm: string | null } | null>(null);
   const [rodando, setRodando] = useState(false);
@@ -310,14 +316,24 @@ export function VerificacoesPrestacao({ prestacaoId, permissoes }: { prestacaoId
       {carregado && !abertas.length && !decididas.length && (
         <p className="flex items-center gap-2 px-5 py-4 text-[0.75rem] text-black/55">
           <CheckCircle2 size={14} className="shrink-0 text-[#2E8932]" aria-hidden />
-          {dados?.verificadaEm ? "Nenhuma pendência nas despesas, nos pagamentos e na conciliação." : "Ainda sem verificação."}
+          {dados?.verificadaEm ? "Nenhuma pendência nas checagens." : "Ainda sem verificação."}
         </p>
       )}
 
+      {resumo ? (
+        carregado && (abertas.length > 0 || decididas.length > 0) && (
+          <div className="px-5 py-3">
+            <Link href={`/prestacoes/${prestacaoId}/pendencias`} className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-[0.6875rem] text-[#684DB0] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+              Ver pendências por item <ArrowRight size={11} aria-hidden />
+            </Link>
+          </div>
+        )
+      ) : <>
       <Grupo titulo="Bloqueiam o envio" itens={bloqueios.length} aberto>{itens(bloqueios)}</Grupo>
       <Grupo titulo="Revisar ou justificar" itens={revisar.length} aberto>{itens(revisar)}</Grupo>
       <Grupo titulo="Avisos" itens={avisos.length} aberto={false}>{itens(avisos)}</Grupo>
       <Grupo titulo="Justificadas e dispensadas" itens={decididas.length} aberto={false}>{itens(decididas)}</Grupo>
+      </>}
     </section>
   );
 }

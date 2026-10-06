@@ -85,6 +85,7 @@ export default function ComprovantesPage() {
   // Despesa v2 (P2.4): fornecedores da organização e o comprovante aberto como despesa.
   const { fornecedores, documentosDe } = useFornecedoresDaOrganizacao(organizationId);
   const [despesaAberta, setDespesaAberta] = useState<PrestacaoComprovante | null>(null);
+  const abriuDoLink = useRef(false);
   // Pagamentos (P2.5) e os meios de pagamento do regime da prestação.
   const [pagamentos, setPagamentos] = useState<PrestacaoPagamento[]>([]);
   const [regimeId, setRegimeId] = useState<string | null>(null);
@@ -122,8 +123,16 @@ export default function ComprovantesPage() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela ainda não está no tipo Database
       (supabase as any).from("prestacao_pagamentos").select("*").eq("prestacao_id", id),
     ]);
-    setComprovantes((comp as PrestacaoComprovante[]) ?? []);
+    const lista = (comp as PrestacaoComprovante[]) ?? [];
+    setComprovantes(lista);
     setPagamentos((pags as PrestacaoPagamento[]) ?? []);
+    // Link da fila de pendências (P2.9): ?despesa=<id> abre a despesa, só na primeira leitura.
+    if (!abriuDoLink.current) {
+      abriuDoLink.current = true;
+      const alvo = new URLSearchParams(window.location.search).get("despesa");
+      const doLink = alvo ? lista.find(c => c.id === alvo) : null;
+      if (doLink) setDespesaAberta(doLink);
+    }
     if (prest) {
       setPeriodo({ inicio: prest.data_inicio_execucao, fim: prest.data_fim_execucao });
       setRegimeId(prest.regime_id ?? null);
