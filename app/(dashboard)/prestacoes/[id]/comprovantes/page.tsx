@@ -16,6 +16,9 @@ import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useFornecedoresDaOrganizacao } from "@/hooks/useFornecedoresDaOrganizacao";
 import { DespesaModal } from "@/components/prestacao/despesas/DespesaModal";
 import { FornecedorCombobox } from "@/components/prestacao/despesas/FornecedorCombobox";
+import { LidoDoXml } from "@/components/prestacao/despesas/LidoDoXml";
+import { despesaDoDocumento, ehXml, lerDocumentoFiscal, type DespesaSugerida, type DocumentoFiscalLido, type ParteDoDocumento } from "@/lib/prestacao/documento-fiscal";
+import { decodificarArquivo } from "@/lib/prestacao/extrato";
 import { alertasDaDespesa, ehDespesa, TIPOS_COMPLEMENTARES, TIPOS_FISCAIS } from "@/lib/prestacao/despesas";
 import { nomeDoFornecedor } from "@/lib/prestacao/fornecedores";
 import { alertasDosPagamentos, situacaoDosPagamentos } from "@/lib/prestacao/pagamentos";
@@ -115,11 +118,14 @@ export default function ComprovantesPage() {
   const [descricaoServico, setDescricaoServico] = useState("");
   const [observacao, setObservacao] = useState("");
   const [pendingFile, setPendingFile] = useState<File | null>(null);
+  // Leitura do XML da nota, sem IA (P2.10), e o que ela confere: o proponente e o número do projeto.
+  const [lidoDoXml, setLidoDoXml] = useState<{ documento: DocumentoFiscalLido; sugestao: DespesaSugerida } | null>(null);
+  const [dadosFiscais, setDadosFiscais] = useState<{ identificador: string | null; proponente: ParteDoDocumento | null }>({ identificador: null, proponente: null });
 
   const fetch = useCallback(async () => {
     const [{ data: comp }, { data: prest }, { data: pags }] = await Promise.all([
       (supabase as any).from("prestacao_comprovantes").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
-      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id").eq("id", id).maybeSingle(),
+      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id, identificador_oficial, proponente:proponentes(cnpj, nome)").eq("id", id).maybeSingle(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela ainda não está no tipo Database
       (supabase as any).from("prestacao_pagamentos").select("*").eq("prestacao_id", id),
     ]);
@@ -136,6 +142,10 @@ export default function ComprovantesPage() {
     if (prest) {
       setPeriodo({ inicio: prest.data_inicio_execucao, fim: prest.data_fim_execucao });
       setRegimeId(prest.regime_id ?? null);
+      setDadosFiscais({
+        identificador: prest.identificador_oficial ?? null,
+        proponente: prest.proponente ? { documento: prest.proponente.cnpj ?? null, nome: prest.proponente.nome ?? null } : null,
+      });
     }
     setLoading(false);
   }, [id, supabase]);
@@ -163,6 +173,7 @@ export default function ComprovantesPage() {
     setUploadError("");
     setRiscoGlosa(null);
     setMotivosGlosa([]);
+    setLidoDoXml(null);
     setPendingFile(file);
 
     // 1. Sobe o arquivo
@@ -188,7 +199,37 @@ export default function ComprovantesPage() {
 
     setStoragePath(path);
 
-    // 2. Analisa com IA
+    // 2. XML de NF-e ou NFS-e: lido aqui, sem IA. Formato desconhecido segue para a IA.
+    if (ehXml(file)) {
+      setUploadProgress("Lendo o XML…");
+      const leitura = lerDocumentoFiscal(decodificarArquivo(new Uint8Array(await file.arrayBuffer())));
+      if (leitura.ok) {
+        const sugestao = despesaDoDocumento(leitura.documento, {
+          fornecedores,
+          proponente: dadosFiscais.proponente,
+          identificador: dadosFiscais.identificador,
+          chavesUsadas: comprovantes.filter(c => c.chave_acesso).map(c => ({ chave: c.chave_acesso!, nome: c.nome_arquivo })),
+        });
+        const campos = sugestao.campos;
+        setTipo(campos.tipo);
+        if (campos.valor_extraido !== null) setValorExtraido(String(campos.valor_extraido));
+        if (campos.data_doc) setDataDoc(campos.data_doc);
+        if (campos.descricao_servico) setDescricaoServico(campos.descricao_servico);
+        if (sugestao.fornecedorId) setFornecedorId(sugestao.fornecedorId);
+        setLidoDoXml({ documento: leitura.documento, sugestao });
+        setExtraindo(false);
+        setUploadProgress("");
+        return;
+      }
+      if (leitura.codigo !== "desconhecido") {
+        setUploadError(`${leitura.motivo} Preencha os campos à mão ou envie outro arquivo.`);
+        setExtraindo(false);
+        setUploadProgress("");
+        return;
+      }
+    }
+
+    // 3. Analisa com IA
     setUploadProgress("Analisando com IA…");
     try {
       const { data: fnData, error: fnError } = await supabase.functions.invoke("extrair-comprovante", {
@@ -270,9 +311,20 @@ export default function ComprovantesPage() {
       enviado_por: user?.id ?? null,
       risco_glosa: riscoGlosa || null,
       motivos_glosa: motivosGlosa.length > 0 ? motivosGlosa : [],
+      // Documento fiscal e retenções que vieram do XML.
+      ...(lidoDoXml ? {
+        numero_documento: lidoDoXml.sugestao.campos.numero_documento,
+        serie: lidoDoXml.sugestao.campos.serie,
+        chave_acesso: lidoDoXml.sugestao.campos.chave_acesso,
+        iss: lidoDoXml.sugestao.campos.iss,
+        inss: lidoDoXml.sugestao.campos.inss,
+        irrf: lidoDoXml.sugestao.campos.irrf,
+        outras_retencoes: lidoDoXml.sugestao.campos.outras_retencoes,
+        identificacao_projeto: lidoDoXml.sugestao.campos.identificacao_projeto,
+      } : {}),
     });
     if (insertErro) {
-      setUploadError(`Não foi possível salvar o comprovante: ${insertErro.message}`);
+      setUploadError(mensagemErroPrestacao(insertErro, "Não foi possível salvar o comprovante"));
       setUploadProgress("");
       setUploading(false);
       return;
@@ -290,6 +342,7 @@ export default function ComprovantesPage() {
     setUploadProgress("");
     setRiscoGlosa(null);
     setMotivosGlosa([]);
+    setLidoDoXml(null);
     setUploading(false);
     fetch();
     pedirVerificacao(id);
@@ -312,6 +365,7 @@ export default function ComprovantesPage() {
     setUploadError("");
     setRiscoGlosa(null);
     setMotivosGlosa([]);
+    setLidoDoXml(null);
     setExtraindo(false);
   }
 
@@ -503,6 +557,8 @@ export default function ComprovantesPage() {
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
+
+              {lidoDoXml && <LidoDoXml documento={lidoDoXml.documento} avisos={lidoDoXml.sugestao.avisos} />}
 
               {/* Risco de glosa */}
               {riscoGlosa && (

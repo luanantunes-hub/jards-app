@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- NF-e de exemplo para os testes; CNPJs de teste, sem empresa real. -->
+<nfeProc xmlns="http://www.portalfiscal.inf.br/nfe" versao="4.00">
+  <NFe xmlns="http://www.portalfiscal.inf.br/nfe">
+    <infNFe Id="NFe35260311222333000181550010000012341123456785" versao="4.00">
+      <ide>
+        <cUF>35</cUF>
+        <cNF>12345678</cNF>
+        <natOp>Locação de equipamentos</natOp>
+        <mod>55</mod>
+        <serie>1</serie>
+        <nNF>1234</nNF>
+        <dhEmi>2026-03-15T10:30:00-03:00</dhEmi>
+        <tpNF>1</tpNF>
+      </ide>
+      <emit>
+        <CNPJ>11222333000181</CNPJ>
+        <xNome>Som &amp; Luz Locações Ltda</xNome>
+        <xFant>Som e Luz</xFant>
+      </emit>
+      <dest>
+        <CNPJ>11444777000161</CNPJ>
+        <xNome>Associação Cultural Exemplo</xNome>
+      </dest>
+      <det nItem="1">
+        <prod><cProd>01</cProd><xProd>Locação de mesa de som</xProd><vProd>1500.00</vProd></prod>
+      </det>
+      <det nItem="2">
+        <prod><cProd>02</cProd><xProd>Locação de caixas acústicas</xProd><vProd>1000.00</vProd></prod>
+      </det>
+      <total>
+        <ICMSTot><vProd>2500.00</vProd><vNF>2500.00</vNF></ICMSTot>
+        <retTrib>
+          <vRetPIS>16.25</vRetPIS>
+          <vRetCOFINS>75.00</vRetCOFINS>
+          <vRetCSLL>25.00</vRetCSLL>
+          <vIRRF>37.50</vIRRF>
+        </retTrib>
+      </total>
+      <infAdic>
+        <infCpl><![CDATA[Festival de Inverno - PRONAC 23-5678. Pagamento por PIX.]]></infCpl>
+      </infAdic>
+    </infNFe>
+    <ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:SignedInfo/><ds:SignatureValue>abc=</ds:SignatureValue></ds:Signature>
+  </NFe>
+  <protNFe versao="4.00">
+    <infProt>
+      <tpAmb>1</tpAmb>
+      <chNFe>35260311222333000181550010000012341123456785</chNFe>
+      <dhRecbto>2026-03-15T10:31:00-03:00</dhRecbto>
+      <cStat>100</cStat>
+      <xMotivo>Autorizado o uso da NF-e</xMotivo>
+    </infProt>
+  </protNFe>
+</nfeProc>

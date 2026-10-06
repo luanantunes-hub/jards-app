@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<ConsultarNfseResposta>
+  <ListaNfse>
+    <CompNfse>
+      <Nfse>
+        <InfNfse>
+          <Numero>881</Numero>
+          <DataEmissao>2026-01-20T08:00:00</DataEmissao>
+          <Servico>
+            <Valores>
+              <ValorServicos>1500,00</ValorServicos>
+              <IssRetido>2</IssRetido>
+              <ValorIss>45,00</ValorIss>
+            </Valores>
+            <Discriminacao>Montagem de palco</Discriminacao>
+          </Servico>
+          <PrestadorServico>
+            <IdentificacaoPrestador><Cnpj>11222333000181</Cnpj></IdentificacaoPrestador>
+            <RazaoSocial>Palcos Exemplo ME</RazaoSocial>
+          </PrestadorServico>
+          <TomadorServico>
+            <IdentificacaoTomador><CpfCnpj><Cnpj>11444777000161</Cnpj></CpfCnpj></IdentificacaoTomador>
+            <RazaoSocial>Associação Cultural Exemplo</RazaoSocial>
+          </TomadorServico>
+        </InfNfse>
+      </Nfse>
+      <NfseCancelamento>
+        <Confirmacao><DataHora>2026-01-21T09:00:00</DataHora></Confirmacao>
+      </NfseCancelamento>
+    </CompNfse>
+  </ListaNfse>
+</ConsultarNfseResposta>

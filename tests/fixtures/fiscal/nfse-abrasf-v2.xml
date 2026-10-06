@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CompNfse xmlns="http://www.abrasf.org.br/nfse.xsd">
+  <Nfse versao="2.02">
+    <InfNfse Id="nfse123">
+      <Numero>2026000123</Numero>
+      <CodigoVerificacao>AB12-CD34</CodigoVerificacao>
+      <DataEmissao>2026-04-02T14:00:00</DataEmissao>
+      <ValoresNfse>
+        <BaseCalculo>3000.00</BaseCalculo>
+        <Aliquota>2.00</Aliquota>
+        <ValorIss>60.00</ValorIss>
+        <ValorLiquidoNfse>2565.00</ValorLiquidoNfse>
+      </ValoresNfse>
+      <PrestadorServico>
+        <IdentificacaoPrestador><CpfCnpj><Cnpj>11222333000181</Cnpj></CpfCnpj></IdentificacaoPrestador>
+        <RazaoSocial>Produtora Exemplo Ltda</RazaoSocial>
+      </PrestadorServico>
+      <DeclaracaoPrestacaoServico>
+        <InfDeclaracaoPrestacaoServico>
+          <Competencia>2026-04-01</Competencia>
+          <Servico>
+            <Valores>
+              <ValorServicos>3000.00</ValorServicos>
+              <ValorPis>0.00</ValorPis>
+              <ValorCofins>0.00</ValorCofins>
+              <ValorInss>330.00</ValorInss>
+              <ValorIr>45.00</ValorIr>
+              <ValorCsll>0.00</ValorCsll>
+              <ValorIss>60.00</ValorIss>
+            </Valores>
+            <IssRetido>1</IssRetido>
+            <Discriminacao>Cachê de produção musical</Discriminacao>
+          </Servico>
+          <Prestador><CpfCnpj><Cnpj>11222333000181</Cnpj></CpfCnpj></Prestador>
+          <TomadorServico>
+            <IdentificacaoTomador><CpfCnpj><Cnpj>34028316000103</Cnpj></CpfCnpj></IdentificacaoTomador>
+            <RazaoSocial>Outra Empresa Tomadora SA</RazaoSocial>
+          </TomadorServico>
+        </InfDeclaracaoPrestacaoServico>
+      </DeclaracaoPrestacaoServico>
+    </InfNfse>
+  </Nfse>
+</CompNfse>
