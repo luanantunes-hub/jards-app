@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(149);
+select plan(153);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -119,6 +119,8 @@ begin
   insert into public.prestacao_envio_arquivos (id, prestacao_id, etapa, codigo, storage_path, nome_arquivo) values
     ('f0000000-0000-4000-8000-0000000023a0', pa, 'final', 'recolhimento_fnc',
      org_a || '/prestacoes/' || pa || '/envio/f0000000-0000-4000-8000-000000000da0.pdf', 'gru.pdf');
+  insert into public.prestacao_devolucoes (id, prestacao_id, motivo, valor_principal) values
+    ('f0000000-0000-4000-8000-0000000024a0', pa, 'saldo', 123.45);
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -143,7 +145,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
     'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
     'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
-    'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos'
+    'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes'
   ];
 $$;
 
@@ -223,7 +225,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_evidencias where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_bens where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_envio_checklist where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_envio_arquivos where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_envio_arquivos where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_devolucoes where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -252,7 +255,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_evidencias (prestacao_id, tipo, url) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/rls')$c$),
     rls_teste.efeito($c$insert into public.prestacao_bens (prestacao_id, tipo, descricao) values ('f0000000-0000-4000-8000-0000000001a0', 'equipamento', 'RLS novo bem')$c$),
     rls_teste.efeito($c$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao, justificativa) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'documento', 'bens', 'nao_se_aplica', 'Nenhum bem comprado.')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'relatorio_objeto', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000dd0.pdf', 'relatorio.pdf')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'relatorio_objeto', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000dd0.pdf', 'relatorio.pdf')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_devolucoes (prestacao_id, motivo, valor_principal) values ('f0000000-0000-4000-8000-0000000001a0', 'rendimento', 10)$c$)
   ]);
 $$;
 
@@ -281,7 +285,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_evidencias set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000019a0'$c$),
     rls_teste.efeito($c$update public.prestacao_bens set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000021a0'$c$),
     rls_teste.efeito($c$update public.prestacao_envio_checklist set justificativa = justificativa where id = 'f0000000-0000-4000-8000-0000000022a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_envio_arquivos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000023a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_envio_arquivos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000023a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_devolucoes set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000024a0'$c$)
   ]);
 $$;
 
@@ -310,7 +315,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_evidencias where id = 'f0000000-0000-4000-8000-0000000019a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_bens where id = 'f0000000-0000-4000-8000-0000000021a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_envio_checklist where id = 'f0000000-0000-4000-8000-0000000022a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_envio_arquivos where id = 'f0000000-0000-4000-8000-0000000023a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_envio_arquivos where id = 'f0000000-0000-4000-8000-0000000023a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_devolucoes where id = 'f0000000-0000-4000-8000-0000000024a0'$c$)
   ]);
 $$;
 
@@ -716,6 +722,16 @@ select throws_ok($t$insert into public.prestacao_envio_arquivos (prestacao_id, e
   '23514', 'caminho_invalido', 'o arquivo do envio fica na pasta envio da prestação');
 select throws_ok($t$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'etapas_lancadas', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000de0.pdf', 'print.pdf')$t$,
   '23514', 'item_fora_do_regime', 'arquivo só em documento do regime, não em condição');
+
+-- ─── Devoluções (P4.4): atualização com data-base, pagamento completo, pasta devolucoes ─
+select lives_ok($t$insert into public.prestacao_devolucoes (prestacao_id, motivo, valor_principal, indice, data_base, atualizado_ate, fator, valor_atualizado, gru_unidade_gestora, gru_codigo, gru_referencia, competencia, vencimento, situacao, pago_em, valor_pago, storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'glosa', 1000, 'poupanca', '2026-01-10', '2026-10-07', 1.0612345678, 1061.23, '340034', '019473', '269999', '10/2026', '2026-10-27', 'paga', '2026-10-07', 1061.23, 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/devolucoes/f0000000-0000-4000-8000-000000000fa0.pdf')$t$,
+  'quem edita: registra a devolução atualizada pela poupança, com a guia e o pagamento');
+select throws_ok($t$insert into public.prestacao_devolucoes (prestacao_id, motivo, valor_principal, indice) values ('f0000000-0000-4000-8000-0000000001a0', 'glosa', 100, 'poupanca')$t$,
+  '23514', null, 'atualização pede a data-base');
+select throws_ok($t$insert into public.prestacao_devolucoes (prestacao_id, motivo, valor_principal, situacao) values ('f0000000-0000-4000-8000-0000000001a0', 'saldo', 100, 'paga')$t$,
+  '23514', null, 'devolução paga tem a data e o valor pagos');
+select throws_ok($t$insert into public.prestacao_devolucoes (prestacao_id, motivo, valor_principal, storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'saldo', 100, 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000fb0.pdf')$t$,
+  '23514', 'caminho_invalido', 'o comprovante fica na pasta devolucoes da prestação');
 reset role;
 
 -- ─── Verificações (P2.7): o servidor grava; as pessoas decidem pela função ──

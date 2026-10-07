@@ -8,28 +8,31 @@
 //
 // O que os dados respondem vem deles: metas comprovadas, evidências de
 // acessibilidade, peças com amostra, bens, despesas, extratos, saldo pelo último
-// extrato, alterações em aberto e as verificações abertas por assunto. O resto
+// extrato, alterações em aberto, as verificações abertas por assunto e as guias
+// do saldo e dos rendimentos registradas em Devoluções (P4.4). O resto
 // a pessoa resolve: arquivo anexado, "pronto" (ou, na condição, "conferido") e,
 // para o que não é obrigatório, "não se aplica" com o motivo. Sem React e sem
 // Supabase.
 
 import { CATALOGO_CHECAGENS, dataBr, reais, centavos, type DestinoDaChecagem, type EstadoDaPrestacao } from "./checagens/catalogo";
 import { despesasSemBem } from "./bens";
+import { recolhimentoDoEncerramento } from "./devolucoes";
 import { coberturaDaMeta } from "./objeto";
 import { definida, type Fonte, type RegimeNormativo } from "./regimes";
 import type { Regra } from "./regimes/tipos";
-import type { PrestacaoContaBancaria, PrestacaoEnvioArquivo, PrestacaoEnvioMarcacao, PrestacaoExtratoImportacao } from "@/lib/supabase/types";
+import type { PrestacaoContaBancaria, PrestacaoDevolucao, PrestacaoEnvioArquivo, PrestacaoEnvioMarcacao, PrestacaoExtratoImportacao } from "@/lib/supabase/types";
 
 export type EtapaEnvio = PrestacaoEnvioMarcacao["etapa"];
 export type TipoDoItem = PrestacaoEnvioMarcacao["tipo"];
 export type SituacaoDoItem = "pronto" | "pendente" | "nao_se_aplica";
 /** A aba onde o item se resolve. */
-export type DestinoDoEnvio = DestinoDaChecagem | "pendencias";
+export type DestinoDoEnvio = DestinoDaChecagem | "pendencias" | "devolucoes";
 
 export const ROTULO_DA_ETAPA: Record<EtapaEnvio, string> = { final: "Prestação final", parcial: "Prestação parcial" };
 
 export type MarcacaoDoChecklist = Pick<PrestacaoEnvioMarcacao, "etapa" | "tipo" | "codigo" | "situacao" | "justificativa" | "marcado_por" | "updated_at">;
 export type ArquivoDoChecklist = Pick<PrestacaoEnvioArquivo, "id" | "etapa" | "codigo" | "storage_path" | "nome_arquivo" | "mime_type" | "tamanho_bytes" | "created_at">;
+export type DevolucaoDoChecklist = Pick<PrestacaoDevolucao, "motivo" | "situacao" | "valor_principal" | "valor_atualizado" | "valor_pago" | "pago_em" | "storage_path">;
 export type ContaDoChecklist = Pick<PrestacaoContaBancaria, "id" | "tipo" | "apelido" | "banco" | "conta" | "data_encerramento"> & {
   extratos: readonly Pick<PrestacaoExtratoImportacao, "periodo_fim" | "saldo_final" | "created_at">[];
 };
@@ -43,6 +46,8 @@ export type DadosDoChecklist = {
   contas: readonly ContaDoChecklist[];
   marcacoes: readonly MarcacaoDoChecklist[];
   arquivos: readonly ArquivoDoChecklist[];
+  /** Devoluções registradas; o recolhimento do encerramento sai delas. */
+  devolucoes?: readonly DevolucaoDoChecklist[];
   /** "AAAA-MM-DD"; sem ele, a data do estado. */
   hoje?: string;
 };
@@ -189,12 +194,12 @@ const despesas: Avaliador = ctx => {
 };
 
 /** O último extrato importado de cada conta: o de período mais recente. */
-function ultimoExtrato(conta: ContaDoChecklist) {
+export function ultimoExtrato(conta: ContaDoChecklist) {
   return [...conta.extratos].sort((a, b) =>
     (b.periodo_fim ?? "").localeCompare(a.periodo_fim ?? "") || b.created_at.localeCompare(a.created_at))[0] ?? null;
 }
 
-const nomeDaConta = (c: ContaDoChecklist) => c.apelido?.trim() || [c.banco, c.conta].filter(Boolean).join(" ") || `conta ${c.tipo}`;
+export const nomeDaConta = (c: ContaDoChecklist) => c.apelido?.trim() || [c.banco, c.conta].filter(Boolean).join(" ") || `conta ${c.tipo}`;
 
 const extratos: Avaliador = ctx => {
   if (ctx.contas.length === 0) return pendente("Cadastre as contas do projeto e importe os extratos.", "extrato");
@@ -250,6 +255,18 @@ const saldo: Avaliador = ctx => {
   return pronto("Saldo zerado no último extrato de cada conta.");
 };
 
+/** O comprovante do recolhimento do saldo e dos rendimentos: pelas guias registradas em Devoluções. */
+const recolhimento: Avaliador = ctx => {
+  const r = recolhimentoDoEncerramento(ctx.devolucoes ?? []);
+  if (r.guias === 0) {
+    return { dica: "Registre a guia do saldo e dos rendimentos em Devoluções, ou anexe aqui o comprovante do recolhimento ou da transferência do saldo." };
+  }
+  if (r.aPagar) return pendente(`${plural(r.aPagar, "guia do saldo e dos rendimentos está", "guias do saldo e dos rendimentos estão")} a pagar, ${reais(r.valorAPagar)}.`, "devolucoes");
+  if (r.semComprovante) return pendente(`${plural(r.semComprovante, "guia paga está", "guias pagas estão")} sem o comprovante.`, "devolucoes");
+  const ultima = r.pagasEm[r.pagasEm.length - 1];
+  return pronto(`${reais(r.valorPago)} ${r.guias === 1 ? "recolhido em 1 guia" : `recolhidos em ${r.guias} guias`}${ultima ? `, paga${r.guias === 1 ? "" : "s"} até ${dataBr(ultima)}` : ""}, com comprovante.`);
+};
+
 const ehPdf = (a: { nome_arquivo: string | null; mime_type?: string | null }) =>
   a.mime_type === "application/pdf" || /\.pdf$/i.test(a.nome_arquivo ?? "");
 
@@ -291,6 +308,10 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   documentos_fiscais: despesas,
   extratos,
   extrato: extratos,
+  recolhimento_fnc: recolhimento,
+  gru_saldos: recolhimento,
+  gru_ou_transferencia: recolhimento,
+  gru: recolhimento,
 };
 
 /** Condições do sistema oficial que os dados respondem. */
