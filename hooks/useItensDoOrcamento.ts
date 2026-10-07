@@ -19,6 +19,8 @@ export type ItemDoOrcamento = {
   cnaesDe: { id: string; nome: string } | null;
   aprovado: number;
   vigente: number;
+  /** Item marcado como bem permanente (P3.5). */
+  bemPermanente: boolean;
 };
 
 /**
@@ -53,6 +55,7 @@ export function useItensDoOrcamento(prestacaoId: string, recarga = 0): { itens: 
           cnaesDe: linha.cnaesDe,
           aprovado: linha.totais.aprovado,
           vigente: linha.totais.vigente,
+          bemPermanente: Boolean(linha.no.bem_permanente),
         }));
         setLidos({ chave, itens });
       });

@@ -92,6 +92,10 @@ const ERROS: Record<string, string> = {
   prestacao_comprovantes_retencoes_check: "As retenções passam do valor do documento.",
   prestacao_comprovantes_fornecedor_id_fkey: "O fornecedor está ligado a despesas. Troque o fornecedor nelas antes de excluir.",
   prestacao_orcamento_nos_cnaes_aceitos_check: "Há um CNAE fora do formato; escolha pela busca.",
+  // Bens (P3.5)
+  prestacao_orcamento_nos_bem_permanente_check: "Só um item da planilha pode ser bem permanente.",
+  despesa_de_outra_prestacao: "Escolha uma despesa desta prestação.",
+  cotacao_invalida: "Cada cotação precisa do fornecedor e de um valor.",
   // Verificações (P2.7)
   verificacao_inexistente: "Verificação não encontrada ou sem acesso. Atualize a página.",
   verificacao_resolvida: "Essa pendência já se resolveu. Atualize a página.",

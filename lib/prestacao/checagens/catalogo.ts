@@ -10,6 +10,7 @@ import { definida, regrasDoRegime, type Fonte, type RegimeNormativo } from "../r
 import type { Regra } from "../regimes/tipos";
 import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
+import type { BemParaChecar } from "../bens";
 import type { PrestacaoAtividade, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
@@ -19,14 +20,14 @@ export type SeveridadeChecagem = (typeof SEVERIDADES)[number];
 export const RESULTADOS = ["nao_conforme", "revisar", "nao_calculavel"] as const;
 export type ResultadoChecagem = (typeof RESULTADOS)[number];
 
-export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade", "evidencia", "distribuicao"] as const;
+export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade", "evidencia", "distribuicao", "bem"] as const;
 export type EntidadeVerificada = (typeof ENTIDADES)[number];
 
 export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resolvida"] as const;
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens";
 
 type DoCatalogo = {
   titulo: string;
@@ -114,6 +115,13 @@ export const CATALOGO_CHECAGENS = {
   DISTRIBUICAO_SEM_REALIZADO: { titulo: "Distribuição sem o realizado", grupo: "objeto", resultado: "nao_calculavel", destino: "distribuicao", dimensao: "objeto" },
   DISTRIBUICAO_ALTERADA: { titulo: "Distribuição diferente do plano", grupo: "objeto", resultado: "revisar", destino: "distribuicao", regras: ["alteracao_do_plano"], dimensao: "objeto" },
   DISTRIBUICAO_SEM_BENEFICIARIO: { titulo: "Cota gratuita sem quem recebeu", grupo: "objeto", resultado: "nao_calculavel", destino: "distribuicao", dimensao: "objeto" },
+  // Bens permanentes (P3.5): o bem da despesa, a destinação, a cotação, o registro e o recibo da doação.
+  BEM_SEM_CADASTRO: { titulo: "Despesa de bem sem o bem", grupo: "objeto", resultado: "nao_calculavel", destino: "bens", regras: ["bens", "bens_permanentes", "bem_permanente"], dimensao: "objeto" },
+  BEM_SEM_DESTINACAO: { titulo: "Bem sem destinação", grupo: "objeto", resultado: "nao_calculavel", destino: "bens", regras: ["bem_permanente", "bens_permanentes", "bens"], dimensao: "objeto" },
+  BEM_SEM_COTACAO: { titulo: "Bem sem cotação", grupo: "objeto", resultado: "nao_calculavel", destino: "bens", regras: ["bens", "cotacoes", "processo_de_compra", "precos_de_referencia"], dimensao: "objeto" },
+  BEM_ACIMA_DA_COTACAO: { titulo: "Bem pago acima da menor cotação", grupo: "objeto", resultado: "revisar", destino: "bens", regras: ["cotacoes", "processo_de_compra", "precos_de_referencia", "bens"], dimensao: "objeto" },
+  BEM_IMOVEL_SEM_REGISTRO: { titulo: "Imóvel sem registro", grupo: "objeto", resultado: "nao_calculavel", destino: "bens", regras: ["bens"], dimensao: "objeto" },
+  BEM_DOACAO_SEM_RECIBO: { titulo: "Doação de bem sem recibo", grupo: "objeto", resultado: "nao_calculavel", destino: "bens", regras: ["bens", "bens_permanentes"], dimensao: "objeto" },
   // Dados que faltam para calcular
   DATAS_DA_PRESTACAO: { titulo: "Datas da prestação", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral" },
   LIMITE_SEM_BASE: { titulo: "Limite sem base de cálculo", grupo: "prestacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "fornecedores" },
@@ -197,6 +205,8 @@ export type EstadoDaPrestacao = {
   /** P3.4: plano de distribuição e o valor aprovado, que limita a receita prevista. */
   distribuicao?: readonly LinhaDistribuicao[];
   valorAprovado?: number | null;
+  /** P3.5: bens permanentes; os itens de bem vêm de `nos` (bem_permanente). */
+  bens?: readonly BemParaChecar[];
   hoje?: Date;
 };
 

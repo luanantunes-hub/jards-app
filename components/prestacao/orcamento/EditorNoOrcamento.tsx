@@ -69,6 +69,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
   const [paiId, setPaiId] = useState(inicial ? inicial.parent_id ?? "" : edicao.modo === "novo" ? edicao.parentId ?? "" : "");
   const [grupo, setGrupo] = useState<string>(inicial?.grupo_custo ?? "");
   const [cnaes, setCnaes] = useState<string[]>(limparCnaesAceitos(inicial?.cnaes_aceitos ?? []));
+  const [bemPermanente, setBemPermanente] = useState(Boolean(inicial?.bem_permanente));
   const [uf, setUf] = useState(inicial?.uf ?? "");
   const [municipio, setMunicipio] = useState(inicial?.municipio ?? "");
   const [unidade, setUnidade] = useState(inicial?.unidade ?? "");
@@ -104,6 +105,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
       descricao: descricao.trim() || null,
       grupo_custo: (grupo || null) as GrupoCusto | null,
       cnaes_aceitos: cnaes.length ? cnaes : null,
+      bem_permanente: ehItem && bemPermanente,
       uf: uf || null,
       municipio: municipio.trim() || null,
       unidade: ehItem ? unidade.trim() || null : null,
@@ -204,6 +206,21 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
             herdados={{ cnaes: pai?.cnaes ?? [], de: pai?.cnaesDe?.nome ?? null }}
             ehItem={ehItem}
           />
+
+          {ehItem && (
+            <label className="flex cursor-pointer items-start gap-2.5 rounded border px-3 py-2.5 transition hover:bg-black/[.02]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+              <input
+                type="checkbox"
+                checked={bemPermanente}
+                onChange={e => setBemPermanente(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-[#7259B5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+              />
+              <span>
+                <span className="block text-[0.75rem] text-black/75">Bem permanente</span>
+                <span className="block text-[0.625rem] leading-4 text-black/40">Equipamento, móvel, obra de arte ou imóvel que fica depois do projeto. Cada despesa deste item pede o bem registrado na aba Bens, com a destinação.</span>
+              </span>
+            </label>
+          )}
 
           {ehItem && (
             <fieldset className="rounded border p-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>

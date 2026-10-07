@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(121);
+select plan(135);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -110,6 +110,8 @@ begin
   insert into public.prestacao_evidencias (id, prestacao_id, tipo, atividade_id, nome_arquivo, storage_path) values
     ('f0000000-0000-4000-8000-0000000019a0', pa, 'foto', 'f0000000-0000-4000-8000-0000000006a0', 'rls.jpg',
      org_a || '/prestacoes/' || pa || '/evidencias/f0000000-0000-4000-8000-000000000ef0.jpg');
+  insert into public.prestacao_bens (id, prestacao_id, tipo, descricao) values
+    ('f0000000-0000-4000-8000-0000000021a0', pa, 'movel', 'RLS bem');
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -133,7 +135,8 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_distribuicao', 'prestacao_divulgacao', 'prestacao_alteracoes',
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
     'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
-    'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias'
+    'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
+    'prestacao_bens'
   ];
 $$;
 
@@ -210,7 +213,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_verificacoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_metas where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_locais where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_evidencias where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_evidencias where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_bens where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -236,7 +240,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_verificacoes (prestacao_id, chave, check_codigo, severidade, resultado, entidade_tipo, mensagem) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS:nova', 'X', 'info', 'revisar', 'prestacao', 'x')$c$),
     rls_teste.efeito($c$insert into public.prestacao_metas (prestacao_id, descricao, previsto) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova meta', 1)$c$),
     rls_teste.efeito($c$insert into public.prestacao_locais (prestacao_id, uf, municipio) values ('f0000000-0000-4000-8000-0000000001a0', 'RJ', 'Rio de Janeiro')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_evidencias (prestacao_id, tipo, url) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/rls')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_evidencias (prestacao_id, tipo, url) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/rls')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_bens (prestacao_id, tipo, descricao) values ('f0000000-0000-4000-8000-0000000001a0', 'equipamento', 'RLS novo bem')$c$)
   ]);
 $$;
 
@@ -262,7 +267,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_verificacoes set status = 'dispensada' where id = 'f0000000-0000-4000-8000-0000000016a0'$c$),
     rls_teste.efeito($c$update public.prestacao_metas set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000017a0'$c$),
     rls_teste.efeito($c$update public.prestacao_locais set espaco = espaco where id = 'f0000000-0000-4000-8000-0000000018a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_evidencias set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000019a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_evidencias set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000019a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_bens set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000021a0'$c$)
   ]);
 $$;
 
@@ -288,7 +294,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_verificacoes where id = 'f0000000-0000-4000-8000-0000000016a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_metas where id = 'f0000000-0000-4000-8000-0000000017a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_locais where id = 'f0000000-0000-4000-8000-0000000018a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_evidencias where id = 'f0000000-0000-4000-8000-0000000019a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_evidencias where id = 'f0000000-0000-4000-8000-0000000019a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_bens where id = 'f0000000-0000-4000-8000-0000000021a0'$c$)
   ]);
 $$;
 
@@ -628,6 +635,40 @@ select throws_ok($t$insert into public.prestacao_distribuicao (prestacao_id, pro
   '23514', null, 'categoria fora do regime é recusada');
 select throws_ok($t$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade, beneficiario_documento) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS show', 'educativo', 10, '12.345.678/0001-95')$t$,
   '23514', null, 'o documento de quem recebe é guardado só com letras e números');
+
+-- ─── Bens (P3.5): item e despesa da prestação, cotações e pasta bens ────────
+select lives_ok($t$update public.prestacao_orcamento_nos set bem_permanente = true where id = 'f0000000-0000-4000-8000-0000000003a0'$t$,
+  'quem edita: marca o item como bem permanente');
+select throws_ok($t$insert into public.prestacao_orcamento_nos (versao_id, prestacao_id, tipo, nome, bem_permanente) values ('f0000000-0000-4000-8000-0000000002a0', 'f0000000-0000-4000-8000-0000000001a0', 'etapa', 'RLS etapa bem', true)$t$,
+  '23514', null, 'só item da planilha é bem permanente');
+select lives_ok($t$insert into public.prestacao_bens (id, prestacao_id, no_id, despesa_id, tipo, descricao, cotacoes, destinacao, doacao_storage_path) values ('f0000000-0000-4000-8000-0000000020a0', 'f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000003a0', 'f0000000-0000-4000-8000-0000000005a0', 'equipamento', 'RLS projetor', '[{"fornecedor":"Loja A","valor":100,"data":"2026-09-01","storage_path":"f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/bens/f0000000-0000-4000-8000-000000000ba1.pdf"},{"fornecedor":"Loja B","valor":120,"data":null}]', 'doacao', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/bens/f0000000-0000-4000-8000-000000000ba2.pdf')$t$,
+  'quem edita: registra o bem com o item, a despesa, duas cotações e o termo de doação');
+select throws_ok($t$insert into public.prestacao_bens (prestacao_id, despesa_id, tipo, descricao) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000005b0', 'movel', 'RLS bem B')$t$,
+  '23514', 'despesa_de_outra_prestacao', 'o bem não usa despesa de outra prestação');
+select throws_ok($t$insert into public.prestacao_bens (prestacao_id, tipo, descricao, cotacoes) values ('f0000000-0000-4000-8000-0000000001a0', 'movel', 'RLS quatro', '[{"fornecedor":"A","valor":1},{"fornecedor":"B","valor":1},{"fornecedor":"C","valor":1},{"fornecedor":"D","valor":1}]')$t$,
+  '23514', null, 'até três cotações');
+select throws_ok($t$insert into public.prestacao_bens (prestacao_id, tipo, descricao, cotacoes) values ('f0000000-0000-4000-8000-0000000001a0', 'movel', 'RLS cotação', '[{"fornecedor":"A","valor":"cem"}]')$t$,
+  '23514', 'cotacao_invalida', 'a cotação tem fornecedor e valor numérico');
+select throws_ok($t$insert into public.prestacao_bens (prestacao_id, tipo, descricao, aceite_storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'movel', 'RLS aceite', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000ba3.pdf')$t$,
+  '23514', 'caminho_invalido', 'o aceite fica na pasta bens da prestação');
+-- Ativar outra versão leva o bem e a meta para os nós correspondentes.
+select lives_ok($t$insert into public.prestacao_orcamento_nos (id, versao_id, prestacao_id, tipo, nome) values ('f0000000-0000-4000-8000-0000000003a2', 'f0000000-0000-4000-8000-0000000002a0', 'f0000000-0000-4000-8000-0000000001a0', 'etapa', 'RLS etapa')$t$,
+  'quem edita: cria um agrupador');
+select lives_ok($t$update public.prestacao_metas set no_id = 'f0000000-0000-4000-8000-0000000003a2' where id = 'f0000000-0000-4000-8000-0000000017a0'$t$,
+  'quem edita: liga a meta ao agrupador');
+select lives_ok($t$select public.fn_prestacao_orcamento_copiar_versao('f0000000-0000-4000-8000-0000000002a0', 'readequada', 'RLS cópia bens')$t$,
+  'quem edita: copia a versão com o bem permanente');
+select is(
+  (select n.bem_permanente from public.prestacao_orcamento_nos n
+     join public.prestacao_orcamento_versoes v on v.id = n.versao_id
+    where v.nome = 'RLS cópia bens' and n.origem_no_id = 'f0000000-0000-4000-8000-0000000003a0'),
+  true, 'copiar a versão leva a marca de bem permanente');
+select lives_ok($t$select public.fn_prestacao_orcamento_ativar_versao((select id from public.prestacao_orcamento_versoes where nome = 'RLS cópia bens'))$t$,
+  'quem decide: ativa a versão copiada');
+select is((select n.origem_no_id from public.prestacao_bens b join public.prestacao_orcamento_nos n on n.id = b.no_id where b.id = 'f0000000-0000-4000-8000-0000000020a0'),
+  'f0000000-0000-4000-8000-0000000003a0'::uuid, 'ativar a versão leva o bem para o item correspondente');
+select is((select n.origem_no_id from public.prestacao_metas m join public.prestacao_orcamento_nos n on n.id = m.no_id where m.id = 'f0000000-0000-4000-8000-0000000017a0'),
+  'f0000000-0000-4000-8000-0000000003a2'::uuid, 'ativar a versão leva a meta para o agrupador correspondente');
 reset role;
 
 -- ─── Verificações (P2.7): o servidor grava; as pessoas decidem pela função ──

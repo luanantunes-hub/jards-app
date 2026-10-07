@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Info, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -30,8 +31,9 @@ import { lerValor } from "@/lib/prestacao/orcamento";
 import { alertasDosPagamentos } from "@/lib/prestacao/pagamentos";
 import type { PagamentosRegime } from "@/lib/prestacao/regimes/tipos";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
-import type { PrestacaoComprovante, PrestacaoFornecedor, PrestacaoMeta, PrestacaoPagamento, TipoComprovante } from "@/lib/supabase/types";
+import type { PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoMeta, PrestacaoPagamento, TipoComprovante } from "@/lib/supabase/types";
 import { metaDoItem } from "@/lib/prestacao/objeto";
+import { despesaTemBem } from "@/lib/prestacao/bens";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
 const CAMPO = "w-full rounded border border-black/[.12] px-3 py-2 text-[0.8125rem] outline-none transition focus:border-[#7259B5] focus-visible:ring-2 focus-visible:ring-[#7259B5]/20 disabled:bg-black/[.02] disabled:text-black/50";
@@ -63,17 +65,47 @@ export function ListaAlertasDespesa({ alertas }: { alertas: readonly AlertaDespe
   );
 }
 
+/** Item de bem permanente (P3.5): o bem que a despesa comprou ou o link para registrá-lo. */
+function BemDaDespesa({ prestacaoId, despesa, bens, salva }: {
+  prestacaoId: string;
+  despesa: { id: string; no_id: string | null; status: string };
+  bens: readonly Pick<PrestacaoBem, "id" | "descricao" | "despesa_id" | "no_id">[];
+  /** O item escolhido já está salvo na despesa. */
+  salva: boolean;
+}) {
+  const link = "underline decoration-black/20 underline-offset-2 transition hover:text-black/80 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
+  const doBem = bens.find(b => b.despesa_id === despesa.id) ?? (despesaTemBem(despesa, bens) ? bens.find(b => !b.despesa_id && b.no_id === despesa.no_id) : undefined);
+  if (doBem) {
+    return (
+      <p className="mt-1.5 text-[0.625rem] text-black/55">
+        Bem: <Link href={`/prestacoes/${prestacaoId}/bens?bem=${doBem.id}`} className={link}>{doBem.descricao}</Link>
+      </p>
+    );
+  }
+  return (
+    <p className="mt-1.5 text-[0.625rem] text-[#B07A14]">
+      Item de bem permanente.{" "}
+      {salva
+        ? <Link href={`/prestacoes/${prestacaoId}/bens?despesa=${despesa.id}`} className={link}>Registre o bem</Link>
+        : "Salve a despesa e registre o bem na aba Bens"}
+      , com a destinação.
+    </p>
+  );
+}
+
 /**
  * A despesa de um comprovante fiscal (P2.4): documento, fornecedor, item,
  * retenções e o que precisa de justificativa. Os alertas mudam enquanto a
  * pessoa preenche; salvar não depende deles.
  */
-export function DespesaModal({ comprovante, tipos, itens, metas = [], fornecedores, documentosDe, outrasChaves, pagamentos, regimePagamentos, regime = null, onPagamentosMudaram, podeEditar, onClose, onSalvo }: {
+export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [], fornecedores, documentosDe, outrasChaves, pagamentos, regimePagamentos, regime = null, onPagamentosMudaram, podeEditar, onClose, onSalvo }: {
   comprovante: PrestacaoComprovante;
   tipos: { value: TipoComprovante; label: string }[];
   itens: readonly ItemDoOrcamento[];
   /** Metas do objeto (P3.3): a despesa mostra a meta a que serve, pelo agrupador do item. */
   metas?: readonly Pick<PrestacaoMeta, "id" | "descricao" | "no_id">[];
+  /** Bens da prestação (P3.5): a despesa de item de bem permanente mostra o bem ou pede o registro. */
+  bens?: readonly Pick<PrestacaoBem, "id" | "descricao" | "despesa_id" | "no_id">[];
   fornecedores: readonly PrestacaoFornecedor[];
   documentosDe: (fornecedorId: string | null | undefined) => DocumentoResumido[];
   outrasChaves: readonly string[];
@@ -320,6 +352,14 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], fornecedor
               />
               {metaDaDespesa && (
                 <p className="mt-1.5 text-[0.625rem] text-black/55">Serve à meta: {metaDaDespesa.descricao}</p>
+              )}
+              {item?.bemPermanente && (
+                <BemDaDespesa
+                  prestacaoId={c.prestacao_id}
+                  despesa={{ id: c.id, no_id: itemId || null, status: c.status }}
+                  bens={bens}
+                  salva={itemId === (c.no_id ?? "")}
+                />
               )}
               {item && (
                 <p className="mt-1.5 text-[0.625rem] text-black/40">

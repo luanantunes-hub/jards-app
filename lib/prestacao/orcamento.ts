@@ -101,6 +101,8 @@ export type NoOrcamento = {
   ordem: number;
   /** CNAEs aceitos (P2.4), só algarismos; vazio ou null herda do agrupador. */
   cnaes_aceitos?: string[] | null;
+  /** Item da planilha que é bem permanente (P3.5; art. 30 da IN 29). */
+  bem_permanente?: boolean;
 };
 
 export type ComprovanteDoOrcamento = {

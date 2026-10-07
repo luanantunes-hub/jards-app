@@ -10,6 +10,7 @@ import { itensDaArvore, montarArvore, type NoOrcamento } from "../orcamento";
 import { regimeSchema } from "../regimes/schema";
 import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
+import { lerCotacoes, type BemParaChecar } from "../bens";
 import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
 
 const PAGINA = 1000;
@@ -45,7 +46,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -72,6 +73,9 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<LinhaDistribuicao>(() => db.from("prestacao_distribuicao")
       .select("id, produto, categoria, quantidade, quantidade_meia, preco, quantidade_realizada, beneficiario, beneficiario_documento, justificativa")
+      .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+    todas<BemParaChecar>(() => db.from("prestacao_bens")
+      .select("id, no_id, despesa_id, tipo, descricao, valor, registro_imovel, cotacoes, destinacao, beneficiario, doacao_storage_path, aceite_storage_path, justificativa")
       .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
   ]);
 
@@ -113,6 +117,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     atividades,
     evidencias,
     distribuicao: distribuicao.map(l => ({ ...l, preco: l.preco === null ? null : Number(l.preco) })),
+    bens: bens.map(b => ({ ...b, valor: b.valor === null ? null : Number(b.valor), cotacoes: lerCotacoes(b.cotacoes) })),
     valorAprovado: prestacao.valor_aprovado === null || prestacao.valor_aprovado === undefined ? null : Number(prestacao.valor_aprovado),
     hoje,
   };
