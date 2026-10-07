@@ -676,18 +676,6 @@ export interface PrestacaoStatusLog {
   created_at: string;
 }
 
-export interface PrestacaoItem {
-  id: string;
-  prestacao_id: string;
-  rubrica: string;
-  descricao: string | null;
-  valor_aprovado: number;
-  valor_realizado: number;
-  tolerancia_pct: number;
-  ordem: number;
-  created_at: string;
-}
-
 export type TipoComprovante =
   | "nfe"
   | "recibo"
@@ -714,9 +702,8 @@ export type StatusComprovante = "pendente" | "aceito" | "rejeitado";
 export interface PrestacaoComprovante {
   id: string;
   prestacao_id: string;
-  /** Item do orçamento em árvore (P1.6). item_id é o vínculo antigo, igual a ele enquanto existir. */
+  /** Item do orçamento em árvore (P1.6). */
   no_id: string | null;
-  item_id: string | null;
   tipo: TipoComprovante;
   origem: "nacional" | "internacional";
   nome_arquivo: string;

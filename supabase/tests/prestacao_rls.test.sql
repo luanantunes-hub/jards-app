@@ -69,8 +69,6 @@ begin
     ('f0000000-0000-4000-8000-0000000002a1', pa, 'solicitada', false, admin_a);
   insert into public.prestacao_orcamento_nos (id, versao_id, prestacao_id, nome, valor_total) values
     ('f0000000-0000-4000-8000-0000000003a0', 'f0000000-0000-4000-8000-0000000002a0', pa, 'RLS nó', 100);
-  insert into public.prestacao_itens (id, prestacao_id, rubrica) values
-    ('f0000000-0000-4000-8000-0000000004a0', pa, 'RLS item');
   insert into public.prestacao_comprovantes (id, prestacao_id, nome_arquivo, storage_path) values
     ('f0000000-0000-4000-8000-0000000005a0', pa, 'rls.pdf',
      org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf');
@@ -123,7 +121,7 @@ grant usage on schema rls_teste to authenticated, anon;
 create function rls_teste.todas() returns text[] language sql immutable as $$
   select array[
     'prestacoes_contas', 'prestacao_status_log', 'prestacao_orcamento_versoes',
-    'prestacao_orcamento_nos', 'prestacao_itens', 'prestacao_comprovantes',
+    'prestacao_orcamento_nos', 'prestacao_comprovantes',
     'prestacao_atividades', 'prestacao_atividade_evidencias', 'prestacao_relatorio',
     'prestacao_distribuicao', 'prestacao_divulgacao', 'prestacao_alteracoes',
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
@@ -189,7 +187,6 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_status_log where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_orcamento_versoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_orcamento_nos where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_itens where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_comprovantes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_atividades where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_atividade_evidencias e join public.prestacao_atividades a on a.id = e.atividade_id where a.prestacao_id = %L', p)),
@@ -213,7 +210,6 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_status_log (prestacao_id, status_novo) values ('f0000000-0000-4000-8000-0000000001a0', 'rascunho')$c$),
     rls_teste.efeito($c$insert into public.prestacao_orcamento_versoes (prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000001a0', 'solicitada')$c$),
     rls_teste.efeito($c$insert into public.prestacao_orcamento_nos (versao_id, prestacao_id, nome) values ('f0000000-0000-4000-8000-0000000002a0', 'f0000000-0000-4000-8000-0000000001a0', 'RLS novo')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_itens (prestacao_id, rubrica) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS novo')$c$),
     rls_teste.efeito($c$insert into public.prestacao_comprovantes (prestacao_id, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'novo.pdf', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000cc0.pdf')$c$),
     rls_teste.efeito($c$insert into public.prestacao_atividades (prestacao_id, titulo, data_realizacao) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova', current_date)$c$),
     rls_teste.efeito($c$insert into public.prestacao_atividade_evidencias (atividade_id, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000006a0', 'nova.jpg', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/evidencias/f0000000-0000-4000-8000-000000000ec0.jpg')$c$),
@@ -237,7 +233,6 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_status_log set comentario = comentario where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0'$c$),
     rls_teste.efeito($c$update public.prestacao_orcamento_versoes set nome = nome where id = 'f0000000-0000-4000-8000-0000000002a1'$c$),
     rls_teste.efeito($c$update public.prestacao_orcamento_nos set nome = nome where id = 'f0000000-0000-4000-8000-0000000003a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_itens set rubrica = rubrica where id = 'f0000000-0000-4000-8000-0000000004a0'$c$),
     rls_teste.efeito($c$update public.prestacao_comprovantes set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000005a0'$c$),
     rls_teste.efeito($c$update public.prestacao_atividades set titulo = titulo where id = 'f0000000-0000-4000-8000-0000000006a0'$c$),
     rls_teste.efeito($c$update public.prestacao_atividade_evidencias set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000007a0'$c$),
@@ -261,7 +256,6 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_status_log where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_orcamento_versoes where id = 'f0000000-0000-4000-8000-0000000002a1'$c$),
     rls_teste.efeito($c$delete from public.prestacao_orcamento_nos where id = 'f0000000-0000-4000-8000-0000000003a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_itens where id = 'f0000000-0000-4000-8000-0000000004a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_comprovantes where id = 'f0000000-0000-4000-8000-0000000005a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_atividades where id = 'f0000000-0000-4000-8000-0000000006a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_atividade_evidencias where id = 'f0000000-0000-4000-8000-0000000007a0'$c$),
