@@ -168,7 +168,7 @@ export type Achado = {
 
 export type DespesaDoEstado = DespesaParaChecar &
   Pick<PrestacaoComprovante, "id" | "nome_arquivo" | "status" | "no_id"> &
-  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia">>;
+  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia" | "serie">>;
 
 export type ItemDoEstado = { id: string; nome: string; cnaes: readonly string[]; cnaesDe: { id: string; nome: string } | null };
 

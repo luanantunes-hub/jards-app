@@ -8,7 +8,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileText, MinusCircle, Paperclip, RefreshCw, Send, Trash2, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Paperclip, RefreshCw, Send, Trash2, Undo2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -364,6 +364,11 @@ export default function EnvioPage() {
               );
             })}
           </div>
+        )}
+        {dados?.regime?.sistemaOficial === "Salic" && (
+          <Link href={`/prestacoes/${id}/envio/salic`} className={BOTAO} style={BORDA}>
+            <FileSpreadsheet size={12} aria-hidden /> Espelho do Salic
+          </Link>
         )}
       </div>
 
