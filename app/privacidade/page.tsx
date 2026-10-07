@@ -55,7 +55,7 @@ export default function PrivacidadePage() {
 
           <Section id="s2" num="2" title="Dados que coletamos">
             <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">2.1 Dados de conta</h3>
-            <p>Ao criar uma conta, coletamos nome completo, endereço de e-mail, senha (armazenada em hash, nunca em texto puro) e nome da organização. Se você chegou por um link de campanha ou por um anúncio, guardamos também de qual campanha veio o cadastro (ver §10).</p>
+            <p>Ao criar uma conta, coletamos nome completo, endereço de e-mail, senha (armazenada em hash, nunca em texto puro) e nome da organização. Se você chegou por um link de campanha ou por um anúncio, guardamos também de qual campanha veio o cadastro e, se você aceitou o aviso de cookies, avisamos o cadastro ao Google Ads com o seu e-mail criptografado (ver §10).</p>
 
             <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">2.2 Dados inseridos no CRM</h3>
             <p>Para gerenciar o pipeline de captação você pode inserir informações sobre patrocinadores, contatos, projetos, captações, atividades, documentos e comissões. Esses dados pertencem à sua organização.</p>
@@ -145,7 +145,7 @@ export default function PrivacidadePage() {
               <li><strong>Supabase</strong> — banco de dados, autenticação e armazenamento (EUA, us-east-2)</li>
               <li><strong>Stripe</strong> — processamento de pagamentos (EUA / global)</li>
               <li><strong>Google LLC</strong> — APIs de Gmail e Agenda, somente quando autorizado (EUA / global)</li>
-              <li><strong>Google LLC — Google Analytics e Google Ads</strong> — estatísticas de visitas às páginas públicas do site e medição das nossas campanhas, incluindo cadastros e assinaturas vindos de anúncios, e exibição dos nossos anúncios a quem visitou o site (remarketing), somente com o seu consentimento (EUA / global)</li>
+              <li><strong>Google LLC — Google Analytics e Google Ads</strong> — estatísticas de visitas às páginas públicas do site e medição das nossas campanhas, incluindo cadastros (com o e-mail criptografado, no momento do cadastro) e assinaturas vindos de anúncios, e exibição dos nossos anúncios a quem visitou o site (remarketing), somente com o seu consentimento (EUA / global)</li>
               <li><strong>Microsoft</strong> — API do Outlook/Agenda, somente quando autorizado (EUA / global)</li>
               <li><strong>Anthropic</strong> — assistente Claude via MCP, somente se você conectar essa integração (EUA / global)</li>
               <li><strong>OpenAI</strong> — ChatGPT/Custom GPT, somente se você conectar essa integração (EUA / global)</li>
@@ -173,17 +173,22 @@ export default function PrivacidadePage() {
             <p><strong>Essenciais.</strong> Sessão de autenticação (SameSite=Lax) e estado OAuth temporário (duração de 10 minutos, excluído após o fluxo). Sem eles a plataforma não funciona, por isso não dependem de consentimento.</p>
             <p>
               <strong>Análise e publicidade (opcionais).</strong> Nas páginas públicas do site — página inicial, blog, Termos
-              de Uso e esta Política — usamos o Google Analytics para medir as visitas e entender quais conteúdos são úteis, e
+              de Uso, esta Política e o cadastro — usamos o Google Analytics para medir as visitas e entender quais conteúdos são úteis, e
               a tag do Google Ads para medir o resultado das nossas campanhas e mostrar nossos anúncios a quem já visitou o
               site (remarketing). Nada disso é carregado antes de você aceitar no aviso de cookies; se você recusar ou não
               responder, o Google Analytics e o Google Ads não recebem nada. Quando ativos, o Google Analytics grava os cookies{" "}
               <code>_ga</code> e <code>_ga_*</code> (duração de até 2 anos) e o Google Ads grava cookies como{" "}
               <code>_gcl_au</code> e <code>_gcl_aw</code> (duração de até 90 dias), com identificadores aleatórios do
               navegador. São registradas as páginas visitadas, a origem da visita, o tipo de dispositivo e a localização
-              aproximada. Não enviamos nome, e-mail nem dados do CRM; dos endereços, seguem só a página e os parâmetros de
-              campanha (utm e os identificadores de clique do Google, como o gclid), e da origem da visita, só o domínio. Os
-              sinais do Google no Analytics ficam desativados. Nada disso é carregado dentro da plataforma nem nas páginas de
-              propostas.
+              aproximada. Não enviamos nome nem dados do CRM; dos endereços, seguem só a página e os parâmetros de campanha
+              (utm e os identificadores de clique do Google, como o gclid), e da origem da visita, só o domínio. Os sinais do
+              Google no Analytics ficam desativados. Nada disso é carregado dentro da plataforma nem nas páginas de propostas.
+            </p>
+            <p>
+              <strong>Cadastro e conversões otimizadas.</strong> Quando você cria a conta, se tiver aceitado o aviso, a tag do
+              Google Ads avisa o cadastro e envia o seu e-mail criptografado (hash SHA-256, feito no seu navegador antes do
+              envio). Assim o Google consegue ligar o cadastro ao anúncio em que você clicou, mesmo que tenha sido em outro
+              aparelho. O e-mail não vai em texto, e o Google o usa só para medir as nossas campanhas.
             </p>
             <p>
               A base legal é o seu consentimento (art. 7º, I, da LGPD). Sua escolha fica salva neste navegador, e você pode
@@ -199,8 +204,8 @@ export default function PrivacidadePage() {
               para sabermos quais campanhas trazem cadastros. Esse uso é interno e tem como base o nosso legítimo interesse
               (art. 7º, IX, da LGPD). Se você chegou por um anúncio do Google e aceitou o aviso de cookies, guardamos também o
               identificador do clique (gclid) e informamos ao Google Ads que aquele clique resultou em um cadastro e, se for o
-              caso, em uma assinatura, com a data e o valor mensal do plano. Não enviamos nome, e-mail nem dados do CRM. Essa
-              parte não grava nada no seu navegador: o identificador vem no próprio endereço do anúncio.
+              caso, em uma assinatura, com a data e o valor mensal do plano. Nessa lista não vão nome, e-mail nem dados do
+              CRM. Essa parte não grava nada no seu navegador: o identificador vem no próprio endereço do anúncio.
             </p>
             <p>
               <strong>Os cookies de publicidade servem só aos nossos próprios anúncios.</strong> Não vendemos dados nem os

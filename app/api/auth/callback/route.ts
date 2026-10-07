@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { lerOrigem } from "@/lib/origem-cadastro";
 
@@ -17,9 +18,17 @@ export async function GET(request: Request) {
     if (!error) {
       // Marca convites de equipe como aceitos depois que o usuário conclui o login.
       await supabase.rpc("accept_my_organization_invitations");
-      await registrarOrigemDoCadastro(supabase, searchParams);
-      const redirectUrl = next.startsWith("/") ? `${origin}${next}` : `${origin}/dashboard`;
-      return NextResponse.redirect(redirectUrl);
+      const destino = next.startsWith("/") ? next : "/dashboard";
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const contaNova = !!user && Date.now() - new Date(user.created_at).getTime() <= CONTA_NOVA_MS;
+      if (user && contaNova) await registrarOrigemDoCadastro(supabase, user, searchParams);
+
+      // Cadastro novo com Google passa pela página que avisa o Google Ads.
+      if (user && contaNova && user.app_metadata?.provider === "google") {
+        return NextResponse.redirect(`${origin}/cadastro/concluido?next=${encodeURIComponent(destino)}`);
+      }
+      return NextResponse.redirect(`${origin}${destino}`);
     }
   }
 
@@ -27,17 +36,15 @@ export async function GET(request: Request) {
 }
 
 // Cadastro com Google: a origem chega pelo endereço de retorno (o cadastro só
-// inclui o clique do anúncio com o aceite) e fica na conta, se ela for nova.
+// inclui o clique do anúncio com o aceite) e fica na conta nova.
 async function registrarOrigemDoCadastro(
   supabase: Awaited<ReturnType<typeof createClient>>,
+  user: User,
   params: URLSearchParams,
 ) {
   const origem = lerOrigem(params, true);
-  if (!origem) return;
+  if (!origem || user.user_metadata?.origem_cadastro) return;
   try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user || user.user_metadata?.origem_cadastro) return;
-    if (Date.now() - new Date(user.created_at).getTime() > CONTA_NOVA_MS) return;
     await supabase.auth.updateUser({ data: { origem_cadastro: origem } });
   } catch {
     // A origem é medição; nunca impede o login.
