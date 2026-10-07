@@ -1,14 +1,19 @@
-// Consentimento de cookies de análise (LGPD, art. 7º, I).
-// O Google Analytics — e a medição do Google Ads vinculada à mesma tag — só é
-// carregado depois que o visitante aceita; sem escolha gravada, o aviso aparece.
-// Usado nas páginas públicas: landing, blog, Termos e Política.
-// Qualquer elemento com [data-preferencias-cookies] reabre o aviso.
+// Consentimento de cookies de análise e de publicidade (LGPD, art. 7º, I).
+// O Google Analytics e a tag do Google Ads (medição das campanhas e
+// remarketing) só são carregados depois que o visitante aceita; sem escolha
+// gravada, o aviso aparece. Usado nas páginas públicas: landing, blog, Termos
+// e Política. Qualquer elemento com [data-preferencias-cookies] reabre o aviso.
 (function () {
   if (window.jardsCookies) return;
 
   var GA_ID = "G-JWVV7GT45S";
+  var ADS_ID = "AW-18498679750";
   var CHAVE = "jards_consentimento_cookies";
-  var VERSAO = 1;
+  // Versão 2: o aceite passou a incluir cookies de publicidade; quem aceitou a
+  // versão 1 vê o aviso de novo.
+  var VERSAO = 2;
+  var TUDO_PERMITIDO = { analytics_storage: "granted", ad_storage: "granted", ad_user_data: "granted", ad_personalization: "granted" };
+  var TUDO_NEGADO = { analytics_storage: "denied", ad_storage: "denied", ad_user_data: "denied", ad_personalization: "denied" };
   var gaCarregado = false;
   var aviso = null;
   var historicoNativo = { pushState: history.pushState, replaceState: history.replaceState };
@@ -36,7 +41,7 @@
   function enderecoLimpo() {
     var campanha = new URLSearchParams();
     new URLSearchParams(location.search).forEach(function (valor, nome) {
-      if (/^utm_/.test(nome) || nome === "gclid") campanha.append(nome, valor);
+      if (/^utm_/.test(nome) || /^(gclid|gbraid|wbraid)$/.test(nome)) campanha.append(nome, valor);
     });
     var q = campanha.toString();
     return location.origin + location.pathname + (q ? "?" + q : "");
@@ -51,18 +56,13 @@
     if (!ehPublica(location.pathname)) return;
     window["ga-disable-" + GA_ID] = false;
     if (gaCarregado) {
-      window.gtag("consent", "update", { analytics_storage: "granted" });
+      window.gtag("consent", "update", TUDO_PERMITIDO);
       return;
     }
     gaCarregado = true;
     window.dataLayer = window.dataLayer || [];
     window.gtag = function () { window.dataLayer.push(arguments); };
-    window.gtag("consent", "default", {
-      analytics_storage: "granted",
-      ad_storage: "denied",
-      ad_user_data: "denied",
-      ad_personalization: "denied",
-    });
+    window.gtag("consent", "default", TUDO_PERMITIDO);
     window.gtag("js", new Date());
     limparEnderecoVisivel();
     window.gtag("config", GA_ID, {
@@ -70,6 +70,10 @@
       page_referrer: referenciaLimpa(document.referrer),
       allow_google_signals: false,
       allow_ad_personalization_signals: false,
+    });
+    window.gtag("config", ADS_ID, {
+      page_location: enderecoLimpo(),
+      page_referrer: referenciaLimpa(document.referrer),
     });
     var s = document.createElement("script");
     s.async = true;
@@ -97,10 +101,15 @@
     });
   }
 
+  // A tag do Google Ads não tem desligamento próprio: com as tags já
+  // carregadas, a recusa recarrega a página, que volta sem nenhuma delas.
   function desativarAnalytics() {
     window["ga-disable-" + GA_ID] = true;
-    if (gaCarregado) window.gtag("consent", "update", { analytics_storage: "denied" });
     apagarCookiesAnalytics();
+    if (gaCarregado) {
+      window.gtag("consent", "update", TUDO_NEGADO);
+      location.reload();
+    }
   }
 
   // O GA só pode existir nas páginas públicas. Se uma navegação sem recarga
@@ -182,7 +191,8 @@
     aviso.setAttribute("aria-label", "Preferências de cookies");
     aviso.innerHTML =
       "<p>Usamos o Google Analytics e o Google Ads para medir as visitas e o resultado das nossas campanhas, " +
-      'sem cookies de publicidade. Só ativamos se você aceitar. <a href="/privacidade#s10">Política de Privacidade</a></p>' +
+      "e para mostrar nossos anúncios a quem já visitou o site. Isso grava cookies de análise e de publicidade, " +
+      'e só ativamos se você aceitar. <a href="/privacidade#s10">Política de Privacidade</a></p>' +
       (atual ? '<p class="jc-atual">Escolha atual: ' + (atual.analytics ? "aceito" : "recusado") + ".</p>" : "") +
       '<div class="jc-acoes">' +
       '<button type="button" class="jc-btn jc-recusar">Recusar</button>' +

@@ -5,6 +5,12 @@ import Image from "next/image";
 import { ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AuthShell } from "@/components/auth/AuthShell";
+import { anexarOrigem, consentiuMedicao, lerOrigem } from "@/lib/origem-cadastro";
+
+// De qual campanha veio este cadastro; o clique do anúncio só com o aceite.
+function origemDaVisita() {
+  return lerOrigem(new URLSearchParams(window.location.search), consentiuMedicao());
+}
 
 export default function CadastroPage() {
   const [fullName, setFullName] = useState("");
@@ -32,6 +38,7 @@ export default function CadastroPage() {
 
     setLoading(true);
     const supabase = createClient();
+    const origem = origemDaVisita();
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
@@ -39,6 +46,7 @@ export default function CadastroPage() {
         emailRedirectTo: `${window.location.origin}/api/auth/callback?next=/confirmacao-email`,
         data: {
           full_name: fullName.trim(),
+          ...(origem ? { origem_cadastro: origem } : {}),
         },
       },
     });
@@ -66,10 +74,14 @@ export default function CadastroPage() {
     setLoading(true);
     setError(null);
     const supabase = createClient();
-    const redirectTo = `${window.location.origin}/api/auth/callback?next=${encodeURIComponent("/dashboard?onboarding=1")}`;
+    // O Google não recebe dados extras no cadastro; a origem segue pelo
+    // endereço de retorno e o callback a grava na conta nova.
+    const retorno = new URL("/api/auth/callback", window.location.origin);
+    retorno.searchParams.set("next", "/dashboard?onboarding=1");
+    anexarOrigem(retorno, origemDaVisita());
     const { error: oauthError } = await supabase.auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo },
+      options: { redirectTo: retorno.toString() },
     });
 
     if (oauthError) {
