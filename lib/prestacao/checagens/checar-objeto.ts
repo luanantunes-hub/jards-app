@@ -7,7 +7,8 @@
 //    são dados que faltam;
 //  * meta abaixo do previsto pede justificativa, escrita na própria meta.
 
-import { execucaoTerminou, quantidade, rotuloDoLocal } from "../objeto";
+import { periodoDaAtividade } from "../evidencias";
+import { coberturaDaMeta, execucaoTerminou, quantidade, rotuloDoLocal } from "../objeto";
 import { dataBr, novoAchado, severidadeDaChecagem, type Achado, type EstadoDaPrestacao } from "./catalogo";
 
 export function checarObjeto(estado: EstadoDaPrestacao): Achado[] {
@@ -66,5 +67,48 @@ export function checarObjeto(estado: EstadoDaPrestacao): Achado[] {
     }
   }
 
+  return achados;
+}
+
+// ─── Cobertura por meta (P3.3) ──────────────────────────────────────────────
+//
+// A meta com resultado (realizado ou atividade realizada) precisa de
+// evidência, ligada a ela ou às atividades dela; a severidade é a da regra
+// "evidencias" do regime (bloqueio na Rouanet). Cada atividade realizada que
+// já terminou e não tem evidência é um alerta, para achar o que falta.
+
+export function checarCobertura(estado: EstadoDaPrestacao): Achado[] {
+  const { regime } = estado;
+  const metas = estado.metas ?? [];
+  const atividades = estado.atividades ?? [];
+  const evidencias = estado.evidencias ?? [];
+  const hoje = estado.hoje ?? new Date();
+  const achados: Achado[] = [];
+
+  const doEstado = atividades.map(a => ({ id: a.id, meta_id: a.meta_id ?? null, status_realizacao: a.status_realizacao ?? "realizado" }));
+  for (const meta of metas) {
+    const cobertura = coberturaDaMeta(meta, doEstado, evidencias);
+    const temResultado = (meta.realizado !== null && meta.realizado !== undefined && Number(meta.realizado) > 0) || cobertura.atividadesRealizadas > 0;
+    if (!temResultado || cobertura.evidencias > 0) continue;
+    achados.push(novoAchado(regime, {
+      codigo: "META_SEM_EVIDENCIA",
+      severidade: severidadeDaChecagem(regime, "META_SEM_EVIDENCIA", "alerta"),
+      entidade: { tipo: "meta", id: meta.id },
+      mensagem: `"${meta.descricao}" tem resultado e nenhuma evidência: envie fotos, listas de presença ou outros registros ligados à meta ou às atividades dela.`,
+      dados: { atividades_realizadas: cobertura.atividadesRealizadas },
+    }));
+  }
+
+  for (const a of atividades) {
+    if ((a.status_realizacao ?? "realizado") !== "realizado") continue;
+    if (!execucaoTerminou(periodoDaAtividade(a).fim, hoje)) continue;
+    if (evidencias.some(e => e.atividade_id === a.id)) continue;
+    achados.push(novoAchado(regime, {
+      codigo: "ATIVIDADE_SEM_EVIDENCIA",
+      severidade: "alerta",
+      entidade: { tipo: "atividade", id: a.id },
+      mensagem: `A atividade "${a.titulo}" foi realizada e ainda não tem evidência.`,
+    }));
+  }
   return achados;
 }

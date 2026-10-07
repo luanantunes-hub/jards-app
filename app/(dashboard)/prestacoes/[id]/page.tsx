@@ -15,6 +15,7 @@ import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
 import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import { avaliarProntidao, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
+import { coberturaDaMeta } from "@/lib/prestacao/objeto";
 import { ProntidaoPrestacao } from "@/components/prestacao/ProntidaoPrestacao";
 import { VerificacoesPrestacao } from "@/components/prestacao/VerificacoesPrestacao";
 import { EVENTO_VERIFICADA, pedirVerificacao, verificarAgora } from "@/lib/prestacao/verificar-cliente";
@@ -93,6 +94,8 @@ export default function PrestacaoDetalhe() {
   const [rubricsOpen, setRubricsOpen] = useState(false);
   const [comentario, setComentario] = useState("");
   const [saving, setSaving] = useState(false);
+  // P3.3: metas do objeto e quantas estão comprovadas por evidência.
+  const [objeto, setObjeto] = useState<{ metas: number; comprovadas: number } | undefined>(undefined);
   const permissoes = usePermissoesPrestacao(id);
   const regimes = useRegimesPublicados();
 
@@ -104,6 +107,9 @@ export default function PrestacaoDetalhe() {
       { data: compData },
       { data: alteracoesData },
       { count: bloqueiosCount },
+      { data: metasData },
+      { data: atividadesData },
+      { data: evidenciasData },
     ] = await Promise.all([
       (supabase as any)
         .from("prestacoes_contas")
@@ -136,6 +142,10 @@ export default function PrestacaoDetalhe() {
         .eq("prestacao_id", id)
         .eq("status", "aberta")
         .eq("severidade", "bloqueio"),
+      // Cobertura das metas (P3.3).
+      (supabase as any).from("prestacao_metas").select("id").eq("prestacao_id", id),
+      (supabase as any).from("prestacao_atividades").select("id, meta_id, status_realizacao").eq("prestacao_id", id),
+      (supabase as any).from("prestacao_evidencias").select("atividade_id, meta_id").eq("prestacao_id", id),
     ]);
 
     setPrestacao(data as PrestacaoDetalhe);
@@ -145,6 +155,11 @@ export default function PrestacaoDetalhe() {
     setComprovantes((compData as ComprovanteParaExecucao[]) ?? []);
     setAlteracoesAguardando(alteracoesData ?? []);
     setBloqueiosAbertos(bloqueiosCount ?? 0);
+    const metasLidas = (metasData ?? []) as { id: string }[];
+    setObjeto(metasData ? {
+      metas: metasLidas.length,
+      comprovadas: metasLidas.filter(m => coberturaDaMeta(m, atividadesData ?? [], evidenciasData ?? []).comprovada).length,
+    } : undefined);
 
     setLoading(false);
   }, [id, supabase]);
@@ -234,6 +249,7 @@ export default function PrestacaoDetalhe() {
     itens: itens.map(item => ({ id: item.id, grupo: item.grupo, vigente: item.vigente })),
     comprovantes,
     atividades: atividadesCount,
+    objeto,
     alteracoesAguardando: alteracoesAguardando.length,
     verificacoes: bloqueiosAbertos === null ? undefined : { verificada: Boolean(prestacao.verificada_em), bloqueios: bloqueiosAbertos },
   });

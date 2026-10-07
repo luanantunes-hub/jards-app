@@ -29,6 +29,7 @@ const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> =
   extrato: { caminho: "/extrato", rotulo: "Abrir extrato" },
   conciliacao: { caminho: "/conciliacao", rotulo: "Conciliar" },
   objeto: { caminho: "/objeto", rotulo: "Abrir objeto" },
+  atividades: { caminho: "/atividades", rotulo: "Abrir atividades" },
 };
 
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {

@@ -25,7 +25,7 @@ export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resol
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades";
 
 type DoCatalogo = {
   titulo: string;
@@ -101,6 +101,9 @@ export const CATALOGO_CHECAGENS = {
   EVIDENCIA_FORA_DO_PERIODO: { titulo: "Foto fora do período", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
   EVIDENCIA_FORA_DA_ATIVIDADE: { titulo: "Foto em outra data da atividade", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
   EVIDENCIA_LONGE_DO_LOCAL: { titulo: "Foto longe do local", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
+  // Cobertura por meta (P3.3): o que comprova a meta e cada atividade realizada.
+  META_SEM_EVIDENCIA: { titulo: "Meta sem evidência", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
+  ATIVIDADE_SEM_EVIDENCIA: { titulo: "Atividade sem evidência", grupo: "objeto", resultado: "nao_calculavel", destino: "atividades", regras: ["evidencias"], dimensao: "objeto" },
   // Dados que faltam para calcular
   DATAS_DA_PRESTACAO: { titulo: "Datas da prestação", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral" },
   LIMITE_SEM_BASE: { titulo: "Limite sem base de cálculo", grupo: "prestacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "fornecedores" },
@@ -159,7 +162,8 @@ export type AlteracaoDoEstado = { id: string; numero: number; status: string; so
 
 export type MetaDoEstado = Pick<PrestacaoMeta, "id" | "descricao" | "unidade" | "previsto" | "realizado" | "justificativa">;
 export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "status"> & Partial<Pick<PrestacaoLocal, "latitude" | "longitude">>;
-export type AtividadeDoEstado = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "local_id">;
+export type AtividadeDoEstado = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "local_id">
+  & Partial<Pick<PrestacaoAtividade, "meta_id" | "status_realizacao">>;
 
 export type EstadoDaPrestacao = {
   regime: RegimeNormativo | null;

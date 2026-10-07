@@ -163,7 +163,9 @@ export function Dropdown({
               role="option"
               aria-selected={opt.value === value}
               onMouseDown={e => e.preventDefault()}
-              onClick={() => choose(opt.value)}
+              // Sem o preventDefault, um <label> em volta do campo repassa o clique
+              // ao gatilho (a opção já saiu da tela) e o menu reabre.
+              onClick={e => { e.preventDefault(); choose(opt.value); }}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.8125rem] outline-none transition hover:bg-black/[.04] focus-visible:bg-black/[.04]"
               style={{ color: opt.value === value ? "#0D0D0D" : "rgba(13,13,13,.60)" }}
             >

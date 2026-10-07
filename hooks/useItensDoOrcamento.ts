@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { itensDaArvore, montarArvore, type GrupoCusto, type NoOrcamento } from "@/lib/prestacao/orcamento";
+import { ancestraisDoNo, itensDaArvore, montarArvore, type GrupoCusto, type NoOrcamento } from "@/lib/prestacao/orcamento";
 
 export type ItemDoOrcamento = {
   id: string;
@@ -11,6 +11,8 @@ export type ItemDoOrcamento = {
   descricao: string | null;
   /** Agrupadores acima do item, do mais alto ao mais próximo. */
   caminho: string[];
+  /** Ids desses agrupadores, na mesma ordem (P3.3: a meta a que o item serve). */
+  ancestrais: string[];
   grupo: GrupoCusto | null;
   /** CNAEs aceitos que valem para o item (P2.4) e o nó que os definiu. */
   cnaes: string[];
@@ -45,6 +47,7 @@ export function useItensDoOrcamento(prestacaoId: string, recarga = 0): { itens: 
           nome: linha.no.nome,
           descricao: linha.no.descricao,
           caminho: linha.caminho,
+          ancestrais: ancestraisDoNo(linha.no.id, data ?? []),
           grupo: linha.grupo,
           cnaes: linha.cnaes,
           cnaesDe: linha.cnaesDe,

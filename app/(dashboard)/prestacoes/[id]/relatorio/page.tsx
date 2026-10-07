@@ -2,11 +2,12 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-import type { PrestacaoComprovante } from "@/lib/supabase/types";
+import type { PrestacaoAtividade, PrestacaoComprovante, PrestacaoEvidencia, PrestacaoMeta } from "@/lib/supabase/types";
+import { coberturaDaMeta, metaDoItem, quantidade } from "@/lib/prestacao/objeto";
 import { executadoPorItem, executadoSemRubrica, totalExecutado } from "@/lib/prestacao/execucao";
 import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 
-type View = "metas" | "itens" | "sintetico" | "analitico";
+type View = "metas" | "execucao" | "itens" | "sintetico" | "analitico";
 
 const fmt = (v: number | null) =>
   (v ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 2 });
@@ -44,9 +45,22 @@ export default function RelatorioPage() {
   const [comprovantesCarregados, setComprovantesCarregados] = useState(false);
   const loading = !carregado || !comprovantesCarregados;
 
+  // Metas do objeto (P3.3): previsto × realizado, evidências e despesas de cada uma.
+  const [metas, setMetas] = useState<PrestacaoMeta[]>([]);
+  const [atividades, setAtividades] = useState<Pick<PrestacaoAtividade, "id" | "meta_id" | "status_realizacao">[]>([]);
+  const [evidencias, setEvidencias] = useState<Pick<PrestacaoEvidencia, "atividade_id" | "meta_id">[]>([]);
+
   const load = useCallback(async () => {
-    const { data: comp } = await (supabase as any).from("prestacao_comprovantes").select("*").eq("prestacao_id", id).order("data_doc", { ascending: true });
+    const [{ data: comp }, { data: ms }, { data: ats }, { data: evs }] = await Promise.all([
+      (supabase as any).from("prestacao_comprovantes").select("*").eq("prestacao_id", id).order("data_doc", { ascending: true }),
+      (supabase as any).from("prestacao_metas").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
+      (supabase as any).from("prestacao_atividades").select("id, meta_id, status_realizacao").eq("prestacao_id", id),
+      (supabase as any).from("prestacao_evidencias").select("atividade_id, meta_id").eq("prestacao_id", id),
+    ]);
     setComprovantes((comp as PrestacaoComprovante[]) ?? []);
+    setMetas(((ms ?? []) as PrestacaoMeta[]).map(m => ({ ...m, previsto: Number(m.previsto), realizado: m.realizado === null ? null : Number(m.realizado) })));
+    setAtividades(ats ?? []);
+    setEvidencias(evs ?? []);
     setComprovantesCarregados(true);
   }, [id, supabase]);
 
@@ -71,8 +85,17 @@ export default function RelatorioPage() {
     };
   });
 
+  // Executado de cada meta: despesas aceitas dos itens abaixo do agrupador dela.
+  const executadoPorMeta = new Map<string, number>();
+  for (const c of aceitos) {
+    const item = itens.find(i => i.id === c.no_id);
+    const meta = item ? metaDoItem(item.ancestrais, metas) : null;
+    if (meta) executadoPorMeta.set(meta.id, (executadoPorMeta.get(meta.id) ?? 0) + (c.valor_extraido ?? 0));
+  }
+
   const views: { key: View; label: string }[] = [
     { key: "metas",     label: "Metas comprovadas" },
+    { key: "execucao",  label: "Execução por item" },
     { key: "itens",     label: "Itens comprovados" },
     { key: "sintetico", label: "Pagamentos sintético" },
     { key: "analitico", label: "Pagamentos analítico" },
@@ -103,11 +126,55 @@ export default function RelatorioPage() {
         </div>
       ) : (
         <>
-          {/* ── METAS COMPROVADAS ── */}
+          {/* ── METAS COMPROVADAS (P3.3) ── */}
           {view === "metas" && (
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                 <p className="text-[0.75rem] font-semibold text-black">Metas comprovadas</p>
+                <p className="text-[0.625rem] text-black/35">{metas.filter(m => coberturaDaMeta(m, atividades, evidencias).comprovada).length} de {metas.length} com evidência</p>
+              </div>
+              {metas.length === 0 ? (
+                <p className="px-5 py-8 text-center text-[0.75rem] text-black/40">Cadastre as metas na aba Objeto para o comparativo de metas propostas e resultados.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-[0.75rem]">
+                    <thead>
+                      <tr style={{ background: "#F9F9F8" }}>
+                        {["Meta", "Previsto", "Realizado", "%", "Evidências", "Executado"].map(h => (
+                          <th key={h} className="px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30 border-b whitespace-nowrap" style={{ borderColor: "rgba(13,13,13,.07)" }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {metas.map((meta, i) => {
+                        const cobertura = coberturaDaMeta(meta, atividades, evidencias);
+                        const percentual = meta.realizado !== null && meta.previsto > 0 ? Math.round((meta.realizado / meta.previsto) * 100) : null;
+                        return (
+                          <tr key={meta.id} className="hover:bg-black/[.015] transition border-b last:border-0 align-top" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+                            <td className="px-4 py-3">
+                              <p className="font-semibold text-black">{i + 1} - {meta.descricao}</p>
+                              {meta.justificativa && <p className="text-[0.625rem] text-black/45 mt-0.5">{meta.justificativa}</p>}
+                            </td>
+                            <td className="px-4 py-3 tabular-nums text-black/60 whitespace-nowrap">{quantidade(meta.previsto, meta.unidade)}</td>
+                            <td className="px-4 py-3 tabular-nums text-black/60 whitespace-nowrap">{quantidade(meta.realizado, meta.unidade)}</td>
+                            <td className="px-4 py-3"><PctBar value={percentual} /></td>
+                            <td className="px-4 py-3 text-[0.6875rem] whitespace-nowrap" style={{ color: cobertura.comprovada ? "#2E8932" : cobertura.evidencias ? "#B07A14" : "rgba(13,13,13,.40)" }}>{cobertura.texto}</td>
+                            <td className="px-4 py-3 tabular-nums whitespace-nowrap text-black/60">{meta.no_id ? fmt(executadoPorMeta.get(meta.id) ?? 0) : <span className="text-black/30" title="Ligue a meta a um agrupador do orçamento">—</span>}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ── EXECUÇÃO POR ITEM ── */}
+          {view === "execucao" && (
+            <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+              <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                <p className="text-[0.75rem] font-semibold text-black">Execução por item</p>
                 <p className="text-[0.625rem] text-black/35">{itens.length} rubrica{itens.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="overflow-x-auto">
@@ -121,7 +188,7 @@ export default function RelatorioPage() {
                   </thead>
                   <tbody>
                     {itens.map((item, i) => {
-                      // Quantidades físicas só existem a partir das metas (fase 3).
+                      // As quantidades físicas ficam nas metas (aba Metas comprovadas).
                       const executado = executadoItem.get(item.id) ?? 0;
                       const pctFin = pct(executado, item.vigente);
                       const saldo = item.vigente - executado;
