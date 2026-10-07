@@ -322,6 +322,18 @@ export function itensDaArvore(raizes: readonly LinhaOrcamento[]): LinhaOrcamento
   return linhasVisiveis(raizes).filter(linha => linha.no.tipo === "item");
 }
 
+/** Ids dos agrupadores acima do nó, do mais alto ao mais próximo (P3.3: a meta da despesa). */
+export function ancestraisDoNo(noId: string, nos: readonly Pick<NoOrcamento, "id" | "parent_id">[]): string[] {
+  const porId = new Map(nos.map(n => [n.id, n]));
+  const saida: string[] = [];
+  const vistos = new Set<string>([noId]);
+  for (let atual = porId.get(noId)?.parent_id ?? null; atual && !vistos.has(atual); atual = porId.get(atual)?.parent_id ?? null) {
+    vistos.add(atual);
+    saida.unshift(atual);
+  }
+  return saida;
+}
+
 /** Agrupadores onde um nó pode ficar: nem ele mesmo nem o que está abaixo dele. */
 export function paisPossiveis(raizes: readonly LinhaOrcamento[], noId: string | null): LinhaOrcamento[] {
   const saida: LinhaOrcamento[] = [];

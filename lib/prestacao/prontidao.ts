@@ -36,13 +36,15 @@ export type DadosProntidao = {
   itens: ItemParaProntidao[];
   comprovantes: ComprovanteParaProntidao[];
   atividades: number;
+  /** P3.3: metas do objeto e quantas estão comprovadas por evidência. Sem isso, conta só as atividades. */
+  objeto?: { metas: number; comprovadas: number };
   alteracoesAguardando: number;
   /** Verificações do motor de checagens: sem elas, o item não aparece. Bloqueio aberto impede o envio. */
   verificacoes?: { verificada: boolean; bloqueios: number };
 };
 
 /** Aba onde a pendência se resolve. */
-export type DestinoPendencia = "visao_geral" | "orcamento" | "comprovantes" | "atividades" | "pendencias";
+export type DestinoPendencia = "visao_geral" | "orcamento" | "comprovantes" | "atividades" | "objeto" | "pendencias";
 
 export type Checagem = {
   codigo: string;
@@ -125,9 +127,20 @@ export function avaliarProntidao(dados: DadosProntidao): Prontidao {
   add("vinculo", "Comprovantes ligados ao orçamento", 1, aceitos.length ? 1 - semItem / aceitos.length : 1,
     semItem ? `${plural(semItem, "comprovante aceito está", "comprovantes aceitos estão")} sem item do orçamento.` : "Todos os aceitos estão ligados a um item.", "comprovantes");
 
-  // Objeto.
-  add("objeto", "Atividades do objeto", 1, dados.atividades > 0 ? 1 : 0,
-    dados.atividades > 0 ? `${plural(dados.atividades, "atividade registrada", "atividades registradas")}.` : "Registre as atividades realizadas, com evidências.", "atividades");
+  // Objeto: metas comprovadas por evidência (P3.3) ou, sem as metas, as atividades.
+  if (dados.objeto) {
+    const { metas, comprovadas } = dados.objeto;
+    add("objeto", "Metas comprovadas", 2, metas ? comprovadas / metas : 0,
+      !metas
+        ? "Cadastre as metas do objeto e as evidências que comprovam cada uma."
+        : comprovadas === metas
+          ? `${plural(metas, "meta comprovada", "metas comprovadas")} por evidência.`
+          : `${comprovadas} de ${plural(metas, "meta comprovada", "metas comprovadas")} por evidência. Ligue fotos, listas e registros às metas e às atividades.`,
+      "objeto");
+  } else {
+    add("objeto", "Atividades do objeto", 1, dados.atividades > 0 ? 1 : 0,
+      dados.atividades > 0 ? `${plural(dados.atividades, "atividade registrada", "atividades registradas")}.` : "Registre as atividades realizadas, com evidências.", "atividades");
+  }
 
   // Alterações em aberto.
   add("alteracoes", "Alterações do orçamento", 1, dados.alteracoesAguardando ? 0 : 1,

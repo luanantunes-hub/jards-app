@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { executarChecagens, type EstadoDaPrestacao, type MetaDoEstado } from "../lib/prestacao/checagens";
-import { checarObjeto } from "../lib/prestacao/checagens/checar-objeto";
+import { checarCobertura, checarObjeto } from "../lib/prestacao/checagens/checar-objeto";
+import { ancestraisDoNo } from "../lib/prestacao/orcamento";
+import { avaliarProntidao } from "../lib/prestacao/prontidao";
 import {
+  coberturaDaMeta,
   erroDaMeta,
+  metaDoItem,
   erroDoLocal,
   execucaoTerminou,
   numeroDigitado,
@@ -108,5 +112,63 @@ test("checagens do objeto: sem metas, sem resultado, abaixo do previsto e local 
 
 test("o motor roda a checagem do objeto junto com as outras", () => {
   assert.ok(executarChecagens(base()).some(a => a.codigo === "OBJETO_SEM_METAS"));
-  assert.ok(!executarChecagens(base({ metas: [meta({ realizado: 6 })] })).some(a => a.codigo.startsWith("OBJETO_") || a.codigo.startsWith("META_")));
+  const comEvidencia = base({ metas: [meta({ realizado: 6 })], evidencias: [{ id: "e1", tipo: "foto", nome_arquivo: "a.jpg", url: null, atividade_id: null, meta_id: "m1", local_id: null, capturada_em: null, latitude: null, longitude: null, justificativa: null }] });
+  assert.ok(!executarChecagens(comEvidencia).some(a => a.codigo.startsWith("OBJETO_") || a.codigo.startsWith("META_")));
+});
+
+// ─── P3.3: cobertura por meta e rastreabilidade ─────────────────────────────
+
+const atividade = (id: string, metaId: string | null, status: "realizado" | "nao_realizado" = "realizado") => ({ id, meta_id: metaId, status_realizacao: status });
+const ev = (atividadeId: string | null, metaId: string | null = null) => ({ atividade_id: atividadeId, meta_id: metaId });
+
+test("cobertura da meta: atividades realizadas com evidência e evidências diretas", () => {
+  const atividades = [atividade("a1", "m1"), atividade("a2", "m1"), atividade("a3", "m1", "nao_realizado"), atividade("a4", "outra")];
+  const parcial = coberturaDaMeta({ id: "m1" }, atividades, [ev("a1"), ev("a1"), ev("a4")]);
+  assert.deepEqual(parcial, { evidencias: 2, atividadesRealizadas: 2, atividadesComEvidencia: 1, comprovada: false, texto: "1 de 2 atividades realizadas com evidência" });
+  assert.equal(coberturaDaMeta({ id: "m1" }, atividades, [ev("a1"), ev("a2")]).comprovada, true);
+  assert.deepEqual(coberturaDaMeta({ id: "m2" }, [], [ev(null, "m2"), ev(null, "m2")]), { evidencias: 2, atividadesRealizadas: 0, atividadesComEvidencia: 0, comprovada: true, texto: "2 evidências" });
+  assert.equal(coberturaDaMeta({ id: "m3" }, [], []).texto, "Sem evidência");
+  assert.equal(coberturaDaMeta({ id: "m1" }, atividades, [ev("a1", "m1")]).evidencias, 1, "a evidência da atividade e da meta conta uma vez");
+});
+
+test("a que meta serve a despesa: o agrupador mais próximo acima do item", () => {
+  const nos = [
+    { id: "produto", parent_id: null }, { id: "meta-oficinas", parent_id: "produto" }, { id: "item-1", parent_id: "meta-oficinas" },
+    { id: "item-2", parent_id: "produto" }, { id: "solto", parent_id: null },
+  ];
+  assert.deepEqual(ancestraisDoNo("item-1", nos), ["produto", "meta-oficinas"]);
+  assert.deepEqual(ancestraisDoNo("solto", nos), []);
+  const metas = [{ id: "m-produto", no_id: "produto" }, { id: "m-oficinas", no_id: "meta-oficinas" }];
+  assert.equal(metaDoItem(ancestraisDoNo("item-1", nos), metas)?.id, "m-oficinas", "a mais próxima vence");
+  assert.equal(metaDoItem(ancestraisDoNo("item-2", nos), metas)?.id, "m-produto");
+  assert.equal(metaDoItem(ancestraisDoNo("solto", nos), metas), null);
+  assert.deepEqual(ancestraisDoNo("a", [{ id: "a", parent_id: "b" }, { id: "b", parent_id: "a" }]), ["b"], "ciclo não trava");
+});
+
+test("checagem da cobertura: meta com resultado sem evidência e atividade realizada sem evidência", () => {
+  const estado = base({
+    metas: [meta({ id: "m1", realizado: 4 }), meta({ id: "m2", realizado: null }), meta({ id: "m3", realizado: 2 })],
+    atividades: [
+      { id: "a1", titulo: "Oficina 1", data_realizacao: "2026-09-10", data_inicio: null, data_fim: null, local_id: null, meta_id: "m1", status_realizacao: "realizado" },
+      { id: "a2", titulo: "Oficina 2", data_realizacao: "2026-12-01", data_inicio: null, data_fim: null, local_id: null, meta_id: "m2", status_realizacao: "realizado" },
+      { id: "a3", titulo: "Oficina 3", data_realizacao: "2026-09-12", data_inicio: null, data_fim: null, local_id: null, meta_id: "m3", status_realizacao: "realizado" },
+    ],
+    evidencias: [{ id: "e1", tipo: "foto", nome_arquivo: "a.jpg", url: null, atividade_id: "a3", meta_id: null, local_id: null, capturada_em: null, latitude: null, longitude: null, justificativa: null }],
+  });
+  assert.deepEqual(checarCobertura(estado).map(a => [a.chave, a.severidade]), [
+    ["META_SEM_EVIDENCIA:meta:m1", "bloqueio"],
+    ["META_SEM_EVIDENCIA:meta:m2", "bloqueio"],
+    ["ATIVIDADE_SEM_EVIDENCIA:atividade:a1", "alerta"],
+  ], "m2 tem atividade realizada; a2 ainda não aconteceu (01/12); m3 e a3 têm evidência");
+  assert.equal(checarCobertura({ ...estado, regime: null })[0].severidade, "alerta");
+});
+
+test("prontidão: metas comprovadas pesam no lugar das atividades", () => {
+  const dados = { regime: null, identificadorOficial: null, prazo: "2026-12-31", itens: [], comprovantes: [], atividades: 3, alteracoesAguardando: 0 };
+  const sem = avaliarProntidao(dados).checagens.find(c => c.codigo === "objeto")!;
+  assert.equal(sem.titulo, "Atividades do objeto");
+  const parcial = avaliarProntidao({ ...dados, objeto: { metas: 4, comprovadas: 1 } }).checagens.find(c => c.codigo === "objeto")!;
+  assert.deepEqual([parcial.titulo, parcial.progresso, parcial.destino, parcial.peso], ["Metas comprovadas", 0.25, "objeto", 2]);
+  assert.match(parcial.detalhe, /1 de 4 metas comprovadas/);
+  assert.equal(avaliarProntidao({ ...dados, objeto: { metas: 0, comprovadas: 0 } }).checagens.find(c => c.codigo === "objeto")!.progresso, 0);
 });

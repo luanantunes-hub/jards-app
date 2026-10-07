@@ -10,6 +10,7 @@ function destino(prestacaoId: string, para: DestinoPendencia, codigo: string): s
     case "orcamento": return `/prestacoes/${prestacaoId}/orcamento`;
     case "comprovantes": return `/prestacoes/${prestacaoId}/comprovantes`;
     case "atividades": return `/prestacoes/${prestacaoId}/atividades`;
+    case "objeto": return `/prestacoes/${prestacaoId}/objeto`;
     case "pendencias": return `/prestacoes/${prestacaoId}/pendencias`;
     case "visao_geral": return codigo === "prazo" ? "#prazo" : "#dados-oficiais";
   }

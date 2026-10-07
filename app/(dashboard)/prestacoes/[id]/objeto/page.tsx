@@ -15,7 +15,8 @@ import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { checarEvidencias } from "@/lib/prestacao/checagens/checar-evidencias";
 import type { Achado } from "@/lib/prestacao/checagens";
 import { TIPOS_NO } from "@/lib/prestacao/orcamento";
-import { periodoDoLocal, quantidade, resumoDaMeta, rotuloDoLocal, STATUS_LOCAL, type ResumoDaMeta, type SituacaoDaMeta } from "@/lib/prestacao/objeto";
+import { coberturaDaMeta, metaDoItem, periodoDoLocal, quantidade, resumoDaMeta, rotuloDoLocal, STATUS_LOCAL, type CoberturaDaMeta, type ResumoDaMeta, type SituacaoDaMeta } from "@/lib/prestacao/objeto";
+import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
 import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
@@ -61,6 +62,23 @@ function Atividades({ resumo }: { resumo: ResumoDaMeta }) {
   );
 }
 
+function Cobertura({ cobertura }: { cobertura: CoberturaDaMeta }) {
+  if (cobertura.comprovada) return <span className="text-[#2E8932]">{cobertura.texto}</span>;
+  return <span className={cobertura.evidencias === 0 ? "text-black/35" : "text-[#B07A14]"}>{cobertura.texto}</span>;
+}
+
+/** O que a meta custou: despesas dos itens abaixo do agrupador dela; sem agrupador, não há como saber. */
+function Despesas({ meta, soma }: { meta: PrestacaoMeta; soma: { valor: number; quantas: number } | undefined }) {
+  if (!meta.no_id) return <span className="text-black/30" title="Ligue a meta a um agrupador do orçamento para ver as despesas dela">—</span>;
+  if (!soma) return <span className="text-black/30">Nenhuma</span>;
+  return (
+    <span className="tabular-nums">
+      {soma.valor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+      <span className="text-black/40"> · {soma.quantas} {soma.quantas === 1 ? "despesa" : "despesas"}</span>
+    </span>
+  );
+}
+
 export default function ObjetoPage() {
   const { id } = useParams<{ id: string }>();
   const supabase = useMemo(() => createClient(), []);
@@ -76,6 +94,8 @@ export default function ObjetoPage() {
   const [execucao, setExecucao] = useState<Execucao>({ data_inicio_execucao: null, data_fim_execucao: null });
   const [editandoEvidencia, setEditandoEvidencia] = useState<PrestacaoEvidencia | "nova" | null>(null);
   const organizationId = usePrestacaoOrganizacao(id);
+  const [despesas, setDespesas] = useState<{ id: string; no_id: string | null; valor_extraido: number | null; status: string }[]>([]);
+  const { itens } = useItensDoOrcamento(id);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [editandoMeta, setEditandoMeta] = useState<PrestacaoMeta | "nova" | null>(null);
@@ -85,7 +105,7 @@ export default function ObjetoPage() {
   const buscar = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas do objeto ainda não estão no tipo Database
     const db = supabase as any;
-    const [m, l, a, n, e, p] = await Promise.all([
+    const [m, l, a, n, e, p, c] = await Promise.all([
       db.from("prestacao_metas").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
       db.from("prestacao_locais").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
       db.from("prestacao_atividades").select("id, titulo, data_realizacao, data_inicio, data_fim, meta_id, local_id, status_realizacao, publico_atingido").eq("prestacao_id", id).order("data_realizacao"),
@@ -93,8 +113,10 @@ export default function ObjetoPage() {
         .eq("prestacao_id", id).neq("tipo", "item").eq("versao.ativa", true).order("ordem"),
       db.from("prestacao_evidencias").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
       db.from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
+      // Despesas (P3.3): a meta a que cada uma serve vem do item, pelo agrupador da meta.
+      db.from("prestacao_comprovantes").select("id, no_id, valor_extraido, status, tipo").eq("prestacao_id", id),
     ]);
-    const falha = m.error ?? l.error ?? a.error ?? n.error ?? e.error ?? p.error;
+    const falha = m.error ?? l.error ?? a.error ?? n.error ?? e.error ?? p.error ?? c.error;
     return {
       erro: falha ? mensagemErroPrestacao(falha, "Não foi possível carregar o objeto") : "",
       metas: ((m.data ?? []) as PrestacaoMeta[]).map(x => ({ ...x, previsto: Number(x.previsto), realizado: x.realizado === null ? null : Number(x.realizado) })),
@@ -102,6 +124,7 @@ export default function ObjetoPage() {
       atividades: (a.data ?? []) as AtividadeDoObjeto[],
       evidencias: (e.data ?? []) as PrestacaoEvidencia[],
       execucao: { data_inicio_execucao: p.data?.data_inicio_execucao ?? null, data_fim_execucao: p.data?.data_fim_execucao ?? null } as Execucao,
+      despesas: (c.data ?? []) as { id: string; no_id: string | null; valor_extraido: number | null; status: string }[],
       agrupadores: ((n.data ?? []) as { id: string; nome: string; tipo: string }[]).map(no => ({
         id: no.id,
         rotulo: `${TIPOS_NO.find(t => t.id === no.tipo)?.rotulo ?? no.tipo} · ${no.nome}`,
@@ -117,6 +140,7 @@ export default function ObjetoPage() {
     setAgrupadores(dados.agrupadores);
     setEvidencias(dados.evidencias);
     setExecucao(dados.execucao);
+    setDespesas(dados.despesas);
     setCarregando(false);
     // Link das verificações: ?meta=<id> ou ?local=<id> abre o cadastro, só na primeira leitura.
     if (!abriuDoLink.current) {
@@ -140,6 +164,21 @@ export default function ObjetoPage() {
   }, [aplicar, buscar]);
 
   const resumos = useMemo(() => new Map(metas.map(m => [m.id, resumoDaMeta(m, atividades)])), [metas, atividades]);
+  const coberturas = useMemo(() => new Map(metas.map(m => [m.id, coberturaDaMeta(m, atividades, evidencias)])), [metas, atividades, evidencias]);
+  // Despesas que servem a cada meta: as do item que fica abaixo do agrupador dela (rejeitadas fora).
+  const despesasPorMeta = useMemo(() => {
+    const porItem = new Map(itens.map(i => [i.id, i]));
+    const soma = new Map<string, { valor: number; quantas: number }>();
+    for (const d of despesas) {
+      if (d.status === "rejeitado" || !d.no_id) continue;
+      const item = porItem.get(d.no_id);
+      const meta = item ? metaDoItem(item.ancestrais, metas) : null;
+      if (!meta) continue;
+      const atual = soma.get(meta.id) ?? { valor: 0, quantas: 0 };
+      soma.set(meta.id, { valor: atual.valor + (Number(d.valor_extraido) || 0), quantas: atual.quantas + 1 });
+    }
+    return soma;
+  }, [despesas, itens, metas]);
   const atividadesPorLocal = useMemo(() => {
     const contagem = new Map<string, number>();
     for (const a of atividades) if (a.local_id) contagem.set(a.local_id, (contagem.get(a.local_id) ?? 0) + 1);
@@ -298,6 +337,8 @@ export default function ObjetoPage() {
                   <th className={`${CABECALHO} whitespace-nowrap text-right`}>Realizado</th>
                   <th className={`${CABECALHO} whitespace-nowrap`}>Situação</th>
                   <th className={`${CABECALHO} whitespace-nowrap`}>Atividades</th>
+                  <th className={`${CABECALHO} whitespace-nowrap`}>Evidências</th>
+                  <th className={`${CABECALHO} whitespace-nowrap text-right`}>Despesas</th>
                   {podeEditar && <th className={CABECALHO}><span className="sr-only">Ações</span></th>}
                 </tr>
               </thead>
@@ -317,6 +358,8 @@ export default function ObjetoPage() {
                         {resumo.faltaJustificativa && <p className="mt-1 whitespace-nowrap text-[0.625rem] text-[#B07A14]">Falta a justificativa</p>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] text-black/60"><Atividades resumo={resumo} /></td>
+                      <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem]"><Cobertura cobertura={coberturas.get(meta.id)!} /></td>
+                      <td className="whitespace-nowrap px-4 py-3 text-right text-[0.6875rem] text-black/60"><Despesas meta={meta} soma={despesasPorMeta.get(meta.id)} /></td>
                       {podeEditar && (
                         <td className="whitespace-nowrap px-2 py-2 text-right">
                           <button type="button" onClick={() => setEditandoMeta(meta)} aria-label={`Editar a meta ${meta.descricao}`} className={botaoIcone}><Pencil size={13} /></button>
@@ -346,6 +389,8 @@ export default function ObjetoPage() {
                       <dt className="text-black/40">Previsto</dt><dd className="tabular-nums text-black/70">{quantidade(meta.previsto, meta.unidade)}</dd>
                       <dt className="text-black/40">Realizado</dt><dd className="text-black/70"><Resultado meta={meta} resumo={resumo} /></dd>
                       <dt className="text-black/40">Atividades</dt><dd className="text-black/60"><Atividades resumo={resumo} /></dd>
+                      <dt className="text-black/40">Evidências</dt><dd><Cobertura cobertura={coberturas.get(meta.id)!} /></dd>
+                      <dt className="text-black/40">Despesas</dt><dd className="text-black/60"><Despesas meta={meta} soma={despesasPorMeta.get(meta.id)} /></dd>
                     </dl>
                     <div className="flex flex-wrap items-center gap-2">
                       <Etiqueta {...SITUACAO[resumo.situacao]} />

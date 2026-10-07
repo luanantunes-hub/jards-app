@@ -30,7 +30,8 @@ import { lerValor } from "@/lib/prestacao/orcamento";
 import { alertasDosPagamentos } from "@/lib/prestacao/pagamentos";
 import type { PagamentosRegime } from "@/lib/prestacao/regimes/tipos";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
-import type { PrestacaoComprovante, PrestacaoFornecedor, PrestacaoPagamento, TipoComprovante } from "@/lib/supabase/types";
+import type { PrestacaoComprovante, PrestacaoFornecedor, PrestacaoMeta, PrestacaoPagamento, TipoComprovante } from "@/lib/supabase/types";
+import { metaDoItem } from "@/lib/prestacao/objeto";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
 const CAMPO = "w-full rounded border border-black/[.12] px-3 py-2 text-[0.8125rem] outline-none transition focus:border-[#7259B5] focus-visible:ring-2 focus-visible:ring-[#7259B5]/20 disabled:bg-black/[.02] disabled:text-black/50";
@@ -67,10 +68,12 @@ export function ListaAlertasDespesa({ alertas }: { alertas: readonly AlertaDespe
  * retenções e o que precisa de justificativa. Os alertas mudam enquanto a
  * pessoa preenche; salvar não depende deles.
  */
-export function DespesaModal({ comprovante, tipos, itens, fornecedores, documentosDe, outrasChaves, pagamentos, regimePagamentos, regime = null, onPagamentosMudaram, podeEditar, onClose, onSalvo }: {
+export function DespesaModal({ comprovante, tipos, itens, metas = [], fornecedores, documentosDe, outrasChaves, pagamentos, regimePagamentos, regime = null, onPagamentosMudaram, podeEditar, onClose, onSalvo }: {
   comprovante: PrestacaoComprovante;
   tipos: { value: TipoComprovante; label: string }[];
   itens: readonly ItemDoOrcamento[];
+  /** Metas do objeto (P3.3): a despesa mostra a meta a que serve, pelo agrupador do item. */
+  metas?: readonly Pick<PrestacaoMeta, "id" | "descricao" | "no_id">[];
   fornecedores: readonly PrestacaoFornecedor[];
   documentosDe: (fornecedorId: string | null | undefined) => DocumentoResumido[];
   outrasChaves: readonly string[];
@@ -109,6 +112,7 @@ export function DespesaModal({ comprovante, tipos, itens, fornecedores, document
 
   const fornecedor = fornecedores.find(f => f.id === fornecedorId) ?? null;
   const item = itens.find(i => i.id === itemId) ?? null;
+  const metaDaDespesa = item ? metaDoItem(item.ancestrais, metas) : null;
   const despesa: DespesaParaChecar = {
     tipo,
     data_doc: dataDoc || null,
@@ -314,6 +318,9 @@ export function DespesaModal({ comprovante, tipos, itens, fornecedores, document
                   ...itens.map(i => ({ value: i.id, label: i.caminho.length ? `${i.caminho[i.caminho.length - 1]} › ${i.nome}` : i.nome })),
                 ]}
               />
+              {metaDaDespesa && (
+                <p className="mt-1.5 text-[0.625rem] text-black/55">Serve à meta: {metaDaDespesa.descricao}</p>
+              )}
               {item && (
                 <p className="mt-1.5 text-[0.625rem] text-black/40">
                   {item.cnaes.length

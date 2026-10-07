@@ -129,3 +129,49 @@ export function numeroDigitado(texto: string): number | null {
     : /^\d{1,3}(\.\d{3})+$/.test(limpo) ? limpo.replace(/\./g, "") : limpo;
   return /^-?\d+(\.\d+)?$/.test(normal) ? Number(normal) : NaN;
 }
+
+// ─── Cobertura por meta e rastreabilidade (P3.3) ────────────────────────────
+
+type AtividadeDaCobertura = Pick<PrestacaoAtividade, "id" | "meta_id" | "status_realizacao">;
+type EvidenciaDaCobertura = { atividade_id: string | null; meta_id: string | null };
+
+export type CoberturaDaMeta = {
+  /** Evidências da meta: as ligadas a ela e as das atividades dela, sem contar duas vezes. */
+  evidencias: number;
+  atividadesRealizadas: number;
+  atividadesComEvidencia: number;
+  /** Tem evidência e, quando há atividades realizadas, todas têm. */
+  comprovada: boolean;
+  texto: string;
+};
+
+/** "Meta 3: 4 de 6 oficinas com evidência": o que comprova a meta. */
+export function coberturaDaMeta(
+  meta: Pick<PrestacaoMeta, "id">,
+  atividades: readonly AtividadeDaCobertura[],
+  evidencias: readonly EvidenciaDaCobertura[],
+): CoberturaDaMeta {
+  const daMeta = atividades.filter(a => a.meta_id === meta.id);
+  const idsDaMeta = new Set(daMeta.map(a => a.id));
+  const evidenciasDaMeta = evidencias.filter(e => e.meta_id === meta.id || (e.atividade_id !== null && idsDaMeta.has(e.atividade_id)));
+  const realizadas = daMeta.filter(a => a.status_realizacao === "realizado");
+  const comEvidencia = realizadas.filter(a => evidencias.some(e => e.atividade_id === a.id));
+  const n = evidenciasDaMeta.length;
+  const comprovada = n > 0 && comEvidencia.length === realizadas.length;
+  const texto = realizadas.length > 0
+    ? `${comEvidencia.length} de ${realizadas.length} ${realizadas.length === 1 ? "atividade realizada" : "atividades realizadas"} com evidência`
+    : n > 0 ? `${n} ${n === 1 ? "evidência" : "evidências"}` : "Sem evidência";
+  return { evidencias: n, atividadesRealizadas: realizadas.length, atividadesComEvidencia: comEvidencia.length, comprovada, texto };
+}
+
+/**
+ * A meta a que serve um item do orçamento: a ligada ao agrupador mais próximo
+ * acima dele (meta, produto ou etapa). É por aí que a despesa chega à meta.
+ */
+export function metaDoItem<M extends Pick<PrestacaoMeta, "no_id">>(ancestrais: readonly string[], metas: readonly M[]): M | null {
+  for (let i = ancestrais.length - 1; i >= 0; i--) {
+    const meta = metas.find(m => m.no_id === ancestrais[i]);
+    if (meta) return meta;
+  }
+  return null;
+}
