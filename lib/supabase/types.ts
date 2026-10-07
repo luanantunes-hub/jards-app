@@ -899,6 +899,35 @@ export interface PrestacaoPeca {
   updated_at: string;
 }
 
+/** Marcação de um item do checklist de envio: pronto ou não se aplica (P4.1). */
+export interface PrestacaoEnvioMarcacao {
+  id: string;
+  prestacao_id: string;
+  etapa: "parcial" | "final";
+  tipo: "documento" | "condicao";
+  /** Código do documento ou da condição no regime. */
+  codigo: string;
+  situacao: "pronto" | "nao_se_aplica";
+  justificativa: string | null;
+  marcado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Arquivo anexado a um documento do checklist, na pasta envio da prestação (P4.1). */
+export interface PrestacaoEnvioArquivo {
+  id: string;
+  prestacao_id: string;
+  etapa: "parcial" | "final";
+  codigo: string;
+  storage_path: string;
+  nome_arquivo: string;
+  mime_type: string | null;
+  tamanho_bytes: number | null;
+  criado_por: string | null;
+  created_at: string;
+}
+
 /** Local de realização e a situação que o relatório informa (P3.1). */
 export interface PrestacaoLocal {
   id: string;

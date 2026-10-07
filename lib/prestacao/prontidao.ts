@@ -41,10 +41,12 @@ export type DadosProntidao = {
   alteracoesAguardando: number;
   /** Verificações do motor de checagens: sem elas, o item não aparece. Bloqueio aberto impede o envio. */
   verificacoes?: { verificada: boolean; bloqueios: number };
+  /** P4.1: o checklist de envio do regime (resumo de checklistDeEnvio). Sem ele, o item não aparece. */
+  envio?: { total: number; resolvidos: number; obrigatoriosPendentes: number };
 };
 
 /** Aba onde a pendência se resolve. */
-export type DestinoPendencia = "visao_geral" | "orcamento" | "comprovantes" | "atividades" | "objeto" | "pendencias";
+export type DestinoPendencia = "visao_geral" | "orcamento" | "comprovantes" | "atividades" | "objeto" | "pendencias" | "envio";
 
 export type Checagem = {
   codigo: string;
@@ -156,6 +158,17 @@ export function avaliarProntidao(dados: DadosProntidao): Prontidao {
           ? `${plural(bloqueios, "bloqueio aberto impede", "bloqueios abertos impedem")} o envio: resolva ou peça a dispensa ao revisor.`
           : "Nenhum bloqueio aberto.",
       "pendencias");
+  }
+
+  // Checklist de envio (P4.1): documentos e condições do sistema oficial.
+  if (dados.envio && dados.envio.total > 0) {
+    const { total, resolvidos, obrigatoriosPendentes } = dados.envio;
+    const faltam = total - resolvidos;
+    add("envio", "Checklist de envio", 2, resolvidos / total,
+      !faltam
+        ? `${plural(total, "item pronto", "itens prontos")} no checklist do regime.`
+        : `${resolvidos} de ${total} itens prontos${obrigatoriosPendentes ? `; ${plural(obrigatoriosPendentes, "obrigatório falta", "obrigatórios faltam")}` : ""}.`,
+      "envio");
   }
 
   const pesoTotal = checagens.reduce((soma, c) => soma + c.peso, 0);

@@ -77,6 +77,7 @@ test("a leitura aceita o que a montagem produz", () => {
     { tipo: "evidencias" as const },
     { tipo: "bens" as const },
     { tipo: "pecas" as const },
+    { tipo: "envio" as const },
     { tipo: "atividade" as const, atividadeId: ATIVIDADE },
   ]) {
     const caminho = montarCaminhoPrestacao({ organizationId: ORG, prestacaoId: PRESTACAO, pasta, nomeOriginal: "a.pdf" });
