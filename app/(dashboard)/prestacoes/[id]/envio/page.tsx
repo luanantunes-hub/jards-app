@@ -365,10 +365,17 @@ export default function EnvioPage() {
             })}
           </div>
         )}
-        {dados?.regime?.sistemaOficial === "Salic" && (
-          <Link href={`/prestacoes/${id}/envio/salic`} className={BOTAO} style={BORDA}>
-            <FileSpreadsheet size={12} aria-hidden /> Espelho do Salic
-          </Link>
+        {dados?.regime && (
+          <div className="flex flex-wrap gap-2">
+            <Link href={`/prestacoes/${id}/envio/objeto`} className={BOTAO} style={BORDA}>
+              <FileText size={12} aria-hidden /> Relatório do objeto
+            </Link>
+            {dados.regime.sistemaOficial === "Salic" && (
+              <Link href={`/prestacoes/${id}/envio/salic`} className={BOTAO} style={BORDA}>
+                <FileSpreadsheet size={12} aria-hidden /> Espelho do Salic
+              </Link>
+            )}
+          </div>
         )}
       </div>
 

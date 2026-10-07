@@ -62,21 +62,21 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .select("id, data, natureza, valor, historico, numero_documento, numero_normalizado, categoria")
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<AlteracaoDoEstado>(() => db.from("prestacao_alteracoes")
-      .select("id, numero, status, solicitada_em").eq("prestacao_id", prestacaoId).order("id")),
+      .select("id, numero, status, solicitada_em, tipo, justificativa, decidida_em").eq("prestacao_id", prestacaoId).order("id")),
     todas<MetaDoEstado>(() => db.from("prestacao_metas")
       .select("id, descricao, unidade, previsto, realizado, justificativa").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<LocalDoEstado>(() => db.from("prestacao_locais")
-      .select("id, pais, uf, municipio, status, latitude, longitude").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+      .select("id, pais, uf, municipio, status, latitude, longitude, espaco, inicio, fim, justificativa").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<AtividadeDoEstado>(() => db.from("prestacao_atividades")
-      .select("id, titulo, data_realizacao, data_inicio, data_fim, local_id, meta_id, status_realizacao").eq("prestacao_id", prestacaoId).order("id")),
+      .select("id, titulo, data_realizacao, data_inicio, data_fim, local_id, meta_id, status_realizacao, descricao, democratizacao_descricao, acessibilidade_descricao, justificativa_nao_realizacao").eq("prestacao_id", prestacaoId).order("id")),
     todas<EvidenciaParaChecar>(() => db.from("prestacao_evidencias")
-      .select("id, tipo, requisitos, nome_arquivo, url, atividade_id, meta_id, local_id, capturada_em, latitude, longitude, justificativa")
+      .select("id, tipo, requisitos, nome_arquivo, url, atividade_id, meta_id, local_id, capturada_em, latitude, longitude, justificativa, descricao")
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<LinhaDistribuicao>(() => db.from("prestacao_distribuicao")
       .select("id, produto, categoria, quantidade, quantidade_meia, preco, quantidade_realizada, beneficiario, beneficiario_documento, justificativa")
       .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<BemParaChecar>(() => db.from("prestacao_bens")
-      .select("id, no_id, despesa_id, tipo, descricao, valor, registro_imovel, cotacoes, destinacao, beneficiario, doacao_storage_path, aceite_storage_path, justificativa")
+      .select("id, no_id, despesa_id, tipo, descricao, valor, registro_imovel, cotacoes, destinacao, beneficiario, doacao_storage_path, aceite_storage_path, justificativa, quantidade, beneficiario_documento")
       .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<PecaParaChecar>(() => db.from("prestacao_pecas")
       .select("id, tipo, titulo, veiculacao_inicio, veiculacao_fim, marcas, aprovacao_status, aprovacao_enviada_em, aprovacao_decidida_em, storage_path, url, justificativa")

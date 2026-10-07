@@ -12,7 +12,7 @@ import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
 import type { BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
-import type { PrestacaoAtividade, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
+import type { PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
 export const SEVERIDADES = ["bloqueio", "alerta", "justificativa", "info"] as const;
@@ -182,12 +182,13 @@ export type DatasDaPrestacao = {
   data_fim_execucao?: string | null;
 };
 
-export type AlteracaoDoEstado = { id: string; numero: number; status: string; solicitada_em: string | null };
+export type AlteracaoDoEstado = { id: string; numero: number; status: string; solicitada_em: string | null; tipo?: string; justificativa?: string | null; decidida_em?: string | null };
 
 export type MetaDoEstado = Pick<PrestacaoMeta, "id" | "descricao" | "unidade" | "previsto" | "realizado" | "justificativa">;
-export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "status"> & Partial<Pick<PrestacaoLocal, "latitude" | "longitude">>;
+export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "status">
+  & Partial<Pick<PrestacaoLocal, "latitude" | "longitude" | "espaco" | "inicio" | "fim" | "justificativa">>;
 export type AtividadeDoEstado = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "local_id">
-  & Partial<Pick<PrestacaoAtividade, "meta_id" | "status_realizacao">>;
+  & Partial<Pick<PrestacaoAtividade, "meta_id" | "status_realizacao" | "descricao" | "democratizacao_descricao" | "acessibilidade_descricao" | "justificativa_nao_realizacao">>;
 
 export type EstadoDaPrestacao = {
   regime: RegimeNormativo | null;
@@ -212,7 +213,7 @@ export type EstadoDaPrestacao = {
   distribuicao?: readonly LinhaDistribuicao[];
   valorAprovado?: number | null;
   /** P3.5: bens permanentes; os itens de bem vêm de `nos` (bem_permanente). */
-  bens?: readonly BemParaChecar[];
+  bens?: readonly (BemParaChecar & Partial<Pick<PrestacaoBem, "quantidade" | "beneficiario_documento">>)[];
   /** P3.6: peças de divulgação e os períodos de defeso eleitoral do calendário regulatório. */
   pecas?: readonly PecaParaChecar[];
   defesos?: readonly DefesoEleitoral[];
