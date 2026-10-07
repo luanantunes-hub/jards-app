@@ -112,7 +112,7 @@ export function somarDias(dia: string, dias: number): string {
 }
 
 export type EvidenciaParaChecar = Pick<PrestacaoEvidencia, "id" | "tipo" | "nome_arquivo" | "url" | "atividade_id" | "meta_id" | "local_id" | "capturada_em" | "latitude" | "longitude" | "justificativa">
-  & Partial<Pick<PrestacaoEvidencia, "requisitos">>;
+  & Partial<Pick<PrestacaoEvidencia, "requisitos" | "descricao">>;
 
 /** Nome curto da evidência para mensagens. */
 export const nomeDaEvidencia = (e: Pick<PrestacaoEvidencia, "tipo" | "nome_arquivo" | "url">) =>
