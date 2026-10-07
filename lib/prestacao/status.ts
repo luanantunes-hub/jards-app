@@ -75,10 +75,14 @@ const ERROS: Record<string, string> = {
   prestacao_locais_brasil: "No Brasil, informe a UF e o município.",
   prestacao_locais_periodo: "O fim vem antes do início.",
   prestacao_atividades_justificativa: "Explique por que a atividade não foi realizada.",
+  // Evidências (P3.2)
+  atividade_de_outra_prestacao: "Escolha uma atividade desta prestação.",
+  prestacao_evidencias_arquivo_ou_link: "A evidência precisa de um arquivo ou de um link.",
   // Extrato (P2.1)
   conta_inexistente: "Conta bancária não encontrada ou sem acesso.",
   extrato_invalido: "O arquivo não tem lançamentos que dê para importar (ou passa de 5 mil linhas).",
-  caminho_invalido: "O arquivo do extrato precisa ser enviado pela própria tela.",
+  // Extrato e evidências (P3.2): o arquivo fora da pasta dele na prestação.
+  caminho_invalido: "O arquivo precisa ser enviado pela própria tela, na pasta desta prestação.",
   extrato_ja_importado: "Esse arquivo já foi importado nesta conta.",
   extrato_sem_novos: "Todos os lançamentos desse arquivo já estavam importados nesta conta.",
   // Despesas (P2.4)

@@ -1,17 +1,22 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { Plus, Upload, Image, Trash2, X, MapPin, Users, CalendarDays, ChevronDown, ChevronUp, Briefcase, HandHeart, Accessibility } from "lucide-react";
+import { Plus, Trash2, MapPin, Users, CalendarDays, ChevronDown, ChevronUp, Briefcase, HandHeart, Accessibility } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { PrestacaoAtividade, PrestacaoAtividadeEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
+import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
+import { EvidenciaModal } from "@/components/prestacao/objeto/EvidenciaModal";
+import { ListaEvidencias } from "@/components/prestacao/objeto/ListaEvidencias";
+import { checarEvidencias } from "@/lib/prestacao/checagens/checar-evidencias";
+import type { Achado } from "@/lib/prestacao/checagens";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { rotuloDoLocal } from "@/lib/prestacao/objeto";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
-import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
-type AtividadeComEvidencias = PrestacaoAtividade & { evidencias: PrestacaoAtividadeEvidencia[] };
+// Evidências da tabela do objeto (P3.2), ligadas à atividade.
+type AtividadeComEvidencias = PrestacaoAtividade & { evidencias: PrestacaoEvidencia[] };
+type LocalDaAtividade = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "espaco" | "status" | "latitude" | "longitude">;
 
 const fmtDate = (d: string) =>
   new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
@@ -42,20 +47,20 @@ const EMPTY_FORM: FormState = {
 
 export default function AtividadesPage() {
   const { id } = useParams<{ id: string }>();
-  const supabase = createClient();
-  const fileRef = useRef<HTMLInputElement>(null);
+  const supabase = useMemo(() => createClient(), []);
   const organizationId = usePrestacaoOrganizacao(id);
   const { confirmDelete } = useDeleteConfirm();
   const [erro, setErro] = useState("");
 
   const [atividades, setAtividades] = useState<AtividadeComEvidencias[]>([]);
   const [metas, setMetas] = useState<Pick<PrestacaoMeta, "id" | "descricao">[]>([]);
-  const [locais, setLocais] = useState<Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "espaco">[]>([]);
+  const [locais, setLocais] = useState<LocalDaAtividade[]>([]);
+  const [execucao, setExecucao] = useState<{ data_inicio_execucao: string | null; data_fim_execucao: string | null }>({ data_inicio_execucao: null, data_fim_execucao: null });
+  const [evidenciaAberta, setEvidenciaAberta] = useState<{ evidencia: PrestacaoEvidencia | null; atividade: AtividadeComEvidencias } | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
 
   const fetchAll = useCallback(async () => {
     const { data: ats } = await (supabase as any)
@@ -65,25 +70,29 @@ export default function AtividadesPage() {
       .order("data_realizacao", { ascending: true });
 
     const { data: evs } = await (supabase as any)
-      .from("prestacao_atividade_evidencias")
+      .from("prestacao_evidencias")
       .select("*")
-      .in("atividade_id", (ats ?? []).map((a: PrestacaoAtividade) => a.id));
+      .eq("prestacao_id", id)
+      .not("atividade_id", "is", null)
+      .order("created_at");
 
-    const evMap: Record<string, PrestacaoAtividadeEvidencia[]> = {};
-    for (const e of (evs ?? []) as PrestacaoAtividadeEvidencia[]) {
-      evMap[e.atividade_id] = [...(evMap[e.atividade_id] ?? []), e];
+    const evMap: Record<string, PrestacaoEvidencia[]> = {};
+    for (const e of (evs ?? []) as PrestacaoEvidencia[]) {
+      if (e.atividade_id) evMap[e.atividade_id] = [...(evMap[e.atividade_id] ?? []), e];
     }
 
     setAtividades(
       ((ats ?? []) as PrestacaoAtividade[]).map(a => ({ ...a, evidencias: evMap[a.id] ?? [] }))
     );
-    // Metas e locais do objeto (P3.1), para ligar a atividade.
-    const [{ data: ms }, { data: ls }] = await Promise.all([
+    // Metas e locais do objeto (P3.1), para ligar a atividade; datas da execução para conferir as fotos.
+    const [{ data: ms }, { data: ls }, { data: prest }] = await Promise.all([
       (supabase as any).from("prestacao_metas").select("id, descricao").eq("prestacao_id", id).order("ordem").order("created_at"),
-      (supabase as any).from("prestacao_locais").select("id, pais, uf, municipio, espaco").eq("prestacao_id", id).order("ordem").order("created_at"),
+      (supabase as any).from("prestacao_locais").select("id, pais, uf, municipio, espaco, status, latitude, longitude").eq("prestacao_id", id).order("ordem").order("created_at"),
+      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
     ]);
     setMetas(ms ?? []);
     setLocais(ls ?? []);
+    setExecucao({ data_inicio_execucao: prest?.data_inicio_execucao ?? null, data_fim_execucao: prest?.data_fim_execucao ?? null });
     setLoading(false);
   }, [id, supabase]);
 
@@ -140,66 +149,43 @@ export default function AtividadesPage() {
     confirmDelete({
       title: "Excluir atividade?",
       description: at.evidencias.length > 0
-        ? `"${at.titulo}" e ${at.evidencias.length} evidência${at.evidencias.length > 1 ? "s" : ""} serão apagadas.`
+        ? `"${at.titulo}" será apagada. ${at.evidencias.length === 1 ? "A evidência fica" : `As ${at.evidencias.length} evidências ficam`} na aba Objeto, sem atividade.`
         : `"${at.titulo}" será apagada.`,
       onConfirm: async () => {
         const { error } = await (supabase as any).from("prestacao_atividades").delete().eq("id", atId);
-        if (error) throw new Error(error.message);
-        const caminhos = at.evidencias.map(ev => ev.storage_path);
-        if (caminhos.length > 0) await supabase.storage.from("documentos").remove(caminhos);
+        if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir a atividade"));
         fetchAll();
       },
     });
   }
 
-  async function uploadEvidencia(atId: string, file: File) {
-    if (!organizationId) return;
-    setUploadingFor(atId);
-    const path = montarCaminhoPrestacao({
-      organizationId,
-      prestacaoId: id,
-      pasta: { tipo: "atividade", atividadeId: atId },
-      nomeOriginal: file.name,
-    });
-    setErro("");
-    const { error } = await supabase.storage.from("documentos").upload(path, file, { upsert: false });
-    if (error) {
-      setErro(`Não foi possível enviar a evidência: ${error.message}`);
-      setUploadingFor(null);
-      return;
-    }
-    const { error: linhaErro } = await (supabase as any).from("prestacao_atividade_evidencias").insert({
-      atividade_id: atId,
-      nome_arquivo: file.name,
-      storage_path: path,
-      tipo: file.type.startsWith("video") ? "video" : "foto",
-    });
-    if (linhaErro) {
-      await supabase.storage.from("documentos").remove([path]);
-      setErro(`Não foi possível registrar a evidência: ${linhaErro.message}`);
-    }
-    fetchAll();
-    setUploadingFor(null);
-  }
-
-  function excluirEvidencia(ev: PrestacaoAtividadeEvidencia) {
+  function excluirEvidencia(ev: PrestacaoEvidencia) {
     confirmDelete({
       title: "Excluir evidência?",
-      description: `"${ev.nome_arquivo}" será apagada.`,
+      description: `"${ev.nome_arquivo || ev.url || "Evidência"}" será apagada.`,
       onConfirm: async () => {
-        const { error } = await (supabase as any).from("prestacao_atividade_evidencias").delete().eq("id", ev.id);
-        if (error) throw new Error(error.message);
-        await supabase.storage.from("documentos").remove([ev.storage_path]);
+        const { error } = await (supabase as any).from("prestacao_evidencias").delete().eq("id", ev.id);
+        if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir a evidência"));
+        if (ev.storage_path) await supabase.storage.from("documentos").remove([ev.storage_path]);
         fetchAll();
       },
     });
   }
 
-  async function getImgUrl(path: string) {
-    setErro("");
-    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(path, 300);
-    if (data?.signedUrl) window.open(data.signedUrl, "_blank");
-    else setErro(`Não foi possível abrir o arquivo${error ? `: ${error.message}` : ""}.`);
+  // A conferência das evidências, a mesma do motor.
+  const alertasDasEvidencias = useMemo(() => {
+    const achados = checarEvidencias({
+      regime: null, despesas: [], fornecedores: [], documentosDosFornecedores: [], itens: [], pagamentos: [], lancamentos: [],
+      prestacao: execucao, atividades, locais, evidencias: atividades.flatMap(a => a.evidencias),
+    });
+    const porEvidencia = new Map<string, Achado[]>();
+    for (const a of achados) if (a.entidade.id) porEvidencia.set(a.entidade.id, [...(porEvidencia.get(a.entidade.id) ?? []), a]);
+    return porEvidencia;
+  }, [execucao, atividades, locais]);
+
+  function vinculosDaEvidencia(e: PrestacaoEvidencia): string {
+    const local = e.local_id ? locais.find(l => l.id === e.local_id) : null;
+    return [e.meta_id ? metas.find(m => m.id === e.meta_id)?.descricao : null, local ? rotuloDoLocal(local) : null].filter(Boolean).join(" · ");
   }
 
   function toggle(atId: string) {
@@ -362,52 +348,29 @@ export default function AtividadesPage() {
                           </div>
                         )}
 
-                        {/* Evidências */}
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
+                        {/* Evidências (P3.2): as da tabela do objeto, com a data e o local conferidos */}
+                        <div className="-mx-4 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                          <div className="flex items-center justify-between px-4 pt-3">
                             <p className="text-[0.625rem] font-bold uppercase tracking-wide text-black/30">Evidências</p>
-                            <label className="flex items-center gap-1 px-2.5 py-1 rounded text-[0.625rem] font-semibold cursor-pointer transition hover:opacity-80"
-                              style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
-                              {uploadingFor === at.id
-                                ? <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin" />
-                                : <><Upload size={10} /> Adicionar</>}
-                              <input
-                                type="file"
-                                className="hidden"
-                                accept="image/*,video/*"
-                                disabled={!organizationId || uploadingFor === at.id}
-                                onChange={e => {
-                                  const f = e.target.files?.[0];
-                                  if (f) uploadEvidencia(at.id, f);
-                                  e.target.value = "";
-                                }}
-                              />
-                            </label>
+                            <button
+                              type="button"
+                              onClick={() => setEvidenciaAberta({ evidencia: null, atividade: at })}
+                              disabled={!organizationId}
+                              className="flex h-8 items-center gap-1 rounded border bg-white px-2.5 text-[0.6875rem] text-black/65 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:opacity-40"
+                              style={{ borderColor: "rgba(13,13,13,.14)" }}
+                            >
+                              <Plus size={11} aria-hidden /> Adicionar
+                            </button>
                           </div>
-                          {at.evidencias.length === 0 ? (
-                            <p className="text-[0.6875rem] text-black/25">Nenhuma evidência adicionada.</p>
-                          ) : (
-                            <div className="flex flex-wrap gap-2">
-                              {at.evidencias.map(ev => (
-                                <div key={ev.id} className="relative group">
-                                  <button
-                                    onClick={() => getImgUrl(ev.storage_path)}
-                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded border text-[0.625rem] text-black/50 hover:text-[#7259B5] transition"
-                                    style={{ borderColor: "rgba(13,13,13,.10)" }}
-                                  >
-                                    <Image size={11} /> {ev.nome_arquivo}
-                                  </button>
-                                  <button
-                                    onClick={() => excluirEvidencia(ev)}
-                                    aria-label={`Excluir evidência ${ev.nome_arquivo}`}
-                                    className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#D94E4E] text-white hidden group-hover:flex items-center justify-center"
-                                  >
-                                    <X size={8} />
-                                  </button>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          <ListaEvidencias
+                            evidencias={at.evidencias}
+                            vinculos={vinculosDaEvidencia}
+                            alertas={alertasDasEvidencias}
+                            podeEditar
+                            onEditar={ev => setEvidenciaAberta({ evidencia: ev, atividade: at })}
+                            onExcluir={excluirEvidencia}
+                            vazio={<p className="px-4 py-3 text-[0.6875rem] text-black/30">Nenhuma evidência. Da foto, a data e o local são lidos sozinhos.</p>}
+                          />
                         </div>
                       </div>
                     )}
@@ -417,6 +380,21 @@ export default function AtividadesPage() {
             })}
           </div>
         </div>
+      )}
+
+      {evidenciaAberta && (
+        <EvidenciaModal
+          prestacaoId={id}
+          organizationId={organizationId}
+          evidencia={evidenciaAberta.evidencia}
+          inicial={{ atividade_id: evidenciaAberta.atividade.id, meta_id: evidenciaAberta.atividade.meta_id, local_id: evidenciaAberta.atividade.local_id }}
+          atividades={atividades}
+          metas={metas}
+          locais={locais}
+          execucao={execucao}
+          onClose={() => setEvidenciaAberta(null)}
+          onSaved={() => { setEvidenciaAberta(null); fetchAll(); }}
+        />
       )}
 
       {/* Modal de criação/edição */}

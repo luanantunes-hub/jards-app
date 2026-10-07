@@ -781,6 +781,32 @@ export interface PrestacaoMeta {
   updated_at: string;
 }
 
+/** Evidência do objeto, com a data e a posição lidas do arquivo (P3.2). */
+export interface PrestacaoEvidencia {
+  id: string;
+  prestacao_id: string;
+  tipo: "foto" | "video" | "link" | "lista_presenca" | "declaracao" | "clipping" | "bordero" | "print" | "relatorio_exibicao" | "cpb" | "outro";
+  requisitos: ("alcance_objeto" | "democratizacao" | "acessibilidade" | "distribuicao" | "divulgacao")[];
+  atividade_id: string | null;
+  meta_id: string | null;
+  local_id: string | null;
+  nome_arquivo: string | null;
+  storage_path: string | null;
+  mime_type: string | null;
+  tamanho_bytes: number | null;
+  url: string | null;
+  descricao: string | null;
+  /** Hora da câmera, sem fuso: "2026-09-10T14:32:05". */
+  capturada_em: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  origem_dados: "arquivo" | "informado" | null;
+  justificativa: string | null;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Local de realização e a situação que o relatório informa (P3.1). */
 export interface PrestacaoLocal {
   id: string;
@@ -788,6 +814,10 @@ export interface PrestacaoLocal {
   pais: string;
   uf: string | null;
   municipio: string | null;
+  /** Código do IBGE e coordenadas da sede, quando o município veio da lista (P3.2). */
+  municipio_ibge: string | null;
+  latitude: number | null;
+  longitude: number | null;
   espaco: string | null;
   inicio: string | null;
   fim: string | null;
@@ -2034,7 +2064,7 @@ export interface PrestacaoVerificacao {
   check_codigo: string;
   severidade: "bloqueio" | "alerta" | "justificativa" | "info";
   resultado: "nao_conforme" | "revisar" | "nao_calculavel";
-  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade";
+  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade" | "evidencia";
   entidade_id: string | null;
   mensagem: string;
   fonte: { documento: string; dispositivo: string; citacao?: string; aConfirmar?: boolean; regra?: { codigo: string; descricao: string } } | null;

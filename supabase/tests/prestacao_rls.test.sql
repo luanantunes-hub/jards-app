@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(110);
+select plan(115);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -107,6 +107,9 @@ begin
     ('f0000000-0000-4000-8000-0000000017a0', pa, 'RLS meta', 'oficinas', 6);
   insert into public.prestacao_locais (id, prestacao_id, uf, municipio) values
     ('f0000000-0000-4000-8000-0000000018a0', pa, 'SP', 'São Paulo');
+  insert into public.prestacao_evidencias (id, prestacao_id, tipo, atividade_id, nome_arquivo, storage_path) values
+    ('f0000000-0000-4000-8000-0000000019a0', pa, 'foto', 'f0000000-0000-4000-8000-0000000006a0', 'rls.jpg',
+     org_a || '/prestacoes/' || pa || '/evidencias/f0000000-0000-4000-8000-000000000ef0.jpg');
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -130,7 +133,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_distribuicao', 'prestacao_divulgacao', 'prestacao_alteracoes',
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
     'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
-    'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais'
+    'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias'
   ];
 $$;
 
@@ -206,7 +209,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_pagamentos where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_verificacoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_metas where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_locais where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_locais where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_evidencias where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -231,7 +235,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_pagamentos (despesa_id, forma, data, valor) values ('f0000000-0000-4000-8000-0000000005a0', 'ted', current_date, 5)$c$),
     rls_teste.efeito($c$insert into public.prestacao_verificacoes (prestacao_id, chave, check_codigo, severidade, resultado, entidade_tipo, mensagem) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS:nova', 'X', 'info', 'revisar', 'prestacao', 'x')$c$),
     rls_teste.efeito($c$insert into public.prestacao_metas (prestacao_id, descricao, previsto) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova meta', 1)$c$),
-    rls_teste.efeito($c$insert into public.prestacao_locais (prestacao_id, uf, municipio) values ('f0000000-0000-4000-8000-0000000001a0', 'RJ', 'Rio de Janeiro')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_locais (prestacao_id, uf, municipio) values ('f0000000-0000-4000-8000-0000000001a0', 'RJ', 'Rio de Janeiro')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_evidencias (prestacao_id, tipo, url) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/rls')$c$)
   ]);
 $$;
 
@@ -256,7 +261,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_pagamentos set observacao = observacao where id = 'f0000000-0000-4000-8000-0000000015a0'$c$),
     rls_teste.efeito($c$update public.prestacao_verificacoes set status = 'dispensada' where id = 'f0000000-0000-4000-8000-0000000016a0'$c$),
     rls_teste.efeito($c$update public.prestacao_metas set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000017a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_locais set espaco = espaco where id = 'f0000000-0000-4000-8000-0000000018a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_locais set espaco = espaco where id = 'f0000000-0000-4000-8000-0000000018a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_evidencias set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000019a0'$c$)
   ]);
 $$;
 
@@ -281,7 +287,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_pagamentos where id = 'f0000000-0000-4000-8000-0000000015a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_verificacoes where id = 'f0000000-0000-4000-8000-0000000016a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_metas where id = 'f0000000-0000-4000-8000-0000000017a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_locais where id = 'f0000000-0000-4000-8000-0000000018a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_locais where id = 'f0000000-0000-4000-8000-0000000018a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_evidencias where id = 'f0000000-0000-4000-8000-0000000019a0'$c$)
   ]);
 $$;
 
@@ -595,6 +602,18 @@ select throws_ok($t$update public.prestacao_locais set status = 'outras_fontes',
   '23514', null, 'a justificativa do local tem até 500 caracteres, como no Salic');
 select throws_ok($t$insert into public.prestacao_locais (prestacao_id, municipio) values ('f0000000-0000-4000-8000-0000000001a0', 'Santos')$t$,
   '23514', null, 'local no Brasil pede UF e município');
+
+-- ─── Evidências (P3.2): arquivo ou link, vínculos e pasta da própria prestação ─
+select lives_ok($t$insert into public.prestacao_evidencias (prestacao_id, tipo, url, requisitos, local_id) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/video', array['acessibilidade', 'democratizacao'], 'f0000000-0000-4000-8000-0000000018a0')$t$,
+  'quem edita: registra um link como evidência de acessibilidade, ligado ao local');
+select throws_ok($t$insert into public.prestacao_evidencias (prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000001a0', 'foto')$t$,
+  '23514', null, 'evidência tem arquivo ou link');
+select throws_ok($t$insert into public.prestacao_evidencias (prestacao_id, tipo, url, meta_id) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/x', 'f0000000-0000-4000-8000-0000000017b0')$t$,
+  '23514', 'meta_de_outra_prestacao', 'a evidência não usa meta de outra prestação');
+select throws_ok($t$insert into public.prestacao_evidencias (prestacao_id, tipo, storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'foto', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000ef1.jpg')$t$,
+  '23514', 'caminho_invalido', 'o arquivo da evidência fica na pasta de evidências da prestação');
+select throws_ok($t$insert into public.prestacao_evidencias (prestacao_id, tipo, url, requisitos) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/y', array['qualquer'])$t$,
+  '23514', null, 'requisito fora da lista é recusado');
 reset role;
 
 -- ─── Verificações (P2.7): o servidor grava; as pessoas decidem pela função ──

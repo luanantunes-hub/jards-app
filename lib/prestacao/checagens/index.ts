@@ -1,7 +1,7 @@
 // Motor de checagens (P2.7, P2.8).
 //
 // Cada checagem é uma função pura que olha o estado da prestação (despesas,
-// fornecedores, orçamento, pagamentos, extrato, datas, metas e locais) e o regime, e devolve
+// fornecedores, orçamento, pagamentos, extrato, datas, metas, locais e evidências) e o regime, e devolve
 // achados com código estável. A rota /api/prestacoes/[id]/verificar monta o
 // estado no servidor (estado.ts), roda tudo e grava em prestacao_verificacoes
 // por fn_prestacao_verificacoes_sincronizar: achado novo abre, achado que
@@ -17,6 +17,7 @@ import type { Achado, EstadoDaPrestacao, SeveridadeChecagem } from "./catalogo";
 import { checarConciliacao } from "./checar-conciliacao";
 import { checarDespesas } from "./checar-despesas";
 import { checarConcentracao, checarOrcamento, checarPeriodo } from "./checar-financeiro";
+import { checarEvidencias } from "./checar-evidencias";
 import { checarObjeto } from "./checar-objeto";
 
 export * from "./catalogo";
@@ -30,6 +31,7 @@ export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado
   { id: "orcamento", titulo: "Saldo dos itens, tetos e alterações", executar: checarOrcamento },
   { id: "concentracao", titulo: "Concentração por fornecedor e partes relacionadas", executar: checarConcentracao },
   { id: "objeto", titulo: "Metas e locais do objeto", executar: checarObjeto },
+  { id: "evidencias", titulo: "Evidências: vínculo, data e local da foto", executar: checarEvidencias },
 ];
 
 /** Roda todas as checagens; chaves repetidas ganham um sufixo para continuarem únicas. */

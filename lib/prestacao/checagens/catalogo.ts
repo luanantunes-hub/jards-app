@@ -8,7 +8,8 @@ import type { LancamentoParaConciliar } from "../conciliacao";
 import type { NoOrcamento } from "../orcamento";
 import { definida, type Fonte, type RegimeNormativo } from "../regimes";
 import type { Regra } from "../regimes/tipos";
-import type { PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
+import type { EvidenciaParaChecar } from "../evidencias";
+import type { PrestacaoAtividade, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
 export const SEVERIDADES = ["bloqueio", "alerta", "justificativa", "info"] as const;
@@ -17,7 +18,7 @@ export type SeveridadeChecagem = (typeof SEVERIDADES)[number];
 export const RESULTADOS = ["nao_conforme", "revisar", "nao_calculavel"] as const;
 export type ResultadoChecagem = (typeof RESULTADOS)[number];
 
-export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade"] as const;
+export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade", "evidencia"] as const;
 export type EntidadeVerificada = (typeof ENTIDADES)[number];
 
 export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resolvida"] as const;
@@ -95,6 +96,11 @@ export const CATALOGO_CHECAGENS = {
   META_SEM_RESULTADO: { titulo: "Meta sem resultado", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
   META_ABAIXO_DO_PREVISTO: { titulo: "Meta abaixo do previsto", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
   LOCAL_SEM_SITUACAO: { titulo: "Local sem situação", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", dimensao: "objeto" },
+  // Evidências (P3.2): vínculo, data e posição lidas do arquivo.
+  EVIDENCIA_SEM_VINCULO: { titulo: "Evidência sem vínculo", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
+  EVIDENCIA_FORA_DO_PERIODO: { titulo: "Foto fora do período", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
+  EVIDENCIA_FORA_DA_ATIVIDADE: { titulo: "Foto em outra data da atividade", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
+  EVIDENCIA_LONGE_DO_LOCAL: { titulo: "Foto longe do local", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
   // Dados que faltam para calcular
   DATAS_DA_PRESTACAO: { titulo: "Datas da prestação", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral" },
   LIMITE_SEM_BASE: { titulo: "Limite sem base de cálculo", grupo: "prestacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "fornecedores" },
@@ -152,7 +158,8 @@ export type DatasDaPrestacao = {
 export type AlteracaoDoEstado = { id: string; numero: number; status: string; solicitada_em: string | null };
 
 export type MetaDoEstado = Pick<PrestacaoMeta, "id" | "descricao" | "unidade" | "previsto" | "realizado" | "justificativa">;
-export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "status">;
+export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "status"> & Partial<Pick<PrestacaoLocal, "latitude" | "longitude">>;
+export type AtividadeDoEstado = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "local_id">;
 
 export type EstadoDaPrestacao = {
   regime: RegimeNormativo | null;
@@ -170,6 +177,9 @@ export type EstadoDaPrestacao = {
   /** P3.1: metas e locais do objeto. */
   metas?: readonly MetaDoEstado[];
   locais?: readonly LocalDoEstado[];
+  /** P3.2: atividades e evidências do objeto. */
+  atividades?: readonly AtividadeDoEstado[];
+  evidencias?: readonly EvidenciaParaChecar[];
   hoje?: Date;
 };
 

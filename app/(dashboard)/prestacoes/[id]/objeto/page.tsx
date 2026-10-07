@@ -3,17 +3,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { MapPin, Pencil, Plus, Target, Trash2 } from "lucide-react";
+import { Camera, MapPin, Pencil, Plus, Target, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { MetaModal, type AgrupadorParaMeta } from "@/components/prestacao/objeto/MetaModal";
 import { LocalModal } from "@/components/prestacao/objeto/LocalModal";
+import { EvidenciaModal } from "@/components/prestacao/objeto/EvidenciaModal";
+import { ListaEvidencias } from "@/components/prestacao/objeto/ListaEvidencias";
+import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
+import { checarEvidencias } from "@/lib/prestacao/checagens/checar-evidencias";
+import type { Achado } from "@/lib/prestacao/checagens";
 import { TIPOS_NO } from "@/lib/prestacao/orcamento";
 import { periodoDoLocal, quantidade, resumoDaMeta, rotuloDoLocal, STATUS_LOCAL, type ResumoDaMeta, type SituacaoDaMeta } from "@/lib/prestacao/objeto";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
-import type { PrestacaoAtividade, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
+import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
@@ -25,7 +30,8 @@ const SITUACAO: Record<SituacaoDaMeta, { rotulo: string; cor: string }> = {
   abaixo: { rotulo: "Abaixo do previsto", cor: "#B07A14" },
 };
 
-type AtividadeDoObjeto = Pick<PrestacaoAtividade, "id" | "meta_id" | "local_id" | "status_realizacao" | "publico_atingido">;
+type AtividadeDoObjeto = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "meta_id" | "local_id" | "status_realizacao" | "publico_atingido">;
+type Execucao = { data_inicio_execucao: string | null; data_fim_execucao: string | null };
 
 /** Etiqueta informativa: borda leve, fundo branco e a cor no texto. */
 function Etiqueta({ rotulo, cor }: { rotulo: string; cor: string }) {
@@ -66,6 +72,10 @@ export default function ObjetoPage() {
   const [locais, setLocais] = useState<PrestacaoLocal[]>([]);
   const [atividades, setAtividades] = useState<AtividadeDoObjeto[]>([]);
   const [agrupadores, setAgrupadores] = useState<AgrupadorParaMeta[]>([]);
+  const [evidencias, setEvidencias] = useState<PrestacaoEvidencia[]>([]);
+  const [execucao, setExecucao] = useState<Execucao>({ data_inicio_execucao: null, data_fim_execucao: null });
+  const [editandoEvidencia, setEditandoEvidencia] = useState<PrestacaoEvidencia | "nova" | null>(null);
+  const organizationId = usePrestacaoOrganizacao(id);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState("");
   const [editandoMeta, setEditandoMeta] = useState<PrestacaoMeta | "nova" | null>(null);
@@ -75,19 +85,23 @@ export default function ObjetoPage() {
   const buscar = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas do objeto ainda não estão no tipo Database
     const db = supabase as any;
-    const [m, l, a, n] = await Promise.all([
+    const [m, l, a, n, e, p] = await Promise.all([
       db.from("prestacao_metas").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
       db.from("prestacao_locais").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
-      db.from("prestacao_atividades").select("id, meta_id, local_id, status_realizacao, publico_atingido").eq("prestacao_id", id),
+      db.from("prestacao_atividades").select("id, titulo, data_realizacao, data_inicio, data_fim, meta_id, local_id, status_realizacao, publico_atingido").eq("prestacao_id", id).order("data_realizacao"),
       db.from("prestacao_orcamento_nos").select("id, nome, tipo, ordem, versao:prestacao_orcamento_versoes!inner(ativa)")
         .eq("prestacao_id", id).neq("tipo", "item").eq("versao.ativa", true).order("ordem"),
+      db.from("prestacao_evidencias").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
+      db.from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
     ]);
-    const falha = m.error ?? l.error ?? a.error ?? n.error;
+    const falha = m.error ?? l.error ?? a.error ?? n.error ?? e.error ?? p.error;
     return {
       erro: falha ? mensagemErroPrestacao(falha, "Não foi possível carregar o objeto") : "",
       metas: ((m.data ?? []) as PrestacaoMeta[]).map(x => ({ ...x, previsto: Number(x.previsto), realizado: x.realizado === null ? null : Number(x.realizado) })),
       locais: (l.data ?? []) as PrestacaoLocal[],
       atividades: (a.data ?? []) as AtividadeDoObjeto[],
+      evidencias: (e.data ?? []) as PrestacaoEvidencia[],
+      execucao: { data_inicio_execucao: p.data?.data_inicio_execucao ?? null, data_fim_execucao: p.data?.data_fim_execucao ?? null } as Execucao,
       agrupadores: ((n.data ?? []) as { id: string; nome: string; tipo: string }[]).map(no => ({
         id: no.id,
         rotulo: `${TIPOS_NO.find(t => t.id === no.tipo)?.rotulo ?? no.tipo} · ${no.nome}`,
@@ -101,6 +115,8 @@ export default function ObjetoPage() {
     setLocais(dados.locais);
     setAtividades(dados.atividades);
     setAgrupadores(dados.agrupadores);
+    setEvidencias(dados.evidencias);
+    setExecucao(dados.execucao);
     setCarregando(false);
     // Link das verificações: ?meta=<id> ou ?local=<id> abre o cadastro, só na primeira leitura.
     if (!abriuDoLink.current) {
@@ -108,8 +124,10 @@ export default function ObjetoPage() {
       const busca = new URLSearchParams(window.location.search);
       const meta = dados.metas.find(x => x.id === busca.get("meta"));
       const local = dados.locais.find(x => x.id === busca.get("local"));
+      const evidencia = dados.evidencias.find(x => x.id === busca.get("evidencia"));
       if (meta) setEditandoMeta(meta);
       else if (local) setEditandoLocal(local);
+      else if (evidencia) setEditandoEvidencia(evidencia);
     }
   }, []);
 
@@ -133,9 +151,44 @@ export default function ObjetoPage() {
     porStatus: STATUS_LOCAL.map(s => ({ ...s, quantos: locais.filter(l => l.status === s.id).length })).filter(s => s.quantos > 0),
   }), [metas, locais, resumos]);
 
+  // A conferência das evidências, a mesma do motor, para mostrar em cada linha.
+  const alertasDasEvidencias = useMemo(() => {
+    const achados = checarEvidencias({
+      regime: null, despesas: [], fornecedores: [], documentosDosFornecedores: [], itens: [], pagamentos: [], lancamentos: [],
+      prestacao: execucao, atividades, locais, evidencias,
+    });
+    const porEvidencia = new Map<string, Achado[]>();
+    for (const a of achados) if (a.entidade.id) porEvidencia.set(a.entidade.id, [...(porEvidencia.get(a.entidade.id) ?? []), a]);
+    return porEvidencia;
+  }, [execucao, atividades, locais, evidencias]);
+
+  function vinculosDaEvidencia(e: PrestacaoEvidencia): string {
+    return [
+      e.atividade_id ? atividades.find(a => a.id === e.atividade_id)?.titulo : null,
+      e.meta_id ? metas.find(m => m.id === e.meta_id)?.descricao : null,
+      e.local_id ? (() => { const l = locais.find(x => x.id === e.local_id); return l ? rotuloDoLocal(l) : null; })() : null,
+    ].filter(Boolean).join(" · ");
+  }
+
+  function excluirEvidencia(e: PrestacaoEvidencia) {
+    confirmDelete({
+      title: "Excluir evidência?",
+      description: `"${e.nome_arquivo || e.url || "Evidência"}" sai do objeto${e.storage_path ? " e o arquivo é apagado" : ""}.`,
+      onConfirm: async () => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas do objeto ainda não estão no tipo Database
+        const { error } = await (supabase as any).from("prestacao_evidencias").delete().eq("id", e.id);
+        if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir a evidência"));
+        if (e.storage_path) await supabase.storage.from("documentos").remove([e.storage_path]);
+        await carregar();
+        pedirVerificacao(id);
+      },
+    });
+  }
+
   function salvou() {
     setEditandoMeta(null);
     setEditandoLocal(null);
+    setEditandoEvidencia(null);
     carregar();
     pedirVerificacao(id);
   }
@@ -350,6 +403,45 @@ export default function ObjetoPage() {
         )}
       </section>
 
+      {/* Evidências */}
+      <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="evidencias-titulo">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          <h3 id="evidencias-titulo" className="text-[0.75rem] font-semibold text-black">
+            Evidências <span className="font-normal tabular-nums text-black/35">({evidencias.length})</span>
+            {alertasDasEvidencias.size > 0 && <span className="ml-2 font-normal text-[#B07A14]">{alertasDasEvidencias.size} com alerta</span>}
+          </h3>
+          {podeEditar && (
+            <button
+              type="button"
+              onClick={() => setEditandoEvidencia("nova")}
+              className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/70 transition hover:border-black/25 hover:text-black/90 focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+              style={{ borderColor: "rgba(13,13,13,.14)" }}
+            >
+              <Plus size={13} aria-hidden /> Nova evidência
+            </button>
+          )}
+        </div>
+        {carregando ? (
+          <div className="space-y-2 p-5">{[0, 1].map(i => <div key={i} className="h-14 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
+        ) : (
+          <ListaEvidencias
+            evidencias={evidencias}
+            vinculos={vinculosDaEvidencia}
+            alertas={alertasDasEvidencias}
+            podeEditar={podeEditar}
+            onEditar={setEditandoEvidencia}
+            onExcluir={excluirEvidencia}
+            vazio={
+              <div className="px-5 py-8 text-center">
+                <Camera size={20} className="mx-auto text-black/20" aria-hidden />
+                <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma evidência.</p>
+                <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Fotos, vídeos, listas de presença e matérias que comprovam a realização. Da foto, a data e o local são lidos sozinhos." : "Quem edita a prestação envia as evidências."}</p>
+              </div>
+            }
+          />
+        )}
+      </section>
+
       <p className="text-[0.6875rem] text-black/40">
         As atividades se ligam a uma meta e a um local na aba <Link href={`/prestacoes/${id}/atividades`} className="text-black/60 underline decoration-black/20 underline-offset-2 hover:text-black/80 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Atividades</Link>.
       </p>
@@ -360,6 +452,19 @@ export default function ObjetoPage() {
           meta={editandoMeta === "nova" ? null : editandoMeta}
           agrupadores={agrupadores}
           onClose={() => setEditandoMeta(null)}
+          onSaved={salvou}
+        />
+      )}
+      {editandoEvidencia && (
+        <EvidenciaModal
+          prestacaoId={id}
+          organizationId={organizationId}
+          evidencia={editandoEvidencia === "nova" ? null : editandoEvidencia}
+          atividades={atividades}
+          metas={metas}
+          locais={locais}
+          execucao={execucao}
+          onClose={() => setEditandoEvidencia(null)}
           onSaved={salvou}
         />
       )}

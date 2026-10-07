@@ -1,13 +1,15 @@
 // Monta o estado da prestação que o motor de checagens recebe (P2.7, P2.8):
 // despesas, fornecedores e documentos, nós e itens da versão em uso do
 // orçamento com os CNAEs, pagamentos, lançamentos do extrato, alterações do
-// orçamento, metas e locais do objeto, as datas da prestação e o regime. A rota de verificação usa o
+// orçamento, metas, locais, atividades e evidências do objeto, as datas da
+// prestação e o regime. A rota de verificação usa o
 // cliente do service role; o mesmo código roda com qualquer cliente do
 // Supabase que enxergue a prestação.
 
 import { itensDaArvore, montarArvore, type NoOrcamento } from "../orcamento";
 import { regimeSchema } from "../regimes/schema";
-import type { AlteracaoDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
+import type { EvidenciaParaChecar } from "../evidencias";
+import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
 
 const PAGINA = 1000;
 
@@ -42,7 +44,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -61,7 +63,12 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     todas<MetaDoEstado>(() => db.from("prestacao_metas")
       .select("id, descricao, unidade, previsto, realizado, justificativa").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<LocalDoEstado>(() => db.from("prestacao_locais")
-      .select("id, pais, uf, municipio, status").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+      .select("id, pais, uf, municipio, status, latitude, longitude").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+    todas<AtividadeDoEstado>(() => db.from("prestacao_atividades")
+      .select("id, titulo, data_realizacao, data_inicio, data_fim, local_id").eq("prestacao_id", prestacaoId).order("id")),
+    todas<EvidenciaParaChecar>(() => db.from("prestacao_evidencias")
+      .select("id, tipo, nome_arquivo, url, atividade_id, meta_id, local_id, capturada_em, latitude, longitude, justificativa")
+      .eq("prestacao_id", prestacaoId).order("id")),
   ]);
 
   const nos = versao
@@ -99,6 +106,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     alteracoes,
     metas,
     locais,
+    atividades,
+    evidencias,
     hoje,
   };
 }
