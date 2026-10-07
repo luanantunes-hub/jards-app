@@ -31,6 +31,7 @@ const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> =
   objeto: { caminho: "/objeto", rotulo: "Abrir objeto" },
   atividades: { caminho: "/atividades", rotulo: "Abrir atividades" },
   distribuicao: { caminho: "/distribuicao", rotulo: "Abrir distribuição" },
+  bens: { caminho: "/bens", rotulo: "Abrir bens" },
 };
 
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {
@@ -47,6 +48,13 @@ function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; 
   // O achado de uma linha da distribuição abre a linha.
   if (qual === "distribuicao" && v.entidade_tipo === "distribuicao" && v.entidade_id) {
     return { href: `/prestacoes/${prestacaoId}/distribuicao?linha=${v.entidade_id}`, rotulo: "Abrir linha" };
+  }
+  // O bem abre o cadastro; a despesa sem bem abre o cadastro de um bem novo para ela.
+  if (qual === "bens" && v.entidade_tipo === "bem" && v.entidade_id) {
+    return { href: `/prestacoes/${prestacaoId}/bens?bem=${v.entidade_id}`, rotulo: "Abrir bem" };
+  }
+  if (qual === "bens" && v.entidade_tipo === "despesa" && v.entidade_id) {
+    return { href: `/prestacoes/${prestacaoId}/bens?despesa=${v.entidade_id}`, rotulo: "Registrar o bem" };
   }
   const { caminho, rotulo } = DESTINOS[qual];
   return { href: caminho.startsWith("#") ? caminho : `/prestacoes/${prestacaoId}${caminho}`, rotulo };

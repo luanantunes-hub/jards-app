@@ -95,6 +95,8 @@ export default function ComprovantesPage() {
   const [pagamentos, setPagamentos] = useState<PrestacaoPagamento[]>([]);
   // Metas do objeto (P3.3): a despesa mostra a meta a que serve.
   const [metas, setMetas] = useState<{ id: string; descricao: string; no_id: string | null }[]>([]);
+  // Bens (P3.5): a despesa de item de bem permanente mostra o bem ou pede o registro.
+  const [bens, setBens] = useState<{ id: string; descricao: string; despesa_id: string | null; no_id: string | null }[]>([]);
   const [regimeId, setRegimeId] = useState<string | null>(null);
   const regimes = useRegimesPublicados();
   const regime = regimes.find(r => r.id === regimeId)?.regime ?? null;
@@ -125,17 +127,20 @@ export default function ComprovantesPage() {
   const [dadosFiscais, setDadosFiscais] = useState<{ identificador: string | null; proponente: ParteDoDocumento | null }>({ identificador: null, proponente: null });
 
   const fetch = useCallback(async () => {
-    const [{ data: comp }, { data: prest }, { data: pags }, { data: ms }] = await Promise.all([
+    const [{ data: comp }, { data: prest }, { data: pags }, { data: ms }, { data: bs }] = await Promise.all([
       (supabase as any).from("prestacao_comprovantes").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
       (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id, identificador_oficial, proponente:proponentes(cnpj, nome)").eq("id", id).maybeSingle(),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela ainda não está no tipo Database
       (supabase as any).from("prestacao_pagamentos").select("*").eq("prestacao_id", id),
       (supabase as any).from("prestacao_metas").select("id, descricao, no_id").eq("prestacao_id", id),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_bens ainda não está no tipo Database
+      (supabase as any).from("prestacao_bens").select("id, descricao, despesa_id, no_id").eq("prestacao_id", id),
     ]);
     const lista = (comp as PrestacaoComprovante[]) ?? [];
     setComprovantes(lista);
     setPagamentos((pags as PrestacaoPagamento[]) ?? []);
     setMetas(ms ?? []);
+    setBens(bs ?? []);
     // Link da fila de pendências (P2.9): ?despesa=<id> abre a despesa, só na primeira leitura.
     if (!abriuDoLink.current) {
       abriuDoLink.current = true;
@@ -787,6 +792,7 @@ export default function ComprovantesPage() {
           tipos={TIPOS_OPCOES}
           itens={itens}
           metas={metas}
+          bens={bens}
           fornecedores={fornecedores}
           documentosDe={documentosDe}
           outrasChaves={comprovantes.filter(o => o.id !== despesaAberta.id && o.chave_acesso).map(o => o.chave_acesso!)}

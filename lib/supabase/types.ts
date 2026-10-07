@@ -829,6 +829,48 @@ export interface PrestacaoDistribuicao {
   updated_at: string;
 }
 
+/** Cotação de preço de um bem (P3.5); o arquivo fica na pasta bens da prestação. */
+export interface CotacaoDoBem {
+  fornecedor: string;
+  documento?: string | null;
+  valor: number;
+  /** "2026-09-01" */
+  data?: string | null;
+  storage_path?: string | null;
+  nome_arquivo?: string | null;
+}
+
+/** Bem permanente adquirido, produzido ou construído (P3.5). */
+export interface PrestacaoBem {
+  id: string;
+  prestacao_id: string;
+  /** Item da planilha (art. 30 da IN 29) e despesa que pagou o bem. */
+  no_id: string | null;
+  despesa_id: string | null;
+  tipo: "movel" | "equipamento" | "obra_de_arte" | "imovel";
+  descricao: string;
+  quantidade: number;
+  valor: number | null;
+  numero_patrimonio: string | null;
+  /** Imóvel: cartório, número do registro e folha. */
+  registro_imovel: string | null;
+  cotacoes: CotacaoDoBem[];
+  destinacao: "doacao" | "proponente" | "outra" | null;
+  destinacao_descricao: string | null;
+  beneficiario: string | null;
+  beneficiario_documento: string | null;
+  doacao_storage_path: string | null;
+  doacao_nome_arquivo: string | null;
+  aceite_storage_path: string | null;
+  aceite_nome_arquivo: string | null;
+  justificativa: string | null;
+  observacoes: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Local de realização e a situação que o relatório informa (P3.1). */
 export interface PrestacaoLocal {
   id: string;
@@ -2086,7 +2128,7 @@ export interface PrestacaoVerificacao {
   check_codigo: string;
   severidade: "bloqueio" | "alerta" | "justificativa" | "info";
   resultado: "nao_conforme" | "revisar" | "nao_calculavel";
-  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade" | "evidencia" | "distribuicao";
+  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade" | "evidencia" | "distribuicao" | "bem";
   entidade_id: string | null;
   mensagem: string;
   fonte: { documento: string; dispositivo: string; citacao?: string; aConfirmar?: boolean; regra?: { codigo: string; descricao: string } } | null;
