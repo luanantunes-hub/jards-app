@@ -3,7 +3,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import { Plus, Upload, Image, Trash2, X, MapPin, Users, CalendarDays, ChevronDown, ChevronUp, Briefcase, HandHeart, Accessibility } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { PrestacaoAtividade, PrestacaoAtividadeEvidencia } from "@/lib/supabase/types";
+import type { PrestacaoAtividade, PrestacaoAtividadeEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
+import { Dropdown } from "@/components/ui/Dropdown";
+import { rotuloDoLocal } from "@/lib/prestacao/objeto";
+import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -33,6 +36,8 @@ const EMPTY_FORM: FormState = {
   acessibilidade_descricao: "",
   status_realizacao: "realizado",
   justificativa_nao_realizacao: "",
+  meta_id: null,
+  local_id: null,
 };
 
 export default function AtividadesPage() {
@@ -44,6 +49,8 @@ export default function AtividadesPage() {
   const [erro, setErro] = useState("");
 
   const [atividades, setAtividades] = useState<AtividadeComEvidencias[]>([]);
+  const [metas, setMetas] = useState<Pick<PrestacaoMeta, "id" | "descricao">[]>([]);
+  const [locais, setLocais] = useState<Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "espaco">[]>([]);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormState | null>(null);
   const [saving, setSaving] = useState(false);
@@ -70,6 +77,13 @@ export default function AtividadesPage() {
     setAtividades(
       ((ats ?? []) as PrestacaoAtividade[]).map(a => ({ ...a, evidencias: evMap[a.id] ?? [] }))
     );
+    // Metas e locais do objeto (P3.1), para ligar a atividade.
+    const [{ data: ms }, { data: ls }] = await Promise.all([
+      (supabase as any).from("prestacao_metas").select("id, descricao").eq("prestacao_id", id).order("ordem").order("created_at"),
+      (supabase as any).from("prestacao_locais").select("id, pais, uf, municipio, espaco").eq("prestacao_id", id).order("ordem").order("created_at"),
+    ]);
+    setMetas(ms ?? []);
+    setLocais(ls ?? []);
     setLoading(false);
   }, [id, supabase]);
 
@@ -99,6 +113,8 @@ export default function AtividadesPage() {
       justificativa_nao_realizacao: form.status_realizacao === "nao_realizado"
         ? (form.justificativa_nao_realizacao?.trim() || null)
         : null,
+      meta_id: form.meta_id || null,
+      local_id: form.local_id || null,
     };
     // Edição não mexe na ordem nem em quem criou.
     const { error } = form._new
@@ -111,7 +127,7 @@ export default function AtividadesPage() {
       : await (supabase as any).from("prestacao_atividades").update(payload).eq("id", form.id);
     setSaving(false);
     if (error) {
-      setErro(`Não foi possível salvar a atividade: ${error.message}`);
+      setErro(mensagemErroPrestacao(error, "Não foi possível salvar a atividade"));
       return;
     }
     setForm(null);
@@ -255,15 +271,22 @@ export default function AtividadesPage() {
                           <span className="flex items-center gap-1 text-[0.625rem] text-black/40">
                             <CalendarDays size={10} /> {fmtDate(at.data_realizacao)}
                           </span>
-                          {(at.cidade || at.local) && (
-                            <span className="flex items-center gap-1 text-[0.625rem] text-black/40">
-                              <MapPin size={10} /> {[at.local, at.cidade, at.estado].filter(Boolean).join(", ")}
-                            </span>
+                          {(() => {
+                            const doObjeto = at.local_id ? locais.find(l => l.id === at.local_id) : null;
+                            const onde = [at.local, doObjeto ? rotuloDoLocal(doObjeto) : null, doObjeto ? null : at.cidade, doObjeto ? null : at.estado].filter(Boolean).join(", ");
+                            return onde ? (
+                              <span className="flex items-center gap-1 text-[0.625rem] text-black/40">
+                                <MapPin size={10} /> {onde}
+                              </span>
+                            ) : null;
+                          })()}
+                          {at.meta_id && metas.find(m => m.id === at.meta_id) && (
+                            <span className="text-[0.625rem] text-black/40">Meta: {metas.find(m => m.id === at.meta_id)!.descricao}</span>
                           )}
                           {at.publico_atingido !== null && (
                             <span className="flex items-center gap-1 text-[0.625rem] text-black/40">
                               <Users size={10} /> {at.publico_atingido.toLocaleString("pt-BR")} pessoas
-                              {pct !== null && <span style={{ color: pct >= 100 ? "#2E8932" : pct >= 70 ? "#B07A14" : "rgba(13,13,13,.35)" }}>({pct}% da meta)</span>}
+                              {pct !== null && <span style={{ color: pct >= 100 ? "#2E8932" : pct >= 70 ? "#B07A14" : "rgba(13,13,13,.35)" }}>({pct}% do previsto)</span>}
                             </span>
                           )}
                           {at.evidencias.length > 0 && (
@@ -496,38 +519,39 @@ export default function AtividadesPage() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Local</label>
+                  <span className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Meta</span>
+                  <Dropdown
+                    value={form.meta_id ?? ""}
+                    onChange={valor => setForm({ ...form, meta_id: valor || null })}
+                    ariaLabel="Meta da atividade"
+                    placeholder={metas.length ? "Escolha a meta" : "Cadastre as metas na aba Objeto"}
+                    disabled={metas.length === 0}
+                    options={[{ value: "", label: "Sem meta" }, ...metas.map(m => ({ value: m.id, label: m.descricao }))]}
+                  />
+                </div>
+                <div>
+                  <span className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Local de realização</span>
+                  <Dropdown
+                    value={form.local_id ?? ""}
+                    onChange={valor => setForm({ ...form, local_id: valor || null })}
+                    ariaLabel="Local de realização da atividade"
+                    placeholder={locais.length ? "Escolha o local" : "Cadastre os locais na aba Objeto"}
+                    disabled={locais.length === 0}
+                    options={[{ value: "", label: "Sem local" }, ...locais.map(l => ({ value: l.id, label: [rotuloDoLocal(l), l.espaco].filter(Boolean).join(" · ") }))]}
+                  />
+                </div>
+                <div>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Espaço</label>
                   <input
                     value={form.local ?? ""}
                     onChange={e => setForm({ ...form, local: e.target.value })}
                     className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                     style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    placeholder="Nome do local"
+                    placeholder="Teatro, escola, praça"
                   />
                 </div>
                 <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Cidade</label>
-                  <input
-                    value={form.cidade ?? ""}
-                    onChange={e => setForm({ ...form, cidade: e.target.value })}
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    placeholder="São Paulo"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">UF</label>
-                  <input
-                    value={form.estado ?? ""}
-                    onChange={e => setForm({ ...form, estado: e.target.value.toUpperCase().slice(0, 2) })}
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none uppercase"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    placeholder="SP"
-                    maxLength={2}
-                  />
-                </div>
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Meta (pessoas)</label>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1">Público previsto</label>
                   <input
                     type="number"
                     value={form.meta_prevista ?? ""}

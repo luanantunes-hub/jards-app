@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(103);
+select plan(110);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -103,6 +103,10 @@ begin
     ('f0000000-0000-4000-8000-0000000016a0', pa, 'RLS:alerta', 'DOC_PJ_SEM_NF', 'alerta', 'revisar', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'RLS alerta'),
     ('f0000000-0000-4000-8000-0000000016b0', pa, 'RLS:bloqueio', 'DEBITO_SEM_COMPROVANTE', 'bloqueio', 'nao_conforme', 'lancamento', 'f0000000-0000-4000-8000-0000000012a0', 'RLS bloqueio'),
     ('f0000000-0000-4000-8000-0000000016c0', pa, 'RLS:sumiu', 'DESPESA_SEM_VALOR', 'alerta', 'nao_calculavel', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'RLS sumiu');
+  insert into public.prestacao_metas (id, prestacao_id, descricao, unidade, previsto) values
+    ('f0000000-0000-4000-8000-0000000017a0', pa, 'RLS meta', 'oficinas', 6);
+  insert into public.prestacao_locais (id, prestacao_id, uf, municipio) values
+    ('f0000000-0000-4000-8000-0000000018a0', pa, 'SP', 'São Paulo');
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -126,7 +130,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_distribuicao', 'prestacao_divulgacao', 'prestacao_alteracoes',
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
     'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
-    'prestacao_verificacoes'
+    'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais'
   ];
 $$;
 
@@ -200,7 +204,9 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_fornecedores where organization_id = %L', rls_teste.org_da(p))),
     rls_teste.efeito(format('select 1 from public.prestacao_fornecedor_documentos where organization_id = %L', rls_teste.org_da(p))),
     rls_teste.efeito(format('select 1 from public.prestacao_pagamentos where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_verificacoes where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_verificacoes where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_metas where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_locais where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -223,7 +229,9 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_fornecedores (organization_id, tipo_pessoa, documento, nome) values ('f0000000-0000-4000-8000-0000000000a0', 'pj', '00000000000191', 'RLS novo')$c$),
     rls_teste.efeito($c$insert into public.prestacao_fornecedor_documentos (fornecedor_id, tipo, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000013a0', 'outro', 'novo.pdf', 'f0000000-0000-4000-8000-0000000000a0/fornecedores/f0000000-0000-4000-8000-0000000013a0/f0000000-0000-4000-8000-0000000014b0.pdf')$c$),
     rls_teste.efeito($c$insert into public.prestacao_pagamentos (despesa_id, forma, data, valor) values ('f0000000-0000-4000-8000-0000000005a0', 'ted', current_date, 5)$c$),
-    rls_teste.efeito($c$insert into public.prestacao_verificacoes (prestacao_id, chave, check_codigo, severidade, resultado, entidade_tipo, mensagem) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS:nova', 'X', 'info', 'revisar', 'prestacao', 'x')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_verificacoes (prestacao_id, chave, check_codigo, severidade, resultado, entidade_tipo, mensagem) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS:nova', 'X', 'info', 'revisar', 'prestacao', 'x')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_metas (prestacao_id, descricao, previsto) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova meta', 1)$c$),
+    rls_teste.efeito($c$insert into public.prestacao_locais (prestacao_id, uf, municipio) values ('f0000000-0000-4000-8000-0000000001a0', 'RJ', 'Rio de Janeiro')$c$)
   ]);
 $$;
 
@@ -246,7 +254,9 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_fornecedores set observacoes = observacoes where id = 'f0000000-0000-4000-8000-0000000013a0'$c$),
     rls_teste.efeito($c$update public.prestacao_fornecedor_documentos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000014a0'$c$),
     rls_teste.efeito($c$update public.prestacao_pagamentos set observacao = observacao where id = 'f0000000-0000-4000-8000-0000000015a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_verificacoes set status = 'dispensada' where id = 'f0000000-0000-4000-8000-0000000016a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_verificacoes set status = 'dispensada' where id = 'f0000000-0000-4000-8000-0000000016a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_metas set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000017a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_locais set espaco = espaco where id = 'f0000000-0000-4000-8000-0000000018a0'$c$)
   ]);
 $$;
 
@@ -269,7 +279,9 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_fornecedores where id = 'f0000000-0000-4000-8000-0000000013a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_fornecedor_documentos where id = 'f0000000-0000-4000-8000-0000000014a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_pagamentos where id = 'f0000000-0000-4000-8000-0000000015a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_verificacoes where id = 'f0000000-0000-4000-8000-0000000016a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_verificacoes where id = 'f0000000-0000-4000-8000-0000000016a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_metas where id = 'f0000000-0000-4000-8000-0000000017a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_locais where id = 'f0000000-0000-4000-8000-0000000018a0'$c$)
   ]);
 $$;
 
@@ -561,6 +573,28 @@ set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","r
 set local role authenticated;
 select throws_ok($t$insert into public.prestacao_pagamentos (despesa_id, forma, data, valor) values ('f0000000-0000-4000-8000-0000000005b0', 'pix', current_date, 1)$t$,
   '42501', null, 'outra organização: não lança pagamento na despesa de B');
+reset role;
+
+-- ─── Metas e locais (P3.1): vínculos da mesma prestação e justificativas ────
+-- Uma meta da prestação B, para A tentar ligar.
+insert into public.prestacao_metas (id, prestacao_id, descricao, previsto) values
+  ('f0000000-0000-4000-8000-0000000017b0', 'f0000000-0000-4000-8000-0000000001b0', 'RLS meta B', 1);
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$update public.prestacao_atividades set meta_id = 'f0000000-0000-4000-8000-0000000017a0', local_id = 'f0000000-0000-4000-8000-0000000018a0' where id = 'f0000000-0000-4000-8000-0000000006a0'$t$,
+  'quem edita: liga a atividade a uma meta e a um local da prestação');
+select throws_ok($t$update public.prestacao_atividades set meta_id = 'f0000000-0000-4000-8000-0000000017b0' where id = 'f0000000-0000-4000-8000-0000000006a0'$t$,
+  '23514', 'meta_de_outra_prestacao', 'a atividade não usa meta de outra prestação');
+select throws_ok($t$update public.prestacao_atividades set status_realizacao = 'nao_realizado' where id = 'f0000000-0000-4000-8000-0000000006a0'$t$,
+  '23514', null, 'atividade não realizada pede justificativa');
+select throws_ok($t$update public.prestacao_metas set no_id = 'f0000000-0000-4000-8000-0000000003a0' where id = 'f0000000-0000-4000-8000-0000000017a0'$t$,
+  '23514', 'no_invalido', 'a meta liga a um agrupador do orçamento, não a um item');
+select throws_ok($t$insert into public.prestacao_locais (prestacao_id, uf, municipio, status) values ('f0000000-0000-4000-8000-0000000001a0', 'SP', 'Santos', 'nao_realizado')$t$,
+  '23514', null, 'local não realizado pede justificativa');
+select throws_ok($t$update public.prestacao_locais set status = 'outras_fontes', justificativa = repeat('x', 501) where id = 'f0000000-0000-4000-8000-0000000018a0'$t$,
+  '23514', null, 'a justificativa do local tem até 500 caracteres, como no Salic');
+select throws_ok($t$insert into public.prestacao_locais (prestacao_id, municipio) values ('f0000000-0000-4000-8000-0000000001a0', 'Santos')$t$,
+  '23514', null, 'local no Brasil pede UF e município');
 reset role;
 
 -- ─── Verificações (P2.7): o servidor grava; as pessoas decidem pela função ──

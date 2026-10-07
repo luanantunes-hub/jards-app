@@ -2,7 +2,7 @@
 import { useParams, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowLeftRight, ListChecks, LayoutGrid, DollarSign, FileText, Landmark, CalendarDays, BookOpen, Ticket, Megaphone } from "lucide-react";
+import { ArrowLeft, ArrowLeftRight, ListChecks, LayoutGrid, DollarSign, FileText, Landmark, CalendarDays, BookOpen, Ticket, Megaphone, Target } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { createClient } from "@/lib/supabase/client";
 import type { StatusPrestacao } from "@/lib/supabase/types";
@@ -36,6 +36,7 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
     { href: `${base}/extrato`,       label: "Extrato",      icon: Landmark,    exact: false },
     { href: `${base}/conciliacao`,   label: "Conciliação",  icon: ArrowLeftRight, exact: false },
     { href: `${base}/pendencias`,    label: "Pendências",   icon: ListChecks,  exact: false },
+    { href: `${base}/objeto`,        label: "Objeto",       icon: Target,      exact: false },
     { href: `${base}/atividades`,    label: "Atividades",   icon: CalendarDays, exact: false },
     { href: `${base}/relatorio`,     label: "Relatório",    icon: BookOpen,    exact: false },
     { href: `${base}/distribuicao`,  label: "Distribuição", icon: Ticket,      exact: false },

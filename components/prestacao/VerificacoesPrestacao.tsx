@@ -28,6 +28,7 @@ const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> =
   comprovantes: { caminho: "/comprovantes", rotulo: "Abrir despesas" },
   extrato: { caminho: "/extrato", rotulo: "Abrir extrato" },
   conciliacao: { caminho: "/conciliacao", rotulo: "Conciliar" },
+  objeto: { caminho: "/objeto", rotulo: "Abrir objeto" },
 };
 
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {
@@ -35,6 +36,10 @@ function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; 
   // O achado de uma despesa abre a própria despesa na aba de comprovantes.
   if (qual === "comprovantes" && v.entidade_tipo === "despesa" && v.entidade_id) {
     return { href: `/prestacoes/${prestacaoId}/comprovantes?despesa=${v.entidade_id}`, rotulo: "Abrir despesa" };
+  }
+  // O achado de uma meta ou de um local abre o cadastro dele na aba Objeto.
+  if (qual === "objeto" && (v.entidade_tipo === "meta" || v.entidade_tipo === "local") && v.entidade_id) {
+    return { href: `/prestacoes/${prestacaoId}/objeto?${v.entidade_tipo}=${v.entidade_id}`, rotulo: v.entidade_tipo === "meta" ? "Abrir meta" : "Abrir local" };
   }
   const { caminho, rotulo } = DESTINOS[qual];
   return { href: caminho.startsWith("#") ? caminho : `/prestacoes/${prestacaoId}${caminho}`, rotulo };
