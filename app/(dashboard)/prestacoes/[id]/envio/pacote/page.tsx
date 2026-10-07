@@ -4,7 +4,8 @@
 // renomeados no padrão do sistema de destino, com o manifesto (tamanho e
 // SHA-256 de cada arquivo) e o relatório da prestação em PDF, num .zip
 // montado no navegador. O que está fora da regra do regime aparece antes de
-// gerar; o pré-pacote sai a qualquer momento e diz o que falta.
+// gerar; o pré-pacote sai a qualquer momento e diz o que falta. Depois do
+// pacote, quem decide registra o envio (P4.6), com o manifesto dele.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -12,6 +13,10 @@ import { useParams } from "next/navigation";
 import { AlertTriangle, ArrowLeft, ArrowRight, FileArchive, Package } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
+import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
+import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { RegistrarEnvio } from "@/components/prestacao/envio/RegistrarEnvio";
+import { envioVigente } from "@/lib/prestacao/envios";
 import { checklistDeEnvio, etapasDoRegime, nomeDaConta, ROTULO_DA_ETAPA, type EtapaEnvio } from "@/lib/prestacao/envio";
 import {
   manifestoCsv,
@@ -84,7 +89,10 @@ function baixar(blob: Blob, nome: string) {
 export default function PacotePage() {
   const { id } = useParams<{ id: string }>();
   const supabase = useMemo(() => createClient(), []);
-  const { dados, erro: erroDoEnvio } = useDadosDoEnvio(id);
+  const { dados, erro: erroDoEnvio, recarregar: recarregarEnvio } = useDadosDoEnvio(id);
+  const permissoes = usePermissoesPrestacao(id);
+  const { envios, recarregar: recarregarEnvios } = useEnviosRegistrados(id);
+  const [ultimoPacote, setUltimoPacote] = useState<{ etapa: EtapaEnvio; manifesto: Manifesto } | null>(null);
   const [extras, setExtras] = useState<Extras | null>(null);
   const [erro, setErro] = useState("");
   const [etapaEscolhida, setEtapa] = useState<EtapaEnvio>("final");
@@ -201,7 +209,10 @@ export default function PacotePage() {
         regime: dadosDoPacote.regime ? { codigo: dadosDoPacote.regime.codigo, versao: dadosDoPacote.regime.versao, sistema: dadosDoPacote.regime.sistemaOficial } : null,
         etapa,
         padrao: plano.padrao,
-        arquivos: todas.map(l => ({ ...l, vinculo: plano.itens.find(i => i.caminho === l.arquivo)?.vinculo ?? null })),
+        arquivos: todas.map(l => {
+          const item = plano.itens.find(i => i.caminho === l.arquivo);
+          return { ...l, vinculo: item?.vinculo ?? null, storagePath: item?.storagePath ?? null };
+        }),
         faltas: plano.faltas.map(f => f.texto),
       };
       const texto = new TextEncoder();
@@ -215,6 +226,7 @@ export default function PacotePage() {
       const nome = nomeDoPacote(tipo, dadosDoPacote.prestacao, etapa, geradoEm);
       baixar(new Blob(zip as BlobPart[], { type: "application/zip" }), nome);
       setGerado(`${nome}: ${linhas.length + 1} ${linhas.length ? "arquivos" : "arquivo"}, com o manifesto${tipo === "pre-pacote" ? " e o que falta" : ""}.`);
+      if (tipo === "pacote") setUltimoPacote({ etapa, manifesto });
     } catch (x) {
       setErro(x instanceof Error ? x.message : "Não foi possível gerar o pacote.");
     }
@@ -224,6 +236,8 @@ export default function PacotePage() {
   const erroGeral = erro || erroDoEnvio;
   const ocupado = progresso !== null;
   const sistema = dadosDoPacote?.checklist.sistema;
+  const vigente = envios ? envioVigente(envios, etapa) : null;
+  const pacoteDaEtapa = ultimoPacote?.etapa === etapa ? ultimoPacote.manifesto : null;
 
   return (
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
@@ -305,6 +319,18 @@ export default function PacotePage() {
               {!progresso && gerado && <p role="status" className="text-[0.6875rem] text-[#2E8932]">Gerado: {gerado}</p>}
             </div>
           </div>
+
+          {(vigente || pacoteDaEtapa) && (
+            <RegistrarEnvio
+              prestacaoId={id}
+              etapa={etapa}
+              sistema={sistema ?? null}
+              manifesto={pacoteDaEtapa}
+              podeRegistrar={permissoes.decidir}
+              vigente={vigente}
+              onRegistrado={() => { recarregarEnvios(); recarregarEnvio(); }}
+            />
+          )}
 
           {plano.faltas.length > 0 && (
             <section className="rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="faltas">

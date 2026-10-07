@@ -3,7 +3,8 @@
 // Aba Envio (P4.1): o checklist do regime para a etapa (final ou parcial), com
 // os documentos e as condições do sistema oficial. O que os dados respondem
 // leva à aba onde se resolve; o resto a pessoa resolve aqui, com o arquivo,
-// "pronto" ou, para o que não é obrigatório, "não se aplica" com o motivo.
+// "pronto" ou, para o que não é obrigatório, "não se aplica" com o motivo. No
+// topo, os envios registrados (P4.6), com o retrato e a reabertura.
 
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -14,6 +15,8 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
+import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
+import { EnviosRegistrados } from "@/components/prestacao/envio/EnviosRegistrados";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import {
   checklistDeEnvio,
@@ -237,6 +240,7 @@ export default function EnvioPage() {
   const organizationId = usePrestacaoOrganizacao(id);
   const { confirmDelete } = useDeleteConfirm();
   const { dados, erro: erroAoCarregar, recarregar } = useDadosDoEnvio(id);
+  const { envios, recarregar: recarregarEnvios } = useEnviosRegistrados(id);
   const [etapaEscolhida, setEtapa] = useState<EtapaEnvio>("final");
   const [ocupado, setOcupado] = useState(false);
   const [verificando, setVerificando] = useState(false);
@@ -388,6 +392,15 @@ export default function EnvioPage() {
 
       {(erro || erroAoCarregar) && (
         <p role="alert" className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#D94A4A40" }}>{erro || erroAoCarregar}</p>
+      )}
+
+      {envios && envios.length > 0 && (
+        <EnviosRegistrados
+          envios={envios}
+          podeReabrir={permissoes.decidir}
+          identificador={dados?.identificador ?? id}
+          onMudou={() => { recarregarEnvios(); recarregar(); }}
+        />
       )}
 
       {!checklist && !erroAoCarregar && (

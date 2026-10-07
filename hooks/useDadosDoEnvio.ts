@@ -7,7 +7,7 @@ import type { ArquivoDoChecklist, ContaDoChecklist, DadosDoChecklist, DevolucaoD
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { EVENTO_VERIFICADA } from "@/lib/prestacao/verificar-cliente";
 
-export type DadosDoEnvio = Omit<DadosDoChecklist, "etapa"> & { verificadaEm: string | null };
+export type DadosDoEnvio = Omit<DadosDoChecklist, "etapa"> & { verificadaEm: string | null; identificador: string | null };
 
 type Importacao = { conta_id: string; periodo_fim: string | null; saldo_final: number | null; created_at: string };
 
@@ -26,7 +26,7 @@ export function useDadosDoEnvio(prestacaoId: string): { dados: DadosDoEnvio | nu
     try {
       const [estado, prestacao, verificacoes, contas, importacoes, marcacoes, arquivos, devolucoes] = await Promise.all([
         estadoDaPrestacao(supabase, prestacaoId),
-        db.from("prestacoes_contas").select("verificada_em").eq("id", prestacaoId).maybeSingle(),
+        db.from("prestacoes_contas").select("verificada_em, titulo, identificador_oficial").eq("id", prestacaoId).maybeSingle(),
         db.from("prestacao_verificacoes").select("check_codigo, status").eq("prestacao_id", prestacaoId).eq("status", "aberta"),
         db.from("prestacao_contas_bancarias").select("id, tipo, apelido, banco, conta, data_encerramento").eq("prestacao_id", prestacaoId).order("created_at"),
         db.from("prestacao_extrato_importacoes").select("conta_id, periodo_fim, saldo_final, created_at").eq("prestacao_id", prestacaoId),
@@ -51,6 +51,7 @@ export function useDadosDoEnvio(prestacaoId: string): { dados: DadosDoEnvio | nu
           arquivos: (arquivos.data ?? []) as ArquivoDoChecklist[],
           devolucoes: (devolucoes.data ?? []) as DevolucaoDoChecklist[],
           verificadaEm: prestacao.data?.verificada_em ?? null,
+          identificador: prestacao.data?.identificador_oficial || prestacao.data?.titulo || null,
         },
       };
     } catch (e) {

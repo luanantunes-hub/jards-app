@@ -313,7 +313,8 @@ export type Manifesto = {
   regime: { codigo: string; versao: number; sistema: string | null } | null;
   etapa: EtapaEnvio;
   padrao: PadraoDosNomes;
-  arquivos: (LinhaDoManifesto & { vinculo: VinculoDoItem | null })[];
+  /** storagePath: o arquivo guardado de onde veio (o relatório é gerado, não guardado). */
+  arquivos: (LinhaDoManifesto & { vinculo: VinculoDoItem | null; storagePath: string | null })[];
   faltas: string[];
 };
 

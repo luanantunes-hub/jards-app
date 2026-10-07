@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(153);
+select plan(176);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -121,6 +121,13 @@ begin
      org_a || '/prestacoes/' || pa || '/envio/f0000000-0000-4000-8000-000000000da0.pdf', 'gru.pdf');
   insert into public.prestacao_devolucoes (id, prestacao_id, motivo, valor_principal) values
     ('f0000000-0000-4000-8000-0000000024a0', pa, 'saldo', 123.45);
+  -- Um envio parcial antigo, já reaberto e fora da guarda: aparece, mas não trava nada.
+  insert into public.prestacao_envios (id, prestacao_id, etapa, versao, enviado_em, retrato, retrato_sha256, guarda_ate,
+                                       situacao, reaberto_em, motivo_reabertura) values
+    ('f0000000-0000-4000-8000-0000000025a0', pa, 'parcial', 1, '2020-01-01', '{}', repeat('0', 64), '2020-12-31',
+     'reaberto', now(), 'Envio antigo do cenário de teste.');
+  insert into public.prestacao_envio_itens (envio_id, prestacao_id, tabela, registro_id) values
+    ('f0000000-0000-4000-8000-0000000025a0', pa, 'prestacao_devolucoes', 'f0000000-0000-4000-8000-0000000024a0');
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -145,7 +152,8 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
     'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
     'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
-    'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes'
+    'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes',
+    'prestacao_envios', 'prestacao_envio_itens'
   ];
 $$;
 
@@ -156,17 +164,20 @@ create function rls_teste.org_da(p uuid) returns uuid language sql immutable as 
 $$;
 
 -- O que quem edita cria e altera direto: tudo, menos o histórico de status, a
--- importação e os lançamentos do extrato e as verificações, que só as funções
--- do banco escrevem.
+-- importação e os lançamentos do extrato, as verificações e os envios, que só
+-- as funções do banco escrevem.
 create function rls_teste.editaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
-    'prestacao_status_log'), 'prestacao_extrato_importacoes'), 'prestacao_lancamentos'), 'prestacao_verificacoes');
+  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
+    'prestacao_status_log'), 'prestacao_extrato_importacoes'), 'prestacao_lancamentos'), 'prestacao_verificacoes'),
+    'prestacao_envios'), 'prestacao_envio_itens');
 $$;
 
 -- O que quem edita apaga: também a importação (desfaz o arquivo e leva os
--- lançamentos dela); o lançamento sozinho, o histórico e a verificação, não.
+-- lançamentos dela); o lançamento sozinho, o histórico, a verificação e o
+-- envio, não.
 create function rls_teste.apagaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'), 'prestacao_verificacoes');
+  select array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'),
+    'prestacao_verificacoes'), 'prestacao_envios'), 'prestacao_envio_itens');
 $$;
 
 -- Roda o comando e desfaz. 'sim' se leu ou atingiu alguma linha; '' se a
@@ -226,7 +237,9 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_bens where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_envio_checklist where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_envio_arquivos where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_devolucoes where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_devolucoes where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_envios where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_envio_itens where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -256,7 +269,9 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_bens (prestacao_id, tipo, descricao) values ('f0000000-0000-4000-8000-0000000001a0', 'equipamento', 'RLS novo bem')$c$),
     rls_teste.efeito($c$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao, justificativa) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'documento', 'bens', 'nao_se_aplica', 'Nenhum bem comprado.')$c$),
     rls_teste.efeito($c$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'relatorio_objeto', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000dd0.pdf', 'relatorio.pdf')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_devolucoes (prestacao_id, motivo, valor_principal) values ('f0000000-0000-4000-8000-0000000001a0', 'rendimento', 10)$c$)
+    rls_teste.efeito($c$insert into public.prestacao_devolucoes (prestacao_id, motivo, valor_principal) values ('f0000000-0000-4000-8000-0000000001a0', 'rendimento', 10)$c$),
+    rls_teste.efeito($c$insert into public.prestacao_envios (prestacao_id, etapa, versao, enviado_em, retrato, retrato_sha256) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 9, current_date, '{}', repeat('0', 64))$c$),
+    rls_teste.efeito($c$insert into public.prestacao_envio_itens (envio_id, prestacao_id, tabela, registro_id) values ('f0000000-0000-4000-8000-0000000025a0', 'f0000000-0000-4000-8000-0000000001a0', 'prestacao_comprovantes', 'f0000000-0000-4000-8000-0000000005a0')$c$)
   ]);
 $$;
 
@@ -286,7 +301,9 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_bens set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000021a0'$c$),
     rls_teste.efeito($c$update public.prestacao_envio_checklist set justificativa = justificativa where id = 'f0000000-0000-4000-8000-0000000022a0'$c$),
     rls_teste.efeito($c$update public.prestacao_envio_arquivos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000023a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_devolucoes set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000024a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_devolucoes set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000024a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_envios set protocolo = protocolo where id = 'f0000000-0000-4000-8000-0000000025a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_envio_itens set storage_path = storage_path where envio_id = 'f0000000-0000-4000-8000-0000000025a0'$c$)
   ]);
 $$;
 
@@ -316,7 +333,9 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_bens where id = 'f0000000-0000-4000-8000-0000000021a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_envio_checklist where id = 'f0000000-0000-4000-8000-0000000022a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_envio_arquivos where id = 'f0000000-0000-4000-8000-0000000023a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_devolucoes where id = 'f0000000-0000-4000-8000-0000000024a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_devolucoes where id = 'f0000000-0000-4000-8000-0000000024a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_envios where id = 'f0000000-0000-4000-8000-0000000025a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_envio_itens where envio_id = 'f0000000-0000-4000-8000-0000000025a0'$c$)
   ]);
 $$;
 
@@ -807,6 +826,71 @@ select lives_ok($t$update public.prestacao_comprovantes set motivos_ia = '[]' wh
 select throws_ok($t$update public.prestacao_comprovantes set motivos_ia = '{"codigo":"DOC_ILEGIVEL"}' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
   '23514', null, 'motivos da IA são uma lista');
 reset role;
+
+-- ─── Envio registrado (P4.6): retrato, travas, guarda e reabertura ──────────
+-- A prestação de A está enviada, verificada e sem bloqueio aberto.
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a2","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a0', 'final', current_date, 'X', '{"arquivos":[]}')$t$,
+  '42501', null, 'preparador: não registra o envio (decidir é do responsável ou do admin)');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a0', 'final', current_date + 1)$t$,
+  'P0001', 'envio_data_invalida', 'o envio não tem data futura');
+select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a0', 'final', current_date, null, '{"arquivos":{}}')$t$,
+  'P0001', 'manifesto_invalido', 'o manifesto traz a lista de arquivos');
+select lives_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a0', 'final', current_date, 'PRONAC 269999, protocolo 123', '{"arquivos":[{"arquivo":"comprovantes/001.pdf","sha256":"ab"}]}', 'Enviado pelo Salic')$t$,
+  'admin: registra o envio final, com o protocolo e o manifesto');
+select is((select array[status::text, data_envio::text] from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
+  array['enviado', current_date::text], 'o envio final deixa a prestação enviada, com a data do envio');
+select is((select array[versao::text, jsonb_array_length(retrato -> 'despesas')::text,
+                        (retrato_sha256 = encode(extensions.digest(convert_to(retrato::text, 'UTF8'), 'sha256'), 'hex'))::text]
+             from public.prestacao_envios where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and etapa = 'final'),
+  array['1', '1', 'true'], 'o retrato traz a despesa e o SHA-256 dele confere');
+select ok(exists (select 1 from public.prestacao_envio_itens where tabela = 'prestacao_comprovantes'
+                   and registro_id = 'f0000000-0000-4000-8000-0000000005a0' and storage_path like '%/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf'),
+  'o arquivo da despesa entra na lista do que foi enviado');
+select throws_ok($t$update public.prestacao_comprovantes set nome_arquivo = 'outro.pdf' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  'P0001', 'enviado_travado', 'a despesa enviada não muda enquanto o envio vale');
+select throws_ok($t$delete from public.prestacao_pagamentos where id = 'f0000000-0000-4000-8000-0000000015a0'$t$,
+  'P0001', 'enviado_guardado', 'o pagamento enviado não sai');
+select lives_ok($t$insert into public.prestacao_comprovantes (prestacao_id, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'nova.pdf', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c90.pdf')$t$,
+  'uma despesa nova entra depois do envio');
+select is(rls_teste.arquivos(), array['le', 'envia'], 'admin: o arquivo enviado não sai nem é trocado no bucket');
+select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a0', 'final', current_date)$t$,
+  'P0001', 'envio_vigente', 'não há dois envios valendo na mesma etapa');
+select throws_ok($t$insert into public.prestacao_envios (prestacao_id, etapa, versao, enviado_em, retrato, retrato_sha256) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 9, current_date, '{}', repeat('0', 64))$t$,
+  '42501', null, 'admin: não grava envio direto na tabela');
+select throws_ok($t$delete from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
+  'P0001', 'enviado_guardado', 'a prestação com envio em guarda não é apagada');
+reset role;
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a2","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_reabrir_envio((select id from public.prestacao_envios where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and etapa = 'final'), 'Diligência pediu a nota corrigida.')$t$,
+  '42501', null, 'preparador: não reabre o envio');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_reabrir_envio((select id from public.prestacao_envios where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and etapa = 'final'), 'curto')$t$,
+  'P0001', 'reabertura_sem_motivo', 'reabrir pede o motivo');
+select lives_ok($t$select public.fn_prestacao_reabrir_envio((select id from public.prestacao_envios where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and etapa = 'final'), 'Diligência pediu a nota fiscal corrigida.')$t$,
+  'admin: reabre o envio com o motivo');
+select is((select status::text from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
+  'ajuste_solicitado', 'reabrir devolve a prestação para ajuste');
+select lives_ok($t$update public.prestacao_comprovantes set nome_arquivo = 'corrigida.pdf' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  'reaberto: a despesa enviada volta a mudar');
+select throws_ok($t$delete from public.prestacao_comprovantes where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  'P0001', 'enviado_guardado', 'reaberto: a despesa enviada continua guardada');
+select lives_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a0', 'final', current_date, 'Protocolo 124')$t$,
+  'admin: registra a correção');
+select is((select array_agg(versao || ':' || situacao order by versao) from public.prestacao_envios
+            where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and etapa = 'final'),
+  array['1:reaberto', '2:vigente'], 'a correção vira a versão 2; a primeira fica reaberta no histórico');
+reset role;
+select throws_ok($t$update public.prestacao_envios set retrato = '{}' where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and etapa = 'final' and versao = 1$t$,
+  'P0001', 'envio_imutavel', 'nem o dono do banco reescreve o retrato');
 
 select * from finish();
 rollback;

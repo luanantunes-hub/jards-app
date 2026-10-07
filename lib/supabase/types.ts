@@ -961,6 +961,32 @@ export interface PrestacaoDevolucao {
   updated_at: string;
 }
 
+/** Envio registrado (P4.6): o retrato do que foi enviado e a trava. Só as funções gravam. */
+export interface PrestacaoEnvio {
+  id: string;
+  prestacao_id: string;
+  etapa: "final" | "parcial";
+  versao: number;
+  enviado_em: string;
+  protocolo: string | null;
+  sistema: string | null;
+  comentario: string | null;
+  regime_codigo: string | null;
+  regime_versao: number | null;
+  retrato: Record<string, unknown>;
+  retrato_sha256: string;
+  manifesto: Record<string, unknown> | null;
+  guarda_marco: string | null;
+  /** null: até a data do marco do regime (a decisão final, em geral). */
+  guarda_ate: string | null;
+  situacao: "vigente" | "reaberto";
+  registrado_por: string | null;
+  registrado_em: string;
+  reaberto_em: string | null;
+  reaberto_por: string | null;
+  motivo_reabertura: string | null;
+}
+
 /** Local de realização e a situação que o relatório informa (P3.1). */
 export interface PrestacaoLocal {
   id: string;
