@@ -19,6 +19,7 @@ import { checarDespesas } from "./checar-despesas";
 import { checarConcentracao, checarOrcamento, checarPeriodo } from "./checar-financeiro";
 import { checarEvidencias } from "./checar-evidencias";
 import { checarCobertura, checarObjeto } from "./checar-objeto";
+import { checarDistribuicao } from "./checar-distribuicao";
 
 export * from "./catalogo";
 export { captadoDoExtrato } from "./checar-financeiro";
@@ -33,6 +34,7 @@ export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado
   { id: "objeto", titulo: "Metas e locais do objeto", executar: checarObjeto },
   { id: "evidencias", titulo: "Evidências: vínculo, data e local da foto", executar: checarEvidencias },
   { id: "cobertura", titulo: "Cobertura das metas e atividades por evidências", executar: checarCobertura },
+  { id: "distribuicao", titulo: "Plano de distribuição: cotas, preços e realizado", executar: checarDistribuicao },
 ];
 
 /** Roda todas as checagens; chaves repetidas ganham um sufixo para continuarem únicas. */

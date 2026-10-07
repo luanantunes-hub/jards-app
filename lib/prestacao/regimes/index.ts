@@ -8,7 +8,7 @@ import { LIE_P424_2020 } from "./lie-p424-2020";
 import { ROUANET_IN29_2026 } from "./rouanet-in29-2026";
 import { SAUDE_LXXXVI_2017 } from "./saude-lxxxvi-2017";
 import { SAUDE_LXXXVI_A_2025 } from "./saude-lxxxvi-a-2025";
-import { definida, ehLacuna, type Fonte, type Lacuna, type PrazoRegime, type RegimeNormativo } from "./tipos";
+import { definida, ehLacuna, type Fonte, type Lacuna, type PrazoRegime, type RegimeNormativo, type Regra } from "./tipos";
 
 export type { Fonte, Lacuna, PrazoRegime, RegimeNormativo, TetoDoRegime } from "./tipos";
 export { definida, ehLacuna } from "./tipos";
@@ -120,4 +120,22 @@ export function porteDoProjeto(regime: RegimeNormativo, valorBase: number): stri
   const porte = definida(regime.porte);
   if (!porte) return null;
   return porte.faixas.find(faixa => faixa.ate === null || valorBase <= faixa.ate)?.nome ?? null;
+}
+
+/** As regras de todas as dimensões do regime, incluindo as do documento fiscal. */
+export function regrasDoRegime(regime: RegimeNormativo): Regra[] {
+  const regras: Regra[] = [];
+  for (const valor of Object.values(regime)) {
+    if (!valor || typeof valor !== "object" || Array.isArray(valor) || "lacuna" in valor) continue;
+    const dimensao = valor as { regras?: unknown; documentoFiscal?: unknown };
+    for (const lista of [dimensao.regras, dimensao.documentoFiscal]) {
+      if (Array.isArray(lista)) regras.push(...(lista as Regra[]).filter(r => r && typeof r.codigo === "string" && r.fonte));
+    }
+  }
+  return regras;
+}
+
+/** A regra do regime com o código, em qualquer dimensão. */
+export function regraDoRegime(regime: RegimeNormativo | null | undefined, codigo: string): Regra | null {
+  return regime ? regrasDoRegime(regime).find(r => r.codigo === codigo) ?? null : null;
 }

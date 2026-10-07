@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(115);
+select plan(121);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -79,8 +79,8 @@ begin
      org_a || '/prestacoes/' || pa || '/evidencias/f0000000-0000-4000-8000-000000000ea0.jpg');
   insert into public.prestacao_relatorio (id, prestacao_id, secao) values
     ('f0000000-0000-4000-8000-0000000008a0', pa, 'rls');
-  insert into public.prestacao_distribuicao (id, prestacao_id, tipo) values
-    ('f0000000-0000-4000-8000-0000000009a0', pa, 'gratuito');
+  insert into public.prestacao_distribuicao (id, prestacao_id, produto, categoria, quantidade) values
+    ('f0000000-0000-4000-8000-0000000009a0', pa, 'RLS produto', 'social', 10);
   insert into public.prestacao_divulgacao (id, prestacao_id, tipo) values
     ('f0000000-0000-4000-8000-000000000aa0', pa, 'cartaz');
   insert into public.prestacao_alteracoes (id, prestacao_id, versao_id, numero) values
@@ -224,7 +224,7 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_atividades (prestacao_id, titulo, data_realizacao) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova', current_date)$c$),
     rls_teste.efeito($c$insert into public.prestacao_atividade_evidencias (atividade_id, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000006a0', 'nova.jpg', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/evidencias/f0000000-0000-4000-8000-000000000ec0.jpg')$c$),
     rls_teste.efeito($c$insert into public.prestacao_relatorio (prestacao_id, secao) values ('f0000000-0000-4000-8000-0000000001a0', 'rls nova')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_distribuicao (prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000001a0', 'pago')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS novo', 'social', 5)$c$),
     rls_teste.efeito($c$insert into public.prestacao_divulgacao (prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000001a0', 'folder')$c$),
     rls_teste.efeito($c$insert into public.prestacao_alteracoes (prestacao_id, versao_id, numero) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000002a0', 2)$c$),
     rls_teste.efeito($c$insert into public.prestacao_contas_bancarias (prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000001a0', 'captacao')$c$),
@@ -250,7 +250,7 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_atividades set titulo = titulo where id = 'f0000000-0000-4000-8000-0000000006a0'$c$),
     rls_teste.efeito($c$update public.prestacao_atividade_evidencias set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000007a0'$c$),
     rls_teste.efeito($c$update public.prestacao_relatorio set secao = secao where id = 'f0000000-0000-4000-8000-0000000008a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_distribuicao set tipo = tipo where id = 'f0000000-0000-4000-8000-0000000009a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_distribuicao set produto = produto where id = 'f0000000-0000-4000-8000-0000000009a0'$c$),
     rls_teste.efeito($c$update public.prestacao_divulgacao set tipo = tipo where id = 'f0000000-0000-4000-8000-000000000aa0'$c$),
     rls_teste.efeito($c$update public.prestacao_alteracoes set justificativa = justificativa where id = 'f0000000-0000-4000-8000-000000000ba0'$c$),
     rls_teste.efeito($c$update public.prestacao_contas_bancarias set apelido = apelido where id = 'f0000000-0000-4000-8000-0000000010a0'$c$),
@@ -614,6 +614,20 @@ select throws_ok($t$insert into public.prestacao_evidencias (prestacao_id, tipo,
   '23514', 'caminho_invalido', 'o arquivo da evidência fica na pasta de evidências da prestação');
 select throws_ok($t$insert into public.prestacao_evidencias (prestacao_id, tipo, url, requisitos) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/y', array['qualquer'])$t$,
   '23514', null, 'requisito fora da lista é recusado');
+
+-- ─── Distribuição (P3.4): categoria do regime, preço e meia só onde há venda ─
+select lives_ok($t$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade, quantidade_meia, preco, beneficiario_documento) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS show', 'popular', 100, 40, 50, null)$t$,
+  'quem edita: registra a venda a preço popular com a meia-entrada');
+select throws_ok($t$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS show', 'venda', 100)$t$,
+  '23514', null, 'venda pede o preço do ingresso inteiro');
+select throws_ok($t$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade, preco) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS show', 'social', 10, 20)$t$,
+  '23514', null, 'cota gratuita não tem preço');
+select throws_ok($t$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade, quantidade_meia, preco) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS show', 'venda', 10, 11, 80)$t$,
+  '23514', null, 'a meia-entrada é parte da quantidade');
+select throws_ok($t$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS show', 'cortesia', 10)$t$,
+  '23514', null, 'categoria fora do regime é recusada');
+select throws_ok($t$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade, beneficiario_documento) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS show', 'educativo', 10, '12.345.678/0001-95')$t$,
+  '23514', null, 'o documento de quem recebe é guardado só com letras e números');
 reset role;
 
 -- ─── Verificações (P2.7): o servidor grava; as pessoas decidem pela função ──
