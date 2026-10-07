@@ -928,6 +928,39 @@ export interface PrestacaoEnvioArquivo {
   created_at: string;
 }
 
+/** Devolução de recursos por GRU: saldo, rendimento, glosa ou reprovação (P4.4). */
+export interface PrestacaoDevolucao {
+  id: string;
+  prestacao_id: string;
+  motivo: "saldo" | "rendimento" | "glosa" | "reprovacao" | "outro";
+  descricao: string | null;
+  valor_principal: number;
+  /** Índice de atualização; "nenhum" para saldo e rendimentos devolvidos no encerramento. */
+  indice: "nenhum" | "poupanca" | "selic" | "outro";
+  data_base: string | null;
+  atualizado_ate: string | null;
+  fator: number | null;
+  valor_atualizado: number | null;
+  gru_unidade_gestora: string | null;
+  gru_gestao: string | null;
+  gru_codigo: string | null;
+  gru_referencia: string | null;
+  /** "MM/AAAA". */
+  competencia: string | null;
+  vencimento: string | null;
+  situacao: "a_pagar" | "paga";
+  pago_em: string | null;
+  valor_pago: number | null;
+  storage_path: string | null;
+  nome_arquivo: string | null;
+  mime_type: string | null;
+  observacoes: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Local de realização e a situação que o relatório informa (P3.1). */
 export interface PrestacaoLocal {
   id: string;

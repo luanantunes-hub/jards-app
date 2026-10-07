@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { estadoDaPrestacao } from "@/lib/prestacao/checagens/estado";
-import type { ArquivoDoChecklist, ContaDoChecklist, DadosDoChecklist, MarcacaoDoChecklist } from "@/lib/prestacao/envio";
+import type { ArquivoDoChecklist, ContaDoChecklist, DadosDoChecklist, DevolucaoDoChecklist, MarcacaoDoChecklist } from "@/lib/prestacao/envio";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { EVENTO_VERIFICADA } from "@/lib/prestacao/verificar-cliente";
 
@@ -13,8 +13,8 @@ type Importacao = { conta_id: string; periodo_fim: string | null; saldo_final: n
 
 /**
  * O que o checklist de envio (P4.1) avalia: o estado da prestação que o motor
- * de checagens usa, as verificações, as contas com os extratos, e as marcações
- * e os arquivos do checklist. Lê de novo quando uma verificação termina.
+ * de checagens usa, as verificações, as contas com os extratos, as marcações
+ * e os arquivos do checklist, e as devoluções (P4.4). Lê de novo quando uma verificação termina.
  */
 export function useDadosDoEnvio(prestacaoId: string): { dados: DadosDoEnvio | null; erro: string; recarregar: () => Promise<void> } {
   const supabase = useMemo(() => createClient(), []);
@@ -24,7 +24,7 @@ export function useDadosDoEnvio(prestacaoId: string): { dados: DadosDoEnvio | nu
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     try {
-      const [estado, prestacao, verificacoes, contas, importacoes, marcacoes, arquivos] = await Promise.all([
+      const [estado, prestacao, verificacoes, contas, importacoes, marcacoes, arquivos, devolucoes] = await Promise.all([
         estadoDaPrestacao(supabase, prestacaoId),
         db.from("prestacoes_contas").select("verificada_em").eq("id", prestacaoId).maybeSingle(),
         db.from("prestacao_verificacoes").select("check_codigo, status").eq("prestacao_id", prestacaoId).eq("status", "aberta"),
@@ -32,8 +32,9 @@ export function useDadosDoEnvio(prestacaoId: string): { dados: DadosDoEnvio | nu
         db.from("prestacao_extrato_importacoes").select("conta_id, periodo_fim, saldo_final, created_at").eq("prestacao_id", prestacaoId),
         db.from("prestacao_envio_checklist").select("etapa, tipo, codigo, situacao, justificativa, marcado_por, updated_at").eq("prestacao_id", prestacaoId),
         db.from("prestacao_envio_arquivos").select("id, etapa, codigo, storage_path, nome_arquivo, mime_type, tamanho_bytes, created_at").eq("prestacao_id", prestacaoId).order("created_at"),
+        db.from("prestacao_devolucoes").select("motivo, situacao, valor_principal, valor_atualizado, valor_pago, pago_em, storage_path").eq("prestacao_id", prestacaoId),
       ]);
-      const falha = prestacao.error ?? verificacoes.error ?? contas.error ?? importacoes.error ?? marcacoes.error ?? arquivos.error;
+      const falha = prestacao.error ?? verificacoes.error ?? contas.error ?? importacoes.error ?? marcacoes.error ?? arquivos.error ?? devolucoes.error;
       if (falha) return { dados: null, erro: mensagemErroPrestacao(falha, "Não foi possível carregar o checklist de envio") };
       const extratos = (importacoes.data ?? []) as Importacao[];
       return {
@@ -48,6 +49,7 @@ export function useDadosDoEnvio(prestacaoId: string): { dados: DadosDoEnvio | nu
           })),
           marcacoes: (marcacoes.data ?? []) as MarcacaoDoChecklist[],
           arquivos: (arquivos.data ?? []) as ArquivoDoChecklist[],
+          devolucoes: (devolucoes.data ?? []) as DevolucaoDoChecklist[],
           verificadaEm: prestacao.data?.verificada_em ?? null,
         },
       };

@@ -19,6 +19,7 @@ export type PastaPrestacao =
   | { tipo: "bens" }
   | { tipo: "pecas" }
   | { tipo: "envio" }
+  | { tipo: "devolucoes" }
   | { tipo: "atividade"; atividadeId: string };
 
 export type CaminhoPrestacao = {
@@ -89,7 +90,7 @@ export function lerCaminhoPrestacao(caminho: unknown): CaminhoPrestacao | null {
 
   let pasta: PastaPrestacao;
   let arquivo: string;
-  if (partes.length === 5 && (partes[3] === "comprovantes" || partes[3] === "orcamento" || partes[3] === "alteracoes" || partes[3] === "extratos" || partes[3] === "evidencias" || partes[3] === "bens" || partes[3] === "pecas" || partes[3] === "envio")) {
+  if (partes.length === 5 && (partes[3] === "comprovantes" || partes[3] === "orcamento" || partes[3] === "alteracoes" || partes[3] === "extratos" || partes[3] === "evidencias" || partes[3] === "bens" || partes[3] === "pecas" || partes[3] === "envio" || partes[3] === "devolucoes")) {
     pasta = { tipo: partes[3] };
     arquivo = partes[4];
   } else if (partes.length === 6 && partes[3] === "atividades" && ehUuid(partes[4])) {

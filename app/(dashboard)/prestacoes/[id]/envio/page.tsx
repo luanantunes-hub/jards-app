@@ -8,7 +8,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Paperclip, RefreshCw, Send, Trash2, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Paperclip, Receipt, RefreshCw, Send, Trash2, Undo2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -43,6 +43,7 @@ const ABAS: Record<DestinoDoEnvio, { rotulo: string; caminho: string }> = {
   bens: { rotulo: "Bens", caminho: "/bens" },
   divulgacao: { rotulo: "Divulgação", caminho: "/divulgacao" },
   pendencias: { rotulo: "Pendências", caminho: "/pendencias" },
+  devolucoes: { rotulo: "Devoluções", caminho: "/envio/devolucoes" },
 };
 
 const tamanho = (bytes: number | null) =>
@@ -375,6 +376,9 @@ export default function EnvioPage() {
                 <FileSpreadsheet size={12} aria-hidden /> Espelho do Salic
               </Link>
             )}
+            <Link href={`/prestacoes/${id}/envio/devolucoes`} className={BOTAO} style={BORDA}>
+              <Receipt size={12} aria-hidden /> Devoluções
+            </Link>
           </div>
         )}
       </div>
