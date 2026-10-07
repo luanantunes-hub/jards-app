@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Como a Jards coleta, usa e protege seus dados.",
 };
 
-const UPDATED = "30 de setembro de 2026";
+const UPDATED = "7 de outubro de 2026";
 
 export default function PrivacidadePage() {
   return (
@@ -55,13 +55,13 @@ export default function PrivacidadePage() {
 
           <Section id="s2" num="2" title="Dados que coletamos">
             <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">2.1 Dados de conta</h3>
-            <p>Ao criar uma conta, coletamos nome completo, endereço de e-mail, senha (armazenada em hash, nunca em texto puro) e nome da organização.</p>
+            <p>Ao criar uma conta, coletamos nome completo, endereço de e-mail, senha (armazenada em hash, nunca em texto puro) e nome da organização. Se você chegou por um link de campanha ou por um anúncio, guardamos também de qual campanha veio o cadastro (ver §10).</p>
 
             <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">2.2 Dados inseridos no CRM</h3>
             <p>Para gerenciar o pipeline de captação você pode inserir informações sobre patrocinadores, contatos, projetos, captações, atividades, documentos e comissões. Esses dados pertencem à sua organização.</p>
 
             <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">2.3 Dados técnicos</h3>
-            <p>Registramos automaticamente endereço IP, logs de sessão e histórico de alterações de campos críticos para segurança e auditoria. Esses dados não são usados para publicidade. Nas páginas públicas do site, e só com o seu consentimento, também coletamos estatísticas de navegação pelo Google Analytics e pelo Google Ads (ver §10).</p>
+            <p>Registramos automaticamente endereço IP, logs de sessão e histórico de alterações de campos críticos para segurança e auditoria. Esses dados não são usados para publicidade. Nas páginas públicas do site, e só com o seu consentimento, também coletamos estatísticas de navegação e dados para os nossos anúncios pelo Google Analytics e pelo Google Ads (ver §10).</p>
           </Section>
 
           <Section id="s3" num="3" title="Integrações externas — Google, Claude e ChatGPT">
@@ -136,7 +136,7 @@ export default function PrivacidadePage() {
           </Section>
 
           <Section id="s5" num="5" title="Como usamos os dados">
-            <p>Usamos seus dados para prestar o serviço de CRM contratado, autenticar usuários, sincronizar integrações autorizadas, processar pagamentos, enviar notificações sobre o serviço, prevenir fraudes e, com o seu consentimento, medir o uso das páginas públicas do site e o resultado das nossas campanhas. <strong>Nunca usamos seus dados para publicidade de terceiros, nem os vendemos.</strong></p>
+            <p>Usamos seus dados para prestar o serviço de CRM contratado, autenticar usuários, sincronizar integrações autorizadas, processar pagamentos, enviar notificações sobre o serviço, prevenir fraudes, saber de qual campanha veio cada cadastro e, com o seu consentimento, medir o uso das páginas públicas do site e o resultado das nossas campanhas e mostrar nossos anúncios a quem já visitou o site. <strong>Nunca usamos seus dados para publicidade de terceiros, nem os vendemos.</strong></p>
           </Section>
 
           <Section id="s6" num="6" title="Compartilhamento de dados">
@@ -145,7 +145,7 @@ export default function PrivacidadePage() {
               <li><strong>Supabase</strong> — banco de dados, autenticação e armazenamento (EUA, us-east-2)</li>
               <li><strong>Stripe</strong> — processamento de pagamentos (EUA / global)</li>
               <li><strong>Google LLC</strong> — APIs de Gmail e Agenda, somente quando autorizado (EUA / global)</li>
-              <li><strong>Google LLC — Google Analytics e Google Ads</strong> — estatísticas de visitas às páginas públicas do site e medição das nossas campanhas, somente com o seu consentimento (EUA / global)</li>
+              <li><strong>Google LLC — Google Analytics e Google Ads</strong> — estatísticas de visitas às páginas públicas do site e medição das nossas campanhas, incluindo cadastros e assinaturas vindos de anúncios, e exibição dos nossos anúncios a quem visitou o site (remarketing), somente com o seu consentimento (EUA / global)</li>
               <li><strong>Microsoft</strong> — API do Outlook/Agenda, somente quando autorizado (EUA / global)</li>
               <li><strong>Anthropic</strong> — assistente Claude via MCP, somente se você conectar essa integração (EUA / global)</li>
               <li><strong>OpenAI</strong> — ChatGPT/Custom GPT, somente se você conectar essa integração (EUA / global)</li>
@@ -158,7 +158,7 @@ export default function PrivacidadePage() {
           </Section>
 
           <Section id="s8" num="8" title="Retenção de dados">
-            <p>Dados de conta e CRM são mantidos enquanto a organização estiver ativa e excluídos em até 30 dias após solicitação. Tokens OAuth são excluídos imediatamente ao desconectar a integração. Logs de auditoria são mantidos por 24 meses. Dados de pagamento são mantidos por 5 anos por obrigação fiscal. Dados de navegação coletados pelo Google Analytics ficam retidos, no nível de evento, por no máximo 14 meses.</p>
+            <p>Dados de conta e CRM são mantidos enquanto a organização estiver ativa e excluídos em até 30 dias após solicitação. Tokens OAuth são excluídos imediatamente ao desconectar a integração. Logs de auditoria são mantidos por 24 meses. Dados de pagamento são mantidos por 5 anos por obrigação fiscal. Dados de navegação coletados pelo Google Analytics ficam retidos, no nível de evento, por no máximo 14 meses. As listas de público do Google Ads (remarketing) guardam a visita por até 540 dias, conforme a configuração das nossas campanhas.</p>
           </Section>
 
           <Section id="s9" num="9" title="Seus direitos (LGPD)">
@@ -172,17 +172,18 @@ export default function PrivacidadePage() {
           <Section id="s10" num="10" title="Cookies">
             <p><strong>Essenciais.</strong> Sessão de autenticação (SameSite=Lax) e estado OAuth temporário (duração de 10 minutos, excluído após o fluxo). Sem eles a plataforma não funciona, por isso não dependem de consentimento.</p>
             <p>
-              <strong>Análise (opcionais).</strong> Nas páginas públicas do site — página inicial, blog, Termos de Uso e esta
-              Política — usamos o Google Analytics para medir as visitas e entender quais conteúdos são úteis. A mesma tag
-              do Google envia ao Google Ads o registro das visitas, para medir o resultado das nossas campanhas. Nada disso é
-              carregado antes de você aceitar no aviso de cookies; se você recusar ou não responder, o Google Analytics e o
-              Google Ads não recebem nada. Quando ativo, o Google Analytics grava os cookies <code>_ga</code> e{" "}
-              <code>_ga_*</code> (duração de até 2 anos) com um identificador aleatório do navegador e registra páginas
-              visitadas, origem da visita, tipo de dispositivo e localização aproximada; o Google Ads recebe a página
-              visitada, a origem e esse identificador. Não enviamos nome, e-mail nem dados do CRM; dos endereços, seguem só a
-              página e os parâmetros de campanha (utm e gclid), e da origem da visita, só o domínio. Não gravamos cookies de
-              publicidade, e a personalização de anúncios e os sinais do Google ficam desativados. Nada disso é usado dentro
-              da plataforma nem nas páginas de propostas.
+              <strong>Análise e publicidade (opcionais).</strong> Nas páginas públicas do site — página inicial, blog, Termos
+              de Uso e esta Política — usamos o Google Analytics para medir as visitas e entender quais conteúdos são úteis, e
+              a tag do Google Ads para medir o resultado das nossas campanhas e mostrar nossos anúncios a quem já visitou o
+              site (remarketing). Nada disso é carregado antes de você aceitar no aviso de cookies; se você recusar ou não
+              responder, o Google Analytics e o Google Ads não recebem nada. Quando ativos, o Google Analytics grava os cookies{" "}
+              <code>_ga</code> e <code>_ga_*</code> (duração de até 2 anos) e o Google Ads grava cookies como{" "}
+              <code>_gcl_au</code> e <code>_gcl_aw</code> (duração de até 90 dias), com identificadores aleatórios do
+              navegador. São registradas as páginas visitadas, a origem da visita, o tipo de dispositivo e a localização
+              aproximada. Não enviamos nome, e-mail nem dados do CRM; dos endereços, seguem só a página e os parâmetros de
+              campanha (utm e os identificadores de clique do Google, como o gclid), e da origem da visita, só o domínio. Os
+              sinais do Google no Analytics ficam desativados. Nada disso é carregado dentro da plataforma nem nas páginas de
+              propostas.
             </p>
             <p>
               A base legal é o seu consentimento (art. 7º, I, da LGPD). Sua escolha fica salva neste navegador, e você pode
@@ -190,9 +191,21 @@ export default function PrivacidadePage() {
               <button type="button" data-preferencias-cookies className="text-[#7259B5] hover:underline">
                 Preferências de cookies
               </button>
-              . Se recusar depois de ter aceitado, apagamos os cookies do Google Analytics deste navegador.
+              . Se recusar depois de ter aceitado, apagamos os cookies do Google Analytics e do Google Ads deste navegador.
             </p>
-            <p><strong>Não usamos cookies de publicidade.</strong></p>
+            <p>
+              <strong>Origem do cadastro.</strong> Quando você cria uma conta a partir de um link de campanha, guardamos com a
+              conta os parâmetros de campanha desse link (origem, mídia, campanha, palavra-chave e conteúdo, os chamados utm),
+              para sabermos quais campanhas trazem cadastros. Esse uso é interno e tem como base o nosso legítimo interesse
+              (art. 7º, IX, da LGPD). Se você chegou por um anúncio do Google e aceitou o aviso de cookies, guardamos também o
+              identificador do clique (gclid) e informamos ao Google Ads que aquele clique resultou em um cadastro e, se for o
+              caso, em uma assinatura, com a data e o valor mensal do plano. Não enviamos nome, e-mail nem dados do CRM. Essa
+              parte não grava nada no seu navegador: o identificador vem no próprio endereço do anúncio.
+            </p>
+            <p>
+              <strong>Os cookies de publicidade servem só aos nossos próprios anúncios.</strong> Não vendemos dados nem os
+              usamos para anúncios de terceiros.
+            </p>
           </Section>
 
           <Section id="s11" num="11" title="Menores de idade">
