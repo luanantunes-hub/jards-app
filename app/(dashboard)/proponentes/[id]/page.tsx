@@ -446,7 +446,7 @@ export default function ProponenteDetailPage() {
                 />
               )}
               {relationshipSection === "registrations" && <InscricoesTable rows={inscricoes} />}
-              {relationshipSection === "negotiations" && <NegotiationsTable rows={negociacoes} eyebrow="Pipeline do proponente" title="Negociações" hideNegotiationColumn />}
+              {relationshipSection === "negotiations" && <NegotiationsTable rows={negociacoes} eyebrow="Pipeline do proponente" title="Negociações" />}
             </div>
           </div>
         ) : pageTab === "clientes" ? (

@@ -250,7 +250,7 @@ function ClientNegotiationsHistory({ rows }: { rows: NegotiationHistoryRow[] }) 
   const totalCiclosAntigos = rows.length - rows.filter(r => !idsComRenovacaoMaisNova.has(r.id)).length;
   return <div className="flex flex-col gap-3">
     {totalCiclosAntigos > 0 && <div className="flex justify-end"><FilterButton active={showHistorico} onClick={() => setShowHistorico(v => !v)}>Histórico{!showHistorico ? ` (${totalCiclosAntigos})` : ""}</FilterButton></div>}
-    <NegotiationsTable rows={visiveis} eyebrow="Histórico comercial" hideNegotiationColumn/>
+    <NegotiationsTable rows={visiveis} eyebrow="Histórico comercial"/>
   </div>;
 }
 

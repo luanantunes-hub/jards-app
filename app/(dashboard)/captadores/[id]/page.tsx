@@ -331,7 +331,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
             </div>
           </div>
         ) : pageTab === "negociacoes" ? (
-          <NegotiationsTable rows={negociacoes} hideNegotiationColumn />
+          <NegotiationsTable rows={negociacoes} />
         ) : pageTab === "inscricoes" ? (
           <InscricoesTable rows={inscricoes} />
         ) : pageTab === "atribuicoes" ? (
