@@ -136,7 +136,7 @@ export default function PrivacidadePage() {
           </Section>
 
           <Section id="s5" num="5" title="Como usamos os dados">
-            <p>Usamos seus dados para prestar o serviço de CRM contratado, autenticar usuários, sincronizar integrações autorizadas, processar pagamentos, enviar notificações sobre o serviço, prevenir fraudes, saber de qual campanha veio cada cadastro e, com o seu consentimento, medir o uso das páginas públicas do site e o resultado das nossas campanhas e mostrar nossos anúncios a quem já visitou o site. <strong>Nunca usamos seus dados para publicidade de terceiros, nem os vendemos.</strong></p>
+            <p>Usamos seus dados para prestar o serviço de CRM contratado, autenticar usuários, sincronizar integrações autorizadas, processar pagamentos, enviar notificações sobre o serviço, enviar por e-mail novidades do Jards e conteúdos sobre captação a quem tem conta (toda mensagem traz um link para sair da lista), prevenir fraudes, saber de qual campanha veio cada cadastro e, com o seu consentimento, medir o uso das páginas públicas do site e o resultado das nossas campanhas e mostrar nossos anúncios a quem já visitou o site. <strong>Nunca usamos seus dados para publicidade de terceiros, nem os vendemos.</strong></p>
           </Section>
 
           <Section id="s6" num="6" title="Compartilhamento de dados">
@@ -144,6 +144,8 @@ export default function PrivacidadePage() {
             <ul className="mt-2 ml-4 list-disc space-y-1">
               <li><strong>Supabase</strong> — banco de dados, autenticação e armazenamento (EUA, us-east-2)</li>
               <li><strong>Stripe</strong> — processamento de pagamentos (EUA / global)</li>
+              <li><strong>Resend</strong> — envio de e-mails: acesso à conta (confirmação, senha e convites) e novidades do Jards (EUA, com envio pela região de São Paulo)</li>
+              <li><strong>Vercel</strong> — hospedagem do site e da plataforma (EUA / global)</li>
               <li><strong>Google LLC</strong> — APIs de Gmail e Agenda, somente quando autorizado (EUA / global)</li>
               <li><strong>Google LLC — Google Analytics e Google Ads</strong> — estatísticas de visitas às páginas públicas do site e medição das nossas campanhas, incluindo cadastros (com o e-mail criptografado, no momento do cadastro) e assinaturas vindos de anúncios, e exibição dos nossos anúncios a quem visitou o site (remarketing), somente com o seu consentimento (EUA / global)</li>
               <li><strong>Microsoft</strong> — API do Outlook/Agenda, somente quando autorizado (EUA / global)</li>
