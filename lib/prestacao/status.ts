@@ -109,6 +109,17 @@ const ERROS: Record<string, string> = {
   // Envio (bloqueio aberto impede)
   verificacao_pendente: "Rode a verificação da prestação antes de enviar (painel Verificações, na visão geral).",
   bloqueios_abertos: "Há bloqueios abertos nas verificações. Resolva cada um, ou peça ao revisor para dispensar com o motivo, e envie de novo.",
+  // Envio registrado (P4.6)
+  envio_vigente: "Já há um envio registrado valendo nesta etapa. Para mandar uma correção, reabra esse envio na aba Envio.",
+  enviado_travado: "Isso foi enviado e está travado enquanto o envio vale. Para corrigir, reabra o envio na aba Envio.",
+  enviado_guardado: "Isso foi enviado e fica guardado pelo prazo de guarda do regime: não pode ser apagado.",
+  envio_imutavel: "O envio registrado não muda; só pode ser reaberto, com o motivo.",
+  envio_inexistente: "Envio não encontrado ou sem acesso. Atualize a página.",
+  envio_ja_reaberto: "Esse envio já foi reaberto. Atualize a página.",
+  reabertura_sem_motivo: "Explique por que o envio está sendo reaberto (pelo menos 10 letras).",
+  etapa_invalida: "Etapa do envio inválida. Atualize a página.",
+  envio_data_invalida: "Informe a data do envio, que não pode ser futura.",
+  manifesto_invalido: "O manifesto do pacote veio incompleto. Gere o pacote de novo.",
 };
 
 export function mensagemErroPrestacao(erro: { message?: string } | null | undefined, padrao: string): string {
