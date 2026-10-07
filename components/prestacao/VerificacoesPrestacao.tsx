@@ -37,9 +37,10 @@ function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; 
   if (qual === "comprovantes" && v.entidade_tipo === "despesa" && v.entidade_id) {
     return { href: `/prestacoes/${prestacaoId}/comprovantes?despesa=${v.entidade_id}`, rotulo: "Abrir despesa" };
   }
-  // O achado de uma meta ou de um local abre o cadastro dele na aba Objeto.
-  if (qual === "objeto" && (v.entidade_tipo === "meta" || v.entidade_tipo === "local") && v.entidade_id) {
-    return { href: `/prestacoes/${prestacaoId}/objeto?${v.entidade_tipo}=${v.entidade_id}`, rotulo: v.entidade_tipo === "meta" ? "Abrir meta" : "Abrir local" };
+  // O achado de uma meta, de um local ou de uma evidência abre o cadastro na aba Objeto.
+  if (qual === "objeto" && (v.entidade_tipo === "meta" || v.entidade_tipo === "local" || v.entidade_tipo === "evidencia") && v.entidade_id) {
+    const rotulo = { meta: "Abrir meta", local: "Abrir local", evidencia: "Abrir evidência" }[v.entidade_tipo];
+    return { href: `/prestacoes/${prestacaoId}/objeto?${v.entidade_tipo}=${v.entidade_id}`, rotulo };
   }
   const { caminho, rotulo } = DESTINOS[qual];
   return { href: caminho.startsWith("#") ? caminho : `/prestacoes/${prestacaoId}${caminho}`, rotulo };

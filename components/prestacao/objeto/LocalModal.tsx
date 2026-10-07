@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
+import { MunicipioCombobox, type MunicipioEscolhido } from "@/components/prestacao/objeto/MunicipioCombobox";
 import { ehBrasil, erroDoLocal, LIMITE_JUSTIFICATIVA_LOCAL, STATUS_LOCAL, UFS, type StatusLocal } from "@/lib/prestacao/objeto";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoLocal } from "@/lib/supabase/types";
@@ -21,7 +22,12 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
   const supabase = useMemo(() => createClient(), []);
   const [pais, setPais] = useState(local?.pais ?? "Brasil");
   const [uf, setUf] = useState(local?.uf ?? "");
-  const [municipio, setMunicipio] = useState(local?.municipio ?? "");
+  const [municipio, setMunicipio] = useState<MunicipioEscolhido>({
+    nome: local?.municipio ?? "",
+    ibge: local?.municipio_ibge ?? null,
+    latitude: local?.latitude === null || local?.latitude === undefined ? null : Number(local.latitude),
+    longitude: local?.longitude === null || local?.longitude === undefined ? null : Number(local.longitude),
+  });
   const [espaco, setEspaco] = useState(local?.espaco ?? "");
   const [inicio, setInicio] = useState(local?.inicio ?? "");
   const [fim, setFim] = useState(local?.fim ?? "");
@@ -38,7 +44,7 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
     const campos = {
       pais: pais.trim() || "Brasil",
       uf: brasil ? uf || null : null,
-      municipio: municipio.trim() || null,
+      municipio: municipio.nome.trim() || null,
       espaco: espaco.trim() || null,
       inicio: inicio || null,
       fim: fim || null,
@@ -47,13 +53,17 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
     };
     const problema = erroDoLocal(campos);
     if (problema) { setErro(problema); return; }
+    // Código e coordenadas só valem para o município escolhido da lista, no Brasil.
+    const doIbge = brasil && municipio.ibge
+      ? { municipio_ibge: municipio.ibge, latitude: municipio.latitude, longitude: municipio.longitude }
+      : { municipio_ibge: null, latitude: null, longitude: null };
     setSalvando(true);
     setErro("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas do objeto ainda não estão no tipo Database
     const tabela = (supabase as any).from("prestacao_locais");
     const { error } = local
-      ? await tabela.update(campos).eq("id", local.id)
-      : await tabela.insert({ ...campos, prestacao_id: prestacaoId });
+      ? await tabela.update({ ...campos, ...doIbge }).eq("id", local.id)
+      : await tabela.insert({ ...campos, ...doIbge, prestacao_id: prestacaoId });
     setSalvando(false);
     if (error) { setErro(mensagemErroPrestacao(error, "Não foi possível salvar o local")); return; }
     onSaved();
@@ -87,17 +97,24 @@ export function LocalModal({ prestacaoId, local, onClose, onSaved }: {
             <span className={ROTULO}>UF</span>
             <Dropdown
               value={uf}
-              onChange={setUf}
+              onChange={valor => { if (valor !== uf) setMunicipio({ nome: "", ibge: null, latitude: null, longitude: null }); setUf(valor); }}
               ariaLabel="UF"
               placeholder="Escolha a UF"
               options={UFS.map(([sigla, nome]) => ({ value: sigla, label: `${sigla} · ${nome}` }))}
             />
           </label>
         )}
-        <label className={brasil ? "" : "sm:col-span-2"}>
-          <span className={ROTULO}>{brasil ? "Município" : "Cidade"}</span>
-          <input value={municipio} onChange={e => setMunicipio(e.target.value)} maxLength={120} placeholder={brasil ? "São Paulo" : "Buenos Aires"} className={CAMPO} />
-        </label>
+        {brasil ? (
+          <div>
+            <span className={ROTULO}>Município</span>
+            <MunicipioCombobox uf={uf} valor={municipio} onChange={setMunicipio} />
+          </div>
+        ) : (
+          <label className="sm:col-span-2">
+            <span className={ROTULO}>Cidade</span>
+            <input value={municipio.nome} onChange={e => setMunicipio({ nome: e.target.value, ibge: null, latitude: null, longitude: null })} maxLength={120} placeholder="Buenos Aires" className={CAMPO} />
+          </label>
+        )}
         <label className="sm:col-span-2">
           <span className={ROTULO}>Espaço (opcional)</span>
           <input value={espaco} onChange={e => setEspaco(e.target.value)} maxLength={200} placeholder="Ex.: Teatro Municipal, escolas da rede estadual" className={CAMPO} />

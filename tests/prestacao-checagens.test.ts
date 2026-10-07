@@ -17,8 +17,8 @@ import { regimePorCodigo } from "../lib/prestacao/regimes";
 import type { PrestacaoFornecedor } from "../lib/supabase/types";
 
 const MIGRATION = "supabase/migrations/20261006200000_prestacao_verificacoes.sql";
-// A P3.1 trocou a regra dos tipos de entidade: meta, local e atividade entraram.
-const MIGRATION_ENTIDADES = "supabase/migrations/20261007120000_prestacao_metas_locais.sql";
+// A P3.1 e a P3.2 trocaram a regra dos tipos de entidade: meta, local, atividade e evidência entraram.
+const MIGRATION_ENTIDADES = "supabase/migrations/20261007140000_prestacao_evidencias.sql";
 
 const fornecedor: PrestacaoFornecedor = {
   id: "f1", organization_id: "o1", tipo_pessoa: "pj", documento: "11222333000181", nome: null,
@@ -167,7 +167,7 @@ test("contrato: catálogo cobre o que as checagens emitem, e o banco aceita os m
   assert.deepEqual(lista("severidade"), [...SEVERIDADES]);
   assert.deepEqual(lista("resultado"), [...RESULTADOS]);
   const entidades = (await readFile(MIGRATION_ENTIDADES, "utf8")).match(/check \(entidade_tipo in \(([^)]*)\)\)/);
-  assert.ok(entidades, "check de entidade_tipo na migration da P3.1");
+  assert.ok(entidades, "check de entidade_tipo na migration da P3.2");
   assert.deepEqual(entidades[1].split(",").map(v => v.trim().replace(/'/g, "")), [...ENTIDADES]);
   assert.deepEqual(lista("status"), [...STATUS_VERIFICACAO]);
 });
