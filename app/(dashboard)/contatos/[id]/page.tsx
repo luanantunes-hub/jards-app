@@ -754,7 +754,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           className="block rounded border px-3 py-2.5 transition hover:border-[#7259B5]/30 hover:bg-black/[.04]"
                           style={{ borderColor: "rgba(13,13,13,.09)" }}>
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-[0.75rem] font-semibold text-[#0D0D0D] leading-snug">{c.titulo ?? c.projeto?.nome ?? "Sem título"}</p>
+                            <p className="text-[0.75rem] font-semibold text-[#0D0D0D] leading-snug">{c.titulo ?? c.projeto?.nome}</p>
                             <StatusBadge
                               status={c.status}
                               label={etiqueta?.label ?? cfg.label}
@@ -805,12 +805,13 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                     {captacoes.map(c => {
                       const cfg = STATUS_CONFIG[c.status] ?? { label: c.status, color: "rgba(13,13,13,.4)" };
                       const etiqueta = etiquetasCaptacao[c.status];
+                      const nome = c.titulo ?? c.projeto?.nome;
                       return (
                         <tr
                           key={c.id}
                           role="link"
                           tabIndex={0}
-                          aria-label={`Abrir negociação ${c.titulo ?? c.projeto?.nome ?? "Sem título"}`}
+                          aria-label={nome ? `Abrir negociação ${nome}` : "Abrir negociação"}
                           onClick={() => router.push(`/captacoes/${c.id}`)}
                           onKeyDown={event => {
                             if (event.key === "Enter" || event.key === " ") {
@@ -822,9 +823,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           className="group cursor-pointer transition hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                         >
                           <td className="px-5 py-3.5">
-                            <span className="text-[0.8125rem] font-semibold text-[#0D0D0D]">
-                              {c.titulo ?? c.projeto?.nome ?? "Sem título"}
-                            </span>
+                            <span className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{nome}</span>
                           </td>
                           <td className="px-5 py-3.5 text-[0.78125rem] text-black/55">{c.empresa_crm?.nome ?? "—"}</td>
                           <td className="px-5 py-3.5 text-[0.78125rem] text-black/55 tabular-nums">{fmtCurrency(c.valor_solicitado)}</td>

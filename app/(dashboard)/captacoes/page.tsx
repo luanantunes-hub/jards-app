@@ -218,9 +218,9 @@ export default function CaptacoesPage() {
     if (error) setCaptacoes(previous);
   }
 
-  function handleDelete(id: string, titulo: string) {
+  function handleDelete(id: string, nome: string) {
     confirmDelete({
-      title: `Excluir a negociação “${titulo}”?`,
+      title: nome ? `Excluir a negociação “${nome}”?` : "Excluir a negociação?",
       description: "O histórico e os documentos da negociação são apagados. Atividades, notas e propostas continuam salvas, sem o vínculo. Esta ação não pode ser desfeita.",
       onConfirm: async () => {
         await excluirPorId(supabase, "captacoes", id);
@@ -872,7 +872,7 @@ export default function CaptacoesPage() {
                           <td className="px-4 py-3.5">
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 transition">
                               <button
-                                onClick={e => { e.stopPropagation(); handleDelete(c.id, c.titulo ?? "sem título"); }}
+                                onClick={e => { e.stopPropagation(); handleDelete(c.id, c.titulo ?? c.projeto?.nome ?? c.empresa_pub?.nome ?? c.empresa_crm?.nome ?? ""); }}
                                 className="p-1 rounded hover:bg-black/[.04] text-black/20 hover:text-[#D94E4E] transition"
                                 title="Excluir"
                               >

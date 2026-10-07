@@ -1277,7 +1277,7 @@ export default function PatrocinadorPage() {
                           >
                             <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "white", border: "1px solid #7259B540", color: "#7259B5" }}>Neg.</span>
                             <p className="text-[0.6875rem] font-medium text-black/70 truncate flex-1 min-w-0">
-                              {c.projeto?.nome ?? c.titulo ?? "Sem título"}
+                              {c.projeto?.nome ?? c.titulo}
                             </p>
                             <StatusBadge status={c.status} label={sc.label} bg={sc.text} iconName={sc.iconName} size="sm" />
                           </button>

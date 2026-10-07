@@ -631,8 +631,9 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
           cotas={cotas}
           captacoes={captacoes.map(captacao => ({
             id: captacao.id,
-            titulo: captacao.titulo || "Negociação sem título",
-            complemento: captacao.empresa_crm?.nome,
+            // Sem título, a negociação se identifica pela empresa.
+            titulo: captacao.titulo || captacao.empresa_crm?.nome || "Negociação",
+            complemento: captacao.titulo ? captacao.empresa_crm?.nome : null,
           }))}
           inscricoes={inscricoes.map(inscricao => ({
             id: inscricao.id,
@@ -1205,8 +1206,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             projetoId={projeto.id}
             captacoes={captacoes.map(captacao => ({
               id: captacao.id,
-              titulo: captacao.titulo || "Negociação sem título",
-              empresaNome: captacao.empresa_crm?.nome,
+              titulo: captacao.titulo || captacao.empresa_crm?.nome || "Negociação",
+              empresaNome: captacao.titulo ? captacao.empresa_crm?.nome : null,
             }))}
             inscricoes={inscricoes.map(inscricao => ({
               id: inscricao.id,

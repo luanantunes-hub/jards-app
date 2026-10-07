@@ -232,7 +232,10 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
                   onChange={escolherCaptacao}
                   ariaLabel="Negociação aprovada"
                   placeholder={captacoes.length ? "Selecionar negociação" : "Nenhuma negociação aprovada"}
-                  options={captacoes.map(c => ({ value: c.id, label: `${c.titulo ?? "Sem título"}${c.lei ? ` (${c.lei})` : ""}` }))}
+                  options={captacoes.map(c => {
+                    const nome = c.titulo || projetos.find(p => p.id === c.projeto_id)?.nome || "Negociação";
+                    return { value: c.id, label: `${nome}${c.lei ? ` (${c.lei})` : ""}` };
+                  })}
                 />
                 <p className="mt-1 text-[0.625rem] text-black/35">A lei da negociação define o regime sugerido.</p>
               </div>
