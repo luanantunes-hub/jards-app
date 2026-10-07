@@ -32,6 +32,7 @@ const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> =
   atividades: { caminho: "/atividades", rotulo: "Abrir atividades" },
   distribuicao: { caminho: "/distribuicao", rotulo: "Abrir distribuição" },
   bens: { caminho: "/bens", rotulo: "Abrir bens" },
+  divulgacao: { caminho: "/divulgacao", rotulo: "Abrir divulgação" },
 };
 
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {
@@ -55,6 +56,9 @@ function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; 
   }
   if (qual === "bens" && v.entidade_tipo === "despesa" && v.entidade_id) {
     return { href: `/prestacoes/${prestacaoId}/bens?despesa=${v.entidade_id}`, rotulo: "Registrar o bem" };
+  }
+  if (qual === "divulgacao" && v.entidade_tipo === "peca" && v.entidade_id) {
+    return { href: `/prestacoes/${prestacaoId}/divulgacao?peca=${v.entidade_id}`, rotulo: "Abrir peça" };
   }
   const { caminho, rotulo } = DESTINOS[qual];
   return { href: caminho.startsWith("#") ? caminho : `/prestacoes/${prestacaoId}${caminho}`, rotulo };

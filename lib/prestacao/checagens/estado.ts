@@ -11,6 +11,7 @@ import { regimeSchema } from "../regimes/schema";
 import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
 import { lerCotacoes, type BemParaChecar } from "../bens";
+import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
 
 const PAGINA = 1000;
@@ -46,7 +47,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -77,6 +78,11 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     todas<BemParaChecar>(() => db.from("prestacao_bens")
       .select("id, no_id, despesa_id, tipo, descricao, valor, registro_imovel, cotacoes, destinacao, beneficiario, doacao_storage_path, aceite_storage_path, justificativa")
       .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+    todas<PecaParaChecar>(() => db.from("prestacao_pecas")
+      .select("id, tipo, titulo, veiculacao_inicio, veiculacao_fim, marcas, aprovacao_status, aprovacao_enviada_em, aprovacao_decidida_em, storage_path, url, justificativa")
+      .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+    todas<DefesoEleitoral>(() => db.from("calendario_regulatorio")
+      .select("inicio, fim, descricao").eq("tipo", "defeso_eleitoral").order("inicio")),
   ]);
 
   const nos = versao
@@ -118,6 +124,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     evidencias,
     distribuicao: distribuicao.map(l => ({ ...l, preco: l.preco === null ? null : Number(l.preco) })),
     bens: bens.map(b => ({ ...b, valor: b.valor === null ? null : Number(b.valor), cotacoes: lerCotacoes(b.cotacoes) })),
+    pecas,
+    defesos,
     valorAprovado: prestacao.valor_aprovado === null || prestacao.valor_aprovado === undefined ? null : Number(prestacao.valor_aprovado),
     hoje,
   };

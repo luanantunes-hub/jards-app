@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(135);
+select plan(140);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -81,8 +81,8 @@ begin
     ('f0000000-0000-4000-8000-0000000008a0', pa, 'rls');
   insert into public.prestacao_distribuicao (id, prestacao_id, produto, categoria, quantidade) values
     ('f0000000-0000-4000-8000-0000000009a0', pa, 'RLS produto', 'social', 10);
-  insert into public.prestacao_divulgacao (id, prestacao_id, tipo) values
-    ('f0000000-0000-4000-8000-000000000aa0', pa, 'cartaz');
+  insert into public.prestacao_pecas (id, prestacao_id, tipo, titulo) values
+    ('f0000000-0000-4000-8000-000000000aa0', pa, 'cartaz', 'RLS cartaz');
   insert into public.prestacao_alteracoes (id, prestacao_id, versao_id, numero) values
     ('f0000000-0000-4000-8000-000000000ba0', pa, 'f0000000-0000-4000-8000-0000000002a0', 1);
   insert into public.prestacao_contas_bancarias (id, prestacao_id, tipo, banco, agencia, conta) values
@@ -132,7 +132,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacoes_contas', 'prestacao_status_log', 'prestacao_orcamento_versoes',
     'prestacao_orcamento_nos', 'prestacao_comprovantes',
     'prestacao_atividades', 'prestacao_atividade_evidencias', 'prestacao_relatorio',
-    'prestacao_distribuicao', 'prestacao_divulgacao', 'prestacao_alteracoes',
+    'prestacao_distribuicao', 'prestacao_pecas', 'prestacao_alteracoes',
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
     'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
     'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
@@ -202,7 +202,7 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_atividade_evidencias e join public.prestacao_atividades a on a.id = e.atividade_id where a.prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_relatorio where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_distribuicao where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_divulgacao where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_pecas where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_alteracoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_contas_bancarias where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_extrato_importacoes where prestacao_id = %L', p)),
@@ -229,7 +229,7 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_atividade_evidencias (atividade_id, nome_arquivo, storage_path) values ('f0000000-0000-4000-8000-0000000006a0', 'nova.jpg', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/evidencias/f0000000-0000-4000-8000-000000000ec0.jpg')$c$),
     rls_teste.efeito($c$insert into public.prestacao_relatorio (prestacao_id, secao) values ('f0000000-0000-4000-8000-0000000001a0', 'rls nova')$c$),
     rls_teste.efeito($c$insert into public.prestacao_distribuicao (prestacao_id, produto, categoria, quantidade) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS novo', 'social', 5)$c$),
-    rls_teste.efeito($c$insert into public.prestacao_divulgacao (prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000001a0', 'folder')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_pecas (prestacao_id, tipo, titulo) values ('f0000000-0000-4000-8000-0000000001a0', 'folder', 'RLS folder')$c$),
     rls_teste.efeito($c$insert into public.prestacao_alteracoes (prestacao_id, versao_id, numero) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000002a0', 2)$c$),
     rls_teste.efeito($c$insert into public.prestacao_contas_bancarias (prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000001a0', 'captacao')$c$),
     rls_teste.efeito($c$insert into public.prestacao_extrato_importacoes (prestacao_id, conta_id, formato) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000010a0', 'ofx')$c$),
@@ -256,7 +256,7 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_atividade_evidencias set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000007a0'$c$),
     rls_teste.efeito($c$update public.prestacao_relatorio set secao = secao where id = 'f0000000-0000-4000-8000-0000000008a0'$c$),
     rls_teste.efeito($c$update public.prestacao_distribuicao set produto = produto where id = 'f0000000-0000-4000-8000-0000000009a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_divulgacao set tipo = tipo where id = 'f0000000-0000-4000-8000-000000000aa0'$c$),
+    rls_teste.efeito($c$update public.prestacao_pecas set titulo = titulo where id = 'f0000000-0000-4000-8000-000000000aa0'$c$),
     rls_teste.efeito($c$update public.prestacao_alteracoes set justificativa = justificativa where id = 'f0000000-0000-4000-8000-000000000ba0'$c$),
     rls_teste.efeito($c$update public.prestacao_contas_bancarias set apelido = apelido where id = 'f0000000-0000-4000-8000-0000000010a0'$c$),
     rls_teste.efeito($c$update public.prestacao_extrato_importacoes set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000011a0'$c$),
@@ -283,7 +283,7 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_atividade_evidencias where id = 'f0000000-0000-4000-8000-0000000007a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_relatorio where id = 'f0000000-0000-4000-8000-0000000008a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_distribuicao where id = 'f0000000-0000-4000-8000-0000000009a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_divulgacao where id = 'f0000000-0000-4000-8000-000000000aa0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_pecas where id = 'f0000000-0000-4000-8000-000000000aa0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_alteracoes where id = 'f0000000-0000-4000-8000-000000000ba0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_contas_bancarias where id = 'f0000000-0000-4000-8000-0000000010a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_extrato_importacoes where id = 'f0000000-0000-4000-8000-0000000011a0'$c$),
@@ -669,6 +669,18 @@ select is((select n.origem_no_id from public.prestacao_bens b join public.presta
   'f0000000-0000-4000-8000-0000000003a0'::uuid, 'ativar a versão leva o bem para o item correspondente');
 select is((select n.origem_no_id from public.prestacao_metas m join public.prestacao_orcamento_nos n on n.id = m.no_id where m.id = 'f0000000-0000-4000-8000-0000000017a0'),
   'f0000000-0000-4000-8000-0000000003a2'::uuid, 'ativar a versão leva a meta para o agrupador correspondente');
+
+-- ─── Peças (P3.6): aprovação com datas, período e amostra na pasta pecas ────
+select lives_ok($t$insert into public.prestacao_pecas (prestacao_id, tipo, titulo, meio, veiculacao_inicio, veiculacao_fim, marcas, aprovacao_status, aprovacao_protocolo, aprovacao_enviada_em, storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'rede_social', 'RLS post', 'Instagram', '2026-08-01', '2026-08-10', array['Ministério da Cultura', 'Lei de Incentivo à Cultura (Lei Rouanet)'], 'enviada', '01400.000123/2026-11', '2026-07-20', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/pecas/f0000000-0000-4000-8000-000000000aa1.png')$t$,
+  'quem edita: registra a peça com as marcas, o envio para aprovação e a amostra');
+select throws_ok($t$insert into public.prestacao_pecas (prestacao_id, tipo, titulo, aprovacao_status) values ('f0000000-0000-4000-8000-0000000001a0', 'cartaz', 'RLS sem data', 'enviada')$t$,
+  '23514', null, 'peça enviada tem a data do envio');
+select throws_ok($t$insert into public.prestacao_pecas (prestacao_id, tipo, titulo, aprovacao_status, aprovacao_enviada_em) values ('f0000000-0000-4000-8000-0000000001a0', 'cartaz', 'RLS sem decisão', 'aprovada', '2026-07-20')$t$,
+  '23514', null, 'peça aprovada tem a data da decisão');
+select throws_ok($t$insert into public.prestacao_pecas (prestacao_id, tipo, titulo, veiculacao_inicio, veiculacao_fim) values ('f0000000-0000-4000-8000-0000000001a0', 'cartaz', 'RLS período', '2026-08-10', '2026-08-01')$t$,
+  '23514', null, 'a veiculação não termina antes de começar');
+select throws_ok($t$insert into public.prestacao_pecas (prestacao_id, tipo, titulo, storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'cartaz', 'RLS pasta', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/bens/f0000000-0000-4000-8000-000000000aa2.png')$t$,
+  '23514', 'caminho_invalido', 'a amostra fica na pasta pecas da prestação');
 reset role;
 
 -- ─── Verificações (P2.7): o servidor grava; as pessoas decidem pela função ──
