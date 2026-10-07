@@ -8,7 +8,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Paperclip, Receipt, RefreshCw, Send, Trash2, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Package, Paperclip, Receipt, RefreshCw, Send, Trash2, Undo2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -368,6 +368,9 @@ export default function EnvioPage() {
         )}
         {dados?.regime && (
           <div className="flex flex-wrap gap-2">
+            <Link href={`/prestacoes/${id}/envio/pacote`} className={BOTAO} style={BORDA}>
+              <Package size={12} aria-hidden /> Pacote
+            </Link>
             <Link href={`/prestacoes/${id}/envio/objeto`} className={BOTAO} style={BORDA}>
               <FileText size={12} aria-hidden /> Relatório do objeto
             </Link>
