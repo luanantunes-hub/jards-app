@@ -987,6 +987,82 @@ export interface PrestacaoEnvio {
   motivo_reabertura: string | null;
 }
 
+/** Diligência do órgão depois do envio (P4.7); o prazo vem do regime. */
+export interface PrestacaoDiligencia {
+  id: string;
+  prestacao_id: string;
+  envio_id: string | null;
+  numero: number;
+  recebida_em: string;
+  prazo: string | null;
+  /** O prazo que o regime dá; `prazo` pode ter sido ajustado. */
+  prazo_regime: string | null;
+  descricao: string;
+  situacao: "aberta" | "respondida" | "encerrada";
+  respondida_em: string | null;
+  resposta: string | null;
+  documento_path: string | null;
+  documento_nome: string | null;
+  resposta_path: string | null;
+  resposta_nome: string | null;
+  atividade_id: string | null;
+  created_at: string;
+}
+
+export type ResultadoDaDecisao = "aprovada" | "aprovada_ressalvas" | "aprovada_parcialmente" | "reprovada";
+
+/** Decisão do órgão sobre as contas (P4.7), sempre com o documento. */
+export interface PrestacaoDecisao {
+  id: string;
+  prestacao_id: string;
+  envio_id: string | null;
+  instancia: "analise" | "recurso";
+  resultado: ResultadoDaDecisao;
+  registrada_em: string;
+  ciencia_em: string | null;
+  valor_glosado: number | null;
+  resumo: string | null;
+  documento_path: string;
+  documento_nome: string | null;
+  prazo_recurso: string | null;
+  prazo_devolucao: string | null;
+  atividade_id: string | null;
+  created_at: string;
+}
+
+/** Valor glosado (P4.7), por despesa quando houver, e a devolução que o recolhe. */
+export interface PrestacaoGlosa {
+  id: string;
+  prestacao_id: string;
+  decisao_id: string | null;
+  diligencia_id: string | null;
+  despesa_id: string | null;
+  descricao: string;
+  valor: number;
+  data_base: string | null;
+  situacao: "mantida" | "revertida";
+  devolucao_id: string | null;
+  observacoes: string | null;
+  created_at: string;
+}
+
+/** Recurso contra uma decisão (P4.7). */
+export interface PrestacaoRecurso {
+  id: string;
+  prestacao_id: string;
+  decisao_id: string;
+  protocolado_em: string;
+  pedido: string | null;
+  situacao: "em_analise" | "deferido" | "parcialmente_deferido" | "indeferido";
+  decidido_em: string | null;
+  resultado_resumo: string | null;
+  documento_path: string | null;
+  documento_nome: string | null;
+  decisao_path: string | null;
+  decisao_nome: string | null;
+  created_at: string;
+}
+
 /** Local de realização e a situação que o relatório informa (P3.1). */
 export interface PrestacaoLocal {
   id: string;

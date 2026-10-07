@@ -47,6 +47,7 @@ const ABAS: Record<DestinoDoEnvio, { rotulo: string; caminho: string }> = {
   divulgacao: { rotulo: "Divulgação", caminho: "/divulgacao" },
   pendencias: { rotulo: "Pendências", caminho: "/pendencias" },
   devolucoes: { rotulo: "Devoluções", caminho: "/envio/devolucoes" },
+  pos_envio: { rotulo: "Após o envio", caminho: "/pos-envio" },
 };
 
 const tamanho = (bytes: number | null) =>

@@ -26,7 +26,7 @@ export type EtapaEnvio = PrestacaoEnvioMarcacao["etapa"];
 export type TipoDoItem = PrestacaoEnvioMarcacao["tipo"];
 export type SituacaoDoItem = "pronto" | "pendente" | "nao_se_aplica";
 /** A aba onde o item se resolve. */
-export type DestinoDoEnvio = DestinoDaChecagem | "pendencias" | "devolucoes";
+export type DestinoDoEnvio = DestinoDaChecagem | "pendencias" | "devolucoes" | "pos_envio";
 
 export const ROTULO_DA_ETAPA: Record<EtapaEnvio, string> = { final: "Prestação final", parcial: "Prestação parcial" };
 
@@ -48,6 +48,8 @@ export type DadosDoChecklist = {
   arquivos: readonly ArquivoDoChecklist[];
   /** Devoluções registradas; o recolhimento do encerramento sai delas. */
   devolucoes?: readonly DevolucaoDoChecklist[];
+  /** Diligências registradas depois do envio (P4.7); só a situação importa aqui. */
+  diligencias?: readonly { situacao: string }[];
   /** "AAAA-MM-DD"; sem ele, a data do estado. */
   hoje?: string;
 };
@@ -267,6 +269,15 @@ const recolhimento: Avaliador = ctx => {
   return pronto(`${reais(r.valorPago)} ${r.guias === 1 ? "recolhido em 1 guia" : `recolhidos em ${r.guias} guias`}${ultima ? `, paga${r.guias === 1 ? "" : "s"} até ${dataBr(ultima)}` : ""}, com comprovante.`);
 };
 
+/** Diligência aberta trava o próximo envio; sem nenhuma registrada, a pessoa confere no sistema. */
+const semDiligenciaAberta: Avaliador = ctx => {
+  const todas = ctx.diligencias ?? [];
+  if (todas.length === 0) return { dica: `Nenhuma diligência registrada aqui. Confira no ${ctx.sistema} e marque como conferido.` };
+  const abertas = todas.filter(d => d.situacao === "aberta").length;
+  if (abertas) return pendente(`${plural(abertas, "diligência está aberta", "diligências estão abertas")}: registre a resposta antes de enviar.`, "pos_envio");
+  return pronto(`${plural(todas.length, "diligência registrada", "diligências registradas")}, todas respondidas ou encerradas.`);
+};
+
 const ehPdf = (a: { nome_arquivo: string | null; mime_type?: string | null }) =>
   a.mime_type === "application/pdf" || /\.pdf$/i.test(a.nome_arquivo ?? "");
 
@@ -320,6 +331,7 @@ const CONDICOES: Record<string, Avaliador> = {
   itens_comprovados: itens,
   sem_readequacao_em_analise: alteracoes,
   saldo_liquidado: saldo,
+  sem_diligencia_aberta: semDiligenciaAberta,
   anexos,
   arquivos: anexos,
 };
