@@ -120,6 +120,14 @@ const ERROS: Record<string, string> = {
   etapa_invalida: "Etapa do envio inválida. Atualize a página.",
   envio_data_invalida: "Informe a data do envio, que não pode ser futura.",
   manifesto_invalido: "O manifesto do pacote veio incompleto. Gere o pacote de novo.",
+  // Depois do envio (P4.7)
+  diligencia_aberta: "Há diligência aberta: registre a resposta na aba Após o envio antes de registrar o novo envio.",
+  vinculo_de_outra_prestacao: "Escolha um registro desta prestação.",
+  prestacao_diligencias_resposta: "Diligência respondida pede a data da resposta.",
+  prestacao_diligencias_datas: "Confira as datas: a resposta e o prazo não vêm antes do recebimento.",
+  prestacao_decisoes_datas: "A ciência não vem antes do registro da decisão.",
+  prestacao_recursos_decisao: "Recurso decidido pede a data da decisão.",
+  prestacao_recursos_datas: "A decisão do recurso não vem antes do protocolo.",
 };
 
 export function mensagemErroPrestacao(erro: { message?: string } | null | undefined, padrao: string): string {

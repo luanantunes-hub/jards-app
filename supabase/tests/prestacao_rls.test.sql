@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(176);
+select plan(197);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -128,6 +128,16 @@ begin
      'reaberto', now(), 'Envio antigo do cenário de teste.');
   insert into public.prestacao_envio_itens (envio_id, prestacao_id, tabela, registro_id) values
     ('f0000000-0000-4000-8000-0000000025a0', pa, 'prestacao_devolucoes', 'f0000000-0000-4000-8000-0000000024a0');
+  -- Depois do envio (P4.7): uma diligência já respondida, uma decisão, uma glosa e um recurso.
+  insert into public.prestacao_diligencias (id, prestacao_id, recebida_em, descricao, situacao, respondida_em) values
+    ('f0000000-0000-4000-8000-0000000026a0', pa, current_date - 10, 'RLS diligência respondida', 'respondida', current_date - 5);
+  insert into public.prestacao_decisoes (id, prestacao_id, resultado, registrada_em, documento_path) values
+    ('f0000000-0000-4000-8000-0000000027a0', pa, 'aprovada_ressalvas', current_date - 2,
+     org_a || '/prestacoes/' || pa || '/pos-envio/f0000000-0000-4000-8000-000000000ab0.pdf');
+  insert into public.prestacao_glosas (id, prestacao_id, decisao_id, despesa_id, descricao, valor) values
+    ('f0000000-0000-4000-8000-0000000028a0', pa, 'f0000000-0000-4000-8000-0000000027a0', 'f0000000-0000-4000-8000-0000000005a0', 'RLS glosa', 10);
+  insert into public.prestacao_recursos (id, prestacao_id, decisao_id, protocolado_em) values
+    ('f0000000-0000-4000-8000-0000000029a0', pa, 'f0000000-0000-4000-8000-0000000027a0', current_date);
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -153,7 +163,8 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
     'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
     'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes',
-    'prestacao_envios', 'prestacao_envio_itens'
+    'prestacao_envios', 'prestacao_envio_itens', 'prestacao_diligencias', 'prestacao_decisoes', 'prestacao_glosas',
+    'prestacao_recursos'
   ];
 $$;
 
@@ -239,7 +250,11 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_envio_arquivos where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_devolucoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_envios where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_envio_itens where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_envio_itens where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_diligencias where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_decisoes where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_glosas where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_recursos where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -271,7 +286,11 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'relatorio_objeto', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000dd0.pdf', 'relatorio.pdf')$c$),
     rls_teste.efeito($c$insert into public.prestacao_devolucoes (prestacao_id, motivo, valor_principal) values ('f0000000-0000-4000-8000-0000000001a0', 'rendimento', 10)$c$),
     rls_teste.efeito($c$insert into public.prestacao_envios (prestacao_id, etapa, versao, enviado_em, retrato, retrato_sha256) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 9, current_date, '{}', repeat('0', 64))$c$),
-    rls_teste.efeito($c$insert into public.prestacao_envio_itens (envio_id, prestacao_id, tabela, registro_id) values ('f0000000-0000-4000-8000-0000000025a0', 'f0000000-0000-4000-8000-0000000001a0', 'prestacao_comprovantes', 'f0000000-0000-4000-8000-0000000005a0')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_envio_itens (envio_id, prestacao_id, tabela, registro_id) values ('f0000000-0000-4000-8000-0000000025a0', 'f0000000-0000-4000-8000-0000000001a0', 'prestacao_comprovantes', 'f0000000-0000-4000-8000-0000000005a0')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_diligencias (prestacao_id, recebida_em, descricao, situacao, respondida_em) values ('f0000000-0000-4000-8000-0000000001a0', current_date, 'RLS nova diligência', 'respondida', current_date)$c$),
+    rls_teste.efeito($c$insert into public.prestacao_decisoes (prestacao_id, resultado, registrada_em, documento_path) values ('f0000000-0000-4000-8000-0000000001a0', 'aprovada', current_date, 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/pos-envio/f0000000-0000-4000-8000-000000000ab1.pdf')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_glosas (prestacao_id, descricao, valor) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova glosa', 5)$c$),
+    rls_teste.efeito($c$insert into public.prestacao_recursos (prestacao_id, decisao_id, protocolado_em) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000027a0', current_date)$c$)
   ]);
 $$;
 
@@ -303,7 +322,11 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_envio_arquivos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000023a0'$c$),
     rls_teste.efeito($c$update public.prestacao_devolucoes set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000024a0'$c$),
     rls_teste.efeito($c$update public.prestacao_envios set protocolo = protocolo where id = 'f0000000-0000-4000-8000-0000000025a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_envio_itens set storage_path = storage_path where envio_id = 'f0000000-0000-4000-8000-0000000025a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_envio_itens set storage_path = storage_path where envio_id = 'f0000000-0000-4000-8000-0000000025a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_diligencias set resposta = resposta where id = 'f0000000-0000-4000-8000-0000000026a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_decisoes set resumo = resumo where id = 'f0000000-0000-4000-8000-0000000027a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_glosas set observacoes = observacoes where id = 'f0000000-0000-4000-8000-0000000028a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_recursos set pedido = pedido where id = 'f0000000-0000-4000-8000-0000000029a0'$c$)
   ]);
 $$;
 
@@ -335,7 +358,11 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_envio_arquivos where id = 'f0000000-0000-4000-8000-0000000023a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_devolucoes where id = 'f0000000-0000-4000-8000-0000000024a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_envios where id = 'f0000000-0000-4000-8000-0000000025a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_envio_itens where envio_id = 'f0000000-0000-4000-8000-0000000025a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_envio_itens where envio_id = 'f0000000-0000-4000-8000-0000000025a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_diligencias where id = 'f0000000-0000-4000-8000-0000000026a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_decisoes where id = 'f0000000-0000-4000-8000-0000000027a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_glosas where id = 'f0000000-0000-4000-8000-0000000028a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_recursos where id = 'f0000000-0000-4000-8000-0000000029a0'$c$)
   ]);
 $$;
 
@@ -891,6 +918,76 @@ select is((select array_agg(versao || ':' || situacao order by versao) from publ
 reset role;
 select throws_ok($t$update public.prestacao_envios set retrato = '{}' where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and etapa = 'final' and versao = 1$t$,
   'P0001', 'envio_imutavel', 'nem o dono do banco reescreve o retrato');
+
+-- ─── Depois do envio (P4.7): prazos do regime, atividades, trava e guarda ───
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$insert into public.prestacao_diligencias (prestacao_id, recebida_em, descricao) values ('f0000000-0000-4000-8000-0000000001a0', '2026-11-03', 'RLS análise preditiva')$t$,
+  'quem edita: registra a diligência recebida');
+reset role;
+select is((select array[numero::text, prazo::text, prazo_regime::text] from public.prestacao_diligencias where descricao = 'RLS análise preditiva'),
+  array['2', '2026-11-23', '2026-11-23'], 'a diligência ganha o número e o prazo do regime (20 dias corridos na Rouanet)');
+select ok(exists (select 1 from public.atividades a join public.prestacao_diligencias d on d.atividade_id = a.id
+                   where d.descricao = 'RLS análise preditiva' and a.regra_origem = 'prestacao_diligencia'
+                     and a.data_prevista::date = '2026-11-23' and not coalesce(a.feita, false)),
+  'a diligência aberta vira atividade com o prazo');
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a0', 'parcial', current_date)$t$,
+  'P0001', 'diligencia_aberta', 'diligência aberta trava o próximo envio');
+select lives_ok($t$update public.prestacao_diligencias set situacao = 'respondida', respondida_em = '2026-11-10', resposta = 'Notas reenviadas.' where descricao = 'RLS análise preditiva'$t$,
+  'quem edita: registra a resposta da diligência');
+reset role;
+select ok(exists (select 1 from public.atividades a join public.prestacao_diligencias d on d.atividade_id = a.id
+                   where d.descricao = 'RLS análise preditiva' and coalesce(a.feita, false)),
+  'responder conclui a atividade da diligência');
+-- Um envio guardado até a decisão, para a decisão fechar a guarda.
+insert into public.prestacao_envios (id, prestacao_id, etapa, versao, enviado_em, retrato, retrato_sha256, guarda_marco,
+                                     situacao, reaberto_em, motivo_reabertura) values
+  ('f0000000-0000-4000-8000-0000000025b0', 'f0000000-0000-4000-8000-0000000001a0', 'parcial', 3, '2026-01-01', '{}', repeat('0', 64),
+   'registro_decisao', 'reaberto', now(), 'Envio do cenário guardado até a decisão.');
+set local role authenticated;
+select throws_ok($t$insert into public.prestacao_decisoes (prestacao_id, resultado, registrada_em) values ('f0000000-0000-4000-8000-0000000001a0', 'reprovada', '2026-10-20')$t$,
+  '23502', null, 'a decisão traz o documento');
+select throws_ok($t$insert into public.prestacao_decisoes (prestacao_id, resultado, registrada_em, documento_path) values ('f0000000-0000-4000-8000-0000000001a0', 'reprovada', '2026-10-20', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000ab2.pdf')$t$,
+  '23514', 'caminho_invalido', 'o documento da decisão fica na pasta pos-envio da prestação');
+select lives_ok($t$insert into public.prestacao_decisoes (id, prestacao_id, resultado, registrada_em, ciencia_em, valor_glosado, documento_path) values ('f0000000-0000-4000-8000-0000000027b0', 'f0000000-0000-4000-8000-0000000001a0', 'reprovada', '2026-10-20', '2026-10-22', 100, 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/pos-envio/f0000000-0000-4000-8000-000000000ab3.pdf')$t$,
+  'quem edita: registra a decisão com o documento');
+reset role;
+select is((select array[prazo_recurso::text, prazo_devolucao::text] from public.prestacao_decisoes where id = 'f0000000-0000-4000-8000-0000000027b0'),
+  array['2026-11-23', '2026-11-09'], 'recurso em 30 dias da ciência (do sábado para segunda) e devolução em 20 dias do registro');
+select is((select guarda_ate::text from public.prestacao_envios where id = 'f0000000-0000-4000-8000-0000000025b0'),
+  '2031-10-20', 'a decisão fecha a guarda dos envios que contam dela');
+select ok(exists (select 1 from public.atividades a join public.prestacao_decisoes d on d.atividade_id = a.id
+                   where d.id = 'f0000000-0000-4000-8000-0000000027b0' and a.regra_origem = 'prestacao_recurso' and not coalesce(a.feita, false)),
+  'o prazo de recurso vira atividade');
+set local role authenticated;
+select lives_ok($t$insert into public.prestacao_recursos (prestacao_id, decisao_id, protocolado_em, pedido) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000027b0', '2026-11-10', 'Reconsideração da glosa.')$t$,
+  'quem edita: registra o recurso');
+reset role;
+select ok(exists (select 1 from public.atividades a join public.prestacao_decisoes d on d.atividade_id = a.id
+                   where d.id = 'f0000000-0000-4000-8000-0000000027b0' and coalesce(a.feita, false)),
+  'registrar o recurso conclui a atividade do prazo');
+set local role authenticated;
+select throws_ok($t$insert into public.prestacao_glosas (prestacao_id, despesa_id, descricao, valor) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000005b0', 'RLS glosa de B', 10)$t$,
+  '23514', 'vinculo_de_outra_prestacao', 'a glosa não usa despesa de outra prestação');
+select lives_ok($t$insert into public.prestacao_glosas (prestacao_id, decisao_id, despesa_id, descricao, valor, data_base) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000027b0', 'f0000000-0000-4000-8000-0000000005a0', 'RLS nota sem identificação', 100, '2026-03-01')$t$,
+  'quem edita: registra a glosa da despesa, com a data-base');
+select lives_ok($t$insert into public.prestacao_devolucoes (id, prestacao_id, motivo, valor_principal, vencimento) values ('f0000000-0000-4000-8000-0000000024b0', 'f0000000-0000-4000-8000-0000000001a0', 'glosa', 100, '2026-11-09')$t$,
+  'quem edita: registra a devolução da glosa com o vencimento');
+reset role;
+select ok(exists (select 1 from public.atividades a join public.prestacao_devolucoes d on d.atividade_id = a.id
+                   where d.id = 'f0000000-0000-4000-8000-0000000024b0' and a.regra_origem = 'prestacao_devolucao'
+                     and a.data_prevista::date = '2026-11-09' and not coalesce(a.feita, false)),
+  'a GRU a pagar vira atividade com o vencimento');
+set local role authenticated;
+select lives_ok($t$update public.prestacao_devolucoes set situacao = 'paga', pago_em = '2026-11-05', valor_pago = 100 where id = 'f0000000-0000-4000-8000-0000000024b0'$t$,
+  'quem edita: registra o pagamento da GRU');
+reset role;
+select ok(exists (select 1 from public.atividades a join public.prestacao_devolucoes d on d.atividade_id = a.id
+                   where d.id = 'f0000000-0000-4000-8000-0000000024b0' and coalesce(a.feita, false)),
+  'pagar a GRU conclui a atividade');
+select throws_ok($t$update public.prestacao_envios set guarda_ate = '2027-01-01' where id = 'f0000000-0000-4000-8000-0000000025b0'$t$,
+  'P0001', 'envio_imutavel', 'a guarda só cresce, nunca diminui');
 
 select * from finish();
 rollback;
