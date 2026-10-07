@@ -1,8 +1,9 @@
 // Consentimento de cookies de análise e de publicidade (LGPD, art. 7º, I).
 // O Google Analytics e a tag do Google Ads (medição das campanhas e
 // remarketing) só são carregados depois que o visitante aceita; sem escolha
-// gravada, o aviso aparece. Usado nas páginas públicas: landing, blog, Termos
-// e Política. Qualquer elemento com [data-preferencias-cookies] reabre o aviso.
+// gravada, o aviso aparece. Usado nas páginas públicas: landing, blog, Termos,
+// Política e cadastro. Qualquer elemento com [data-preferencias-cookies]
+// reabre o aviso.
 (function () {
   if (window.jardsCookies) return;
 
@@ -20,7 +21,8 @@
 
   function ehPublica(caminho) {
     return caminho === "/" || caminho === "/privacidade" || caminho === "/termos" ||
-      caminho === "/blog" || caminho.indexOf("/blog/") === 0;
+      caminho === "/blog" || caminho.indexOf("/blog/") === 0 ||
+      caminho === "/cadastro" || caminho.indexOf("/cadastro/") === 0;
   }
 
   function lerEscolha() {

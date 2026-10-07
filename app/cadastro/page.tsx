@@ -6,6 +6,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { anexarOrigem, consentiuMedicao, lerOrigem } from "@/lib/origem-cadastro";
+import { registrarCadastroNoGoogleAds } from "@/lib/conversao-google-ads";
 
 // De qual campanha veio este cadastro; o clique do anúncio só com o aceite.
 function origemDaVisita() {
@@ -60,6 +61,9 @@ export default function CadastroPage() {
       setLoading(false);
       return;
     }
+
+    // E-mail já cadastrado volta sem identidade: não é cadastro novo.
+    if (data.user?.identities?.length) await registrarCadastroNoGoogleAds(email);
 
     if (data.session) {
       window.location.href = "/dashboard";
