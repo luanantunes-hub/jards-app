@@ -12,7 +12,7 @@
 
 ## Andamento
 
-Atualizado em 07/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 392 passando no `npm test`. O app (PR #13) e as funções `extrair-comprovante` e `importar-orcamento` estão publicados desde 05/10/2026; `ler-extrato-pdf` (P2.2) e `consultar-fornecedor` (P2.3, versão 2 com os comprovantes da P2.3b) também, no mesmo dia.
+Atualizado em 07/10/2026, na branch `claude/youthful-pascal-h3kudq`. Testes: 395 passando no `npm test`. O app (PR #13) e as funções `extrair-comprovante` e `importar-orcamento` estão publicados desde 05/10/2026; `ler-extrato-pdf` (P2.2) e `consultar-fornecedor` (P2.3, versão 2 com os comprovantes da P2.3b) também, no mesmo dia.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
