@@ -33,6 +33,8 @@ import {
   textoDoPrazo,
   type EstadoDoRegistro,
 } from "@/lib/prestacao/pos-envio";
+import { rotuloDoApontamento } from "@/lib/prestacao/piloto";
+import { definida } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoDecisao, PrestacaoDevolucao, PrestacaoDiligencia, PrestacaoGlosa, PrestacaoRecurso, ResultadoDaDecisao } from "@/lib/supabase/types";
 
@@ -51,7 +53,7 @@ type Lidos = {
   identificadorOficial: string | null;
 };
 type Editando =
-  | { tipo: "diligencia"; linha: PrestacaoDiligencia | null; inicio?: { recebidaEm?: string; descricao?: string; responder?: boolean } }
+  | { tipo: "diligencia"; linha: PrestacaoDiligencia | null; inicio?: { recebidaEm?: string; descricao?: string; responder?: boolean; preditiva?: boolean } }
   | { tipo: "decisao"; linha: PrestacaoDecisao | null }
   | { tipo: "glosa"; linha: PrestacaoGlosa | null }
   | { tipo: "recurso"; linha: PrestacaoRecurso | null };
@@ -170,6 +172,7 @@ export default function PosEnvioPage() {
   const sugestao = lidos && final?.versao === 1 && lidos.decisoes.length === 0 ? sugestaoDaAnalisePreditiva(regime, final.enviado_em, lidos.diligencias) : null;
   const carregado = lidos !== null && dados !== null;
   const guardaPelaDecisao = guardaContaDaDecisao(regime);
+  const temAnalisePreditiva = Boolean(regime && definida(regime.posEnvio)?.regras.some(r => r.codigo === "analise_preditiva"));
 
   const despesas = useMemo<DespesaParaGlosa[]>(() => {
     const fornecedores = new Map((dados?.estado.fornecedores ?? []).map(f => [f.id, f]));
@@ -303,7 +306,7 @@ export default function PosEnvioPage() {
                 </span>
               </p>
               {podeEditar && (
-                <button type="button" onClick={() => setEditando({ tipo: "diligencia", linha: null, inicio: { recebidaEm: sugestao.recebidaEm, descricao: "Diligência da análise preditiva" } })} className={BOTAO} style={BORDA}>
+                <button type="button" onClick={() => setEditando({ tipo: "diligencia", linha: null, inicio: { recebidaEm: sugestao.recebidaEm, descricao: "Diligência da análise preditiva", preditiva: true } })} className={BOTAO} style={BORDA}>
                   Registrar a diligência
                 </button>
               )}
@@ -329,8 +332,12 @@ export default function PosEnvioPage() {
                           <p className="whitespace-pre-line text-[0.6875rem] text-black/60">{d.descricao}</p>
                           <p className="mt-0.5 text-[0.6875rem] tabular-nums text-black/40">
                             Recebida em {dataBr(d.recebida_em)}
+                            {d.preditiva ? " · análise preditiva" : ""}
                             {d.prazo && d.prazo_regime && d.prazo !== d.prazo_regime ? ` · prazo ajustado; pelo regime, ${dataBr(d.prazo_regime)}` : ""}
                           </p>
+                          {d.apontamentos.length > 0 && (
+                            <p className="mt-0.5 text-[0.6875rem] text-black/55">Apontado: {d.apontamentos.map(rotuloDoApontamento).join("; ")}</p>
+                          )}
                         </div>
                         <div className="flex shrink-0 flex-col items-end gap-1">
                           <Etiqueta cor={COR_DA_DILIGENCIA[s.estado]}>{s.estado === "aberta" ? "Aberta" : s.estado === "vencida" ? "Vencida" : s.estado === "respondida" ? "Respondida" : "Encerrada"}</Etiqueta>
@@ -537,6 +544,7 @@ export default function PosEnvioPage() {
           diligencia={editando.linha}
           inicio={editando.inicio}
           envioId={envioAtual?.id ?? null}
+          analisePreditiva={temAnalisePreditiva}
           onClose={() => setEditando(null)}
           onSaved={() => { setEditando(null); recarregar(); }}
         />

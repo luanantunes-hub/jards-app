@@ -1,13 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, Building, Users, Newspaper, Inbox, ClipboardList, ChevronLeft, Megaphone } from "lucide-react";
+import { LayoutDashboard, Building2, Building, Users, Newspaper, Inbox, ClipboardList, ChevronLeft, Megaphone, FlaskConical } from "lucide-react";
 
 const NAV = [
   { href: "/admin/dashboard",      label: "Dashboard",      icon: LayoutDashboard },
   { href: "/admin/patrocinadores", label: "Patrocinadores", icon: Building2 },
   { href: "/admin/usuarios",       label: "Usuários",       icon: Users      },
   { href: "/admin/organizacoes",   label: "Organizações",   icon: Building   },
+  { href: "/admin/piloto",         label: "Piloto",         icon: FlaskConical },
   { href: "/admin/blog",           label: "Blog",           icon: Newspaper  },
   { href: "/admin/pedidos",        label: "Pedidos",        icon: Inbox      },
   { href: "/admin/campanhas",      label: "Campanhas",      icon: Megaphone  },

@@ -1005,6 +1005,9 @@ export interface PrestacaoDiligencia {
   documento_nome: string | null;
   resposta_path: string | null;
   resposta_nome: string | null;
+  /** P4.8: veio da análise preditiva e o que o órgão apontou, em códigos das checagens. */
+  preditiva: boolean;
+  apontamentos: string[];
   atividade_id: string | null;
   created_at: string;
 }

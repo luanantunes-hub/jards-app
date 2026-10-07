@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(197);
+select plan(201);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -988,6 +988,17 @@ select ok(exists (select 1 from public.atividades a join public.prestacao_devolu
   'pagar a GRU conclui a atividade');
 select throws_ok($t$update public.prestacao_envios set guarda_ate = '2027-01-01' where id = 'f0000000-0000-4000-8000-0000000025b0'$t$,
   'P0001', 'envio_imutavel', 'a guarda só cresce, nunca diminui');
+
+-- P4.8: a diligência marca a análise preditiva e o que o órgão apontou; o piloto é só do admin.
+set local role authenticated;
+select throws_ok($t$update public.prestacao_diligencias set apontamentos = array['numero do pagamento'] where descricao = 'RLS análise preditiva'$t$,
+  '23514', null, 'apontamento é código de checagem');
+select lives_ok($t$update public.prestacao_diligencias set preditiva = true, apontamentos = array['PAGAMENTO_SEM_NUMERO', 'DOC_FORA_VIGENCIA'] where descricao = 'RLS análise preditiva'$t$,
+  'quem edita: marca a diligência preditiva e os apontamentos');
+select throws_ok($t$select count(*) from public.piloto_organizacoes$t$, '42501', null, 'conta logada não lê o piloto');
+select throws_ok($t$insert into public.piloto_organizacoes (organization_id) values ('f0000000-0000-4000-8000-0000000000a0')$t$,
+  '42501', null, 'conta logada não escreve no piloto');
+reset role;
 
 select * from finish();
 rollback;
