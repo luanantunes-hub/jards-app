@@ -22,6 +22,8 @@ export const PRECO_MENSAL: Record<string, number> = { basico: 62.9, profissional
 export const JANELA_CLIQUE_DIAS = 90;
 
 const CHAVE_CONSENTIMENTO = "jards_consentimento_cookies";
+// A mesma versão de public/consentimento.js: aceite de versão antiga não vale.
+const VERSAO_CONSENTIMENTO = 2;
 const LIMITE = 200;
 
 export function lerOrigem(params: URLSearchParams, incluirClique: boolean, agora = new Date()): OrigemCadastro | null {
@@ -40,7 +42,7 @@ export function lerOrigem(params: URLSearchParams, incluirClique: boolean, agora
 export function consentiuMedicao(): boolean {
   try {
     const escolha = JSON.parse(localStorage.getItem(CHAVE_CONSENTIMENTO) ?? "null");
-    return escolha?.versao === 1 && escolha.analytics === true;
+    return escolha?.versao === VERSAO_CONSENTIMENTO && escolha.analytics === true;
   } catch {
     return false;
   }

@@ -4,12 +4,30 @@ import {
   CONVERSAO_ASSINATURA,
   CONVERSAO_CADASTRO,
   anexarOrigem,
+  consentiuMedicao,
   csvConversoesGoogleAds,
   lerOrigem,
   montarConversoes,
 } from "../lib/origem-cadastro";
 
 const agora = new Date("2026-10-08T12:00:00Z");
+
+test("só vale o aceite da versão atual do aviso de cookies", () => {
+  const guardado = new Map<string, string>();
+  const global = globalThis as { localStorage?: unknown };
+  global.localStorage = { getItem: (chave: string) => guardado.get(chave) ?? null };
+  try {
+    assert.equal(consentiuMedicao(), false);
+    guardado.set("jards_consentimento_cookies", JSON.stringify({ versao: 1, analytics: true }));
+    assert.equal(consentiuMedicao(), false);
+    guardado.set("jards_consentimento_cookies", JSON.stringify({ versao: 2, analytics: false }));
+    assert.equal(consentiuMedicao(), false);
+    guardado.set("jards_consentimento_cookies", JSON.stringify({ versao: 2, analytics: true }));
+    assert.equal(consentiuMedicao(), true);
+  } finally {
+    delete global.localStorage;
+  }
+});
 
 test("sem o aceite, a origem guarda as utm e deixa o clique do anúncio de fora", () => {
   const params = new URLSearchParams("utm_source=google&utm_term=%20salic%20comparar%20&gclid=abc&outro=x");
