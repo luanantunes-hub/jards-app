@@ -96,6 +96,10 @@ const ERROS: Record<string, string> = {
   prestacao_orcamento_nos_bem_permanente_check: "Só um item da planilha pode ser bem permanente.",
   despesa_de_outra_prestacao: "Escolha uma despesa desta prestação.",
   cotacao_invalida: "Cada cotação precisa do fornecedor e de um valor.",
+  // Peças de divulgação (P3.6)
+  prestacao_pecas_periodo: "A veiculação não termina antes de começar.",
+  prestacao_pecas_envio: "Informe quando a peça foi enviada para aprovação.",
+  prestacao_pecas_decisao: "Aprovada ou recusada: informe a data da decisão, que não vem antes do envio.",
   // Verificações (P2.7)
   verificacao_inexistente: "Verificação não encontrada ou sem acesso. Atualize a página.",
   verificacao_resolvida: "Essa pendência já se resolveu. Atualize a página.",

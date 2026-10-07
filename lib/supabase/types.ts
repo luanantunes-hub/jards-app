@@ -871,6 +871,34 @@ export interface PrestacaoBem {
   updated_at: string;
 }
 
+/** Peça de divulgação: veiculação, marcas, aprovação prévia e amostra (P3.6). */
+export interface PrestacaoPeca {
+  id: string;
+  prestacao_id: string;
+  tipo: "cartaz" | "folder" | "banner" | "programa" | "convite" | "anuncio" | "rede_social" | "site" | "video" | "audio" | "placa" | "release" | "outro";
+  titulo: string;
+  /** Onde foi veiculada: o perfil, o jornal, o local da placa. */
+  meio: string | null;
+  veiculacao_inicio: string | null;
+  veiculacao_fim: string | null;
+  /** Marcas que aparecem na peça, com os nomes do regime. */
+  marcas: string[];
+  aprovacao_status: "nao_enviada" | "enviada" | "aprovada" | "reprovada";
+  aprovacao_protocolo: string | null;
+  aprovacao_enviada_em: string | null;
+  aprovacao_decidida_em: string | null;
+  storage_path: string | null;
+  nome_arquivo: string | null;
+  mime_type: string | null;
+  url: string | null;
+  justificativa: string | null;
+  observacoes: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Local de realização e a situação que o relatório informa (P3.1). */
 export interface PrestacaoLocal {
   id: string;
@@ -2128,7 +2156,7 @@ export interface PrestacaoVerificacao {
   check_codigo: string;
   severidade: "bloqueio" | "alerta" | "justificativa" | "info";
   resultado: "nao_conforme" | "revisar" | "nao_calculavel";
-  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade" | "evidencia" | "distribuicao" | "bem";
+  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade" | "evidencia" | "distribuicao" | "bem" | "peca";
   entidade_id: string | null;
   mensagem: string;
   fonte: { documento: string; dispositivo: string; citacao?: string; aConfirmar?: boolean; regra?: { codigo: string; descricao: string } } | null;

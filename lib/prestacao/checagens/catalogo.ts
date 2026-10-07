@@ -11,6 +11,7 @@ import type { Regra } from "../regimes/tipos";
 import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
 import type { BemParaChecar } from "../bens";
+import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { PrestacaoAtividade, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
@@ -20,14 +21,14 @@ export type SeveridadeChecagem = (typeof SEVERIDADES)[number];
 export const RESULTADOS = ["nao_conforme", "revisar", "nao_calculavel"] as const;
 export type ResultadoChecagem = (typeof RESULTADOS)[number];
 
-export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade", "evidencia", "distribuicao", "bem"] as const;
+export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade", "evidencia", "distribuicao", "bem", "peca"] as const;
 export type EntidadeVerificada = (typeof ENTIDADES)[number];
 
 export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resolvida"] as const;
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao";
 
 type DoCatalogo = {
   titulo: string;
@@ -37,7 +38,7 @@ type DoCatalogo = {
   /** Códigos de regra do regime (em qualquer dimensão) que dão a fonte do achado, na ordem de preferência. */
   regras?: readonly string[];
   /** Sem regra, a fonte é a da dimensão inteira. */
-  dimensao?: "pagamentos" | "contas" | "fornecedores" | "despesas" | "objeto";
+  dimensao?: "pagamentos" | "contas" | "fornecedores" | "despesas" | "objeto" | "divulgacao";
 };
 
 /**
@@ -122,6 +123,11 @@ export const CATALOGO_CHECAGENS = {
   BEM_ACIMA_DA_COTACAO: { titulo: "Bem pago acima da menor cotação", grupo: "objeto", resultado: "revisar", destino: "bens", regras: ["cotacoes", "processo_de_compra", "precos_de_referencia", "bens"], dimensao: "objeto" },
   BEM_IMOVEL_SEM_REGISTRO: { titulo: "Imóvel sem registro", grupo: "objeto", resultado: "nao_calculavel", destino: "bens", regras: ["bens"], dimensao: "objeto" },
   BEM_DOACAO_SEM_RECIBO: { titulo: "Doação de bem sem recibo", grupo: "objeto", resultado: "nao_calculavel", destino: "bens", regras: ["bens", "bens_permanentes"], dimensao: "objeto" },
+  // Peças de divulgação (P3.6): aprovação prévia, marcas, defeso e amostra.
+  PECA_SEM_APROVACAO: { titulo: "Peça veiculada sem aprovação", grupo: "objeto", resultado: "revisar", destino: "divulgacao", dimensao: "divulgacao" },
+  PECA_MARCA_FALTANDO: { titulo: "Marca faltando na peça", grupo: "objeto", resultado: "nao_conforme", destino: "divulgacao", regras: ["marcas_em_todas_as_pecas", "selo_a_cada_insercao", "logotipo_do_ms", "bandeira", "onde_aplicar"], dimensao: "divulgacao" },
+  PECA_MARCA_NO_DEFESO: { titulo: "Marca do Governo Federal no defeso", grupo: "objeto", resultado: "nao_conforme", destino: "divulgacao", dimensao: "divulgacao" },
+  PECA_SEM_AMOSTRA: { titulo: "Peça sem amostra", grupo: "objeto", resultado: "nao_calculavel", destino: "divulgacao", regras: ["comprovacao"], dimensao: "divulgacao" },
   // Dados que faltam para calcular
   DATAS_DA_PRESTACAO: { titulo: "Datas da prestação", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral" },
   LIMITE_SEM_BASE: { titulo: "Limite sem base de cálculo", grupo: "prestacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "fornecedores" },
@@ -207,6 +213,9 @@ export type EstadoDaPrestacao = {
   valorAprovado?: number | null;
   /** P3.5: bens permanentes; os itens de bem vêm de `nos` (bem_permanente). */
   bens?: readonly BemParaChecar[];
+  /** P3.6: peças de divulgação e os períodos de defeso eleitoral do calendário regulatório. */
+  pecas?: readonly PecaParaChecar[];
+  defesos?: readonly DefesoEleitoral[];
   hoje?: Date;
 };
 

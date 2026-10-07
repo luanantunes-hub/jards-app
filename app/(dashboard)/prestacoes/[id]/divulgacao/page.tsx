@@ -1,338 +1,329 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Plus, Trash2, Megaphone, Check, X, ExternalLink } from "lucide-react";
+import { AlertTriangle, Ban, ExternalLink, FileText, Megaphone, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Select } from "@/components/ui/Select";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { PecaModal } from "@/components/prestacao/divulgacao/PecaModal";
+import type { Achado } from "@/lib/prestacao/checagens";
+import { checarPecas } from "@/lib/prestacao/checagens/checar-pecas";
+import {
+  defesosDaPeca,
+  divulgacaoDoRegime,
+  marcasEsperadas,
+  marcasFaltando,
+  periodoDaVeiculacao,
+  rotuloDoTipoPeca,
+  situacaoDaAprovacao,
+  type DefesoEleitoral,
+} from "@/lib/prestacao/pecas";
+import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
+import type { RegimeNormativo } from "@/lib/prestacao/regimes";
+import type { PrestacaoPeca } from "@/lib/supabase/types";
 
-type TipoDivulgacao =
-  | "cartaz" | "folder" | "banner" | "programa"
-  | "website" | "redes_sociais" | "release" | "video" | "outro";
+const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
+const dataBr = (iso: string) => iso.split("-").reverse().join("/");
+const hoje = () => new Date().toISOString().slice(0, 10);
 
-type DivItem = {
-  id: string;
-  tipo: TipoDivulgacao;
-  descricao: string | null;
-  data_veiculacao: string | null;
-  lei_mencionada: boolean;
-  minc_logo: boolean;
-  arquivo_url: string | null;
-};
+function Avisos({ achados }: { achados: readonly Achado[] }) {
+  if (achados.length === 0) return null;
+  return (
+    <ul className="mt-1 space-y-0.5">
+      {achados.map(a => {
+        const bloqueio = a.severidade === "bloqueio" && !a.justificativa;
+        const Icone = bloqueio ? Ban : AlertTriangle;
+        return (
+          <li key={a.chave} className="flex items-start gap-1 text-[0.6875rem]" style={{ color: a.justificativa ? "rgba(13,13,13,.45)" : bloqueio ? "#B23B3B" : "#B07A14" }}>
+            <Icone size={11} className="mt-0.5 shrink-0" aria-hidden />
+            <span>{a.mensagem}{a.justificativa ? ` Justificativa: ${a.justificativa}` : ""}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
-const TIPO_LABEL: Record<TipoDivulgacao, string> = {
-  cartaz:       "Cartaz",
-  folder:       "Folder / Panfleto",
-  banner:       "Banner",
-  programa:     "Programa",
-  website:      "Website",
-  redes_sociais:"Redes sociais",
-  release:      "Release / Imprensa",
-  video:        "Vídeo",
-  outro:        "Outro",
-};
+function Marcas({ p, regime, defesos }: { p: PrestacaoPeca; regime: RegimeNormativo | null; defesos: readonly DefesoEleitoral[] }) {
+  const esperadas = marcasEsperadas(regime, defesosDaPeca(p, defesos).length > 0);
+  if (esperadas.length === 0) return <span className="text-black/60">{p.marcas.length ? p.marcas.length : "—"}</span>;
+  const faltam = marcasFaltando(p, esperadas).length;
+  return <span className={faltam ? "text-[#B07A14]" : "text-black/60"}>{esperadas.length - faltam} de {esperadas.length}</span>;
+}
 
-const EMPTY: Omit<DivItem, "id"> = {
-  tipo: "cartaz",
-  descricao: "",
-  data_veiculacao: "",
-  lei_mencionada: false,
-  minc_logo: false,
-  arquivo_url: "",
-};
-
-const fmtDate = (d: string | null) =>
-  d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
-
-const Bool = ({ ok }: { ok: boolean }) =>
-  ok
-    ? <Check size={12} style={{ color: "#2E8932" }} />
-    : <X size={12} style={{ color: "#D94E4E" }} />;
+function Amostra({ p, onAbrir }: { p: PrestacaoPeca; onAbrir: (p: PrestacaoPeca) => void }) {
+  if (!p.storage_path && !p.url) return <span className="text-black/30">—</span>;
+  const Icone = p.storage_path ? FileText : ExternalLink;
+  return (
+    <button type="button" onClick={() => onAbrir(p)} aria-label={`Abrir a amostra de ${p.titulo}`} className="inline-flex items-center gap-1 rounded text-black/60 underline decoration-black/20 underline-offset-2 transition hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+      <Icone size={11} aria-hidden /> {p.storage_path ? "Arquivo" : "Link"}
+    </button>
+  );
+}
 
 export default function DivulgacaoPage() {
   const { id } = useParams<{ id: string }>();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const permissoes = usePermissoesPrestacao(id);
+  const podeEditar = permissoes.editar;
   const { confirmDelete } = useDeleteConfirm();
+  const regimes = useRegimesPublicados();
+  const organizationId = usePrestacaoOrganizacao(id);
 
-  const [items, setItems] = useState<DivItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Omit<DivItem, "id">>(EMPTY);
-  const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const [pecas, setPecas] = useState<PrestacaoPeca[]>([]);
+  const [defesos, setDefesos] = useState<DefesoEleitoral[]>([]);
+  const [regimeId, setRegimeId] = useState<string | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [editando, setEditando] = useState<PrestacaoPeca | "nova" | null>(null);
+  const abriuDoLink = useRef(false);
 
-  const load = useCallback(async () => {
-    const { data, error } = await (supabase as any)
-      .from("prestacao_divulgacao")
-      .select("*")
-      .eq("prestacao_id", id)
-      .order("created_at");
-    if (error) setErro(error.message);
-    else {
-      setErro(null);
-      setItems((data ?? []) as DivItem[]);
-    }
-    setLoading(false);
+  const buscar = useCallback(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
+    const db = supabase as any;
+    const [p, c, r] = await Promise.all([
+      db.from("prestacao_pecas").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
+      db.from("calendario_regulatorio").select("inicio, fim, descricao").eq("tipo", "defeso_eleitoral").order("inicio"),
+      db.from("prestacoes_contas").select("regime_id").eq("id", id).maybeSingle(),
+    ]);
+    const falha = p.error ?? c.error ?? r.error;
+    return {
+      erro: falha ? mensagemErroPrestacao(falha, "Não foi possível carregar as peças") : "",
+      pecas: (p.data ?? []) as PrestacaoPeca[],
+      defesos: (c.data ?? []) as DefesoEleitoral[],
+      regimeId: (r.data?.regime_id ?? null) as string | null,
+    };
   }, [id, supabase]);
 
-  useEffect(() => { load(); }, [load]);
-
-  async function salvar() {
-    setSaving(true);
-    setErro(null);
-    const { error } = await (supabase as any).from("prestacao_divulgacao").insert({
-      prestacao_id: id,
-      tipo: form.tipo,
-      descricao: form.descricao || null,
-      data_veiculacao: form.data_veiculacao || null,
-      lei_mencionada: form.lei_mencionada,
-      minc_logo: form.minc_logo,
-      arquivo_url: form.arquivo_url || null,
-    });
-    setSaving(false);
-    if (error) {
-      setErro(error.message);
-      return;
+  const aplicar = useCallback((dados: Awaited<ReturnType<typeof buscar>>) => {
+    setErro(dados.erro);
+    setPecas(dados.pecas);
+    setDefesos(dados.defesos);
+    setRegimeId(dados.regimeId);
+    setCarregando(false);
+    // Link das verificações: ?peca=<id> abre a peça, só na primeira leitura.
+    if (!abriuDoLink.current) {
+      abriuDoLink.current = true;
+      const peca = dados.pecas.find(x => x.id === new URLSearchParams(window.location.search).get("peca"));
+      if (peca) setEditando(peca);
     }
-    setModalOpen(false);
-    setForm(EMPTY);
-    load();
+  }, []);
+
+  const carregar = useCallback(async () => aplicar(await buscar()), [aplicar, buscar]);
+
+  useEffect(() => {
+    let ativo = true;
+    buscar().then(dados => { if (ativo) aplicar(dados); });
+    return () => { ativo = false; };
+  }, [aplicar, buscar]);
+
+  const regime = useMemo(() => regimes.find(r => r.id === regimeId)?.regime ?? null, [regimes, regimeId]);
+  const divulgacao = useMemo(() => divulgacaoDoRegime(regime), [regime]);
+
+  // A conferência do motor, para mostrar em cada peça.
+  const achadosPorPeca = useMemo(() => {
+    const achados = checarPecas({
+      regime, despesas: [], fornecedores: [], documentosDosFornecedores: [], itens: [], pagamentos: [], lancamentos: [],
+      pecas, defesos,
+    });
+    const mapa = new Map<string, Achado[]>();
+    for (const a of achados) if (a.entidade.id) mapa.set(a.entidade.id, [...(mapa.get(a.entidade.id) ?? []), a]);
+    return mapa;
+  }, [regime, pecas, defesos]);
+
+  const placar = useMemo(() => {
+    const dia = hoje();
+    const circularam = pecas.filter(p => p.veiculacao_inicio && p.veiculacao_inicio <= dia);
+    return {
+      circularam: circularam.length,
+      semAprovacao: pecas.filter(p => achadosPorPeca.get(p.id)?.some(a => a.codigo === "PECA_SEM_APROVACAO")).length,
+      comMarcaFaltando: pecas.filter(p => achadosPorPeca.get(p.id)?.some(a => a.codigo === "PECA_MARCA_FALTANDO" || a.codigo === "PECA_MARCA_NO_DEFESO")).length,
+      semAmostra: circularam.filter(p => !p.storage_path && !p.url).length,
+    };
+  }, [pecas, achadosPorPeca]);
+
+  const defesoAtual = divulgacao?.defeso ? defesos[defesos.length - 1] ?? null : null;
+
+  async function abrirAmostra(p: PrestacaoPeca) {
+    if (p.url && !p.storage_path) { window.open(p.url, "_blank", "noopener,noreferrer"); return; }
+    if (!p.storage_path) return;
+    const { data, error } = await supabase.storage.from("documentos").createSignedUrl(p.storage_path, 300);
+    if (data?.signedUrl) window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+    else setErro(`Não foi possível abrir o arquivo${error ? `: ${error.message}` : ""}.`);
   }
 
-  function remover(itemId: string) {
+  function salvou() {
+    setEditando(null);
+    carregar();
+    pedirVerificacao(id);
+  }
+
+  function excluir(p: PrestacaoPeca) {
     confirmDelete({
-      title: "Excluir material?",
-      description: "O material sai da lista de divulgação desta prestação.",
+      title: "Excluir peça?",
+      description: `"${p.titulo}" sai da divulgação${p.storage_path ? ", com a amostra anexada" : ""}.`,
       onConfirm: async () => {
-        setDeletingId(itemId);
-        setErro(null);
-        const { error } = await (supabase as any).from("prestacao_divulgacao").delete().eq("id", itemId);
-        setDeletingId(null);
-        if (error) throw new Error(error.message);
-        load();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_pecas ainda não está no tipo Database
+        const { error } = await (supabase as any).from("prestacao_pecas").delete().eq("id", p.id);
+        if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir a peça"));
+        if (p.storage_path) await supabase.storage.from("documentos").remove([p.storage_path]);
+        await carregar();
+        pedirVerificacao(id);
       },
     });
   }
 
-  const semLei = items.filter(i => !i.lei_mencionada).length;
-  const semLogo = items.filter(i => !i.minc_logo).length;
-
-  if (loading) return <div className="p-8 text-[0.8125rem] text-black/30">Carregando…</div>;
+  const botaoIcone = "rounded p-2 text-black/35 transition hover:bg-black/5 hover:text-black/65 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
+  const botaoExcluir = "rounded p-2 text-black/25 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]";
 
   return (
-    <div className="px-8 py-6 max-w-4xl">
-
-      {erro && (
-        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-white px-4 py-3 text-[0.75rem] font-medium text-[#B23A3A]">
-          Não foi possível concluir a operação: {erro}
+    <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Divulgação</h2>
+          <p className="text-[0.6875rem] text-black/45">Peças de divulgação com as marcas, a aprovação prévia e a amostra para o relatório final.</p>
         </div>
-      )}
-
-      {/* Alertas de conformidade */}
-      {semLei > 0 && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
-          style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
-          <span className="font-semibold flex-shrink-0">Atenção:</span>
-          <span>
-            {semLei} material{semLei > 1 ? "is" : ""} sem menção à Lei Rouanet / Lei de Incentivo à Cultura.
-            A lei exige que todos os materiais citem o mecanismo de financiamento.
-          </span>
-        </div>
-      )}
-      {semLogo > 0 && (
-        <div className="flex items-start gap-2.5 px-4 py-3 rounded border mb-4 text-[0.75rem]"
-          style={{ background: "#fff", borderColor: "#B07A1430", color: "#B07A14" }}>
-          <span className="font-semibold flex-shrink-0">Atenção:</span>
-          <span>
-            {semLogo} material{semLogo > 1 ? "is" : ""} sem logo do MinC.
-            O uso da marca do Ministério da Cultura é obrigatório em todo material de divulgação.
-          </span>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[0.6875rem] font-semibold text-black/45">
-          {items.length > 0
-            ? `${items.length} material${items.length > 1 ? "is" : ""} cadastrado${items.length > 1 ? "s" : ""}`
-            : "Nenhum material cadastrado"}
-        </p>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90"
-          style={{ background: "#7259B5" }}
-        >
-          <Plus size={13} /> Adicionar material
-        </button>
+        {podeEditar && (
+          <button
+            type="button"
+            onClick={() => setEditando("nova")}
+            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+          >
+            <Plus size={13} aria-hidden /> Nova peça
+          </button>
+        )}
       </div>
 
-      {/* Lista */}
-      {items.length === 0 ? (
-        <div className="bg-white rounded border flex flex-col items-center justify-center py-16 text-center"
-          style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <Megaphone size={28} className="text-black/15 mb-3" />
-          <p className="text-[0.8125rem] text-black/35 font-medium">Nenhum material de divulgação</p>
-          <p className="text-[0.6875rem] text-black/25 mt-1 max-w-xs">
-            Registre cartazes, banners, posts e demais materiais usados para divulgar o projeto,
-            comprovando o cumprimento das obrigações de divulgação da Lei Rouanet.
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <table className="w-full text-[0.75rem]">
-            <thead>
-              <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                {["Tipo", "Descrição", "Veiculação", "Lei citada", "Logo MinC", "Arquivo", ""].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(item => (
-                <tr key={item.id} className="border-b last:border-0 hover:bg-black/[.015] transition"
-                  style={{ borderColor: "rgba(13,13,13,.05)" }}>
-                  <td className="px-4 py-3">
-                    <span className="px-2 py-0.5 rounded text-[0.625rem] font-semibold"
-                      style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
-                      {TIPO_LABEL[item.tipo]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-black/65 max-w-[12.5rem] truncate">{item.descricao || "—"}</td>
-                  <td className="px-4 py-3 text-black/50">{fmtDate(item.data_veiculacao)}</td>
-                  <td className="px-4 py-3"><Bool ok={item.lei_mencionada} /></td>
-                  <td className="px-4 py-3"><Bool ok={item.minc_logo} /></td>
-                  <td className="px-4 py-3">
-                    {item.arquivo_url ? (
-                      <a href={item.arquivo_url} target="_blank" rel="noopener noreferrer"
-                        className="flex items-center gap-1 text-[0.6875rem] transition"
-                        style={{ color: "#2D72B0" }}>
-                        <ExternalLink size={11} /> Ver
-                      </a>
-                    ) : (
-                      <span className="text-black/25">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3">
-                    <button
-                      onClick={() => remover(item.id)}
-                      disabled={deletingId === item.id}
-                      className="text-black/20 hover:text-[#D94E4E] transition"
-                    >
-                      <Trash2 size={13} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {erro && <p role="alert" className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={BORDA}>{erro}</p>}
+
+      {/* O que o regime pede */}
+      {divulgacao && (
+        <div className="space-y-1.5 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
+          <p><span className="text-black/40">Marcas do regime: </span><span className="text-black/75">{divulgacao.marcas.join(" · ")}</span></p>
+          <p><span className="text-black/40">Aprovação prévia: </span><span className="text-black/75">{divulgacao.aprovacaoPrevia.exigida ? divulgacao.aprovacaoPrevia.descricao : "o regime não pede."}</span></p>
+          {defesoAtual && divulgacao.defeso && (
+            <p className="text-[#B07A14]">Defeso eleitoral de {dataBr(defesoAtual.inicio)} a {dataBr(defesoAtual.fim)}: {divulgacao.defeso.descricao}</p>
+          )}
         </div>
       )}
 
-      {/* Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(13,13,13,.35)" }}
-          onClick={e => { if (e.target === e.currentTarget) { setModalOpen(false); setForm(EMPTY); } }}>
-          <div className="bg-white rounded w-full max-w-md" style={{ boxShadow: "0 8px 32px rgba(13,13,13,.15)" }}>
-            <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[0.8125rem] font-bold text-black/80">Adicionar material de divulgação</p>
-            </div>
-            <div className="p-5 space-y-4">
+      {!carregando && pecas.length > 0 && (
+        <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
+          <div className="flex gap-1.5"><dt className="text-black/40">Peças</dt><dd className="tabular-nums text-black/75">{pecas.length}</dd></div>
+          <div className="flex gap-1.5"><dt className="text-black/40">Já circularam</dt><dd className="tabular-nums text-black/75">{placar.circularam}</dd></div>
+          {placar.semAprovacao > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Circularam sem aprovação</dt><dd className="tabular-nums text-[#B07A14]">{placar.semAprovacao}</dd></div>}
+          {placar.comMarcaFaltando > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Com marca a corrigir</dt><dd className="tabular-nums text-[#B07A14]">{placar.comMarcaFaltando}</dd></div>}
+          {placar.semAmostra > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Sem amostra</dt><dd className="tabular-nums text-[#B07A14]">{placar.semAmostra}</dd></div>}
+        </dl>
+      )}
 
-              {/* Tipo */}
-              <div>
-                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Tipo de material</label>
-                <Select
-                  value={form.tipo}
-                  onChange={e => setForm(f => ({ ...f, tipo: e.target.value as TipoDivulgacao }))}
-                  className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none bg-white"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                >
-                  {(Object.entries(TIPO_LABEL) as [TipoDivulgacao, string][]).map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </Select>
-              </div>
-
-              {/* Descrição */}
-              <div>
-                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Descrição</label>
-                <input
-                  value={form.descricao ?? ""}
-                  onChange={e => setForm(f => ({ ...f, descricao: e.target.value }))}
-                  placeholder="Cartaz A3 impresso, post Instagram 1080×1080…"
-                  className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-
-              {/* Data e URL */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Data de veiculação</label>
-                  <input
-                    type="date"
-                    value={form.data_veiculacao ?? ""}
-                    onChange={e => setForm(f => ({ ...f, data_veiculacao: e.target.value }))}
-                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">URL do arquivo</label>
-                  <input
-                    value={form.arquivo_url ?? ""}
-                    onChange={e => setForm(f => ({ ...f, arquivo_url: e.target.value }))}
-                    placeholder="https://…"
-                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                </div>
-              </div>
-
-              {/* Checkboxes */}
-              <div className="space-y-2">
-                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 block">Conformidade</label>
-                {([
-                  { key: "lei_mencionada" as const, label: "Menciona a Lei Rouanet / Lei de Incentivo à Cultura" },
-                  { key: "minc_logo" as const, label: "Exibe o logo do Ministério da Cultura (MinC)" },
-                ] as const).map(({ key, label }) => (
-                  <label key={key} className="flex items-center gap-2.5 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={form[key]}
-                      onChange={e => setForm(f => ({ ...f, [key]: e.target.checked }))}
-                      className="accent-[#7259B5]"
-                    />
-                    <span className="text-[0.75rem] text-black/65">{label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-
-            <div className="px-5 py-4 border-t flex items-center justify-end gap-4"
-              style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <button
-                onClick={() => { setModalOpen(false); setForm(EMPTY); }}
-                className="text-[0.75rem] font-medium transition"
-                style={{ color: "rgba(13,13,13,.35)" }}
-                onMouseOver={e => (e.currentTarget.style.color = "rgba(13,13,13,.55)")}
-                onMouseOut={e => (e.currentTarget.style.color = "rgba(13,13,13,.35)")}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={salvar}
-                disabled={saving}
-                className="px-4 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
-                style={{ background: "#7259B5" }}
-              >
-                {saving ? "Salvando…" : "Salvar"}
-              </button>
-            </div>
-          </div>
+      <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="pecas-titulo">
+        <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          <h3 id="pecas-titulo" className="text-[0.75rem] font-semibold text-black">Peças <span className="font-normal tabular-nums text-black/35">({pecas.length})</span></h3>
         </div>
+        {carregando ? (
+          <div className="space-y-2 p-5">{[0, 1, 2].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
+        ) : pecas.length === 0 ? (
+          <div className="px-5 py-10 text-center">
+            <Megaphone size={22} className="mx-auto text-black/20" aria-hidden />
+            <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma peça cadastrada.</p>
+            <p className="mx-auto max-w-[30rem] text-[0.6875rem] text-black/35">
+              {podeEditar
+                ? "Cadastre cartazes, posts, vídeos e placas com as marcas que aparecem, a aprovação prévia e a amostra, que entra no relatório final."
+                : "Quem edita a prestação cadastra as peças."}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Computador: tabela */}
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full text-[0.75rem]">
+                <thead>
+                  <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                    <th className={`${CABECALHO} w-full`}>Peça</th>
+                    <th className={`${CABECALHO} whitespace-nowrap`}>Veiculação</th>
+                    <th className={`${CABECALHO} whitespace-nowrap`}>Marcas</th>
+                    <th className={`${CABECALHO} whitespace-nowrap`}>Aprovação</th>
+                    <th className={`${CABECALHO} whitespace-nowrap`}>Amostra</th>
+                    {podeEditar && <th className={CABECALHO}><span className="sr-only">Ações</span></th>}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pecas.map(p => {
+                    const defeso = defesosDaPeca(p, defesos).length > 0 && Boolean(divulgacao?.defeso);
+                    return (
+                      <tr key={p.id} className="border-b align-top transition last:border-0 hover:bg-black/[.02]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+                        <td className="px-4 py-3">
+                          <p className="text-black/80">{p.titulo}</p>
+                          <p className="text-[0.625rem] text-black/40">{rotuloDoTipoPeca(p.tipo)}{p.meio ? ` · ${p.meio}` : ""}</p>
+                          <Avisos achados={achadosPorPeca.get(p.id) ?? []} />
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] tabular-nums text-black/60">
+                          {periodoDaVeiculacao(p) ?? <span className="text-black/30">—</span>}
+                          {defeso && <span className="block text-[0.625rem] text-[#B07A14]">no defeso</span>}
+                        </td>
+                        <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] tabular-nums"><Marcas p={p} regime={regime} defesos={defesos} /></td>
+                        <td className="min-w-[10rem] px-4 py-3 text-[0.6875rem] text-black/60">{situacaoDaAprovacao(p, regime, hoje()).texto}</td>
+                        <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem]"><Amostra p={p} onAbrir={abrirAmostra} /></td>
+                        {podeEditar && (
+                          <td className="whitespace-nowrap px-2 py-2 text-right">
+                            <button type="button" onClick={() => setEditando(p)} aria-label={`Editar ${p.titulo}`} className={botaoIcone}><Pencil size={13} /></button>
+                            <button type="button" onClick={() => excluir(p)} aria-label={`Excluir ${p.titulo}`} className={botaoExcluir}><Trash2 size={13} /></button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Celular: cartões */}
+            <ul className="divide-y divide-black/[.05] md:hidden">
+              {pecas.map(p => (
+                <li key={p.id} className="space-y-2 px-5 py-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-[0.75rem] text-black/80">{p.titulo}</p>
+                      <p className="text-[0.625rem] text-black/40">{rotuloDoTipoPeca(p.tipo)}{p.meio ? ` · ${p.meio}` : ""}</p>
+                    </div>
+                    {podeEditar && (
+                      <div className="flex shrink-0 items-center">
+                        <button type="button" onClick={() => setEditando(p)} aria-label={`Editar ${p.titulo}`} className={botaoIcone}><Pencil size={13} /></button>
+                        <button type="button" onClick={() => excluir(p)} aria-label={`Excluir ${p.titulo}`} className={botaoExcluir}><Trash2 size={13} /></button>
+                      </div>
+                    )}
+                  </div>
+                  <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-[0.6875rem]">
+                    <dt className="text-black/40">Veiculação</dt><dd className="tabular-nums text-black/70">{periodoDaVeiculacao(p) ?? "—"}</dd>
+                    <dt className="text-black/40">Marcas</dt><dd className="tabular-nums"><Marcas p={p} regime={regime} defesos={defesos} /></dd>
+                    <dt className="text-black/40">Aprovação</dt><dd className="text-black/70">{situacaoDaAprovacao(p, regime, hoje()).texto}</dd>
+                    <dt className="text-black/40">Amostra</dt><dd><Amostra p={p} onAbrir={abrirAmostra} /></dd>
+                  </dl>
+                  <Avisos achados={achadosPorPeca.get(p.id) ?? []} />
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+
+      {editando && (
+        <PecaModal
+          prestacaoId={id}
+          organizationId={organizationId}
+          peca={editando === "nova" ? null : editando}
+          regime={regime}
+          divulgacao={divulgacao}
+          defesos={defesos}
+          onClose={() => setEditando(null)}
+          onSaved={salvou}
+        />
       )}
     </div>
   );
