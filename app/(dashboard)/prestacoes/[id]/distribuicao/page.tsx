@@ -1,349 +1,405 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
+
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
-import { Plus, Trash2, Users } from "lucide-react";
+import { AlertTriangle, Ban, CheckCircle2, Pencil, Plus, Ticket, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { Select } from "@/components/ui/Select";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { DistribuicaoModal } from "@/components/prestacao/distribuicao/DistribuicaoModal";
+import type { Achado } from "@/lib/prestacao/checagens";
+import { checarDistribuicao } from "@/lib/prestacao/checagens/checar-distribuicao";
+import {
+  categoriaDistribuicao,
+  chaveDoProduto,
+  cotasDoProduto,
+  formatarPercentual,
+  limitesDoRegime,
+  percentual,
+  resumosPorProduto,
+  rotuloDaCategoria,
+  type LimitesDistribuicao,
+  type ResumoDoProduto,
+  type SituacaoDaCota,
+} from "@/lib/prestacao/distribuicao";
+import { formatarDocumento } from "@/lib/prestacao/fornecedores";
+import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
+import type { PrestacaoDistribuicao } from "@/lib/supabase/types";
 
-type Tipo = "pago" | "gratuito" | "cortesia";
-type PublicoAlvo = "geral" | "idosos" | "pne" | "estudantes" | "professores" | "outro";
+const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
+const COR_BLOQUEIO = "#B23B3B";
+const COR_ALERTA = "#B07A14";
 
-type DistItem = {
-  id: string;
-  tipo: Tipo;
-  categoria: string | null;
-  quantidade: number;
-  preco_unitario: number | null;
-  publico_alvo: PublicoAlvo;
-  observacoes: string | null;
+type DadosDaPrestacao = {
+  regime_id: string | null;
+  valor_aprovado: number | null;
+  data_inicio_execucao: string | null;
+  data_fim_execucao: string | null;
 };
 
-const TIPO_META: Record<Tipo, { label: string; color: string; bg: string }> = {
-  pago:      { label: "Pago",      color: "#2D72B0", bg: "#fff" },
-  gratuito:  { label: "Gratuito",  color: "#2E8932", bg: "#fff" },
-  cortesia:  { label: "Cortesia",  color: "#7259B5", bg: "#fff" },
-};
+const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const inteiro = (n: number) => n.toLocaleString("pt-BR");
 
-const PUBLICO_LABEL: Record<PublicoAlvo, string> = {
-  geral:       "Público geral",
-  idosos:      "Idosos (60+)",
-  pne:         "PNE / Acessibilidade",
-  estudantes:  "Estudantes",
-  professores: "Professores",
-  outro:       "Outro",
-};
+/** Uma cota do art. 41 no produto: o percentual, o limite e se está dentro. */
+function Cota({ c }: { c: SituacaoDaCota }) {
+  const Icone = c.dentro ? CheckCircle2 : Ban;
+  return (
+    <div className="rounded border bg-white px-3 py-2.5" style={BORDA}>
+      <p className="text-[0.625rem] text-black/45">{c.rotulo}</p>
+      <p className="mt-0.5 text-[1rem] font-semibold tabular-nums text-black/85">{formatarPercentual(c.percentual)}</p>
+      <p className="text-[0.625rem] text-black/40">{c.sentido === "max" ? "até" : "ao menos"} {formatarPercentual(c.limite)} · {c.dispositivo}</p>
+      <p className="mt-1 flex items-center gap-1 text-[0.625rem] font-medium" style={{ color: c.dentro ? "#2E8932" : COR_BLOQUEIO }}>
+        <Icone size={11} aria-hidden /> {c.dentro ? "Dentro" : c.sentido === "max" ? "Acima do máximo" : "Abaixo do mínimo"}
+      </p>
+    </div>
+  );
+}
 
-const EMPTY: Omit<DistItem, "id"> = {
-  tipo: "gratuito",
-  categoria: "",
-  quantidade: 0,
-  preco_unitario: null,
-  publico_alvo: "geral",
-  observacoes: "",
-};
+/** Achados de uma linha ou de um produto, com a justificativa quando já há. */
+function Avisos({ achados }: { achados: readonly Achado[] }) {
+  if (achados.length === 0) return null;
+  return (
+    <ul className="mt-1 space-y-0.5">
+      {achados.map(a => {
+        const bloqueio = a.severidade === "bloqueio";
+        const Icone = bloqueio ? Ban : AlertTriangle;
+        return (
+          <li key={a.chave} className="flex items-start gap-1 text-[0.6875rem]" style={{ color: a.justificativa ? "rgba(13,13,13,.45)" : bloqueio ? COR_BLOQUEIO : COR_ALERTA }}>
+            <Icone size={11} className="mt-0.5 shrink-0" aria-hidden />
+            <span>{a.mensagem}{a.justificativa ? ` Justificativa: ${a.justificativa}` : ""}</span>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
-const fmt = (v: number) =>
-  v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+function Preco({ l }: { l: PrestacaoDistribuicao }) {
+  if (!categoriaDistribuicao(l.categoria)?.venda) return <span className="text-black/35">Gratuito</span>;
+  return <span className="tabular-nums">{l.preco ? reais(Number(l.preco)) : "—"}</span>;
+}
+
+function QuemRecebeu({ l }: { l: PrestacaoDistribuicao }) {
+  if (!l.beneficiario && !l.beneficiario_documento) return <span className="text-black/30">—</span>;
+  return (
+    <span>
+      {l.beneficiario}
+      {l.beneficiario_documento && <span className="block whitespace-nowrap tabular-nums text-black/40">{formatarDocumento(l.beneficiario_documento)}</span>}
+    </span>
+  );
+}
+
+function Produto({ resumo, limites, achadosDoProduto, achadosDaLinha, podeEditar, onEditar, onExcluir }: {
+  resumo: ResumoDoProduto<PrestacaoDistribuicao>;
+  limites: LimitesDistribuicao | null;
+  achadosDoProduto: readonly Achado[];
+  achadosDaLinha: ReadonlyMap<string, Achado[]>;
+  podeEditar: boolean;
+  onEditar: (l: PrestacaoDistribuicao) => void;
+  onExcluir: (l: PrestacaoDistribuicao) => void;
+}) {
+  const cotas = limites ? cotasDoProduto(resumo, limites) : [];
+  // As cotas já aparecem nos blocos; aqui ficam os outros avisos do produto.
+  const outros = achadosDoProduto.filter(a => a.codigo !== "DISTRIBUICAO_COTA");
+  const botaoIcone = "rounded p-2 text-black/35 transition hover:bg-black/5 hover:text-black/65 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
+  const botaoExcluir = "rounded p-2 text-black/25 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]";
+  const titulo = `produto-${resumo.chave}`;
+
+  return (
+    <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby={titulo}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        <h3 id={titulo} className="text-[0.75rem] font-semibold text-black">{resumo.produto}</h3>
+        <p className="text-[0.6875rem] tabular-nums text-black/45">
+          {inteiro(resumo.total)} {resumo.base === "realizado" ? "distribuídos e vendidos" : "no plano"}
+          {resumo.receita > 0 && <> · receita prevista {reais(resumo.receita)}</>}
+        </p>
+      </div>
+
+      {(cotas.length > 0 || resumo.vendidos > 0) && (
+        <div className="space-y-3 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          {cotas.length > 0 && (
+            <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+              {cotas.map(c => <Cota key={c.cota} c={c} />)}
+            </div>
+          )}
+          {resumo.vendidos > 0 && (
+            <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[0.6875rem]">
+              <div className="flex gap-1.5">
+                <dt className="text-black/40">Meia-entrada</dt>
+                <dd className="tabular-nums text-black/75">
+                  {inteiro(resumo.meias)} de {inteiro(resumo.vendidos)} vendidos · {formatarPercentual(percentual(resumo.meias, resumo.vendidos))}
+                  {limites?.meiaMin != null && <span className="text-black/40"> (ao menos {formatarPercentual(limites.meiaMin)})</span>}
+                </dd>
+              </div>
+              {resumo.precoMedio !== null && (
+                <div className="flex gap-1.5">
+                  <dt className="text-black/40">Preço médio da venda livre</dt>
+                  <dd className="tabular-nums text-black/75">
+                    {reais(resumo.precoMedio)}
+                    {limites?.precoMedioMax != null && <span className="text-black/40"> (até {reais(limites.precoMedioMax)})</span>}
+                  </dd>
+                </div>
+              )}
+            </dl>
+          )}
+          <Avisos achados={outros} />
+        </div>
+      )}
+
+      {/* Computador: tabela */}
+      <div className="hidden overflow-x-auto md:block">
+        <table className="w-full text-[0.75rem]">
+          <thead>
+            <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+              <th className={`${CABECALHO} w-full`}>Categoria</th>
+              <th className={`${CABECALHO} whitespace-nowrap text-right`}>Previsto</th>
+              <th className={`${CABECALHO} whitespace-nowrap text-right`}>Realizado</th>
+              <th className={`${CABECALHO} whitespace-nowrap text-right`}>Meias</th>
+              <th className={`${CABECALHO} whitespace-nowrap text-right`}>Preço</th>
+              <th className={`${CABECALHO} whitespace-nowrap`}>Quem recebeu</th>
+              {podeEditar && <th className={CABECALHO}><span className="sr-only">Ações</span></th>}
+            </tr>
+          </thead>
+          <tbody>
+            {resumo.linhas.map(l => (
+              <tr key={l.id} className="border-b align-top transition last:border-0 hover:bg-black/[.02]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
+                <td className="px-4 py-3">
+                  <p className="text-black/80">{rotuloDaCategoria(l.categoria)}</p>
+                  <p className="text-[0.625rem] text-black/40">{categoriaDistribuicao(l.categoria)?.descricao}</p>
+                  {l.observacoes && <p className="mt-0.5 text-[0.625rem] text-black/45">{l.observacoes}</p>}
+                  <Avisos achados={achadosDaLinha.get(l.id) ?? []} />
+                </td>
+                <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-black/75">{inteiro(l.quantidade)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-black/75">{l.quantidade_realizada === null ? <span className="text-black/30">—</span> : inteiro(l.quantidade_realizada)}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-black/60">{categoriaDistribuicao(l.categoria)?.venda ? inteiro(l.quantidade_meia) : <span className="text-black/30">—</span>}</td>
+                <td className="whitespace-nowrap px-4 py-3 text-right text-black/60"><Preco l={l} /></td>
+                <td className="min-w-[11rem] px-4 py-3 text-[0.6875rem] text-black/60"><QuemRecebeu l={l} /></td>
+                {podeEditar && (
+                  <td className="whitespace-nowrap px-2 py-2 text-right">
+                    <button type="button" onClick={() => onEditar(l)} aria-label={`Editar ${rotuloDaCategoria(l.categoria)} de ${resumo.produto}`} className={botaoIcone}><Pencil size={13} /></button>
+                    <button type="button" onClick={() => onExcluir(l)} aria-label={`Excluir ${rotuloDaCategoria(l.categoria)} de ${resumo.produto}`} className={botaoExcluir}><Trash2 size={13} /></button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Celular: cartões */}
+      <ul className="divide-y divide-black/[.05] md:hidden">
+        {resumo.linhas.map(l => (
+          <li key={l.id} className="space-y-2 px-5 py-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <p className="text-[0.75rem] text-black/80">{rotuloDaCategoria(l.categoria)}</p>
+                <p className="text-[0.625rem] text-black/40">{categoriaDistribuicao(l.categoria)?.descricao}</p>
+              </div>
+              {podeEditar && (
+                <div className="flex shrink-0 items-center">
+                  <button type="button" onClick={() => onEditar(l)} aria-label={`Editar ${rotuloDaCategoria(l.categoria)} de ${resumo.produto}`} className={botaoIcone}><Pencil size={13} /></button>
+                  <button type="button" onClick={() => onExcluir(l)} aria-label={`Excluir ${rotuloDaCategoria(l.categoria)} de ${resumo.produto}`} className={botaoExcluir}><Trash2 size={13} /></button>
+                </div>
+              )}
+            </div>
+            <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-[0.6875rem]">
+              <dt className="text-black/40">Previsto</dt><dd className="tabular-nums text-black/70">{inteiro(l.quantidade)}</dd>
+              <dt className="text-black/40">Realizado</dt><dd className="tabular-nums text-black/70">{l.quantidade_realizada === null ? "—" : inteiro(l.quantidade_realizada)}</dd>
+              {categoriaDistribuicao(l.categoria)?.venda && <><dt className="text-black/40">Meias</dt><dd className="tabular-nums text-black/70">{inteiro(l.quantidade_meia)}</dd></>}
+              <dt className="text-black/40">Preço</dt><dd className="text-black/70"><Preco l={l} /></dd>
+              {(l.beneficiario || l.beneficiario_documento) && <><dt className="text-black/40">Quem recebeu</dt><dd className="text-black/70"><QuemRecebeu l={l} /></dd></>}
+            </dl>
+            <Avisos achados={achadosDaLinha.get(l.id) ?? []} />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
 
 export default function DistribuicaoPage() {
   const { id } = useParams<{ id: string }>();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
+  const permissoes = usePermissoesPrestacao(id);
+  const podeEditar = permissoes.editar;
   const { confirmDelete } = useDeleteConfirm();
+  const regimes = useRegimesPublicados();
 
-  const [items, setItems] = useState<DistItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [form, setForm] = useState<Omit<DistItem, "id">>(EMPTY);
-  const [saving, setSaving] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [erro, setErro] = useState<string | null>(null);
+  const [linhas, setLinhas] = useState<PrestacaoDistribuicao[]>([]);
+  const [prestacao, setPrestacao] = useState<DadosDaPrestacao | null>(null);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState("");
+  const [editando, setEditando] = useState<PrestacaoDistribuicao | "nova" | null>(null);
+  const abriuDoLink = useRef(false);
 
-  const load = useCallback(async () => {
-    const { data, error } = await (supabase as any)
-      .from("prestacao_distribuicao")
-      .select("*")
-      .eq("prestacao_id", id)
-      .order("created_at");
-    if (error) setErro(error.message);
-    else {
-      setErro(null);
-      setItems((data ?? []) as DistItem[]);
-    }
-    setLoading(false);
+  const buscar = useCallback(async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
+    const db = supabase as any;
+    const [d, p] = await Promise.all([
+      db.from("prestacao_distribuicao").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
+      db.from("prestacoes_contas").select("regime_id, valor_aprovado, data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
+    ]);
+    const falha = d.error ?? p.error;
+    return {
+      erro: falha ? mensagemErroPrestacao(falha, "Não foi possível carregar a distribuição") : "",
+      linhas: ((d.data ?? []) as PrestacaoDistribuicao[]).map(l => ({ ...l, preco: l.preco === null ? null : Number(l.preco) })),
+      prestacao: (p.data ?? null) as DadosDaPrestacao | null,
+    };
   }, [id, supabase]);
 
-  useEffect(() => { load(); }, [load]);
-
-  async function salvar() {
-    setSaving(true);
-    setErro(null);
-    const { error } = await (supabase as any).from("prestacao_distribuicao").insert({
-      prestacao_id: id,
-      tipo: form.tipo,
-      categoria: form.categoria || null,
-      quantidade: form.quantidade,
-      preco_unitario: form.tipo === "pago" ? form.preco_unitario : null,
-      publico_alvo: form.publico_alvo,
-      observacoes: form.observacoes || null,
-    });
-    setSaving(false);
-    if (error) {
-      setErro(error.message);
-      return;
+  const aplicar = useCallback((dados: Awaited<ReturnType<typeof buscar>>) => {
+    setErro(dados.erro);
+    setLinhas(dados.linhas);
+    setPrestacao(dados.prestacao);
+    setCarregando(false);
+    // Link das verificações: ?linha=<id> abre a linha, só na primeira leitura.
+    if (!abriuDoLink.current) {
+      abriuDoLink.current = true;
+      const linha = dados.linhas.find(l => l.id === new URLSearchParams(window.location.search).get("linha"));
+      if (linha) setEditando(linha);
     }
-    setModalOpen(false);
-    setForm(EMPTY);
-    load();
+  }, []);
+
+  const carregar = useCallback(async () => aplicar(await buscar()), [aplicar, buscar]);
+
+  useEffect(() => {
+    let ativo = true;
+    buscar().then(dados => { if (ativo) aplicar(dados); });
+    return () => { ativo = false; };
+  }, [aplicar, buscar]);
+
+  const regime = regimes.find(r => r.id === prestacao?.regime_id)?.regime ?? null;
+  const limites = useMemo(() => limitesDoRegime(regime), [regime]);
+  const resumos = useMemo(() => resumosPorProduto(linhas, limites), [linhas, limites]);
+
+  // A conferência do motor, para mostrar em cada produto e em cada linha.
+  const achados = useMemo(() => checarDistribuicao({
+    regime, despesas: [], fornecedores: [], documentosDosFornecedores: [], itens: [], pagamentos: [], lancamentos: [],
+    prestacao: { data_inicio_execucao: prestacao?.data_inicio_execucao ?? null, data_fim_execucao: prestacao?.data_fim_execucao ?? null },
+    distribuicao: linhas,
+    valorAprovado: prestacao?.valor_aprovado === null || prestacao?.valor_aprovado === undefined ? null : Number(prestacao.valor_aprovado),
+  }), [regime, prestacao, linhas]);
+  const { porProduto, porLinha, receita } = useMemo(() => {
+    const porProduto = new Map<string, Achado[]>();
+    const porLinha = new Map<string, Achado[]>();
+    for (const a of achados) {
+      if (a.entidade.tipo === "distribuicao" && a.entidade.id) porLinha.set(a.entidade.id, [...(porLinha.get(a.entidade.id) ?? []), a]);
+      else if (typeof a.dados.produto === "string") {
+        const chave = chaveDoProduto(a.dados.produto);
+        porProduto.set(chave, [...(porProduto.get(chave) ?? []), a]);
+      }
+    }
+    return { porProduto, porLinha, receita: achados.filter(a => a.codigo === "DISTRIBUICAO_RECEITA") };
+  }, [achados]);
+
+  const produtos = useMemo(() => resumos.map(r => r.produto), [resumos]);
+  const receitaTotal = resumos.reduce((s, r) => s + r.receita, 0);
+  const foraDasCotas = resumos.reduce((n, r) => n + (limites ? cotasDoProduto(r, limites).filter(c => !c.dentro).length : 0), 0);
+
+  function salvou() {
+    setEditando(null);
+    carregar();
+    pedirVerificacao(id);
   }
 
-  function remover(itemId: string) {
+  function excluir(l: PrestacaoDistribuicao) {
     confirmDelete({
-      title: "Excluir categoria?",
-      description: "A categoria sai do plano de distribuição desta prestação.",
+      title: "Excluir linha do plano?",
+      description: `${rotuloDaCategoria(l.categoria)} de "${l.produto}" sai do plano de distribuição.`,
       onConfirm: async () => {
-        setDeletingId(itemId);
-        setErro(null);
-        const { error } = await (supabase as any).from("prestacao_distribuicao").delete().eq("id", itemId);
-        setDeletingId(null);
-        if (error) throw new Error(error.message);
-        load();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_distribuicao ainda não está no tipo Database
+        const { error } = await (supabase as any).from("prestacao_distribuicao").delete().eq("id", l.id);
+        if (error) throw new Error(mensagemErroPrestacao(error, "Não foi possível excluir a linha"));
+        await carregar();
+        pedirVerificacao(id);
       },
     });
   }
 
-  // Totais
-  const totalGratuito = items.filter(i => i.tipo !== "pago").reduce((s, i) => s + i.quantidade, 0);
-  const totalPago = items.filter(i => i.tipo === "pago").reduce((s, i) => s + i.quantidade, 0);
-  const total = totalGratuito + totalPago;
-  const pctGratuito = total > 0 ? Math.round((totalGratuito / total) * 100) : 0;
-  const receitaEstimada = items
-    .filter(i => i.tipo === "pago" && i.preco_unitario)
-    .reduce((s, i) => s + i.quantidade * (i.preco_unitario ?? 0), 0);
-
-  if (loading) return <div className="p-8 text-[0.8125rem] text-black/30">Carregando…</div>;
-
   return (
-    <div className="px-8 py-6 max-w-4xl">
-
-      {erro && (
-        <div className="mb-4 rounded border border-[#D94E4E]/25 bg-white px-4 py-3 text-[0.75rem] font-medium text-[#B23A3A]">
-          Não foi possível concluir a operação: {erro}
+    <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Distribuição</h2>
+          <p className="text-[0.6875rem] text-black/45">
+            {limites && regime
+              ? `Plano de distribuição por produto, com as cotas do regime (${regime.nome}).`
+              : "Plano de distribuição por produto: o previsto e o que foi distribuído ou vendido."}
+          </p>
         </div>
-      )}
-
-      {/* Resumo */}
-      {items.length > 0 && (
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          {[
-            { label: "Total de acessos", value: total.toLocaleString("pt-BR"), sub: null },
-            { label: "Gratuitos / Cortesia", value: totalGratuito.toLocaleString("pt-BR"), sub: `${pctGratuito}% do total` },
-            { label: "Pagos", value: totalPago.toLocaleString("pt-BR"), sub: null },
-            { label: "Receita estimada", value: receitaEstimada > 0 ? fmt(receitaEstimada) : "—", sub: null },
-          ].map(c => (
-            <div key={c.label} className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">{c.label}</p>
-              <p className="text-[1.0625rem] font-bold text-black/80">{c.value}</p>
-              {c.sub && <p className="text-[0.625rem] text-black/35 mt-0.5">{c.sub}</p>}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Header da tabela */}
-      <div className="flex items-center justify-between mb-3">
-        <p className="text-[0.6875rem] font-semibold text-black/45">
-          {items.length > 0 ? `${items.length} categoria${items.length > 1 ? "s" : ""} cadastrada${items.length > 1 ? "s" : ""}` : "Nenhuma categoria cadastrada"}
-        </p>
-        <button
-          onClick={() => setModalOpen(true)}
-          className="flex items-center gap-1.5 px-3 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90"
-          style={{ background: "#7259B5" }}
-        >
-          <Plus size={13} /> Adicionar categoria
-        </button>
+        {podeEditar && (
+          <button
+            type="button"
+            onClick={() => setEditando("nova")}
+            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+          >
+            <Plus size={13} aria-hidden /> Adicionar ao plano
+          </button>
+        )}
       </div>
 
-      {/* Lista */}
-      {items.length === 0 ? (
-        <div className="bg-white rounded border flex flex-col items-center justify-center py-16 text-center"
-          style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <Users size={28} className="text-black/15 mb-3" />
-          <p className="text-[0.8125rem] text-black/35 font-medium">Nenhum plano de distribuição</p>
-          <p className="text-[0.6875rem] text-black/25 mt-1 max-w-xs">
-            Cadastre como os ingressos ou acessos à atividade serão distribuídos — pagos, gratuitos e cotas reservadas.
+      {erro && <p role="alert" className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={BORDA}>{erro}</p>}
+
+      {!carregando && linhas.length > 0 && (
+        <div className="rounded border bg-white px-5 py-3" style={BORDA}>
+          <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[0.6875rem]">
+            <div className="flex gap-1.5"><dt className="text-black/40">Produtos</dt><dd className="tabular-nums text-black/75">{resumos.length}</dd></div>
+            {receitaTotal > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Receita prevista</dt><dd className="tabular-nums text-black/75">{reais(receitaTotal)}</dd></div>}
+            {limites && (
+              <div className="flex gap-1.5">
+                <dt className="text-black/40">Cotas fora do limite</dt>
+                <dd className="tabular-nums" style={{ color: foraDasCotas ? COR_BLOQUEIO : "rgba(13,13,13,.75)" }}>{foraDasCotas}</dd>
+              </div>
+            )}
+          </dl>
+          <Avisos achados={receita} />
+          {!limites && (
+            <p className="mt-1 text-[0.6875rem] text-black/45">
+              {regime ? "O regime desta prestação não define cotas de distribuição; o plano é conferido contra o realizado." : "Sem regime definido, as cotas não são conferidas."}
+            </p>
+          )}
+        </div>
+      )}
+
+      {carregando ? (
+        <div className="space-y-2 rounded border bg-white p-5" style={BORDA}>{[0, 1, 2].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
+      ) : linhas.length === 0 ? (
+        <div className="rounded border bg-white px-5 py-12 text-center" style={BORDA}>
+          <Ticket size={22} className="mx-auto text-black/20" aria-hidden />
+          <p className="mt-2 text-[0.75rem] text-black/55">Nenhum plano de distribuição.</p>
+          <p className="mx-auto max-w-[28rem] text-[0.6875rem] text-black/35">
+            {podeEditar
+              ? "Cadastre como os ingressos ou produtos serão distribuídos: as cotas gratuitas, o preço popular e a venda, produto a produto."
+              : "Quem edita a prestação cadastra o plano de distribuição."}
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <table className="w-full text-[0.75rem]">
-            <thead>
-              <tr className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                {["Tipo", "Categoria", "Público-alvo", "Quantidade", "Preço unit.", "Observações", ""].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/30">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map(item => {
-                const tm = TIPO_META[item.tipo];
-                return (
-                  <tr key={item.id} className="border-b last:border-0 hover:bg-black/[.015] transition"
-                    style={{ borderColor: "rgba(13,13,13,.05)" }}>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded text-[0.625rem] font-semibold"
-                        style={{ background: tm.bg, color: tm.color }}>
-                        {tm.label}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-black/70">{item.categoria || "—"}</td>
-                    <td className="px-4 py-3 text-black/60">{PUBLICO_LABEL[item.publico_alvo]}</td>
-                    <td className="px-4 py-3 font-semibold text-black/80 tabular-nums">
-                      {item.quantidade.toLocaleString("pt-BR")}
-                    </td>
-                    <td className="px-4 py-3 text-black/60 tabular-nums">
-                      {item.tipo === "pago" && item.preco_unitario ? fmt(item.preco_unitario) : "—"}
-                    </td>
-                    <td className="px-4 py-3 text-black/45 max-w-[11.25rem] truncate">{item.observacoes || "—"}</td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => remover(item.id)}
-                        disabled={deletingId === item.id}
-                        className="text-black/20 hover:text-[#D94E4E] transition"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        resumos.map(r => (
+          <Produto
+            key={r.chave}
+            resumo={r}
+            limites={limites}
+            achadosDoProduto={porProduto.get(r.chave) ?? []}
+            achadosDaLinha={porLinha}
+            podeEditar={podeEditar}
+            onEditar={setEditando}
+            onExcluir={excluir}
+          />
+        ))
       )}
 
-      {/* Modal */}
-      {modalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(13,13,13,.35)" }}
-          onClick={e => { if (e.target === e.currentTarget) { setModalOpen(false); setForm(EMPTY); } }}>
-          <div className="bg-white rounded w-full max-w-md" style={{ boxShadow: "0 8px 32px rgba(13,13,13,.15)" }}>
-            <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <p className="text-[0.8125rem] font-bold text-black/80">Adicionar categoria de distribuição</p>
-            </div>
-            <div className="p-5 space-y-4">
-
-              {/* Tipo */}
-              <div>
-                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Tipo de acesso</label>
-                <div className="flex gap-2">
-                  {(["gratuito", "pago", "cortesia"] as Tipo[]).map(t => (
-                    <button key={t}
-                      onClick={() => setForm(f => ({ ...f, tipo: t }))}
-                      className="flex-1 py-2 rounded text-[0.6875rem] font-semibold transition border"
-                      style={{
-                        background: form.tipo === t ? TIPO_META[t].bg : "transparent",
-                        color: form.tipo === t ? TIPO_META[t].color : "rgba(13,13,13,.40)",
-                        borderColor: form.tipo === t ? TIPO_META[t].color + "60" : "rgba(13,13,13,.12)",
-                      }}>
-                      {TIPO_META[t].label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Categoria e público */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Categoria</label>
-                  <input
-                    value={form.categoria ?? ""}
-                    onChange={e => setForm(f => ({ ...f, categoria: e.target.value }))}
-                    placeholder="Show, exposição, oficina…"
-                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                </div>
-                <div>
-                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Público-alvo</label>
-                  <Select
-                    value={form.publico_alvo}
-                    onChange={e => setForm(f => ({ ...f, publico_alvo: e.target.value as PublicoAlvo }))}
-                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none bg-white"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  >
-                    {(Object.entries(PUBLICO_LABEL) as [PublicoAlvo, string][]).map(([v, l]) => (
-                      <option key={v} value={v}>{l}</option>
-                    ))}
-                  </Select>
-                </div>
-              </div>
-
-              {/* Quantidade e preço */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Quantidade</label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={form.quantidade}
-                    onChange={e => setForm(f => ({ ...f, quantidade: parseInt(e.target.value) || 0 }))}
-                    className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                </div>
-                {form.tipo === "pago" && (
-                  <div>
-                    <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Preço unitário (R$)</label>
-                    <input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={form.preco_unitario ?? ""}
-                      onChange={e => setForm(f => ({ ...f, preco_unitario: parseFloat(e.target.value) || null }))}
-                      className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* Observações */}
-              <div>
-                <label className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/40 mb-1.5 block">Observações</label>
-                <textarea
-                  rows={2}
-                  value={form.observacoes ?? ""}
-                  onChange={e => setForm(f => ({ ...f, observacoes: e.target.value }))}
-                  placeholder="Critérios de seleção, documentação necessária…"
-                  className="w-full border rounded px-3 py-2 text-[0.75rem] focus:outline-none resize-none"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-            </div>
-
-            <div className="px-5 py-4 border-t flex items-center justify-end gap-4"
-              style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <button
-                onClick={() => { setModalOpen(false); setForm(EMPTY); }}
-                className="text-[0.75rem] font-medium transition"
-                style={{ color: "rgba(13,13,13,.35)" }}
-                onMouseOver={e => (e.currentTarget.style.color = "rgba(13,13,13,.55)")}
-                onMouseOut={e => (e.currentTarget.style.color = "rgba(13,13,13,.35)")}
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={salvar}
-                disabled={saving || form.quantidade === 0}
-                className="px-4 py-2 rounded text-[0.75rem] font-semibold text-white transition hover:opacity-90 disabled:opacity-40"
-                style={{ background: "#7259B5" }}
-              >
-                {saving ? "Salvando…" : "Salvar"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {editando && (
+        <DistribuicaoModal
+          prestacaoId={id}
+          linha={editando === "nova" ? null : editando}
+          produtos={produtos}
+          limites={limites}
+          onClose={() => setEditando(null)}
+          onSaved={salvou}
+        />
       )}
     </div>
   );

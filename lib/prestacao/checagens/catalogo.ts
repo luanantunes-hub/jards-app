@@ -6,9 +6,10 @@ import type { DespesaParaChecar } from "../despesas";
 import type { PagamentoParaChecar } from "../pagamentos";
 import type { LancamentoParaConciliar } from "../conciliacao";
 import type { NoOrcamento } from "../orcamento";
-import { definida, type Fonte, type RegimeNormativo } from "../regimes";
+import { definida, regrasDoRegime, type Fonte, type RegimeNormativo } from "../regimes";
 import type { Regra } from "../regimes/tipos";
 import type { EvidenciaParaChecar } from "../evidencias";
+import type { LinhaDistribuicao } from "../distribuicao";
 import type { PrestacaoAtividade, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
@@ -18,14 +19,14 @@ export type SeveridadeChecagem = (typeof SEVERIDADES)[number];
 export const RESULTADOS = ["nao_conforme", "revisar", "nao_calculavel"] as const;
 export type ResultadoChecagem = (typeof RESULTADOS)[number];
 
-export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade", "evidencia"] as const;
+export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade", "evidencia", "distribuicao"] as const;
 export type EntidadeVerificada = (typeof ENTIDADES)[number];
 
 export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resolvida"] as const;
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao";
 
 type DoCatalogo = {
   titulo: string;
@@ -104,6 +105,15 @@ export const CATALOGO_CHECAGENS = {
   // Cobertura por meta (P3.3): o que comprova a meta e cada atividade realizada.
   META_SEM_EVIDENCIA: { titulo: "Meta sem evidência", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["evidencias"], dimensao: "objeto" },
   ATIVIDADE_SEM_EVIDENCIA: { titulo: "Atividade sem evidência", grupo: "objeto", resultado: "nao_calculavel", destino: "atividades", regras: ["evidencias"], dimensao: "objeto" },
+  // Plano de distribuição (P3.4): cotas, preços e meia-entrada do regime; o realizado contra o plano.
+  DISTRIBUICAO_COTA: { titulo: "Cota do plano de distribuição", grupo: "objeto", resultado: "nao_conforme", destino: "distribuicao", regras: ["cotas_distribuicao"], dimensao: "objeto" },
+  DISTRIBUICAO_PRECO_POPULAR: { titulo: "Preço popular acima do teto", grupo: "objeto", resultado: "nao_conforme", destino: "distribuicao", regras: ["cotas_distribuicao"], dimensao: "objeto" },
+  DISTRIBUICAO_PRECO_MEDIO: { titulo: "Preço médio acima do limite", grupo: "objeto", resultado: "nao_conforme", destino: "distribuicao", regras: ["preco_medio"], dimensao: "objeto" },
+  DISTRIBUICAO_MEIA_ENTRADA: { titulo: "Meia-entrada abaixo do mínimo", grupo: "objeto", resultado: "revisar", destino: "distribuicao", regras: ["meia_entrada"], dimensao: "objeto" },
+  DISTRIBUICAO_RECEITA: { titulo: "Receita prevista acima do valor", grupo: "objeto", resultado: "nao_conforme", destino: "distribuicao", regras: ["receita_prevista"], dimensao: "objeto" },
+  DISTRIBUICAO_SEM_REALIZADO: { titulo: "Distribuição sem o realizado", grupo: "objeto", resultado: "nao_calculavel", destino: "distribuicao", dimensao: "objeto" },
+  DISTRIBUICAO_ALTERADA: { titulo: "Distribuição diferente do plano", grupo: "objeto", resultado: "revisar", destino: "distribuicao", regras: ["alteracao_do_plano"], dimensao: "objeto" },
+  DISTRIBUICAO_SEM_BENEFICIARIO: { titulo: "Cota gratuita sem quem recebeu", grupo: "objeto", resultado: "nao_calculavel", destino: "distribuicao", dimensao: "objeto" },
   // Dados que faltam para calcular
   DATAS_DA_PRESTACAO: { titulo: "Datas da prestação", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral" },
   LIMITE_SEM_BASE: { titulo: "Limite sem base de cálculo", grupo: "prestacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "fornecedores" },
@@ -184,25 +194,15 @@ export type EstadoDaPrestacao = {
   /** P3.2: atividades e evidências do objeto. */
   atividades?: readonly AtividadeDoEstado[];
   evidencias?: readonly EvidenciaParaChecar[];
+  /** P3.4: plano de distribuição e o valor aprovado, que limita a receita prevista. */
+  distribuicao?: readonly LinhaDistribuicao[];
+  valorAprovado?: number | null;
   hoje?: Date;
 };
 
 export const centavos = (v: unknown) => Math.round((Number(v) || 0) * 100);
 export const reais = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 export const dataBr = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
-
-/** As regras de todas as dimensões do regime, incluindo as do documento fiscal. */
-function regrasDoRegime(regime: RegimeNormativo): Regra[] {
-  const regras: Regra[] = [];
-  for (const valor of Object.values(regime)) {
-    if (!valor || typeof valor !== "object" || Array.isArray(valor) || "lacuna" in valor) continue;
-    const dimensao = valor as { regras?: unknown; documentoFiscal?: unknown };
-    for (const lista of [dimensao.regras, dimensao.documentoFiscal]) {
-      if (Array.isArray(lista)) regras.push(...(lista as Regra[]).filter(r => r && typeof r.codigo === "string" && r.fonte));
-    }
-  }
-  return regras;
-}
 
 /** A regra do regime que trata do código, na ordem de preferência do catálogo. */
 function regraDaChecagem(regime: RegimeNormativo | null, codigo: CodigoChecagem): Regra | null {

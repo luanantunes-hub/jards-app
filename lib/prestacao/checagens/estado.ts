@@ -9,6 +9,7 @@
 import { itensDaArvore, montarArvore, type NoOrcamento } from "../orcamento";
 import { regimeSchema } from "../regimes/schema";
 import type { EvidenciaParaChecar } from "../evidencias";
+import type { LinhaDistribuicao } from "../distribuicao";
 import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
 
 const PAGINA = 1000;
@@ -38,13 +39,13 @@ async function uma<T>(consulta: PromiseLike<Resposta>): Promise<T | null> {
 export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, hoje: Date = new Date()): Promise<EstadoDaPrestacao> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
   const db = cliente as any;
-  const prestacao = await uma<{ organization_id: string; regime_id: string | null } & DatasDaPrestacao>(
+  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null } & DatasDaPrestacao>(
     db.from("prestacoes_contas")
-      .select("organization_id, regime_id, data_aprovacao, data_liberacao, data_inicio_execucao, data_fim_execucao")
+      .select("organization_id, regime_id, valor_aprovado, data_aprovacao, data_liberacao, data_inicio_execucao, data_fim_execucao")
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -69,6 +70,9 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     todas<EvidenciaParaChecar>(() => db.from("prestacao_evidencias")
       .select("id, tipo, nome_arquivo, url, atividade_id, meta_id, local_id, capturada_em, latitude, longitude, justificativa")
       .eq("prestacao_id", prestacaoId).order("id")),
+    todas<LinhaDistribuicao>(() => db.from("prestacao_distribuicao")
+      .select("id, produto, categoria, quantidade, quantidade_meia, preco, quantidade_realizada, beneficiario, beneficiario_documento, justificativa")
+      .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
   ]);
 
   const nos = versao
@@ -108,6 +112,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     locais,
     atividades,
     evidencias,
+    distribuicao: distribuicao.map(l => ({ ...l, preco: l.preco === null ? null : Number(l.preco) })),
+    valorAprovado: prestacao.valor_aprovado === null || prestacao.valor_aprovado === undefined ? null : Number(prestacao.valor_aprovado),
     hoje,
   };
 }

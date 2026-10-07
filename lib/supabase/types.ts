@@ -807,6 +807,28 @@ export interface PrestacaoEvidencia {
   updated_at: string;
 }
 
+/** Parte do plano de distribuição de um produto, na categoria do regime (P3.4). */
+export interface PrestacaoDistribuicao {
+  id: string;
+  prestacao_id: string;
+  produto: string;
+  categoria: "patrocinador" | "proponente" | "social" | "educativo" | "popular" | "venda" | "gratuita";
+  quantidade: number;
+  /** Quantas da quantidade são meia-entrada; só onde há venda. */
+  quantidade_meia: number;
+  /** Preço do ingresso inteiro ou do produto; só onde há venda. */
+  preco: number | null;
+  quantidade_realizada: number | null;
+  beneficiario: string | null;
+  /** CPF ou CNPJ só com letras e números. */
+  beneficiario_documento: string | null;
+  justificativa: string | null;
+  observacoes: string | null;
+  ordem: number;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Local de realização e a situação que o relatório informa (P3.1). */
 export interface PrestacaoLocal {
   id: string;
@@ -2064,7 +2086,7 @@ export interface PrestacaoVerificacao {
   check_codigo: string;
   severidade: "bloqueio" | "alerta" | "justificativa" | "info";
   resultado: "nao_conforme" | "revisar" | "nao_calculavel";
-  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade" | "evidencia";
+  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade" | "evidencia" | "distribuicao";
   entidade_id: string | null;
   mensagem: string;
   fonte: { documento: string; dispositivo: string; citacao?: string; aConfirmar?: boolean; regra?: { codigo: string; descricao: string } } | null;

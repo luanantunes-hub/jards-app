@@ -30,6 +30,7 @@ const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> =
   conciliacao: { caminho: "/conciliacao", rotulo: "Conciliar" },
   objeto: { caminho: "/objeto", rotulo: "Abrir objeto" },
   atividades: { caminho: "/atividades", rotulo: "Abrir atividades" },
+  distribuicao: { caminho: "/distribuicao", rotulo: "Abrir distribuição" },
 };
 
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {
@@ -42,6 +43,10 @@ function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; 
   if (qual === "objeto" && (v.entidade_tipo === "meta" || v.entidade_tipo === "local" || v.entidade_tipo === "evidencia") && v.entidade_id) {
     const rotulo = { meta: "Abrir meta", local: "Abrir local", evidencia: "Abrir evidência" }[v.entidade_tipo];
     return { href: `/prestacoes/${prestacaoId}/objeto?${v.entidade_tipo}=${v.entidade_id}`, rotulo };
+  }
+  // O achado de uma linha da distribuição abre a linha.
+  if (qual === "distribuicao" && v.entidade_tipo === "distribuicao" && v.entidade_id) {
+    return { href: `/prestacoes/${prestacaoId}/distribuicao?linha=${v.entidade_id}`, rotulo: "Abrir linha" };
   }
   const { caminho, rotulo } = DESTINOS[qual];
   return { href: caminho.startsWith("#") ? caminho : `/prestacoes/${prestacaoId}${caminho}`, rotulo };
