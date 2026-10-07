@@ -533,6 +533,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   }
 
   const atvsPendentes = atividades.filter(a => !a.feita);
+  // Sem título nem projeto, o título fica vazio (nada de "Sem título").
+  const tituloNegociacao = captacao.titulo || captacao.projeto?.nome || "";
 
   const timelineEvents = [
     ...interacoes.map(interacao => ({
@@ -587,7 +589,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         </Link>
 
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 items-start gap-4">
+          <div className={`flex min-w-0 gap-4 ${tituloNegociacao ? "items-start" : "items-center"}`}>
             <CompanyLogo
               nome={captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || "?"}
               domain={captacao.empresa_crm?.domain_key}
@@ -596,10 +598,14 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
               size={56}
             />
             <div className="min-w-0">
-              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">
-                {captacao.titulo || captacao.projeto?.nome || "Sem título"}
-              </h1>
-              <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.875rem] text-black/45">
+              {tituloNegociacao ? (
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">
+                  {tituloNegociacao}
+                </h1>
+              ) : (
+                <h1 className="sr-only">{captacao.empresa_pub?.nome || captacao.empresa_crm?.nome || "Negociação"}</h1>
+              )}
+              <div className={`${tituloNegociacao ? "mt-2 " : ""}flex flex-wrap items-center gap-2 text-[0.875rem] text-black/45`}>
                 {captacao.empresa_crm?.nome && !captacao.empresa_pub?.nome ? (
                   <Link href={`/empresas-crm/${captacao.empresa_crm_id}`} className="text-sm text-black/50 hover:text-[#7259B5] transition">
                     {captacao.empresa_crm.nome}

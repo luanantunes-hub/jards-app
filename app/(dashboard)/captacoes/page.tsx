@@ -398,7 +398,7 @@ export default function CaptacoesPage() {
   /* ─── shared card renderer (used in both views) ─── */
   function renderCard(c: CaptacaoRow, compact = false, dragHandlers?: { onDragStart: () => void; onDragEnd: () => void }, ghost = false, valuePct?: number) {
     const empresa  = c.empresa_pub?.nome ?? c.empresa_crm?.nome ?? "—";
-    const titulo   = c.titulo ?? c.projeto?.nome ?? "Sem título";
+    const titulo   = c.titulo ?? c.projeto?.nome ?? "";
     const lei      = c.lei ? leiMap[c.lei] : null;
     const atividade = atividadesPorCaptacao[c.id];
     const isGhost  = ghost || draggingId === c.id;
@@ -449,7 +449,7 @@ export default function CaptacoesPage() {
             <ArrowUpRight size={12} className="text-black/20 opacity-0 transition group-hover:opacity-100"/>
           </div>
         </div>
-        <p className="mb-3 line-clamp-2 text-[0.8125rem] font-semibold leading-[1.35] tracking-[-.01em] text-black/85">{titulo}</p>
+        {titulo && <p className="mb-3 line-clamp-2 text-[0.8125rem] font-semibold leading-[1.35] tracking-[-.01em] text-black/85">{titulo}</p>}
         <div className="flex items-center justify-between">
           {lei ? (
             <span className="rounded border bg-white text-[0.5625rem] font-bold px-1.5 py-0.5 uppercase tracking-wide" style={{ borderColor: lei.text + "47", color: lei.text }}>
