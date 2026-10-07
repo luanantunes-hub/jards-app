@@ -1,9 +1,9 @@
-// Conversão "Cadastro Jards" no Google Ads, avisada pela tag do Google no
-// momento em que a conta é criada, com o e-mail para as conversões otimizadas
-// (a tag o criptografa antes de enviar). Sem o aceite do aviso de cookies a
-// tag nem é carregada (public/consentimento.js) e nada é enviado.
+// Conversão "Inscrição" no Google Ads, avisada pela tag do Google no momento
+// em que a conta é criada, com o e-mail para as conversões otimizadas (a tag o
+// criptografa antes de enviar). Sem o aceite do aviso de cookies a tag nem é
+// carregada (public/consentimento.js) e nada é enviado.
 
-export const CONVERSAO_CADASTRO_ADS = "AW-18498679750/CrTtCMvchpQdEMbn7fRE";
+export const CONVERSAO_CADASTRO_ADS = "AW-18498679750/Ev-4CMq2hJQdEMbn7fRE";
 // Quanto vale um cadastro: 1 em 14 vira assinante, que rende uns R$ 240.
 export const VALOR_CADASTRO = 17;
 
