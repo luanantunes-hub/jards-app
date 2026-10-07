@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
@@ -14,6 +15,7 @@ import {
   ROTULO_DO_RECURSO,
   ROTULO_DO_RESULTADO,
 } from "@/lib/prestacao/pos-envio";
+import { APONTAMENTOS, rotuloDoApontamento } from "@/lib/prestacao/piloto";
 import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoDecisao, PrestacaoDiligencia, PrestacaoGlosa, PrestacaoRecurso, ResultadoDaDecisao } from "@/lib/supabase/types";
@@ -89,10 +91,12 @@ function useGravar(tabela: string) {
 
 // ─── Diligência ─────────────────────────────────────────────────────────────
 
-export function DiligenciaModal({ prestacaoId, organizationId, diligencia, inicio, envioId, onClose, onSaved }: Base & {
+export function DiligenciaModal({ prestacaoId, organizationId, diligencia, inicio, envioId, analisePreditiva = false, onClose, onSaved }: Base & {
   diligencia: PrestacaoDiligencia | null;
-  inicio?: { recebidaEm?: string; descricao?: string; responder?: boolean };
+  inicio?: { recebidaEm?: string; descricao?: string; responder?: boolean; preditiva?: boolean };
   envioId: string | null;
+  /** O regime tem análise preditiva (Rouanet): a diligência pode vir dela. */
+  analisePreditiva?: boolean;
 }) {
   const { gravar, abrir, salvando, erro, setErro } = useGravar("prestacao_diligencias");
   const [recebidaEm, setRecebidaEm] = useState(diligencia?.recebida_em ?? inicio?.recebidaEm ?? "");
@@ -103,6 +107,8 @@ export function DiligenciaModal({ prestacaoId, organizationId, diligencia, inici
   const [resposta, setResposta] = useState(diligencia?.resposta ?? "");
   const [documento, setDocumento] = useState(arquivoDe(diligencia?.documento_path, diligencia?.documento_nome));
   const [respostaArquivo, setRespostaArquivo] = useState(arquivoDe(diligencia?.resposta_path, diligencia?.resposta_nome));
+  const [preditiva, setPreditiva] = useState(diligencia?.preditiva ?? inicio?.preditiva ?? false);
+  const [apontamentos, setApontamentos] = useState<string[]>(diligencia?.apontamentos ?? []);
 
   async function salvar() {
     const problema = erroDaDiligencia({ recebidaEm, descricao, prazo, situacao, respondidaEm, resposta });
@@ -120,6 +126,8 @@ export function DiligenciaModal({ prestacaoId, organizationId, diligencia, inici
         situacao,
         respondida_em: respondida || situacao === "encerrada" ? respondidaEm || null : null,
         resposta: resposta.trim() || null,
+        preditiva,
+        apontamentos,
         ...(diligencia ? {} : { envio_id: envioId }),
       },
       padrao: "Não foi possível salvar a diligência",
@@ -152,6 +160,32 @@ export function DiligenciaModal({ prestacaoId, organizationId, diligencia, inici
         </label>
         <div className="sm:col-span-2">
           <CampoArquivo rotulo="Ofício ou mensagem do órgão" arquivo={documento} onChange={setDocumento} onAbrir={abrir} />
+        </div>
+        {(analisePreditiva || preditiva) && (
+          <div className="sm:col-span-2">
+            <Opcoes rotulo="Origem" valor={preditiva ? "preditiva" : "orgao"} onChange={v => setPreditiva(v === "preditiva")}
+              opcoes={[{ id: "orgao", rotulo: "Análise do órgão" }, { id: "preditiva", rotulo: "Análise preditiva" }]} />
+          </div>
+        )}
+        <div className="sm:col-span-2">
+          <span className={ROTULO}>O que o órgão apontou e o sistema confere</span>
+          {apontamentos.length > 0 && (
+            <ul className="mb-2 flex flex-wrap gap-1.5" aria-label="Apontamentos">
+              {apontamentos.map(c => (
+                <li key={c} className="inline-flex items-center gap-1 rounded border bg-white py-1 pl-2 pr-1 text-[0.6875rem] text-black/70" style={{ borderColor: "rgba(13,13,13,.14)" }}>
+                  {rotuloDoApontamento(c)}
+                  <button type="button" onClick={() => setApontamentos(apontamentos.filter(x => x !== c))} aria-label={`Tirar ${rotuloDoApontamento(c)}`}
+                    className="rounded p-0.5 text-black/35 transition hover:bg-black/5 hover:text-black/65 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                    <X size={11} aria-hidden />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <Dropdown value="" onChange={v => { if (v && !apontamentos.includes(v)) setApontamentos([...apontamentos, v]); }}
+            ariaLabel="Adicionar apontamento" placeholder={apontamentos.length ? "Adicionar outro" : "Nenhum; adicionar"}
+            options={APONTAMENTOS.filter(a => !apontamentos.includes(a.codigo)).map(a => ({ value: a.codigo, label: rotuloDoApontamento(a.codigo) }))} />
+          <span className="mt-1 block text-[0.625rem] text-black/40">O piloto mede as diligências por erro que o sistema já confere antes do envio.</span>
         </div>
         <div className="sm:col-span-2">
           <Opcoes rotulo="Situação" valor={situacao} onChange={setSituacao}
