@@ -136,6 +136,7 @@ export async function proxy(request: NextRequest) {
         pathname === "/sitemap.xml" ||
         pathname === "/termos" ||
         pathname === "/privacidade" ||
+        pathname === "/incentivadores" ||
         pathname.startsWith("/redefinir-senha") ||
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
@@ -180,7 +181,8 @@ export async function proxy(request: NextRequest) {
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
     pathname === "/termos" ||
-    pathname === "/privacidade";
+    pathname === "/privacidade" ||
+    pathname === "/incentivadores";
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {
