@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronDown, ChevronRight, AlertCircle, ArrowRight } from "lucide-react";
@@ -20,6 +20,8 @@ import { ProntidaoPrestacao } from "@/components/prestacao/ProntidaoPrestacao";
 import { VerificacoesPrestacao } from "@/components/prestacao/VerificacoesPrestacao";
 import { EVENTO_VERIFICADA, pedirVerificacao, verificarAgora } from "@/lib/prestacao/verificar-cliente";
 import { MarcosDaPrestacao, ProximosPrazos } from "@/components/prestacao/PrazosEMarcos";
+import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
+import { checklistDeEnvio } from "@/lib/prestacao/envio";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -98,6 +100,13 @@ export default function PrestacaoDetalhe() {
   const [objeto, setObjeto] = useState<{ metas: number; comprovadas: number } | undefined>(undefined);
   const permissoes = usePermissoesPrestacao(id);
   const regimes = useRegimesPublicados();
+  // Checklist de envio da etapa final (P4.1), para a prontidão.
+  const { dados: dadosDoEnvio } = useDadosDoEnvio(id);
+  const resumoDoEnvio = useMemo(() => {
+    if (!dadosDoEnvio) return undefined;
+    const checklist = checklistDeEnvio({ ...dadosDoEnvio, etapa: "final" });
+    return checklist.semChecklist ? undefined : checklist.resumo;
+  }, [dadosDoEnvio]);
 
   const fetch = useCallback(async () => {
     const [
@@ -252,6 +261,7 @@ export default function PrestacaoDetalhe() {
     objeto,
     alteracoesAguardando: alteracoesAguardando.length,
     verificacoes: bloqueiosAbertos === null ? undefined : { verificada: Boolean(prestacao.verificada_em), bloqueios: bloqueiosAbertos },
+    envio: resumoDoEnvio,
   });
   const prazos = prazosDaPrestacao(prestacao, regime, alteracoesAguardando, hoje);
 

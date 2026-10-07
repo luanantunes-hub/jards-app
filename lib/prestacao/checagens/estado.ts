@@ -70,7 +70,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     todas<AtividadeDoEstado>(() => db.from("prestacao_atividades")
       .select("id, titulo, data_realizacao, data_inicio, data_fim, local_id, meta_id, status_realizacao").eq("prestacao_id", prestacaoId).order("id")),
     todas<EvidenciaParaChecar>(() => db.from("prestacao_evidencias")
-      .select("id, tipo, nome_arquivo, url, atividade_id, meta_id, local_id, capturada_em, latitude, longitude, justificativa")
+      .select("id, tipo, requisitos, nome_arquivo, url, atividade_id, meta_id, local_id, capturada_em, latitude, longitude, justificativa")
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<LinhaDistribuicao>(() => db.from("prestacao_distribuicao")
       .select("id, produto, categoria, quantidade, quantidade_meia, preco, quantidade_realizada, beneficiario, beneficiario_documento, justificativa")

@@ -1,8 +1,8 @@
 "use client";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowLeftRight, ListChecks, LayoutGrid, DollarSign, FileText, Landmark, CalendarDays, BookOpen, Ticket, Megaphone, Target, Package } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowLeftRight, ListChecks, LayoutGrid, DollarSign, FileText, Landmark, CalendarDays, BookOpen, Ticket, Megaphone, Target, Package, Send } from "lucide-react";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { createClient } from "@/lib/supabase/client";
 import type { StatusPrestacao } from "@/lib/supabase/types";
@@ -28,6 +28,12 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  // Com muitas abas, a linha rola: a aba ativa entra na vista.
+  const abasRef = useRef<HTMLElement>(null);
+  useEffect(() => {
+    abasRef.current?.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [pathname]);
+
   const base = `/prestacoes/${id}`;
   const tabs = [
     { href: base,                    label: "Visão geral",  icon: LayoutGrid, exact: true },
@@ -42,6 +48,7 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
     { href: `${base}/distribuicao`,  label: "Distribuição", icon: Ticket,      exact: false },
     { href: `${base}/bens`,          label: "Bens",         icon: Package,     exact: false },
     { href: `${base}/divulgacao`,    label: "Divulgação",   icon: Megaphone,   exact: false },
+    { href: `${base}/envio`,         label: "Envio",        icon: Send,        exact: false },
   ];
 
   function isActive(href: string, exact: boolean) {
@@ -63,7 +70,7 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
           {status && <StatusBadge status={status} size="sm" />}
         </div>
         {/* Abas: no celular a linha rola na horizontal, sem quebrar o rótulo. */}
-        <nav aria-label="Seções da prestação" className="flex gap-0 overflow-x-auto">
+        <nav ref={abasRef} aria-label="Seções da prestação" className="flex gap-0 overflow-x-auto">
           {tabs.map(({ href, label, icon: Icon, exact }) => {
             const active = isActive(href, exact);
             return (

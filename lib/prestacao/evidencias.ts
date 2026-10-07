@@ -111,7 +111,8 @@ export function somarDias(dia: string, dias: number): string {
   return d.toISOString().slice(0, 10);
 }
 
-export type EvidenciaParaChecar = Pick<PrestacaoEvidencia, "id" | "tipo" | "nome_arquivo" | "url" | "atividade_id" | "meta_id" | "local_id" | "capturada_em" | "latitude" | "longitude" | "justificativa">;
+export type EvidenciaParaChecar = Pick<PrestacaoEvidencia, "id" | "tipo" | "nome_arquivo" | "url" | "atividade_id" | "meta_id" | "local_id" | "capturada_em" | "latitude" | "longitude" | "justificativa">
+  & Partial<Pick<PrestacaoEvidencia, "requisitos">>;
 
 /** Nome curto da evidência para mensagens. */
 export const nomeDaEvidencia = (e: Pick<PrestacaoEvidencia, "tipo" | "nome_arquivo" | "url">) =>

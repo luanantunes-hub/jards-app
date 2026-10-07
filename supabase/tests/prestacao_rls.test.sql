@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(140);
+select plan(149);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -59,10 +59,12 @@ begin
     (org_b, 'f0000000-0000-4000-8000-0000000000b1', 'admin', '{captacao,prestacao}', null),
     (org_c, 'f0000000-0000-4000-8000-0000000000c1', 'admin', '{captacao,prestacao}', null);
 
-  insert into public.prestacoes_contas (id, titulo, organization_id, criado_por) values
-    (pa, 'RLS prestação A', org_a, admin_a),
-    ('f0000000-0000-4000-8000-0000000001b0', 'RLS prestação B', org_b, 'f0000000-0000-4000-8000-0000000000b1'),
-    ('f0000000-0000-4000-8000-0000000001c0', 'RLS prestação C', org_c, 'f0000000-0000-4000-8000-0000000000c1');
+  -- A prestação de A é da Rouanet: o checklist de envio (P4.1) confere os itens no regime.
+  insert into public.prestacoes_contas (id, titulo, organization_id, criado_por, regime_id) values
+    (pa, 'RLS prestação A', org_a, admin_a,
+     (select id from public.prestacao_regimes where codigo = 'rouanet_in29_2026' and status = 'publicado' order by versao desc limit 1)),
+    ('f0000000-0000-4000-8000-0000000001b0', 'RLS prestação B', org_b, 'f0000000-0000-4000-8000-0000000000b1', null),
+    ('f0000000-0000-4000-8000-0000000001c0', 'RLS prestação C', org_c, 'f0000000-0000-4000-8000-0000000000c1', null);
 
   insert into public.prestacao_orcamento_versoes (id, prestacao_id, tipo, ativa, criado_por) values
     ('f0000000-0000-4000-8000-0000000002a0', pa, 'aprovada', true, admin_a),
@@ -112,6 +114,11 @@ begin
      org_a || '/prestacoes/' || pa || '/evidencias/f0000000-0000-4000-8000-000000000ef0.jpg');
   insert into public.prestacao_bens (id, prestacao_id, tipo, descricao) values
     ('f0000000-0000-4000-8000-0000000021a0', pa, 'movel', 'RLS bem');
+  insert into public.prestacao_envio_checklist (id, prestacao_id, etapa, tipo, codigo, situacao) values
+    ('f0000000-0000-4000-8000-0000000022a0', pa, 'final', 'condicao', 'etapas_lancadas', 'pronto');
+  insert into public.prestacao_envio_arquivos (id, prestacao_id, etapa, codigo, storage_path, nome_arquivo) values
+    ('f0000000-0000-4000-8000-0000000023a0', pa, 'final', 'recolhimento_fnc',
+     org_a || '/prestacoes/' || pa || '/envio/f0000000-0000-4000-8000-000000000da0.pdf', 'gru.pdf');
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -136,7 +143,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos',
     'prestacao_fornecedores', 'prestacao_fornecedor_documentos', 'prestacao_pagamentos',
     'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
-    'prestacao_bens'
+    'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos'
   ];
 $$;
 
@@ -214,7 +221,9 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_metas where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_locais where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_evidencias where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_bens where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_bens where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_envio_checklist where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_envio_arquivos where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -241,7 +250,9 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_metas (prestacao_id, descricao, previsto) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova meta', 1)$c$),
     rls_teste.efeito($c$insert into public.prestacao_locais (prestacao_id, uf, municipio) values ('f0000000-0000-4000-8000-0000000001a0', 'RJ', 'Rio de Janeiro')$c$),
     rls_teste.efeito($c$insert into public.prestacao_evidencias (prestacao_id, tipo, url) values ('f0000000-0000-4000-8000-0000000001a0', 'link', 'https://exemplo.org/rls')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_bens (prestacao_id, tipo, descricao) values ('f0000000-0000-4000-8000-0000000001a0', 'equipamento', 'RLS novo bem')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_bens (prestacao_id, tipo, descricao) values ('f0000000-0000-4000-8000-0000000001a0', 'equipamento', 'RLS novo bem')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao, justificativa) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'documento', 'bens', 'nao_se_aplica', 'Nenhum bem comprado.')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'relatorio_objeto', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000dd0.pdf', 'relatorio.pdf')$c$)
   ]);
 $$;
 
@@ -268,7 +279,9 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_metas set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000017a0'$c$),
     rls_teste.efeito($c$update public.prestacao_locais set espaco = espaco where id = 'f0000000-0000-4000-8000-0000000018a0'$c$),
     rls_teste.efeito($c$update public.prestacao_evidencias set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000019a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_bens set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000021a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_bens set descricao = descricao where id = 'f0000000-0000-4000-8000-0000000021a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_envio_checklist set justificativa = justificativa where id = 'f0000000-0000-4000-8000-0000000022a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_envio_arquivos set nome_arquivo = nome_arquivo where id = 'f0000000-0000-4000-8000-0000000023a0'$c$)
   ]);
 $$;
 
@@ -295,7 +308,9 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_metas where id = 'f0000000-0000-4000-8000-0000000017a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_locais where id = 'f0000000-0000-4000-8000-0000000018a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_evidencias where id = 'f0000000-0000-4000-8000-0000000019a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_bens where id = 'f0000000-0000-4000-8000-0000000021a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_bens where id = 'f0000000-0000-4000-8000-0000000021a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_envio_checklist where id = 'f0000000-0000-4000-8000-0000000022a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_envio_arquivos where id = 'f0000000-0000-4000-8000-0000000023a0'$c$)
   ]);
 $$;
 
@@ -681,6 +696,26 @@ select throws_ok($t$insert into public.prestacao_pecas (prestacao_id, tipo, titu
   '23514', null, 'a veiculação não termina antes de começar');
 select throws_ok($t$insert into public.prestacao_pecas (prestacao_id, tipo, titulo, storage_path) values ('f0000000-0000-4000-8000-0000000001a0', 'cartaz', 'RLS pasta', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/bens/f0000000-0000-4000-8000-000000000aa2.png')$t$,
   '23514', 'caminho_invalido', 'a amostra fica na pasta pecas da prestação');
+
+-- ─── Checklist de envio (P4.1): item do regime, motivo e pasta envio ────────
+select lives_ok($t$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'documento', 'relatorio_objeto', 'pronto')$t$,
+  'quem edita: marca um documento do regime como pronto');
+select throws_ok($t$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao, justificativa) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'documento', 'comprovantes_despesa', 'nao_se_aplica', 'Não houve despesa.')$t$,
+  '23514', 'obrigatorio_nao_se_dispensa', 'documento obrigatório não aceita "não se aplica"');
+select throws_ok($t$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao, justificativa) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'condicao', 'aportes_validados', 'nao_se_aplica', 'Sem aporte no período.')$t$,
+  '23514', 'obrigatorio_nao_se_dispensa', 'condição que bloqueia o envio não aceita "não se aplica"');
+select throws_ok($t$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao, justificativa) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'documento', 'cotacoes', 'nao_se_aplica', ' ')$t$,
+  '23514', null, '"não se aplica" pede o motivo');
+select throws_ok($t$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao) values ('f0000000-0000-4000-8000-0000000001a0', 'parcial', 'documento', 'relatorio_objeto', 'pronto')$t$,
+  '23514', 'item_fora_do_regime', 'a Rouanet não tem documento de prestação parcial');
+select throws_ok($t$insert into public.prestacao_envio_checklist (prestacao_id, etapa, tipo, codigo, situacao) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'documento', 'rp', 'pronto')$t$,
+  '23514', 'item_fora_do_regime', 'documento de outro regime é recusado');
+select lives_ok($t$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo, mime_type, tamanho_bytes) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'aceitacao_obra', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000db0.pdf', 'termo.pdf', 'application/pdf', 1024)$t$,
+  'quem edita: anexa o termo de aceitação ao documento');
+select throws_ok($t$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'aceitacao_obra', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/pecas/f0000000-0000-4000-8000-000000000dc0.pdf', 'termo.pdf')$t$,
+  '23514', 'caminho_invalido', 'o arquivo do envio fica na pasta envio da prestação');
+select throws_ok($t$insert into public.prestacao_envio_arquivos (prestacao_id, etapa, codigo, storage_path, nome_arquivo) values ('f0000000-0000-4000-8000-0000000001a0', 'final', 'etapas_lancadas', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000de0.pdf', 'print.pdf')$t$,
+  '23514', 'item_fora_do_regime', 'arquivo só em documento do regime, não em condição');
 reset role;
 
 -- ─── Verificações (P2.7): o servidor grava; as pessoas decidem pela função ──
