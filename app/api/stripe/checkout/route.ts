@@ -46,6 +46,10 @@ export async function POST(req: NextRequest) {
   if (!price_id) return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
 
   const origin = req.headers.get("origin") ?? "http://localhost:3000";
+  // A volta do pagamento passa pela tela que confere a compra e a avisa ao
+  // Google Ads (com o aceite dos cookies); o Stripe preenche {CHECKOUT_SESSION_ID}.
+  const destino = `/patrocinadores?welcome=paid&plan=${encodeURIComponent(plano)}`;
+  const success_url = `${origin}/assinatura/concluida?session_id={CHECKOUT_SESSION_ID}&next=${encodeURIComponent(destino)}`;
 
   const res = await fetch(`${SUPABASE_URL}/functions/v1/stripe-checkout`, {
     method: "POST",
@@ -56,7 +60,7 @@ export async function POST(req: NextRequest) {
     },
     body: JSON.stringify({
       price_id,
-      success_url: `${origin}/patrocinadores?welcome=paid&plan=${encodeURIComponent(plano)}`,
+      success_url,
       cancel_url: `${origin}/meu-plano?canceled=1`,
     }),
   });

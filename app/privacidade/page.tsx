@@ -173,7 +173,7 @@ export default function PrivacidadePage() {
             <p><strong>Essenciais.</strong> Sessão de autenticação (SameSite=Lax) e estado OAuth temporário (duração de 10 minutos, excluído após o fluxo). Sem eles a plataforma não funciona, por isso não dependem de consentimento.</p>
             <p>
               <strong>Análise e publicidade (opcionais).</strong> Nas páginas públicas do site — página inicial, blog, Termos
-              de Uso, esta Política e o cadastro — usamos o Google Analytics para medir as visitas e entender quais conteúdos são úteis, e
+              de Uso, esta Política, o cadastro e a tela de volta do pagamento — usamos o Google Analytics para medir as visitas e entender quais conteúdos são úteis, e
               a tag do Google Ads para medir o resultado das nossas campanhas e mostrar nossos anúncios a quem já visitou o
               site (remarketing). Nada disso é carregado antes de você aceitar no aviso de cookies; se você recusar ou não
               responder, o Google Analytics e o Google Ads não recebem nada. Quando ativos, o Google Analytics grava os cookies{" "}
@@ -188,7 +188,9 @@ export default function PrivacidadePage() {
               <strong>Cadastro e conversões otimizadas.</strong> Quando você cria a conta, se tiver aceitado o aviso, a tag do
               Google Ads avisa o cadastro e envia o seu e-mail criptografado (hash SHA-256, feito no seu navegador antes do
               envio). Assim o Google consegue ligar o cadastro ao anúncio em que você clicou, mesmo que tenha sido em outro
-              aparelho. O e-mail não vai em texto, e o Google o usa só para medir as nossas campanhas.
+              aparelho. O e-mail não vai em texto, e o Google o usa só para medir as nossas campanhas. Quando você assina um
+              plano, a tela de volta do pagamento confere a compra no Stripe e avisa ao Google Ads a assinatura, com o valor
+              pago e o código do pagamento, sem dados do cartão.
             </p>
             <p>
               A base legal é o seu consentimento (art. 7º, I, da LGPD). Sua escolha fica salva neste navegador, e você pode

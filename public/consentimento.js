@@ -2,8 +2,8 @@
 // O Google Analytics e a tag do Google Ads (medição das campanhas e
 // remarketing) só são carregados depois que o visitante aceita; sem escolha
 // gravada, o aviso aparece. Usado nas páginas públicas: landing, blog, Termos,
-// Política e cadastro. Qualquer elemento com [data-preferencias-cookies]
-// reabre o aviso.
+// Política, cadastro e a volta do pagamento. Qualquer elemento com
+// [data-preferencias-cookies] reabre o aviso.
 (function () {
   if (window.jardsCookies) return;
 
@@ -22,7 +22,8 @@
   function ehPublica(caminho) {
     return caminho === "/" || caminho === "/privacidade" || caminho === "/termos" ||
       caminho === "/blog" || caminho.indexOf("/blog/") === 0 ||
-      caminho === "/cadastro" || caminho.indexOf("/cadastro/") === 0;
+      caminho === "/cadastro" || caminho.indexOf("/cadastro/") === 0 ||
+      caminho === "/assinatura/concluida";
   }
 
   function lerEscolha() {
