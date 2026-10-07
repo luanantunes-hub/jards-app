@@ -67,6 +67,14 @@ const ERROS: Record<string, string> = {
   versao_nao_ativa: "A alteração é de uma versão que não está mais em uso. Monte de novo na versão em uso.",
   documento_invalido: "Envie o documento pela própria alteração.",
   acao_invalida: "Ação desconhecida. Atualize a página.",
+  // Metas e locais (P3.1)
+  no_invalido: "Escolha um agrupador do orçamento desta prestação (meta, produto ou etapa), não um item.",
+  meta_de_outra_prestacao: "Escolha uma meta desta prestação.",
+  local_de_outra_prestacao: "Escolha um local desta prestação.",
+  prestacao_locais_justificativa: "Não realizado e realizado com outras fontes pedem justificativa.",
+  prestacao_locais_brasil: "No Brasil, informe a UF e o município.",
+  prestacao_locais_periodo: "O fim vem antes do início.",
+  prestacao_atividades_justificativa: "Explique por que a atividade não foi realizada.",
   // Extrato (P2.1)
   conta_inexistente: "Conta bancária não encontrada ou sem acesso.",
   extrato_invalido: "O arquivo não tem lançamentos que dê para importar (ou passa de 5 mil linhas).",

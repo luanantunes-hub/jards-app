@@ -1,13 +1,13 @@
 // Monta o estado da prestação que o motor de checagens recebe (P2.7, P2.8):
 // despesas, fornecedores e documentos, nós e itens da versão em uso do
 // orçamento com os CNAEs, pagamentos, lançamentos do extrato, alterações do
-// orçamento, as datas da prestação e o regime. A rota de verificação usa o
+// orçamento, metas e locais do objeto, as datas da prestação e o regime. A rota de verificação usa o
 // cliente do service role; o mesmo código roda com qualquer cliente do
 // Supabase que enxergue a prestação.
 
 import { itensDaArvore, montarArvore, type NoOrcamento } from "../orcamento";
 import { regimeSchema } from "../regimes/schema";
-import type { AlteracaoDoEstado, DatasDaPrestacao, EstadoDaPrestacao } from "./catalogo";
+import type { AlteracaoDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
 
 const PAGINA = 1000;
 
@@ -42,7 +42,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -58,6 +58,10 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("prestacao_id", prestacaoId).order("id")),
     todas<AlteracaoDoEstado>(() => db.from("prestacao_alteracoes")
       .select("id, numero, status, solicitada_em").eq("prestacao_id", prestacaoId).order("id")),
+    todas<MetaDoEstado>(() => db.from("prestacao_metas")
+      .select("id, descricao, unidade, previsto, realizado, justificativa").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+    todas<LocalDoEstado>(() => db.from("prestacao_locais")
+      .select("id, pais, uf, municipio, status").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
   ]);
 
   const nos = versao
@@ -93,6 +97,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     pagamentos,
     lancamentos,
     alteracoes,
+    metas,
+    locais,
     hoje,
   };
 }

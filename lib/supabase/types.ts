@@ -756,9 +756,48 @@ export interface PrestacaoAtividade {
   acessibilidade_descricao: string | null;
   status_realizacao: "realizado" | "nao_realizado";
   justificativa_nao_realizacao: string | null;
+  /** Meta e local de realização da mesma prestação (P3.1). */
+  meta_id: string | null;
+  local_id: string | null;
   ordem: number;
   criado_por: string | null;
   created_at: string;
+}
+
+/** Meta do objeto: o previsto e o realizado que o relatório compara (P3.1). */
+export interface PrestacaoMeta {
+  id: string;
+  prestacao_id: string;
+  descricao: string;
+  unidade: string | null;
+  previsto: number;
+  realizado: number | null;
+  justificativa: string | null;
+  /** Agrupador do orçamento em árvore (meta, produto, etapa) por onde a despesa chega à meta. */
+  no_id: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Local de realização e a situação que o relatório informa (P3.1). */
+export interface PrestacaoLocal {
+  id: string;
+  prestacao_id: string;
+  pais: string;
+  uf: string | null;
+  municipio: string | null;
+  espaco: string | null;
+  inicio: string | null;
+  fim: string | null;
+  status: "previsto" | "realizado" | "nao_realizado" | "outras_fontes";
+  /** Até 500 caracteres, o limite do Salic; obrigatória em não realizado e em outras fontes. */
+  justificativa: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 /** Conta bancária do projeto (P2.1). */
@@ -1995,7 +2034,7 @@ export interface PrestacaoVerificacao {
   check_codigo: string;
   severidade: "bloqueio" | "alerta" | "justificativa" | "info";
   resultado: "nao_conforme" | "revisar" | "nao_calculavel";
-  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento";
+  entidade_tipo: "prestacao" | "despesa" | "pagamento" | "lancamento" | "meta" | "local" | "atividade";
   entidade_id: string | null;
   mensagem: string;
   fonte: { documento: string; dispositivo: string; citacao?: string; aConfirmar?: boolean; regra?: { codigo: string; descricao: string } } | null;

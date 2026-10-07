@@ -8,7 +8,7 @@ import type { LancamentoParaConciliar } from "../conciliacao";
 import type { NoOrcamento } from "../orcamento";
 import { definida, type Fonte, type RegimeNormativo } from "../regimes";
 import type { Regra } from "../regimes/tipos";
-import type { PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoPagamento } from "@/lib/supabase/types";
+import type { PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
 export const SEVERIDADES = ["bloqueio", "alerta", "justificativa", "info"] as const;
@@ -17,24 +17,24 @@ export type SeveridadeChecagem = (typeof SEVERIDADES)[number];
 export const RESULTADOS = ["nao_conforme", "revisar", "nao_calculavel"] as const;
 export type ResultadoChecagem = (typeof RESULTADOS)[number];
 
-export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento"] as const;
+export const ENTIDADES = ["prestacao", "despesa", "pagamento", "lancamento", "meta", "local", "atividade"] as const;
 export type EntidadeVerificada = (typeof ENTIDADES)[number];
 
 export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resolvida"] as const;
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto";
 
 type DoCatalogo = {
   titulo: string;
-  grupo: "despesa" | "fornecedor" | "pagamento" | "conciliacao" | "orcamento" | "prestacao";
+  grupo: "despesa" | "fornecedor" | "pagamento" | "conciliacao" | "orcamento" | "objeto" | "prestacao";
   resultado: ResultadoChecagem;
   destino: DestinoDaChecagem;
   /** Códigos de regra do regime (em qualquer dimensão) que dão a fonte do achado, na ordem de preferência. */
   regras?: readonly string[];
   /** Sem regra, a fonte é a da dimensão inteira. */
-  dimensao?: "pagamentos" | "contas" | "fornecedores" | "despesas";
+  dimensao?: "pagamentos" | "contas" | "fornecedores" | "despesas" | "objeto";
 };
 
 /**
@@ -90,6 +90,11 @@ export const CATALOGO_CHECAGENS = {
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   ALTERACAO_PENDENTE: { titulo: "Alteração do orçamento sem decisão", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento", regras: ["sem_readequacao_em_analise"] },
+  // Objeto (P3.1): metas propostas × resultados e situação de cada local.
+  OBJETO_SEM_METAS: { titulo: "Objeto sem metas", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
+  META_SEM_RESULTADO: { titulo: "Meta sem resultado", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
+  META_ABAIXO_DO_PREVISTO: { titulo: "Meta abaixo do previsto", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
+  LOCAL_SEM_SITUACAO: { titulo: "Local sem situação", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", dimensao: "objeto" },
   // Dados que faltam para calcular
   DATAS_DA_PRESTACAO: { titulo: "Datas da prestação", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral" },
   LIMITE_SEM_BASE: { titulo: "Limite sem base de cálculo", grupo: "prestacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "fornecedores" },
@@ -146,6 +151,9 @@ export type DatasDaPrestacao = {
 
 export type AlteracaoDoEstado = { id: string; numero: number; status: string; solicitada_em: string | null };
 
+export type MetaDoEstado = Pick<PrestacaoMeta, "id" | "descricao" | "unidade" | "previsto" | "realizado" | "justificativa">;
+export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "status">;
+
 export type EstadoDaPrestacao = {
   regime: RegimeNormativo | null;
   despesas: readonly DespesaDoEstado[];
@@ -159,6 +167,9 @@ export type EstadoDaPrestacao = {
   prestacao?: DatasDaPrestacao;
   nos?: readonly NoOrcamento[];
   alteracoes?: readonly AlteracaoDoEstado[];
+  /** P3.1: metas e locais do objeto. */
+  metas?: readonly MetaDoEstado[];
+  locais?: readonly LocalDoEstado[];
   hoje?: Date;
 };
 
