@@ -224,7 +224,7 @@ function CaptadoresList({
   function renderCell(id: CaptadorColumnId, captador: CaptadorRow) {
     if (id === "captador") return (
       <div className="flex min-w-0 items-center gap-2.5">
-        <ProjectIdentity nome={captador.nome} tipo={captador.identidade_tipo ?? (captador.logo_url ? "logo" : "padrao")} valor={captador.identidade_valor} logoUrl={captador.identidade_logo_url ?? captador.logo_url} cor={captador.identidade_cor} size="sm" iconOptions={CAPTADOR_ICON_OPTIONS} />
+        <ProjectIdentity nome={captador.nome} tipo={captador.identidade_tipo ?? (captador.logo_url ? "logo" : "padrao")} valor={captador.identidade_valor} logoUrl={captador.identidade_logo_url ?? captador.logo_url} cor={captador.identidade_cor} size="sm" iconOptions={CAPTADOR_ICON_OPTIONS} semFundo />
         <div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black" title={captador.nome}>{captador.nome}</p>{captador.agencia && <p className="truncate text-[0.6875rem] text-black/35" title={captador.agencia}>{captador.agencia}</p>}</div>
       </div>
     );

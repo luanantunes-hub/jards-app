@@ -173,7 +173,7 @@ Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 ## Identidade de entidades
 
 - empresas usam `CompanyLogo` com fallback para inicial;
-- projetos usam `ProjectIdentity`;
+- projetos usam `ProjectIdentity`: em cartões e cabeçalhos, quadrado com gradiente claro na cor e volume, símbolo em branco; em linhas de tabela, só o ícone na cor, sem fundo (`semFundo`);
 - projetos, proponentes e captadores podem escolher ícone, logo e cor;
 - imagens precisam de texto alternativo útil;
 - cores não podem ser o único meio de transmitir estado.

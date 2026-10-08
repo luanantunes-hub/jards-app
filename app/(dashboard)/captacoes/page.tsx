@@ -763,7 +763,7 @@ export default function CaptacoesPage() {
                           <td className="px-4 py-3.5">
                             {c.projeto?.nome ? (
                               <span className="flex items-center gap-1.5 text-[0.78125rem] text-black/50">
-                                <ProjectIdentity nome={c.projeto.nome} tipo={c.projeto.identidade_tipo} valor={c.projeto.identidade_valor} logoUrl={c.projeto.identidade_logo_url} cor={c.projeto.identidade_cor} size="sm" />
+                                <ProjectIdentity nome={c.projeto.nome} tipo={c.projeto.identidade_tipo} valor={c.projeto.identidade_valor} logoUrl={c.projeto.identidade_logo_url} cor={c.projeto.identidade_cor} size="sm" semFundo />
                                 {c.projeto.nome}
                               </span>
                             ) : (

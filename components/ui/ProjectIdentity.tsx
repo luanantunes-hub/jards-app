@@ -60,6 +60,8 @@ type ProjectIdentityProps = {
   size?: "sm" | "md" | "lg";
   iconOptions?: readonly IdentityIconOption[];
   defaultIcon?: React.ElementType;
+  /** Em linhas de tabela: só o ícone na cor, sem o quadrado de fundo. */
+  semFundo?: boolean;
 };
 
 function initials(nome: string) {
@@ -76,6 +78,7 @@ export function ProjectIdentity({
   size = "md",
   iconOptions = PROJECT_ICON_OPTIONS,
   defaultIcon: DefaultIcon = FolderOpen,
+  semFundo = false,
 }: ProjectIdentityProps) {
   const [logoFailed, setLogoFailed] = useState(false);
   useEffect(() => setLogoFailed(false), [logoUrl]);
@@ -91,6 +94,14 @@ export function ProjectIdentity({
         <img src={logoUrl} alt={`Logotipo de ${nome}`} onError={() => setLogoFailed(true)} className="w-full h-full object-cover" />
       </div>
     );
+  }
+
+  if (semFundo && !(tipo === "logo" && logoUrl && !logoFailed)) {
+    const caixa = `${dimensions} flex items-center justify-center flex-shrink-0`;
+    if (tipo === "emoji" && valor) return <div className={`${caixa} text-[1.125rem]`} aria-label={`Ícone ${valor}`}>{valor}</div>;
+    if (tipo === "icone") return <div className={caixa} style={{ color: iconCor }}><Icon size={iconSize} /></div>;
+    if (tipo === "logo") return <div className={`${caixa} text-[0.6875rem] font-bold`} style={{ color: iconCor }}>{initials(nome)}</div>;
+    return <div className={`${caixa} text-black/35`}><DefaultIcon size={iconSize} /></div>;
   }
 
   if (tipo === "emoji" && valor) {

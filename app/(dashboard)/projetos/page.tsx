@@ -361,7 +361,7 @@ export default function ProjetosPage() {
                         {/* Nome */}
                         <td className="px-4 py-3.5">
                           <div className="flex items-center gap-2">
-                            <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} size="sm" />
+                            <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} size="sm" semFundo />
                             <div className="min-w-0">
                               <p className="text-[0.8125rem] font-semibold text-black leading-tight line-clamp-1">{p.nome}</p>
                               {p.descricao && (

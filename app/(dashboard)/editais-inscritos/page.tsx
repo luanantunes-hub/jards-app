@@ -645,7 +645,7 @@ export default function EditaisInscritosPage() {
                           <td className="px-5 py-3.5 text-black/50 text-[0.78125rem] max-w-[13.75rem]">
                             {e.projetos_crm ? (
                               <div className="flex items-center gap-1.5">
-                                <ProjectIdentity nome={e.projetos_crm.nome} tipo={e.projetos_crm.identidade_tipo} valor={e.projetos_crm.identidade_valor} logoUrl={e.projetos_crm.identidade_logo_url} cor={e.projetos_crm.identidade_cor} size="sm" />
+                                <ProjectIdentity nome={e.projetos_crm.nome} tipo={e.projetos_crm.identidade_tipo} valor={e.projetos_crm.identidade_valor} logoUrl={e.projetos_crm.identidade_logo_url} cor={e.projetos_crm.identidade_cor} size="sm" semFundo />
                                 <span>{projeto}</span>
                               </div>
                             ) : <span>{projeto}</span>}
