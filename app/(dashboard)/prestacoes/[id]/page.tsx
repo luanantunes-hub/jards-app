@@ -26,6 +26,7 @@ import { ResponsavelDaPrestacao } from "@/components/prestacao/ResponsavelDaPres
 import { LinksDoPatrocinador } from "@/components/prestacao/LinksDoPatrocinador";
 import { ConvidadosDaPrestacao } from "@/components/prestacao/ConvidadosDaPrestacao";
 import { CapturaPorEmail } from "@/components/prestacao/CapturaPorEmail";
+import { VersaoNovaDoRegime } from "@/components/prestacao/VersaoNovaDoRegime";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -80,6 +81,7 @@ export default function PrestacaoDetalhe() {
   const [bloqueiosAbertos, setBloqueiosAbertos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState("");
+  const [aviso, setAviso] = useState("");
   const [avancarOpen, setAvancarOpen] = useState(false);
   const avancarBoxRef = useRef<HTMLDivElement>(null);
   const [avancarMenuPos, setAvancarMenuPos] = useState<{ right: number; top: number } | null>(null);
@@ -386,6 +388,27 @@ export default function PrestacaoDetalhe() {
           {erro}
         </p>
       )}
+
+      {aviso && (
+        <p role="status" className="mb-4 px-4 py-3 rounded border text-[0.75rem]"
+          style={{ background: "#fff", borderColor: "#2E893240", color: "#2E8932" }}>
+          {aviso}
+        </p>
+      )}
+
+      {/* Versão nova do regime (P6.4) */}
+      <VersaoNovaDoRegime
+        prestacao={prestacao}
+        regimes={regimes}
+        podeDecidir={permissoes.decidir}
+        onPassou={async mensagem => {
+          setAviso(mensagem);
+          setErro("");
+          await fetch();
+          // As checagens seguem o regime: refaz com a versão nova.
+          pedirVerificacao(id);
+        }}
+      />
 
       {/* Alerta de prazo próximo */}
       {prazoAlerta && (

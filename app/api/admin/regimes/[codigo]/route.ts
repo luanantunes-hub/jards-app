@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeAdminAuditLog } from "@/lib/admin/audit";
-import { diferencaEntreVersoes, montarRascunho, regrasQueBloqueiamEnvio, type MudancaRevisada } from "@/lib/prestacao/regimes/revisao";
+import {
+  diferencaEntreVersoes, montarRascunho, regrasQueBloqueiamEnvio, resumoDasMudancas, type MudancaRevisada,
+} from "@/lib/prestacao/regimes/revisao";
 import { validarRegime } from "@/lib/prestacao/regimes/schema";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -15,7 +17,9 @@ import { OPERACOES, type Operacao } from "@/supabase/functions/_shared/proposta-
 // está logado não escreve na tabela.
 //
 // POST { acao: "rascunho", propostaId?, mudancas, vigenteDesde?, notas? }
-// POST { acao: "aprovar" }   publica, ou registra a primeira de duas aprovações
+// POST { acao: "aprovar" }   publica, ou registra a primeira de duas aprovações;
+//                            ao publicar, a versão guarda o resumo do que muda e
+//                            as organizações com prestações na anterior são avisadas (P6.4)
 // POST { acao: "descartar" }
 // POST { acao: "rejeitar", propostaId, motivo }
 
@@ -121,12 +125,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ cod
     // O que está guardado é o que publica: confere de novo no schema.
     const validacao = validarRegime(rascunho.parametros);
     if (!validacao.ok) return resposta({ error: "A versão não passa nas regras do regime.", erros: validacao.erros }, 422);
-    const { data: situacao, error } = await admin.rpc("fn_regime_rascunho_aprovar", { p_regime_id: rascunho.id, p_usuario: user.id });
+    const resumo = resumoDasMudancas(publicado.parametros, rascunho.parametros).slice(0, 200);
+    const { data: situacao, error } = await admin.rpc("fn_regime_rascunho_aprovar", {
+      p_regime_id: rascunho.id, p_usuario: user.id, p_resumo: resumo,
+    });
     if (error) return erroDoBanco(error);
-    await auditoria(situacao === "publicado" ? "regime_publicado" : "regime_primeira_aprovacao", rascunho.id,
-      situacao === "publicado" ? `${publicado.nome}: versão ${rascunho.versao} publicada` : `${publicado.nome}: versão ${rascunho.versao} aprovada, aguarda a segunda aprovação`,
-      { versao: rascunho.versao });
-    return resposta({ situacao, versao: rascunho.versao });
+    if (situacao !== "publicado") {
+      await auditoria("regime_primeira_aprovacao", rascunho.id, `${publicado.nome}: versão ${rascunho.versao} aprovada, aguarda a segunda aprovação`,
+        { versao: rascunho.versao });
+      return resposta({ situacao, versao: rascunho.versao });
+    }
+    // Logo depois de publicar, toda prestação em andamento do regime está numa versão anterior.
+    const { data: afetadas } = await admin.rpc("fn_regime_prestacoes_afetadas", { p_codigo: codigo });
+    const { prestacoes = 0, organizacoes = 0 } = (afetadas?.[0] ?? {}) as { prestacoes?: number; organizacoes?: number };
+    await auditoria("regime_publicado", rascunho.id, `${publicado.nome}: versão ${rascunho.versao} publicada`,
+      { versao: rascunho.versao, mudancas: resumo.length, prestacoesAfetadas: prestacoes, organizacoesAvisadas: organizacoes });
+    return resposta({ situacao, versao: rascunho.versao, prestacoes, organizacoes });
   }
 
   if (corpo.acao === "descartar") {

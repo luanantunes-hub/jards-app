@@ -52,8 +52,10 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
               onChange={trocarRegime}
               ariaLabel="Regime normativo"
               placeholder="Escolher regime"
+              // Outra versão do mesmo regime não aparece aqui: a troca passa
+              // pelo aviso de versão nova, por quem decide (P6.4).
               options={regimes
-                .filter(r => r.publicado || r.id === prestacao.regime_id)
+                .filter(r => r.id === prestacao.regime_id || (r.publicado && r.regime.codigo !== atual?.codigo))
                 .map(r => ({ value: r.id, label: r.publicado ? r.regime.nome : `${r.regime.nome} (versão ${r.regime.versao}, substituída)` }))}
             />
           ) : (

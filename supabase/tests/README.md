@@ -6,6 +6,8 @@
 
 `regimes_publicacao.test.sql` confere a publicação dos regimes (P6.3): ninguém escreve direto na tabela, o rascunho é a versão seguinte e um por regime, a pessoa comum não vê o rascunho, regra de bloqueio pede duas pessoas diferentes e a outra é avisada, publicar deixa a anterior obsoleta, descartar e rejeitar funcionam. Roda do mesmo jeito.
 
+`regimes_aviso_versao.test.sql` confere o aviso de versão nova (P6.4): publicar guarda o resumo e avisa, uma vez, quem decide e quem conduz as prestações em andamento na versão anterior, e não avisa organização com a prestação já aprovada nem em outro regime; só quem decide passa a prestação para a versão publicada (nem gravando direto quem só edita), outra organização não passa, prestação aprovada fica onde está, e o histórico registra a versão de antes e o prazo recalculado. Roda do mesmo jeito.
+
 O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`.
 
 ## Rodar

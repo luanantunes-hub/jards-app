@@ -44,6 +44,9 @@ const ERROS: Record<string, string> = {
   transicao_invalida: "Essa mudança de status não existe a partir do status atual. Atualize a página.",
   prazo_sem_justificativa: "Explique por que o prazo é diferente do calculado pelo regime.",
   sem_permissao: "Seu papel não permite essa ação. Enviar ao órgão e registrar a decisão cabem ao administrador ou ao responsável; aceitar comprovantes, ao administrador, revisor ou responsável.",
+  // Versão do regime (P6.4)
+  prestacao_encerrada: "Prestação aprovada ou arquivada fica na versão do regime em que foi decidida.",
+  versao_invalida: "A prestação só passa para a versão publicada do regime, por quem decide na organização. Use o aviso de versão nova.",
   // Orçamento em árvore (P1.6)
   versao_ativa: "A versão ativa não pode ser excluída. Torne outra versão ativa antes.",
   use_ativar_versao: "Use “Tornar ativa” para trocar a versão ativa do orçamento.",
