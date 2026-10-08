@@ -19,7 +19,8 @@ import {
   type Minuta,
 } from "@/lib/prestacao/alteracoes";
 import type { NoOrcamento, VersaoOrcamento } from "@/lib/prestacao/orcamento";
-import type { RegimeNormativo } from "@/lib/prestacao/regimes";
+import { definida, type RegimeNormativo } from "@/lib/prestacao/regimes";
+import { estadoDaPrestacao } from "@/lib/prestacao/checagens/estado";
 import { EditorAlteracao, type AlteracaoSalva } from "./EditorAlteracao";
 import { DecisaoAlteracao, type AcaoDeDecisao } from "./DecisaoAlteracao";
 import { MinutaAlteracao } from "./MinutaAlteracao";
@@ -72,7 +73,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
   const [lidas, setLidas] = useState<{ chave: string; lista: AlteracaoSalva[] } | null>(null);
   const [editor, setEditor] = useState<{ alteracao: AlteracaoSalva | null } | null>(null);
   const [decisao, setDecisao] = useState<{ alteracao: AlteracaoSalva; acao: AcaoDeDecisao } | null>(null);
-  const [minuta, setMinuta] = useState<Minuta | null>(null);
+  const [minuta, setMinuta] = useState<{ minuta: Minuta; alteracao: AlteracaoSalva } | null>(null);
   const [abertas, setAbertas] = useState<Set<string>>(new Set());
   const [erro, setErro] = useState("");
   const chave = `${prestacaoId}:${recarga}`;
@@ -115,8 +116,30 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
     return alt.calculo as unknown as CalculoAlteracao;
   }
 
+  // LIE: a planilha de remanejamento e readequação (Modelo I) vai junto do pedido (P8.3).
+  const modeloDaPlanilha = regime ? definida(regime.envio)?.modelos.find(m => m.codigo === "planilha_remanejamento")?.arquivo ?? null : null;
+
+  async function baixarPlanilha(alt: AlteracaoSalva): Promise<string[]> {
+    if (!modeloDaPlanilha) return [];
+    const [estado, gravacao, resposta] = await Promise.all([
+      estadoDaPrestacao(supabase, prestacaoId),
+      import("@/lib/prestacao/remanejamento-lie"),
+      fetch(`/modelos/${modeloDaPlanilha.replace(/\.xls$/i, ".xlsx")}`),
+    ]);
+    if (!resposta.ok) throw new Error("Não foi possível abrir o modelo da planilha.");
+    const planilha = gravacao.planilhaDeRemanejamento({ estado, projeto: prestacao?.titulo ?? "Projeto", alteracao: alt });
+    const arquivo = await gravacao.gravarPlanilhaDeRemanejamento(new Uint8Array(await resposta.arrayBuffer()), planilha);
+    const url = URL.createObjectURL(new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = gravacao.nomeDaPlanilhaDeRemanejamento(planilha);
+    a.click();
+    URL.revokeObjectURL(url);
+    return planilha.criticas;
+  }
+
   function abrirMinuta(alt: AlteracaoSalva) {
-    setMinuta(minutaDoPedido({
+    setMinuta({ alteracao: alt, minuta: minutaDoPedido({
       prestacaoTitulo: prestacao?.titulo ?? "Projeto",
       identificador: prestacao?.identificador_oficial
         ? { rotulo: regime?.identificadorOficial?.rotulo ?? "Identificador", valor: prestacao.identificador_oficial }
@@ -127,7 +150,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
       justificativa: alt.justificativa ?? "",
       movimentos: alt.movimentos,
       calculo: calculoAtual(alt),
-    }));
+    }) });
   }
 
   function excluir(alt: AlteracaoSalva) {
@@ -317,7 +340,13 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
           onDone={mensagem => { setDecisao(null); onChanged(mensagem); }}
         />
       )}
-      {minuta && <MinutaAlteracao minuta={minuta} onClose={() => setMinuta(null)} />}
+      {minuta && (
+        <MinutaAlteracao
+          minuta={minuta.minuta}
+          onClose={() => setMinuta(null)}
+          planilha={modeloDaPlanilha ? { rotulo: "Planilha de remanejamento", baixar: () => baixarPlanilha(minuta.alteracao) } : undefined}
+        />
+      )}
     </section>
   );
 }

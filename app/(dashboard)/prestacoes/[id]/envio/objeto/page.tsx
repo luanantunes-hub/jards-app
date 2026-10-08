@@ -9,8 +9,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Check, Copy } from "lucide-react";
+import { ArrowLeft, Check, Copy, FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { Dropdown } from "@/components/ui/Dropdown";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import {
@@ -24,6 +25,8 @@ import {
   type Paragrafo,
   type SecaoDoRelatorio,
 } from "@/lib/prestacao/relatorio-objeto";
+import { etapaSugerida, type EtapaDoFormulario } from "@/lib/prestacao/formulario-lie";
+import { definida } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
@@ -262,6 +265,39 @@ export default function RelatorioDoObjetoPage() {
     return rascunhoDoRelatorio({ regime: dados.regime, estado: dados.estado, prestacao, guardados, envio: dados });
   }, [dados, prestacao, guardados]);
 
+  // LIE: o RCO no modelo oficial (.docx), com o título da etapa (P8.3).
+  const modeloDoRco = rascunho?.modelo === "rco" && dados?.regime ? definida(dados.regime.envio)?.modelos.find(m => m.codigo === "rco")?.arquivo ?? null : null;
+  const [etapaEscolhida, setEtapa] = useState<EtapaDoFormulario | null>(null);
+  const etapaInicial = useMemo(() => (dados ? etapaSugerida(dados.estado, new Date()) : null), [dados]);
+  const etapa: EtapaDoFormulario = etapaEscolhida ?? etapaInicial ?? "parcial";
+  const [gerando, setGerando] = useState(false);
+  const [erroDoRco, setErroDoRco] = useState("");
+
+  async function baixarRco() {
+    if (!rascunho || !prestacao || !modeloDoRco) return;
+    setGerando(true);
+    setErroDoRco("");
+    try {
+      const [{ gravarRco, nomeDoRco }, resposta] = await Promise.all([import("@/lib/prestacao/rco-docx"), fetch(`/modelos/${modeloDoRco}`)]);
+      if (!resposta.ok) throw new Error("Não foi possível abrir o modelo do RCO.");
+      const dadosDoRco = {
+        etapa, projeto: prestacao.titulo, sli: prestacao.identificador_oficial,
+        proponente: prestacao.proponente?.nome ?? null, cnpj: prestacao.proponente?.cnpj ?? null,
+      };
+      const arquivo = await gravarRco(new Uint8Array(await resposta.arrayBuffer()), rascunho, dadosDoRco);
+      const url = URL.createObjectURL(new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nomeDoRco(dadosDoRco);
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setErroDoRco(e instanceof Error ? e.message : "Não foi possível gerar o RCO.");
+    } finally {
+      setGerando(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <Link href={`/prestacoes/${id}/envio`} className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/45 hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
@@ -288,6 +324,31 @@ export default function RelatorioDoObjetoPage() {
               <CopiarTudo texto={textoDoRascunho(rascunho)} />
             </div>
           </div>
+          {modeloDoRco && (
+            <section className="flex flex-wrap items-end gap-3 rounded border bg-white px-5 py-4" style={BORDA} aria-label="RCO no modelo oficial">
+              <div className="min-w-0 flex-1 basis-[16rem]">
+                <p className="text-[0.75rem] font-semibold text-black">RCO no modelo oficial</p>
+                <p className="text-[0.6875rem] text-black/45">
+                  O documento do Ministério do Esporte com este rascunho no lugar das orientações; o que falta sai em vermelho, entre colchetes, para completar no Word.
+                </p>
+              </div>
+              <div className="w-full sm:w-[16rem]">
+                <Dropdown
+                  value={etapa}
+                  onChange={v => setEtapa(v as EtapaDoFormulario)}
+                  ariaLabel="Etapa do RCO"
+                  options={[{ value: "parcial", label: "Prestação de contas parcial" }, { value: "final", label: "Prestação de contas final" }]}
+                />
+              </div>
+              <button type="button" onClick={baixarRco} disabled={gerando} className={BOTAO} style={BORDA}>
+                {gerando
+                  ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/15 border-t-black/50 motion-reduce:animate-none" aria-hidden />
+                  : <FileText size={12} aria-hidden />}
+                Baixar RCO (.docx)
+              </button>
+              {erroDoRco && <p role="alert" className="w-full text-[0.6875rem] text-[#B23B3B]">{erroDoRco}</p>}
+            </section>
+          )}
           {rascunho.secoes.map(s => (
             <Secao key={`${rascunho.modelo}:${s.id}:${s.complemento?.valor ?? ""}:${JSON.stringify(s.numeros ?? [])}`} secao={s} modelo={rascunho.modelo} prestacaoId={id} podeEditar={permissoes.editar} guardar={guardar} />
           ))}

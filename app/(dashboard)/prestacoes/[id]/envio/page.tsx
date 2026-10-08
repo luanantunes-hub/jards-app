@@ -27,6 +27,7 @@ import {
   type EtapaEnvio,
   type LinhaDoChecklist,
 } from "@/lib/prestacao/envio";
+import { definida } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { verificarAgora } from "@/lib/prestacao/verificar-cliente";
 
@@ -387,6 +388,11 @@ export default function EnvioPage() {
             {dados.regime.sistemaOficial?.includes("STR") && (
               <Link href={`/prestacoes/${id}/envio/str`} className={BOTAO} style={BORDA}>
                 <FileSpreadsheet size={12} aria-hidden /> Planilhas do STR
+              </Link>
+            )}
+            {definida(dados.regime.envio)?.modelos.some(m => m.codigo === "formulario_pcp_pcf") && (
+              <Link href={`/prestacoes/${id}/envio/formulario-lie${checklist?.etapa === "parcial" ? "?etapa=parcial" : ""}`} className={BOTAO} style={BORDA}>
+                <FileSpreadsheet size={12} aria-hidden /> Formulário PCP/PCF
               </Link>
             )}
             <Link href={`/prestacoes/${id}/envio/devolucoes`} className={BOTAO} style={BORDA}>
