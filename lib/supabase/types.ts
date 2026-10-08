@@ -744,6 +744,8 @@ export interface PrestacaoComprovante {
   justificativa?: string | null;
   /** O que a leitura por IA apontou, com códigos do catálogo de checagens (P2.10b). */
   motivos_ia?: MotivoLido[];
+  /** Por onde entrou: a equipe lançou ou o proponente enviou pelo espaço dele (P5.4). */
+  canal?: "equipe" | "proponente";
   created_at: string;
 }
 // ─── Prestação de contas — Phase 3 ──────────────────────────────────────────
@@ -814,6 +816,8 @@ export interface PrestacaoEvidencia {
   origem_dados: "arquivo" | "informado" | null;
   justificativa: string | null;
   criado_por: string | null;
+  /** Por onde entrou: a equipe lançou ou o proponente enviou pelo espaço dele (P5.4). */
+  canal?: "equipe" | "proponente";
   created_at: string;
   updated_at: string;
 }

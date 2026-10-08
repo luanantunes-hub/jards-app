@@ -140,6 +140,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isSuperAdmin, setIsSuperAdmin]     = useState(false);
   // Prestações de outras organizações acompanhadas por convite (P5.3).
   const [temConvites, setTemConvites]       = useState(false);
+  // Espaço do proponente (P5.4): a conta está ligada a um cadastro de proponente.
+  const [ehProponente, setEhProponente]     = useState(false);
   const [plan, setPlan]                     = useState<PlanTipo | null>(null);
   const [org, setOrg]                       = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
   const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
@@ -198,6 +200,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         .select("id", { count: "exact", head: true })
         .eq("user_id", user.id);
       setTemConvites((convites ?? 0) > 0);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- coluna user_id ainda fora do tipo Database
+      const { count: cadastros } = await (supabase as any)
+        .from("proponentes")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      setEhProponente((cadastros ?? 0) > 0);
 
       if (memberList.length > 0) {
         let escolhido = memberList[0];
@@ -544,6 +553,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Shield size={16} className="flex-shrink-0" />
               {isExpanded && <span>Admin</span>}
+            </Link>
+          )}
+          {ehProponente && !isWorkspaceCaptador && (
+            <Link
+              href="/workspace-proponente"
+              title={!isExpanded ? "Espaço do proponente" : undefined}
+              aria-label={!isExpanded ? "Espaço do proponente" : undefined}
+              aria-current={correspondeRota(path, "/workspace-proponente") ? "page" : undefined}
+              className={`flex items-center rounded text-[0.8125rem] font-medium transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                correspondeRota(path, "/workspace-proponente") ? "bg-black/[0.05] text-[#0D0D0D]" : "text-black/35 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+              }`}
+              style={{
+                gap: isExpanded ? 10 : 0,
+                padding: isExpanded ? "8px 10px" : "8px 0",
+                justifyContent: isExpanded ? "flex-start" : "center",
+              }}
+            >
+              <FolderOpen size={16} className="flex-shrink-0" aria-hidden="true" />
+              {isExpanded && <span>Espaço do proponente</span>}
             </Link>
           )}
           {temConvites && !isWorkspaceCaptador && (
