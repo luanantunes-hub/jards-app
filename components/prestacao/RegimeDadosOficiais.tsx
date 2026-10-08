@@ -2,11 +2,14 @@
 
 import { Dropdown } from "@/components/ui/Dropdown";
 import type { RegimePublicado } from "@/hooks/useRegimesPublicados";
-import type { PrestacaoContas } from "@/lib/supabase/types";
+import { NIVEIS_ESPORTIVOS, regimePedeNivel, rotulosDoNivel } from "@/lib/prestacao/nivel-esportivo";
+import { regraDoRegime } from "@/lib/prestacao/regimes";
+import type { ManifestacaoEsportiva, PrestacaoContas } from "@/lib/supabase/types";
 
 type Campos = Partial<Pick<PrestacaoContas,
   "regime_id" | "identificador_oficial" | "identificador_tipo" | "fonte_recurso"
-  | "data_aprovacao" | "data_liberacao" | "data_termo" | "data_conclusao_objeto" | "data_envio">>;
+  | "data_aprovacao" | "data_liberacao" | "data_termo" | "data_conclusao_objeto" | "data_envio"
+  | "manifestacao_esportiva" | "crc_validade">>;
 
 const MARCOS: { campo: keyof Campos; rotulo: string }[] = [
   { campo: "data_aprovacao", rotulo: "Aprovação" },
@@ -32,6 +35,10 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
 }) {
   const atual = regimes.find(r => r.id === prestacao.regime_id)?.regime ?? null;
   const identificador = atual?.identificadorOficial;
+  // LIE (P8.4): o nível da manifestação esportiva muda os limites; na excelência, a CRC vale para toda a execução.
+  const pedeNivel = regimePedeNivel(atual);
+  const rotulos = rotulosDoNivel(atual);
+  const pedeCrc = pedeNivel && prestacao.manifestacao_esportiva === "excelencia" && Boolean(regraDoRegime(atual, "crc_excelencia"));
 
   function trocarRegime(regimeId: string) {
     if (!regimeId || regimeId === prestacao.regime_id) return;
@@ -99,6 +106,47 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
             />
           </label>
         </div>
+
+        {pedeNivel && (
+          <div className="grid grid-cols-2 gap-2">
+            <div className={pedeCrc ? "col-span-2 sm:col-span-1" : "col-span-2"}>
+              <span className={ROTULO}>Nível da manifestação esportiva</span>
+              {podeEditar ? (
+                <Dropdown
+                  value={prestacao.manifestacao_esportiva ?? ""}
+                  onChange={v => {
+                    const valor = (v || null) as ManifestacaoEsportiva | null;
+                    if (valor !== (prestacao.manifestacao_esportiva ?? null)) onSalvar({ manifestacao_esportiva: valor });
+                  }}
+                  ariaLabel="Nível da manifestação esportiva"
+                  placeholder="Escolher nível"
+                  options={NIVEIS_ESPORTIVOS.map(n => ({ value: n, label: rotulos[n].replace(/^./, c => c.toUpperCase()) }))}
+                />
+              ) : (
+                <p className="text-[0.75rem] text-black/70">{prestacao.manifestacao_esportiva ? rotulos[prestacao.manifestacao_esportiva] : "—"}</p>
+              )}
+            </div>
+            {pedeCrc && (
+              <label className="col-span-2 block sm:col-span-1">
+                <span className={ROTULO}>Validade da CRC</span>
+                <input
+                  type="date"
+                  key={`crc-${prestacao.crc_validade ?? ""}`}
+                  defaultValue={prestacao.crc_validade ?? ""}
+                  disabled={!podeEditar}
+                  onBlur={e => {
+                    const valor = e.target.value || null;
+                    if (valor !== (prestacao.crc_validade ?? null)) onSalvar({ crc_validade: valor });
+                  }}
+                  className={CAMPO}
+                />
+              </label>
+            )}
+            <p className="col-span-2 text-[0.5625rem] leading-4 text-black/35">
+              Define o limite de elaboração e captação (10%, 7% ou 5% de fim + meio; 15% no N, NE e CO), o de captação e quem recebe bolsa.
+            </p>
+          </div>
+        )}
 
         <div>
           <span className="mb-1.5 block text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30">Marcos</span>

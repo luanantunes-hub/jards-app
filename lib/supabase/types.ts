@@ -629,6 +629,8 @@ export type StatusPrestacao =
   | "aprovado"
   | "arquivado";
 
+export type ManifestacaoEsportiva = "formacao" | "toda_vida" | "excelencia";
+
 export interface PrestacaoContas {
   id: string;
   /** Null só em prestações antigas sem projeto, captação ou organização única de quem criou. */
@@ -649,6 +651,9 @@ export interface PrestacaoContas {
   proponente_id?: string | null;
   /** Prestações da mesma obra e do mesmo objeto (ANCINE, P7.4): mesmo valor, mesmo grupo. */
   obra_grupo?: string | null;
+  /** LIE (P8.4): nível da manifestação esportiva e validade da CRC do proponente. */
+  manifestacao_esportiva?: ManifestacaoEsportiva | null;
+  crc_validade?: string | null;
   data_aprovacao?: string | null;
   data_liberacao?: string | null;
   data_termo?: string | null;
