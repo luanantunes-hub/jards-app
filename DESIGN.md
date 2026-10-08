@@ -43,6 +43,16 @@ Princípios:
 - tabelas usam cabeçalhos de `0.625rem` (10px na base), peso 500, caixa alta e tracking `.08em`;
 - números financeiros devem usar algarismos tabulares quando comparados em coluna.
 
+## Números e indicadores
+
+- rótulo neutro: `0.625rem`, peso 500, caixa alta, tracking `.08em`, `text-black/45`; nunca colorido nem em negrito;
+- valor em tinta (`#0D0D0D`), semibold, algarismos tabulares; valor zerado fica apagado (`text-black/30`);
+- cor só no gráfico (barra, segmento, marcador da legenda), nunca no rótulo nem no valor. Um quadrado de 8px antes do rótulo liga o número ao segmento da barra;
+- captação: verde é confirmado, verde a 35% é em negociação, cinza é o que falta. Roxo é navegação, não é cor de dado;
+- exceção: um desfecho escrito em palavra ("Meta atingida") pode levar a cor no texto;
+- valores de resumo, totais, kanban e cartões usam `formatarValorCurto` (`R$ 400.000`, `R$ 1,5 mi`, `R$ 13 bi`), com `formatarValorCompleto` no `title`; campos, propostas, exportações e prestação de contas mostram o valor exato;
+- componentes: `Indicador` e `BarraCaptacao` em `components/ui/IndicadoresFinanceiros.tsx`.
+
 ## Forma e espaçamento
 
 - raio padrão do produto: `rounded` (4px);

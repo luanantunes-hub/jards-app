@@ -11,6 +11,8 @@ import { NovoResultadoModal, type EditDataResultado } from "@/components/modals/
 import { CotasProjetoManager, type VendaPatrocinioComEmpresa } from "@/components/CotasProjetoManager";
 import { PROJECT_ICON_COLORS, PROJECT_ICON_OPTIONS, ProjectIdentity } from "@/components/ui/ProjectIdentity";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { BarraCaptacao, Indicador, MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
 import StatusBadge from "@/components/ui/StatusBadge";
 import type { Proposta, CotaPatrocinio } from "@/lib/supabase/types";
 import { PitchWorkspace } from "@/components/projects/PitchWorkspace";
@@ -127,12 +129,7 @@ const STATUS_PROPOSTA: Record<string, { label: string; color: string }> = {
   arquivada:   { label: "Arquivada",   color: "rgba(13,13,13,.40)" },
 };
 
-function fmtValor(v: number | null): string {
-  if (v == null) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
-}
+const fmtValor = formatarValorCurto;
 
 function formatCurrencyInput(raw: string): string {
   const cleaned = raw.replace(/[^\d,]/g, "");
@@ -846,20 +843,16 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                                 key={f.value}
                                 type="button"
                                 onClick={() => void updateFase(f.value)}
-                                className="relative flex flex-col items-center justify-center gap-2 rounded py-3.5 transition hover:opacity-90"
-                                style={{
-                                  background: f.color + "22",
-                                  border: `1.5px solid ${active ? f.color : "transparent"}`,
-                                  color: f.color,
-                                }}
+                                className={`relative flex flex-col items-center justify-center gap-2 rounded border bg-white py-3.5 transition hover:bg-black/[.04] ${active ? "" : "border-black/[.08]"}`}
+                                style={active ? { borderColor: f.color, boxShadow: `inset 0 0 0 0.5px ${f.color}` } : undefined}
                               >
                                 {active && (
                                   <span className="absolute right-1.5 top-1.5 flex h-4 w-4 items-center justify-center rounded" style={{ background: f.color }}>
                                     <Check size={9} className="text-white" strokeWidth={3} />
                                   </span>
                                 )}
-                                <f.Icon size={16} strokeWidth={1.8} />
-                                <span className="text-[0.5625rem] font-bold uppercase tracking-[.08em] leading-none">{f.label}</span>
+                                <f.Icon size={16} strokeWidth={1.8} style={{ color: f.color }} />
+                                <span className="text-[0.5625rem] font-medium uppercase leading-none tracking-[.08em] text-black/60">{f.label}</span>
                               </button>
                             );
                           })}
@@ -869,25 +862,16 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                   )}
                 </div>
               </div>
-              <div className="h-2 overflow-hidden rounded bg-black/[.06]">
-                <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${progress}%` }} />
-              </div>
-              <div className="mt-6 grid grid-cols-3 gap-4 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <div>
-                  <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#2E8932" }}>Confirmado</p>
-                  <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{fmtValor(confirmado)}</p>
-                </div>
-                <div>
-                  <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#7259B5" }}>Em negociação</p>
-                  <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: "#7259B5" }}>{fmtValor(negociacao)}</p>
-                </div>
-                <div>
-                  <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>
-                    {faltante > 0 ? "Falta captar" : "Meta atingida"}
-                  </p>
-                  <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>{faltante > 0 ? fmtValor(faltante) : "—"}</p>
-                </div>
-              </div>
+              <BarraCaptacao confirmado={confirmado} negociacao={negociacao} meta={projeto.valor_alvo} />
+              <dl className="mt-6 grid grid-cols-3 gap-3 border-t pt-5 sm:gap-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                <Indicador marca={MARCA_CAPTACAO.confirmado} rotulo="Confirmado" valor={confirmado} />
+                <Indicador marca={MARCA_CAPTACAO.negociacao} rotulo="Em negociação" valor={negociacao} />
+                {projeto.valor_alvo && faltante === 0 ? (
+                  <Indicador marca={MARCA_CAPTACAO.falta} rotulo="Falta captar" valor={0} texto="Meta atingida" corTexto="#2E8932" />
+                ) : (
+                  <Indicador marca={MARCA_CAPTACAO.falta} rotulo="Falta captar" valor={projeto.valor_alvo ? faltante : null} />
+                )}
+              </dl>
 
               {/* Orçamento total calculado do orçamento */}
               {orcamentoTotal > 0 && (
@@ -1007,72 +991,39 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                     </div>
                   </div>
 
-                  {/* Duel financeiro */}
-                  <div className="border rounded overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                    {/* Linha Objetivo */}
-                    <div className="flex items-center gap-5 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                      <div className="w-24 flex-shrink-0">
-                        <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/30">Objetivo</p>
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-[0.8125rem] font-semibold text-black/60">{fmtValor(projeto.valor_alvo)}</span>
-                          <span className="text-[0.6875rem] text-black/30">100%</span>
-                        </div>
-                        <div className="h-2 rounded bg-black/6 overflow-hidden">
-                          <div className="h-full w-full rounded bg-black/10" />
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Linha Confirmado */}
-                    <div className="flex items-center gap-5 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                      <div className="w-24 flex-shrink-0">
-                        <p className="text-[0.625rem] font-bold uppercase tracking-[.12em]" style={{ color: "#2E8932" }}>Confirmado</p>
-                      </div>
-                      <div className="flex-1">
-                        {(() => {
-                          const real = valorCaptadoDisplay + (projeto.valor_garantido ?? 0);
-                          const pct = projeto.valor_alvo ? Math.min(100, (real / projeto.valor_alvo) * 100) : 0;
-                          return (
-                            <>
-                              <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[0.8125rem] font-semibold" style={{ color: "#2E8932" }}>{fmtValor(real)}</span>
-                                <span className="text-[0.6875rem] font-bold" style={{ color: "#2E8932" }}>{projeto.valor_alvo ? `${pct.toFixed(0)}%` : "—"}</span>
+                  {/* Objetivo e realizado */}
+                  {(() => {
+                    const meta = projeto.valor_alvo ?? 0;
+                    const real = valorCaptadoDisplay + (projeto.valor_garantido ?? 0);
+                    const neg = Math.max(0, captadoTotal - captadoAprovado);
+                    const pct = (valor: number) => meta > 0 ? Math.min(100, (valor / meta) * 100) : 0;
+                    const linhas = [
+                      { rotulo: "Objetivo", marca: null, valor: projeto.valor_alvo, largura: meta > 0 ? 100 : 0, cor: "bg-black/[.12]", pct: meta > 0 ? "100%" : "—" },
+                      { rotulo: "Confirmado", marca: MARCA_CAPTACAO.confirmado, valor: real, largura: pct(real), cor: MARCA_CAPTACAO.confirmado, pct: meta > 0 ? `${pct(real).toFixed(0)}%` : "—" },
+                      { rotulo: "Em negociação", marca: MARCA_CAPTACAO.negociacao, valor: neg, largura: pct(neg), cor: MARCA_CAPTACAO.negociacao, pct: meta > 0 ? `${pct(neg).toFixed(0)}%` : "—" },
+                    ];
+                    return (
+                      <div className="divide-y divide-black/[.06] overflow-hidden rounded border border-black/[.08]">
+                        {linhas.map(linha => (
+                          <div key={linha.rotulo} className="flex items-center gap-5 px-5 py-4">
+                            <p className="flex w-28 shrink-0 items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                              {linha.marca && <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-[2px] ${linha.marca}`} />}
+                              {linha.rotulo}
+                            </p>
+                            <div className="min-w-0 flex-1">
+                              <div className="mb-1.5 flex items-baseline justify-between gap-3">
+                                <span title={formatarValorCompleto(linha.valor)} className={`text-[0.8125rem] font-semibold tabular-nums ${linha.valor ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmtValor(linha.valor)}</span>
+                                <span className="text-[0.6875rem] tabular-nums text-black/40">{linha.pct}</span>
                               </div>
-                              <div className="h-2 rounded bg-black/[.06] overflow-hidden">
-                                <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${pct}%` }} />
+                              <div className="h-1.5 overflow-hidden rounded bg-black/[.06]">
+                                <div className={`h-full rounded transition-[width] duration-200 motion-reduce:transition-none ${linha.cor}`} style={{ width: `${linha.largura}%` }} />
                               </div>
-                            </>
-                          );
-                        })()}
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                    </div>
-
-                    {/* Linha Em negociação */}
-                    <div className="flex items-center gap-5 px-5 py-4">
-                      <div className="w-24 flex-shrink-0">
-                        <p className="text-[0.625rem] font-bold uppercase tracking-[.12em]" style={{ color: "#7259B5" }}>Negociação</p>
-                      </div>
-                      <div className="flex-1">
-                        {(() => {
-                          const neg = Math.max(0, captadoTotal - captadoAprovado);
-                          const pct = projeto.valor_alvo ? Math.min(100, (neg / projeto.valor_alvo) * 100) : 0;
-                          return (
-                            <>
-                              <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-[0.8125rem] font-semibold" style={{ color: "#7259B5" }}>{fmtValor(neg)}</span>
-                                <span className="text-[0.6875rem] font-bold" style={{ color: "#7259B5" }}>{projeto.valor_alvo ? `${pct.toFixed(0)}%` : "—"}</span>
-                              </div>
-                              <div className="h-2 rounded bg-black/[.06] overflow-hidden">
-                                <div className="h-full rounded bg-[#7259B5] transition-all" style={{ width: `${pct}%` }} />
-                              </div>
-                            </>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  </div>
+                    );
+                  })()}
 
                   {/* Resultado registrado */}
                   {ultimoResultado && (
@@ -1081,13 +1032,13 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                         Resultado · {ultimoResultado.data_resultado ? fmtDate(ultimoResultado.data_resultado) : "sem data"}
                       </p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        <MetricCard label="Captado" value={fmtValor(ultimoResultado.valor_captado)} color="#2E8932" />
+                        <MetricCard label="Captado" value={fmtValor(ultimoResultado.valor_captado)} />
                         <MetricCard label="Executado" value={fmtValor(ultimoResultado.valor_executado)} />
-                        <MetricCard label="Ret. mídia" value={fmtValor(ultimoResultado.retorno_midia_est)} color="#7259B5" />
+                        <MetricCard label="Ret. mídia" value={fmtValor(ultimoResultado.retorno_midia_est)} />
                         <MetricCard label="Público" value={fmtInt(ultimoResultado.publico_alcancado)} icon={<Users size={11} className="text-black/30" />} />
                         <MetricCard label="Eventos" value={fmtInt(ultimoResultado.eventos_realizados)} />
                         {ultimoResultado.valor_captado && ultimoResultado.valor_executado && ultimoResultado.valor_executado > 0 && (
-                          <MetricCard label="ROI" value={`${((ultimoResultado.valor_captado / ultimoResultado.valor_executado) * 100).toFixed(0)}%`} color="#2D72B0" />
+                          <MetricCard label="ROI" value={`${((ultimoResultado.valor_captado / ultimoResultado.valor_executado) * 100).toFixed(0)}%`} />
                         )}
                       </div>
                       {ultimoResultado.observacoes && (
@@ -1288,13 +1239,13 @@ function MiniInfo({ label, value }: { label: string; value: string }) {
   return <div className="min-w-0"><p className="text-[0.625rem] font-medium text-black/35">{label}</p><p className="mt-1.5 truncate text-[0.8125rem] font-medium text-black/65">{value}</p></div>;
 }
 
-function MetricCard({ label, value, color, icon }: { label: string; value: string; color?: string; icon?: React.ReactNode }) {
+function MetricCard({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
   return (
     <div className="rounded px-3 py-2.5" style={{ background: "rgba(13,13,13,.03)" }}>
-      <p className="text-[0.625rem] font-semibold text-black/30 uppercase tracking-[.10em] mb-1 flex items-center gap-1">
+      <p className="mb-1 flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
         {icon}{label}
       </p>
-      <p className="text-[0.9375rem] font-bold" style={{ color: color ?? "#0D0D0D" }}>{value}</p>
+      <p className={`text-[0.9375rem] font-semibold tabular-nums ${value === "—" ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p>
     </div>
   );
 }

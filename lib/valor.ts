@@ -25,3 +25,22 @@ export function formatarValorBRL(valor: number | null | undefined): string {
 }
 
 export const MENSAGEM_VALOR_INVALIDO = "Confira o valor: use só números, como 150.000,00.";
+
+const VALOR_INTEIRO = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
+const VALOR_COMPACTO = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", minimumFractionDigits: 0, maximumFractionDigits: 1 });
+const VALOR_COMPLETO = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+/**
+ * Valor para resumos, indicadores e totais: inteiro até R$ 999.999 ("R$ 400.000")
+ * e abreviado daí em diante ("R$ 1,5 mi", "R$ 13 bi"). Vazio vira "—".
+ */
+export function formatarValorCurto(valor: number | null | undefined): string {
+  if (valor == null || !Number.isFinite(valor)) return "—";
+  return Math.abs(valor) >= 1_000_000 ? VALOR_COMPACTO.format(valor) : VALOR_INTEIRO.format(valor);
+}
+
+/** Valor exato com centavos ("R$ 1.250.000,00"), para `title` de um valor abreviado. */
+export function formatarValorCompleto(valor: number | null | undefined): string {
+  if (valor == null || !Number.isFinite(valor)) return "—";
+  return VALOR_COMPLETO.format(valor);
+}
