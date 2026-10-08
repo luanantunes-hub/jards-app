@@ -232,10 +232,15 @@ export function checarConcentracao(estado: EstadoDaPrestacao): Achado[] {
   if (!limites.length) return [];
 
   const fornecedores = new Map(estado.fornecedores.map(f => [f.id, f]));
-  const despesas = estado.despesas.filter(d => valida(d) && d.fornecedor_id && fornecedores.has(d.fornecedor_id) && centavos(d.valor_extraido) > 0);
-  if (!despesas.length) return [];
+  const comFornecedor = (d: DespesaDoEstado) => valida(d) && Boolean(d.fornecedor_id) && fornecedores.has(d.fornecedor_id!) && centavos(d.valor_extraido) > 0;
+  const despesas = estado.despesas.filter(comFornecedor);
+  // P7.4: na mesma obra (ANCINE), o limite sobre o executado soma as despesas de todas as prestações.
+  const obra = estado.obra?.prestacoes.length ? estado.obra : null;
+  const despesasDaObra = obra ? obra.despesas.filter(comFornecedor) : [];
+  if (!despesas.length && !despesasDaObra.length) return [];
 
   const executado = estado.despesas.filter(valida).reduce((s, d) => s + centavos(d.valor_extraido), 0);
+  const executadoDaObra = executado + (obra ? obra.despesas.filter(valida).reduce((s, d) => s + centavos(d.valor_extraido), 0) : 0);
   const captado = captadoDoExtrato(estado);
   const doOrcamento = estado.nos?.length ? basesDoOrcamento(montarArvore(estado.nos, []).raizes, regime) : null;
   const valorDaBase = (base: BaseCalculo): number | null => {
@@ -251,9 +256,11 @@ export function checarConcentracao(estado: EstadoDaPrestacao): Achado[] {
   for (const limite of limites) {
     // O limite de proponente pessoa física ou MEI depende do tipo do proponente, que a prestação ainda não guarda.
     if (limite.escopo === "proponente_pf_mei") continue;
-    const grupos = agrupar(limite, despesas, fornecedores);
+    const somaObra = Boolean(obra) && limite.base === "valor_executado";
+    const grupos = agrupar(limite, somaObra ? [...despesas, ...despesasDaObra] : despesas, fornecedores);
     if (!grupos.length) continue;
-    const base = valorDaBase(limite.base);
+    const base = somaObra ? executadoDaObra || null : valorDaBase(limite.base);
+    const daObra = somaObra ? ` Soma as ${obra!.prestacoes.length + 1} prestações da mesma obra.` : "";
     const primeira = limite.faixas[0];
     if (!base) {
       achados.push(novoAchado(regime, {
@@ -271,8 +278,8 @@ export function checarConcentracao(estado: EstadoDaPrestacao): Achado[] {
       const excecoes = limite.excecoes.length ? ` Se for exceção da norma (${limite.excecoes.map(e => e.descricao.toLowerCase()).join("; ")}), dispense com o motivo.` : "";
       achados.push(novoAchado(regime, {
         codigo, severidade: faixa.severidade, entidade: { tipo: "prestacao", id: null }, ref: `${limite.codigo}:${grupo.chave}`,
-        mensagem: `${grupo.nome}: ${reais(grupo.soma)} em despesas, ${percentual.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% ${ROTULO_DA_BASE[limite.base]} (${reais(base)}); o limite é ${faixa.percentual}%. ${faixa.consequencia}.${excecoes}`,
-        dados: { fornecedor: grupo.nome, soma: grupo.soma / 100, base: base / 100, percentual: Math.round(percentual * 10) / 10, limite: faixa.percentual },
+        mensagem: `${grupo.nome}: ${reais(grupo.soma)} em despesas, ${percentual.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}% ${ROTULO_DA_BASE[limite.base]} (${reais(base)}); o limite é ${faixa.percentual}%. ${faixa.consequencia}.${daObra}${excecoes}`,
+        dados: { fornecedor: grupo.nome, soma: grupo.soma / 100, base: base / 100, percentual: Math.round(percentual * 10) / 10, limite: faixa.percentual, ...(somaObra ? { prestacoes_da_obra: obra!.prestacoes.length + 1 } : {}) },
         fonte: { ...limite.fonte },
       }));
     }

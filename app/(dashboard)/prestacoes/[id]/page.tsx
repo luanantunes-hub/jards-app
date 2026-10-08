@@ -11,6 +11,7 @@ import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { executadoPorItem, percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
 import { mensagemErroPrestacao, proximosBloqueados, proximosStatus } from "@/lib/prestacao/status";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { MesmaObra } from "@/components/prestacao/MesmaObra";
 import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
 import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
@@ -564,6 +565,11 @@ export default function PrestacaoDetalhe() {
               </div>
             </div>
           </div>
+
+          {/* Mesma obra (P7.4): ANCINE, ou quando a prestação já está num grupo. */}
+          {(regimes.find(r => r.id === prestacao.regime_id)?.regime?.sistemaOficial?.includes("STR") || prestacao.obra_grupo) && (
+            <MesmaObra prestacao={prestacao} podeEditar={permissoes.editar} onMudou={fetch} />
+          )}
 
           <div id="dados-oficiais" className="scroll-mt-4">
             <RegimeDadosOficiais

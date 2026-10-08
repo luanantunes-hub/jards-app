@@ -47,6 +47,9 @@ const ERROS: Record<string, string> = {
   // Versão do regime (P6.4)
   prestacao_encerrada: "Prestação aprovada ou arquivada fica na versão do regime em que foi decidida.",
   versao_invalida: "A prestação só passa para a versão publicada do regime, por quem decide na organização. Use o aviso de versão nova.",
+  // Mesma obra (P7.4)
+  obra_de_outra_organizacao: "Só prestações da mesma organização entram na mesma obra.",
+  mesma_prestacao: "Escolha outra prestação para vincular.",
   // Orçamento em árvore (P1.6)
   versao_ativa: "A versão ativa não pode ser excluída. Torne outra versão ativa antes.",
   use_ativar_versao: "Use “Tornar ativa” para trocar a versão ativa do orçamento.",

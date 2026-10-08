@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(325);
+select plan(332);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -1413,6 +1413,36 @@ select is((select count(*)::integer from pg_policies where schemaname = 'public'
    where schemaname = 'public' and permissive = 'PERMISSIVE' and cmd in ('ALL', 'SELECT')
      and (qual like '%can_access_prestacao(%' or qual like '%auth_tem_modulo(organization_id, ''prestacao''::text)%')),
   'somente leitura: cada tabela que a equipe lê tem a regra de leitura sem assinatura');
+
+-- ─── Mesma obra (P7.4): grupo de prestações, sempre da mesma organização ────
+insert into public.prestacoes_contas (id, titulo, organization_id, criado_por) values
+  ('f0000000-0000-4000-8000-0000000001a5', 'RLS prestação A da mesma obra', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000000a1');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a4","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_obra_vincular('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000001a5')$t$,
+  '42501', null, 'mesma obra: o leitor não vincula');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$select public.fn_prestacao_obra_vincular('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000001a5')$t$,
+  'mesma obra: quem edita vincula duas prestações da organização');
+select is((select count(distinct obra_grupo)::integer from public.prestacoes_contas
+           where id in ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000001a5') and obra_grupo is not null),
+  1, 'mesma obra: as duas ficam no mesmo grupo');
+select throws_ok($t$select public.fn_prestacao_obra_vincular('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000001b0')$t$,
+  'P0002', null, 'mesma obra: prestação de outra organização não entra');
+reset role;
+select throws_ok($t$update public.prestacoes_contas set obra_grupo = (select obra_grupo from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0')
+  where id = 'f0000000-0000-4000-8000-0000000001b0'$t$,
+  '23514', null, 'mesma obra: o grupo não mistura organizações, nem gravando direto');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$select public.fn_prestacao_obra_desvincular('f0000000-0000-4000-8000-0000000001a5')$t$,
+  'mesma obra: quem edita desvincula');
+select is((select count(*)::integer from public.prestacoes_contas
+           where id in ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000001a5') and obra_grupo is not null),
+  0, 'mesma obra: a que ficou sozinha também sai do grupo');
+reset role;
 
 select * from finish();
 rollback;

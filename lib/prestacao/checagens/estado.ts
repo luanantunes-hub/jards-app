@@ -41,9 +41,9 @@ async function uma<T>(consulta: PromiseLike<Resposta>): Promise<T | null> {
 export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, hoje: Date = new Date()): Promise<EstadoDaPrestacao> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
   const db = cliente as any;
-  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null } & DatasDaPrestacao>(
+  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null; obra_grupo: string | null } & DatasDaPrestacao>(
     db.from("prestacoes_contas")
-      .select("organization_id, regime_id, valor_aprovado, data_aprovacao, data_liberacao, data_inicio_execucao, data_fim_execucao")
+      .select("organization_id, regime_id, valor_aprovado, obra_grupo, data_aprovacao, data_liberacao, data_inicio_execucao, data_fim_execucao")
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
@@ -91,7 +91,19 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
   const itens = itensDaArvore(montarArvore(nos, []).raizes)
     .map(linha => ({ id: linha.no.id, nome: linha.no.nome, cnaes: linha.cnaes, cnaesDe: linha.cnaesDe }));
 
-  const idsFornecedores = [...new Set(despesas.map(d => d.fornecedor_id).filter((f): f is string => Boolean(f)))];
+  // P7.4: as outras prestações da mesma obra, sempre da mesma organização (esta leitura usa o service role).
+  const outras = prestacao.obra_grupo
+    ? await todas<{ id: string; titulo: string; identificador_oficial: string | null }>(() => db.from("prestacoes_contas")
+      .select("id, titulo, identificador_oficial").eq("organization_id", prestacao.organization_id)
+      .eq("obra_grupo", prestacao.obra_grupo).neq("id", prestacaoId).order("id"))
+    : [];
+  const despesasDaObra = outras.length
+    ? await todas<EstadoDaPrestacao["despesas"][number] & { prestacao_id: string }>(() => db.from("prestacao_comprovantes")
+      .select("id, prestacao_id, nome_arquivo, status, no_id, tipo, data_doc, valor_extraido, fornecedor_id, numero_documento, chave_acesso, iss, inss, irrf, outras_retencoes, identificacao_projeto")
+      .in("prestacao_id", outras.map(o => o.id)).order("id"))
+    : [];
+
+  const idsFornecedores = [...new Set([...despesas, ...despesasDaObra].map(d => d.fornecedor_id).filter((f): f is string => Boolean(f)))];
   const [fornecedores, documentos] = idsFornecedores.length
     ? await Promise.all([
       todas<EstadoDaPrestacao["fornecedores"][number]>(() => db.from("prestacao_fornecedores").select("*")
@@ -128,5 +140,11 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     defesos,
     valorAprovado: prestacao.valor_aprovado === null || prestacao.valor_aprovado === undefined ? null : Number(prestacao.valor_aprovado),
     hoje,
+    ...(outras.length ? {
+      obra: {
+        prestacoes: outras.map(o => ({ id: o.id, titulo: o.titulo, identificador: o.identificador_oficial })),
+        despesas: despesasDaObra,
+      },
+    } : {}),
   };
 }
