@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(323);
+select plan(325);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -669,6 +669,10 @@ select throws_ok($t$update public.prestacao_comprovantes set fornecedor_id = 'f0
   '23514', 'fornecedor_de_outra_organizacao', 'a despesa não usa fornecedor de outra organização');
 select throws_ok($t$update public.prestacao_comprovantes set iss = 200 where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
   '23514', null, 'as retenções não passam do valor do documento');
+select lives_ok($t$update public.prestacao_comprovantes set contrapartida = 'doacao' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  'quem edita: marca a despesa como contrapartida por doação (P7.2)');
+select throws_ok($t$update public.prestacao_comprovantes set contrapartida = 'emprestimo' where id = 'f0000000-0000-4000-8000-0000000005a0'$t$,
+  '23514', null, 'a contrapartida é financeira ou por doação');
 select throws_ok($t$insert into public.prestacao_comprovantes (prestacao_id, nome_arquivo, storage_path, chave_acesso) values
     ('f0000000-0000-4000-8000-0000000001a0', 'repetida.pdf',
      'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000cf0.pdf',

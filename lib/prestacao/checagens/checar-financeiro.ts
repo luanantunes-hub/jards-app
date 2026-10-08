@@ -16,7 +16,8 @@
 import { ehDespesa } from "../despesas";
 import { basesDoOrcamento, itensDaArvore, montarArvore, ROTULO_DA_BASE, tetosPorGrupo } from "../orcamento";
 import { limparDocumento } from "../fornecedores";
-import { definida } from "../regimes";
+import { definida, regraDoRegime } from "../regimes";
+import { execucaoTerminou } from "../objeto";
 import type { BaseCalculo, LimiteConcentracao } from "../regimes/tipos";
 import { rotuloDaForma } from "../pagamentos";
 import {
@@ -141,7 +142,69 @@ export function checarOrcamento(estado: EstadoDaPrestacao): Achado[] {
       dados: { numero: a.numero, solicitada_em: a.solicitada_em },
     }));
   }
-  return achados;
+  return [...achados, ...checarContrapartida(estado)];
+}
+
+// ─── Contrapartida (P7.2) ───────────────────────────────────────────────────
+
+export type ContrapartidaDaPrestacao = {
+  percentual: number;
+  /** Em centavos: o orçamento global vigente, o mínimo e o que as despesas comprovam. */
+  orcamento: number;
+  minimo: number;
+  financeira: number;
+  doacao: number;
+  comprovada: number;
+};
+
+/**
+ * O mínimo de contrapartida do regime (regra contrapartida_minima) sobre o
+ * orçamento global vigente e o que as despesas marcadas como contrapartida
+ * comprovam. Null quando o regime não pede contrapartida ou falta orçamento.
+ */
+export function contrapartidaDaPrestacao(estado: Pick<EstadoDaPrestacao, "regime" | "despesas" | "nos">): ContrapartidaDaPrestacao | null {
+  const regra = regraDoRegime(estado.regime, "contrapartida_minima");
+  const percentual = Number(regra?.parametros?.percentual);
+  if (!regra || !(percentual > 0) || !estado.nos?.length) return null;
+  const orcamento = centavos(basesDoOrcamento(montarArvore(estado.nos, []).raizes, estado.regime).valorTotalProjeto);
+  const soma = (tipo: "financeira" | "doacao") => estado.despesas
+    .filter(d => valida(d) && d.contrapartida === tipo).reduce((s, d) => s + centavos(d.valor_extraido), 0);
+  const financeira = soma("financeira");
+  const doacao = soma("doacao");
+  return { percentual, orcamento, minimo: Math.ceil((orcamento * percentual) / 100), financeira, doacao, comprovada: financeira + doacao };
+}
+
+export function checarContrapartida(estado: EstadoDaPrestacao): Achado[] {
+  const { regime } = estado;
+  const regra = regraDoRegime(regime, "contrapartida_minima");
+  // Sem despesa ainda, não há o que comparar.
+  if (!regra || !estado.despesas.some(valida)) return [];
+  const conta = contrapartidaDaPrestacao(estado);
+  if (!conta) {
+    if (estado.nos?.length) return [];
+    return [novoAchado(regime, {
+      codigo: "CONTRAPARTIDA_MINIMA", severidade: "info", resultado: "nao_calculavel", entidade: { tipo: "prestacao", id: null }, ref: "sem_orcamento",
+      mensagem: "Cadastre o orçamento para conferir a contrapartida mínima.",
+    })];
+  }
+  if (conta.comprovada >= conta.minimo) return [];
+
+  // Na execução ainda dá para completar; depois do fim, falta de contrapartida impede o envio.
+  const fim = estado.prestacao?.data_fim_execucao ?? null;
+  const terminou = execucaoTerminou(fim, estado.hoje ?? new Date());
+  const minimo = `${reais(conta.minimo)} (${conta.percentual}% do orçamento global de ${reais(conta.orcamento)})`;
+  const partes = [conta.financeira && `${reais(conta.financeira)} em dinheiro`, conta.doacao && `${reais(conta.doacao)} por doação`].filter(Boolean);
+  const comprovada = conta.comprovada
+    ? `Contrapartida comprovada: ${reais(conta.comprovada)}${partes.length > 1 ? ` (${partes.join(" e ")})` : ""}, abaixo do mínimo de ${minimo}; faltam ${reais(conta.minimo - conta.comprovada)}.`
+    : `Nenhuma despesa marcada como contrapartida; o mínimo é ${minimo}.`;
+  return [novoAchado(regime, {
+    codigo: "CONTRAPARTIDA_MINIMA",
+    severidade: terminou ? regra.severidade : "alerta",
+    entidade: { tipo: "prestacao", id: null },
+    ref: "minimo",
+    mensagem: `${comprovada} Marque em "Paga com" as despesas pagas como contrapartida${!terminou && fim ? `; a execução vai até ${dataBr(fim)}` : ""}.`,
+    dados: { percentual: conta.percentual, orcamento: conta.orcamento / 100, minimo: conta.minimo / 100, financeira: conta.financeira / 100, doacao: conta.doacao / 100, falta: (conta.minimo - conta.comprovada) / 100 },
+  })];
 }
 
 // ─── Concentração ───────────────────────────────────────────────────────────

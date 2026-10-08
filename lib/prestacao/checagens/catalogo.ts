@@ -97,6 +97,8 @@ export const CATALOGO_CHECAGENS = {
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   ALTERACAO_PENDENTE: { titulo: "Alteração do orçamento sem decisão", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento", regras: ["sem_readequacao_em_analise"] },
+  // Contrapartida (P7.2): o mínimo do regime sobre o orçamento global, comprovado com despesas.
+  CONTRAPARTIDA_MINIMA: { titulo: "Contrapartida abaixo do mínimo", grupo: "orcamento", resultado: "nao_conforme", destino: "comprovantes", regras: ["contrapartida_minima"] },
   // Objeto (P3.1): metas propostas × resultados e situação de cada local.
   OBJETO_SEM_METAS: { titulo: "Objeto sem metas", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
   META_SEM_RESULTADO: { titulo: "Meta sem resultado", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["metas_resultados"], dimensao: "objeto" },
@@ -171,7 +173,7 @@ export type Achado = {
 
 export type DespesaDoEstado = DespesaParaChecar &
   Pick<PrestacaoComprovante, "id" | "nome_arquivo" | "status" | "no_id"> &
-  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia" | "serie">>;
+  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia" | "serie" | "contrapartida">>;
 
 export type ItemDoEstado = { id: string; nome: string; cnaes: readonly string[]; cnaesDe: { id: string; nome: string } | null };
 

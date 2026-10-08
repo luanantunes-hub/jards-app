@@ -746,6 +746,8 @@ export interface PrestacaoComprovante {
   motivos_ia?: MotivoLido[];
   /** Por onde entrou: a equipe lançou, o proponente enviou pelo espaço dele (P5.4) ou chegou por e-mail (P5.5). */
   canal?: "equipe" | "proponente" | "email";
+  /** Paga como contrapartida, em dinheiro ou por doação (P7.2); vazio é o recurso do projeto. */
+  contrapartida?: "financeira" | "doacao" | null;
   created_at: string;
 }
 // ─── Prestação de contas — Phase 3 ──────────────────────────────────────────
