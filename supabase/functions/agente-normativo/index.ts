@@ -18,11 +18,14 @@
 //
 // No modo "paginas" (P6.1, rotina jards-agente-paginas), coleta as páginas e
 // os arquivos dos órgãos vencidos pela frequência de cada fonte (paginas.ts);
-// pela tela, uma fonte escolhida, na hora.
+// pela tela, uma fonte escolhida, na hora. No modo "ler" (P6.2), a IA lê um
+// documento conferido e propõe a nova versão de cada regime que ele afeta
+// (leitura.ts).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Unzip, UnzipInflate } from "https://esm.sh/fflate@0.8.2";
 import { chaveDoArtigo, lerArtigoDou, triarArtigo, type ArtigoDou } from "../_shared/vigia-dou.ts";
+import { lerDocumento } from "./leitura.ts";
 import { CAMPOS_DA_FONTE, coletarFontes, fonteVencida, type Cliente, type FonteVigiada } from "./paginas.ts";
 
 const INLABS = "https://inlabs.in.gov.br";
@@ -212,17 +215,24 @@ Deno.serve(async (req) => {
   // A rotina diária manda o segredo do cofre; o super admin, o próprio token.
   const segredo = Deno.env.get("AGENTE_NORMATIVO_SEGREDO") ?? "";
   let autorizado = !!segredo && iguais(req.headers.get("x-agente-segredo") ?? "", segredo);
+  let userId: string | null = null;
   if (!autorizado) {
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
     const { data: { user } } = token ? await admin.auth.getUser(token) : { data: { user: null } };
     if (user) {
       const { data: perfil } = await admin.from("profiles").select("jards_super_admin").eq("id", user.id).maybeSingle();
       autorizado = perfil?.jards_super_admin === true;
+      userId = user.id;
     }
   }
   if (!autorizado) return responder({ error: "sem_permissao" }, 401);
 
-  const corpo = await req.json().catch(() => ({})) as { data?: string; ultima?: boolean; modo?: string; fonte_id?: string };
+  const corpo = await req.json().catch(() => ({})) as { data?: string; ultima?: boolean; modo?: string; fonte_id?: string; documento_id?: string };
+  if (corpo.modo === "ler") {
+    if (!/^[0-9a-f-]{36}$/i.test(corpo.documento_id ?? "")) return responder({ error: "documento_invalido" }, 400);
+    const leitura = await lerDocumento(admin, corpo.documento_id!, userId, hojeEmBrasilia());
+    return responder(leitura.corpo, leitura.status);
+  }
   if (corpo.modo === "paginas") {
     if (corpo.fonte_id !== undefined && !/^[0-9a-f-]{36}$/i.test(corpo.fonte_id)) return responder({ error: "fonte_invalida" }, 400);
     return await coletarPaginas(admin, corpo.fonte_id);

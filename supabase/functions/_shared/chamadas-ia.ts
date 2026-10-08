@@ -13,7 +13,7 @@ export function emBase64(bytes: Uint8Array): string {
 }
 
 export async function registrarChamadaIa(admin: SupabaseClient, chamada: {
-  funcao: "extrair-comprovante" | "ler-extrato-pdf";
+  funcao: "extrair-comprovante" | "ler-extrato-pdf" | "agente-normativo";
   organizationId: string | null;
   prestacaoId: string | null;
   userId: string | null;

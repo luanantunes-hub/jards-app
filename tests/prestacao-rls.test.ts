@@ -22,6 +22,10 @@ test("toda tabela da prestação tem sonda no teste de acesso", async () => {
   // o teste confere cada um à parte.
   tabelas.delete("prestacao_regimes");
   tabelas.delete("prestacao_ia_chamadas");
+  // As propostas do agente normativo são do catálogo, só do super admin (normas_rls.test.sql).
+  tabelas.delete("prestacao_regime_propostas");
+  assert.match(await readFile("supabase/tests/normas_rls.test.sql", "utf8"), /pessoa comum: não lê as propostas/,
+    "as propostas de regime também precisam de caso");
   const teste = await readFile(TESTE_RLS, "utf8");
   const lista = /function rls_teste\.todas\(\)[\s\S]*?array\[([\s\S]*?)\]/.exec(teste)?.[1] ?? "";
   const cobertas = new Set([...lista.matchAll(/'(prestac[a-z_]+)'/g)].map(m => m[1]));
