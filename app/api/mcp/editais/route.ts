@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authenticateMcpRequest, isErrorResponse } from "@/lib/mcp/auth";
+import { hojeEmSaoPaulo } from "@/lib/mcp/datas";
 
 /** Base pública, compartilhada entre todos os clientes do Jards — não é escopada por organização. */
 export async function GET(req: NextRequest) {
@@ -19,7 +20,8 @@ export async function GET(req: NextRequest) {
     .order("data_fechamento", { ascending: true })
     .limit(limite);
   if (busca) query = query.ilike("titulo", `%${busca}%`);
-  if (apenasAtivos) query = query.eq("ativo", true);
+  // "Ativo" no banco não basta: há edital marcado como ativo que já encerrou. Aberto = sem data de fechamento ou fechando de hoje em diante.
+  if (apenasAtivos) query = query.eq("ativo", true).or(`data_fechamento.is.null,data_fechamento.gte.${hojeEmSaoPaulo()}`);
 
   const { data, error } = await query;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });

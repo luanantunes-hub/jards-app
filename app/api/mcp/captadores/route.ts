@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
   const admin = createAdminClient();
   let query = admin
     .from("captadores")
-    .select("id,nome,email,status,updated_at")
+    .select("id,nome,email,ativo,updated_at")
     .eq("organization_id", orgId)
     .order("updated_at", { ascending: false })
     .limit(limite);

@@ -1,48 +1,22 @@
-import { NextRequest, NextResponse } from "next/server";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { authenticateMcpRequest, isErrorResponse, requireWriteScope, resolveOrgId } from "@/lib/mcp/auth";
+import { consultarContatos } from "@/lib/mcp/consultas";
+import { garantirDaOrganizacao } from "@/lib/mcp/crm";
+import { resposta, rotaMcp } from "@/lib/mcp/rota";
+import { paginacao, termoDeBusca } from "@/lib/mcp/validacao";
 
 /**
- * Ver os contatos de uma empresa consome 1 crédito da organização, na primeira
- * vez (mesma regra do app — fn_desbloquear_empresa_as). Se já estava
- * desbloqueada, não cobra de novo. Por gastar crédito (efeito colateral,
- * não leitura pura), exige chave com escopo de escrita.
+ * Contatos que a equipe cadastrou nessa empresa do CRM. É leitura simples, sem gastar crédito: o crédito do Jards
+ * é só para abrir os contatos da base pública de patrocinadores no app, não para ver os da própria carteira.
  */
-export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const ctx = await authenticateMcpRequest(req);
-  if (isErrorResponse(ctx)) return ctx;
-  const scopeError = requireWriteScope(ctx);
-  if (scopeError) return scopeError;
-
-  const searchParams = req.nextUrl.searchParams;
-  const orgId = resolveOrgId(ctx, searchParams.get("organization_id"));
-  if (isErrorResponse(orgId)) return orgId;
-
-  const { id: empresaCrmId } = await params;
-  const admin = createAdminClient();
-
-  const { data: desbloqueio, error: desbloqueioError } = await admin.rpc("fn_desbloquear_empresa_as", {
-    p_user_id: ctx.userId,
-    p_organization_id: orgId,
-    p_empresa_id: empresaCrmId,
+export const GET = rotaMcp({ escrita: false }, async ({ admin, orgId, id, query }) => {
+  await garantirDaOrganizacao(admin, orgId, "empresas_crm", "id", id);
+  const { limite, deslocamento } = paginacao(query);
+  const contatos = await consultarContatos(admin, orgId, {
+    busca: termoDeBusca(query.get("busca")),
+    empresa_crm_id: id,
+    proponente_id: null,
+    captador_id: null,
+    limite,
+    deslocamento,
   });
-  if (desbloqueioError) return NextResponse.json({ error: desbloqueioError.message }, { status: 402 });
-
-  const busca = searchParams.get("busca");
-  const limite = Math.min(Math.max(Number(searchParams.get("limite") ?? 20), 1), 100);
-
-  let query = admin
-    .from("contatos")
-    .select(
-      "id,nome,cargo,email,telefone,telefone_2,linkedin_url,papel_decisao,sentimento,score,ativo_na_empresa,ultima_interacao,updated_at"
-    )
-    .eq("organization_id", orgId)
-    .eq("empresa_crm_id", empresaCrmId)
-    .order("updated_at", { ascending: false })
-    .limit(limite);
-  if (busca) query = query.ilike("nome", `%${busca}%`);
-
-  const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ desbloqueio, contatos: data });
-}
+  return resposta({ contatos });
+});

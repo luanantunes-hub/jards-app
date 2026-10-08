@@ -5,10 +5,18 @@ export const VERSOES_SUPORTADAS = ["2025-06-18", "2025-03-26", "2024-11-05"] as 
 
 export const INSTRUCOES =
   "Jards é um CRM de captação de patrocínio por leis de incentivo (Rouanet/Cultura, Ancine, Esporte e Saúde). " +
-  "As ferramentas consultam os dados da organização da pessoa conectada: projetos, empresas do CRM, contatos, " +
-  "propostas, tarefas, captadores, proponentes, editais públicos e a base pública de patrocinadores. " +
+  "As ferramentas leem e gravam no CRM da organização da pessoa conectada: empresas, contatos, negociações (o funil), " +
+  "projetos, proponentes, atividades (as tarefas do Jards), follow-ups, interações, notas, inscrições em editais, " +
+  "propostas e captadores; também consultam os editais públicos e a base pública de patrocinadores. " +
   "Se a pessoa pertence a mais de uma organização, informe organization_id (use listar_minhas_organizacoes). " +
-  "Ver os contatos de uma empresa consome crédito da organização na primeira vez.";
+  "Antes de criar algo, procure o que já existe (listar_empresas_crm, listar_contatos, listar_negociacoes...): " +
+  "criar_empresa_crm, criar_contato, criar_projeto e criar_proponente devolvem o registro existente em vez de duplicar. " +
+  "Uma negociação liga uma empresa a um projeto: crie a empresa e o projeto se faltarem e depois use criar_negociacao. " +
+  "Use listar_opcoes_do_crm para saber as etapas do funil, as origens, os canais e os ids da equipe; a negociação nova " +
+  "nasce na primeira etapa em aberto, e aprovar ou recusar só se faz no app. " +
+  "Tarefa é atividade (criar_atividade, listar_atividades); para lembrar de retomar um contato numa data use criar_followup; " +
+  "conversa que já aconteceu vira registrar_interacao e observação solta vira criar_nota. " +
+  "Ler os contatos do CRM não gasta crédito. Depois de criar algo, entregue à pessoa o link (url) da resposta.";
 
 /** Resposta do tipo "tool result" maior que isso é cortada: o cliente de IA não aproveita e estoura o contexto. */
 const MAX_TEXTO_DA_FERRAMENTA = 60_000;

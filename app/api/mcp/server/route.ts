@@ -68,7 +68,7 @@ function criarDependencias(req: NextRequest): DependenciasMcp {
         return {
           tipo: "resposta",
           status,
-          corpo: { error: "Esta conexão é somente leitura. Para criar registros, reconecte o Jards e marque a permissão de criar contatos e tarefas." },
+          corpo: { error: "Esta conexão é somente leitura. Para criar registros, reconecte o Jards e marque a permissão de criar registros no CRM (empresas, contatos, negociações, atividades e mais)." },
         };
       }
       return { tipo: "resposta", status, corpo };

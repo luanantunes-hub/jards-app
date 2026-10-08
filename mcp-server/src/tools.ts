@@ -247,7 +247,7 @@ export const tools: ToolDef[] = [
       const orgId = await resolveOrgId(organization_id as string | undefined);
       let query = supabase
         .from("captadores")
-        .select("id,nome,email,status,updated_at")
+        .select("id,nome,email,ativo,updated_at")
         .eq("organization_id", orgId)
         .order("updated_at", { ascending: false })
         .limit(limite as number);
@@ -284,7 +284,7 @@ export const tools: ToolDef[] = [
       "compartilhada entre todos os clientes, usada para prospecção).",
     schema: { busca: searchParam, limite: limitParam },
     handler: async ({ busca, limite }) => {
-      let query = supabase.from("empresas").select("id,nome,site,cidade,estado,segmento").limit(limite as number);
+      let query = supabase.from("empresas").select("id,nome,site,cidade,estado,setor").limit(limite as number);
       if (busca) query = query.ilike("nome", `%${busca}%`);
       const { data, error } = await query;
       if (error) throw new Error(error.message);

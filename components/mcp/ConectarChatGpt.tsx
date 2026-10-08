@@ -73,8 +73,8 @@ export function ConectarChatGpt({ status, verificacao, origem, urlServidor, aoIn
         <>
           <p>O ChatGPT abre a tela de login do Jards: entre e autorize.</p>
           <p className="mt-1 text-xs text-black/60">
-            Por padrão o ChatGPT só lê. Para ele criar contatos e tarefas, ou ver os contatos de uma empresa (consome
-            crédito), marque a permissão extra na tela de autorização.
+            Por padrão o ChatGPT só lê. Para ele também criar registros (empresas, contatos, negociações, atividades e
+            mais), marque a permissão extra na tela de autorização.
           </p>
         </>
       }

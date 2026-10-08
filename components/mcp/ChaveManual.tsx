@@ -67,7 +67,7 @@ export function ChaveManual({ aoCriar }: { aoCriar: () => Promise<void> }) {
           <div className="mt-2">
             <Select id={idPermissao} value={scope} onChange={(e) => setScope(e.target.value as "read" | "write")} className="h-10">
               <option value="read">Somente leitura</option>
-              <option value="write">Leitura e criação (contatos, tarefas)</option>
+              <option value="write">Leitura e criação (empresas, contatos, negociações, atividades)</option>
             </Select>
           </div>
         </div>

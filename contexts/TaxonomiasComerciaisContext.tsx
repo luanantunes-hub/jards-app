@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { LEI_OPTIONS } from "@/lib/constants/lei";
+import { CANAIS_PADRAO, ORIGENS_PADRAO, RESULTADOS_PADRAO } from "@/lib/taxonomias-padrao";
 
 export type TaxonomiaCategoria = "origem" | "canal" | "resultado" | "lei";
 export type TaxonomiaOpcao = {
@@ -19,24 +20,9 @@ export type TaxonomiaOpcao = {
 };
 
 const DEFAULTS: Record<TaxonomiaCategoria, TaxonomiaOpcao[]> = {
-  origem: [
-    ["prospeccao_ativa","Prospecção ativa","#7259B5","Search"], ["indicacao","Indicação","#2E8932","Users"],
-    ["edital","Edital","#2D72B0","FileText"], ["evento","Evento","#B07A14","Calendar"],
-    ["inbound","Inbound","#1A8B7A","ArrowDownToLine"], ["parceiro","Parceiro","#7259B5","Handshake"],
-    ["base_propria","Base própria","#666666","Database"], ["outro","Outro","#888888","MoreHorizontal"],
-  ].map(([chave,label,cor,icone], index) => ({ id:`default-origem-${chave}`, categoria:"origem", chave, label, cor, icone, ordem:(index+1)*10, ativo:true, padrao:true })),
-  canal: [
-    ["email","E-mail","#2D72B0","Mail"], ["telefone","Telefone","#1A8B7A","Phone"],
-    ["linkedin","LinkedIn","#2D72B0","Send"], ["whatsapp","WhatsApp","#2E8932","MessageCircle"],
-    ["videoconferencia","Videoconferência","#7259B5","Video"], ["presencial","Presencial","#B07A14","Users"],
-    ["outro","Outro","#888888","MoreHorizontal"],
-  ].map(([chave,label,cor,icone], index) => ({ id:`default-canal-${chave}`, categoria:"canal", chave, label, cor, icone, ordem:(index+1)*10, ativo:true, padrao:true })),
-  resultado: [
-    ["sem_resposta","Sem resposta","#888888","Clock"], ["respondeu","Respondeu","#2D72B0","MessageSquare"],
-    ["reuniao_agendada","Reunião agendada","#7259B5","CalendarCheck"], ["proposta_solicitada","Proposta solicitada","#B07A14","FileCheck"],
-    ["avancou","Avançou","#2E8932","TrendingUp"], ["adiado","Adiado","#B07A14","Pause"],
-    ["recusou","Recusou","#D94E4E","XCircle"],
-  ].map(([chave,label,cor,icone], index) => ({ id:`default-resultado-${chave}`, categoria:"resultado", chave, label, cor, icone, ordem:(index+1)*10, ativo:true, padrao:true })),
+  origem: ORIGENS_PADRAO.map(([chave,label,cor,icone], index) => ({ id:`default-origem-${chave}`, categoria:"origem", chave, label, cor, icone, ordem:(index+1)*10, ativo:true, padrao:true })),
+  canal: CANAIS_PADRAO.map(([chave,label,cor,icone], index) => ({ id:`default-canal-${chave}`, categoria:"canal", chave, label, cor, icone, ordem:(index+1)*10, ativo:true, padrao:true })),
+  resultado: RESULTADOS_PADRAO.map(([chave,label,cor,icone], index) => ({ id:`default-resultado-${chave}`, categoria:"resultado", chave, label, cor, icone, ordem:(index+1)*10, ativo:true, padrao:true })),
   lei: LEI_OPTIONS.filter(option => option.status).map((option, index) => ({
     id: `default-lei-${option.status}`, categoria: "lei", chave: option.status,
     label: option.label, cor: option.bg, icone: option.iconName,

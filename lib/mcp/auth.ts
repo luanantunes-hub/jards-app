@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse, after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { MODULO_CAPTACAO, PAPEL_COM_ACESSO_AO_CRM } from "@/lib/mcp/enums";
 import { isRateLimited } from "@/lib/mcp/rateLimit";
 
 const MAX_REQUESTS_PER_KEY_PER_MIN = 60;
@@ -34,6 +35,26 @@ export interface McpAuthContext {
   paidOrganizationIds: string[];
   scope: McpKeyScope;
 }
+
+export interface Membro {
+  organization_id: string;
+  papel: string | null;
+  modulos_acesso: string[] | null;
+}
+
+/**
+ * Organizações em que a pessoa pode usar o conector: ela é da equipe (admin) e tem o módulo de captação.
+ * Captador e proponente são externos e no app só veem o próprio espaço; o conector lê com a chave de serviço
+ * (sem o RLS do app), então quem não tem esse acesso no app também não pode ter pelo conector.
+ */
+export function organizacoesComAcessoAoCrm(membros: readonly Membro[]): string[] {
+  return membros
+    .filter((m) => m.papel === PAPEL_COM_ACESSO_AO_CRM && (m.modulos_acesso == null || m.modulos_acesso.includes(MODULO_CAPTACAO)))
+    .map((m) => m.organization_id);
+}
+
+export const SEM_ACESSO_AO_CONECTOR =
+  "Esta conta não tem acesso ao conector do Jards: ele é para quem é da equipe da organização e usa a captação. Captadores e proponentes externos usam só o próprio espaço no app.";
 
 /**
  * Autentica uma requisição do MCP/Custom GPT pelo header `Authorization: Bearer <chave>`.
@@ -96,11 +117,14 @@ export async function authenticateMcpRequest(
 
   const { data: memberships, error: membershipError } = await admin
     .from("organization_members")
-    .select("organization_id")
+    .select("organization_id,papel,modulos_acesso")
     .eq("user_id", key.user_id);
   if (membershipError) return NextResponse.json({ error: membershipError.message }, { status: 500 });
 
-  const organizationIds = (memberships ?? []).map((m) => m.organization_id);
+  const organizationIds = organizacoesComAcessoAoCrm((memberships ?? []) as Membro[]);
+  if (organizationIds.length === 0 && (memberships ?? []).length > 0) {
+    return NextResponse.json({ error: SEM_ACESSO_AO_CONECTOR }, { status: 403 });
+  }
   const paidOrganizationIds = await filterPaidOrganizations(admin, organizationIds);
 
   // Gate de plano no ponto de entrada: MCP/Custom GPT é recurso pago. Sem
@@ -145,10 +169,10 @@ export async function filterPaidOrganizations(
 export async function userHasPaidOrg(admin: ReturnType<typeof createAdminClient>, userId: string): Promise<boolean> {
   const { data: memberships, error } = await admin
     .from("organization_members")
-    .select("organization_id")
+    .select("organization_id,papel,modulos_acesso")
     .eq("user_id", userId);
   if (error || !memberships) return false;
-  const orgIds = memberships.map((m) => m.organization_id);
+  const orgIds = organizacoesComAcessoAoCrm(memberships as Membro[]);
   const paid = await filterPaidOrganizations(admin, orgIds);
   return paid.length > 0;
 }

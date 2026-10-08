@@ -59,9 +59,8 @@ export function AuthorizeConsent({
         <div className="mt-4 rounded border border-black/10 bg-black/[0.02] p-3 text-sm">
           <p className="font-medium text-black">Vai poder:</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-4 text-black/70">
-            <li>Ler projetos, propostas, tarefas, empresas e contatos das suas organizações</li>
-            {!publico && scope === "write" && <li>Criar contatos e tarefas</li>}
-            {!publico && scope === "write" && <li>Desbloquear contatos de empresas (consome créditos da organização)</li>}
+            <li>Ler o CRM das suas organizações: empresas, contatos, negociações, projetos, atividades, propostas e mais</li>
+            {!publico && scope === "write" && <li>Criar registros no CRM: empresas, contatos, negociações, projetos, atividades, notas e follow-ups</li>}
           </ul>
           {organizacoes.length > 0 && (
             <p className="mt-2 text-xs text-black/50">Organizações: {organizacoes.join(", ")}</p>
@@ -96,8 +95,8 @@ export function AuthorizeConsent({
             <label className="mb-4 flex cursor-pointer items-start gap-2.5 text-sm text-black/70">
               <input type="checkbox" name="escrita" className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[#0D0D0D]" />
               <span>
-                Permitir também criar contatos e tarefas e desbloquear contatos de empresas{" "}
-                <span className="text-black/45">(usa créditos da organização)</span>
+                Permitir também criar registros no CRM{" "}
+                <span className="text-black/45">(empresas, contatos, negociações, atividades, notas e mais)</span>
               </span>
             </label>
           )}

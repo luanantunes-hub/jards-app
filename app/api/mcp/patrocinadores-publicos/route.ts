@@ -12,7 +12,7 @@ export async function GET(req: NextRequest) {
   const limite = Math.min(Math.max(Number(params.get("limite") ?? 20), 1), 100);
 
   const admin = createAdminClient();
-  let query = admin.from("empresas").select("id,nome,site,cidade,estado,segmento").limit(limite);
+  let query = admin.from("empresas").select("id,nome,site,cidade,estado,setor").limit(limite);
   if (busca) query = query.ilike("nome", `%${busca}%`);
 
   const { data, error } = await query;
