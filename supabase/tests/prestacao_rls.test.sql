@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(208);
+select plan(219);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -138,6 +138,12 @@ begin
     ('f0000000-0000-4000-8000-0000000028a0', pa, 'f0000000-0000-4000-8000-0000000027a0', 'f0000000-0000-4000-8000-0000000005a0', 'RLS glosa', 10);
   insert into public.prestacao_recursos (id, prestacao_id, decisao_id, protocolado_em) values
     ('f0000000-0000-4000-8000-0000000029a0', pa, 'f0000000-0000-4000-8000-0000000027a0', current_date);
+  -- Relatório do patrocinador (P5.2): uma empresa do CRM de A e um link, de endereço conhecido no teste.
+  insert into public.empresas_crm (id, account_id, organization_id, nome) values
+    ('f0000000-0000-4000-8000-0000000031a0', admin_a, org_a, 'RLS Patrocinador');
+  insert into public.prestacao_links_patrocinador (id, prestacao_id, empresa_crm_id, patrocinador, token_hash, expira_em) values
+    ('f0000000-0000-4000-8000-0000000030a0', pa, 'f0000000-0000-4000-8000-0000000031a0', 'RLS Patrocinador',
+     encode(extensions.digest(repeat('a', 48), 'sha256'), 'hex'), current_date + 30);
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -164,7 +170,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
     'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes',
     'prestacao_envios', 'prestacao_envio_itens', 'prestacao_diligencias', 'prestacao_decisoes', 'prestacao_glosas',
-    'prestacao_recursos'
+    'prestacao_recursos', 'prestacao_links_patrocinador'
   ];
 $$;
 
@@ -178,17 +184,17 @@ $$;
 -- importação e os lançamentos do extrato, as verificações e os envios, que só
 -- as funções do banco escrevem.
 create function rls_teste.editaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
+  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
     'prestacao_status_log'), 'prestacao_extrato_importacoes'), 'prestacao_lancamentos'), 'prestacao_verificacoes'),
-    'prestacao_envios'), 'prestacao_envio_itens');
+    'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador');
 $$;
 
 -- O que quem edita apaga: também a importação (desfaz o arquivo e leva os
 -- lançamentos dela); o lançamento sozinho, o histórico, a verificação e o
 -- envio, não.
 create function rls_teste.apagaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'),
-    'prestacao_verificacoes'), 'prestacao_envios'), 'prestacao_envio_itens');
+  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'),
+    'prestacao_verificacoes'), 'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador');
 $$;
 
 -- Roda o comando e desfaz. 'sim' se leu ou atingiu alguma linha; '' se a
@@ -254,7 +260,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_diligencias where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_decisoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_glosas where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_recursos where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_recursos where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_links_patrocinador where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -290,7 +297,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_diligencias (prestacao_id, recebida_em, descricao, situacao, respondida_em) values ('f0000000-0000-4000-8000-0000000001a0', current_date, 'RLS nova diligência', 'respondida', current_date)$c$),
     rls_teste.efeito($c$insert into public.prestacao_decisoes (prestacao_id, resultado, registrada_em, documento_path) values ('f0000000-0000-4000-8000-0000000001a0', 'aprovada', current_date, 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/pos-envio/f0000000-0000-4000-8000-000000000ab1.pdf')$c$),
     rls_teste.efeito($c$insert into public.prestacao_glosas (prestacao_id, descricao, valor) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova glosa', 5)$c$),
-    rls_teste.efeito($c$insert into public.prestacao_recursos (prestacao_id, decisao_id, protocolado_em) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000027a0', current_date)$c$)
+    rls_teste.efeito($c$insert into public.prestacao_recursos (prestacao_id, decisao_id, protocolado_em) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000027a0', current_date)$c$),
+    rls_teste.efeito($c$insert into public.prestacao_links_patrocinador (prestacao_id, patrocinador, token_hash, expira_em) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS direto', repeat('b', 64), current_date + 30)$c$)
   ]);
 $$;
 
@@ -326,7 +334,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_diligencias set resposta = resposta where id = 'f0000000-0000-4000-8000-0000000026a0'$c$),
     rls_teste.efeito($c$update public.prestacao_decisoes set resumo = resumo where id = 'f0000000-0000-4000-8000-0000000027a0'$c$),
     rls_teste.efeito($c$update public.prestacao_glosas set observacoes = observacoes where id = 'f0000000-0000-4000-8000-0000000028a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_recursos set pedido = pedido where id = 'f0000000-0000-4000-8000-0000000029a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_recursos set pedido = pedido where id = 'f0000000-0000-4000-8000-0000000029a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_links_patrocinador set mensagem = mensagem where id = 'f0000000-0000-4000-8000-0000000030a0'$c$)
   ]);
 $$;
 
@@ -362,7 +371,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_diligencias where id = 'f0000000-0000-4000-8000-0000000026a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_decisoes where id = 'f0000000-0000-4000-8000-0000000027a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_glosas where id = 'f0000000-0000-4000-8000-0000000028a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_recursos where id = 'f0000000-0000-4000-8000-0000000029a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_recursos where id = 'f0000000-0000-4000-8000-0000000029a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_links_patrocinador where id = 'f0000000-0000-4000-8000-0000000030a0'$c$)
   ]);
 $$;
 
@@ -1038,6 +1048,44 @@ reset role;
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
 set local role authenticated;
 select is((select count(*)::integer from public.prestacao_carteira where prestacao_id = 'f0000000-0000-4000-8000-0000000001b0'), 0, 'carteira: outra organização não vê');
+reset role;
+
+-- P5.2: o link do patrocinador. Quem edita cria e revoga; quem tem o link lê e aceita uma vez.
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$select public.fn_prestacao_criar_link_patrocinador('f0000000-0000-4000-8000-0000000001a0', 'RLS Novo patrocinador', 'f0000000-0000-4000-8000-0000000031a0')$t$,
+  'quem edita: cria o link do patrocinador');
+select throws_ok($t$select public.fn_prestacao_criar_link_patrocinador('f0000000-0000-4000-8000-0000000001a0', 'RLS Velho', null, current_date - 1)$t$,
+  'P0001', 'validade_invalida', 'o link nasce com validade futura');
+reset role;
+select is((select count(*)::integer from public.prestacao_links_patrocinador where patrocinador = 'RLS Novo patrocinador' and expira_em = current_date + 90 and token_hash ~ '^[0-9a-f]{64}$'),
+  1, 'o link guarda só o hash, com 90 dias de validade');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a4","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_criar_link_patrocinador('f0000000-0000-4000-8000-0000000001a0', 'RLS Leitor')$t$,
+  '42501', 'sem_permissao', 'quem só lê não cria link');
+reset role;
+set local request.jwt.claims = '{"role":"anon"}';
+set local role anon;
+select is((select public.fn_relatorio_patrocinador_publico(repeat('a', 48)) ->> 'patrocinador'), 'RLS Patrocinador', 'sem login: o link abre o relatório');
+select is(public.fn_relatorio_patrocinador_publico(repeat('c', 48)), null, 'sem login: link desconhecido não abre nada');
+select lives_ok($t$select public.fn_relatorio_patrocinador_aceitar(repeat('a', 48), 'Maria Patrocinadora', 'Tudo certo.')$t$,
+  'sem login: o patrocinador registra o aceite');
+select throws_ok($t$select public.fn_relatorio_patrocinador_aceitar(repeat('a', 48), 'Outra pessoa')$t$,
+  'P0001', 'ja_aceito', 'o aceite é um só');
+reset role;
+select ok(exists (select 1 from public.prestacao_links_patrocinador l join public.crm_interacoes i on i.id = l.interacao_id
+                   where l.id = 'f0000000-0000-4000-8000-0000000030a0' and l.visualizacoes = 1
+                     and i.empresa_crm_id = 'f0000000-0000-4000-8000-0000000031a0' and i.resultado = 'avancou'),
+  'a visita conta e o aceite entra no histórico do patrocinador no CRM');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$select public.fn_prestacao_revogar_link_patrocinador('f0000000-0000-4000-8000-0000000030a0')$t$,
+  'quem edita: revoga o link');
+reset role;
+set local request.jwt.claims = '{"role":"anon"}';
+set local role anon;
+select is((select public.fn_relatorio_patrocinador_publico(repeat('a', 48)) ->> 'situacao'), 'revogado', 'sem login: o link revogado não mostra o relatório');
 reset role;
 
 select * from finish();
