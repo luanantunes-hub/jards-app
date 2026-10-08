@@ -75,10 +75,13 @@ export function isLoopbackRedirectUri(uri: string): boolean {
 // Callback oficial do Claude (claude.ai e o domínio novo claude.com).
 const CLAUDE_REDIRECT_URI = /^https:\/\/(claude\.ai|claude\.com)\/api\/mcp\/auth_callback$/;
 
-/** O que um cliente pode registrar: callback do Claude ou loopback (Claude Code e ferramentas locais). */
+// Callbacks do conector MCP do ChatGPT: um por conector (/connector/oauth/{id}) e o estável legado.
+const CHATGPT_CONNECTOR_REDIRECT_URI = /^https:\/\/chatgpt\.com\/(connector\/oauth\/[A-Za-z0-9_-]+|connector_platform_oauth_redirect)$/;
+
+/** O que um cliente pode registrar: callback do Claude ou do ChatGPT, ou loopback (Claude Code e ferramentas locais). */
 export function isRegistrableRedirectUri(uri: string): boolean {
   if (typeof uri !== "string" || uri.length > 300) return false;
-  if (CLAUDE_REDIRECT_URI.test(uri)) return true;
+  if (CLAUDE_REDIRECT_URI.test(uri) || CHATGPT_CONNECTOR_REDIRECT_URI.test(uri)) return true;
   return isLoopbackRedirectUri(uri) && !new URL(uri).hash;
 }
 

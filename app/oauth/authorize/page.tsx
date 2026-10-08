@@ -25,6 +25,7 @@ function provedorDoCliente(redirectUri: string): string {
   try {
     const host = new URL(redirectUri).hostname;
     if (host === "claude.ai" || host === "claude.com") return "da Anthropic (Claude)";
+    if (host === "chatgpt.com") return "da OpenAI (ChatGPT)";
   } catch {
     // cai no padrão
   }

@@ -12,6 +12,17 @@ test("MCP: sem token, o servidor pede autorização e aponta os metadados de OAu
   expect(desafio).toContain("/.well-known/oauth-protected-resource/api/mcp/server");
 });
 
+test("MCP: quem digita o endereço no navegador cai na tela de configuração, em vez de baixar um arquivo", async ({ request }) => {
+  const navegador = await request.get("/api/mcp/server", { headers: { Accept: "text/html,application/xhtml+xml,*/*;q=0.8" }, maxRedirects: 0 });
+  expect(navegador.status()).toBe(307);
+  expect(navegador.headers()["location"]).toMatch(/\/configuracoes\/mcp$/);
+
+  // Os clientes MCP seguem recebendo o 405 de sempre.
+  const cliente = await request.get("/api/mcp/server", { headers: { Accept: "text/event-stream" }, maxRedirects: 0 });
+  expect(cliente.status()).toBe(405);
+  expect(cliente.headers()["allow"]).toBe("POST");
+});
+
 test("MCP: os metadados de OAuth são públicos e completos", async ({ request }) => {
   const recurso = await request.get("/.well-known/oauth-protected-resource/api/mcp/server");
   expect(recurso.status()).toBe(200);
@@ -28,7 +39,7 @@ test("MCP: os metadados de OAuth são públicos e completos", async ({ request }
   expect(metadadosServidor.code_challenge_methods_supported).toEqual(["S256"]);
 });
 
-test("MCP: o registro de cliente recusa callback que não é do Claude", async ({ request }) => {
+test("MCP: o registro de cliente recusa callback que não é do Claude nem do ChatGPT", async ({ request }) => {
   const resposta = await request.post("/api/mcp/oauth/register", { data: { client_name: "Intruso", redirect_uris: ["https://evil.example/cb"] } });
 
   expect(resposta.status()).toBe(400);

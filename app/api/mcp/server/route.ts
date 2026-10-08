@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { authenticateMcpRequest, isErrorResponse, type McpAuthContext } from "@/lib/mcp/auth";
 import { FERRAMENTAS, ferramentasDoEscopo, normalizarArgumentos, validarArgumentos } from "@/lib/mcp/ferramentas";
 import { executarFerramenta } from "@/lib/mcp/execucao";
+import { pedidoDeNavegador } from "@/lib/mcp/navegador";
 import { ErroHttp, VERSOES_SUPORTADAS, tratarMensagem, type DependenciasMcp, type RespostaJsonRpc } from "@/lib/mcp/protocolo";
 
 /**
@@ -121,5 +122,16 @@ export async function POST(req: NextRequest) {
 function metodoNaoPermitido() {
   return new NextResponse(null, { status: 405, headers: { Allow: "POST" } });
 }
-export const GET = metodoNaoPermitido;
+
+// Quem cola o endereço na barra do navegador (em vez de no Claude ou no ChatGPT) cairia num download
+// vazio: leva essa pessoa para a tela que explica como conectar.
+export function GET(req: NextRequest) {
+  if (pedidoDeNavegador(req.headers.get("accept"))) {
+    return NextResponse.redirect(new URL("/configuracoes/mcp", req.nextUrl.origin), {
+      status: 307,
+      headers: { ...SEM_CACHE, Vary: "Accept" },
+    });
+  }
+  return metodoNaoPermitido();
+}
 export const DELETE = metodoNaoPermitido;
