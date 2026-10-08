@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Calendar, FolderOpen, TrendingUp, Zap, FileText, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { PrestacoesDoProponente } from "@/components/prestacao/proponente/PrestacoesDoProponente";
 
 type ProjetoResumo = {
   id: string;
@@ -86,6 +87,7 @@ export default function WorkspaceProponenteListPage() {
 
       <main className="mx-auto w-full max-w-pagina px-4 py-8 sm:px-6 lg:px-10">
         {erro && <p role="alert" className="mb-4 text-[0.75rem] font-medium text-[#D94E4E]">{erro}</p>}
+        <PrestacoesDoProponente />
 
         {projetos.length === 0 ? (
           <div className="rounded border px-6 py-14 text-center" style={{ borderColor: "rgba(13,13,13,.10)", borderStyle: "dashed" }}>

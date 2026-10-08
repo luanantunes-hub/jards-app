@@ -7,6 +7,8 @@
 --   organização B, com o módulo: admin;
 --   organização C, sem o módulo: admin com acesso aos dois módulos;
 --   convidado de fora (P5.3), com convite aceito só para o financeiro de A;
+--   proponente da prestação de A (P5.4), membro de A sem o módulo e ligado ao
+--   cadastro do proponente;
 --   visitante sem login.
 -- A prestação de A tem uma linha em cada tabela e dois arquivos no bucket
 -- (um da prestação e um fora dela); A tem um fornecedor, que é da
@@ -22,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(250);
+select plan(275);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -41,7 +43,7 @@ begin
     'f0000000-0000-4000-8000-0000000000a3', 'f0000000-0000-4000-8000-0000000000a4',
     'f0000000-0000-4000-8000-0000000000a5', 'f0000000-0000-4000-8000-0000000000a6',
     'f0000000-0000-4000-8000-0000000000b1', 'f0000000-0000-4000-8000-0000000000c1',
-    'f0000000-0000-4000-8000-0000000000a7'
+    'f0000000-0000-4000-8000-0000000000a7', 'f0000000-0000-4000-8000-0000000000a8'
   ]::uuid[]) as id;
   -- O cadastro também cria uma organização pessoal para cada pessoa nova. Ela
   -- fica: não tem o módulo da prestação e não muda nenhum caso abaixo.
@@ -59,14 +61,19 @@ begin
     (org_a, 'f0000000-0000-4000-8000-0000000000a5', 'colaborador', '{captacao}', null),
     (org_a, 'f0000000-0000-4000-8000-0000000000a6', 'captador', '{captacao}', null),
     (org_b, 'f0000000-0000-4000-8000-0000000000b1', 'admin', '{captacao,prestacao}', null),
-    (org_c, 'f0000000-0000-4000-8000-0000000000c1', 'admin', '{captacao,prestacao}', null);
+    (org_c, 'f0000000-0000-4000-8000-0000000000c1', 'admin', '{captacao,prestacao}', null),
+    (org_a, 'f0000000-0000-4000-8000-0000000000a8', 'proponente', '{captacao}', null);
+  -- O cadastro do proponente de A, ligado à conta …00a8 (P5.4).
+  insert into public.proponentes (id, account_id, organization_id, nome, user_id) values
+    ('f0000000-0000-4000-8000-0000000032a0', admin_a, org_a, 'RLS Proponente', 'f0000000-0000-4000-8000-0000000000a8');
 
   -- A prestação de A é da Rouanet: o checklist de envio (P4.1) confere os itens no regime.
-  insert into public.prestacoes_contas (id, titulo, organization_id, criado_por, regime_id) values
+  insert into public.prestacoes_contas (id, titulo, organization_id, criado_por, regime_id, proponente_id) values
     (pa, 'RLS prestação A', org_a, admin_a,
-     (select id from public.prestacao_regimes where codigo = 'rouanet_in29_2026' and status = 'publicado' order by versao desc limit 1)),
-    ('f0000000-0000-4000-8000-0000000001b0', 'RLS prestação B', org_b, 'f0000000-0000-4000-8000-0000000000b1', null),
-    ('f0000000-0000-4000-8000-0000000001c0', 'RLS prestação C', org_c, 'f0000000-0000-4000-8000-0000000000c1', null);
+     (select id from public.prestacao_regimes where codigo = 'rouanet_in29_2026' and status = 'publicado' order by versao desc limit 1),
+     'f0000000-0000-4000-8000-0000000032a0'),
+    ('f0000000-0000-4000-8000-0000000001b0', 'RLS prestação B', org_b, 'f0000000-0000-4000-8000-0000000000b1', null, null),
+    ('f0000000-0000-4000-8000-0000000001c0', 'RLS prestação C', org_c, 'f0000000-0000-4000-8000-0000000000c1', null, null);
 
   insert into public.prestacao_orcamento_versoes (id, prestacao_id, tipo, ativa, criado_por) values
     ('f0000000-0000-4000-8000-0000000002a0', pa, 'aprovada', true, admin_a),
@@ -1186,6 +1193,79 @@ select is(rls_teste.arquivos(), '{}'::text[], 'convite revogado: não lê mais o
 select throws_ok($t$select public.fn_convidado_anotar('f0000000-0000-4000-8000-0000000001a0', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'verificado')$t$,
   '42501', 'sem_convite', 'convite revogado: não anota mais');
 select is((public.fn_convidado_acesso('f0000000-0000-4000-8000-0000000001a0') ->> 'situacao'), 'revogado', 'convite revogado: a abertura diz por quê');
+reset role;
+
+-- ─── Espaço do proponente (P5.4): lê a própria prestação e envia por função ─
+-- Outro cliente de A, ainda sem conta ligada. A organização de teste está no
+-- plano gratuito, que admite um proponente; o limite sai até o teste de criar
+-- cadastro já ligado, para ele mostrar a regra do vínculo.
+alter table public.proponentes disable trigger enforce_free_proponente_limit;
+insert into public.proponentes (id, account_id, organization_id, nome) values
+  ('f0000000-0000-4000-8000-0000000033a0', 'f0000000-0000-4000-8000-0000000000a1', 'f0000000-0000-4000-8000-0000000000a0', 'RLS outro cliente');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","role":"authenticated"}';
+set local role authenticated;
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'),
+  array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
+    'prestacao_status_log'), 'prestacao_verificacoes'), 'prestacao_links_patrocinador'), 'prestacao_convidados'), 'prestacao_convidado_notas'),
+  'proponente: lê a própria prestação, menos o histórico, as verificações, os links e os convidados');
+select is(rls_teste.insere(), '{}'::text[], 'proponente: não cria nada direto nas tabelas');
+select is(rls_teste.altera(), '{}'::text[], 'proponente: não altera nada');
+select is(rls_teste.apaga(), '{}'::text[], 'proponente: não apaga nada');
+select is(rls_teste.arquivos(), array['le', 'envia'], 'proponente: lê os arquivos e envia para a pasta de comprovantes, sem trocar nem apagar os da equipe');
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001b0'), '{}'::text[], 'proponente: não vê a prestação de outra organização');
+select is(rls_teste.efeito($c$insert into storage.objects (bucket_id, name) values ('documentos', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/envio/f0000000-0000-4000-8000-000000000d80.pdf')$c$), '',
+  'proponente: não envia arquivo fora das pastas de comprovantes e evidências');
+select lives_ok($t$insert into storage.objects (bucket_id, name, owner) values ('documentos', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c80.pdf', 'f0000000-0000-4000-8000-0000000000a8')$t$,
+  'proponente: envia o arquivo da despesa para a pasta da prestação');
+select lives_ok($t$select public.fn_proponente_enviar_despesa('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c80.pdf', 'nota.pdf', 'nfe', 150.5, current_date - 3, 'Transporte do cenário', '987')$t$,
+  'proponente: registra a despesa com o arquivo enviado');
+select throws_ok($t$select public.fn_proponente_enviar_despesa('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c80.pdf', 'nota.pdf', 'nfe', 10, current_date, 'De novo')$t$,
+  'P0001', 'arquivo_ja_registrado', 'o mesmo arquivo não vira duas despesas');
+select throws_ok($t$select public.fn_proponente_enviar_despesa('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c81.pdf', 'x.pdf', 'nfe', 10, current_date, 'Sem arquivo')$t$,
+  'P0001', 'arquivo_nao_enviado', 'a despesa pede o arquivo já enviado por quem registra');
+select throws_ok($t$select public.fn_proponente_enviar_despesa('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000000b0/prestacoes/f0000000-0000-4000-8000-0000000001b0/comprovantes/f0000000-0000-4000-8000-000000000c82.pdf', 'x.pdf', 'nfe', 10, current_date, 'Pasta de outra')$t$,
+  'P0001', 'caminho_invalido', 'o arquivo precisa estar na pasta desta prestação');
+select lives_ok($t$select public.fn_proponente_enviar_evidencia('f0000000-0000-4000-8000-0000000001a0', 'link', 'Vídeo do ensaio aberto', p_url => 'https://exemplo.org/video')$t$,
+  'proponente: envia uma evidência por link');
+select is((select array[jsonb_array_length(r)::text, r -> 0 ->> 'id'] from public.fn_proponente_minhas_prestacoes() r),
+  array['1', 'f0000000-0000-4000-8000-0000000001a0'], 'proponente: a lista traz a prestação dele');
+select throws_ok($t$select public.fn_convidado_anotar('f0000000-0000-4000-8000-0000000001a0', 'prestacao', 'f0000000-0000-4000-8000-0000000001a0', 'comentario', 'Oi')$t$,
+  '42501', 'sem_convite', 'proponente sem convite não anota como convidado');
+reset role;
+select is((select array[canal, status::text, (enviado_por = 'f0000000-0000-4000-8000-0000000000a8')::text, valor_extraido::text] from public.prestacao_comprovantes where storage_path = 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c80.pdf'),
+  array['proponente', 'pendente', 'true', '150.50'], 'a despesa entra em análise, marcada como enviada pelo proponente');
+select ok(exists (select 1 from public.notification_events where event_key = 'prestacao_envio_proponente' and entity_id = 'f0000000-0000-4000-8000-0000000001a0'),
+  'quem responde pela prestação é avisado do envio');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a4","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_proponente_enviar_evidencia('f0000000-0000-4000-8000-0000000001a0', 'link', 'Da equipe', p_url => 'https://exemplo.org/x')$t$,
+  '42501', 'sem_permissao', 'quem é da equipe não envia como proponente');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","role":"authenticated"}';
+set local role authenticated;
+select is(public.fn_proponente_retirar('despesa', (select id from public.prestacao_comprovantes where storage_path = 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c80.pdf')), 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c80.pdf',
+  'proponente: retira a despesa em análise e recebe o caminho do arquivo');
+select is(rls_teste.efeito($c$delete from storage.objects where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c80.pdf'$c$), 'sim',
+  'proponente: tira do bucket o arquivo que não virou despesa');
+select throws_ok($t$update public.proponentes set user_id = 'f0000000-0000-4000-8000-0000000000a8' where id = 'f0000000-0000-4000-8000-0000000033a0'$t$,
+  '42501', 'vinculo_do_proponente', 'proponente: não liga a própria conta ao cadastro de outro cliente');
+select throws_ok($t$insert into public.proponentes (account_id, organization_id, nome, user_id) values ('f0000000-0000-4000-8000-0000000000a8', 'f0000000-0000-4000-8000-0000000000a0', 'RLS falso', 'f0000000-0000-4000-8000-0000000000a8')$t$,
+  '42501', 'vinculo_do_proponente', 'proponente: não cria cadastro já ligado à própria conta');
+reset role;
+alter table public.proponentes enable trigger enforce_free_proponente_limit;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a2","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$update public.proponentes set user_id = 'f0000000-0000-4000-8000-0000000000a2' where id = 'f0000000-0000-4000-8000-0000000033a0'$t$,
+  '42501', 'vinculo_do_proponente', 'colaborador: não liga conta ao cadastro do proponente (só o admin)');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$update public.proponentes set user_id = null where id = 'f0000000-0000-4000-8000-0000000032a0'$t$,
+  'admin: desfaz o vínculo do cadastro com a conta');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","role":"authenticated"}';
+set local role authenticated;
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), '{}'::text[], 'sem o vínculo com o cadastro do proponente, não vê mais nada');
 reset role;
 
 select * from finish();
