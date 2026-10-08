@@ -65,6 +65,8 @@ const ERROS: Record<string, string> = {
   alteracao_desatualizada: "O valor de algum item mudou desde que a alteração foi montada. Abra, revise os valores e salve de novo.",
   alteracao_valor_invalido: "Há um valor inválido na alteração.",
   versao_nao_ativa: "A alteração é de uma versão que não está mais em uso. Monte de novo na versão em uso.",
+  // Antes de documento_invalido: a busca é por trecho do código.
+  tipo_de_documento_invalido: "Escolha o tipo de documento.",
   documento_invalido: "Envie o documento pela própria alteração.",
   acao_invalida: "Ação desconhecida. Atualize a página.",
   // Metas e locais (P3.1)
@@ -149,6 +151,16 @@ const ERROS: Record<string, string> = {
   entidade_inexistente: "Este item não existe mais na prestação. Atualize a página.",
   tipo_invalido: "Ação desconhecida. Atualize a página.",
   texto_invalido: "Escreva o comentário (até 2.000 caracteres).",
+  // Espaço do proponente (P5.4) e captura por e-mail (P5.5)
+  arquivo_nao_enviado: "O arquivo não chegou ao armazenamento. Tente enviar de novo.",
+  arquivo_ja_registrado: "Este arquivo já foi registrado. Atualize a página.",
+  valor_invalido: "Informe o valor do documento.",
+  data_do_documento_invalida: "Informe a data do documento, que não pode ser futura.",
+  descricao_invalida: "Diga o que o documento comprova (até 500 caracteres).",
+  arquivo_invalido: "Confira o nome do arquivo e o número do documento.",
+  despesa_ja_avaliada: "A equipe já avaliou esta despesa; ela não pode mais ser retirada.",
+  vinculo_do_proponente: "Só o admin da organização liga a conta ao cadastro do proponente.",
+  remetentes_demais: "São até 20 remetentes autorizados.",
   prestacao_diligencias_resposta: "Diligência respondida pede a data da resposta.",
   prestacao_diligencias_datas: "Confira as datas: a resposta e o prazo não vêm antes do recebimento.",
   prestacao_decisoes_datas: "A ciência não vem antes do registro da decisão.",

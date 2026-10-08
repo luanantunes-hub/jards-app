@@ -697,6 +697,9 @@ export default function ComprovantesPage() {
                       {c.canal === "proponente" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Enviada pelo cliente</span>
                       )}
+                      {c.canal === "email" && (
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Recebida por e-mail</span>
+                      )}
                       {c.origem === "internacional" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #1A8B7A47", color: "#1A8B7A" }}>Internacional</span>
                       )}
