@@ -1,5 +1,5 @@
--- P1.10 e P6.1: quem lê e confere os atos e as páginas guardados pelo vigia
--- normativo, e quem cadastra as fontes.
+-- P1.10, P6.1 e P6.2: quem lê e confere os atos e as páginas guardados pelo
+-- vigia normativo, quem cadastra as fontes e quem lê as propostas da IA.
 --
 -- Cenário criado e desfeito dentro da transação: um super admin, uma pessoa
 -- comum, um ato guardado, uma versão de página com cópia no bucket e as
@@ -10,7 +10,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(39);
+select plan(49);
 
 do $cenario$
 begin
@@ -39,6 +39,10 @@ begin
           'sha-pagina', array['texto mudou em 1 trecho (1 linha nova)'], 'novo', 'html',
           'normas-teste/2026-10-10-sha.html', 'f1000000-0000-4000-8000-0000000000e3');
   insert into storage.objects (bucket_id, name) values ('normas', 'normas-teste/2026-10-10-sha.html');
+  insert into public.prestacao_regime_propostas (id, documento_id, regime_id, regime_codigo, classificacao, resumo)
+  values ('f1000000-0000-4000-8000-0000000000a1', 'f1000000-0000-4000-8000-0000000000d1',
+          (select id from public.prestacao_regimes where codigo = 'pronon_pronas_lxxxvi_a_2025' and status = 'publicado'),
+          'pronon_pronas_lxxxvi_a_2025', 'informativo', 'Prorroga a dedução até 2031.');
 end
 $cenario$;
 
@@ -69,6 +73,9 @@ select is((select count(*)::integer from public.normas_fontes), 0, 'pessoa comum
 select throws_ok($t$select public.fn_normas_fonte_salvar(null, '{"nome": "Página", "url": "https://www.gov.br/x/y"}')$t$,
   '42501', 'sem_permissao', 'pessoa comum: não cadastra fontes');
 select throws_ok($t$select public.fn_agente_paginas_disparar()$t$, '42501', null, 'pessoa comum: não dispara a coleta das páginas');
+select is((select count(*)::integer from public.prestacao_regime_propostas), 0, 'pessoa comum: não lê as propostas');
+select throws_ok($t$select * from public.fn_regime_prestacoes_afetadas('rouanet_in29_2026')$t$, '42501', null,
+  'pessoa comum: não conta as prestações afetadas');
 select is((select count(*)::integer from storage.objects where bucket_id = 'normas'), 0, 'pessoa comum: não lê as cópias');
 reset role;
 
@@ -80,11 +87,26 @@ select is((select titulo from public.normas_documentos where id = 'f1000000-0000
   'super admin: lê os atos guardados');
 select ok((select count(*) from public.agente_execucoes where id in ('f1000000-0000-4000-8000-0000000000e1', 'f1000000-0000-4000-8000-0000000000e2')) = 2,
   'super admin: lê as coletas');
-select lives_ok($t$select public.fn_normas_documento_conferir('f1000000-0000-4000-8000-0000000000d1', 'conferido', ' Muda a dedução do PRONON. ')$t$,
-  'super admin: confere o ato');
+select throws_ok($t$select public.fn_normas_documento_conferir('f1000000-0000-4000-8000-0000000000d1', 'conferido', 'x')$t$,
+  '22023', 'regimes_obrigatorios', 'ato do Diário que afeta um regime precisa dizer qual');
+select throws_ok($t$select public.fn_normas_documento_conferir('f1000000-0000-4000-8000-0000000000d1', 'conferido', 'x', array['nao_existe'])$t$,
+  '22023', 'regime_inexistente', 'o regime escolhido precisa existir');
+select lives_ok($t$select public.fn_normas_documento_conferir('f1000000-0000-4000-8000-0000000000d1', 'conferido', ' Muda a dedução do PRONON. ',
+  array['pronon_pronas_lxxxvi_a_2025'])$t$, 'super admin: confere o ato');
 select is((select array[situacao, nota, (conferido_por = 'f1000000-0000-4000-8000-000000000001')::text] from public.normas_documentos
            where id = 'f1000000-0000-4000-8000-0000000000d1'),
   array['conferido', 'Muda a dedução do PRONON.', 'true'], 'a conferência guarda quem, quando e a nota');
+select is((select regimes from public.normas_documentos where id = 'f1000000-0000-4000-8000-0000000000d1'),
+  array['pronon_pronas_lxxxvi_a_2025'], 'e os regimes que o ato afeta');
+select lives_ok($t$select public.fn_normas_documento_conferir('f1000000-0000-4000-8000-0000000000d2', 'conferido')$t$,
+  'super admin: confere a mudança de página');
+select is((select regimes from public.normas_documentos where id = 'f1000000-0000-4000-8000-0000000000d2'),
+  array['lie_p10_2026', 'lie_p424_2020'], 'a mudança de página afeta os regimes da fonte');
+select is((select resumo from public.prestacao_regime_propostas where id = 'f1000000-0000-4000-8000-0000000000a1'),
+  'Prorroga a dedução até 2031.', 'super admin: lê as propostas');
+select throws_ok($t$insert into public.prestacao_regime_propostas (documento_id, regime_id, regime_codigo, classificacao)
+  values ('f1000000-0000-4000-8000-0000000000d1', (select id from public.prestacao_regimes limit 1), 'x', 'informativo')$t$,
+  '42501', null, 'super admin: propostas só pela função, com a chave de serviço');
 select throws_ok($t$select public.fn_normas_documento_conferir('f1000000-0000-4000-8000-0000000000d1', 'aprovado')$t$,
   '22023', 'situacao_invalida', 'só novo, conferido ou descartado');
 select throws_ok($t$update public.normas_documentos set situacao = 'descartado'$t$, '42501', null,
@@ -132,6 +154,8 @@ select is(public.fn_normas_avisar('f1000000-0000-4000-8000-0000000000e2'), 0, 'c
 select ok(public.fn_normas_avisar('f1000000-0000-4000-8000-0000000000e3') >= 1, 'página mudou: o super admin é avisado');
 select ok(public.fn_normas_avisar('f1000000-0000-4000-8000-0000000000e4') >= 1, 'fonte sem resposta há 3 coletas: o super admin é avisado');
 select is(public.fn_normas_avisar('f1000000-0000-4000-8000-0000000000e5'), 0, 'coleta de páginas sem mudança: nenhum aviso');
+select ok((select prestacoes >= 0 and organizacoes >= 0 from public.fn_regime_prestacoes_afetadas('rouanet_in29_2026')),
+  'a chave de serviço conta as prestações em andamento do regime');
 reset role;
 select is((select payload->>'title' from public.notification_events where dedupe_key like 'normas_vigia:f1000000-0000-4000-8000-0000000000e3:%' limit 1),
   'Páginas dos órgãos: 1 mudança para conferir', 'o aviso diz quantas páginas mudaram');

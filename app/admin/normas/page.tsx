@@ -1,10 +1,10 @@
 "use client";
 
-// Vigia normativo (P1.10 e P6.1): os atos do Diário Oficial e as mudanças nas
-// páginas e arquivos dos órgãos que as coletas guardaram para conferir, as
-// últimas coletas e as fontes vigiadas. Conferir é dizer se o ato ou a
-// mudança afeta um regime do módulo; na fase 6, o agente normativo lê os que
-// afetam e propõe a nova versão do regime.
+// Vigia normativo (P1.10, P6.1 e P6.2): os atos do Diário Oficial e as
+// mudanças nas páginas e arquivos dos órgãos que as coletas guardaram para
+// conferir, as últimas coletas e as fontes vigiadas. Conferir é dizer se o ato
+// ou a mudança afeta um regime do módulo, e quais; aí a IA lê o documento e
+// propõe a nova versão de cada regime, com o trecho da norma conferido.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Download, ExternalLink, RefreshCw, ScrollText } from "lucide-react";
@@ -12,9 +12,12 @@ import { createClient } from "@/lib/supabase/client";
 import { chaveDoArquivo, type ArquivoLigado } from "@/supabase/functions/_shared/vigia-paginas";
 import { DiferencaDasVersoes } from "./DiferencaDasVersoes";
 import { FontesVigiadas } from "./FontesVigiadas";
+import { PropostasDoDocumento, type Proposta } from "./PropostasDoDocumento";
 
 type Documento = {
   id: string;
+  fonte_id: string | null;
+  regimes: string[];
   publicado_em: string;
   edicao: string | null;
   orgao: string;
@@ -33,7 +36,7 @@ type Documento = {
 };
 type Execucao = {
   id: string;
-  agente: "vigia_dou" | "vigia_paginas";
+  agente: "vigia_dou" | "vigia_paginas" | "leitor_normas";
   referencia: string;
   situacao: "rodando" | "ok" | "sem_edicao" | "falhou";
   lidos: number;
@@ -58,7 +61,25 @@ const SITUACAO_DA_COLETA: Record<Execucao["situacao"], { texto: string; cor: str
   falhou: { texto: "Falhou", cor: "#B23B3B" },
   rodando: { texto: "Lendo", cor: "#2D72B0" },
 };
-const CAMPOS_DO_DOCUMENTO = "id, publicado_em, edicao, orgao, tipo_ato, titulo, ementa, url, motivos, situacao, nota, conferido_em, arquivo, arquivos, anterior_id, atualizado_na_fonte";
+const CAMPOS_DO_DOCUMENTO = "id, fonte_id, regimes, publicado_em, edicao, orgao, tipo_ato, titulo, ementa, url, motivos, situacao, nota, conferido_em, arquivo, arquivos, anterior_id, atualizado_na_fonte";
+const CAMPOS_DA_PROPOSTA = "id, documento_id, regime_codigo, classificacao, resumo, mudancas, descartadas, checagens_novas, regime_proposto, vigencia_proposta, transicao, prestacoes_afetadas, organizacoes_afetadas, status, created_at";
+
+type RegimeDoCatalogo = { codigo: string; nome: string };
+
+// Ato do Diário: o regime sugerido pelos motivos da triagem e pelo órgão.
+const SUGESTOES: [RegExp, string][] = [
+  [/rouanet|8\.313|cultura/i, "rouanet_in29_2026"],
+  [/esporte|11\.438|lc 222|12\.861/i, "lie_p10_2026"],
+  [/ancine|audiovisual|2\.228|8\.685/i, "ancine_in159_2021"],
+  [/pronon|pronas|lxxxvi|12\.715|saúde/i, "pronon_pronas_lxxxvi_a_2025"],
+];
+
+function regimesSugeridos(d: Documento, regimesDaFonte: Record<string, string[]>): string[] {
+  if (d.regimes.length) return d.regimes;
+  if (d.fonte_id && regimesDaFonte[d.fonte_id]?.length) return regimesDaFonte[d.fonte_id];
+  const texto = [...d.motivos, d.orgao, d.titulo ?? "", d.ementa ?? ""].join(" ");
+  return SUGESTOES.filter(([padrao]) => padrao.test(texto)).map(([, codigo]) => codigo);
+}
 
 const dataBr = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 const horaBr = (iso: string) => new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
@@ -142,14 +163,23 @@ function Leitura({ d }: { d: Documento }) {
   );
 }
 
-function CartaoDoAto({ d, ocupado, onDecidir, onCopia }: {
+function CartaoDoAto({ d, ocupado, onDecidir, onCopia, regimes, sugeridos, propostas, regimesAtuais, lendo, onLer }: {
   d: Documento;
   ocupado: boolean;
-  onDecidir: (situacao: Documento["situacao"], nota: string) => void;
+  onDecidir: (situacao: Documento["situacao"], nota: string, regimes?: string[]) => void;
   onCopia: (caminho: string) => void;
+  regimes: RegimeDoCatalogo[];
+  sugeridos: string[];
+  propostas: Proposta[];
+  regimesAtuais: Record<string, unknown>;
+  lendo: boolean;
+  onLer: () => void;
 }) {
   const [nota, setNota] = useState(d.nota ?? "");
+  const [escolhendo, setEscolhendo] = useState(false);
+  const [escolhidos, setEscolhidos] = useState<string[]>(sugeridos);
   const pagina = ehVersaoDePagina(d);
+  const nomes = useMemo(() => Object.fromEntries(regimes.map(r => [r.codigo, r.nome])), [regimes]);
   const botao = "h-9 rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
   const cabecalho = pagina
     ? [d.tipo_ato, d.orgao, `coletada em ${dataBr(d.publicado_em)}`, d.atualizado_na_fonte && /^\d{2}\/\d{2}\/\d{4}/.test(d.atualizado_na_fonte) ? `a página diz atualizada em ${d.atualizado_na_fonte.slice(0, 10)}` : null]
@@ -177,7 +207,16 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia }: {
           </button>
         )}
       </div>
+      {d.situacao === "conferido" && d.regimes.length > 0 && (
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          <span className="text-[0.6875rem] text-black/45">Afeta:</span>
+          {d.regimes.map(c => <Etiqueta key={c} texto={nomes[c] ?? c} />)}
+        </div>
+      )}
       <Leitura d={d} />
+      {d.situacao === "conferido" && (
+        <PropostasDoDocumento propostas={propostas} nomes={nomes} regimesAtuais={regimesAtuais} lendo={lendo} onLer={onLer} />
+      )}
       <div className="mt-3 flex flex-wrap items-end gap-2 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <label className="min-w-[12rem] flex-1">
           <span className="sr-only">Nota sobre o ato</span>
@@ -186,7 +225,7 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia }: {
         </label>
         {d.situacao === "novo" ? (
           <>
-            <button type="button" disabled={ocupado} onClick={() => onDecidir("conferido", nota)} className={botao}>Afeta um regime</button>
+            <button type="button" disabled={ocupado} aria-expanded={escolhendo} onClick={() => setEscolhendo(e => !e)} className={botao}>Afeta um regime</button>
             <button type="button" disabled={ocupado} onClick={() => onDecidir("descartado", nota)} className={botao}>Não afeta</button>
           </>
         ) : (
@@ -197,12 +236,47 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia }: {
           </>
         )}
       </div>
+      {escolhendo && d.situacao === "novo" && (
+        <fieldset className="mt-3 rounded border px-4 py-3" style={BORDA}>
+          <legend className="px-1 text-[0.6875rem] text-black/55">Quais regimes {pagina ? "a mudança" : "o ato"} afeta? A IA lê e propõe a nova versão de cada um.</legend>
+          <div className="flex flex-wrap gap-1.5">
+            {regimes.map(regime => {
+              const marcado = escolhidos.includes(regime.codigo);
+              return (
+                <button key={regime.codigo} type="button" aria-pressed={marcado}
+                  onClick={() => setEscolhidos(atual => marcado ? atual.filter(c => c !== regime.codigo) : [...atual, regime.codigo])}
+                  className="min-h-9 rounded border bg-white px-2.5 py-1 text-left text-[0.6875rem] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]"
+                  style={marcado ? { borderColor: "#7259B5", color: "#7259B5" } : { borderColor: "rgba(13,13,13,.12)", color: "rgba(13,13,13,.6)" }}>
+                  {regime.nome}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+            <button type="button" onClick={() => setEscolhendo(false)}
+              className="h-9 rounded px-3 text-[0.75rem] text-black/55 transition hover:text-black/80 focus-visible:outline-2 focus-visible:outline-[#7259B5]">Cancelar</button>
+            <button type="button" disabled={ocupado || escolhidos.length === 0}
+              onClick={() => { setEscolhendo(false); onDecidir("conferido", nota, escolhidos); }}
+              className="h-9 rounded bg-[#2E8932] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#2E8932] active:scale-[.98] disabled:opacity-50">
+              Confirmar e propor mudanças
+            </button>
+          </div>
+        </fieldset>
+      )}
     </li>
   );
 }
 
 function ResumoDaColeta({ e }: { e: Execucao }) {
   if (e.situacao !== "ok") return e.detalhe ? <span className="text-black/50">{e.detalhe}</span> : null;
+  if (e.agente === "leitor_normas") {
+    return (
+      <span className="tabular-nums text-black/55">
+        {plural(e.lidos, "regime lido", "regimes lidos")} · {plural(e.novos, "com mudança proposta", "com mudança proposta")}
+        {e.detalhe ? <span className="text-black/45"> · {e.detalhe}</span> : null}
+      </span>
+    );
+  }
   if (e.agente === "vigia_paginas") {
     return (
       <span className="tabular-nums text-black/55">
@@ -224,6 +298,11 @@ export default function AdminNormasPage() {
   const [documentos, setDocumentos] = useState<Documento[] | null>(null);
   const [execucoes, setExecucoes] = useState<Execucao[]>([]);
   const [fontes, setFontes] = useState(0);
+  const [regimesDaFonte, setRegimesDaFonte] = useState<Record<string, string[]>>({});
+  const [regimes, setRegimes] = useState<RegimeDoCatalogo[]>([]);
+  const [propostas, setPropostas] = useState<Proposta[]>([]);
+  const [regimesAtuais, setRegimesAtuais] = useState<Record<string, unknown>>({});
+  const [lendo, setLendo] = useState<Set<string>>(new Set());
   const [aba, setAba] = useState<Aba>("novo");
   const [erro, setErro] = useState("");
   const [aviso, setAviso] = useState("");
@@ -231,7 +310,7 @@ export default function AdminNormasPage() {
   const [dia, setDia] = useState(hojeEmBrasilia);
 
   const buscar = useCallback(async () => {
-    const [docs, execs, fontesVigiadas] = await Promise.all([
+    const [docs, execs, fontesVigiadas, catalogo, props] = await Promise.all([
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas novas, ainda fora do tipo Database
       (supabase as any).from("normas_documentos").select(CAMPOS_DO_DOCUMENTO).neq("situacao", "referencia")
         .order("publicado_em", { ascending: false }).order("created_at", { ascending: false }).limit(300),
@@ -239,16 +318,32 @@ export default function AdminNormasPage() {
       (supabase as any).from("agente_execucoes").select("id, agente, referencia, situacao, lidos, rotina, relevantes, novos, detalhe, iniciada_em")
         .order("iniciada_em", { ascending: false }).limit(12),
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas novas, ainda fora do tipo Database
-      (supabase as any).from("normas_fontes").select("id", { count: "exact", head: true }).eq("ativa", true),
+      (supabase as any).from("normas_fontes").select("id, regimes, ativa"),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_regimes ainda não está no tipo Database
+      (supabase as any).from("prestacao_regimes").select("codigo, nome").eq("status", "publicado").neq("codigo", "generico").order("nome"),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela nova, ainda fora do tipo Database
+      (supabase as any).from("prestacao_regime_propostas").select(CAMPOS_DA_PROPOSTA).neq("status", "substituida")
+        .order("created_at", { ascending: false }).limit(200),
     ]);
-    return { docs, execs, fontesVigiadas };
+    // Os parâmetros publicados só dos regimes com proposta, para dar nome aos caminhos.
+    const codigos = [...new Set(((props.data ?? []) as Proposta[]).map(p => p.regime_codigo))];
+    const atuais = codigos.length
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_regimes ainda não está no tipo Database
+      ? await (supabase as any).from("prestacao_regimes").select("codigo, parametros").eq("status", "publicado").in("codigo", codigos)
+      : { data: [] };
+    return { docs, execs, fontesVigiadas, catalogo, props, atuais };
   }, [supabase]);
 
-  const aplicar = useCallback(({ docs, execs, fontesVigiadas }: Awaited<ReturnType<typeof buscar>>) => {
+  const aplicar = useCallback(({ docs, execs, fontesVigiadas, catalogo, props, atuais }: Awaited<ReturnType<typeof buscar>>) => {
     if (docs.error || execs.error) { setErro("Não foi possível carregar os atos."); return; }
     setDocumentos(docs.data as Documento[]);
     setExecucoes(execs.data as Execucao[]);
-    setFontes(fontesVigiadas.count ?? 0);
+    const lista = (fontesVigiadas.data ?? []) as { id: string; regimes: string[]; ativa: boolean }[];
+    setFontes(lista.filter(f => f.ativa).length);
+    setRegimesDaFonte(Object.fromEntries(lista.map(f => [f.id, f.regimes ?? []])));
+    setRegimes((catalogo.data ?? []) as RegimeDoCatalogo[]);
+    setPropostas((props.data ?? []) as Proposta[]);
+    setRegimesAtuais(Object.fromEntries(((atuais.data ?? []) as { codigo: string; parametros: unknown }[]).map(r => [r.codigo, r.parametros])));
   }, []);
 
   const recarregar = useCallback(async () => aplicar(await buscar()), [buscar, aplicar]);
@@ -259,13 +354,36 @@ export default function AdminNormasPage() {
     return () => { ativo = false; };
   }, [buscar, aplicar]);
 
-  async function decidir(d: Documento, situacao: Documento["situacao"], nota: string) {
+  async function decidir(d: Documento, situacao: Documento["situacao"], nota: string, escolhidos?: string[]) {
     setOcupado(d.id);
     setErro("");
+    setAviso("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- função nova, ainda fora do tipo Database
-    const { error } = await (supabase as any).rpc("fn_normas_documento_conferir", { p_documento_id: d.id, p_situacao: situacao, p_nota: nota });
+    const { error } = await (supabase as any).rpc("fn_normas_documento_conferir", {
+      p_documento_id: d.id, p_situacao: situacao, p_nota: nota, p_regimes: escolhidos ?? null,
+    });
     setOcupado(null);
-    if (error) { setErro("Não foi possível salvar a conferência."); return; }
+    if (error) {
+      setErro(error.message?.includes("regimes_obrigatorios") ? "Escolha ao menos um regime que o documento afeta." : "Não foi possível salvar a conferência.");
+      return;
+    }
+    await recarregar();
+    // Confirmado que afeta regimes: a IA já começa a ler.
+    if (situacao === "conferido" && escolhidos) {
+      setAba("conferido");
+      await ler(d);
+    }
+  }
+
+  async function ler(d: Documento) {
+    setLendo(atual => new Set(atual).add(d.id));
+    setErro("");
+    const { data, error } = await supabase.functions.invoke("agente-normativo", { body: { modo: "ler", documento_id: d.id } });
+    setLendo(atual => { const novo = new Set(atual); novo.delete(d.id); return novo; });
+    const r = data as { situacao?: string; detalhe?: string | null } | null;
+    if (error && !r?.situacao) setErro("Não foi possível pedir a leitura à IA agora.");
+    else if (r?.situacao === "falhou") setErro(`A leitura falhou: ${r.detalhe ?? "sem detalhe"}.`);
+    else if (r?.detalhe) setAviso(`Leitura feita, com ressalvas: ${r.detalhe}.`);
     await recarregar();
   }
 
@@ -333,7 +451,7 @@ export default function AdminNormasPage() {
               return (
                 <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-2.5 text-[0.75rem]">
                   <span className="w-[5.5rem] tabular-nums text-black/75">{dataBr(e.referencia)}</span>
-                  <span className="w-[6.5rem] text-black/55">{e.agente === "vigia_paginas" ? "Páginas" : "Diário Oficial"}</span>
+                  <span className="w-[7.5rem] text-black/55">{e.agente === "vigia_paginas" ? "Páginas" : e.agente === "leitor_normas" ? "Leitura pela IA" : "Diário Oficial"}</span>
                   <Etiqueta texto={s.texto} cor={s.cor} />
                   <ResumoDaColeta e={e} />
                   <span className="ml-auto text-[0.6875rem] text-black/35">{horaBr(e.iniciada_em)}</span>
@@ -369,7 +487,12 @@ export default function AdminNormasPage() {
         </div>
       ) : (
         <ul className="space-y-3">
-          {daAba.map(d => <CartaoDoAto key={`${d.id}:${d.situacao}`} d={d} ocupado={!!ocupado} onDecidir={(s, n) => decidir(d, s, n)} onCopia={abrirCopia} />)}
+          {daAba.map(d => (
+            <CartaoDoAto key={`${d.id}:${d.situacao}`} d={d} ocupado={!!ocupado} onDecidir={(s, n, r) => decidir(d, s, n, r)} onCopia={abrirCopia}
+              regimes={regimes} sugeridos={regimesSugeridos(d, regimesDaFonte)}
+              propostas={propostas.filter(p => p.documento_id === d.id)} regimesAtuais={regimesAtuais}
+              lendo={lendo.has(d.id)} onLer={() => ler(d)} />
+          ))}
         </ul>
       )}
     </div>
