@@ -131,6 +131,7 @@ export async function proxy(request: NextRequest) {
       const isPublicPage =
         pathname.startsWith("/p/") ||
         pathname.startsWith("/r/") ||
+        pathname.startsWith("/convite/") ||
         pathname === "/login" ||
         pathname === "/" ||
         pathname === "/robots.txt" ||
@@ -177,6 +178,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/p/") ||
     // Relatório do patrocinador por link (P5.2): o banco confere o link.
     pathname.startsWith("/r/") ||
+    // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
+    pathname.startsWith("/convite/") ||
     pathname.startsWith("/.well-known") ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api") ||

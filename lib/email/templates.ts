@@ -22,6 +22,40 @@ function emailShell(content: string) {
 </body></html>`;
 }
 
+// Convite para acompanhar a prestação de contas (P5.3).
+export function conviteDaPrestacaoEmail(input: {
+  recipientName?: string | null;
+  organizacao: string;
+  convidadoPor?: string | null;
+  prestacao: string;
+  secoes: string;
+  validade: string;
+  mensagem?: string | null;
+  url: string;
+}) {
+  const recipient = input.recipientName?.trim()
+    ? `Olá, ${escapeHtml(input.recipientName.trim().split(" ")[0])}.`
+    : "Olá.";
+  const quem = input.convidadoPor?.trim() ? `${input.convidadoPor.trim()}, de ${input.organizacao},` : input.organizacao;
+  const url = escapeHtml(input.url);
+  const mensagem = input.mensagem?.trim()
+    ? `<p style="margin:0 0 20px;padding:12px 14px;border-left:2px solid #e8e8e5;font-size:13px;line-height:1.6;color:#61615d">${escapeHtml(input.mensagem.trim()).replace(/\n/g, "<br>")}</p>`
+    : "";
+
+  return {
+    subject: `Convite para acompanhar a prestação de contas de ${input.prestacao}`,
+    text: `${recipient} ${quem} convidou você para acompanhar a prestação de contas de ${input.prestacao} (${input.secoes}), até ${input.validade}. Abra o convite: ${input.url}`,
+    html: emailShell(`
+      <p style="margin:0 0 12px;font-size:14px;color:#555">${recipient}</p>
+      <h1 style="margin:0 0 12px;font-size:23px;line-height:1.25;letter-spacing:-.5px">${escapeHtml(quem)} convidou você para acompanhar a prestação de contas de ${escapeHtml(input.prestacao)}.</h1>
+      <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#61615d">Você poderá ler ${escapeHtml(input.secoes.toLowerCase())}, comentar e marcar itens como verificados, até ${escapeHtml(input.validade)}. Entre com a conta deste e-mail.</p>
+      ${mensagem}
+      <a href="${url}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:#0d0d0d;color:#ffffff;text-decoration:none;font-size:13px;font-weight:700">Abrir o convite</a>
+      <p style="margin:24px 0 0;font-size:11px;line-height:1.5;color:#999">Se o botão não abrir, copie este endereço:<br>${url}</p>
+    `),
+  };
+}
+
 export function patrocinadorProntoEmail(input: {
   recipientName?: string | null;
   empresaName: string;

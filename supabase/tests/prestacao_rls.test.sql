@@ -6,6 +6,7 @@
 --     revisor, leitor, colaborador sem o módulo da prestação, captador;
 --   organização B, com o módulo: admin;
 --   organização C, sem o módulo: admin com acesso aos dois módulos;
+--   convidado de fora (P5.3), com convite aceito só para o financeiro de A;
 --   visitante sem login.
 -- A prestação de A tem uma linha em cada tabela e dois arquivos no bucket
 -- (um da prestação e um fora dela); A tem um fornecedor, que é da
@@ -21,7 +22,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(219);
+select plan(250);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -33,13 +34,14 @@ declare
   admin_a uuid := 'f0000000-0000-4000-8000-0000000000a1';
   pa uuid := 'f0000000-0000-4000-8000-0000000001a0';
 begin
-  insert into auth.users (id, email, aud, role, raw_user_meta_data)
-  select id, 'rls-' || id || '@teste.invalid', 'authenticated', 'authenticated', '{}'::jsonb
+  insert into auth.users (id, email, aud, role, raw_user_meta_data, email_confirmed_at)
+  select id, 'rls-' || id || '@teste.invalid', 'authenticated', 'authenticated', '{}'::jsonb, now()
   from unnest(array[
     'f0000000-0000-4000-8000-0000000000a1', 'f0000000-0000-4000-8000-0000000000a2',
     'f0000000-0000-4000-8000-0000000000a3', 'f0000000-0000-4000-8000-0000000000a4',
     'f0000000-0000-4000-8000-0000000000a5', 'f0000000-0000-4000-8000-0000000000a6',
-    'f0000000-0000-4000-8000-0000000000b1', 'f0000000-0000-4000-8000-0000000000c1'
+    'f0000000-0000-4000-8000-0000000000b1', 'f0000000-0000-4000-8000-0000000000c1',
+    'f0000000-0000-4000-8000-0000000000a7'
   ]::uuid[]) as id;
   -- O cadastro também cria uma organização pessoal para cada pessoa nova. Ela
   -- fica: não tem o módulo da prestação e não muda nenhum caso abaixo.
@@ -144,6 +146,16 @@ begin
   insert into public.prestacao_links_patrocinador (id, prestacao_id, empresa_crm_id, patrocinador, token_hash, expira_em) values
     ('f0000000-0000-4000-8000-0000000030a0', pa, 'f0000000-0000-4000-8000-0000000031a0', 'RLS Patrocinador',
      encode(extensions.digest(repeat('a', 48), 'sha256'), 'hex'), current_date + 30);
+  -- Convidados (P5.3): …00a7, de fora, aceitou o convite do financeiro e já
+  -- marcou a despesa; o admin de C tem um convite do objeto ainda por aceitar.
+  insert into public.prestacao_convidados (id, prestacao_id, email, papel, secoes, token_hash, expira_em, user_id, aceito_em) values
+    ('f0000000-0000-4000-8000-0000000040a0', pa, 'rls-f0000000-0000-4000-8000-0000000000a7@teste.invalid', 'contador', '{financeiro}',
+     encode(extensions.digest(repeat('e', 48), 'sha256'), 'hex'), current_date + 30, 'f0000000-0000-4000-8000-0000000000a7', now()),
+    ('f0000000-0000-4000-8000-0000000042a0', pa, 'rls-f0000000-0000-4000-8000-0000000000c1@teste.invalid', 'auditor', '{objeto}',
+     encode(extensions.digest(repeat('d', 48), 'sha256'), 'hex'), current_date + 30, null, null);
+  insert into public.prestacao_convidado_notas (id, prestacao_id, convidado_id, autor_id, entidade_tipo, entidade_id, tipo) values
+    ('f0000000-0000-4000-8000-0000000041a0', pa, 'f0000000-0000-4000-8000-0000000040a0', 'f0000000-0000-4000-8000-0000000000a7',
+     'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'verificado');
 
   insert into storage.objects (bucket_id, name, owner) values
     ('documentos', org_a || '/prestacoes/' || pa || '/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf', admin_a),
@@ -170,7 +182,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
     'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes',
     'prestacao_envios', 'prestacao_envio_itens', 'prestacao_diligencias', 'prestacao_decisoes', 'prestacao_glosas',
-    'prestacao_recursos', 'prestacao_links_patrocinador'
+    'prestacao_recursos', 'prestacao_links_patrocinador', 'prestacao_convidados', 'prestacao_convidado_notas'
   ];
 $$;
 
@@ -181,20 +193,20 @@ create function rls_teste.org_da(p uuid) returns uuid language sql immutable as 
 $$;
 
 -- O que quem edita cria e altera direto: tudo, menos o histórico de status, a
--- importação e os lançamentos do extrato, as verificações e os envios, que só
--- as funções do banco escrevem.
+-- importação e os lançamentos do extrato, as verificações, os envios, os links
+-- do patrocinador e os convidados, que só as funções do banco escrevem.
 create function rls_teste.editaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
+  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
     'prestacao_status_log'), 'prestacao_extrato_importacoes'), 'prestacao_lancamentos'), 'prestacao_verificacoes'),
-    'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador');
+    'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador'), 'prestacao_convidados'), 'prestacao_convidado_notas');
 $$;
 
 -- O que quem edita apaga: também a importação (desfaz o arquivo e leva os
 -- lançamentos dela); o lançamento sozinho, o histórico, a verificação e o
 -- envio, não.
 create function rls_teste.apagaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'),
-    'prestacao_verificacoes'), 'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador');
+  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'),
+    'prestacao_verificacoes'), 'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador'), 'prestacao_convidados'), 'prestacao_convidado_notas');
 $$;
 
 -- Roda o comando e desfaz. 'sim' se leu ou atingiu alguma linha; '' se a
@@ -261,7 +273,9 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_decisoes where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_glosas where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_recursos where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_links_patrocinador where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_links_patrocinador where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_convidados where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_convidado_notas where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -298,7 +312,9 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_decisoes (prestacao_id, resultado, registrada_em, documento_path) values ('f0000000-0000-4000-8000-0000000001a0', 'aprovada', current_date, 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/pos-envio/f0000000-0000-4000-8000-000000000ab1.pdf')$c$),
     rls_teste.efeito($c$insert into public.prestacao_glosas (prestacao_id, descricao, valor) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova glosa', 5)$c$),
     rls_teste.efeito($c$insert into public.prestacao_recursos (prestacao_id, decisao_id, protocolado_em) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000027a0', current_date)$c$),
-    rls_teste.efeito($c$insert into public.prestacao_links_patrocinador (prestacao_id, patrocinador, token_hash, expira_em) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS direto', repeat('b', 64), current_date + 30)$c$)
+    rls_teste.efeito($c$insert into public.prestacao_links_patrocinador (prestacao_id, patrocinador, token_hash, expira_em) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS direto', repeat('b', 64), current_date + 30)$c$),
+    rls_teste.efeito($c$insert into public.prestacao_convidados (prestacao_id, email, papel, secoes, token_hash, expira_em) values ('f0000000-0000-4000-8000-0000000001a0', 'rls-direto@teste.invalid', 'auditor', '{objeto}', repeat('c', 64), current_date + 30)$c$),
+    rls_teste.efeito($c$insert into public.prestacao_convidado_notas (prestacao_id, convidado_id, entidade_tipo, entidade_id, tipo, texto) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000040a0', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'comentario', 'RLS direto')$c$)
   ]);
 $$;
 
@@ -335,7 +351,9 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_decisoes set resumo = resumo where id = 'f0000000-0000-4000-8000-0000000027a0'$c$),
     rls_teste.efeito($c$update public.prestacao_glosas set observacoes = observacoes where id = 'f0000000-0000-4000-8000-0000000028a0'$c$),
     rls_teste.efeito($c$update public.prestacao_recursos set pedido = pedido where id = 'f0000000-0000-4000-8000-0000000029a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_links_patrocinador set mensagem = mensagem where id = 'f0000000-0000-4000-8000-0000000030a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_links_patrocinador set mensagem = mensagem where id = 'f0000000-0000-4000-8000-0000000030a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_convidados set nome = nome where id = 'f0000000-0000-4000-8000-0000000040a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_convidado_notas set texto = texto where id = 'f0000000-0000-4000-8000-0000000041a0'$c$)
   ]);
 $$;
 
@@ -372,7 +390,9 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_decisoes where id = 'f0000000-0000-4000-8000-0000000027a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_glosas where id = 'f0000000-0000-4000-8000-0000000028a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_recursos where id = 'f0000000-0000-4000-8000-0000000029a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_links_patrocinador where id = 'f0000000-0000-4000-8000-0000000030a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_links_patrocinador where id = 'f0000000-0000-4000-8000-0000000030a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_convidados where id = 'f0000000-0000-4000-8000-0000000040a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_convidado_notas where id = 'f0000000-0000-4000-8000-0000000041a0'$c$)
   ]);
 $$;
 
@@ -1086,6 +1106,86 @@ reset role;
 set local request.jwt.claims = '{"role":"anon"}';
 set local role anon;
 select is((select public.fn_relatorio_patrocinador_publico(repeat('a', 48)) ->> 'situacao'), 'revogado', 'sem login: o link revogado não mostra o relatório');
+reset role;
+
+-- ─── Convidados (P5.3): convite por seção, leitura sem escrita, notas ──────
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$select public.fn_prestacao_convidar('f0000000-0000-4000-8000-0000000001a0', ' Contadora@Exemplo.org ', 'Ana Contadora', 'contador', array['financeiro', 'financeiro'])$t$,
+  'quem edita: convida a contadora para o financeiro');
+select throws_ok($t$select public.fn_prestacao_convidar('f0000000-0000-4000-8000-0000000001a0', 'contadora@exemplo.org', null, 'contador', array['objeto'])$t$,
+  'P0001', 'convite_existente', 'o mesmo e-mail não tem dois convites valendo na prestação');
+select throws_ok($t$select public.fn_prestacao_convidar('f0000000-0000-4000-8000-0000000001a0', 'auditor@exemplo.org', null, 'auditor', array['tudo'])$t$,
+  'P0001', 'secoes_invalidas', 'o convite vale para financeiro, objeto ou envio');
+select throws_ok($t$select public.fn_prestacao_convidar('f0000000-0000-4000-8000-0000000001a0', 'rls-f0000000-0000-4000-8000-0000000000a2@teste.invalid', null, 'outro', array['objeto'])$t$,
+  'P0001', 'ja_e_da_equipe', 'quem já é da equipe não vira convidado');
+reset role;
+select is((select array[email, array_to_string(secoes, ','), (expira_em - current_date)::text, (token_hash ~ '^[0-9a-f]{64}$')::text]
+             from public.prestacao_convidados where nome = 'Ana Contadora'),
+  array['contadora@exemplo.org', 'financeiro', '90', 'true'], 'o convite guarda o e-mail em minúsculas, as seções sem repetir, 90 dias e só o hash do link');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a4","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_convidar('f0000000-0000-4000-8000-0000000001a0', 'outra@exemplo.org')$t$,
+  '42501', 'sem_permissao', 'quem só lê não convida');
+reset role;
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a7","role":"authenticated"}';
+set local role authenticated;
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), array[
+    'prestacoes_contas', 'prestacao_orcamento_versoes', 'prestacao_orcamento_nos', 'prestacao_comprovantes', 'prestacao_alteracoes',
+    'prestacao_contas_bancarias', 'prestacao_extrato_importacoes', 'prestacao_lancamentos', 'prestacao_fornecedores',
+    'prestacao_fornecedor_documentos', 'prestacao_pagamentos', 'prestacao_devolucoes', 'prestacao_convidados', 'prestacao_convidado_notas'],
+  'convidado do financeiro: lê só o financeiro, o próprio convite e as próprias notas');
+select is(rls_teste.insere(), '{}'::text[], 'convidado: não cria nada');
+select is(rls_teste.altera(), '{}'::text[], 'convidado: não altera nada');
+select is(rls_teste.apaga(), '{}'::text[], 'convidado: não apaga nada');
+select is(rls_teste.arquivos(), array['le'], 'convidado do financeiro: só lê o comprovante no bucket');
+select is(rls_teste.arquivos_fornecedor(), array['le'], 'convidado do financeiro: lê o comprovante do fornecedor da despesa');
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001b0'), '{}'::text[], 'convidado: não vê a prestação de outra organização');
+select lives_ok($t$select public.fn_convidado_anotar('f0000000-0000-4000-8000-0000000001a0', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'comentario', 'Falta o recibo do ISS.')$t$,
+  'convidado: comenta a despesa');
+select throws_ok($t$select public.fn_convidado_anotar('f0000000-0000-4000-8000-0000000001a0', 'atividade', 'f0000000-0000-4000-8000-0000000006a0', 'verificado')$t$,
+  '42501', 'fora_do_escopo', 'convidado do financeiro: não anota a atividade');
+select throws_ok($t$select public.fn_convidado_anotar('f0000000-0000-4000-8000-0000000001a0', 'despesa', 'f0000000-0000-4000-8000-0000000005b1', 'verificado')$t$,
+  'P0002', 'entidade_inexistente', 'convidado: só anota item da própria prestação');
+select throws_ok($t$select public.fn_convidado_anotar('f0000000-0000-4000-8000-0000000001b0', 'prestacao', 'f0000000-0000-4000-8000-0000000001b0', 'comentario', 'Oi')$t$,
+  '42501', 'sem_convite', 'convidado: não anota onde não foi convidado');
+select is((public.fn_convidado_acesso('f0000000-0000-4000-8000-0000000001a0') -> 'secoes'), '["financeiro"]'::jsonb, 'convidado: a abertura diz as seções do convite');
+reset role;
+select ok((select ultimo_acesso_em is not null from public.prestacao_convidados where id = 'f0000000-0000-4000-8000-0000000040a0'),
+  'a abertura conta o último acesso');
+
+set local request.jwt.claims = '{"role":"anon"}';
+set local role anon;
+select is((select public.fn_convite_publico(repeat('d', 48)) ->> 'situacao'), 'pendente', 'sem login: o link mostra o convite pendente');
+select is(public.fn_convite_publico(repeat('f', 48)), null, 'sem login: link desconhecido não mostra nada');
+reset role;
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000c1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_aceitar_convite(repeat('e', 48))$t$,
+  '42501', 'email_diferente', 'o convite de outro e-mail não é aceito');
+select is(public.fn_prestacao_aceitar_convite(repeat('d', 48)), 'f0000000-0000-4000-8000-0000000001a0'::uuid, 'o convidado aceita o convite do próprio e-mail');
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), array[
+    'prestacoes_contas', 'prestacao_atividades', 'prestacao_atividade_evidencias', 'prestacao_relatorio', 'prestacao_distribuicao',
+    'prestacao_pecas', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias', 'prestacao_bens', 'prestacao_convidados'],
+  'convidado do objeto: lê só o objeto e o próprio convite');
+select is(rls_teste.arquivos(), '{}'::text[], 'convidado do objeto: não lê o comprovante');
+reset role;
+
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select is((select count(*)::integer from public.prestacao_convidado_notas where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0'), 2,
+  'a equipe lê as notas dos convidados');
+select lives_ok($t$select public.fn_prestacao_revogar_convidado('f0000000-0000-4000-8000-0000000040a0')$t$, 'quem edita: revoga o convite');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a7","role":"authenticated"}';
+set local role authenticated;
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), array['prestacao_convidados'], 'convite revogado: sobra só o próprio convite');
+select is(rls_teste.arquivos(), '{}'::text[], 'convite revogado: não lê mais os arquivos');
+select throws_ok($t$select public.fn_convidado_anotar('f0000000-0000-4000-8000-0000000001a0', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'verificado')$t$,
+  '42501', 'sem_convite', 'convite revogado: não anota mais');
+select is((public.fn_convidado_acesso('f0000000-0000-4000-8000-0000000001a0') ->> 'situacao'), 'revogado', 'convite revogado: a abertura diz por quê');
 reset role;
 
 select * from finish();
