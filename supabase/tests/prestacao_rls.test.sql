@@ -21,7 +21,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(201);
+select plan(208);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -998,6 +998,46 @@ select lives_ok($t$update public.prestacao_diligencias set preditiva = true, apo
 select throws_ok($t$select count(*) from public.piloto_organizacoes$t$, '42501', null, 'conta logada não lê o piloto');
 select throws_ok($t$insert into public.piloto_organizacoes (organization_id) values ('f0000000-0000-4000-8000-0000000000a0')$t$,
   '42501', null, 'conta logada não escreve no piloto');
+reset role;
+
+-- P5.1: o responsável da prestação e a carteira.
+insert into public.atividades (account_id, organization_id, prestacao_id, nome, tipo, prioridade, data_prevista, responsavel_id, origem_automatica, regra_origem) values
+  ('f0000000-0000-4000-8000-0000000000a1', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000001a0', 'RLS prazo automático', 'outro', 'alta', now() + interval '10 days', 'f0000000-0000-4000-8000-0000000000a1', true, 'prestacao_diligencia');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$update public.prestacoes_contas set responsavel_id = 'f0000000-0000-4000-8000-0000000000a4' where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
+  '23514', 'responsavel_sem_acesso', 'o responsável não é quem só lê');
+select throws_ok($t$update public.prestacoes_contas set responsavel_id = 'f0000000-0000-4000-8000-0000000000c1' where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
+  '23514', 'responsavel_sem_acesso', 'o responsável é da organização da prestação');
+select lives_ok($t$update public.prestacoes_contas set responsavel_id = 'f0000000-0000-4000-8000-0000000000a3' where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
+  'quem edita: escolhe o responsável da prestação');
+reset role;
+select is(public.prestacao_responsavel('f0000000-0000-4000-8000-0000000001a0'), 'f0000000-0000-4000-8000-0000000000a3'::uuid, 'o responsável escolhido recebe os prazos');
+select is((select responsavel_id from public.atividades where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and nome = 'RLS prazo automático'), 'f0000000-0000-4000-8000-0000000000a3'::uuid,
+  'as atividades automáticas abertas passam para ele');
+-- Carteira de B: achado na despesa e no pagamento dela (conta uma vez), um aporte e uma despesa rejeitada.
+insert into public.prestacao_contas_bancarias (id, prestacao_id, tipo) values ('f0000000-0000-4000-8000-0000000010b0', 'f0000000-0000-4000-8000-0000000001b0', 'movimento');
+insert into public.prestacao_lancamentos (id, prestacao_id, conta_id, data, natureza, valor, historico, categoria, chave) values
+  ('f0000000-0000-4000-8000-0000000012b0', 'f0000000-0000-4000-8000-0000000001b0', 'f0000000-0000-4000-8000-0000000010b0', current_date, 'credito', 500, 'RLS aporte', 'aporte', 'rls-b-1');
+insert into public.prestacao_comprovantes (id, prestacao_id, nome_arquivo, storage_path, valor_extraido, status) values
+  ('f0000000-0000-4000-8000-0000000005b1', 'f0000000-0000-4000-8000-0000000001b0', 'rls-b1.pdf',
+   'f0000000-0000-4000-8000-0000000000b0/prestacoes/f0000000-0000-4000-8000-0000000001b0/comprovantes/f0000000-0000-4000-8000-000000000cb2.pdf', 200, 'aceito'),
+  ('f0000000-0000-4000-8000-0000000005b2', 'f0000000-0000-4000-8000-0000000001b0', 'rls-b2.pdf',
+   'f0000000-0000-4000-8000-0000000000b0/prestacoes/f0000000-0000-4000-8000-0000000001b0/comprovantes/f0000000-0000-4000-8000-000000000cb3.pdf', 50, 'rejeitado');
+insert into public.prestacao_pagamentos (id, despesa_id, forma, data, valor) values
+  ('f0000000-0000-4000-8000-0000000015b0', 'f0000000-0000-4000-8000-0000000005b1', 'pix', current_date, 200);
+insert into public.prestacao_verificacoes (id, prestacao_id, chave, check_codigo, severidade, resultado, entidade_tipo, entidade_id, mensagem) values
+  ('f0000000-0000-4000-8000-0000000016b1', 'f0000000-0000-4000-8000-0000000001b0', 'RLS-B:despesa', 'DOC_PJ_SEM_NF', 'alerta', 'revisar', 'despesa', 'f0000000-0000-4000-8000-0000000005b1', 'RLS B despesa'),
+  ('f0000000-0000-4000-8000-0000000016b2', 'f0000000-0000-4000-8000-0000000001b0', 'RLS-B:pagamento', 'PAGAMENTO_SEM_NUMERO', 'alerta', 'nao_conforme', 'pagamento', 'f0000000-0000-4000-8000-0000000015b0', 'RLS B pagamento'),
+  ('f0000000-0000-4000-8000-0000000016b3', 'f0000000-0000-4000-8000-0000000001b0', 'RLS-B:sem valor', 'DESPESA_SEM_VALOR', 'alerta', 'nao_calculavel', 'despesa', 'f0000000-0000-4000-8000-0000000005b2', 'RLS B sem valor');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000b1","role":"authenticated"}';
+set local role authenticated;
+select is((select array[valor_em_risco::text, achados_em_risco::text, captado::text, executado::text] from public.prestacao_carteira where prestacao_id = 'f0000000-0000-4000-8000-0000000001b0'),
+  array['200.00', '2', '500.00', '200.00'], 'carteira: risco sem repetir a despesa, captado pelos aportes, executado sem as rejeitadas');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select is((select count(*)::integer from public.prestacao_carteira where prestacao_id = 'f0000000-0000-4000-8000-0000000001b0'), 0, 'carteira: outra organização não vê');
 reset role;
 
 select * from finish();

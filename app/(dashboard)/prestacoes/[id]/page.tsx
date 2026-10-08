@@ -22,10 +22,12 @@ import { EVENTO_VERIFICADA, pedirVerificacao, verificarAgora } from "@/lib/prest
 import { MarcosDaPrestacao, ProximosPrazos } from "@/components/prestacao/PrazosEMarcos";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { checklistDeEnvio } from "@/lib/prestacao/envio";
+import { ResponsavelDaPrestacao } from "@/components/prestacao/ResponsavelDaPrestacao";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
   projeto: { id: string; nome: string } | null;
+  proponente: { id: string; nome: string } | null;
 };
 
 type LogEntry = {
@@ -122,7 +124,7 @@ export default function PrestacaoDetalhe() {
     ] = await Promise.all([
       (supabase as any)
         .from("prestacoes_contas")
-        .select("*, captacao:captacao_id(id, titulo, lei, valor_solicitado), projeto:projeto_id(id, nome)")
+        .select("*, captacao:captacao_id(id, titulo, lei, valor_solicitado), projeto:projeto_id(id, nome), proponente:proponente_id(id, nome)")
         .eq("id", id)
         .maybeSingle(),
       (supabase as any)
@@ -624,6 +626,21 @@ export default function PrestacaoDetalhe() {
           {/* Meta */}
           <div className="bg-white rounded border p-4 space-y-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35">Informações</p>
+            <div>
+              <p className="text-[0.5625rem] text-black/30 mb-0.5">Responsável</p>
+              <ResponsavelDaPrestacao
+                organizationId={prestacao.organization_id}
+                responsavelId={prestacao.responsavel_id ?? null}
+                podeEditar={permissoes.editar}
+                onSalvar={salvarCampos}
+              />
+            </div>
+            {prestacao.proponente && (
+              <div>
+                <p className="text-[0.5625rem] text-black/30 mb-0.5">Cliente (proponente)</p>
+                <Link href={`/proponentes/${prestacao.proponente.id}`} className="rounded text-[0.6875rem] text-black/60 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">{prestacao.proponente.nome}</Link>
+              </div>
+            )}
             <div>
               <p className="text-[0.5625rem] text-black/30 mb-0.5">Criada em</p>
               <p className="text-[0.6875rem] text-black/60">{fmtDate(prestacao.created_at.split("T")[0])}</p>
