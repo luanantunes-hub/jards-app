@@ -126,3 +126,60 @@ export function situacaoDoContrato(contrato: ContratoModulo | null, agora: Date 
     case "cancelado": return "Encerrada";
   }
 }
+
+/** Data AAAA-MM-DD ou ISO em DD/MM/AAAA, no horário de Brasília. */
+function dataCurta(valor: string): string {
+  const data = /^\d{4}-\d{2}-\d{2}$/.test(valor) ? new Date(`${valor}T12:00:00Z`) : new Date(valor);
+  return new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric" }).format(data);
+}
+
+export type AssinaturaDoModulo = ContratoModulo & {
+  periodo_fim: string | null;
+  encerrado_em: string | null;
+  stripe_subscription_id: string | null;
+};
+
+export type DescricaoDaAssinatura = {
+  /** Situação em poucas palavras, para a etiqueta. */
+  titulo: string;
+  /** O que acontece agora e até quando. */
+  detalhe: string;
+  tom: "ok" | "atencao" | "neutro";
+  /** Assinatura paga existe: compra de vagas e gerenciamento no portal. */
+  paga: boolean;
+  /** Sem assinatura em vigor: a tela oferece assinar. */
+  podeAssinar: boolean;
+  /** O módulo está só para leitura. */
+  somenteLeitura: boolean;
+};
+
+/** Como a tela explica a assinatura do módulo (P5.6). */
+export function descricaoDaAssinatura(contrato: AssinaturaDoModulo | null, agora: Date = new Date()): DescricaoDaAssinatura {
+  if (!contrato) {
+    return { titulo: "Sem assinatura", detalhe: "Assine para usar a prestação de contas na organização.", tom: "neutro", paga: false, podeAssinar: true, somenteLeitura: false };
+  }
+  const emVigor = contratoEmVigor(contrato, agora);
+  const paga = contratoPago(contrato) && !!contrato.stripe_subscription_id;
+  switch (contrato.status) {
+    case "ativo":
+      return { titulo: "Ativa", detalhe: contrato.periodo_fim ? `Renova em ${dataCurta(contrato.periodo_fim)}.` : "Assinatura em dia.", tom: "ok", paga, podeAssinar: !paga, somenteLeitura: false };
+    case "teste":
+      return { titulo: "Em teste", detalhe: contrato.periodo_fim ? `O teste vai até ${dataCurta(contrato.periodo_fim)}.` : "Período de teste.", tom: "ok", paga, podeAssinar: !paga, somenteLeitura: false };
+    case "atraso": {
+      if (!contrato.past_due_since) {
+        return { titulo: "Pagamento em atraso", detalhe: "Regularize o pagamento em Gerenciar assinatura.", tom: "atencao", paga, podeAssinar: false, somenteLeitura: false };
+      }
+      const limite = new Date(Date.parse(contrato.past_due_since) + CARENCIA_ATRASO_DIAS * DIA_MS).toISOString();
+      return emVigor
+        ? { titulo: "Pagamento em atraso", detalhe: `Regularize até ${dataCurta(limite)} para continuar editando.`, tom: "atencao", paga, podeAssinar: false, somenteLeitura: false }
+        : { titulo: "Somente leitura", detalhe: `O pagamento está em atraso desde ${dataCurta(contrato.past_due_since)}. Regularize para voltar a editar.`, tom: "atencao", paga, podeAssinar: false, somenteLeitura: true };
+    }
+    case "cortesia":
+      if (emVigor) {
+        return { titulo: "Cortesia", detalhe: contrato.cortesia_ate ? `Liberada até ${dataCurta(contrato.cortesia_ate)}. Assine para continuar depois disso.` : "Liberada pelo suporte.", tom: "ok", paga: false, podeAssinar: true, somenteLeitura: false };
+      }
+      return { titulo: "Somente leitura", detalhe: `A cortesia terminou${contrato.cortesia_ate ? ` em ${dataCurta(contrato.cortesia_ate)}` : ""}. Assine para voltar a editar.`, tom: "atencao", paga: false, podeAssinar: true, somenteLeitura: true };
+    case "cancelado":
+      return { titulo: "Somente leitura", detalhe: `Sem assinatura${contrato.encerrado_em ? ` desde ${dataCurta(contrato.encerrado_em)}` : ""}. As prestações e os arquivos continuam disponíveis para consulta e exportação; assine para voltar a editar.`, tom: "atencao", paga: false, podeAssinar: true, somenteLeitura: true };
+  }
+}

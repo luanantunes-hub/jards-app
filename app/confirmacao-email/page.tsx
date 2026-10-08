@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { ArrowRight, CheckCircle, CircleAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-export default function ConfirmacaoEmailPage() {
+export default function ConfirmacaoEmailPage({ searchParams }: { searchParams: Promise<{ modulo?: string | string[] }> }) {
   const [confirmed, setConfirmed] = useState<boolean | null>(null);
+  // Cadastro pela prestação de contas (P5.6): o próximo passo é assinar o módulo.
+  const paraPrestacao = use(searchParams).modulo === "prestacao";
 
   useEffect(() => {
     const supabase = createClient();
@@ -32,8 +34,8 @@ export default function ConfirmacaoEmailPage() {
             <CheckCircle size={42} className="mx-auto mb-5 text-[#2E8932]" strokeWidth={1.5} />
             <h1 className="font-display text-2xl font-bold text-[#0D0D0D]">E-mail confirmado</h1>
             <p className="mt-3 text-sm leading-6 text-black/50">Sua conta está pronta. Você já pode acessar seu espaço no Jards.</p>
-            <a href="/dashboard" className="mt-7 inline-flex items-center gap-2 rounded border border-[#7259B5]/25 bg-white px-4 py-2.5 text-sm font-medium text-[#7259B5] transition hover:bg-black/[.04]">
-              Entrar no Jards <ArrowRight size={14} />
+            <a href={paraPrestacao ? "/meu-plano?assinar=prestacao" : "/dashboard"} className="mt-7 inline-flex items-center gap-2 rounded border border-[#7259B5]/25 bg-white px-4 py-2.5 text-sm font-medium text-[#7259B5] transition hover:bg-black/[.04]">
+              {paraPrestacao ? "Assinar a prestação de contas" : "Entrar no Jards"} <ArrowRight size={14} />
             </a>
           </>
         )}

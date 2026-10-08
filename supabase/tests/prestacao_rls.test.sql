@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(275);
+select plan(323);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -160,6 +160,9 @@ begin
      encode(extensions.digest(repeat('e', 48), 'sha256'), 'hex'), current_date + 30, 'f0000000-0000-4000-8000-0000000000a7', now()),
     ('f0000000-0000-4000-8000-0000000042a0', pa, 'rls-f0000000-0000-4000-8000-0000000000c1@teste.invalid', 'auditor', '{objeto}',
      encode(extensions.digest(repeat('d', 48), 'sha256'), 'hex'), current_date + 30, null, null);
+  -- Um e-mail que chegou pela captura (P5.5).
+  insert into public.prestacao_emails_recebidos (id, prestacao_id, resend_email_id, remetente, assunto, situacao, anexos, despesas) values
+    ('f0000000-0000-4000-8000-0000000044a0', pa, 'rls-email-1', 'rls@teste.invalid', 'RLS nota', 'registrado', 1, 1);
   insert into public.prestacao_convidado_notas (id, prestacao_id, convidado_id, autor_id, entidade_tipo, entidade_id, tipo) values
     ('f0000000-0000-4000-8000-0000000041a0', pa, 'f0000000-0000-4000-8000-0000000040a0', 'f0000000-0000-4000-8000-0000000000a7',
      'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'verificado');
@@ -189,7 +192,8 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_verificacoes', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias',
     'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes',
     'prestacao_envios', 'prestacao_envio_itens', 'prestacao_diligencias', 'prestacao_decisoes', 'prestacao_glosas',
-    'prestacao_recursos', 'prestacao_links_patrocinador', 'prestacao_convidados', 'prestacao_convidado_notas'
+    'prestacao_recursos', 'prestacao_links_patrocinador', 'prestacao_convidados', 'prestacao_convidado_notas',
+    'prestacao_emails_recebidos'
   ];
 $$;
 
@@ -201,19 +205,20 @@ $$;
 
 -- O que quem edita cria e altera direto: tudo, menos o histórico de status, a
 -- importação e os lançamentos do extrato, as verificações, os envios, os links
--- do patrocinador e os convidados, que só as funções do banco escrevem.
+-- do patrocinador, os convidados e os e-mails recebidos, que só as funções do
+-- banco e o servidor escrevem.
 create function rls_teste.editaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
+  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
     'prestacao_status_log'), 'prestacao_extrato_importacoes'), 'prestacao_lancamentos'), 'prestacao_verificacoes'),
-    'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador'), 'prestacao_convidados'), 'prestacao_convidado_notas');
+    'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador'), 'prestacao_convidados'), 'prestacao_convidado_notas'), 'prestacao_emails_recebidos');
 $$;
 
 -- O que quem edita apaga: também a importação (desfaz o arquivo e leva os
 -- lançamentos dela); o lançamento sozinho, o histórico, a verificação e o
 -- envio, não.
 create function rls_teste.apagaveis() returns text[] language sql immutable as $$
-  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'),
-    'prestacao_verificacoes'), 'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador'), 'prestacao_convidados'), 'prestacao_convidado_notas');
+  select array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(), 'prestacao_status_log'), 'prestacao_lancamentos'),
+    'prestacao_verificacoes'), 'prestacao_envios'), 'prestacao_envio_itens'), 'prestacao_links_patrocinador'), 'prestacao_convidados'), 'prestacao_convidado_notas'), 'prestacao_emails_recebidos');
 $$;
 
 -- Roda o comando e desfaz. 'sim' se leu ou atingiu alguma linha; '' se a
@@ -282,7 +287,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_recursos where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_links_patrocinador where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_convidados where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_convidado_notas where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_convidado_notas where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_emails_recebidos where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -321,7 +327,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_recursos (prestacao_id, decisao_id, protocolado_em) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000027a0', current_date)$c$),
     rls_teste.efeito($c$insert into public.prestacao_links_patrocinador (prestacao_id, patrocinador, token_hash, expira_em) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS direto', repeat('b', 64), current_date + 30)$c$),
     rls_teste.efeito($c$insert into public.prestacao_convidados (prestacao_id, email, papel, secoes, token_hash, expira_em) values ('f0000000-0000-4000-8000-0000000001a0', 'rls-direto@teste.invalid', 'auditor', '{objeto}', repeat('c', 64), current_date + 30)$c$),
-    rls_teste.efeito($c$insert into public.prestacao_convidado_notas (prestacao_id, convidado_id, entidade_tipo, entidade_id, tipo, texto) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000040a0', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'comentario', 'RLS direto')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_convidado_notas (prestacao_id, convidado_id, entidade_tipo, entidade_id, tipo, texto) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000040a0', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'comentario', 'RLS direto')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_emails_recebidos (prestacao_id, resend_email_id, remetente, situacao) values ('f0000000-0000-4000-8000-0000000001a0', 'rls-direto', 'x@teste.invalid', 'sem_anexo')$c$)
   ]);
 $$;
 
@@ -360,7 +367,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_recursos set pedido = pedido where id = 'f0000000-0000-4000-8000-0000000029a0'$c$),
     rls_teste.efeito($c$update public.prestacao_links_patrocinador set mensagem = mensagem where id = 'f0000000-0000-4000-8000-0000000030a0'$c$),
     rls_teste.efeito($c$update public.prestacao_convidados set nome = nome where id = 'f0000000-0000-4000-8000-0000000040a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_convidado_notas set texto = texto where id = 'f0000000-0000-4000-8000-0000000041a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_convidado_notas set texto = texto where id = 'f0000000-0000-4000-8000-0000000041a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_emails_recebidos set detalhe = detalhe where id = 'f0000000-0000-4000-8000-0000000044a0'$c$)
   ]);
 $$;
 
@@ -399,7 +407,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_recursos where id = 'f0000000-0000-4000-8000-0000000029a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_links_patrocinador where id = 'f0000000-0000-4000-8000-0000000030a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_convidados where id = 'f0000000-0000-4000-8000-0000000040a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_convidado_notas where id = 'f0000000-0000-4000-8000-0000000041a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_convidado_notas where id = 'f0000000-0000-4000-8000-0000000041a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_emails_recebidos where id = 'f0000000-0000-4000-8000-0000000044a0'$c$)
   ]);
 $$;
 
@@ -1205,9 +1214,10 @@ insert into public.proponentes (id, account_id, organization_id, nome) values
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","role":"authenticated"}';
 set local role authenticated;
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'),
-  array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
+  array_remove(array_remove(array_remove(array_remove(array_remove(array_remove(rls_teste.todas(),
     'prestacao_status_log'), 'prestacao_verificacoes'), 'prestacao_links_patrocinador'), 'prestacao_convidados'), 'prestacao_convidado_notas'),
-  'proponente: lê a própria prestação, menos o histórico, as verificações, os links e os convidados');
+    'prestacao_emails_recebidos'),
+  'proponente: lê a própria prestação, menos o histórico, as verificações, os links, os convidados e os e-mails');
 select is(rls_teste.insere(), '{}'::text[], 'proponente: não cria nada direto nas tabelas');
 select is(rls_teste.altera(), '{}'::text[], 'proponente: não altera nada');
 select is(rls_teste.apaga(), '{}'::text[], 'proponente: não apaga nada');
@@ -1267,6 +1277,138 @@ set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","r
 set local role authenticated;
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), '{}'::text[], 'sem o vínculo com o cadastro do proponente, não vê mais nada');
 reset role;
+
+-- ─── Captura por e-mail (P5.5): endereço, remetentes e destino no servidor ──
+update public.proponentes set user_id = 'f0000000-0000-4000-8000-0000000000a8' where id = 'f0000000-0000-4000-8000-0000000032a0';
+create temporary table rls_captura (token text) on commit drop;
+grant all on rls_captura to authenticated, service_role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+insert into rls_captura select public.fn_prestacao_ligar_captura_email('f0000000-0000-4000-8000-0000000001a0');
+select ok((select token ~ '^[a-z0-9]{10}$' from rls_captura), 'quem edita: liga o endereço de captura da prestação');
+select is(public.fn_prestacao_remetentes_captura('f0000000-0000-4000-8000-0000000001a0', array[' Contador@Exemplo.org ', 'contador@exemplo.org']), array['contador@exemplo.org'],
+  'quem edita: autoriza remetentes, em minúsculas e sem repetir');
+select throws_ok($t$select public.fn_prestacao_remetentes_captura('f0000000-0000-4000-8000-0000000001a0', array['contador@'])$t$, 'P0001', 'email_invalido', 'remetente precisa ser e-mail válido');
+select throws_ok($t$select public.fn_prestacao_captura_destino('abcdefghij', 'x@teste.invalid')$t$, '42501', null, 'conta logada não consulta o destino da captura');
+select is((select count(*)::integer from public.prestacao_emails_recebidos where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0'), 1, 'a equipe lê os e-mails recebidos');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a4","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_ligar_captura_email('f0000000-0000-4000-8000-0000000001a0')$t$, '42501', 'sem_permissao', 'quem só lê não liga a captura');
+reset role;
+set local role service_role;
+select is((select array[d ->> 'autorizado', d ->> 'quem', d ->> 'usuario_id'] from public.fn_prestacao_captura_destino((select token from rls_captura), 'RLS-f0000000-0000-4000-8000-0000000000a2@teste.invalid') d),
+  array['true', 'equipe', 'f0000000-0000-4000-8000-0000000000a2'], 'destino: alguém da equipe com a prestação manda');
+select is((select array[d ->> 'autorizado', d ->> 'quem'] from public.fn_prestacao_captura_destino((select token from rls_captura), 'rls-f0000000-0000-4000-8000-0000000000a8@teste.invalid') d),
+  array['true', 'proponente'], 'destino: o proponente da prestação manda');
+select is((select array[d ->> 'autorizado', d ->> 'quem'] from public.fn_prestacao_captura_destino((select token from rls_captura), 'contador@exemplo.org') d),
+  array['true', 'autorizado'], 'destino: o remetente autorizado manda');
+select is((select d ->> 'autorizado' from public.fn_prestacao_captura_destino((select token from rls_captura), 'rls-f0000000-0000-4000-8000-0000000000a5@teste.invalid') d),
+  'false', 'destino: quem é da organização mas não tem a prestação não manda');
+select is((select d ->> 'autorizado' from public.fn_prestacao_captura_destino((select token from rls_captura), 'estranho@exemplo.org') d),
+  'false', 'destino: estranho não manda');
+select is(public.fn_prestacao_captura_destino('zzzzzzzzzz', 'rls-f0000000-0000-4000-8000-0000000000a2@teste.invalid'), null, 'destino: código desconhecido não leva a nada');
+select public.fn_prestacao_avisar_captura('f0000000-0000-4000-8000-0000000001a0', 'E-mail recusado na captura', 'estranho@exemplo.org mandou um recibo.', 'rls-recusado', true);
+select public.fn_prestacao_avisar_captura('f0000000-0000-4000-8000-0000000001a0', 'Despesa recebida por e-mail', 'Confira e avalie.', 'rls-recebido');
+reset role;
+select is((select array_agg(link order by dedupe_key) from public.notificacoes where dedupe_key in ('prestacao_captura_email:rls-recebido', 'prestacao_captura_email:rls-recusado')),
+  array['/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes', '/prestacoes/f0000000-0000-4000-8000-0000000001a0'],
+  'aviso da captura: despesas levam aos comprovantes; recusa leva à visão geral, onde se autoriza');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$select public.fn_prestacao_desligar_captura_email('f0000000-0000-4000-8000-0000000001a0')$t$, 'quem edita: desliga a captura');
+reset role;
+set local role service_role;
+select is(public.fn_prestacao_captura_destino((select token from rls_captura), 'rls-f0000000-0000-4000-8000-0000000000a2@teste.invalid'), null, 'desligada, o endereço antigo não leva a nada');
+reset role;
+select lives_ok($t$insert into public.prestacao_comprovantes (prestacao_id, nome_arquivo, storage_path, canal) values ('f0000000-0000-4000-8000-0000000001a0', 'email.pdf', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c70.pdf', 'email')$t$,
+  'a despesa aceita o canal e-mail');
+select ok(public.fn_prestacao_resumo_semanal() >= 1, 'o resumo semanal sai para quem responde por prestações com pendência');
+select ok(exists (select 1 from public.notification_events where event_key = 'prestacao_resumo_semanal' and organization_id = 'f0000000-0000-4000-8000-0000000000a0'),
+  'a organização A recebe o resumo da semana');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","role":"authenticated"}';
+set local role authenticated;
+select is((select count(*)::integer from public.prestacao_emails_recebidos), 0, 'proponente: não lê os e-mails recebidos');
+reset role;
+
+-- ─── Cobrança do módulo (P5.6): assinatura, somente leitura e vagas ─────────
+set local role service_role;
+select is(public.fn_processar_cobranca_modulo('rls_evt_1', 'customer.subscription.deleted', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_velha', 'si_rls_mod', null, 0, 'canceled', null) ->> 'ignorado',
+  'outra_assinatura', 'cobrança: o fim de uma assinatura que não é a do contrato não mexe nele');
+select is(public.fn_processar_cobranca_modulo('rls_evt_2', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', 'si_rls_vagas', 3, 'active', now() + interval '30 days') ->> 'status',
+  'ativo', 'cobrança: assinatura ativa vira contrato ativo');
+select is(public.fn_processar_cobranca_modulo('rls_evt_2', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', 'si_rls_vagas', 3, 'active', now() + interval '30 days') ->> 'duplicate',
+  'true', 'cobrança: o mesmo evento não é processado duas vezes');
+select is((select array[stripe_subscription_id, stripe_item_vagas_id, vagas_compradas::text, billing_user_id::text] from public.organization_modulos
+           where organization_id = 'f0000000-0000-4000-8000-0000000000a0' and modulo = 'prestacao'),
+  array['sub_rls_a', 'si_rls_vagas', '3', 'f0000000-0000-4000-8000-0000000000a1'], 'cobrança: o contrato guarda a assinatura, as vagas compradas e quem paga');
+select is(public.fn_processar_cobranca_modulo('rls_evt_3', 'invoice.payment_failed', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', null, 3, 'past_due', now() + interval '30 days') ->> 'status',
+  'atraso', 'cobrança: pagamento recusado deixa o contrato em atraso');
+select ok((select om.past_due_since is not null and 'prestacao' = any(o.modulos_ativos)
+           from public.organization_modulos om join public.organizations o on o.id = om.organization_id
+           where om.organization_id = 'f0000000-0000-4000-8000-0000000000a0' and om.modulo = 'prestacao'),
+  'cobrança: em atraso, o módulo segue ativo durante a carência');
+select is(public.fn_processar_cobranca_modulo('rls_evt_4', 'invoice.payment_failed', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_nova', 'si_rls_mod', null, 0, 'incomplete', now() + interval '30 days') ->> 'ignorado',
+  'pagamento_pendente', 'cobrança: primeiro pagamento pendente não muda o contrato');
+select is(public.fn_processar_cobranca_modulo('rls_evt_5', 'customer.subscription.deleted', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', null, 3, 'canceled', null) ->> 'status',
+  'cancelado', 'cobrança: assinatura cancelada encerra o contrato');
+select is((select array[array_to_string(modulos_ativos, ','), array_to_string(modulos_leitura, ',')] from public.organizations where id = 'f0000000-0000-4000-8000-0000000000a0'),
+  array['captacao', 'prestacao'], 'cobrança: sem assinatura, a prestação fica só para leitura');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), rls_teste.todas(), 'somente leitura: o admin continua vendo tudo da prestação');
+select is(rls_teste.insere(), '{}'::text[], 'somente leitura: ninguém cria nada');
+select is(rls_teste.altera(), '{}'::text[], 'somente leitura: ninguém altera nada');
+select is(rls_teste.apaga(), '{}'::text[], 'somente leitura: ninguém apaga nada');
+select is(rls_teste.arquivos(), array['le'], 'somente leitura: os arquivos são lidos, sem enviar, trocar ou apagar');
+select is(public.auth_prestacao_pode('f0000000-0000-4000-8000-0000000001a0', 'editar'), false, 'somente leitura: a tela não oferece edição');
+update public.organizations set modulos_ativos = '{captacao,prestacao}', modulos_leitura = '{}' where id = 'f0000000-0000-4000-8000-0000000000a0';
+select throws_ok($t$select public.fn_processar_cobranca_modulo('rls_evt_x', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_x', 'si_rls_mod', null, 0, 'active', now() + interval '30 days')$t$, '42501', null,
+  'cobrança: conta logada não registra assinatura');
+reset role;
+select is((select array[array_to_string(modulos_ativos, ','), array_to_string(modulos_leitura, ',')] from public.organizations where id = 'f0000000-0000-4000-8000-0000000000a0'),
+  array['captacao', 'prestacao'], 'somente leitura: a organização não muda a própria lista de módulos');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a5","role":"authenticated"}';
+set local role authenticated;
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), '{}'::text[], 'somente leitura: quem não usava o módulo continua sem ver');
+reset role;
+set local role service_role;
+select is(public.fn_processar_cobranca_modulo('rls_evt_6', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a2', 'si_rls_mod', null, 0, 'active', now() + interval '30 days') ->> 'status',
+  'ativo', 'cobrança: assinar de novo devolve a edição');
+select is(public.fn_processar_cobranca_modulo('rls_evt_7', 'customer.subscription.deleted', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', null, 0, 'canceled', null) ->> 'ignorado',
+  'outra_assinatura', 'cobrança: o fim da assinatura antiga não derruba a nova');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select is(public.auth_prestacao_pode('f0000000-0000-4000-8000-0000000001a0', 'editar'), true, 'cobrança: com a assinatura nova, o admin volta a editar');
+reset role;
+select ok((select count(*) from public.notification_events where event_key = 'modulo_cobranca' and organization_id = 'f0000000-0000-4000-8000-0000000000a0') >= 3,
+  'cobrança: quem administra é avisado do atraso, do fim e da volta da assinatura');
+update public.organization_members set modulos_acesso = '{captacao}' where organization_id = 'f0000000-0000-4000-8000-0000000000c0' and user_id = 'f0000000-0000-4000-8000-0000000000c1';
+update public.organization_modulos set status = 'cortesia', cortesia_ate = current_date + 10 where organization_id = 'f0000000-0000-4000-8000-0000000000b0' and modulo = 'prestacao';
+set local role service_role;
+select is(public.fn_processar_cobranca_modulo('rls_evt_8', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000c0', 'prestacao', 'f0000000-0000-4000-8000-0000000000c1', 'cus_rls_c', 'sub_rls_c', 'si_rls_mod', null, 0, 'trialing', now() + interval '14 days') ->> 'status',
+  'teste', 'cobrança: assinatura em teste libera o módulo para a organização sem ele');
+select is(public.fn_processar_cobranca_modulo('rls_evt_9', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000b0', 'prestacao', 'f0000000-0000-4000-8000-0000000000b1', 'cus_rls_b', 'sub_rls_b', 'si_rls_mod', null, 0, 'active', now() + interval '30 days') ->> 'status',
+  'ativo', 'cobrança: a assinatura substitui a cortesia');
+select is(public.fn_processar_cobranca_modulo('rls_evt_10', 'customer.subscription.deleted', 'f0000000-0000-4000-8000-0000000000b0', 'prestacao', 'f0000000-0000-4000-8000-0000000000b1', 'cus_rls_b', 'sub_rls_b', 'si_rls_mod', null, 0, 'canceled', null) ->> 'status',
+  'cortesia', 'cobrança: cancelada a assinatura, volta a cortesia que ainda vale');
+reset role;
+select ok((select 'prestacao' = any(modulos_acesso) from public.organization_members where organization_id = 'f0000000-0000-4000-8000-0000000000c0' and user_id = 'f0000000-0000-4000-8000-0000000000c1'),
+  'cobrança: quem assinou ganha o acesso ao módulo');
+select lives_ok($t$insert into public.organization_seat_purchases (id, organization_id, billing_user_id, quantity, previous_quantity, resulting_quantity, status, modulo) values
+  ('f0000000-0000-4000-8000-0000000056a0', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000000a1', 1, 0, 1, 'pending', 'captacao'),
+  ('f0000000-0000-4000-8000-0000000056a1', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000000a1', 1, 0, 1, 'pending', 'prestacao')$t$,
+  'vagas: uma compra pendente da captação e uma da prestação ao mesmo tempo');
+select throws_ok($t$insert into public.organization_seat_purchases (id, organization_id, billing_user_id, quantity, previous_quantity, resulting_quantity, status, modulo) values
+  ('f0000000-0000-4000-8000-0000000056a2', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000000a1', 1, 1, 2, 'pending', 'prestacao')$t$, '23505', null,
+  'vagas: só uma compra pendente da prestação por vez');
+select is((select count(*)::integer from pg_policies where schemaname = 'public' and policyname like '%: leitura sem assinatura'),
+  (select count(distinct tablename)::integer from pg_policies
+   where schemaname = 'public' and permissive = 'PERMISSIVE' and cmd in ('ALL', 'SELECT')
+     and (qual like '%can_access_prestacao(%' or qual like '%auth_tem_modulo(organization_id, ''prestacao''::text)%')),
+  'somente leitura: cada tabela que a equipe lê tem a regra de leitura sem assinatura');
 
 select * from finish();
 rollback;

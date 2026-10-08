@@ -4,6 +4,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import Stripe from "stripe";
+import { novoStripe, PRECOS_MODULO } from "@/lib/stripe";
+import {
+  dadosDoContrato,
+  ehAssinaturaDoModulo,
+  parametrosDaCobranca,
+  type AssinaturaStripe,
+} from "@/supabase/functions/_shared/cobranca-modulo";
 
 const PRICE_TO_PLAN: Record<string, "basico" | "profissional"> = {
   [process.env.STRIPE_PRICE_BASICO ?? ""]:        "basico",
@@ -87,6 +94,25 @@ async function processBillingEvent(
   return data;
 }
 
+// Assinatura do módulo de prestação de contas (P5.6): é da organização e vai
+// para o contrato do módulo, nunca para o plano do perfil. O estado vem do
+// Stripe na hora, para eventos fora de ordem aplicarem sempre o mais novo.
+async function processModuleEvent(
+  stripe: Stripe,
+  supabase: ReturnType<typeof adminClient>,
+  event: Stripe.Event,
+  subscriptionId: string,
+) {
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId) as unknown as AssinaturaStripe;
+  const lido = dadosDoContrato(subscription, PRECOS_MODULO);
+  if (!lido.ok) throw new Error(lido.erro);
+  const { error } = await supabase.rpc("fn_processar_cobranca_modulo" as never, parametrosDaCobranca(event, lido.dados) as never);
+  if (error) throw error;
+}
+
+const isModuleSubscription = (subscription: Stripe.Subscription) =>
+  ehAssinaturaDoModulo(subscription as unknown as AssinaturaStripe, PRECOS_MODULO);
+
 function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -99,7 +125,7 @@ export async function POST(req: NextRequest) {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey) return NextResponse.json({ error: "Stripe não configurado" }, { status: 503 });
 
-  const stripe = new Stripe(secretKey);
+  const stripe = novoStripe() ?? new Stripe(secretKey);
 
   const body = await req.text();
   const sig = req.headers.get("stripe-signature") ?? "";
@@ -120,12 +146,16 @@ export async function POST(req: NextRequest) {
       const subscriptionId = invoiceSubscriptionId(invoice);
       if (!subscriptionId) throw new Error("Fatura sem assinatura");
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      if (!planFromSubscription(subscription)) throw new Error(`Assinatura Stripe sem preço de plano conhecido: ${subscriptionId}`);
-      await processBillingEvent(supabase, event, subscription, {
-        invoiceId: invoice.id,
-        paid: true,
-        forcedStatus: "active",
-      });
+      if (isModuleSubscription(subscription)) {
+        await processModuleEvent(stripe, supabase, event, subscriptionId);
+      } else {
+        if (!planFromSubscription(subscription)) throw new Error(`Assinatura Stripe sem preço de plano conhecido: ${subscriptionId}`);
+        await processBillingEvent(supabase, event, subscription, {
+          invoiceId: invoice.id,
+          paid: true,
+          forcedStatus: "active",
+        });
+      }
     }
 
     if (event.type === "invoice.payment_failed") {
@@ -133,23 +163,40 @@ export async function POST(req: NextRequest) {
       const subscriptionId = invoiceSubscriptionId(invoice);
       if (!subscriptionId) throw new Error("Fatura sem assinatura");
       const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-      await processBillingEvent(supabase, event, subscription, {
-        invoiceId: invoice.id,
-        forcedStatus: "past_due",
-      });
+      if (isModuleSubscription(subscription)) {
+        await processModuleEvent(stripe, supabase, event, subscriptionId);
+      } else {
+        await processBillingEvent(supabase, event, subscription, {
+          invoiceId: invoice.id,
+          forcedStatus: "past_due",
+        });
+      }
+    }
+
+    if (event.type === "customer.subscription.created") {
+      const subscription = event.data.object as Stripe.Subscription;
+      if (isModuleSubscription(subscription)) await processModuleEvent(stripe, supabase, event, subscription.id);
     }
 
     if (event.type === "customer.subscription.updated") {
       const subscription = event.data.object as Stripe.Subscription;
-      if (!planFromSubscription(subscription) && ["active", "trialing"].includes(subscription.status)) {
-        throw new Error(`Assinatura Stripe sem preço de plano conhecido: ${subscription.id}`);
+      if (isModuleSubscription(subscription)) {
+        await processModuleEvent(stripe, supabase, event, subscription.id);
+      } else {
+        if (!planFromSubscription(subscription) && ["active", "trialing"].includes(subscription.status)) {
+          throw new Error(`Assinatura Stripe sem preço de plano conhecido: ${subscription.id}`);
+        }
+        await processBillingEvent(supabase, event, subscription);
       }
-      await processBillingEvent(supabase, event, subscription);
     }
 
     if (event.type === "customer.subscription.deleted") {
       const subscription = event.data.object as Stripe.Subscription;
-      await processBillingEvent(supabase, event, subscription, { forcedStatus: "canceled" });
+      if (isModuleSubscription(subscription)) {
+        await processModuleEvent(stripe, supabase, event, subscription.id);
+      } else {
+        await processBillingEvent(supabase, event, subscription, { forcedStatus: "canceled" });
+      }
     }
   } catch (error) {
     console.error("Stripe webhook handler error", error);

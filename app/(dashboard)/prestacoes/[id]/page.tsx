@@ -25,6 +25,7 @@ import { checklistDeEnvio } from "@/lib/prestacao/envio";
 import { ResponsavelDaPrestacao } from "@/components/prestacao/ResponsavelDaPrestacao";
 import { LinksDoPatrocinador } from "@/components/prestacao/LinksDoPatrocinador";
 import { ConvidadosDaPrestacao } from "@/components/prestacao/ConvidadosDaPrestacao";
+import { CapturaPorEmail } from "@/components/prestacao/CapturaPorEmail";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -592,6 +593,7 @@ export default function PrestacaoDetalhe() {
           <MarcosDaPrestacao prestacao={prestacao} hoje={hoje} />
           <LinksDoPatrocinador prestacaoId={id} captacaoId={prestacao.captacao_id} projetoId={prestacao.projeto_id} podeEditar={permissoes.editar} />
           <ConvidadosDaPrestacao prestacaoId={id} podeEditar={permissoes.editar} />
+          <CapturaPorEmail prestacaoId={id} podeEditar={permissoes.editar} />
 
           {/* Histórico */}
           <div className="bg-white rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
