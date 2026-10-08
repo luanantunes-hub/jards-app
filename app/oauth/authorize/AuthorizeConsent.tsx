@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export type ClienteConsentimento =
   | { tipo: "chatgpt" }
@@ -33,6 +33,15 @@ export function AuthorizeConsent({
 }: Props) {
   const [enviando, setEnviando] = useState<"allow" | "deny" | null>(null);
   const publico = cliente.tipo === "publico";
+
+  // Voltar a esta tela pelo botão do navegador traz a página do cache; sem isto os botões ficariam travados em "Autorizando…".
+  useEffect(() => {
+    const destravar = (e: PageTransitionEvent) => {
+      if (e.persisted) setEnviando(null);
+    };
+    window.addEventListener("pageshow", destravar);
+    return () => window.removeEventListener("pageshow", destravar);
+  }, []);
 
   return (
     <div className="mx-auto flex min-h-[70vh] max-w-md items-center px-4">

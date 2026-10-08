@@ -11,6 +11,9 @@ import {
   verifyPkceS256,
 } from "@/lib/mcp/oauth";
 
+/** A resposta com tokens nunca pode ficar em cache (RFC 6749, seção 5.1). */
+const SEM_CACHE = { "Cache-Control": "no-store", Pragma: "no-cache" };
+
 /** Aceita form-urlencoded (padrão OAuth) ou JSON, e client_secret no body OU em Basic auth. */
 async function readParams(req: NextRequest): Promise<Record<string, string>> {
   const contentType = req.headers.get("content-type") ?? "";
@@ -128,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const tokens = await issueTokens(admin, codeRow.user_id, clientId, codeRow.scope, label);
-      return NextResponse.json(tokens);
+      return NextResponse.json(tokens, { headers: SEM_CACHE });
     } catch {
       return NextResponse.json({ error: "server_error" }, { status: 500 });
     }
@@ -162,7 +165,7 @@ export async function POST(req: NextRequest) {
 
     try {
       const tokens = await issueTokens(admin, tokenRow.user_id, clientId, tokenRow.scope, label);
-      return NextResponse.json(tokens);
+      return NextResponse.json(tokens, { headers: SEM_CACHE });
     } catch {
       return NextResponse.json({ error: "server_error" }, { status: 500 });
     }

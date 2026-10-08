@@ -3,6 +3,15 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OAUTH_CODE_TTL_MS, generateOpaqueToken, normalizeScope, validateAuthorizationRequest } from "@/lib/mcp/oauth";
 import { userHasPaidOrg } from "@/lib/mcp/auth";
+import { paginaDeRetorno } from "@/lib/mcp/retorno-oauth";
+
+/** Devolve a pessoa ao assistente por uma página com refresh (um redirect direto do formulário é bloqueado pela política de segurança). */
+function voltarAoAssistente(destino: URL, titulo: string, mensagem: string) {
+  return new NextResponse(paginaDeRetorno({ destino: destino.toString(), titulo, mensagem }), {
+    status: 200,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
 
 /** Processa o botão Permitir/Negar da tela de consentimento OAuth. */
 export async function POST(req: NextRequest) {
@@ -43,16 +52,17 @@ export async function POST(req: NextRequest) {
 
   const callback = new URL(redirectUri);
   if (state) callback.searchParams.set("state", state);
+  const assistente = validacao.client.kind === "chatgpt" ? "ChatGPT" : validacao.client.name;
 
   if (negado) {
     callback.searchParams.set("error", "access_denied");
-    return NextResponse.redirect(callback, { status: 303 });
+    return voltarAoAssistente(callback, "Acesso negado", `Você negou o acesso. Voltando ao ${assistente}…`);
   }
 
   if (!(await userHasPaidOrg(admin, user.id))) {
     callback.searchParams.set("error", "access_denied");
     callback.searchParams.set("error_description", "Assinatura necessária");
-    return NextResponse.redirect(callback, { status: 303 });
+    return voltarAoAssistente(callback, "Assinatura necessária", `O acesso por assistentes está nos planos pagos. Voltando ao ${assistente}…`);
   }
 
   const { raw, hash } = generateOpaqueToken("jards_oauth_code_");
@@ -69,5 +79,5 @@ export async function POST(req: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
   callback.searchParams.set("code", raw);
-  return NextResponse.redirect(callback, { status: 303 });
+  return voltarAoAssistente(callback, "Acesso autorizado", `Pronto, acesso autorizado. Voltando ao ${assistente}…`);
 }
