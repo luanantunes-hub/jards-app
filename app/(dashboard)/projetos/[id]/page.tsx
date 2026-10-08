@@ -1005,7 +1005,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                       <div className="divide-y divide-black/[.06] overflow-hidden rounded border border-black/[.08]">
                         {linhas.map(linha => (
                           <div key={linha.rotulo} className="flex items-center gap-5 px-5 py-4">
-                            <p className="flex w-28 shrink-0 items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                            <p className="flex w-32 shrink-0 items-center gap-1.5 whitespace-nowrap text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
                               <linha.Icone size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
                               {linha.rotulo}
                             </p>
