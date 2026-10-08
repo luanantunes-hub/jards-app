@@ -27,6 +27,7 @@ import {
   ArrowLeftRight,
   Menu,
   Store,
+  DoorOpen,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -137,6 +138,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // Só redireciona por módulo depois de saber os módulos reais da organização atual.
   const [modulosCarregados, setModulosCarregados] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin]     = useState(false);
+  // Prestações de outras organizações acompanhadas por convite (P5.3).
+  const [temConvites, setTemConvites]       = useState(false);
   const [plan, setPlan]                     = useState<PlanTipo | null>(null);
   const [org, setOrg]                       = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
   const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
@@ -188,6 +191,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       setIsSuperAdmin(profile?.jards_super_admin === true);
       setPlan((profile?.plano ?? null) as PlanTipo | null);
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela nova, ainda fora do tipo Database
+      const { count: convites } = await (supabase as any)
+        .from("prestacao_convidados")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", user.id);
+      setTemConvites((convites ?? 0) > 0);
 
       if (memberList.length > 0) {
         let escolhido = memberList[0];
@@ -534,6 +544,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <Shield size={16} className="flex-shrink-0" />
               {isExpanded && <span>Admin</span>}
+            </Link>
+          )}
+          {temConvites && !isWorkspaceCaptador && (
+            <Link
+              href="/convidado"
+              title={!isExpanded ? "Acesso de convidado" : undefined}
+              aria-label={!isExpanded ? "Acesso de convidado" : undefined}
+              className="flex items-center rounded text-[0.8125rem] font-medium text-black/35 transition whitespace-nowrap overflow-hidden hover:text-[#0D0D0D] hover:bg-black/[0.05] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+              style={{
+                gap: isExpanded ? 10 : 0,
+                padding: isExpanded ? "8px 10px" : "8px 0",
+                justifyContent: isExpanded ? "flex-start" : "center",
+              }}
+            >
+              <DoorOpen size={16} className="flex-shrink-0" aria-hidden="true" />
+              {isExpanded && <span>Acesso de convidado</span>}
             </Link>
           )}
           {!isWorkspaceCaptador && (
