@@ -10,7 +10,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(49);
+select plan(52);
 
 do $cenario$
 begin
@@ -43,12 +43,19 @@ begin
   values ('f1000000-0000-4000-8000-0000000000a1', 'f1000000-0000-4000-8000-0000000000d1',
           (select id from public.prestacao_regimes where codigo = 'pronon_pronas_lxxxvi_a_2025' and status = 'publicado'),
           'pronon_pronas_lxxxvi_a_2025', 'informativo', 'Prorroga a dedução até 2031.');
+  -- Uma rodada do conjunto de teste do agente (P6.5).
+  insert into public.agente_execucoes (id, agente, referencia, situacao, lidos, relevantes, novos)
+  values ('f1000000-0000-4000-8000-0000000000e6', 'avaliador_normas', current_date, 'ok', 1, 1, 6);
+  insert into public.normas_avaliacoes (execucao_id, caso, titulo, regime_codigo, documento, classificacao, classificacao_certa,
+                                        esperadas, acertos, faltas, cobertura)
+  values ('f1000000-0000-4000-8000-0000000000e6', 'lie_portaria_10_2026', 'LIE: Portaria 424/2020 → Portaria MESP 10/2026',
+          'lie_p424_2020', 'Portaria MESP 10/2026', 'altera_regra', true, 7, 6, 1, 0.8571);
 end
 $cenario$;
 
 select ok((select ativa from public.normas_fontes where codigo = 'dou_secao1'), 'a seção 1 do Diário Oficial é vigiada');
-select is((select count(*)::integer from public.normas_fontes where tipo in ('pagina', 'arquivo') and ativa), 16,
-  'as páginas e os arquivos citados pelos regimes são vigiados');
+select is((select count(*)::integer from public.normas_fontes where tipo in ('pagina', 'arquivo') and ativa), 17,
+  'as páginas e os arquivos citados pelos regimes são vigiados, com a Portaria MESP 10/2026');
 select is((select count(*)::integer from public.normas_fontes f, unnest(f.regimes) r(codigo)
            where not exists (select 1 from public.prestacao_regimes p where p.codigo = r.codigo)), 0,
   'toda fonte aponta para regimes que existem');
@@ -77,6 +84,9 @@ select is((select count(*)::integer from public.prestacao_regime_propostas), 0, 
 select throws_ok($t$select * from public.fn_regime_prestacoes_afetadas('rouanet_in29_2026')$t$, '42501', null,
   'pessoa comum: não conta as prestações afetadas');
 select is((select count(*)::integer from storage.objects where bucket_id = 'normas'), 0, 'pessoa comum: não lê as cópias');
+select is((select count(*)::integer from public.normas_avaliacoes), 0, 'pessoa comum: não lê as notas do conjunto de teste');
+select throws_ok($t$insert into public.normas_avaliacoes (execucao_id, caso, titulo, regime_codigo, documento)
+  values ('f1000000-0000-4000-8000-0000000000e6', 'x', 'x', 'x', 'x')$t$, '42501', null, 'pessoa comum: não grava nota');
 reset role;
 
 -- ─── Super admin ────────────────────────────────────────────────────────────
@@ -87,6 +97,8 @@ select is((select titulo from public.normas_documentos where id = 'f1000000-0000
   'super admin: lê os atos guardados');
 select ok((select count(*) from public.agente_execucoes where id in ('f1000000-0000-4000-8000-0000000000e1', 'f1000000-0000-4000-8000-0000000000e2')) = 2,
   'super admin: lê as coletas');
+select is((select array[caso, acertos::text, esperadas::text] from public.normas_avaliacoes where execucao_id = 'f1000000-0000-4000-8000-0000000000e6'),
+  array['lie_portaria_10_2026', '6', '7'], 'super admin: lê as notas do conjunto de teste');
 select throws_ok($t$select public.fn_normas_documento_conferir('f1000000-0000-4000-8000-0000000000d1', 'conferido', 'x')$t$,
   '22023', 'regimes_obrigatorios', 'ato do Diário que afeta um regime precisa dizer qual');
 select throws_ok($t$select public.fn_normas_documento_conferir('f1000000-0000-4000-8000-0000000000d1', 'conferido', 'x', array['nao_existe'])$t$,

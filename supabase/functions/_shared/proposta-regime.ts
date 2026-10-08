@@ -451,6 +451,8 @@ export type ContextoDaLeituraNormativa = {
   /** Página vigiada: os trechos que mudaram, com "ANTES" e "AGORA". */
   trechosQueMudaram: string | null;
   regime: { codigo: string; nome: string; versao: number; normaReferencia: string; achatado: string };
+  /** O documento substitui esta norma do regime (P6.5): a IA propõe o regime que segue o documento. */
+  normaAnterior?: string | null;
 };
 
 const TEXTO_NO_PEDIDO = 150_000;
@@ -471,6 +473,9 @@ export function promptDaLeituraNormativa(c: ContextoDaLeituraNormativa): string 
     corpo,
     "",
     `Regime: ${c.regime.nome} (código ${c.regime.codigo}, versão ${c.regime.versao}). Norma de referência: ${c.regime.normaReferencia}.`,
+    ...(c.normaAnterior
+      ? [`O documento substitui a norma em que o regime se baseia (${c.normaAnterior}). Proponha as mudanças para o regime seguir o documento: cada valor do regime que o documento fixa de outro jeito muda. Regra da norma anterior que o documento não repete não sai só por isso.`]
+      : []),
     "Parâmetros do regime, um por linha (caminho = valor). As linhas \".fonte\" dizem de que norma veio cada regra:",
     c.regime.achatado,
     "",
@@ -490,4 +495,120 @@ export function promptDaLeituraNormativa(c: ContextoDaLeituraNormativa): string 
     "6. vigencia: a data em que a mudança passa a valer (AAAA-MM-DD), se o documento disser; senão null.",
     "7. transicao: aplicaEmAndamento diz se a mudança vale para projetos já aprovados ou em execução (null se o documento não diz), com a explicação e o dispositivo.",
   ].join("\n");
+}
+
+// ─── Nota de uma leitura (P6.5) ─────────────────────────────────────────────
+// O conjunto de teste (conjunto-normativo.ts) compara a proposta conferida com
+// um gabarito: as mudanças que o documento traz, com o valor de cada uma.
+
+export type GabaritoDaLeitura = {
+  classificacoes: Classificacao[];
+  /** Parâmetros que o documento muda; sem valor, o valor sai do regime conferido. */
+  mudancas: { caminho: string; valor?: unknown }[];
+};
+
+/** Lista de opções vale sem a ordem; o resto, valor a valor. */
+export function mesmoValor(a: unknown, b: unknown): boolean {
+  if (Array.isArray(a) && Array.isArray(b)) {
+    if (a.length !== b.length) return false;
+    if (a.every(x => !ehObjeto(x) && !Array.isArray(x)) && b.every(x => !ehObjeto(x) && !Array.isArray(x))) {
+      const ordenar = (lista: unknown[]) => lista.map(x => JSON.stringify(x)).sort();
+      return ordenar(a).every((x, i) => x === ordenar(b)[i]);
+    }
+    return a.every((x, i) => mesmoValor(x, b[i]));
+  }
+  if (ehObjeto(a) && ehObjeto(b)) {
+    const chaves = new Set([...Object.keys(a), ...Object.keys(b)]);
+    return [...chaves].every(chave => mesmoValor(a[chave], b[chave]));
+  }
+  // Texto curto (opção, sigla) vale sem maiúsculas e acentos: "TransfereGov" é "Transferegov".
+  if (typeof a === "string" && typeof b === "string") return semAcento(a) === semAcento(b);
+  return a === b || (a == null && b == null);
+}
+
+const semAcento = (texto: string) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+
+/** Texto livre (descrição, explicação): muda a redação, não a regra. */
+function ehRedacao(valor: unknown): boolean {
+  if (typeof valor === "string") return valor.length > 40 || /\s/.test(valor.trim());
+  if (Array.isArray(valor)) return valor.some(ehRedacao);
+  return false;
+}
+
+/** a e b são o mesmo parâmetro, ou um está dentro do outro. */
+function relacionados(a: string, b: string): boolean {
+  const dentro = (x: string, y: string) => x.startsWith(`${y}.`) || x.startsWith(`${y}[`);
+  return a === b || dentro(a, b) || dentro(b, a);
+}
+
+export type ResultadoDoCaso = {
+  classificacao: Classificacao | null;
+  classificacaoCerta: boolean;
+  esperadas: number;
+  acertos: { caminho: string; valor: unknown }[];
+  /** O parâmetro mudou, mas para outro valor. */
+  erradas: { caminho: string; esperado: unknown; proposto: unknown }[];
+  /** O parâmetro ficou como estava. */
+  faltas: { caminho: string; esperado: unknown; atual: unknown }[];
+  /** Mudança fora do gabarito que diverge do regime conferido (ou qualquer uma, sem ele). */
+  falsosAlarmes: { caminho: string; proposto: unknown; esperado: unknown }[];
+  /** Mudança fora do gabarito que bate com o regime conferido. */
+  extrasCertos: number;
+  /** Mudança de texto livre fora do gabarito. */
+  redacao: number;
+  descartadas: number;
+  /** Acertos sobre as mudanças esperadas; null quando o caso não espera mudança. */
+  cobertura: number | null;
+};
+
+/**
+ * A nota de uma leitura: a proposta conferida (com as mudanças aceitas já
+ * aplicadas em regimeProposto) contra o gabarito do caso.
+ */
+export function avaliarLeitura(
+  caso: { esperado: GabaritoDaLeitura },
+  regimes: { antigo: unknown; esperado?: unknown },
+  leitura: { classificacao: Classificacao | null; conferida: PropostaConferida | null },
+): ResultadoDoCaso {
+  const antigo = regimes.antigo;
+  const proposto = leitura.conferida?.regimeProposto ?? antigo;
+  const esperadas = caso.esperado.mudancas.map(m => ({
+    caminho: m.caminho,
+    valor: "valor" in m ? m.valor : lerCaminho(regimes.esperado, m.caminho).valor,
+  }));
+  const resultado: ResultadoDoCaso = {
+    classificacao: leitura.classificacao,
+    classificacaoCerta: !!leitura.classificacao && caso.esperado.classificacoes.includes(leitura.classificacao),
+    esperadas: esperadas.length,
+    acertos: [], erradas: [], faltas: [], falsosAlarmes: [],
+    extrasCertos: 0, redacao: 0,
+    descartadas: leitura.conferida?.descartadas.length ?? 0,
+    cobertura: null,
+  };
+
+  for (const e of esperadas) {
+    const agora = lerCaminho(proposto, e.caminho);
+    const antes = lerCaminho(antigo, e.caminho).valor;
+    if (agora.existe && mesmoValor(agora.valor, e.valor)) resultado.acertos.push(e);
+    else if (!mesmoValor(agora.valor, antes)) resultado.erradas.push({ caminho: e.caminho, esperado: e.valor, proposto: agora.valor });
+    else resultado.faltas.push({ caminho: e.caminho, esperado: e.valor, atual: antes });
+  }
+
+  for (const m of leitura.conferida?.mudancas ?? []) {
+    if (esperadas.some(e => relacionados(e.caminho, m.caminho))) continue;
+    // O item incluído numa lista se confere pelo código dele.
+    const caminho = m.operacao === "incluir" && ehObjeto(m.valorProposto) && typeof m.valorProposto.codigo === "string"
+      && passosDoCaminho(m.caminho) ? caminhoDosPassos([...passosDoCaminho(m.caminho)!, { codigo: m.valorProposto.codigo }]) : m.caminho;
+    const valor = lerCaminho(proposto, caminho);
+    if (m.operacao !== "remover" && ehRedacao(m.valorProposto)) { resultado.redacao++; continue; }
+    const noConferido = regimes.esperado === undefined ? null : lerCaminho(regimes.esperado, caminho);
+    const confere = noConferido !== null && (m.operacao === "remover"
+      ? !noConferido.existe
+      : noConferido.existe && (m.operacao === "incluir" || mesmoValor(noConferido.valor, valor.valor)));
+    if (confere) resultado.extrasCertos++;
+    else resultado.falsosAlarmes.push({ caminho, proposto: m.operacao === "remover" ? null : valor.valor, esperado: noConferido?.existe ? noConferido.valor : null });
+  }
+
+  resultado.cobertura = esperadas.length ? resultado.acertos.length / esperadas.length : null;
+  return resultado;
 }
