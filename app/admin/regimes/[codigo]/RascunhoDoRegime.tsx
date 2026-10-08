@@ -28,6 +28,14 @@ export type Rascunho = {
   vigente_desde: string | null;
 };
 
+/** O que acontece com as prestações quando a versão é publicada (P6.4). */
+function avisoDasOrganizacoes(prestacoes: number, organizacoes: number): string {
+  if (!prestacoes) return "Nenhuma prestação em andamento usa este regime.";
+  const quantas = prestacoes === 1 ? "1 prestação em andamento continua" : `${prestacoes} prestações em andamento continuam`;
+  const quem = organizacoes === 1 ? "a organização foi avisada" : `as ${organizacoes} organizações foram avisadas`;
+  return `${quantas} na versão anterior; ${quem}, e quem decide em cada uma pode passar para a nova.`;
+}
+
 /** O valor como aparece no regime achatado, sem as aspas do JSON. */
 const semAspas = (valor: string | null) => (valor === null ? "—" : valor.startsWith("\"") ? valor.slice(1, -1) : valor);
 
@@ -241,7 +249,7 @@ export function RascunhoDoRegime({ codigo, rascunho, publicado, usuarioId, onFei
           ) : (
             <button type="button" disabled={enviando || !validacao?.ok || diferencas.length === 0 || faltam <= 0}
               onClick={() => agir({ acao: "aprovar" }, dados => dados.situacao === "publicado"
-                ? `Versão ${dados.versao} publicada. As prestações continuam na versão que usam até serem passadas para a nova.`
+                ? `Versão ${dados.versao} publicada. ${avisoDasOrganizacoes(Number(dados.prestacoes ?? 0), Number(dados.organizacoes ?? 0))}`
                 : `Versão ${dados.versao} aprovada por você. Outra pessoa da equipe foi avisada para a segunda aprovação.`)}
               className={BOTAO_VERDE}>
               {enviando ? "Salvando…" : rotuloAprovar}

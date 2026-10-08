@@ -7,7 +7,8 @@
 //     fonte de cada trecho e a vigência, e validar no schema do regime;
 //   - dizer o que mudou entre duas versões, parâmetro a parâmetro;
 //   - apontar as mudanças que tocam uma regra de severidade "bloqueio", que
-//     pedem uma segunda pessoa para publicar.
+//     pedem uma segunda pessoa para publicar;
+//   - resumir o que muda para quem tem prestação na versão anterior (P6.4).
 
 import {
   aplicarMudanca,
@@ -16,6 +17,7 @@ import {
   passosDoCaminho,
   regimeAchatado,
   type Operacao,
+  type Passo,
 } from "@/supabase/functions/_shared/proposta-regime";
 import { validarRegime } from "./schema";
 import { DIMENSOES } from "./tipos";
@@ -144,8 +146,92 @@ export function valorLegivel(valor: unknown): string {
   if (valor === null || valor === undefined) return "—";
   if (typeof valor === "boolean") return valor ? "sim" : "não";
   if (typeof valor === "number") return valor.toLocaleString("pt-BR");
-  if (typeof valor === "string") return valor;
+  if (typeof valor === "string") return /^\d{4}-\d{2}-\d{2}$/.test(valor) ? valor.split("-").reverse().join("/") : valor;
   if (Array.isArray(valor)) return valor.map(valorLegivel).join(", ");
   const objeto = valor as Objeto;
   return String(objeto.descricao ?? objeto.rotulo ?? objeto.nome ?? JSON.stringify(valor));
+}
+
+/** Um item do que muda de uma versão para a outra, para quem usa o regime (P6.4). */
+export type ItemDoResumo = {
+  rotulo: string;
+  tipo: "mudou" | "entrou" | "saiu";
+  antes: string | null;
+  depois: string | null;
+  /** Documento e dispositivo de onde vem a regra, na versão que vale. */
+  fonte: string | null;
+};
+
+function fonteMaisProxima(regime: unknown, passos: readonly Passo[]): string | null {
+  for (let n = passos.length; n > 0; n--) {
+    const fonte = lerCaminho(regime, `${caminhoDosPassos(passos.slice(0, n))}.fonte`).valor;
+    if (fonte && typeof fonte === "object" && !Array.isArray(fonte)) {
+      const { documento, dispositivo } = fonte as Objeto;
+      const texto = [documento, dispositivo].filter(v => typeof v === "string" && v.trim()).join(", ");
+      if (texto) return texto;
+    }
+  }
+  return null;
+}
+
+/** Objeto não vira texto no resumo: o nome dele já está no rótulo. */
+const legivelNoResumo = (valor: unknown) => (valor && typeof valor === "object" && !Array.isArray(valor) ? null : valorLegivel(valor));
+
+const UNIDADES: Record<string, [string, string]> = {
+  dias_corridos: ["dia corrido", "dias corridos"], dias_uteis: ["dia útil", "dias úteis"], meses: ["mês", "meses"], anos: ["ano", "anos"],
+};
+
+/**
+ * Quantidade de prazo e percentual de teto se leem com o que são ("90 dias
+ * corridos", "12%"), e o rótulo para no prazo ou no teto.
+ */
+function noResumo(regime: unknown, passos: readonly Passo[], valor: unknown): { dono: Passo[] | null; texto: string | null } {
+  const ultimo = passos[passos.length - 1];
+  if (!ultimo || !("chave" in ultimo) || typeof valor !== "number") return { dono: null, texto: legivelNoResumo(valor) };
+  const dono = passos.slice(0, -1);
+  if (ultimo.chave === "percentual") return { dono, texto: `${valorLegivel(valor)}%` };
+  const unidade = UNIDADES[String(lerCaminho(regime, `${caminhoDosPassos(dono)}.unidade`).valor)];
+  if (ultimo.chave === "quantidade" && unidade) return { dono, texto: `${valorLegivel(valor)} ${unidade[valor === 1 ? 0 : 1]}` };
+  return { dono: null, texto: valorLegivel(valor) };
+}
+
+/**
+ * O que muda para quem usa o regime, guardado na versão ao publicar e
+ * mostrado no aviso da prestação: cada parâmetro com o valor de antes e o de
+ * agora; o item de lista que entrou ou saiu aparece uma vez só. A fonte muda
+ * junto com o valor e vai ao lado dele, não como mudança à parte.
+ */
+export function resumoDasMudancas(antes: unknown, depois: unknown): ItemDoResumo[] {
+  const itens: ItemDoResumo[] = [];
+  const vistos = new Set<string>();
+  for (const d of diferencaEntreVersoes(antes, depois)) {
+    if (d.caminho.endsWith(".fonte")) continue;
+    const passos = passosDoCaminho(d.caminho);
+    if (!passos) continue;
+    let n = passos.length;
+    for (let k = 1; k < passos.length; k++) {
+      if ("chave" in passos[k - 1]) continue;
+      const caminho = caminhoDosPassos(passos.slice(0, k));
+      if (lerCaminho(antes, caminho).existe !== lerCaminho(depois, caminho).existe) { n = k; break; }
+    }
+    const caminho = caminhoDosPassos(passos.slice(0, n));
+    if (vistos.has(caminho)) continue;
+    vistos.add(caminho);
+    const a = lerCaminho(antes, caminho);
+    const b = lerCaminho(depois, caminho);
+    const tipo = !a.existe ? "entrou" : !b.existe ? "saiu" : "mudou";
+    const vale = tipo === "saiu" ? antes : depois;
+    const daqui = passos.slice(0, n);
+    const lidoAntes = a.existe ? noResumo(antes, daqui, a.valor) : null;
+    const lidoDepois = b.existe ? noResumo(depois, daqui, b.valor) : null;
+    const dono = (lidoDepois ?? lidoAntes)?.dono;
+    itens.push({
+      rotulo: rotuloDoCaminho(vale, dono?.length ? caminhoDosPassos(dono) : caminho),
+      tipo,
+      antes: lidoAntes?.texto ?? null,
+      depois: lidoDepois?.texto ?? null,
+      fonte: fonteMaisProxima(vale, daqui),
+    });
+  }
+  return itens;
 }
