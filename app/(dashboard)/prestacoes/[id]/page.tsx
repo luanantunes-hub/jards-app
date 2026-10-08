@@ -11,6 +11,7 @@ import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { executadoPorItem, percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
 import { mensagemErroPrestacao, proximosBloqueados, proximosStatus } from "@/lib/prestacao/status";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
+import { DadosDaAncine } from "@/components/prestacao/DadosDaAncine";
 import { MesmaObra } from "@/components/prestacao/MesmaObra";
 import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
 import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais";
@@ -570,6 +571,8 @@ export default function PrestacaoDetalhe() {
           {(regimes.find(r => r.id === prestacao.regime_id)?.regime?.sistemaOficial?.includes("STR") || prestacao.obra_grupo) && (
             <MesmaObra prestacao={prestacao} podeEditar={permissoes.editar} onMudou={fetch} />
           )}
+          {/* Dados públicos do projeto na ANCINE (P7.5). */}
+          {regimes.find(r => r.id === prestacao.regime_id)?.regime?.sistemaOficial?.includes("STR") && <DadosDaAncine prestacaoId={prestacao.id} />}
 
           <div id="dados-oficiais" className="scroll-mt-4">
             <RegimeDadosOficiais
