@@ -5,6 +5,7 @@ import {
   diferencaEntreVersoes,
   montarRascunho,
   regrasQueBloqueiamEnvio,
+  resumoDasMudancas,
   rotuloDoCaminho,
   valorLegivel,
   type MudancaRevisada,
@@ -90,6 +91,37 @@ test("só mudança em regra de bloqueio pede a segunda aprovação", () => {
   }], { versao: VERSAO });
   assert.ok(subiu.ok, subiu.ok ? "" : subiu.erros.join("; "));
   assert.deepEqual(regrasQueBloqueiamEnvio(base, subiu.regime), [`despesas.regras[codigo=${regra.codigo}]`]);
+});
+
+test("o resumo para quem usa o regime junta o item que entrou e põe a fonte ao lado", () => {
+  const base = publicado();
+  // A regra nova sem fonte própria recebe a do documento que a incluiu.
+  const regra = { ...(lerCaminho(base, "despesas.regras").valor as Record<string, unknown>[])[0] };
+  delete regra.fonte;
+  const r = montarRascunho(base, [
+    prazo,
+    { operacao: "incluir", caminho: "despesas.regras", valor: { ...regra, codigo: "bufe_vedado", descricao: "Serviços de bufê não são aceitos." },
+      documento: "IN MinC 40/2026", dispositivo: "art. 2º" },
+    { operacao: "remover", caminho: `despesas.regras[codigo=${regra.codigo}]`, valor: null, documento: "IN MinC 40/2026", dispositivo: "art. 4º" },
+  ], { versao: VERSAO, vigenteDesde: "2027-01-01" });
+  assert.ok(r.ok, r.ok ? "" : r.erros.join("; "));
+  assert.deepEqual(resumoDasMudancas(ROUANET_IN29_2026, r.regime), [
+    { rotulo: "Vigente desde", tipo: "mudou", antes: "30/01/2026", depois: "01/01/2027", fonte: null },
+    {
+      rotulo: "Prazos › Concluir os pagamentos e enviar o relatório final no Salic", tipo: "mudou",
+      antes: "60 dias corridos", depois: "90 dias corridos", fonte: "IN MinC 40/2026, art. 1º (art. 69 da IN 29)",
+    },
+    { rotulo: "Período e despesas vedadas › Serviços de bufê não são aceitos.", tipo: "entrou", antes: null, depois: null, fonte: "IN MinC 40/2026, art. 2º" },
+    { rotulo: "Período e despesas vedadas › Despesa anterior à Portaria de captação não é ressarcida.", tipo: "saiu", antes: null, depois: null, fonte: "IN MinC 29/2026, art. 47, § 3º" },
+  ]);
+  assert.deepEqual(resumoDasMudancas(ROUANET_IN29_2026, ROUANET_IN29_2026), []);
+
+  const comTeto = montarRascunho(publicado(), [teto], { versao: VERSAO });
+  assert.ok(comTeto.ok);
+  assert.deepEqual(resumoDasMudancas(ROUANET_IN29_2026, comTeto.regime), [{
+    rotulo: "Orçamento, grupos e tetos › Custos de administração, incluindo tarifas necessárias", tipo: "mudou",
+    antes: "15%", depois: "12%", fonte: "IN MinC 40/2026, art. 1º (art. 22 da IN 29)",
+  }]);
 });
 
 test("rótulo e valor para ler na tela", () => {
