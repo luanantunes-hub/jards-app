@@ -104,3 +104,49 @@ export function partesDoZip(arquivos: readonly ArquivoDoZip[]): Uint8Array[] {
   f.setUint32(16, posicao, true);
   return [...partes, ...central, fim];
 }
+
+/** Descomprime "deflate" cru (método 8 do ZIP) pelo DecompressionStream do navegador e do Node. */
+async function inflar(dados: Uint8Array): Promise<Uint8Array> {
+  const fluxo = new Blob([dados as BlobPart]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(fluxo).arrayBuffer());
+}
+
+/**
+ * Lê os arquivos de um ZIP pelo diretório central (store e deflate), para
+ * abrir modelos .xlsx no navegador. Sem ZIP64 e sem criptografia.
+ */
+export async function lerZip(zip: Uint8Array): Promise<Map<string, Uint8Array>> {
+  const v = new DataView(zip.buffer, zip.byteOffset, zip.byteLength);
+  let fim = -1;
+  for (let i = zip.length - 22; i >= Math.max(0, zip.length - 22 - 0xffff); i--) {
+    if (v.getUint32(i, true) === 0x06054b50) { fim = i; break; }
+  }
+  if (fim < 0) throw new Error("O arquivo não é um ZIP.");
+  const quantidade = v.getUint16(fim + 10, true);
+  let p = v.getUint32(fim + 16, true);
+  const latin1 = new TextDecoder("latin1");
+  const utf8 = new TextDecoder();
+  const arquivos = new Map<string, Uint8Array>();
+  for (let n = 0; n < quantidade; n++) {
+    if (v.getUint32(p, true) !== 0x02014b50) throw new Error("Diretório do ZIP corrompido.");
+    const bandeiras = v.getUint16(p + 8, true);
+    const metodo = v.getUint16(p + 10, true);
+    const comprimido = v.getUint32(p + 20, true);
+    const tamanhoNome = v.getUint16(p + 28, true);
+    const tamanhoExtra = v.getUint16(p + 30, true);
+    const tamanhoComentario = v.getUint16(p + 32, true);
+    const local = v.getUint32(p + 42, true);
+    const bytesDoNome = zip.subarray(p + 46, p + 46 + tamanhoNome);
+    const nome = (bandeiras & 0x0800 ? utf8 : latin1).decode(bytesDoNome);
+    p += 46 + tamanhoNome + tamanhoExtra + tamanhoComentario;
+    if (bandeiras & 1) throw new Error(`"${nome}" está criptografado no ZIP.`);
+    if (v.getUint32(local, true) !== 0x04034b50) throw new Error(`Cabeçalho de "${nome}" corrompido no ZIP.`);
+    const inicio = local + 30 + v.getUint16(local + 26, true) + v.getUint16(local + 28, true);
+    const dados = zip.subarray(inicio, inicio + comprimido);
+    if (nome.endsWith("/")) continue;
+    if (metodo === 0) arquivos.set(nome, dados);
+    else if (metodo === 8) arquivos.set(nome, await inflar(dados));
+    else throw new Error(`"${nome}" usa um método de compressão sem suporte (${metodo}).`);
+  }
+  return arquivos;
+}
