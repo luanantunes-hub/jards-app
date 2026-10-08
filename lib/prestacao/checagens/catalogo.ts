@@ -90,6 +90,9 @@ export const CATALOGO_CHECAGENS = {
   PAGAMENTO_SEM_LANCAMENTO: { titulo: "Pagamento sem débito no extrato", grupo: "conciliacao", resultado: "revisar", destino: "conciliacao", regras: ["numero_do_pagamento"] },
   NUMERO_PAGAMENTO_DIVERGENTE: { titulo: "Número do pagamento diferente do extrato", grupo: "conciliacao", resultado: "nao_conforme", destino: "conciliacao", regras: ["numero_do_pagamento"] },
   EXTRATO_AUSENTE: { titulo: "Extrato não importado", grupo: "conciliacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "contas" },
+  // Regras da conta e do documento que a ANCINE cobra (P7.1); valem para todo regime que as traz.
+  TARIFA_GLOSAVEL: { titulo: "Tarifa bancária que pode ser glosada", grupo: "conciliacao", resultado: "revisar", destino: "extrato", dimensao: "contas" },
+  DOC_EMISSAO_POS_DEBITO: { titulo: "Documento emitido muito depois do débito", grupo: "despesa", resultado: "nao_conforme", destino: "comprovantes", regras: ["emissao_30_dias"] },
   // Orçamento (P1.6, P1.7)
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
