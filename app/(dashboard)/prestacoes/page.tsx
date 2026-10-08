@@ -8,6 +8,7 @@ import type { PrestacaoCarteira, StatusPrestacao } from "@/lib/supabase/types";
 import { NovaPrestacaoModal } from "@/components/modals/NovaPrestacaoModal";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { useAssinaturaPrestacao } from "@/hooks/useAssinaturaPrestacao";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { Select } from "@/components/ui/Select";
 import { itensDaArvore, montarArvore, type NoOrcamento } from "@/lib/prestacao/orcamento";
@@ -176,6 +177,9 @@ export default function PrestacoesList() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
   const organizationId = useOrganizationId();
+  // Sem assinatura o módulo fica só para leitura (P5.6): sem criar prestações.
+  const { assinatura } = useAssinaturaPrestacao(organizationId);
+  const podeCriar = !assinatura?.descricao.somenteLeitura;
   const regimes = useRegimesPublicados();
   const [recarga, setRecarga] = useState(0);
   const [lidas, setLidas] = useState<{ chave: string; prestacoes: PrestacaoLida[]; relacionados: Relacionados } | null>(null);
@@ -332,7 +336,7 @@ export default function PrestacoesList() {
         )}
         actions={<>
           <EntityViewSwitcher value={visao} onChange={setVisao} options={VISOES} />
-          <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>
+          {podeCriar && <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
         </>}
       />
 
@@ -404,7 +408,7 @@ export default function PrestacoesList() {
               description={hasFilter ? undefined : "Crie a prestação a partir de um projeto ou de uma negociação aprovada; o Jards calcula o prazo pelo regime."}
               filtered={hasFilter}
               onClearFilters={limparFiltros}
-              action={hasFilter ? undefined : <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
+              action={hasFilter || !podeCriar ? undefined : <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
             />
           </ListTableSurface>
         ) : visao === "quadro" ? (

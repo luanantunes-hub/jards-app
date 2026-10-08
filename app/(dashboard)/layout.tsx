@@ -40,7 +40,7 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
-import { destinoSemAcesso, moduloDaRota, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
+import { destinoSemAcesso, moduloDaRota, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 // ─── Definição dos módulos ──────────────────────────────────────────────────
@@ -153,10 +153,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const supabase = createClient();
     const { data: orgData } = await (supabase as any)
       .from("organizations")
-      .select("modulos_ativos")
+      .select("modulos_ativos, modulos_leitura")
       .eq("id", orgId)
       .maybeSingle();
-    setModulosOrg(normalizarModulos(orgData?.modulos_ativos));
+    // Os módulos só para leitura (sem assinatura) continuam navegáveis.
+    setModulosOrg(modulosDaOrganizacao(orgData?.modulos_ativos, orgData?.modulos_leitura));
     setModulosCarregados(true);
   }, []);
 

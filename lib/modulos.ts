@@ -23,6 +23,17 @@ export function normalizarModulos(valor: unknown): ModuloId[] {
   return modulos.length > 0 ? modulos : [...PADRAO];
 }
 
+/**
+ * Módulos que a organização usa, em vigor ou só para leitura
+ * (organizations.modulos_leitura, P5.6): sem assinatura a pessoa continua
+ * abrindo as telas para consultar e exportar; o banco não deixa escrever.
+ */
+export function modulosDaOrganizacao(ativos: unknown, leitura: unknown): ModuloId[] {
+  const emLeitura = Array.isArray(leitura) ? leitura : [];
+  const emVigor = normalizarModulos(ativos);
+  return MODULOS.filter(modulo => emVigor.includes(modulo) || emLeitura.includes(modulo));
+}
+
 const ROTAS_DO_MODULO: Record<ModuloId, readonly string[]> = {
   captacao: [],
   prestacao: ["/prestacoes"],

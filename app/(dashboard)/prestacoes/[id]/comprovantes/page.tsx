@@ -399,208 +399,210 @@ export default function ComprovantesPage() {
 
   return (
     <div className="px-8 py-6 space-y-5">
-      {/* Upload */}
-      <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p className="text-[0.75rem] font-semibold text-black">Enviar comprovante</p>
-        </div>
-        <div className="p-5">
-          {!pendingFile ? (
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded border-2 border-dashed transition hover:border-[#7259B5]/40 hover:bg-black/[.04]"
-              style={{ borderColor: "rgba(13,13,13,.12)" }}
-            >
-              <Upload size={20} className="text-black/20" />
-              <p className="text-[0.75rem] text-black/40">Clique para selecionar arquivo</p>
-              <p className="text-[0.625rem] text-black/25">PDF, imagem, planilha, XML…</p>
-            </button>
-          ) : (
-            <div className="space-y-3">
-              {/* Arquivo selecionado */}
-              <div className="flex items-center gap-3 p-3 rounded border" style={{ borderColor: "rgba(13,13,13,.10)", background: "#FAFAFA" }}>
-                <FileText size={16} className="text-[#7259B5] flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-[0.75rem] font-medium text-black truncate">{pendingFile.name}</p>
-                  <p className="text-[0.625rem] text-black/35">{(pendingFile.size / 1024).toFixed(1)} KB</p>
-                </div>
-                <button onClick={cancelarUpload} className="p-1 rounded hover:bg-black/5 text-black/30 hover:text-black/55">
-                  <X size={13} />
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                {/* Tipo */}
-                <div className="col-span-2">
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Tipo de documento</label>
-                  <Select
-                    value={tipo}
-                    onChange={e => setTipo(e.target.value as TipoComprovante)}
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  >
-                    <optgroup label="Fiscais">
-                      {TIPOS_FISCAIS.map(k => (
-                        <option key={k} value={k}>{TIPO_META[k].label}</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="Complementares">
-                      {TIPOS_COMPLEMENTARES.map(k => (
-                        <option key={k} value={k}>{TIPO_META[k].label}</option>
-                      ))}
-                    </optgroup>
-                  </Select>
-                  {TIPO_META[tipo].hint && (
-                    <p className="text-[0.625rem] mt-1.5 leading-relaxed" style={{ color: "rgba(13,13,13,.38)" }}>
-                      {TIPO_META[tipo].hint}
-                    </p>
-                  )}
+      {/* Upload: só para quem edita (o leitor e a prestação sem assinatura só consultam) */}
+      {permissoes.editar && (
+        <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+            <p className="text-[0.75rem] font-semibold text-black">Enviar comprovante</p>
+          </div>
+          <div className="p-5">
+            {!pendingFile ? (
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded border-2 border-dashed transition hover:border-[#7259B5]/40 hover:bg-black/[.04]"
+                style={{ borderColor: "rgba(13,13,13,.12)" }}
+              >
+                <Upload size={20} className="text-black/20" />
+                <p className="text-[0.75rem] text-black/40">Clique para selecionar arquivo</p>
+                <p className="text-[0.625rem] text-black/25">PDF, imagem, planilha, XML…</p>
+              </button>
+            ) : (
+              <div className="space-y-3">
+                {/* Arquivo selecionado */}
+                <div className="flex items-center gap-3 p-3 rounded border" style={{ borderColor: "rgba(13,13,13,.10)", background: "#FAFAFA" }}>
+                  <FileText size={16} className="text-[#7259B5] flex-shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[0.75rem] font-medium text-black truncate">{pendingFile.name}</p>
+                    <p className="text-[0.625rem] text-black/35">{(pendingFile.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button onClick={cancelarUpload} className="p-1 rounded hover:bg-black/5 text-black/30 hover:text-black/55">
+                    <X size={13} />
+                  </button>
                 </div>
 
-                {/* Origem */}
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Origem</label>
-                  <div className="flex gap-2">
-                    {(["nacional", "internacional"] as const).map(o => (
-                      <button
-                        key={o}
-                        type="button"
-                        onClick={() => setOrigem(o)}
-                        className="flex-1 py-2 rounded border text-[0.6875rem] font-semibold transition capitalize"
-                        style={{
-                          background: origem === o ? "#fff" : "white",
-                          borderColor: origem === o ? "#7259B5" : "rgba(13,13,13,.12)",
-                          color: origem === o ? "#7259B5" : "rgba(13,13,13,.45)",
-                        }}
-                      >
-                        {o === "nacional" ? "Nacional" : "Internacional"}
-                      </button>
-                    ))}
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Tipo */}
+                  <div className="col-span-2">
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Tipo de documento</label>
+                    <Select
+                      value={tipo}
+                      onChange={e => setTipo(e.target.value as TipoComprovante)}
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                      style={{ borderColor: "rgba(13,13,13,.12)" }}
+                    >
+                      <optgroup label="Fiscais">
+                        {TIPOS_FISCAIS.map(k => (
+                          <option key={k} value={k}>{TIPO_META[k].label}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Complementares">
+                        {TIPOS_COMPLEMENTARES.map(k => (
+                          <option key={k} value={k}>{TIPO_META[k].label}</option>
+                        ))}
+                      </optgroup>
+                    </Select>
+                    {TIPO_META[tipo].hint && (
+                      <p className="text-[0.625rem] mt-1.5 leading-relaxed" style={{ color: "rgba(13,13,13,.38)" }}>
+                        {TIPO_META[tipo].hint}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Origem */}
+                  <div>
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Origem</label>
+                    <div className="flex gap-2">
+                      {(["nacional", "internacional"] as const).map(o => (
+                        <button
+                          key={o}
+                          type="button"
+                          onClick={() => setOrigem(o)}
+                          className="flex-1 py-2 rounded border text-[0.6875rem] font-semibold transition capitalize"
+                          style={{
+                            background: origem === o ? "#fff" : "white",
+                            borderColor: origem === o ? "#7259B5" : "rgba(13,13,13,.12)",
+                            color: origem === o ? "#7259B5" : "rgba(13,13,13,.45)",
+                          }}
+                        >
+                          {o === "nacional" ? "Nacional" : "Internacional"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Rubrica */}
+                  <div>
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Item do orçamento</label>
+                    <Select
+                      value={itemId}
+                      onChange={e => setItemId(e.target.value)}
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                      style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
+                    >
+                      <option value="">Sem item</option>
+                      {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
+                    </Select>
+                  </div>
+
+                  {/* Valor */}
+                  <div>
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Valor (R$)</label>
+                    <input
+                      type="number"
+                      value={valorExtraido}
+                      onChange={e => setValorExtraido(e.target.value)}
+                      placeholder="0,00"
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                      style={{ borderColor: "rgba(13,13,13,.12)" }}
+                    />
+                  </div>
+
+                  {/* Data */}
+                  <div>
+                    <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Data do documento</label>
+                    <input
+                      type="date"
+                      value={dataDoc}
+                      onChange={e => setDataDoc(e.target.value)}
+                      className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                      style={{ borderColor: "rgba(13,13,13,.12)" }}
+                    />
                   </div>
                 </div>
 
-                {/* Rubrica */}
+                {ehDespesa(tipo) && (
+                  <div>
+                    <label htmlFor="fornecedor-envio" className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Fornecedor</label>
+                    <FornecedorCombobox id="fornecedor-envio" fornecedores={fornecedores} valor={fornecedorId} onChange={setFornecedorId} />
+                  </div>
+                )}
+
+                {/* Descrição do serviço */}
                 <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Item do orçamento</label>
-                  <Select
-                    value={itemId}
-                    onChange={e => setItemId(e.target.value)}
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">
+                    Descrição do serviço
+                    {tipo === "nfe" && <span className="ml-1 font-normal text-[#D94E4E]/70">(deve corresponder à rubrica aprovada)</span>}
+                  </label>
+                  <input
+                    value={descricaoServico}
+                    onChange={e => setDescricaoServico(e.target.value)}
+                    placeholder={tipo === "cartao_embarque" ? "Passageiros e trechos" : tipo === "invoice" ? "Descrição do serviço prestado (tradução livre)": "Descrição do serviço ou produto"}
                     className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
+                    style={{ borderColor: "rgba(13,13,13,.12)" }}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Observação</label>
+                  <input
+                    value={observacao}
+                    onChange={e => setObservacao(e.target.value)}
+                    placeholder="Observação"
+                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
+                    style={{ borderColor: "rgba(13,13,13,.12)" }}
+                  />
+                </div>
+
+                {lido && (
+                  <DocumentoLido
+                    documento={lido.documento}
+                    avisos={lido.sugestao.avisos}
+                    motivos={motivosParaMostrar(lido.motivos, regime)}
+                  />
+                )}
+
+                {/* Erro de upload */}
+                {uploadError && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
+                    style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
+                    {uploadError}
+                  </div>
+                )}
+
+                {/* Banner IA analisando */}
+                {extraindo && (
+                  <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
+                    style={{ background: "#fff", borderColor: "#7259B530", color: "#7259B5" }}>
+                    <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin flex-shrink-0" />
+                    {uploadProgress || "Analisando documento com IA…"}
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-3 pt-1">
+                  <button
+                    onClick={cancelarUpload}
+                    disabled={uploading}
+                    className="px-3 py-1.5 text-[0.6875rem] text-black/35 hover:text-black/55 transition"
                   >
-                    <option value="">Sem item</option>
-                    {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
-                  </Select>
-                </div>
-
-                {/* Valor */}
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Valor (R$)</label>
-                  <input
-                    type="number"
-                    value={valorExtraido}
-                    onChange={e => setValorExtraido(e.target.value)}
-                    placeholder="0,00"
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                </div>
-
-                {/* Data */}
-                <div>
-                  <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Data do documento</label>
-                  <input
-                    type="date"
-                    value={dataDoc}
-                    onChange={e => setDataDoc(e.target.value)}
-                    className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={handleUpload}
+                    disabled={uploading || extraindo}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-[0.75rem] font-semibold text-white rounded transition hover:opacity-90 disabled:opacity-50"
+                    style={{ background: "#7259B5" }}
+                  >
+                    {uploading
+                      ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando…</>
+                      : <><Upload size={12} /> Enviar</>}
+                  </button>
                 </div>
               </div>
-
-              {ehDespesa(tipo) && (
-                <div>
-                  <label htmlFor="fornecedor-envio" className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Fornecedor</label>
-                  <FornecedorCombobox id="fornecedor-envio" fornecedores={fornecedores} valor={fornecedorId} onChange={setFornecedorId} />
-                </div>
-              )}
-
-              {/* Descrição do serviço */}
-              <div>
-                <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">
-                  Descrição do serviço
-                  {tipo === "nfe" && <span className="ml-1 font-normal text-[#D94E4E]/70">(deve corresponder à rubrica aprovada)</span>}
-                </label>
-                <input
-                  value={descricaoServico}
-                  onChange={e => setDescricaoServico(e.target.value)}
-                  placeholder={tipo === "cartao_embarque" ? "Passageiros e trechos" : tipo === "invoice" ? "Descrição do serviço prestado (tradução livre)": "Descrição do serviço ou produto"}
-                  className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-
-              <div>
-                <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Observação</label>
-                <input
-                  value={observacao}
-                  onChange={e => setObservacao(e.target.value)}
-                  placeholder="Observação"
-                  className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                  style={{ borderColor: "rgba(13,13,13,.12)" }}
-                />
-              </div>
-
-              {lido && (
-                <DocumentoLido
-                  documento={lido.documento}
-                  avisos={lido.sugestao.avisos}
-                  motivos={motivosParaMostrar(lido.motivos, regime)}
-                />
-              )}
-
-              {/* Erro de upload */}
-              {uploadError && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
-                  style={{ background: "#fff", borderColor: "#D94E4E30", color: "#D94E4E" }}>
-                  {uploadError}
-                </div>
-              )}
-
-              {/* Banner IA analisando */}
-              {extraindo && (
-                <div className="flex items-center gap-2 px-3 py-2 rounded border text-[0.6875rem]"
-                  style={{ background: "#fff", borderColor: "#7259B530", color: "#7259B5" }}>
-                  <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin flex-shrink-0" />
-                  {uploadProgress || "Analisando documento com IA…"}
-                </div>
-              )}
-
-              <div className="flex justify-end gap-3 pt-1">
-                <button
-                  onClick={cancelarUpload}
-                  disabled={uploading}
-                  className="px-3 py-1.5 text-[0.6875rem] text-black/35 hover:text-black/55 transition"
-                >
-                  Cancelar
-                </button>
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading || extraindo}
-                  className="flex items-center gap-1.5 px-4 py-1.5 text-[0.75rem] font-semibold text-white rounded transition hover:opacity-90 disabled:opacity-50"
-                  style={{ background: "#7259B5" }}
-                >
-                  {uploading
-                    ? <><span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Salvando…</>
-                    : <><Upload size={12} /> Enviar</>}
-                </button>
-              </div>
-            </div>
-          )}
-          <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.xml,.xlsx,.xls,.csv" />
+            )}
+            <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.xml,.xlsx,.xls,.csv" />
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Lista */}
       <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>

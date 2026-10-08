@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import Stripe from "stripe";
+import { novoStripe } from "@/lib/stripe";
 
 const SEAT_PRICE_ID = process.env.STRIPE_PRICE_SEAT ?? "";
 const UNIT_PRICE = 19.9;
@@ -126,6 +127,7 @@ export async function POST(req: NextRequest) {
     organization_id?: string;
     quantity?: number;
     request_id?: string;
+    modulo?: string;
   } | null;
   const organizationId = body?.organization_id ?? "";
   const quantity = Number(body?.quantity);
@@ -139,6 +141,7 @@ export async function POST(req: NextRequest) {
   if (!SEAT_PRICE_ID || !process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Preço de usuário extra ainda não configurado" }, { status: 503 });
   }
+  if (body?.modulo === "prestacao") return comprarVagasDaPrestacao(organizationId, user.id, quantity, requestId);
 
   const admin = adminClient();
   const { data: previousPurchase } = await admin
@@ -189,7 +192,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: purchaseError.message }, { status: 500 });
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  const stripe = novoStripe() ?? new Stripe(process.env.STRIPE_SECRET_KEY);
   let itemId = summary.stripe_subscription_item_id;
   let createdItem = false;
   try {
@@ -243,6 +246,116 @@ export async function POST(req: NextRequest) {
       }
     } catch (rollbackError) {
       console.error("Falha ao reverter compra de usuários extras", rollbackError);
+    }
+    const message = error instanceof Error ? error.message : "Falha ao comprar usuários extras";
+    await admin.from("organization_seat_purchases").update({ status: "failed", error: message.slice(0, 1000) }).eq("id", requestId);
+    return NextResponse.json({ error: message }, { status: 502 });
+  }
+}
+
+/**
+ * Usuários extras da prestação de contas (P5.6): item do preço de vaga na
+ * assinatura do módulo, que é da organização. Só quem paga a assinatura
+ * compra; o contrato é atualizado na hora e o webhook confirma depois.
+ */
+async function comprarVagasDaPrestacao(organizationId: string, userId: string, quantity: number, requestId: string) {
+  const admin = adminClient();
+  const { data: contrato, error: contratoError } = await admin
+    .from("organization_modulos")
+    .select("status, billing_user_id, stripe_subscription_id, stripe_item_vagas_id, vagas_compradas")
+    .eq("organization_id", organizationId)
+    .eq("modulo", "prestacao")
+    .maybeSingle();
+  if (contratoError) return NextResponse.json({ error: "Falha ao consultar a assinatura" }, { status: 500 });
+  if (!contrato?.stripe_subscription_id || !["ativo", "teste", "atraso"].includes(contrato.status)) {
+    return NextResponse.json({ error: "É necessário assinar a prestação de contas para comprar usuários extras" }, { status: 402 });
+  }
+  if (contrato.billing_user_id !== userId) {
+    return NextResponse.json({ error: "Somente quem paga a assinatura da prestação pode comprar usuários extras" }, { status: 403 });
+  }
+
+  const { data: previousPurchase } = await admin
+    .from("organization_seat_purchases")
+    .select("status")
+    .eq("id", requestId)
+    .eq("organization_id", organizationId)
+    .eq("billing_user_id", userId)
+    .maybeSingle();
+  if (previousPurchase?.status === "completed") {
+    return NextResponse.json({ ok: true, ...(await prestacaoSummary(organizationId)), reused: true });
+  }
+  if (previousPurchase?.status === "pending") {
+    return NextResponse.json({ error: "Esta compra ainda está sendo processada" }, { status: 409 });
+  }
+
+  const previous = contrato.vagas_compradas ?? 0;
+  const resultingQuantity = previous + quantity;
+  const { error: purchaseError } = await admin.from("organization_seat_purchases").upsert({
+    id: requestId,
+    organization_id: organizationId,
+    billing_user_id: userId,
+    modulo: "prestacao",
+    quantity,
+    previous_quantity: previous,
+    resulting_quantity: resultingQuantity,
+    status: "pending",
+    error: null,
+    completed_at: null,
+  }, { onConflict: "id" });
+  if (purchaseError) {
+    if (purchaseError.code === "23505") {
+      return NextResponse.json({ error: "Já existe uma compra de usuários extras em processamento" }, { status: 409 });
+    }
+    return NextResponse.json({ error: purchaseError.message }, { status: 500 });
+  }
+
+  const stripe = novoStripe() ?? new Stripe(process.env.STRIPE_SECRET_KEY!);
+  let itemId: string | null = contrato.stripe_item_vagas_id;
+  let createdItem = false;
+  try {
+    const subscription = await stripe.subscriptions.retrieve(contrato.stripe_subscription_id, { expand: ["items"] });
+    const currentItem = subscription.items.data.find(item => item.id === itemId || item.price.id === SEAT_PRICE_ID);
+    itemId = currentItem?.id ?? null;
+    if (itemId) {
+      await stripe.subscriptionItems.update(itemId, {
+        quantity: resultingQuantity,
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      }, { idempotencyKey: `seat-purchase:${requestId}` });
+    } else {
+      const created = await stripe.subscriptionItems.create({
+        subscription: contrato.stripe_subscription_id,
+        price: SEAT_PRICE_ID,
+        quantity: resultingQuantity,
+        proration_behavior: "always_invoice",
+        payment_behavior: "error_if_incomplete",
+      }, { idempotencyKey: `seat-purchase:${requestId}` });
+      itemId = created.id;
+      createdItem = true;
+    }
+
+    const { error: contratoUpdateError } = await admin.from("organization_modulos")
+      .update({ vagas_compradas: resultingQuantity, stripe_item_vagas_id: itemId })
+      .eq("organization_id", organizationId)
+      .eq("modulo", "prestacao");
+    if (contratoUpdateError) throw contratoUpdateError;
+
+    const { error: completeError } = await admin.from("organization_seat_purchases").update({
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    }).eq("id", requestId);
+    if (completeError) throw completeError;
+
+    return NextResponse.json({ ok: true, ...(await prestacaoSummary(organizationId)) });
+  } catch (error) {
+    try {
+      if (itemId && createdItem) {
+        await stripe.subscriptionItems.del(itemId, { proration_behavior: "none" });
+      } else if (itemId) {
+        await stripe.subscriptionItems.update(itemId, { quantity: previous, proration_behavior: "none" });
+      }
+    } catch (rollbackError) {
+      console.error("Falha ao reverter compra de usuários extras da prestação", rollbackError);
     }
     const message = error instanceof Error ? error.message : "Falha ao comprar usuários extras";
     await admin.from("organization_seat_purchases").update({ status: "failed", error: message.slice(0, 1000) }).eq("id", requestId);

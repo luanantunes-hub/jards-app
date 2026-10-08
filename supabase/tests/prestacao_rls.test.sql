@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(294);
+select plan(323);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -1330,6 +1330,85 @@ set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","r
 set local role authenticated;
 select is((select count(*)::integer from public.prestacao_emails_recebidos), 0, 'proponente: não lê os e-mails recebidos');
 reset role;
+
+-- ─── Cobrança do módulo (P5.6): assinatura, somente leitura e vagas ─────────
+set local role service_role;
+select is(public.fn_processar_cobranca_modulo('rls_evt_1', 'customer.subscription.deleted', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_velha', 'si_rls_mod', null, 0, 'canceled', null) ->> 'ignorado',
+  'outra_assinatura', 'cobrança: o fim de uma assinatura que não é a do contrato não mexe nele');
+select is(public.fn_processar_cobranca_modulo('rls_evt_2', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', 'si_rls_vagas', 3, 'active', now() + interval '30 days') ->> 'status',
+  'ativo', 'cobrança: assinatura ativa vira contrato ativo');
+select is(public.fn_processar_cobranca_modulo('rls_evt_2', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', 'si_rls_vagas', 3, 'active', now() + interval '30 days') ->> 'duplicate',
+  'true', 'cobrança: o mesmo evento não é processado duas vezes');
+select is((select array[stripe_subscription_id, stripe_item_vagas_id, vagas_compradas::text, billing_user_id::text] from public.organization_modulos
+           where organization_id = 'f0000000-0000-4000-8000-0000000000a0' and modulo = 'prestacao'),
+  array['sub_rls_a', 'si_rls_vagas', '3', 'f0000000-0000-4000-8000-0000000000a1'], 'cobrança: o contrato guarda a assinatura, as vagas compradas e quem paga');
+select is(public.fn_processar_cobranca_modulo('rls_evt_3', 'invoice.payment_failed', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', null, 3, 'past_due', now() + interval '30 days') ->> 'status',
+  'atraso', 'cobrança: pagamento recusado deixa o contrato em atraso');
+select ok((select om.past_due_since is not null and 'prestacao' = any(o.modulos_ativos)
+           from public.organization_modulos om join public.organizations o on o.id = om.organization_id
+           where om.organization_id = 'f0000000-0000-4000-8000-0000000000a0' and om.modulo = 'prestacao'),
+  'cobrança: em atraso, o módulo segue ativo durante a carência');
+select is(public.fn_processar_cobranca_modulo('rls_evt_4', 'invoice.payment_failed', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_nova', 'si_rls_mod', null, 0, 'incomplete', now() + interval '30 days') ->> 'ignorado',
+  'pagamento_pendente', 'cobrança: primeiro pagamento pendente não muda o contrato');
+select is(public.fn_processar_cobranca_modulo('rls_evt_5', 'customer.subscription.deleted', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', null, 3, 'canceled', null) ->> 'status',
+  'cancelado', 'cobrança: assinatura cancelada encerra o contrato');
+select is((select array[array_to_string(modulos_ativos, ','), array_to_string(modulos_leitura, ',')] from public.organizations where id = 'f0000000-0000-4000-8000-0000000000a0'),
+  array['captacao', 'prestacao'], 'cobrança: sem assinatura, a prestação fica só para leitura');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), rls_teste.todas(), 'somente leitura: o admin continua vendo tudo da prestação');
+select is(rls_teste.insere(), '{}'::text[], 'somente leitura: ninguém cria nada');
+select is(rls_teste.altera(), '{}'::text[], 'somente leitura: ninguém altera nada');
+select is(rls_teste.apaga(), '{}'::text[], 'somente leitura: ninguém apaga nada');
+select is(rls_teste.arquivos(), array['le'], 'somente leitura: os arquivos são lidos, sem enviar, trocar ou apagar');
+select is(public.auth_prestacao_pode('f0000000-0000-4000-8000-0000000001a0', 'editar'), false, 'somente leitura: a tela não oferece edição');
+update public.organizations set modulos_ativos = '{captacao,prestacao}', modulos_leitura = '{}' where id = 'f0000000-0000-4000-8000-0000000000a0';
+select throws_ok($t$select public.fn_processar_cobranca_modulo('rls_evt_x', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_x', 'si_rls_mod', null, 0, 'active', now() + interval '30 days')$t$, '42501', null,
+  'cobrança: conta logada não registra assinatura');
+reset role;
+select is((select array[array_to_string(modulos_ativos, ','), array_to_string(modulos_leitura, ',')] from public.organizations where id = 'f0000000-0000-4000-8000-0000000000a0'),
+  array['captacao', 'prestacao'], 'somente leitura: a organização não muda a própria lista de módulos');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a5","role":"authenticated"}';
+set local role authenticated;
+select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), '{}'::text[], 'somente leitura: quem não usava o módulo continua sem ver');
+reset role;
+set local role service_role;
+select is(public.fn_processar_cobranca_modulo('rls_evt_6', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a2', 'si_rls_mod', null, 0, 'active', now() + interval '30 days') ->> 'status',
+  'ativo', 'cobrança: assinar de novo devolve a edição');
+select is(public.fn_processar_cobranca_modulo('rls_evt_7', 'customer.subscription.deleted', 'f0000000-0000-4000-8000-0000000000a0', 'prestacao', 'f0000000-0000-4000-8000-0000000000a1', 'cus_rls_a', 'sub_rls_a', 'si_rls_mod', null, 0, 'canceled', null) ->> 'ignorado',
+  'outra_assinatura', 'cobrança: o fim da assinatura antiga não derruba a nova');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select is(public.auth_prestacao_pode('f0000000-0000-4000-8000-0000000001a0', 'editar'), true, 'cobrança: com a assinatura nova, o admin volta a editar');
+reset role;
+select ok((select count(*) from public.notification_events where event_key = 'modulo_cobranca' and organization_id = 'f0000000-0000-4000-8000-0000000000a0') >= 3,
+  'cobrança: quem administra é avisado do atraso, do fim e da volta da assinatura');
+update public.organization_members set modulos_acesso = '{captacao}' where organization_id = 'f0000000-0000-4000-8000-0000000000c0' and user_id = 'f0000000-0000-4000-8000-0000000000c1';
+update public.organization_modulos set status = 'cortesia', cortesia_ate = current_date + 10 where organization_id = 'f0000000-0000-4000-8000-0000000000b0' and modulo = 'prestacao';
+set local role service_role;
+select is(public.fn_processar_cobranca_modulo('rls_evt_8', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000c0', 'prestacao', 'f0000000-0000-4000-8000-0000000000c1', 'cus_rls_c', 'sub_rls_c', 'si_rls_mod', null, 0, 'trialing', now() + interval '14 days') ->> 'status',
+  'teste', 'cobrança: assinatura em teste libera o módulo para a organização sem ele');
+select is(public.fn_processar_cobranca_modulo('rls_evt_9', 'customer.subscription.created', 'f0000000-0000-4000-8000-0000000000b0', 'prestacao', 'f0000000-0000-4000-8000-0000000000b1', 'cus_rls_b', 'sub_rls_b', 'si_rls_mod', null, 0, 'active', now() + interval '30 days') ->> 'status',
+  'ativo', 'cobrança: a assinatura substitui a cortesia');
+select is(public.fn_processar_cobranca_modulo('rls_evt_10', 'customer.subscription.deleted', 'f0000000-0000-4000-8000-0000000000b0', 'prestacao', 'f0000000-0000-4000-8000-0000000000b1', 'cus_rls_b', 'sub_rls_b', 'si_rls_mod', null, 0, 'canceled', null) ->> 'status',
+  'cortesia', 'cobrança: cancelada a assinatura, volta a cortesia que ainda vale');
+reset role;
+select ok((select 'prestacao' = any(modulos_acesso) from public.organization_members where organization_id = 'f0000000-0000-4000-8000-0000000000c0' and user_id = 'f0000000-0000-4000-8000-0000000000c1'),
+  'cobrança: quem assinou ganha o acesso ao módulo');
+select lives_ok($t$insert into public.organization_seat_purchases (id, organization_id, billing_user_id, quantity, previous_quantity, resulting_quantity, status, modulo) values
+  ('f0000000-0000-4000-8000-0000000056a0', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000000a1', 1, 0, 1, 'pending', 'captacao'),
+  ('f0000000-0000-4000-8000-0000000056a1', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000000a1', 1, 0, 1, 'pending', 'prestacao')$t$,
+  'vagas: uma compra pendente da captação e uma da prestação ao mesmo tempo');
+select throws_ok($t$insert into public.organization_seat_purchases (id, organization_id, billing_user_id, quantity, previous_quantity, resulting_quantity, status, modulo) values
+  ('f0000000-0000-4000-8000-0000000056a2', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000000a1', 1, 1, 2, 'pending', 'prestacao')$t$, '23505', null,
+  'vagas: só uma compra pendente da prestação por vez');
+select is((select count(*)::integer from pg_policies where schemaname = 'public' and policyname like '%: leitura sem assinatura'),
+  (select count(distinct tablename)::integer from pg_policies
+   where schemaname = 'public' and permissive = 'PERMISSIVE' and cmd in ('ALL', 'SELECT')
+     and (qual like '%can_access_prestacao(%' or qual like '%auth_tem_modulo(organization_id, ''prestacao''::text)%')),
+  'somente leitura: cada tabela que a equipe lê tem a regra de leitura sem assinatura');
 
 select * from finish();
 rollback;

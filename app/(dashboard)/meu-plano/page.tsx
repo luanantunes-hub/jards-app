@@ -9,6 +9,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { Profile, PlanTipo } from "@/lib/supabase/types";
+import { AssinaturaDoModulo } from "@/components/prestacao/AssinaturaDoModulo";
 
 // ─── Plan definitions ─────────────────────────────────────────────────────────
 
@@ -129,8 +130,12 @@ function MeuPlanoInner() {
   const supabase    = createClient();
   const organizationId = useOrganizationId();
   const params      = useSearchParams();
-  const success     = params.get("success") === "1";
-  const canceled    = params.get("canceled") === "1";
+  // A volta do checkout da prestação de contas (P5.6) é tratada no cartão do módulo.
+  const doModulo    = params.get("modulo") === "prestacao";
+  const success     = !doModulo && params.get("success") === "1";
+  const canceled    = !doModulo && params.get("canceled") === "1";
+  const destacarModulo = doModulo || params.get("assinar") === "prestacao";
+  const retornoModulo = !doModulo ? null : params.get("success") === "1" ? "pago" : params.get("canceled") === "1" ? "cancelado" : null;
 
   const [profile, setProfile]             = useState<Profile | null>(null);
   const [usage, setUsage] = useState<Record<UsageKey, number>>({
@@ -284,6 +289,12 @@ function MeuPlanoInner() {
         <div role="alert" className="flex items-center gap-3 bg-white border border-[#D94E4E]/25 rounded px-5 py-4 mb-6">
           <AlertCircle size={18} className="text-[#B23A3A] flex-shrink-0" />
           <p className="text-sm text-[#B23A3A]">{erro}</p>
+        </div>
+      )}
+
+      {destacarModulo && (
+        <div className="mb-8">
+          <AssinaturaDoModulo destacar retorno={retornoModulo} />
         </div>
       )}
 
@@ -458,6 +469,12 @@ function MeuPlanoInner() {
           </div>
         </div>
       </div>
+
+      {!destacarModulo && (
+        <div className="mt-8">
+          <AssinaturaDoModulo destacar={false} retorno={null} />
+        </div>
+      )}
     </div>
   );
 }
