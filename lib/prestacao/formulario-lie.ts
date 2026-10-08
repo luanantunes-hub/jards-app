@@ -239,6 +239,24 @@ function acoesDoPlano(itens: readonly LinhaOrcamento[], nomeDoNo: (id: string) =
   return { acoes: lista, proprios };
 }
 
+/**
+ * As ações e os itens do orçamento em uso, com a numeração do plano de
+ * trabalho e o executado de cada item (despesas não recusadas). A planilha de
+ * remanejamento (P8.3) usa os mesmos códigos.
+ */
+export function planoDeTrabalho(estado: Pick<EstadoDaPrestacao, "nos" | "despesas" | "pagamentos">) {
+  const despesas = estado.despesas.filter(valida);
+  const nos = estado.nos ?? [];
+  const nosPorId = new Map(nos.map(n => [n.id, n]));
+  const arvore = montarArvore(nos, despesas.map(d => ({ id: d.id, no_id: d.no_id, status: d.status, valor_extraido: d.valor_extraido, valor_liquido: d.valor_liquido })), estado.pagamentos);
+  const { acoes, proprios } = acoesDoPlano(itensDaArvore(arvore.raizes), id => {
+    const no = nosPorId.get(id);
+    return no ? { nome: no.nome, codigo: no.codigo } : null;
+  });
+  const itens = acoes.flatMap(a => a.itens);
+  return { acoes, proprios, itens, codigoDoItem: new Map(itens.map(i => [i.id, i.codigo])) };
+}
+
 export function formularioLie(dados: DadosDoFormularioLie): FormularioLie {
   const { estado, etapa } = dados;
   const criticas: CriticaDoFormulario[] = [];
@@ -268,15 +286,8 @@ export function formularioLie(dados: DadosDoFormularioLie): FormularioLie {
 
   // ─── Plano e execução ───
   const despesas = estado.despesas.filter(valida);
-  const nos = estado.nos ?? [];
-  const nosPorId = new Map(nos.map(n => [n.id, n]));
-  const arvore = montarArvore(nos, despesas.map(d => ({ id: d.id, no_id: d.no_id, status: d.status, valor_extraido: d.valor_extraido, valor_liquido: d.valor_liquido })), estado.pagamentos);
-  const { acoes, proprios } = acoesDoPlano(itensDaArvore(arvore.raizes), id => {
-    const no = nosPorId.get(id);
-    return no ? { nome: no.nome, codigo: no.codigo } : null;
-  });
-  const itens = acoes.flatMap(a => a.itens);
-  const codigoDoItem = new Map(itens.map(i => [i.id, i.codigo]));
+  const nosPorId = new Map((estado.nos ?? []).map(n => [n.id, n]));
+  const { acoes, proprios, itens, codigoDoItem } = planoDeTrabalho(estado);
   if (!itens.length) corrigir("EXECUTADO", "Ações", "O orçamento em uso não tem itens: EXECUTADO, RECEITA E DESPESA e A EXECUTAR saem sem ações.", { tipo: "orcamento" });
   if (proprios) {
     const semM = acoes.filter(a => a.divisao === "meio" && !/^M/i.test(a.codigo));

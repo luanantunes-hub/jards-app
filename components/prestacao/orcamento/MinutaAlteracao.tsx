@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import { Check, Copy, Printer, X } from "lucide-react";
+import { Check, Copy, FileSpreadsheet, Info, Printer, X } from "lucide-react";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { minutaEmTexto, type Minuta } from "@/lib/prestacao/alteracoes";
 
@@ -41,10 +41,31 @@ td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
  * Minuta do pedido ao órgão, montada do cálculo salvo na alteração. A pessoa
  * revisa, copia para o sistema oficial (no Salic, a readequação) ou imprime.
  */
-export function MinutaAlteracao({ minuta, onClose }: { minuta: Minuta; onClose: () => void }) {
+export function MinutaAlteracao({ minuta, onClose, planilha }: {
+  minuta: Minuta;
+  onClose: () => void;
+  /** Planilha de remanejamento do regime (LIE, Modelo I): gera, baixa e devolve o que conferir. */
+  planilha?: { rotulo: string; baixar: () => Promise<string[]> };
+}) {
   const titleId = useId();
   useModalDismiss(onClose);
   const [copiado, setCopiado] = useState(false);
+  const [gerando, setGerando] = useState(false);
+  const [avisos, setAvisos] = useState<string[]>([]);
+  const [erro, setErro] = useState("");
+
+  async function baixarPlanilha() {
+    if (!planilha) return;
+    setGerando(true);
+    setErro("");
+    try {
+      setAvisos(await planilha.baixar());
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Não foi possível gerar a planilha.");
+    } finally {
+      setGerando(false);
+    }
+  }
 
   async function copiar() {
     try {
@@ -110,7 +131,23 @@ export function MinutaAlteracao({ minuta, onClose }: { minuta: Minuta; onClose: 
           <p className="pt-2 text-black/60">{minuta.fecho}</p>
         </article>
 
-        <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        {(erro || avisos.length > 0) && (
+          <div className="shrink-0 space-y-1 border-t px-6 py-3 text-[0.6875rem]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+            {erro && <p role="alert" className="text-[#B23B3B]">{erro}</p>}
+            {avisos.map(a => (
+              <p key={a} className="flex items-start gap-1.5 text-black/60"><Info size={12} className="mt-0.5 shrink-0 text-black/40" aria-hidden /> {a}</p>
+            ))}
+          </div>
+        )}
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+          {planilha && (
+            <button type="button" onClick={baixarPlanilha} disabled={gerando} className="mr-auto flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/65 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:cursor-not-allowed disabled:text-black/30" style={{ borderColor: "rgba(13,13,13,.14)" }}>
+              {gerando
+                ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/15 border-t-black/50 motion-reduce:animate-none" aria-hidden />
+                : <FileSpreadsheet size={13} aria-hidden />}
+              {planilha.rotulo}
+            </button>
+          )}
           <button type="button" onClick={() => imprimir(minuta)} className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/65 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.14)" }}>
             <Printer size={13} aria-hidden /> Imprimir
           </button>
