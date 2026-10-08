@@ -2,9 +2,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus, ClipboardCheck, ArrowUpRight, CheckCircle2, AlertCircle, Clock } from "lucide-react";
+import { Plus, ClipboardCheck, ArrowUpRight, CheckCircle2, AlertCircle, Clock, List, Columns3 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { StatusPrestacao } from "@/lib/supabase/types";
+import type { PrestacaoCarteira, StatusPrestacao } from "@/lib/supabase/types";
 import { NovaPrestacaoModal } from "@/components/modals/NovaPrestacaoModal";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
@@ -13,6 +13,11 @@ import { Select } from "@/components/ui/Select";
 import { itensDaArvore, montarArvore, type NoOrcamento } from "@/lib/prestacao/orcamento";
 import { avaliarProntidao, prazosDaPrestacao, proximoPrazo, quandoVence, type PrazoDaPrestacao, type Prontidao } from "@/lib/prestacao/prontidao";
 import type { RegimeNormativo } from "@/lib/prestacao/regimes";
+import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
+import { KanbanBoard, KanbanCard, KanbanColumn, KanbanEmpty } from "@/components/kanban/KanbanPrimitives";
+import { fetchOrganizationMembers, type OrganizationMemberSummary } from "@/lib/organization/members";
+import { nomeDoMembro, podeConduzir } from "@/components/prestacao/ResponsavelDaPrestacao";
+import { clientesDaCarteira, execucaoDoCaptado, filtrarCarteira, quadroDaCarteira, resumoDaCarteira, type LinhaDaCarteira } from "@/lib/prestacao/carteira";
 import { LIST_HEADER_CELL, ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 
 type PrestacaoLida = {
@@ -24,8 +29,10 @@ type PrestacaoLida = {
   regime_id: string | null;
   identificador_oficial: string | null;
   created_at: string;
+  responsavel_id: string | null;
   captacao: { titulo: string | null } | null;
   projeto: { nome: string } | null;
+  proponente: { id: string; nome: string } | null;
 };
 
 type Relacionados = {
@@ -33,9 +40,10 @@ type Relacionados = {
   comprovantes: { prestacao_id: string; no_id: string | null; status: string; valor_extraido: number | null }[];
   atividades: { prestacao_id: string }[];
   alteracoes: { prestacao_id: string; numero: number; solicitada_em: string | null }[];
+  carteira: PrestacaoCarteira[];
 };
 
-type Linha = PrestacaoLida & {
+type Linha = PrestacaoLida & LinhaDaCarteira & {
   regime: RegimeNormativo | null;
   vigente: number;
   pago: number;
@@ -54,15 +62,25 @@ const STATUS_META: Record<StatusPrestacao, { label: string; color: string; icon:
 
 const EM_PREPARO: StatusPrestacao[] = ["rascunho", "revisao_interna", "ajuste_solicitado"];
 
+const VISOES = [
+  { value: "lista", label: "Lista", icon: List },
+  { value: "quadro", label: "Quadro", icon: Columns3 },
+] as const;
+const VISOES_PERMITIDAS = VISOES.map(v => v.value);
+
 const COLUNAS: ColumnDefinition<string>[] = [
   { id: "prestacao", label: "Prestação", width: "16rem", grow: true, hideable: false },
+  { id: "cliente", label: "Cliente", width: "11rem" },
   { id: "identificador", label: "Identificador", width: "8.5rem" },
   { id: "regime", label: "Regime", width: "11rem" },
   { id: "status", label: "Status", width: "9.5rem" },
+  { id: "responsavel", label: "Responsável", width: "10rem" },
   { id: "prazo", label: "Próximo prazo", width: "10.5rem" },
   { id: "prontidao", label: "Prontidão", width: "9.5rem" },
+  { id: "risco", label: "Em risco", width: "8.5rem" },
   { id: "orcamento", label: "Orçamento", width: "8.5rem" },
   { id: "comprovado", label: "Comprovado", width: "9rem" },
+  { id: "captado", label: "Captado × executado", width: "10.5rem" },
   { id: "negociacao", label: "Negociação", width: "11rem", defaultHidden: true },
 ];
 
@@ -81,7 +99,7 @@ function hojeEmBrasilia(): string {
 }
 
 function semAcento(texto: string): string {
-  return texto.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+  return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
 function corDaProntidao(percentual: number): string {
@@ -130,6 +148,30 @@ function PrazoCelula({ prazo }: { prazo: PrazoDaPrestacao | null }) {
   );
 }
 
+function RiscoCelula({ carteira }: { carteira: Linha["carteira"] }) {
+  if (!carteira?.achados_em_risco) return <span className="text-[0.75rem] text-black/25">—</span>;
+  const achados = `${carteira.achados_em_risco} ${carteira.achados_em_risco === 1 ? "achado aberto" : "achados abertos"}`;
+  if (!carteira.valor_em_risco) return <p className="text-[0.6875rem] text-black/50">{achados}</p>;
+  return (
+    <div className="min-w-0">
+      <p className="text-[0.75rem] tabular-nums text-[#B23B3B]">{fmt(carteira.valor_em_risco)}</p>
+      <p className="text-[0.625rem] text-black/40">{achados}</p>
+    </div>
+  );
+}
+
+function CaptadoCelula({ carteira }: { carteira: Linha["carteira"] }) {
+  if (!carteira || (!carteira.captado && !carteira.executado)) return <span className="text-[0.75rem] text-black/25">—</span>;
+  const { percentual, acima } = execucaoDoCaptado(carteira);
+  if (percentual === null) return <p className="text-[0.6875rem] text-black/50">{fmt(carteira.executado)} executado, sem aporte no extrato</p>;
+  return (
+    <div className="min-w-0">
+      <p className="text-[0.75rem] tabular-nums text-black/60">{fmt(carteira.captado)}</p>
+      <p className={`text-[0.625rem] tabular-nums ${acima ? "text-[#B23B3B]" : "text-black/40"}`}>{fmt(carteira.executado)} executado · {percentual}%</p>
+    </div>
+  );
+}
+
 export default function PrestacoesList() {
   const router = useRouter();
   const supabase = useMemo(() => createClient(), []);
@@ -141,7 +183,17 @@ export default function PrestacoesList() {
   const [filtroStatus, setFiltroStatus] = useState<StatusPrestacao | "todos">("todos");
   const [filtroRegime, setFiltroRegime] = useState("todos");
   const [busca, setBusca] = useState("");
+  const [filtroCliente, setFiltroCliente] = useState("todos");
+  const [filtroResponsavel, setFiltroResponsavel] = useState("todos");
+  const [visao, setVisao] = usePersistedViewMode("prestacoes:visao", VISOES_PERMITIDAS, "lista");
+  const [membros, setMembros] = useState<OrganizationMemberSummary[]>([]);
   const chave = `${organizationId}:${recarga}`;
+
+  useEffect(() => {
+    let ativo = true;
+    fetchOrganizationMembers(organizationId).then(lista => { if (ativo) setMembros(lista); }).catch(() => {});
+    return () => { ativo = false; };
+  }, [organizationId]);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -152,20 +204,22 @@ export default function PrestacoesList() {
       // O acesso vale para todas as organizações da pessoa; a lista mostra só a atual.
       const { data } = await db
         .from("prestacoes_contas")
-        .select("id, titulo, status, prazo, data_envio, regime_id, identificador_oficial, created_at, captacao:captacao_id(titulo), projeto:projeto_id(nome)")
+        .select("id, titulo, status, prazo, data_envio, regime_id, identificador_oficial, created_at, responsavel_id, captacao:captacao_id(titulo), projeto:projeto_id(nome), proponente:proponente_id(id, nome)")
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false });
       const prestacoes = (data ?? []) as PrestacaoLida[];
       const ids = prestacoes.map(p => p.id);
       const vazio = { data: [] };
-      const [nos, comprovantes, atividades, alteracoes] = ids.length
+      const [nos, comprovantes, atividades, alteracoes, carteira] = ids.length
         ? await Promise.all([
             db.from("prestacao_orcamento_nos").select("*, versao:prestacao_orcamento_versoes!inner(ativa)").in("prestacao_id", ids).eq("versao.ativa", true),
             db.from("prestacao_comprovantes").select("prestacao_id, no_id, status, valor_extraido").in("prestacao_id", ids),
             db.from("prestacao_atividades").select("prestacao_id").in("prestacao_id", ids),
             db.from("prestacao_alteracoes").select("prestacao_id, numero, solicitada_em").eq("status", "solicitada").in("prestacao_id", ids),
+            // Valor em risco, captado e executado (P5.1).
+            db.from("prestacao_carteira").select("prestacao_id, valor_em_risco, achados_em_risco, captado, executado").in("prestacao_id", ids),
           ])
-        : [vazio, vazio, vazio, vazio];
+        : [vazio, vazio, vazio, vazio, vazio];
       if (!ativo) return;
       setLidas({
         chave,
@@ -175,6 +229,7 @@ export default function PrestacoesList() {
           comprovantes: comprovantes.data ?? [],
           atividades: atividades.data ?? [],
           alteracoes: alteracoes.data ?? [],
+          carteira: carteira.data ?? [],
         },
       });
     })();
@@ -196,6 +251,10 @@ export default function PrestacoesList() {
     const comprovantesPor = agrupar(relacionados.comprovantes);
     const atividadesPor = agrupar(relacionados.atividades);
     const alteracoesPor = agrupar(relacionados.alteracoes);
+    const carteiraPor = new Map(relacionados.carteira.map(c => [c.prestacao_id, {
+      valor_em_risco: Number(c.valor_em_risco) || 0, achados_em_risco: Number(c.achados_em_risco) || 0,
+      captado: Number(c.captado) || 0, executado: Number(c.executado) || 0,
+    }]));
 
     return prestacoes.map(p => {
       const regime = regimes.find(r => r.id === p.regime_id)?.regime ?? null;
@@ -215,6 +274,9 @@ export default function PrestacoesList() {
       });
       return {
         ...p,
+        cliente: p.proponente,
+        responsavelId: p.responsavel_id,
+        carteira: carteiraPor.get(p.id) ?? null,
         regime,
         vigente: itens.reduce((soma, item) => soma + item.vigente, 0),
         pago: comprovantes
@@ -233,10 +295,10 @@ export default function PrestacoesList() {
   }, [lidas, regimes, hoje]);
 
   const termo = semAcento(busca.trim());
-  const filtradas = linhas.filter(p =>
+  const filtradas = filtrarCarteira(linhas, { cliente: filtroCliente, responsavel: filtroResponsavel }).filter(p =>
     (filtroStatus === "todos" || p.status === filtroStatus) &&
     (filtroRegime === "todos" || (filtroRegime === "sem" ? !p.regime_id : p.regime_id === filtroRegime)) &&
-    (!termo || semAcento([p.titulo, p.projeto?.nome, p.captacao?.titulo, p.identificador_oficial].filter(Boolean).join(" ")).includes(termo)));
+    (!termo || semAcento([p.titulo, p.projeto?.nome, p.captacao?.titulo, p.identificador_oficial, p.cliente?.nome].filter(Boolean).join(" ")).includes(termo)));
 
   const contadores = Object.fromEntries(
     (Object.keys(STATUS_META) as StatusPrestacao[]).map(s => [s, linhas.filter(p => p.status === s).length]),
@@ -245,8 +307,13 @@ export default function PrestacoesList() {
   const envioProximo = linhas.filter(p => p.prazoProximo?.quem === "proponente" && p.prazoProximo.dias >= 0 && p.prazoProximo.dias <= 30).length;
   const vencidas = linhas.filter(p => p.prazoProximo?.quem === "proponente" && p.prazoProximo.dias < 0).length;
   const regimesNaLista = [...new Map(linhas.filter(p => p.regime_id && p.regime).map(p => [p.regime_id as string, p.regime as RegimeNormativo])).entries()];
-  const hasFilter = filtroStatus !== "todos" || filtroRegime !== "todos" || termo !== "";
-  const limparFiltros = () => { setFiltroStatus("todos"); setFiltroRegime("todos"); setBusca(""); };
+  const hasFilter = filtroStatus !== "todos" || filtroRegime !== "todos" || filtroCliente !== "todos" || filtroResponsavel !== "todos" || termo !== "";
+  const limparFiltros = () => { setFiltroStatus("todos"); setFiltroRegime("todos"); setFiltroCliente("todos"); setFiltroResponsavel("todos"); setBusca(""); };
+  const resumo = resumoDaCarteira(linhas);
+  const clientes = clientesDaCarteira(linhas);
+  const nomePorId = new Map(membros.map(m => [m.user_id, nomeDoMembro(m)]));
+  const responsaveis = membros.filter(podeConduzir);
+  const nomeDoResponsavel = (id: string | null) => (id ? nomePorId.get(id) ?? "Fora da equipe" : null);
 
   return (
     <div className="flex h-full flex-col">
@@ -259,9 +326,14 @@ export default function PrestacoesList() {
             {emPreparo > 0 && <ListSummary strong={emPreparo}>em preparo</ListSummary>}
             {envioProximo > 0 && <ListSummary strong={envioProximo} tone="#9A6A10">com envio em até 30 dias</ListSummary>}
             {vencidas > 0 && <ListSummary strong={vencidas} tone="#B23B3B">{vencidas === 1 ? "vencida" : "vencidas"}</ListSummary>}
+            {resumo.valorEmRisco > 0 && <ListSummary strong={fmt(resumo.valorEmRisco)} tone="#B23B3B">em risco</ListSummary>}
+            {resumo.clientes > 1 && <ListSummary strong={resumo.clientes}>clientes</ListSummary>}
           </>
         )}
-        actions={<PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
+        actions={<>
+          <EntityViewSwitcher value={visao} onChange={setVisao} options={VISOES} />
+          <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>
+        </>}
       />
 
       <ListToolbar search={<ListSearch value={busca} onChange={setBusca} placeholder="Buscar prestação, projeto ou identificador" />}>
@@ -307,6 +379,20 @@ export default function PrestacoesList() {
             {linhas.some(p => !p.regime_id) && <option value="sem">Sem regime</option>}
           </Select>
         )}
+        {clientes.length > 0 && (
+          <Select block={false} aria-label="Filtrar por cliente" value={filtroCliente} onChange={event => setFiltroCliente(event.target.value)} className="h-9 shrink-0 pl-3 pr-8 text-black/60">
+            <option value="todos">Todos os clientes</option>
+            {clientes.map(c => <option key={c.id} value={c.id}>{c.nome} ({c.quantas})</option>)}
+            {linhas.some(p => !p.cliente) && <option value="sem">Sem cliente</option>}
+          </Select>
+        )}
+        {(responsaveis.length > 1 || linhas.some(p => p.responsavelId)) && (
+          <Select block={false} aria-label="Filtrar por responsável" value={filtroResponsavel} onChange={event => setFiltroResponsavel(event.target.value)} className="h-9 shrink-0 pl-3 pr-8 text-black/60">
+            <option value="todos">Todos os responsáveis</option>
+            {responsaveis.map(m => <option key={m.user_id} value={m.user_id}>{nomeDoMembro(m)}</option>)}
+            <option value="sem">Automático</option>
+          </Select>
+        )}
       </ListToolbar>
 
       <ListContent>
@@ -321,6 +407,30 @@ export default function PrestacoesList() {
               action={hasFilter ? undefined : <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}
             />
           </ListTableSurface>
+        ) : visao === "quadro" ? (
+          <div className="-mx-4 -my-5 md:-mx-8 md:-my-6">
+            <KanbanBoard>
+              {quadroDaCarteira(filtradas).map(coluna => {
+                const meta = STATUS_META[coluna.status];
+                const risco = resumoDaCarteira(coluna.linhas).valorEmRisco;
+                return (
+                  <KanbanColumn key={coluna.status} label={meta.label} accent={meta.color} count={loading ? null : coluna.linhas.length} total={risco > 0 ? `${fmt(risco)} em risco` : null} compact>
+                    {coluna.linhas.length === 0 ? <KanbanEmpty label="Nenhuma prestação" /> : coluna.linhas.map(p => (
+                      <KanbanCard key={p.id} onClick={() => router.push(`/prestacoes/${p.id}`)}>
+                        <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-2 rounded text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
+                        <p className="mt-0.5 truncate text-[0.6875rem] text-black/45">{[p.cliente?.nome, nomeDoResponsavel(p.responsavelId)].filter(Boolean).join(" · ") || "Sem cliente"}</p>
+                        <div className="mt-3 grid grid-cols-2 gap-3">
+                          <PrazoCelula prazo={p.prazoProximo} />
+                          <BarraProntidao prontidao={p.prontidao} />
+                        </div>
+                        {p.carteira?.achados_em_risco ? <div className="mt-2.5 border-t pt-2.5" style={{ borderColor: "rgba(13,13,13,.06)" }}><RiscoCelula carteira={p.carteira} /></div> : null}
+                      </KanbanCard>
+                    ))}
+                  </KanbanColumn>
+                );
+              })}
+            </KanbanBoard>
+          </div>
         ) : (
           <>
             {/* Celular: cartões */}
@@ -334,7 +444,7 @@ export default function PrestacoesList() {
                       <div className="min-w-0">
                         <p className="text-[0.8125rem] font-semibold text-black">{p.titulo}</p>
                         <p className="truncate text-[0.6875rem] text-black/40">
-                          {[p.regime?.identificadorOficial && p.identificador_oficial ? `${p.regime.identificadorOficial.rotulo} ${p.identificador_oficial}` : null, p.projeto?.nome].filter(Boolean).join(" · ") || "Sem projeto"}
+                          {[p.cliente?.nome, p.regime?.identificadorOficial && p.identificador_oficial ? `${p.regime.identificadorOficial.rotulo} ${p.identificador_oficial}` : null, p.projeto?.nome].filter(Boolean).join(" · ") || "Sem projeto"}
                         </p>
                       </div>
                       <EtiquetaStatus status={p.status} />
@@ -343,6 +453,12 @@ export default function PrestacoesList() {
                       <PrazoCelula prazo={p.prazoProximo} />
                       <BarraProntidao prontidao={p.prontidao} />
                     </div>
+                    {(p.carteira?.achados_em_risco || p.responsavelId) ? (
+                      <div className="mt-3 grid grid-cols-2 gap-3 text-[0.6875rem] text-black/55">
+                        <RiscoCelula carteira={p.carteira} />
+                        <span className="truncate">{nomeDoResponsavel(p.responsavelId) ?? ""}</span>
+                      </div>
+                    ) : null}
                   </Link>
                 </li>
               ))}
@@ -378,6 +494,9 @@ export default function PrestacoesList() {
                           <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-1 text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
                           {p.projeto && <p className="mt-0.5 line-clamp-1 text-[0.625rem] text-black/35">{p.projeto.nome}</p>}
                         </td>
+                        <td className="px-4 py-3">
+                          <p className="line-clamp-2 text-[0.6875rem] text-black/60">{p.cliente?.nome ?? <span className="text-black/25">—</span>}</p>
+                        </td>
                         <td className="px-4 py-3 text-[0.6875rem] tabular-nums text-black/60">
                           {p.identificador_oficial
                             ? <><span className="block text-[0.5625rem] uppercase tracking-[.08em] text-black/30">{p.regime?.identificadorOficial?.rotulo ?? "Identificador"}</span>{p.identificador_oficial}</>
@@ -387,8 +506,12 @@ export default function PrestacoesList() {
                           <p className="line-clamp-2 text-[0.6875rem] text-black/60" title={p.regime?.normaReferencia}>{p.regime?.nome ?? <span className="text-black/30">Sem regime</span>}</p>
                         </td>
                         <td className="px-4 py-3"><EtiquetaStatus status={p.status} /></td>
+                        <td className="px-4 py-3">
+                          <p className="line-clamp-2 text-[0.6875rem] text-black/60">{nomeDoResponsavel(p.responsavelId) ?? <span className="text-black/30">Automático</span>}</p>
+                        </td>
                         <td className="px-4 py-3"><PrazoCelula prazo={p.prazoProximo} /></td>
                         <td className="px-4 py-3"><BarraProntidao prontidao={p.prontidao} /></td>
+                        <td className="px-4 py-3"><RiscoCelula carteira={p.carteira} /></td>
                         <td className="px-4 py-3 text-[0.75rem] tabular-nums text-black/60">{p.vigente ? fmt(p.vigente) : <span className="text-black/25">—</span>}</td>
                         <td className="px-4 py-3">
                           {p.vigente ? (
@@ -398,6 +521,7 @@ export default function PrestacoesList() {
                             </>
                           ) : <span className="text-[0.75rem] text-black/25">—</span>}
                         </td>
+                        <td className="px-4 py-3"><CaptadoCelula carteira={p.carteira} /></td>
                         <td className="px-4 py-3">
                           <p className="line-clamp-2 text-[0.6875rem] text-black/55">{p.captacao?.titulo ?? <span className="text-black/25">—</span>}</p>
                         </td>

@@ -662,8 +662,19 @@ export interface PrestacaoContas {
   valor_realizado: number;
   observacoes: string | null;
   criado_por: string | null;
+  /** Quem conduz a prestação na equipe (P5.1); vazio, vale quem tem a função de responsável ou quem criou. */
+  responsavel_id?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+/** Números da carteira por prestação (P5.1), da visão prestacao_carteira. */
+export interface PrestacaoCarteira {
+  prestacao_id: string;
+  valor_em_risco: number;
+  achados_em_risco: number;
+  captado: number;
+  executado: number;
 }
 
 export interface PrestacaoStatusLog {

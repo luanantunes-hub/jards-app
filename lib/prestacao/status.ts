@@ -123,6 +123,7 @@ const ERROS: Record<string, string> = {
   // Depois do envio (P4.7)
   diligencia_aberta: "Há diligência aberta: registre a resposta na aba Após o envio antes de registrar o novo envio.",
   vinculo_de_outra_prestacao: "Escolha um registro desta prestação.",
+  responsavel_sem_acesso: "O responsável precisa ser da equipe, com a prestação de contas e papel que edita.",
   prestacao_diligencias_resposta: "Diligência respondida pede a data da resposta.",
   prestacao_diligencias_datas: "Confira as datas: a resposta e o prazo não vêm antes do recebimento.",
   prestacao_decisoes_datas: "A ciência não vem antes do registro da decisão.",
