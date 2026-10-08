@@ -94,18 +94,34 @@ export function ProjectIdentity({
   }
 
   if (tipo === "emoji" && valor) {
-    return <div className={`${dimensions} rounded bg-black/5 flex items-center justify-center text-[1.125rem] flex-shrink-0`} aria-label={`Ícone ${valor}`}>{valor}</div>;
+    return <div className={`${dimensions} rounded flex items-center justify-center text-[1.125rem] flex-shrink-0`} style={FUNDO_NEUTRO} aria-label={`Ícone ${valor}`}>{valor}</div>;
   }
 
-  // Identidade escolhida é marca, como o logo de uma empresa: quadrado
-  // preenchido na cor, com o símbolo em branco (nunca ícone solto colorido).
+  // Identidade escolhida é marca, como o logo de uma empresa: quadrado na cor,
+  // com o símbolo em branco (nunca ícone solto colorido).
   if (tipo === "icone") {
-    return <div className={`${dimensions} rounded flex items-center justify-center flex-shrink-0 text-white`} style={{ background: iconCor }}><Icon size={iconSize} /></div>;
+    return <div className={`${dimensions} rounded flex items-center justify-center flex-shrink-0 text-white`} style={fundoNaCor(iconCor)}><Icon size={iconSize} /></div>;
   }
 
   if (tipo === "logo" && logoFailed) {
-    return <div className={`${dimensions} rounded flex items-center justify-center text-[0.6875rem] font-bold flex-shrink-0 text-white`} style={{ background: iconCor }}>{initials(nome)}</div>;
+    return <div className={`${dimensions} rounded flex items-center justify-center text-[0.6875rem] font-bold flex-shrink-0 text-white`} style={fundoNaCor(iconCor)}>{initials(nome)}</div>;
   }
 
-  return <div className={`${dimensions} rounded bg-black/5 flex items-center justify-center text-black/35 flex-shrink-0`}><DefaultIcon size={iconSize} /></div>;
+  return <div className={`${dimensions} rounded flex items-center justify-center text-black/40 flex-shrink-0`} style={FUNDO_NEUTRO}><DefaultIcon size={iconSize} /></div>;
 }
+
+/**
+ * Fundo do quadrado de identidade: gradiente em tons claros da cor, com brilho
+ * fino no alto e sombra curta na própria cor, para dar volume.
+ */
+function fundoNaCor(cor: string): React.CSSProperties {
+  return {
+    background: `linear-gradient(150deg, color-mix(in srgb, ${cor} 58%, #fff) 0%, color-mix(in srgb, ${cor} 92%, #fff) 100%)`,
+    boxShadow: `inset 0 1px 0 rgba(255,255,255,.4), inset 0 -1px 0 rgba(13,13,13,.06), 0 1px 2px rgba(13,13,13,.08), 0 4px 10px -4px color-mix(in srgb, ${cor} 55%, transparent)`,
+  };
+}
+
+const FUNDO_NEUTRO: React.CSSProperties = {
+  background: "linear-gradient(150deg, #FFFFFF 0%, #EEEDEA 100%)",
+  boxShadow: "inset 0 1px 0 #fff, inset 0 0 0 1px rgba(13,13,13,.06), 0 1px 2px rgba(13,13,13,.06)",
+};
