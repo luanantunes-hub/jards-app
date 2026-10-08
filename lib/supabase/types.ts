@@ -647,6 +647,8 @@ export interface PrestacaoContas {
   identificador_tipo?: string | null;
   fonte_recurso?: string | null;
   proponente_id?: string | null;
+  /** Prestações da mesma obra e do mesmo objeto (ANCINE, P7.4): mesmo valor, mesmo grupo. */
+  obra_grupo?: string | null;
   data_aprovacao?: string | null;
   data_liberacao?: string | null;
   data_termo?: string | null;

@@ -224,6 +224,11 @@ export type EstadoDaPrestacao = {
   pecas?: readonly PecaParaChecar[];
   defesos?: readonly DefesoEleitoral[];
   hoje?: Date;
+  /** P7.4: as outras prestações da mesma obra (ANCINE) e as despesas delas, para a concentração somada. */
+  obra?: {
+    prestacoes: readonly { id: string; titulo: string; identificador: string | null }[];
+    despesas: readonly (DespesaDoEstado & { prestacao_id: string })[];
+  };
 };
 
 export const centavos = (v: unknown) => Math.round((Number(v) || 0) * 100);
