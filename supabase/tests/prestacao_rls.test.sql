@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(271);
+select plan(275);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -1196,6 +1196,12 @@ select is((public.fn_convidado_acesso('f0000000-0000-4000-8000-0000000001a0') ->
 reset role;
 
 -- ─── Espaço do proponente (P5.4): lê a própria prestação e envia por função ─
+-- Outro cliente de A, ainda sem conta ligada. A organização de teste está no
+-- plano gratuito, que admite um proponente; o limite sai até o teste de criar
+-- cadastro já ligado, para ele mostrar a regra do vínculo.
+alter table public.proponentes disable trigger enforce_free_proponente_limit;
+insert into public.proponentes (id, account_id, organization_id, nome) values
+  ('f0000000-0000-4000-8000-0000000033a0', 'f0000000-0000-4000-8000-0000000000a1', 'f0000000-0000-4000-8000-0000000000a0', 'RLS outro cliente');
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","role":"authenticated"}';
 set local role authenticated;
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'),
@@ -1241,8 +1247,22 @@ select is(public.fn_proponente_retirar('despesa', (select id from public.prestac
   'proponente: retira a despesa em análise e recebe o caminho do arquivo');
 select is(rls_teste.efeito($c$delete from storage.objects where bucket_id = 'documentos' and name = 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000c80.pdf'$c$), 'sim',
   'proponente: tira do bucket o arquivo que não virou despesa');
+select throws_ok($t$update public.proponentes set user_id = 'f0000000-0000-4000-8000-0000000000a8' where id = 'f0000000-0000-4000-8000-0000000033a0'$t$,
+  '42501', 'vinculo_do_proponente', 'proponente: não liga a própria conta ao cadastro de outro cliente');
+select throws_ok($t$insert into public.proponentes (account_id, organization_id, nome, user_id) values ('f0000000-0000-4000-8000-0000000000a8', 'f0000000-0000-4000-8000-0000000000a0', 'RLS falso', 'f0000000-0000-4000-8000-0000000000a8')$t$,
+  '42501', 'vinculo_do_proponente', 'proponente: não cria cadastro já ligado à própria conta');
 reset role;
-update public.proponentes set user_id = null where id = 'f0000000-0000-4000-8000-0000000032a0';
+alter table public.proponentes enable trigger enforce_free_proponente_limit;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a2","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$update public.proponentes set user_id = 'f0000000-0000-4000-8000-0000000000a2' where id = 'f0000000-0000-4000-8000-0000000033a0'$t$,
+  '42501', 'vinculo_do_proponente', 'colaborador: não liga conta ao cadastro do proponente (só o admin)');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$update public.proponentes set user_id = null where id = 'f0000000-0000-4000-8000-0000000032a0'$t$,
+  'admin: desfaz o vínculo do cadastro com a conta');
+reset role;
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a8","role":"authenticated"}';
 set local role authenticated;
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), '{}'::text[], 'sem o vínculo com o cadastro do proponente, não vê mais nada');
