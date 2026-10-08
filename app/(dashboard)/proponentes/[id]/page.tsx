@@ -26,6 +26,7 @@ import { RelationshipWorkspace } from "@/components/relationship/RelationshipWor
 import { NegotiationsTable, type CaptacaoRow } from "@/components/company/NegotiationsTable";
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
 
 type ProponenteDetail = {
   id: string;
@@ -483,11 +484,11 @@ export default function ProponenteDetailPage() {
                   <p className="text-[0.75rem] text-black/25 italic">Sem informações de contato</p>
                 )}
               </div>
-              {proponente.descricao && (
+              {proponente.descricao?.trim() && (
                 <>
                   <div className="my-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}/>
                   <div className="flex items-start gap-1.5"><FileText size={12} className="text-black/25 mt-0.5 flex-shrink-0"/>
-                    <p className="text-[0.75rem] text-black/55 leading-relaxed">{proponente.descricao}</p>
+                    <TextoRecolhivel texto={proponente.descricao.trim()} linhas={5} className="min-w-0 text-[0.75rem] text-black/55 leading-relaxed" />
                   </div>
                 </>
               )}

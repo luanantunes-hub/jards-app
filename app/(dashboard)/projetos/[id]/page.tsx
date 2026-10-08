@@ -10,6 +10,7 @@ import { EditarObjetivoModal } from "@/components/modals/EditarObjetivoModal";
 import { NovoResultadoModal, type EditDataResultado } from "@/components/modals/NovoResultadoModal";
 import { CotasProjetoManager, type VendaPatrocinioComEmpresa } from "@/components/CotasProjetoManager";
 import { PROJECT_ICON_COLORS, PROJECT_ICON_OPTIONS, ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
 import StatusBadge from "@/components/ui/StatusBadge";
 import type { Proposta, CotaPatrocinio } from "@/lib/supabase/types";
 import { PitchWorkspace } from "@/components/projects/PitchWorkspace";
@@ -665,8 +666,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
         </div>
 
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex min-w-0 items-center gap-4">
-            <div ref={identityRef} className="relative flex-shrink-0">
+          <div className="flex min-w-0 items-start gap-4">
+            <div ref={identityRef} className="relative flex-shrink-0 sm:mt-0.5">
               <input ref={identityLogoInputRef} type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={event => { handleIdentityLogo(event.target.files?.[0]); event.target.value = ""; }} />
               <button type="button" onClick={() => setIdentityOpen(open => !open)} aria-label="Alterar identidade do projeto" aria-expanded={identityOpen} className="group relative rounded outline-none ring-[#7259B5]/25 focus-visible:ring-2">
                 <ProjectIdentity nome={projeto.nome} tipo={projeto.identidade_tipo} valor={projeto.identidade_valor} logoUrl={projeto.identidade_logo_url} cor={projeto.identidade_cor} size="md" />
@@ -696,15 +697,17 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
               </div>}
             </div>
             <div className="min-w-0">
-              <div className="mb-3 flex flex-wrap items-center gap-2">
-                {projeto.status_operacional === "pausado" && (
-                  <span className="rounded border border-[#B07A14]/25 bg-white px-2 py-1 text-[0.625rem] font-medium text-[#B07A14]">Pausado</span>
-                )}
-                {projeto.status_operacional === "arquivado" && (
-                  <span className="rounded border border-black/[.10] bg-white px-2 py-1 text-[0.625rem] font-medium text-black/40">Arquivado</span>
-                )}
-              </div>
-              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{projeto.nome}</h1>
+              {(projeto.status_operacional === "pausado" || projeto.status_operacional === "arquivado") && (
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                  {projeto.status_operacional === "pausado" && (
+                    <span className="rounded border border-[#B07A14]/25 bg-white px-2 py-1 text-[0.625rem] font-medium text-[#B07A14]">Pausado</span>
+                  )}
+                  {projeto.status_operacional === "arquivado" && (
+                    <span className="rounded border border-black/[.10] bg-white px-2 py-1 text-[0.625rem] font-medium text-black/40">Arquivado</span>
+                  )}
+                </div>
+              )}
+              <h1 className="max-w-4xl text-balance text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{projeto.nome}</h1>
               {projeto.proponente_nome && (
                 <p className="mt-2 text-[0.875rem] text-black/50">
                   {projeto.proponente_nome}
@@ -713,8 +716,8 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                   )}
                 </p>
               )}
-              {projeto.descricao && (
-                <p className="mt-3 max-w-3xl text-[0.9375rem] leading-6 text-black/45">{projeto.descricao}</p>
+              {projeto.descricao?.trim() && (
+                <TextoRecolhivel texto={projeto.descricao.trim()} className="mt-3 max-w-[42rem] text-[0.9375rem] leading-6 text-black/45" />
               )}
             </div>
           </div>

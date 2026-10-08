@@ -164,7 +164,8 @@ Referência: `NovaCaptacaoModal` e `NovaInscricaoModal`.
 
 Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 
-- cabeçalho com identidade e ações;
+- cabeçalho com identidade e ações; a identidade alinha com o título, no topo;
+- descrição e outros textos livres usam `TextoRecolhivel`: poucas linhas (3 no cabeçalho), "Ver mais" só quando o texto passa do limite, parágrafos preservados;
 - barra de informações principais;
 - abas coerentes;
 - conteúdo com largura e espaçamento padronizados;
