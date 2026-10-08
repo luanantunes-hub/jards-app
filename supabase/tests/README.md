@@ -2,7 +2,7 @@
 
 `prestacao_rls.test.sql` confere, com pgTAP, quem lê, cria, altera e apaga cada parte da prestação de contas e os arquivos dela no bucket `documentos`. O arquivo monta o próprio cenário (três organizações, oito pessoas e um visitante, todos com id `f0000000-0000-4000-8000-…`), roda as verificações e termina em `rollback`: nada fica gravado, nem o pgTAP, que é instalado dentro da transação.
 
-`normas_rls.test.sql` confere o vigia normativo (P1.10, P6.1 e P6.2): só o super admin lê os atos, as versões de página, as cópias, as coletas e as propostas da IA, cadastra fontes e confere pelas funções, dizendo os regimes afetados; os avisos saem e as rotinas estão agendadas. Roda do mesmo jeito.
+`normas_rls.test.sql` confere o vigia normativo (P1.10, P6.1, P6.2 e P6.5): só o super admin lê os atos, as versões de página, as cópias, as coletas, as propostas da IA e as notas do conjunto de teste, cadastra fontes e confere pelas funções, dizendo os regimes afetados; os avisos saem e as rotinas estão agendadas. Roda do mesmo jeito.
 
 `regimes_publicacao.test.sql` confere a publicação dos regimes (P6.3): ninguém escreve direto na tabela, o rascunho é a versão seguinte e um por regime, a pessoa comum não vê o rascunho, regra de bloqueio pede duas pessoas diferentes e a outra é avisada, publicar deixa a anterior obsoleta, descartar e rejeitar funcionam. Roda do mesmo jeito.
 

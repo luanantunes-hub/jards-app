@@ -11,6 +11,7 @@ import { Download, ExternalLink, RefreshCw, ScrollText } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { chaveDoArquivo, type ArquivoLigado } from "@/supabase/functions/_shared/vigia-paginas";
 import { DiferencaDasVersoes } from "./DiferencaDasVersoes";
+import { ConjuntoDeTeste } from "./ConjuntoDeTeste";
 import { FontesVigiadas } from "./FontesVigiadas";
 import { PropostasDoDocumento, type Proposta } from "./PropostasDoDocumento";
 
@@ -36,7 +37,7 @@ type Documento = {
 };
 type Execucao = {
   id: string;
-  agente: "vigia_dou" | "vigia_paginas" | "leitor_normas";
+  agente: "vigia_dou" | "vigia_paginas" | "leitor_normas" | "avaliador_normas";
   referencia: string;
   situacao: "rodando" | "ok" | "sem_edicao" | "falhou";
   lidos: number;
@@ -46,7 +47,7 @@ type Execucao = {
   detalhe: string | null;
   iniciada_em: string;
 };
-type Aba = Documento["situacao"] | "fontes";
+type Aba = Documento["situacao"] | "fontes" | "teste";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const ABAS: { id: Aba; rotulo: string }[] = [
@@ -54,7 +55,11 @@ const ABAS: { id: Aba; rotulo: string }[] = [
   { id: "conferido", rotulo: "Afetam um regime" },
   { id: "descartado", rotulo: "Descartados" },
   { id: "fontes", rotulo: "Fontes vigiadas" },
+  { id: "teste", rotulo: "Conjunto de teste" },
 ];
+const NOME_DO_AGENTE: Record<Execucao["agente"], string> = {
+  vigia_dou: "Diário Oficial", vigia_paginas: "Páginas", leitor_normas: "Leitura pela IA", avaliador_normas: "Conjunto de teste",
+};
 const SITUACAO_DA_COLETA: Record<Execucao["situacao"], { texto: string; cor: string }> = {
   ok: { texto: "Lida", cor: "#2E8932" },
   sem_edicao: { texto: "Sem Diário", cor: "#6B6B6B" },
@@ -268,7 +273,7 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia, regimes, sugeridos, propo
 }
 
 function ResumoDaColeta({ e }: { e: Execucao }) {
-  if (e.situacao !== "ok") return e.detalhe ? <span className="text-black/50">{e.detalhe}</span> : null;
+  if (e.situacao !== "ok" || e.agente === "avaliador_normas") return e.detalhe ? <span className="text-black/50">{e.detalhe}</span> : null;
   if (e.agente === "leitor_normas") {
     return (
       <span className="tabular-nums text-black/55">
@@ -451,7 +456,7 @@ export default function AdminNormasPage() {
               return (
                 <li key={e.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-2.5 text-[0.75rem]">
                   <span className="w-[5.5rem] tabular-nums text-black/75">{dataBr(e.referencia)}</span>
-                  <span className="w-[7.5rem] text-black/55">{e.agente === "vigia_paginas" ? "Páginas" : e.agente === "leitor_normas" ? "Leitura pela IA" : "Diário Oficial"}</span>
+                  <span className="w-[7.5rem] text-black/55">{NOME_DO_AGENTE[e.agente] ?? "Diário Oficial"}</span>
                   <Etiqueta texto={s.texto} cor={s.cor} />
                   <ResumoDaColeta e={e} />
                   <span className="ml-auto text-[0.6875rem] text-black/35">{horaBr(e.iniciada_em)}</span>
@@ -468,7 +473,7 @@ export default function AdminNormasPage() {
             <button key={a.id} type="button" role="tab" aria-selected={aba === a.id} onClick={() => setAba(a.id)}
               className="h-9 shrink-0 rounded border bg-white px-3 text-[0.75rem] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]"
               style={aba === a.id ? { borderColor: "#7259B5", color: "#7259B5" } : { borderColor: "rgba(13,13,13,.12)", color: "rgba(13,13,13,.6)" }}>
-              {a.rotulo} ({contagem[a.id] ?? 0})
+              {a.rotulo}{a.id === "teste" ? "" : ` (${contagem[a.id] ?? 0})`}
             </button>
           ))}
         </div>
@@ -476,6 +481,8 @@ export default function AdminNormasPage() {
 
       {aba === "fontes" ? (
         <FontesVigiadas onColetou={recarregar} />
+      ) : aba === "teste" ? (
+        <ConjuntoDeTeste />
       ) : !documentos && !erro ? (
         <div className="space-y-3">{[0, 1].map(i => <div key={i} className="h-36 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
       ) : daAba.length === 0 ? (

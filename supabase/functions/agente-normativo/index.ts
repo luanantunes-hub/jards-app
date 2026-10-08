@@ -20,13 +20,19 @@
 // os arquivos dos órgãos vencidos pela frequência de cada fonte (paginas.ts);
 // pela tela, uma fonte escolhida, na hora. No modo "ler" (P6.2), a IA lê um
 // documento conferido e propõe a nova versão de cada regime que ele afeta
-// (leitura.ts).
+// (leitura.ts). No modo "avaliar" (P6.5), roda o conjunto de teste do agente
+// e guarda a nota de cada caso, sem gerar proposta (avaliacao.ts); responde
+// logo com o id da rodada e lê em segundo plano.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Unzip, UnzipInflate } from "https://esm.sh/fflate@0.8.2";
 import { chaveDoArtigo, lerArtigoDou, triarArtigo, type ArtigoDou } from "../_shared/vigia-dou.ts";
+import { iniciarAvaliacao } from "./avaliacao.ts";
 import { lerDocumento } from "./leitura.ts";
 import { CAMPOS_DA_FONTE, coletarFontes, fonteVencida, type Cliente, type FonteVigiada } from "./paginas.ts";
+
+// Tarefas em segundo plano das funções do Supabase.
+declare const EdgeRuntime: { waitUntil(promessa: Promise<unknown>): void } | undefined;
 
 const INLABS = "https://inlabs.in.gov.br";
 const TEXTO_MAXIMO = 200_000;
@@ -227,7 +233,19 @@ Deno.serve(async (req) => {
   }
   if (!autorizado) return responder({ error: "sem_permissao" }, 401);
 
-  const corpo = await req.json().catch(() => ({})) as { data?: string; ultima?: boolean; modo?: string; fonte_id?: string; documento_id?: string };
+  const corpo = await req.json().catch(() => ({})) as {
+    data?: string; ultima?: boolean; modo?: string; fonte_id?: string; documento_id?: string; casos?: unknown;
+  };
+  if (corpo.modo === "avaliar") {
+    const casos = Array.isArray(corpo.casos) ? corpo.casos.filter((c): c is string => typeof c === "string").slice(0, 20) : undefined;
+    const avaliacao = await iniciarAvaliacao(admin, userId, hojeEmBrasilia(), casos);
+    // A leitura segue depois da resposta (tarefa em segundo plano do Supabase).
+    if (avaliacao.trabalho) {
+      if (typeof EdgeRuntime !== "undefined") EdgeRuntime.waitUntil(avaliacao.trabalho);
+      else await avaliacao.trabalho;
+    }
+    return responder(avaliacao.corpo, avaliacao.status);
+  }
   if (corpo.modo === "ler") {
     if (!/^[0-9a-f-]{36}$/i.test(corpo.documento_id ?? "")) return responder({ error: "documento_invalido" }, 400);
     const leitura = await lerDocumento(admin, corpo.documento_id!, userId, hojeEmBrasilia());
