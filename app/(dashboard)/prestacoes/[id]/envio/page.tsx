@@ -384,6 +384,11 @@ export default function EnvioPage() {
                 <FileSpreadsheet size={12} aria-hidden /> Espelho do Salic
               </Link>
             )}
+            {dados.regime.sistemaOficial?.includes("STR") && (
+              <Link href={`/prestacoes/${id}/envio/str`} className={BOTAO} style={BORDA}>
+                <FileSpreadsheet size={12} aria-hidden /> Planilhas do STR
+              </Link>
+            )}
             <Link href={`/prestacoes/${id}/envio/devolucoes`} className={BOTAO} style={BORDA}>
               <Receipt size={12} aria-hidden /> Devoluções
             </Link>

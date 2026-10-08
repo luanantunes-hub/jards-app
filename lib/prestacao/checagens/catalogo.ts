@@ -203,7 +203,8 @@ export type EstadoDaPrestacao = {
   /** Itens da versão em uso do orçamento, com os CNAEs que valem para cada um. */
   itens: readonly ItemDoEstado[];
   pagamentos: readonly PagamentoDoEstado[];
-  lancamentos: readonly LancamentoParaConciliar[];
+  /** A conta vem junto para as planilhas por conta (P7.3). */
+  lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */
   prestacao?: DatasDaPrestacao;
   nos?: readonly NoOrcamento[];
