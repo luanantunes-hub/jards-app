@@ -8,10 +8,11 @@
 // mesmo. A proposta não publica nada.
 
 import { useMemo, useState } from "react";
-import { Check, RefreshCw, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { Check, ChevronRight, RefreshCw, TriangleAlert } from "lucide-react";
+import { rotuloDoCaminho, valorLegivel } from "@/lib/prestacao/regimes/revisao";
 import { validarRegime } from "@/lib/prestacao/regimes/schema";
-import { DIMENSOES } from "@/lib/prestacao/regimes/tipos";
-import { lerCaminho, passosDoCaminho, type MudancaConferida, type MudancaDescartada, type ChecagemNova } from "@/supabase/functions/_shared/proposta-regime";
+import type { ChecagemNova, MudancaConferida, MudancaDescartada } from "@/supabase/functions/_shared/proposta-regime";
 
 export type Proposta = {
   id: string;
@@ -42,7 +43,6 @@ const CLASSIFICACAO: Record<Proposta["classificacao"], { texto: string; cor: str
   irrelevante: { texto: "Sem relação", cor: "#6B6B6B" },
 };
 const OPERACAO: Record<string, string> = { alterar: "Muda", incluir: "Inclui", remover: "Retira" };
-const NOME_DA_DIMENSAO: Record<string, string> = Object.fromEntries(DIMENSOES.map(d => [d.chave, d.rotulo]));
 
 const dataBr = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 
@@ -52,36 +52,6 @@ function Etiqueta({ texto, cor = "rgba(13,13,13,.6)" }: { texto: string; cor?: s
       {texto}
     </span>
   );
-}
-
-/** "Prazos › Concluir os pagamentos e enviar o relatório final no Salic › quantidade". */
-function rotuloDoCaminho(regime: unknown, caminho: string): string {
-  const passos = passosDoCaminho(caminho);
-  if (!passos) return caminho;
-  const partes: string[] = [];
-  let atual = "";
-  passos.forEach((passo, i) => {
-    atual += "chave" in passo ? `${i ? "." : ""}${passo.chave}` : "codigo" in passo ? `[codigo=${passo.codigo}]` : `[${passo.indice}]`;
-    const ultimo = i === passos.length - 1;
-    if (i === 0 && "chave" in passo) { partes.push(NOME_DA_DIMENSAO[passo.chave] ?? passo.chave); return; }
-    const valor = lerCaminho(regime, atual).valor as Record<string, unknown> | undefined;
-    const nome = valor && typeof valor === "object" && !Array.isArray(valor)
-      ? (valor.descricao ?? valor.rotulo ?? valor.nome) as string | undefined
-      : undefined;
-    if (nome) partes.push(nome.length > 70 ? `${nome.slice(0, 70)}…` : nome);
-    else if (ultimo && "chave" in passo) partes.push(passo.chave);
-  });
-  return partes.join(" › ");
-}
-
-function valorLegivel(valor: unknown): string {
-  if (valor === null || valor === undefined) return "—";
-  if (typeof valor === "boolean") return valor ? "sim" : "não";
-  if (typeof valor === "number") return valor.toLocaleString("pt-BR");
-  if (typeof valor === "string") return valor;
-  if (Array.isArray(valor)) return valor.map(valorLegivel).join(", ");
-  const objeto = valor as Record<string, unknown>;
-  return String(objeto.descricao ?? objeto.rotulo ?? objeto.nome ?? JSON.stringify(valor));
 }
 
 function Mudanca({ m, regimeAtual }: { m: MudancaConferida; regimeAtual: unknown }) {
@@ -170,6 +140,13 @@ function CartaoDaProposta({ p, nomeDoRegime, regimeAtual }: { p: Proposta; nomeD
             ))}
           </ul>
         </div>
+      )}
+
+      {(p.status === "nova" || p.status === "em_revisao" || p.status === "aceita") && (
+        <Link href={`/admin/regimes/${p.regime_codigo}`}
+          className="mt-2 inline-flex items-center gap-1 rounded text-[0.75rem] font-medium text-[#7259B5] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+          {p.status === "aceita" ? "Ver no rascunho do regime" : "Revisar e publicar em Regimes"} <ChevronRight size={13} aria-hidden />
+        </Link>
       )}
 
       {p.descartadas.length > 0 && (

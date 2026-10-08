@@ -122,6 +122,13 @@ function passoEmTexto(passo: Passo): string {
   return "codigo" in passo ? `[codigo=${passo.codigo}]` : `[${passo.indice}]`;
 }
 
+/** Os passos de volta em texto: o inverso de passosDoCaminho. */
+export function caminhoDosPassos(passos: readonly Passo[]): string {
+  return passos.map(passoEmTexto).join("").replace(/^\./, "");
+}
+
+export type { Passo };
+
 /**
  * O regime em linhas "caminho = valor", para a IA citar caminhos que existem.
  * Fontes viram uma linha só (documento e dispositivo); o trecho citado e as
@@ -228,7 +235,7 @@ function atualizarFonte(raiz: Objeto, passos: Passo[], fonte: Objeto) {
   if (dono) dono.fonte = fonte;
 }
 
-type Resultado = { ok: true; valorAtual: unknown } | { ok: false; motivo: string };
+export type Resultado = { ok: true; valorAtual: unknown } | { ok: false; motivo: string };
 
 function aplicarUma(raiz: Objeto, passos: Passo[], operacao: Operacao, valor: unknown, fonte: Objeto): Resultado {
   const pai = passos.slice(0, -1).reduce<{ existe: boolean; valor: unknown }>((atual, passo) => (atual.existe ? filho(atual.valor, passo) : atual), { existe: true, valor: raiz });
@@ -277,6 +284,21 @@ function aplicarUma(raiz: Objeto, passos: Passo[], operacao: Operacao, valor: un
   return { ok: true, valorAtual: alvo.valor };
 }
 
+/**
+ * Aplica uma mudança no regime (que é alterado no lugar), com as mesmas travas
+ * da leitura: caminho que existe, mesmo tipo de valor e identidade intocada.
+ * A fonte do trecho passa a ser `fonte`. Usada também na revisão (P6.3).
+ */
+export function aplicarMudanca(raiz: Objeto, caminho: string, operacao: Operacao, valor: unknown, fonte: Objeto): Resultado {
+  if (!OPERACOES.includes(operacao)) return { ok: false, motivo: "operação desconhecida" };
+  const passos = passosDoCaminho(caminho);
+  if (!passos) return { ok: false, motivo: "caminho mal escrito" };
+  if ("chave" in passos[0] && PROTEGIDOS.has(passos[0].chave) && passos.length === 1) {
+    return { ok: false, motivo: "código, versão, área e mecanismo do regime não mudam por proposta" };
+  }
+  return aplicarUma(raiz, passos, operacao, operacao === "remover" ? null : valor, fonte);
+}
+
 export type DocumentoDaProposta = { documento: string; url: string | null; texto: string };
 
 export type PropostaConferida = {
@@ -303,6 +325,7 @@ export function conferirLeitura(regime: Objeto, leitura: LeituraDaIa, doc: Docum
       descartar(m, "código, versão, área e mecanismo do regime não mudam por proposta");
       continue;
     }
+    // A citação vem antes do tipo: sem trecho no texto, nem vale conferir o valor.
     if (!citacaoNoTexto(doc.texto, m.citacao)) { descartar(m, "o trecho citado não está no texto guardado"); continue; }
     const valor = operacao === "remover" ? null : lerValorProposto(m.valorProposto);
     const fonte: Objeto = {

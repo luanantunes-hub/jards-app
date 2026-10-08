@@ -4,6 +4,8 @@
 
 `normas_rls.test.sql` confere o vigia normativo (P1.10, P6.1 e P6.2): só o super admin lê os atos, as versões de página, as cópias, as coletas e as propostas da IA, cadastra fontes e confere pelas funções, dizendo os regimes afetados; os avisos saem e as rotinas estão agendadas. Roda do mesmo jeito.
 
+`regimes_publicacao.test.sql` confere a publicação dos regimes (P6.3): ninguém escreve direto na tabela, o rascunho é a versão seguinte e um por regime, a pessoa comum não vê o rascunho, regra de bloqueio pede duas pessoas diferentes e a outra é avisada, publicar deixa a anterior obsoleta, descartar e rejeitar funcionam. Roda do mesmo jeito.
+
 O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`.
 
 ## Rodar
