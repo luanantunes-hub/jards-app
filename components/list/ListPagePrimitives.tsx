@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Search, type LucideIcon } from "lucide-react";
+import { AlertCircle, Search, type LucideIcon } from "lucide-react";
 
 /** Cabeçalho de coluna de tabela conforme DESIGN.md: 10px, peso 500, caixa alta, tracking .08em. */
 export const LIST_HEADER_CELL = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35";
@@ -10,8 +10,28 @@ export function ListPageHeader({ eyebrow, title, description, summary, actions }
   return <header className="shrink-0 border-b px-4 pb-5 pt-6 md:px-8 md:pt-8" style={{borderColor:"rgba(13,13,13,.08)"}}><div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"><div><p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">{eyebrow}</p><h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D] [text-wrap:balance]">{title}</h1>{description && <p className="mt-1.5 max-w-xl text-[0.8125rem] text-black/45">{description}</p>}</div><div className="flex flex-wrap items-center gap-3 lg:justify-end">{summary}{actions}</div></div></header>;
 }
 
-export function ListSummary({ strong, children, tone = "#0D0D0D" }: { strong: ReactNode; children: ReactNode; tone?: string }) {
-  return <span className="text-[0.75rem] text-black/40"><span className="font-bold tabular-nums" style={{color:tone}}>{strong}</span> {children}</span>;
+const COR_ALERTA = { ambar: "#B07A14", vermelho: "#D94A4A" } as const;
+
+/** Converte o `tone` antigo (cor no número) no alerta equivalente, que pinta só o ícone. */
+const ALERTA_DO_TOM: Record<string, keyof typeof COR_ALERTA> = {
+  "#9a6a10": "ambar",
+  "#b07a14": "ambar",
+  "#b23b3b": "vermelho",
+  "#d94a4a": "vermelho",
+  "#d94e4e": "vermelho",
+};
+
+/**
+ * Número do cabeçalho da lista: valor em tinta, texto neutro. O ícone opcional
+ * fica cinza; só um estado de alerta (`alerta`) pinta o ícone, nunca o número.
+ * `tone` está obsoleto: âmbar ou vermelho viram um ícone de alerta na cor; outros tons são ignorados.
+ */
+export function ListSummary({ strong, children, icone, alerta, tone }: { strong: ReactNode; children: ReactNode; icone?: LucideIcon; alerta?: keyof typeof COR_ALERTA; /** @deprecated use `icone` + `alerta` */ tone?: string }) {
+  const alertaFinal = alerta ?? (tone ? ALERTA_DO_TOM[tone.toLowerCase()] : undefined);
+  const Icone = icone ?? (alertaFinal ? AlertCircle : undefined);
+  const conteudo = <><span className="font-semibold tabular-nums text-[#0D0D0D]">{strong}</span> {children}</>;
+  if (!Icone) return <span className="text-[0.75rem] text-black/40">{conteudo}</span>;
+  return <span className="inline-flex items-center gap-1.5 text-[0.75rem] text-black/40"><Icone size={12} strokeWidth={1.75} aria-hidden="true" className={alertaFinal ? "shrink-0" : "shrink-0 text-black/40"} style={alertaFinal ? { color: COR_ALERTA[alertaFinal] } : undefined}/><span>{conteudo}</span></span>;
 }
 
 export function ListToolbar({ children, search }: { children?: ReactNode; search?: ReactNode }) {

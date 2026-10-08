@@ -8,12 +8,13 @@ type Props = {
   titleOverride?: string;
 };
 
+/** Escala em teal (relacionamento); roxo fica para navegação e seleção. */
 const SEGMENTS = [
-  { from: 180, to: 148, color: "rgba(114,89,181,.35)" },
-  { from: 144, to: 112, color: "rgba(114,89,181,.50)" },
-  { from: 108, to: 76,  color: "rgba(114,89,181,.65)" },
-  { from: 72,  to: 40,  color: "rgba(114,89,181,.80)" },
-  { from: 36,  to: 4,   color: "#7259B5" },
+  { from: 180, to: 148, color: "rgba(26,139,122,.35)" },
+  { from: 144, to: 112, color: "rgba(26,139,122,.50)" },
+  { from: 108, to: 76,  color: "rgba(26,139,122,.65)" },
+  { from: 72,  to: 40,  color: "rgba(26,139,122,.80)" },
+  { from: 36,  to: 4,   color: "#1A8B7A" },
 ];
 
 function point(angle: number, radius: number) {
@@ -34,7 +35,7 @@ function scoreMeta(score: number | null, variant: NonNullable<Props["variant"]>)
     if (score < 25) return { title: "Baixo potencial", color: "#D94E4E" };
     if (score < 45) return { title: "Potencial incerto", color: "#B07A14" };
     if (score < 65) return { title: "Oportunidade possível", color: "#2D72B0" };
-    if (score < 82) return { title: "Forte oportunidade", color: "#7259B5" };
+    if (score < 82) return { title: "Forte oportunidade", color: "#1A8B7A" };
     return { title: "Alta prioridade", color: "#2E8932" };
   }
 
@@ -42,7 +43,7 @@ function scoreMeta(score: number | null, variant: NonNullable<Props["variant"]>)
     if (score < 20) return { title: "Improvável converter", color: "#D94E4E" };
     if (score < 40) return { title: "Pouco provável", color: "#B07A14" };
     if (score < 60) return { title: "Possível", color: "#2D72B0" };
-    if (score < 80) return { title: "Provável", color: "#7259B5" };
+    if (score < 80) return { title: "Provável", color: "#1A8B7A" };
     return { title: "Alta chance", color: "#2E8932" };
   }
 
@@ -50,7 +51,7 @@ function scoreMeta(score: number | null, variant: NonNullable<Props["variant"]>)
     if (score < 25) return { title: "Sem viabilidade",   color: "#D94E4E" };
     if (score < 45) return { title: "Em estruturação",   color: "#B07A14" };
     if (score < 65) return { title: "Promissor",         color: "#2D72B0" };
-    if (score < 82) return { title: "Forte potencial",   color: "#7259B5" };
+    if (score < 82) return { title: "Forte potencial",   color: "#1A8B7A" };
     return              { title: "Prioritário",          color: "#2E8932" };
   }
 
@@ -58,7 +59,7 @@ function scoreMeta(score: number | null, variant: NonNullable<Props["variant"]>)
     if (score < 25) return { title: "Risco crítico", color: "#D94E4E" };
     if (score < 45) return { title: "Precisa de atenção", color: "#B07A14" };
     if (score < 65) return { title: "Parceria estável", color: "#2D72B0" };
-    if (score < 82) return { title: "Parceria saudável", color: "#7259B5" };
+    if (score < 82) return { title: "Parceria saudável", color: "#1A8B7A" };
     return { title: "Parceria forte", color: "#2E8932" };
   }
 
@@ -66,14 +67,14 @@ function scoreMeta(score: number | null, variant: NonNullable<Props["variant"]>)
     if (score < 25) return { title: "Sem tração",        color: "#D94E4E" };
     if (score < 45) return { title: "Em desenvolvimento", color: "#B07A14" };
     if (score < 65) return { title: "Operacional",        color: "#2D72B0" };
-    if (score < 82) return { title: "Alto desempenho",    color: "#7259B5" };
+    if (score < 82) return { title: "Alto desempenho",    color: "#1A8B7A" };
     return              { title: "Referência",            color: "#2E8932" };
   }
 
   if (score < 25) return { title: "Relação frágil", color: "#D94E4E" };
   if (score < 45) return { title: "Em atenção", color: "#B07A14" };
   if (score < 65) return { title: "Estável", color: "#2D72B0" };
-  if (score < 82) return { title: "Em evolução", color: "#7259B5" };
+  if (score < 82) return { title: "Em evolução", color: "#1A8B7A" };
   return { title: "Relação forte", color: "#2E8932" };
 }
 

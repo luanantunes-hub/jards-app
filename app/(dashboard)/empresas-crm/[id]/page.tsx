@@ -3,6 +3,7 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
+  AlertCircle,
   ArrowLeft,
   ArrowUpRight,
   Award,
@@ -40,14 +41,10 @@ import { InscricoesTable, type EditalRow } from "@/components/company/Inscricoes
 import { DetailHeaderAction, DetailPageContent, DetailSidebarCard, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import type { EmpresaCrm } from "@/lib/supabase/types";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 const CLOSED_STATUSES = new Set(["aprovado", "recusado", "ganha", "perdida"]);
 const EDITAL_CLOSED_STATUSES = new Set(["aprovado", "reprovado", "cancelado"]);
-
-function fmtCurrency(value: number | null) {
-  if (value == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
-}
 
 function fmtDate(value: string | null) {
   if (!value) return "—";
@@ -199,10 +196,10 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
 function CommercialOverview({empresa,companyId,contacts,negotiations,projects,notices,clientAccount,atribuicao,pipelineValue,nextStep,nextOpening,nextContactDate,openOpportunitiesCount,staleCount,timelineSources,setTimelineSources,onNewNegotiation,onGoToRelationship,onDataChanged,onEditLocalizacao}:{empresa:EmpresaCrm;companyId:string;contacts:ContactRow[];negotiations:CaptacaoRow[];projects:ProjectRow[];notices:EditalRow[];clientAccount:ClientLink|null;atribuicao:AtribuicaoRow|null;pipelineValue:number;nextStep:{kind:"negociacao"|"followup";id:string;titulo:string;data:string;projetoNome?:string|null}|null;nextOpening:EditalRow|null;nextContactDate:string|null;openOpportunitiesCount:number;staleCount:number;timelineSources:string[];setTimelineSources:React.Dispatch<React.SetStateAction<string[]>>;onNewNegotiation:()=>void;onGoToRelationship:()=>void;onDataChanged:()=>void;onEditLocalizacao:()=>void}) {
   return <div className="space-y-5">
     <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
-      <Metric label="Oportunidades abertas" value={String(openOpportunitiesCount)} color="#7259B5"/>
-      <Metric label="Valor no pipeline" value={fmtCurrency(pipelineValue)} color="#2D72B0"/>
-      <Metric label="Próximo contato" value={nextContactDate ? fmtDate(nextContactDate) : "Não definido"} color={nextContactDate?'#1A8B7A':'#B07A14'}/>
-      <Metric label="Sem avanço há 14 dias" value={String(staleCount)} color={staleCount?'#D94E4E':'#2E8932'}/>
+      <Metric label="Oportunidades abertas" value={String(openOpportunitiesCount)} vazio={!openOpportunitiesCount}/>
+      <Metric label="Valor no pipeline" value={formatarValorCurto(pipelineValue)} title={formatarValorCompleto(pipelineValue)} vazio={!pipelineValue}/>
+      <Metric label="Próximo contato" value={nextContactDate ? fmtDate(nextContactDate) : "Não definido"} vazio={!nextContactDate}/>
+      <Metric label="Sem avanço há 14 dias" value={String(staleCount)} vazio={!staleCount} alerta={staleCount > 0}/>
     </section>
 
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
@@ -573,7 +570,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
   );
 }
 
-function Metric({label,value,color}:{label:string;value:string;color:string}) { return <div className="rounded border bg-black/[.025] px-4 py-4" style={{borderColor:"rgba(13,13,13,.07)"}}><p className="text-[0.625rem] font-medium text-black/35">{label}</p><p className="mt-1.5 text-[1.375rem] font-semibold tabular-nums" style={{color}}>{value}</p></div>; }
+function Metric({label,value,title,vazio=false,alerta=false}:{label:string;value:string;title?:string;vazio?:boolean;alerta?:boolean}) { return <div className="rounded border bg-black/[.025] px-4 py-4" style={{borderColor:"rgba(13,13,13,.07)"}}><p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{alerta && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]"/>}{label}</p><p title={title} className={`mt-1.5 break-words text-[1.375rem] font-semibold tabular-nums ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p></div>; }
 function NextStepRow({label,title,subtitle,actionLabel,onAction,href}:{label:string;title:string;subtitle:string;actionLabel:string;onAction?:()=>void;href?:string}) {
   const action = href
     ? <Link href={href} className="inline-flex shrink-0 items-center gap-1.5 rounded border border-[#7259B5]/25 bg-white px-3 py-1.5 text-[0.6875rem] font-medium text-[#7259B5] hover:bg-black/[.04]">{actionLabel}<ArrowUpRight size={11}/></Link>

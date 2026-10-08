@@ -2,9 +2,10 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import {
-  TrendingUp, CheckCircle2, Percent, ListChecks, AlertTriangle,
+  TrendingUp, Percent, ListChecks, AlertTriangle,
   Mail, Phone, Users, Calendar, MoreHorizontal, CheckSquare,
   ArrowRight, ArrowUpRight, Clock, CircleDollarSign, List, Filter,
+  type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PotencialFechamento, StatusCaptacao, TipoAtividade } from "@/lib/supabase/types";
@@ -16,6 +17,8 @@ import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext"
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { escalaUi } from "@/lib/escala-ui";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { ICONE_CAPTACAO, MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -24,7 +27,7 @@ type FunnelStage = {
   label: string;
   count: number;
   valor: number;
-  color: string;
+  barra: string;
 };
 
 type StagnantCap = {
@@ -77,12 +80,15 @@ type ChannelMetric = {
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 
-const STAGE_ORDER: Array<{ status: StatusCaptacao; label: string; color: string }> = [
-  { status: "prospeccao",       label: "Prospecção",       color: "rgba(13,13,13,.35)" },
-  { status: "primeiro_contato", label: "1º contato",       color: "rgba(13,13,13,.40)" },
-  { status: "proposta_enviada", label: "Proposta enviada", color: "#7259B5" },
-  { status: "em_negociacao",    label: "Em negociação",    color: "#7259B5" },
-  { status: "renovacao",        label: "Renovação",        color: "#2D72B0" },
+// Cor só no dado de captação: em negociação é verde a 35%; os demais estágios em aberto ficam em cinza.
+const BARRA_ESTAGIO_ABERTO = "bg-black/[.22]";
+
+const STAGE_ORDER: Array<{ status: StatusCaptacao; label: string; barra: string }> = [
+  { status: "prospeccao",       label: "Prospecção",       barra: BARRA_ESTAGIO_ABERTO },
+  { status: "primeiro_contato", label: "1º contato",       barra: BARRA_ESTAGIO_ABERTO },
+  { status: "proposta_enviada", label: "Proposta enviada", barra: BARRA_ESTAGIO_ABERTO },
+  { status: "em_negociacao",    label: "Em negociação",    barra: MARCA_CAPTACAO.negociacao },
+  { status: "renovacao",        label: "Renovação",        barra: BARRA_ESTAGIO_ABERTO },
 ];
 
 const STATUS_LABEL: Record<StatusCaptacao, string> = {
@@ -112,12 +118,6 @@ const POTENCIAL_PESO: Record<PotencialFechamento, number> = {
 };
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
-
-function fmtValor(v: number): string {
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
-}
 
 function timeAgo(iso: string): string {
   const diff  = Date.now() - new Date(iso).getTime();
@@ -156,6 +156,27 @@ function KpiSkeleton() {
       <div className="h-2.5 w-16 bg-black/8 rounded mb-4" />
       <div className="h-7 w-24 bg-black/8 rounded mb-2" />
       <div className="h-2.5 w-20 bg-black/8 rounded" />
+    </div>
+  );
+}
+
+/** Rótulo neutro com ícone cinza e valor em tinta; zerado fica apagado. */
+function KpiCard({ rotulo, Icon, valor, vazio, title, detalhe }: {
+  rotulo: string;
+  Icon: LucideIcon;
+  valor: string;
+  vazio: boolean;
+  title?: string;
+  detalhe?: string;
+}) {
+  return (
+    <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      <p className="mb-3 flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+        <Icon size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
+        {rotulo}
+      </p>
+      <p title={title} className={`text-[1.375rem] font-semibold tabular-nums tracking-[-.02em] leading-none mb-1 ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{valor}</p>
+      {detalhe && <p className="text-[0.6875rem] text-black/35">{detalhe}</p>}
     </div>
   );
 }
@@ -491,9 +512,9 @@ export default function DashboardPage() {
         });
       }
       setFunnel(
-        STAGE_ORDER.map(({ status, label, color }) => {
+        STAGE_ORDER.map(({ status, label, barra }) => {
           const d = stageMap.get(status) ?? { count: 0, valor: 0 };
-          return { status, label, count: d.count, valor: d.valor, color };
+          return { status, label, count: d.count, valor: d.valor, barra };
         })
       );
 
@@ -562,7 +583,7 @@ export default function DashboardPage() {
           tipo: "followup" as const,
           titulo: item.empresa_crm?.nome ?? item.titulo ?? "Follow-up",
           sub: item.captacao
-            ? `${STATUS_LABEL[item.captacao.status]}${item.captacao.valor_solicitado ? " · " + fmtValor(item.captacao.valor_solicitado) : ""}`
+            ? `${STATUS_LABEL[item.captacao.status]}${item.captacao.valor_solicitado ? " · " + formatarValorCurto(item.captacao.valor_solicitado) : ""}`
             : "Relacionamento",
         }));
 
@@ -600,14 +621,15 @@ export default function DashboardPage() {
   const maxFunnelValor  = Math.max(...funnel.map(s => s.valor), 1);
   const globalMax       = Math.max(maxFunnelValor, aprovadoValor);
   const aprovadoBarPct  = Math.round((aprovadoValor / globalMax) * 100);
-  const prioridades = [
+  // Só estado de alerta (vencido, prazo perto, em risco) colore o ícone; o número fica em tinta.
+  const prioridades: Array<{ label: string; detail: string; value: number; href: string; Icon: LucideIcon; color: string | null }> = [
     {
       label: "Follow-ups vencidos",
       detail: followupsVencidos === 1 ? "1 contato pede retorno" : `${followupsVencidos} contatos pedem retorno`,
       value: followupsVencidos,
       href: "/captacoes",
       Icon: Clock,
-      color: followupsVencidos > 0 ? "#D94E4E" : "#2E8932",
+      color: "#D94E4E",
     },
     {
       label: "Tarefas em aberto",
@@ -615,7 +637,7 @@ export default function DashboardPage() {
       value: pendentes,
       href: "/atividades",
       Icon: ListChecks,
-      color: pendentes > 0 ? "#B07A14" : "#2E8932",
+      color: null,
     },
     {
       label: "Editais próximos",
@@ -623,7 +645,7 @@ export default function DashboardPage() {
       value: editaisUrgentes,
       href: "/editais-abertos",
       Icon: Calendar,
-      color: editaisUrgentes > 0 ? "#D94E4E" : "#2E8932",
+      color: "#D94E4E",
     },
     {
       label: "Negociações em risco",
@@ -631,7 +653,7 @@ export default function DashboardPage() {
       value: stagnant.length,
       href: "/captacoes",
       Icon: AlertTriangle,
-      color: stagnant.length > 0 ? "#B07A14" : "#2E8932",
+      color: "#B07A14",
     },
   ];
   const modulePosition = (id: DashboardModuleId) => dashboardPreferences.preferences.find((item) => item.id === id)?.position ?? 99;
@@ -658,49 +680,11 @@ export default function DashboardPage() {
           ? Array.from({ length: 5 }).map((_, i) => <KpiSkeleton key={i} />)
           : (
             <>
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Pipeline</p>
-                  <TrendingUp size={14} className="text-[#7259B5]" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(pipeline)}</p>
-                <p className="text-[0.6875rem] text-black/35">{pipelineCount} em andamento</p>
-              </div>
-
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Ponderado</p>
-                  <CircleDollarSign size={14} className="text-[#7259B5]" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(pipelinePonderado)}</p>
-              </div>
-
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Aprovado</p>
-                  <CheckCircle2 size={14} className="text-[#2E8932]" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{fmtValor(aprovadoValor)}</p>
-                <p className="text-[0.6875rem] text-black/35">{aprovadoCount} patrocínios</p>
-              </div>
-
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Conversão</p>
-                  <Percent size={14} className="text-[#7259B5]" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">
-                  {conversao !== null ? `${conversao}%` : "—"}
-                </p>
-              </div>
-
-              <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em]">Pendentes</p>
-                  <ListChecks size={14} className="text-black/45" />
-                </div>
-                <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none mb-1">{pendentes}</p>
-              </div>
+              <KpiCard rotulo="Pipeline" Icon={TrendingUp} valor={formatarValorCurto(pipeline)} title={formatarValorCompleto(pipeline)} vazio={!pipeline} detalhe={`${pipelineCount} em andamento`} />
+              <KpiCard rotulo="Ponderado" Icon={CircleDollarSign} valor={formatarValorCurto(pipelinePonderado)} title={formatarValorCompleto(pipelinePonderado)} vazio={!pipelinePonderado} />
+              <KpiCard rotulo="Aprovado" Icon={ICONE_CAPTACAO.confirmado} valor={formatarValorCurto(aprovadoValor)} title={formatarValorCompleto(aprovadoValor)} vazio={!aprovadoValor} detalhe={`${aprovadoCount} patrocínios`} />
+              <KpiCard rotulo="Conversão" Icon={Percent} valor={conversao !== null ? `${conversao}%` : "—"} vazio={!conversao} />
+              <KpiCard rotulo="Pendentes" Icon={ListChecks} valor={String(pendentes)} vazio={!pendentes} />
             </>
           )
         }
@@ -726,13 +710,16 @@ export default function DashboardPage() {
                 } ${index === 2 ? "sm:border-l-0 xl:border-l" : ""}`}
                 style={{ borderColor: "rgba(13,13,13,.06)" }}
               >
-                <div className="flex h-9 w-9 flex-none items-center justify-center rounded border bg-white" style={{ borderColor: `${color}38`, color }}>
-                  <Icon size={15} />
+                <div
+                  className={`flex h-9 w-9 flex-none items-center justify-center rounded border bg-white ${value > 0 && color ? "" : "border-black/[.08] text-black/40"}`}
+                  style={value > 0 && color ? { borderColor: `${color}38`, color } : undefined}
+                >
+                  <Icon size={15} aria-hidden="true" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-[0.75rem] font-semibold text-black/70">{label}</p>
-                    <span className="text-[0.9375rem] font-bold tabular-nums" style={{ color }}>{value}</span>
+                    <span className={`text-[0.9375rem] font-semibold tabular-nums ${value > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{value}</span>
                   </div>
                   <p className="mt-1 truncate text-[0.625rem] text-black/32">{value > 0 ? detail : "Nenhuma ação necessária"}</p>
                 </div>
@@ -763,7 +750,7 @@ export default function DashboardPage() {
             </div>
 
             <div className="px-6 py-5 flex flex-col gap-3.5">
-              {funnel.map(({ status, label, count, valor, color }) => {
+              {funnel.map(({ status, label, count, valor, barra }) => {
                 const pct = Math.round((valor / globalMax) * 100);
                 const tempo = tempoPorEstagio[status];
                 return (
@@ -772,48 +759,44 @@ export default function DashboardPage() {
                       {label}
                     </span>
                     <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(13,13,13,.05)" }}>
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${pct}%`,
-                          background: color,
-                          opacity: status === "em_negociacao" ? 1 : 0.6,
-                        }}
-                      />
+                      <div className={`h-full rounded-full ${barra}`} style={{ width: `${pct}%` }} />
                     </div>
                     <span
-                      className="text-[0.6875rem] text-black/30 w-[2.625rem] text-right flex-shrink-0 tabular-nums"
+                      className="hidden sm:inline text-[0.6875rem] text-black/30 w-[2.625rem] text-right flex-shrink-0 tabular-nums"
                       title={tempo ? `Tempo mediano neste estágio · ${tempo.amostras} ${tempo.amostras === 1 ? "passagem" : "passagens"}` : "Ainda sem passagens concluídas por este estágio"}
                     >
                       {tempo ? `~${fmtDias(tempo.mediana_dias)}` : "—"}
                     </span>
                     <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{count}</span>
-                    <span className="text-[0.6875rem] font-semibold text-black/55 w-[3.625rem] text-right flex-shrink-0">
-                      {valor > 0 ? fmtValor(valor) : "—"}
+                    <span
+                      title={valor > 0 ? formatarValorCompleto(valor) : undefined}
+                      className={`truncate text-[0.6875rem] font-semibold tabular-nums w-[4.25rem] text-right flex-shrink-0 ${valor > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}
+                    >
+                      {valor > 0 ? formatarValorCurto(valor) : "—"}
                     </span>
                   </div>
                 );
               })}
 
               <div className="border-t mt-1 pt-3.5 flex items-center gap-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <span className="text-[0.6875rem] font-semibold w-[8.25rem] flex-shrink-0 whitespace-nowrap text-[#2E8932]">
+                <span className="text-[0.6875rem] font-medium text-black/60 w-[8.25rem] flex-shrink-0 whitespace-nowrap">
                   Aprovado
                 </span>
                 <div className="flex-1 h-[0.3125rem] rounded-full" style={{ background: "rgba(13,13,13,.06)" }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{ width: `${aprovadoBarPct}%`, background: "#2E8932", opacity: 0.7 }}
-                  />
+                  <div className={`h-full rounded-full ${MARCA_CAPTACAO.confirmado}`} style={{ width: `${aprovadoBarPct}%` }} />
                 </div>
-                <span className="w-[2.625rem] flex-shrink-0" aria-hidden="true" />
+                <span className="hidden sm:inline w-[2.625rem] flex-shrink-0" aria-hidden="true" />
                 <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{aprovadoCount}</span>
-                <span className="text-[0.6875rem] font-semibold w-[3.625rem] text-right flex-shrink-0 text-[#2E8932]">
-                  {aprovadoValor > 0 ? fmtValor(aprovadoValor) : "—"}
+                <span
+                  title={aprovadoValor > 0 ? formatarValorCompleto(aprovadoValor) : undefined}
+                  className={`truncate text-[0.6875rem] font-semibold tabular-nums w-[4.25rem] text-right flex-shrink-0 ${aprovadoValor > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}
+                >
+                  {aprovadoValor > 0 ? formatarValorCurto(aprovadoValor) : "—"}
                 </span>
               </div>
 
               {Object.keys(tempoPorEstagio).length > 0 && (
-                <p className="text-[0.625rem] text-black/30">
+                <p className="hidden sm:block text-[0.625rem] text-black/30">
                   ~ dias: tempo mediano que as negociações passam em cada estágio
                 </p>
               )}
@@ -845,16 +828,13 @@ export default function DashboardPage() {
                         className="w-8 h-8 rounded flex items-center justify-center flex-shrink-0"
                         style={{ background: "rgba(13,13,13,.04)" }}
                       >
-                        <Clock size={13} style={{ color: urgente ? "#D94E4E" : "#B07A14" }} />
+                        <Clock size={13} aria-hidden="true" style={{ color: urgente ? "#D94E4E" : "#B07A14" }} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-[0.75rem] font-semibold text-[#0D0D0D] truncate">{c.empresa}</p>
                         <p className="text-[0.625rem] text-black/35 mt-0.5">{STATUS_LABEL[c.status]}</p>
                       </div>
-                      <span
-                        className="text-[0.6875rem] font-bold flex-shrink-0"
-                        style={{ color: urgente ? "#D94E4E" : "#B07A14" }}
-                      >
+                      <span className="text-[0.6875rem] font-semibold tabular-nums text-[#0D0D0D] flex-shrink-0">
                         {c.diasSemAtividade}d
                       </span>
                     </Link>
@@ -1044,7 +1024,7 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                         <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Conversão</p>
-                        <p className="text-[0.9375rem] font-bold text-[#7259B5]">{winRate === null ? "—" : `${winRate}%`}</p>
+                        <p className={`text-[0.9375rem] font-semibold tabular-nums ${winRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{winRate === null ? "—" : `${winRate}%`}</p>
                       </div>
                     </div>
                   );
@@ -1107,7 +1087,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                       <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Aprovação</p>
-                      <p className="text-[0.9375rem] font-bold text-[#7259B5] tabular-nums">{Math.round(item.taxa_aprovacao * 100)}%</p>
+                      <p className={`text-[0.9375rem] font-semibold tabular-nums ${Math.round(item.taxa_aprovacao * 100) ? "text-[#0D0D0D]" : "text-black/30"}`}>{Math.round(item.taxa_aprovacao * 100)}%</p>
                     </div>
                   </div>
                 ))}

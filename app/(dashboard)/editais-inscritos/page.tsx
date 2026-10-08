@@ -26,6 +26,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { getInscricaoTiming } from "@/lib/inscricoes/timing";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { DESFECHOS_INSCRICAO, ehDesfecho } from "@/lib/etapas";
 
 type EditalInscrito = {
@@ -106,10 +107,7 @@ function fmtShortDate(d: string | null): string {
 }
 
 function fmtValor(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(0)}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
+  return v ? formatarValorCurto(v) : "—";
 }
 
 // A inscrição é identificada por empresa e projeto — não há mais um nome próprio.
@@ -423,11 +421,11 @@ export default function EditaisInscritosPage() {
           {e.data_fechamento ? (
             <span className="flex items-center gap-1 text-[0.625rem] text-black/40 font-semibold"><Calendar size={9} />{fmtShortDate(e.data_fechamento)}</span>
           ) : <span />}
-          {e.valor != null && <span className="text-xs font-bold text-black/65">{fmtValor(e.valor)}</span>}
+          {e.valor != null && <span className="text-xs font-semibold tabular-nums text-black/65" title={e.valor ? formatarValorCompleto(e.valor) : undefined}>{fmtValor(e.valor)}</span>}
         </div>
         {typeof valuePct === "number" && (
           <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-black/[.07]">
-            <div className="h-full rounded-full bg-[#2E8932]" style={{ width: `${valuePct}%` }} />
+            <div className="h-full rounded-full bg-black/30" style={{ width: `${valuePct}%` }} />
           </div>
         )}
       </KanbanCard>
@@ -552,7 +550,7 @@ export default function EditaisInscritosPage() {
         />
       )}
 
-      <ListPageHeader eyebrow="Operação de editais" title="Inscrições" summary={!loading&&<><ListSummary strong={filtered.length}>registros</ListSummary><ListSummary strong={countByStatus('aprovado')} tone="#2E8932">aprovados</ListSummary><ListSummary strong={countByStatus('em_analise')} tone="#B07A14">em análise</ListSummary></>} actions={<><ViewToggle view={view} onChange={setView}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Nova inscrição</PrimaryListAction></>}/>
+      <ListPageHeader eyebrow="Operação de editais" title="Inscrições" summary={!loading&&<><ListSummary strong={filtered.length}>registros</ListSummary><ListSummary strong={countByStatus('aprovado')}>aprovados</ListSummary><ListSummary strong={countByStatus('em_analise')}>em análise</ListSummary></>} actions={<><ViewToggle view={view} onChange={setView}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Nova inscrição</PrimaryListAction></>}/>
 
       <div className="flex shrink-0 flex-col gap-3 border-b bg-white px-4 py-3 md:px-8 lg:flex-row lg:items-center" style={{borderColor:"rgba(13,13,13,.06)"}}>
         <ListSearch value={search} onChange={setSearch} placeholder="Buscar empresa ou projeto"/>
@@ -713,7 +711,7 @@ export default function EditaisInscritosPage() {
                             })()}
                           </td>
                           <td className="px-5 py-3.5 text-black/40 text-xs whitespace-nowrap">{fmtDate(e.data_resultado)}</td>
-                          <td className="px-5 py-3.5 font-bold text-black/70 text-[0.8125rem] whitespace-nowrap">{fmtValor(e.valor)}</td>
+                          <td className="px-5 py-3.5 font-semibold tabular-nums text-black/70 text-[0.8125rem] whitespace-nowrap" title={e.valor ? formatarValorCompleto(e.valor) : undefined}>{fmtValor(e.valor)}</td>
                           <td className="px-5 py-3.5"><PrioBadge prio={e.prioridade} size="md" /></td>
 
                           {/* Documentos */}
@@ -859,7 +857,7 @@ export default function EditaisInscritosPage() {
                               ) : <span />}
                               <div className="flex items-center gap-1.5">
                                 <PrioBadge prio={e.prioridade} size="sm" />
-                                <span className="text-xs font-bold text-black/65">{fmtValor(e.valor)}</span>
+                                <span className="text-xs font-semibold tabular-nums text-black/65" title={e.valor ? formatarValorCompleto(e.valor) : undefined}>{fmtValor(e.valor)}</span>
                               </div>
                             </div>
                           </KanbanCard>

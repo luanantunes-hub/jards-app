@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { Search, Check, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type Empresa = {
   id: string;
@@ -113,8 +114,8 @@ export default function AdminPatrocinadoresPage() {
                 <td className="px-4 py-3 text-[0.8125rem] text-black/55">
                   {[e.cidade, e.estado].filter(Boolean).join(", ") || "—"}
                 </td>
-                <td className="px-4 py-3 text-[0.8125rem] text-black/55">
-                  {e.aporte_estimado ? `R$ ${Number(e.aporte_estimado).toLocaleString("pt-BR")}` : "—"}
+                <td className="px-4 py-3 text-[0.8125rem] tabular-nums text-black/55" title={e.aporte_estimado ? formatarValorCompleto(Number(e.aporte_estimado)) : undefined}>
+                  {e.aporte_estimado ? formatarValorCurto(Number(e.aporte_estimado)) : "—"}
                 </td>
                 <td className="px-4 py-3 text-center">
                   {e.tem_detalhe

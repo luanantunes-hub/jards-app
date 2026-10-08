@@ -10,6 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import type { StatusEdital } from "@/lib/supabase/types";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 
@@ -66,13 +67,6 @@ const STATUS_LABEL: Record<StatusEdital, string> = {
   reprovado:  "Reprovado",
   cancelado:  "Cancelado",
 };
-
-function fmtValor(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
-}
 
 /* ─── Campo resposta individual ─────────────────────────────────────────── */
 
@@ -394,7 +388,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
                   <span className="text-xs text-black/40 font-medium">{inscricao.projeto_nome}</span>
                 )}
                 {inscricao.valor && (
-                  <span className="text-xs font-bold text-black/60">{fmtValor(inscricao.valor)}</span>
+                  <span title={formatarValorCompleto(inscricao.valor)} className="text-xs font-semibold tabular-nums text-black/60">{formatarValorCurto(inscricao.valor)}</span>
                 )}
               </div>
             </div>

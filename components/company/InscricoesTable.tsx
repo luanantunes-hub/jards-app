@@ -3,6 +3,7 @@ import { useRouter } from "next/navigation";
 import { Plus, FileStack } from "lucide-react";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 export type EditalRow = {
   id: string;
@@ -22,11 +23,6 @@ const EDITAL_STATUS_LABEL: Record<string, { label: string; color: string }> = {
   reprovado:  { label: "Reprovado",  color: "#D94E4E" },
   cancelado:  { label: "Cancelado",  color: "rgba(13,13,13,.40)" },
 };
-
-function fmtCurrency(value: number | null) {
-  if (value == null) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
-}
 
 function fmtDate(value: string | null) {
   if (!value) return "—";
@@ -98,7 +94,7 @@ export function InscricoesTable({ rows, onNew }: { rows: EditalRow[]; onNew?: ()
                     <td className="px-5 py-4">
                       <StatusBadge status={row.status} label={s.label} bg={s.color} iconName={s.iconName} size="sm" />
                     </td>
-                    <td className="px-5 py-4 text-[0.75rem] font-semibold tabular-nums text-black/65">{fmtCurrency(row.valor)}</td>
+                    <td title={row.valor != null ? formatarValorCompleto(row.valor) : undefined} className="px-5 py-4 text-[0.75rem] font-semibold tabular-nums text-black/65">{formatarValorCurto(row.valor)}</td>
                     <td className="px-5 py-4 text-[0.6875rem] tabular-nums text-black/45">{fmtDate(row.data_fechamento)}</td>
                     <td className="px-5 py-4 text-[0.6875rem] text-black/45">há {daysSince(row.updated_at)} dias</td>
                   </tr>

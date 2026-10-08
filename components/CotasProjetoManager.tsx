@@ -5,7 +5,9 @@ import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { CotaPatrocinio, StatusCotaPatrocinio, VendaPatrocinio } from "@/lib/supabase/types";
-import { formatCotaValor, formatMoney } from "@/lib/cotas";
+import { formatCotaValor } from "@/lib/cotas";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { BarraCaptacao } from "@/components/ui/IndicadoresFinanceiros";
 
 export type VendaPatrocinioComEmpresa = VendaPatrocinio & {
   empresa_crm: { nome: string } | null;
@@ -274,17 +276,17 @@ export function CotasProjetoManager({
       {cotas.length > 0 && (
         <div className="rounded border p-4 space-y-3" style={{ borderColor: "rgba(13,13,13,.08)", background: "rgba(13,13,13,.018)" }}>
           <div className="grid grid-cols-3 gap-3">
-            <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-[.08em] text-black/35 mb-1">Vendido</p>
-              <p className="text-[0.9375rem] font-semibold text-black/75 tabular-nums">{formatMoney(valorContratado)}</p>
+            <div className="min-w-0">
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Vendido</p>
+              <p title={formatarValorCompleto(valorContratado)} className={`truncate text-[0.9375rem] font-semibold tabular-nums ${valorContratado ? "text-[#0D0D0D]" : "text-black/30"}`}>{formatarValorCurto(valorContratado)}</p>
             </div>
-            <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-[.08em] text-[#2E8932]/70 mb-1">Disponíveis</p>
-              <p className="text-[0.9375rem] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{disponiveis}{unlimitedCount > 0 ? " + ilimitadas" : ""}</p>
+            <div className="min-w-0">
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Disponíveis</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${disponiveis || unlimitedCount > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{disponiveis}{unlimitedCount > 0 ? " + ilimitadas" : ""}</p>
             </div>
-            <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-[.08em] text-black/35 mb-1">Vendidas</p>
-              <p className="text-[0.9375rem] font-semibold text-black/60 tabular-nums">{vendidas}</p>
+            <div className="min-w-0">
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Vendidas</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${vendidas ? "text-[#0D0D0D]" : "text-black/30"}`}>{vendidas}</p>
             </div>
           </div>
           {valorTotal && valorTotal > 0 && (() => {
@@ -292,12 +294,7 @@ export function CotasProjetoManager({
             const over = valorContratado > valorTotal;
             return (
               <div className="pt-1 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <div className="h-1.5 overflow-hidden rounded bg-black/[.07]">
-                  <div
-                    className="h-full rounded transition-all"
-                    style={{ width: `${pct}%`, background: over ? "#D94E4E" : pct === 100 ? "#2E8932" : "#7259B5" }}
-                  />
-                </div>
+                <BarraCaptacao confirmado={valorContratado} meta={valorTotal} className="h-1.5" />
                 <p className="mt-1.5 text-[0.625rem] text-black/35">
                   {pct}% do alvo contratado nestas cotas
                   {over && <span className="ml-1 font-semibold text-[#B07A14]">— acima da meta atual</span>}

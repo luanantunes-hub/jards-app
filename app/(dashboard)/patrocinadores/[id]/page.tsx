@@ -28,6 +28,7 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import StatusBadge from "@/components/ui/StatusBadge";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { ProjetoCategoriaIlustracao, categoriaDoProjeto } from "@/components/ui/ProjetoCategoriaIlustracao";
 
 type RelatorioSustentabilidade = {
@@ -150,22 +151,6 @@ function colorFrom(nome: string) {
   return p[Math.abs(h) % p.length];
 }
 
-function fmtValor(v: number | null) {
-  if (!v) return "—";
-  if (v >= 1_000_000_000) return `R$ ${(v / 1_000_000_000).toFixed(1).replace(".", ",")}B`;
-  if (v >= 1_000_000)     return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  if (v >= 1_000)         return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
-}
-
-function fmtValorAxis(v: number) {
-  if (v === 0) return "0";
-  if (v >= 1_000_000_000) return `${(v / 1_000_000_000).toFixed(1)}B`;
-  if (v >= 1_000_000)     return `R$${(v / 1_000_000).toFixed(0)}M`;
-  if (v >= 1_000)         return v.toLocaleString("pt-BR");
-  return String(v);
-}
-
 function fmtDate(d: string | null) {
   if (!d) return "—";
   const [y, m, day] = d.split("T")[0].split("-");
@@ -253,7 +238,7 @@ function TrimestralChart({ data }: { data: InvestimentoTrimestre }) {
                 {q.value > 0 ? `${q.pct}%` : "—"}
               </span>
               {q.value > 0 && (
-                <span className="text-[0.875rem] leading-none font-light" style={{ color: q.positive ? "#2E8932" : "#D94E4E" }}>
+                <span className="text-[0.875rem] leading-none font-light text-black/40">
                   {q.positive ? "↑" : "↓"}
                 </span>
               )}
@@ -282,8 +267,8 @@ function TrimestralChart({ data }: { data: InvestimentoTrimestre }) {
               {isHovered ? (
                 <div className="text-center px-1">
                   <p className="text-[0.6875rem] font-medium text-black/40 leading-none mb-1">{cell.label}</p>
-                  <p className="text-[0.875rem] font-semibold text-black/70 leading-none">
-                    {cell.v > 0 ? fmtValor(cell.v) : "—"}
+                  <p className="text-[0.875rem] font-semibold text-black/70 leading-none tabular-nums">
+                    {cell.v > 0 ? formatarValorCurto(cell.v) : "—"}
                   </p>
                 </div>
               ) : (
@@ -346,12 +331,10 @@ function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
   return (
     <div>
       <div className="flex items-center justify-between px-5 pt-5 pb-2">
-        <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-wide">Investimento Anual</p>
+        <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Investimento Anual</p>
         {total > 0 && diffPct !== 0 && (
-          <span
-            className="text-[0.625rem] font-bold px-2 py-0.5 rounded"
-            style={{ background: diffPct >= 0 ? "#fff" : "#fff", color: diffPct >= 0 ? "#2E8932" : "#D94E4E" }}
-          >
+          <span className="flex items-center gap-1 text-[0.625rem] font-medium tabular-nums text-black/55">
+            <span aria-hidden="true" className="text-black/40">{diffPct >= 0 ? "↑" : "↓"}</span>
             {diffPct >= 0 ? "+" : ""}{diffPct.toFixed(2).replace(".", ",")}%
           </span>
         )}
@@ -373,7 +356,7 @@ function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
               textAnchor="start" fontSize="5" fill="rgba(13,13,13,0.25)"
               fontFamily="system-ui, sans-serif"
             >
-              {fmtValorAxis(val)}
+              {formatarValorCurto(val)}
             </text>
           );
         })}
@@ -427,7 +410,7 @@ function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
                 textAnchor="middle" fontSize="8.5" fill="#0D0D0D"
                 fontFamily="system-ui, sans-serif" fontWeight="600"
               >
-                {fmtValorAxis(pt.v)}
+                {formatarValorCurto(pt.v)}
               </text>
             </g>
           );
@@ -449,9 +432,9 @@ function TipologiaChart({ t }: { t: Tipologia }) {
         <div key={key} className="flex items-center gap-2">
           <span className="text-[0.6875rem] text-black/50 font-medium w-32 flex-shrink-0">{TIPO_PT[key]}</span>
           <div className="flex-1 h-2 rounded-full bg-black/6 overflow-hidden">
-            <div className="h-full rounded-full bg-[#7259B5] transition-all" style={{ width: `${(v / max) * 100}%` }} />
+            <div className="h-full rounded-full bg-[#0D0D0D]/70 transition-all" style={{ width: `${(v / max) * 100}%` }} />
           </div>
-          <span className="text-[0.625rem] font-bold text-black/40 w-5 text-right">{v}</span>
+          <span className="text-[0.625rem] font-medium tabular-nums text-black/40 w-5 text-right">{v}</span>
         </div>
       ))}
     </div>
@@ -1094,7 +1077,7 @@ export default function PatrocinadorPage() {
               </div>
               {(isLeiView ? valorRecenteLei : empresa.aporte_estimado) && (
                 <p className="text-xs text-black/40">
-                  Total investido: <span className="font-bold text-black/70">{fmtValor(isLeiView ? valorRecenteLei : empresa.aporte_estimado)}</span>
+                  Total investido: <span className="font-semibold tabular-nums text-black/70" title={formatarValorCompleto(isLeiView ? valorRecenteLei : empresa.aporte_estimado)}>{formatarValorCurto(isLeiView ? valorRecenteLei : empresa.aporte_estimado)}</span>
                 </p>
               )}
             </div>
@@ -1760,7 +1743,7 @@ export default function PatrocinadorPage() {
                               <div className="min-w-0 flex-1">
                                 <span className={`block font-semibold leading-snug transition text-black ${tamanhoNome}`}>{p.nome}</span>
                                 {p.valor ? (
-                                  <span className="mt-1 block text-[0.625rem] font-semibold text-black/35">{fmtValor(p.valor)}</span>
+                                  <span className="mt-1 block text-[0.625rem] font-semibold tabular-nums text-black/35" title={formatarValorCompleto(p.valor)}>{formatarValorCurto(p.valor)}</span>
                                 ) : null}
                               </div>
                             </>

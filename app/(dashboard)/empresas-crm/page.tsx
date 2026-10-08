@@ -15,6 +15,7 @@ import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, L
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type ViewMode = "lista" | "matriz";
 const VIEW_MODES = ["lista", "matriz"] as const;
@@ -82,18 +83,13 @@ function fmtDate(d: string | null): string {
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 }
 
-function fmtMoney(value: number) {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)} mi`;
-  if (value >= 1_000) return `R$ ${(value / 1_000).toFixed(0)} mil`;
-  return `R$ ${value.toLocaleString("pt-BR")}`;
-}
-
+/** Mesma escala teal do RelationshipScoreGauge, que mostra este dado no detalhe da empresa. */
 const GAUGE_SEGMENTS = [
-  { from: 180, to: 148, color: "rgba(114,89,181,.35)" },
-  { from: 144, to: 112, color: "rgba(114,89,181,.50)" },
-  { from: 108, to: 76,  color: "rgba(114,89,181,.65)" },
-  { from: 72,  to: 40,  color: "rgba(114,89,181,.80)" },
-  { from: 36,  to: 4,   color: "#7259B5" },
+  { from: 180, to: 148, color: "rgba(26,139,122,.35)" },
+  { from: 144, to: 112, color: "rgba(26,139,122,.50)" },
+  { from: 108, to: 76,  color: "rgba(26,139,122,.65)" },
+  { from: 72,  to: 40,  color: "rgba(26,139,122,.80)" },
+  { from: 36,  to: 4,   color: "#1A8B7A" },
 ];
 function gaugePoint(angle: number, radius: number) {
   const rad = (angle * Math.PI) / 180;
@@ -133,10 +129,10 @@ function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; o
   const positiveValues = empresas.map(item => item.activePipelineValue).filter(value => value > 0).sort((a, b) => a - b);
   const median = positiveValues.length ? positiveValues[Math.floor(positiveValues.length / 2)] : 0;
   const quadrants = [
-    { key: "high-high", title: "Priorizar",          subtitle: "Relação forte, oportunidade alta",         highRelation: true,  highValue: true,  tone: "#2E8932" },
-    { key: "low-high",  title: "Desenvolver relação", subtitle: "Relação em construção, oportunidade alta", highRelation: false, highValue: true,  tone: "#B07A14" },
-    { key: "high-low",  title: "Cultivar",            subtitle: "Relação forte, oportunidade menor",        highRelation: true,  highValue: false, tone: "#2D72B0" },
-    { key: "low-low",   title: "Monitorar",           subtitle: "Relação e oportunidade menores",           highRelation: false, highValue: false, tone: "#6B7280" },
+    { key: "high-high", title: "Priorizar",          subtitle: "Relação forte, oportunidade alta",         highRelation: true,  highValue: true },
+    { key: "low-high",  title: "Desenvolver relação", subtitle: "Relação em construção, oportunidade alta", highRelation: false, highValue: true },
+    { key: "high-low",  title: "Cultivar",            subtitle: "Relação forte, oportunidade menor",        highRelation: true,  highValue: false },
+    { key: "low-low",   title: "Monitorar",           subtitle: "Relação e oportunidade menores",           highRelation: false, highValue: false },
   ];
 
   return (
@@ -156,8 +152,8 @@ function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; o
           return (
             <section key={quadrant.key} className="min-h-[15rem] rounded border border-black/[.07] bg-[#F8F8F6] p-3.5">
               <header className="mb-3 flex items-start justify-between gap-3">
-                <div><h2 className="text-[0.75rem] font-bold" style={{ color: quadrant.tone }}>{quadrant.title}</h2><p className="mt-0.5 text-[0.625rem] text-black/30">{quadrant.subtitle}</p></div>
-                <div className="text-right"><p className="text-[0.625rem] font-semibold tabular-nums text-black/45">{items.length} {items.length === 1 ? "empresa" : "empresas"}</p>{total > 0 && <p className="mt-0.5 text-[0.5625rem] tabular-nums text-black/30">{fmtMoney(total)}</p>}</div>
+                <div><h2 className="text-[0.75rem] font-semibold text-black/75">{quadrant.title}</h2><p className="mt-0.5 text-[0.625rem] text-black/30">{quadrant.subtitle}</p></div>
+                <div className="text-right"><p className="text-[0.625rem] font-semibold tabular-nums text-black/45">{items.length} {items.length === 1 ? "empresa" : "empresas"}</p>{total > 0 && <p className="mt-0.5 text-[0.5625rem] tabular-nums text-black/30" title={formatarValorCompleto(total)}>{formatarValorCurto(total)}</p>}</div>
               </header>
               {items.length === 0 ? (
                 <div className="flex min-h-[10rem] items-center justify-center rounded border border-dashed border-black/10 text-[0.6875rem] text-black/25">Nenhuma empresa neste quadrante</div>
@@ -166,7 +162,7 @@ function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; o
                   {items.map(item => (
                     <button key={item.id} type="button" onClick={() => onOpen(item.id)} className="flex min-w-0 items-center gap-2.5 rounded border border-black/[.07] bg-white p-2.5 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                       <CompanyLogo nome={item.nome} domain={item.domain_key} site={item.site} size={item.activeNegotiations > 2 ? 36 : 30} className="shrink-0 border border-black/[.06]"/>
-                      <div className="min-w-0"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{item.nome}</p><p className="mt-0.5 text-[0.59375rem] text-black/30">{item.activeNegotiations} {item.activeNegotiations === 1 ? "negociação" : "negociações"}{item.activePipelineValue > 0 ? `, ${fmtMoney(item.activePipelineValue)}` : ""}</p>{item.potencial_relacionamento == null && <p className="mt-0.5 text-[0.5625rem] text-[#B07A14]">Relação não avaliada</p>}</div>
+                      <div className="min-w-0"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{item.nome}</p><p className="mt-0.5 text-[0.59375rem] text-black/30">{item.activeNegotiations} {item.activeNegotiations === 1 ? "negociação" : "negociações"}{item.activePipelineValue > 0 && <>, <span title={formatarValorCompleto(item.activePipelineValue)}>{formatarValorCurto(item.activePipelineValue)}</span></>}</p>{item.potencial_relacionamento == null && <p className="mt-0.5 text-[0.5625rem] text-[#B07A14]">Relação não avaliada</p>}</div>
                     </button>
                   ))}
                 </div>
@@ -473,7 +469,7 @@ export default function EmpresasCrmPage() {
                           <span className="text-[0.8125rem] font-semibold tabular-nums text-black/70">{e.activeNegotiations}</span>
                           <span className="text-[0.6875rem] text-black/35"> {e.activeNegotiations === 1 ? "negociação" : "negociações"}</span>
                           {e.activePipelineValue > 0 && (
-                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums">{fmtMoney(e.activePipelineValue)}</p>
+                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums" title={formatarValorCompleto(e.activePipelineValue)}>{formatarValorCurto(e.activePipelineValue)}</p>
                           )}
                         </div>
                       ) : (
@@ -483,8 +479,8 @@ export default function EmpresasCrmPage() {
 
                     {/* Convertido */}
                     <td className="px-5 py-3.5">
-                      <span className={`text-[0.75rem] font-semibold tabular-nums ${e.convertedValue > 0 ? "text-[#2E8932]" : "text-black/25"}`}>
-                        {fmtMoney(e.convertedValue)}
+                      <span className={`text-[0.75rem] font-semibold tabular-nums ${e.convertedValue > 0 ? "text-[#0D0D0D]" : "text-black/30"}`} title={e.convertedValue > 0 ? formatarValorCompleto(e.convertedValue) : undefined}>
+                        {formatarValorCurto(e.convertedValue)}
                       </span>
                     </td>
 
@@ -557,7 +553,7 @@ export default function EmpresasCrmPage() {
                           <span className="text-[0.8125rem] font-semibold tabular-nums text-black/70">{e.inscricoesCount}</span>
                           <span className="text-[0.6875rem] text-black/35"> {e.inscricoesCount === 1 ? "edital" : "editais"}</span>
                           {e.inscricoesValue > 0 && (
-                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums">{fmtMoney(e.inscricoesValue)}</p>
+                            <p className="mt-0.5 text-[0.6875rem] text-black/40 tabular-nums" title={formatarValorCompleto(e.inscricoesValue)}>{formatarValorCurto(e.inscricoesValue)}</p>
                           )}
                         </div>
                       ) : (

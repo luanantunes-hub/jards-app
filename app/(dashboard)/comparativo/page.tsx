@@ -7,6 +7,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { usePortalPosition, PortalMenu } from "@/components/ui/ComboboxPortalMenu";
 import { usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { colorFrom } from "@/lib/colorFrom";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
@@ -64,11 +65,6 @@ const VIEW_OPTIONS = [
 type MetricaExtra = "nenhuma" | "crescimento" | "potencial";
 const METRICA_EXTRA_MODES = ["nenhuma", "crescimento", "potencial"] as const;
 
-const fmt = (v: number) => {
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  return `R$ ${v.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}`;
-};
-
 // Esporte tem teto incerto pra nós (2% geral ou 4% inclusão social — não classificamos o
 // projeto). Pra estimar a capacidade fiscal da empresa (a "base segura" abaixo), ele entra
 // SEMPRE pela hipótese de 4%, não pelos 2% que ele mesmo exibe (TETO_PCT.esporte) — dividir
@@ -123,13 +119,13 @@ function PotencialTag({ lei, potencial, valorEfetivo, potencialRealocado }: { le
     return (
       <div
         className="flex flex-col items-end gap-0.5"
-        title={`Espaço estimado se ${outra} cedesse todo o espaço que ocupa no teto compartilhado (realocação, não soma com o potencial normal)`}
+        title={`+${formatarValorCompleto(potencialRealocado)} · Espaço estimado se ${outra} cedesse todo o espaço que ocupa no teto compartilhado (realocação, não soma com o potencial normal)`}
       >
-        <div className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold" style={{ color: "#2E8932" }}>
-          <ArrowRight size={10} strokeWidth={2.5} className="shrink-0" />
-          +{fmt(potencialRealocado)}
+        <div className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">
+          <ArrowRight size={12} strokeWidth={1.75} className="shrink-0 text-black/40" aria-hidden="true" />
+          +{formatarValorCurto(potencialRealocado)}
         </div>
-        <span className="text-[0.5rem] font-bold uppercase tracking-wider text-black/30">Potencial realocado</span>
+        <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Potencial realocado</span>
       </div>
     );
   }
@@ -137,13 +133,13 @@ function PotencialTag({ lei, potencial, valorEfetivo, potencialRealocado }: { le
     return (
       <div
         className="flex flex-col items-end gap-0.5"
-        title={`Espaço estimado até o teto legal de dedução${lei === "esporte" ? " (considerando o teto de 2% de projeto geral — pode ser maior, até 4%, se for inclusão social)" : ""}`}
+        title={`+${formatarValorCompleto(potencial)} · Espaço estimado até o teto legal de dedução${lei === "esporte" ? " (considerando o teto de 2% de projeto geral — pode ser maior, até 4%, se for inclusão social)" : ""}`}
       >
-        <div className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold" style={{ color: "#2E8932" }}>
-          <Unlock size={10} strokeWidth={2.5} className="shrink-0" />
-          +{fmt(potencial)}
+        <div className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">
+          <Unlock size={12} strokeWidth={1.75} className="shrink-0 text-black/40" aria-hidden="true" />
+          +{formatarValorCurto(potencial)}
         </div>
-        <span className="text-[0.5rem] font-bold uppercase tracking-wider text-black/30">Potencial</span>
+        <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Potencial</span>
       </div>
     );
   }
@@ -174,16 +170,16 @@ function CrescimentoTag({ crescimento, valor }: { crescimento?: Crescimento; val
   return (
     <div
       className="flex flex-col items-start gap-0.5"
-      title={`Crescimento anual estimado${confianca === "setor" ? " (baseado no setor — empresa tem pouco histórico próprio)" : ""}`}
+      title={`${positivo ? "+" : "-"}${formatarValorCompleto(valorNominal)} · Crescimento anual estimado${confianca === "setor" ? " (baseado no setor — empresa tem pouco histórico próprio)" : ""}`}
     >
-      <div className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold" style={{ color: positivo ? "#1A8B7A" : "rgba(13,13,13,.4)" }}>
+      <div className={`flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold tabular-nums ${positivo ? "text-[#0D0D0D]" : "text-black/45"}`}>
         {positivo ? "+" : "-"}
         {Math.round(Math.abs(taxaAnual) * 100)}%
-        <ArrowRight size={10} strokeWidth={2.5} className="shrink-0 text-black/25" />
+        <ArrowRight size={10} strokeWidth={2.5} className="shrink-0 text-black/25" aria-hidden="true" />
         {positivo ? "+" : "-"}
-        {fmt(valorNominal)}
+        {formatarValorCurto(valorNominal)}
       </div>
-      <span className="text-[0.5rem] font-bold uppercase tracking-wider text-black/30">
+      <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
         Cresc./ano{confianca === "setor" && " · setor"}
       </span>
     </div>
@@ -333,8 +329,11 @@ function ComparativoContent() {
             />
           </div>
           <div className="w-full shrink-0 text-right sm:w-[24%]">
-            <div className="text-[1.25rem] font-semibold leading-none tabular-nums text-black/85">
-              {loadingValores ? "…" : fmt(valor)}
+            <div
+              title={loadingValores ? undefined : formatarValorCompleto(valor)}
+              className={`text-[1.25rem] font-semibold leading-none tabular-nums ${loadingValores || !valor ? "text-black/30" : "text-[#0D0D0D]"}`}
+            >
+              {loadingValores ? "…" : formatarValorCurto(valor)}
             </div>
             {!loadingValores && metricaExtra !== "nenhuma" && (
               <div className="mt-1.5 flex justify-end">
@@ -467,9 +466,9 @@ function ComparativoContent() {
                   onClick={() => setMetricaExtra(metricaExtra === "crescimento" ? "nenhuma" : "crescimento")}
                   className="flex items-center gap-1.5 rounded-l border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
-                    background: metricaExtra === "crescimento" ? "#1A8B7A" : "#fff",
+                    background: metricaExtra === "crescimento" ? "#0D0D0D" : "#fff",
                     color: metricaExtra === "crescimento" ? "#fff" : "rgba(13,13,13,.45)",
-                    borderColor: metricaExtra === "crescimento" ? "#1A8B7A" : "rgba(13,13,13,.12)",
+                    borderColor: metricaExtra === "crescimento" ? "#0D0D0D" : "rgba(13,13,13,.12)",
                     zIndex: metricaExtra === "crescimento" ? 10 : undefined,
                     position: "relative",
                   }}
@@ -490,9 +489,9 @@ function ComparativoContent() {
                   onClick={() => setMetricaExtra(metricaExtra === "potencial" ? "nenhuma" : "potencial")}
                   className="flex items-center gap-1.5 rounded-r border px-3.5 py-1.5 text-[0.75rem] font-semibold transition"
                   style={{
-                    background: metricaExtra === "potencial" ? "#2E8932" : "#fff",
+                    background: metricaExtra === "potencial" ? "#0D0D0D" : "#fff",
                     color: metricaExtra === "potencial" ? "#fff" : "rgba(13,13,13,.45)",
-                    borderColor: metricaExtra === "potencial" ? "#2E8932" : "rgba(13,13,13,.12)",
+                    borderColor: metricaExtra === "potencial" ? "#0D0D0D" : "rgba(13,13,13,.12)",
                     zIndex: metricaExtra === "potencial" ? 10 : undefined,
                     position: "relative",
                   }}
@@ -523,7 +522,7 @@ function ComparativoContent() {
                 ))}
 
                 <div className="flex flex-col gap-3 border-t py-6 sm:flex-row sm:items-center sm:gap-6" style={{ borderColor: "rgba(13,13,13,.1)" }}>
-                  <div className="w-full shrink-0 text-[0.6875rem] font-bold uppercase tracking-[.08em] text-black/45 sm:w-[22%]">
+                  <div className="w-full shrink-0 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 sm:w-[22%]">
                     Total 2025
                   </div>
                   <div className="flex flex-1 flex-wrap gap-x-8 gap-y-2 sm:justify-end">
@@ -531,8 +530,11 @@ function ComparativoContent() {
                       <div key={e.id} className="flex items-baseline gap-2">
                         <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: colorFrom(e.nome) }} />
                         <span className="text-[0.8125rem] font-medium text-black/50">{e.nome}</span>
-                        <span className="text-[1rem] font-bold tabular-nums text-black/90">
-                          {loadingValores ? "…" : fmt(totalPorEmpresa(e.id))}
+                        <span
+                          title={loadingValores ? undefined : formatarValorCompleto(totalPorEmpresa(e.id))}
+                          className={`text-[1rem] font-semibold tabular-nums ${loadingValores || !totalPorEmpresa(e.id) ? "text-black/30" : "text-[#0D0D0D]"}`}
+                        >
+                          {loadingValores ? "…" : formatarValorCurto(totalPorEmpresa(e.id))}
                         </span>
                       </div>
                     ))}
@@ -594,8 +596,13 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
           return (
             <div key={key}>
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-[0.625rem] font-bold uppercase tracking-wider text-black/40">{label}</span>
-                <span className="text-[0.9375rem] font-semibold tabular-nums text-black/80">{loading ? "…" : fmt(valor)}</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</span>
+                <span
+                  title={loading ? undefined : formatarValorCompleto(valor)}
+                  className={`text-[0.9375rem] font-semibold tabular-nums ${loading || !valor ? "text-black/30" : "text-[#0D0D0D]"}`}
+                >
+                  {loading ? "…" : formatarValorCurto(valor)}
+                </span>
               </div>
               <div className="h-1.5 w-full rounded-full bg-black/[.05]">
                 <div
@@ -671,10 +678,13 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
               />
               <div>
                 <span className="text-[1rem] font-semibold text-black/85">{e.nome}</span>
-                <div className="mt-1 text-[1.375rem] font-semibold leading-none tabular-nums text-black/90">
-                  {loading ? "…" : fmt(total)}
+                <div
+                  title={loading ? undefined : formatarValorCompleto(total)}
+                  className={`mt-1 text-[1.375rem] font-semibold leading-none tabular-nums ${loading || !total ? "text-black/30" : "text-[#0D0D0D]"}`}
+                >
+                  {loading ? "…" : formatarValorCurto(total)}
                 </div>
-                <span className="text-[0.625rem] font-medium uppercase tracking-wider text-black/30">Total 2025</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Total 2025</span>
               </div>
             </div>
 

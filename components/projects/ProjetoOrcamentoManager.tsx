@@ -10,6 +10,7 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { CotaPatrocinio, ProjetoOrcamentoItem } from "@/lib/supabase/types";
 import { Select } from "@/components/ui/Select";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type Rateio = { id: string; item_id: string; cota_id: string; valor: number };
 type ItemWithRateios = ProjetoOrcamentoItem & { rateios: Rateio[] };
@@ -314,16 +315,16 @@ export function ProjetoOrcamentoManager({
 
       {/* Summary cards */}
       <div className="flex gap-3 overflow-x-auto pb-0.5">
-        <Summary label="Rubricas" value={String(itens.length)} />
-        <Summary label="Orçamento total" value={fmt(total)} />
+        <Summary label="Rubricas" value={String(itens.length)} vazio={!itens.length} />
+        <Summary label="Orçamento total" value={formatarValorCurto(total)} title={formatarValorCompleto(total)} vazio={!total} />
         {activeCota ? (
-          <Summary label={`${activeCota.nome} (${(activeCota.pct * 100).toFixed(1)}%)`} value={fmt(total * activeCota.pct)} color="#7259B5" />
+          <Summary label={`${activeCota.nome} (${(activeCota.pct * 100).toFixed(1)}%)`} value={formatarValorCurto(total * activeCota.pct)} title={formatarValorCompleto(total * activeCota.pct)} vazio={!(total * activeCota.pct)} />
         ) : valorTotal && valorTotal > 0 ? (
           cotaData.map(cota => (
-            <Summary key={cota.id} label={`${cota.nome} (${(cota.pct * 100).toFixed(1)}%)`} value={fmt(total * cota.pct)} color="#7259B5" />
+            <Summary key={cota.id} label={`${cota.nome} (${(cota.pct * 100).toFixed(1)}%)`} value={formatarValorCurto(total * cota.pct)} title={formatarValorCompleto(total * cota.pct)} vazio={!(total * cota.pct)} />
           ))
         ) : (
-          <Summary label="Cadastre o orçamento total para ver a cobertura por cota" value="—" />
+          <p className="min-w-[8.75rem] flex-1 self-center px-1 text-[0.6875rem] text-black/40">Cadastre o orçamento total para ver a cobertura por cota</p>
         )}
       </div>
 
@@ -335,12 +336,12 @@ export function ProjetoOrcamentoManager({
       {activeCota && (
         <div className="flex items-center justify-between rounded border px-4 py-3" style={{ borderColor: "rgba(114,89,181,.2)", background: "#fff" }}>
           <div>
-            <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-[#7259B5]">{activeCota.nome}</p>
+            <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{activeCota.nome}</p>
             <p className="mt-0.5 text-[0.75rem] text-black/50">
               {(activeCota.pct * 100).toFixed(1)}% do projeto · <span className="font-semibold">{fmt(activeCota.valor)}</span> de referência por unidade
             </p>
           </div>
-          <p className="text-[0.75rem] font-bold tabular-nums text-[#7259B5]">{fmt(total * activeCota.pct)} nesta cota</p>
+          <p className="shrink-0 text-[0.75rem] text-black/45"><span title={formatarValorCompleto(total * activeCota.pct)} className="font-semibold tabular-nums text-[#0D0D0D]">{formatarValorCurto(total * activeCota.pct)}</span> nesta cota</p>
         </div>
       )}
 
@@ -360,7 +361,7 @@ export function ProjetoOrcamentoManager({
                   <th className="px-4 py-3 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">Descrição</th>
                   <th className="px-4 py-3 text-right text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">Valor total</th>
                   {activeCota ? (
-                    <th className="px-4 py-3 text-right text-[0.625rem] font-medium uppercase tracking-[.08em]" style={{ color: "#7259B5" }}>
+                    <th className="px-4 py-3 text-right text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
                       {activeCota.nome} ({(activeCota.pct * 100).toFixed(1)}%)
                     </th>
                   ) : valorTotal && valorTotal > 0 && cotaData.length > 0 ? (
@@ -381,7 +382,7 @@ export function ProjetoOrcamentoManager({
                     <td className="px-4 py-3 text-right font-semibold tabular-nums text-black/65">{fmt(item.valor)}</td>
                     {activeCota ? (
                       <td className="px-4 py-3 text-right">
-                        <span className="font-semibold tabular-nums" style={{ color: "#7259B5" }}>{fmt(item.valor * activeCota.pct)}</span>
+                        <span className="font-semibold tabular-nums text-[#0D0D0D]">{fmt(item.valor * activeCota.pct)}</span>
                       </td>
                     ) : valorTotal && valorTotal > 0 && cotaData.length > 0 ? (
                       cotaData.map(cota => (
@@ -404,7 +405,7 @@ export function ProjetoOrcamentoManager({
                   <td colSpan={2} className="px-4 py-3 text-[0.6875rem] font-bold text-black/45">Total</td>
                   <td className="px-4 py-3 text-right text-[0.75rem] font-bold tabular-nums text-black/70">{fmt(total)}</td>
                   {activeCota ? (
-                    <td className="px-4 py-3 text-right text-[0.75rem] font-bold tabular-nums" style={{ color: "#7259B5" }}>{fmt(total * activeCota.pct)}</td>
+                    <td className="px-4 py-3 text-right text-[0.75rem] font-bold tabular-nums text-[#0D0D0D]">{fmt(total * activeCota.pct)}</td>
                   ) : valorTotal && valorTotal > 0 && cotaData.length > 0 ? (
                     cotaData.map(cota => (
                       <td key={cota.id} className="px-4 py-3 text-right text-[0.6875rem] font-bold tabular-nums text-black/55">{fmt(total * cota.pct)}</td>
@@ -433,8 +434,8 @@ export function ProjetoOrcamentoManager({
   );
 }
 
-function Summary({ label, value, color }: { label: string; value: string; color?: string }) {
-  return <div className="flex-1 rounded bg-black/[.025] px-4 py-3 min-w-[8.75rem]"><p className="text-[0.625rem] font-medium text-black/35 truncate">{label}</p><p className="mt-1 text-[0.875rem] font-bold tabular-nums" style={{ color: color ?? "rgba(13,13,13,.7)" }}>{value}</p></div>;
+function Summary({ label, value, title, vazio = false }: { label: string; value: string; title?: string; vazio?: boolean }) {
+  return <div className="flex-1 rounded bg-black/[.025] px-4 py-3 min-w-[8.75rem]"><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 truncate">{label}</p><p title={title} className={`mt-1 truncate text-[0.875rem] font-semibold tabular-nums ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p></div>;
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {

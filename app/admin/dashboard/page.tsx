@@ -69,16 +69,16 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
-          <p className="text-[0.6875rem] font-semibold text-black/40 uppercase tracking-wide">Cadastros</p>
-          <p className="text-2xl font-bold text-[#0D0D0D] mt-1 tabular-nums">{total}</p>
+          <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Cadastros</p>
+          <p className={`mt-1 text-2xl font-semibold tabular-nums ${total ? "text-[#0D0D0D]" : "text-black/30"}`}>{total}</p>
         </div>
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
-          <p className="text-[0.6875rem] font-semibold text-black/40 uppercase tracking-wide">Responderam a origem</p>
-          <p className="text-2xl font-bold text-[#0D0D0D] mt-1 tabular-nums">{respondidos}</p>
+          <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Responderam a origem</p>
+          <p className={`mt-1 text-2xl font-semibold tabular-nums ${respondidos ? "text-[#0D0D0D]" : "text-black/30"}`}>{respondidos}</p>
         </div>
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
-          <p className="text-[0.6875rem] font-semibold text-black/40 uppercase tracking-wide">Taxa de resposta</p>
-          <p className="text-2xl font-bold text-[#0D0D0D] mt-1 tabular-nums">
+          <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Taxa de resposta</p>
+          <p className={`mt-1 text-2xl font-semibold tabular-nums ${respondidos ? "text-[#0D0D0D]" : "text-black/30"}`}>
             {total > 0 ? Math.round((respondidos / total) * 100) : 0}%
           </p>
         </div>
@@ -110,11 +110,11 @@ export default function AdminDashboardPage() {
                       className="h-full rounded-full transition-all"
                       style={{
                         width: `${(count / maxCount) * 100}%`,
-                        background: isNull ? "rgba(13,13,13,.15)" : "#7259B5",
+                        background: isNull ? "rgba(13,13,13,.15)" : "rgba(13,13,13,.75)",
                       }}
                     />
                   </div>
-                  <span className="text-[0.75rem] font-bold text-black/50 w-16 text-right tabular-nums">
+                  <span className="text-[0.75rem] font-semibold text-black/50 w-16 text-right tabular-nums">
                     {count} <span className="font-normal text-black/30">({pct}%)</span>
                   </span>
                 </div>

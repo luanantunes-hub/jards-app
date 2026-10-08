@@ -3,7 +3,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, Mail, Phone, Users, Calendar, MoreHorizontal, CheckSquare,
-  CheckCircle2, Circle, AlertCircle, Clock, X, CheckCheck,
+  CheckCircle2, Circle, AlertCircle, AlertTriangle, Clock, X, CheckCheck, UserX,
   ChevronLeft, ChevronRight, CalendarDays, List, BarChart2, Gauge, Settings2, ArrowUpDown, Pencil,
 } from "lucide-react";
 import { DndContext, DragOverlay, PointerSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
@@ -491,7 +491,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
                 borderTop: "1px solid rgba(13,13,13,.06)",
                 borderLeft: i % 7 !== 0 ? "1px solid rgba(13,13,13,.05)" : "none",
                 background: isToday
-                  ? "rgba(114,89,181,.06)"
+                  ? "rgba(13,13,13,.035)"
                   : !isCurrentMonth ? "rgba(13,13,13,.012)"
                   : isWeekend ? "rgba(13,13,13,.008)"
                   : "transparent",
@@ -771,16 +771,16 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
 
       <div className="grid grid-cols-3 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="px-5 py-3">
-          <p className="text-[1.125rem] font-semibold tabular-nums text-black/75">{members.filter(member => member.id !== "__unassigned").length}</p>
-          <p className="text-[0.625rem] text-black/30">membros com atividades</p>
+          <p className={`text-[1.125rem] font-semibold tabular-nums ${members.some(member => member.id !== "__unassigned") ? "text-[#0D0D0D]" : "text-black/30"}`}>{members.filter(member => member.id !== "__unassigned").length}</p>
+          <p className="flex items-center gap-1.5 text-[0.625rem] font-medium text-black/45"><Users size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />membros com atividades</p>
         </div>
         <div className="border-l px-5 py-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-          <p className={`text-[1.125rem] font-semibold tabular-nums ${overloaded > 0 ? "text-[#D94E4E]" : "text-black/75"}`}>{overloaded}</p>
-          <p className="text-[0.625rem] text-black/30">em sobrecarga</p>
+          <p className={`text-[1.125rem] font-semibold tabular-nums ${overloaded > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{overloaded}</p>
+          <p className="flex items-center gap-1.5 text-[0.625rem] font-medium text-black/45"><AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className={`shrink-0 ${overloaded > 0 ? "text-[#D94A4A]" : "text-black/40"}`} />em sobrecarga</p>
         </div>
         <div className="border-l px-5 py-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-          <p className={`text-[1.125rem] font-semibold tabular-nums ${unassignedInWeek > 0 ? "text-[#B07A14]" : "text-black/75"}`}>{unassignedInWeek}</p>
-          <p className="text-[0.625rem] text-black/30">sem responsável</p>
+          <p className={`text-[1.125rem] font-semibold tabular-nums ${unassignedInWeek > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{unassignedInWeek}</p>
+          <p className="flex items-center gap-1.5 text-[0.625rem] font-medium text-black/45"><UserX size={12} strokeWidth={1.75} aria-hidden="true" className={`shrink-0 ${unassignedInWeek > 0 ? "text-[#B07A14]" : "text-black/40"}`} />sem responsável</p>
         </div>
       </div>
 
@@ -811,7 +811,7 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
                       const dayItems = weeklyItems.filter(item => normDate(scheduledDate(item)!) === key);
                       return <div key={key} className={`space-y-1 border-l p-1.5 ${key === todayStr ? "bg-black/[.015]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}>{dayItems.map(item => <DraggablePill key={item.id} item={item} onEdit={onEdit} />)}</div>;
                     })}
-                    <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className="text-[1.125rem] font-semibold tabular-nums" style={{ color: status.color }}>{weeklyItems.length}</span><span className="text-[0.5625rem] font-medium" style={{ color: status.color }}>{status.label}</span></div>
+                    <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className={`text-[1.125rem] font-semibold tabular-nums ${weeklyItems.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{weeklyItems.length}</span><span className="text-[0.5625rem] font-medium" style={{ color: status.color }}>{status.label}</span></div>
                   </MemberDropRow>
                 );
               })}
@@ -1103,7 +1103,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                         <div style={{
                           position: "absolute", top: 0, bottom: 0,
                           left: remDe(todayOffset), width: 1.5,
-                          background: "#7259B5", opacity: 0.35,
+                          background: "rgba(13,13,13,.35)",
                         }} />
                       )}
                       {/* Editable date range */}
@@ -1115,7 +1115,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                           height: remDe(16), borderRadius: 2,
                           background: a.feita ? "rgba(13,13,13,.12)" : pill.bar,
                           opacity: a.feita ? 0.5 : draggingId === a.id ? 0.85 : 1,
-                          boxShadow: draggingId === a.id ? "0 0 0 2px rgba(114,89,181,.18)" : "none",
+                          boxShadow: draggingId === a.id ? "0 0 0 2px rgba(13,13,13,.18)" : "none",
                         }} onClick={event => event.stopPropagation()}>
                           {!a.feita && (
                             <>
@@ -1471,20 +1471,20 @@ export default function AtividadesPage() {
       {viewMode === "lista" && !loading && tab === "pendentes" && (
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border text-sm" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <span className="font-bold text-[0.9375rem]">{filtered.length}</span>
+            <span className={`font-semibold tabular-nums text-[0.9375rem] ${filtered.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{filtered.length}</span>
             <span className="text-black/40 text-xs">pendentes</span>
           </div>
           {atrasadas > 0 && (
             <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
-              <AlertCircle size={13} className="text-[#D94E4E] flex-shrink-0" />
-              <span className="font-bold text-[#D94E4E] text-[0.9375rem]">{atrasadas}</span>
+              <AlertCircle size={13} aria-hidden="true" className="text-[#D94E4E] flex-shrink-0" />
+              <span className="font-semibold tabular-nums text-[#0D0D0D] text-[0.9375rem]">{atrasadas}</span>
               <span className="text-black/40 text-xs">atrasadas</span>
             </div>
           )}
           {hoje > 0 && (
             <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
-              <Clock size={13} className="text-[#B07A14] flex-shrink-0" />
-              <span className="font-bold text-[#B07A14] text-[0.9375rem]">{hoje}</span>
+              <Clock size={13} aria-hidden="true" className="text-[#B07A14] flex-shrink-0" />
+              <span className="font-semibold tabular-nums text-[#0D0D0D] text-[0.9375rem]">{hoje}</span>
               <span className="text-black/40 text-xs">para hoje</span>
             </div>
           )}

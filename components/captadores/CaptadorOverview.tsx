@@ -5,6 +5,7 @@ import {
   Activity, AlertCircle, Banknote, CalendarDays, CheckCircle2,
   CircleDot, Clock3, FileCheck2, Info, Percent, Send, UsersRound,
 } from "lucide-react";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type Metric = {
   valor: number | null;
@@ -43,15 +44,6 @@ export type CaptadorOverviewData = {
   alertas: Alert[];
   atividade_recente: RecentEvent[];
 };
-
-function currency(value: number | null) {
-  if (value == null) return "—";
-  return value.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  });
-}
 
 function percent(value: number | null) {
   if (value == null) return "—";
@@ -105,7 +97,6 @@ function MetricBlock({
   const scale = Math.max(value ?? 0, median ?? 0, 1);
   const currentWidth = Math.max(value == null ? 0 : 4, Math.min(100, ((value ?? 0) / scale) * 100));
   const medianPosition = Math.min(100, ((median ?? 0) / scale) * 100);
-  const tone = comparison.tone === "positive" ? "#2E8932" : comparison.tone === "attention" ? "#B07A14" : "rgba(13,13,13,.42)";
   const sampleLabel = noFinancialHistory
     ? "Sem base"
     : !reliable
@@ -120,22 +111,22 @@ function MetricBlock({
   return (
     <div className="min-w-0 px-5 py-5 sm:px-6">
       <div className="mb-4 flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 text-black/38">
+        <div className="flex items-center gap-2 text-black/45">
           <span className="flex h-7 w-7 items-center justify-center rounded bg-black/[.045] text-black/40">
             <Icon size={13} strokeWidth={1.8} />
           </span>
-          <p className="text-[0.625rem] font-semibold uppercase tracking-[.11em]">{label}</p>
+          <p className="text-[0.625rem] font-medium uppercase tracking-[.08em]">{label}</p>
         </div>
         <span className="inline-flex items-center gap-1 text-[0.5625rem] font-medium text-black/28" title="A confiança considera o tamanho da amostra e a quantidade de captadores comparáveis.">
           <Info size={9} /> {sampleLabel}
         </span>
       </div>
-      <p className="text-[1.5625rem] font-semibold leading-none tracking-[-.035em] text-[#0D0D0D] tabular-nums">{formatter(value)}</p>
-      <p className="mt-2 min-h-4 text-[0.6875rem] font-medium" style={{ color: tone }}>{comparisonText}</p>
+      <p title={unit === "money" && value != null ? formatarValorCompleto(value) : undefined} className={`text-[1.5625rem] font-semibold leading-none tracking-[-.035em] tabular-nums ${value ? "text-[#0D0D0D]" : "text-black/30"}`}>{formatter(value)}</p>
+      <p className="mt-2 min-h-4 text-[0.6875rem] font-medium text-black/45">{comparisonText}</p>
       <div className="relative mt-4 h-1 overflow-visible rounded-sm bg-black/[.06]">
         <div className="h-full rounded-sm bg-[#0D0D0D]/75 transition-[width] duration-500" style={{ width: `${noFinancialHistory ? 0 : currentWidth}%` }} />
         {reliable && median != null && !noFinancialHistory && (
-          <span className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-[#7259B5]" style={{ left: `${medianPosition}%` }} title={`Mediana: ${formatter(median)}`} />
+          <span className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-black/45" style={{ left: `${medianPosition}%` }} title={`Mediana: ${formatter(median)}`} />
         )}
       </div>
       <p className="mt-2 text-[0.625rem] text-black/28">
@@ -208,7 +199,7 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
             value={data.valor_captado.valor}
             median={data.valor_captado.mediana_pares}
             reliable={data.comparacao.confiavel}
-            formatter={currency}
+            formatter={formatarValorCurto}
             unit="money"
             icon={Banknote}
           />

@@ -163,7 +163,7 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
               <path d={`M ${sx} ${sy} C ${sx + control} ${sy + parallelOffset}, ${tx - control} ${ty + parallelOffset}, ${tx} ${ty}`} fill="none" stroke={selected ? "#2E8932" : "rgba(13,13,13,.13)"} strokeWidth={selected ? 2 : 1.2} strokeDasharray={selected ? "7 5" : "4 6"} className={selected ? "tree-edge-active" : ""}/>
               {/* Dentro do SVG, px são unidades do viewBox e já acompanham a escala. */}
               {selected && <foreignObject x={(sx + tx) / 2 - 48} y={(sy + ty) / 2 + parallelOffset - 12} width="96" height="24">
-                <div className="mx-auto w-fit max-w-[92px] truncate rounded border border-[#2E8932]/20 bg-[#F1F8F1] px-[6px] py-[2px] text-[8px] font-medium text-[#2E8932]">{edge.label}</div>
+                <div className="mx-auto w-fit max-w-[92px] truncate rounded border border-[#2E8932]/20 bg-white px-[6px] py-[2px] text-[8px] font-medium text-[#2E8932]">{edge.label}</div>
               </foreignObject>}
             </g>;
           })}
@@ -174,7 +174,7 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
           const isAnswered = vertex.kind === "question" && Boolean(value.answers[vertex.id]);
           const outcomeKey = vertex.id.startsWith("outcome:") ? vertex.id.slice("outcome:".length) : null;
           const isOutcome = Boolean(outcomeKey && value.outcome === outcomeKey);
-          return <div key={vertex.id} className={`tree-node-enter absolute flex flex-col justify-center rounded border px-4 ${isCurrent ? "tree-node-active border-[#7259B5] bg-white shadow-[0_10px_35px_rgba(74,54,126,.14)]" : isAnswered || isOutcome ? "border-[#2E8932]/30 bg-[#F7FBF7]" : vertex.kind === "outcome" ? "border-black/[.08] bg-[#F1F1EF]" : "border-black/[.09] bg-white/95"}`} style={{ left: remDe(vertex.x), top: remDe(vertex.y), width: remDe(NODE_W), height: remDe(NODE_H), animationDelay: `${Math.min(index * 35, 350)}ms` }}>
+          return <div key={vertex.id} className={`tree-node-enter absolute flex flex-col justify-center rounded border px-4 ${isCurrent ? "tree-node-active border-[#7259B5] bg-white shadow-[0_10px_35px_rgba(74,54,126,.14)]" : isAnswered || isOutcome ? "border-[#2E8932]/30 bg-white" : vertex.kind === "outcome" ? "border-black/[.08] bg-[#F1F1EF]" : "border-black/[.09] bg-white/95"}`} style={{ left: remDe(vertex.x), top: remDe(vertex.y), width: remDe(NODE_W), height: remDe(NODE_H), animationDelay: `${Math.min(index * 35, 350)}ms` }}>
             <div className="flex items-start gap-2.5">
               <span className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-[0.5rem] font-semibold ${isAnswered || isOutcome ? "border-[#2E8932]/20 bg-[#2E8932] text-white" : isCurrent ? "border-[#7259B5]/25 bg-[#7259B5] text-white" : "border-black/[.08] bg-black/[.025] text-black/25"}`}>{isAnswered || isOutcome ? <Check size={10}/> : vertex.kind === "outcome" ? "◆" : index + 1}</span>
               <div className="min-w-0"><p className="text-[0.5625rem] font-medium uppercase tracking-[.08em] text-black/25">{vertex.kind === "outcome" ? "Diagnóstico" : isCurrent ? "Pergunta atual" : "Decisão"}</p><p className="mt-1 text-[0.6875rem] font-semibold leading-snug text-black/65">{vertex.title}</p></div>
@@ -189,7 +189,7 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
         {value.outcome ? <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.04] text-[#2E8932]"><Check size={14}/></span>
-            <div className="min-w-0"><p className="text-[0.5625rem] font-semibold uppercase tracking-[.08em] text-[#2E8932]/60">Diagnóstico</p><p className="truncate text-[0.875rem] font-semibold text-black/75">{OUTCOME_LABELS[value.outcome]}</p></div>
+            <div className="min-w-0"><p className="text-[0.5625rem] font-medium uppercase tracking-[.08em] text-black/45">Diagnóstico</p><p className="truncate text-[0.875rem] font-semibold text-black/75">{OUTCOME_LABELS[value.outcome]}</p></div>
           </div>
           <div className="flex shrink-0 items-center justify-end gap-1.5">
             <button type="button" onClick={reset} className="inline-flex items-center gap-1.5 rounded border border-black/[.09] bg-white px-3 py-2 text-[0.625rem] font-medium text-black/45 hover:bg-black/[.035]"><RotateCcw size={11}/>Refazer</button>

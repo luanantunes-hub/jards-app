@@ -108,7 +108,8 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
     <div>
       <div className="flex justify-between text-xs mb-1.5">
         <span className="font-semibold text-black/60">{label}</span>
-        <span className={`font-bold ${over ? "text-[#B23A3A]" : "text-black/50"}`}>
+        <span className={`flex items-center gap-1 font-semibold tabular-nums ${used ? "text-[#0D0D0D]" : "text-black/30"}`}>
+          {over && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
           {used} / {limit === null ? "∞" : limit}
         </span>
       </div>
@@ -116,7 +117,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
         {limit !== null && (
           <div
             className="h-full rounded-full transition-all"
-            style={{ width: `${p}%`, background: over ? "#C2410C" : "#7259B5" }}
+            style={{ width: `${p}%`, background: over ? "#D94A4A" : "rgba(13,13,13,.75)" }}
           />
         )}
       </div>

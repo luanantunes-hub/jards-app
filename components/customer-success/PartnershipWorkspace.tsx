@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/Select";
 import { PartnershipHealthScorecards } from "@/components/customer-success/PartnershipHealthScorecards";
 import { RenewalPlanningSheet, type RenewalPlan } from "@/components/customer-success/RenewalPlanningSheet";
 import { OUTCOME_LABELS } from "@/lib/customer-success/renewalDecisionTree";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type Contract = { id: string; titulo: string | null; numero: string | null; valor: number; proxima_renovacao: string | null; status: string };
 type Project = { id: string; nome: string };
@@ -122,7 +123,7 @@ function formatDate(value: string | null | undefined) {
 
 function formatCurrency(value: number | null | undefined) {
   if (value == null) return "Não informado";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value);
+  return formatarValorCurto(value);
 }
 
 function RenewalView({ contracts, renewals, plans, onPlan }: { contracts: Contract[]; renewals: PrevisaoRenovacao[]; plans: RenewalPlan[]; onPlan: (contractId: string) => void }) {
@@ -135,13 +136,13 @@ function RenewalView({ contracts, renewals, plans, onPlan }: { contracts: Contra
     const startDate = plan?.iniciar_negociacao_em ?? legacy?.data_esperada ?? contract.proxima_renovacao;
     return <article key={contract.id} className="grid items-center gap-4 py-4 md:grid-cols-[minmax(0,1fr)_6.875rem_8.125rem_6.875rem_auto]">
       <div className="min-w-0"><div className="flex min-w-0 items-center gap-2"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{contract.titulo || contract.numero || "Contrato"}</p>{status && <span className="shrink-0 rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ color: status.color, borderColor: `${status.color}47` }}>{status.label}</span>}</div><p className="mt-1 text-[0.6875rem] text-black/35">{plan ? `${RENEWAL_SCENARIO[plan.cenario]} · iniciar em ${formatDate(startDate)}` : "Renovação ainda não planejada"}</p></div>
-      <Metric label="Valor esperado" value={formatCurrency(expectedValue)} /><Metric label="Início" value={formatDate(startDate)} /><Metric label="Decisão" value={plan?.diagnostico ? OUTCOME_LABELS[plan.diagnostico] : "Não avaliada"} />
+      <Metric label="Valor esperado" value={formatCurrency(expectedValue)} title={expectedValue == null ? undefined : formatarValorCompleto(expectedValue)} /><Metric label="Início" value={formatDate(startDate)} /><Metric label="Decisão" value={plan?.diagnostico ? OUTCOME_LABELS[plan.diagnostico] : "Não avaliada"} />
       <div className="flex justify-end">{plan?.captacao_id ? <Link href={`/captacoes/${plan.captacao_id}`} className="rounded border border-black/[.12] bg-white px-3 py-2 text-[0.6875rem] font-semibold text-black/60 transition hover:bg-black/[.04]">Abrir negociação</Link> : <button type="button" onClick={() => onPlan(contract.id)} className="rounded border border-black/[.12] bg-white px-3 py-2 text-[0.6875rem] font-semibold text-black/60 transition hover:bg-black/[.04]">{plan ? "Editar plano" : "Planejar"}</button>}</div>
     </article>;
   })}</div>;
 }
 
-function Metric({ label, value }: { label: string; value: string }) { return <div><p className="text-[0.625rem] font-medium text-black/30">{label}</p><p className="mt-1 truncate text-[0.75rem] font-semibold text-black/60">{value}</p></div>; }
+function Metric({ label, value, title }: { label: string; value: string; title?: string }) { return <div><p className="text-[0.625rem] font-medium text-black/30">{label}</p><p title={title} className="mt-1 truncate text-[0.75rem] font-semibold tabular-nums text-black/60">{value}</p></div>; }
 function Empty({icon:Icon,title,copy}:{icon:any;title:string;copy:string}) { return <div className="py-16 text-center"><Icon size={22} className="mx-auto text-black/15"/><p className="mt-4 text-[0.875rem] font-semibold text-black/45">{title}</p><p className="mx-auto mt-2 max-w-md text-[0.75rem] leading-relaxed text-black/30">{copy}</p></div>; }
 
 function QuickForm({contracts,projects,saving,onClose,onSubmit}:{contracts:Contract[];projects:Project[];saving:boolean;onClose:()=>void;onSubmit:(k:'commitment',d:Record<string,FormDataEntryValue>)=>void}) { return <form onSubmit={e=>{e.preventDefault();onSubmit('commitment',Object.fromEntries(new FormData(e.currentTarget)) as any)}} className="border-b bg-black/[.015] px-5 py-5 md:px-6" style={{borderColor:'rgba(13,13,13,.07)'}}><div className="mb-4 flex items-center justify-between"><p className="text-[0.8125rem] font-semibold text-black/65">Novo compromisso</p><button type="button" onClick={onClose} className="text-black/30 hover:text-black/55"><X size={14}/></button></div><div className="grid gap-3 md:grid-cols-2">

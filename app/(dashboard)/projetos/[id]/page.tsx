@@ -2,7 +2,7 @@
 import { useState, useEffect, use, useRef } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { AlignLeft, ArrowLeft, Check, ChevronDown, FolderOpen, Pencil, Plus, Calendar, BarChart2, TrendingUp, Users, FileText, Eye, ImageIcon, ImagePlus, FileSpreadsheet, BriefcaseBusiness, Zap } from "lucide-react";
+import { AlertTriangle, AlignLeft, ArrowLeft, Check, ChevronDown, FolderOpen, Pencil, Plus, Calendar, BarChart2, TrendingUp, Users, FileText, Eye, ImageIcon, ImagePlus, FileSpreadsheet, BriefcaseBusiness, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { NovoProjetoModal } from "@/components/modals/NovoProjetoModal";
@@ -12,7 +12,7 @@ import { CotasProjetoManager, type VendaPatrocinioComEmpresa } from "@/component
 import { PROJECT_ICON_COLORS, PROJECT_ICON_OPTIONS, ProjectIdentity } from "@/components/ui/ProjectIdentity";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
-import { BarraCaptacao, Indicador, MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
+import { BarraCaptacao, ICONE_CAPTACAO, Indicador, MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
 import StatusBadge from "@/components/ui/StatusBadge";
 import type { Proposta, CotaPatrocinio } from "@/lib/supabase/types";
 import { PitchWorkspace } from "@/components/projects/PitchWorkspace";
@@ -813,7 +813,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                   <p className="text-[3.25rem] font-semibold tracking-[-.045em] tabular-nums leading-none text-black/80">
                     {progress}<span className="text-[1.875rem] text-black/35 ml-1">%</span>
                   </p>
-                  {projeto.valor_alvo && <p className="mt-2 text-[0.75rem] text-black/35">de {fmtValor(projeto.valor_alvo)}</p>}
+                  {projeto.valor_alvo && <p className="mt-2 text-[0.75rem] tabular-nums text-black/35" title={formatarValorCompleto(projeto.valor_alvo)}>de {fmtValor(projeto.valor_alvo)}</p>}
                 </div>
                 <div className="relative">
                   <button
@@ -864,21 +864,20 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
               </div>
               <BarraCaptacao confirmado={confirmado} negociacao={negociacao} meta={projeto.valor_alvo} />
               <dl className="mt-6 grid grid-cols-3 gap-3 border-t pt-5 sm:gap-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <Indicador marca={MARCA_CAPTACAO.confirmado} rotulo="Confirmado" valor={confirmado} />
-                <Indicador marca={MARCA_CAPTACAO.negociacao} rotulo="Em negociação" valor={negociacao} />
+                <Indicador icone={ICONE_CAPTACAO.confirmado} rotulo="Confirmado" valor={confirmado} />
+                <Indicador icone={ICONE_CAPTACAO.negociacao} rotulo="Em negociação" valor={negociacao} />
                 {projeto.valor_alvo && faltante === 0 ? (
-                  <Indicador marca={MARCA_CAPTACAO.falta} rotulo="Falta captar" valor={0} texto="Meta atingida" corTexto="#2E8932" />
+                  <Indicador icone={ICONE_CAPTACAO.falta} rotulo="Falta captar" valor={0} texto="Meta atingida" corTexto="#2E8932" />
                 ) : (
-                  <Indicador marca={MARCA_CAPTACAO.falta} rotulo="Falta captar" valor={projeto.valor_alvo ? faltante : null} />
+                  <Indicador icone={ICONE_CAPTACAO.falta} rotulo="Falta captar" valor={projeto.valor_alvo ? faltante : null} />
                 )}
               </dl>
 
               {/* Orçamento total calculado do orçamento */}
               {orcamentoTotal > 0 && (
-                <div className="mt-5 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                  <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] text-black/35 mb-1.5">Orçamento total do projeto</p>
-                  <p className="text-[1.25rem] font-semibold tabular-nums text-black/70">{fmtValor(orcamentoTotal)}</p>
-                </div>
+                <dl className="mt-5 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+                  <Indicador rotulo="Orçamento total do projeto" valor={orcamentoTotal} />
+                </dl>
               )}
             </div>
 
@@ -936,7 +935,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                 <div className="border-b px-5 py-3 text-[0.625rem] font-medium uppercase tracking-[.12em] text-[#B07A14]" style={{ borderColor: "rgba(176,122,20,.14)" }}>Pontos de atenção</div>
                 {alerts.map(alert => (
                   <div key={alert} className="flex items-center gap-2 border-b px-5 py-3 text-[0.6875rem] text-black/50 last:border-b-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
-                    <span className="h-1.5 w-1.5 rounded bg-[#B07A14]" />{alert}
+                    <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />{alert}
                   </div>
                 ))}
               </section>
@@ -998,16 +997,16 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                     const neg = Math.max(0, captadoTotal - captadoAprovado);
                     const pct = (valor: number) => meta > 0 ? Math.min(100, (valor / meta) * 100) : 0;
                     const linhas = [
-                      { rotulo: "Objetivo", marca: null, valor: projeto.valor_alvo, largura: meta > 0 ? 100 : 0, cor: "bg-black/[.12]", pct: meta > 0 ? "100%" : "—" },
-                      { rotulo: "Confirmado", marca: MARCA_CAPTACAO.confirmado, valor: real, largura: pct(real), cor: MARCA_CAPTACAO.confirmado, pct: meta > 0 ? `${pct(real).toFixed(0)}%` : "—" },
-                      { rotulo: "Em negociação", marca: MARCA_CAPTACAO.negociacao, valor: neg, largura: pct(neg), cor: MARCA_CAPTACAO.negociacao, pct: meta > 0 ? `${pct(neg).toFixed(0)}%` : "—" },
+                      { rotulo: "Objetivo", Icone: ICONE_CAPTACAO.falta, valor: projeto.valor_alvo, largura: meta > 0 ? 100 : 0, cor: "bg-black/[.12]", pct: meta > 0 ? "100%" : "—" },
+                      { rotulo: "Confirmado", Icone: ICONE_CAPTACAO.confirmado, valor: real, largura: pct(real), cor: MARCA_CAPTACAO.confirmado, pct: meta > 0 ? `${pct(real).toFixed(0)}%` : "—" },
+                      { rotulo: "Em negociação", Icone: ICONE_CAPTACAO.negociacao, valor: neg, largura: pct(neg), cor: MARCA_CAPTACAO.negociacao, pct: meta > 0 ? `${pct(neg).toFixed(0)}%` : "—" },
                     ];
                     return (
                       <div className="divide-y divide-black/[.06] overflow-hidden rounded border border-black/[.08]">
                         {linhas.map(linha => (
                           <div key={linha.rotulo} className="flex items-center gap-5 px-5 py-4">
                             <p className="flex w-28 shrink-0 items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
-                              {linha.marca && <span aria-hidden="true" className={`h-2 w-2 shrink-0 rounded-[2px] ${linha.marca}`} />}
+                              <linha.Icone size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
                               {linha.rotulo}
                             </p>
                             <div className="min-w-0 flex-1">
@@ -1032,9 +1031,9 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                         Resultado · {ultimoResultado.data_resultado ? fmtDate(ultimoResultado.data_resultado) : "sem data"}
                       </p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                        <MetricCard label="Captado" value={fmtValor(ultimoResultado.valor_captado)} />
-                        <MetricCard label="Executado" value={fmtValor(ultimoResultado.valor_executado)} />
-                        <MetricCard label="Ret. mídia" value={fmtValor(ultimoResultado.retorno_midia_est)} />
+                        <MetricCard label="Captado" value={fmtValor(ultimoResultado.valor_captado)} title={formatarValorCompleto(ultimoResultado.valor_captado)} />
+                        <MetricCard label="Executado" value={fmtValor(ultimoResultado.valor_executado)} title={formatarValorCompleto(ultimoResultado.valor_executado)} />
+                        <MetricCard label="Ret. mídia" value={fmtValor(ultimoResultado.retorno_midia_est)} title={formatarValorCompleto(ultimoResultado.retorno_midia_est)} />
                         <MetricCard label="Público" value={fmtInt(ultimoResultado.publico_alcancado)} icon={<Users size={11} className="text-black/30" />} />
                         <MetricCard label="Eventos" value={fmtInt(ultimoResultado.eventos_realizados)} />
                         {ultimoResultado.valor_captado && ultimoResultado.valor_executado && ultimoResultado.valor_executado > 0 && (
@@ -1061,7 +1060,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           onClick={() => setEditingResultado(r)}
                         >
                           <span className="text-[0.75rem] text-black/45">{r.data_resultado ? fmtDate(r.data_resultado) : "Sem data"}</span>
-                          <span className="text-[0.75rem] font-bold text-black/60">{fmtValor(r.valor_captado)}</span>
+                          <span className="text-[0.75rem] font-semibold tabular-nums text-black/60" title={r.valor_captado != null ? formatarValorCompleto(r.valor_captado) : undefined}>{fmtValor(r.valor_captado)}</span>
                         </div>
                       ))}
                     </div>
@@ -1100,7 +1099,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">
                             <StatusBadge status={c.status} label={st.label} bg={st.color} iconName={st.iconName} size="sm" />
-                            <span className="text-[0.75rem] font-bold text-black/50">{fmtValor(c.valor_solicitado)}</span>
+                            <span className="text-[0.75rem] font-semibold tabular-nums text-black/50" title={c.valor_solicitado != null ? formatarValorCompleto(c.valor_solicitado) : undefined}>{fmtValor(c.valor_solicitado)}</span>
                           </div>
                         </button>
                       );
@@ -1207,7 +1206,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                       return (
                         <button key={proposta.id} onClick={() => { setEditingProposta(proposta); setShowPropostaModal(true); }} className="rounded border border-black/[.08] bg-white p-5 text-left transition hover:bg-black/[.018] active:scale-[.995]">
                           <div className="flex items-start justify-between gap-4"><div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{captacao ? `Negociação · ${captacao.empresa_crm?.nome || captacao.titulo}` : inscricao ? `Inscrição · ${inscricao.empresa_crm?.nome || "sem empresa"}` : "Sem vínculo definido"}</p></div><span className="shrink-0 rounded px-2 py-1 text-[0.5625rem] font-semibold" style={{ color: statusMeta.color, background: "#fff", border: `1px solid ${statusMeta.color}47` }}>{statusMeta.label}</span></div>
-                          <div className="mt-5 grid grid-cols-3 gap-3 border-t border-black/[.06] pt-4"><MiniInfo label="Cota-base" value={cota?.nome ?? "Sem cota"} /><MiniInfo label="Valor" value={fmtValor(proposta.valor_proposto)} /><MiniInfo label="Contrapartidas" value={String(proposta.contrapartidas?.length ?? 0)} /></div>
+                          <div className="mt-5 grid grid-cols-3 gap-3 border-t border-black/[.06] pt-4"><MiniInfo label="Cota-base" value={cota?.nome ?? "Sem cota"} /><MiniInfo label="Valor" value={formatarValorCompleto(proposta.valor_proposto)} inteiro /><MiniInfo label="Contrapartidas" value={String(proposta.contrapartidas?.length ?? 0)} /></div>
                         </button>
                       );
                     })}
@@ -1235,17 +1234,17 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
 }
 
 
-function MiniInfo({ label, value }: { label: string; value: string }) {
-  return <div className="min-w-0"><p className="text-[0.625rem] font-medium text-black/35">{label}</p><p className="mt-1.5 truncate text-[0.8125rem] font-medium text-black/65">{value}</p></div>;
+function MiniInfo({ label, value, inteiro = false }: { label: string; value: string; inteiro?: boolean }) {
+  return <div className="min-w-0"><p className="text-[0.625rem] font-medium text-black/35">{label}</p><p title={value} className={`mt-1.5 text-[0.8125rem] font-medium text-black/65 ${inteiro ? "break-words" : "truncate"}`}>{value}</p></div>;
 }
 
-function MetricCard({ label, value, icon }: { label: string; value: string; icon?: React.ReactNode }) {
+function MetricCard({ label, value, title, icon }: { label: string; value: string; title?: string; icon?: React.ReactNode }) {
   return (
     <div className="rounded px-3 py-2.5" style={{ background: "rgba(13,13,13,.03)" }}>
       <p className="mb-1 flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
         {icon}{label}
       </p>
-      <p className={`text-[0.9375rem] font-semibold tabular-nums ${value === "—" ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p>
+      <p title={value === "—" ? undefined : title} className={`text-[0.9375rem] font-semibold tabular-nums ${value === "—" ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p>
     </div>
   );
 }

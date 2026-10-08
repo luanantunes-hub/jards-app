@@ -27,6 +27,7 @@ import { CommercialCycleHistory, type CommercialCycle } from "@/components/comme
 import { NotasDoRegistro } from "@/components/notas/NotasDoRegistro";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { CAMPOS_NOTA, buscarNotas, resumoNota, type NotaRegistro } from "@/lib/notas";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 const RESULTADO_NEGATIVO = new Set(["reprovado", "cancelado"]);
 
@@ -132,13 +133,6 @@ function fmtDate(d: string | null): string {
   if (!d) return "—";
   const [y, m, day] = d.split("T")[0].split("-");
   return `${day}/${m}/${y}`;
-}
-
-function fmtValor(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
 }
 
 function daysUntil(d: string | null): number | null {
@@ -583,12 +577,12 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
       <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}><div className="mx-auto grid max-w-pagina grid-cols-2 gap-5 px-4 py-5 sm:grid-cols-3 sm:px-6 lg:grid-cols-5 lg:px-10 xl:grid-cols-6">
           {!inscricao.projeto_id && (
             <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 mb-0.5">Valor</p>
-              <p className="text-[0.9375rem] font-bold text-[#0D0D0D]">{fmtValor(inscricao.valor)}</p>
+              <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Valor</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.valor ? "text-[#0D0D0D]" : "text-black/30"}`} title={inscricao.valor ? formatarValorCompleto(inscricao.valor) : undefined}>{inscricao.valor ? formatarValorCurto(inscricao.valor) : "—"}</p>
             </div>
           )}
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Tipo de patrocínio</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tipo de patrocínio</p>
             <button
               type="button"
               onClick={(event) => {
@@ -605,19 +599,19 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             </button>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 mb-0.5">Fechamento</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Fechamento</p>
             {diasFechamento !== null && diasFechamento >= 0 && diasFechamento < 7 ? (
-              <p className="text-[0.9375rem] font-bold" style={{ color: "#D94E4E" }}>{diasFechamento === 0 ? "Hoje" : `${diasFechamento}d`}</p>
+              <p className="inline-flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums text-[#0D0D0D]"><Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: "#D94A4A" }} />{diasFechamento === 0 ? "Hoje" : `${diasFechamento}d`}</p>
             ) : (
-              <p className="text-[0.9375rem] font-bold text-[#0D0D0D]">{fmtDate(inscricao.data_fechamento)}</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.data_fechamento ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmtDate(inscricao.data_fechamento)}</p>
             )}
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 mb-0.5">Resultado</p>
-            <p className="text-[0.9375rem] font-bold text-[#0D0D0D]">{fmtDate(inscricao.data_resultado)}</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Resultado</p>
+            <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.data_resultado ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmtDate(inscricao.data_resultado)}</p>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Prioridade</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prioridade</p>
             <button
               type="button"
               onClick={(event) => {
@@ -639,8 +633,8 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             </button>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/30 mb-0.5">Atividades</p>
-            <p className="text-[0.9375rem] font-bold text-[#0D0D0D]">
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Atividades</p>
+            <p className={`text-[0.9375rem] font-semibold tabular-nums ${atividades.length ? "text-[#0D0D0D]" : "text-black/30"}`}>
               {concluidas.length}<span className="text-black/25 font-medium text-[0.8125rem]">/{atividades.length}</span>
             </p>
           </div>
@@ -718,7 +712,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 <div className="space-y-2">
                   {propostas.map(proposta => (
                     <div key={proposta.id} className="rounded border border-black/[.08] bg-white p-4">
-                      <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/40"><BriefcaseBusiness size={14} /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-4"><div><p className="text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 text-[0.625rem] text-black/30">{proposta.contrapartidas.length} contrapartida{proposta.contrapartidas.length === 1 ? "" : "s"}</p></div><span className="shrink-0 text-[0.8125rem] font-semibold text-black/65">{fmtValor(proposta.valor_proposto)}</span></div>{proposta.observacoes_comerciais && <p className="mt-3 border-t border-black/[.06] pt-3 text-[0.6875rem] leading-5 text-black/40">{proposta.observacoes_comerciais}</p>}</div></div>
+                      <div className="flex items-start gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/40"><BriefcaseBusiness size={14} /></span><div className="min-w-0 flex-1"><div className="flex items-start justify-between gap-4"><div><p className="text-[0.8125rem] font-semibold text-black/75">{proposta.titulo}</p><p className="mt-1 text-[0.625rem] text-black/30">{proposta.contrapartidas.length} contrapartida{proposta.contrapartidas.length === 1 ? "" : "s"}</p></div><span className="shrink-0 text-[0.8125rem] font-semibold tabular-nums text-black/65">{proposta.valor_proposto ? formatarValorCompleto(proposta.valor_proposto) : "—"}</span></div>{proposta.observacoes_comerciais && <p className="mt-3 border-t border-black/[.06] pt-3 text-[0.6875rem] leading-5 text-black/40">{proposta.observacoes_comerciais}</p>}</div></div>
                     </div>
                   ))}
                 </div>

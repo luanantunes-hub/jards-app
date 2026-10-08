@@ -175,7 +175,7 @@ export function RevisaoDaProposta({ codigo, proposta, regimeBase, temRascunho, o
             <>
               <button type="button" onClick={() => setRejeitando(false)} disabled={enviando} className={BOTAO_TEXTO}>Voltar</button>
               <button type="button" onClick={rejeitar} disabled={enviando || motivo.trim().length < 5}
-                className="h-10 rounded border border-[#B23B3B]/40 bg-white px-4 text-[0.75rem] font-medium text-[#B23B3B] transition hover:bg-[#B23B3B]/[.04] focus-visible:outline-2 focus-visible:outline-[#B23B3B] disabled:opacity-50">
+                className="h-10 rounded border border-[#B23B3B]/40 bg-white px-4 text-[0.75rem] font-medium text-[#B23B3B] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#B23B3B] disabled:opacity-50">
                 {proposta.classificacao === "altera_regra" ? "Rejeitar a proposta" : "Arquivar"}
               </button>
             </>

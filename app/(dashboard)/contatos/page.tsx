@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Plus, Mail, Phone, X, ArrowUpDown, Trash2,
   List, UsersRound, ShieldCheck, Radio, Wrench, CalendarX2, ContactRound, Search,
+  Smile, Meh, Frown,
 } from "lucide-react";
 
 function LinkedinIcon({ size = 13 }: { size?: number }) {
@@ -182,7 +183,9 @@ const STAKEHOLDER_LANES = [
   { key: "operacao", label: "Operação", icon: Wrench, roles: ["gatekeeper"] },
 ] as const;
 
-function LevelMarks({ value, color = "#7259B5" }: { value: number | null; color?: string }) {
+const SENTIMENTO_ICONE = { positivo: Smile, neutro: Meh, negativo: Frown } as const;
+
+function LevelMarks({ value, color = "rgba(13,13,13,.7)" }: { value: number | null; color?: string }) {
   return <span className="inline-flex gap-0.5" aria-label={value ? `${value} de 5` : "Não avaliado"}>{Array.from({ length: 5 }).map((_, index) => <span key={index} className="h-1 w-2 rounded-sm" style={{ background: value && index < value ? color : "rgba(13,13,13,.08)" }}/>)}</span>;
 }
 
@@ -215,10 +218,10 @@ function StakeholdersView({ contatos }: { contatos: ContatoRow[] }) {
                     {laneItems.length === 0 ? <div className="rounded border border-dashed border-black/10 py-8 text-center text-[0.625rem] text-black/20">Nenhum contato</div> : laneItems.map(item => {
                       const name = item.nome ?? item.responsavel?.nome ?? "Contato sem nome";
                       const role = item.papel_decisao ? ROLE_LABEL[item.papel_decisao] : "Papel não definido";
-                      const sentimentColor = item.sentimento === "positivo" ? "#2E8932" : item.sentimento === "negativo" ? "#D94E4E" : item.sentimento === "neutro" ? "#B07A14" : "rgba(13,13,13,.22)";
+                      const SentimentoIcone = item.sentimento && item.sentimento !== "desconhecido" ? SENTIMENTO_ICONE[item.sentimento] : null;
                       return (
                         <article key={item.id} className="rounded border border-black/[.07] bg-white p-2.5 cursor-pointer hover:border-[#7259B5]/30 transition" onClick={() => { window.location.href = `/contatos/${item.id}`; }}>
-                          <div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-black/[.05] text-[0.625rem] font-bold text-black/35">{name.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{name}</p><span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: sentimentColor }} title={`Sentimento: ${item.sentimento ?? "não avaliado"}`}/></div><p className="mt-0.5 truncate text-[0.59375rem] text-black/35">{item.cargo ?? item.responsavel?.cargo ?? role}</p></div>{item.email && <a href={`mailto:${item.email}`} className="rounded p-1 text-black/25 transition hover:bg-black/[.05] hover:text-black" aria-label={`Enviar e-mail para ${name}`}><Mail size={11}/></a>}</div>
+                          <div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-black/[.05] text-[0.625rem] font-bold text-black/35">{name.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{name}</p>{SentimentoIcone && <span role="img" className="shrink-0" title={`Sentimento: ${item.sentimento}`} aria-label={`Sentimento: ${item.sentimento}`}><SentimentoIcone size={12} strokeWidth={1.75} aria-hidden="true" className={item.sentimento === "negativo" ? "text-[#D94A4A]" : "text-black/40"}/></span>}</div><p className="mt-0.5 truncate text-[0.59375rem] text-black/35">{item.cargo ?? item.responsavel?.cargo ?? role}</p></div>{item.email && <a href={`mailto:${item.email}`} className="rounded p-1 text-black/25 transition hover:bg-black/[.05] hover:text-black" aria-label={`Enviar e-mail para ${name}`}><Mail size={11}/></a>}</div>
                           <div className="mt-2 flex items-center justify-between gap-2 border-t border-black/[.05] pt-2"><span className="truncate text-[0.5625rem] font-medium text-black/35">{role}</span><div className="flex items-center gap-1.5"><LevelMarks value={item.influencia}/><LevelMarks value={item.forca_relacao} color="#2E8932"/></div></div>
                         </article>
                       );

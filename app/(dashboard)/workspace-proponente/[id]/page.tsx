@@ -11,6 +11,8 @@ import StatusBadge from "@/components/ui/StatusBadge";
 import { useEtiquetas, type Etiqueta } from "@/contexts/EtiquetasContext";
 import { KanbanBoard, KanbanColumn, KanbanCard, KanbanEmpty } from "@/components/kanban/KanbanPrimitives";
 import { ProjetoSolicitacoes } from "@/components/proponentes/ProjetoSolicitacoes";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { BarraCaptacao, ICONE_CAPTACAO, Indicador } from "@/components/ui/IndicadoresFinanceiros";
 
 type NegociacaoRow = { id: string; titulo: string | null; status: string; valorSolicitado: number | null; empresaNome: string; updatedAt: string };
 type InscricaoRow = { id: string; empresaNome: string; status: string; valor: number | null; dataSubmissao: string | null; updatedAt: string };
@@ -52,12 +54,6 @@ const STATUS_INSC: Record<string, { label: string; color: string }> = {
   reprovado:  { label: "Reprovado",  color: "#D94E4E" },
   aguardando: { label: "Aguardando", color: "#B07A14" },
 };
-
-function fmtValor(v: number | null): string {
-  if (v == null) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
-}
 
 function fmtDate(d: string | null): string {
   if (!d) return "";
@@ -151,27 +147,18 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
             <p className="text-[3.25rem] font-semibold tracking-[-.045em] tabular-nums leading-none text-black/80">
               {progress}<span className="text-[1.875rem] text-black/35 ml-1">%</span>
             </p>
-            {projeto.valorAlvo && <p className="mt-2 text-[0.75rem] text-black/35">de {fmtValor(projeto.valorAlvo)}</p>}
+            {projeto.valorAlvo && <p className="mt-2 text-[0.75rem] tabular-nums text-black/35" title={formatarValorCompleto(projeto.valorAlvo)}>de {formatarValorCurto(projeto.valorAlvo)}</p>}
 
-            <div className="mt-5 h-2 overflow-hidden rounded bg-black/[.06]">
-              <div className="h-full rounded bg-[#2E8932] transition-all" style={{ width: `${progress}%` }} />
-            </div>
-            <div className="mt-6 grid grid-cols-3 gap-4 border-t pt-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <div>
-                <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#2E8932" }}>Confirmado</p>
-                <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: "#2E8932" }}>{fmtValor(confirmado)}</p>
-              </div>
-              <div>
-                <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: "#7259B5" }}>Em negociação</p>
-                <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: "#7259B5" }}>{fmtValor(negociacao)}</p>
-              </div>
-              <div>
-                <p className="text-[0.625rem] font-bold uppercase tracking-[.10em] mb-1.5" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>
-                  {faltante > 0 ? "Falta captar" : "Meta atingida"}
-                </p>
-                <p className="text-[1.125rem] font-semibold tabular-nums" style={{ color: faltante > 0 ? "#B07A14" : "#2E8932" }}>{faltante > 0 ? fmtValor(faltante) : "—"}</p>
-              </div>
-            </div>
+            <BarraCaptacao confirmado={confirmado} negociacao={negociacao} meta={projeto.valorAlvo} className="mt-5 h-2" />
+            <dl className="mt-6 grid grid-cols-3 gap-3 border-t pt-5 sm:gap-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+              <Indicador icone={ICONE_CAPTACAO.confirmado} rotulo="Confirmado" valor={confirmado} />
+              <Indicador icone={ICONE_CAPTACAO.negociacao} rotulo="Em negociação" valor={negociacao} />
+              {projeto.valorAlvo && faltante === 0 ? (
+                <Indicador icone={ICONE_CAPTACAO.falta} rotulo="Falta captar" valor={0} texto="Meta atingida" corTexto="#2E8932" />
+              ) : (
+                <Indicador icone={ICONE_CAPTACAO.falta} rotulo="Falta captar" valor={projeto.valorAlvo ? faltante : null} />
+              )}
+            </dl>
           </div>
 
           {/* Negociações */}
@@ -194,7 +181,7 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
                       <p className="mt-0.5 truncate text-[0.6875rem] text-black/45">{neg.empresaNome}</p>
                       <div className="mt-2.5 flex items-center justify-between border-t border-black/[.06] pt-2">
                         <StatusBadge status={neg.status} label={st.label} bg={st.color} iconName={st.iconName} size="sm" />
-                        <span className="text-[0.75rem] font-bold text-black/50">{fmtValor(neg.valorSolicitado)}</span>
+                        <span className="text-[0.75rem] font-semibold tabular-nums text-black/50" title={neg.valorSolicitado != null ? formatarValorCompleto(neg.valorSolicitado) : undefined}>{formatarValorCurto(neg.valorSolicitado)}</span>
                       </div>
                     </div>
                   );

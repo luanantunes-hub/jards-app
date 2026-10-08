@@ -19,6 +19,7 @@ import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import type { StatusCaptacao } from "@/lib/supabase/types";
 import { escalaUi } from "@/lib/escala-ui";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 function LinkedinIcon({ size = 14 }: { size?: number }) {
   return (
@@ -152,22 +153,16 @@ function daysSince(dateStr: string | null): number | null {
   return Math.floor((Date.now() - new Date(dateStr).getTime()) / 86_400_000);
 }
 
-function fmtCurrency(v: number | null): string {
-  if (!v) return "—";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(v);
-}
-
 function fmtDate(d: string | null): string {
   if (!d) return "—";
   const [y, m, day] = d.split("T")[0].split("-");
   return `${day}/${m}/${y}`;
 }
 
-function interacaoColor(days: number | null): string {
-  if (days === null) return "rgba(13,13,13,.4)";
-  if (days <= 14) return "#1A8B7A";
-  if (days <= 30) return "#B07A14";
-  return "#D94E4E";
+/** Só o atraso pinta o ícone: âmbar depois de 14 dias, vermelho depois de 30. */
+function interacaoAlerta(days: number | null): string | undefined {
+  if (days === null || days <= 14) return undefined;
+  return days <= 30 ? "#B07A14" : "#D94A4A";
 }
 
 /* ─── Inline edit components ─────────────────────────────────────────── */
@@ -582,35 +577,35 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
           <div className="mt-7 grid grid-cols-1 gap-px overflow-hidden rounded border bg-black/[.045] sm:grid-cols-2 lg:grid-cols-[1.1fr_1.15fr_1.15fr_1fr_1fr_1fr]" style={{ borderColor: "rgba(13,13,13,.055)" }}>
             {/* Papel */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Papel na decisão</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Papel na decisão</p>
               <InlineSelect value={contato.papel_decisao} opts={PAPEL_OPTS} onSave={v => saveField("papel_decisao", v)} />
             </div>
             {/* Influência */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="flex items-center gap-1.5 text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35"><Radio size={11} strokeWidth={1.9} />Influência</p>
-              <InlineBars value={contato.influencia} max={5} color="#7259B5" kind="influencia" onSave={v => saveField("influencia", v)} />
+              <p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45"><Radio size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />Influência</p>
+              <InlineBars value={contato.influencia} max={5} color="rgba(13,13,13,.7)" kind="influencia" onSave={v => saveField("influencia", v)} />
             </div>
             {/* Força */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="flex items-center gap-1.5 text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35"><Handshake size={11} strokeWidth={1.9} />Força da relação</p>
+              <p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45"><Handshake size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />Força da relação</p>
               <InlineBars value={contato.forca_relacao} max={5} color="#1A8B7A" kind="relacao" onSave={v => saveField("forca_relacao", v)} />
             </div>
             {/* Sentimento */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Sentimento</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Sentimento</p>
               <InlineSelect value={contato.sentimento} opts={SENTIMENTO_OPTS} onSave={v => saveField("sentimento", v)} />
             </div>
             {/* Última interação */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Última interação</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Última interação</p>
               <div className="group flex min-h-9 items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 transition hover:border-black/[.10] hover:bg-black/[.018]">
-                <span className="flex h-5 w-5 shrink-0 items-center justify-center" style={{ color: interacaoColor(dias) }}><CalendarClock size={14} strokeWidth={1.9} /></span>
-                <p className="truncate text-[0.8125rem] font-semibold" style={{ color: interacaoColor(dias) }}>{interacaoText}</p>
+                <span className={`flex h-5 w-5 shrink-0 items-center justify-center ${interacaoAlerta(dias) ? "" : "text-black/40"}`} style={interacaoAlerta(dias) ? { color: interacaoAlerta(dias) } : undefined}><CalendarClock size={14} strokeWidth={1.9} aria-hidden="true" /></span>
+                <p className={`truncate text-[0.8125rem] font-semibold tabular-nums ${dias === null ? "text-black/30" : "text-[#0D0D0D]"}`}>{interacaoText}</p>
               </div>
             </div>
             {/* Canal preferido */}
             <div className="flex min-h-[6.75rem] flex-col justify-between gap-3 bg-white px-4 py-3.5">
-              <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/35">Canal preferido</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Canal preferido</p>
               <InlineSelect value={contato.canal_preferido} opts={CANAL_OPTS} onSave={v => saveField("canal_preferido", v)} />
             </div>
           </div>
@@ -765,7 +760,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           </div>
                           <div className="mt-0.5 flex items-center gap-2 text-[0.625rem] text-black/35">
                             {c.empresa_crm?.nome && <span>{c.empresa_crm.nome}</span>}
-                            {c.valor_solicitado && <span>· {fmtCurrency(c.valor_solicitado)}</span>}
+                            {c.valor_solicitado && <span className="tabular-nums" title={formatarValorCompleto(c.valor_solicitado)}>· {formatarValorCurto(c.valor_solicitado)}</span>}
                           </div>
                         </Link>
                       );
@@ -826,7 +821,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                             <span className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{nome}</span>
                           </td>
                           <td className="px-5 py-3.5 text-[0.78125rem] text-black/55">{c.empresa_crm?.nome ?? "—"}</td>
-                          <td className="px-5 py-3.5 text-[0.78125rem] text-black/55 tabular-nums">{fmtCurrency(c.valor_solicitado)}</td>
+                          <td className="px-5 py-3.5 text-[0.78125rem] text-black/55 tabular-nums" title={c.valor_solicitado ? formatarValorCompleto(c.valor_solicitado) : undefined}>{c.valor_solicitado ? formatarValorCurto(c.valor_solicitado) : "—"}</td>
                           <td className="px-5 py-3.5">
                             <StatusBadge
                               status={c.status}

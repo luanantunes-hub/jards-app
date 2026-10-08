@@ -24,6 +24,7 @@ import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { PesquisaEmpresaModal } from "@/components/modals/PesquisaEmpresaModal";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
 import { useCreditos } from "@/contexts/CreditosContext";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type Lei = "esporte" | "ancine" | "saude";
 
@@ -205,7 +206,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.setor ?? "—"}</td>
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem] font-medium">{l.empresas?.estado ?? "—"}</td>
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.cidade ?? "—"}</td>
-                    <td className="px-4 py-3"><span className="font-bold text-[#0D0D0D] text-[0.8125rem] tabular-nums">{fmt(l.valor)}</span></td>
+                    <td className="px-4 py-3"><span className="font-semibold text-[#0D0D0D] text-[0.8125rem] tabular-nums" title={l.valor ? formatarValorCompleto(l.valor) : undefined}>{l.valor ? formatarValorCurto(l.valor) : "—"}</span></td>
                   </tr>
                 ))
               )}
@@ -228,13 +229,6 @@ const ESTADOS_BR = [
 type SortCol = "nome" | "aporte_estimado";
 type Trimestre = "T1" | "T2" | "T3" | "T4";
 type PaidPlan = "basico" | "profissional";
-
-const fmt = (v: number | null) => {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(0)}M`;
-  if (v >= 1_000) return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
-};
 
 function colorFrom(nome: string) {
   const palette = [
@@ -692,8 +686,8 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
                       {/* Investimento */}
                       <td className="px-4 py-3">
-                        <span className="font-bold text-[#0D0D0D] text-[0.8125rem]">
-                          {fmt(e.aporte_estimado)}
+                        <span className="font-semibold text-[#0D0D0D] text-[0.8125rem] tabular-nums" title={e.aporte_estimado ? formatarValorCompleto(e.aporte_estimado) : undefined}>
+                          {e.aporte_estimado ? formatarValorCurto(e.aporte_estimado) : "—"}
                         </span>
                       </td>
                     </tr>

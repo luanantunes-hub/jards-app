@@ -176,8 +176,8 @@ export function PropostaWizard({
               {proposta && (
                 <div className="flex items-center gap-2 mt-0.5">
                   <span
-                    className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full"
-                    style={{ background: `${STATUS_LABELS[status]?.color}14`, color: STATUS_LABELS[status]?.color }}
+                    className="rounded border bg-white px-2 py-1 text-[0.625rem] font-medium"
+                    style={{ borderColor: STATUS_LABELS[status]?.color.startsWith("#") ? `${STATUS_LABELS[status]?.color}47` : "rgba(13,13,13,.12)", color: STATUS_LABELS[status]?.color }}
                   >
                     {STATUS_LABELS[status]?.label}
                   </span>

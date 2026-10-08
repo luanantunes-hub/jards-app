@@ -26,14 +26,14 @@ function Logo({ name, size = 44 }: { name: string; size?: number }) {
 }
 
 const LEI: Record<string, [string, string]> = {
-  Rouanet:     ["rgba(114,89,181,.10)", "#7259B5"],
-  Audiovisual: ["rgba(26,139,122,.10)", "#1A8B7A"],
-  Esporte:     ["rgba(45,114,176,.08)", "#2D72B0"],
+  Rouanet:     ["rgba(114,89,181,.28)", "#7259B5"],
+  Audiovisual: ["rgba(26,139,122,.28)", "#1A8B7A"],
+  Esporte:     ["rgba(45,114,176,.28)", "#2D72B0"],
 };
 function LeiBadge({ lei }: { lei: string }) {
-  const [bg, c] = LEI[lei] ?? ["rgba(13,13,13,.06)", "rgba(13,13,13,.45)"];
+  const [borda, c] = LEI[lei] ?? ["rgba(13,13,13,.12)", "rgba(13,13,13,.45)"];
   return (
-    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 4, background: bg, color: c }}>
+    <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".07em", textTransform: "uppercase", padding: "2px 6px", borderRadius: 4, background: "#fff", border: `1px solid ${borda}`, color: c }}>
       {lei}
     </span>
   );
@@ -179,9 +179,9 @@ const EDITAIS = [
   { co: "Vale",           state: "MG", title: "Fundo Local de Cultura 2025",        urgency: "soon",    ab: "15/07/25", fe: "01/11/25" },
 ];
 const URG_BADGE: Record<string, [string, string, string]> = {
-  urgente: ["rgba(217,78,78,.10)",  "#D94E4E", "Urgente"],
-  soon:    ["rgba(176,122,20,.10)", "#B07A14", "Próximo"],
-  open:    ["rgba(46,137,50,.10)",  "#2E8932", "Aberto"],
+  urgente: ["rgba(217,78,78,.28)",  "#D94E4E", "Urgente"],
+  soon:    ["rgba(176,122,20,.28)", "#B07A14", "Próximo"],
+  open:    ["rgba(46,137,50,.28)",  "#2E8932", "Aberto"],
 };
 
 function EditaisPanel() {
@@ -199,7 +199,7 @@ function EditaisPanel() {
       <div style={{ flex: 1, overflow: "hidden", padding: "16px 32px" }}>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
           {EDITAIS.map((e) => {
-            const [bg, c, lbl] = URG_BADGE[e.urgency];
+            const [borda, c, lbl] = URG_BADGE[e.urgency];
             return (
               <div key={e.co} style={{ border: "1px solid rgba(13,13,13,.08)", borderRadius: 4, padding: 18, background: "linear-gradient(145deg,#ffffff 0%,#f7f7f6 100%)" }}>
                 <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 12, gap: 8 }}>
@@ -212,7 +212,7 @@ function EditaisPanel() {
                   </div>
                   <div style={{ display: "flex", gap: 5, flexShrink: 0 }}>
                     <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: ".05em", padding: "2px 6px", borderRadius: 4, background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.50)" }}>ADM</span>
-                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: bg, color: c }}>{lbl}</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, padding: "2px 8px", borderRadius: 4, background: "#fff", border: `1px solid ${borda}`, color: c }}>{lbl}</span>
                   </div>
                 </div>
                 <p style={{ fontSize: 12, color: "rgba(13,13,13,.50)", lineHeight: 1.45, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{e.title}</p>
@@ -310,12 +310,12 @@ function NegociacoesPanel() {
 
 /* ── ATIVIDADES ──────────────────────────────────────────── */
 const ATIVS = [
-  { done: false, nome: "Enviar proposta Rouanet atualizada", tipo: "Email",   neg: "Captação Itaú BBA",   co: "Itaú BBA",    prazo: "hoje",   prio: ["rgba(217,78,78,.10)", "#D94E4E",   "Alta"]  },
-  { done: false, nome: "Reunião de alinhamento do projeto",  tipo: "Reunião", neg: "Ambev — Turnê",       co: "Ambev",       prazo: "amanhã", prio: ["rgba(176,122,20,.10)", "#B07A14", "Média"] },
-  { done: true,  nome: "Follow-up sobre edital Rouanet",     tipo: "Ligação", neg: "Petrobras Audio",     co: "Petrobras",   prazo: "ontem",  prio: ["rgba(13,13,13,.06)", "rgba(13,13,13,.45)", "Baixa"] },
-  { done: false, nome: "Conectar com dir. de patrocínio",    tipo: "LinkedIn",neg: "Prosp. Porto Seg.",   co: "Porto Seguro",prazo: "seg",    prio: ["rgba(176,122,20,.10)", "#B07A14", "Média"] },
-  { done: true,  nome: "Confirmar reunião presencial",        tipo: "Email",   neg: "Proposta Embraer",    co: "Embraer",     prazo: "ontem",  prio: ["rgba(217,78,78,.10)", "#D94E4E",   "Alta"]  },
-  { done: false, nome: "Preparar relatório de atividades",   tipo: "Tarefa",  neg: "—",                   co: "Interno",     prazo: "sexta",  prio: ["rgba(13,13,13,.06)", "rgba(13,13,13,.45)", "Baixa"] },
+  { done: false, nome: "Enviar proposta Rouanet atualizada", tipo: "Email",   neg: "Captação Itaú BBA",   co: "Itaú BBA",    prazo: "hoje",   prio: ["rgba(217,78,78,.28)", "#D94E4E",   "Alta"]  },
+  { done: false, nome: "Reunião de alinhamento do projeto",  tipo: "Reunião", neg: "Ambev — Turnê",       co: "Ambev",       prazo: "amanhã", prio: ["rgba(176,122,20,.28)", "#B07A14", "Média"] },
+  { done: true,  nome: "Follow-up sobre edital Rouanet",     tipo: "Ligação", neg: "Petrobras Audio",     co: "Petrobras",   prazo: "ontem",  prio: ["rgba(13,13,13,.12)", "rgba(13,13,13,.45)", "Baixa"] },
+  { done: false, nome: "Conectar com dir. de patrocínio",    tipo: "LinkedIn",neg: "Prosp. Porto Seg.",   co: "Porto Seguro",prazo: "seg",    prio: ["rgba(176,122,20,.28)", "#B07A14", "Média"] },
+  { done: true,  nome: "Confirmar reunião presencial",        tipo: "Email",   neg: "Proposta Embraer",    co: "Embraer",     prazo: "ontem",  prio: ["rgba(217,78,78,.28)", "#D94E4E",   "Alta"]  },
+  { done: false, nome: "Preparar relatório de atividades",   tipo: "Tarefa",  neg: "—",                   co: "Interno",     prazo: "sexta",  prio: ["rgba(13,13,13,.12)", "rgba(13,13,13,.45)", "Baixa"] },
 ] as const;
 const DEADLINE_COLOR: Record<string, string> = { hoje: "#B07A14", amanhã: "rgba(13,13,13,.55)", sexta: "rgba(13,13,13,.55)", seg: "rgba(13,13,13,.55)", ontem: "rgba(13,13,13,.35)" };
 const TH = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 bg-[#F9F9F8] px-3.5 py-2.5 text-left whitespace-nowrap";
@@ -367,7 +367,7 @@ function AtividadesPanel() {
                 </td>
                 <td style={{ padding: "11px 14px", fontSize: 11.5, fontWeight: 500, color: DEADLINE_COLOR[a.prazo] ?? "rgba(13,13,13,.50)", whiteSpace: "nowrap" }}>{a.prazo}</td>
                 <td style={{ padding: "11px 14px" }}>
-                  <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 100, background: a.prio[0], color: a.prio[1] }}>{a.prio[2]}</span>
+                  <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 100, background: "#fff", border: `1px solid ${a.prio[0]}`, color: a.prio[1] }}>{a.prio[2]}</span>
                 </td>
                 <td style={{ padding: "11px 14px", fontSize: 11.5, color: "rgba(13,13,13,.55)" }}>Luana M.</td>
               </tr>

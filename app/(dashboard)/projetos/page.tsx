@@ -11,6 +11,8 @@ import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManag
 import { ListPageHeader, ListSummary, PrimaryListAction, ListContent, ListTableSurface, ListToolbar, ListSearch } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { SegmentedControl, FilterButton } from "@/components/ui/FilterControls";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
 
 type ViewMode = "lista" | "portfolio";
 const VIEW_MODES = ["lista", "portfolio"] as const;
@@ -53,10 +55,7 @@ type ProjetoRow = {
 };
 
 function fmtValor(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
+  return v ? formatarValorCurto(v) : "—";
 }
 
 function fmtAtualizacao(value: string): string {
@@ -77,10 +76,10 @@ function FinancialProgress({ captured, target }: { captured: number; target: num
   return (
     <div className="w-[7.375rem]" title={`${rawProgress}% do objetivo captado`}>
       <div className="mb-1.5 flex items-baseline justify-between gap-2">
-        <span className={`text-[0.625rem] font-semibold tabular-nums tracking-[-.01em] ${completed ? "text-[#267A49]" : "text-black/55"}`}>
+        <span className="text-[0.625rem] font-semibold tabular-nums tracking-[-.01em] text-black/55">
           {progress}%
         </span>
-        {completed && <span className="text-[0.5rem] font-semibold uppercase tracking-[.06em] text-[#267A49]/70">Meta</span>}
+        {completed && <span className="text-[0.5rem] font-semibold uppercase tracking-[.06em] text-[#2E8932]">Meta</span>}
       </div>
       <div
         className="h-1.5 overflow-hidden rounded bg-black/[.075] ring-1 ring-inset ring-black/[.025]"
@@ -91,7 +90,7 @@ function FinancialProgress({ captured, target }: { captured: number; target: num
         aria-valuenow={progress}
       >
         <div
-          className="h-full rounded bg-[#34A368] transition-[width] duration-500 ease-out"
+          className={`h-full rounded transition-[width] duration-200 ease-out motion-reduce:transition-none ${MARCA_CAPTACAO.confirmado}`}
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -118,10 +117,13 @@ function ProjectsPortfolioView({ projetos, onOpen }: { projetos: ProjetoRow[]; o
             <section key={phase.key} className="flex min-h-[32.5rem] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
               <header className="border-b border-black/[.07] px-3.5 py-3">
                 <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-[0.75rem] font-bold" style={{ color: phase.color }}>{phase.label}</h2>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <phase.Icon size={14} strokeWidth={2.2} className="shrink-0" style={{ color: phase.color }} aria-hidden="true" />
+                    <h2 className="truncate text-[0.75rem] font-semibold text-black/75">{phase.label}</h2>
+                  </div>
                   <span className="text-[0.625rem] font-semibold tabular-nums text-black/30">{items.length}</span>
                 </div>
-                <p className="mt-1 text-[0.625rem] tabular-nums text-black/35">{value > 0 ? fmtValor(value) : "Sem objetivo financeiro"}</p>
+                <p className="mt-1 text-[0.625rem] tabular-nums text-black/35" title={value > 0 ? formatarValorCompleto(value) : undefined}>{value > 0 ? formatarValorCurto(value) : "Sem objetivo financeiro"}</p>
               </header>
               <div className="space-y-2 p-2.5">
                 {items.length === 0 ? (
@@ -143,8 +145,8 @@ function ProjectsPortfolioView({ projetos, onOpen }: { projetos: ProjetoRow[]; o
                         </div>
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-2 border-t border-black/[.06] pt-2.5">
-                        <div><p className="text-[0.5625rem] font-semibold uppercase tracking-[.08em] text-black/25">Captado</p><p className="mt-0.5 text-[0.6875rem] font-bold text-black/65">{fmtValor(project.valor_captado)}</p></div>
-                        <div><p className="text-[0.5625rem] font-semibold uppercase tracking-[.08em] text-black/25">Progresso</p><p className="mt-0.5 text-[0.6875rem] font-bold tabular-nums text-black/65">{progress}%</p></div>
+                        <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Captado</p><p className={`mt-0.5 truncate text-[0.6875rem] font-semibold tabular-nums ${project.valor_captado ? "text-[#0D0D0D]" : "text-black/30"}`} title={project.valor_captado ? formatarValorCompleto(project.valor_captado) : undefined}>{fmtValor(project.valor_captado)}</p></div>
+                        <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Progresso</p><p className={`mt-0.5 text-[0.6875rem] font-semibold tabular-nums ${progress ? "text-[#0D0D0D]" : "text-black/30"}`}>{progress}%</p></div>
                       </div>
                       <div className="mt-2.5 space-y-1.5 text-[0.625rem] text-black/40">
                         <div className="flex items-center gap-1.5"><CalendarDays size={11}/><span>{project.proximo_prazo ? new Date(`${project.proximo_prazo}T00:00:00`).toLocaleDateString("pt-BR") : "Sem prazo próximo"}</span></div>
@@ -274,7 +276,7 @@ export default function ProjetosPage() {
         />
       )}
 
-      <ListPageHeader eyebrow="Portfólio" title="Projetos" summary={!loading&&<><ListSummary strong={filteredProjetos.length}>projetos</ListSummary>{totalValor>0&&<ListSummary strong={fmtValor(totalValor)}>em objetivos</ListSummary>}</>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo projeto</PrimaryListAction></>}/>
+      <ListPageHeader eyebrow="Portfólio" title="Projetos" summary={!loading&&<><ListSummary strong={filteredProjetos.length}>projetos</ListSummary>{totalValor>0&&<ListSummary strong={<span title={formatarValorCompleto(totalValor)}>{formatarValorCurto(totalValor)}</span>}>em objetivos</ListSummary>}</>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo projeto</PrimaryListAction></>}/>
 
       {projetos.length > 0 && (
         <ListToolbar search={<ListSearch value={search} onChange={setSearch} placeholder="Buscar projeto ou proponente"/>}>
@@ -408,12 +410,12 @@ export default function ProjetosPage() {
 
                         {/* Objetivo */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="text-[0.8125rem] font-bold text-black/70">{fmtValor(p.valor_alvo)}</span>
+                          <span className={`text-[0.8125rem] font-semibold tabular-nums ${p.valor_alvo ? "text-black/70" : "text-black/30"}`} title={p.valor_alvo ? formatarValorCompleto(p.valor_alvo) : undefined}>{fmtValor(p.valor_alvo)}</span>
                         </td>
 
                         {/* Captado */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className="text-[0.8125rem] font-semibold" style={{ color: p.valor_captado > 0 ? "#2E8932" : "rgba(13,13,13,.20)" }}>{fmtValor(p.valor_captado)}</span>
+                          <span className={`text-[0.8125rem] font-semibold tabular-nums ${p.valor_captado > 0 ? "text-[#0D0D0D]" : "text-black/30"}`} title={p.valor_captado > 0 ? formatarValorCompleto(p.valor_captado) : undefined}>{fmtValor(p.valor_captado)}</span>
                         </td>
 
                         {/* Progresso financeiro */}

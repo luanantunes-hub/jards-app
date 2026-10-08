@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CalendarClock, Check, Clock, Mail, MessageCircleQuestion, Pencil, Plus, RefreshCw, RotateCcw, Save, StickyNote, X } from "lucide-react";
+import { AlertCircle, CalendarClock, Check, Clock, Mail, MessageCircleQuestion, Pencil, Plus, RefreshCw, RotateCcw, Save, StickyNote, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useTaxonomiasComerciais } from "@/contexts/TaxonomiasComerciaisContext";
@@ -209,7 +209,7 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
 
   return <div className="space-y-5">
     <div className="grid gap-px overflow-hidden rounded border bg-black/[.06] sm:grid-cols-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-      <Metric label="Próximas ações" value={String(pending.length)} tone="#7259B5" /><Metric label="Atrasadas" value={String(overdue)} tone={overdue ? "#D94E4E" : "#2E8932"} /><Metric label="Última interação" value={coldDays === null ? "Sem histórico" : coldDays === 0 ? "Hoje" : `${coldDays} dias`} tone={coldDays !== null && coldDays >= 14 ? "#B07A14" : "#1A8B7A"} />
+      <Metric label="Próximas ações" value={String(pending.length)} vazio={!pending.length} /><Metric label="Atrasadas" value={String(overdue)} vazio={!overdue} alerta={overdue ? { icone: AlertCircle, cor: "#D94A4A" } : undefined} /><Metric label="Última interação" value={coldDays === null ? "Sem histórico" : coldDays === 0 ? "Hoje" : `${coldDays} dias`} vazio={coldDays === null} alerta={coldDays !== null && coldDays >= 14 ? { icone: Clock, cor: "#B07A14" } : undefined} />
     </div>
 
     <div className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -260,7 +260,8 @@ function FollowupRow({ item, channelLabel, saving, onFinish, onEdit, onCancel, o
   return <div className="flex items-center gap-3 px-5 py-4">{pending ? <button disabled={saving} onClick={onFinish} title="Concluir" className="flex h-6 w-6 items-center justify-center rounded border border-black/12 text-black/20 hover:border-[#2E8932] hover:text-[#2E8932]"><Check size={12}/></button> : <span className={`flex h-6 w-6 items-center justify-center rounded ${item.status === "concluido" ? "bg-black/[.04] text-[#2E8932]" : "bg-black/[.04] text-black/25"}`}>{item.status === "concluido" ? <Check size={12}/> : <X size={12}/>}</span>}<div className="min-w-0 flex-1"><p className={`text-[0.8125rem] font-semibold ${pending ? "text-black" : "text-black/40"}`}>{item.titulo}</p><p className="mt-0.5 text-[0.6875rem] text-black/35">{item.contato?.nome ?? "Sem contato definido"} · {channelLabel(item.canal)} · {item.responsavel?.full_name ?? "Sem responsável"} · tentativa {item.tentativa}</p>{item.resultado && <p className="mt-0.5 text-[0.625rem] text-black/30">Resultado: {item.resultado.replaceAll("_", " ")}</p>}</div><span className="hidden text-[0.6875rem] font-medium sm:block" style={{ color: pending && new Date(item.previsto_para).getTime() < Date.now() ? "#D94E4E" : "rgba(13,13,13,.4)" }}>{dateLabel(item.previsto_para)}</span><div className="flex items-center gap-1">{pending ? <><button onClick={onEdit} title="Editar" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-black/55"><Pencil size={12}/></button><button onClick={onCancel} title="Cancelar" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-[#D94E4E]"><X size={13}/></button></> : <button onClick={onReopen} title="Reabrir" className="rounded p-1.5 text-black/25 hover:bg-black/[.04] hover:text-[#7259B5]"><RotateCcw size={12}/></button>}</div></div>;
 }
 
-function Metric({ label, value, tone }: { label: string; value: string; tone: string }) { return <div className="flex min-h-28 flex-col justify-center bg-white px-5 py-4"><p className="text-[0.625rem] font-medium text-black/30">{label}</p><p className="mt-2 text-[1.125rem] font-semibold tracking-[-.02em]" style={{ color: tone }}>{value}</p></div>; }
+/** Só um alerta (atraso, contato esfriando) pinta o ícone; rótulo e valor ficam neutros. */
+function Metric({ label, value, vazio = false, alerta }: { label: string; value: string; vazio?: boolean; alerta?: { icone: typeof Clock; cor: "#D94A4A" | "#B07A14" } }) { return <div className="flex min-h-28 flex-col justify-center bg-white px-5 py-4"><p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{alerta && <alerta.icone size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: alerta.cor }} />}{label}</p><p className={`mt-2 text-[1.125rem] font-semibold tracking-[-.02em] tabular-nums ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p></div>; }
 function Action({ label, onClick, primary = false }: { label: string; onClick: () => void; primary?: boolean }) { return <button onClick={onClick} className="rounded border bg-white px-3 py-2 text-[0.75rem] font-medium transition hover:bg-black/[.04]" style={{ color: primary ? "#7259B5" : "rgba(13,13,13,.6)", borderColor: primary ? "#7259B540" : "rgba(13,13,13,.1)" }}><Plus size={11} className="mr-1.5 inline"/>{label}</button>; }
 
 type Taxonomy = { chave: string; label: string; ativo: boolean };

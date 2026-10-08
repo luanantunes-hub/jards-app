@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyLogo } from "@/components/CompanyLogo";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type PanelTab = "relationship" | "negotiations" | "inscricoes";
 
@@ -79,15 +80,6 @@ function fmtDate(value: string | null) {
     day: "2-digit",
     month: "short",
   });
-}
-
-function fmtMoney(value: number | null) {
-  if (value == null) return null;
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(value);
 }
 
 function StatusPill({ status }: { status: string }) {
@@ -217,7 +209,7 @@ export function CompanyQuickPanel({ company, onClose }: {
               {negotiations.length ? negotiations.map(item => (
                 <Link key={item.id} href={`/captacoes/${item.id}`} className="group block border-t border-black/[.06] py-3.5 first:border-0 first:pt-0 last:pb-0">
                   <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.titulo || "Negociação sem título"}</p><p className="mt-1 truncate text-[0.625rem] text-black/35">{item.projeto?.nome || "Sem projeto"}{item.proxima_prospeccao ? ` · próximo contato ${fmtDate(item.proxima_prospeccao)}` : ""}</p></div><StatusPill status={item.status} /></div>
-                  {fmtMoney(item.valor_solicitado) && <p className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor_solicitado)}</p>}
+                  {item.valor_solicitado != null && <p title={formatarValorCompleto(item.valor_solicitado)} className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{formatarValorCurto(item.valor_solicitado)}</p>}
                 </Link>
               )) : <Empty copy="Nenhuma negociação vinculada." />}
             </PanelSection>
@@ -226,7 +218,7 @@ export function CompanyQuickPanel({ company, onClose }: {
               {registrations.length ? registrations.map(item => (
                 <Link key={item.id} href={`/editais-inscritos/${item.id}`} className="group block border-t border-black/[.06] py-3.5 first:border-0 first:pt-0 last:pb-0">
                   <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.75rem] font-semibold text-black/75 group-hover:text-[#7259B5]">{item.projeto?.nome || "Sem projeto"}</p>{item.data_fechamento && <p className="mt-1 truncate text-[0.625rem] text-black/35">encerra {fmtDate(item.data_fechamento)}</p>}</div><StatusPill status={item.status} /></div>
-                  {fmtMoney(item.valor) && <p className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{fmtMoney(item.valor)}</p>}
+                  {item.valor != null && <p title={formatarValorCompleto(item.valor)} className="mt-2 text-[0.6875rem] font-semibold tabular-nums text-black/55">{formatarValorCurto(item.valor)}</p>}
                 </Link>
               )) : <Empty copy="Nenhuma inscrição vinculada." />}
             </PanelSection>

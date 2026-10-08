@@ -24,6 +24,7 @@ import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { DESFECHOS_NEGOCIACAO, ehDesfecho } from "@/lib/etapas";
 import { FecharNegocioSheet, useRecusarNegociacao } from "@/components/captacoes/FechamentoNegociacao";
 
@@ -86,10 +87,7 @@ const CAPTACOES_SELECT_LEGACY = CAPTACOES_SELECT
   .replace(",\n  captador_externo:captadores!captador_externo_id(nome, agencia)", "");
 
 function fmtValor(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000)     return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
+  return v ? formatarValorCurto(v) : "—";
 }
 
 function fmtShortDate(d: string | null): string {
@@ -456,11 +454,11 @@ export default function CaptacoesPage() {
               {lei.label}
             </span>
           ) : <span />}
-          <span className="text-[0.75rem] font-semibold tabular-nums text-black/65">{fmtValor(c.valor_solicitado)}</span>
+          <span className="text-[0.75rem] font-semibold tabular-nums text-black/65" title={c.valor_solicitado ? formatarValorCompleto(c.valor_solicitado) : undefined}>{fmtValor(c.valor_solicitado)}</span>
         </div>
         {typeof valuePct === "number" && (
           <div className="mt-2.5 h-[3px] overflow-hidden rounded-full bg-black/[.07]">
-            <div className="h-full rounded-full bg-[#2E8932]" style={{ width: `${valuePct}%` }} />
+            <div className="h-full rounded-full bg-black/30" style={{ width: `${valuePct}%` }} />
           </div>
         )}
         {c.proxima_prospeccao && (
@@ -573,7 +571,7 @@ export default function CaptacoesPage() {
         title="Negociações"
         summary={!loading && <>
           <ListSummary strong={filteredCaptacoes.length}>de {captacoes.length}</ListSummary>
-          <ListSummary strong={fmtValor(pipelineTotal)} tone="#2E8932">no pipeline</ListSummary>
+          <ListSummary strong={<span title={pipelineTotal ? formatarValorCompleto(pipelineTotal) : undefined}>{fmtValor(pipelineTotal)}</span>}>no pipeline</ListSummary>
         </>}
         actions={<>
           <ViewToggle view={view} onChange={setView} />
@@ -810,7 +808,7 @@ export default function CaptacoesPage() {
 
                           {/* Valor */}
                           <td className="px-4 py-3.5 whitespace-nowrap">
-                            <span className="font-bold tabular-nums text-[0.8125rem] text-black/70">{fmtValor(c.valor_solicitado)}</span>
+                            <span className="font-semibold tabular-nums text-[0.8125rem] text-black/70" title={c.valor_solicitado ? formatarValorCompleto(c.valor_solicitado) : undefined}>{fmtValor(c.valor_solicitado)}</span>
                           </td>
 
                           {/* Prioridade */}

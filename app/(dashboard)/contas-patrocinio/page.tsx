@@ -15,6 +15,7 @@ import { CompanyLogo } from "@/components/CompanyLogo";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type ViewMode = "lista" | "carteira";
 type PortfolioLane = "intervir" | "renovar" | "expandir" | "acompanhar";
@@ -65,13 +66,6 @@ function healthMeta(score: number | null, readings: number) {
   if (score < 64) return { label: "Atenção", color: "#B07A14" };
   if (score < 84) return { label: "Estável", color: "#2D72B0" };
   return { label: "Saudável", color: "#2E8932" };
-}
-
-function fmtCurrency(v: number | null): string {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
 }
 
 function fmtDate(d: string | null): string {
@@ -230,10 +224,10 @@ function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]
             <section key={lane.key} className="flex min-h-[32.5rem] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
               <header className="border-b border-black/[.07] px-3.5 py-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div><div className="flex items-center gap-1.5"><LaneIcon size={13} style={{ color: lane.color }}/><h2 className="text-[0.75rem] font-bold" style={{ color: lane.color }}>{lane.label}</h2></div><p className="mt-1 text-[0.59375rem] text-black/30">{lane.description}</p></div>
+                  <div><div className="flex items-center gap-1.5"><LaneIcon size={13} aria-hidden="true" className="shrink-0" style={{ color: lane.color }}/><h2 className="text-[0.75rem] font-semibold text-black/75">{lane.label}</h2></div><p className="mt-1 text-[0.59375rem] text-black/30">{lane.description}</p></div>
                   <span className="text-[0.625rem] font-semibold tabular-nums text-black/30">{items.length}</span>
                 </div>
-                <p className="mt-2 text-[0.625rem] tabular-nums text-black/35">{total > 0 ? `${fmtCurrency(total)} na carteira` : "Sem valor registrado"}</p>
+                <p className="mt-2 text-[0.625rem] tabular-nums text-black/35">{total > 0 ? <span title={formatarValorCompleto(total)}>{formatarValorCurto(total)} na carteira</span> : "Sem valor registrado"}</p>
               </header>
               <div className="space-y-2 p-2.5">
                 {items.length === 0 ? (
@@ -245,17 +239,17 @@ function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]
                       <div className="flex items-start gap-2.5">
                         <CompanyLogo nome={companyName} domain={account.empresa_crm?.domain_key} site={account.empresa_crm?.site} size={32} className="shrink-0 border border-black/[.06]"/>
                         <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black">{companyName}</p><p className="mt-0.5 truncate text-[0.59375rem] text-black/30">{account.nome && account.nome !== companyName ? account.nome : account.empresa_crm?.setor ?? "Cliente"}</p></div>
-                        {account.health_score !== null && <span className="text-[0.625rem] font-bold tabular-nums" style={{ color: account.health_score >= 70 ? "#2E8932" : account.health_score >= 45 ? "#B07A14" : "#D94E4E" }}>{account.health_score}</span>}
+                        {account.health_score !== null && <span className="flex shrink-0 items-center gap-1 text-[0.625rem] font-semibold tabular-nums text-[#0D0D0D]"><HeartPulse size={12} strokeWidth={1.75} aria-hidden="true" className={account.health_score >= 70 ? "shrink-0 text-black/40" : "shrink-0"} style={account.health_score >= 70 ? undefined : { color: account.health_score >= 45 ? "#B07A14" : "#D94A4A" }}/>{account.health_score}</span>}
                       </div>
                       <div className="mt-3 border-t border-black/[.06] pt-2.5">
-                        <p className="text-[0.625rem] font-semibold" style={{ color: lane.color }}>{account.portfolio_reason}</p>
+                        <p className="text-[0.625rem] font-semibold text-black/55">{account.portfolio_reason}</p>
                         <p className="mt-1 line-clamp-2 text-[0.6875rem] font-medium leading-[1.4] text-black/65">{account.portfolio_action}</p>
                       </div>
                       <div className="mt-2.5 space-y-1.5 text-[0.59375rem] text-black/35">
                         <div className="flex items-center gap-1.5"><CalendarDays size={10}/><span>{account.portfolio_deadline ? fmtDate(account.portfolio_deadline) : "Sem prazo definido"}</span></div>
                         <div className="flex items-center gap-1.5"><UserRound size={10}/><span className="truncate">{account.proxima_atividade?.responsavel ?? account.responsavel_nome ?? "Sem responsável"}</span></div>
                       </div>
-                      <div className="mt-2.5 flex items-center justify-between border-t border-black/[.05] pt-2"><span className="text-[0.5625rem] text-black/25">{account.n_contratos} {account.n_contratos === 1 ? "contrato" : "contratos"}</span><span className="text-[0.625rem] font-bold tabular-nums text-black/55">{fmtCurrency(account.valor_total)}</span></div>
+                      <div className="mt-2.5 flex items-center justify-between border-t border-black/[.05] pt-2"><span className="text-[0.5625rem] text-black/25">{account.n_contratos} {account.n_contratos === 1 ? "contrato" : "contratos"}</span><span className="text-[0.625rem] font-semibold tabular-nums text-black/55" title={account.valor_total ? formatarValorCompleto(account.valor_total) : undefined}>{account.valor_total ? formatarValorCurto(account.valor_total) : "—"}</span></div>
                     </button>
                   );
                 })}
@@ -450,7 +444,7 @@ export default function ContasPatrocinioPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader eyebrow="Gestão da carteira" title="Clientes" summary={!loading&&<><ListSummary strong={stats.ativas} tone="#2E8932">ativas</ListSummary><ListSummary strong={stats.renovacao} tone="#B07A14">renovações próximas</ListSummary><ListSummary strong={stats.emRisco} tone="#D94E4E">em atenção</ListSummary></>} actions={
+      <ListPageHeader eyebrow="Gestão da carteira" title="Clientes" summary={!loading&&<><ListSummary strong={stats.ativas}>ativas</ListSummary><ListSummary strong={stats.renovacao}>renovações próximas</ListSummary><ListSummary strong={stats.emRisco} icone={AlertTriangle} alerta={stats.emRisco > 0 ? "vermelho" : undefined}>em atenção</ListSummary></>} actions={
         <div className="flex items-center gap-2">
           <button onClick={() => setShowNovoCliente(true)} className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-black rounded hover:bg-black/5 transition">
             <Plus size={13} /> Novo cliente
@@ -596,8 +590,8 @@ export default function ContasPatrocinioPage() {
                     </td>
 
                     {/* Valor Total */}
-                    <td className="px-5 py-3.5 text-[0.75rem] font-bold text-black/75">
-                      {fmtCurrency(c.valor_total)}
+                    <td className="px-5 py-3.5 text-[0.75rem] font-semibold tabular-nums text-black/75" title={c.valor_total ? formatarValorCompleto(c.valor_total) : undefined}>
+                      {c.valor_total ? formatarValorCurto(c.valor_total) : "—"}
                     </td>
 
                     {/* Próxima Renovação */}

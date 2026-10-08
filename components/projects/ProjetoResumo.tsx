@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { ProjectIdentity, type IdentityType } from "@/components/ui/ProjectIdentity";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 /** Campos do projeto que o resumo usa; o que faltar não aparece. */
 export type ProjetoResumoDados = {
@@ -15,8 +16,6 @@ export type ProjetoResumoDados = {
   identidade_logo_url?: string | null;
   identidade_cor?: string | null;
 };
-
-const moeda = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 function texto(valor: string | null | undefined) {
   const limpo = valor?.trim();
@@ -54,15 +53,15 @@ export function ProjetoResumo({ projetoId, projeto }: { projetoId: string | null
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-4 border-t border-black/[.06] pt-4 sm:grid-cols-3">
           {proponente && (
             <div className="min-w-0">
-              <dt className="mb-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-black/35">Proponente</dt>
+              <dt className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Proponente</dt>
               <dd className="break-words text-[0.8125rem] font-medium text-[#0D0D0D]">{proponente}</dd>
               {local && <dd className="text-[0.6875rem] text-black/40">{local}</dd>}
             </div>
           )}
           {meta != null && (
             <div className="min-w-0">
-              <dt className="mb-0.5 text-[0.625rem] font-semibold uppercase tracking-wide text-black/35">Meta de captação</dt>
-              <dd className="text-[0.8125rem] font-medium tabular-nums text-[#0D0D0D]">{moeda.format(meta)}</dd>
+              <dt className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Meta de captação</dt>
+              <dd title={formatarValorCompleto(meta)} className="text-[0.8125rem] font-semibold tabular-nums text-[#0D0D0D]">{formatarValorCurto(meta)}</dd>
             </div>
           )}
         </dl>

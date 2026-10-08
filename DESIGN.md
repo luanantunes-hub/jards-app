@@ -47,7 +47,7 @@ Princípios:
 
 - rótulo neutro: `0.625rem`, peso 500, caixa alta, tracking `.08em`, `text-black/45`; nunca colorido nem em negrito;
 - valor em tinta (`#0D0D0D`), semibold, algarismos tabulares; valor zerado fica apagado (`text-black/30`);
-- cor só no gráfico (barra, segmento, marcador da legenda), nunca no rótulo nem no valor. Um quadrado de 8px antes do rótulo liga o número ao segmento da barra;
+- cor só no gráfico (barra, segmento), nunca no rótulo nem no valor. Sem pontos ou quadrados coloridos como marcador: quando o rótulo precisa de apoio visual, usa ícone cinza (`text-black/40`, 12px); só um estado de alerta (em risco, expirado, atrasado) pode colorir o ícone;
 - captação: verde é confirmado, verde a 35% é em negociação, cinza é o que falta. Roxo é navegação, não é cor de dado;
 - exceção: um desfecho escrito em palavra ("Meta atingida") pode levar a cor no texto;
 - valores de resumo, totais, kanban e cartões usam `formatarValorCurto` (`R$ 400.000`, `R$ 1,5 mi`, `R$ 13 bi`), com `formatarValorCompleto` no `title`; campos, propostas, exportações e prestação de contas mostram o valor exato;

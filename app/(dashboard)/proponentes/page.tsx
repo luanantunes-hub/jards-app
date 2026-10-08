@@ -15,6 +15,7 @@ import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/Entity
 import { calculateWeightedScore, CompactDecisionScoreRing } from "@/components/relationship/DecisionScorecard";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type ViewMode = "lista" | "mapa";
 const VIEW_MODES = ["lista", "mapa"] as const;
@@ -101,11 +102,6 @@ const TIPO_COLOR: Record<string, string> = {
   outro:         "#888888",
 };
 
-function fmtMoney(value: number) {
-  if (value >= 1_000_000) return `R$ ${(value / 1_000_000).toFixed(1)} mi`;
-  return `R$ ${value.toLocaleString("pt-BR")}`;
-}
-
 function fmtDate(value: string | null) {
   if (!value) return "—";
   const [year, month, day] = value.split("T")[0].split("-");
@@ -134,7 +130,7 @@ function ProponentesMapView({ items, onOpenProponente, onOpenProjeto }: {
                   <span className="text-[0.625rem] font-semibold text-black/35">{item.n_projetos} {item.n_projetos === 1 ? "projeto" : "projetos"}</span>
                 </div>
                 <p className="mt-1 text-[0.6875rem] text-black/40">{[item.tipo ? tipoLabels[item.tipo] ?? TIPO_LABEL[item.tipo] ?? item.tipo : null, item.cidade, item.estado].filter(Boolean).join(" / ") || "Sem classificação"}</p>
-                {(target > 0 || guaranteed > 0) && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-black/35"><span>Objetivo <strong className="text-black/60">{fmtMoney(target)}</strong></span><span>Garantido <strong className="text-[#2E8932]">{fmtMoney(guaranteed)}</strong></span></div>}
+                {(target > 0 || guaranteed > 0) && <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-black/35"><span>Objetivo <strong className={`font-semibold tabular-nums ${target ? "text-black/70" : "text-black/30"}`} title={formatarValorCompleto(target)}>{formatarValorCurto(target)}</strong></span><span>Garantido <strong className={`font-semibold tabular-nums ${guaranteed ? "text-black/70" : "text-black/30"}`} title={formatarValorCompleto(guaranteed)}>{formatarValorCurto(guaranteed)}</strong></span></div>}
               </div>
             </button>
             <div className="grid gap-2 bg-[#F7F7F5] p-3 sm:grid-cols-2">
@@ -363,7 +359,7 @@ export default function ProponentesPage() {
                           {/* Captação */}
                           <td className="px-4 py-3.5">
                             {target > 0 ? <div>
-                              <p className="text-[0.6875rem] font-medium tabular-nums text-black/60"><span className="text-[#2E8932]">{fmtMoney(guaranteed)}</span> de {fmtMoney(target)}</p>
+                              <p className="text-[0.6875rem] font-medium tabular-nums text-black/60"><span title={formatarValorCompleto(guaranteed)}>{formatarValorCurto(guaranteed)}</span> de <span title={formatarValorCompleto(target)}>{formatarValorCurto(target)}</span></p>
                               <div className="mt-2 flex items-center gap-2"><span className="h-1 flex-1 overflow-hidden rounded-full bg-black/[.06]"><span className="block h-full rounded-full bg-[#2E8932]" style={{ width: `${progress}%` }}/></span><span className="w-8 text-right text-[0.59375rem] tabular-nums text-black/35">{progress}%</span></div>
                             </div> : <span className="text-[0.6875rem] text-black/25">Sem meta definida</span>}
                           </td>

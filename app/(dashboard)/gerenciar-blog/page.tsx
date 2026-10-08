@@ -79,7 +79,7 @@ export default function BlogAdminPage() {
       <ListPageHeader
         eyebrow="Conteúdo"
         title="Blog"
-        summary={isAdmin && !loading && <><ListSummary strong={publicados} tone="#2E8932">{publicados === 1 ? "publicado" : "publicados"}</ListSummary><ListSummary strong={posts.length - publicados}>{posts.length - publicados === 1 ? "rascunho" : "rascunhos"}</ListSummary></>}
+        summary={isAdmin && !loading && <><ListSummary strong={publicados}>{publicados === 1 ? "publicado" : "publicados"}</ListSummary><ListSummary strong={posts.length - publicados}>{posts.length - publicados === 1 ? "rascunho" : "rascunhos"}</ListSummary></>}
         actions={<PrimaryListAction onClick={() => void handleNew()} disabled={creating || !isAdmin}><Plus size={13} aria-hidden="true" />{creating ? "Criando…" : "Novo post"}</PrimaryListAction>}
       />
       <ListContent>

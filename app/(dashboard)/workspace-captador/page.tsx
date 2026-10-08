@@ -25,11 +25,11 @@ type Pedido = WorkspacePedido;
 const TIPO_LABEL: Record<EscopoTipo, string> = { empresas: "Relacionamento", negociacoes: "Negociação", inscricoes: "Edital" };
 const rotuloOportunidade = (pedido: Pedido) => pedido.oportunidade_etiqueta?.nome ?? TIPO_LABEL[pedido.tipo];
 
-const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string; fundo: string }> = {
-  pendente: { label: "Pendente", cor: "#B07A14", fundo: "#B07A1414" },
-  aguardando_captador: { label: "Responder", cor: "#5F4AA8", fundo: "#5F4AA814" },
-  aprovado: { label: "Aprovado", cor: "#2E8932", fundo: "#2E893214" },
-  recusado: { label: "Recusado", cor: "#D94E4E", fundo: "#D94E4E14" },
+const STATUS_PEDIDO: Record<PedidoStatus, { label: string; cor: string }> = {
+  pendente: { label: "Pendente", cor: "#B07A14" },
+  aguardando_captador: { label: "Responder", cor: "#5F4AA8" },
+  aprovado: { label: "Aprovado", cor: "#2E8932" },
+  recusado: { label: "Recusado", cor: "#D94E4E" },
 };
 
 type AtribuicaoLinha = { id: string; status: string; organizationId: string; empresaNome: string; empresaSite?: string | null; empresaDomainKey?: string | null; workspaceEtapa?: string | null; workspaceFunil?: string | null };
@@ -46,7 +46,7 @@ function normalizarSite(valor: string): string | null {
 function StatusPedidoBadge({ status }: { status: PedidoStatus }) {
   const organizationName = useOrganizationName() || "sua organização";
   const cfg = STATUS_PEDIDO[status];
-  return <span className="shrink-0 rounded px-2 py-1 text-[0.625rem] font-semibold uppercase tracking-wide" style={{ color: cfg.cor, background: cfg.fundo }}>{status === "aguardando_captador" ? `Responder a ${organizationName}` : cfg.label}</span>;
+  return <span className="shrink-0 rounded border bg-white px-2 py-1 text-[0.625rem] font-semibold uppercase tracking-wide" style={{ borderColor: cfg.cor + "47", color: cfg.cor }}>{status === "aguardando_captador" ? `Responder a ${organizationName}` : cfg.label}</span>;
 }
 
 function StatusAtribuicaoBadge({ status }: { status: string }) {
@@ -368,7 +368,7 @@ export default function WorkspaceCaptadorPage() {
             {erroEtapa && <p role="alert" className="mb-4 text-[0.75rem] text-[#B64545]">{erroEtapa}</p>}
             {aba === "resumo" && <div className="space-y-6">
               <section className="grid grid-cols-3 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08]">
-                {[["Em andamento", atribuicoes.length], ["Sua resposta", esperandoResposta.length + acoesPendentes.length], ["Em análise", aguardandoGestor.length]].map(([label, value]) => <div key={label} className="bg-white px-4 py-4 sm:px-5"><p className="text-[0.6875rem] text-black/40">{label}</p><p className="mt-3 text-[1.5625rem] font-semibold tabular-nums tracking-tight text-[#171717]">{value}</p></div>)}
+                {[["Em andamento", atribuicoes.length], ["Sua resposta", esperandoResposta.length + acoesPendentes.length], ["Em análise", aguardandoGestor.length]].map(([label, value]) => <div key={label} className="bg-white px-4 py-4 sm:px-5"><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p className={`mt-3 text-[1.5625rem] font-semibold tabular-nums tracking-tight ${value ? "text-[#0D0D0D]" : "text-black/30"}`}>{value}</p></div>)}
               </section>
               <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
                 <div className="min-w-0 space-y-5">

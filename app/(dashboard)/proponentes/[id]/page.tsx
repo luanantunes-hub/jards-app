@@ -27,6 +27,7 @@ import { NegotiationsTable, type CaptacaoRow } from "@/components/company/Negoti
 import { InscricoesTable, type EditalRow } from "@/components/company/InscricoesTable";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type ProponenteDetail = {
   id: string;
@@ -142,9 +143,7 @@ const AREA_PT: Record<string, string> = {
 };
 
 function fmtValor(v: number | null) {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1).replace(".", ",")}M`;
-  return `R$ ${v.toLocaleString("pt-BR")}`;
+  return v ? formatarValorCurto(v) : "—";
 }
 function fmtDate(d: string) {
   const [y, m, day] = d.split("T")[0].split("-");
@@ -571,16 +570,16 @@ export default function ProponenteDetailPage() {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-3">
               {[
-                { icon: FolderOpen, label: "Projetos",  value: projetos.length.toString(), sub: "total" },
-                { icon: TrendingUp, label: "Ativos",    value: ativos.toString(),          sub: "em andamento" },
-                { icon: TrendingUp, label: "Garantido", value: fmtValor(totalGarant),      sub: "valor garantido" },
-              ].map(({ icon: Icon, label, value, sub }) => (
+                { icon: FolderOpen, label: "Projetos",  value: projetos.length.toString(), sub: "total",           vazio: projetos.length === 0, title: undefined },
+                { icon: TrendingUp, label: "Ativos",    value: ativos.toString(),          sub: "em andamento",    vazio: ativos === 0,          title: undefined },
+                { icon: TrendingUp, label: "Garantido", value: fmtValor(totalGarant),      sub: "valor garantido", vazio: !totalGarant,          title: totalGarant ? formatarValorCompleto(totalGarant) : undefined },
+              ].map(({ icon: Icon, label, value, sub, vazio, title }) => (
                 <div key={label} className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <div className="flex items-center gap-1.5 mb-2">
                     <Icon size={13} className="text-black/25"/>
-                    <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-wider">{label}</p>
+                    <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p>
                   </div>
-                  <p className="text-[1.375rem] font-bold text-[#0D0D0D] leading-none">{value}</p>
+                  <p title={title} className={`text-[1.375rem] font-semibold tabular-nums leading-none ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p>
                   <p className="text-[0.6875rem] text-black/30 mt-0.5">{sub}</p>
                 </div>
               ))}
@@ -668,8 +667,8 @@ function ProjetosView({ projetos, onOpen }: {
                     <td className="max-w-[16.25rem] px-5 py-4"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{project.nome}</p>{project.mecanismo && <p className="mt-0.5 truncate text-[0.625rem] text-black/30">{project.mecanismo}</p>}</td>
                     <td className="px-5 py-4"><span className="rounded px-1.5 py-0.5 text-[0.625rem] font-medium" style={{ background: fase.bg, color: fase.text }}>{FASE_LABEL[project.fase]}</span></td>
                     <td className="max-w-[13.125rem] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded border border-[#7259B5]/30 bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium text-[#7259B5]">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[0.5625rem] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
-                    <td className="px-5 py-4 text-[0.75rem] tabular-nums text-black/50">{fmtValor(project.valor_alvo)}</td>
-                    <td className="px-5 py-4 text-[0.75rem] font-medium tabular-nums text-[#2E8932]">{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
+                    <td className="px-5 py-4 text-[0.75rem] tabular-nums text-black/50" title={project.valor_alvo ? formatarValorCompleto(project.valor_alvo) : undefined}>{fmtValor(project.valor_alvo)}</td>
+                    <td className="px-5 py-4 text-[0.75rem] font-medium tabular-nums text-[#0D0D0D]" title={project.valor_garantido > 0 ? formatarValorCompleto(project.valor_garantido) : undefined}>{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
                   </tr>
                 );
               })}
@@ -723,7 +722,7 @@ function ClientesView({ clientes }: { clientes: ClienteRow[] }) {
                   <tr key={cliente.id} className="transition hover:bg-black/[.018]">
                     <td className="px-5 py-4"><Link href={href} className="flex items-center gap-3"><CompanyLogo nome={cliente.nome} domain={cliente.domain_key} site={cliente.site} size={34} className="shrink-0 rounded"/><span><span className="block text-[0.8125rem] font-semibold text-black/75">{cliente.nome}</span>{cliente.setor && <span className="mt-0.5 block text-[0.625rem] text-black/30">{cliente.setor}</span>}</span></Link></td>
                     <td className="px-5 py-4"><div className="flex flex-wrap gap-1">{cliente.projetos.slice(0, 2).map(project => <Link key={project.id} href={`/projetos/${project.id}`} className="rounded bg-black/[.045] px-2 py-1 text-[0.625rem] text-black/45 transition hover:text-[#7259B5]">{project.nome}</Link>)}{cliente.projetos.length > 2 && <span className="px-1 py-1 text-[0.625rem] text-black/25">+{cliente.projetos.length - 2}</span>}</div></td>
-                    <td className="px-5 py-4 text-[0.75rem] font-semibold tabular-nums text-[#2E8932]">{fmtValor(cliente.valor)}</td>
+                    <td className={`px-5 py-4 text-[0.75rem] font-semibold tabular-nums ${cliente.valor ? "text-[#0D0D0D]" : "text-black/30"}`} title={cliente.valor ? formatarValorCompleto(cliente.valor) : undefined}>{fmtValor(cliente.valor)}</td>
                     <td className="px-5 py-4 text-[0.6875rem] tabular-nums text-black/40">{fmtDate(cliente.ultima_venda)}</td>
                   </tr>
                 );

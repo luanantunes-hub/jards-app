@@ -8,7 +8,8 @@ import { ArrowUpRight, CalendarDays, Megaphone, Plus, WalletCards } from "lucide
 import { createClient } from "@/lib/supabase/client";
 import type { PlanoAtivacaoResumo } from "@/lib/supabase/types";
 import { ACTIVATION_STATUS } from "@/lib/ativacao/constants";
-import { activationProgress, money, shortDate } from "@/lib/ativacao/metrics";
+import { activationProgress, shortDate } from "@/lib/ativacao/metrics";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { NovoPlanoAtivacaoModal } from "@/components/modals/NovoPlanoAtivacaoModal";
 
 type Props = {
@@ -68,15 +69,15 @@ function PlanCard({ plan, hideProject }: { plan: PlanoAtivacaoResumo; hideProjec
   return <Link href={`/ativacoes/${plan.id}`} className="group rounded border p-4 transition hover:bg-black/[.018]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
     <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.875rem] font-semibold text-black/75">{plan.nome}</p><p className="mt-1 truncate text-[0.6875rem] text-black/35">{subtitle}</p></div><ArrowUpRight size={14} className="shrink-0 text-black/20 transition group-hover:text-[#7259B5]"/></div>
     <div className="mt-4 flex items-center justify-between"><span className="text-[0.625rem] font-medium" style={{ color: status.color }}>{status.label}</span><span className="text-[0.6875rem] font-semibold tabular-nums text-black/55">{progress}%</span></div>
-    <div className="mt-2 h-1.5 overflow-hidden rounded bg-black/[.06]"><div className="h-full rounded bg-[#7259B5]" style={{ width: `${progress}%` }}/></div>
+    <div className="mt-2 h-1.5 overflow-hidden rounded bg-black/[.06]"><div className="h-full rounded bg-[#0D0D0D]/70" style={{ width: `${progress}%` }}/></div>
     <div className="mt-4 grid grid-cols-3 gap-2 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
       <Mini icon={CalendarDays} label="Próximo prazo" value={shortDate(plan.proxima_data)} />
-      <Mini icon={WalletCards} label="Orçamento" value={money(plan.orcamento_planejado)} />
+      <Mini icon={WalletCards} label="Orçamento" value={formatarValorCurto(plan.orcamento_planejado)} title={formatarValorCompleto(plan.orcamento_planejado)} />
       <Mini icon={Megaphone} label="Contrapartidas" value={`${plan.entregaveis_aprovados}/${plan.entregaveis_total}`} />
     </div>
   </Link>;
 }
 
-function Mini({ icon: Icon, label, value }: { icon: typeof CalendarDays; label: string; value: string }) {
-  return <div className="min-w-0"><p className="flex items-center gap-1 text-[0.5625rem] text-black/25"><Icon size={9}/>{label}</p><p className="mt-1 truncate text-[0.625rem] font-medium text-black/55">{value}</p></div>;
+function Mini({ icon: Icon, label, value, title }: { icon: typeof CalendarDays; label: string; value: string; title?: string }) {
+  return <div className="min-w-0"><p className="flex items-center gap-1 text-[0.5625rem] text-black/25"><Icon size={9}/>{label}</p><p title={title} className="mt-1 truncate text-[0.625rem] font-medium text-black/55">{value}</p></div>;
 }
