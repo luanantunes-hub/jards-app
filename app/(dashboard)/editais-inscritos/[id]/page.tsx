@@ -12,7 +12,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import type { StatusEdital } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { ProjetoResumo } from "@/components/projects/ProjetoResumo";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
@@ -63,7 +63,7 @@ type InscricaoDetalhe = {
   retomada_atividade_id: string | null;
   empresas: { nome: string; logo_url: string | null; site: string | null } | null;
   empresas_crm: { nome: string; domain_key: string | null; site: string | null } | null;
-  projetos_crm: { nome: string; descricao: string | null; identidade_tipo: "padrao" | "icone" | "emoji" | "logo" | null; identidade_valor: string | null; identidade_logo_url: string | null; identidade_cor: string | null } | null;
+  projetos_crm: { nome: string; descricao: string | null; valor_alvo: number | null; proponente_nome: string | null; proponente_cidade: string | null; proponente_estado: string | null; identidade_tipo: "padrao" | "icone" | "emoji" | "logo" | null; identidade_valor: string | null; identidade_logo_url: string | null; identidade_cor: string | null } | null;
 };
 
 type Atividade = {
@@ -213,7 +213,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
         retomada_programada_em, ciclo_programado, retomada_atividade_id,
         empresas!empresa_pub_id(nome, logo_url, site),
         empresas_crm!empresa_crm_id(nome, domain_key, site),
-        projetos_crm!projeto_id(nome, descricao, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor)
+        projetos_crm!projeto_id(nome, descricao, valor_alvo, proponente_nome, proponente_cidade, proponente_estado, identidade_tipo, identidade_valor, identidade_logo_url, identidade_cor)
       `)
       .eq("id", id)
       .single();
@@ -695,26 +695,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             {inscricao.projetos_crm && (
               <section>
                 <div className="mb-3"><h2 className="text-[0.6875rem] font-bold uppercase tracking-[.12em] text-black/35">Projeto</h2></div>
-                <Link
-                  href={inscricao.projeto_id ? `/projetos/${inscricao.projeto_id}` : "#"}
-                  className={`block rounded border bg-white p-5 transition ${inscricao.projeto_id ? "hover:border-[#7259B5]/30 hover:bg-black/[.04]" : "pointer-events-none"}`}
-                  style={{ borderColor: "rgba(13,13,13,.08)" }}
-                >
-                  <div className="flex items-center gap-3">
-                    <ProjectIdentity
-                      nome={inscricao.projetos_crm.nome}
-                      tipo={inscricao.projetos_crm.identidade_tipo}
-                      valor={inscricao.projetos_crm.identidade_valor}
-                      logoUrl={inscricao.projetos_crm.identidade_logo_url}
-                      cor={inscricao.projetos_crm.identidade_cor}
-                      size="md"
-                    />
-                    <p className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-[#0D0D0D]">{inscricao.projetos_crm.nome}</p>
-                  </div>
-                  {inscricao.projetos_crm.descricao && (
-                    <p className="mt-3 text-[0.75rem] leading-relaxed text-black/45">{inscricao.projetos_crm.descricao}</p>
-                  )}
-                </Link>
+                <ProjetoResumo projetoId={inscricao.projeto_id} projeto={inscricao.projetos_crm} />
               </section>
             )}
 

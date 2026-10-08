@@ -97,12 +97,14 @@ export function ProjectIdentity({
     return <div className={`${dimensions} rounded bg-black/5 flex items-center justify-center text-[1.125rem] flex-shrink-0`} aria-label={`Ícone ${valor}`}>{valor}</div>;
   }
 
+  // Identidade escolhida é marca, como o logo de uma empresa: quadrado
+  // preenchido na cor, com o símbolo em branco (nunca ícone solto colorido).
   if (tipo === "icone") {
-    return <div className={`${dimensions} rounded flex items-center justify-center flex-shrink-0`} style={{ color: iconCor }}><Icon size={iconSize} /></div>;
+    return <div className={`${dimensions} rounded flex items-center justify-center flex-shrink-0 text-white`} style={{ background: iconCor }}><Icon size={iconSize} /></div>;
   }
 
   if (tipo === "logo" && logoFailed) {
-    return <div className={`${dimensions} rounded flex items-center justify-center text-[0.6875rem] font-bold flex-shrink-0`} style={{ color: iconCor }}>{initials(nome)}</div>;
+    return <div className={`${dimensions} rounded flex items-center justify-center text-[0.6875rem] font-bold flex-shrink-0 text-white`} style={{ background: iconCor }}>{initials(nome)}</div>;
   }
 
   return <div className={`${dimensions} rounded bg-black/5 flex items-center justify-center text-black/35 flex-shrink-0`}><DefaultIcon size={iconSize} /></div>;

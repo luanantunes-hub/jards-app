@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import {
   ArrowLeft, Pencil, Plus, RefreshCw, Mail, Phone,
   Users, Calendar, MoreHorizontal, FileText, ExternalLink,
-  FolderOpen, Star, Clock, Send,
+  FolderOpen, Clock, Send,
   X, Upload, Trash2,
   LayoutDashboard, MessagesSquare, RotateCw, Tag, Info, Layers,
   ChevronDown, ArrowUp, ArrowDown, Minus, Check,
@@ -15,7 +15,7 @@ import { excluirDocumento } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import type { Captacao, Atividade } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
-import { ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { ProjetoResumo } from "@/components/projects/ProjetoResumo";
 import { CotasReferenceTab } from "@/components/CotasReferenceTab";
 import PrioBadge from "@/components/ui/PrioBadge";
 import SharedStatusBadge from "@/components/ui/StatusBadge";
@@ -786,43 +786,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 <div className="mb-3">
                   <h2 className="text-[0.75rem] font-bold uppercase tracking-[.12em] text-black/40">Projeto</h2>
                 </div>
-                <Link
-                  href={captacao.projeto_id ? `/projetos/${captacao.projeto_id}` : "#"}
-                  className={`block rounded border bg-white p-5 transition ${captacao.projeto_id ? "hover:border-[#7259B5]/30 hover:bg-black/[.04]" : "pointer-events-none"}`}
-                  style={{ borderColor: "rgba(13,13,13,.08)" }}
-                >
-                  <div className="flex items-center gap-3">
-                    <ProjectIdentity
-                      nome={captacao.projeto.nome}
-                      tipo={captacao.projeto.identidade_tipo}
-                      valor={captacao.projeto.identidade_valor}
-                      logoUrl={captacao.projeto.identidade_logo_url}
-                      cor={captacao.projeto.identidade_cor}
-                      size="md"
-                    />
-                    <p className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold text-[#0D0D0D]">{captacao.projeto.nome}</p>
-                  </div>
-                  {captacao.projeto.descricao && (
-                    <p className="mt-3 text-[0.75rem] leading-relaxed text-black/45">{captacao.projeto.descricao}</p>
-                  )}
-                  {(captacao.projeto.proponente_nome || captacao.projeto.valor_alvo) && (
-                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.6875rem] text-black/50">
-                      {captacao.projeto.proponente_nome && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <Users size={11} className="text-black/30" />
-                          {captacao.projeto.proponente_nome}
-                          {captacao.projeto.proponente_cidade && captacao.projeto.proponente_estado ? ` · ${captacao.projeto.proponente_cidade}, ${captacao.projeto.proponente_estado}` : ""}
-                        </span>
-                      )}
-                      {captacao.projeto.valor_alvo && (
-                        <span className="inline-flex items-center gap-1.5 font-semibold text-[#7259B5]">
-                          <Star size={11} className="text-[#7259B5]/60" />
-                          {formatCurrency(captacao.projeto.valor_alvo)} de meta
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </Link>
+                <ProjetoResumo projetoId={captacao.projeto_id} projeto={captacao.projeto} />
               </section>
             )}
 
