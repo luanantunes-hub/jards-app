@@ -69,7 +69,7 @@ export function trechosParaLeitura(antes: string, agora: string): string {
   return texto.length > TRECHOS_MAXIMOS ? `${texto.slice(0, TRECHOS_MAXIMOS)}\n[trechos cortados]` : texto;
 }
 
-async function chamarIa(prompt: string): Promise<{ bruta: unknown; corpo: unknown; erro: string | null }> {
+export async function chamarIa(prompt: string): Promise<{ bruta: unknown; corpo: unknown; erro: string | null }> {
   const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
   if (!apiKey) return { bruta: null, corpo: null, erro: "GOOGLE_AI_API_KEY não configurada" };
   const modelo = modeloDaIa();
