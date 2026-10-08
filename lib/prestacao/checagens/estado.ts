@@ -43,11 +43,11 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
   const db = cliente as any;
   const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null; obra_grupo: string | null } & DatasDaPrestacao>(
     db.from("prestacoes_contas")
-      .select("organization_id, regime_id, valor_aprovado, obra_grupo, data_aprovacao, data_liberacao, data_inicio_execucao, data_fim_execucao")
+      .select("organization_id, regime_id, valor_aprovado, obra_grupo, data_aprovacao, data_liberacao, data_termo, data_inicio_execucao, data_fim_execucao")
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -83,6 +83,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<DefesoEleitoral>(() => db.from("calendario_regulatorio")
       .select("inicio, fim, descricao").eq("tipo", "defeso_eleitoral").order("inicio")),
+    todas<{ id: string; tipo: string }>(() => db.from("prestacao_contas_bancarias").select("id, tipo").eq("prestacao_id", prestacaoId).order("id")),
   ]);
 
   const nos = versao
@@ -118,6 +119,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     regime: regime?.success ? regime.data : null,
     prestacao: {
       data_aprovacao: prestacao.data_aprovacao ?? null,
+      data_termo: prestacao.data_termo ?? null,
       data_liberacao: prestacao.data_liberacao ?? null,
       data_inicio_execucao: prestacao.data_inicio_execucao ?? null,
       data_fim_execucao: prestacao.data_fim_execucao ?? null,
@@ -129,6 +131,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     nos,
     pagamentos,
     lancamentos,
+    contas,
     alteracoes,
     metas,
     locais,

@@ -15,6 +15,7 @@
 
 import type { Achado, EstadoDaPrestacao, SeveridadeChecagem } from "./catalogo";
 import { checarConciliacao } from "./checar-conciliacao";
+import { checarContas } from "./checar-contas";
 import { checarDespesas } from "./checar-despesas";
 import { checarConcentracao, checarOrcamento, checarPeriodo } from "./checar-financeiro";
 import { checarEvidencias } from "./checar-evidencias";
@@ -30,6 +31,7 @@ export { captadoDoExtrato } from "./checar-financeiro";
 export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado: EstadoDaPrestacao) => Achado[] }[] = [
   { id: "despesas", titulo: "Despesas, fornecedores e pagamentos", executar: checarDespesas },
   { id: "conciliacao", titulo: "Conciliação com o extrato", executar: checarConciliacao },
+  { id: "contas", titulo: "Contas: saque, captação e vigência", executar: checarContas },
   { id: "periodo", titulo: "Período dos documentos e liberação", executar: checarPeriodo },
   { id: "orcamento", titulo: "Saldo dos itens, tetos, alterações e contrapartida", executar: checarOrcamento },
   { id: "concentracao", titulo: "Concentração por fornecedor e partes relacionadas", executar: checarConcentracao },
