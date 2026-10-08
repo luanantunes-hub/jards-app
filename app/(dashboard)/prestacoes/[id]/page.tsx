@@ -23,6 +23,7 @@ import { MarcosDaPrestacao, ProximosPrazos } from "@/components/prestacao/Prazos
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { checklistDeEnvio } from "@/lib/prestacao/envio";
 import { ResponsavelDaPrestacao } from "@/components/prestacao/ResponsavelDaPrestacao";
+import { LinksDoPatrocinador } from "@/components/prestacao/LinksDoPatrocinador";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -588,6 +589,7 @@ export default function PrestacaoDetalhe() {
 
           <ProximosPrazos prazos={prazos} />
           <MarcosDaPrestacao prestacao={prestacao} hoje={hoje} />
+          <LinksDoPatrocinador prestacaoId={id} captacaoId={prestacao.captacao_id} projetoId={prestacao.projeto_id} podeEditar={permissoes.editar} />
 
           {/* Histórico */}
           <div className="bg-white rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
