@@ -88,6 +88,26 @@ function sectorPlaceholder(setor: string | null | undefined) {
   if (value.includes("educ")) return "/placeholders/setores/educacao.jpeg";
   if (value.includes("eletron") || value.includes("tecnologia")) return "/placeholders/setores/eletronicos.jpeg";
   if (value.includes("embalag")) return "/placeholders/setores/embalagens.png";
+  if (value.includes("industria")) return "/placeholders/setores/industria.jpeg";
+  if (value.includes("financ")) return "/placeholders/setores/financeiro.jpeg";
+  if (value.includes("varejo")) return "/placeholders/setores/varejo.jpeg";
+  if (value.includes("saude")) return "/placeholders/setores/saude.jpeg";
+  if (value.includes("energia")) return "/placeholders/setores/energia.jpeg";
+  if (value.includes("logist")) return "/placeholders/setores/logistica.jpeg";
+  if (value.includes("engenharia")) return "/placeholders/setores/engenharia.jpeg";
+  if (value.includes("servico")) return "/placeholders/setores/servicos.jpeg";
+  if (value.includes("equipamento")) return "/placeholders/setores/equipamentos.jpeg";
+  if (value.includes("mineracao")) return "/placeholders/setores/mineracao.jpeg";
+  if (value.includes("seguro")) return "/placeholders/setores/seguros.jpeg";
+  if (value.includes("petroleo")) return "/placeholders/setores/petroleo.jpeg";
+  if (value.includes("maritimo")) return "/placeholders/setores/maritimo.jpeg";
+  if (value.includes("textil")) return "/placeholders/setores/textil.jpeg";
+  if (value.includes("juridico")) return "/placeholders/setores/juridico.jpeg";
+  if (value === "gas") return "/placeholders/setores/gas.jpeg";
+  if (value.includes("infraestrutura")) return "/placeholders/setores/infraestrutura.jpeg";
+  if (value.includes("midia") || value.includes("entretenimento")) return "/placeholders/setores/midia.jpeg";
+  if (value.includes("saneamento")) return "/placeholders/setores/saneamento.jpeg";
+  if (value.includes("papel") || value.includes("celulose")) return "/placeholders/setores/papel-celulose.jpeg";
   return null;
 }
 
