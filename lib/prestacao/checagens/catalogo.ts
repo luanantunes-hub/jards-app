@@ -93,6 +93,11 @@ export const CATALOGO_CHECAGENS = {
   // Regras da conta e do documento que a ANCINE cobra (P7.1); valem para todo regime que as traz.
   TARIFA_GLOSAVEL: { titulo: "Tarifa bancária que pode ser glosada", grupo: "conciliacao", resultado: "revisar", destino: "extrato", dimensao: "contas" },
   DOC_EMISSAO_POS_DEBITO: { titulo: "Documento emitido muito depois do débito", grupo: "despesa", resultado: "nao_conforme", destino: "comprovantes", regras: ["emissao_30_dias"] },
+  // Contas pelo extrato (P8.1, a partir da LIE).
+  SAQUE_NO_EXTRATO: { titulo: "Saque em dinheiro na conta do projeto", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", dimensao: "pagamentos" },
+  CAPTADO_ACIMA_DO_AUTORIZADO: { titulo: "Captação acima do autorizado", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["captar_acima"] },
+  APORTE_FORA_DA_CAPTACAO: { titulo: "Aporte fora da conta de captação", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["deposito_identificado"] },
+  DEBITO_FORA_DA_VIGENCIA: { titulo: "Débito fora da vigência", grupo: "conciliacao", resultado: "nao_conforme", destino: "conciliacao", dimensao: "despesas" },
   // Orçamento (P1.6, P1.7)
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
@@ -182,6 +187,8 @@ export type PagamentoDoEstado = PagamentoParaChecar & Pick<PrestacaoPagamento, "
 /** Marcos da prestação que as checagens de período usam (P1.2). */
 export type DatasDaPrestacao = {
   data_aprovacao?: string | null;
+  /** Assinatura do Termo de Compromisso (LIE): início da vigência das despesas. */
+  data_termo?: string | null;
   data_liberacao?: string | null;
   data_inicio_execucao?: string | null;
   data_fim_execucao?: string | null;
@@ -203,6 +210,8 @@ export type EstadoDaPrestacao = {
   /** Itens da versão em uso do orçamento, com os CNAEs que valem para cada um. */
   itens: readonly ItemDoEstado[];
   pagamentos: readonly PagamentoDoEstado[];
+  /** Tipo de cada conta do projeto (P8.1): captação, movimento… */
+  contas?: readonly { id: string; tipo: string }[];
   /** A conta vem junto para as planilhas por conta (P7.3). */
   lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */
