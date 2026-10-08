@@ -15,10 +15,15 @@
 // lido. A falha só vira aviso na última tentativa do dia ({"ultima": true}).
 // O super admin também roda a coleta pela tela /admin/normas, para um dia
 // escolhido; aí a função confere o token dele e avisa da falha na hora.
+//
+// No modo "paginas" (P6.1, rotina jards-agente-paginas), coleta as páginas e
+// os arquivos dos órgãos vencidos pela frequência de cada fonte (paginas.ts);
+// pela tela, uma fonte escolhida, na hora.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { Unzip, UnzipInflate } from "https://esm.sh/fflate@0.8.2";
 import { chaveDoArtigo, lerArtigoDou, triarArtigo, type ArtigoDou } from "../_shared/vigia-dou.ts";
+import { CAMPOS_DA_FONTE, coletarFontes, fonteVencida, type Cliente, type FonteVigiada } from "./paginas.ts";
 
 const INLABS = "https://inlabs.in.gov.br";
 const TEXTO_MAXIMO = 200_000;
@@ -149,6 +154,55 @@ function lerXmlsDoZip(zip: Uint8Array, aoLer: (conteudo: Uint8Array<ArrayBuffer>
 
 type Relevante = { artigo: ArtigoDou; motivos: string[]; xml: Uint8Array<ArrayBuffer> };
 
+// Para as páginas: no máximo 8 fontes por coleta (as outras ficam vencidas para
+// o dia seguinte) e nenhuma começa depois de 100 segundos, abaixo do limite da função.
+const FONTES_POR_COLETA = 8;
+const PRAZO_DAS_PAGINAS_MS = 100_000;
+
+async function coletarPaginas(admin: Cliente, fonteId: string | undefined) {
+  const hoje = hojeEmBrasilia();
+  let consulta = admin.from("normas_fontes").select(CAMPOS_DA_FONTE).in("tipo", ["pagina", "arquivo"]);
+  consulta = fonteId ? consulta.eq("id", fonteId) : consulta.eq("ativa", true);
+  const { data, error } = await consulta.order("ultima_coleta_em", { ascending: true, nullsFirst: true });
+  if (error) return responder({ error: "fontes_nao_lidas" }, 500);
+  const fontes = ((data ?? []) as FonteVigiada[]).filter(fonte => fonteId || fonteVencida(fonte)).slice(0, FONTES_POR_COLETA);
+  if (fonteId && fontes.length === 0) return responder({ error: "fonte_inexistente" }, 404);
+  if (fontes.length === 0) return responder({ referencia: hoje, situacao: "nada_vencido" });
+
+  const { data: execucao, error: erroExecucao } = await admin.from("agente_execucoes")
+    .insert({ agente: "vigia_paginas", fonte_id: fonteId ?? null, referencia: hoje, situacao: "rodando" })
+    .select("id").single();
+  if (erroExecucao || !execucao) return responder({ error: "execucao_nao_registrada" }, 500);
+
+  let resumo;
+  try {
+    resumo = await coletarFontes(admin, fontes, execucao.id, hoje, PRAZO_DAS_PAGINAS_MS);
+  } catch (falha) {
+    const detalhe = (falha instanceof Error ? falha.message : String(falha)).slice(0, 2000);
+    await admin.from("agente_execucoes")
+      .update({ situacao: "falhou", detalhe, terminada_em: new Date().toISOString() }).eq("id", execucao.id);
+    await admin.rpc("fn_normas_avisar", { p_execucao_id: execucao.id });
+    return responder({ execucao: execucao.id, situacao: "falhou", detalhe }, 502);
+  }
+  // Uma fonte que falha sozinha espera a terceira falha para avisar; todas
+  // falharem (a rede da função, não o órgão) é falha da coleta.
+  const situacao = resumo.todasFalharam && fontes.length > 1 ? "falhou" : "ok";
+  await admin.from("agente_execucoes").update({
+    situacao,
+    lidos: resumo.lidos,
+    rotina: resumo.rotina,
+    relevantes: resumo.relevantes,
+    novos: resumo.novos,
+    fontes_sem_resposta: resumo.semResposta,
+    detalhe: resumo.detalhe,
+    terminada_em: new Date().toISOString(),
+  }).eq("id", execucao.id);
+  if (situacao === "falhou" || resumo.novos > 0 || resumo.semResposta.length > 0) {
+    await admin.rpc("fn_normas_avisar", { p_execucao_id: execucao.id });
+  }
+  return responder({ execucao: execucao.id, referencia: hoje, situacao, ...resumo });
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (req.method !== "POST") return responder({ error: "metodo" }, 405);
@@ -168,7 +222,11 @@ Deno.serve(async (req) => {
   }
   if (!autorizado) return responder({ error: "sem_permissao" }, 401);
 
-  const corpo = await req.json().catch(() => ({})) as { data?: string; ultima?: boolean };
+  const corpo = await req.json().catch(() => ({})) as { data?: string; ultima?: boolean; modo?: string; fonte_id?: string };
+  if (corpo.modo === "paginas") {
+    if (corpo.fonte_id !== undefined && !/^[0-9a-f-]{36}$/i.test(corpo.fonte_id)) return responder({ error: "fonte_invalida" }, 400);
+    return await coletarPaginas(admin, corpo.fonte_id);
+  }
   const hoje = hojeEmBrasilia();
   const data = corpo.data ?? hoje;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data) || data > hoje) return responder({ error: "data_invalida" }, 400);
@@ -234,6 +292,7 @@ Deno.serve(async (req) => {
           url: artigo.pdf || null,
           motivos,
           hash: await sha256(xml),
+          execucao_id: execucao.id,
         })));
         const { data: novos, error } = await admin.from("normas_documentos")
           .upsert(linhas, { onConflict: "chave", ignoreDuplicates: true })

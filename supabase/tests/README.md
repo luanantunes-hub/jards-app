@@ -2,7 +2,7 @@
 
 `prestacao_rls.test.sql` confere, com pgTAP, quem lê, cria, altera e apaga cada parte da prestação de contas e os arquivos dela no bucket `documentos`. O arquivo monta o próprio cenário (três organizações, oito pessoas e um visitante, todos com id `f0000000-0000-4000-8000-…`), roda as verificações e termina em `rollback`: nada fica gravado, nem o pgTAP, que é instalado dentro da transação.
 
-`normas_rls.test.sql` confere o vigia normativo (P1.10): só o super admin lê os atos guardados e as coletas, a conferência passa pela função, os avisos saem e a rotina está agendada. Roda do mesmo jeito.
+`normas_rls.test.sql` confere o vigia normativo (P1.10 e P6.1): só o super admin lê os atos, as versões de página, as cópias e as coletas, cadastra fontes e confere pelas funções; os avisos saem e as rotinas estão agendadas. Roda do mesmo jeito.
 
 O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`.
 
