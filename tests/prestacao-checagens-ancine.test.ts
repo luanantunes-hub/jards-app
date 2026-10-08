@@ -2,11 +2,14 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { executarChecagens, fonteDaChecagem, type Achado, type DespesaDoEstado, type EstadoDaPrestacao } from "../lib/prestacao/checagens";
 import { tarifaGlosavel } from "../lib/prestacao/checagens/checar-conciliacao";
+import { contrapartidaDaPrestacao } from "../lib/prestacao/checagens/checar-financeiro";
+import type { NoOrcamento } from "../lib/prestacao/orcamento";
 import { regimePorCodigo } from "../lib/prestacao/regimes";
 
 // P7.1: o que o extrato mostra contra a regra do regime. Os exemplos vêm do
 // Manual de Prestação de Contas da ANCINE v2.11 (tarifas, p. 23 e 64) e da IN
 // 159, art. 18, XXIX (documento emitido até 30 dias depois do débito).
+// P7.2: contrapartida mínima (Lei 8.685, art. 4º, § 2º, I; IN 159, art. 16, § 1º).
 
 const IN159 = regimePorCodigo("ancine_in159_2021")!;
 const IN150 = regimePorCodigo("ancine_in150_2019")!;
@@ -102,4 +105,55 @@ test("IN 159: documento emitido mais de 30 dias depois do débito é bloqueio", 
   assert.equal(fonteDaChecagem(IN159, "DOC_EMISSAO_POS_DEBITO")?.dispositivo, "art. 18, XXIX");
   // A Rouanet não traz a regra: nada a checar.
   assert.equal(de(executarChecagens({ ...s, regime: ROUANET }), "DOC_EMISSAO_POS_DEBITO").length, 0);
+});
+
+// ─── Contrapartida (P7.2) ───────────────────────────────────────────────────
+
+const no = (id: string, nome: string, valor_total: number, grupo_custo: string): NoOrcamento => ({
+  id, nome, versao_id: "v1", parent_id: null, tipo: "item", codigo: null, descricao: null, uf: null, municipio: null,
+  grupo_custo, unidade: null, quantidade: null, ocorrencias: null, valor_unitario: null, valor_total, valor_remanejado: 0, ordem: 0,
+});
+
+// Orçamento global de R$ 100 mil (gerenciamento entra): o mínimo é R$ 5 mil.
+const NOS = [no("i1", "Montagem", 90_000, "execucao"), no("g1", "Gerenciamento", 10_000, "gerenciamento")];
+const DESPESAS = [
+  despesa("recurso", { valor_extraido: 50_000 }),
+  despesa("dinheiro", { valor_extraido: 2_000, contrapartida: "financeira" }),
+  despesa("doada", { valor_extraido: 1_000, contrapartida: "doacao" }),
+  despesa("recusada", { valor_extraido: 5_000, contrapartida: "financeira", status: "rejeitado" }),
+];
+const HOJE = new Date(2026, 9, 8);
+
+test("IN 159: contrapartida abaixo de 5% do orçamento global avisa na execução e bloqueia depois do fim", () => {
+  const naExecucao = estado(IN159, { nos: NOS, despesas: DESPESAS, hoje: HOJE, prestacao: { data_fim_execucao: "2026-12-31" } });
+  assert.deepEqual(contrapartidaDaPrestacao(naExecucao), { percentual: 5, orcamento: 10_000_000, minimo: 500_000, financeira: 200_000, doacao: 100_000, comprovada: 300_000 });
+  const [aviso] = de(executarChecagens(naExecucao), "CONTRAPARTIDA_MINIMA");
+  assert.equal(aviso.severidade, "alerta");
+  assert.equal(aviso.resultado, "nao_conforme");
+  assert.match(aviso.mensagem, /^Contrapartida comprovada: R\$\s3\.000,00 \(R\$\s2\.000,00 em dinheiro e R\$\s1\.000,00 por doação\), abaixo do mínimo de R\$\s5\.000,00 \(5% do orçamento global de R\$\s100\.000,00\); faltam R\$\s2\.000,00\./);
+  assert.match(aviso.mensagem, /a execução vai até 31\/12\/2026\.$/);
+  assert.equal(aviso.fonte?.dispositivo, "art. 4º, § 2º, I; IN 159, art. 16, § 1º");
+
+  const terminada = { ...naExecucao, prestacao: { data_fim_execucao: "2026-06-30" } };
+  const [bloqueio] = de(executarChecagens(terminada), "CONTRAPARTIDA_MINIMA");
+  assert.equal(bloqueio.severidade, "bloqueio");
+  // A chave é a mesma: a verificação muda de severidade sem perder a decisão.
+  assert.equal(bloqueio.chave, aviso.chave);
+});
+
+test("contrapartida que alcança o mínimo, sem despesa ou sem orçamento", () => {
+  const completa = DESPESAS.map(d => d.id === "recusada" ? { ...d, status: "pendente" as const } : d);
+  assert.equal(de(executarChecagens(estado(IN159, { nos: NOS, despesas: completa, hoje: HOJE })), "CONTRAPARTIDA_MINIMA").length, 0);
+  assert.equal(de(executarChecagens(estado(IN159, { nos: NOS, despesas: [], hoje: HOJE })), "CONTRAPARTIDA_MINIMA").length, 0);
+
+  const [semOrcamento] = de(executarChecagens(estado(IN159, { nos: [], despesas: DESPESAS, hoje: HOJE })), "CONTRAPARTIDA_MINIMA");
+  assert.deepEqual([semOrcamento.severidade, semOrcamento.resultado], ["info", "nao_calculavel"]);
+
+  // Sem despesa marcada, a mensagem diz o mínimo; a IN 150 traz a mesma regra.
+  const [nenhuma] = de(executarChecagens(estado(IN150, { nos: NOS, despesas: [despesa("recurso", {})], hoje: HOJE })), "CONTRAPARTIDA_MINIMA");
+  assert.match(nenhuma.mensagem, /^Nenhuma despesa marcada como contrapartida; o mínimo é R\$\s5\.000,00/);
+  // Rouanet e esporte não pedem contrapartida mínima.
+  for (const regime of [ROUANET, LIE]) {
+    assert.equal(de(executarChecagens(estado(regime, { nos: NOS, despesas: DESPESAS, hoje: HOJE })), "CONTRAPARTIDA_MINIMA").length, 0, regime.codigo);
+  }
 });

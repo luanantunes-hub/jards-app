@@ -31,7 +31,7 @@ export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado
   { id: "despesas", titulo: "Despesas, fornecedores e pagamentos", executar: checarDespesas },
   { id: "conciliacao", titulo: "Conciliação com o extrato", executar: checarConciliacao },
   { id: "periodo", titulo: "Período dos documentos e liberação", executar: checarPeriodo },
-  { id: "orcamento", titulo: "Saldo dos itens, tetos e alterações", executar: checarOrcamento },
+  { id: "orcamento", titulo: "Saldo dos itens, tetos, alterações e contrapartida", executar: checarOrcamento },
   { id: "concentracao", titulo: "Concentração por fornecedor e partes relacionadas", executar: checarConcentracao },
   { id: "objeto", titulo: "Metas e locais do objeto", executar: checarObjeto },
   { id: "evidencias", titulo: "Evidências: vínculo, data e local da foto", executar: checarEvidencias },
