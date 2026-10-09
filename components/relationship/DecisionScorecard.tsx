@@ -55,7 +55,7 @@ function ScoreRing({ score }: { score: number | null }) {
     <div className="relative h-[7.75rem] w-[7.75rem] shrink-0">
       <SegmentedScoreArc score={score} label={score === null ? "Score sem avaliação" : `Score ${score.toFixed(1)} de 5`} />
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className={`text-[1.875rem] font-semibold tabular-nums tracking-[-.055em] ${score === null ? "text-black/30" : "text-[#0D0D0D]"}`}>{score === null ? "N/A" : score.toFixed(1).replace(".", ",")}</span>
+        <span className={`text-[1.875rem] font-semibold tabular-nums tracking-[-.055em] ${score === null ? "text-black/30" : "text-[#282525]"}`}>{score === null ? "N/A" : score.toFixed(1).replace(".", ",")}</span>
         <span className="mt-0.5 text-[0.625rem] font-medium text-black/35">de 5</span>
       </div>
     </div>
@@ -76,7 +76,7 @@ export function CompactDecisionScoreRing({ score }: { score: number | null }) {
         strokeWidth={10}
         label={score === null ? "Score sem avaliação" : `Score ${score.toFixed(1)} de 5`}
       />
-      <span className={`absolute inset-0 flex items-center justify-center text-[0.5625rem] font-semibold tabular-nums tracking-[-.04em] ${score === null ? "text-black/30" : "text-[#0D0D0D]"}`}>
+      <span className={`absolute inset-0 flex items-center justify-center text-[0.5625rem] font-semibold tabular-nums tracking-[-.04em] ${score === null ? "text-black/30" : "text-[#282525]"}`}>
         {score === null ? "N/A" : score.toFixed(1).replace(".", ",")}
       </span>
     </div>

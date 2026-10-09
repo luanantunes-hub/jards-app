@@ -34,7 +34,7 @@ type UltimaVersao = { fonte_id: string; arquivo: string | null; created_at: stri
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 const ICONE = "flex h-9 w-9 items-center justify-center rounded text-black/45 transition hover:bg-black/[.04] hover:text-black/75 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:opacity-40";
 
 const TIPOS = [
@@ -304,7 +304,7 @@ export function FontesVigiadas({ onColetou }: { onColetou: () => void }) {
           Todo dia às 9h37, as páginas e os arquivos vencidos pela frequência são baixados. Mudou o texto ou a lista de arquivos, a versão nova vai para Para conferir, com a diferença lado a lado.
         </p>
         <button type="button" onClick={() => setEditando("nova")}
-          className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]">
+          className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
           <Plus size={14} aria-hidden /> Incluir fonte
         </button>
       </div>
@@ -327,7 +327,7 @@ export function FontesVigiadas({ onColetou }: { onColetou: () => void }) {
               <li key={fonte.id} className="flex flex-col gap-2 px-5 py-3.5 sm:flex-row sm:items-start">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-1.5">
-                    <h3 className={`text-[0.8125rem] font-medium ${fonte.ativa ? "text-[#0D0D0D]" : "text-black/45"}`}>{fonte.nome}</h3>
+                    <h3 className={`text-[0.8125rem] font-medium ${fonte.ativa ? "text-[#282525]" : "text-black/45"}`}>{fonte.nome}</h3>
                     <Etiqueta texto={ROTULO_DO_TIPO[fonte.tipo]} />
                     {!fonte.ativa && <Etiqueta texto="Pausada" />}
                     {fonte.falhas_seguidas > 0 && (

@@ -63,7 +63,7 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
           <p className="mb-3 text-[0.6875rem] font-bold uppercase tracking-[.13em] text-[#2E8932]">
             {quantityLabel}
           </p>
-          <h2 id="welcome-team-title" className="max-w-sm text-[1.875rem] font-bold leading-[1.08] tracking-[-.035em] text-[#0D0D0D] sm:text-[2.25rem]">
+          <h2 id="welcome-team-title" className="max-w-sm text-[1.875rem] font-bold leading-[1.08] tracking-[-.035em] text-[#282525] sm:text-[2.25rem]">
             Sua equipe ganhou espaço para crescer.
           </h2>
           <p className="mt-4 max-w-sm text-sm leading-6 text-black/50">

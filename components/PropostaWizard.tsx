@@ -172,7 +172,7 @@ export function PropostaWizard({
               <FileText size={16} className="text-black/50" />
             </div>
             <div>
-              <h2 className="text-[0.9375rem] font-bold text-black">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
+              <h2 className="text-[0.9375rem] font-bold text-[#282525]">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
               {proposta && (
                 <div className="flex items-center gap-2 mt-0.5">
                   <span
@@ -250,12 +250,12 @@ export function PropostaWizard({
 
           {/* Título geral */}
           <div className="mb-6">
-            <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Título da proposta</label>
+            <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Título da proposta</label>
             <input
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
               placeholder="Proposta de patrocínio..."
-              className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+              className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
               style={{ borderColor: "rgba(13,13,13,.15)" }}
             />
           </div>
@@ -266,32 +266,32 @@ export function PropostaWizard({
             <div className="space-y-4">
               <p className="text-[0.625rem] font-bold uppercase tracking-[.13em] text-black/30">Slide 1 — Capa</p>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Título</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Título</label>
                 <input
                   value={capa.titulo ?? ""}
                   onChange={e => setCapa(c => ({ ...c, titulo: e.target.value }))}
                   placeholder={projetoNome}
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Subtítulo</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Subtítulo</label>
                 <input
                   value={capa.subtitulo ?? ""}
                   onChange={e => setCapa(c => ({ ...c, subtitulo: e.target.value }))}
                   placeholder="Proposta de Patrocínio"
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">URL da imagem</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">URL da imagem</label>
                 <input
                   value={capa.imagem_url ?? ""}
                   onChange={e => setCapa(c => ({ ...c, imagem_url: e.target.value }))}
                   placeholder="https://..."
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
@@ -303,18 +303,18 @@ export function PropostaWizard({
             <div className="space-y-4">
               <p className="text-[0.625rem] font-bold uppercase tracking-[.13em] text-black/30">Slide 2 — História</p>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Texto principal</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Texto principal</label>
                 <textarea
                   value={historia.texto ?? ""}
                   onChange={e => setHistoria(h => ({ ...h, texto: e.target.value }))}
                   placeholder="Conte a história do projeto, sua missão, por que existe..."
                   rows={6}
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition resize-none"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition resize-none"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">
                   Imagens <span className="text-black/30 font-normal">(URLs, uma por linha)</span>
                 </label>
                 <textarea
@@ -322,7 +322,7 @@ export function PropostaWizard({
                   onChange={e => setHistoria(h => ({ ...h, imagens: e.target.value.split("\n").map(s => s.trim()).filter(Boolean) }))}
                   placeholder={"https://exemplo.com/foto1.jpg\nhttps://exemplo.com/foto2.jpg"}
                   rows={3}
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition resize-none"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition resize-none"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
@@ -334,43 +334,43 @@ export function PropostaWizard({
             <div className="space-y-4">
               <p className="text-[0.625rem] font-bold uppercase tracking-[.13em] text-black/30">Slide 3 — Números</p>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Alcance</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Alcance</label>
                 <input
                   value={numeros.alcance ?? ""}
                   onChange={e => setNumeros(n => ({ ...n, alcance: e.target.value }))}
                   placeholder="Ex: Presença em 3 estados, 12 eventos..."
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Público alcançado</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Público alcançado</label>
                 <input
                   type="number"
                   value={numeros.publico ?? ""}
                   onChange={e => setNumeros(n => ({ ...n, publico: e.target.value ? parseInt(e.target.value) : undefined }))}
                   placeholder="Ex: 5000"
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Edições anteriores</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Edições anteriores</label>
                 <input
                   value={numeros.edicoes_anteriores ?? ""}
                   onChange={e => setNumeros(n => ({ ...n, edicoes_anteriores: e.target.value }))}
                   placeholder="Ex: 3 edições anteriores com 100% de captação"
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">ROI médio</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">ROI médio</label>
                 <input
                   value={numeros.roi_medio ?? ""}
                   onChange={e => setNumeros(n => ({ ...n, roi_medio: e.target.value }))}
                   placeholder="Ex: 3:1 (R$3 retornado para cada R$1 investido)"
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
@@ -381,8 +381,8 @@ export function PropostaWizard({
                   <div className="space-y-2">
                     {cotas.filter(cotaTemDisponibilidade).map(c => (
                       <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded bg-black/[0.02]">
-                        <span className="text-[0.75rem] font-semibold text-black">{c.nome}{c.modelo === "produto" && c.produto_nome ? ` · ${c.produto_nome}` : ""}</span>
-                        <span className="text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">
+                        <span className="text-[0.75rem] font-semibold text-[#282525]">{c.nome}{c.modelo === "produto" && c.produto_nome ? ` · ${c.produto_nome}` : ""}</span>
+                        <span className="text-[0.75rem] font-semibold tabular-nums text-[#282525]">
                           {formatCotaValor(c)}
                         </span>
                       </div>
@@ -398,44 +398,44 @@ export function PropostaWizard({
             <div className="space-y-4">
               <p className="text-[0.625rem] font-bold uppercase tracking-[.13em] text-black/30">Slide 4 — Contato</p>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Nome</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Nome</label>
                 <input
                   value={contato.nome ?? ""}
                   onChange={e => setContato(c => ({ ...c, nome: e.target.value }))}
                   placeholder="Nome do responsável"
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">E-mail</label>
+                  <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">E-mail</label>
                   <input
                     value={contato.email ?? ""}
                     onChange={e => setContato(c => ({ ...c, email: e.target.value }))}
                     placeholder="email@exemplo.com"
-                    className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                    className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                     style={{ borderColor: "rgba(13,13,13,.15)" }}
                   />
                 </div>
                 <div>
-                  <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Telefone</label>
+                  <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Telefone</label>
                   <input
                     value={contato.telefone ?? ""}
                     onChange={e => setContato(c => ({ ...c, telefone: e.target.value }))}
                     placeholder="(00) 00000-0000"
-                    className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                    className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                     style={{ borderColor: "rgba(13,13,13,.15)" }}
                   />
                 </div>
               </div>
               <div>
-                <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">WhatsApp</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">WhatsApp</label>
                 <input
                   value={contato.whatsapp ?? ""}
                   onChange={e => setContato(c => ({ ...c, whatsapp: e.target.value }))}
                   placeholder="(00) 00000-0000"
-                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                  className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
@@ -444,14 +444,14 @@ export function PropostaWizard({
               <div className="mt-6 border-t pt-4" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                 <p className="text-[0.625rem] font-bold uppercase tracking-[.13em] text-black/30 mb-3">Configurações do link</p>
                 <div>
-                  <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">
+                  <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">
                     Expira em
                   </label>
                   <input
                     type="date"
                     value={expiraEm}
                     onChange={e => setExpiraEm(e.target.value)}
-                    className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-black outline-none focus:border-[#7259B5] transition"
+                    className="w-full border rounded px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none focus:border-[#7259B5] transition"
                     style={{ borderColor: "rgba(13,13,13,.15)" }}
                   />
                 </div>

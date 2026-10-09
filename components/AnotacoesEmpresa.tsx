@@ -124,7 +124,7 @@ export function AnotacoesEmpresa({ empresaCrmId, empresaNome, onClose }: Props) 
           <div className="flex items-center gap-2">
             <StickyNote size={14} className="text-black/35" />
             <div>
-              <p className="text-[0.75rem] font-bold text-black">Anotações</p>
+              <p className="text-[0.75rem] font-bold text-[#282525]">Anotações</p>
               <p className="text-[0.65625rem] text-black/35">{empresaNome}</p>
             </div>
           </div>

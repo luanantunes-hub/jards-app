@@ -61,7 +61,7 @@ export default function AdminDashboardPage() {
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-[#0D0D0D]">Dashboard</h1>
+        <h1 className="text-xl font-bold text-[#282525]">Dashboard</h1>
         <p className="text-sm text-black/40 mt-0.5">
           {total} usuários cadastrados{primeiro ? ` desde ${fmtDate(primeiro)}` : ""}
         </p>
@@ -70,15 +70,15 @@ export default function AdminDashboardPage() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
           <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Cadastros</p>
-          <p className={`mt-1 text-2xl font-semibold tabular-nums ${total ? "text-[#0D0D0D]" : "text-black/30"}`}>{total}</p>
+          <p className={`mt-1 text-2xl font-semibold tabular-nums ${total ? "text-[#282525]" : "text-black/30"}`}>{total}</p>
         </div>
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
           <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Responderam a origem</p>
-          <p className={`mt-1 text-2xl font-semibold tabular-nums ${respondidos ? "text-[#0D0D0D]" : "text-black/30"}`}>{respondidos}</p>
+          <p className={`mt-1 text-2xl font-semibold tabular-nums ${respondidos ? "text-[#282525]" : "text-black/30"}`}>{respondidos}</p>
         </div>
         <div className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
           <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Taxa de resposta</p>
-          <p className={`mt-1 text-2xl font-semibold tabular-nums ${respondidos ? "text-[#0D0D0D]" : "text-black/30"}`}>
+          <p className={`mt-1 text-2xl font-semibold tabular-nums ${respondidos ? "text-[#282525]" : "text-black/30"}`}>
             {total > 0 ? Math.round((respondidos / total) * 100) : 0}%
           </p>
         </div>
@@ -87,7 +87,7 @@ export default function AdminDashboardPage() {
       <div className="rounded p-6" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
         <div className="flex items-center gap-2 mb-5">
           <Compass size={15} className="text-black/40" />
-          <h2 className="text-sm font-bold text-[#0D0D0D]">Onde conheceu a Jards?</h2>
+          <h2 className="text-sm font-bold text-[#282525]">Onde conheceu a Jards?</h2>
         </div>
 
         {respondidos === 0 ? (

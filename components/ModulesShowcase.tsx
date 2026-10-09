@@ -46,7 +46,7 @@ function SegBtn({ label, on }: { label: string; on?: boolean }) {
       style={{
         padding: "0 14px", height: 34, display: "flex", alignItems: "center",
         fontSize: 12, fontWeight: 600, cursor: "default", whiteSpace: "nowrap",
-        background: on ? "#0D0D0D" : "#fff",
+        background: on ? "#282525" : "#fff",
         color: on ? "#fff" : "rgba(13,13,13,.45)",
         borderRight: "1px solid rgba(13,13,13,.12)",
       }}
@@ -115,14 +115,14 @@ function Sidebar({ activeNavKey }: { activeNavKey: string | null }) {
       {/* logo */}
       <div style={{ height: 56, display: "flex", alignItems: "center", gap: 9, padding: "0 20px", borderBottom: "1px solid rgba(13,13,13,.07)", flexShrink: 0 }}>
         <svg width="20" height="20" viewBox="0 0 689 689"><path fill="#D94E4E" d="M0,168h194c-2,19-9,38-11,58C170,411,341,548,519,495v194H0V168Z"/><path fill="#7259B5" d="M675,338H355l-4-4V15C548-57,743,141,675,338Z"/></svg>
-        <span style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 16, fontWeight: 700, color: "#0D0D0D" }}>Jards</span>
+        <span style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 16, fontWeight: 700, color: "#282525" }}>Jards</span>
       </div>
       {/* user */}
       <div style={{ padding: 8, borderBottom: "1px solid rgba(13,13,13,.07)", flexShrink: 0 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 8px", borderRadius: 4 }}>
           <div style={{ width: 28, height: 28, borderRadius: 4, background: "#7259B5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#fff", flexShrink: 0 }}>L</div>
           <div>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#0D0D0D", lineHeight: 1.3 }}>Luana</p>
+            <p style={{ fontSize: 12, fontWeight: 600, color: "#282525", lineHeight: 1.3 }}>Luana</p>
             <p style={{ fontSize: 10, color: "rgba(13,13,13,.35)" }}>Plano Pro</p>
           </div>
         </div>
@@ -163,7 +163,7 @@ function PageHeader({ eyebrow, title, action }: { eyebrow?: string; title: strin
     <div style={{ flexShrink: 0, padding: "28px 32px 20px", borderBottom: "1px solid rgba(13,13,13,.08)" }}>
       {eyebrow && <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(13,13,13,.30)", marginBottom: 4 }}>{eyebrow}</p>}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-        <h1 style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-.025em", color: "#0D0D0D" }}>{title}</h1>
+        <h1 style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-.025em", color: "#282525" }}>{title}</h1>
         {action && <OutlineBtn>{action}</OutlineBtn>}
       </div>
     </div>
@@ -191,7 +191,7 @@ function EditaisPanel() {
       <PageHeader title="Editais" action="Sugerir edital" />
       <Toolbar>
         <SearchBox placeholder="Buscar edital, empresa, estado…" />
-        <span style={{ fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>47</strong> editais</span>
+        <span style={{ fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>47</strong> editais</span>
         <div style={{ marginLeft: "auto", display: "flex", border: "1px solid rgba(13,13,13,.12)", borderRadius: 4, overflow: "hidden" }}>
           <SegBtn label="Abertos" on />
           <SegBtn label="Fechados" />
@@ -207,7 +207,7 @@ function EditaisPanel() {
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <Logo name={e.co} size={44} />
                     <div>
-                      <p style={{ fontSize: 15, fontWeight: 700, color: "#0D0D0D" }}>{e.co}</p>
+                      <p style={{ fontSize: 15, fontWeight: 700, color: "#282525" }}>{e.co}</p>
                       <p style={{ fontSize: 11, color: "rgba(13,13,13,.35)" }}>{e.state}</p>
                     </div>
                   </div>
@@ -289,10 +289,10 @@ function NegociacoesPanel() {
                     </div>
                     <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#7259B5", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 700, color: "#fff" }}>{c.cap}</div>
                   </div>
-                  <p style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.35, letterSpacing: "-.01em", color: "rgba(13,13,13,.85)", marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.title}</p>
+                  <p style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.35, letterSpacing: "-.01em", color: "rgba(40,37,37,.85)", marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.title}</p>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <LeiBadge lei={c.lei} />
-                    <span title={formatarValorCompleto(c.val)} style={{ fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>{formatarValorCurto(c.val)}</span>
+                    <span title={formatarValorCompleto(c.val)} style={{ fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>{formatarValorCurto(c.val)}</span>
                   </div>
                   {"dt" in c && c.dt && (
                     <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(13,13,13,.06)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10, fontWeight: 500 }}>
@@ -408,7 +408,7 @@ function PatrocinadoresPanel() {
         <div style={{ display: "flex", border: "1px solid rgba(13,13,13,.12)", borderRadius: 4, overflow: "hidden" }}>
           <SegBtn label="Todos" on /><SegBtn label="Rouanet" /><SegBtn label="Esporte" /><SegBtn label="Audiovisual" />
         </div>
-        <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>312</strong> empresas</span>
+        <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>312</strong> empresas</span>
       </Toolbar>
       <div style={{ flex: 1, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -426,15 +426,15 @@ function PatrocinadoresPanel() {
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <Logo name={s.co} size={32} />
                     <div>
-                      <p style={{ fontSize: 13, fontWeight: 600, color: "#0D0D0D" }}>{s.co}</p>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: "#282525" }}>{s.co}</p>
                       <p style={{ fontSize: 11, color: "rgba(13,13,13,.40)" }}>{s.sec}</p>
                     </div>
                   </div>
                 </td>
                 <td style={{ padding: "13px 14px" }}><LeiBadge lei={s.lei} /></td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>{s.editais}</td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>{s.negs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>negociações</span></td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>{s.inscs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>inscrições</span></td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>{s.editais}</td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>{s.negs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>negociações</span></td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#282525" }}>{s.inscs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>inscrições</span></td>
               </tr>
             ))}
           </tbody>

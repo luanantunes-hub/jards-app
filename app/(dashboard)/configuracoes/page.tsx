@@ -503,7 +503,7 @@ const { data: perfilData } = await (supabase as any)
     <div className="w-full px-5 md:px-8 lg:px-10 py-8 md:py-10">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-[1.375rem] font-bold text-black">Configurações</h1>
+        <h1 className="text-[1.375rem] font-bold text-[#282525]">Configurações</h1>
         <p className="text-[0.8125rem] text-black/40 mt-1">
           Gerencie sua conta, integrações, equipe e processos
         </p>
@@ -536,8 +536,8 @@ const { data: perfilData } = await (supabase as any)
                   aria-current={active ? "page" : undefined}
                   className={`group flex min-w-[11.125rem] md:min-w-0 w-full items-center gap-3 rounded px-3 py-3 text-left transition-colors active:scale-[0.98] ${
                     active
-                      ? "bg-[#0D0D0D] text-white"
-                      : "text-black/50 hover:bg-black/[0.04] hover:text-black"
+                      ? "bg-[#282525] text-white"
+                      : "text-black/50 hover:bg-black/[0.04] hover:text-[#282525]"
                   }`}
                 >
                   <Icon size={16} strokeWidth={1.8} className="flex-shrink-0" />
@@ -550,7 +550,7 @@ const { data: perfilData } = await (supabase as any)
 
         <section className="min-w-0" aria-live="polite">
           <div className="mb-5">
-            <h2 className="text-[1.0625rem] font-bold text-black">{currentSection.label}</h2>
+            <h2 className="text-[1.0625rem] font-bold text-[#282525]">{currentSection.label}</h2>
           </div>
 
           <div className="space-y-6">
@@ -568,7 +568,7 @@ const { data: perfilData } = await (supabase as any)
       <form onSubmit={handleSalvarPerfil} className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
         <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <UserCircle size={14} className="text-black/30" />
-          <span className="text-[0.75rem] font-bold text-black">Meu perfil</span>
+          <span className="text-[0.75rem] font-bold text-[#282525]">Meu perfil</span>
         </div>
         <div className="p-6 space-y-5">
           <div className="flex items-center gap-4">
@@ -600,7 +600,7 @@ const { data: perfilData } = await (supabase as any)
                 onChange={(e) => setNome(e.target.value)}
                 required
                 placeholder="Como podemos chamar você?"
-                className="w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.75rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
+                className="w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.75rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
               />
             </div>
             <div>
@@ -629,12 +629,12 @@ const { data: perfilData } = await (supabase as any)
       <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
         <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <Lock size={14} className="text-black/30" />
-          <span className="text-[0.75rem] font-bold text-black">Senha</span>
+          <span className="text-[0.75rem] font-bold text-[#282525]">Senha</span>
         </div>
         <div className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[0.8125rem] font-semibold text-black">Sua senha de acesso</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Sua senha de acesso</p>
               <p className="mt-0.5 text-[0.6875rem] text-black/40">Use uma senha que você não usa em outros serviços.</p>
             </div>
             <button
@@ -651,14 +651,14 @@ const { data: perfilData } = await (supabase as any)
       <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
         <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <CreditCard size={14} className="text-black/30" />
-          <span className="text-[0.75rem] font-bold text-black">Plano e créditos</span>
+          <span className="text-[0.75rem] font-bold text-[#282525]">Plano e créditos</span>
           <span className="ml-auto text-[0.6875rem] font-semibold px-2 py-0.5 rounded" style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
             {PLANO_LABEL[assinatura?.plano ?? "gratuito"] ?? assinatura?.plano ?? "Gratuito"}
           </span>
         </div>
         <div className="p-6 space-y-5">
           <div className="flex items-center justify-between p-4 rounded" style={{ background: "rgba(13,13,13,.03)" }}>
-            <p className="text-[0.8125rem] font-semibold text-black">Plano {PLANO_LABEL[assinatura?.plano ?? "gratuito"] ?? "Gratuito"}</p>
+            <p className="text-[0.8125rem] font-semibold text-[#282525]">Plano {PLANO_LABEL[assinatura?.plano ?? "gratuito"] ?? "Gratuito"}</p>
             <button onClick={() => router.push("/meu-plano")} className="rounded border border-[#7259B5]/30 bg-white px-3 py-2 text-[0.6875rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04]">
               Gerenciar plano
             </button>
@@ -667,7 +667,7 @@ const { data: perfilData } = await (supabase as any)
           {/* Saldo de créditos */}
           <div className="p-4 rounded border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
             <div className="flex items-center justify-between mb-3">
-              <p className="text-[0.8125rem] font-semibold text-black">Saldo de créditos</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Saldo de créditos</p>
               <span className="text-[0.6875rem] tabular-nums text-black/40">
                 {creditos?.creditos_usados ?? 0} / {creditos?.creditos_totais ?? 0} usados
               </span>
@@ -689,7 +689,7 @@ const { data: perfilData } = await (supabase as any)
                 )}
                 Disponível
               </span>
-              <span className={`text-[0.875rem] font-semibold tabular-nums ${creditosDisponiveis ? "text-[#0D0D0D]" : "text-black/30"}`}>
+              <span className={`text-[0.875rem] font-semibold tabular-nums ${creditosDisponiveis ? "text-[#282525]" : "text-black/30"}`}>
                 {creditosDisponiveis}
               </span>
             </div>
@@ -717,7 +717,7 @@ const { data: perfilData } = await (supabase as any)
         <form onSubmit={handleSalvarOrganizacao} className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
           <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <Building2 size={14} className="text-black/30" />
-            <span className="text-[0.75rem] font-bold text-black">Organização</span>
+            <span className="text-[0.75rem] font-bold text-[#282525]">Organização</span>
           </div>
           <div className="p-6 space-y-5">
             <div className="flex items-center gap-4">
@@ -741,7 +741,7 @@ const { data: perfilData } = await (supabase as any)
                 onChange={(e) => setOrgNome(e.target.value)}
                 required
                 placeholder="Nome da sua organização"
-                className="w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.75rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
+                className="w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.75rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
               />
             </div>
             <div className="flex justify-end border-t pt-5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
@@ -762,7 +762,7 @@ const { data: perfilData } = await (supabase as any)
         <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
           <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <Eye size={14} className="text-black/30" />
-            <span className="text-[0.75rem] font-bold text-black">Visibilidade da equipe</span>
+            <span className="text-[0.75rem] font-bold text-[#282525]">Visibilidade da equipe</span>
           </div>
           <div className="p-6 space-y-6">
             {/* Captações */}
@@ -782,7 +782,7 @@ const { data: perfilData } = await (supabase as any)
                     <EyeOff size={14} style={{ color: "#D94E4E" }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[0.75rem] font-semibold" style={{ color: config?.visibilidade_captacoes === "admin_only" ? "#7259B5" : "#0D0D0D" }}>
+                    <p className="text-[0.75rem] font-semibold" style={{ color: config?.visibilidade_captacoes === "admin_only" ? "#7259B5" : "#282525" }}>
                       Só seus próprios
                     </p>
                     <p className="text-[0.625rem] text-black/40 mt-0.5">Captador vê apenas suas negociações</p>
@@ -803,7 +803,7 @@ const { data: perfilData } = await (supabase as any)
                     <Eye size={14} style={{ color: "#1A8B7A" }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[0.75rem] font-semibold" style={{ color: config?.visibilidade_captacoes === "team_shared" ? "#7259B5" : "#0D0D0D" }}>
+                    <p className="text-[0.75rem] font-semibold" style={{ color: config?.visibilidade_captacoes === "team_shared" ? "#7259B5" : "#282525" }}>
                       Todos veem tudo
                     </p>
                     <p className="text-[0.625rem] text-black/40 mt-0.5">Equipe inteira tem acesso completo</p>
@@ -830,7 +830,7 @@ const { data: perfilData } = await (supabase as any)
                     <Shield size={14} style={{ color: "#D94E4E" }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[0.75rem] font-semibold" style={{ color: config?.acesso_contatos === "admin_only" ? "#7259B5" : "#0D0D0D" }}>
+                    <p className="text-[0.75rem] font-semibold" style={{ color: config?.acesso_contatos === "admin_only" ? "#7259B5" : "#282525" }}>
                       Só admin
                     </p>
                     <p className="text-[0.625rem] text-black/40 mt-0.5">Captadores não acessam contatos</p>
@@ -851,7 +851,7 @@ const { data: perfilData } = await (supabase as any)
                     <CreditCard size={14} style={{ color: "#7259B5" }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[0.75rem] font-semibold" style={{ color: config?.acesso_contatos === "team_with_credits" ? "#7259B5" : "#0D0D0D" }}>
+                    <p className="text-[0.75rem] font-semibold" style={{ color: config?.acesso_contatos === "team_with_credits" ? "#7259B5" : "#282525" }}>
                       Com créditos
                     </p>
                     <p className="text-[0.625rem] text-black/40 mt-0.5">Cada visualização gasta 1 crédito</p>
@@ -869,8 +869,8 @@ const { data: perfilData } = await (supabase as any)
         <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
           <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <MessageSquare size={14} className="text-black/30" />
-            <span className="text-[0.75rem] font-bold text-black">Contribuições pendentes</span>
-            <span className="ml-2 rounded border border-black/[.10] bg-white px-2 py-0.5 text-[0.625rem] font-semibold tabular-nums text-[#0D0D0D]">
+            <span className="text-[0.75rem] font-bold text-[#282525]">Contribuições pendentes</span>
+            <span className="ml-2 rounded border border-black/[.10] bg-white px-2 py-0.5 text-[0.625rem] font-semibold tabular-nums text-[#282525]">
               {contribuicoesPendentes.length}
             </span>
           </div>
@@ -934,7 +934,7 @@ const { data: perfilData } = await (supabase as any)
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
           <div className="flex items-center gap-2">
             <Users size={14} className="text-black/30" />
-            <span className="text-[0.75rem] font-bold text-black">Membros da equipe</span>
+            <span className="text-[0.75rem] font-bold text-[#282525]">Membros da equipe</span>
             <span className="text-[0.625rem] text-black/30 font-medium ml-1">({membros.length})</span>
           </div>
           {isAdmin && (
@@ -961,7 +961,7 @@ const { data: perfilData } = await (supabase as any)
                   {(m.full_name || m.email || "?").charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[0.8125rem] font-semibold text-black">{m.full_name ?? "Sem nome"}</p>
+                  <p className="text-[0.8125rem] font-semibold text-[#282525]">{m.full_name ?? "Sem nome"}</p>
                   <p className="text-[0.6875rem] text-black/40 truncate">{m.email}</p>
                   {(orgTemPrestacao || m.modulos_acesso?.includes("prestacao")) && (
                     <ModulosDoMembro
@@ -1017,17 +1017,17 @@ const { data: perfilData } = await (supabase as any)
       {activeSection === "funis" && (
       <div className="space-y-8">
         <div>
-          <h2 className="mb-1 text-[0.8125rem] font-bold text-black">Tipos de oportunidade do captador</h2>
+          <h2 className="mb-1 text-[0.8125rem] font-bold text-[#282525]">Tipos de oportunidade do captador</h2>
           <p className="mb-4 text-[0.6875rem] text-black/45">Essas etiquetas são os tipos exibidos no workspace. Você pode renomear, excluir ou criar outros.</p>
           <OpportunityLabelsConfig />
         </div>
-        {organizationId && <div><div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded border border-black/20 bg-transparent"><Handshake size={14} className="text-black/55"/></div><p className="text-[0.8125rem] font-bold text-black">Renovação de clientes</p></div><RenewalDecisionTreeConfig organizationId={organizationId}/></div>}
+        {organizationId && <div><div className="mb-4 flex items-center gap-2"><div className="flex h-8 w-8 items-center justify-center rounded border border-black/20 bg-transparent"><Handshake size={14} className="text-black/55"/></div><p className="text-[0.8125rem] font-bold text-[#282525]">Renovação de clientes</p></div><RenewalDecisionTreeConfig organizationId={organizationId}/></div>}
         <div>
           <div className="flex items-center gap-2 mb-4">
             <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#1A8B7A66" }}>
               <MessageSquare size={14} style={{ color: "#1A8B7A" }} />
             </div>
-            <p className="text-[0.8125rem] font-bold text-black">Canais e origem comercial</p>
+            <p className="text-[0.8125rem] font-bold text-[#282525]">Canais e origem comercial</p>
           </div>
           <TaxonomiasComerciaisConfig />
         </div>
@@ -1037,7 +1037,7 @@ const { data: perfilData } = await (supabase as any)
             <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#7259B566" }}>
               <Handshake size={14} style={{ color: "#7259B5" }} />
             </div>
-            <p className="text-[0.8125rem] font-bold text-black">Funil de negociações</p>
+            <p className="text-[0.8125rem] font-bold text-[#282525]">Funil de negociações</p>
           </div>
           <EtiquetasConfig entidade="captacao" />
         </div>
@@ -1047,7 +1047,7 @@ const { data: perfilData } = await (supabase as any)
             <div className="w-8 h-8 rounded border bg-transparent flex items-center justify-center flex-shrink-0" style={{ borderColor: "#2D72B066" }}>
               <FileCheck size={14} style={{ color: "#2D72B0" }} />
             </div>
-            <p className="text-[0.8125rem] font-bold text-black">Funil de inscrições</p>
+            <p className="text-[0.8125rem] font-bold text-[#282525]">Funil de inscrições</p>
           </div>
           <EtiquetasConfig entidade="inscricao" />
         </div>
@@ -1056,7 +1056,7 @@ const { data: perfilData } = await (supabase as any)
           <div className="mb-4 flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded border border-[#7259B5]/40 text-[#7259B5]"><Building2 size={14} /></div>
             <div>
-              <p className="text-[0.8125rem] font-bold text-black">Maturidade do proponente</p>
+              <p className="text-[0.8125rem] font-bold text-[#282525]">Maturidade do proponente</p>
               <p className="mt-0.5 text-[0.625rem] text-black/30">Edite, exclua ou acrescente etiquetas para classificar a estrutura da instituição.</p>
             </div>
           </div>
@@ -1069,7 +1069,7 @@ const { data: perfilData } = await (supabase as any)
               <Building2 size={14} className="text-black/55" />
             </div>
             <div>
-              <p className="text-[0.8125rem] font-bold text-black">Tipos de proponente</p>
+              <p className="text-[0.8125rem] font-bold text-[#282525]">Tipos de proponente</p>
               <p className="mt-0.5 text-[0.625rem] text-black/30">Edite nome, cor e ícone ou crie suas próprias etiquetas.</p>
             </div>
           </div>

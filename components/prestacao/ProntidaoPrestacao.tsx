@@ -60,7 +60,7 @@ export function ProntidaoPrestacao({ prontidao, prestacaoId }: { prontidao: Pron
       <div className="flex flex-wrap items-end justify-between gap-4 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div>
           <h2 id="prontidao-titulo" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prontidão para envio</h2>
-          <p className={`mt-1 text-[2rem] font-semibold leading-none tracking-[-.02em] tabular-nums ${prontidao.percentual ? "text-[#0D0D0D]" : "text-black/30"}`}>{prontidao.percentual}%</p>
+          <p className={`mt-1 text-[2rem] font-semibold leading-none tracking-[-.02em] tabular-nums ${prontidao.percentual ? "text-[#282525]" : "text-black/30"}`}>{prontidao.percentual}%</p>
         </div>
         <div className="min-w-[12rem] flex-1 sm:max-w-[22rem]">
           <div

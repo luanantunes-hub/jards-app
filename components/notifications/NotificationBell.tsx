@@ -287,7 +287,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       >
         <Bell size={16} className="text-black/45" />
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0D0D0D] px-1 text-[0.5625rem] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#282525] px-1 text-[0.5625rem] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -297,7 +297,7 @@ export function NotificationBell({ userId }: { userId: string }) {
         <div className="absolute right-0 top-10 z-50 w-[22.5rem] overflow-hidden rounded border border-black/[.10] bg-white shadow-[0_16px_40px_rgba(13,13,13,.12)]">
           <div className="flex items-center justify-between border-b border-black/[.07] px-4 py-3">
             <div>
-              <p className="text-[0.8125rem] font-bold text-black">Notificações</p>
+              <p className="text-[0.8125rem] font-bold text-[#282525]">Notificações</p>
               <p className="mt-0.5 text-[0.625rem] text-black/35">
                 {unreadCount ? `${unreadCount} não lida${unreadCount === 1 ? "" : "s"}` : "Tudo em dia"}
               </p>
@@ -338,7 +338,7 @@ export function NotificationBell({ userId }: { userId: string }) {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
-                      <span className={`truncate text-[0.75rem] ${notification.lida ? "font-normal text-black/60" : "font-semibold text-[#0D0D0D]"}`}>{notification.titulo}</span>
+                      <span className={`truncate text-[0.75rem] ${notification.lida ? "font-normal text-black/60" : "font-semibold text-[#282525]"}`}>{notification.titulo}</span>
                       {!notification.lida && <span className="sr-only">Não lida</span>}
                     </span>
                     <span className="mt-0.5 line-clamp-2 block text-[0.6875rem] leading-4 text-black/45">{notification.mensagem}</span>

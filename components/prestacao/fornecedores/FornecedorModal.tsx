@@ -18,7 +18,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoFornecedor } from "@/lib/supabase/types";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 aria-[invalid=true]:border-[#D94A4A]/50";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 aria-[invalid=true]:border-[#D94A4A]/50";
 
 /** Consulta a Receita e o TCU pela função; devolve o fornecedor atualizado ou null se não respondeu. */
 export async function consultarFornecedor(supabase: ReturnType<typeof createClient>, id: string): Promise<PrestacaoFornecedor | null> {

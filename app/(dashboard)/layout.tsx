@@ -418,7 +418,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
               {isExpanded && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
+                  <p className="text-xs font-semibold text-[#282525] truncate whitespace-nowrap">{displayName}</p>
                   <p className="text-[0.625rem] text-black/35 truncate whitespace-nowrap">Captador externo</p>
                 </div>
               )}
@@ -443,7 +443,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               )}
               {isExpanded && (
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-[#0D0D0D] truncate whitespace-nowrap">{displayName}</p>
+                  <p className="text-xs font-semibold text-[#282525] truncate whitespace-nowrap">{displayName}</p>
                   <p className="text-[0.625rem] text-black/35 truncate whitespace-nowrap">
                     {plan === "gratuito" ? "Plano gratuito" : plan === "basico" ? "Plano Básico" : plan === "profissional" ? "Plano Profissional" : "Jards"}
                   </p>
@@ -465,7 +465,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 title={!isExpanded ? "Meu workspace" : undefined}
                 aria-current={correspondeRota(path, "/workspace-captador") ? "page" : undefined}
                 className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                  correspondeRota(path, "/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+                  correspondeRota(path, "/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                 }`}
                 style={{
                   gap: isExpanded ? 10 : 0,
@@ -503,7 +503,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       aria-label={!isExpanded ? label : undefined}
                       aria-current={active ? "page" : undefined}
                       className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                        active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+                        active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                       }`}
                       style={{
                         gap: isExpanded ? 10 : 0,
@@ -563,7 +563,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               aria-label={!isExpanded ? "Espaço do proponente" : undefined}
               aria-current={correspondeRota(path, "/workspace-proponente") ? "page" : undefined}
               className={`flex items-center rounded text-[0.8125rem] font-medium transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                correspondeRota(path, "/workspace-proponente") ? "bg-black/[0.05] text-[#0D0D0D]" : "text-black/35 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+                correspondeRota(path, "/workspace-proponente") ? "bg-black/[0.05] text-[#282525]" : "text-black/35 hover:text-[#282525] hover:bg-black/[0.05]"
               }`}
               style={{
                 gap: isExpanded ? 10 : 0,
@@ -580,7 +580,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               href="/convidado"
               title={!isExpanded ? "Acesso de convidado" : undefined}
               aria-label={!isExpanded ? "Acesso de convidado" : undefined}
-              className="flex items-center rounded text-[0.8125rem] font-medium text-black/35 transition whitespace-nowrap overflow-hidden hover:text-[#0D0D0D] hover:bg-black/[0.05] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+              className="flex items-center rounded text-[0.8125rem] font-medium text-black/35 transition whitespace-nowrap overflow-hidden hover:text-[#282525] hover:bg-black/[0.05] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
               style={{
                 gap: isExpanded ? 10 : 0,
                 padding: isExpanded ? "8px 10px" : "8px 0",
@@ -598,7 +598,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             aria-label={!isExpanded ? "Configurações" : undefined}
             aria-current={correspondeRota(path, "/configuracoes") ? "page" : undefined}
             className={`flex items-center rounded text-[0.8125rem] font-medium transition whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-              correspondeRota(path, "/configuracoes") ? "bg-black/[0.05] text-[#0D0D0D]" : "text-black/35 hover:text-[#0D0D0D] hover:bg-black/[0.05]"
+              correspondeRota(path, "/configuracoes") ? "bg-black/[0.05] text-[#282525]" : "text-black/35 hover:text-[#282525] hover:bg-black/[0.05]"
             }`}
             style={{
               gap: isExpanded ? 10 : 0,
@@ -676,7 +676,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   style={{
                     background: ativo ? "#FFFFFF" : "transparent",
                     color: ativo
-                      ? "#0D0D0D"
+                      ? "#282525"
                       : acessivel
                       ? "rgba(13,13,13,.45)"
                       : "rgba(13,13,13,.25)",
@@ -736,7 +736,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             {m.avatarUrl ? <img src={m.avatarUrl} alt="" className="h-full w-full object-cover" /> : (m.nome ? m.nome.charAt(0).toUpperCase() : "?")}
                           </span>
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-[0.75rem] font-semibold text-black">{m.nome || "Sem nome"}</span>
+                            <span className="block truncate text-[0.75rem] font-semibold text-[#282525]">{m.nome || "Sem nome"}</span>
                             {m.papel === "captador" && <span className="text-[0.625rem] font-medium text-black/40">Workspace de captador</span>}
                           </span>
                         </button>

@@ -113,7 +113,7 @@ export function ProjetoCategoriaIlustracao({ categoria, projetoId, size = 44 }: 
     <div className="rounded overflow-hidden flex-shrink-0 relative" style={{ width: size, height: size, background: CINZA_METALICO + "14" }}>
       <div className="absolute inset-0" style={{ background: CINZA_METALICO + "26", clipPath: `polygon(100% 0, 100% 100%, ${corte}% 100%)` }} />
       <div className="absolute inset-0 flex items-center justify-center">
-        <IconCmp size={Math.round(size * 0.48)} color="#0D0D0D" weight="duotone" />
+        <IconCmp size={Math.round(size * 0.48)} color="#282525" weight="duotone" />
       </div>
     </div>
   );

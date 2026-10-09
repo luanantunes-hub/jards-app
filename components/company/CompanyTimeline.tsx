@@ -257,7 +257,7 @@ export function CompanyTimeline({
                   <span className="text-[0.6875rem] font-semibold text-black/50">{formatDate(evt.data)}</span>
                   <span className="text-[0.625rem] text-black/25">{formatRelative(evt.data)}</span>
                 </div>
-                <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{evt.titulo}</p>
+                <p className="text-[0.8125rem] font-medium text-[#282525]">{evt.titulo}</p>
                 {evt.descricao && <p className="text-xs text-black/40 mt-0.5">{evt.descricao}</p>}
                 {evt.captacao_titulo && (
                   <p className="text-[0.625rem] text-[#7259B5] mt-1">↗ {evt.captacao_titulo}</p>

@@ -49,15 +49,15 @@ export function AuthorizeConsent({
         <h1 className="text-lg font-semibold tracking-tight">Autorizar acesso ao Jards</h1>
         <p className="mt-2 text-sm text-black/60">
           {cliente.tipo === "publico" ? (
-            <>O aplicativo &ldquo;<span className="font-medium text-black">{cliente.nome}</span>&rdquo; está pedindo permissão para acessar os dados do Jards usando a sua conta (</>
+            <>O aplicativo &ldquo;<span className="font-medium text-[#282525]">{cliente.nome}</span>&rdquo; está pedindo permissão para acessar os dados do Jards usando a sua conta (</>
           ) : (
             <>Um assistente do ChatGPT está pedindo permissão para acessar os dados do Jards usando a sua conta (</>
           )}
-          <span className="font-medium text-black">{email}</span>).
+          <span className="font-medium text-[#282525]">{email}</span>).
         </p>
 
         <div className="mt-4 rounded border border-black/10 bg-black/[0.02] p-3 text-sm">
-          <p className="font-medium text-black">Vai poder:</p>
+          <p className="font-medium text-[#282525]">Vai poder:</p>
           <ul className="mt-1 list-disc space-y-0.5 pl-4 text-black/70">
             <li>Ler o CRM das suas organizações: empresas, contatos, negociações, projetos, atividades, propostas e mais</li>
             {!publico && scope === "write" && <li>Criar registros no CRM: empresas, contatos, negociações, projetos, atividades, notas e follow-ups</li>}
@@ -93,7 +93,7 @@ export function AuthorizeConsent({
 
           {publico && (
             <label className="mb-4 flex cursor-pointer items-start gap-2.5 text-sm text-black/70">
-              <input type="checkbox" name="escrita" className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[#0D0D0D]" />
+              <input type="checkbox" name="escrita" className="mt-0.5 h-4 w-4 flex-shrink-0 accent-[#282525]" />
               <span>
                 Permitir também criar registros no CRM{" "}
                 <span className="text-black/45">(empresas, contatos, negociações, atividades, notas e mais)</span>

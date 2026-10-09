@@ -58,7 +58,7 @@ function Mudanca({ m, regimeAtual }: { m: MudancaConferida; regimeAtual: unknown
   return (
     <li className="space-y-1 py-2.5">
       <p className="text-[0.6875rem] text-black/45">{OPERACAO[m.operacao] ?? m.operacao} · {rotuloDoCaminho(regimeAtual, m.caminho)}</p>
-      <p className="text-[0.8125rem] text-[#0D0D0D]">
+      <p className="text-[0.8125rem] text-[#282525]">
         {m.operacao === "alterar" ? (
           <>
             <span className="text-black/45 line-through decoration-black/30">{valorLegivel(m.valorAtual)}</span>
@@ -91,7 +91,7 @@ function CartaoDaProposta({ p, nomeDoRegime, regimeAtual }: { p: Proposta; nomeD
   return (
     <div className="rounded border bg-white px-4 py-3" style={BORDA}>
       <div className="flex flex-wrap items-center gap-1.5">
-        <span className="text-[0.8125rem] font-medium text-[#0D0D0D]">{nomeDoRegime}</span>
+        <span className="text-[0.8125rem] font-medium text-[#282525]">{nomeDoRegime}</span>
         <Etiqueta texto={c.texto} cor={c.cor} />
         {typeof versao === "number" && <Etiqueta texto={`Proposta da versão ${versao}`} />}
         <span className="ml-auto text-[0.6875rem] text-black/40">

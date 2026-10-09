@@ -20,7 +20,7 @@ type DeliveryRow = CompromissoCliente & {
 };
 
 const STATUS = {
-  pendente: { label: "Pendente", color: "#0D0D0D" },
+  pendente: { label: "Pendente", color: "#282525" },
   em_andamento: { label: "Em andamento", color: "#2D72B0" },
   entregue: { label: "Entregue", color: "#B07A14" },
   aprovado: { label: "Aprovada", color: "#2E8932" },
@@ -138,7 +138,7 @@ export function DeliveriesPanel({ organizationId, accountId, contaId, projetoId,
 
   return <section className="overflow-hidden rounded border border-black/[.08] bg-white">
     <header className="flex flex-col gap-4 border-b border-black/[.07] px-5 py-5 sm:flex-row sm:items-end sm:justify-between md:px-6">
-      <div><p className="text-[0.6875rem] font-medium text-black/35">Execução da parceria</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">Entregas</h2></div>
+      <div><p className="text-[0.6875rem] font-medium text-black/35">Execução da parceria</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">Entregas</h2></div>
       {canWrite && <button type="button" onClick={() => setShowCreate(true)} className="inline-flex h-10 items-center gap-2 self-start rounded border border-[#7259B5]/30 bg-white px-4 text-[0.75rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] active:scale-[.98] sm:self-auto"><Plus size={13}/>Nova entrega</button>}
     </header>
     <div className="flex flex-col gap-3 border-b border-black/[.06] px-5 py-3 sm:flex-row sm:items-center sm:justify-between md:px-6">

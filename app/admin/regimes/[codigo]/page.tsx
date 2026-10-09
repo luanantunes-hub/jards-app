@@ -123,7 +123,7 @@ export default function AdminRegimePage() {
       ) : (
         <>
           <div className="min-w-0">
-            <h1 className="text-xl font-bold text-[#0D0D0D]">{atual.nome}</h1>
+            <h1 className="text-xl font-bold text-[#282525]">{atual.nome}</h1>
             <p className="mt-0.5 text-sm text-black/45">
               {[`${codigo}`, `versão ${atual.versao} publicada${atual.publicado_em ? ` em ${dataBr(atual.publicado_em)}` : ""}`,
                 atual.vigente_desde ? `vigente desde ${dataBr(atual.vigente_desde)}` : null, atual.norma_referencia].filter(Boolean).join(" · ")}

@@ -342,8 +342,8 @@ function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full block" onMouseLeave={() => setHoveredIdx(null)}>
         <defs>
           <linearGradient id="lgAreaInvLei" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%"   stopColor="#0D0D0D" stopOpacity="0.12" />
-            <stop offset="100%" stopColor="#0D0D0D" stopOpacity="0.01" />
+            <stop offset="0%"   stopColor="#282525" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#282525" stopOpacity="0.01" />
           </linearGradient>
         </defs>
         {yTicks.map((val, i) => {
@@ -361,14 +361,14 @@ function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
           );
         })}
         <path d={areaD} fill="url(#lgAreaInvLei)" />
-        <path d={pathD} fill="none" stroke="#0D0D0D" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d={pathD} fill="none" stroke="#282525" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
         {pts.map((pt, i) => pt.v > 0 && (
           <circle
             key={i}
             cx={pt.x.toFixed(1)} cy={pt.y.toFixed(1)}
             r={hoveredIdx === i ? "4.5" : "3"}
-            fill={hoveredIdx === i ? "#0D0D0D" : "white"}
-            stroke="#0D0D0D" strokeWidth="1.8"
+            fill={hoveredIdx === i ? "#282525" : "white"}
+            stroke="#282525" strokeWidth="1.8"
             style={{ cursor: "pointer", transition: "r 0.1s, fill 0.1s" }}
           />
         ))}
@@ -407,7 +407,7 @@ function LineChartLei({ rows }: { rows: { ano: number; valor: number }[] }) {
               </text>
               <text
                 x={(tx + TW / 2).toFixed(1)} y={(ty + 21).toFixed(1)}
-                textAnchor="middle" fontSize="8.5" fill="#0D0D0D"
+                textAnchor="middle" fontSize="8.5" fill="#282525"
                 fontFamily="system-ui, sans-serif" fontWeight="600"
               >
                 {formatarValorCurto(pt.v)}
@@ -432,7 +432,7 @@ function TipologiaChart({ t }: { t: Tipologia }) {
         <div key={key} className="flex items-center gap-2">
           <span className="text-[0.6875rem] text-black/50 font-medium w-32 flex-shrink-0">{TIPO_PT[key]}</span>
           <div className="flex-1 h-2 rounded-full bg-black/6 overflow-hidden">
-            <div className="h-full rounded-full bg-[#0D0D0D]/70 transition-all" style={{ width: `${(v / max) * 100}%` }} />
+            <div className="h-full rounded-full bg-[#282525]/70 transition-all" style={{ width: `${(v / max) * 100}%` }} />
           </div>
           <span className="text-[0.625rem] font-medium tabular-nums text-black/40 w-5 text-right">{v}</span>
         </div>
@@ -975,7 +975,7 @@ export default function PatrocinadorPage() {
         >
           <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
-              <p className="text-[0.8125rem] font-semibold text-black">Sugerir contato</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Sugerir contato</p>
               <p className="text-[0.6875rem] text-black/35 mt-0.5">Responsável pelo patrocínio</p>
             </div>
             <button
@@ -1049,7 +1049,7 @@ export default function PatrocinadorPage() {
 
       {/* ── Hero header ── */}
       <div className="px-4 pt-6 pb-0 border-b md:px-8" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <Link href="/patrocinadores" className="inline-flex items-center gap-1.5 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition mb-5">
+        <Link href="/patrocinadores" className="inline-flex items-center gap-1.5 text-[0.6875rem] font-semibold text-black/30 hover:text-[#282525] transition mb-5">
           <ArrowLeft size={12} /> Patrocinadores
         </Link>
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -1063,7 +1063,7 @@ export default function PatrocinadorPage() {
             />
             <div>
               <div className="flex items-center gap-2 mb-0.5">
-                <h1 className="min-w-0 break-words text-[1.75rem] font-bold leading-tight tracking-[-.025em] text-[#0D0D0D]">{empresa.nome}</h1>
+                <h1 className="min-w-0 break-words text-[1.75rem] font-bold leading-tight tracking-[-.025em] text-[#282525]">{empresa.nome}</h1>
                 {empresa.site && (
                   <a
                     href={empresa.site.startsWith("http") ? empresa.site : `https://${empresa.site}`}
@@ -1085,7 +1085,7 @@ export default function PatrocinadorPage() {
           <div className="flex items-center gap-2 flex-shrink-0">
             <Link
               href={`/comparativo?empresas=${empresa.id}`}
-              className="flex h-9 items-center gap-1.5 rounded border bg-white px-3.5 text-[0.75rem] font-medium text-black transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+              className="flex h-9 items-center gap-1.5 rounded border bg-white px-3.5 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
               style={{ borderColor: "rgba(13,13,13,.12)" }}
             >
               <ArrowLeftRight size={12} aria-hidden="true" /> Comparar
@@ -1182,12 +1182,12 @@ export default function PatrocinadorPage() {
               <div className="bg-white rounded border p-5 space-y-2.5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-3">Contato geral</p>
                 {empresa.email_geral && (
-                  <a href={`mailto:${empresa.email_geral}`} className="flex items-start gap-2 text-xs text-black/50 hover:text-black transition">
+                  <a href={`mailto:${empresa.email_geral}`} className="flex items-start gap-2 text-xs text-black/50 hover:text-[#282525] transition">
                     <Mail size={12} className="shrink-0 mt-0.5" /> <span className="break-all">{empresa.email_geral}</span>
                   </a>
                 )}
                 {empresa.telefone && (
-                  <a href={`tel:${empresa.telefone}`} className="flex items-center gap-2 text-xs text-black/50 hover:text-black transition">
+                  <a href={`tel:${empresa.telefone}`} className="flex items-center gap-2 text-xs text-black/50 hover:text-[#282525] transition">
                     <Phone size={12} /> {empresa.telefone}
                   </a>
                 )}
@@ -1195,7 +1195,7 @@ export default function PatrocinadorPage() {
                   <a
                     href={empresa.site.startsWith("http") ? empresa.site : `https://${empresa.site}`}
                     target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-xs text-black/50 hover:text-black transition"
+                    className="flex items-center gap-2 text-xs text-black/50 hover:text-[#282525] transition"
                   >
                     <Globe size={12} /> {empresa.site.replace(/^https?:\/\//, "")}
                   </a>
@@ -1406,7 +1406,7 @@ export default function PatrocinadorPage() {
                                 {r.nome.charAt(0).toUpperCase()}
                               </div>
                               <span
-                                className={`font-medium text-black text-[0.8125rem] ${!mostraContatos ? "select-none" : ""}`}
+                                className={`font-medium text-[#282525] text-[0.8125rem] ${!mostraContatos ? "select-none" : ""}`}
                                 style={{ filter: !mostraContatos ? "blur(3px)" : "none" }}
                               >
                                 {nome}
@@ -1465,7 +1465,7 @@ export default function PatrocinadorPage() {
                                   >
                                     <ThumbsUp size={12} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                                   </button>
-                                  <span className={`text-[0.6875rem] font-semibold tabular-nums w-4 text-center ${saldo === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
+                                  <span className={`text-[0.6875rem] font-semibold tabular-nums w-4 text-center ${saldo === 0 ? "text-black/30" : "text-[#282525]"}`}>
                                     {saldo}
                                   </span>
                                   <button
@@ -1521,7 +1521,7 @@ export default function PatrocinadorPage() {
                                 {s.nome.charAt(0).toUpperCase()}
                               </div>
                               <span
-                                className={`font-medium text-black text-[0.8125rem] ${!mostraContatos ? "select-none" : ""}`}
+                                className={`font-medium text-[#282525] text-[0.8125rem] ${!mostraContatos ? "select-none" : ""}`}
                                 style={{ filter: !mostraContatos ? "blur(3px)" : "none" }}
                               >
                                 {sNome}
@@ -1574,7 +1574,7 @@ export default function PatrocinadorPage() {
                               >
                                 <ThumbsUp size={12} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                               </button>
-                              <span className={`text-[0.6875rem] font-semibold tabular-nums w-4 text-center ${saldo === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
+                              <span className={`text-[0.6875rem] font-semibold tabular-nums w-4 text-center ${saldo === 0 ? "text-black/30" : "text-[#282525]"}`}>
                                 {saldo}
                               </span>
                               <button
@@ -1617,10 +1617,10 @@ export default function PatrocinadorPage() {
             {/* 3. Editais + Votos */}
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-4 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-sm font-semibold text-black">Editais e chamamentos</p>
+                <p className="text-sm font-semibold text-[#282525]">Editais e chamamentos</p>
                 <button
                   onClick={() => { setInscricaoEdital(null); setShowInscricaoModal(true); }}
-                  className="text-[0.6875rem] font-medium text-black/35 hover:text-black transition"
+                  className="text-[0.6875rem] font-medium text-black/35 hover:text-[#282525] transition"
                 >
                   Exportar
                 </button>
@@ -1647,7 +1647,7 @@ export default function PatrocinadorPage() {
                             className="hover:bg-black/[0.015] transition"
                             style={{ borderBottom: i < editais.length - 1 ? "1px solid rgba(13,13,13,.05)" : "none" }}
                           >
-                            <td className="px-5 py-3.5 font-medium text-black text-[0.8125rem] max-w-[12.5rem]">
+                            <td className="px-5 py-3.5 font-medium text-[#282525] text-[0.8125rem] max-w-[12.5rem]">
                               <span className="line-clamp-2">{e.titulo ?? "Sem título"}</span>
                             </td>
                             <td className="px-5 py-3.5 text-black/40 text-xs whitespace-nowrap">{fmtDate(e.data_abertura)}</td>
@@ -1675,14 +1675,14 @@ export default function PatrocinadorPage() {
                             <td className="px-5 py-3.5">
                               <button
                                 onClick={() => { setInscricaoEdital(e); setShowInscricaoModal(true); }}
-                                className="text-[0.6875rem] font-medium text-black/35 hover:text-black transition"
+                                className="text-[0.6875rem] font-medium text-black/35 hover:text-[#282525] transition"
                               >
                                 Exportar
                               </button>
                             </td>
                             <td className="px-5 py-3.5">
                               {e.url_acesso && (
-                                <a href={e.url_acesso} target="_blank" rel="noopener noreferrer" className="text-black/25 hover:text-black transition">
+                                <a href={e.url_acesso} target="_blank" rel="noopener noreferrer" className="text-black/25 hover:text-[#282525] transition">
                                   <ExternalLink size={13} />
                                 </a>
                               )}
@@ -1739,7 +1739,7 @@ export default function PatrocinadorPage() {
                             <>
                               <ProjetoCategoriaIlustracao categoria={categoria} projetoId={p.id} size={44} />
                               <div className="min-w-0 flex-1">
-                                <span className={`block font-semibold leading-snug transition text-black ${tamanhoNome}`}>{p.nome}</span>
+                                <span className={`block font-semibold leading-snug transition text-[#282525] ${tamanhoNome}`}>{p.nome}</span>
                                 {p.valor ? (
                                   <span className="mt-1 block text-[0.625rem] font-semibold tabular-nums text-black/35" title={formatarValorCompleto(p.valor)}>{formatarValorCurto(p.valor)}</span>
                                 ) : null}
@@ -1854,11 +1854,11 @@ export default function PatrocinadorPage() {
                                   href={rel.url}
                                   target="_blank"
                                   rel="noopener noreferrer"
-                                  className="flex items-center gap-1 rounded px-2 py-1.5 text-[0.625rem] font-semibold text-black/55 transition hover:bg-black/[.05] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20"
+                                  className="flex items-center gap-1 rounded px-2 py-1.5 text-[0.625rem] font-semibold text-black/55 transition hover:bg-black/[.05] hover:text-[#282525] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/20"
                                 >
                                   <ExternalLink size={11} /> Abrir
                                 </a>
-                                <label className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-[0.625rem] font-semibold text-black/55 transition hover:bg-black/[.05] hover:text-black ${replacing ? "pointer-events-none opacity-50" : ""}`} title="Trocar arquivo deste relatório">
+                                <label className={`flex cursor-pointer items-center gap-1 rounded px-2 py-1.5 text-[0.625rem] font-semibold text-black/55 transition hover:bg-black/[.05] hover:text-[#282525] ${replacing ? "pointer-events-none opacity-50" : ""}`} title="Trocar arquivo deste relatório">
                                   <input type="file" accept=".pdf,.doc,.docx" className="hidden" disabled={replacing} onChange={event => { const file = event.target.files?.[0]; if (file) void handleUploadRelatorio(file, rel); event.target.value = ""; }}/>
                                   {replacing ? <span className="h-3 w-3 animate-spin rounded-full border-2 border-black/15 border-t-black/50"/> : <RefreshCw size={11}/>} {replacing ? "Trocando…" : "Trocar"}
                                 </label>
@@ -1887,7 +1887,7 @@ export default function PatrocinadorPage() {
             {tipologia && (
               <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                 <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-1">Perfil</p>
-                <p className="text-sm font-semibold text-black mb-4">Tipologia de projetos apoiados</p>
+                <p className="text-sm font-semibold text-[#282525] mb-4">Tipologia de projetos apoiados</p>
                 <TipologiaChart t={tipologia} />
               </div>
             )}

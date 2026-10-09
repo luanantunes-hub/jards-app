@@ -110,7 +110,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar empresa, setor, cidade…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -188,7 +188,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
                     <td className="px-4 py-3">
                       <CompanyLogo nome={l.empresas?.nome ?? ""} site={l.empresas?.site} logo_url={l.empresas?.logo_url} size={32} className="rounded border border-black/8" />
                     </td>
-                    <td className="px-4 py-3"><span className="font-semibold text-[#0D0D0D] text-[0.8125rem]">{l.empresas?.nome}</span></td>
+                    <td className="px-4 py-3"><span className="font-semibold text-[#282525] text-[0.8125rem]">{l.empresas?.nome}</span></td>
                     <td className="px-4 py-3">
                       <button
                         className="w-7 h-7 rounded-full flex items-center justify-center transition-all duration-150
@@ -206,7 +206,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.setor ?? "—"}</td>
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem] font-medium">{l.empresas?.estado ?? "—"}</td>
                     <td className="px-4 py-3 text-black/50 text-[0.78125rem]">{l.empresas?.cidade ?? "—"}</td>
-                    <td className="px-4 py-3"><span className="font-semibold text-[#0D0D0D] text-[0.8125rem] tabular-nums" title={l.valor ? formatarValorCompleto(l.valor) : undefined}>{l.valor ? formatarValorCurto(l.valor) : "—"}</span></td>
+                    <td className="px-4 py-3"><span className="font-semibold text-[#282525] text-[0.8125rem] tabular-nums" title={l.valor ? formatarValorCompleto(l.valor) : undefined}>{l.valor ? formatarValorCurto(l.valor) : "—"}</span></td>
                   </tr>
                 ))
               )}
@@ -541,7 +541,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar empresa, setor, cidade…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -656,7 +656,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
                       {/* Empresa */}
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-[#0D0D0D] text-[0.8125rem]">{e.nome}</span>
+                        <span className="font-semibold text-[#282525] text-[0.8125rem]">{e.nome}</span>
                       </td>
 
                       {/* Ver */}
@@ -686,7 +686,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
                       {/* Investimento */}
                       <td className="px-4 py-3">
-                        <span className="font-semibold text-[#0D0D0D] text-[0.8125rem] tabular-nums" title={e.aporte_estimado ? formatarValorCompleto(e.aporte_estimado) : undefined}>
+                        <span className="font-semibold text-[#282525] text-[0.8125rem] tabular-nums" title={e.aporte_estimado ? formatarValorCompleto(e.aporte_estimado) : undefined}>
                           {e.aporte_estimado ? formatarValorCurto(e.aporte_estimado) : "—"}
                         </span>
                       </td>
@@ -768,7 +768,7 @@ export default function PatrocinadoresPage() {
       <div className="flex flex-col gap-4 px-4 pb-5 pt-6 md:px-8 md:pt-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D] [text-wrap:balance]">Encontrar patrocinadores</h1>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525] [text-wrap:balance]">Encontrar patrocinadores</h1>
         </div>
         <SegmentedControl
           value={aba}

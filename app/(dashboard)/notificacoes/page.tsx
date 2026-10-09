@@ -251,7 +251,7 @@ export default function NotificacoesPage() {
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:gap-6">
         <div>
           <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Central</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Notificações</h1>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525]">Notificações</h1>
           <p className="mt-1 text-[0.8125rem] text-black/40">
             {unread > 0 ? `${unread} não lida${unread === 1 ? "" : "s"}` : "Tudo em dia"}
           </p>
@@ -330,7 +330,7 @@ export default function NotificacoesPage() {
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className={`truncate text-[0.8125rem] ${item.lida ? "font-normal text-black/60" : "font-semibold text-[#0D0D0D]"}`}>{item.titulo}</p>
+                          <p className={`truncate text-[0.8125rem] ${item.lida ? "font-normal text-black/60" : "font-semibold text-[#282525]"}`}>{item.titulo}</p>
                           {!item.lida && <span className="sr-only">Não lida</span>}
                           {critical && <span className="rounded border border-[#D94A4A]/[.28] bg-white px-1.5 py-0.5 text-[0.5rem] font-medium uppercase tracking-wide text-[#D94A4A]">Crítica</span>}
                         </div>

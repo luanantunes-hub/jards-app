@@ -59,7 +59,7 @@ function ListaDeCriticas({ id, titulo, criticas, aviso }: { id: string; titulo: 
   if (!criticas.length) return null;
   return (
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-label={titulo}>
-      <h3 className="border-b px-5 py-3 text-[0.75rem] font-semibold text-black" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+      <h3 className="border-b px-5 py-3 text-[0.75rem] font-semibold text-[#282525]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         {titulo} <span className="font-normal text-black/40">({criticas.length})</span>
       </h3>
       <ul className="divide-y divide-black/[.05]">
@@ -102,7 +102,7 @@ function SecaoGradeRh({ id, cargos, criticas, gerando, onBaixar }: {
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="grade-rh-arquivo">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="min-w-0">
-          <h3 id="grade-rh-arquivo" className="text-[0.75rem] font-semibold text-black">Grade horária dos recursos humanos</h3>
+          <h3 id="grade-rh-arquivo" className="text-[0.75rem] font-semibold text-[#282525]">Grade horária dos recursos humanos</h3>
           <p className="max-w-[40rem] text-[0.6875rem] text-black/45">
             Vai na PCP, à parte do formulário, no modelo da DPPIE: {cargos ? `${cargos} ${cargos === 1 ? "cargo" : "cargos"} da grade de RH` : "nenhum cargo cadastrado"}.{" "}
             <Link href={`/prestacoes/${id}/atividades`} className={LINK}>Editar na aba Atividades <ArrowRight size={10} aria-hidden /></Link>
@@ -281,7 +281,7 @@ export default function FormularioLiePage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Formulário PCP/PCF</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Formulário PCP/PCF</h2>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
             As 10 abas do formulário da DPPIE, montadas com o extrato, o orçamento, as despesas, os beneficiados, a grade, as atividades e os bens.
             Corrija aqui o que sai errado, complete no Excel o que o Jards não sabe e junte o arquivo à PCP no SEI ou à PCF.
@@ -292,7 +292,7 @@ export default function FormularioLiePage() {
             type="button"
             onClick={baixarFormulario}
             disabled={gerando}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transform-none"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transform-none"
           >
             {gerando
               ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" aria-hidden />
@@ -361,7 +361,7 @@ export default function FormularioLiePage() {
           <ListaDeCriticas id={id} titulo="Conferir e completar no Excel" criticas={avisos} aviso />
 
           <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-label="Abas do formulário">
-            <h3 className="border-b px-5 py-3 text-[0.75rem] font-semibold text-black" style={{ borderColor: "rgba(13,13,13,.07)" }}>Abas</h3>
+            <h3 className="border-b px-5 py-3 text-[0.75rem] font-semibold text-[#282525]" style={{ borderColor: "rgba(13,13,13,.07)" }}>Abas</h3>
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-[0.75rem]">
                 <thead>

@@ -104,7 +104,7 @@ export default function AdminUsuariosPage() {
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-[#0D0D0D]">Usuários</h1>
+          <h1 className="text-xl font-bold text-[#282525]">Usuários</h1>
           <p className="text-sm text-black/40 mt-0.5">{users.length} usuários cadastrados</p>
         </div>
         <input
@@ -144,7 +144,7 @@ export default function AdminUsuariosPage() {
                   style={{ borderTop: i > 0 ? "1px solid rgba(13,13,13,.05)" : undefined, background: "white" }}
                 >
                   <td className="px-4 py-3">
-                    <p className="font-medium text-[0.8125rem] text-[#0D0D0D]">{u.full_name ?? "—"}</p>
+                    <p className="font-medium text-[0.8125rem] text-[#282525]">{u.full_name ?? "—"}</p>
                     <p className="text-[0.6875rem] text-black/40">{u.email ?? "—"}</p>
                   </td>
                   <td className="px-4 py-3 text-[0.8125rem] text-black/55">

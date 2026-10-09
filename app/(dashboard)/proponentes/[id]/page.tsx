@@ -379,7 +379,7 @@ export default function ProponenteDetailPage() {
                 triggerLabel="Alterar identidade do proponente"
               />
               <div className="min-w-0">
-                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{proponente.nome}</h1>
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{proponente.nome}</h1>
                 {proponente.maturidade && (() => {
                   const item = etiquetasMaturidadeProponente.find(etiqueta => etiqueta.key === proponente.maturidade);
                   return item ? <span className="mt-2 inline-flex rounded border px-2 py-1 text-[0.625rem] font-semibold" style={{ color: item.cor, borderColor: `${item.cor}55` }}>Maturidade: {item.label}</span> : null;
@@ -539,7 +539,7 @@ export default function ProponenteDetailPage() {
                   {captadores.map(cp => (
                     <div key={cp.id} className="px-5 py-3 group">
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-[0.8125rem] font-semibold text-black leading-tight truncate">{cp.captador?.nome ?? "—"}</p>
+                        <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight truncate">{cp.captador?.nome ?? "—"}</p>
                         <div className="flex items-center gap-2 flex-shrink-0">
                           <span className="text-[0.625rem] font-medium capitalize text-black/45">{cp.status}</span>
                           {cp.status === "ativo" && (
@@ -573,7 +573,7 @@ export default function ProponenteDetailPage() {
                     <Icon size={13} className="text-black/25"/>
                     <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p>
                   </div>
-                  <p title={title} className={`text-[1.375rem] font-semibold tabular-nums leading-none ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p>
+                  <p title={title} className={`text-[1.375rem] font-semibold tabular-nums leading-none ${vazio ? "text-black/30" : "text-[#282525]"}`}>{value}</p>
                   <p className="text-[0.6875rem] text-black/30 mt-0.5">{sub}</p>
                 </div>
               ))}
@@ -594,7 +594,7 @@ export default function ProponenteDetailPage() {
                         <span className="text-[0.6875rem] font-bold text-black/30">{(c.nome ?? "?").split(" ").slice(0, 2).map(w => w[0]).join("").toUpperCase()}</span>
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[0.8125rem] font-semibold text-black leading-tight">{c.nome ?? "—"}</p>
+                        <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight">{c.nome ?? "—"}</p>
                         {c.cargo && <p className="text-[0.6875rem] text-black/35">{c.cargo}</p>}
                       </div>
                       <div className="flex items-center gap-3 flex-shrink-0">
@@ -629,7 +629,7 @@ function SectionHeading({ eyebrow, title, count }: { eyebrow: string; title: str
     <header className="flex items-end justify-between gap-4 border-b px-5 py-5 md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
       <div>
         <p className="text-[0.625rem] font-bold uppercase tracking-[.12em] text-black/35">{eyebrow}</p>
-        <h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">{title}</h2>
+        <h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">{title}</h2>
       </div>
       <span className="text-[0.6875rem] tabular-nums text-black/30">{count} {count === 1 ? "registro" : "registros"}</span>
     </header>
@@ -662,7 +662,7 @@ function ProjetosView({ projetos, onOpen }: {
                     <td className="px-5 py-4"><span className="rounded border bg-white px-1.5 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: fase.text.startsWith("#") ? `${fase.text}47` : "rgba(13,13,13,.12)", color: fase.text }}>{FASE_LABEL[project.fase]}</span></td>
                     <td className="max-w-[13.125rem] px-5 py-4"><div className="flex flex-wrap gap-1">{project.areas_culturais.slice(0, 2).map(area => <span key={area} className="rounded border border-black/[.10] bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium text-black/55">{AREA_PT[area] ?? area}</span>)}{project.areas_culturais.length > 2 && <span className="text-[0.5625rem] text-black/30">+{project.areas_culturais.length - 2}</span>}{!project.areas_culturais.length && <span className="text-black/20">—</span>}</div></td>
                     <td className="px-5 py-4 text-[0.75rem] tabular-nums text-black/50" title={project.valor_alvo ? formatarValorCompleto(project.valor_alvo) : undefined}>{fmtValor(project.valor_alvo)}</td>
-                    <td className="px-5 py-4 text-[0.75rem] font-medium tabular-nums text-[#0D0D0D]" title={project.valor_garantido > 0 ? formatarValorCompleto(project.valor_garantido) : undefined}>{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
+                    <td className="px-5 py-4 text-[0.75rem] font-medium tabular-nums text-[#282525]" title={project.valor_garantido > 0 ? formatarValorCompleto(project.valor_garantido) : undefined}>{project.valor_garantido > 0 ? fmtValor(project.valor_garantido) : <span className="font-normal text-black/20">—</span>}</td>
                   </tr>
                 );
               })}
@@ -716,7 +716,7 @@ function ClientesView({ clientes }: { clientes: ClienteRow[] }) {
                   <tr key={cliente.id} className="transition hover:bg-black/[.018]">
                     <td className="px-5 py-4"><Link href={href} className="flex items-center gap-3"><CompanyLogo nome={cliente.nome} domain={cliente.domain_key} site={cliente.site} size={34} className="shrink-0 rounded"/><span><span className="block text-[0.8125rem] font-semibold text-black/75">{cliente.nome}</span>{cliente.setor && <span className="mt-0.5 block text-[0.625rem] text-black/30">{cliente.setor}</span>}</span></Link></td>
                     <td className="px-5 py-4"><div className="flex flex-wrap gap-1">{cliente.projetos.slice(0, 2).map(project => <Link key={project.id} href={`/projetos/${project.id}`} className="rounded bg-black/[.045] px-2 py-1 text-[0.625rem] text-black/45 transition hover:text-[#7259B5]">{project.nome}</Link>)}{cliente.projetos.length > 2 && <span className="px-1 py-1 text-[0.625rem] text-black/25">+{cliente.projetos.length - 2}</span>}</div></td>
-                    <td className={`px-5 py-4 text-[0.75rem] font-semibold tabular-nums ${cliente.valor ? "text-[#0D0D0D]" : "text-black/30"}`} title={cliente.valor ? formatarValorCompleto(cliente.valor) : undefined}>{fmtValor(cliente.valor)}</td>
+                    <td className={`px-5 py-4 text-[0.75rem] font-semibold tabular-nums ${cliente.valor ? "text-[#282525]" : "text-black/30"}`} title={cliente.valor ? formatarValorCompleto(cliente.valor) : undefined}>{fmtValor(cliente.valor)}</td>
                     <td className="px-5 py-4 text-[0.6875rem] tabular-nums text-black/40">{fmtDate(cliente.ultima_venda)}</td>
                   </tr>
                 );

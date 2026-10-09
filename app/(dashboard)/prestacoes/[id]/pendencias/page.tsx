@@ -169,7 +169,7 @@ export default function PendenciasPage() {
     <div className="space-y-5 px-4 py-6 sm:px-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-[0.875rem] font-semibold text-[#0D0D0D]">Pendências</h2>
+          <h2 className="text-[0.875rem] font-semibold text-[#282525]">Pendências</h2>
           <p className="mt-0.5 text-[0.75rem] text-black/50">
             {semNada ? "Cadastre o orçamento e envie as despesas: aqui aparece o que falta em cada item." : <>
               <span className="tabular-nums">{resumo.itensComPendencia}</span> {resumo.itensComPendencia === 1 ? "item com pendência" : "itens com pendência"}
@@ -201,7 +201,7 @@ export default function PendenciasPage() {
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 rounded border bg-white px-4 py-3 text-[0.75rem] text-black/65" style={{ borderColor: "#B23B3B47" }}>
           <span>
             <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mr-1 inline-block align-[-0.125rem] text-[#D94A4A]" />
-            <span className="font-semibold text-[#0D0D0D] tabular-nums">{resumo.debitosSemDespesa.quantidade}</span> {resumo.debitosSemDespesa.quantidade === 1 ? "débito do extrato" : "débitos do extrato"} sem despesa
+            <span className="font-semibold text-[#282525] tabular-nums">{resumo.debitosSemDespesa.quantidade}</span> {resumo.debitosSemDespesa.quantidade === 1 ? "débito do extrato" : "débitos do extrato"} sem despesa
             (<span className="tabular-nums">{fmt(resumo.debitosSemDespesa.valor)}</span>): ainda não têm item, por isso ficam fora da fila.
           </span>
           <Link href={`/prestacoes/${id}/conciliacao`} className="inline-flex items-center gap-1 rounded px-1.5 py-1 text-[0.6875rem] text-[#684DB0] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
@@ -245,7 +245,7 @@ export default function PendenciasPage() {
                           <td className={`${NUMERO} text-black/70`}><Contagem {...l.despesas} /></td>
                           <td className={NUMERO}><Contagem {...l.aConciliar} alerta /></td>
                           <td className="px-3 py-2.5 text-[0.6875rem]"><Pendencias linha={l} /></td>
-                          <td className={`${NUMERO} ${l.saldo !== null && l.saldo < 0 ? "font-medium text-[#0D0D0D]" : "text-black/60"}`}>
+                          <td className={`${NUMERO} ${l.saldo !== null && l.saldo < 0 ? "font-medium text-[#282525]" : "text-black/60"}`}>
                             {l.saldo !== null && l.saldo < 0 && <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Saldo negativo" className="mr-1 inline-block align-[-0.125rem] text-[#D94A4A]" />}
                             {l.saldo === null ? "—" : fmt(l.saldo)}
                           </td>
@@ -288,7 +288,7 @@ export default function PendenciasPage() {
                           <span className="block text-[0.75rem] text-black/80">{l.nome}</span>
                           <span className="block text-[0.6875rem] text-black/55">
                             Despesas <span className="tabular-nums"><Contagem {...l.despesas} /></span>
-                            {l.saldo !== null && <> · Saldo {l.saldo < 0 && <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Saldo negativo" className="mr-0.5 inline-block align-[-0.125rem] text-[#D94A4A]" />}<span className={`tabular-nums ${l.saldo < 0 ? "font-medium text-[#0D0D0D]" : ""}`}>{fmt(l.saldo)}</span></>}
+                            {l.saldo !== null && <> · Saldo {l.saldo < 0 && <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Saldo negativo" className="mr-0.5 inline-block align-[-0.125rem] text-[#D94A4A]" />}<span className={`tabular-nums ${l.saldo < 0 ? "font-medium text-[#282525]" : ""}`}>{fmt(l.saldo)}</span></>}
                           </span>
                           {(l.aConciliar.quantidade > 0 || l.pendencias.bloqueios + l.pendencias.outras > 0) && (
                             <span className="block text-[0.6875rem]">

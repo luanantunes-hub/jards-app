@@ -16,7 +16,7 @@ export function Select({ className = "", children, block = true, style, ...props
   return (
     <div className={`relative ${block ? "w-full" : "inline-block"}`}>
       <select
-        className={`appearance-none rounded border border-black/[.12] bg-white text-[0.75rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:cursor-not-allowed disabled:opacity-50 ${block ? "w-full" : ""} ${className}`}
+        className={`appearance-none rounded border border-black/[.12] bg-white text-[0.75rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:cursor-not-allowed disabled:opacity-50 ${block ? "w-full" : ""} ${className}`}
         {...props}
         style={{ paddingRight: "2rem", ...style }}
       >

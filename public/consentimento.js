@@ -163,7 +163,7 @@
     ".jc-btn:focus-visible{outline:2px solid rgba(255,255,255,.6);outline-offset:2px}" +
     ".jc-recusar{background:transparent;color:#fff;border:1px solid rgba(255,255,255,.22)}" +
     ".jc-recusar:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.34)}" +
-    ".jc-aceitar{background:#fff;color:#0D0D0D;border:1px solid #fff}" +
+    ".jc-aceitar{background:#fff;color:#282525;border:1px solid #fff}" +
     ".jc-aceitar:hover{background:rgba(255,255,255,.86);border-color:transparent}" +
     "@keyframes jc-entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}" +
     "@media (max-width:640px){.jc-aviso{flex-direction:column;align-items:stretch;left:12px;right:12px;bottom:12px;padding:12px}.jc-acoes .jc-btn{flex:1;height:36px}}" +

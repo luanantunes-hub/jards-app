@@ -91,7 +91,7 @@ export function ChaveManual({ aoCriar }: { aoCriar: () => Promise<void> }) {
         type="button"
         onClick={criarChave}
         disabled={criando}
-        className="mt-4 rounded bg-[#0D0D0D] px-4 py-2.5 text-sm text-white transition hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50"
+        className="mt-4 rounded bg-[#282525] px-4 py-2.5 text-sm text-white transition hover:bg-[#3A3535] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50"
       >
         {criando ? "Gerando…" : "Gerar chave"}
       </button>

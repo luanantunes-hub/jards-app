@@ -29,7 +29,7 @@ export function paginaDeRetorno({ destino, titulo, mensagem }: PaginaDeRetorno):
 <meta http-equiv="refresh" content="0;url=${href}">
 <title>${escaparHtml(titulo)} — Jards</title>
 <style>
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fff;color:#0d0d0d;font:1rem/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fff;color:#282525;font:1rem/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:26rem;padding:1.5rem;text-align:center}
 h1{margin:0 0 .5rem;font-size:1.125rem;font-weight:600}
 p{margin:.5rem 0;color:rgba(13,13,13,.65);font-size:.9375rem}

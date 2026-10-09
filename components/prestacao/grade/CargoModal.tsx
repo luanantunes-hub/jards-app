@@ -10,7 +10,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { ContratacaoDoCargo, PrestacaoCargo } from "@/lib/supabase/types";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 
 export type ItemParaCargo = { id: string; nome: string; deRh: boolean };
 
@@ -132,8 +132,8 @@ export function CargoModal({ prestacaoId, cargo, itens, ordem, onClose, onSaved 
                   role="radio"
                   aria-checked={ativo}
                   onClick={() => setContratacao(ativo ? "" : f.valor)}
-                  className={`min-h-10 rounded border px-2 py-1.5 text-left transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${ativo ? "bg-[#0D0D0D] text-white" : "bg-white text-black/70 hover:bg-black/[.04]"}`}
-                  style={{ borderColor: ativo ? "#0D0D0D" : "rgba(13,13,13,.12)" }}
+                  className={`min-h-10 rounded border px-2 py-1.5 text-left transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${ativo ? "bg-[#282525] text-white" : "bg-white text-black/70 hover:bg-black/[.04]"}`}
+                  style={{ borderColor: ativo ? "#282525" : "rgba(13,13,13,.12)" }}
                 >
                   <span className="block text-[0.75rem] font-medium">{f.rotulo}</span>
                   <span className={`block text-[0.625rem] ${ativo ? "text-white/70" : "text-black/40"}`}>{f.descricao}</span>
@@ -172,7 +172,7 @@ export function CargoModal({ prestacaoId, cargo, itens, ordem, onClose, onSaved 
         <div className="flex items-end">
           {soma.horas > 0 && !soma.ilegiveis.length && cargaEscrita !== soma.horas && (
             <button type="button" onClick={() => setCarga(String(soma.horas).replace(".", ","))}
-              className="h-10 rounded px-2 text-[0.75rem] text-black/55 underline decoration-black/20 underline-offset-2 transition hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+              className="h-10 rounded px-2 text-[0.75rem] text-black/55 underline decoration-black/20 underline-offset-2 transition hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
               Usar a soma dos horários ({horasBr(soma.horas)})
             </button>
           )}
@@ -180,7 +180,7 @@ export function CargoModal({ prestacaoId, cargo, itens, ordem, onClose, onSaved 
 
         <div className="border-t pt-3 sm:col-span-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes}
-            className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+            className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
             <ChevronDown size={13} aria-hidden className={`transition-transform duration-200 motion-reduce:transition-none ${maisDetalhes ? "rotate-180" : ""}`} />
             Mais detalhes
           </button>
@@ -189,7 +189,7 @@ export function CargoModal({ prestacaoId, cargo, itens, ordem, onClose, onSaved 
               <label>
                 <span className={ROTULO}>Atribuições</span>
                 <textarea value={atribuicoes} onChange={e => setAtribuicoes(e.target.value)} maxLength={1000} rows={2} placeholder="As responsabilidades do cargo"
-                  className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+                  className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
               </label>
               <label>
                 <span className={ROTULO}>Formação acadêmica</span>

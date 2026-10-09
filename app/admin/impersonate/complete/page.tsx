@@ -28,7 +28,7 @@ function ImpersonateCompleteInner() {
     return (
       <div className="flex h-screen items-center justify-center px-6">
         <div className="max-w-sm text-center">
-          <p className="text-[0.875rem] font-semibold text-black">Não foi possível entrar como este usuário</p>
+          <p className="text-[0.875rem] font-semibold text-[#282525]">Não foi possível entrar como este usuário</p>
           <p className="mt-1.5 text-[0.8125rem] text-black/50">{error}</p>
         </div>
       </div>

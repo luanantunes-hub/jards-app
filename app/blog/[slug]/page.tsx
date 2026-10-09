@@ -21,13 +21,13 @@ function renderBlock(block: Block) {
   switch (block.type) {
     case "heading2":
       return (
-        <h2 key={block.id} className="text-2xl font-bold text-[#0D0D0D] mt-8 mb-3 leading-snug">
+        <h2 key={block.id} className="text-2xl font-bold text-[#282525] mt-8 mb-3 leading-snug">
           {block.content}
         </h2>
       );
     case "heading3":
       return (
-        <h3 key={block.id} className="text-lg font-semibold text-[#0D0D0D] mt-6 mb-2">
+        <h3 key={block.id} className="text-lg font-semibold text-[#282525] mt-6 mb-2">
           {block.content}
         </h3>
       );
@@ -141,7 +141,7 @@ export default async function BlogPostPage({ params }: Props) {
         )}
 
         {/* Title */}
-        <h1 className="text-4xl font-bold text-[#0D0D0D] leading-tight mb-4 tracking-tight">
+        <h1 className="text-4xl font-bold text-[#282525] leading-tight mb-4 tracking-tight">
           {post.titulo}
         </h1>
 

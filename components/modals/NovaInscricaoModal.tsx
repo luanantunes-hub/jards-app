@@ -60,7 +60,7 @@ export type EditDataInscricao = {
 };
 
 function Rotulo({ children }: { children: React.ReactNode }) {
-  return <p className="mb-1.5 text-[0.75rem] font-semibold text-black">{children}</p>;
+  return <p className="mb-1.5 text-[0.75rem] font-semibold text-[#282525]">{children}</p>;
 }
 
 function DateField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
@@ -74,7 +74,7 @@ function DateField({ label, value, onChange }: { label: string; value: string; o
           value={value}
           aria-label={label}
           onChange={event => onChange(event.target.value)}
-          className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none"
+          className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-[#282525] outline-none"
         />
       </div>
     </div>
@@ -416,7 +416,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/5">
               <FolderOpen size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-black">{editData ? "Editar inscrição" : "Nova inscrição"}</h2>
+            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-[#282525]">{editData ? "Editar inscrição" : "Nova inscrição"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
@@ -438,7 +438,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); }}
                   onFocus={() => setEmpresaOpen(true)}
                   onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
-                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none"
                 />
                 {empresaSearch && (
                   <button type="button" aria-label="Limpar patrocinador"
@@ -453,7 +453,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   {empresasFiltradas.map(e => (
                     <button key={e.id} type="button"
                       onMouseDown={ev => { ev.preventDefault(); setEmpresaId(e.id); setEmpresaSearch(e.nome); setEmpresaOpen(false); }}
-                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[0.04]">
+                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[0.04]">
                       {e.nome}
                     </button>
                   ))}
@@ -504,7 +504,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   onChange={e => { setProjetoSearch(e.target.value); setProjetoId(""); setCotaId(""); setProjetoOpen(true); }}
                   onFocus={() => setProjetoOpen(true)}
                   onBlur={() => setTimeout(() => setProjetoOpen(false), 150)}
-                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none"
                 />
                 {projetoSearch && (
                   <button type="button" aria-label="Limpar projeto"
@@ -519,7 +519,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                   {projetosFiltrados.map(p => (
                     <button key={p.id} type="button"
                       onMouseDown={ev => { ev.preventDefault(); setProjetoId(p.id); setProjetoSearch(p.nome); setCotaId(""); setProjetoOpen(false); }}
-                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[0.04]">
+                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[0.04]">
                       {p.nome}
                     </button>
                   ))}
@@ -586,7 +586,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
 
           <div className="mt-5 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes}
-              className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
               <ChevronDown size={13} aria-hidden="true" className={`transition-transform duration-200 motion-reduce:transition-none ${maisDetalhes ? "rotate-180" : ""}`} />
               Mais detalhes
             </button>
@@ -613,7 +613,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                             onClick={() => trocarResponsavelTipo(tipo)}
                             className="flex items-center gap-1.5 border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
                             style={responsavelTipo === tipo
-                              ? { background: "#0D0D0D", color: "#fff", borderColor: "#0D0D0D" }
+                              ? { background: "#282525", color: "#fff", borderColor: "#282525" }
                               : { background: "#fff", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}
                           >
                             {tipo === "agencia" ? <Building2 size={12} /> : <Users size={12} />}
@@ -635,7 +635,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                           onChange={e => { const v = e.target.value; if (!responsavelTipo) setResponsavelTipo("membro"); setResponsavelPesquisa(v); setResponsavelId(""); setResponsavelOpen(v.trim().length > 0); }}
                           onFocus={() => { if (responsavelPesquisa.trim()) setResponsavelOpen(true); }}
                           onBlur={() => setTimeout(() => setResponsavelOpen(false), 150)}
-                          className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
+                          className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none"
                         />
                         {responsavelPesquisa && (
                           <button type="button" aria-label="Limpar responsável"
@@ -651,7 +651,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                             <button key={r.id} type="button"
                               onMouseDown={ev => { ev.preventDefault(); selecionarResponsavel(r); }}
                               className="w-full px-3 py-2 text-left transition hover:bg-black/[0.04]">
-                              <span className="block text-[0.8125rem] text-black">{r.label}</span>
+                              <span className="block text-[0.8125rem] text-[#282525]">{r.label}</span>
                               {r.sublabel && <span className="block text-[0.625rem] text-black/35">{r.sublabel}</span>}
                             </button>
                           ))}

@@ -115,7 +115,7 @@ export function DecisaoAlteracao({ alteracao, acao, regime, prestacaoId, organiz
       >
         <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div>
-            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#0D0D0D]">{TITULO[acao]}</h2>
+            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#282525]">{TITULO[acao]}</h2>
             <p className="text-[0.6875rem] text-black/40">Nº {alteracao.numero} · {rotuloTipoAlteracao(alteracao.tipo)} · {itens} {itens === 1 ? "item" : "itens"}</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="rounded p-1.5 text-black/35 transition hover:bg-black/5 hover:text-black/55 focus-visible:outline-2 focus-visible:outline-[#7259B5]">

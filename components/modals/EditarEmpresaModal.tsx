@@ -18,7 +18,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-[#282525]">{children}</label>;
 }
 
 export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
@@ -106,7 +106,7 @@ export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5">
               <Building2 size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Editar empresa</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Editar empresa</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
@@ -124,7 +124,7 @@ export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
               value={nome}
               onChange={e => setNome(e.target.value)}
               placeholder="Nome da empresa"
-              className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30"
+              className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30"
               style={{ borderColor: "rgba(13,13,13,.15)" }}
             />
           </div>
@@ -137,7 +137,7 @@ export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
                 onChange={e => { setSetor(e.target.value); setSetorDropdown(true); }}
                 onFocus={() => setSetorDropdown(true)}
                 placeholder="Ex: Tecnologia, Varejo, Saúde…"
-                className="w-full rounded border bg-white px-3 py-2.5 pr-8 text-[0.8125rem] text-black outline-none transition focus:border-black/30"
+                className="w-full rounded border bg-white px-3 py-2.5 pr-8 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30"
                 style={{ borderColor: "rgba(13,13,13,.15)" }}
               />
               <button type="button" tabIndex={-1} onClick={() => setSetorDropdown(v => !v)}
@@ -178,7 +178,7 @@ export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
                 value={domainKey}
                 onChange={e => setDomainKey(e.target.value)}
                 placeholder="empresa.com.br"
-                className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30"
+                className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30"
                 style={{ borderColor: "rgba(13,13,13,.15)" }}
               />
             </div>
@@ -190,7 +190,7 @@ export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
                   onChange={e => setLocCidade(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById("uf-edit-loc")?.focus(); } }}
                   placeholder="Cidade"
-                  className="w-32 rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30"
+                  className="w-32 rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
                 <input
@@ -199,7 +199,7 @@ export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
                   onChange={e => setLocUF(e.target.value.slice(0, 2))}
                   placeholder="UF"
                   maxLength={2}
-                  className="w-14 rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-center uppercase text-black outline-none transition focus:border-black/30"
+                  className="w-14 rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-center uppercase text-[#282525] outline-none transition focus:border-black/30"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
               </div>
@@ -228,7 +228,7 @@ export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
                   onChange={e => setCidadeNome(e.target.value)}
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); document.getElementById("uf-edit-cidade")?.focus(); } }}
                   placeholder="Cidade"
-                  className="flex-1 rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30"
+                  className="flex-1 rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
                 <input
@@ -238,7 +238,7 @@ export function EditarEmpresaModal({ empresa, onClose, onSaved }: Props) {
                   onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); addCidade(); } }}
                   placeholder="UF"
                   maxLength={2}
-                  className="w-14 rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-center uppercase text-black outline-none transition focus:border-black/30"
+                  className="w-14 rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-center uppercase text-[#282525] outline-none transition focus:border-black/30"
                   style={{ borderColor: "rgba(13,13,13,.15)" }}
                 />
                 <button type="button" onClick={addCidade} disabled={!cidadePreview} aria-label="Adicionar cidade"

@@ -83,7 +83,7 @@ type SelectOption = { value: string; label: string; icon: React.ElementType; col
 
 const PAPEL_OPTS: SelectOption[] = [
   { value: "",               label: "Não definido",  icon: CircleHelp,  color: "rgba(13,13,13,.35)" },
-  { value: "decision_maker", label: "Decision maker", icon: CircleDollarSign, color: "#0D0D0D" },
+  { value: "decision_maker", label: "Decision maker", icon: CircleDollarSign, color: "#282525" },
   { value: "champion",       label: "Champion",       icon: BadgeCheck,  color: "#7259B5" },
   { value: "influencer",     label: "Influencer",     icon: Radio,       color: "#7259B5" },
   { value: "gatekeeper",     label: "Gatekeeper",     icon: ShieldCheck, color: "#7259B5" },
@@ -296,7 +296,7 @@ function InlineSelect({
         onClick={toggle}
         aria-haspopup="listbox"
         aria-expanded={Boolean(menuPos)}
-        className="group inline-flex min-h-9 w-full max-w-full items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 text-[0.8125rem] font-semibold text-[#0D0D0D] transition-[background-color,border-color,transform] duration-150 hover:border-black/[.10] hover:bg-black/[.018] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+        className="group inline-flex min-h-9 w-full max-w-full items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 text-[0.8125rem] font-semibold text-[#282525] transition-[background-color,border-color,transform] duration-150 hover:border-black/[.10] hover:bg-black/[.018] active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
       >
         <span className="flex h-5 w-5 shrink-0 items-center justify-center text-black/65"><CurrentIcon size={14} strokeWidth={1.9} /></span>
         <span className="min-w-0 flex-1 truncate text-left">{current?.label ?? "—"}</span>
@@ -318,7 +318,7 @@ function InlineSelect({
                   type="button"
                   onClick={() => handleSelect(o.value)}
                   className="flex w-full items-center gap-2.5 px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.04]"
-                  style={{ fontWeight: selected ? 700 : 500, color: o.value ? "#0D0D0D" : "rgba(13,13,13,.4)" }}
+                  style={{ fontWeight: selected ? 700 : 500, color: o.value ? "#282525" : "rgba(13,13,13,.4)" }}
                 >
                   <span className="flex h-5 w-5 shrink-0 items-center justify-center text-black/60"><Icon size={13}/></span>
                   <span className="min-w-0 flex-1 truncate">{o.label}</span>
@@ -381,7 +381,7 @@ function InlineBars({
       </div>
       <div className="flex min-w-0 items-baseline justify-between gap-2">
         <p className={`truncate text-[0.6875rem] font-medium ${displayValue == null ? "text-black/30" : "text-black/55"}`}>{reading}</p>
-        <p className={`shrink-0 text-[0.875rem] font-semibold tabular-nums tracking-[-.02em] ${displayValue == null ? "text-black/30" : "text-[#0D0D0D]"}`}>{displayValue ?? "—"}<span className="ml-0.5 text-[0.625rem] font-medium text-black/25">/{max}</span></p>
+        <p className={`shrink-0 text-[0.875rem] font-semibold tabular-nums tracking-[-.02em] ${displayValue == null ? "text-black/30" : "text-[#282525]"}`}>{displayValue ?? "—"}<span className="ml-0.5 text-[0.625rem] font-medium text-black/25">/{max}</span></p>
       </div>
     </div>
   );
@@ -510,7 +510,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
               </div>
 
               <div className="min-w-0">
-                <h1 className="text-[1.75rem] font-semibold leading-[1.06] tracking-[-.04em] text-[#0D0D0D] sm:text-[2.125rem]">
+                <h1 className="text-[1.75rem] font-semibold leading-[1.06] tracking-[-.04em] text-[#282525] sm:text-[2.125rem]">
                   <InlineText
                     value={contato.nome}
                     onSave={v => saveField("nome", v)}
@@ -590,7 +590,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
               <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Última interação</p>
               <div className="group flex min-h-9 items-center gap-2 rounded border border-transparent bg-transparent px-2.5 py-2 transition hover:border-black/[.10] hover:bg-black/[.018]">
                 <span className={`flex h-5 w-5 shrink-0 items-center justify-center ${interacaoAlerta(dias) ? "" : "text-black/40"}`} style={interacaoAlerta(dias) ? { color: interacaoAlerta(dias) } : undefined}><CalendarClock size={14} strokeWidth={1.9} aria-hidden="true" /></span>
-                <p className={`truncate text-[0.8125rem] font-semibold tabular-nums ${dias === null ? "text-black/30" : "text-[#0D0D0D]"}`}>{interacaoText}</p>
+                <p className={`truncate text-[0.8125rem] font-semibold tabular-nums ${dias === null ? "text-black/30" : "text-[#282525]"}`}>{interacaoText}</p>
               </div>
             </div>
             {/* Canal preferido */}
@@ -704,7 +704,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                         </div>
                         <div className="min-w-0 flex-1 rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                           <div className="flex flex-wrap items-start justify-between gap-2">
-                            <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{a.nome}</p>
+                            <p className="text-[0.8125rem] font-semibold text-[#282525]">{a.nome}</p>
                             <span className="shrink-0 text-[0.6875rem] text-black/35">{fmtDate(dataStr)}</span>
                           </div>
                           {a.resultado && <p className="mt-1 text-[0.75rem] text-black/55 line-clamp-2">{a.resultado}</p>}
@@ -738,7 +738,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           className="block rounded border px-3 py-2.5 transition hover:border-[#7259B5]/30 hover:bg-black/[.04]"
                           style={{ borderColor: "rgba(13,13,13,.09)" }}>
                           <div className="flex items-start justify-between gap-2">
-                            <p className="text-[0.75rem] font-semibold text-[#0D0D0D] leading-snug">{c.titulo ?? c.projeto?.nome}</p>
+                            <p className="text-[0.75rem] font-semibold text-[#282525] leading-snug">{c.titulo ?? c.projeto?.nome}</p>
                             <StatusBadge
                               status={c.status}
                               label={etiqueta?.label ?? cfg.label}
@@ -807,7 +807,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           className="group cursor-pointer transition hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                         >
                           <td className="px-5 py-3.5">
-                            <span className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{nome}</span>
+                            <span className="text-[0.8125rem] font-semibold text-[#282525]">{nome}</span>
                           </td>
                           <td className="px-5 py-3.5 text-[0.78125rem] text-black/55">{c.empresa_crm?.nome ?? "—"}</td>
                           <td className="px-5 py-3.5 text-[0.78125rem] text-black/55 tabular-nums" title={c.valor_solicitado ? formatarValorCompleto(c.valor_solicitado) : undefined}>{c.valor_solicitado ? formatarValorCurto(c.valor_solicitado) : "—"}</td>

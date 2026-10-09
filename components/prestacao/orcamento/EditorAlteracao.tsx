@@ -153,7 +153,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
       >
         <div className="flex shrink-0 items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div>
-            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#0D0D0D]">
+            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#282525]">
               {alteracao ? `Alteração nº ${alteracao.numero}` : "Nova alteração do orçamento"}
             </h2>
             <p className="text-[0.6875rem] text-black/40">Digite o novo valor vigente só dos itens que mudam. Nada muda no orçamento até a alteração ser aplicada.</p>
@@ -271,7 +271,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
           <aside className="space-y-4 border-t bg-[#FAFAF9] px-5 py-4 lg:overflow-y-auto lg:border-l lg:border-t-0" style={{ borderColor: "rgba(13,13,13,.07)" }} aria-label="Cálculo da alteração">
             <div>
               <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tipo</p>
-              <p className="text-[0.875rem] font-semibold text-[#0D0D0D]">{movimentos.length ? rotuloTipoAlteracao(calculo.tipo) : "—"}</p>
+              <p className="text-[0.875rem] font-semibold text-[#282525]">{movimentos.length ? rotuloTipoAlteracao(calculo.tipo) : "—"}</p>
               {calculo.classificacao ? (
                 <p className="mt-0.5 flex items-center gap-1 text-[0.75rem] text-black/55">
                   {calculo.classificacao === "formal" && <FileText size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />}

@@ -39,10 +39,10 @@ const OUTROS_TIPOS_LABEL: Partial<Record<TipoExclusividade, string>> = {
 };
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-[#282525]">{children}</label>;
 }
 
-const fieldClass = "w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30";
+const fieldClass = "w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30";
 const fieldStyle = { borderColor: "rgba(13,13,13,.15)" } as const;
 
 export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSelecionado, onClose, onSaved }: Props) {
@@ -197,7 +197,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5">
               <Shield size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{editData ? "Editar atribuição" : "Nova atribuição"}</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">{editData ? "Editar atribuição" : "Nova atribuição"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />
@@ -211,7 +211,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
             {empresaSelecionada ? (
               <div className="flex items-center gap-2 rounded border bg-black/[.02] px-3 py-2.5" style={fieldStyle}>
                 <CompanyLogo nome={empresaSelecionada.nome} domain={empresaSelecionada.domain_key} site={empresaSelecionada.site} size={24} className="flex-shrink-0" />
-                <span className="flex-1 text-[0.8125rem] font-medium text-black">{empresaSelecionada.nome}</span>
+                <span className="flex-1 text-[0.8125rem] font-medium text-[#282525]">{empresaSelecionada.nome}</span>
                 <button type="button" onClick={() => { setEmpresaSelecionada(null); setProjetoSelecionado(null); setProjetoBusca(""); setProjetos([]); }} className="text-black/30 hover:text-black/60"><X size={12} /></button>
               </div>
             ) : (
@@ -250,7 +250,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
             {projetoSelecionado ? (
               <div className="flex items-center gap-2 rounded border bg-black/[.02] px-3 py-2.5" style={fieldStyle}>
                 <FolderOpen size={14} className="text-black/40" />
-                <span className="flex-1 text-[0.8125rem] font-medium text-black">{projetoSelecionado.nome}</span>
+                <span className="flex-1 text-[0.8125rem] font-medium text-[#282525]">{projetoSelecionado.nome}</span>
                 <button type="button" onClick={() => setProjetoSelecionado(null)} className="text-black/30 hover:text-black/60"><X size={12} /></button>
               </div>
             ) : (
@@ -288,7 +288,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
             {captadorSelecionado ? (
               <div className="flex items-center gap-2 rounded border bg-black/[.02] px-3 py-2.5" style={fieldStyle}>
                 <UserCheck size={14} className="text-black/40" />
-                <span className="flex-1 text-[0.8125rem] font-medium text-black">{captadorSelecionado.nome}</span>
+                <span className="flex-1 text-[0.8125rem] font-medium text-[#282525]">{captadorSelecionado.nome}</span>
                 <button type="button" onClick={() => setCaptadorSelecionado(null)} className="text-black/30 hover:text-black/60"><X size={12} /></button>
               </div>
             ) : (
@@ -341,7 +341,7 @@ export function NovaAtribuicaoModal({ editData, empresaPreSelecionada, tipoPreSe
                   >
                     <div className="mb-1 flex items-center gap-1.5">
                       <t.Icon size={12} style={{ color: active ? t.color : "rgba(13,13,13,.35)" }} />
-                      <p className="text-[0.8125rem] font-semibold" style={{ color: active ? t.color : "#0D0D0D" }}>{t.label}</p>
+                      <p className="text-[0.8125rem] font-semibold" style={{ color: active ? t.color : "#282525" }}>{t.label}</p>
                     </div>
                     <p className="text-[0.6875rem] leading-snug text-black/45">{t.desc}</p>
                   </button>

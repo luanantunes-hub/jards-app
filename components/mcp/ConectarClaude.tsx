@@ -66,7 +66,7 @@ export function ConectarClaude({ status, verificacao, urlServidor, aoInteragir }
     >
       <Detalhes titulo="Claude Code e contas de empresa">
         <div>
-          <p className="font-medium text-black">No Claude Code</p>
+          <p className="font-medium text-[#282525]">No Claude Code</p>
           <CaixaCopiavel
             texto={comandoClaudeCode}
             carregando={!urlServidor}
@@ -82,14 +82,14 @@ export function ConectarClaude({ status, verificacao, urlServidor, aoInteragir }
           </p>
         </div>
         <div className="border-t border-black/10 pt-4">
-          <p className="font-medium text-black">Claude Team ou Enterprise</p>
+          <p className="font-medium text-[#282525]">Claude Team ou Enterprise</p>
           <p className="mt-1">
             Quem é Owner adiciona o conector uma vez, em{" "}
             <a
               href={CONECTORES_DA_ORGANIZACAO}
               target="_blank"
               rel="noopener noreferrer"
-              className="underline underline-offset-2 hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+              className="underline underline-offset-2 hover:text-[#282525] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
             >
               Organization settings → Connectors
             </a>

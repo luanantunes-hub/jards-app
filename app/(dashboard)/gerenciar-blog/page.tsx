@@ -126,7 +126,7 @@ export default function BlogAdminPage() {
                           </span>
                         )}
                       </div>
-                      <p className="truncate text-sm font-semibold text-[#0D0D0D]">{post.titulo || "Sem título"}</p>
+                      <p className="truncate text-sm font-semibold text-[#282525]">{post.titulo || "Sem título"}</p>
                       <p className="mt-0.5 text-xs text-black/35">/{post.slug}</p>
                     </div>
                     <div className="mt-0.5 flex flex-shrink-0 items-center gap-1 text-[0.6875rem] tabular-nums text-black/30">

@@ -31,7 +31,7 @@ function PctBar({ value, tol }: { value: number | null; tol?: number }) {
       <div className="w-20 h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,13,13,.07)" }}>
         <div className="h-full rounded-full" style={{ width: `${Math.min(value, 100)}%`, background: color }} />
       </div>
-      <span className={`text-[0.625rem] font-semibold tabular-nums ${value ? "text-[#0D0D0D]" : "text-black/30"}`}>{value}%</span>
+      <span className={`text-[0.625rem] font-semibold tabular-nums ${value ? "text-[#282525]" : "text-black/30"}`}>{value}%</span>
     </div>
   );
 }
@@ -132,7 +132,7 @@ export default function RelatorioPage() {
           {view === "metas" && (
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[0.75rem] font-semibold text-black">Metas comprovadas</p>
+                <p className="text-[0.75rem] font-semibold text-[#282525]">Metas comprovadas</p>
                 <p className="text-[0.625rem] text-black/35">{metas.filter(m => coberturaDaMeta(m, atividades, evidencias).comprovada).length} de {metas.length} com evidência</p>
               </div>
               {metas.length === 0 ? (
@@ -154,7 +154,7 @@ export default function RelatorioPage() {
                         return (
                           <tr key={meta.id} className="hover:bg-black/[.015] transition border-b last:border-0 align-top" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                             <td className="px-4 py-3">
-                              <p className="font-semibold text-black">{i + 1} - {meta.descricao}</p>
+                              <p className="font-semibold text-[#282525]">{i + 1} - {meta.descricao}</p>
                               {meta.justificativa && <p className="text-[0.625rem] text-black/45 mt-0.5">{meta.justificativa}</p>}
                             </td>
                             <td className="px-4 py-3 tabular-nums text-black/60 whitespace-nowrap">{quantidade(meta.previsto, meta.unidade)}</td>
@@ -176,7 +176,7 @@ export default function RelatorioPage() {
           {view === "execucao" && (
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[0.75rem] font-semibold text-black">Execução por item</p>
+                <p className="text-[0.75rem] font-semibold text-[#282525]">Execução por item</p>
                 <p className="text-[0.625rem] text-black/35">{itens.length} rubrica{itens.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="overflow-x-auto">
@@ -198,14 +198,14 @@ export default function RelatorioPage() {
                         <tr key={item.id} className="hover:bg-black/[.015] transition border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                           <td className="px-4 py-3">
                             {item.caminho.length > 0 && <p className="text-[0.5625rem] uppercase tracking-[.08em] text-black/30">{item.caminho.join(" › ")}</p>}
-                            <p className="font-semibold text-black">{i + 1} - {item.nome}</p>
+                            <p className="font-semibold text-[#282525]">{i + 1} - {item.nome}</p>
                             {item.descricao && <p className="text-[0.625rem] text-black/35 mt-0.5">{item.descricao}</p>}
                           </td>
                           <td className="px-4 py-3 text-black/25">—</td>
                           <td className="px-4 py-3 text-black/25">—</td>
                           <td className="px-4 py-3"><PctBar value={null} /></td>
                           <td className="px-4 py-3 text-black/60 tabular-nums font-medium">{fmt(item.vigente)}</td>
-                          <td className={`px-4 py-3 tabular-nums font-semibold ${executado ? "text-[#0D0D0D]" : "text-black/30"}`}>
+                          <td className={`px-4 py-3 tabular-nums font-semibold ${executado ? "text-[#282525]" : "text-black/30"}`}>
                             <span className="inline-flex items-center gap-1">
                               {((pctFin !== null && pctFin > 100) || saldo < 0) && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
                               {fmt(executado)}
@@ -221,7 +221,7 @@ export default function RelatorioPage() {
                     <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
                       <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50" colSpan={4}>Total</td>
                       <td className="px-4 py-2.5 text-[0.75rem] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
-                      <td className={`px-4 py-2.5 text-[0.75rem] font-semibold tabular-nums ${totalRealizadoItens ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totalRealizadoItens)}</td>
+                      <td className={`px-4 py-2.5 text-[0.75rem] font-semibold tabular-nums ${totalRealizadoItens ? "text-[#282525]" : "text-black/30"}`}>{fmt(totalRealizadoItens)}</td>
                       <td className="px-4 py-2.5"><PctBar value={pct(totalRealizadoItens, totalAprovado)} /></td>
                       <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums text-black/50">{fmt(totalAprovado - totalRealizadoItens)}</td>
                     </tr>
@@ -239,7 +239,7 @@ export default function RelatorioPage() {
                 if (compsItem.length === 0) return (
                   <div key={item.id} className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                     <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="text-[0.75rem] font-semibold text-black">{idx + 1} - {item.nome}</p>
+                      <p className="text-[0.75rem] font-semibold text-[#282525]">{idx + 1} - {item.nome}</p>
                     </div>
                     <p className="text-[0.6875rem] text-black/30 px-5 py-4">Nenhum comprovante aceito vinculado.</p>
                   </div>
@@ -247,7 +247,7 @@ export default function RelatorioPage() {
                 return (
                   <div key={item.id} className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                     <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="text-[0.75rem] font-semibold text-black">{idx + 1} - {item.nome}</p>
+                      <p className="text-[0.75rem] font-semibold text-[#282525]">{idx + 1} - {item.nome}</p>
                       <span className="text-[0.625rem] text-black/35">{compsItem.length} item{compsItem.length !== 1 ? "s" : ""} · {fmt(compsItem.reduce((s, c) => s + (c.valor_extraido ?? 0), 0))}</span>
                     </div>
                     <div className="overflow-x-auto">
@@ -269,7 +269,7 @@ export default function RelatorioPage() {
                                 </td>
                                 <td className="px-4 py-2.5 text-black/50 whitespace-nowrap tabular-nums">{fmtDate(c.data_doc)}</td>
                                 <td className="px-4 py-2.5 text-[0.625rem] text-black/45">{c.tipo}</td>
-                                <td className={`px-4 py-2.5 font-semibold tabular-nums ${val ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(val)}</td>
+                                <td className={`px-4 py-2.5 font-semibold tabular-nums ${val ? "text-[#282525]" : "text-black/30"}`}>{fmt(val)}</td>
                               </tr>
                             );
                           })}
@@ -286,7 +286,7 @@ export default function RelatorioPage() {
           {view === "sintetico" && (
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[0.75rem] font-semibold text-black">Relação de pagamentos — Sintético</p>
+                <p className="text-[0.75rem] font-semibold text-[#282525]">Relação de pagamentos — Sintético</p>
                 <p className="text-[0.625rem] text-black/35">{aceitos.length} pagamento{aceitos.length !== 1 ? "s" : ""} aceito{aceitos.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="overflow-x-auto">
@@ -302,11 +302,11 @@ export default function RelatorioPage() {
                     {sintetico.map(({ item, qtd, total }) => (
                       <tr key={item.id} className="border-b last:border-0 hover:bg-black/[.015]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                         <td className="px-4 py-3">
-                          <p className="font-semibold text-black">{item.nome}</p>
+                          <p className="font-semibold text-[#282525]">{item.nome}</p>
                           {item.descricao && <p className="text-[0.625rem] text-black/35">{item.descricao}</p>}
                         </td>
                         <td className="px-4 py-3 text-black/50 tabular-nums">{qtd}</td>
-                        <td className={`px-4 py-3 font-semibold tabular-nums ${total ? "text-[#0D0D0D]" : "text-black/30"}`}>
+                        <td className={`px-4 py-3 font-semibold tabular-nums ${total ? "text-[#282525]" : "text-black/30"}`}>
                           <span className="inline-flex items-center gap-1">
                             {total > item.vigente && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
                             {fmt(total)}
@@ -320,7 +320,7 @@ export default function RelatorioPage() {
                       <tr className="border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                         <td className="px-4 py-3 text-[0.6875rem] italic text-black/45">Aceitos sem rubrica</td>
                         <td className="px-4 py-3 text-black/50 tabular-nums">{aceitosSemRubrica}</td>
-                        <td className={`px-4 py-3 font-semibold tabular-nums ${semRubrica ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(semRubrica)}</td>
+                        <td className={`px-4 py-3 font-semibold tabular-nums ${semRubrica ? "text-[#282525]" : "text-black/30"}`}>{fmt(semRubrica)}</td>
                         <td className="px-4 py-3 text-black/25">—</td>
                         <td className="px-4 py-3 text-black/25">—</td>
                       </tr>
@@ -334,7 +334,7 @@ export default function RelatorioPage() {
                       <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
                         <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50">Total</td>
                         <td className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50 tabular-nums">{aceitos.length}</td>
-                        <td className={`px-4 py-2.5 text-[0.75rem] font-semibold tabular-nums ${totalRealizado ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totalRealizado)}</td>
+                        <td className={`px-4 py-2.5 text-[0.75rem] font-semibold tabular-nums ${totalRealizado ? "text-[#282525]" : "text-black/30"}`}>{fmt(totalRealizado)}</td>
                         <td className="px-4 py-2.5 text-[0.75rem] font-bold text-black/60 tabular-nums">{fmt(totalAprovado)}</td>
                         <td className="px-4 py-2.5 text-[0.75rem] font-bold tabular-nums text-black/50">{fmt(totalAprovado - totalRealizado)}</td>
                       </tr>
@@ -349,7 +349,7 @@ export default function RelatorioPage() {
           {view === "analitico" && (
             <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <div className="px-5 py-3 border-b flex items-center justify-between" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <p className="text-[0.75rem] font-semibold text-black">Relação de pagamentos — Analítico</p>
+                <p className="text-[0.75rem] font-semibold text-[#282525]">Relação de pagamentos — Analítico</p>
                 <p className="text-[0.625rem] text-black/35">{aceitos.length} registro{aceitos.length !== 1 ? "s" : ""}</p>
               </div>
               <div className="overflow-x-auto">
@@ -384,7 +384,7 @@ export default function RelatorioPage() {
                             </span>
                           </td>
                           <td className="px-4 py-3 text-[0.625rem] text-black/40 capitalize">{c.origem}</td>
-                          <td className={`px-4 py-3 font-semibold tabular-nums ${c.valor_extraido ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(c.valor_extraido)}</td>
+                          <td className={`px-4 py-3 font-semibold tabular-nums ${c.valor_extraido ? "text-[#282525]" : "text-black/30"}`}>{fmt(c.valor_extraido)}</td>
                         </tr>
                       );
                     })}
@@ -393,7 +393,7 @@ export default function RelatorioPage() {
                     <tfoot>
                       <tr style={{ background: "#F9F9F8", borderTop: "2px solid rgba(13,13,13,.08)" }}>
                         <td colSpan={5} className="px-4 py-2.5 text-[0.6875rem] font-bold text-black/50">Total</td>
-                        <td className={`px-4 py-2.5 text-[0.75rem] font-semibold tabular-nums ${totalAceitos ? "text-[#0D0D0D]" : "text-black/30"}`}>
+                        <td className={`px-4 py-2.5 text-[0.75rem] font-semibold tabular-nums ${totalAceitos ? "text-[#282525]" : "text-black/30"}`}>
                           {fmt(totalAceitos)}
                         </td>
                       </tr>

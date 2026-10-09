@@ -44,7 +44,7 @@ export function ProjetoResumo({ projetoId, projeto }: { projetoId: string | null
           size="md"
         />
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[0.9375rem] font-semibold text-[#0D0D0D]">{projeto.nome}</p>
+          <p className="truncate text-[0.9375rem] font-semibold text-[#282525]">{projeto.nome}</p>
           {descricao && <p className="mt-0.5 line-clamp-2 text-[0.75rem] text-black/45">{descricao}</p>}
         </div>
       </div>
@@ -54,14 +54,14 @@ export function ProjetoResumo({ projetoId, projeto }: { projetoId: string | null
           {proponente && (
             <div className="min-w-0">
               <dt className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Proponente</dt>
-              <dd className="break-words text-[0.8125rem] font-medium text-[#0D0D0D]">{proponente}</dd>
+              <dd className="break-words text-[0.8125rem] font-medium text-[#282525]">{proponente}</dd>
               {local && <dd className="text-[0.6875rem] text-black/40">{local}</dd>}
             </div>
           )}
           {meta != null && (
             <div className="min-w-0">
               <dt className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Meta de captação</dt>
-              <dd title={formatarValorCompleto(meta)} className="text-[0.8125rem] font-semibold tabular-nums text-[#0D0D0D]">{formatarValorCurto(meta)}</dd>
+              <dd title={formatarValorCompleto(meta)} className="text-[0.8125rem] font-semibold tabular-nums text-[#282525]">{formatarValorCurto(meta)}</dd>
             </div>
           )}
         </dl>

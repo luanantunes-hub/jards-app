@@ -74,7 +74,7 @@ export function BottomSheet({ titulo, subtitulo, onClose, children, footer }: {
       >
         <div className="flex items-start justify-between gap-4 border-b px-5 py-4 md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           <div className="min-w-0">
-            <h3 id={tituloId} className="text-[0.9375rem] font-semibold text-[#0D0D0D]">{titulo}</h3>
+            <h3 id={tituloId} className="text-[0.9375rem] font-semibold text-[#282525]">{titulo}</h3>
             {subtitulo && <p className="mt-0.5 truncate text-[0.75rem] text-black/40">{subtitulo}</p>}
           </div>
           <button type="button" onClick={close} aria-label="Fechar" className="-mr-1.5 flex h-9 w-9 shrink-0 items-center justify-center rounded transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">

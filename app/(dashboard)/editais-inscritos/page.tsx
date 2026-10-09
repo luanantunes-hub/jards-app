@@ -365,7 +365,7 @@ export default function EditaisInscritosPage() {
 
   const countByStatus = (st: StatusEdital) => editais.filter((e) => e.status === st).length;
   const stats = [
-    { label: "Total",      value: editais.length,              color: "#0D0D0D"  },
+    { label: "Total",      value: editais.length,              color: "#282525"  },
     { label: "Aprovados",  value: countByStatus("aprovado"),   color: "#2E8932"  },
     { label: "Em análise", value: countByStatus("em_analise"), color: "#B07A14"  },
     { label: "Inscritos",  value: countByStatus("inscrito"),   color: "#2D72B0"  },
@@ -403,7 +403,7 @@ export default function EditaisInscritosPage() {
               </span>
               <div
                 role="tooltip"
-                className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#0D0D0D] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
+                className="pointer-events-none absolute right-0 top-full z-20 mt-1.5 w-max max-w-[11.875rem] rounded bg-[#282525] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/atividade:opacity-100"
               >
                 <p className="font-semibold">{atividade.nome}</p>
                 <p className={atividade.atrasada ? "text-[#F0B24D]" : "text-white/55"}>
@@ -416,7 +416,7 @@ export default function EditaisInscritosPage() {
             </div>
           )}
         </div>
-        <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{projeto}</p>
+        <p className="text-[0.8125rem] font-semibold text-[#282525] leading-snug mb-2.5 line-clamp-2">{projeto}</p>
         <div className="flex items-center justify-between">
           {e.data_fechamento ? (
             <span className="flex items-center gap-1 text-[0.625rem] text-black/40 font-semibold"><Calendar size={9} />{fmtShortDate(e.data_fechamento)}</span>
@@ -854,7 +854,7 @@ export default function EditaisInscritosPage() {
                             </div>
 
                             {/* Projeto */}
-                            <p className="text-[0.8125rem] font-semibold text-black leading-snug mb-2.5 line-clamp-2">{projeto}</p>
+                            <p className="text-[0.8125rem] font-semibold text-[#282525] leading-snug mb-2.5 line-clamp-2">{projeto}</p>
 
                             {/* Footer */}
                             <div className="flex items-center justify-between">

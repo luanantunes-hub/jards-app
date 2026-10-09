@@ -247,7 +247,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
             <CompanyLogo nome={companyName} domain={account.empresa_crm?.domain_key} site={account.empresa_crm?.site} size={48}/>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2"><StatusBadge status={delivery.status} label={statusMeta.label} bg={statusMeta.color} iconName={statusMeta.icon} size="sm"/><span className="text-[0.6875rem] text-black/30">{categoryLabel(delivery.categoria)}</span></div>
-              <h1 className="mt-2 max-w-3xl text-[1.875rem] font-semibold leading-tight tracking-[-.04em] text-black">{delivery.titulo}</h1>
+              <h1 className="mt-2 max-w-3xl text-[1.875rem] font-semibold leading-tight tracking-[-.04em] text-[#282525]">{delivery.titulo}</h1>
               <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[0.75rem] text-black/35">
                 <span>{companyName}</span>{project && <><span>·</span><Link href={`/projetos/${project.id}`} className="hover:text-[#7259B5]">{project.nome}</Link></>}{contract && <><span>·</span><Link href={`/contratos/${contract.id}`} className="hover:text-[#7259B5]">{contract.titulo || contract.numero || "Contrato"}</Link></>}
               </p>

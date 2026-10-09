@@ -57,10 +57,10 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white shadow-2xl" style={{ maxWidth: "26.25rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
+            <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-[#282525]">
               <Target size={15} />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Editar objetivo</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Editar objetivo</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />
@@ -85,7 +85,7 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
                 onChange={e => setValor(formatDecimalBR(e.target.value))}
                 onKeyDown={e => { if (e.key === "Enter") handleSalvar(); }}
                 placeholder="Ex.: 1.250.000,00"
-                className="h-11 w-full bg-transparent text-[0.875rem] text-black outline-none"
+                className="h-11 w-full bg-transparent text-[0.875rem] text-[#282525] outline-none"
               />
             </div>
           </label>

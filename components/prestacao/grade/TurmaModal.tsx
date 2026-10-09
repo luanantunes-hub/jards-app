@@ -10,7 +10,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoTurma } from "@/lib/supabase/types";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 
 /** Cria ou edita uma turma da grade: núcleo, modalidade, alunos, dias e horário; observações em "Mais detalhes". */
 export function TurmaModal({ prestacaoId, turma, locais, modalidades, ordem, onClose, onSaved }: {
@@ -125,8 +125,8 @@ export function TurmaModal({ prestacaoId, turma, locais, modalidades, ordem, onC
                   onClick={() => alternar(d.dia)}
                   aria-pressed={ativo}
                   aria-label={d.nome}
-                  className={`h-10 min-w-11 rounded border px-2.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${ativo ? "bg-[#0D0D0D] text-white" : "bg-white text-black/55 hover:bg-black/[.04] hover:text-black/80"}`}
-                  style={{ borderColor: ativo ? "#0D0D0D" : "rgba(13,13,13,.12)" }}
+                  className={`h-10 min-w-11 rounded border px-2.5 text-[0.75rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${ativo ? "bg-[#282525] text-white" : "bg-white text-black/55 hover:bg-black/[.04] hover:text-black/80"}`}
+                  style={{ borderColor: ativo ? "#282525" : "rgba(13,13,13,.12)" }}
                 >
                   {d.curto}
                 </button>
@@ -149,7 +149,7 @@ export function TurmaModal({ prestacaoId, turma, locais, modalidades, ordem, onC
 
         <div className="border-t pt-3 sm:col-span-2" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes}
-            className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+            className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
             <ChevronDown size={13} aria-hidden className={`transition-transform duration-200 motion-reduce:transition-none ${maisDetalhes ? "rotate-180" : ""}`} />
             Mais detalhes
           </button>
@@ -157,7 +157,7 @@ export function TurmaModal({ prestacaoId, turma, locais, modalidades, ordem, onC
             <label className="mt-3 block">
               <span className={ROTULO}>Observações</span>
               <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} maxLength={1000} rows={2}
-                className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+                className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
             </label>
           )}
         </div>

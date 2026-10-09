@@ -76,7 +76,7 @@ export function CustomDropdown({
           compact ? `px-3 py-2.5 text-xs ${emphasized ? "font-semibold" : "font-normal"}` : `px-3.5 py-2.5 text-sm ${emphasized ? "" : "font-normal"}`
         } ${
           value
-            ? `border-black/12 text-[#0D0D0D] ${emphasized ? "font-semibold" : "font-normal"}`
+            ? `border-black/12 text-[#282525] ${emphasized ? "font-semibold" : "font-normal"}`
             : "border-black/12 text-black/40 font-normal"
         } hover:border-black/20 focus:outline-none focus:ring-2 focus:ring-black/10 disabled:cursor-not-allowed disabled:bg-black/[.02] disabled:text-black/25 disabled:hover:border-black/12`}
       >
@@ -111,7 +111,7 @@ export function CustomDropdown({
                   compact ? "text-[0.75rem]" : ""
                 } ${
                   value === opt.value
-                    ? "text-[#0D0D0D] bg-black/[0.03]"
+                    ? "text-[#282525] bg-black/[0.03]"
                     : "text-black/55 hover:bg-black/[0.04]"
                 } disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent`}
               >

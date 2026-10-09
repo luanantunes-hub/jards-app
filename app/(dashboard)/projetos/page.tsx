@@ -140,13 +140,13 @@ function ProjectsPortfolioView({ projetos, onOpen }: { projetos: ProjetoRow[]; o
                       <div className="flex items-start gap-2.5">
                         <ProjectIdentity nome={project.nome} tipo={project.identidade_tipo} valor={project.identidade_valor} logoUrl={project.identidade_logo_url} cor={project.identidade_cor} size="sm" />
                         <div className="min-w-0 flex-1">
-                          <p className="line-clamp-2 text-[0.75rem] font-semibold leading-[1.35] text-black">{project.nome}</p>
+                          <p className="line-clamp-2 text-[0.75rem] font-semibold leading-[1.35] text-[#282525]">{project.nome}</p>
                           <p className="mt-1 truncate text-[0.625rem] text-black/35">{project.proponente_nome ?? "Sem proponente"}</p>
                         </div>
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-2 border-t border-black/[.06] pt-2.5">
-                        <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Captado</p><p className={`mt-0.5 truncate text-[0.6875rem] font-semibold tabular-nums ${project.valor_captado ? "text-[#0D0D0D]" : "text-black/30"}`} title={project.valor_captado ? formatarValorCompleto(project.valor_captado) : undefined}>{fmtValor(project.valor_captado)}</p></div>
-                        <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Progresso</p><p className={`mt-0.5 text-[0.6875rem] font-semibold tabular-nums ${progress ? "text-[#0D0D0D]" : "text-black/30"}`}>{progress}%</p></div>
+                        <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Captado</p><p className={`mt-0.5 truncate text-[0.6875rem] font-semibold tabular-nums ${project.valor_captado ? "text-[#282525]" : "text-black/30"}`} title={project.valor_captado ? formatarValorCompleto(project.valor_captado) : undefined}>{fmtValor(project.valor_captado)}</p></div>
+                        <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Progresso</p><p className={`mt-0.5 text-[0.6875rem] font-semibold tabular-nums ${progress ? "text-[#282525]" : "text-black/30"}`}>{progress}%</p></div>
                       </div>
                       <div className="mt-2.5 space-y-1.5 text-[0.625rem] text-black/40">
                         <div className="flex items-center gap-1.5"><CalendarDays size={11}/><span>{project.proximo_prazo ? new Date(`${project.proximo_prazo}T00:00:00`).toLocaleDateString("pt-BR") : "Sem prazo próximo"}</span></div>
@@ -308,7 +308,7 @@ export default function ProjetosPage() {
             <p className="text-sm text-black/25 mb-5">Crie projetos para organizar suas negociações e inscrições</p>
             <button
               onClick={() => setShowModal(true)}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
+              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition"
             >
               <Plus size={13} /> Criar primeiro projeto
             </button>
@@ -322,7 +322,7 @@ export default function ProjetosPage() {
             <p className="text-sm text-black/25 mb-5">Ajuste a busca ou os filtros para ver mais resultados</p>
             <button
               onClick={() => { setSearch(""); setFaseFilter("todas"); setShowArquivados(true); }}
-              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
+              className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition"
             >
               Limpar filtros
             </button>
@@ -365,7 +365,7 @@ export default function ProjetosPage() {
                           <div className="flex items-center gap-2">
                             <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} size="sm" semFundo />
                             <div className="min-w-0">
-                              <p className="text-[0.8125rem] font-semibold text-black leading-tight line-clamp-1">{p.nome}</p>
+                              <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight line-clamp-1">{p.nome}</p>
                               {p.descricao && (
                                 <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
                               )}
@@ -415,7 +415,7 @@ export default function ProjetosPage() {
 
                         {/* Captado */}
                         <td className="px-4 py-3.5 whitespace-nowrap">
-                          <span className={`text-[0.8125rem] font-semibold tabular-nums ${p.valor_captado > 0 ? "text-[#0D0D0D]" : "text-black/30"}`} title={p.valor_captado > 0 ? formatarValorCompleto(p.valor_captado) : undefined}>{fmtValor(p.valor_captado)}</span>
+                          <span className={`text-[0.8125rem] font-semibold tabular-nums ${p.valor_captado > 0 ? "text-[#282525]" : "text-black/30"}`} title={p.valor_captado > 0 ? formatarValorCompleto(p.valor_captado) : undefined}>{fmtValor(p.valor_captado)}</span>
                         </td>
 
                         {/* Progresso financeiro */}

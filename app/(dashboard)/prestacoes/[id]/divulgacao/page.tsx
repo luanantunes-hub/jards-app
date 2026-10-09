@@ -192,14 +192,14 @@ export default function DivulgacaoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Divulgação</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Divulgação</h2>
           <p className="text-[0.6875rem] text-black/45">Peças de divulgação com as marcas, a aprovação prévia e a amostra para o relatório final.</p>
         </div>
         {podeEditar && (
           <button
             type="button"
             onClick={() => setEditando("nova")}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
           >
             <Plus size={13} aria-hidden /> Nova peça
           </button>
@@ -224,17 +224,17 @@ export default function DivulgacaoPage() {
 
       {!carregando && pecas.length > 0 && (
         <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
-          <div className="flex items-center gap-1.5"><dt className={ROTULO}>Peças</dt><dd className="font-semibold tabular-nums text-[#0D0D0D]">{pecas.length}</dd></div>
-          <div className="flex items-center gap-1.5"><dt className={ROTULO}>Já circularam</dt><dd className={`font-semibold tabular-nums ${placar.circularam ? "text-[#0D0D0D]" : "text-black/30"}`}>{placar.circularam}</dd></div>
-          {placar.semAprovacao > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Circularam sem aprovação</dt><dd className="font-semibold tabular-nums text-[#0D0D0D]">{placar.semAprovacao}</dd></div>}
-          {placar.comMarcaFaltando > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Com marca a corrigir</dt><dd className="font-semibold tabular-nums text-[#0D0D0D]">{placar.comMarcaFaltando}</dd></div>}
-          {placar.semAmostra > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Sem amostra</dt><dd className="font-semibold tabular-nums text-[#0D0D0D]">{placar.semAmostra}</dd></div>}
+          <div className="flex items-center gap-1.5"><dt className={ROTULO}>Peças</dt><dd className="font-semibold tabular-nums text-[#282525]">{pecas.length}</dd></div>
+          <div className="flex items-center gap-1.5"><dt className={ROTULO}>Já circularam</dt><dd className={`font-semibold tabular-nums ${placar.circularam ? "text-[#282525]" : "text-black/30"}`}>{placar.circularam}</dd></div>
+          {placar.semAprovacao > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Circularam sem aprovação</dt><dd className="font-semibold tabular-nums text-[#282525]">{placar.semAprovacao}</dd></div>}
+          {placar.comMarcaFaltando > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Com marca a corrigir</dt><dd className="font-semibold tabular-nums text-[#282525]">{placar.comMarcaFaltando}</dd></div>}
+          {placar.semAmostra > 0 && <div className="flex items-center gap-1.5"><dt className={ROTULO}>{ALERTA}Sem amostra</dt><dd className="font-semibold tabular-nums text-[#282525]">{placar.semAmostra}</dd></div>}
         </dl>
       )}
 
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="pecas-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="pecas-titulo" className="text-[0.75rem] font-semibold text-black">Peças <span className="font-normal tabular-nums text-black/35">({pecas.length})</span></h3>
+          <h3 id="pecas-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Peças <span className="font-normal tabular-nums text-black/35">({pecas.length})</span></h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1, 2].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>

@@ -95,7 +95,7 @@ export function PrioridadeSelect({ value, onChange }: {
                   <span className="w-3 h-3 rounded flex items-center justify-center text-white flex-shrink-0" style={{ background: it.color }}>
                     <Icon size={8} strokeWidth={2.5} />
                   </span>
-                  <span className="text-[0.75rem] text-black">{it.label}</span>
+                  <span className="text-[0.75rem] text-[#282525]">{it.label}</span>
                 </span>
                 {value === p && <Check size={12} className="text-[#7259B5] flex-shrink-0" />}
               </button>

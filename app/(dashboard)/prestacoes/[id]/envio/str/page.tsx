@@ -56,7 +56,7 @@ function ListaDeCriticas({ id, titulo, criticas, aviso }: { id: string; titulo: 
   if (!criticas.length) return null;
   return (
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-label={titulo}>
-      <h3 className="border-b px-5 py-3 text-[0.75rem] font-semibold text-black" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+      <h3 className="border-b px-5 py-3 text-[0.75rem] font-semibold text-[#282525]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         {titulo} <span className="font-normal text-black/40">({criticas.length})</span>
       </h3>
       <ul className="divide-y divide-black/[.05]">
@@ -205,7 +205,7 @@ export default function PlanilhasStrPage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Planilhas do STR</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Planilhas do STR</h2>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
             Relação de Pagamentos, Demonstrativo do Extrato e Demonstrativo Orçamentário no modelo da ANCINE, montados com as despesas, o extrato e o orçamento.
             Resolva aqui o que o STR recusaria e baixe os arquivos em Excel 97-2003 para carregar.
@@ -216,7 +216,7 @@ export default function PlanilhasStrPage() {
             type="button"
             onClick={baixarTodas}
             disabled={gerando}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transform-none"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40 motion-reduce:transform-none"
           >
             {gerando
               ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" aria-hidden />
@@ -256,7 +256,7 @@ export default function PlanilhasStrPage() {
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded border bg-white px-5 py-4 text-[0.6875rem] md:grid-cols-3" style={BORDA}>
               <div>
                 <dt className={ROTULO}>A comprovar</dt>
-                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${planilhas.totais.aComprovar ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(planilhas.totais.aComprovar)}</dd>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${planilhas.totais.aComprovar ? "text-[#282525]" : "text-black/30"}`}>{reais(planilhas.totais.aComprovar)}</dd>
                 <dd className="tabular-nums text-black/40">
                   captado {reais(planilhas.totais.captado)}
                   {planilhas.totais.contrapartidaMinima > 0 && ` + contrapartida ${reais(planilhas.totais.contrapartidaMinima)}`}
@@ -265,12 +265,12 @@ export default function PlanilhasStrPage() {
               </div>
               <div>
                 <dt className={ROTULO}>Comprovado</dt>
-                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${planilhas.totais.comprovado ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(planilhas.totais.comprovado)}</dd>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${planilhas.totais.comprovado ? "text-[#282525]" : "text-black/30"}`}>{reais(planilhas.totais.comprovado)}</dd>
                 <dd className="tabular-nums text-black/40">RPs {reais(planilhas.totais.rps)} + despesas bancárias {reais(planilhas.totais.despesasBancarias)}</dd>
               </div>
               <div className="col-span-2 md:col-span-1">
                 <dt className={ROTULO}>Comprovado × a comprovar</dt>
-                <dd className={`mt-0.5 flex items-center gap-1 text-[0.875rem] tabular-nums ${diferenca >= 0 ? "font-medium text-black/70" : "font-semibold text-[#0D0D0D]"}`}>
+                <dd className={`mt-0.5 flex items-center gap-1 text-[0.875rem] tabular-nums ${diferenca >= 0 ? "font-medium text-black/70" : "font-semibold text-[#282525]"}`}>
                   {diferenca < 0 && <AlertCircle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
                   {diferenca >= 0 ? "Fecha" : `Faltam ${reais(-diferenca)}`}
                 </dd>
@@ -289,7 +289,7 @@ export default function PlanilhasStrPage() {
           <ListaDeCriticas id={id} titulo="Avisos" criticas={avisos} aviso />
 
           <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-label="Planilhas">
-            <h3 className="border-b px-5 py-3 text-[0.75rem] font-semibold text-black" style={{ borderColor: "rgba(13,13,13,.07)" }}>Planilhas</h3>
+            <h3 className="border-b px-5 py-3 text-[0.75rem] font-semibold text-[#282525]" style={{ borderColor: "rgba(13,13,13,.07)" }}>Planilhas</h3>
             <div className="hidden overflow-x-auto md:block">
               <table className="w-full text-[0.75rem]">
                 <thead>

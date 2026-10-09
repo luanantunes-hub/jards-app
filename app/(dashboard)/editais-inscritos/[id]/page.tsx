@@ -441,7 +441,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                   onClick={() => handlePrioridadeChange(p === "sem" ? null : p)}
                   className="flex w-full items-center justify-between px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.03]"
                 >
-                  <span className="inline-flex items-center gap-1.5 text-black">
+                  <span className="inline-flex items-center gap-1.5 text-[#282525]">
                     {it ? (
                       <span className="flex h-3 w-3 items-center justify-center rounded text-white" style={{ background: it.color }}>
                         <it.Icon size={8} strokeWidth={2.5} />
@@ -478,7 +478,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               size={56}
             />
             <div className="min-w-0">
-              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{titulo}</h1>
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{titulo}</h1>
               <div className="mt-2 flex flex-wrap items-center gap-2 text-[0.875rem] text-black/45">
                 {projetoNome && (inscricao.empresas_crm?.nome && !inscricao.empresas?.nome ? (
                   <Link href={`/empresas-crm/${inscricao.empresa_crm_id}`} className="text-sm text-black/45 hover:text-[#7259B5] transition">
@@ -533,7 +533,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
             ) : RESULTADO_NEGATIVO.has(inscricao.status) ? (
               <button
                 onClick={() => setShowRenovarModal(true)}
-                className="flex h-11 items-center gap-2 rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black transition hover:bg-black/[.04]"
+                className="flex h-11 items-center gap-2 rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04]"
               >
                 <RotateCw size={12} />
                 {inscricao.retomada_programada_em
@@ -569,7 +569,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
           {!inscricao.projeto_id && (
             <div>
               <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Valor</p>
-              <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.valor ? "text-[#0D0D0D]" : "text-black/30"}`} title={inscricao.valor ? formatarValorCompleto(inscricao.valor) : undefined}>{inscricao.valor ? formatarValorCurto(inscricao.valor) : "—"}</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.valor ? "text-[#282525]" : "text-black/30"}`} title={inscricao.valor ? formatarValorCompleto(inscricao.valor) : undefined}>{inscricao.valor ? formatarValorCurto(inscricao.valor) : "—"}</p>
             </div>
           )}
           <div>
@@ -592,14 +592,14 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
           <div>
             <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Fechamento</p>
             {diasFechamento !== null && diasFechamento >= 0 && diasFechamento < 7 ? (
-              <p className="inline-flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums text-[#0D0D0D]"><Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: "#D94A4A" }} />{diasFechamento === 0 ? "Hoje" : `${diasFechamento}d`}</p>
+              <p className="inline-flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums text-[#282525]"><Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: "#D94A4A" }} />{diasFechamento === 0 ? "Hoje" : `${diasFechamento}d`}</p>
             ) : (
-              <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.data_fechamento ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmtDate(inscricao.data_fechamento)}</p>
+              <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.data_fechamento ? "text-[#282525]" : "text-black/30"}`}>{fmtDate(inscricao.data_fechamento)}</p>
             )}
           </div>
           <div>
             <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Resultado</p>
-            <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.data_resultado ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmtDate(inscricao.data_resultado)}</p>
+            <p className={`text-[0.9375rem] font-semibold tabular-nums ${inscricao.data_resultado ? "text-[#282525]" : "text-black/30"}`}>{fmtDate(inscricao.data_resultado)}</p>
           </div>
           <div>
             <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prioridade</p>
@@ -625,7 +625,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
           </div>
           <div>
             <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Atividades</p>
-            <p className={`text-[0.9375rem] font-semibold tabular-nums ${atividades.length ? "text-[#0D0D0D]" : "text-black/30"}`}>
+            <p className={`text-[0.9375rem] font-semibold tabular-nums ${atividades.length ? "text-[#282525]" : "text-black/30"}`}>
               {concluidas.length}<span className="text-black/25 font-medium text-[0.8125rem]">/{atividades.length}</span>
             </p>
           </div>
@@ -804,7 +804,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                           <Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.8125rem] font-medium text-[#0D0D0D] truncate">{atv.nome}</p>
+                          <p className="text-[0.8125rem] font-medium text-[#282525] truncate">{atv.nome}</p>
                           {atv.nota && <p className="text-[0.6875rem] text-black/30 truncate">{atv.nota}</p>}
                         </div>
                         {atv.data_prevista && (
@@ -850,7 +850,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                         </div>
                         {/* Content */}
                         <div className={`flex-1 min-w-0 ${!isLast ? "pb-5" : ""}`}>
-                          <p className={`text-[0.8125rem] font-medium leading-snug ${evt.feita === false ? "text-black/40 line-through" : "text-[#0D0D0D]"}`}>
+                          <p className={`text-[0.8125rem] font-medium leading-snug ${evt.feita === false ? "text-black/40 line-through" : "text-[#282525]"}`}>
                             {evt.titulo}
                           </p>
                           <div className="flex items-center gap-2 mt-0.5">

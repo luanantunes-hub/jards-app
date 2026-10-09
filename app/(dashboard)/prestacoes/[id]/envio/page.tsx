@@ -229,7 +229,7 @@ function Secao({ id, titulo, linhas, acoes }: { id: string; titulo: string; linh
   return (
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby={id}>
       <div className="flex items-baseline justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <h3 id={id} className="text-[0.75rem] font-semibold text-black">{titulo}</h3>
+        <h3 id={id} className="text-[0.75rem] font-semibold text-[#282525]">{titulo}</h3>
         <span className="text-[0.6875rem] tabular-nums text-black/40">{prontos} de {linhas.length}</span>
       </div>
       <ul className="divide-y divide-black/[.05]">
@@ -356,7 +356,7 @@ export default function EnvioPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Envio</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Envio</h2>
           <p className="text-[0.6875rem] text-black/45">
             O que {checklist?.sistema ? `o ${checklist.sistema}` : "o sistema oficial"} pede para enviar a prestação: documentos e condições, com a fonte de cada um.
           </p>
@@ -480,7 +480,7 @@ export default function EnvioPage() {
 
           {checklist.orientacoes.length > 0 && (
             <section className="rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="envio-orientacoes">
-              <h3 id="envio-orientacoes" className="text-[0.75rem] font-semibold text-black">Bom saber</h3>
+              <h3 id="envio-orientacoes" className="text-[0.75rem] font-semibold text-[#282525]">Bom saber</h3>
               <ul className="mt-2 space-y-1.5">
                 {checklist.orientacoes.map(o => (
                   <li key={o.codigo} className="text-[0.6875rem] text-black/60">

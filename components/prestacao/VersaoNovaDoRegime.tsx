@@ -110,7 +110,7 @@ export function VersaoNovaDoRegime({ prestacao, regimes, podeDecidir, onPassou }
       <div className="flex items-start gap-2.5">
         <RefreshCw size={14} aria-hidden className="mt-0.5 flex-shrink-0" style={{ color: AMBAR }} />
         <div className="min-w-0 flex-1">
-          <h2 id="titulo-versao-nova" className="text-[0.8125rem] font-semibold text-[#0D0D0D]">
+          <h2 id="titulo-versao-nova" className="text-[0.8125rem] font-semibold text-[#282525]">
             Versão {nova.regime.versao} do regime publicada
           </h2>
           <p className="mt-0.5 text-[0.75rem] leading-relaxed text-black/60">

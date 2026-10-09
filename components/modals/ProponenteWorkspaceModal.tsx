@@ -61,7 +61,7 @@ export function ProponenteWorkspaceModal({
           <div className="flex items-center gap-3">
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><FolderOpen size={16} className="text-black/50" /></div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Dar acesso ao proponente</h2>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Dar acesso ao proponente</h2>
               <p className="mt-0.5 text-[0.625rem] text-black/35">Ele passa a ver os próprios projetos e o status de negociações e inscrições</p>
             </div>
           </div>
@@ -70,7 +70,7 @@ export function ProponenteWorkspaceModal({
 
         {contaExistente ? (
           <main className="flex-1 space-y-4 px-5 py-6">
-            <p className="text-[0.8125rem] font-semibold text-black">Acesso liberado.</p>
+            <p className="text-[0.8125rem] font-semibold text-[#282525]">Acesso liberado.</p>
             <p className="text-[0.75rem] text-black/50">
               <strong className="font-semibold text-black/70">{contaExistente}</strong> já tinha uma conta no Jards, então não enviamos convite por e-mail — o acesso ao workspace já está liberado.
               Se a pessoa não lembrar a senha, é só usar &quot;Esqueci minha senha&quot; na tela de login.
@@ -79,7 +79,7 @@ export function ProponenteWorkspaceModal({
           </main>
         ) : inviteUrl ? (
           <main className="flex-1 space-y-4 px-5 py-6">
-            <p className="text-[0.8125rem] font-semibold text-black">Acesso liberado.</p>
+            <p className="text-[0.8125rem] font-semibold text-[#282525]">Acesso liberado.</p>
             <p className="text-[0.75rem] text-black/50">Esse proponente já tinha um convite pendente — em vez de mandar outro e-mail, copie e envie esse link diretamente pra ele:</p>
             <div className="flex items-center gap-2 rounded border border-black/[.12] bg-black/[.02] px-3 py-2.5">
               <span className="min-w-0 flex-1 truncate text-[0.6875rem] text-black/60">{inviteUrl}</span>
@@ -102,13 +102,13 @@ export function ProponenteWorkspaceModal({
                 </p>
               )}
               <div>
-                <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-black"><Mail size={12} className="text-black/35" />E-mail do proponente</label>
+                <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-[#282525]"><Mail size={12} className="text-black/35" />E-mail do proponente</label>
                 <input
                   type="email"
                   value={email}
                   onChange={event => setEmail(event.target.value)}
                   placeholder="contato@instituicao.org"
-                  className="h-10 w-full rounded border border-black/[.15] bg-white px-3 text-[0.8125rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
+                  className="h-10 w-full rounded border border-black/[.15] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5] focus:ring-2 focus:ring-[#7259B5]/10"
                 />
                 <p className="mt-1.5 text-[0.6875rem] text-black/35">Ele recebe um convite por e-mail pra criar uma senha e ver os próprios projetos.</p>
               </div>

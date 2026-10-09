@@ -151,7 +151,7 @@ export function CompanyQuickPanel({ company, onClose }: {
           <div className="flex items-start gap-3">
             <CompanyLogo nome={company.nome} domain={company.domain_key} site={company.site} size={44} className="shrink-0 rounded border border-black/[.06]" />
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[1.0625rem] font-semibold tracking-[-.02em] text-black">{company.nome}</p>
+              <p className="truncate text-[1.0625rem] font-semibold tracking-[-.02em] text-[#282525]">{company.nome}</p>
               <p className="mt-1 truncate text-[0.6875rem] text-black/40">{company.setor || "Setor não informado"}</p>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar painel" className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/65">

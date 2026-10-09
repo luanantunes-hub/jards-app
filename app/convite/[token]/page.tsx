@@ -40,7 +40,7 @@ function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center bg-[#FAFAF9] px-4">
       <div className="max-w-[28rem] rounded-lg border bg-white px-6 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <h1 className="text-[1.0625rem] font-semibold text-[#0D0D0D]">{titulo}</h1>
+        <h1 className="text-[1.0625rem] font-semibold text-[#282525]">{titulo}</h1>
         <p className="mt-2 text-[0.8125rem] text-black/55">{texto}</p>
       </div>
     </main>
@@ -68,13 +68,13 @@ export default async function ConviteDaPrestacao({ params }: { params: Promise<{
               // eslint-disable-next-line @next/next/no-img-element -- logo da organização, de endereço público
               <img src={c.organizacao.avatar_url} alt={`Logo de ${organizacao}`} className="h-10 w-10 rounded object-cover" />
             ) : (
-              <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded bg-[#0D0D0D] text-[0.9375rem] font-semibold text-white">
+              <span aria-hidden className="flex h-10 w-10 items-center justify-center rounded bg-[#282525] text-[0.9375rem] font-semibold text-white">
                 {organizacao.charAt(0).toUpperCase()}
               </span>
             )}
             <p className="text-[0.75rem] text-black/50">{organizacao}</p>
           </div>
-          <h1 id="convite-titulo" className="mt-4 text-balance text-[1.375rem] font-semibold leading-tight tracking-[-0.02em] text-[#0D0D0D]">
+          <h1 id="convite-titulo" className="mt-4 text-balance text-[1.375rem] font-semibold leading-tight tracking-[-0.02em] text-[#282525]">
             {quem} convidou você para acompanhar a prestação de contas de {c.prestacao?.titulo}.
           </h1>
           <dl className="mt-5 grid grid-cols-1 gap-3 text-[0.75rem] sm:grid-cols-3">

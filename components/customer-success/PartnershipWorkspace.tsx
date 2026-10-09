@@ -85,7 +85,7 @@ export function PartnershipWorkspace({ contaId, organizationId, accountId, contr
   return <section className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
     <header className="border-b px-5 py-5 md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div><p className="text-[0.6875rem] font-medium text-black/35">{sectionMeta.eyebrow}</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">{sectionMeta.title}</h2></div>
+        <div><p className="text-[0.6875rem] font-medium text-black/35">{sectionMeta.eyebrow}</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">{sectionMeta.title}</h2></div>
         <div className="flex flex-wrap gap-2">
           {section === "deliveries" ? <WorkspaceAction label="Registrar entrega" onClick={() => setForm("commitment")} accent /> : section === "renewal" ? <WorkspaceAction label="Planejar renovação" onClick={() => { setRenewalContractId(null); setRenewalSheetOpen(true); }} accent /> : null}
         </div>
@@ -104,7 +104,7 @@ function WorkspaceAction({label,onClick,accent=false}:{label:string;onClick:()=>
 
 function CommitmentsView({items,onFinish}:{items:CompromissoCliente[];onFinish:(i:CompromissoCliente)=>void}) { if(!items.length)return <Empty icon={ClipboardCheck} title="Nenhum compromisso registrado" copy="Conecte contrato, projeto, prazo e evidência para que promessas não se percam."/>;return <div className="divide-y divide-black/[.06]">{items.map(item=>{const late=item.prazo&&new Date(item.prazo)<new Date()&&!['entregue','aprovado','cancelado'].includes(item.status);return <div key={item.id} className="flex items-center gap-3 py-4"><button onClick={()=>onFinish(item)} className="flex h-7 w-7 items-center justify-center rounded border text-black/20 hover:border-[#2E8932] hover:text-[#2E8932]" style={{borderColor:'rgba(13,13,13,.12)'}}><Check size={13}/></button><div className="min-w-0 flex-1"><p className="text-[0.8125rem] font-semibold text-black/75">{item.titulo}</p><p className="mt-1 text-[0.6875rem] text-black/35">{item.categoria.replaceAll('_',' ')} · {item.status.replaceAll('_',' ')}</p></div><span className="flex shrink-0 items-center gap-1 text-[0.6875rem] font-medium text-black/50">{late&&<Clock size={12} strokeWidth={1.75} role="img" aria-label="Atrasado" className="shrink-0 text-[#D94A4A]"/>}{item.prazo?new Date(item.prazo+'T12:00').toLocaleDateString('pt-BR'):'Sem prazo'}</span></div>})}</div>; }
 const RENEWAL_STATUS: Record<RenewalPlan["status"], { label: string; color: string }> = {
-  programada: { label: "Programada", color: "#0D0D0D" },
+  programada: { label: "Programada", color: "#282525" },
   em_negociacao: { label: "Em negociação", color: "#2563A8" },
   aprovada: { label: "Aprovada", color: "#2E8932" },
   recusada: { label: "Recusada", color: "#B54444" },
@@ -142,7 +142,7 @@ function RenewalView({ contracts, renewals, plans, onPlan }: { contracts: Contra
   })}</div>;
 }
 
-function Metric({ label, value, title }: { label: string; value: string; title?: string }) { return <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p title={title} className="mt-1 truncate text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">{value}</p></div>; }
+function Metric({ label, value, title }: { label: string; value: string; title?: string }) { return <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p title={title} className="mt-1 truncate text-[0.75rem] font-semibold tabular-nums text-[#282525]">{value}</p></div>; }
 function Empty({icon:Icon,title,copy}:{icon:any;title:string;copy:string}) { return <div className="py-16 text-center"><Icon size={22} className="mx-auto text-black/15"/><p className="mt-4 text-[0.875rem] font-semibold text-black/45">{title}</p><p className="mx-auto mt-2 max-w-md text-[0.75rem] leading-relaxed text-black/30">{copy}</p></div>; }
 
 function QuickForm({contracts,projects,saving,onClose,onSubmit}:{contracts:Contract[];projects:Project[];saving:boolean;onClose:()=>void;onSubmit:(k:'commitment',d:Record<string,FormDataEntryValue>)=>void}) { return <form onSubmit={e=>{e.preventDefault();onSubmit('commitment',Object.fromEntries(new FormData(e.currentTarget)) as any)}} className="border-b bg-black/[.015] px-5 py-5 md:px-6" style={{borderColor:'rgba(13,13,13,.07)'}}><div className="mb-4 flex items-center justify-between"><p className="text-[0.8125rem] font-semibold text-black/65">Novo compromisso</p><button type="button" onClick={onClose} className="text-black/30 hover:text-black/55"><X size={14}/></button></div><div className="grid gap-3 md:grid-cols-2">

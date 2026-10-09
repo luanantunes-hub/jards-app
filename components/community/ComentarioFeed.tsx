@@ -82,7 +82,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
       {/* Header */}
       {!embedded && <div className="px-5 py-4 justify-between border-b flex items-center" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         {!embedded && <div>
-          <p className="text-sm font-semibold text-black">
+          <p className="text-sm font-semibold text-[#282525]">
             Experiências{comentarios.length > 0 && <span className="text-black/30 font-normal text-xs ml-1.5">({comentarios.length})</span>}
           </p>
         </div>}
@@ -102,7 +102,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
             onClick={() => setFiltro("todos")}
             className={`px-2.5 py-1 rounded text-[0.625rem] font-bold transition border ${
               filtro === "todos"
-                ? "bg-white border-black/20 text-black"
+                ? "bg-white border-black/20 text-[#282525]"
                 : "bg-white border-black/[.08] text-black/40 hover:bg-black/[.04]"
             }`}
           >
@@ -153,7 +153,7 @@ export function ComentarioFeed({ empresaId, embedded = false, composerOpen, onCo
                     >
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[0.6875rem] font-semibold tabular-nums ${c.votos === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
+                    <span className={`text-[0.6875rem] font-semibold tabular-nums ${c.votos === 0 ? "text-black/30" : "text-[#282525]"}`}>
                       {c.votos}
                     </span>
                     <button
@@ -241,7 +241,7 @@ function NovoComentarioModal({
           <div className="w-10 h-10 rounded flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(13,13,13,.04)" }}>
             <MessageCircle size={18} className="text-[#2E8932]" />
           </div>
-          <h2 className="text-[0.9375rem] font-bold text-[#0D0D0D] mb-1">Obrigado por compartilhar!</h2>
+          <h2 className="text-[0.9375rem] font-bold text-[#282525] mb-1">Obrigado por compartilhar!</h2>
           <p className="text-[0.8125rem] text-black/45">Sua experiência ajuda toda a comunidade.</p>
         </div>
       </div>
@@ -256,7 +256,7 @@ function NovoComentarioModal({
       <div className="bg-white rounded shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <h2 className="text-[0.875rem] font-semibold text-[#0D0D0D]">Contar experiência</h2>
+          <h2 className="text-[0.875rem] font-semibold text-[#282525]">Contar experiência</h2>
           <button onClick={onClose} className="p-1.5 rounded hover:bg-black/5 transition text-black/35 hover:text-black/55">
             <X size={15} />
           </button>
@@ -287,14 +287,14 @@ function NovoComentarioModal({
                     <Icon size={12} style={{ color: isSelected ? m.color : "rgba(0,0,0,.30)" }} />
                   </div>
                   <div className="flex-1 min-w-0 flex items-baseline gap-2">
-                    <p className="text-[0.75rem] font-medium leading-tight text-[#0D0D0D]">
+                    <p className="text-[0.75rem] font-medium leading-tight text-[#282525]">
                       {m.label}
                     </p>
                     <p className="text-[0.625rem] text-black/30 truncate">{m.desc}</p>
                   </div>
                   {/* Indicador de seleção */}
                   <span className="flex h-4 w-4 shrink-0 items-center justify-center">
-                    {isSelected && <Check size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#0D0D0D]" />}
+                    {isSelected && <Check size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#282525]" />}
                   </span>
                 </button>
               );

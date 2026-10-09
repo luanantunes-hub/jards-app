@@ -167,7 +167,7 @@ export function DeleteConfirmProvider({ children }: { children: ReactNode }) {
                 type="button"
                 onClick={handleClose}
                 disabled={loading}
-                className={`rounded px-2 py-2 text-[0.75rem] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50 ${blocked ? "bg-[#0D0D0D] px-4 text-white hover:bg-black/80" : "text-black/45 hover:text-black/70"}`}
+                className={`rounded px-2 py-2 text-[0.75rem] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50 ${blocked ? "bg-[#282525] px-4 text-white hover:bg-[#3A3535]" : "text-black/45 hover:text-black/70"}`}
               >
                 {blocked ? "Entendi" : "Cancelar"}
               </button>

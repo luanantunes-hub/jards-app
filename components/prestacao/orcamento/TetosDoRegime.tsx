@@ -31,7 +31,7 @@ export function TetosDoRegime({ tetos, regimeNome, bases }: { tetos: TetoDoGrupo
   return (
     <section aria-labelledby="tetos-titulo" className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <h2 id="tetos-titulo" className="text-[0.75rem] font-semibold text-[#0D0D0D]">Grupos de custo e tetos</h2>
+        <h2 id="tetos-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Grupos de custo e tetos</h2>
         <p className="text-[0.625rem] text-black/40">
           {regimeNome
             ? basesDoRegime.length

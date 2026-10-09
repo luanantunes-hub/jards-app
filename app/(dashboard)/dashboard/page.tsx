@@ -175,7 +175,7 @@ function KpiCard({ rotulo, Icon, valor, vazio, title, detalhe }: {
         <Icon size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
         {rotulo}
       </p>
-      <p title={title} className={`text-[1.375rem] font-semibold tabular-nums tracking-[-.02em] leading-none mb-1 ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{valor}</p>
+      <p title={title} className={`text-[1.375rem] font-semibold tabular-nums tracking-[-.02em] leading-none mb-1 ${vazio ? "text-black/30" : "text-[#282525]"}`}>{valor}</p>
       {detalhe && <p className="text-[0.6875rem] text-black/35">{detalhe}</p>}
     </div>
   );
@@ -286,7 +286,7 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
           const anchor = isLast ? "middle" : "start";
           return (
             <g key={stage.key}>
-              <text x={textX} y={28} textAnchor={anchor} fontSize={22} className="font-semibold" style={{ fontVariantNumeric: "tabular-nums" }} fill="#0D0D0D">{total}</text>
+              <text x={textX} y={28} textAnchor={anchor} fontSize={22} className="font-semibold" style={{ fontVariantNumeric: "tabular-nums" }} fill="#282525">{total}</text>
               <text x={textX} y={48} textAnchor={anchor} fontSize={13} fill="rgba(13,13,13,.5)">{stage.label}</text>
               <text x={textX} y={65} textAnchor={anchor} fontSize={13} className="font-semibold" style={{ fontVariantNumeric: "tabular-nums" }} fill="rgba(13,13,13,.7)">{pct}%</text>
             </g>
@@ -665,7 +665,7 @@ export default function DashboardPage() {
       <div className="mb-7 flex items-start justify-between gap-4">
         <div>
           <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Gerenciamento</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Visão geral</h1>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525]">Visão geral</h1>
         </div>
         <DashboardCustomizer open={customizerOpen} onOpenChange={setCustomizerOpen} preferences={dashboardPreferences.preferences} onToggle={dashboardPreferences.toggle} onMove={dashboardPreferences.move} onReset={dashboardPreferences.reset} />
       </div>
@@ -696,7 +696,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between border-b px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold uppercase tracking-[.09em] text-black/30">Foco</p>
-              <h2 className="mt-0.5 text-[0.8125rem] font-semibold text-[#0D0D0D]">Prioridades do dia</h2>
+              <h2 className="mt-0.5 text-[0.8125rem] font-semibold text-[#282525]">Prioridades do dia</h2>
             </div>
             <p className="hidden text-[0.625rem] text-black/30 sm:block">Ordenadas por urgência operacional</p>
           </div>
@@ -719,7 +719,7 @@ export default function DashboardPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-[0.75rem] font-semibold text-black/70">{label}</p>
-                    <span className={`text-[0.9375rem] font-semibold tabular-nums ${value > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{value}</span>
+                    <span className={`text-[0.9375rem] font-semibold tabular-nums ${value > 0 ? "text-[#282525]" : "text-black/30"}`}>{value}</span>
                   </div>
                   <p className="mt-1 truncate text-[0.625rem] text-black/32">{value > 0 ? detail : "Nenhuma ação necessária"}</p>
                 </div>
@@ -739,11 +739,11 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <div>
                 <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Pipeline</p>
-                <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Distribuição por estágio</p>
+                <p className="text-[0.8125rem] font-semibold text-[#282525]">Distribuição por estágio</p>
               </div>
               <Link
                 href="/captacoes"
-                className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
+                className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-[#282525] transition"
               >
                 Ver kanban <ArrowRight size={11} />
               </Link>
@@ -770,7 +770,7 @@ export default function DashboardPage() {
                     <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{count}</span>
                     <span
                       title={valor > 0 ? formatarValorCompleto(valor) : undefined}
-                      className={`truncate text-[0.6875rem] font-semibold tabular-nums w-[4.25rem] text-right flex-shrink-0 ${valor > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}
+                      className={`truncate text-[0.6875rem] font-semibold tabular-nums w-[4.25rem] text-right flex-shrink-0 ${valor > 0 ? "text-[#282525]" : "text-black/30"}`}
                     >
                       {valor > 0 ? formatarValorCurto(valor) : "—"}
                     </span>
@@ -789,7 +789,7 @@ export default function DashboardPage() {
                 <span className="text-[0.6875rem] text-black/25 w-5 text-right flex-shrink-0">{aprovadoCount}</span>
                 <span
                   title={aprovadoValor > 0 ? formatarValorCompleto(aprovadoValor) : undefined}
-                  className={`truncate text-[0.6875rem] font-semibold tabular-nums w-[4.25rem] text-right flex-shrink-0 ${aprovadoValor > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}
+                  className={`truncate text-[0.6875rem] font-semibold tabular-nums w-[4.25rem] text-right flex-shrink-0 ${aprovadoValor > 0 ? "text-[#282525]" : "text-black/30"}`}
                 >
                   {aprovadoValor > 0 ? formatarValorCurto(aprovadoValor) : "—"}
                 </span>
@@ -809,7 +809,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Atenção</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Negociações estagnadas</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Negociações estagnadas</p>
             </div>
 
             {stagnant.length === 0 ? (
@@ -831,10 +831,10 @@ export default function DashboardPage() {
                         <Clock size={13} aria-hidden="true" style={{ color: urgente ? "#D94E4E" : "#B07A14" }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[0.75rem] font-semibold text-[#0D0D0D] truncate">{c.empresa}</p>
+                        <p className="text-[0.75rem] font-semibold text-[#282525] truncate">{c.empresa}</p>
                         <p className="text-[0.625rem] text-black/35 mt-0.5">{STATUS_LABEL[c.status]}</p>
                       </div>
-                      <span className="text-[0.6875rem] font-semibold tabular-nums text-[#0D0D0D] flex-shrink-0">
+                      <span className="text-[0.6875rem] font-semibold tabular-nums text-[#282525] flex-shrink-0">
                         {c.diasSemAtividade}d
                       </span>
                     </Link>
@@ -854,7 +854,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">CRM</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Atividades recentes</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Atividades recentes</p>
             </div>
 
             {atividades.length === 0 ? (
@@ -896,7 +896,7 @@ export default function DashboardPage() {
                 <div className="px-5 py-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <Link
                     href="/atividades"
-                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
+                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-[#282525] transition"
                   >
                     Ver todas <ArrowUpRight size={11} />
                   </Link>
@@ -911,7 +911,7 @@ export default function DashboardPage() {
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Calendário</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Próximos 30 dias</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Próximos 30 dias</p>
             </div>
 
             {eventos.length === 0 ? (
@@ -929,14 +929,14 @@ export default function DashboardPage() {
                       <div key={ev.id} className="px-5 py-3.5 flex items-start gap-3">
                         <div className="w-9 text-center flex-shrink-0">
                           <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{mes}</p>
-                          <p className="text-[1.125rem] font-semibold leading-tight tabular-nums text-[#0D0D0D]">{dia}</p>
+                          <p className="text-[1.125rem] font-semibold leading-tight tabular-nums text-[#282525]">{dia}</p>
                         </div>
                         <div className="flex-1 min-w-0 pt-0.5">
                           <span className="mb-1.5 inline-flex items-center gap-1 rounded border border-black/[.12] bg-white px-1.5 py-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/55">
                             <TipoIcone size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                             {isEdital ? "Edital" : "Follow-up"}
                           </span>
-                          <p className="flex items-center gap-1 text-[0.75rem] font-semibold text-[#0D0D0D]">
+                          <p className="flex items-center gap-1 text-[0.75rem] font-semibold text-[#282525]">
                             {prazoProximo && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Prazo em até 5 dias" className="shrink-0 text-[#D94A4A]" />}
                             <span className="min-w-0 truncate">{ev.titulo}</span>
                           </p>
@@ -949,7 +949,7 @@ export default function DashboardPage() {
                 <div className="px-5 py-3 border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <Link
                     href="/atividades"
-                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-black transition"
+                    className="flex items-center gap-1 text-[0.6875rem] font-semibold text-black/30 hover:text-[#282525] transition"
                   >
                     Abrir calendário <ArrowUpRight size={11} />
                   </Link>
@@ -967,7 +967,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Aquisição</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Eficácia dos canais</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Eficácia dos canais</p>
             </div>
             {channelMetrics.length > 0 && (
               <SegmentedControl
@@ -1006,7 +1006,7 @@ export default function DashboardPage() {
                   return (
                     <div key={metric.canal} className="grid grid-cols-2 sm:grid-cols-[1fr_repeat(4,5.5rem)] items-center gap-3 sm:gap-4 px-5 py-3.5">
                       <div className="col-span-2 sm:col-span-1 min-w-0">
-                        <p className="truncate text-[0.75rem] font-semibold text-[#0D0D0D]">{option?.label ?? metric.canal.replaceAll("_", " ")}</p>
+                        <p className="truncate text-[0.75rem] font-semibold text-[#282525]">{option?.label ?? metric.canal.replaceAll("_", " ")}</p>
                         <p className="mt-0.5 text-[0.625rem] text-black/30">
                           {metric.interacoes} interações · {metric.negociacoes} negociações
                           {metric.interacoes < 5 && <span> · amostra pequena</span>}
@@ -1014,19 +1014,19 @@ export default function DashboardPage() {
                       </div>
                       <div className="text-center">
                         <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Resposta</p>
-                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${responseRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{responseRate}%</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${responseRate ? "text-[#282525]" : "text-black/30"}`}>{responseRate}%</p>
                       </div>
                       <div className="text-center">
                         <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Reunião</p>
-                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${meetingRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{meetingRate}%</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${meetingRate ? "text-[#282525]" : "text-black/30"}`}>{meetingRate}%</p>
                       </div>
                       <div className="text-center">
                         <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Proposta</p>
-                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${proposalRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{proposalRate}%</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${proposalRate ? "text-[#282525]" : "text-black/30"}`}>{proposalRate}%</p>
                       </div>
                       <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                         <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Conversão</p>
-                        <p className={`text-[0.9375rem] font-semibold tabular-nums ${winRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{winRate === null ? "—" : `${winRate}%`}</p>
+                        <p className={`text-[0.9375rem] font-semibold tabular-nums ${winRate ? "text-[#282525]" : "text-black/30"}`}>{winRate === null ? "—" : `${winRate}%`}</p>
                       </div>
                     </div>
                   );
@@ -1043,7 +1043,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Velocidade</p>
-              <p className="text-[0.8125rem] font-semibold text-[#0D0D0D]">Velocidade por captador</p>
+              <p className="text-[0.8125rem] font-semibold text-[#282525]">Velocidade por captador</p>
             </div>
             <SegmentedControl
               ariaLabel="Tipo de captador"
@@ -1074,22 +1074,22 @@ export default function DashboardPage() {
                 {ranking[rankingView].map((item) => (
                   <div key={item.captador_id} className="grid grid-cols-3 sm:grid-cols-[1fr_repeat(3,6.5rem)] items-center gap-3 sm:gap-4 px-5 py-3.5">
                     <div className="col-span-3 sm:col-span-1 min-w-0">
-                      <p className="truncate text-[0.75rem] font-semibold text-[#0D0D0D]">{item.nome}</p>
+                      <p className="truncate text-[0.75rem] font-semibold text-[#282525]">{item.nome}</p>
                       {item.ciclos_fechados < 5 && (
                         <p className="mt-0.5 text-[0.625rem] text-black/35">amostra pequena</p>
                       )}
                     </div>
                     <div className="text-center">
                       <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Ciclos</p>
-                      <p className={`text-[0.8125rem] font-semibold tabular-nums ${item.ciclos_fechados ? "text-[#0D0D0D]" : "text-black/30"}`}>{item.ciclos_fechados}</p>
+                      <p className={`text-[0.8125rem] font-semibold tabular-nums ${item.ciclos_fechados ? "text-[#282525]" : "text-black/30"}`}>{item.ciclos_fechados}</p>
                     </div>
                     <div className="text-center">
                       <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tempo</p>
-                      <p className={`text-[0.8125rem] font-semibold tabular-nums ${item.mediana_dias ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmtDias(item.mediana_dias)}</p>
+                      <p className={`text-[0.8125rem] font-semibold tabular-nums ${item.mediana_dias ? "text-[#282525]" : "text-black/30"}`}>{fmtDias(item.mediana_dias)}</p>
                     </div>
                     <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                       <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Aprovação</p>
-                      <p className={`text-[0.9375rem] font-semibold tabular-nums ${Math.round(item.taxa_aprovacao * 100) ? "text-[#0D0D0D]" : "text-black/30"}`}>{Math.round(item.taxa_aprovacao * 100)}%</p>
+                      <p className={`text-[0.9375rem] font-semibold tabular-nums ${Math.round(item.taxa_aprovacao * 100) ? "text-[#282525]" : "text-black/30"}`}>{Math.round(item.taxa_aprovacao * 100)}%</p>
                     </div>
                   </div>
                 ))}

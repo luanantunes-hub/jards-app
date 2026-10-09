@@ -10,7 +10,7 @@ export function BotaoCopiar({ copiado, onCopiar, rotulo, disabled }: { copiado: 
       onClick={onCopiar}
       disabled={disabled}
       aria-label={rotulo}
-      className="inline-flex h-10 w-full flex-shrink-0 items-center justify-center gap-2 rounded border border-black/15 bg-white px-3 text-[0.75rem] font-medium text-black transition hover:bg-black/[.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-40 sm:w-auto"
+      className="inline-flex h-10 w-full flex-shrink-0 items-center justify-center gap-2 rounded border border-black/15 bg-white px-3 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-40 sm:w-auto"
     >
       {copiado ? <Check size={14} className="text-[#2E8932]" aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
       {copiado ? "Copiado" : "Copiar"}

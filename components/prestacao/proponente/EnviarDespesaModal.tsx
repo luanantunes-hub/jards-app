@@ -15,7 +15,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { lerValorBRL } from "@/lib/valor";
 
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 const hojeIso = () => new Date().toLocaleDateString("sv-SE");
 
 export function EnviarDespesaModal({ prestacaoId, organizationId, onClose, onEnviada }: {
@@ -115,7 +115,7 @@ export function EnviarDespesaModal({ prestacaoId, organizationId, onClose, onEnv
           <span className={ROTULO}>O que foi pago</span>
           <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2} maxLength={500}
             placeholder="Ex.: sonorização do show de abertura"
-            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
         </label>
         {erro && <p role="alert" className="text-[0.6875rem] text-[#B23B3B] sm:col-span-2">{erro}</p>}
       </div>

@@ -118,9 +118,9 @@ function PotencialGauge({ score }: { score: number | null }) {
           stroke={value >= i * 20 ? seg.color : "rgba(13,13,13,.075)"} strokeWidth="17" />
       ))}
       <path d={`M ${nL.x} ${nL.y} L ${tip.x} ${tip.y} L ${nR.x} ${nR.y} Z`}
-        fill="white" stroke="#0D0D0D" strokeWidth="2" strokeLinejoin="round" />
-      <circle cx="80" cy="68" r="7" fill="white" stroke="#0D0D0D" strokeWidth="2.25" />
-      <circle cx="80" cy="68" r="2.25" fill="#0D0D0D" />
+        fill="white" stroke="#282525" strokeWidth="2" strokeLinejoin="round" />
+      <circle cx="80" cy="68" r="7" fill="white" stroke="#282525" strokeWidth="2.25" />
+      <circle cx="80" cy="68" r="2.25" fill="#282525" />
     </svg>
   );
 }
@@ -340,14 +340,14 @@ export default function EmpresasCrmPage() {
             {tipoFilter === "cliente_ativo" ? (
               <button
                 onClick={() => setShowNovoCliente(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition"
               >
                 <Plus size={13} /> Novo cliente
               </button>
             ) : (
               <button
                 onClick={() => setShowNovoProspect(true)}
-                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-black rounded hover:bg-black/5 transition"
+                className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition"
               >
                 <Plus size={13} /> Novo prospect
               </button>
@@ -429,7 +429,7 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <CompanyLogo nome={e.nome} domain={e.domain_key} size={28} className="flex-shrink-0" />
-                        <span className="text-[0.8125rem] font-semibold text-[#0D0D0D] truncate block">
+                        <span className="text-[0.8125rem] font-semibold text-[#282525] truncate block">
                           {e.nome}
                         </span>
                       </div>
@@ -479,7 +479,7 @@ export default function EmpresasCrmPage() {
 
                     {/* Convertido */}
                     <td className="px-5 py-3.5">
-                      <span className={`text-[0.75rem] font-semibold tabular-nums ${e.convertedValue > 0 ? "text-[#0D0D0D]" : "text-black/30"}`} title={e.convertedValue > 0 ? formatarValorCompleto(e.convertedValue) : undefined}>
+                      <span className={`text-[0.75rem] font-semibold tabular-nums ${e.convertedValue > 0 ? "text-[#282525]" : "text-black/30"}`} title={e.convertedValue > 0 ? formatarValorCompleto(e.convertedValue) : undefined}>
                         {formatarValorCurto(e.convertedValue)}
                       </span>
                     </td>
@@ -519,7 +519,7 @@ export default function EmpresasCrmPage() {
                                 <CalendarClock size={12} strokeWidth={1.75} aria-hidden="true" className="text-[#D94A4A]" />
                               </span>
                             )}
-                            <span className={`text-[0.75rem] tabular-nums ${isOverdue ? "font-medium text-[#0D0D0D]" : "text-black/50"}`}>
+                            <span className={`text-[0.75rem] tabular-nums ${isOverdue ? "font-medium text-[#282525]" : "text-black/50"}`}>
                               {fmtDate(e.proximoFollowup)}
                             </span>
                           </span>

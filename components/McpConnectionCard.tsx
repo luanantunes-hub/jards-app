@@ -64,12 +64,12 @@ export function McpConnectionCard() {
             <div className="absolute left-0 top-0 w-6 h-6 rounded border border-black/20 bg-white flex items-center justify-center">
               <ClaudeMark size={13} />
             </div>
-            <div className="absolute right-0 bottom-0 w-6 h-6 rounded border border-black/20 bg-white flex items-center justify-center text-black">
+            <div className="absolute right-0 bottom-0 w-6 h-6 rounded border border-black/20 bg-white flex items-center justify-center text-[#282525]">
               <OpenAIMark size={12} />
             </div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[0.8125rem] font-semibold text-black">Claude e ChatGPT (MCP)</p>
+            <p className="text-[0.8125rem] font-semibold text-[#282525]">Claude e ChatGPT (MCP)</p>
             <p className="text-[0.6875rem] text-black/40 mt-0.5">
               {ativas === null
                 ? "Conecte assistentes de IA aos dados do Jards"

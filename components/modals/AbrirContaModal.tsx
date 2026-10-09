@@ -70,7 +70,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
               <Building2 size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#0D0D0D]">Criar cliente</h2>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Criar cliente</h2>
               <p className="text-[0.75rem] text-black/40">{empresaNome}</p>
             </div>
           </div>

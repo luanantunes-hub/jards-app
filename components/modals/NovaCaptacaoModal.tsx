@@ -91,7 +91,7 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-[#282525]">{children}</label>;
 }
 
 /* ─── Mini-form inline para novo contato ─────────────────────────── */
@@ -695,7 +695,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/5">
               <Building2 size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-black">{editData ? "Editar negociação" : "Nova negociação"}</h2>
+            <h2 id={titleId} className="min-w-0 text-[0.9375rem] font-bold text-[#282525]">{editData ? "Editar negociação" : "Nova negociação"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
@@ -713,7 +713,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                 <input type="text" placeholder="Buscar ou criar…" value={empresaSearch} aria-label="Patrocinador"
                   onChange={e => { setEmpresaSearch(e.target.value); setEmpresaId(""); setEmpresaOpen(true); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }}
                   onFocus={() => setEmpresaOpen(true)} onBlur={() => setTimeout(() => setEmpresaOpen(false), 150)}
-                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none" />
                 {empresaSearch && <button type="button" aria-label="Limpar patrocinador" onMouseDown={e => { e.preventDefault(); setEmpresaSearch(""); setEmpresaId(""); setContatoEmpresaId(null); setContatoSugeridoChave(null); empresaTocada.current = true; setContatosEmpresa([]); setShowNovoContato(false); setExclusividade(null); setBlindagem(null); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
               </div>
               {empresaOpen && (empresasFiltradas.length > 0 || (empresaSearch.trim() && !hasExactMatch)) && (
@@ -723,7 +723,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                       event.preventDefault(); setEmpresaId(empresa.id); setEmpresaSearch(empresa.nome); setEmpresaOpen(false);
                       setContatoSugeridoChave(null); empresaTocada.current = true;
                       checkBlindagem(empresa.id); checkExclusividade(empresa.id, projetoId); loadContatosEmpresa(empresa.id, { doPatrocinador: empresa.id === empresaDoPatrocinadorId });
-                    }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
+                    }} className="w-full px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[.04]">
                       {empresa.nome}
                     </button>
                   ))}
@@ -791,7 +791,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                 <input type="text" placeholder="Buscar ou criar…" value={projetoSearch} aria-label="Projeto"
                   onChange={e => { setProjetoSearch(e.target.value); setProjetoId(""); setProjetoOpen(true); }}
                   onFocus={() => setProjetoOpen(true)} onBlur={() => setTimeout(() => setProjetoOpen(false), 150)}
-                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none" />
+                  className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none" />
                 {projetoSearch && <button type="button" aria-label="Limpar projeto" onMouseDown={e => { e.preventDefault(); setProjetoSearch(""); setProjetoId(""); }} className="text-black/25 transition hover:text-black/50"><X size={12} /></button>}
               </div>
               {projetoOpen && (projetosFiltrados.length > 0 || (projetoSearch.trim() && !hasExactMatchProjeto)) && (
@@ -801,7 +801,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                       event.preventDefault(); setProjetoId(projeto.id); setProjetoSearch(projeto.nome); setProjetoOpen(false);
                       if (empresaId) checkExclusividade(empresaId, projeto.id);
                     }}
-                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-black transition hover:bg-black/[.04]">
+                      className="w-full px-3 py-2 text-left text-[0.8125rem] text-[#282525] transition hover:bg-black/[.04]">
                       {projeto.nome}
                     </button>
                   ))}
@@ -859,14 +859,14 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
               <div className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
                 <input type="date" value={proximoFollowup} onChange={e => setProximoFollowup(e.target.value)} aria-label="Próximo contato"
-                  className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
+                  className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-[#282525] outline-none" />
               </div>
             </div>
           </div>
 
           <div className="mt-5 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <button type="button" onClick={() => setMaisDetalhes(aberto => !aberto)} aria-expanded={maisDetalhes}
-              className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-black focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              className="-ml-1 inline-flex min-h-9 items-center gap-1.5 rounded px-1 text-[0.75rem] font-medium text-black/55 transition hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
               <ChevronDown size={13} aria-hidden="true" className={`transition-transform duration-200 motion-reduce:transition-none ${maisDetalhes ? "rotate-180" : ""}`} />
               Mais detalhes
             </button>
@@ -882,7 +882,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                   <div className="flex items-center gap-2 rounded border bg-white px-3 py-2.5" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                     <CalendarDays size={13} className="flex-shrink-0 text-black/35" />
                     <input type="date" value={previsao} onChange={e => setPrevisao(e.target.value)} aria-label="Previsão de fechamento"
-                      className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-black outline-none" />
+                      className="min-w-0 flex-1 bg-transparent text-[0.75rem] text-[#282525] outline-none" />
                   </div>
                 </div>
 
@@ -908,7 +908,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                           }}
                             className="border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
                             style={captacaoTipo === tipo
-                              ? { background: "#0D0D0D", color: "white", borderColor: "#0D0D0D" }
+                              ? { background: "#282525", color: "white", borderColor: "#282525" }
                               : { background: "white", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}>
                             {tipo === "interna" ? "Equipe interna" : "Captador externo"}
                           </button>

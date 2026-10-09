@@ -130,7 +130,7 @@ export function PropostaUploadModal({
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
               placeholder="Ex.: Proposta Rouanet 2025"
-              className="w-full rounded border border-black/12 bg-white px-3 py-2.5 text-sm text-black placeholder-black/25 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/15 focus:border-[#7259B5]/40 transition"
+              className="w-full rounded border border-black/12 bg-white px-3 py-2.5 text-sm text-[#282525] placeholder-black/25 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/15 focus:border-[#7259B5]/40 transition"
             />
           </div>
 

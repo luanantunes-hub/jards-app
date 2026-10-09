@@ -162,7 +162,7 @@ export default function EspelhoSalicPage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Espelho do Salic</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Espelho do Salic</h2>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
             As despesas na ordem da tela de comprovação do Salic, uma linha por pagamento, ligadas ao item da planilha. Lance cada uma copiando campo a campo, ou baixe a planilha.
           </p>
@@ -171,7 +171,7 @@ export default function EspelhoSalicPage() {
           <button
             type="button"
             onClick={baixar}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
           >
             <Download size={13} aria-hidden /> Baixar planilha
           </button>
@@ -191,7 +191,7 @@ export default function EspelhoSalicPage() {
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded border bg-white px-5 py-4 text-[0.6875rem] md:grid-cols-4" style={BORDA}>
           <div>
             <dt className={ROTULO}>Linhas</dt>
-            <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${totais.linhas ? "text-[#0D0D0D]" : "text-black/30"}`}>
+            <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${totais.linhas ? "text-[#282525]" : "text-black/30"}`}>
               {totais.linhas}
               {totais.incompletas > 0 && (
                 <span className="ml-1.5 inline-flex items-center gap-1 text-[0.6875rem] font-normal text-black/45">
@@ -203,17 +203,17 @@ export default function EspelhoSalicPage() {
           </div>
           <div>
             <dt className={ROTULO}>Comprovado no espelho</dt>
-            <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${totais.comprovado ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(totais.comprovado)}</dd>
+            <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${totais.comprovado ? "text-[#282525]" : "text-black/30"}`}>{reais(totais.comprovado)}</dd>
             <dd className="tabular-nums text-black/40">de {reais(totais.vigente)} vigente</dd>
           </div>
           <div>
             <dt className={ROTULO}>Débitos do extrato</dt>
-            <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${totais.debitosDoExtrato ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(totais.debitosDoExtrato)}</dd>
+            <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${totais.debitosDoExtrato ? "text-[#282525]" : "text-black/30"}`}>{reais(totais.debitosDoExtrato)}</dd>
             <dd className="tabular-nums text-black/40">{reais(totais.conciliado)} conciliados</dd>
           </div>
           <div>
             <dt className={ROTULO}>Espelho × extrato</dt>
-            <dd className={`mt-0.5 flex items-center gap-1 text-[0.875rem] tabular-nums ${diferenca === 0 ? "font-medium text-black/70" : "font-semibold text-[#0D0D0D]"}`}>
+            <dd className={`mt-0.5 flex items-center gap-1 text-[0.875rem] tabular-nums ${diferenca === 0 ? "font-medium text-black/70" : "font-semibold text-[#282525]"}`}>
               {diferenca !== 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
               {diferenca === 0 ? "Batem" : reais(diferenca)}
             </dd>
@@ -268,7 +268,7 @@ export default function EspelhoSalicPage() {
               <section key={g.itemId ?? "sem-item"} className="overflow-hidden rounded border bg-white" style={BORDA} aria-label={g.item}>
                 <div className="flex flex-wrap items-baseline justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <div className="min-w-0">
-                    <h3 className="text-[0.75rem] font-semibold text-black">{g.item}</h3>
+                    <h3 className="text-[0.75rem] font-semibold text-[#282525]">{g.item}</h3>
                     {caminhoDoGrupo(g) && <p className="text-[0.625rem] text-black/40">{caminhoDoGrupo(g)}</p>}
                   </div>
                   {g.itemId && (

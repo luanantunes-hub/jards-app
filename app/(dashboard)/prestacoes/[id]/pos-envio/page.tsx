@@ -68,7 +68,7 @@ function Secao({ titulo, descricao, acao, children }: { titulo: string; descrica
     <section className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0">
-          <h3 className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{titulo}</h3>
+          <h3 className="text-[0.8125rem] font-semibold text-[#282525]">{titulo}</h3>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">{descricao}</p>
         </div>
         {acao}
@@ -253,7 +253,7 @@ export default function PosEnvioPage() {
   return (
     <div className="mx-auto max-w-pagina space-y-6 px-4 py-6 md:px-8">
       <div className="min-w-0">
-        <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Após o envio</h2>
+        <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Após o envio</h2>
         <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
           Diligências, decisões, glosas e recursos. O prazo de cada um vem do regime e vira atividade, com aviso, para quem cuida da prestação.{guardaPelaDecisao ? " A decisão sobre as contas marca o início da guarda do que foi enviado." : ""}
         </p>
@@ -274,7 +274,7 @@ export default function PosEnvioPage() {
             </div>
             <div className="min-w-0">
               <dt className={ROTULO}>Análise do órgão</dt>
-              <dd className="mt-0.5 text-[0.8125rem] tabular-nums">{analise ? <span className="font-semibold text-[#0D0D0D]">Até {dataBr(analise.data)}</span> : <span className="text-black/45">Sem prazo no regime</span>}</dd>
+              <dd className="mt-0.5 text-[0.8125rem] tabular-nums">{analise ? <span className="font-semibold text-[#282525]">Até {dataBr(analise.data)}</span> : <span className="text-black/45">Sem prazo no regime</span>}</dd>
             </div>
             <div>
               <dt className={ROTULO}>
@@ -283,13 +283,13 @@ export default function PosEnvioPage() {
                   : contas.abertas > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
                 Diligências abertas
               </dt>
-              <dd className={`mt-0.5 text-[0.8125rem] font-semibold tabular-nums ${contas.abertas ? "text-[#0D0D0D]" : "text-black/30"}`}>
+              <dd className={`mt-0.5 text-[0.8125rem] font-semibold tabular-nums ${contas.abertas ? "text-[#282525]" : "text-black/30"}`}>
                 {contas.abertas}{contas.vencidas ? `, ${contas.vencidas} vencida${contas.vencidas === 1 ? "" : "s"}` : ""}
               </dd>
             </div>
             <div>
               <dt className={ROTULO}>Glosado</dt>
-              <dd className={`mt-0.5 text-[0.8125rem] font-semibold tabular-nums ${contas.glosas.mantido ? "text-[#0D0D0D]" : "text-black/30"}`}>
+              <dd className={`mt-0.5 text-[0.8125rem] font-semibold tabular-nums ${contas.glosas.mantido ? "text-[#282525]" : "text-black/30"}`}>
                 {reais(contas.glosas.mantido / 100)}
                 {contas.glosas.mantido > 0 && <span className="font-normal text-black/45"> · recolhido {reais(contas.glosas.recolhido / 100)}</span>}
               </dd>
@@ -299,7 +299,7 @@ export default function PosEnvioPage() {
           {!envioAtual && (
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.6875rem] text-black/50">
               O registro do envio guarda o que foi enviado e dá o marco dos prazos.
-              <Link href={`/prestacoes/${id}/envio/pacote`} className="inline-flex items-center gap-1 rounded text-black/70 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+              <Link href={`/prestacoes/${id}/envio/pacote`} className="inline-flex items-center gap-1 rounded text-black/70 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                 Registrar no pacote <ArrowRight size={11} aria-hidden />
               </Link>
             </p>

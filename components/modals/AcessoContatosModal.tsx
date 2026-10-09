@@ -129,7 +129,7 @@ export function AcessoContatosModal({
 
           <h2
             id="acesso-contatos-title"
-            className="mt-2 max-w-[24.375rem] text-[1.375rem] font-semibold leading-[1.2] tracking-[-.025em] text-[#0D0D0D]"
+            className="mt-2 max-w-[24.375rem] text-[1.375rem] font-semibold leading-[1.2] tracking-[-.025em] text-[#282525]"
           >
             {conteudo.titulo}
           </h2>

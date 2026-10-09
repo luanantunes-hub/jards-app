@@ -179,7 +179,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
     <section aria-labelledby="alteracoes-titulo" className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div>
-          <h2 id="alteracoes-titulo" className="text-[0.75rem] font-semibold text-[#0D0D0D]">Alterações do orçamento</h2>
+          <h2 id="alteracoes-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Alterações do orçamento</h2>
           <p className="text-[0.625rem] text-black/40">Remanejamentos, complementações, reduções e itens novos, com o enquadramento do regime</p>
         </div>
         {permissoes.editar && (

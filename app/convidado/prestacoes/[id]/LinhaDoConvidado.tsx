@@ -52,13 +52,13 @@ export function LinhaDoConvidado({ item, estado, onMarcar, onComentar, onAbrirAr
             <div className="mt-1 flex flex-wrap gap-3">
               {item.arquivo && (
                 <button type="button" onClick={() => onAbrirArquivo(item.arquivo!.path)}
-                  className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                  className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                   <FileText size={11} aria-hidden /> {item.arquivo.nome}
                 </button>
               )}
               {item.link && (
                 <a href={item.link} target="_blank" rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                  className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                   Abrir link <ExternalLink size={11} aria-hidden />
                 </a>
               )}
@@ -101,7 +101,7 @@ export function LinhaDoConvidado({ item, estado, onMarcar, onComentar, onAbrirAr
             <span className="sr-only">Comentário sobre {item.titulo}</span>
             <textarea value={texto} onChange={e => setTexto(e.target.value)} rows={2} maxLength={2000} autoFocus
               placeholder="O que a equipe precisa ver neste item?"
-              className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+              className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
           </label>
           <div className="mt-1.5 flex justify-end gap-3">
             <button type="button" onClick={() => { setComentando(false); setTexto(""); setErro(""); }}

@@ -76,7 +76,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
         {ganho && <Check size={13} className="text-black/40" aria-hidden="true" />}
         <span className="text-[0.75rem]">
           <span className="font-medium text-black/70">{ganho ? "Negócio fechado" : "Negociação recusada"}</span>
-          {ganho && <> · <span className="font-semibold tabular-nums text-[#0D0D0D]">{moeda(captacao.valor_aprovado ?? captacao.valor_solicitado)}</span></>}
+          {ganho && <> · <span className="font-semibold tabular-nums text-[#282525]">{moeda(captacao.valor_aprovado ?? captacao.valor_solicitado)}</span></>}
         </span>
       </div>
     );
@@ -102,7 +102,7 @@ export function PropostaDaNegociacao({ captacao, empresaNome, projetoNome, propo
             <span className="block max-w-[11rem] truncate text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
               {comProjeto ? "Proposta" : "Valor"}{cota && <span className="font-normal normal-case tracking-normal"> · {cota.nome}</span>}
             </span>
-            <span className={`block text-[0.75rem] font-semibold tabular-nums ${valor != null ? "text-[#0D0D0D]" : "text-black/40"}`}>{valor != null ? moeda(valor) : "Definir valor"}</span>
+            <span className={`block text-[0.75rem] font-semibold tabular-nums ${valor != null ? "text-[#282525]" : "text-black/40"}`}>{valor != null ? moeda(valor) : "Definir valor"}</span>
           </span>
           <Pencil size={11} className="text-black/25" aria-hidden="true" />
         </button>

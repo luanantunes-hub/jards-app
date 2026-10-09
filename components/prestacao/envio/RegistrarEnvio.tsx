@@ -10,7 +10,7 @@ import type { Manifesto } from "@/lib/prestacao/pacote";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
 const dataBr = (iso: string) => iso.slice(0, 10).split("-").reverse().join("/");
 const hojeIso = () => new Date().toLocaleDateString("sv-SE");
@@ -83,7 +83,7 @@ export function RegistrarEnvio({ prestacaoId, etapa, exercicio = 0, sistema, man
   return (
     <section className="space-y-3 rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="registrar-envio">
       <div>
-        <h3 id="registrar-envio" className="text-[0.75rem] font-semibold text-black">Registrar o envio</h3>
+        <h3 id="registrar-envio" className="text-[0.75rem] font-semibold text-[#282525]">Registrar o envio</h3>
         <p className="max-w-[46rem] text-[0.6875rem] text-black/50">
           Depois de enviar {destino}, registre aqui. O Jards guarda um retrato do que foi enviado, com o manifesto deste pacote, e trava o que foi enviado: nada muda enquanto o envio vale, e nada sai pelo prazo de guarda do regime.
         </p>

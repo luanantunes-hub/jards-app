@@ -192,7 +192,7 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia, regimes, sugeridos, propo
   return (
     <li className="rounded border bg-white px-5 py-4" style={BORDA}>
       <p className="text-[0.6875rem] text-black/45">{cabecalho.filter(Boolean).join(" · ")}</p>
-      <h2 className="mt-1 text-[0.875rem] font-semibold text-[#0D0D0D]">{d.titulo || "Ato sem título"}</h2>
+      <h2 className="mt-1 text-[0.875rem] font-semibold text-[#282525]">{d.titulo || "Ato sem título"}</h2>
       {d.ementa && (
         <p className="mt-1 text-[0.8125rem] leading-relaxed text-black/70">
           {pagina && <span className="text-black/45">Primeiro trecho que mudou: </span>}
@@ -226,7 +226,7 @@ function CartaoDoAto({ d, ocupado, onDecidir, onCopia, regimes, sugeridos, propo
         <label className="min-w-[12rem] flex-1">
           <span className="sr-only">Nota sobre o ato</span>
           <input value={nota} onChange={e => setNota(e.target.value)} maxLength={1000} placeholder="Nota (opcional): o que muda e em qual regime"
-            className="h-9 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+            className="h-9 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
         </label>
         {d.situacao === "novo" ? (
           <>
@@ -423,7 +423,7 @@ export default function AdminNormasPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-8 md:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-[#0D0D0D]">Vigia normativo</h1>
+          <h1 className="text-xl font-bold text-[#282525]">Vigia normativo</h1>
           <p className="mt-0.5 max-w-[48rem] text-sm text-black/45">
             Todo dia às 8h, a seção 1 do Diário Oficial da União é lida no INLABS: ficam os atos que citam as normas dos regimes ou que vêm do Ministério da Cultura, da ANCINE e do Ministério do Esporte tratando de prestação de contas ou de incentivo. Às 9h37, as leis compiladas, as normas consolidadas e as páginas de manuais e modelos dos órgãos são comparadas com a última versão guardada.
           </p>
@@ -432,10 +432,10 @@ export default function AdminNormasPage() {
           <label>
             <span className="mb-1 block text-[0.625rem] font-medium text-black/45">Dia do Diário</span>
             <input type="date" value={dia} max={hojeEmBrasilia()} onChange={e => setDia(e.target.value)}
-              className="h-9 rounded border border-black/[.12] bg-white px-3 text-[0.75rem] tabular-nums text-black outline-none focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+              className="h-9 rounded border border-black/[.12] bg-white px-3 text-[0.75rem] tabular-nums text-[#282525] outline-none focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
           </label>
           <button type="button" onClick={coletar} disabled={!!ocupado || !dia}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50">
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50">
             <RefreshCw size={13} className={ocupado === "coleta" ? "animate-spin motion-reduce:animate-none" : ""} aria-hidden />
             {ocupado === "coleta" ? "Lendo o Diário…" : "Coletar o Diário"}
           </button>

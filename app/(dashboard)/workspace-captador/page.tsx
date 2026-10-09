@@ -206,7 +206,7 @@ function FunilKanban({ etapas, itens, pedidos, draggingId, setDraggingId, overEt
                 </div>
               </div>
               <div className="mt-2.5 flex items-center justify-between border-t border-black/[.06] pt-2">
-                <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice - 1].key); }} className="text-[0.6875rem] font-medium text-black/45 hover:text-black disabled:invisible">← Voltar</button>
+                <button type="button" disabled={indice === 0} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice - 1].key); }} className="text-[0.6875rem] font-medium text-black/45 hover:text-[#282525] disabled:invisible">← Voltar</button>
                 <button type="button" disabled={indice === etapas.length - 1} onClick={event => { event.stopPropagation(); moverEtapa(item.id, etapas[indice + 1].key); }} className="text-[0.6875rem] font-medium text-[#5F4AA8] hover:underline disabled:invisible">Avançar →</button>
               </div>
             </KanbanCard>;
@@ -230,8 +230,8 @@ function OportunidadeSolta({ item, onIniciar, router }: {
       <CompanyLogo nome={item.empresaNome} domain={item.empresaDomainKey} site={item.empresaSite} size={36} className="shrink-0 border border-black/[.07]"/>
       <span className="min-w-0 flex-1 truncate text-[0.8125rem] font-semibold text-black/80">{item.empresaNome}</span>
       <div className="flex shrink-0 items-center gap-1.5" onClick={event => event.stopPropagation()}>
-        <button type="button" onClick={() => onIniciar(item.id, "negociacoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Negociação</button>
-        <button type="button" onClick={() => onIniciar(item.id, "inscricoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Inscrição</button>
+        <button type="button" onClick={() => onIniciar(item.id, "negociacoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-[#282525]">Negociação</button>
+        <button type="button" onClick={() => onIniciar(item.id, "inscricoes")} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-[#282525]">Inscrição</button>
       </div>
     </div>
   );
@@ -346,9 +346,9 @@ export default function WorkspaceCaptadorPage() {
     <div className="min-h-full">
       <header className="border-b border-black/[.06] bg-white">
         <div className="mx-auto flex max-w-pagina flex-col justify-between gap-5 px-4 pb-8 pt-7 sm:flex-row sm:items-end sm:px-6 lg:px-10 lg:pb-10 lg:pt-9">
-          <div><p className="mb-2 text-[0.6875rem] font-medium text-black/40">Workspace do captador</p><h1 className="text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{organizationName}</h1></div>
+          <div><p className="mb-2 text-[0.6875rem] font-medium text-black/40">Workspace do captador</p><h1 className="text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{organizationName}</h1></div>
           {!naoEncontrado && <button type="button" onClick={() => setSheetAberto(true)} disabled={!(escopos ?? []).some(e => e.habilitado && (e.tipo === "negociacoes" || e.tipo === "inscricoes"))}
-            className="inline-flex h-11 items-center gap-2 self-start rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black transition hover:bg-black/[.04] active:scale-[.98] disabled:opacity-40 sm:self-auto"><Plus size={14}/>Nova oportunidade</button>}
+            className="inline-flex h-11 items-center gap-2 self-start rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] active:scale-[.98] disabled:opacity-40 sm:self-auto"><Plus size={14}/>Nova oportunidade</button>}
         </div>
       </header>
 
@@ -368,7 +368,7 @@ export default function WorkspaceCaptadorPage() {
             {erroEtapa && <p role="alert" className="mb-4 text-[0.75rem] text-[#B64545]">{erroEtapa}</p>}
             {aba === "resumo" && <div className="space-y-6">
               <section className="grid grid-cols-3 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08]">
-                {[["Em andamento", atribuicoes.length], ["Sua resposta", esperandoResposta.length + acoesPendentes.length], ["Em análise", aguardandoGestor.length]].map(([label, value]) => <div key={label} className="bg-white px-4 py-4 sm:px-5"><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p className={`mt-3 text-[1.5625rem] font-semibold tabular-nums tracking-tight ${value ? "text-[#0D0D0D]" : "text-black/30"}`}>{value}</p></div>)}
+                {[["Em andamento", atribuicoes.length], ["Sua resposta", esperandoResposta.length + acoesPendentes.length], ["Em análise", aguardandoGestor.length]].map(([label, value]) => <div key={label} className="bg-white px-4 py-4 sm:px-5"><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p className={`mt-3 text-[1.5625rem] font-semibold tabular-nums tracking-tight ${value ? "text-[#282525]" : "text-black/30"}`}>{value}</p></div>)}
               </section>
               <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
                 <div className="min-w-0 space-y-5">

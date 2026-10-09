@@ -65,7 +65,7 @@ export function PesquisaEmpresaModal({
           {concluida ? (
             <>
               <p className="text-[0.625rem] font-semibold uppercase tracking-[.12em] text-[#2E8932]">Busca priorizada</p>
-              <h2 id="pesquisa-empresa-title" className="mt-2 text-[1.3125rem] font-semibold tracking-[-.025em] text-[#0D0D0D]">
+              <h2 id="pesquisa-empresa-title" className="mt-2 text-[1.3125rem] font-semibold tracking-[-.025em] text-[#282525]">
                 Pedido recebido.
               </h2>
               <p className="mt-3 text-[0.875rem] leading-6 text-black/50">
@@ -84,7 +84,7 @@ export function PesquisaEmpresaModal({
           ) : (
             <>
               <h2 id="pesquisa-empresa-title" className="text-[1.0625rem] font-medium leading-7 tracking-[-.015em] text-black/70">
-                <strong className="font-semibold text-[#0D0D0D]">{usuarioNome}</strong>, precisamos confirmar algumas informações da empresa <strong className="font-semibold text-[#0D0D0D]">{empresaNome}</strong>. Clique em “começar busca” para priorizar este pedido. Vamos identificar os contatos-chave e te avisar em breve.
+                <strong className="font-semibold text-[#282525]">{usuarioNome}</strong>, precisamos confirmar algumas informações da empresa <strong className="font-semibold text-[#282525]">{empresaNome}</strong>. Clique em “começar busca” para priorizar este pedido. Vamos identificar os contatos-chave e te avisar em breve.
               </h2>
 
               {erro && (

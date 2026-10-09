@@ -166,7 +166,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
   if (savedProponente) return <>
     <div className={`fixed inset-0 ${nested ? "z-[70]" : "z-50"} flex items-start justify-center bg-black/45 px-3 sm:px-5`} onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="proponente-created-title" className="w-full max-w-[42.5rem] overflow-hidden rounded-b bg-white shadow-[0_22px_72px_rgba(13,13,13,.2)]" onClick={event => event.stopPropagation()}>
-        <header className="flex items-center justify-between border-b border-black/[.08] px-6 py-4"><h2 id="proponente-created-title" className="text-[1rem] font-semibold text-black">Proponente criado</h2><button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded text-black/35 hover:bg-black/[.05]"><X size={15}/></button></header>
+        <header className="flex items-center justify-between border-b border-black/[.08] px-6 py-4"><h2 id="proponente-created-title" className="text-[1rem] font-semibold text-[#282525]">Proponente criado</h2><button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded text-black/35 hover:bg-black/[.05]"><X size={15}/></button></header>
         <div className="px-6 py-8 sm:px-8"><span className="flex h-10 w-10 items-center justify-center rounded bg-black/[.04] text-[#2E8932]"><Check size={18}/></span><p className="mt-4 text-[1.0625rem] font-semibold text-black/80">{savedProponente.nome}</p><p className="mt-1 text-[0.75rem] text-black/40">O cadastro está pronto. Escolha o próximo passo para completar o relacionamento.</p><div className="mt-6 grid gap-3 sm:grid-cols-2"><button type="button" onClick={() => setShowContato(true)} className="flex items-center gap-3 rounded border border-black/[.1] px-4 py-4 text-left transition hover:bg-black/[.025]"><UserPlus size={16} className="text-black/40"/><span><strong className="block text-[0.75rem] font-semibold text-black/70">Adicionar contato</strong><small className="mt-0.5 block text-[0.625rem] text-black/35">Cadastre o ponto focal</small></span></button><button type="button" onClick={() => { onClose(); router.push(`/projetos?novo=1&proponente=${savedProponente.id}`); }} className="flex items-center gap-3 rounded border border-black/[.1] px-4 py-4 text-left transition hover:bg-black/[.025]"><FolderPlus size={16} className="text-black/40"/><span><strong className="block text-[0.75rem] font-semibold text-black/70">Criar primeiro projeto</strong><small className="mt-0.5 block text-[0.625rem] text-black/35">Inicie o portfólio</small></span></button></div></div>
         <footer className="flex justify-end border-t border-black/[.08] px-6 py-4"><button type="button" onClick={onClose} className="px-3 py-2 text-[0.75rem] font-medium text-black/40 hover:text-black/60">Concluir depois</button></footer>
       </div>
@@ -192,7 +192,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
             <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
               <Building2 size={16} className="text-black/50" />
             </div>
-            <h2 id="proponente-sheet-title" className="text-[1rem] font-semibold text-black">{editData ? "Editar proponente" : "Novo proponente"}</h2>
+            <h2 id="proponente-sheet-title" className="text-[1rem] font-semibold text-[#282525]">{editData ? "Editar proponente" : "Novo proponente"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
             <X size={15} className="text-black/40" />
@@ -205,7 +205,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
           <section className="flex min-w-0 flex-col gap-4 p-6 sm:p-7 lg:p-8">
             {/* Nome */}
             <div className="order-1">
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Nome</label>
+              <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Nome</label>
               <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: nome ? "rgba(13,13,13,.25)" : "rgba(13,13,13,.15)" }}>
                 <Building2 size={13} className="text-black/35 flex-shrink-0" />
                 <input
@@ -214,7 +214,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
                   placeholder="Nome da organização ou pessoa"
                   value={nome}
                   onChange={e => setNome(e.target.value)}
-                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
+                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-[#282525] min-w-0"
                 />
               </div>
             </div>
@@ -252,7 +252,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
             {/* Tipo */}
             <div className="order-2">
               <div className="mb-1.5 flex items-center justify-between">
-                <label className="text-[0.75rem] font-semibold text-black">Tipo</label>
+                <label className="text-[0.75rem] font-semibold text-[#282525]">Tipo</label>
                 <a href="/configuracoes?section=funis" target="_blank" rel="noopener noreferrer" className="text-[0.625rem] font-medium text-black/30 transition hover:text-[#7259B5]">Editar em configurações</a>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -271,7 +271,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
             </div>
 
             <div className="order-2">
-              <label className="mb-1.5 block text-[0.75rem] font-semibold text-black">Maturidade institucional</label>
+              <label className="mb-1.5 block text-[0.75rem] font-semibold text-[#282525]">Maturidade institucional</label>
               <p className="mb-2 text-[0.6875rem] text-black/40">Nível de estrutura do proponente para executar e captar recursos.</p>
               <Dropdown value={maturidade} onChange={setMaturidade} options={[
                 { value: "", label: "Não avaliado" },
@@ -281,7 +281,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
 
             {/* Documento */}
             <div className="order-3">
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">{documentLabel}</label>
+              <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">{documentLabel}</label>
               <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <Hash size={13} className="text-black/35 flex-shrink-0" />
                 <input
@@ -290,14 +290,14 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
                   placeholder={isPerson ? "000.000.000-00" : "00.000.000/0001-00"}
                   value={cnpj}
                   onChange={e => setCnpj(formatDocument(e.target.value, isPerson))}
-                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0"
+                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-[#282525] min-w-0"
                 />
               </div>
             </div>
 
             {/* Descrição */}
             <div className="order-4">
-              <div className="mb-1.5 flex items-center justify-between"><label className="text-[0.75rem] font-semibold text-black">Descrição</label><span className="text-[0.625rem] font-medium text-black/25">Opcional</span></div>
+              <div className="mb-1.5 flex items-center justify-between"><label className="text-[0.75rem] font-semibold text-[#282525]">Descrição</label><span className="text-[0.625rem] font-medium text-black/25">Opcional</span></div>
               <div className="flex items-start border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <AlignLeft size={13} className="text-black/35 flex-shrink-0 mt-0.5" />
                 <textarea
@@ -305,7 +305,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
                   value={descricao}
                   onChange={e => setDescricao(e.target.value)}
                   rows={2}
-                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-black min-w-0 resize-none"
+                  className="flex-1 text-[0.8125rem] outline-none bg-transparent text-[#282525] min-w-0 resize-none"
                 />
               </div>
             </div>
@@ -316,7 +316,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
             <p className="text-[0.625rem] font-bold uppercase tracking-[.13em] text-black/30">Contato</p>
 
             <div>
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">E-mail</label>
+              <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">E-mail</label>
               <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <Mail size={12} className="text-black/35 flex-shrink-0" />
                 <input
@@ -324,13 +324,13 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
                   placeholder="contato@org.com.br"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="flex-1 text-[0.75rem] outline-none bg-transparent text-black min-w-0"
+                  className="flex-1 text-[0.75rem] outline-none bg-transparent text-[#282525] min-w-0"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Telefone</label>
+              <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Telefone</label>
               <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <Phone size={12} className="text-black/35 flex-shrink-0" />
                 <input
@@ -338,13 +338,13 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
                   placeholder="(11) 99999-9999"
                   value={telefone}
                   onChange={e => setTelefone(e.target.value)}
-                  className="flex-1 text-[0.75rem] outline-none bg-transparent text-black min-w-0"
+                  className="flex-1 text-[0.75rem] outline-none bg-transparent text-[#282525] min-w-0"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Site</label>
+              <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Site</label>
               <div className="flex items-center border rounded px-3 py-2.5 gap-2" style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <Globe size={12} className="text-black/35 flex-shrink-0" />
                 <input
@@ -352,7 +352,7 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
                   placeholder="www.org.com.br"
                   value={site}
                   onChange={e => setSite(e.target.value)}
-                  className="flex-1 text-[0.75rem] outline-none bg-transparent text-black min-w-0"
+                  className="flex-1 text-[0.75rem] outline-none bg-transparent text-[#282525] min-w-0"
                 />
               </div>
             </div>
@@ -361,25 +361,25 @@ export function NovoProponenteModal({ onClose, onSaved, editData, nested = false
               <p className="text-[0.625rem] font-bold uppercase tracking-[.13em] text-black/30 mb-3">Localização</p>
               <div className="grid grid-cols-[minmax(0,1fr)_5.5rem] gap-3">
                 <div>
-                  <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Cidade</label>
+                  <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Cidade</label>
                   <input
                     type="text"
                     placeholder="São Paulo"
                     value={cidade}
                     onChange={e => setCidade(e.target.value)}
-                    className="w-full border rounded px-3 py-2.5 text-[0.75rem] outline-none text-black"
+                    className="w-full border rounded px-3 py-2.5 text-[0.75rem] outline-none text-[#282525]"
                     style={{ borderColor: "rgba(13,13,13,.15)" }}
                   />
                 </div>
                 <div>
-                  <label className="text-[0.75rem] font-semibold text-black mb-1.5 block">Estado</label>
+                  <label className="text-[0.75rem] font-semibold text-[#282525] mb-1.5 block">Estado</label>
                   <input
                     type="text"
                     placeholder="SP"
                     maxLength={2}
                     value={estado}
                     onChange={e => setEstado(e.target.value.toUpperCase())}
-                    className="w-full border rounded px-3 py-2.5 text-[0.75rem] outline-none text-black uppercase"
+                    className="w-full border rounded px-3 py-2.5 text-[0.75rem] outline-none text-[#282525] uppercase"
                     style={{ borderColor: "rgba(13,13,13,.15)" }}
                   />
                 </div>

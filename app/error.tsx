@@ -17,7 +17,7 @@ export default function ErrorPage({
     <main className="flex min-h-[60vh] items-center justify-center px-6 py-16">
       <div className="max-w-md text-center">
         <p className="text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-black/35">Erro inesperado</p>
-        <h1 className="mt-3 text-2xl font-semibold tracking-[-.03em] text-black">Não foi possível abrir esta área.</h1>
+        <h1 className="mt-3 text-2xl font-semibold tracking-[-.03em] text-[#282525]">Não foi possível abrir esta área.</h1>
         <p className="mt-2 text-sm leading-6 text-black/45">Tente novamente. Se o problema continuar, a equipe poderá localizar o erro pelo registro desta ocorrência.</p>
         <button
           onClick={reset}

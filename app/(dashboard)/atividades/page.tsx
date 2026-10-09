@@ -772,15 +772,15 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
 
       <div className="grid grid-cols-3 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="px-5 py-3">
-          <p className={`text-[1.125rem] font-semibold tabular-nums ${members.some(member => member.id !== "__unassigned") ? "text-[#0D0D0D]" : "text-black/30"}`}>{members.filter(member => member.id !== "__unassigned").length}</p>
+          <p className={`text-[1.125rem] font-semibold tabular-nums ${members.some(member => member.id !== "__unassigned") ? "text-[#282525]" : "text-black/30"}`}>{members.filter(member => member.id !== "__unassigned").length}</p>
           <p className="flex items-center gap-1.5 text-[0.625rem] font-medium text-black/45"><Users size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />membros com atividades</p>
         </div>
         <div className="border-l px-5 py-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-          <p className={`text-[1.125rem] font-semibold tabular-nums ${overloaded > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{overloaded}</p>
+          <p className={`text-[1.125rem] font-semibold tabular-nums ${overloaded > 0 ? "text-[#282525]" : "text-black/30"}`}>{overloaded}</p>
           <p className="flex items-center gap-1.5 text-[0.625rem] font-medium text-black/45"><AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className={`shrink-0 ${overloaded > 0 ? "text-[#D94A4A]" : "text-black/40"}`} />em sobrecarga</p>
         </div>
         <div className="border-l px-5 py-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-          <p className={`text-[1.125rem] font-semibold tabular-nums ${unassignedInWeek > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{unassignedInWeek}</p>
+          <p className={`text-[1.125rem] font-semibold tabular-nums ${unassignedInWeek > 0 ? "text-[#282525]" : "text-black/30"}`}>{unassignedInWeek}</p>
           <p className="flex items-center gap-1.5 text-[0.625rem] font-medium text-black/45"><UserX size={12} strokeWidth={1.75} aria-hidden="true" className={`shrink-0 ${unassignedInWeek > 0 ? "text-[#B07A14]" : "text-black/40"}`} />sem responsável</p>
         </div>
       </div>
@@ -812,7 +812,7 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
                       const dayItems = weeklyItems.filter(item => normDate(scheduledDate(item)!) === key);
                       return <div key={key} className={`space-y-1 border-l p-1.5 ${key === todayStr ? "bg-black/[.015]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}>{dayItems.map(item => <DraggablePill key={item.id} item={item} onEdit={onEdit} />)}</div>;
                     })}
-                    <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className={`text-[1.125rem] font-semibold tabular-nums ${weeklyItems.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{weeklyItems.length}</span><span className="flex items-center gap-1 text-[0.625rem] font-medium text-black/55">{status.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: status.alerta }} />}{status.label}</span></div>
+                    <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className={`text-[1.125rem] font-semibold tabular-nums ${weeklyItems.length ? "text-[#282525]" : "text-black/30"}`}>{weeklyItems.length}</span><span className="flex items-center gap-1 text-[0.625rem] font-medium text-black/55">{status.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: status.alerta }} />}{status.label}</span></div>
                   </MemberDropRow>
                 );
               })}
@@ -1463,7 +1463,7 @@ export default function AtividadesPage() {
       <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Rotina comercial</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Atividades</h1>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525]">Atividades</h1>
         </div>
         <PrimaryListAction onClick={() => setShowNovaAtividade(true)}><Plus size={13} aria-hidden="true" /> Nova atividade</PrimaryListAction>
       </div>
@@ -1472,20 +1472,20 @@ export default function AtividadesPage() {
       {viewMode === "lista" && !loading && tab === "pendentes" && (
         <div className="flex items-center gap-3 mb-6 flex-wrap">
           <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border text-sm" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <span className={`font-semibold tabular-nums text-[0.9375rem] ${filtered.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{filtered.length}</span>
+            <span className={`font-semibold tabular-nums text-[0.9375rem] ${filtered.length ? "text-[#282525]" : "text-black/30"}`}>{filtered.length}</span>
             <span className="text-black/40 text-xs">pendentes</span>
           </div>
           {atrasadas > 0 && (
             <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
               <AlertCircle size={13} aria-hidden="true" className="text-[#D94E4E] flex-shrink-0" />
-              <span className="font-semibold tabular-nums text-[#0D0D0D] text-[0.9375rem]">{atrasadas}</span>
+              <span className="font-semibold tabular-nums text-[#282525] text-[0.9375rem]">{atrasadas}</span>
               <span className="text-black/40 text-xs">atrasadas</span>
             </div>
           )}
           {hoje > 0 && (
             <div className="flex items-center gap-2 bg-white rounded px-4 py-2.5 border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
               <Clock size={13} aria-hidden="true" className="text-[#B07A14] flex-shrink-0" />
-              <span className="font-semibold tabular-nums text-[#0D0D0D] text-[0.9375rem]">{hoje}</span>
+              <span className="font-semibold tabular-nums text-[#282525] text-[0.9375rem]">{hoje}</span>
               <span className="text-black/40 text-xs">para hoje</span>
             </div>
           )}

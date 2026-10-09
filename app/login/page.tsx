@@ -49,7 +49,7 @@ function PasswordResetModal({
 
           {sent ? (
             <>
-              <h2 className="text-[1.35rem] font-bold tracking-tight text-[#0D0D0D]">
+              <h2 className="text-[1.35rem] font-bold tracking-tight text-[#282525]">
                 Link enviado!
               </h2>
               <p className="mt-2.5 text-sm leading-6 text-black/50">
@@ -69,7 +69,7 @@ function PasswordResetModal({
             </>
           ) : (
             <>
-              <h2 className="text-[1.35rem] font-bold tracking-tight text-[#0D0D0D]">
+              <h2 className="text-[1.35rem] font-bold tracking-tight text-[#282525]">
                 O Jards foi<br />totalmente renovado
               </h2>
               <p className="mt-2.5 text-sm leading-6 text-black/50">
@@ -251,7 +251,7 @@ function LoginForm() {
             placeholder="voce@empresa.com"
             required
             autoComplete="email"
-            className="w-full rounded-xl border border-black/12 bg-white px-4 py-2.5 text-sm text-black placeholder-black/55 transition focus:border-[#684DB0]/55 focus:outline-none focus:ring-2 focus:ring-[#684DB0]/12"
+            className="w-full rounded-xl border border-black/12 bg-white px-4 py-2.5 text-sm text-[#282525] placeholder-black/55 transition focus:border-[#684DB0]/55 focus:outline-none focus:ring-2 focus:ring-[#684DB0]/12"
           />
         </div>
 
@@ -267,7 +267,7 @@ function LoginForm() {
               placeholder="••••••••"
               required
               autoComplete="current-password"
-              className="w-full rounded-xl border border-black/12 bg-white px-4 py-2.5 pr-11 text-sm text-black placeholder-black/55 transition focus:border-[#684DB0]/55 focus:outline-none focus:ring-2 focus:ring-[#684DB0]/12"
+              className="w-full rounded-xl border border-black/12 bg-white px-4 py-2.5 pr-11 text-sm text-[#282525] placeholder-black/55 transition focus:border-[#684DB0]/55 focus:outline-none focus:ring-2 focus:ring-[#684DB0]/12"
             />
             <button
               type="button"
@@ -281,7 +281,7 @@ function LoginForm() {
           <div className="mt-2 flex justify-end">
             <a
               href="/redefinir-senha"
-              className="text-xs text-black/40 hover:text-black transition"
+              className="text-xs text-black/40 hover:text-[#282525] transition"
             >
               Esqueci minha senha
             </a>
@@ -347,7 +347,7 @@ export default function LoginPage() {
         <Image src="/jards-logo.svg" alt="Jards" width={88} height={28} priority className="h-7 w-auto" />
       </a>
       <p className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Continue seu trabalho</p>
-      <h1 className="text-[clamp(2.2rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">Hoje é o dia.</h1>
+      <h1 className="text-[clamp(2.2rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#282525]">Hoje é o dia.</h1>
       <p className="mb-5 mt-2.5 text-sm leading-6 text-black/50">Seu workspace, projetos e negociações permanecem no mesmo contexto.</p>
 
       <Suspense fallback={<div className="space-y-4 animate-pulse"><div className="h-12 bg-black/5 rounded"/><div className="h-12 bg-black/5 rounded"/><div className="h-12 bg-black/5 rounded"/></div>}>
@@ -355,7 +355,7 @@ export default function LoginPage() {
       </Suspense>
 
       <p className="mt-5 text-center text-xs text-black/40">
-        Ainda não usa o Jards? <a href="/cadastro" className="font-semibold text-black hover:underline">Criar uma conta</a>
+        Ainda não usa o Jards? <a href="/cadastro" className="font-semibold text-[#282525] hover:underline">Criar uma conta</a>
       </p>
 
       <p className="mt-4 text-center text-[0.6875rem] leading-5 text-black/35">

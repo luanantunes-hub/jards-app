@@ -3,7 +3,7 @@
 
 :root {
   --cream:          #FFFFFF;
-  --ink:            #0D0D0D;
+  --ink:            #282525;
   --color-primary:  #684DB0;
   --color-accent:   #D94A4A;
   --color-danger:   #C64C46;
@@ -365,7 +365,7 @@ table thead th > span > span {
 .auth-oblique-card__text {
   font-weight: 700;
   letter-spacing: -.01em;
-  color: #0D0D0D;
+  color: #282525;
 }
 
 .auth-oblique-card__text--lg {

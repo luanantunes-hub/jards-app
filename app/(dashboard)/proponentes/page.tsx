@@ -126,7 +126,7 @@ function ProponentesMapView({ items, onOpenProponente, onOpenProjeto }: {
               <ProjectIdentity nome={item.nome} tipo={item.identidade_tipo} valor={item.identidade_valor} logoUrl={item.identidade_logo_url} cor={item.identidade_cor} iconOptions={PROPONENTE_ICON_OPTIONS} />
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h2 className="truncate text-[0.875rem] font-bold text-black">{item.nome}</h2>
+                  <h2 className="truncate text-[0.875rem] font-bold text-[#282525]">{item.nome}</h2>
                   <span className="text-[0.625rem] font-semibold text-black/35">{item.n_projetos} {item.n_projetos === 1 ? "projeto" : "projetos"}</span>
                 </div>
                 <p className="mt-1 text-[0.6875rem] text-black/40">{[item.tipo ? tipoLabels[item.tipo] ?? TIPO_LABEL[item.tipo] ?? item.tipo : null, item.cidade, item.estado].filter(Boolean).join(" / ") || "Sem classificação"}</p>
@@ -334,7 +334,7 @@ export default function ProponentesPage() {
                             <div className="flex items-center gap-2.5">
                               <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} iconOptions={PROPONENTE_ICON_OPTIONS} semFundo />
                               <div className="min-w-0">
-                                <p className="text-[0.8125rem] font-semibold text-black leading-tight line-clamp-1">{p.nome}</p>
+                                <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight line-clamp-1">{p.nome}</p>
                                 {p.descricao && (
                                   <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
                                 )}

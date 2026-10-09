@@ -132,7 +132,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5">
               <Users size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Novo cliente</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Novo cliente</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar"
             className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
@@ -149,7 +149,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
                 style={{ borderColor: "rgba(13,13,13,.15)" }}>
                 <div className="flex items-center gap-2">
                   <Building2 size={13} className="text-black/40 flex-shrink-0" />
-                  <span className="text-[0.8125rem] font-semibold text-black">{empresaSelecionada.nome}</span>
+                  <span className="text-[0.8125rem] font-semibold text-[#282525]">{empresaSelecionada.nome}</span>
                 </div>
                 <button type="button" onClick={() => { setEmpresaSelecionada(null); setBusca(""); setAgenciaId(""); setResponsavelId(""); }}
                   className="text-[0.6875rem] text-black/35 hover:text-black/55 transition">trocar</button>
@@ -163,7 +163,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
                     value={busca}
                     onChange={e => setBusca(e.target.value)}
                     placeholder="Buscar ou criar empresa…"
-                    className="flex-1 text-[0.8125rem] text-black outline-none bg-transparent"
+                    className="flex-1 text-[0.8125rem] text-[#282525] outline-none bg-transparent"
                   />
                 </div>
                 {busca.trim().length > 0 && opcoes.length > 0 && (
@@ -174,7 +174,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
                         className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-[0.8125rem] hover:bg-black/[.04] transition">
                         {e.id === "__new__"
                           ? <span className="text-[#7259B5] font-semibold">{e.nome}</span>
-                          : <><Building2 size={12} className="text-black/30 flex-shrink-0" /><span className="text-black">{e.nome}</span></>
+                          : <><Building2 size={12} className="text-black/30 flex-shrink-0" /><span className="text-[#282525]">{e.nome}</span></>
                         }
                       </button>
                     ))}
@@ -186,7 +186,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
 
           {/* Responsável interno */}
           <div className="border-t pt-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-black">
+            <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-[#282525]">
               <UserRound size={12} className="text-black/35" /> Responsável interno
               <span className="font-normal text-black/30">recomendado</span>
             </label>
@@ -201,7 +201,7 @@ export function NovaContaClienteModal({ onClose, onSaved }: {
           </div>
 
           <div>
-            <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-black"><Handshake size={12} className="text-black/35"/>Agência de captação <span className="text-black/30 font-normal">opcional</span></label>
+            <label className="mb-1.5 flex items-center gap-1.5 text-[0.75rem] font-semibold text-[#282525]"><Handshake size={12} className="text-black/35"/>Agência de captação <span className="text-black/30 font-normal">opcional</span></label>
             <CustomDropdown value={agenciaId} onChange={setAgenciaId} options={[{ value: "", label: "Sem agência vinculada" }, ...agencias.map(agencia => ({ value: agencia.id, label: agencia.nome }))]} compact portalZIndex={100} className="w-full [&>button]:h-10 [&>button]:w-full"/>
           </div>
 

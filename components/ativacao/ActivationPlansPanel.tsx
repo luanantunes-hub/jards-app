@@ -51,7 +51,7 @@ export function ActivationPlansPanel({ organizationId, contaId, projetoId, title
 
   return <section className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
     <header className="flex flex-col gap-4 border-b px-5 py-5 sm:flex-row sm:items-end sm:justify-between md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-      <div><p className="text-[0.6875rem] font-medium text-black/35">Contrapartidas</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-black">{title}</h2></div>
+      <div><p className="text-[0.6875rem] font-medium text-black/35">Contrapartidas</p><h2 className="mt-1 text-[1.3125rem] font-semibold tracking-[-.02em] text-[#282525]">{title}</h2></div>
       {canWrite && <button type="button" onClick={() => setShowCreate(true)} className="inline-flex h-10 items-center gap-2 self-start rounded border border-black/[.15] bg-white px-4 text-[0.75rem] font-medium text-black/70 transition hover:bg-black/[.04] active:scale-[.98] sm:self-auto"><Plus size={13}/>Novo plano</button>}
     </header>
     {error && <p className="mx-5 mt-4 rounded border border-[#D94E4E]/25 px-3 py-2 text-[0.6875rem] text-[#D94E4E]">{error}</p>}
@@ -68,8 +68,8 @@ function PlanCard({ plan, hideProject }: { plan: PlanoAtivacaoResumo; hideProjec
   const subtitle = hideProject ? plan.empresa_nome : `${plan.empresa_nome} · ${plan.projeto_nome}`;
   return <Link href={`/ativacoes/${plan.id}`} className="group rounded border p-4 transition hover:bg-black/[.018]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
     <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.875rem] font-semibold text-black/75">{plan.nome}</p><p className="mt-1 truncate text-[0.6875rem] text-black/35">{subtitle}</p></div><ArrowUpRight size={14} className="shrink-0 text-black/20 transition group-hover:text-[#7259B5]"/></div>
-    <div className="mt-4 flex items-center justify-between"><span className="text-[0.625rem] font-medium text-black/55">{status.label}</span><span className={`text-[0.6875rem] font-semibold tabular-nums ${progress ? "text-[#0D0D0D]" : "text-black/30"}`}>{progress}%</span></div>
-    <div className="mt-2 h-1.5 overflow-hidden rounded bg-black/[.06]"><div className="h-full rounded bg-[#0D0D0D]/70" style={{ width: `${progress}%` }}/></div>
+    <div className="mt-4 flex items-center justify-between"><span className="text-[0.625rem] font-medium text-black/55">{status.label}</span><span className={`text-[0.6875rem] font-semibold tabular-nums ${progress ? "text-[#282525]" : "text-black/30"}`}>{progress}%</span></div>
+    <div className="mt-2 h-1.5 overflow-hidden rounded bg-black/[.06]"><div className="h-full rounded bg-[#282525]/70" style={{ width: `${progress}%` }}/></div>
     <div className="mt-4 grid grid-cols-3 gap-2 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
       <Mini icon={CalendarDays} label="Próximo prazo" value={shortDate(plan.proxima_data)} />
       <Mini icon={WalletCards} label="Orçamento" value={formatarValorCurto(plan.orcamento_planejado)} title={formatarValorCompleto(plan.orcamento_planejado)} />
@@ -79,5 +79,5 @@ function PlanCard({ plan, hideProject }: { plan: PlanoAtivacaoResumo; hideProjec
 }
 
 function Mini({ icon: Icon, label, value, title }: { icon: typeof CalendarDays; label: string; value: string; title?: string }) {
-  return <div className="min-w-0"><p className="flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45"><Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40"/>{label}</p><p title={title} className="mt-1 truncate text-[0.625rem] font-semibold tabular-nums text-[#0D0D0D]">{value}</p></div>;
+  return <div className="min-w-0"><p className="flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45"><Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40"/>{label}</p><p title={title} className="mt-1 truncate text-[0.625rem] font-semibold tabular-nums text-[#282525]">{value}</p></div>;
 }

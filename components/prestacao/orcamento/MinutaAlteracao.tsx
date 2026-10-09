@@ -88,7 +88,7 @@ export function MinutaAlteracao({ minuta, onClose, planilha }: {
       >
         <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div>
-            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#0D0D0D]">Minuta do pedido</h2>
+            <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#282525]">Minuta do pedido</h2>
             <p className="text-[0.6875rem] text-black/40">Texto-base para revisar e levar ao sistema oficial.</p>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="rounded p-1.5 text-black/35 transition hover:bg-black/5 hover:text-black/55 focus-visible:outline-2 focus-visible:outline-[#7259B5]">
@@ -98,7 +98,7 @@ export function MinutaAlteracao({ minuta, onClose, planilha }: {
 
         <article className="flex-1 space-y-3 overflow-y-auto px-6 py-5 text-[0.8125rem] leading-6 text-black/80">
           <div>
-            <h3 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">{minuta.titulo}</h3>
+            <h3 className="text-[0.9375rem] font-semibold text-[#282525]">{minuta.titulo}</h3>
             <p className="text-black/55">Ao {minuta.destinatario}</p>
           </div>
           <p>{minuta.abertura}</p>
@@ -151,7 +151,7 @@ export function MinutaAlteracao({ minuta, onClose, planilha }: {
           <button type="button" onClick={() => imprimir(minuta)} className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/65 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.14)" }}>
             <Printer size={13} aria-hidden /> Imprimir
           </button>
-          <button type="button" onClick={copiar} className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]">
+          <button type="button" onClick={copiar} className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
             {copiado ? <><Check size={13} aria-hidden /> Copiado</> : <><Copy size={13} aria-hidden /> Copiar texto</>}
           </button>
         </div>

@@ -129,7 +129,7 @@ export function AssinaturaDoModulo({ destacar, retorno }: { destacar: boolean; r
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 id="titulo-prestacao-de-contas" className="text-[0.6875rem] font-bold uppercase tracking-widest text-black/40">Prestação de contas</h2>
-          <p className="mt-3 text-[1.75rem] font-bold leading-none tracking-tight text-[#0D0D0D]">
+          <p className="mt-3 text-[1.75rem] font-bold leading-none tracking-tight text-[#282525]">
             {reais(precos.modulo)} <span className="text-[0.8125rem] font-normal tracking-normal text-black/45">por mês, com 1 usuário</span>
           </p>
           <p className="mt-1.5 text-[0.75rem] text-black/45">Usuário extra: {reais(precos.vaga)} por mês.</p>
@@ -193,7 +193,7 @@ export function AssinaturaDoModulo({ destacar, retorno }: { destacar: boolean; r
                   <p className="text-[0.9375rem] font-medium tabular-nums text-black/85">{reais(precos.modulo + extras * precos.vaga)} por mês</p>
                 </div>
                 <button type="button" onClick={assinar} disabled={!!ocupado || !assinatura.cobrancaConfigurada}
-                  className="rounded bg-[#0D0D0D] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition hover:bg-black/80 active:scale-[.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50 motion-reduce:transition-none">
+                  className="rounded bg-[#282525] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition hover:bg-[#3A3535] active:scale-[.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50 motion-reduce:transition-none">
                   {ocupado === "assinar" ? "Abrindo o pagamento…" : assinatura.cobrancaConfigurada ? "Assinar a prestação de contas" : "Pagamento ainda não configurado"}
                 </button>
               </div>

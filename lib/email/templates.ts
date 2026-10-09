@@ -11,7 +11,7 @@ function escapeHtml(value: string) {
 function emailShell(content: string) {
   return `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
-<body style="margin:0;background:#f6f6f4;font-family:Arial,sans-serif;color:#0d0d0d">
+<body style="margin:0;background:#f6f6f4;font-family:Arial,sans-serif;color:#282525">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="padding:32px 16px;background:#f6f6f4"><tr><td align="center">
     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;background:#fff;border:1px solid #e8e8e5;border-radius:8px;overflow:hidden">
       <tr><td style="padding:28px 32px 8px"><img src="https://ykaymbmybellixxvtasi.supabase.co/storage/v1/object/public/email-assets/logo-jards.png" alt="Jards" width="96" style="display:block;width:96px;height:auto;border:0"></td></tr>
@@ -50,7 +50,7 @@ export function conviteDaPrestacaoEmail(input: {
       <h1 style="margin:0 0 12px;font-size:23px;line-height:1.25;letter-spacing:-.5px">${escapeHtml(quem)} convidou você para acompanhar a prestação de contas de ${escapeHtml(input.prestacao)}.</h1>
       <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#61615d">Você poderá ler ${escapeHtml(input.secoes.toLowerCase())}, comentar e marcar itens como verificados, até ${escapeHtml(input.validade)}. Entre com a conta deste e-mail.</p>
       ${mensagem}
-      <a href="${url}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:#0d0d0d;color:#ffffff;text-decoration:none;font-size:13px;font-weight:700">Abrir o convite</a>
+      <a href="${url}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:#282525;color:#ffffff;text-decoration:none;font-size:13px;font-weight:700">Abrir o convite</a>
       <p style="margin:24px 0 0;font-size:11px;line-height:1.5;color:#999">Se o botão não abrir, copie este endereço:<br>${url}</p>
     `),
   };

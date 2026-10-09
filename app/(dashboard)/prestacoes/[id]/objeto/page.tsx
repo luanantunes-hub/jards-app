@@ -280,7 +280,7 @@ export default function ObjetoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Objeto</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Objeto</h2>
           <p className="text-[0.6875rem] text-black/45">Metas propostas × resultados e locais de realização, como o relatório do objeto pede.</p>
         </div>
         {podeEditar && (
@@ -296,7 +296,7 @@ export default function ObjetoPage() {
             <button
               type="button"
               onClick={() => setEditandoMeta("nova")}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+              className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
             >
               <Plus size={13} aria-hidden /> Nova meta
             </button>
@@ -308,20 +308,20 @@ export default function ObjetoPage() {
 
       {!carregando && (metas.length > 0 || locais.length > 0) && (
         <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
-          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Metas com resultado</dt><dd className={`font-semibold tabular-nums ${placar.comResultado ? "text-[#0D0D0D]" : "text-black/30"}`}>{placar.comResultado} de {metas.length}</dd></div>
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Metas com resultado</dt><dd className={`font-semibold tabular-nums ${placar.comResultado ? "text-[#282525]" : "text-black/30"}`}>{placar.comResultado} de {metas.length}</dd></div>
           {placar.semJustificativa > 0 && (
             <div className="flex items-center gap-1.5">
               <dt className={`${ROTULO} inline-flex items-center gap-1`}>
                 <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
                 Abaixo do previsto sem justificativa
               </dt>
-              <dd className="font-semibold tabular-nums text-[#0D0D0D]">{placar.semJustificativa}</dd>
+              <dd className="font-semibold tabular-nums text-[#282525]">{placar.semJustificativa}</dd>
             </div>
           )}
           {placar.porStatus.length > 0 && (
             <div className="flex items-baseline gap-1.5">
               <dt className={ROTULO}>Locais</dt>
-              <dd className="font-semibold tabular-nums text-[#0D0D0D]">{placar.porStatus.map(s => `${s.quantos} ${s.rotulo.toLowerCase()}`).join(" · ")}</dd>
+              <dd className="font-semibold tabular-nums text-[#282525]">{placar.porStatus.map(s => `${s.quantos} ${s.rotulo.toLowerCase()}`).join(" · ")}</dd>
             </div>
           )}
         </dl>
@@ -330,7 +330,7 @@ export default function ObjetoPage() {
       {/* Metas */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="metas-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="metas-titulo" className="text-[0.75rem] font-semibold text-black">Metas <span className="font-normal tabular-nums text-black/35">({metas.length})</span></h3>
+          <h3 id="metas-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Metas <span className="font-normal tabular-nums text-black/35">({metas.length})</span></h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1, 2].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
@@ -430,7 +430,7 @@ export default function ObjetoPage() {
       {/* Locais */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="locais-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="locais-titulo" className="text-[0.75rem] font-semibold text-black">Locais de realização <span className="font-normal tabular-nums text-black/35">({locais.length})</span></h3>
+          <h3 id="locais-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Locais de realização <span className="font-normal tabular-nums text-black/35">({locais.length})</span></h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
@@ -474,7 +474,7 @@ export default function ObjetoPage() {
       {/* Evidências */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="evidencias-titulo">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="evidencias-titulo" className="text-[0.75rem] font-semibold text-black">
+          <h3 id="evidencias-titulo" className="text-[0.75rem] font-semibold text-[#282525]">
             Evidências <span className="font-normal tabular-nums text-black/35">({evidencias.length})</span>
             {alertasDasEvidencias.size > 0 && (
               <span className="ml-2 inline-flex items-center gap-1 align-middle font-normal text-black/45">

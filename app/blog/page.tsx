@@ -38,7 +38,7 @@ export default async function BlogPublicPage() {
       {/* Header */}
       <div className="max-w-3xl mx-auto px-6 pt-20 pb-12 text-center">
         <p className="text-xs font-bold tracking-[.14em] uppercase text-[#7259B5] mb-3">Blog</p>
-        <h1 className="text-4xl font-bold text-[#0D0D0D] tracking-tight leading-tight mb-4">
+        <h1 className="text-4xl font-bold text-[#282525] tracking-tight leading-tight mb-4">
           Insights, descobertas e conversas<br />sobre captação
         </h1>
         <p className="text-base text-black/45 max-w-xl mx-auto">
@@ -82,7 +82,7 @@ export default async function BlogPublicPage() {
                   ))}
                 </div>
               )}
-              <h2 className="text-lg font-bold text-[#0D0D0D] leading-snug mb-2 group-hover:text-[#7259B5] transition-colors">
+              <h2 className="text-lg font-bold text-[#282525] leading-snug mb-2 group-hover:text-[#7259B5] transition-colors">
                 {post.titulo}
               </h2>
               {post.seo_descricao && (

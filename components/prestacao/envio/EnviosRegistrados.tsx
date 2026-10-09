@@ -77,7 +77,7 @@ function ReabrirModal({ envio, onClose, onReaberto }: { envio: EnvioDaLista; onC
             maxLength={2000}
             autoFocus
             placeholder="Ex.: a diligência pediu a nota fiscal corrigida da despesa 12."
-            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
+            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
           />
         </label>
         {erro && <p role="alert" className="text-[0.6875rem] text-[#B23B3B]">{erro}</p>}
@@ -123,7 +123,7 @@ export function EnviosRegistrados({ envios, podeReabrir, identificador, onMudou 
   return (
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="envios-registrados">
       <div className="flex items-baseline justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <h3 id="envios-registrados" className="flex items-center gap-1.5 text-[0.75rem] font-semibold text-black"><History size={13} aria-hidden /> Envios registrados</h3>
+        <h3 id="envios-registrados" className="flex items-center gap-1.5 text-[0.75rem] font-semibold text-[#282525]"><History size={13} aria-hidden /> Envios registrados</h3>
         <span className="text-[0.6875rem] tabular-nums text-black/40">{envios.length}</span>
       </div>
       {erro && <p role="alert" className="px-5 pt-3 text-[0.6875rem] text-[#B23B3B]">{erro}</p>}

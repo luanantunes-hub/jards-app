@@ -368,7 +368,7 @@
     /* ── Reveal ── */
     section[id] { scroll-margin-top:96px; }
     :focus-visible { outline:3px solid rgba(104,77,176,.45); outline-offset:3px; }
-    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#0D0D0D; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
+    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#282525; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
     .skip-link:focus { transform:translateY(0); }
     .reveal { opacity:1; transform:none; }
     html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
@@ -767,8 +767,8 @@
     /* ── Alternativa: tokens ── */
     :root {
       --accent-gradient: linear-gradient(90deg,#7B35E8 0%,#B875FF 38%,#9145F5 68%,#684DB0 100%);
-      --alt-ink: #0D0D0D;
-      --alt-ink-hover: #2B2828;
+      --alt-ink: #282525;
+      --alt-ink-hover: #3A3535;
       --alt-purple: #684DB0;
       --alt-purple-focus: #7259B5;
       --alt-purple-on-dark: #CFC3F0;
@@ -1047,10 +1047,10 @@
     <a href="#top" aria-label="Voltar ao início"><img src="/assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
 
     <nav class="hidden md:flex items-center gap-8">
-      <a href="#leis" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Leis</a>
-      <a href="#patrocinador" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Patrocinador</a>
-      <a href="#comparativo" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Comparativo</a>
-      <a href="#editais" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Editais</a>
+      <a href="#leis" class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Leis</a>
+      <a href="#patrocinador" class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Patrocinador</a>
+      <a href="#comparativo" class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Comparativo</a>
+      <a href="#editais" class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Editais</a>
     </nav>
 
     <div class="flex items-center gap-1 md:gap-3">
@@ -1118,7 +1118,7 @@
         <div id="leis-lista-rows" class="relative" style="z-index:1"></div>
         <div id="leis-perfil" class="lp-perfil" aria-hidden="true"></div>
         <div id="leis-cursor" class="lp-cursor" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2v15.5l4.1-3.9 2.7 6.2 2.9-1.3-2.7-6H15.5z" fill="#0D0D0D" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2v15.5l4.1-3.9 2.7 6.2 2.9-1.3-2.7-6H15.5z" fill="#282525" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
         </div>
       </div>
 
@@ -1273,12 +1273,12 @@
         '<div class="flex items-center gap-3 min-w-0">' +
           '<div class="lp-row-logo w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="' + logoUrl(e.dominio, 64) + '" alt="" class="w-full h-full object-contain" /></div>' +
           '<div class="min-w-0">' +
-            '<p class="lp-row-nome font-semibold text-[#0D0D0D] text-[13px] truncate">' + e.nome + '</p>' +
+            '<p class="lp-row-nome font-semibold text-[#282525] text-[13px] truncate">' + e.nome + '</p>' +
             '<p class="text-black/40 text-[11px]">' + e.setor + ' · ' + e.uf + '</p>' +
           '</div>' +
         '</div>' +
         '<div class="text-right flex-shrink-0">' +
-          '<p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">' + fmtValor(e.valorM) + '</p>' +
+          '<p class="font-bold text-[#282525] text-[13px] tabular-nums">' + fmtValor(e.valorM) + '</p>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1311,7 +1311,7 @@
         '<div class="flex items-center gap-3 min-w-0">' +
           '<div class="lp-perfil-logo w-12 h-12 rounded border border-black/8 bg-white p-1 flex-shrink-0 flex items-center justify-center"><img src="' + logoUrl(e.dominio, 128) + '" alt="" class="w-full h-full object-contain" /></div>' +
           '<div data-p class="min-w-0">' +
-            '<div class="flex items-center gap-2"><p class="font-bold text-[#0D0D0D] text-[20px] leading-tight truncate">' + e.nome + '</p><i class="ph ph-globe text-[13px] text-black/25"></i></div>' +
+            '<div class="flex items-center gap-2"><p class="font-bold text-[#282525] text-[20px] leading-tight truncate">' + e.nome + '</p><i class="ph ph-globe text-[13px] text-black/25"></i></div>' +
             '<p class="text-[11px] text-black/40 mt-0.5">Em 2025: <span class="font-bold text-black/70">' + fmtValor(e.valorM) + '</span></p>' +
           '</div>' +
         '</div>' +
@@ -1359,10 +1359,10 @@
     var base = (pad.t + ph).toFixed(1);
     var area = d + ' L ' + pts[pts.length - 1].x.toFixed(1) + ' ' + base + ' L ' + pts[0].x.toFixed(1) + ' ' + base + ' Z';
     caixa.innerHTML = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block">' +
-      '<defs><linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0D0D0D" stop-opacity=".12"/><stop offset="100%" stop-color="#0D0D0D" stop-opacity=".01"/></linearGradient></defs>' +
+      '<defs><linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#282525" stop-opacity=".12"/><stop offset="100%" stop-color="#282525" stop-opacity=".01"/></linearGradient></defs>' +
       '<path class="lp-g-area" d="' + area + '" fill="url(#lpArea)"/>' +
-      '<path class="lp-g-linha" d="' + d + '" fill="none" stroke="#0D0D0D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
-      pts.map(function(pt){ return '<circle class="lp-g-ponto" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="#fff" stroke="#0D0D0D" stroke-width="1.8" style="transform-box:fill-box;transform-origin:center"/>'; }).join('') +
+      '<path class="lp-g-linha" d="' + d + '" fill="none" stroke="#282525" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      pts.map(function(pt){ return '<circle class="lp-g-ponto" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="#fff" stroke="#282525" stroke-width="1.8" style="transform-box:fill-box;transform-origin:center"/>'; }).join('') +
       pts.map(function(pt, i){ return '<text x="' + pt.x.toFixed(1) + '" y="' + (h - 7) + '" text-anchor="middle" font-size="9" font-weight="600" fill="rgba(13,13,13,.3)" font-family="Google Sans, system-ui, sans-serif">' + (e.anos || ANOS)[i] + '</text>'; }).join('') +
     '</svg>';
     var linha = caixa.querySelector('.lp-g-linha');
@@ -1629,7 +1629,7 @@
   .fx-lista .ph { flex:0 0 auto; margin-top:2px; font-size:17px; color:var(--fx-cor,#684DB0); }
   .fx-copia .alt-cta { margin-top:30px; }
   /* janela do app */
-  .app-frame { position:relative; overflow:hidden; background:#fff; border:1px solid rgba(13,13,13,.08); border-radius:4px; box-shadow:0 22px 44px -12px rgba(52,42,78,.18),0 6px 14px -6px rgba(52,42,78,.10); font-size:12px; color:#0D0D0D; }
+  .app-frame { position:relative; overflow:hidden; background:#fff; border:1px solid rgba(13,13,13,.08); border-radius:4px; box-shadow:0 22px 44px -12px rgba(52,42,78,.18),0 6px 14px -6px rgba(52,42,78,.10); font-size:12px; color:#282525; }
   .app-barra { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(13,13,13,.07); background:#F9F9F8; font-size:11px; color:rgba(13,13,13,.4); }
   .app-barra img { width:14px; height:14px; }
   .app-barra b { color:rgba(13,13,13,.75); font-weight:600; }
@@ -1654,7 +1654,7 @@
   .id-topo .mk-logo { width:46px; height:46px; }
   .id-nome { font-size:19px; font-weight:700; line-height:1.1; }
   .id-sub { margin-top:3px; font-size:11px; color:rgba(13,13,13,.45); }
-  .id-sub b { color:rgba(13,13,13,.8); }
+  .id-sub b { color:rgba(40,37,37,.8); }
   .id-comparar { margin-left:auto; display:inline-flex; align-items:center; gap:5px; padding:6px 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; font-size:10.5px; font-weight:700; }
   .id-tags { display:flex; flex-wrap:wrap; gap:6px; margin:12px 0 14px; padding-bottom:14px; border-bottom:1px solid rgba(13,13,13,.08); }
   .id-grade { display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,1fr); gap:10px; }
@@ -1707,7 +1707,7 @@
   .id-noticia-linhas i { display:block; height:6px; border-radius:4px; background:linear-gradient(90deg,rgba(13,13,13,.10),rgba(13,13,13,.05),rgba(13,13,13,.10)); background-size:200% 100%; animation:mk-brilho 1.6s linear infinite; }
   .id-noticia time { font-size:9px; color:rgba(13,13,13,.35); white-space:nowrap; }
   @keyframes mk-brilho { from { background-position:200% 0; } to { background-position:-200% 0; } }
-  .mock-credito { position:absolute; z-index:10; padding:3px 8px; border-radius:4px; background:#0D0D0D; color:#fff; font-size:10px; font-weight:700; pointer-events:none; opacity:0; }
+  .mock-credito { position:absolute; z-index:10; padding:3px 8px; border-radius:4px; background:#282525; color:#fff; font-size:10px; font-weight:700; pointer-events:none; opacity:0; }
   .mock-credito.is-voando { animation:mk-credito 1.1s ease-out forwards; }
   @keyframes mk-credito { 0% { opacity:0; transform:translateY(4px); } 20% { opacity:1; } 100% { opacity:0; transform:translateY(-26px); } }
 
@@ -1717,14 +1717,14 @@
   .cp-acoes { display:flex; align-items:center; gap:10px; margin-top:12px; }
   .cp-busca { position:relative; flex:1; max-width:250px; display:flex; align-items:center; gap:7px; padding:8px 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; font-size:11px; color:rgba(13,13,13,.3); }
   .cp-busca.is-foco { border-color:rgba(13,13,13,.3); box-shadow:0 0 0 2px rgba(13,13,13,.06); }
-  .cp-digitado { color:#0D0D0D; }
+  .cp-digitado { color:#282525; }
   .cp-digitado:not(:empty) + .cp-placeholder { display:none; }
-  .cp-menu { position:absolute; left:-1px; right:-1px; top:calc(100% + 4px); z-index:5; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border:1px solid rgba(13,13,13,.1); border-radius:4px; box-shadow:0 10px 24px rgba(13,13,13,.10); color:#0D0D0D; font-size:11px; opacity:0; transform:translateY(-4px); transition:opacity .2s ease, transform .2s ease; pointer-events:none; }
+  .cp-menu { position:absolute; left:-1px; right:-1px; top:calc(100% + 4px); z-index:5; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border:1px solid rgba(13,13,13,.1); border-radius:4px; box-shadow:0 10px 24px rgba(13,13,13,.10); color:#282525; font-size:11px; opacity:0; transform:translateY(-4px); transition:opacity .2s ease, transform .2s ease; pointer-events:none; }
   .cp-menu.is-aberto { opacity:1; transform:none; }
   .cp-menu .mk-logo { width:20px; height:20px; padding:2px; }
   .cp-visao { margin-left:auto; display:flex; border:1px solid rgba(13,13,13,.12); border-radius:4px; overflow:hidden; font-size:10px; font-weight:700; }
   .cp-visao span { padding:6px 10px; color:rgba(13,13,13,.45); }
-  .cp-visao span.is-ativa { background:#0D0D0D; color:#fff; }
+  .cp-visao span.is-ativa { background:#282525; color:#fff; }
   .cp-chips { display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:8px; }
   .cp-chip { display:flex; align-items:center; gap:7px; font-size:11px; font-weight:500; color:rgba(13,13,13,.75); transition:opacity .35s ease, transform .35s ease; }
   .cp-chip .mk-logo { width:24px; height:24px; }
@@ -1745,7 +1745,7 @@
   .cp-trilho i { display:block; height:100%; width:var(--p); border-radius:99px; background:var(--c); transform-origin:left; transform:scaleX(0); transition:transform .7s cubic-bezier(.2,.8,.2,1); }
   .cp-linha.is-cheia .cp-trilho i { transform:scaleX(1); }
   .cp-valor { text-align:right; }
-  .cp-valor strong { display:block; font-size:13.5px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; color:rgba(13,13,13,.85); }
+  .cp-valor strong { display:block; font-size:13.5px; font-weight:600; line-height:1; font-variant-numeric:tabular-nums; color:rgba(40,37,37,.85); }
   .cp-pot { display:none; justify-content:flex-end; align-items:center; gap:3px; margin-top:4px; font-size:9.5px; font-weight:700; white-space:nowrap; }
   .cp-pot.is-mais { color:#2E8932; }
   .cp-pot.is-teto { color:#B07A14; }
@@ -1756,19 +1756,19 @@
   .cp-total-itens { display:flex; flex-wrap:wrap; gap:4px 14px; }
   .cp-total-item { display:inline-flex; align-items:baseline; gap:5px; font-size:10px; color:rgba(13,13,13,.5); transition:opacity .35s ease; }
   .cp-total-item i { width:7px; height:7px; border-radius:2px; background:var(--c); }
-  .cp-total-item b { font-size:12px; color:rgba(13,13,13,.9); font-variant-numeric:tabular-nums; }
+  .cp-total-item b { font-size:12px; color:rgba(40,37,37,.9); font-variant-numeric:tabular-nums; }
   .cp-total-item.is-oculto { opacity:0; }
 
   /* Editais */
   .ed-corpo { padding:16px 16px 18px; }
   .ed-topo { display:flex; align-items:flex-end; justify-content:space-between; gap:10px; }
   .ed-titulo { margin-top:2px; font-size:19px; font-weight:700; letter-spacing:-.025em; }
-  .ed-sugerir { display:inline-flex; align-items:center; gap:5px; padding:7px 10px; border-radius:4px; background:#0D0D0D; color:#fff; font-size:10px; font-weight:700; }
+  .ed-sugerir { display:inline-flex; align-items:center; gap:5px; padding:7px 10px; border-radius:4px; background:#282525; color:#fff; font-size:10px; font-weight:700; }
   .ed-filtros { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin:12px 0 14px; }
   .ed-busca { flex:1; min-width:150px; display:flex; align-items:center; gap:6px; padding:7px 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; font-size:10.5px; color:rgba(13,13,13,.3); }
   .ed-status { display:flex; border:1px solid rgba(13,13,13,.12); border-radius:4px; overflow:hidden; font-size:10px; font-weight:700; }
   .ed-status span { padding:6px 9px; color:rgba(13,13,13,.45); }
-  .ed-status span.is-ativa { background:#0D0D0D; color:#fff; }
+  .ed-status span.is-ativa { background:#282525; color:#fff; }
   .ed-ordem { display:inline-flex; align-items:center; gap:4px; padding:6px 9px; border:1px solid rgba(13,13,13,.12); border-radius:4px; font-size:10px; font-weight:600; color:rgba(13,13,13,.55); }
   .ed-grade { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
   @container (max-width: 430px) { .ed-grade { grid-template-columns:minmax(0,1fr); } .ed-card:nth-child(n+3) { display:none; } }
@@ -1872,7 +1872,7 @@
             </div>
           </div>
         </div>
-        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#0D0D0D" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#282525" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
         <span class="mock-credito">−1 crédito</span>
       </div>
     </div>
@@ -1908,7 +1908,7 @@
           <div class="cp-lei"><span class="mk-rotulo">Cultura</span><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/vale.com?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Vale</span><span class="cp-trilho"><i style="--p:78.7%;--c:#0EA5E9"></i></span><span class="cp-valor"><strong>R$ 250,7M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/petrobras.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Petrobras</span><span class="cp-trilho"><i style="--p:100.0%;--c:#F59E0B"></i></span><span class="cp-valor"><strong>R$ 318,6M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/nubank.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Nubank</span><span class="cp-trilho"><i style="--p:47.7%;--c:#1D4ED8"></i></span><span class="cp-valor"><strong>R$ 152,1M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div><div class="cp-linha is-oculta" data-nova="1"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/bradesco.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Bradesco</span><span class="cp-trilho"><i style="--p:23.9%;--c:#E11D48"></i></span><span class="cp-valor"><strong>R$ 76,0M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div></div><div class="cp-lei"><span class="mk-rotulo">Esporte</span><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/vale.com?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Vale</span><span class="cp-trilho"><i style="--p:100.0%;--c:#0EA5E9"></i></span><span class="cp-valor"><strong>R$ 191,2M</strong><span class="cp-pot is-teto"><span><i class="ph ph-lock-simple" aria-hidden="true"></i>No teto</span></span></span></div><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/petrobras.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Petrobras</span><span class="cp-trilho"><i style="--p:15.4%;--c:#F59E0B"></i></span><span class="cp-valor"><strong>R$ 29,5M</strong><span class="cp-pot is-mais"><span><i class="ph ph-lock-simple-open" aria-hidden="true"></i>+R$ 132,0M</span><small>Potencial</small></span></span></div><div class="cp-linha"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/nubank.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Nubank</span><span class="cp-trilho"><i style="--p:36.1%;--c:#1D4ED8"></i></span><span class="cp-valor"><strong>R$ 69,1M</strong><span class="cp-pot is-mais"><span><i class="ph ph-lock-simple-open" aria-hidden="true"></i>+R$ 12,2M</span><small>Potencial</small></span></span></div><div class="cp-linha is-oculta" data-nova="1"><span class="cp-nome"><span class="mk-logo"><img src="https://img.logo.dev/bradesco.com.br?token=pk_A2QRZaI_S5urxuYmsI6baQ&amp;size=64&amp;format=png" alt="" loading="lazy" /></span>Bradesco</span><span class="cp-trilho"><i style="--p:9.3%;--c:#E11D48"></i></span><span class="cp-valor"><strong>R$ 17,8M</strong><span class="cp-pot is-mais"><span><i class="ph ph-lock-simple-open" aria-hidden="true"></i>+R$ 20,2M</span><small>Potencial</small></span></span></div></div>
           <div class="cp-total"><span class="mk-rotulo">Total 2025</span><div class="cp-total-itens"><span class="cp-total-item" style="--c:#0EA5E9"><i></i>Vale<b>R$ 498,6M</b></span><span class="cp-total-item" style="--c:#F59E0B"><i></i>Petrobras<b>R$ 352,4M</b></span><span class="cp-total-item" style="--c:#1D4ED8"><i></i>Nubank<b>R$ 267,6M</b></span><span class="cp-total-item is-oculto" data-nova="1" style="--c:#E11D48"><i></i>Bradesco<b>R$ 106,8M</b></span></div></div>
         </div>
-        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#0D0D0D" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#282525" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
       </div>
     </div>
   </div>
@@ -1954,7 +1954,7 @@
   <div class="ed-rodape"><div class="ed-votos"><span class="ed-voto ed-voto--sim" data-base="0"><i class="ph ph-thumbs-up" aria-hidden="true"></i><span class="ed-n"></span></span><span class="ed-voto"><i class="ph ph-thumbs-down" aria-hidden="true"></i></span></div><div class="ed-btns"><span class="ed-btn"><i class="ph ph-download-simple" aria-hidden="true"></i>Exportar</span><span class="ed-btn ed-btn--acessar">Acessar<i class="ph ph-caret-right" aria-hidden="true"></i></span></div></div>
 </article></div>
         </div>
-        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#0D0D0D" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <svg class="mock-cursor" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l14 7.5-6.2 1.6L9.6 18z" fill="#282525" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
       </div>
     </div>
   </div>

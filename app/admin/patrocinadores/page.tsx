@@ -68,7 +68,7 @@ export default function AdminPatrocinadoresPage() {
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-xl font-bold text-[#0D0D0D]">Patrocinadores</h1>
+          <h1 className="text-xl font-bold text-[#282525]">Patrocinadores</h1>
           <p className="text-sm text-black/40 mt-0.5">
             {total} {search.trim() ? "empresas encontradas" : "empresas cadastradas"}
           </p>
@@ -107,7 +107,7 @@ export default function AdminPatrocinadoresPage() {
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-3">
                     <CompanyLogo nome={e.nome} logo_url={e.logo_url} size={28} />
-                    <span className="font-medium text-[#0D0D0D] text-[0.8125rem]">{e.nome}</span>
+                    <span className="font-medium text-[#282525] text-[0.8125rem]">{e.nome}</span>
                   </div>
                 </td>
                 <td className="px-4 py-3 text-[0.8125rem] text-black/55">{e.setor ?? "—"}</td>

@@ -132,7 +132,7 @@ export function EmailConnections() {
     <div className="rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.06)", background: "white" }}>
       <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <Mail size={14} className="text-black/30" />
-        <span className="text-[0.75rem] font-bold text-black">E-mail</span>
+        <span className="text-[0.75rem] font-bold text-[#282525]">E-mail</span>
         <span className="ml-auto text-[0.6875rem] text-black/35">Gmail · conta pessoal</span>
       </div>
 
@@ -159,7 +159,7 @@ export function EmailConnections() {
                 <GoogleMark />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[0.8125rem] font-semibold text-black">Gmail</p>
+                <p className="text-[0.8125rem] font-semibold text-[#282525]">Gmail</p>
                 {connection ? (
                   <p className="text-[0.6875rem] text-black/40 truncate mt-0.5">
                     {connection.provider_account_email ?? "Conta conectada"} · última sync {fmtDate(connection.last_sync_at)}

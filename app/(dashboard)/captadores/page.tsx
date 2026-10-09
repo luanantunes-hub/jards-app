@@ -212,7 +212,7 @@ function CaptadoresList({
     if (id === "captador") return (
       <div className="flex min-w-0 items-center gap-2.5">
         <ProjectIdentity nome={captador.nome} tipo={captador.identidade_tipo ?? (captador.logo_url ? "logo" : "padrao")} valor={captador.identidade_valor} logoUrl={captador.identidade_logo_url ?? captador.logo_url} cor={captador.identidade_cor} size="sm" iconOptions={CAPTADOR_ICON_OPTIONS} semFundo />
-        <div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black" title={captador.nome}>{captador.nome}</p>{captador.agencia && <p className="truncate text-[0.6875rem] text-black/35" title={captador.agencia}>{captador.agencia}</p>}</div>
+        <div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-[#282525]" title={captador.nome}>{captador.nome}</p>{captador.agencia && <p className="truncate text-[0.6875rem] text-black/35" title={captador.agencia}>{captador.agencia}</p>}</div>
       </div>
     );
     if (id === "contato") return <div className="min-w-0"><p className="truncate text-[0.75rem] text-black/55" title={captador.email ?? undefined}>{captador.email || "—"}</p>{captador.telefone && <p className="truncate text-[0.625rem] text-black/30">{captador.telefone}</p>}</div>;
@@ -580,7 +580,7 @@ export default function CaptadoresPage() {
                     value={teamSearch}
                     onChange={event => setTeamSearch(event.target.value)}
                     placeholder="Buscar captador, agência ou contato"
-                    className="h-9 w-full rounded border border-black/10 bg-white pl-9 pr-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10"
+                    className="h-9 w-full rounded border border-black/10 bg-white pl-9 pr-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/45 focus:ring-2 focus:ring-[#7259B5]/10"
                   />
                 </label>
 
@@ -603,7 +603,7 @@ export default function CaptadoresPage() {
               <div className="rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)", background: "white" }}>
                 <div className="flex items-center gap-2 mb-4">
                   <Activity size={14} aria-hidden="true" className="text-black/40" />
-                  <span className="text-[0.75rem] font-semibold text-[#0D0D0D]">Meu painel</span>
+                  <span className="text-[0.75rem] font-semibold text-[#282525]">Meu painel</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                   {[
@@ -617,7 +617,7 @@ export default function CaptadoresPage() {
                         <m.Icone size={12} strokeWidth={1.75} aria-hidden="true" className={m.alerta ? "shrink-0" : "shrink-0 text-black/40"} style={m.alerta ? { color: m.alerta } : undefined} />
                         {m.label}
                       </p>
-                      <p className={`text-[1.5rem] font-semibold tabular-nums ${m.value === "0" ? "text-black/30" : "text-[#0D0D0D]"}`}>{m.value}</p>
+                      <p className={`text-[1.5rem] font-semibold tabular-nums ${m.value === "0" ? "text-black/30" : "text-[#282525]"}`}>{m.value}</p>
                       <p className="text-[0.625rem] text-black/30">{m.sub}</p>
                     </div>
                   ))}
@@ -628,7 +628,7 @@ export default function CaptadoresPage() {
                     {(() => {
                       const taxa = metricas.total_captações > 0 ? Math.round((metricas.captações_ganhas / metricas.total_captações) * 100) : 0;
                       return (
-                        <span className={`text-[0.75rem] font-semibold tabular-nums ${taxa === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
+                        <span className={`text-[0.75rem] font-semibold tabular-nums ${taxa === 0 ? "text-black/30" : "text-[#282525]"}`}>
                           {taxa}%
                         </span>
                       );
@@ -704,7 +704,7 @@ export default function CaptadoresPage() {
                               iconOptions={CAPTADOR_ICON_OPTIONS}
                             />
                             <div>
-                              <Link href={`/captadores/${c.id}`} className="text-[0.9375rem] font-bold text-[#0D0D0D] leading-tight hover:text-[#7259B5] transition">{c.nome}</Link>
+                              <Link href={`/captadores/${c.id}`} className="text-[0.9375rem] font-bold text-[#282525] leading-tight hover:text-[#7259B5] transition">{c.nome}</Link>
                               {c.agencia && (
                                 <p className="text-[0.6875rem] text-black/35 mt-0.5">{c.agencia}</p>
                               )}
@@ -717,15 +717,15 @@ export default function CaptadoresPage() {
                         <div className="grid grid-cols-3 gap-2 text-[0.625rem] mb-3">
                           <div>
                             <p className="mb-0.5 font-medium uppercase tracking-[.08em] text-black/45">Empresas</p>
-                            <p className={`text-[1.25rem] font-semibold leading-tight tabular-nums ${c.n_empresas > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{c.n_empresas}</p>
+                            <p className={`text-[1.25rem] font-semibold leading-tight tabular-nums ${c.n_empresas > 0 ? "text-[#282525]" : "text-black/30"}`}>{c.n_empresas}</p>
                           </div>
                           <div>
                             <p className="mb-0.5 font-medium uppercase tracking-[.08em] text-black/45">Negociações</p>
-                            <p className={`text-[1.25rem] font-semibold leading-tight tabular-nums ${c.n_negociacoes_ativas > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>{c.n_negociacoes_ativas}</p>
+                            <p className={`text-[1.25rem] font-semibold leading-tight tabular-nums ${c.n_negociacoes_ativas > 0 ? "text-[#282525]" : "text-black/30"}`}>{c.n_negociacoes_ativas}</p>
                           </div>
                           <div>
                             <p className="mb-0.5 font-medium uppercase tracking-[.08em] text-black/45">Valor Captado</p>
-                            <p className={`mt-1 truncate text-[0.8125rem] font-semibold leading-tight tabular-nums ${c.valor_captado > 0 ? "text-[#0D0D0D]" : "text-black/30"}`} title={c.valor_captado > 0 ? formatarValorCompleto(c.valor_captado) : undefined}>{fmtValor(c.valor_captado)}</p>
+                            <p className={`mt-1 truncate text-[0.8125rem] font-semibold leading-tight tabular-nums ${c.valor_captado > 0 ? "text-[#282525]" : "text-black/30"}`} title={c.valor_captado > 0 ? formatarValorCompleto(c.valor_captado) : undefined}>{fmtValor(c.valor_captado)}</p>
                           </div>
                         </div>
 
@@ -803,7 +803,7 @@ export default function CaptadoresPage() {
                     <s.Icone size={12} strokeWidth={1.75} aria-hidden="true" className={s.alerta ? "shrink-0" : "shrink-0 text-black/40"} style={s.alerta ? { color: s.alerta } : undefined} />
                     {s.label}
                   </p>
-                  <p className={`mt-1 text-[1.625rem] font-semibold leading-none tabular-nums tracking-[-.035em] ${s.value ? "text-[#0D0D0D]" : "text-black/30"}`}>{s.value}</p>
+                  <p className={`mt-1 text-[1.625rem] font-semibold leading-none tabular-nums tracking-[-.035em] ${s.value ? "text-[#282525]" : "text-black/30"}`}>{s.value}</p>
                 </div>
               ))}
             </div>
@@ -813,7 +813,7 @@ export default function CaptadoresPage() {
                 <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-black/25" />
                 <input type="text" value={busca} onChange={e => setBusca(e.target.value)}
                   placeholder="Buscar empresa, captador..."
-                  className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
+                  className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
                   style={{ borderColor: "rgba(13,13,13,.12)" }} />
               </div>
               <div className="flex rounded overflow-hidden border bg-white" style={{ borderColor: "rgba(13,13,13,.12)" }}>
@@ -899,7 +899,7 @@ export default function CaptadoresPage() {
                           size={32}
                           className="flex-shrink-0"
                         />
-                        <span className="truncate text-[0.8125rem] font-semibold text-[#0D0D0D]">
+                        <span className="truncate text-[0.8125rem] font-semibold text-[#282525]">
                           {a.empresa_crm?.nome || "—"}
                         </span>
                       </div>
@@ -915,7 +915,7 @@ export default function CaptadoresPage() {
                             <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="text-[#B07A14]" />
                           </span>
                         )}
-                        <span className={`text-[0.75rem] tabular-nums ${emRisco ? "font-medium text-[#0D0D0D]" : "text-black/60"}`}>{formatDias(a.dias_sem_avanco)}</span>
+                        <span className={`text-[0.75rem] tabular-nums ${emRisco ? "font-medium text-[#282525]" : "text-black/60"}`}>{formatDias(a.dias_sem_avanco)}</span>
                       </div>
                       <div className="flex items-center justify-end">
                         <button type="button" aria-label="Editar atribuição" title="Editar atribuição" onClick={(event) => { event.stopPropagation(); setEditData(a); setShowAtribuicaoModal(true); }} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/70 transition focus-visible:outline-2 focus-visible:outline-[#7259B5]">
