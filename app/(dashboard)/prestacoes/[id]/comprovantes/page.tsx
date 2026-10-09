@@ -398,7 +398,7 @@ export default function ComprovantesPage() {
   }
 
   return (
-    <div className="px-8 py-6 space-y-5">
+    <div className="mx-auto max-w-pagina space-y-5 px-4 py-6 md:px-8">
       {/* Upload: só para quem edita (o leitor e a prestação sem assinatura só consultam) */}
       {permissoes.editar && (
         <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>

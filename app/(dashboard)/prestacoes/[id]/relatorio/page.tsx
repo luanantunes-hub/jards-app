@@ -104,7 +104,7 @@ export default function RelatorioPage() {
   ];
 
   return (
-    <div className="px-8 py-6">
+    <div className="mx-auto max-w-pagina px-4 py-6 md:px-8">
       {/* Sub-navegação */}
       <div className="flex gap-1 mb-5 bg-white rounded border p-1" style={{ borderColor: "rgba(13,13,13,.08)", width: "fit-content" }}>
         {views.map(v => (

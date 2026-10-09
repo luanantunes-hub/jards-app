@@ -185,7 +185,7 @@ export default function ConciliacaoPage() {
   }
 
   return (
-    <div className="space-y-5 px-4 py-6 sm:px-8">
+    <div className="mx-auto max-w-pagina space-y-5 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="text-[0.875rem] font-semibold text-[#282525]">Conciliação</h2>
