@@ -12,7 +12,7 @@ import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
 import type { BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
-import type { PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
+import type { ManifestacaoEsportiva, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
 export const SEVERIDADES = ["bloqueio", "alerta", "justificativa", "info"] as const;
@@ -98,6 +98,12 @@ export const CATALOGO_CHECAGENS = {
   CAPTADO_ACIMA_DO_AUTORIZADO: { titulo: "Captação acima do autorizado", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["captar_acima"] },
   APORTE_FORA_DA_CAPTACAO: { titulo: "Aporte fora da conta de captação", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["deposito_identificado"] },
   DEBITO_FORA_DA_VIGENCIA: { titulo: "Débito fora da vigência", grupo: "conciliacao", resultado: "nao_conforme", destino: "conciliacao", dimensao: "despesas" },
+  // Nível da manifestação esportiva e CRC (P8.4, LIE).
+  NIVEL_ESPORTIVO_AUSENTE: { titulo: "Nível da manifestação esportiva", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral", regras: ["elaboracao_por_nivel", "limite_de_captacao"] },
+  ELABORACAO_ACIMA_DO_NIVEL: { titulo: "Elaboração e captação acima do limite do nível", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento", regras: ["elaboracao_por_nivel"] },
+  CAPTACAO_ACIMA_DO_NIVEL: { titulo: "Captação acima do limite do nível", grupo: "orcamento", resultado: "nao_conforme", destino: "visao_geral", regras: ["limite_de_captacao"] },
+  BOLSA_FORA_DA_EXCELENCIA: { titulo: "Bolsa fora do nível excelência", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento", regras: ["bolsa_auxilio"] },
+  CRC_EXCELENCIA: { titulo: "CRC no nível excelência", grupo: "prestacao", resultado: "nao_conforme", destino: "visao_geral", regras: ["crc_excelencia"] },
   // Orçamento (P1.6, P1.7)
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
@@ -212,6 +218,9 @@ export type EstadoDaPrestacao = {
   pagamentos: readonly PagamentoDoEstado[];
   /** Tipo de cada conta do projeto (P8.1): captação, movimento… */
   contas?: readonly { id: string; tipo: string }[];
+  /** LIE (P8.4): nível da manifestação esportiva e validade da CRC. */
+  manifestacaoEsportiva?: ManifestacaoEsportiva | null;
+  crcValidade?: string | null;
   /** A conta vem junto para as planilhas por conta (P7.3). */
   lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */

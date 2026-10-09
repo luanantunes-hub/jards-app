@@ -17,6 +17,7 @@ import type { Achado, EstadoDaPrestacao, SeveridadeChecagem } from "./catalogo";
 import { checarConciliacao } from "./checar-conciliacao";
 import { checarContas } from "./checar-contas";
 import { checarDespesas } from "./checar-despesas";
+import { checarEsporte } from "./checar-esporte";
 import { checarConcentracao, checarOrcamento, checarPeriodo } from "./checar-financeiro";
 import { checarEvidencias } from "./checar-evidencias";
 import { checarCobertura, checarObjeto } from "./checar-objeto";
@@ -34,6 +35,7 @@ export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado
   { id: "contas", titulo: "Contas: saque, captação e vigência", executar: checarContas },
   { id: "periodo", titulo: "Período dos documentos e liberação", executar: checarPeriodo },
   { id: "orcamento", titulo: "Saldo dos itens, tetos, alterações e contrapartida", executar: checarOrcamento },
+  { id: "esporte", titulo: "Nível esportivo: elaboração, captação, bolsa e CRC", executar: checarEsporte },
   { id: "concentracao", titulo: "Concentração por fornecedor e partes relacionadas", executar: checarConcentracao },
   { id: "objeto", titulo: "Metas e locais do objeto", executar: checarObjeto },
   { id: "evidencias", titulo: "Evidências: vínculo, data e local da foto", executar: checarEvidencias },

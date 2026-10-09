@@ -11,6 +11,8 @@ import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
+import { tetosComONivel } from "@/lib/prestacao/nivel-esportivo";
+import type { ManifestacaoEsportiva, PrestacaoLocal } from "@/lib/supabase/types";
 import {
   linhasVisiveis,
   montarArvore,
@@ -57,6 +59,9 @@ export default function OrcamentoPage() {
     versoes: VersaoOrcamento[];
     comprovantes: ComprovanteDoOrcamento[];
     pagamentos: PagamentoDoOrcamento[];
+    /** O nível esportivo e os locais mudam o limite de elaboração da LIE (P8.4). */
+    nivel: ManifestacaoEsportiva | null;
+    locais: Pick<PrestacaoLocal, "pais" | "uf" | "status">[];
   } | null>(null);
   const [nosCarregados, setNosCarregados] = useState<{ versaoId: string; nos: NoComOrigem[] } | null>(null);
   const [versaoEscolhida, setVersaoEscolhida] = useState<string | null>(null);
@@ -74,11 +79,12 @@ export default function OrcamentoPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     Promise.all([
-      db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, data_liberacao, data_termo, data_fim_execucao").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, data_liberacao, data_termo, data_fim_execucao, manifestacao_esportiva").eq("id", id).maybeSingle(),
       db.from("prestacao_orcamento_versoes").select("*").eq("prestacao_id", id).order("created_at"),
       db.from("prestacao_comprovantes").select("id, no_id, status, valor_extraido, valor_liquido").eq("prestacao_id", id),
       db.from("prestacao_pagamentos").select("despesa_id, valor, lancamento_id").eq("prestacao_id", id),
-    ]).then(([prestacao, versoes, comprovantes, pagamentos]) => {
+      db.from("prestacao_locais").select("pais, uf, status").eq("prestacao_id", id),
+    ]).then(([prestacao, versoes, comprovantes, pagamentos, locais]) => {
       if (!ativo) return;
       setBase({
         prestacaoId: id,
@@ -87,6 +93,8 @@ export default function OrcamentoPage() {
         versoes: (versoes.data as VersaoOrcamento[]) ?? [],
         comprovantes: (comprovantes.data as ComprovanteDoOrcamento[]) ?? [],
         pagamentos: (pagamentos.data as PagamentoDoOrcamento[]) ?? [],
+        nivel: prestacao.data?.manifestacao_esportiva ?? null,
+        locais: locais.data ?? [],
       });
       if (versoes.error) setErro(mensagemErroPrestacao(versoes.error, "Não foi possível carregar o orçamento"));
     });
@@ -132,8 +140,11 @@ export default function OrcamentoPage() {
   }, [pagamentos]);
   const linhas = linhasVisiveis(arvore.raizes, fechados);
   const regime = regimes.find(r => r.id === base?.regimeId)?.regime ?? null;
-  const tetos = useMemo(() => tetosPorGrupo(arvore.raizes, regime), [arvore, regime]);
   const bases = useMemo(() => basesDoOrcamento(arvore.raizes, regime), [arvore, regime]);
+  const tetos = useMemo(
+    () => tetosComONivel(tetosPorGrupo(arvore.raizes, regime), bases, { regime, manifestacaoEsportiva: base?.nivel, locais: base?.locais }),
+    [arvore, regime, bases, base],
+  );
   const agrupadores = nos.filter(no => no.tipo !== "item").map(no => no.id);
   const percentual = percentualPago(arvore.total);
   const podeEditar = permissoes.editar;
