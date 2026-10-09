@@ -392,24 +392,19 @@
     .flow-index { display:block; margin-bottom:28px; font-size:clamp(34px,3.4vw,48px); line-height:.9; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
     .jards-flow-step strong { display:block; margin-bottom:10px; font-size:20px; }
     .jards-flow-step p { color:rgba(40,37,37,.58); font-size:14px; line-height:1.6; }
-    .flow-journey-art { position:relative; height:clamp(120px,18vw,210px); margin-top:40px; overflow:hidden; }
-    .flow-journey-art img { position:absolute; top:50%; left:0; display:block; width:100%; height:auto; transform:translateY(-50%) scaleX(-1); pointer-events:none; user-select:none; }
     /* Alternativa: fluxo sem foto, pista como protagonista.
        A arte tem 2163×727 px e o traço ocupa as linhas 246–515 (37% da altura).
        A pista fica maior que o contêiner, encostada à direita, e sangra pela esquerda. */
+    /* Jornada: vídeo de linhas convergindo para um ponto de luz (Midjourney, 1040×352, loop de 5s).
+       As bordas esmaecem na página: o leve tom azulado do fundo do vídeo vira halo, não retângulo.
+       No desktop o ponto de luz cai sobre o passo 05 (Renovar); no celular aparece a metade direita. */
     .alt-fluxo { overflow:hidden; }
-    .alt-fluxo .flow-journey-art { height:auto; aspect-ratio:2163 / 363; margin:56px 0 48px; overflow:visible; }
-    .alt-fluxo .flow-journey-art img { top:0; right:-1.3%; left:auto; width:135%; max-width:none; transform:translateY(-33.84%) scaleX(-1); }
-    /* A pista esmaece na borda esquerda da janela, em vez de terminar num fragmento cortado.
-       --pista-corte é a distância (em % da largura da imagem) entre a ponta visual esquerda da imagem
-       e o centro do contêiner: (0,5 + 0,337) / 1,35 ≈ 62% no desktop; (0,5 + 1,575) / 2,6 ≈ 79,8% no celular.
-       Menos 50vw, cai na borda esquerda da janela. O gradiente vai "to left" porque a imagem está espelhada.
-       Os primeiros --pista-margem px ficam totalmente transparentes, para nenhum pedaço de curva sobrar colado na borda. */
-    .alt-fluxo { --pista-corte:62%; --pista-margem:24px; --pista-fade:160px; }
-    .alt-fluxo .flow-journey-art img {
-      -webkit-mask-image:linear-gradient(to left, transparent calc(var(--pista-corte) - 50vw + var(--pista-margem)), #000 calc(var(--pista-corte) - 50vw + var(--pista-margem) + var(--pista-fade)));
-      mask-image:linear-gradient(to left, transparent calc(var(--pista-corte) - 50vw + var(--pista-margem)), #000 calc(var(--pista-corte) - 50vw + var(--pista-margem) + var(--pista-fade)));
-    }
+    .alt-fluxo .flow-journey-art { position:relative; aspect-ratio:1040 / 300; margin:48px 0 40px; overflow:hidden;
+      -webkit-mask-image:linear-gradient(to right, transparent 0, #000 22%, #000 90%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
+      -webkit-mask-composite:source-in;
+      mask-image:linear-gradient(to right, transparent 0, #000 22%, #000 90%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
+      mask-composite:intersect; }
+    .jornada-video { position:absolute; top:0; right:0; display:block; width:100%; height:100%; object-fit:cover; object-position:right center; pointer-events:none; user-select:none; }
     .alt-fluxo .jards-flow-step:first-child { padding-left:0; }
     .alt-fluxo .jards-flow-step:last-child { padding-right:0; }
 
@@ -931,9 +926,10 @@
 
     /* Fluxo no celular: passos em 2 colunas compactas e pista larga, sangrando */
     @media (max-width:767px) {
-      .alt-fluxo { --pista-corte:79.8%; --pista-margem:8px; --pista-fade:72px; }
-      .alt-fluxo .flow-journey-art { aspect-ratio:2163 / 699; margin:28px 0 24px; }
-      .alt-fluxo .flow-journey-art img { right:-2.5%; width:260%; }
+      .alt-fluxo .flow-journey-art { aspect-ratio:1.9 / 1; margin:28px 0 24px;
+        -webkit-mask-image:linear-gradient(to right, transparent 0, #000 26%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%);
+        mask-image:linear-gradient(to right, transparent 0, #000 26%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); }
+      .jornada-video { width:182%; }
       .flow-grid { grid-template-columns:1fr 1fr; }
       .jards-flow-step { min-height:0; padding:20px 16px 22px 0; border-right:0; border-bottom:1px solid rgba(40,37,37,.12); }
       .jards-flow-step:nth-child(odd) { border-right:1px solid rgba(40,37,37,.12); }
@@ -1828,8 +1824,8 @@
       </div>
       <p class="alt-split-lede">A Jards conecta o que acontece antes, durante e depois de cada patrocínio.</p>
     </div>
-    <div class="flow-journey-art reveal">
-      <img src="assets/jornada-corrida-s-transparente.png" alt="Tamanduá em um carro de corrida percorrendo uma pista em curvas" />
+    <div class="flow-journey-art reveal" aria-hidden="true">
+      <video class="jornada-video" src="assets/jornada-convergencia.mp4" poster="assets/jornada-convergencia-poster.webp" width="1040" height="352" muted loop playsinline preload="none"></video>
     </div>
     <div class="flow-grid">
       <article class="jards-flow-step"><span class="flow-index">01</span><strong>Encontrar</strong><p>Mapeie patrocinadores, editais e oportunidades relevantes.</p></article>
@@ -3305,6 +3301,27 @@
   function atualizar() { nav.classList.toggle("is-rolado", window.scrollY > 8); }
   window.addEventListener("scroll", atualizar, { passive: true });
   atualizar();
+})();
+</script>
+<script>
+// Vídeo da jornada: toca só quando está na tela e se a pessoa não pediu menos movimento
+(function(){
+  var video = document.querySelector('.jornada-video');
+  if(!video) return;
+  var menosMovimento = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var visivel = false;
+  function atualizar(){
+    if(visivel && !menosMovimento.matches){
+      var tocando = video.play();
+      if(tocando && tocando.catch) tocando.catch(function(){});
+    } else {
+      video.pause();
+    }
+  }
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(entradas){ visivel = entradas[0].isIntersecting; atualizar(); }, { threshold: .15 }).observe(video);
+  } else { visivel = true; atualizar(); }
+  if(menosMovimento.addEventListener) menosMovimento.addEventListener('change', atualizar);
 })();
 </script>
 </body>
