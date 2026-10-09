@@ -41,7 +41,9 @@ export function AssinaturaDoModulo({ destacar, retorno }: { destacar: boolean; r
   const organizationId = useOrganizationId();
   const { assinatura, carregando, recarregar } = useAssinaturaPrestacao(organizationId);
   const secao = useRef<HTMLElement>(null);
-  const [extras, setExtras] = useState(0);
+  // Quem vem do teste ou da cortesia já começa com um usuário para cada pessoa que usa o módulo.
+  const [extrasEscolhidos, setExtras] = useState<number | null>(null);
+  const extras = extrasEscolhidos ?? Math.min(VAGAS_EXTRAS_MAX, Math.max(0, (assinatura?.vagas.emUso ?? 1) - 1));
   const [compra, setCompra] = useState(1);
   const [ocupado, setOcupado] = useState<"assinar" | "comprar" | "portal" | null>(null);
   const [erro, setErro] = useState("");

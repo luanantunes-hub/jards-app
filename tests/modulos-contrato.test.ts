@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import {
-  contratoEmVigor, contratoPago, diasEntre, hojeEmBrasilia, limiteDeVagas, mensagemErroAcesso,
-  situacaoDoContrato, validarCortesia, type ContratoModulo,
+  contratoEmVigor, contratoPago, diasEntre, fimDoTesteGratis, hojeEmBrasilia, limiteDeVagas, mensagemErroAcesso,
+  situacaoDoContrato, somarDias, TESTE_GRATIS_DIAS, testeGratis, validarCortesia, type ContratoModulo,
 } from "../lib/modulos-contrato";
 
 const cortesia = (ate: string | null, vagas = 2): ContratoModulo => ({
@@ -60,6 +60,31 @@ test("situação para a lista", () => {
   assert.equal(situacaoDoContrato(cortesia(null), AGORA), "Cortesia sem prazo");
   assert.equal(situacaoDoContrato({ ...cortesia(null), status: "cancelado" }, AGORA), "Encerrada");
   assert.equal(diasEntre("2026-10-05", "2026-10-12"), 7);
+});
+
+test("teste grátis: 45 dias contados em Brasília e situação na lista", () => {
+  assert.equal(somarDias("2026-10-05", 45), "2026-11-19");
+  assert.equal(somarDias("2026-12-20", 15), "2027-01-04");
+  // 01h de 06/10 em UTC ainda é 05/10 em Brasília.
+  assert.equal(fimDoTesteGratis(new Date("2026-10-06T01:00:00Z")), "2026-11-19");
+  assert.equal(diasEntre(hojeEmBrasilia(AGORA), fimDoTesteGratis(AGORA)), TESTE_GRATIS_DIAS);
+
+  const teste = (ate: string, status: ContratoModulo["status"] = "cortesia"): ContratoModulo => ({ ...cortesia(ate), status, teste_gratis: true });
+  assert.equal(situacaoDoContrato(teste("2026-11-19"), AGORA), "Teste grátis até 19/11/2026");
+  assert.equal(situacaoDoContrato(teste("2026-10-05"), AGORA), "Teste grátis termina hoje");
+  assert.equal(situacaoDoContrato(teste("2026-10-04"), AGORA), "Teste grátis encerrado");
+  assert.equal(situacaoDoContrato(teste("2026-10-04", "cancelado"), AGORA), "Teste grátis encerrado");
+  assert.equal(situacaoDoContrato(cortesia("2026-11-19"), AGORA), "Cortesia até 19/11/2026", "cortesia do suporte não é teste");
+  assert.equal(testeGratis({ ...teste("2026-11-19"), status: "ativo" }, AGORA), null, "a assinatura não é teste");
+  assert.equal(testeGratis({ ...cortesia(null), teste_gratis: true }, AGORA), null, "teste sempre tem data de fim");
+});
+
+test("teste grátis: o banco usa os mesmos 45 dias e avisa no fim", async () => {
+  const sql = await readFile(new URL("../supabase/migrations/20261011110000_prestacao_teste_gratis_45_dias.sql", import.meta.url), "utf8");
+  assert.match(sql, new RegExp(`\\(now\\(\\) at time zone 'America/Sao_Paulo'\\)::date \\+ ${TESTE_GRATIS_DIAS};`));
+  assert.match(sql, /'modulo_teste_fim'/);
+  assert.match(sql, /'modulo_teste_encerrado'/);
+  assert.match(sql, /new\.status in \('ativo', 'teste', 'atraso'\)/, "a assinatura desmarca o teste");
 });
 
 test("erros da função de acesso viram texto da tela", () => {
