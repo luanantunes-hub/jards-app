@@ -399,11 +399,12 @@
        As bordas esmaecem na página: o leve tom azulado do fundo do vídeo vira halo, não retângulo.
        No desktop o ponto de luz cai sobre o passo 05 (Renovar); no celular aparece a metade direita. */
     .alt-fluxo { overflow:hidden; }
-    .alt-fluxo .flow-journey-art { position:relative; aspect-ratio:1040 / 300; margin:48px 0 40px; overflow:hidden;
-      -webkit-mask-image:linear-gradient(to right, transparent 0, #000 22%, #000 90%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
-      -webkit-mask-composite:source-in;
-      mask-image:linear-gradient(to right, transparent 0, #000 22%, #000 90%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 16%, #000 84%, transparent 100%);
-      mask-composite:intersect; }
+    .alt-fluxo .flow-journey-art { position:relative; aspect-ratio:1040 / 300; margin:48px 0 40px; overflow:hidden; }
+    /* Esmaecimento por cima, em branco (a seção é branca), em vez de máscara no vídeo:
+       no Safari, vídeo dentro de elemento com máscara pode ficar no primeiro quadro. */
+    .alt-fluxo .flow-journey-art::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+      background:linear-gradient(to right, #fff 0, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 90%, #fff 100%),
+                 linear-gradient(to bottom, #fff 0, rgba(255,255,255,0) 16%, rgba(255,255,255,0) 84%, #fff 100%); }
     .jornada-video { position:absolute; top:0; right:0; display:block; width:100%; height:100%; object-fit:cover; object-position:right center; pointer-events:none; user-select:none; }
     .alt-fluxo .jards-flow-step:first-child { padding-left:0; }
     .alt-fluxo .jards-flow-step:last-child { padding-right:0; }
@@ -932,9 +933,9 @@
 
     /* Fluxo no celular: passos em 2 colunas compactas e pista larga, sangrando */
     @media (max-width:767px) {
-      .alt-fluxo .flow-journey-art { aspect-ratio:1.9 / 1; margin:28px 0 24px;
-        -webkit-mask-image:linear-gradient(to right, transparent 0, #000 26%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%);
-        mask-image:linear-gradient(to right, transparent 0, #000 26%, #000 92%, transparent 100%), linear-gradient(to bottom, transparent 0, #000 14%, #000 86%, transparent 100%); }
+      .alt-fluxo .flow-journey-art { aspect-ratio:1.9 / 1; margin:28px 0 24px; }
+      .alt-fluxo .flow-journey-art::after { background:linear-gradient(to right, #fff 0, rgba(255,255,255,0) 26%, rgba(255,255,255,0) 92%, #fff 100%),
+        linear-gradient(to bottom, #fff 0, rgba(255,255,255,0) 14%, rgba(255,255,255,0) 86%, #fff 100%); }
       .jornada-video { width:182%; }
       .flow-grid { grid-template-columns:1fr 1fr; }
       .jards-flow-step { min-height:0; padding:20px 16px 22px 0; border-right:0; border-bottom:1px solid rgba(40,37,37,.12); }
@@ -1834,7 +1835,16 @@
       <p class="alt-split-lede">A Jards conecta o que acontece antes, durante e depois de cada patrocínio.</p>
     </div>
     <div class="flow-journey-art reveal" aria-hidden="true">
-      <video class="jornada-video" src="assets/jornada-convergencia.mp4" poster="assets/jornada-convergencia-poster.webp" width="1040" height="352" muted loop playsinline preload="none"></video>
+      <video class="jornada-video" src="assets/jornada-convergencia.mp4" poster="assets/jornada-convergencia-poster.webp" width="1040" height="352" muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
+      <script>
+        // Autoplay nativo: o navegador toca assim que pode e pausa sozinho fora da tela.
+        // Com menos movimento, nada toca e fica o poster.
+        (function(v){
+          if(!v || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
+          v.muted = true; v.autoplay = true;
+          var p = v.play(); if(p && p.catch) p.catch(function(){});
+        })(document.currentScript.previousElementSibling);
+      </script>
     </div>
     <div class="flow-grid">
       <article class="jards-flow-step"><span class="flow-index">01</span><strong>Encontrar</strong><p>Mapeie patrocinadores, editais e oportunidades relevantes.</p></article>
@@ -3334,32 +3344,17 @@
 })();
 </script>
 <script>
-// Vídeo da jornada: toca só quando está na tela e se a pessoa não pediu menos movimento
+// Vídeo da jornada: se a pessoa ligar ou desligar "menos movimento", acompanha.
+// Se o navegador recusar o autoplay, tenta de novo no primeiro toque ou rolagem.
 (function(){
   var video = document.querySelector('.jornada-video');
-  if(!video) return;
-  var menosMovimento = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
-  var visivel = false;
-  function atualizar(){
-    if(visivel && !menosMovimento.matches){
-      var tocando = video.play();
-      if(tocando && tocando.catch) tocando.catch(function(){});
-    } else {
-      video.pause();
-    }
-  }
-  if('IntersectionObserver' in window){
-    // Começa a baixar cerca de uma tela antes de aparecer: ao chegar na seção ele já
-    // está tocando, em vez de mostrar o poster parado enquanto carrega.
-    var antecipar = new IntersectionObserver(function(entradas){
-      if(!entradas[0].isIntersecting || menosMovimento.matches) return;
-      antecipar.disconnect();
-      if(video.readyState === 0 && video.paused){ video.preload = 'auto'; video.load(); }
-    }, { rootMargin: '900px 0px' });
-    antecipar.observe(video);
-    new IntersectionObserver(function(entradas){ visivel = entradas[0].isIntersecting; atualizar(); }, { threshold: .15 }).observe(video);
-  } else { visivel = true; atualizar(); }
-  if(menosMovimento.addEventListener) menosMovimento.addEventListener('change', atualizar);
+  if(!video || !window.matchMedia) return;
+  var menos = matchMedia('(prefers-reduced-motion: reduce)');
+  function tocar(){ if(menos.matches || !video.paused) return; var p = video.play(); if(p && p.catch) p.catch(function(){}); }
+  function aplicar(){ if(menos.matches) video.pause(); else tocar(); }
+  if(menos.addEventListener) menos.addEventListener('change', aplicar);
+  ['scroll','pointerdown','touchstart','keydown'].forEach(function(ev){ window.addEventListener(ev, tocar, { passive:true }); });
+  video.addEventListener('playing', function(){ ['scroll','pointerdown','touchstart','keydown'].forEach(function(ev){ window.removeEventListener(ev, tocar); }); });
 })();
 </script>
 </body>
