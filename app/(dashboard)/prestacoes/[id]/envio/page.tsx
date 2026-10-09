@@ -396,6 +396,11 @@ export default function EnvioPage() {
                 <FileSpreadsheet size={12} aria-hidden /> Formulário PCP/PCF
               </Link>
             )}
+            {dados.regime.area === "saude" && (
+              <Link href={`/prestacoes/${id}/envio/saude`} className={BOTAO} style={BORDA}>
+                <FileSpreadsheet size={12} aria-hidden /> Planilhas da saúde
+              </Link>
+            )}
             {regimePedeCarimbo(dados.regime) && (
               <Link href={`/prestacoes/${id}/envio/carimbos`} className={BOTAO} style={BORDA}>
                 <Stamp size={12} aria-hidden /> Carimbo e atesto
