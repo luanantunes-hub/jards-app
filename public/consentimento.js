@@ -146,14 +146,17 @@
   });
 
   var CSS =
-    ".jc-aviso{position:fixed;left:16px;right:16px;bottom:16px;z-index:90;max-width:400px;box-sizing:border-box;padding:16px;" +
-    "background:#fff;color:#0D0D0D;border:1px solid rgba(13,13,13,.10);border-radius:4px;box-shadow:0 10px 30px rgba(40,37,37,.12);" +
-    "font-family:inherit;font-size:13px;font-weight:400;line-height:1.5;text-align:left;animation:jc-entra .22s ease-out}" +
-    ".jc-aviso p{margin:0;color:rgba(13,13,13,.72);text-wrap:pretty}" +
+    // Barra fina no rodapé: texto à esquerda, escolha à direita; no celular, os botões descem.
+    ".jc-aviso{position:fixed;left:0;right:0;bottom:0;z-index:90;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:12px 24px;" +
+    "padding:10px 24px;background:rgba(255,255,255,.96);color:#0D0D0D;border-top:1px solid rgba(13,13,13,.10);box-shadow:0 -6px 20px rgba(13,13,13,.05);" +
+    "-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);" +
+    "font-family:inherit;font-size:12.5px;font-weight:400;line-height:1.45;text-align:left;animation:jc-entra .22s ease-out}" +
+    ".jc-texto{max-width:760px;min-width:0}" +
+    ".jc-aviso p{margin:0;color:rgba(13,13,13,.68);text-wrap:pretty}" +
     ".jc-aviso a{color:#684DB0;text-decoration:underline;text-underline-offset:2px}" +
-    ".jc-atual{margin-top:6px!important;font-size:12px;color:rgba(13,13,13,.5)!important}" +
-    ".jc-acoes{display:flex;gap:8px;margin-top:12px}" +
-    ".jc-btn{flex:1;height:36px;padding:0 16px;border-radius:4px;font-family:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;" +
+    ".jc-atual{margin-top:2px!important;font-size:12px;color:rgba(13,13,13,.5)!important}" +
+    ".jc-acoes{display:flex;flex-shrink:0;gap:8px}" +
+    ".jc-btn{height:34px;padding:0 16px;border-radius:4px;font-family:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;" +
     "transition:background-color .16s ease,border-color .16s ease,transform .16s ease}" +
     ".jc-btn:active{transform:translateY(1px)}" +
     ".jc-btn:focus-visible{outline:2px solid #7259B5;outline-offset:2px}" +
@@ -162,6 +165,7 @@
     ".jc-aceitar{background:#0D0D0D;color:#fff;border:1px solid #0D0D0D}" +
     ".jc-aceitar:hover{background:#2B2828;border-color:#2B2828}" +
     "@keyframes jc-entra{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}" +
+    "@media (max-width:640px){.jc-aviso{flex-direction:column;align-items:stretch;padding:12px 16px}.jc-acoes .jc-btn{flex:1}}" +
     "@media (prefers-reduced-motion:reduce){.jc-aviso{animation:none}.jc-btn{transition:none}}";
 
   function garantirEstilo() {
@@ -193,10 +197,12 @@
     aviso.setAttribute("role", "region");
     aviso.setAttribute("aria-label", "Preferências de cookies");
     aviso.innerHTML =
+      '<div class="jc-texto">' +
       "<p>Usamos o Google Analytics e o Google Ads para medir as visitas e o resultado das nossas campanhas, " +
       "e para mostrar nossos anúncios a quem já visitou o site. Isso grava cookies de análise e de publicidade, " +
       'e só ativamos se você aceitar. <a href="/privacidade#s10">Política de Privacidade</a></p>' +
       (atual ? '<p class="jc-atual">Escolha atual: ' + (atual.analytics ? "aceito" : "recusado") + ".</p>" : "") +
+      "</div>" +
       '<div class="jc-acoes">' +
       '<button type="button" class="jc-btn jc-recusar">Recusar</button>' +
       '<button type="button" class="jc-btn jc-aceitar">Aceitar</button>' +

@@ -955,15 +955,46 @@
 
     @media (prefers-reduced-motion: reduce) { .alt-nav-login, .lei-card-btn, .bi-destaque { transition:none; } }
 
+    /* Menu de ponta a ponta: transparente no topo, branco ao rolar, preto sobre seções escuras */
+    .site-nav { border-bottom:1px solid transparent; transition:background-color .24s ease, border-color .24s ease; }
+    .site-nav.is-rolado { background:rgba(255,255,255,.84); border-bottom-color:rgba(13,13,13,.06); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%); }
+    .site-nav.is-escuro { background:rgba(13,13,13,.95); border-bottom-color:rgba(255,255,255,.08); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%); }
+    .site-nav nav a { transition:color .24s ease; }
+    .site-nav-logo { position:relative; display:inline-flex; }
+    .site-nav-logo img { transition:opacity .24s ease; }
+    .site-nav-logo .logo-claro { position:absolute; inset:0; opacity:0; }
+    .site-nav.is-escuro .logo-escuro { opacity:0; }
+    .site-nav.is-escuro .logo-claro { opacity:1; }
+    .site-nav.is-escuro nav a { color:rgba(255,255,255,.62); }
+    .site-nav.is-escuro nav a:hover { color:#fff; }
+    .site-nav.is-escuro .alt-nav-login { color:rgba(255,255,255,.7); }
+    .site-nav.is-escuro .alt-nav-login:hover { color:#fff; }
+    .site-nav.is-escuro .alt-cta--header { background:#fff; border-color:#fff; color:#0D0D0D; }
+    .site-nav.is-escuro .alt-cta--header:hover { background:rgba(255,255,255,.86); }
+    @media (prefers-reduced-motion: reduce) { .site-nav, .site-nav nav a, .site-nav-logo img { transition:none; } }
+
+    /* Seção de produto em preto: o app de demonstração fica claro, como uma tela no palco */
+    .secao-escura { background:#0D0D0D; color:#fff; }
+    .secao-escura .alt-kicker { color:rgba(255,255,255,.5); }
+    .secao-escura h2.alt-h2 { color:#fff; }
+    .secao-escura .ms-head-lede { color:rgba(255,255,255,.6); }
+    .secao-escura .ms-tabs-frame { border-color:rgba(255,255,255,.14); background:rgba(255,255,255,.04); box-shadow:none; }
+    .secao-escura .ms-tab { color:rgba(255,255,255,.6); }
+    .secao-escura .ms-tab:hover { color:#fff; background:rgba(255,255,255,.06); }
+    .secao-escura .ms-tab.on { color:#0D0D0D; background:#fff; box-shadow:none; }
+    .secao-escura .ms-tab:focus-visible { outline-color:rgba(255,255,255,.55); }
+    .secao-escura .ms-menu-illustration { filter:invert(1) hue-rotate(180deg); mix-blend-mode:screen; }
+    .secao-escura .ms-shell { border-color:rgba(255,255,255,.08); box-shadow:0 30px 80px rgba(0,0,0,.55); }
+
   </style>
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 
 <!-- ════════════════════════ NAV ════════════════════════ -->
-<header class="fixed inset-x-0 top-0 z-50">
-  <div class="landing-nav-shell max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
-    <a href="#top" aria-label="Voltar ao início"><img src="assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
+<header id="siteNav" class="site-nav fixed inset-x-0 top-0 z-50">
+  <div class="px-5 md:px-8 h-16 flex items-center justify-between">
+    <a href="#top" aria-label="Voltar ao início" class="site-nav-logo"><img src="assets/jards-logo.svg" alt="Jards" class="logo-escuro h-7" /><img src="assets/jards-logo-claro.svg" alt="" aria-hidden="true" class="logo-claro h-7" /></a>
 
     <nav class="hidden md:flex items-center gap-8">
       <a href="#bi"       class="text-sm font-medium text-black/50 hover:text-black transition-colors">Plataforma</a>
@@ -1127,7 +1158,7 @@
 
 
 <!-- ════════════════════════ ATIVO DE MARCA ════════════════════════ -->
-<section class="brand-visual" aria-labelledby="contexto-titulo">
+<section class="brand-visual" aria-labelledby="contexto-titulo" data-nav="escuro">
   <img src="assets/brand/ambiente-criativo-jards-sem-caneta-tratado.png" alt="Profissional trabalhando no computador em um ambiente criativo cercado por projetos e materiais" />
   <div class="brand-caption">
     <p class="alt-kicker alt-kicker--on-dark">Quando cada etapa vive em um lugar</p>
@@ -1873,7 +1904,7 @@
 
 
 <!-- ════════════════════════ PRODUTO: ABAS ════════════════════════ -->
-<section id="produto-tabs" class="section-space bg-[#FFFFFF] px-6">
+<section id="produto-tabs" class="section-space secao-escura px-6" data-nav="escuro">
   <div class="max-w-6xl mx-auto">
 
     <div class="ms-head reveal">
@@ -3292,6 +3323,30 @@
       pranchetas.forEach(function(alvo){ io.observe(alvo.parentElement); });
     }
   });
+})();
+</script>
+<script>
+// Menu: branco ao rolar e preto enquanto passa por uma seção escura.
+(function () {
+  var nav = document.getElementById("siteNav");
+  if (!nav) return;
+  var escuras = Array.prototype.slice.call(document.querySelectorAll('[data-nav="escuro"]'));
+  var pedido = false;
+  function atualizar() {
+    pedido = false;
+    var linha = nav.offsetHeight / 2;
+    var sobreEscura = escuras.some(function (secao) {
+      if (secao.classList.contains("is-light")) return false;
+      var r = secao.getBoundingClientRect();
+      return r.top <= linha && r.bottom >= linha;
+    });
+    nav.classList.toggle("is-escuro", sobreEscura);
+    nav.classList.toggle("is-rolado", !sobreEscura && window.scrollY > 8);
+  }
+  function agendar() { if (!pedido) { pedido = true; requestAnimationFrame(atualizar); } }
+  window.addEventListener("scroll", agendar, { passive: true });
+  window.addEventListener("resize", agendar);
+  atualizar();
 })();
 </script>
 </body>
