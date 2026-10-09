@@ -24,6 +24,7 @@ import {
   type EtapaDoFormulario,
   type FormularioLie,
 } from "@/lib/prestacao/formulario-lie";
+import { criticasDaGradeRh, nomeDaGradeRh, regimePedeGradeRh, type CriticaDaGradeRh } from "@/lib/prestacao/grade-rh";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
@@ -86,6 +87,59 @@ function ListaDeCriticas({ id, titulo, criticas, aviso }: { id: string; titulo: 
   );
 }
 
+/** Modelo oficial da grade horária dos recursos humanos, convertido para .xlsx (P8.7). */
+const MODELO_GRADE_RH = "/modelos/lie/grade-horaria-rh-2026.xlsx";
+
+/** A grade de RH vai à parte, no modelo próprio da DPPIE (art. 65, VII). */
+function SecaoGradeRh({ id, cargos, criticas, gerando, onBaixar }: {
+  id: string;
+  cargos: number;
+  criticas: readonly CriticaDaGradeRh[];
+  gerando: boolean;
+  onBaixar: () => void;
+}) {
+  return (
+    <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="grade-rh-arquivo">
+      <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        <div className="min-w-0">
+          <h3 id="grade-rh-arquivo" className="text-[0.75rem] font-semibold text-black">Grade horária dos recursos humanos</h3>
+          <p className="max-w-[40rem] text-[0.6875rem] text-black/45">
+            Vai na PCP, à parte do formulário, no modelo da DPPIE: {cargos ? `${cargos} ${cargos === 1 ? "cargo" : "cargos"} da grade de RH` : "nenhum cargo cadastrado"}.{" "}
+            <Link href={`/prestacoes/${id}/atividades`} className={LINK}>Editar na aba Atividades <ArrowRight size={10} aria-hidden /></Link>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onBaixar}
+          disabled={gerando}
+          className="flex h-9 shrink-0 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/65 transition hover:border-black/25 hover:text-black/85 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40"
+          style={{ borderColor: "rgba(13,13,13,.14)" }}
+        >
+          {gerando
+            ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-black/15 border-t-black/60 motion-reduce:animate-none" aria-hidden />
+            : <Download size={13} aria-hidden />}
+          Baixar grade de RH
+        </button>
+      </div>
+      {criticas.length > 0 && (
+        <ul className="divide-y divide-black/[.05]">
+          {criticas.map((c, i) => (
+            <li key={`${c.campo}-${i}`} className="flex items-start gap-2.5 px-5 py-2.5 text-[0.75rem]">
+              {c.tipo === "aviso"
+                ? <Info size={13} className="mt-0.5 shrink-0 text-black/40" aria-label="Aviso" />
+                : <AlertTriangle size={13} className="mt-0.5 shrink-0 text-[#B23B3B]" aria-label="Corrigir" />}
+              <div className="min-w-0">
+                <p className="text-[0.625rem] text-black/45">{c.campo}</p>
+                <p className="text-black/75">{c.mensagem}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 function baixar(blob: Blob, nome: string) {
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -139,6 +193,7 @@ export default function FormularioLiePage() {
   const [etapaEscolhida, setEtapa] = useState<EtapaDoFormulario | null>(null);
   const [gerando, setGerando] = useState(false);
   const [erroAoGerar, setErroAoGerar] = useState("");
+  const [gerandoRh, setGerandoRh] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -175,6 +230,31 @@ export default function FormularioLiePage() {
   const avisos = formulario?.criticas.filter(c => c.tipo === "aviso") ?? [];
   const abas = formulario ? linhasDasAbas(formulario) : [];
   const carregando = !formulario && !erro && !erroAoCarregar;
+  const pedeGradeRh = regimePedeGradeRh(dados?.regime);
+  const cargos = useMemo(() => dados?.estado.cargos ?? [], [dados]);
+  const criticasRh = useMemo(
+    () => (prestacao ? criticasDaGradeRh(cargos, { sli: prestacao.identificador_oficial, proponente: prestacao.proponente?.nome ?? null }) : []),
+    [cargos, prestacao],
+  );
+
+  async function baixarGradeRh() {
+    if (!prestacao) return;
+    setGerandoRh(true);
+    setErroAoGerar("");
+    try {
+      const { gravarGradeRh } = await import("@/lib/prestacao/grade-rh-xlsx");
+      const resposta = await fetch(MODELO_GRADE_RH);
+      if (!resposta.ok) throw new Error("Não foi possível abrir o modelo da grade de RH.");
+      const arquivo = await gravarGradeRh(new Uint8Array(await resposta.arrayBuffer()), {
+        projeto: prestacao.titulo, proponente: prestacao.proponente?.nome ?? "", sli: prestacao.identificador_oficial ?? "", cargos,
+      });
+      baixar(new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), nomeDaGradeRh(prestacao.identificador_oficial));
+    } catch (e) {
+      setErroAoGerar(e instanceof Error ? e.message : "Não foi possível gerar a grade de RH.");
+    } finally {
+      setGerandoRh(false);
+    }
+  }
 
   async function baixarFormulario() {
     if (!formulario || !modelo?.arquivo) return;
@@ -322,6 +402,7 @@ export default function FormularioLiePage() {
               ))}
             </ul>
           </section>
+          {pedeGradeRh && <SecaoGradeRh id={id} cargos={cargos.length} criticas={criticasRh} gerando={gerandoRh} onBaixar={baixarGradeRh} />}
           <p className="text-[0.625rem] text-black/40">
             O arquivo sai do modelo oficial da DPPIE convertido para Excel (.xlsx), com as mesmas abas, o logotipo, as bordas e as fórmulas; os totais já vêm calculados.
             Confira no Excel, complete o que ficou para preencher e assine antes de enviar.

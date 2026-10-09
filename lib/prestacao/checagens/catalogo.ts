@@ -14,6 +14,7 @@ import type { BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { BeneficiadoParaChecar } from "../beneficiarios";
 import type { TurmaDaGrade } from "../grade";
+import type { CargoDaGrade } from "../grade-rh";
 import type { ManifestacaoEsportiva, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
@@ -111,6 +112,10 @@ export const CATALOGO_CHECAGENS = {
   BENEFICIADO_SEM_SEXO: { titulo: "Beneficiado sem sexo", grupo: "objeto", resultado: "revisar", destino: "beneficiarios", regras: ["beneficiados"] },
   BENEFICIADO_REPETIDO: { titulo: "Beneficiado repetido", grupo: "objeto", resultado: "revisar", destino: "beneficiarios", regras: ["beneficiados"] },
   REDE_PUBLICA_ABAIXO_DO_MINIMO: { titulo: "Rede pública abaixo do mínimo", grupo: "objeto", resultado: "nao_conforme", destino: "beneficiarios", regras: ["rede_publica"] },
+  // Grade de RH (P8.7): cargos × itens de RH × quem foi pago.
+  RH_SEM_GRADE: { titulo: "Item de RH sem cargo na grade", grupo: "orcamento", resultado: "nao_calculavel", destino: "atividades" },
+  RH_ACIMA_DA_GRADE: { titulo: "Mais pessoas pagas que a grade de RH", grupo: "pagamento", resultado: "revisar", destino: "atividades" },
+  RH_FORMA_DE_CONTRATACAO: { titulo: "Pagamento fora da forma de contratação", grupo: "pagamento", resultado: "revisar", destino: "atividades", regras: ["contratacao_de_pessoal"] },
   // Orçamento (P1.6, P1.7)
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
@@ -232,6 +237,8 @@ export type EstadoDaPrestacao = {
   beneficiarios?: readonly BeneficiadoParaChecar[];
   /** P8.6: turmas da grade semanal. */
   turmas?: readonly TurmaDaGrade[];
+  /** P8.7: cargos da grade horária dos recursos humanos. */
+  cargos?: readonly CargoDaGrade[];
   /** A conta vem junto para as planilhas por conta (P7.3). */
   lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */

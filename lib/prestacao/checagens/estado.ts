@@ -14,6 +14,7 @@ import { lerCotacoes, type BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { BeneficiadoParaChecar } from "../beneficiarios";
 import type { TurmaDaGrade } from "../grade";
+import type { CargoDaGrade } from "../grade-rh";
 import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
 import type { ManifestacaoEsportiva } from "@/lib/supabase/types";
 
@@ -50,7 +51,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios, turmas] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios, turmas, cargos] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -91,6 +92,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .select("id, nome, modalidade, sexo, idade, rede_publica, telefone, endereco, beneficios, observacoes").eq("prestacao_id", prestacaoId).order("id")),
     todas<TurmaDaGrade>(() => db.from("prestacao_turmas")
       .select("id, local_id, nome, modalidade, alunos, dias, hora_inicio, hora_fim, equipe, observacoes, ordem").eq("prestacao_id", prestacaoId).order("id")),
+    todas<CargoDaGrade>(() => db.from("prestacao_cargos")
+      .select("id, no_id, cargo, atribuicoes, quantidade, horarios, carga_semanal, contratacao, formacao, ordem").eq("prestacao_id", prestacaoId).order("id")),
   ]);
 
   const nos = versao
@@ -143,6 +146,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     crcValidade: prestacao.crc_validade ?? null,
     beneficiarios,
     turmas,
+    cargos,
     alteracoes,
     metas,
     locais,

@@ -7,7 +7,7 @@
 // orientação, sem marcação.
 //
 // O que os dados respondem vem deles: metas comprovadas, evidências de
-// acessibilidade, peças com amostra, bens, beneficiados, grade, eventos, despesas, extratos, saldo pelo último
+// acessibilidade, peças com amostra, bens, beneficiados, grade, grade de RH, eventos, despesas, extratos, saldo pelo último
 // extrato, alterações em aberto, as verificações abertas por assunto e as guias
 // do saldo e dos rendimentos registradas em Devoluções (P4.4). O resto
 // a pessoa resolve: arquivo anexado, "pronto" (ou, na condição, "conferido") e,
@@ -17,6 +17,7 @@
 import { CATALOGO_CHECAGENS, dataBr, reais, centavos, type DestinoDaChecagem, type EstadoDaPrestacao } from "./checagens/catalogo";
 import { despesasSemBem } from "./bens";
 import { faltasDaTurma } from "./grade";
+import { faltasDoCargo } from "./grade-rh";
 import { recolhimentoDoEncerramento } from "./devolucoes";
 import { coberturaDaMeta } from "./objeto";
 import { definida, type Fonte, type RegimeNormativo } from "./regimes";
@@ -131,7 +132,9 @@ const objeto: Avaliador = ctx => {
   const evidencias = ctx.estado.evidencias ?? [];
   const comprovadas = metas.filter(m => coberturaDaMeta(m, atividades, evidencias).comprovada).length;
   const semResultado = metas.filter(m => m.realizado === null || m.realizado === undefined).length;
-  const abertas = ctx.abertas(comDestino("objeto", "atividades", "distribuicao"));
+  // A grade de RH (P8.7) também se resolve na aba Atividades, mas é outro documento.
+  const doObjeto = comDestino("objeto", "atividades", "distribuicao");
+  const abertas = ctx.abertas(codigo => doObjeto(codigo) && !CODIGOS_DA_GRADE_RH.has(codigo));
   if (semResultado > 0) return pendente(`${plural(semResultado, "meta está", "metas estão")} sem o resultado informado.`, "objeto");
   if (comprovadas < metas.length) return pendente(`${comprovadas} de ${plural(metas.length, "meta comprovada", "metas comprovadas")} por evidência.`, "objeto");
   if (abertas > 0) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} no objeto e na distribuição.`, "objeto");
@@ -201,6 +204,19 @@ const grade: Avaliador = ctx => {
   if (incompletas) return pendente(`${plural(incompletas, "turma está", "turmas estão")} sem núcleo, dias, horário ou quantidade de alunos.`, "atividades");
   const nucleos = new Set(turmas.map(t => t.local_id)).size;
   return pronto(`${plural(turmas.length, "turma", "turmas")} em ${plural(nucleos, "núcleo", "núcleos")}, com dias e horário.`);
+};
+
+const CODIGOS_DA_GRADE_RH = new Set(["RH_SEM_GRADE", "RH_ACIMA_DA_GRADE", "RH_FORMA_DE_CONTRATACAO"]);
+
+const gradeRh: Avaliador = ctx => {
+  const cargos = ctx.estado.cargos ?? [];
+  if (cargos.length === 0) return pendente("Cadastre a grade de RH: os cargos da equipe, com os horários, a carga semanal e a forma de contratação.", "atividades");
+  const incompletos = cargos.filter(c => faltasDoCargo(c).length).length;
+  if (incompletos) return pendente(`${plural(incompletos, "cargo está", "cargos estão")} sem horários, carga semanal ou forma de contratação.`, "atividades");
+  const abertas = ctx.abertas(codigo => CODIGOS_DA_GRADE_RH.has(codigo));
+  if (abertas) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} na grade de RH.`, "atividades");
+  const pessoas = cargos.reduce((s, c) => s + c.quantidade, 0);
+  return pronto(`${plural(cargos.length, "cargo", "cargos")} e ${plural(pessoas, "contratado", "contratados")} na grade, sem pendência aberta.`);
 };
 
 const eventos: Avaliador = ctx => {
@@ -342,6 +358,7 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   beneficiados,
   beneficiarios: beneficiados,
   grade,
+  grade_rh: gradeRh,
   eventos,
   comprovantes_despesa: despesas,
   documentos_fiscais: despesas,
