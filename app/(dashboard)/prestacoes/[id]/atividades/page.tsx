@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
 import { EvidenciaModal } from "@/components/prestacao/objeto/EvidenciaModal";
 import { GradeSemanal } from "@/components/prestacao/grade/GradeSemanal";
+import { GradeRh } from "@/components/prestacao/grade/GradeRh";
 import { ListaEvidencias } from "@/components/prestacao/objeto/ListaEvidencias";
 import { checarEvidencias } from "@/lib/prestacao/checagens/checar-evidencias";
 import type { Achado } from "@/lib/prestacao/checagens";
@@ -201,6 +202,8 @@ export default function AtividadesPage() {
     <div className="px-8 py-6 space-y-4">
       {/* Grade semanal (P8.6): só quando o regime pede ou já há turmas */}
       <GradeSemanal prestacaoId={id} />
+      {/* Grade de RH (P8.7): só quando o regime pede ou já há cargos */}
+      <GradeRh prestacaoId={id} />
 
       {/* Header */}
       <div className="flex items-center justify-between">

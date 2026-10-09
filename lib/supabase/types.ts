@@ -1157,6 +1157,29 @@ export interface PrestacaoTurma {
   updated_at: string;
 }
 
+/** Cargo da grade horária dos recursos humanos (P8.7, LIE). */
+export type ContratacaoDoCargo = "clt" | "rpa" | "pj";
+
+export interface PrestacaoCargo {
+  id: string;
+  prestacao_id: string;
+  /** Item do orçamento que paga o cargo. */
+  no_id: string | null;
+  cargo: string;
+  atribuicoes: string | null;
+  quantidade: number;
+  /** Um texto por dia, de segunda (posição 0) a domingo (6); vazio no dia sem trabalho. */
+  horarios: string[];
+  /** Horas por semana; o Postgres devolve numeric como número ou texto. */
+  carga_semanal: number | string | null;
+  contratacao: ContratacaoDoCargo | null;
+  formacao: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Conta bancária do projeto (P2.1). */
 export interface PrestacaoContaBancaria {
   id: string;
