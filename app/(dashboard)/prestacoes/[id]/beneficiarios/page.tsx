@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, FileUp, Info, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { AlertTriangle, Ban, FileUp, Info, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -29,18 +29,20 @@ const POR_VEZ = 200;
 
 type DadosDaPrestacao = { regime_id: string | null; manifestacao_esportiva: ManifestacaoEsportiva | null; data_fim_execucao: string | null };
 
-const COR_DA_SEVERIDADE: Record<string, string> = { bloqueio: "#B23B3B", alerta: "#B07A14" };
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
+const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#0D0D0D]" : "text-black/30"}`;
 
+/** O ícone diz a gravidade (vermelho bloqueia, âmbar alerta); o texto fica neutro. */
 function Avisos({ achados }: { achados: readonly Achado[] }) {
   if (!achados.length) return null;
   return (
     <ul className="space-y-1.5 rounded border bg-white px-5 py-3" style={BORDA} aria-label="Avisos da relação">
       {achados.map(a => {
-        const cor = COR_DA_SEVERIDADE[a.severidade];
-        const Icone = cor ? AlertTriangle : Info;
+        const Icone = a.severidade === "bloqueio" ? Ban : a.severidade === "alerta" ? AlertTriangle : Info;
+        const cor = a.severidade === "bloqueio" ? "text-[#D94A4A]" : a.severidade === "alerta" ? "text-[#B07A14]" : "text-black/40";
         return (
-          <li key={a.chave} className="flex items-start gap-1.5 text-[0.6875rem]" style={{ color: cor ?? "rgba(13,13,13,.55)" }}>
-            <Icone size={12} className="mt-0.5 shrink-0" aria-hidden />
+          <li key={a.chave} className="flex items-start gap-1.5 text-[0.6875rem] text-black/60">
+            <Icone size={12} strokeWidth={1.75} className={`mt-0.5 shrink-0 ${cor}`} aria-label={a.severidade === "bloqueio" ? "Bloqueia o envio" : a.severidade === "alerta" ? "Alerta" : "Aviso"} />
             <span>{a.mensagem}</span>
           </li>
         );
@@ -201,18 +203,26 @@ export default function BeneficiariosPage() {
 
       {!carregando && lista.length > 0 && (
         <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
-          <div className="flex gap-1.5"><dt className="text-black/40">Beneficiados</dt><dd className="tabular-nums text-black/75">{resumo.total}</dd></div>
-          <div className="flex gap-1.5"><dt className="text-black/40">Feminino</dt><dd className="tabular-nums text-black/75">{resumo.feminino}</dd></div>
-          <div className="flex gap-1.5"><dt className="text-black/40">Masculino</dt><dd className="tabular-nums text-black/75">{resumo.masculino}</dd></div>
-          {resumo.semSexo > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Sem sexo</dt><dd className="tabular-nums text-[#B07A14]">{resumo.semSexo}</dd></div>}
-          <div className="flex gap-1.5">
-            <dt className="text-black/40">Rede pública</dt>
-            <dd className="tabular-nums text-black/75">
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Beneficiados</dt><dd className={VALOR(resumo.total)}>{resumo.total}</dd></div>
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Feminino</dt><dd className={VALOR(resumo.feminino)}>{resumo.feminino}</dd></div>
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Masculino</dt><dd className={VALOR(resumo.masculino)}>{resumo.masculino}</dd></div>
+          {resumo.semSexo > 0 && (
+            <div className="flex items-center gap-1.5">
+              <dt className={`${ROTULO} inline-flex items-center gap-1`}>
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                Sem sexo
+              </dt>
+              <dd className={VALOR(resumo.semSexo)}>{resumo.semSexo}</dd>
+            </div>
+          )}
+          <div className="flex items-baseline gap-1.5">
+            <dt className={ROTULO}>Rede pública</dt>
+            <dd className={VALOR(resumo.redePublica)}>
               {resumo.redePublica} ({(resumo.percentualRedePublica ?? 0).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%)
-              {minimoRede !== null && <span className="text-black/40"> · mínimo {minimoRede}% na formação</span>}
+              {minimoRede !== null && <span className="font-normal text-black/40"> · mínimo {minimoRede}% na formação</span>}
             </dd>
           </div>
-          {resumo.redeNaoInformada > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Rede não informada</dt><dd className="tabular-nums text-black/75">{resumo.redeNaoInformada}</dd></div>}
+          {resumo.redeNaoInformada > 0 && <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Rede não informada</dt><dd className={VALOR(resumo.redeNaoInformada)}>{resumo.redeNaoInformada}</dd></div>}
         </dl>
       )}
 
@@ -276,7 +286,7 @@ export default function BeneficiariosPage() {
                         <p className="text-black/80">{b.nome}</p>
                         {(b.telefone || b.endereco) && <p className="text-[0.625rem] text-black/40">{[b.telefone, b.endereco].filter(Boolean).join(" · ")}</p>}
                       </td>
-                      <td className="whitespace-nowrap px-4 py-2.5 text-[0.6875rem] text-black/60">{b.sexo ? ROTULO_DO_SEXO[b.sexo] : <span className="text-[#B07A14]">Sem sexo</span>}</td>
+                      <td className="whitespace-nowrap px-4 py-2.5 text-[0.6875rem] text-black/60">{b.sexo ? ROTULO_DO_SEXO[b.sexo] : <span className="inline-flex items-center gap-1 text-black/45"><AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />Sem sexo</span>}</td>
                       <td className="px-4 py-2.5 text-right tabular-nums text-black/60">{b.idade ?? vazio}</td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-[0.6875rem] text-black/60">{b.rede_publica === null ? vazio : rotuloDaRede(b.rede_publica)}</td>
                       <td className="min-w-[8rem] px-4 py-2.5 text-[0.6875rem] text-black/60">{b.modalidade ?? vazio}</td>

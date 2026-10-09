@@ -13,6 +13,7 @@ import type { LinhaDistribuicao } from "../distribuicao";
 import { lerCotacoes, type BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { BeneficiadoParaChecar } from "../beneficiarios";
+import type { TurmaDaGrade } from "../grade";
 import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
 import type { ManifestacaoEsportiva } from "@/lib/supabase/types";
 
@@ -49,7 +50,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios, turmas] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -68,9 +69,9 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     todas<MetaDoEstado>(() => db.from("prestacao_metas")
       .select("id, descricao, unidade, previsto, realizado, justificativa").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<LocalDoEstado>(() => db.from("prestacao_locais")
-      .select("id, pais, uf, municipio, status, latitude, longitude, espaco, inicio, fim, justificativa").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
+      .select("id, pais, uf, municipio, status, latitude, longitude, espaco, inicio, fim, justificativa, endereco, responsavel, telefone").eq("prestacao_id", prestacaoId).order("ordem").order("id")),
     todas<AtividadeDoEstado>(() => db.from("prestacao_atividades")
-      .select("id, titulo, data_realizacao, data_inicio, data_fim, local_id, meta_id, status_realizacao, descricao, democratizacao_descricao, acessibilidade_descricao, justificativa_nao_realizacao").eq("prestacao_id", prestacaoId).order("id")),
+      .select("id, titulo, data_realizacao, data_inicio, data_fim, local_id, meta_id, status_realizacao, descricao, democratizacao_descricao, acessibilidade_descricao, justificativa_nao_realizacao, local, cidade, estado, meta_prevista").eq("prestacao_id", prestacaoId).order("id")),
     todas<EvidenciaParaChecar>(() => db.from("prestacao_evidencias")
       .select("id, tipo, requisitos, nome_arquivo, url, atividade_id, meta_id, local_id, capturada_em, latitude, longitude, justificativa, descricao")
       .eq("prestacao_id", prestacaoId).order("id")),
@@ -88,6 +89,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     todas<{ id: string; tipo: string }>(() => db.from("prestacao_contas_bancarias").select("id, tipo").eq("prestacao_id", prestacaoId).order("id")),
     todas<BeneficiadoParaChecar>(() => db.from("prestacao_beneficiarios")
       .select("id, nome, modalidade, sexo, idade, rede_publica, telefone, endereco, beneficios, observacoes").eq("prestacao_id", prestacaoId).order("id")),
+    todas<TurmaDaGrade>(() => db.from("prestacao_turmas")
+      .select("id, local_id, nome, modalidade, alunos, dias, hora_inicio, hora_fim, equipe, observacoes, ordem").eq("prestacao_id", prestacaoId).order("id")),
   ]);
 
   const nos = versao
@@ -139,6 +142,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     manifestacaoEsportiva: prestacao.manifestacao_esportiva ?? null,
     crcValidade: prestacao.crc_validade ?? null,
     beneficiarios,
+    turmas,
     alteracoes,
     metas,
     locais,

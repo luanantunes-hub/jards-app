@@ -64,6 +64,40 @@ test("escreve, insere linhas com estilo, mesclagem e fórmula, e recalcula", () 
   assert.match(saida, /<t xml:space="preserve">Título: Projeto &amp; Cia<\/t>/);
 });
 
+test("repete um bloco de linhas com valores, estilos, mesclagens e fórmulas relativas", () => {
+  const xml = '<worksheet><dimension ref="A1:C6"/><sheetData>'
+    + '<row r="1"><c r="A1" s="1" t="s"><v>0</v></c></row>'
+    + '<row r="2" ht="20"><c r="A2" s="7" t="s"><v>1</v></c><c r="B2" s="8"/></row>'
+    + '<row r="3"><c r="A3" s="2"/><c r="B3" s="2"/><c r="C3" s="3"><f>B3*2</f><v>0</v></c></row>'
+    + '<row r="4"><c r="A4" s="7" t="s"><v>1</v></c><c r="B4" s="8"/></row>'
+    + '<row r="5"><c r="A5" s="2"/><c r="B5" s="2"/><c r="C5" s="3"><f>B5*2+$B$1</f><v>0</v></c></row>'
+    + '<row r="6"><c r="A6" s="9" t="s"><v>2</v></c><c r="C6"><f>SUM(C3:C5)</f></c></row>'
+    + '</sheetData><mergeCells count="3"><mergeCell ref="A2:B2"/><mergeCell ref="A4:B4"/><mergeCell ref="A1:C1"/></mergeCells></worksheet>';
+  const p = new Planilha("Teste", xml, ["Grade", "NÚCLEO:", "TOTAL"]);
+  // O bloco 4–5 (o segundo núcleo) se repete antes da linha 6.
+  p.copiarLinhas(4, 5, 6);
+  assert.equal(p.ler("A6"), "NÚCLEO:");
+  assert.equal(p.formula("C7"), "B7*2+$B$1", "relativa anda, absoluta fica");
+  assert.equal(p.ler("A8"), "TOTAL");
+  assert.equal(p.formula("C8"), "SUM(C3:C5)", "como no Excel, inserir logo abaixo do intervalo não o estende");
+  p.completar("A6", "Quadra");
+  assert.equal(p.ler("A6"), "NÚCLEO: Quadra");
+  assert.equal(p.ler("A4"), "NÚCLEO:", "a origem não muda");
+  const saida = p.xml();
+  assert.match(saida, /<row r="6"><c r="A6" s="7" t="(?:s|inlineStr)">/);
+  assert.match(saida, /<c r="B6" s="8"\/>/);
+  assert.match(saida, /<mergeCell ref="A4:B4"\/>[\s\S]*<mergeCell ref="A6:B6"\/>/);
+  assert.equal((saida.match(/<mergeCell /g) ?? []).length, 4);
+  assert.match(saida, /<dimension ref="A1:C8"\/>/);
+  // Bloco do meio repetido antes dele mesmo: as linhas de origem descem e a cópia lê o que eram.
+  const q = new Planilha("Teste", xml, ["Grade", "NÚCLEO:", "TOTAL"]);
+  q.copiarLinhas(2, 3, 2);
+  assert.equal(q.formula("C3"), "B3*2");
+  assert.equal(q.formula("C5"), "B5*2");
+  assert.equal(q.formula("C7"), "B7*2+$B$1");
+  assert.equal(q.formula("C8"), "SUM(C5:C7)", "a soma desce com a origem");
+});
+
 test("o modelo da LIE reabre com as abas, a área de impressão deslocada e os totais calculados", async () => {
   const pasta = await PastaDeTrabalho.abrir(MODELO);
   assert.equal(pasta.nomes.length, 10);

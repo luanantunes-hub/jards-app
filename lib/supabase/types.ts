@@ -1126,6 +1126,31 @@ export interface PrestacaoLocal {
   status: "previsto" | "realizado" | "nao_realizado" | "outras_fontes";
   /** Até 500 caracteres, o limite do Salic; obrigatória em não realizado e em outras fontes. */
   justificativa: string | null;
+  /** Núcleo da LIE (P8.6): endereço, responsável pelo projeto no núcleo e telefone. */
+  endereco?: string | null;
+  responsavel?: string | null;
+  telefone?: string | null;
+  ordem: number;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Turma da grade semanal de um núcleo (P8.6, LIE, aba GRADE). */
+export interface PrestacaoTurma {
+  id: string;
+  prestacao_id: string;
+  local_id: string | null;
+  nome: string;
+  modalidade: string | null;
+  alunos: number | null;
+  /** 1 (segunda) a 7 (domingo). */
+  dias: number[];
+  /** "HH:MM:SS", como o Postgres devolve time. */
+  hora_inicio: string | null;
+  hora_fim: string | null;
+  equipe: string | null;
+  observacoes: string | null;
   ordem: number;
   criado_por: string | null;
   created_at: string;

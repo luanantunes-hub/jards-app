@@ -13,8 +13,10 @@
 //  * A EXECUTAR (só na PCP): as macro ações com o valor orçado;
 //  * BENEFICIADOS: a relação de beneficiados (P8.5), em ordem alfabética, com
 //    os benefícios em colunas e os totais feminino e masculino;
+//  * GRADE: as turmas da grade semanal, um bloco por núcleo (P8.6);
+//  * EVENTOS: as atividades, com datas, local e beneficiários previstos (P8.6);
 //  * BENS ADQUIRIDOS: os bens cadastrados.
-// GRADE, EVENTOS e DIÁRIAS saem com o cabeçalho e o marcador,
+// DIÁRIAS sai com o cabeçalho e o marcador,
 // para preencher à mão. As ações seguem a numeração do plano de trabalho: os
 // códigos do orçamento quando todos têm; senão, 1, 1.1… na atividade-fim e M1,
 // M1.1… na atividade-meio (instruções das abas). As críticas comparam as abas
@@ -22,6 +24,7 @@
 
 import { colunasDeBeneficios, nomeComparavel, ordenarPorNome, resumoDosBeneficiados } from "./beneficiarios";
 import { ehDespesa } from "./despesas";
+import { eventosDasAtividades, faltasDaTurma, gradePorNucleo, hora, rotuloDosDias, type LinhaDeEvento } from "./grade";
 import { formatarDocumento, limparDocumento } from "./fornecedores";
 import { itensDaArvore, montarArvore, type LinhaOrcamento } from "./orcamento";
 import type { DespesaDoEstado, EstadoDaPrestacao } from "./checagens/catalogo";
@@ -42,7 +45,7 @@ export const ABAS_DO_FORMULARIO = [
 export type AbaDoFormulario = (typeof ABAS_DO_FORMULARIO)[number];
 
 /** Abas que o Jards não tem como preencher: saem com o cabeçalho e o marcador. */
-export const ABAS_A_MAO: readonly AbaDoFormulario[] = ["GRADE", "EVENTOS", "DIÁRIAS"];
+export const ABAS_A_MAO: readonly AbaDoFormulario[] = ["DIÁRIAS"];
 
 /** Primeira linha de dados de cada aba no modelo e a última linha do bloco (a que fica antes do total). */
 export const BLOCOS = {
@@ -54,7 +57,11 @@ export const BLOCOS = {
   aExecutarMeio: { primeira: 28, ultima: 33 },
   bens: { primeira: 7, ultima: 32 },
   beneficiados: { primeira: 8, ultima: 34 },
+  eventos: { primeira: 10, ultima: 26 },
 } as const;
+
+/** Aba GRADE: blocos de 13 linhas por núcleo, a partir da 8, com 4 linhas do núcleo, 2 de cabeçalho e 7 turmas. */
+export const GRADE = { primeiroBloco: 8, linhasPorBloco: 13, primeiraTurma: 6, turmasPorBloco: 7, blocosNoModelo: 2 } as const;
 
 export type DivisaoDaAcao = "fim" | "meio" | "elaboracao";
 
@@ -66,6 +73,8 @@ export type DestinoDoFormulario =
   | { tipo: "extrato" }
   | { tipo: "bens" }
   | { tipo: "beneficiarios" }
+  | { tipo: "atividades" }
+  | { tipo: "objeto" }
   | { tipo: "dados" };
 
 export type CriticaDoFormulario = {
@@ -131,6 +140,12 @@ export type LinhaDeBeneficiado = {
   observacoes: string;
 };
 
+export type LinhaDaGrade = { turma: string; modalidade: string; alunos: number | null; dias: string; de: string; ate: string; equipe: string; observacoes: string };
+
+export type BlocoDoFormulario = { nucleo: string; endereco: string; responsavel: string; telefone: string; turmas: LinhaDaGrade[] };
+
+export type { LinhaDeEvento } from "./grade";
+
 export type BeneficiadosDoFormulario = {
   /** Os tipos de benefício que viram as colunas G a L. */
   colunas: string[];
@@ -160,6 +175,8 @@ export type FormularioLie = {
   recursosHumanos: LinhaDeRecursoHumano[];
   bens: LinhaDeBem[];
   beneficiados: BeneficiadosDoFormulario;
+  grade: BlocoDoFormulario[];
+  eventos: LinhaDeEvento[];
   /** Centavos. */
   totais: {
     receitas: number;
@@ -455,6 +472,49 @@ export function formularioLie(dados: DadosDoFormularioLie): FormularioLie {
     aviso("BENEFICIADOS", "Benefícios", `O formulário tem 6 colunas de benefício: ${foraDoFormulario.join(", ")} ${foraDoFormulario.length === 1 ? "fica" : "ficam"} de fora; anote nas observações.`, { tipo: "beneficiarios" });
   }
 
+  // ─── GRADE ───
+  const locais = estado.locais ?? [];
+  const blocos = gradePorNucleo(estado.turmas ?? [], locais);
+  const grade: BlocoDoFormulario[] = blocos.map(b => ({
+    nucleo: b.nucleo,
+    endereco: b.endereco,
+    responsavel: b.responsavel,
+    telefone: b.telefone,
+    turmas: b.turmas.map(t => ({
+      turma: t.nome,
+      modalidade: t.modalidade ?? "",
+      alunos: t.alunos,
+      dias: rotuloDosDias(t.dias),
+      de: hora(t.hora_inicio),
+      ate: hora(t.hora_fim),
+      equipe: t.equipe ?? "",
+      observacoes: t.observacoes ?? "",
+    })),
+  }));
+  if (!grade.length) aviso("GRADE", "Turmas", "Nenhuma turma na grade semanal: a aba sai com o cabeçalho.", { tipo: "atividades" });
+  for (const b of blocos) {
+    if (!b.local) {
+      corrigir("GRADE", "Núcleo", `${b.turmas.length === 1 ? "1 turma está" : `${b.turmas.length} turmas estão`} sem núcleo e ${b.turmas.length === 1 ? "sai" : "saem"} num bloco sem nome.`, { tipo: "atividades" });
+      continue;
+    }
+    const falta = [!b.local.endereco?.trim() ? "o endereço" : null, !b.responsavel ? "o responsável" : null, !b.telefone ? "o telefone" : null].filter(Boolean);
+    if (falta.length) aviso("GRADE", "Núcleo", `${b.nucleo}: falta${falta.length > 1 ? "m" : ""} ${falta.join(", ").replace(/, ([^,]*)$/, " e $1")} do núcleo; preencha no local, na aba Objeto.`, { tipo: "objeto" });
+    for (const t of b.turmas) {
+      const faltas = faltasDaTurma(t).filter(f => f !== "o núcleo");
+      if (faltas.length) aviso("GRADE", "Turma", `${b.nucleo}, ${t.nome}: falta${faltas.length > 1 ? "m" : ""} ${faltas.join(", ").replace(/, ([^,]*)$/, " e $1")}.`, { tipo: "atividades" });
+    }
+  }
+
+  // ─── EVENTOS ───
+  const eventos = eventosDasAtividades(estado.atividades ?? [], locais);
+  if (!eventos.length) {
+    aviso("EVENTOS", "Eventos", "Nenhuma atividade realizada ou prevista: a aba sai com o cabeçalho.", { tipo: "atividades" });
+  } else {
+    aviso("EVENTOS", "Eventos", "Os eventos vêm da aba Atividades: tire do arquivo o que não é evento (as aulas regulares vão na GRADE).", { tipo: "atividades" });
+    const semPrevistos = eventos.filter(e => e.previstos === null).length;
+    if (semPrevistos) aviso("EVENTOS", "Nº beneficiários previstos", `${semPrevistos === 1 ? "1 evento está" : `${semPrevistos} eventos estão`} sem o público previsto (a meta prevista da atividade).`, { tipo: "atividades" });
+  }
+
   // ─── A EXECUTAR e abas à mão ───
   if (etapa === "parcial") {
     const saldoAExecutar = acoes.reduce((s, a) => s + Math.max(a.programado - a.executado, 0), 0);
@@ -488,6 +548,8 @@ export function formularioLie(dados: DadosDoFormularioLie): FormularioLie {
     recursosHumanos,
     bens,
     beneficiados,
+    grade,
+    eventos,
     totais: {
       receitas: totalReceitas,
       despesas: totalDespesas,

@@ -272,6 +272,50 @@ export class Planilha {
     this.depois = deslocaAtributo(this.depois);
   }
 
+  /**
+   * Repete as linhas `de` a `ate` (valores, estilos, mesclagens e fórmulas
+   * relativas) na posição `antesDe`, como um bloco que se copia e se insere
+   * no Excel. O que estava em `antesDe` e abaixo desce.
+   */
+  copiarLinhas(de: number, ate: number, antesDe: number): void {
+    const n = ate - de + 1;
+    if (n <= 0) return;
+    // Cópia antes de inserir: inserirLinhas desloca as linhas e as fórmulas no lugar.
+    const origem = Array.from({ length: n }, (_, i) => {
+      const l = this.linhas.get(de + i);
+      return l && { attrs: l.attrs, celulas: l.celulas.map(c => ({ ...c })) };
+    });
+    const mesclagens = this.merges.filter(m => {
+      const [a, b] = m.split(":");
+      const [la, lb] = [lerReferencia(a).linha, lerReferencia(b ?? a).linha];
+      return la >= de && lb <= ate;
+    });
+    this.inserirLinhas(antesDe, n, de);
+    const novas = (m: string) => {
+      const [a, b] = m.split(":");
+      const [la, lb] = [lerReferencia(a).linha, lerReferencia(b ?? a).linha];
+      return la >= antesDe && lb < antesDe + n;
+    };
+    for (let i = 0; i < n; i++) {
+      const r = antesDe + i;
+      const base = origem[i];
+      this.linhas.set(r, {
+        r,
+        attrs: base?.attrs ?? "",
+        celulas: (base?.celulas ?? []).map(c => ({
+          col: c.col, linha: r, attrs: c.attrs,
+          interno: c.interno.replace(/<f(\s[^>]*)?>([\s\S]*?)<\/f>/, (_, a = "", f: string) =>
+            `<f${a}>${escaparXml(copiarFormula(desescaparXml(f), r - (de + i)))}</f>`),
+        })),
+      });
+    }
+    const delta = antesDe - de;
+    this.merges = [
+      ...this.merges.filter(m => !novas(m)),
+      ...mesclagens.map(m => m.split(":").map(x => { const { col, linha } = lerReferencia(x); return referencia(col, linha + delta); }).join(":")),
+    ];
+  }
+
   /** Recalcula as fórmulas e guarda o valor em cada uma; o que não sabe calcular fica sem valor guardado. */
   recalcular(): void {
     const memo = new Map<string, number>();
@@ -410,9 +454,25 @@ export class PastaDeTrabalho {
   /** Insere linhas na aba e desloca a área de impressão dela. */
   inserirLinhas(nome: string, antesDe: number, n: number, modelo: number): void {
     if (n <= 0) return;
+    this.aba(nome).planilha.inserirLinhas(antesDe, n, modelo);
+    this.deslocarNomes(nome, antesDe, n);
+  }
+
+  /** Repete um bloco de linhas da aba (ver Planilha.copiarLinhas) e desloca a área de impressão. */
+  copiarLinhas(nome: string, de: number, ate: number, antesDe: number): void {
+    if (ate < de) return;
+    this.aba(nome).planilha.copiarLinhas(de, ate, antesDe);
+    this.deslocarNomes(nome, antesDe, ate - de + 1);
+  }
+
+  private aba(nome: string) {
     const p = this.planilhas.get(nome);
     if (!p) throw new Error(`O modelo não tem a aba ${nome}.`);
-    p.planilha.inserirLinhas(antesDe, n, modelo);
+    return p;
+  }
+
+  private deslocarNomes(nome: string, antesDe: number, n: number): void {
+    const p = this.aba(nome);
     this.workbook = this.workbook.replace(/<definedName\b([^>]*)>([\s\S]*?)<\/definedName>/g, (todo, attrs: string, ref: string) => {
       const local = /\slocalSheetId="(\d+)"/.exec(attrs)?.[1];
       if (local === undefined || Number(local) !== p.indice) return todo;
