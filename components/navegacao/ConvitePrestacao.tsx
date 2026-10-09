@@ -59,7 +59,7 @@ export function ConvitePrestacao({ organizationId, podeAtivar, onClose, onAtivad
 
   const passos: PassoIlustrado[] = [
     {
-      imagem: { src: "/email/tamandua-celular.png", largura: 300, altura: 341, alt: "Tamanduá do Jards mostrando a novidade no celular" },
+      imagem: { src: "/illustrations/tamandua-contador.png", largura: 900, altura: 547, alt: "Tamanduá do Jards fazendo as contas na mesa, com a calculadora e os papéis" },
       rotulo: "Novidade · primeira versão",
       titulo: "A prestação de contas chegou ao Jards",
       conteudo: (
