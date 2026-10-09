@@ -149,7 +149,7 @@
     // Faixa escura e compacta, centralizada no rodapé: texto pequeno à esquerda, escolha à direita.
     ".jc-aviso{position:fixed;left:16px;right:16px;bottom:16px;z-index:90;max-width:920px;margin:0 auto;box-sizing:border-box;" +
     "display:flex;align-items:center;gap:12px 20px;padding:10px 10px 10px 18px;" +
-    "background:rgba(13,13,13,.92);color:#fff;border:1px solid rgba(255,255,255,.08);border-radius:8px;box-shadow:0 12px 32px rgba(13,13,13,.22);" +
+    "background:rgba(40,37,37,.94);color:#fff;border:1px solid rgba(255,255,255,.08);border-radius:8px;box-shadow:0 12px 32px rgba(40,37,37,.22);" +
     "-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);" +
     "font-family:inherit;font-size:12px;font-weight:400;line-height:1.45;text-align:left;animation:jc-entra .22s ease-out}" +
     ".jc-texto{flex:1;min-width:0}" +
