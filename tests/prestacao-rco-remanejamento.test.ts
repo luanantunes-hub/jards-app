@@ -51,6 +51,9 @@ test("RCO: título da etapa, dados, objeto, resultados, metas e considerações 
   const comeca = (prefixo: string) => blocos.find(b => b.startsWith(prefixo));
   assert.equal(comeca("PRESTAÇÃO DE CONTAS"), "PRESTAÇÃO DE CONTAS PARCIAL");
   assert.equal(comeca("PROCESSO Nº:"), "PROCESSO Nº: [preencher]");
+  // Com o processo no SEI (P8.8), o campo sai preenchido.
+  const comProcesso = await documento(await gravarRco(modelo("modelo-rco-2026.docx"), rascunho, { etapa: "parcial", projeto: "Futebol na Escola", sli: "2600123", proponente: "Associação Esportiva", cnpj: null, processo: "71000.012345/2026-11" }));
+  assert.equal(comProcesso.blocos.find(b => b.startsWith("PROCESSO Nº:")), "PROCESSO Nº: 71000.012345/2026-11");
   assert.equal(comeca("SLIE/SLI:"), "SLIE/SLI: 2600123");
   assert.equal(comeca("PROPONENTE:"), "PROPONENTE: Associação Esportiva");
   assert.equal(comeca("CNPJ:"), "CNPJ: 11.222.333/0001-81");
@@ -153,6 +156,9 @@ test("remanejamento: grava os blocos sobre o modelo e limpa os que sobram", asyn
   const pasta = await PastaDeTrabalho.abrir(await gravarPlanilhaDeRemanejamento(modelo("planilha-remanejamento-readequacao.xlsx"), p));
   const a = pasta.planilha("Remanejamento-Readequação");
   assert.equal(a.ler("B1"), "Projeto: Futebol na Escola\nProcesso nº: ");
+  // Com o processo no SEI (P8.8), o cabeçalho sai completo.
+  const comProcesso = await PastaDeTrabalho.abrir(await gravarPlanilhaDeRemanejamento(modelo("planilha-remanejamento-readequacao.xlsx"), { ...p, processo: "71000.012345/2026-11" }));
+  assert.equal(comProcesso.planilha("Remanejamento-Readequação").ler("B1"), "Projeto: Futebol na Escola\nProcesso nº: 71000.012345/2026-11");
   assert.deepEqual(["B7", "C7", "F7", "G7", "H7", "I7", "J7", "J8", "J11", "J14", "J15"].map(c => a.ler(c)), ["1.1", "Bola oficial", "Unidade", 10, 1, 480, 4_800, 2_400, 2_550, 4_950, 150]);
   assert.equal(a.ler("K7"), "Mais bolas, menos cones.");
   assert.deepEqual(["B18", "J18", "J19", "J22", "J25", "J26"].map(c => a.ler(c)), ["1.2", 200, 50, 0, 50, -150]);

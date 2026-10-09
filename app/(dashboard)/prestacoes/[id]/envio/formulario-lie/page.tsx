@@ -32,7 +32,7 @@ const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase t
 const reais = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const LINK = "inline-flex items-center gap-1 rounded text-[#684DB0] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 
-type Prestacao = { titulo: string; identificador_oficial: string | null; proponente: { nome: string } | null };
+type Prestacao = { titulo: string; identificador_oficial: string | null; numero_processo: string | null; proponente: { nome: string } | null };
 
 const ETAPAS: { value: EtapaDoFormulario; label: string }[] = [
   { value: "parcial", label: "Prestação de contas parcial (PCP)" },
@@ -198,7 +198,7 @@ export default function FormularioLiePage() {
   useEffect(() => {
     let ativo = true;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
-    (supabase as any).from("prestacoes_contas").select("titulo, identificador_oficial, proponente:proponente_id(nome)").eq("id", id).maybeSingle()
+    (supabase as any).from("prestacoes_contas").select("titulo, identificador_oficial, numero_processo, proponente:proponente_id(nome)").eq("id", id).maybeSingle()
       .then(({ data, error }: { data: Prestacao | null; error: { message: string } | null }) => {
         if (!ativo) return;
         if (error) { setErroAoCarregar(mensagemErroPrestacao(error, "Não foi possível carregar a prestação")); return; }
@@ -221,7 +221,7 @@ export default function FormularioLiePage() {
     return formularioLie({
       estado: dados.estado,
       etapa,
-      prestacao: { titulo: prestacao.titulo, sli: prestacao.identificador_oficial, proponente: prestacao.proponente?.nome ?? null },
+      prestacao: { titulo: prestacao.titulo, sli: prestacao.identificador_oficial, proponente: prestacao.proponente?.nome ?? null, processo: prestacao.numero_processo },
       contas: dados.contas,
     });
   }, [dados, prestacao, etapa]);
@@ -233,7 +233,7 @@ export default function FormularioLiePage() {
   const pedeGradeRh = regimePedeGradeRh(dados?.regime);
   const cargos = useMemo(() => dados?.estado.cargos ?? [], [dados]);
   const criticasRh = useMemo(
-    () => (prestacao ? criticasDaGradeRh(cargos, { sli: prestacao.identificador_oficial, proponente: prestacao.proponente?.nome ?? null }) : []),
+    () => (prestacao ? criticasDaGradeRh(cargos, { sli: prestacao.identificador_oficial, proponente: prestacao.proponente?.nome ?? null, processo: prestacao.numero_processo }) : []),
     [cargos, prestacao],
   );
 
@@ -246,7 +246,7 @@ export default function FormularioLiePage() {
       const resposta = await fetch(MODELO_GRADE_RH);
       if (!resposta.ok) throw new Error("Não foi possível abrir o modelo da grade de RH.");
       const arquivo = await gravarGradeRh(new Uint8Array(await resposta.arrayBuffer()), {
-        projeto: prestacao.titulo, proponente: prestacao.proponente?.nome ?? "", sli: prestacao.identificador_oficial ?? "", cargos,
+        projeto: prestacao.titulo, proponente: prestacao.proponente?.nome ?? "", sli: prestacao.identificador_oficial ?? "", processo: prestacao.numero_processo ?? "", cargos,
       });
       baixar(new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }), nomeDaGradeRh(prestacao.identificador_oficial));
     } catch (e) {

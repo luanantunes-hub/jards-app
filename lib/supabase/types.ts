@@ -654,6 +654,9 @@ export interface PrestacaoContas {
   /** LIE (P8.4): nível da manifestação esportiva e validade da CRC do proponente. */
   manifestacao_esportiva?: ManifestacaoEsportiva | null;
   crc_validade?: string | null;
+  /** P8.8: número do processo no órgão (SEI na LIE) e o texto da lei no carimbo das notas. */
+  numero_processo?: string | null;
+  carimbo_lei?: string | null;
   data_aprovacao?: string | null;
   data_liberacao?: string | null;
   data_termo?: string | null;
@@ -755,6 +758,8 @@ export interface PrestacaoComprovante {
   canal?: "equipe" | "proponente" | "email";
   /** Paga como contrapartida, em dinheiro ou por doação (P7.2); vazio é o recurso do projeto. */
   contrapartida?: "financeira" | "doacao" | null;
+  /** Data do atesto de recebimento no verso da nota (LIE, P8.8). */
+  atestado_em?: string | null;
   created_at: string;
 }
 // ─── Prestação de contas — Phase 3 ──────────────────────────────────────────

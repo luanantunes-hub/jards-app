@@ -158,6 +158,8 @@ export type CabecalhoDoFormulario = {
   projeto: string;
   sli: string;
   proponente: string;
+  /** Número do processo no SEI; vazio quando a prestação não tem. */
+  processo: string;
   /** "dd/mm/aaaa a dd/mm/aaaa", do Termo (ou do início da execução) ao fim da vigência. */
   vigencia: string;
   captado: number;
@@ -201,7 +203,8 @@ export type ContaDoFormulario = {
 export type DadosDoFormularioLie = {
   estado: EstadoDaPrestacao;
   etapa: EtapaDoFormulario;
-  prestacao: { titulo: string; sli: string | null; proponente: string | null };
+  /** O processo no SEI (P8.8) vai no "Nº do processo" de EXECUTADO, GRADE, EVENTOS e A EXECUTAR. */
+  prestacao: { titulo: string; sli: string | null; proponente: string | null; processo?: string | null };
   contas?: readonly ContaDoFormulario[];
 };
 
@@ -317,6 +320,7 @@ export function formularioLie(dados: DadosDoFormularioLie): FormularioLie {
     projeto: dados.prestacao.titulo.trim(),
     sli: (dados.prestacao.sli ?? "").trim(),
     proponente: (dados.prestacao.proponente ?? "").trim(),
+    processo: (dados.prestacao.processo ?? "").trim(),
     vigencia: inicio || fim ? `${dataBr(inicio) || "—"} a ${dataBr(fim) || "—"}` : "",
     captado: aportes.reduce((s, l) => s + centavos(l.valor), 0),
     rendimentos: rendimentos.reduce((s, l) => s + centavos(l.valor), 0),
@@ -324,7 +328,7 @@ export function formularioLie(dados: DadosDoFormularioLie): FormularioLie {
   if (!cabecalho.sli) corrigir(null, "Nº SLI", "Informe o número do projeto no SLI nos dados oficiais da prestação: ele vai no cabeçalho das abas.", { tipo: "dados" });
   if (!cabecalho.proponente) corrigir(null, "Proponente", "A prestação não tem proponente: o cabeçalho das abas sai sem o nome.", { tipo: "dados" });
   if (!inicio || !fim) aviso("EXECUTADO", "Período de vigência", "Informe a data do Termo e o fim da vigência nos dados da prestação: o período sai incompleto.", { tipo: "dados" });
-  aviso(null, "Nº do processo", "O número do processo no SEI não fica na prestação: preencha nas abas EXECUTADO, GRADE, EVENTOS e A EXECUTAR.");
+  if (!cabecalho.processo) aviso(null, "Nº do processo", "Informe o número do processo no SEI nos dados oficiais da prestação: ele vai nas abas EXECUTADO, GRADE, EVENTOS e A EXECUTAR.", { tipo: "dados" });
 
   // ─── Plano e execução ───
   const despesas = estado.despesas.filter(valida);

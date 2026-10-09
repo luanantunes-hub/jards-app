@@ -52,6 +52,7 @@ type Lidos = {
   recursos: PrestacaoRecurso[];
   devolucoes: DevolucaoDaLista[];
   identificadorOficial: string | null;
+  numeroProcesso: string | null;
 };
 type Editando =
   | { tipo: "diligencia"; linha: PrestacaoDiligencia | null; inicio?: { recebidaEm?: string; descricao?: string; responder?: boolean; preditiva?: boolean } }
@@ -131,7 +132,7 @@ export default function PosEnvioPage() {
       db.from("prestacao_glosas").select("*").eq("prestacao_id", id).order("created_at"),
       db.from("prestacao_recursos").select("*").eq("prestacao_id", id).order("protocolado_em", { ascending: false }),
       db.from("prestacao_devolucoes").select("id, situacao, valor_principal, valor_atualizado, vencimento, pago_em, valor_pago").eq("prestacao_id", id),
-      db.from("prestacoes_contas").select("identificador_oficial").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("identificador_oficial, numero_processo").eq("id", id).maybeSingle(),
     ]);
     const falha = dil.error ?? dec.error ?? glo.error ?? rec.error ?? dev.error ?? p.error;
     if (falha) return { lidos: null, erro: mensagemErroPrestacao(falha, "Não foi possível carregar o que veio depois do envio") };
@@ -144,6 +145,7 @@ export default function PosEnvioPage() {
         recursos: rec.data ?? [],
         devolucoes: dev.data ?? [],
         identificadorOficial: p.data?.identificador_oficial ?? null,
+        numeroProcesso: p.data?.numero_processo ?? null,
       },
     };
   }, [id, supabase]);
@@ -228,7 +230,7 @@ export default function PosEnvioPage() {
 
   async function gerarDevolucao(g: PrestacaoGlosa) {
     const decisao = g.decisao_id ? decisaoPorId.get(g.decisao_id) : null;
-    const { campos, erro: problema } = devolucaoDaGlosa(g, regime, decisao, lidos?.identificadorOficial, hoje);
+    const { campos, erro: problema } = devolucaoDaGlosa(g, regime, decisao, { identificador_oficial: lidos?.identificadorOficial, numero_processo: lidos?.numeroProcesso }, hoje);
     if (problema) { setErro(problema); return; }
     setGerando(g.id);
     setErro("");

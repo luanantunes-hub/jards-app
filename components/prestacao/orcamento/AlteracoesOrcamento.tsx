@@ -36,6 +36,7 @@ function hojeEmBrasilia(): string {
 export type PrestacaoDaAlteracao = {
   titulo: string;
   identificador_oficial: string | null;
+  numero_processo?: string | null;
   data_liberacao: string | null;
   data_termo?: string | null;
   data_fim_execucao: string | null;
@@ -127,7 +128,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
       fetch(`/modelos/${modeloDaPlanilha.replace(/\.xls$/i, ".xlsx")}`),
     ]);
     if (!resposta.ok) throw new Error("Não foi possível abrir o modelo da planilha.");
-    const planilha = gravacao.planilhaDeRemanejamento({ estado, projeto: prestacao?.titulo ?? "Projeto", alteracao: alt });
+    const planilha = gravacao.planilhaDeRemanejamento({ estado, projeto: prestacao?.titulo ?? "Projeto", processo: prestacao?.numero_processo, alteracao: alt });
     const arquivo = await gravacao.gravarPlanilhaDeRemanejamento(new Uint8Array(await resposta.arrayBuffer()), planilha);
     const url = URL.createObjectURL(new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" }));
     const a = document.createElement("a");

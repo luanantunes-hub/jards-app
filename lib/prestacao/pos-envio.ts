@@ -6,7 +6,7 @@
 // análise do órgão, a conferência dos formulários e os campos da devolução
 // que nasce de uma glosa. Sem React e sem Supabase.
 
-import { competenciaDe, guiasDoRegime, indiceDoMotivo, referenciaDaGuia } from "./devolucoes";
+import { competenciaDe, guiasDoRegime, indiceDoMotivo, referenciaDaPrestacao } from "./devolucoes";
 import { calcularVencimento } from "./prazos";
 import { somarDias } from "./calendario";
 import { definida, type RegimeNormativo } from "./regimes";
@@ -142,7 +142,8 @@ export function devolucaoDaGlosa(
   glosa: Pick<PrestacaoGlosa, "descricao" | "valor" | "data_base">,
   regime: RegimeNormativo | null | undefined,
   decisao: Pick<PrestacaoDecisao, "prazo_devolucao"> | null | undefined,
-  identificador: string | null | undefined,
+  /** O identificador oficial e, na LIE, o processo (P8.8): a referência da guia sai de um deles. */
+  prestacao: { identificador_oficial?: string | null; numero_processo?: string | null } | null | undefined,
   hoje: string,
 ): { campos: DevolucaoDaGlosa; erro: string | null } {
   const indice = indiceDoMotivo(regime, "glosa");
@@ -158,7 +159,7 @@ export function devolucaoDaGlosa(
     gru_unidade_gestora: guia?.unidadeGestora ?? null,
     gru_gestao: guia?.gestao ?? null,
     gru_codigo: guia?.codigo ?? null,
-    gru_referencia: referenciaDaGuia(identificador),
+    gru_referencia: referenciaDaPrestacao(regime, prestacao),
   };
   const erro = indice !== "nenhum" && !glosa.data_base ? "Informe a data-base da glosa: o regime atualiza o valor devolvido a partir dela." : null;
   return { campos, erro };

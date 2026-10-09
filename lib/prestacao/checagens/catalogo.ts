@@ -31,7 +31,7 @@ export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resol
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao" | "beneficiarios";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao" | "beneficiarios" | "carimbos";
 
 type DoCatalogo = {
   titulo: string;
@@ -116,6 +116,9 @@ export const CATALOGO_CHECAGENS = {
   RH_SEM_GRADE: { titulo: "Item de RH sem cargo na grade", grupo: "orcamento", resultado: "nao_calculavel", destino: "atividades" },
   RH_ACIMA_DA_GRADE: { titulo: "Mais pessoas pagas que a grade de RH", grupo: "pagamento", resultado: "revisar", destino: "atividades" },
   RH_FORMA_DE_CONTRATACAO: { titulo: "Pagamento fora da forma de contratação", grupo: "pagamento", resultado: "revisar", destino: "atividades", regras: ["contratacao_de_pessoal"] },
+  // Carimbo e atesto das notas (P8.8).
+  ATESTO_AUSENTE: { titulo: "Notas sem atesto de recebimento", grupo: "despesa", resultado: "nao_calculavel", destino: "carimbos", regras: ["carimbo_e_atesto"] },
+  ATESTO_FORA_DA_DATA: { titulo: "Atesto fora da data", grupo: "despesa", resultado: "revisar", destino: "carimbos", regras: ["carimbo_e_atesto"] },
   // Orçamento (P1.6, P1.7)
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
@@ -196,7 +199,7 @@ export type Achado = {
 
 export type DespesaDoEstado = DespesaParaChecar &
   Pick<PrestacaoComprovante, "id" | "nome_arquivo" | "status" | "no_id"> &
-  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia" | "serie" | "contrapartida">>;
+  Partial<Pick<PrestacaoComprovante, "justificativa" | "valor_liquido" | "motivos_ia" | "serie" | "contrapartida" | "atestado_em">>;
 
 export type ItemDoEstado = { id: string; nome: string; cnaes: readonly string[]; cnaesDe: { id: string; nome: string } | null };
 

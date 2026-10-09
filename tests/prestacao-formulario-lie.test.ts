@@ -99,7 +99,7 @@ test("ações numeradas como no plano, receitas do extrato e despesas por macro 
     ["1 – Locação de Espaços", 800_000], ["2 – Material Esportivo", 480_000], ["M1 – Recursos Humanos - Atividade Meio", 300_000],
     ["Elaboração e captação de recursos", 300_000], ["Despesas sem item do orçamento", 20_000],
   ]);
-  assert.deepEqual(f.cabecalho, { projeto: "Futebol na Escola", sli: "2600123", proponente: "Associação Esportiva", vigencia: "01/03/2026 a 31/10/2026", captado: 5_000_000, rendimentos: 23_000 });
+  assert.deepEqual(f.cabecalho, { projeto: "Futebol na Escola", sli: "2600123", proponente: "Associação Esportiva", processo: "", vigencia: "01/03/2026 a 31/10/2026", captado: 5_000_000, rendimentos: 23_000 });
   assert.equal(f.totais.receitas, 5_023_000);
   assert.equal(f.totais.despesas, 1_900_000);
   assert.equal(f.totais.saldo, 3_123_000);

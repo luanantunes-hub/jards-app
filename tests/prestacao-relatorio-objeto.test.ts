@@ -137,6 +137,9 @@ test("RCO da LIE: dados do projeto, metas com instrumentos, alterações e consi
   assert.deepEqual(r.secoes.map(s => s.id), ["dados", "objeto", "resultados", "alteracoes", "locais", "metas", "documentos", "aplicacao", "consideracoes", "autenticacao"]);
   const s = porId(r.secoes);
   assert.deepEqual(s.dados.tabela!.linhas.map(l => l.map(texto).join(": ")), ["Processo nº: [número do processo no SEI]", "SLIE/SLI: [número do projeto no SLI]", "Projeto: Escolinha (teste)", "Proponente: Instituto X", "CNPJ: 11222333000181"]);
+  // Com o processo nos dados oficiais (P8.8), a lacuna sai.
+  const comProcesso = rascunhoDoRelatorio(dados({ regime: LIE, estado: lie, prestacao: { titulo: "Escolinha (teste)", identificador_oficial: "2600123", numero_processo: "71000.012345/2026-11", proponente: { nome: "Instituto X", cnpj: null } } }));
+  assert.equal(texto(porId(comProcesso.secoes).dados.tabela!.linhas[0][1]), "71000.012345/2026-11");
   assert.deepEqual(s.alteracoes.paragrafos.map(texto), ["Alteração nº 1 (remanejamento), aprovada em 10/05/2026. Troca de fornecedor de luz."], "o rascunho não entra");
   assert.deepEqual(s.metas.tabela!.linhas.map(l => l.map(texto).join(" | ")), [
     "Oficinas | oficinas | 6 | 6 | 100% | 2 evidências (foto, lista de presença)",

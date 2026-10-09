@@ -32,6 +32,9 @@ const CABECALHOS: Record<string, { projeto: string; sli: string; proponente: str
   DIÁRIAS: { projeto: "A4", sli: "J4", proponente: "A5" },
 };
 
+/** Onde vai o número do processo no SEI (P8.8). */
+const PROCESSO: Record<string, string> = { EXECUTADO: "E5", GRADE: "A6", EVENTOS: "A6", "A EXECUTAR": "A5" };
+
 function marcar(p: Planilha, ref: string, marcado: boolean) {
   const texto = String(p.ler(ref) ?? "");
   p.escrever(ref, texto.replace(/\(\s*X?\s*\)/i, marcado ? "(X)" : "(  )"));
@@ -54,6 +57,7 @@ export async function gravarFormularioLie(modelo: Uint8Array, f: FormularioLie):
     p.completar(refs.sli, c.sli);
     p.completar(refs.proponente, c.proponente);
   }
+  for (const [aba, ref] of Object.entries(PROCESSO)) pasta.planilha(aba).completar(ref, c.processo);
   for (const [aba, parcial, final] of MARCADORES) {
     const p = pasta.planilha(aba);
     marcar(p, parcial, f.etapa === "parcial");

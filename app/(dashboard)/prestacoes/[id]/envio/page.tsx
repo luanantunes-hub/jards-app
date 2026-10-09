@@ -9,7 +9,7 @@
 import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Package, Paperclip, Receipt, RefreshCw, Send, Trash2, Undo2 } from "lucide-react";
+import { AlertCircle, ArrowRight, CheckCircle2, Circle, FileSpreadsheet, FileText, MinusCircle, Package, Paperclip, Receipt, RefreshCw, Send, Stamp, Trash2, Undo2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -27,6 +27,7 @@ import {
   type EtapaEnvio,
   type LinhaDoChecklist,
 } from "@/lib/prestacao/envio";
+import { regimePedeCarimbo } from "@/lib/prestacao/carimbo";
 import { definida } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { verificarAgora } from "@/lib/prestacao/verificar-cliente";
@@ -47,6 +48,7 @@ const ABAS: Record<DestinoDoEnvio, { rotulo: string; caminho: string }> = {
   bens: { rotulo: "Bens", caminho: "/bens" },
   divulgacao: { rotulo: "Divulgação", caminho: "/divulgacao" },
   beneficiarios: { rotulo: "Beneficiários", caminho: "/beneficiarios" },
+  carimbos: { rotulo: "Carimbo e atesto", caminho: "/envio/carimbos" },
   pendencias: { rotulo: "Pendências", caminho: "/pendencias" },
   devolucoes: { rotulo: "Devoluções", caminho: "/envio/devolucoes" },
   pos_envio: { rotulo: "Após o envio", caminho: "/pos-envio" },
@@ -393,6 +395,11 @@ export default function EnvioPage() {
             {definida(dados.regime.envio)?.modelos.some(m => m.codigo === "formulario_pcp_pcf") && (
               <Link href={`/prestacoes/${id}/envio/formulario-lie${checklist?.etapa === "parcial" ? "?etapa=parcial" : ""}`} className={BOTAO} style={BORDA}>
                 <FileSpreadsheet size={12} aria-hidden /> Formulário PCP/PCF
+              </Link>
+            )}
+            {regimePedeCarimbo(dados.regime) && (
+              <Link href={`/prestacoes/${id}/envio/carimbos`} className={BOTAO} style={BORDA}>
+                <Stamp size={12} aria-hidden /> Carimbo e atesto
               </Link>
             )}
             <Link href={`/prestacoes/${id}/envio/devolucoes`} className={BOTAO} style={BORDA}>

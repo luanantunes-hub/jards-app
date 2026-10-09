@@ -220,7 +220,7 @@ export type CriticaDaGradeRh = { tipo: "corrigir" | "aviso"; campo: string; mens
 const juntar = (itens: readonly string[]) => (itens.length > 1 ? `${itens.slice(0, -1).join(", ")} e ${itens[itens.length - 1]}` : itens[0] ?? "");
 
 /** O que conferir antes de mandar a grade de RH: cargo incompleto, horário ilegível, carga que não bate. */
-export function criticasDaGradeRh(cargos: readonly CargoDaGrade[], dados: { sli?: string | null; proponente?: string | null } = {}): CriticaDaGradeRh[] {
+export function criticasDaGradeRh(cargos: readonly CargoDaGrade[], dados: { sli?: string | null; proponente?: string | null; processo?: string | null } = {}): CriticaDaGradeRh[] {
   const criticas: CriticaDaGradeRh[] = [];
   if (!dados.sli?.trim()) criticas.push({ tipo: "corrigir", campo: "Nº SLI", mensagem: "A prestação não tem o número do SLI: o cabeçalho sai sem ele." });
   if (!dados.proponente?.trim()) criticas.push({ tipo: "corrigir", campo: "Proponente", mensagem: "A prestação não tem proponente: o cabeçalho sai sem o nome." });
@@ -241,7 +241,7 @@ export function criticasDaGradeRh(cargos: readonly CargoDaGrade[], dados: { sli?
     }
     if (!c.no_id) criticas.push({ tipo: "aviso", campo: "Item do orçamento", mensagem: `${c.cargo} não está ligado a um item do orçamento: o Jards não confere quem foi pago no cargo.` });
   }
-  criticas.push({ tipo: "aviso", campo: "Nº do processo", mensagem: "O número do processo no SEI não fica na prestação: preencha no cabeçalho." });
+  if (!dados.processo?.trim()) criticas.push({ tipo: "aviso", campo: "Nº do processo", mensagem: "Informe o número do processo no SEI nos dados oficiais da prestação: ele vai no cabeçalho." });
   return criticas;
 }
 

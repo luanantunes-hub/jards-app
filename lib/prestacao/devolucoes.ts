@@ -69,6 +69,19 @@ export function referenciaDaGuia(identificador: string | null | undefined): stri
   return limpo || null;
 }
 
+/** O regime usa o número do processo como referência da GRU (a LIE: "número do processo, sem caracteres especiais"). */
+export function regimeUsaProcesso(regime: RegimeNormativo | null | undefined): boolean {
+  return guiasDoRegime(regime).some(g => /processo/i.test(g.referencia));
+}
+
+/** A referência da guia da prestação: o processo, quando o regime pede (P8.8); senão, o identificador oficial. */
+export function referenciaDaPrestacao(
+  regime: RegimeNormativo | null | undefined,
+  p: { identificador_oficial?: string | null; numero_processo?: string | null } | null | undefined,
+): string | null {
+  return referenciaDaGuia(regimeUsaProcesso(regime) ? p?.numero_processo : p?.identificador_oficial);
+}
+
 // ─── Poupança ───────────────────────────────────────────────────────────────
 
 function partes(iso: string): [number, number, number] {

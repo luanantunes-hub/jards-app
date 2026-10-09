@@ -3,13 +3,14 @@
 import { Dropdown } from "@/components/ui/Dropdown";
 import type { RegimePublicado } from "@/hooks/useRegimesPublicados";
 import { NIVEIS_ESPORTIVOS, regimePedeNivel, rotulosDoNivel } from "@/lib/prestacao/nivel-esportivo";
+import { regimeUsaProcesso } from "@/lib/prestacao/devolucoes";
 import { regraDoRegime } from "@/lib/prestacao/regimes";
 import type { ManifestacaoEsportiva, PrestacaoContas } from "@/lib/supabase/types";
 
 type Campos = Partial<Pick<PrestacaoContas,
   "regime_id" | "identificador_oficial" | "identificador_tipo" | "fonte_recurso"
   | "data_aprovacao" | "data_liberacao" | "data_termo" | "data_conclusao_objeto" | "data_envio"
-  | "manifestacao_esportiva" | "crc_validade">>;
+  | "manifestacao_esportiva" | "crc_validade" | "numero_processo">>;
 
 const MARCOS: { campo: keyof Campos; rotulo: string }[] = [
   { campo: "data_aprovacao", rotulo: "Aprovação" },
@@ -39,6 +40,8 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
   const pedeNivel = regimePedeNivel(atual);
   const rotulos = rotulosDoNivel(atual);
   const pedeCrc = pedeNivel && prestacao.manifestacao_esportiva === "excelencia" && Boolean(regraDoRegime(atual, "crc_excelencia"));
+  // LIE (P8.8): o processo no SEI é a referência da GRU e vai no cabeçalho dos formulários.
+  const pedeProcesso = regimeUsaProcesso(atual);
 
   function trocarRegime(regimeId: string) {
     if (!regimeId || regimeId === prestacao.regime_id) return;
@@ -106,6 +109,25 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
             />
           </label>
         </div>
+
+        {pedeProcesso && (
+          <label className="block">
+            <span className={ROTULO}>Nº do processo (SEI)</span>
+            <input
+              key={`processo-${prestacao.numero_processo ?? ""}`}
+              defaultValue={prestacao.numero_processo ?? ""}
+              disabled={!podeEditar}
+              maxLength={60}
+              placeholder="Ex.: 71000.012345/2026-11"
+              onBlur={e => {
+                const valor = e.target.value.trim() || null;
+                if (valor !== (prestacao.numero_processo ?? null)) onSalvar({ numero_processo: valor });
+              }}
+              className={CAMPO}
+            />
+            <span className="mt-1 block text-[0.5625rem] leading-4 text-black/35">Vai na referência da GRU e no cabeçalho do formulário PCP/PCF e da grade de RH.</span>
+          </label>
+        )}
 
         {pedeNivel && (
           <div className="grid grid-cols-2 gap-2">
