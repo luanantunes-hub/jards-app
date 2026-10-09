@@ -356,6 +356,10 @@ const auditoria: Avaliador = ctx => ({
     : "Anexe as demonstrações contábeis com o parecer conclusivo do auditor independente registrado no CRC.",
 });
 
+/** P9.3: na saúde, a relação de pagamentos, os rendimentos e as receitas e despesas saem das planilhas da saúde. */
+const daPlanilhaDaSaude = (oQue: string): Avaliador => ctx =>
+  ctx.regime?.area === "saude" ? { dica: `Gere ${oQue} em Envio, Planilhas da saúde, e anexe aqui o arquivo.` } : null;
+
 /** Documentos que os dados respondem, pelo código no regime. */
 const DOCUMENTOS: Record<string, Avaliador> = {
   relatorio_objeto: objeto,
@@ -383,6 +387,9 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   gru_ou_transferencia: recolhimento,
   gru: recolhimento,
   auditoria,
+  relacao_pagamentos: daPlanilhaDaSaude("a relação de pagamentos (Planilha II)"),
+  rendimentos: daPlanilhaDaSaude("o demonstrativo de rendimentos (Tabela 1)"),
+  receitas_despesas: daPlanilhaDaSaude("as receitas e despesas (informações compiladas)"),
 };
 
 /** Condições do sistema oficial que os dados respondem. */
