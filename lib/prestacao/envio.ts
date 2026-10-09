@@ -7,7 +7,7 @@
 // orientação, sem marcação.
 //
 // O que os dados respondem vem deles: metas comprovadas, evidências de
-// acessibilidade, peças com amostra, bens, despesas, extratos, saldo pelo último
+// acessibilidade, peças com amostra, bens, beneficiados, despesas, extratos, saldo pelo último
 // extrato, alterações em aberto, as verificações abertas por assunto e as guias
 // do saldo e dos rendimentos registradas em Devoluções (P4.4). O resto
 // a pessoa resolve: arquivo anexado, "pronto" (ou, na condição, "conferido") e,
@@ -185,6 +185,14 @@ const bens: Avaliador = (ctx, { obrigatorio }) => {
   return pronto(`${plural(cadastrados.length, "bem", "bens")} com destinação, sem pendência aberta.`);
 };
 
+const beneficiados: Avaliador = ctx => {
+  const lista = ctx.estado.beneficiarios ?? [];
+  if (lista.length === 0) return pendente("Cadastre a relação de beneficiados, com o sexo, a idade e os benefícios de cada um.", "beneficiarios");
+  const abertas = ctx.abertas(comDestino("beneficiarios"));
+  if (abertas) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} na relação de beneficiados.`, "beneficiarios");
+  return pronto(`${plural(lista.length, "beneficiado", "beneficiados")} na relação, sem pendência aberta.`);
+};
+
 const despesas: Avaliador = ctx => {
   const validas = despesasValidas(ctx);
   if (validas.length === 0) return pendente("Nenhuma despesa lançada.", "comprovantes");
@@ -315,6 +323,8 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   divulgacao: pecas,
   bens,
   equipamentos: bens,
+  beneficiados,
+  beneficiarios: beneficiados,
   comprovantes_despesa: despesas,
   documentos_fiscais: despesas,
   extratos,

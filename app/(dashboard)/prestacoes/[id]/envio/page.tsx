@@ -46,6 +46,7 @@ const ABAS: Record<DestinoDoEnvio, { rotulo: string; caminho: string }> = {
   distribuicao: { rotulo: "Distribuição", caminho: "/distribuicao" },
   bens: { rotulo: "Bens", caminho: "/bens" },
   divulgacao: { rotulo: "Divulgação", caminho: "/divulgacao" },
+  beneficiarios: { rotulo: "Beneficiários", caminho: "/beneficiarios" },
   pendencias: { rotulo: "Pendências", caminho: "/pendencias" },
   devolucoes: { rotulo: "Devoluções", caminho: "/envio/devolucoes" },
   pos_envio: { rotulo: "Após o envio", caminho: "/pos-envio" },

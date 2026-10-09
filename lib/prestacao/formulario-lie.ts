@@ -11,13 +11,16 @@
 //  * PAGAMENTOS: cada despesa paga, com o credor, o título de crédito e o cheque;
 //  * RECURSOS HUMANOS: as pessoas físicas e os RPAs, por pessoa;
 //  * A EXECUTAR (só na PCP): as macro ações com o valor orçado;
+//  * BENEFICIADOS: a relação de beneficiados (P8.5), em ordem alfabética, com
+//    os benefícios em colunas e os totais feminino e masculino;
 //  * BENS ADQUIRIDOS: os bens cadastrados.
-// BENEFICIADOS, GRADE, EVENTOS e DIÁRIAS saem com o cabeçalho e o marcador,
+// GRADE, EVENTOS e DIÁRIAS saem com o cabeçalho e o marcador,
 // para preencher à mão. As ações seguem a numeração do plano de trabalho: os
 // códigos do orçamento quando todos têm; senão, 1, 1.1… na atividade-fim e M1,
 // M1.1… na atividade-meio (instruções das abas). As críticas comparam as abas
 // entre si e com o extrato. Sem React e sem Supabase.
 
+import { colunasDeBeneficios, nomeComparavel, ordenarPorNome, resumoDosBeneficiados } from "./beneficiarios";
 import { ehDespesa } from "./despesas";
 import { formatarDocumento, limparDocumento } from "./fornecedores";
 import { itensDaArvore, montarArvore, type LinhaOrcamento } from "./orcamento";
@@ -39,7 +42,7 @@ export const ABAS_DO_FORMULARIO = [
 export type AbaDoFormulario = (typeof ABAS_DO_FORMULARIO)[number];
 
 /** Abas que o Jards não tem como preencher: saem com o cabeçalho e o marcador. */
-export const ABAS_A_MAO: readonly AbaDoFormulario[] = ["BENEFICIADOS", "GRADE", "EVENTOS", "DIÁRIAS"];
+export const ABAS_A_MAO: readonly AbaDoFormulario[] = ["GRADE", "EVENTOS", "DIÁRIAS"];
 
 /** Primeira linha de dados de cada aba no modelo e a última linha do bloco (a que fica antes do total). */
 export const BLOCOS = {
@@ -50,6 +53,7 @@ export const BLOCOS = {
   aExecutarFim: { primeira: 9, ultima: 23 },
   aExecutarMeio: { primeira: 28, ultima: 33 },
   bens: { primeira: 7, ultima: 32 },
+  beneficiados: { primeira: 8, ultima: 34 },
 } as const;
 
 export type DivisaoDaAcao = "fim" | "meio" | "elaboracao";
@@ -61,6 +65,7 @@ export type DestinoDoFormulario =
   | { tipo: "conciliacao" }
   | { tipo: "extrato" }
   | { tipo: "bens" }
+  | { tipo: "beneficiarios" }
   | { tipo: "dados" };
 
 export type CriticaDoFormulario = {
@@ -115,6 +120,25 @@ export type LinhaDeRecursoHumano = { nome: string; documento: string; funcao: st
 
 export type LinhaDeBem = { acao: string; item: string; origem: string; destinacao: string; data: string; valor: number };
 
+export type LinhaDeBeneficiado = {
+  modalidade: string;
+  nome: string;
+  endereco: string;
+  telefone: string;
+  idade: number | null;
+  /** Uma marca por coluna de benefício, na ordem de `colunas`. */
+  beneficios: boolean[];
+  observacoes: string;
+};
+
+export type BeneficiadosDoFormulario = {
+  /** Os tipos de benefício que viram as colunas G a L. */
+  colunas: string[];
+  linhas: LinhaDeBeneficiado[];
+  feminino: number;
+  masculino: number;
+};
+
 export type CabecalhoDoFormulario = {
   projeto: string;
   sli: string;
@@ -135,6 +159,7 @@ export type FormularioLie = {
   pagamentos: LinhaDePagamento[];
   recursosHumanos: LinhaDeRecursoHumano[];
   bens: LinhaDeBem[];
+  beneficiados: BeneficiadosDoFormulario;
   /** Centavos. */
   totais: {
     receitas: number;
@@ -398,6 +423,38 @@ export function formularioLie(dados: DadosDoFormularioLie): FormularioLie {
   });
   if (bens.length) aviso("BENS ADQUIRIDOS", "Localização", "A localização de cada bem fica para preencher.");
 
+  // ─── BENEFICIADOS ───
+  const listaDeBeneficiados = estado.beneficiarios ?? [];
+  const doResumo = resumoDosBeneficiados(listaDeBeneficiados);
+  const { colunas, foraDoFormulario } = colunasDeBeneficios(listaDeBeneficiados);
+  const chavesDasColunas = colunas.map(nomeComparavel);
+  const beneficiados: BeneficiadosDoFormulario = {
+    colunas,
+    linhas: ordenarPorNome(listaDeBeneficiados).map(b => {
+      const recebe = new Set(b.beneficios.map(nomeComparavel));
+      return {
+        modalidade: b.modalidade ?? "",
+        nome: b.nome,
+        endereco: b.endereco ?? "",
+        telefone: b.telefone ?? "",
+        idade: b.idade,
+        beneficios: chavesDasColunas.map(c => recebe.has(c)),
+        observacoes: b.observacoes ?? "",
+      };
+    }),
+    feminino: doResumo.feminino,
+    masculino: doResumo.masculino,
+  };
+  if (!listaDeBeneficiados.length) {
+    aviso("BENEFICIADOS", "Relação", "Nenhum beneficiado cadastrado: a aba sai com o cabeçalho e o marcador.", { tipo: "beneficiarios" });
+  }
+  if (doResumo.semSexo) {
+    corrigir("BENEFICIADOS", "Total por sexo", `${doResumo.semSexo === 1 ? "1 beneficiado está" : `${doResumo.semSexo} beneficiados estão`} sem o sexo: o total feminino e o masculino não somam os ${doResumo.total} listados.`, { tipo: "beneficiarios" });
+  }
+  if (foraDoFormulario.length) {
+    aviso("BENEFICIADOS", "Benefícios", `O formulário tem 6 colunas de benefício: ${foraDoFormulario.join(", ")} ${foraDoFormulario.length === 1 ? "fica" : "ficam"} de fora; anote nas observações.`, { tipo: "beneficiarios" });
+  }
+
   // ─── A EXECUTAR e abas à mão ───
   if (etapa === "parcial") {
     const saldoAExecutar = acoes.reduce((s, a) => s + Math.max(a.programado - a.executado, 0), 0);
@@ -430,6 +487,7 @@ export function formularioLie(dados: DadosDoFormularioLie): FormularioLie {
     pagamentos,
     recursosHumanos,
     bens,
+    beneficiados,
     totais: {
       receitas: totalReceitas,
       despesas: totalDespesas,

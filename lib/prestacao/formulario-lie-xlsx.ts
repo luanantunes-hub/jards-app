@@ -107,6 +107,30 @@ export async function gravarFormularioLie(modelo: Uint8Array, f: FormularioLie):
     });
   }
 
+  // BENEFICIADOS: as colunas G a L levam o tipo de benefício no lugar de "XXXX" e um X para quem recebe.
+  {
+    const b = BLOCOS.beneficiados;
+    const extra = garantir(pasta, "BENEFICIADOS", b, f.beneficiados.linhas.length);
+    const p = pasta.planilha("BENEFICIADOS");
+    const colunas = ["G", "H", "I", "J", "K", "L"];
+    colunas.forEach((c, i) => p.escrever(`${c}7`, f.beneficiados.colunas[i] ?? null));
+    f.beneficiados.linhas.forEach((x, i) => {
+      const r = b.primeira + i;
+      p.escrever(`A${r}`, i + 1);
+      p.escrever(`B${r}`, x.modalidade || null);
+      p.escrever(`C${r}`, x.nome);
+      p.escrever(`D${r}`, x.endereco || null);
+      p.escrever(`E${r}`, x.telefone || null);
+      p.escrever(`F${r}`, x.idade);
+      colunas.forEach((c, j) => p.escrever(`${c}${r}`, x.beneficios[j] ? "X" : null));
+      p.escrever(`M${r}`, x.observacoes || null);
+    });
+    if (f.beneficiados.linhas.length) {
+      p.completar(`A${b.ultima + 1 + extra}`, String(f.beneficiados.feminino));
+      p.completar(`A${b.ultima + 2 + extra}`, String(f.beneficiados.masculino));
+    }
+  }
+
   // RECURSOS HUMANOS
   {
     const b = BLOCOS.recursosHumanos;
