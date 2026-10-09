@@ -15,7 +15,8 @@ import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { BeneficiadoParaChecar } from "../beneficiarios";
 import type { TurmaDaGrade } from "../grade";
 import type { CargoDaGrade } from "../grade-rh";
-import type { ManifestacaoEsportiva, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoDevolucao, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
+import type { ProducaoDoCmd } from "../cmd";
+import type { ManifestacaoEsportiva, ModalidadeSaude, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoDevolucao, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
 export const SEVERIDADES = ["bloqueio", "alerta", "justificativa", "info"] as const;
@@ -169,6 +170,12 @@ export const CATALOGO_CHECAGENS = {
   PECA_MARCA_FALTANDO: { titulo: "Marca faltando na peça", grupo: "objeto", resultado: "nao_conforme", destino: "divulgacao", regras: ["marcas_em_todas_as_pecas", "selo_a_cada_insercao", "logotipo_do_ms", "bandeira", "onde_aplicar"], dimensao: "divulgacao" },
   PECA_MARCA_NO_DEFESO: { titulo: "Marca do Governo Federal no defeso", grupo: "objeto", resultado: "nao_conforme", destino: "divulgacao", dimensao: "divulgacao" },
   PECA_SEM_AMOSTRA: { titulo: "Peça sem amostra", grupo: "objeto", resultado: "nao_calculavel", destino: "divulgacao", regras: ["comprovacao"], dimensao: "divulgacao" },
+  // Produção no CMD e dado de saúde (P9.5).
+  CMD_SEM_PRODUCAO: { titulo: "Produção no CMD", grupo: "objeto", resultado: "nao_calculavel", destino: "objeto", regras: ["cmd"] },
+  CMD_DIFERE_DA_META: { titulo: "Meta diferente da produção no CMD", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["cmd"] },
+  CMD_FORA_DA_EXECUCAO: { titulo: "Produção no CMD fora da execução", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["cmd"] },
+  DADO_CLINICO_BENEFICIADO: { titulo: "Dado de saúde na relação de beneficiados", grupo: "objeto", resultado: "revisar", destino: "beneficiarios", regras: ["dados_de_pacientes"] },
+  DADO_CLINICO_EVIDENCIA: { titulo: "Documento clínico nas evidências", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["dados_de_pacientes"] },
   // Dados que faltam para calcular
   DATAS_DA_PRESTACAO: { titulo: "Datas da prestação", grupo: "prestacao", resultado: "nao_calculavel", destino: "visao_geral" },
   LIMITE_SEM_BASE: { titulo: "Limite sem base de cálculo", grupo: "prestacao", resultado: "nao_calculavel", destino: "extrato", dimensao: "fornecedores" },
@@ -261,6 +268,9 @@ export type EstadoDaPrestacao = {
   /** P9.4: guias de devolução e o último saldo informado de cada conta (pela importação do extrato). */
   devolucoes?: readonly DevolucaoDoEstado[];
   saldos?: readonly SaldoDaConta[];
+  /** P9.5: modalidade do projeto da saúde e a produção registrada no CMD. */
+  modalidadeSaude?: ModalidadeSaude | null;
+  producaoCmd?: readonly ProducaoDoCmd[];
   /** A conta vem junto para as planilhas por conta (P7.3). */
   lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */

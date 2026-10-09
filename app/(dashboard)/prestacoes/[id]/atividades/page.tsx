@@ -15,6 +15,8 @@ import { rotuloDoLocal } from "@/lib/prestacao/objeto";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { regraDoRegime } from "@/lib/prestacao/regimes";
 
 // Evidências da tabela do objeto (P3.2), ligadas à atividade.
 type AtividadeComEvidencias = PrestacaoAtividade & { evidencias: PrestacaoEvidencia[] };
@@ -58,6 +60,10 @@ export default function AtividadesPage() {
   const [metas, setMetas] = useState<Pick<PrestacaoMeta, "id" | "descricao">[]>([]);
   const [locais, setLocais] = useState<LocalDaAtividade[]>([]);
   const [execucao, setExecucao] = useState<{ data_inicio_execucao: string | null; data_fim_execucao: string | null }>({ data_inicio_execucao: null, data_fim_execucao: null });
+  // Saúde (P9.5): o modal da evidência avisa sobre dado de paciente.
+  const [regimeId, setRegimeId] = useState<string | null>(null);
+  const regimes = useRegimesPublicados();
+  const saude = Boolean(regraDoRegime(regimes.find(r => r.id === regimeId)?.regime ?? null, "dados_de_pacientes"));
   const [evidenciaAberta, setEvidenciaAberta] = useState<{ evidencia: PrestacaoEvidencia | null; atividade: AtividadeComEvidencias } | null>(null);
   const [loading, setLoading] = useState(true);
   const [form, setForm] = useState<FormState | null>(null);
@@ -90,11 +96,12 @@ export default function AtividadesPage() {
     const [{ data: ms }, { data: ls }, { data: prest }] = await Promise.all([
       (supabase as any).from("prestacao_metas").select("id, descricao").eq("prestacao_id", id).order("ordem").order("created_at"),
       (supabase as any).from("prestacao_locais").select("id, pais, uf, municipio, espaco, status, latitude, longitude").eq("prestacao_id", id).order("ordem").order("created_at"),
-      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
+      (supabase as any).from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id").eq("id", id).maybeSingle(),
     ]);
     setMetas(ms ?? []);
     setLocais(ls ?? []);
     setExecucao({ data_inicio_execucao: prest?.data_inicio_execucao ?? null, data_fim_execucao: prest?.data_fim_execucao ?? null });
+    setRegimeId(prest?.regime_id ?? null);
     setLoading(false);
   }, [id, supabase]);
 
@@ -398,6 +405,7 @@ export default function AtividadesPage() {
           metas={metas}
           locais={locais}
           execucao={execucao}
+          saude={saude}
           onClose={() => setEvidenciaAberta(null)}
           onSaved={() => { setEvidenciaAberta(null); fetchAll(); }}
         />

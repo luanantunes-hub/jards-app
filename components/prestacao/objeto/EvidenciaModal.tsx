@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { AlertTriangle, Link2, MapPin, Upload } from "lucide-react";
+import { AlertTriangle, Link2, MapPin, ShieldAlert, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
@@ -18,6 +18,7 @@ import {
   type TipoEvidencia,
 } from "@/lib/prestacao/evidencias";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
+import { descreverPistas, pistasDosTextos, textosDaEvidencia } from "@/lib/prestacao/dados-sensiveis";
 import { rotuloDoLocal } from "@/lib/prestacao/objeto";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoMeta } from "@/lib/supabase/types";
@@ -33,7 +34,7 @@ export type AtividadeParaEvidencia = AtividadeDoEstado & Pick<PrestacaoAtividade
  * atividade e local ela serve e os requisitos que atende. Da foto, a data e a
  * posição são lidas na hora e conferidas com a execução, a atividade e o local.
  */
-export function EvidenciaModal({ prestacaoId, organizationId, evidencia, inicial, atividades, metas, locais, execucao, onClose, onSaved }: {
+export function EvidenciaModal({ prestacaoId, organizationId, evidencia, inicial, atividades, metas, locais, execucao, saude = false, onClose, onSaved }: {
   prestacaoId: string;
   organizationId: string | null;
   evidencia: PrestacaoEvidencia | null;
@@ -43,6 +44,8 @@ export function EvidenciaModal({ prestacaoId, organizationId, evidencia, inicial
   metas: readonly Pick<PrestacaoMeta, "id" | "descricao">[];
   locais: readonly LocalDoEstado[];
   execucao: { data_inicio_execucao: string | null; data_fim_execucao: string | null };
+  /** Saúde (P9.5): dado de paciente é sensível; o modal avisa e confere o documento clínico. */
+  saude?: boolean;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -151,7 +154,9 @@ export function EvidenciaModal({ prestacaoId, organizationId, evidencia, inicial
     onSaved();
   }
 
-  const mostrarJustificativa = alertas.some(a => a.codigo !== "EVIDENCIA_SEM_VINCULO") || justificativa.trim().length > 0;
+  // Saúde (P9.5): o nome do arquivo ou a descrição com cara de prontuário, laudo ou CID.
+  const pistas = saude ? pistasDosTextos(textosDaEvidencia({ nome_arquivo: arquivo?.name ?? evidencia?.nome_arquivo ?? null, descricao }), { estrito: true }) : [];
+  const mostrarJustificativa = alertas.some(a => a.codigo !== "EVIDENCIA_SEM_VINCULO") || pistas.length > 0 || justificativa.trim().length > 0;
   const opcoesAtividade = [{ value: "", label: "Sem atividade" }, ...atividades.map(a => ({ value: a.id, label: a.titulo }))];
   const opcoesMeta = [{ value: "", label: "Sem meta" }, ...metas.map(m => ({ value: m.id, label: m.descricao }))];
   const opcoesLocal = [{ value: "", label: "Sem local" }, ...locais.map(l => ({ value: l.id, label: rotuloDoLocal(l) }))];
@@ -277,6 +282,17 @@ export function EvidenciaModal({ prestacaoId, organizationId, evidencia, inicial
           <span className={ROTULO}>Descrição (opcional)</span>
           <textarea value={descricao} onChange={e => setDescricao(e.target.value)} rows={2} maxLength={1000} placeholder="O que aparece e por que comprova" className={AREA} />
         </label>
+        {saude && (
+          <p className="flex items-start gap-2 text-[0.6875rem] leading-relaxed text-black/50 sm:col-span-2">
+            <ShieldAlert size={13} aria-hidden className="mt-0.5 shrink-0 text-black/40" />
+            Dado de paciente é sensível: prontuário, laudo e exame não entram aqui. Foto e lista de presença só com a autorização de quem aparece; depois da guarda, elas saem no descarte dos dados pessoais.
+          </p>
+        )}
+        {pistas.length > 0 && (
+          <p role="status" className="flex items-start gap-2 rounded border bg-white px-3 py-2 text-[0.6875rem] text-[#B07A14] sm:col-span-2" style={{ borderColor: "#B07A1447" }}>
+            <AlertTriangle size={13} className="mt-px shrink-0" aria-hidden /> Parece documento clínico ({descreverPistas(pistas)}): não envie documento de paciente, ou justifique se não é.
+          </p>
+        )}
         {alertas.length > 0 && (
           <ul className="space-y-1.5 sm:col-span-2" aria-label="Conferência da evidência">
             {alertas.map(a => (

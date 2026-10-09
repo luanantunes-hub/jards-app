@@ -18,6 +18,8 @@ import { DadosDoTransferegov } from "@/components/prestacao/DadosDoTransferegov"
 import { MesmaObra } from "@/components/prestacao/MesmaObra";
 import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
 import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais";
+import { DadosPessoaisDaPrestacao } from "@/components/prestacao/DadosPessoaisDaPrestacao";
+import { regraDoRegime } from "@/lib/prestacao/regimes";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import { avaliarProntidao, prazoDoSaldoEmAberto, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
 import { coberturaDaMeta } from "@/lib/prestacao/objeto";
@@ -271,6 +273,8 @@ export default function PrestacaoDetalhe() {
 
   // Prontidão e prazos (P1.9).
   const regime = regimes.find(r => r.id === prestacao.regime_id)?.regime ?? null;
+  // P9.5: na saúde, o cartão dos dados pessoais aparece desde o começo.
+  const saude = Boolean(regraDoRegime(regime, "dados_de_pacientes"));
   const hoje = new Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date());
   const prontidao = avaliarProntidao({
     regime,
@@ -629,6 +633,17 @@ export default function PrestacaoDetalhe() {
           <LinksDoPatrocinador prestacaoId={id} captacaoId={prestacao.captacao_id} projetoId={prestacao.projeto_id} podeEditar={permissoes.editar} />
           <ConvidadosDaPrestacao prestacaoId={id} podeEditar={permissoes.editar} />
           <CapturaPorEmail prestacaoId={id} podeEditar={permissoes.editar} />
+          {/* P9.5: guarda e descarte dos dados pessoais; na saúde sempre, nos outros regimes depois da final. */}
+          {(saude || envios?.some(e => e.etapa === "final") || prestacao.dados_pessoais_descartados_em) && (
+            <DadosPessoaisDaPrestacao
+              prestacao={prestacao}
+              regime={regime?.nome ?? null}
+              saude={saude}
+              envios={envios}
+              podeDecidir={permissoes.decidir}
+              onMudou={fetch}
+            />
+          )}
 
           {/* Histórico */}
           <div className="bg-white rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>

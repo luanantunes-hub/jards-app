@@ -19,6 +19,7 @@ import { despesasSemBem } from "./bens";
 import { faltasDaTurma } from "./grade";
 import { faltasDoCargo } from "./grade-rh";
 import { recolhimentoDoEncerramento } from "./devolucoes";
+import { registraCmd, resumoDoCmd } from "./cmd";
 import { coberturaDaMeta } from "./objeto";
 import { definida, type Fonte, type RegimeNormativo } from "./regimes";
 import type { Regra } from "./regimes/tipos";
@@ -360,6 +361,20 @@ const auditoria: Avaliador = ctx => ({
 const daPlanilhaDaSaude = (oQue: string): Avaliador => ctx =>
   ctx.regime?.area === "saude" ? { dica: `Gere ${oQue} em Envio, Planilhas da saúde, e anexe aqui o arquivo.` } : null;
 
+/** P9.5: as informações lançadas no CMD, pela produção registrada na aba Objeto; formação e pesquisa não registram. */
+const cmd: Avaliador = ctx => {
+  if (ctx.regime?.area !== "saude") return null;
+  if (!registraCmd(ctx.estado.modalidadeSaude)) {
+    return { situacao: "nao_se_aplica", detalhe: "Projeto de formação ou de pesquisa: não há produção médico-assistencial no CMD.", destino: null };
+  }
+  const producao = ctx.estado.producaoCmd ?? [];
+  if (producao.length === 0) return pendente("Registre na aba Objeto a produção lançada no CMD, por competência.", "objeto");
+  const abertas = ctx.abertas(codigo => codigo.startsWith("CMD_"));
+  if (abertas) return pendente(`${plural(abertas, "pendência aberta", "pendências abertas")} na produção do CMD.`, "objeto");
+  const resumo = resumoDoCmd(producao, ctx.estado.metas ?? []);
+  return pronto(`${resumo.total.toLocaleString("pt-BR")} ${resumo.total === 1 ? "registro" : "registros"} no CMD em ${plural(resumo.competencias.length, "competência", "competências")}; anexe aqui o relatório exportado do CMD.`);
+};
+
 /** Documentos que os dados respondem, pelo código no regime. */
 const DOCUMENTOS: Record<string, Avaliador> = {
   relatorio_objeto: objeto,
@@ -390,6 +405,8 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   relacao_pagamentos: daPlanilhaDaSaude("a relação de pagamentos (Planilha II)"),
   rendimentos: daPlanilhaDaSaude("o demonstrativo de rendimentos (Tabela 1)"),
   receitas_despesas: daPlanilhaDaSaude("as receitas e despesas (informações compiladas)"),
+  cmd,
+  producao: cmd,
 };
 
 /** Condições do sistema oficial que os dados respondem. */

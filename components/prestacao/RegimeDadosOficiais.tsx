@@ -4,13 +4,14 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import type { RegimePublicado } from "@/hooks/useRegimesPublicados";
 import { NIVEIS_ESPORTIVOS, regimePedeNivel, rotulosDoNivel } from "@/lib/prestacao/nivel-esportivo";
 import { regimeUsaProcesso } from "@/lib/prestacao/devolucoes";
+import { MODALIDADES_SAUDE } from "@/lib/prestacao/cmd";
 import { regraDoRegime, type RegimeNormativo } from "@/lib/prestacao/regimes";
-import type { ManifestacaoEsportiva, PrestacaoContas } from "@/lib/supabase/types";
+import type { ManifestacaoEsportiva, ModalidadeSaude, PrestacaoContas } from "@/lib/supabase/types";
 
 type Campos = Partial<Pick<PrestacaoContas,
   "regime_id" | "identificador_oficial" | "identificador_tipo" | "fonte_recurso"
   | "data_aprovacao" | "data_liberacao" | "data_termo" | "data_conclusao_objeto" | "data_envio" | "data_fim_captacao"
-  | "manifestacao_esportiva" | "crc_validade" | "numero_processo">>;
+  | "manifestacao_esportiva" | "crc_validade" | "numero_processo" | "modalidade_saude">>;
 
 const MARCOS: { campo: keyof Campos; rotulo: string; soQuando?: (regime: RegimeNormativo | null) => boolean }[] = [
   { campo: "data_aprovacao", rotulo: "Aprovação" },
@@ -44,6 +45,9 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
   const pedeCrc = pedeNivel && prestacao.manifestacao_esportiva === "excelencia" && Boolean(regraDoRegime(atual, "crc_excelencia"));
   // LIE (P8.8): o processo no SEI é a referência da GRU e vai no cabeçalho dos formulários.
   const pedeProcesso = regimeUsaProcesso(atual);
+  // Saúde (P9.5): só o projeto médico-assistencial registra produção no CMD.
+  const pedeModalidade = Boolean(regraDoRegime(atual, "cmd"));
+  const modalidade = MODALIDADES_SAUDE.find(m => m.valor === (prestacao.modalidade_saude ?? "assistencial"));
 
   function trocarRegime(regimeId: string) {
     if (!regimeId || regimeId === prestacao.regime_id) return;
@@ -129,6 +133,26 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
             />
             <span className="mt-1 block text-[0.5625rem] leading-4 text-black/35">Vai na referência da GRU e no cabeçalho do formulário PCP/PCF e da grade de RH.</span>
           </label>
+        )}
+
+        {pedeModalidade && (
+          <div>
+            <span className={ROTULO}>Modalidade do projeto</span>
+            {podeEditar ? (
+              <Dropdown
+                value={prestacao.modalidade_saude ?? "assistencial"}
+                onChange={v => {
+                  const valor = (v || null) as ModalidadeSaude | null;
+                  if (valor !== (prestacao.modalidade_saude ?? "assistencial")) onSalvar({ modalidade_saude: valor });
+                }}
+                ariaLabel="Modalidade do projeto"
+                options={MODALIDADES_SAUDE.map(m => ({ value: m.valor, label: m.rotulo }))}
+              />
+            ) : (
+              <p className="text-[0.75rem] text-black/70">{modalidade?.rotulo ?? "—"}</p>
+            )}
+            {modalidade && <span className="mt-1 block text-[0.5625rem] leading-4 text-black/35">{modalidade.descricao}</span>}
+          </div>
         )}
 
         {pedeNivel && (

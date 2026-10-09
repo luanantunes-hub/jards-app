@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { AlertTriangle, Ban, FileUp, Info, Pencil, Plus, Search, Trash2, Users } from "lucide-react";
+import { AlertTriangle, Ban, FileUp, Info, Pencil, Plus, Search, ShieldAlert, Trash2, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -17,6 +17,8 @@ import { ImportarBeneficiados } from "@/components/prestacao/beneficiarios/Impor
 import { nomeComparavel, ordenarPorNome, resumoDosBeneficiados, ROTULO_DO_SEXO, rotuloDaRede } from "@/lib/prestacao/beneficiarios";
 import type { Achado } from "@/lib/prestacao/checagens";
 import { checarBeneficiarios } from "@/lib/prestacao/checagens/checar-beneficiarios";
+import { checarDadosPessoais } from "@/lib/prestacao/checagens/checar-dados-pessoais";
+import { descreverPistas, pistasDosTextos, textosDoBeneficiado } from "@/lib/prestacao/dados-sensiveis";
 import { regraDoRegime } from "@/lib/prestacao/regimes";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
@@ -48,6 +50,17 @@ function Avisos({ achados }: { achados: readonly Achado[] }) {
         );
       })}
     </ul>
+  );
+}
+
+/** A linha com o que parece dado de saúde: o ícone âmbar e o tipo, sem repetir o trecho. */
+function PistaClinica({ pistas }: { pistas: ReturnType<typeof pistasDosTextos> }) {
+  if (!pistas.length) return null;
+  return (
+    <p className="flex items-center gap-1 text-[0.625rem] text-black/45">
+      <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+      Parece dado de saúde: {descreverPistas(pistas)}
+    </p>
   );
 }
 
@@ -111,12 +124,18 @@ export default function BeneficiariosPage() {
 
   const ordenada = useMemo(() => ordenarPorNome(lista), [lista]);
   const resumo = useMemo(() => resumoDosBeneficiados(lista), [lista]);
-  const achados = useMemo(() => checarBeneficiarios({
-    regime, despesas: [], fornecedores: [], documentosDosFornecedores: [], itens: [], pagamentos: [], lancamentos: [],
-    prestacao: { data_fim_execucao: prestacao?.data_fim_execucao ?? null },
-    manifestacaoEsportiva: prestacao?.manifestacao_esportiva ?? null,
-    beneficiarios: lista,
-  }), [regime, prestacao, lista]);
+  // Saúde (P9.5): dado de paciente é sensível; a relação conta quem foi atendido.
+  const saude = Boolean(regraDoRegime(regime, "dados_de_pacientes"));
+  const achados = useMemo(() => {
+    const estado = {
+      regime, despesas: [], fornecedores: [], documentosDosFornecedores: [], itens: [], pagamentos: [], lancamentos: [],
+      prestacao: { data_fim_execucao: prestacao?.data_fim_execucao ?? null },
+      manifestacaoEsportiva: prestacao?.manifestacao_esportiva ?? null,
+      beneficiarios: lista,
+    };
+    return [...checarBeneficiarios(estado), ...checarDadosPessoais(estado)];
+  }, [regime, prestacao, lista]);
+  const pistasDe = (b: PrestacaoBeneficiario) => (saude ? pistasDosTextos(textosDoBeneficiado(b)) : []);
   const beneficiosConhecidos = useMemo(() => resumo.beneficios.map(b => b.nome), [resumo]);
   const modalidades = useMemo(() => [...new Set(lista.map(b => b.modalidade?.trim()).filter((m): m is string => Boolean(m)))].sort((a, b) => a.localeCompare(b, "pt-BR")), [lista]);
 
@@ -226,6 +245,13 @@ export default function BeneficiariosPage() {
         </dl>
       )}
 
+      {saude && (
+        <p className="flex items-start gap-2 text-[0.6875rem] leading-relaxed text-black/50">
+          <ShieldAlert size={13} aria-hidden className="mt-0.5 shrink-0 text-black/40" />
+          <span>Na saúde, dado de paciente é sensível (LGPD, art. 11): a relação conta quem foi atendido, sem diagnóstico, CID, exame ou prontuário. Depois da guarda, os nomes são trocados por &quot;Pessoa n&quot; no descarte dos dados pessoais.</span>
+        </p>
+      )}
+
       {!carregando && <Avisos achados={achados} />}
 
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="relacao-titulo">
@@ -284,6 +310,7 @@ export default function BeneficiariosPage() {
                     <tr key={b.id} className="border-b align-top transition last:border-0 hover:bg-black/[.02]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                       <td className="px-4 py-2.5">
                         <p className="text-black/80">{b.nome}</p>
+                        <PistaClinica pistas={pistasDe(b)} />
                         {(b.telefone || b.endereco) && <p className="text-[0.625rem] text-black/40">{[b.telefone, b.endereco].filter(Boolean).join(" · ")}</p>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-2.5 text-[0.6875rem] text-black/60">{b.sexo ? ROTULO_DO_SEXO[b.sexo] : <span className="inline-flex items-center gap-1 text-black/45"><AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />Sem sexo</span>}</td>
@@ -310,6 +337,7 @@ export default function BeneficiariosPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-[0.75rem] text-black/80">{b.nome}</p>
+                      <PistaClinica pistas={pistasDe(b)} />
                       <p className="text-[0.625rem] text-black/45">
                         {[b.sexo ? ROTULO_DO_SEXO[b.sexo] : "Sem sexo", b.idade !== null ? `${b.idade} anos` : null, `Rede ${rotuloDaRede(b.rede_publica).toLowerCase()}`].filter(Boolean).join(" · ")}
                       </p>

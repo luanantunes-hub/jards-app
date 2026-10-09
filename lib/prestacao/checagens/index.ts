@@ -31,6 +31,8 @@ import { checarCobertura, checarObjeto } from "./checar-objeto";
 import { checarDistribuicao } from "./checar-distribuicao";
 import { checarBens } from "./checar-bens";
 import { checarPecas } from "./checar-pecas";
+import { checarCmd } from "./checar-cmd";
+import { checarDadosPessoais } from "./checar-dados-pessoais";
 
 export * from "./catalogo";
 export { captadoDoExtrato } from "./checar-financeiro";
@@ -54,6 +56,8 @@ export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado
   { id: "resultados", titulo: "Análise por resultados: metas antes do financeiro", executar: checarResultados },
   { id: "evidencias", titulo: "Evidências: vínculo, data e local da foto", executar: checarEvidencias },
   { id: "cobertura", titulo: "Cobertura das metas e atividades por evidências", executar: checarCobertura },
+  { id: "cmd", titulo: "Produção no CMD: registro, metas e período", executar: checarCmd },
+  { id: "dados_pessoais", titulo: "Dado de saúde nos beneficiados e nas evidências", executar: checarDadosPessoais },
   { id: "distribuicao", titulo: "Plano de distribuição: cotas, preços e realizado", executar: checarDistribuicao },
   { id: "bens", titulo: "Bens permanentes: registro, destinação, cotação e doação", executar: checarBens },
   { id: "pecas", titulo: "Peças de divulgação: aprovação, marcas, defeso e amostra", executar: checarPecas },
