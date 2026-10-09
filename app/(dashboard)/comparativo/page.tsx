@@ -428,30 +428,39 @@ function ComparativoContent() {
       <div className="mx-auto max-w-pagina px-4 py-8 sm:px-6 lg:px-10">
         {selecionadas.length === 0 ? (
           <div
-            className="flex flex-col items-center justify-center gap-8 rounded border bg-white py-20 text-center"
+            className="relative flex flex-col items-center justify-center gap-8 overflow-hidden rounded border bg-white py-20 text-center"
             style={{ borderColor: "rgba(13,13,13,.08)" }}
           >
-            <div className="flex items-end justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/tamandua-esporte-tenis.webp"
-                alt="Tamanduá jogando tênis"
-                className="-mr-8 h-[11.875rem] w-[11.875rem] rotate-[-6deg] object-contain sm:h-[13.75rem] sm:w-[13.75rem]"
-              />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/tamandua-cultura-guitarra.webp"
-                alt="Tamanduá de terno tocando guitarra"
-                className="relative z-10 h-[14.375rem] w-[14.375rem] object-contain sm:h-[16.5rem] sm:w-[16.5rem]"
-              />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/tamandua-saude-medico.webp"
-                alt="Tamanduá médico com prancheta"
-                className="-ml-8 h-[11.875rem] w-[11.875rem] rotate-[6deg] object-contain sm:h-[13.75rem] sm:w-[13.75rem]"
-              />
+            {/* Grade de fundo, apagando nas bordas */}
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0"
+              style={{
+                backgroundImage: "linear-gradient(rgba(13,13,13,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(13,13,13,.045) 1px, transparent 1px)",
+                backgroundSize: "1.5rem 1.5rem",
+                backgroundPosition: "center",
+                maskImage: "radial-gradient(ellipse 60% 70% at 50% 45%, #000 30%, transparent 100%)",
+                WebkitMaskImage: "radial-gradient(ellipse 60% 70% at 50% 45%, #000 30%, transparent 100%)",
+              }}
+            />
+            <div className="relative flex items-end justify-center">
+              {[
+                { src: "/tamandua-esporte-tenis.webp", alt: "Tamanduá jogando tênis", rotulo: "Esporte", wrap: "-mr-8", img: "h-[11.875rem] w-[11.875rem] rotate-[-6deg] sm:h-[13.75rem] sm:w-[13.75rem]" },
+                { src: "/tamandua-cultura-guitarra.webp", alt: "Tamanduá de terno tocando guitarra", rotulo: "Cultura", wrap: "", img: "h-[14.375rem] w-[14.375rem] sm:h-[16.5rem] sm:w-[16.5rem]" },
+                { src: "/tamandua-saude-medico.webp", alt: "Tamanduá médico com prancheta", rotulo: "Saúde", wrap: "-ml-8", img: "h-[11.875rem] w-[11.875rem] rotate-[6deg] sm:h-[13.75rem] sm:w-[13.75rem]" },
+              ].map(item => (
+                <figure key={item.src} className={`flex flex-col items-center ${item.wrap}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={item.src} alt={item.alt} className={`object-contain mix-blend-multiply ${item.img}`} />
+                  {/* Eixo: linha de base contínua, marcação e rótulo de cada área */}
+                  <figcaption className="w-full border-t border-[#D6D6D6]">
+                    <span aria-hidden="true" className="mx-auto block h-1.5 w-px bg-black/30" />
+                    <span className="mt-1.5 block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{item.rotulo}</span>
+                  </figcaption>
+                </figure>
+              ))}
             </div>
-            <div>
+            <div className="relative">
               <p className="text-[0.9375rem] font-medium text-black/60">Busque e adicione empresas para comparar</p>
               <p className="mt-1 text-[0.8125rem] text-black/35">Cultura, Esporte, Ancine e Saúde.</p>
             </div>
