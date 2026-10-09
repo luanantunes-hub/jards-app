@@ -606,7 +606,13 @@
     .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
     .hero-actions a { white-space:nowrap; }
     .hero-visual { position:relative; justify-self:end; min-width:0; width:90%; aspect-ratio:1424 / 960; }
-    .hero-anteater-detail { position:absolute; z-index:3; right:44px; bottom:0; width:clamp(190px,19vw,300px); height:auto; pointer-events:none; user-select:none; transform:translateY(7%); filter:drop-shadow(0 16px 18px rgba(52,42,78,.08)); }
+    .hero-anteater-detail { display:block; position:absolute; z-index:3; right:44px; bottom:0; width:clamp(190px,19vw,300px); height:auto; pointer-events:none; user-select:none; transform:translateY(7%); filter:drop-shadow(0 16px 18px rgba(52,42,78,.08)); }
+    .hero-anteater-detail > img { display:block; width:100%; height:auto; }
+    /* Pisca como o tamanduá do cadastro (3s, troca instantânea, olho fechado nos últimos 8%).
+       O olho fechado é um remendo de 70×53 px sobre a cabeça, que é branca e opaca no desenho. */
+    .hero-anteater-olho { position:absolute; left:23.984%; top:25.111%; width:4.007%; height:5.889%; background:url('assets/tamandua-telefone-olho-fechado.png') center / 100% 100% no-repeat; visibility:hidden; animation:hero-tamandua-piscar 3s steps(1) infinite; }
+    @keyframes hero-tamandua-piscar { 0% { visibility:hidden; } 92% { visibility:visible; } 100% { visibility:visible; } }
+    @media (prefers-reduced-motion: reduce) { .hero-anteater-olho { animation:none; } }
     .landing-hero { min-height:100dvh; }
     /* Keep the device composition proportional within its column. */
     .art-stage { position:absolute; top:0; left:0; width:1424px; height:960px; margin:0; transform:scale(var(--hero-art-scale,.5)); transform-origin:top left; }
@@ -1098,7 +1104,10 @@
     </div>
     </div>
 
-    <img class="hero-anteater-detail" src="assets/tamandua-telefone-transparent.png" alt="Tamanduá ao telefone" />
+    <span class="hero-anteater-detail">
+      <img src="assets/tamandua-telefone-transparent.png" alt="Tamanduá ao telefone" />
+      <span class="hero-anteater-olho" aria-hidden="true"></span>
+    </span>
   </div>
 </section>
 
