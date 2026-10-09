@@ -119,6 +119,8 @@ const ERROS: Record<string, string> = {
   bloqueios_abertos: "Há bloqueios abertos nas verificações. Resolva cada um, ou peça ao revisor para dispensar com o motivo, e envie de novo.",
   // Envio registrado (P4.6)
   envio_vigente: "Já há um envio registrado valendo nesta etapa. Para mandar uma correção, reabra esse envio na aba Envio.",
+  exercicio_obrigatorio: "Escolha o exercício da prestação anual antes de registrar o envio.",
+  exercicio_invalido: "O exercício só vale na prestação anual e precisa ser um ano.",
   enviado_travado: "Isso foi enviado e está travado enquanto o envio vale. Para corrigir, reabra o envio na aba Envio.",
   enviado_guardado: "Isso foi enviado e fica guardado pelo prazo de guarda do regime: não pode ser apagado.",
   envio_imutavel: "O envio registrado não muda; só pode ser reaberto, com o motivo.",

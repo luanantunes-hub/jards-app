@@ -9,7 +9,7 @@ import { ROTULO_DA_ETAPA } from "./envio";
 import type { PrestacaoEnvio } from "@/lib/supabase/types";
 
 export type EnvioDaLista = Pick<PrestacaoEnvio,
-  "id" | "etapa" | "versao" | "enviado_em" | "protocolo" | "sistema" | "comentario" | "situacao" | "registrado_em"
+  "id" | "etapa" | "exercicio" | "versao" | "enviado_em" | "protocolo" | "sistema" | "comentario" | "situacao" | "registrado_em"
   | "reaberto_em" | "motivo_reabertura" | "guarda_ate" | "guarda_marco" | "retrato_sha256">;
 
 const dataBr = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
@@ -22,13 +22,23 @@ const MARCO: Record<string, string> = {
   envio_prestacao: "o envio",
 };
 
-/** O envio que vale em cada etapa (no máximo um, pelo banco). */
-export function envioVigente(envios: readonly EnvioDaLista[], etapa: EnvioDaLista["etapa"]): EnvioDaLista | null {
-  return envios.find(e => e.etapa === etapa && e.situacao === "vigente") ?? null;
+/**
+ * O envio que vale na etapa (no máximo um por etapa e exercício, pelo banco).
+ * Sem o exercício, o mais recente da etapa (na saúde, a última prestação anual).
+ */
+export function envioVigente(envios: readonly EnvioDaLista[], etapa: EnvioDaLista["etapa"], exercicio?: number): EnvioDaLista | null {
+  return envios
+    .filter(e => e.etapa === etapa && e.situacao === "vigente" && (exercicio === undefined || (e.exercicio ?? 0) === exercicio))
+    .sort((a, b) => b.enviado_em.localeCompare(a.enviado_em) || (b.exercicio ?? 0) - (a.exercicio ?? 0))[0] ?? null;
 }
 
-export function tituloDoEnvio(e: Pick<EnvioDaLista, "etapa" | "versao">): string {
-  return `${ROTULO_DA_ETAPA[e.etapa]}${e.versao > 1 ? `, versão ${e.versao}` : ""}`;
+/** Os exercícios com prestação anual valendo (P9.2). */
+export const exerciciosEnviados = (envios: readonly EnvioDaLista[]) =>
+  envios.filter(e => e.etapa === "parcial" && e.situacao === "vigente" && (e.exercicio ?? 0) > 0).map(e => e.exercicio as number);
+
+export function tituloDoEnvio(e: Pick<EnvioDaLista, "etapa" | "versao"> & { exercicio?: number | null }): string {
+  const etapa = e.etapa === "parcial" && e.exercicio ? `Prestação anual de ${e.exercicio}` : ROTULO_DA_ETAPA[e.etapa];
+  return `${etapa}${e.versao > 1 ? `, versão ${e.versao}` : ""}`;
 }
 
 /** Até quando o que foi enviado fica guardado. */

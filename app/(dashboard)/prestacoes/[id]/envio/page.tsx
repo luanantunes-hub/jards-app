@@ -17,11 +17,13 @@ import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
 import { EnviosRegistrados } from "@/components/prestacao/envio/EnviosRegistrados";
+import { EtapaDoEnvio } from "@/components/prestacao/envio/EtapaDoEnvio";
+import { exercicioInicial, exerciciosDaAnual, rotuloDaEtapa } from "@/lib/prestacao/exercicios";
+import { exerciciosEnviados } from "@/lib/prestacao/envios";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import {
   checklistDeEnvio,
   erroDaMarcacao,
-  ROTULO_DA_ETAPA,
   type ArquivoDoChecklist,
   type DestinoDoEnvio,
   type EtapaEnvio,
@@ -246,6 +248,11 @@ export default function EnvioPage() {
   const { dados, erro: erroAoCarregar, recarregar } = useDadosDoEnvio(id);
   const { envios, recarregar: recarregarEnvios } = useEnviosRegistrados(id);
   const [etapaEscolhida, setEtapa] = useState<EtapaEnvio>("final");
+  // P9.2: na saúde, a parcial é a prestação anual de um exercício.
+  const [exercicioEscolhido, setExercicio] = useState<number | null>(null);
+  const exercicios = useMemo(() => (dados ? exerciciosDaAnual(dados.regime, dados.estado.prestacao ?? {}) : []), [dados]);
+  const enviados = useMemo(() => (envios ? exerciciosEnviados(envios) : []), [envios]);
+  const exercicio = etapaEscolhida === "parcial" && exercicios.length ? exercicioEscolhido ?? exercicioInicial(exercicios, enviados) : 0;
   const [ocupado, setOcupado] = useState(false);
   const [verificando, setVerificando] = useState(false);
   const [erro, setErro] = useState("");
@@ -253,8 +260,8 @@ export default function EnvioPage() {
   const checklist = useMemo(() => {
     if (!dados) return null;
     const final = checklistDeEnvio({ ...dados, etapa: "final" });
-    return etapaEscolhida === "final" || !final.etapas.includes(etapaEscolhida) ? final : checklistDeEnvio({ ...dados, etapa: etapaEscolhida });
-  }, [dados, etapaEscolhida]);
+    return etapaEscolhida === "final" || !final.etapas.includes(etapaEscolhida) ? final : checklistDeEnvio({ ...dados, etapa: etapaEscolhida, exercicio });
+  }, [dados, etapaEscolhida, exercicio]);
 
   async function marcar(linha: LinhaDoChecklist, situacao: "pronto" | "nao_se_aplica", justificativa?: string): Promise<string | null> {
     if (!checklist) return null;
@@ -262,9 +269,9 @@ export default function EnvioPage() {
     setErro("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_envio_checklist ainda não está no tipo Database
     const { error } = await (supabase as any).from("prestacao_envio_checklist").upsert({
-      prestacao_id: id, etapa: checklist.etapa, tipo: linha.tipo, codigo: linha.codigo, situacao,
+      prestacao_id: id, etapa: checklist.etapa, exercicio: checklist.exercicio, tipo: linha.tipo, codigo: linha.codigo, situacao,
       justificativa: situacao === "nao_se_aplica" ? justificativa ?? null : null,
-    }, { onConflict: "prestacao_id,etapa,tipo,codigo" });
+    }, { onConflict: "prestacao_id,etapa,exercicio,tipo,codigo" });
     if (!error) await recarregar();
     setOcupado(false);
     if (!error) return null;
@@ -279,7 +286,7 @@ export default function EnvioPage() {
     setErro("");
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_envio_checklist ainda não está no tipo Database
     const { error } = await (supabase as any).from("prestacao_envio_checklist").delete()
-      .eq("prestacao_id", id).eq("etapa", checklist.etapa).eq("tipo", linha.tipo).eq("codigo", linha.codigo);
+      .eq("prestacao_id", id).eq("etapa", checklist.etapa).eq("exercicio", checklist.exercicio).eq("tipo", linha.tipo).eq("codigo", linha.codigo);
     if (error) setErro(mensagemErroPrestacao(error, "Não foi possível desfazer a marcação"));
     else await recarregar();
     setOcupado(false);
@@ -298,7 +305,7 @@ export default function EnvioPage() {
       if (envio.error) { setErro(`Não foi possível enviar "${arquivo.name}": ${envio.error.message}`); break; }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_envio_arquivos ainda não está no tipo Database
       const { error } = await (supabase as any).from("prestacao_envio_arquivos").insert({
-        prestacao_id: id, etapa: checklist.etapa, codigo: linha.codigo, storage_path: caminho,
+        prestacao_id: id, etapa: checklist.etapa, exercicio: checklist.exercicio, codigo: linha.codigo, storage_path: caminho,
         nome_arquivo: arquivo.name, mime_type: arquivo.type || null, tamanho_bytes: arquivo.size,
       });
       if (error) {
@@ -354,25 +361,17 @@ export default function EnvioPage() {
             O que {checklist?.sistema ? `o ${checklist.sistema}` : "o sistema oficial"} pede para enviar a prestação: documentos e condições, com a fonte de cada um.
           </p>
         </div>
-        {checklist && checklist.etapas.length > 1 && (
-          <div role="radiogroup" aria-label="Etapa do envio" className="flex rounded border bg-white p-0.5" style={BORDA}>
-            {checklist.etapas.map(e => {
-              const ativa = checklist.etapa === e;
-              return (
-                <button
-                  key={e}
-                  type="button"
-                  role="radio"
-                  aria-checked={ativa}
-                  onClick={() => setEtapa(e)}
-                  className="h-8 rounded px-3 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5]"
-                  style={ativa ? { background: "#684DB0", color: "#fff" } : { color: "rgba(13,13,13,.6)" }}
-                >
-                  {ROTULO_DA_ETAPA[e]}
-                </button>
-              );
-            })}
-          </div>
+        {checklist && (
+          <EtapaDoEnvio
+            etapas={checklist.etapas}
+            etapa={checklist.etapa}
+            onEtapa={setEtapa}
+            regime={dados?.regime ?? null}
+            exercicios={exercicios}
+            exercicio={exercicio}
+            onExercicio={setExercicio}
+            enviados={enviados}
+          />
         )}
         {dados?.regime && (
           <div className="flex flex-wrap gap-2">
@@ -442,7 +441,7 @@ export default function EnvioPage() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="text-[0.8125rem] text-black/80">
                 {resumo.pendentes === 0
-                  ? <>Tudo pronto para a {ROTULO_DA_ETAPA[checklist.etapa].toLowerCase()}.</>
+                  ? <>Tudo pronto para a {rotuloDaEtapa(checklist.etapa, dados?.regime, checklist.exercicio).toLowerCase()}.</>
                   : <><span className="tabular-nums">{resumo.resolvidos} de {resumo.total}</span> itens prontos{resumo.obrigatoriosPendentes ? (
                       <>
                         {" · "}
