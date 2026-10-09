@@ -18,12 +18,6 @@ const TIPO_ICONS: Record<string, React.ElementType> = {
   inscricao: () => <CheckCircle2 size={13} />,
 };
 
-const TIPO_COLORS: Record<string, string> = {
-  email: "#2D72B0", telefone: "#1A8B7A", linkedin: "#0A66C2",
-  reuniao: "#7259B5", evento: "#B07A14", mudanca: "#7259B5",
-  nota: "#D94E4E", outro: "rgba(13,13,13,.40)", inscricao: "#2E8932",
-};
-
 const STATUS_LABEL: Record<string, string> = {
   prospeccao: "Prospecção", primeiro_contato: "1º Contato",
   proposta_enviada: "Proposta enviada", em_negociacao: "Em negociação",
@@ -68,12 +62,8 @@ type TimelineEvent = {
 
 function EventIcon({ tipo }: { tipo: string }) {
   const Icon = TIPO_ICONS[tipo] || MoreHorizontal;
-  const color = TIPO_COLORS[tipo] || "rgba(13,13,13,.40)";
   return (
-    <div
-      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-      style={{ background: "#fff", border: `1px solid ${color}47`, color }}
-    >
+    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-black/[.08] bg-white text-black/45">
       <Icon size={13} />
     </div>
   );

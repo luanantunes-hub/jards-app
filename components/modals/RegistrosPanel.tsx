@@ -367,7 +367,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
               </button>
             )}
             <div className="flex flex-col items-end gap-1">
-              {!embedded && <span className="text-[0.625rem] font-bold px-2.5 py-1 rounded" style={{ background: sc.bg, color: sc.text }}>
+              {!embedded && <span className="rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: sc.text.startsWith("#") ? `${sc.text}47` : "rgba(13,13,13,.12)", color: sc.text }}>
                 {STATUS_LABEL[inscricao.status]}
               </span>}
               {onOpenDocumentos && (

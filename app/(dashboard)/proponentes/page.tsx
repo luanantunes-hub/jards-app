@@ -366,7 +366,7 @@ export default function ProponentesPage() {
 
                           {/* Próximo movimento */}
                           <td className="px-4 py-3.5">
-                            {p.proxima_atividade ? <div className="flex items-start gap-2"><CalendarClock size={12} className="mt-0.5 shrink-0 text-black/25"/><div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60">{p.proxima_atividade.nome}</p><p className="mt-1 text-[0.625rem] tabular-nums text-black/30">{p.proxima_atividade.data_prevista ? fmtDate(p.proxima_atividade.data_prevista) : "Sem data"}</p></div></div> : <span className="text-[0.6875rem] text-[#D94E4E]">Sem atividade</span>}
+                            {p.proxima_atividade ? <div className="flex items-start gap-2"><CalendarClock size={12} className="mt-0.5 shrink-0 text-black/25"/><div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60">{p.proxima_atividade.nome}</p><p className="mt-1 text-[0.625rem] tabular-nums text-black/30">{p.proxima_atividade.data_prevista ? fmtDate(p.proxima_atividade.data_prevista) : "Sem data"}</p></div></div> : <span className="text-[0.6875rem] text-black/30">Sem atividade</span>}
                           </td>
 
                           {/* Contato principal */}

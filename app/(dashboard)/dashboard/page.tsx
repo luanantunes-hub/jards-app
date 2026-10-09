@@ -872,7 +872,7 @@ export default function DashboardPage() {
                           className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
                           style={{ background: "rgba(13,13,13,.04)" }}
                         >
-                          <Icon size={12} style={{ color: tc.color }} />
+                          <Icon size={12} className="text-black/45" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[0.75rem] font-semibold text-black/75 truncate">{a.nome}</p>

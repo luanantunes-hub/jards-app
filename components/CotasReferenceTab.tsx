@@ -108,7 +108,7 @@ export function CotasReferenceTab({
                         </span>
                       )}
                     </div>
-                    {cota.modelo === "produto" && cota.produto_nome && <p className="mt-1 text-[0.6875rem] text-[#7259B5]">Produto: {cota.produto_nome}</p>}
+                    {cota.modelo === "produto" && cota.produto_nome && <p className="mt-1 text-[0.6875rem] text-black/55">Produto: {cota.produto_nome}</p>}
                     <p className="mt-1 text-[0.625rem] text-black/35">{cota.unidades_ilimitadas ? `Ilimitada · ${cota.unidades_vendidas} vendida(s)` : `${Math.max(0, cota.unidades - cota.unidades_vendidas)} disponível(is) de ${cota.unidades}`}</p>
                     {cota.contrapartidas.length > 0 && (
                       <p className="mt-2 text-[0.6875rem] leading-relaxed text-black/40">{cota.contrapartidas.join(" · ")}</p>
