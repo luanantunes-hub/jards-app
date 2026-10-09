@@ -102,12 +102,12 @@ export function ProjetoSolicitacoes({ projetoId, isOrganizacao, proponenteNome }
                   <textarea id={`resposta-${acao.id}`} rows={2} maxLength={2000} value={respostas[acao.id] ?? ""} onChange={e => setRespostas(prev => ({ ...prev, [acao.id]: e.target.value }))} placeholder="Responder ao pedido…" className="w-full resize-none rounded border border-black/[.15] bg-white px-3 py-2 text-[0.75rem] outline-none focus:border-[#7259B5]" />
                   <button type="button" disabled={saving || !respostas[acao.id]?.trim()} onClick={() => void executar("fn_projeto_responder_acao", { p_acao_id: acao.id, p_resposta: respostas[acao.id].trim() }, () => setRespostas(prev => ({ ...prev, [acao.id]: "" })))} className="inline-flex items-center gap-1.5 rounded bg-[#2E8932] px-3 py-1.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40"><Send size={12} />Responder</button>
                 </div>}
-                {acao.status === "respondida" && <button type="button" disabled={saving} onClick={() => void executar("fn_projeto_resolver_acao", { p_acao_id: acao.id }, () => {})} className="mt-3 inline-flex items-center gap-1.5 rounded border border-black/[.14] px-2.5 py-1 text-[0.6875rem] font-semibold text-black/60 transition hover:border-black/30 hover:text-black disabled:opacity-40"><Check size={12} />Marcar resolvido</button>}
+                {acao.status === "respondida" && <button type="button" disabled={saving} onClick={() => void executar("fn_projeto_resolver_acao", { p_acao_id: acao.id }, () => {})} className="mt-3 inline-flex items-center gap-1.5 rounded border border-black/[.14] px-2.5 py-1 text-[0.6875rem] font-semibold text-black/60 transition hover:border-black/30 hover:text-[#282525] disabled:opacity-40"><Check size={12} />Marcar resolvido</button>}
               </article>
             ))}
           </div>
         )}
-        <button type="button" onClick={() => setPedindoAcao(true)} className="mt-3.5 inline-flex h-9 items-center gap-1.5 rounded border border-black/[.14] px-3.5 text-[0.75rem] font-semibold text-black/65 transition hover:border-black/30 hover:text-black">
+        <button type="button" onClick={() => setPedindoAcao(true)} className="mt-3.5 inline-flex h-9 items-center gap-1.5 rounded border border-black/[.14] px-3.5 text-[0.75rem] font-semibold text-black/65 transition hover:border-black/30 hover:text-[#282525]">
           <Send size={12} />Nova solicitação para {nomeDestinatario(destinatario)}
         </button>
         {resolvidas.length > 0 && <details className="mt-3.5 text-[0.6875rem] text-black/55"><summary className="cursor-pointer select-none">Resolvidos ({resolvidas.length})</summary><div className="mt-2 space-y-2">{resolvidas.map(acao => <div key={acao.id} className="rounded border border-black/[.07] px-3 py-2"><p className="font-medium text-black/65">{acao.descricao}</p>{acao.resposta && <p className="mt-1 text-black/50">{acao.resposta}</p>}</div>)}</div></details>}
@@ -127,7 +127,7 @@ export function ProjetoSolicitacoes({ projetoId, isOrganizacao, proponenteNome }
           <textarea id={`nova-acao-${projetoId}`} autoFocus value={novaAcao} onChange={e => setNovaAcao(e.target.value)} maxLength={2000} rows={4} placeholder="Documento, aprovação, retorno…" className="w-full resize-none rounded border border-black/[.15] px-3 py-2 text-[0.8125rem] outline-none focus:border-[#7259B5]" />
         </div>
         <label className="block text-[0.6875rem] text-black/50">Prazo (opcional)
-          <input type="date" value={prazo} onChange={e => setPrazo(e.target.value)} className="mt-1 h-9 w-full rounded border border-black/[.15] bg-white px-2 text-[0.75rem] text-black" />
+          <input type="date" value={prazo} onChange={e => setPrazo(e.target.value)} className="mt-1 h-9 w-full rounded border border-black/[.15] bg-white px-2 text-[0.75rem] text-[#282525]" />
         </label>
         {erro && <p role="alert" className="text-[0.6875rem] font-medium text-[#B64545]">{erro}</p>}
       </div>

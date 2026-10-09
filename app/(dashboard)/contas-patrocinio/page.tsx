@@ -240,8 +240,8 @@ function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]
                     <button key={account.id} type="button" onClick={() => onOpen(account.id)} className="w-full rounded border border-black/[.08] bg-white p-3 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                       <div className="flex items-start gap-2.5">
                         <CompanyLogo nome={companyName} domain={account.empresa_crm?.domain_key} site={account.empresa_crm?.site} size={32} className="shrink-0 border border-black/[.06]"/>
-                        <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black">{companyName}</p><p className="mt-0.5 truncate text-[0.59375rem] text-black/30">{account.nome && account.nome !== companyName ? account.nome : account.empresa_crm?.setor ?? "Cliente"}</p></div>
-                        {account.health_score !== null && <span className="flex shrink-0 items-center gap-1 text-[0.625rem] font-semibold tabular-nums text-[#0D0D0D]"><HeartPulse size={12} strokeWidth={1.75} aria-hidden="true" className={alerta ? "shrink-0" : "shrink-0 text-black/40"} style={alerta ? { color: alerta } : undefined}/>{account.health_score}</span>}
+                        <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-[#282525]">{companyName}</p><p className="mt-0.5 truncate text-[0.59375rem] text-black/30">{account.nome && account.nome !== companyName ? account.nome : account.empresa_crm?.setor ?? "Cliente"}</p></div>
+                        {account.health_score !== null && <span className="flex shrink-0 items-center gap-1 text-[0.625rem] font-semibold tabular-nums text-[#282525]"><HeartPulse size={12} strokeWidth={1.75} aria-hidden="true" className={alerta ? "shrink-0" : "shrink-0 text-black/40"} style={alerta ? { color: alerta } : undefined}/>{account.health_score}</span>}
                       </div>
                       <div className="mt-3 border-t border-black/[.06] pt-2.5">
                         <p className="text-[0.625rem] font-semibold text-black/55">{account.portfolio_reason}</p>
@@ -448,7 +448,7 @@ export default function ContasPatrocinioPage() {
     <div className="flex h-full flex-col">
       <ListPageHeader eyebrow="Gestão da carteira" title="Clientes" summary={!loading&&<><ListSummary strong={stats.ativas}>ativas</ListSummary><ListSummary strong={stats.renovacao}>renovações próximas</ListSummary><ListSummary strong={stats.emRisco} icone={AlertTriangle} alerta={stats.emRisco > 0 ? "vermelho" : undefined}>em atenção</ListSummary></>} actions={
         <div className="flex items-center gap-2">
-          <button onClick={() => setShowNovoCliente(true)} className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-black rounded hover:bg-black/5 transition">
+          <button onClick={() => setShowNovoCliente(true)} className="flex items-center gap-1.5 px-4 py-2.5 text-xs font-medium bg-white border border-black/12 text-[#282525] rounded hover:bg-black/5 transition">
             <Plus size={13} /> Novo cliente
           </button>
           <EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/>
@@ -548,7 +548,7 @@ export default function ContasPatrocinioPage() {
                           className="flex-shrink-0"
                         />
                         <div className="min-w-0">
-                          <span className="text-[0.8125rem] font-semibold text-[#0D0D0D] truncate block">
+                          <span className="text-[0.8125rem] font-semibold text-[#282525] truncate block">
                             {c.empresa_crm?.nome || "—"}
                           </span>
                         </div>

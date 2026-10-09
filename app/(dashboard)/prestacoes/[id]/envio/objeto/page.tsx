@@ -165,7 +165,7 @@ function Secao({ secao, modelo, prestacaoId, podeEditar, guardar }: { secao: Sec
     <section className="rounded border bg-white" style={BORDA} aria-labelledby={`secao-${secao.id}`}>
       <div className="flex flex-wrap items-start justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="min-w-0">
-          <h3 id={`secao-${secao.id}`} className="text-[0.75rem] font-semibold text-black">
+          <h3 id={`secao-${secao.id}`} className="text-[0.75rem] font-semibold text-[#282525]">
             {secao.titulo}
             {secao.obrigatoria && <span className="ml-2 text-[0.625rem] font-normal text-black/40">obrigatório</span>}
             {secao.lacunas > 0 && (
@@ -316,7 +316,7 @@ export default function RelatorioDoObjetoPage() {
         <>
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">{rascunho.titulo}</h2>
+              <h2 className="text-[0.9375rem] font-semibold text-[#282525]">{rascunho.titulo}</h2>
               <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
                 Rascunho para revisar e copiar. {rascunho.descricao} Cada dado leva à aba de onde veio; o que falta aparece como lacuna.
                 {rascunho.fonte && <span className="text-black/35"> ({rascunho.fonte.documento}, {rascunho.fonte.dispositivo})</span>}
@@ -333,7 +333,7 @@ export default function RelatorioDoObjetoPage() {
           {modeloDoRco && (
             <section className="flex flex-wrap items-end gap-3 rounded border bg-white px-5 py-4" style={BORDA} aria-label="RCO no modelo oficial">
               <div className="min-w-0 flex-1 basis-[16rem]">
-                <p className="text-[0.75rem] font-semibold text-black">RCO no modelo oficial</p>
+                <p className="text-[0.75rem] font-semibold text-[#282525]">RCO no modelo oficial</p>
                 <p className="text-[0.6875rem] text-black/45">
                   O documento do Ministério do Esporte com este rascunho no lugar das orientações; o que falta sai em vermelho, entre colchetes, para completar no Word.
                 </p>
@@ -374,7 +374,7 @@ function CopiarTudo({ texto }: { texto: string }) {
     } catch { /* sem área de transferência */ }
   }
   return (
-    <button type="button" onClick={copiar} className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]">
+    <button type="button" onClick={copiar} className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
       {copiado ? <Check size={13} aria-hidden /> : <Copy size={13} aria-hidden />} {copiado ? "Copiado" : "Copiar tudo"}
     </button>
   );

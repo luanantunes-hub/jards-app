@@ -115,7 +115,7 @@ export function SugerirContribuicaoModal({
           <div className="w-12 h-12 rounded-full bg-black/[.04] flex items-center justify-center mx-auto mb-4">
             <Plus size={20} className="text-[#1A8B7A]" />
           </div>
-          <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#0D0D0D] mb-1">Contribuição enviada</h2>
+          <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525] mb-1">Contribuição enviada</h2>
           <p className="text-[0.8125rem] text-black/45">
             Sua contribuição será analisada pela equipe. Obrigado por ajudar a melhorar os dados!
           </p>
@@ -140,7 +140,7 @@ export function SugerirContribuicaoModal({
               <Users size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#0D0D0D]">Sugerir contribuição</h2>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Sugerir contribuição</h2>
               {registroNome && (
                 <p className="text-[0.6875rem] text-black/40">{registroNome}</p>
               )}

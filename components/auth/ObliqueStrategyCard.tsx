@@ -112,7 +112,7 @@ export function ObliqueStrategyCard() {
         )}
       </div>
       <h2
-        className={`mb-1 max-w-[16ch] shrink-0 text-[clamp(1.6rem,2.8vw,2.35rem)] font-bold leading-[1.08] tracking-[-.03em] text-[#0D0D0D] transition-opacity duration-200 motion-reduce:transition-none ${flipping ? "opacity-0" : "opacity-100"}`}
+        className={`mb-1 max-w-[16ch] shrink-0 text-[clamp(1.6rem,2.8vw,2.35rem)] font-bold leading-[1.08] tracking-[-.03em] text-[#282525] transition-opacity duration-200 motion-reduce:transition-none ${flipping ? "opacity-0" : "opacity-100"}`}
       >
         {headline}
       </h2>

@@ -59,7 +59,7 @@ export function Indicador({ icone: Icone, rotulo, valor, texto, corTexto, tamanh
       </dt>
       <dd
         title={texto ? undefined : formatarValorCompleto(valor)}
-        className={`mt-auto pt-1.5 font-semibold tabular-nums ${texto ? "break-words" : "truncate"} ${fonte} ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}
+        className={`mt-auto pt-1.5 font-semibold tabular-nums ${texto ? "break-words" : "truncate"} ${fonte} ${vazio ? "text-black/30" : "text-[#282525]"}`}
         style={corTexto ? { color: corTexto } : undefined}
       >
         {texto ?? formatarValorCurto(valor)}

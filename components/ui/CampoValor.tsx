@@ -33,7 +33,7 @@ export function CampoValor({ id, value, onChange, placeholder = "0,00", invalido
         placeholder={placeholder}
         aria-label={ariaLabel}
         aria-invalid={invalido || undefined}
-        className="min-w-0 flex-1 bg-transparent text-[0.8125rem] tabular-nums text-black outline-none placeholder:text-black/25 disabled:cursor-not-allowed disabled:text-black/60"
+        className="min-w-0 flex-1 bg-transparent text-[0.8125rem] tabular-nums text-[#282525] outline-none placeholder:text-black/25 disabled:cursor-not-allowed disabled:text-black/60"
       />
     </div>
   );

@@ -48,7 +48,7 @@ function Cota({ c }: { c: SituacaoDaCota }) {
   return (
     <div className="rounded border bg-white px-3 py-2.5" style={BORDA}>
       <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{c.rotulo}</p>
-      <p className={`mt-0.5 text-[1rem] font-semibold tabular-nums ${c.percentual ? "text-[#0D0D0D]" : "text-black/30"}`}>{formatarPercentual(c.percentual)}</p>
+      <p className={`mt-0.5 text-[1rem] font-semibold tabular-nums ${c.percentual ? "text-[#282525]" : "text-black/30"}`}>{formatarPercentual(c.percentual)}</p>
       <p className="text-[0.625rem] text-black/40">{c.sentido === "max" ? "até" : "ao menos"} {formatarPercentual(c.limite)} · {c.dispositivo}</p>
       <p className="mt-1 flex items-center gap-1 text-[0.625rem] text-black/55">
         <Icone size={12} strokeWidth={1.75} aria-hidden className={`shrink-0 ${c.dentro ? "text-black/40" : "text-[#D94A4A]"}`} />
@@ -111,7 +111,7 @@ function Produto({ resumo, limites, achadosDoProduto, achadosDaLinha, podeEditar
   return (
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby={titulo}>
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <h3 id={titulo} className="text-[0.75rem] font-semibold text-black">{resumo.produto}</h3>
+        <h3 id={titulo} className="text-[0.75rem] font-semibold text-[#282525]">{resumo.produto}</h3>
         <p className="text-[0.6875rem] tabular-nums text-black/45">
           {inteiro(resumo.total)} {resumo.base === "realizado" ? "distribuídos e vendidos" : "no plano"}
           {resumo.receita > 0 && <> · receita prevista {reais(resumo.receita)}</>}
@@ -129,7 +129,7 @@ function Produto({ resumo, limites, achadosDoProduto, achadosDaLinha, podeEditar
             <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[0.6875rem]">
               <div className="flex items-baseline gap-1.5">
                 <dt className={ROTULO}>Meia-entrada</dt>
-                <dd className="font-semibold tabular-nums text-[#0D0D0D]">
+                <dd className="font-semibold tabular-nums text-[#282525]">
                   {inteiro(resumo.meias)} de {inteiro(resumo.vendidos)} vendidos · {formatarPercentual(percentual(resumo.meias, resumo.vendidos))}
                   {limites?.meiaMin != null && <span className="font-normal text-black/40"> (ao menos {formatarPercentual(limites.meiaMin)})</span>}
                 </dd>
@@ -137,7 +137,7 @@ function Produto({ resumo, limites, achadosDoProduto, achadosDaLinha, podeEditar
               {resumo.precoMedio !== null && (
                 <div className="flex items-baseline gap-1.5">
                   <dt className={ROTULO}>Preço médio da venda livre</dt>
-                  <dd className="font-semibold tabular-nums text-[#0D0D0D]">
+                  <dd className="font-semibold tabular-nums text-[#282525]">
                     {reais(resumo.precoMedio)}
                     {limites?.precoMedioMax != null && <span className="font-normal text-black/40"> (até {reais(limites.precoMedioMax)})</span>}
                   </dd>
@@ -323,7 +323,7 @@ export default function DistribuicaoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Distribuição</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Distribuição</h2>
           <p className="text-[0.6875rem] text-black/45">
             {limites && regime
               ? `Plano de distribuição por produto, com as cotas do regime (${regime.nome}).`
@@ -334,7 +334,7 @@ export default function DistribuicaoPage() {
           <button
             type="button"
             onClick={() => setEditando("nova")}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
           >
             <Plus size={13} aria-hidden /> Adicionar ao plano
           </button>
@@ -346,15 +346,15 @@ export default function DistribuicaoPage() {
       {!carregando && linhas.length > 0 && (
         <div className="rounded border bg-white px-5 py-3" style={BORDA}>
           <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[0.6875rem]">
-            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Produtos</dt><dd className={`font-semibold tabular-nums ${resumos.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{resumos.length}</dd></div>
-            {receitaTotal > 0 && <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Receita prevista</dt><dd className="font-semibold tabular-nums text-[#0D0D0D]">{reais(receitaTotal)}</dd></div>}
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Produtos</dt><dd className={`font-semibold tabular-nums ${resumos.length ? "text-[#282525]" : "text-black/30"}`}>{resumos.length}</dd></div>
+            {receitaTotal > 0 && <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Receita prevista</dt><dd className="font-semibold tabular-nums text-[#282525]">{reais(receitaTotal)}</dd></div>}
             {limites && (
               <div className="flex items-center gap-1.5">
                 <dt className={`${ROTULO} inline-flex items-center gap-1`}>
                   {foraDasCotas > 0 && <Ban size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
                   Cotas fora do limite
                 </dt>
-                <dd className={`font-semibold tabular-nums ${foraDasCotas ? "text-[#0D0D0D]" : "text-black/30"}`}>{foraDasCotas}</dd>
+                <dd className={`font-semibold tabular-nums ${foraDasCotas ? "text-[#282525]" : "text-black/30"}`}>{foraDasCotas}</dd>
               </div>
             )}
           </dl>

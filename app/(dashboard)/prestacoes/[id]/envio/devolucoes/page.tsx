@@ -313,7 +313,7 @@ export default function DevolucoesPage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Devoluções</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Devoluções</h2>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
             As guias de recolhimento: saldo e rendimentos no encerramento, e o valor irregular depois da análise, atualizado pelo índice do regime. Os campos da guia vão prontos para copiar no PagTesouro.
           </p>
@@ -323,7 +323,7 @@ export default function DevolucoesPage() {
             type="button"
             onClick={() => setEditando({ devolucao: null })}
             disabled={!carregado}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus size={13} aria-hidden /> Nova devolução
           </button>
@@ -385,25 +385,25 @@ export default function DevolucoesPage() {
                 {resumo.aPagar > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
                 A pagar
               </dt>
-              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.aPagar ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(resumo.aPagar)}</dd>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.aPagar ? "text-[#282525]" : "text-black/30"}`}>{reais(resumo.aPagar)}</dd>
             </div>
             <div>
               <dt className={ROTULO}>Pago</dt>
-              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.pago ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(resumo.pago)}</dd>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.pago ? "text-[#282525]" : "text-black/30"}`}>{reais(resumo.pago)}</dd>
             </div>
             <div>
               <dt className={ROTULO}>
                 {resumo.vencidas > 0 && <Clock size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
                 Vencidas
               </dt>
-              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.vencidas ? "text-[#0D0D0D]" : "text-black/30"}`}>{resumo.vencidas}</dd>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.vencidas ? "text-[#282525]" : "text-black/30"}`}>{resumo.vencidas}</dd>
             </div>
             <div>
               <dt className={ROTULO}>
                 {resumo.semComprovante > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
                 Pagas sem comprovante
               </dt>
-              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.semComprovante ? "text-[#0D0D0D]" : "text-black/30"}`}>{resumo.semComprovante}</dd>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.semComprovante ? "text-[#282525]" : "text-black/30"}`}>{resumo.semComprovante}</dd>
             </div>
           </dl>
           <ul className="divide-y divide-black/[.05] overflow-hidden rounded border bg-white" style={BORDA} aria-label="Devoluções">

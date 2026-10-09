@@ -50,7 +50,7 @@ function Valores({ totais, forte }: { totais: Totais; forte?: boolean }) {
       <td className={`${NUMERO} ${totais.pago ? "text-black/70" : "text-black/25"} ${peso}`}>{totais.pago ? fmt(totais.pago) : "—"}</td>
       <td className={`${NUMERO} ${peso}`}>
         {totais.saldo < 0 ? (
-          <span className="inline-flex items-center gap-1 text-[#0D0D0D]" title="Comprometido e pago passam do vigente">
+          <span className="inline-flex items-center gap-1 text-[#282525]" title="Comprometido e pago passam do vigente">
             <AlertTriangle size={12} strokeWidth={1.75} role="img" aria-label="Saldo negativo" className="shrink-0 text-[#D94A4A]" />
             {fmt(totais.saldo)}
           </span>

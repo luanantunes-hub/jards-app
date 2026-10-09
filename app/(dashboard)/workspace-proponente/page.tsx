@@ -74,7 +74,7 @@ export default function WorkspaceProponenteListPage() {
     <div className="min-h-full">
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-8 pt-8 sm:px-6 lg:px-10 lg:pt-10">
-          <h1 className="text-[1.75rem] font-semibold leading-[1.04] tracking-[-.04em] text-[#0D0D0D] sm:text-[2rem]">Meus projetos</h1>
+          <h1 className="text-[1.75rem] font-semibold leading-[1.04] tracking-[-.04em] text-[#282525] sm:text-[2rem]">Meus projetos</h1>
           <p className="mt-2 text-[0.875rem] text-black/45">
             {proponentesUnicos > 1 ? `Projetos de ${proponentesUnicos} proponentes vinculados a você.` : "Acompanhe o andamento das negociações e inscrições de cada projeto."}
           </p>
@@ -109,7 +109,7 @@ export default function WorkspaceProponenteListPage() {
                       <faseMeta.Icon size={10} />{faseMeta.label}
                     </span>
                   </div>
-                  <p className="mt-3 truncate text-[0.875rem] font-semibold text-black/80 group-hover:text-black">{projeto.nome}</p>
+                  <p className="mt-3 truncate text-[0.875rem] font-semibold text-black/80 group-hover:text-[#282525]">{projeto.nome}</p>
                   {proponentesUnicos > 1 && <p className="mt-0.5 truncate text-[0.6875rem] text-black/35">{projeto.proponenteNome}</p>}
 
                   {projeto.valorAlvo ? (

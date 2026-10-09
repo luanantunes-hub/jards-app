@@ -27,7 +27,7 @@ type Candidata = { id: string; nome: string; status: string };
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 const ICONE = "rounded p-2 text-black/35 transition hover:bg-black/[.05] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 const META_DE_ORGANIZACOES = 3;
 
@@ -82,7 +82,7 @@ function CartaoDaOrganizacao({ o, onEditar, onTirar }: { o: Organizacao; onEdita
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-label={o.nome}>
       <div className="flex flex-wrap items-start justify-between gap-3 px-5 py-4">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">{o.nome}</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">{o.nome}</h2>
           <p className="text-[0.6875rem] text-black/45">
             {[
               `No piloto desde ${dataBr(o.entrou_em)}`,
@@ -232,7 +232,7 @@ function PilotoModal({ organizacao, candidatas, onClose, onSaved }: {
           <span className={ROTULO}>Observações</span>
           <textarea value={observacoes} onChange={e => setObservacoes(e.target.value)} rows={3} maxLength={2000}
             placeholder="Como a equipe mediu o tempo de antes, quem acompanha, os projetos"
-            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
         </label>
         {erro && <p role="alert" className="text-[0.6875rem] text-[#B23B3B] sm:col-span-2">{erro}</p>}
       </div>
@@ -271,7 +271,7 @@ export default function AdminPilotoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-8 md:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold text-[#0D0D0D]">Piloto da prestação de contas</h1>
+          <h1 className="text-xl font-bold text-[#282525]">Piloto da prestação de contas</h1>
           <p className="mt-0.5 max-w-[48rem] text-sm text-black/45">
             As medidas da seção 16 do estudo: o tempo de montar a prestação final contra o de antes, os débitos da conta de movimento conciliados até o prazo, as diligências da análise preditiva por erro que o sistema já confere e o custo de IA. A cortesia do módulo fica em <Link href="/admin/organizacoes" className="underline decoration-black/20 underline-offset-2 hover:text-black/70">Organizações</Link>.
           </p>
@@ -280,7 +280,7 @@ export default function AdminPilotoPage() {
           type="button"
           onClick={() => setEditando({ organizacao: null })}
           disabled={!dados}
-          className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
+          className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Plus size={13} aria-hidden /> Incluir organização
         </button>

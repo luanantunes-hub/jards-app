@@ -292,7 +292,7 @@ export function AtribuicaoConversa({ id, organizationId, pedido, onSent, isGesto
       <div className="border-t pt-6" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="mb-3 flex items-center justify-between gap-2">
           <p className="text-[0.6875rem] font-semibold uppercase tracking-wide text-black/40">Histórico</p>
-          <button type="button" onClick={event => atualizacaoPop.abrir(event, 360)} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-black">Nova atualização</button>
+          <button type="button" onClick={event => atualizacaoPop.abrir(event, 360)} className="rounded border border-black/[.14] px-2.5 py-1.5 text-[0.6875rem] font-medium text-black/60 transition hover:border-black/30 hover:text-[#282525]">Nova atualização</button>
         </div>
         <div className="max-h-80 space-y-3 overflow-y-auto" aria-live="polite">
           {loading ? <p className="text-[0.75rem] text-black/40">Carregando acompanhamento…</p> : notas.length === 0 ? (

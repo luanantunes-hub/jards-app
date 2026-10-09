@@ -30,7 +30,7 @@ const POR_VEZ = 200;
 type DadosDaPrestacao = { regime_id: string | null; manifestacao_esportiva: ManifestacaoEsportiva | null; data_fim_execucao: string | null };
 
 const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
-const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#0D0D0D]" : "text-black/30"}`;
+const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#282525]" : "text-black/30"}`;
 
 /** O ícone diz a gravidade (vermelho bloqueia, âmbar alerta); o texto fica neutro. */
 function Avisos({ achados }: { achados: readonly Achado[] }) {
@@ -176,7 +176,7 @@ export default function BeneficiariosPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Beneficiários</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Beneficiários</h2>
           <p className="max-w-[40rem] text-[0.6875rem] text-black/45">
             Quem o projeto atendeu diretamente, com sexo, idade, rede de ensino e benefícios.
             {pedeRelacao ? " Vai na aba BENEFICIADOS do formulário da prestação." : regime ? " O regime desta prestação não pede a relação; ela fica registrada aqui." : ""}
@@ -190,7 +190,7 @@ export default function BeneficiariosPage() {
             <button
               type="button"
               onClick={() => setEditando({ beneficiado: null })}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+              className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
             >
               <Plus size={13} aria-hidden /> Adicionar beneficiado
             </button>
@@ -230,7 +230,7 @@ export default function BeneficiariosPage() {
 
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="relacao-titulo">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="relacao-titulo" className="text-[0.75rem] font-semibold text-black">Relação de beneficiados <span className="font-normal tabular-nums text-black/35">({lista.length})</span></h3>
+          <h3 id="relacao-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Relação de beneficiados <span className="font-normal tabular-nums text-black/35">({lista.length})</span></h3>
           {lista.length > 0 && (
             <div className="flex flex-wrap items-center gap-2">
               <label className="flex h-9 items-center gap-1.5 rounded border bg-white px-2.5" style={{ borderColor: "rgba(13,13,13,.12)" }}>
@@ -240,7 +240,7 @@ export default function BeneficiariosPage() {
                   onChange={e => { setBusca(e.target.value); setMostrando(POR_VEZ); }}
                   placeholder="Buscar nome ou modalidade"
                   aria-label="Buscar na relação"
-                  className="w-[11rem] bg-transparent text-[0.6875rem] text-black outline-none placeholder:text-black/30"
+                  className="w-[11rem] bg-transparent text-[0.6875rem] text-[#282525] outline-none placeholder:text-black/30"
                 />
               </label>
               {podeEditar && (
@@ -330,7 +330,7 @@ export default function BeneficiariosPage() {
 
             {filtrada.length > visiveis.length && (
               <div className="border-t px-5 py-3 text-center" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                <button type="button" onClick={() => setMostrando(m => m + POR_VEZ)} className="rounded px-3 py-2 text-[0.6875rem] text-black/55 transition hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                <button type="button" onClick={() => setMostrando(m => m + POR_VEZ)} className="rounded px-3 py-2 text-[0.6875rem] text-black/55 transition hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                   Mostrar mais ({filtrada.length - visiveis.length})
                 </button>
               </div>

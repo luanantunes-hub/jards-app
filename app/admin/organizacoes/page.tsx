@@ -119,7 +119,7 @@ export default function AdminOrganizacoesPage() {
     <div className="mx-auto max-w-pagina px-6 py-8">
       <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold text-[#0D0D0D]">Organizações</h1>
+          <h1 className="text-xl font-bold text-[#282525]">Organizações</h1>
           <p className="mt-0.5 text-sm text-black/40">
             {organizacoes.length} organizações · {comContrato} com a prestação de contas
           </p>
@@ -175,7 +175,7 @@ export default function AdminOrganizacoesPage() {
                   <button
                     type="button"
                     onClick={() => setAbertaId(o.id)}
-                    className="rounded text-left text-[0.8125rem] font-medium text-[#0D0D0D] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                    className="rounded text-left text-[0.8125rem] font-medium text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                   >
                     {o.nome}
                   </button>
@@ -428,7 +428,7 @@ function PainelOrganizacao({ organizacao, hoje, onClose, onMudou }: {
               return (
                 <li key={m.user_id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
-                    <p className="truncate text-[0.8125rem] text-[#0D0D0D]">{nome}</p>
+                    <p className="truncate text-[0.8125rem] text-[#282525]">{nome}</p>
                     <p className="truncate text-[0.6875rem] text-black/40">
                       {PAPEL_LABEL[m.papel] ?? m.papel}{m.email && m.nome ? ` · ${m.email}` : ""}
                       {temAcesso && !m.modulos_acesso.includes("captacao") ? " · só prestação" : ""}

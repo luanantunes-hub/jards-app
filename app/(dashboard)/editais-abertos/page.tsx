@@ -400,7 +400,7 @@ export default function EditaisAbertosPage() {
       <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#0D0D0D]">Editais</h1>
+          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525]">Editais</h1>
         </div>
         <PrimaryListAction onClick={() => setShowSugerirForm(v => !v)}><UserPlus size={13} aria-hidden="true" /> Sugerir edital</PrimaryListAction>
       </div>
@@ -423,7 +423,7 @@ export default function EditaisAbertosPage() {
                 <div className="w-8 h-8 rounded flex items-center justify-center" style={{ background: "rgba(13,13,13,.04)" }}>
                   <UserPlus size={14} style={{ color: "#7259B5" }} />
                 </div>
-                <h2 className="text-[0.875rem] font-bold text-black">Sugerir edital</h2>
+                <h2 className="text-[0.875rem] font-bold text-[#282525]">Sugerir edital</h2>
               </div>
               <button
                 type="button"
@@ -526,7 +526,7 @@ export default function EditaisAbertosPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Buscar edital, empresa, estado…"
-            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
+            className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border rounded text-[#282525] placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           />
         </div>
@@ -615,7 +615,7 @@ export default function EditaisAbertosPage() {
                       </div>
                     )}
                     <div>
-                      <p className="text-[0.9375rem] font-bold text-[#0D0D0D] leading-tight">{nome}</p>
+                      <p className="text-[0.9375rem] font-bold text-[#282525] leading-tight">{nome}</p>
                       {isADM && adm!.empresas?.estado && (
                         <p className="text-[0.6875rem] text-black/35 mt-0.5">{adm!.empresas!.estado}</p>
                       )}
@@ -766,7 +766,7 @@ export default function EditaisAbertosPage() {
                     <button type="button" aria-label="Votar a favor" aria-pressed={meuVoto === 1} onClick={() => handleVotar(s.id, 1)} className="p-0.5 rounded hover:bg-black/5 transition">
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[0.6875rem] font-semibold tabular-nums ${saldo === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
+                    <span className={`text-[0.6875rem] font-semibold tabular-nums ${saldo === 0 ? "text-black/30" : "text-[#282525]"}`}>
                       {saldo}
                     </span>
                     <button type="button" aria-label="Votar contra" aria-pressed={meuVoto === -1} onClick={() => handleVotar(s.id, -1)} className="p-0.5 rounded hover:bg-black/5 transition">
@@ -777,7 +777,7 @@ export default function EditaisAbertosPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2 mb-0.5">
-                      <p className="text-[0.8125rem] font-bold text-black leading-tight truncate">{s.empresa_nome}</p>
+                      <p className="text-[0.8125rem] font-bold text-[#282525] leading-tight truncate">{s.empresa_nome}</p>
                       {dias !== null && (
                         <span
                           className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0"

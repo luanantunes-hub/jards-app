@@ -341,7 +341,7 @@ export function ProjetoOrcamentoManager({
               {(activeCota.pct * 100).toFixed(1)}% do projeto · <span className="font-semibold">{fmt(activeCota.valor)}</span> de referência por unidade
             </p>
           </div>
-          <p className="shrink-0 text-[0.75rem] text-black/45"><span title={formatarValorCompleto(total * activeCota.pct)} className="font-semibold tabular-nums text-[#0D0D0D]">{formatarValorCurto(total * activeCota.pct)}</span> nesta cota</p>
+          <p className="shrink-0 text-[0.75rem] text-black/45"><span title={formatarValorCompleto(total * activeCota.pct)} className="font-semibold tabular-nums text-[#282525]">{formatarValorCurto(total * activeCota.pct)}</span> nesta cota</p>
         </div>
       )}
 
@@ -382,7 +382,7 @@ export function ProjetoOrcamentoManager({
                     <td className="px-4 py-3 text-right font-semibold tabular-nums text-black/65">{fmt(item.valor)}</td>
                     {activeCota ? (
                       <td className="px-4 py-3 text-right">
-                        <span className="font-semibold tabular-nums text-[#0D0D0D]">{fmt(item.valor * activeCota.pct)}</span>
+                        <span className="font-semibold tabular-nums text-[#282525]">{fmt(item.valor * activeCota.pct)}</span>
                       </td>
                     ) : valorTotal && valorTotal > 0 && cotaData.length > 0 ? (
                       cotaData.map(cota => (
@@ -405,7 +405,7 @@ export function ProjetoOrcamentoManager({
                   <td colSpan={2} className="px-4 py-3 text-[0.6875rem] font-bold text-black/45">Total</td>
                   <td className="px-4 py-3 text-right text-[0.75rem] font-bold tabular-nums text-black/70">{fmt(total)}</td>
                   {activeCota ? (
-                    <td className="px-4 py-3 text-right text-[0.75rem] font-bold tabular-nums text-[#0D0D0D]">{fmt(total * activeCota.pct)}</td>
+                    <td className="px-4 py-3 text-right text-[0.75rem] font-bold tabular-nums text-[#282525]">{fmt(total * activeCota.pct)}</td>
                   ) : valorTotal && valorTotal > 0 && cotaData.length > 0 ? (
                     cotaData.map(cota => (
                       <td key={cota.id} className="px-4 py-3 text-right text-[0.6875rem] font-bold tabular-nums text-black/55">{fmt(total * cota.pct)}</td>
@@ -435,7 +435,7 @@ export function ProjetoOrcamentoManager({
 }
 
 function Summary({ label, value, title, vazio = false }: { label: string; value: string; title?: string; vazio?: boolean }) {
-  return <div className="flex-1 rounded bg-black/[.025] px-4 py-3 min-w-[8.75rem]"><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 truncate">{label}</p><p title={title} className={`mt-1 truncate text-[0.875rem] font-semibold tabular-nums ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p></div>;
+  return <div className="flex-1 rounded bg-black/[.025] px-4 py-3 min-w-[8.75rem]"><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 truncate">{label}</p><p title={title} className={`mt-1 truncate text-[0.875rem] font-semibold tabular-nums ${vazio ? "text-black/30" : "text-[#282525]"}`}>{value}</p></div>;
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {

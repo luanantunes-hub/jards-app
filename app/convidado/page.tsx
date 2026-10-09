@@ -32,7 +32,7 @@ export default async function PrestacoesDoConvidado() {
 
   return (
     <main className="mx-auto max-w-[48rem] px-4 py-8 md:px-6 md:py-10">
-      <h1 className="text-balance text-[1.375rem] font-semibold tracking-[-0.02em] text-[#0D0D0D]">Prestações que você acompanha</h1>
+      <h1 className="text-balance text-[1.375rem] font-semibold tracking-[-0.02em] text-[#282525]">Prestações que você acompanha</h1>
       <p className="mt-1 text-[0.8125rem] text-black/50">Por convite, só leitura: você comenta e marca itens como verificados.</p>
 
       {error ? (
@@ -51,7 +51,7 @@ export default async function PrestacoesDoConvidado() {
               <>
                 <div className="min-w-0">
                   <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40">{c.organizacao ?? "Organização"}</p>
-                  <p className="mt-0.5 truncate text-[0.875rem] font-medium text-[#0D0D0D]">{c.titulo}</p>
+                  <p className="mt-0.5 truncate text-[0.875rem] font-medium text-[#282525]">{c.titulo}</p>
                   <p className="mt-0.5 text-[0.6875rem] text-black/50">
                     {rotuloDoPapel(c.papel)} · {textoDasSecoes(c.secoes)} · {ativo ? `até ${dataBr(c.expira_em)}` : SITUACAO[c.situacao]}
                   </p>

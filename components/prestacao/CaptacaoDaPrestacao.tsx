@@ -40,7 +40,7 @@ export function CaptacaoDaPrestacao({ situacao, prestacaoId, fimDaCaptacao, pode
             {readequar && podeEditar && (
               <>
                 {" "}
-                <Link href={`/prestacoes/${prestacaoId}/orcamento`} className="rounded text-black/75 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                <Link href={`/prestacoes/${prestacaoId}/orcamento`} className="rounded text-black/75 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                   Pedir em Orçamento
                 </Link>
               </>

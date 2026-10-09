@@ -131,7 +131,7 @@ export default function WorkspaceProponenteProjetoPage({ params }: { params: Pro
               <span className="mb-2 inline-flex items-center gap-1.5 rounded border px-2 py-1 text-[0.625rem] font-medium" style={{ borderColor: faseMeta.color + "47", color: faseMeta.color, background: "white" }}>
                 <faseMeta.Icon size={10} />{faseMeta.label}
               </span>
-              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{projeto.nome}</h1>
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{projeto.nome}</h1>
               <p className="mt-2 text-[0.875rem] text-black/50">{projeto.proponenteNome}</p>
               {projeto.descricao && <p className="mt-3 max-w-3xl text-[0.9375rem] leading-6 text-black/45">{projeto.descricao}</p>}
             </div>

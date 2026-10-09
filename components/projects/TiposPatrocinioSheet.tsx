@@ -124,7 +124,7 @@ export function TiposPatrocinioSheet({
                     <div
                       onClick={() => toggleFederal(type.value)}
                       className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded transition ${
-                        active ? "bg-[#0D0D0D]" : "border border-black/[.2] bg-white"
+                        active ? "bg-[#282525]" : "border border-black/[.2] bg-white"
                       }`}
                     >
                       {active && <Check size={10} className="text-white" strokeWidth={3} />}
@@ -177,7 +177,7 @@ export function TiposPatrocinioSheet({
                       options={BRAZIL_STATES.map(([code, name]) => ({ value: code, label: `${code} — ${name}` }))}
                     />
                   </div>
-                  <button onClick={addEstadual} disabled={!estadualState} className="h-10 rounded bg-[#0D0D0D] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-black/80 disabled:opacity-40">
+                  <button onClick={addEstadual} disabled={!estadualState} className="h-10 rounded bg-[#282525] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-[#3A3535] disabled:opacity-40">
                     Adicionar
                   </button>
                   <button onClick={() => { setAddingEstadual(false); setEstadualState(""); }} className="text-[0.6875rem] text-black/35 transition hover:text-black/55">
@@ -205,7 +205,7 @@ export function TiposPatrocinioSheet({
                     autoFocus
                     className="h-10 w-40 rounded border border-black/[.15] px-3 text-[0.75rem] outline-none focus:border-black/30 transition"
                   />
-                  <button onClick={addMunicipal} disabled={!municipalName.trim()} className="h-10 rounded bg-[#0D0D0D] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-black/80 disabled:opacity-40">
+                  <button onClick={addMunicipal} disabled={!municipalName.trim()} className="h-10 rounded bg-[#282525] px-3 text-[0.6875rem] font-medium text-white transition hover:bg-[#3A3535] disabled:opacity-40">
                     Adicionar
                   </button>
                   <button onClick={() => { setAddingMunicipal(false); setMunicipalName(""); }} className="text-[0.6875rem] text-black/35 transition hover:text-black/55">

@@ -68,7 +68,7 @@ export default function PrestacaoLayout({ children }: { children: React.ReactNod
           <ArrowLeft size={12} /> Prestações
         </button>
         <div className="flex items-center gap-3 mb-4">
-          <h1 className="font-bold text-[1.25rem] text-[#0D0D0D] truncate">{titulo || "…"}</h1>
+          <h1 className="font-bold text-[1.25rem] text-[#282525] truncate">{titulo || "…"}</h1>
           {status && <StatusBadge status={status} size="sm" />}
         </div>
         {/* Abas: no celular a linha rola na horizontal, sem quebrar o rótulo. */}

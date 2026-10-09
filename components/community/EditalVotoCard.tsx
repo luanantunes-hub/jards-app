@@ -62,7 +62,7 @@ function VotoRow({
       </div>
       {pct !== null && (
         <p className="text-[0.625rem] text-black/30">
-          <span className={`font-semibold tabular-nums ${pct === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
+          <span className={`font-semibold tabular-nums ${pct === 0 ? "text-black/30" : "text-[#282525]"}`}>
             {pct}% positivo
           </span>
           {" "}· {total} {total === 1 ? "voto" : "votos"}

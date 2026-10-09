@@ -403,7 +403,7 @@ export default function ComprovantesPage() {
       {permissoes.editar && (
         <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <p className="text-[0.75rem] font-semibold text-black">Enviar comprovante</p>
+            <p className="text-[0.75rem] font-semibold text-[#282525]">Enviar comprovante</p>
           </div>
           <div className="p-5">
             {!pendingFile ? (
@@ -422,7 +422,7 @@ export default function ComprovantesPage() {
                 <div className="flex items-center gap-3 p-3 rounded border" style={{ borderColor: "rgba(13,13,13,.10)", background: "#FAFAFA" }}>
                   <FileText size={16} className="text-[#7259B5] flex-shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-[0.75rem] font-medium text-black truncate">{pendingFile.name}</p>
+                    <p className="text-[0.75rem] font-medium text-[#282525] truncate">{pendingFile.name}</p>
                     <p className="text-[0.625rem] text-black/35">{(pendingFile.size / 1024).toFixed(1)} KB</p>
                   </div>
                   <button onClick={cancelarUpload} className="p-1 rounded hover:bg-black/5 text-black/30 hover:text-black/55">
@@ -487,7 +487,7 @@ export default function ComprovantesPage() {
                       value={itemId}
                       onChange={e => setItemId(e.target.value)}
                       className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
-                      style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#0D0D0D" : "rgba(13,13,13,.35)" }}
+                      style={{ borderColor: "rgba(13,13,13,.12)", color: itemId ? "#282525" : "rgba(13,13,13,.35)" }}
                     >
                       <option value="">Sem item</option>
                       {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
@@ -607,7 +607,7 @@ export default function ComprovantesPage() {
       {/* Lista */}
       <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <p className="text-[0.75rem] font-semibold text-black">
+          <p className="text-[0.75rem] font-semibold text-[#282525]">
             Documentos enviados
             {comprovantes.length > 0 && <span className="text-black/30 font-normal text-[0.6875rem] ml-1.5">({comprovantes.length})</span>}
           </p>
@@ -666,7 +666,7 @@ export default function ComprovantesPage() {
                       <button
                         onClick={() => getUrl(c.storage_path)}
                         title={c.nome_arquivo}
-                        className="flex min-w-0 max-w-xs items-center gap-1 rounded text-[0.75rem] font-semibold text-black transition hover:text-[#7259B5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                        className="flex min-w-0 max-w-xs items-center gap-1 rounded text-[0.75rem] font-semibold text-[#282525] transition hover:text-[#7259B5] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                       >
                         <span className="truncate">{c.nome_arquivo}</span> <ExternalLink size={10} className="flex-shrink-0 opacity-50" />
                       </button>
@@ -709,7 +709,7 @@ export default function ComprovantesPage() {
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Recebida por e-mail</span>
                       )}
                       {c.contrapartida && (
-                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #0D0D0D2E", color: "#0D0D0DA6" }}>
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2825252E", color: "#282525A6" }}>
                           {c.contrapartida === "doacao" ? "Contrapartida por doação" : "Contrapartida"}
                         </span>
                       )}

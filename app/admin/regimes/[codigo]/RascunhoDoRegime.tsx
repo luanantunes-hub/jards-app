@@ -170,7 +170,7 @@ export function RascunhoDoRegime({ codigo, rascunho, publicado, usuarioId, onFei
   return (
     <section className="space-y-3 rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="titulo-rascunho">
       <div className="flex flex-wrap items-center gap-1.5">
-        <h2 id="titulo-rascunho" className="text-[0.875rem] font-semibold text-[#0D0D0D]">Rascunho da versão {rascunho.versao}</h2>
+        <h2 id="titulo-rascunho" className="text-[0.875rem] font-semibold text-[#282525]">Rascunho da versão {rascunho.versao}</h2>
         {rascunho.exige_segunda_aprovacao && <Etiqueta texto="Pede duas aprovações" cor={AMBAR} />}
       </div>
 
@@ -191,7 +191,7 @@ export function RascunhoDoRegime({ codigo, rascunho, publicado, usuarioId, onFei
               <li key={d.caminho} className="grid gap-1 py-2 text-[0.75rem] md:grid-cols-[1fr_1fr_1fr] md:gap-4">
                 <span className="text-black/50">{fonte ? `Fonte de ${rotuloDoCaminho(rascunho.parametros, d.caminho.slice(0, -6))}` : rotuloDoCaminho(rascunho.parametros, d.caminho)}</span>
                 <span className="text-black/45 line-through decoration-black/25">{semAspas(d.antes)}</span>
-                <span className="font-medium text-[#0D0D0D]">{semAspas(d.depois)}</span>
+                <span className="font-medium text-[#282525]">{semAspas(d.depois)}</span>
               </li>
             );
           })}

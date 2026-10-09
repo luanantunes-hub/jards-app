@@ -32,7 +32,7 @@ export function PrestacoesDoProponente() {
 
   return (
     <section aria-labelledby="prestacoes-proponente" className="mb-10">
-      <h2 id="prestacoes-proponente" className="mb-3 flex items-center gap-2 text-[0.9375rem] font-semibold text-[#0D0D0D]">
+      <h2 id="prestacoes-proponente" className="mb-3 flex items-center gap-2 text-[0.9375rem] font-semibold text-[#282525]">
         <ClipboardCheck size={16} className="text-black/40" aria-hidden /> Prestações de contas
       </h2>
       {erro ? (
@@ -51,7 +51,7 @@ export function PrestacoesDoProponente() {
                     <p className="min-w-0 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{p.organizacao}</p>
                     <span className="shrink-0 rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: s.cor + "47", color: s.cor }}>{s.rotulo}</span>
                   </div>
-                  <p className="mt-2 text-[0.875rem] font-semibold text-black/80 group-hover:text-black">{p.titulo}</p>
+                  <p className="mt-2 text-[0.875rem] font-semibold text-black/80 group-hover:text-[#282525]">{p.titulo}</p>
                   <p className="mt-0.5 text-[0.6875rem] text-black/45">{[p.regime, p.identificador_oficial].filter(Boolean).join(" · ")}</p>
                   {prazo && (
                     <p className="mt-2 flex items-center gap-1 text-[0.6875rem] text-black/55">

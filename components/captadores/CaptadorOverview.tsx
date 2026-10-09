@@ -121,10 +121,10 @@ function MetricBlock({
           <Info size={9} /> {sampleLabel}
         </span>
       </div>
-      <p title={unit === "money" && value != null ? formatarValorCompleto(value) : undefined} className={`text-[1.5625rem] font-semibold leading-none tracking-[-.035em] tabular-nums ${value ? "text-[#0D0D0D]" : "text-black/30"}`}>{formatter(value)}</p>
+      <p title={unit === "money" && value != null ? formatarValorCompleto(value) : undefined} className={`text-[1.5625rem] font-semibold leading-none tracking-[-.035em] tabular-nums ${value ? "text-[#282525]" : "text-black/30"}`}>{formatter(value)}</p>
       <p className="mt-2 min-h-4 text-[0.6875rem] font-medium text-black/45">{comparisonText}</p>
       <div className="relative mt-4 h-1 overflow-visible rounded-sm bg-black/[.06]">
-        <div className="h-full rounded-sm bg-[#0D0D0D]/75 transition-[width] duration-500" style={{ width: `${noFinancialHistory ? 0 : currentWidth}%` }} />
+        <div className="h-full rounded-sm bg-[#282525]/75 transition-[width] duration-500" style={{ width: `${noFinancialHistory ? 0 : currentWidth}%` }} />
         {reliable && median != null && !noFinancialHistory && (
           <span className="absolute top-1/2 h-3 w-px -translate-y-1/2 bg-black/45" style={{ left: `${medianPosition}%` }} title={`Mediana: ${formatter(median)}`} />
         )}
@@ -182,9 +182,9 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
     <div className="space-y-5">
       <section className="overflow-hidden rounded border border-black/[.08] bg-white">
         <div className="px-5 pb-5 pt-6 sm:px-6">
-          <p className="max-w-3xl text-[1.25rem] font-semibold leading-[1.25] tracking-[-.025em] text-[#0D0D0D] sm:text-[1.375rem]">
+          <p className="max-w-3xl text-[1.25rem] font-semibold leading-[1.25] tracking-[-.025em] text-[#282525] sm:text-[1.375rem]">
             <span className="font-normal text-black/65">{summary.before}</span>
-            <span className="font-semibold text-[#0D0D0D]">{summary.emphasis}</span>
+            <span className="font-semibold text-[#282525]">{summary.emphasis}</span>
             <span className="font-normal text-black/65">{summary.after}</span>
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[0.625rem] text-black/32">

@@ -74,7 +74,7 @@ function BlockEditor({
   isFirst: boolean;
   isLast: boolean;
 }) {
-  const inputCls = "w-full bg-transparent outline-none resize-none text-[#0D0D0D] placeholder:text-black/25";
+  const inputCls = "w-full bg-transparent outline-none resize-none text-[#282525] placeholder:text-black/25";
 
   return (
     <div
@@ -332,7 +332,7 @@ export default function BlogEditorPage() {
       >
         <button
           onClick={() => router.push("/gerenciar-blog")}
-          className="flex items-center gap-1.5 text-sm text-black/40 hover:text-[#0D0D0D] transition"
+          className="flex items-center gap-1.5 text-sm text-black/40 hover:text-[#282525] transition"
         >
           <ChevronLeft size={16} /> Blog
         </button>
@@ -396,7 +396,7 @@ export default function BlogEditorPage() {
 
           {/* Title */}
           <input
-            className="w-full text-3xl font-bold text-[#0D0D0D] bg-transparent outline-none placeholder:text-black/20 mb-6"
+            className="w-full text-3xl font-bold text-[#282525] bg-transparent outline-none placeholder:text-black/20 mb-6"
             placeholder="Título do post"
             value={titulo}
             onChange={(e) => setTitulo(e.target.value)}

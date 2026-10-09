@@ -13,7 +13,7 @@ type Props = {
   onComplete: (name: string) => void;
 };
 
-const inputClass = "w-full rounded border border-black/12 bg-white px-3.5 py-2.5 text-sm text-black transition focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10";
+const inputClass = "w-full rounded border border-black/12 bg-white px-3.5 py-2.5 text-sm text-[#282525] transition focus:border-[#7259B5]/45 focus:outline-none focus:ring-2 focus:ring-[#7259B5]/10";
 const dropdownClass = "w-full [&>button]:w-full [&>button]:py-2.5";
 
 const ROLE_OPTIONS = [
@@ -142,7 +142,7 @@ export function OnboardingModal({ user, organizationId, onComplete }: Props) {
       <section className="max-h-[96dvh] w-full overflow-y-auto rounded-t bg-white sm:max-w-xl sm:rounded">
         <header className="border-b border-black/8 px-6 pb-5 pt-6 sm:px-8 sm:pt-8">
           <p className="mb-2 text-[0.6875rem] font-medium uppercase tracking-[.14em] text-[#7259B5]">Só mais um passo</p>
-          <h2 id="onboarding-title" className="font-display text-2xl font-bold tracking-[-.02em] text-[#0D0D0D]">Vamos preparar o Jards para você</h2>
+          <h2 id="onboarding-title" className="font-display text-2xl font-bold tracking-[-.02em] text-[#282525]">Vamos preparar o Jards para você</h2>
           <p className="mt-2 max-w-md text-sm leading-6 text-black/45">Essas respostas ajustam sua experiência e ajudam a gente a construir recursos mais úteis.</p>
         </header>
 

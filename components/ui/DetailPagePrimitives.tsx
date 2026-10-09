@@ -68,7 +68,7 @@ export function DetailHeaderAction({
 }) {
   const resolvedTone = tone ?? (accent ? "purple" : undefined);
   const className = `inline-flex h-11 items-center gap-2 rounded border bg-white px-4 text-[0.75rem] font-medium transition hover:bg-black/[.04] active:scale-[.98] ${
-    resolvedTone === "amber" ? "border-[#B07A14]/35 text-[#B07A14]" : resolvedTone === "purple" ? "border-[#7259B5]/30 text-[#7259B5]" : resolvedTone === "black" ? "border-black/[.15] text-black" : "border-black/[.12] text-black/55"
+    resolvedTone === "amber" ? "border-[#B07A14]/35 text-[#B07A14]" : resolvedTone === "purple" ? "border-[#7259B5]/30 text-[#7259B5]" : resolvedTone === "black" ? "border-black/[.15] text-[#282525]" : "border-black/[.12] text-black/55"
   }`;
   const content = <><Icon size={14} strokeWidth={1.8} />{label}</>;
 

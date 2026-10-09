@@ -110,7 +110,7 @@ export function PassosConexao({
         <li className="flex gap-3">
           <NumeroDoPasso n={1} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-black">Copie o endereço do Jards</p>
+            <p className="text-sm font-medium text-[#282525]">Copie o endereço do Jards</p>
             <CaixaCopiavel
               texto={urlServidor ?? ""}
               carregando={urlServidor === null}
@@ -127,7 +127,7 @@ export function PassosConexao({
         <li className="flex gap-3">
           <NumeroDoPasso n={2} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-black">{tituloAbrir}</p>
+            <p className="text-sm font-medium text-[#282525]">{tituloAbrir}</p>
             <a
               href={abrirHref}
               target="_blank"
@@ -136,7 +136,7 @@ export function PassosConexao({
                 if (urlServidor) void copiar("url", urlServidor);
                 aoInteragir();
               }}
-              className="mt-2 inline-flex h-11 items-center gap-2 rounded bg-[#0D0D0D] px-4 text-sm text-white transition hover:bg-black/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]"
+              className="mt-2 inline-flex h-11 items-center gap-2 rounded bg-[#282525] px-4 text-sm text-white transition hover:bg-[#3A3535] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]"
             >
               {abrirRotulo}
               <ExternalLink size={14} aria-hidden="true" />
@@ -149,7 +149,7 @@ export function PassosConexao({
         <li className="flex gap-3">
           <NumeroDoPasso n={3} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-black">{tituloConectar}</p>
+            <p className="text-sm font-medium text-[#282525]">{tituloConectar}</p>
             <div className="mt-1 text-sm text-black/70">{passoConectar}</div>
           </div>
         </li>
@@ -157,7 +157,7 @@ export function PassosConexao({
         <li className="flex gap-3">
           <NumeroDoPasso n={4} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-black">{tituloUsar}</p>
+            <p className="text-sm font-medium text-[#282525]">{tituloUsar}</p>
             <div className="mt-1 text-sm text-black/70">{passoUsar}</div>
           </div>
         </li>

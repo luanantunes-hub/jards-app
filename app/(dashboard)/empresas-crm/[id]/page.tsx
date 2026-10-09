@@ -152,7 +152,7 @@ export default function EmpresaCrmDetailPage({ params }: { params: Promise<{ id:
           <div className="min-w-0">
             {empresa.setor && <p className="mb-1.5 text-[0.75rem] text-black/45">{empresa.setor}</p>}
             <div className="flex flex-wrap items-center gap-2.5">
-              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{empresa.nome}</h1>
+              <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{empresa.nome}</h1>
               {empresa.domain_key && <a href={empresa.domain_key.startsWith("http") ? empresa.domain_key : `https://${empresa.domain_key}`} target="_blank" rel="noopener noreferrer" className="text-black/25 hover:text-[#7259B5] transition" title={empresa.domain_key}><Globe size={16}/></a>}
             </div>
           </div>
@@ -570,7 +570,7 @@ function TipoBadge({empresa,onSaved}:{empresa:EmpresaCrm;onSaved:()=>void}) {
   );
 }
 
-function Metric({label,value,title,vazio=false,alerta=false}:{label:string;value:string;title?:string;vazio?:boolean;alerta?:boolean}) { return <div className="rounded border bg-black/[.025] px-4 py-4" style={{borderColor:"rgba(13,13,13,.07)"}}><p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{alerta && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]"/>}{label}</p><p title={title} className={`mt-1.5 break-words text-[1.375rem] font-semibold tabular-nums ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p></div>; }
+function Metric({label,value,title,vazio=false,alerta=false}:{label:string;value:string;title?:string;vazio?:boolean;alerta?:boolean}) { return <div className="rounded border bg-black/[.025] px-4 py-4" style={{borderColor:"rgba(13,13,13,.07)"}}><p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{alerta && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]"/>}{label}</p><p title={title} className={`mt-1.5 break-words text-[1.375rem] font-semibold tabular-nums ${vazio ? "text-black/30" : "text-[#282525]"}`}>{value}</p></div>; }
 function NextStepRow({label,title,subtitle,actionLabel,onAction,href}:{label:string;title:string;subtitle:string;actionLabel:string;onAction?:()=>void;href?:string}) {
   const action = href
     ? <Link href={href} className="inline-flex shrink-0 items-center gap-1.5 rounded border border-[#7259B5]/25 bg-white px-3 py-1.5 text-[0.6875rem] font-medium text-[#7259B5] hover:bg-black/[.04]">{actionLabel}<ArrowUpRight size={11}/></Link>

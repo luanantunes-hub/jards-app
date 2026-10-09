@@ -308,7 +308,7 @@ export default function OrcamentoPage() {
               type="button"
               onClick={() => abrirNovo(null, "item")}
               disabled={carregando}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:opacity-50"
+              className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:opacity-50"
             >
               <Plus size={13} aria-hidden /> Adicionar item
             </button>
@@ -364,7 +364,7 @@ export default function OrcamentoPage() {
                   {cartao.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
                   {cartao.rotulo}
                 </p>
-                <p className={`mt-1 text-[1rem] font-semibold tabular-nums ${cartao.zerado ? "text-black/30" : "text-[#0D0D0D]"}`}>{cartao.valor}</p>
+                <p className={`mt-1 text-[1rem] font-semibold tabular-nums ${cartao.zerado ? "text-black/30" : "text-[#282525]"}`}>{cartao.valor}</p>
                 <p className="mt-0.5 text-[0.625rem] text-black/35">{cartao.nota}</p>
               </div>
             ))}
@@ -384,7 +384,7 @@ export default function OrcamentoPage() {
 
           <section aria-labelledby="itens-titulo" className={`${CARTAO} overflow-hidden`} style={BORDA}>
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <h2 id="itens-titulo" className="text-[0.75rem] font-semibold text-[#0D0D0D]">Itens do orçamento</h2>
+              <h2 id="itens-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Itens do orçamento</h2>
               {agrupadores.length > 0 && (
                 <button
                   type="button"

@@ -205,7 +205,7 @@ function StakeholdersView({ contatos }: { contatos: ContatoRow[] }) {
         <section key={key} className="overflow-hidden rounded border border-black/[.08] bg-white">
           <header className="flex items-center gap-3 border-b border-black/[.07] px-4 py-3.5">
             <CompanyLogo nome={group.name} domain={group.domain} site={group.site} size={34} className="shrink-0 border border-black/[.06]"/>
-            <div className="min-w-0 flex-1"><h2 className="truncate text-[0.8125rem] font-bold text-black">{group.name}</h2><p className="mt-0.5 text-[0.625rem] text-black/35">{group.items.length} {group.items.length === 1 ? "contato" : "contatos"}</p></div>
+            <div className="min-w-0 flex-1"><h2 className="truncate text-[0.8125rem] font-bold text-[#282525]">{group.name}</h2><p className="mt-0.5 text-[0.625rem] text-black/35">{group.items.length} {group.items.length === 1 ? "contato" : "contatos"}</p></div>
           </header>
           <div className="grid grid-cols-1 bg-[#F7F7F5] lg:grid-cols-3">
             {STAKEHOLDER_LANES.map((lane, laneIndex) => {
@@ -221,7 +221,7 @@ function StakeholdersView({ contatos }: { contatos: ContatoRow[] }) {
                       const SentimentoIcone = item.sentimento && item.sentimento !== "desconhecido" ? SENTIMENTO_ICONE[item.sentimento] : null;
                       return (
                         <article key={item.id} className="rounded border border-black/[.07] bg-white p-2.5 cursor-pointer hover:border-[#7259B5]/30 transition" onClick={() => { window.location.href = `/contatos/${item.id}`; }}>
-                          <div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-black/[.05] text-[0.625rem] font-bold text-black/35">{name.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{name}</p>{SentimentoIcone && <span role="img" className="shrink-0" title={`Sentimento: ${item.sentimento}`} aria-label={`Sentimento: ${item.sentimento}`}><SentimentoIcone size={12} strokeWidth={1.75} aria-hidden="true" className={item.sentimento === "negativo" ? "text-[#D94A4A]" : "text-black/40"}/></span>}</div><p className="mt-0.5 truncate text-[0.59375rem] text-black/35">{item.cargo ?? item.responsavel?.cargo ?? role}</p></div>{item.email && <a href={`mailto:${item.email}`} className="rounded p-1 text-black/25 transition hover:bg-black/[.05] hover:text-black" aria-label={`Enviar e-mail para ${name}`}><Mail size={11}/></a>}</div>
+                          <div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-black/[.05] text-[0.625rem] font-bold text-black/35">{name.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{name}</p>{SentimentoIcone && <span role="img" className="shrink-0" title={`Sentimento: ${item.sentimento}`} aria-label={`Sentimento: ${item.sentimento}`}><SentimentoIcone size={12} strokeWidth={1.75} aria-hidden="true" className={item.sentimento === "negativo" ? "text-[#D94A4A]" : "text-black/40"}/></span>}</div><p className="mt-0.5 truncate text-[0.59375rem] text-black/35">{item.cargo ?? item.responsavel?.cargo ?? role}</p></div>{item.email && <a href={`mailto:${item.email}`} className="rounded p-1 text-black/25 transition hover:bg-black/[.05] hover:text-[#282525]" aria-label={`Enviar e-mail para ${name}`}><Mail size={11}/></a>}</div>
                           <div className="mt-2 flex items-center justify-between gap-2 border-t border-black/[.05] pt-2"><span className="truncate text-[0.5625rem] font-medium text-black/35">{role}</span><div className="flex items-center gap-1.5"><LevelMarks value={item.influencia}/><LevelMarks value={item.forca_relacao} color="#1A8B7A"/></div></div>
                         </article>
                       );
@@ -463,7 +463,7 @@ export default function ContatosPage() {
                           >
                             {nome.charAt(0).toUpperCase()}
                           </div>
-                          <span className="truncate font-semibold text-black text-[0.8125rem]" title={nome}>{nome}</span>
+                          <span className="truncate font-semibold text-[#282525] text-[0.8125rem]" title={nome}>{nome}</span>
                         </div>
                       </td>
 
@@ -515,9 +515,9 @@ export default function ContatosPage() {
                       {/* Canais de contato */}
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-1">
-                          {c.email && <a href={`mailto:${c.email}`} title={c.email} aria-label={`Enviar e-mail para ${nome}`} className="flex h-7 w-7 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black"><Mail size={13}/></a>}
-                          {c.telefone && <a href={`tel:${c.telefone}`} title={c.telefone} aria-label={`Ligar para ${nome}`} className="flex h-7 w-7 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black"><Phone size={13}/></a>}
-                          {c.linkedin_url && <a href={safeExternalUrl(c.linkedin_url)} target="_blank" rel="noopener noreferrer" title="LinkedIn" aria-label={`Abrir LinkedIn de ${nome}`} className="flex h-7 w-7 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black"><LinkedinIcon size={12}/></a>}
+                          {c.email && <a href={`mailto:${c.email}`} title={c.email} aria-label={`Enviar e-mail para ${nome}`} className="flex h-7 w-7 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-[#282525]"><Mail size={13}/></a>}
+                          {c.telefone && <a href={`tel:${c.telefone}`} title={c.telefone} aria-label={`Ligar para ${nome}`} className="flex h-7 w-7 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-[#282525]"><Phone size={13}/></a>}
+                          {c.linkedin_url && <a href={safeExternalUrl(c.linkedin_url)} target="_blank" rel="noopener noreferrer" title="LinkedIn" aria-label={`Abrir LinkedIn de ${nome}`} className="flex h-7 w-7 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-[#282525]"><LinkedinIcon size={12}/></a>}
                           {!c.email && !c.telefone && !c.linkedin_url && <span className="text-xs text-black/20">—</span>}
                         </div>
                       </td>

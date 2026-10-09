@@ -31,13 +31,13 @@ export function AcompanharPrestacao({ prestacaoId, onAbrirArquivo }: { prestacao
 
   return (
     <section aria-labelledby="acompanhar-titulo" className="space-y-3">
-      <h2 id="acompanhar-titulo" className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Acompanhar a prestação</h2>
+      <h2 id="acompanhar-titulo" className="text-[0.9375rem] font-semibold text-[#282525]">Acompanhar a prestação</h2>
       <div role="tablist" aria-label="Seções da prestação" className="flex gap-1 overflow-x-auto border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         {SECOES_DO_CONVITE.map(s => (
           <button key={s.id} type="button" role="tab" id={`aba-acompanhar-${s.id}`} aria-selected={secao === s.id} aria-controls="painel-acompanhar"
             onClick={() => { if (secao !== s.id) { setListas(null); setSecao(s.id); } }}
             className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-              secao === s.id ? "border-[#7259B5] text-[#0D0D0D]" : "border-transparent text-black/50 hover:text-black/80"}`}>
+              secao === s.id ? "border-[#7259B5] text-[#282525]" : "border-transparent text-black/50 hover:text-black/80"}`}>
             {s.rotulo}
           </button>
         ))}
@@ -63,13 +63,13 @@ export function AcompanharPrestacao({ prestacaoId, onAbrirArquivo }: { prestacao
                         <div className="mt-1 flex flex-wrap gap-3">
                           {item.arquivo && (
                             <button type="button" onClick={() => onAbrirArquivo(item.arquivo!.path)}
-                              className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                              className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                               <FileText size={11} aria-hidden /> {item.arquivo.nome}
                             </button>
                           )}
                           {item.link && (
                             <a href={item.link} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                              className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                               Abrir link <ExternalLink size={11} aria-hidden />
                             </a>
                           )}

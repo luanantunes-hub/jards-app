@@ -321,7 +321,7 @@ export default function PrestacaoDetalhe() {
             <button
               onClick={() => setAvancarOpen(!avancarOpen)}
               aria-expanded={avancarOpen}
-              className="flex items-center gap-2 rounded bg-[#0D0D0D] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]"
+              className="flex items-center gap-2 rounded bg-[#282525] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
             >
               Avançar status <ChevronDown size={13} aria-hidden />
             </button>
@@ -465,17 +465,17 @@ export default function PrestacaoDetalhe() {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
                   <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Aprovado</p>
-                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalAprovado ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totalAprovado)}</p>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalAprovado ? "text-[#282525]" : "text-black/30"}`}>{fmt(totalAprovado)}</p>
                 </div>
                 <div>
                   <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Comprovado</p>
-                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalComprovado ? "text-[#0D0D0D]" : "text-black/30"}`}>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalComprovado ? "text-[#282525]" : "text-black/30"}`}>
                     {fmt(totalComprovado)}
                   </p>
                 </div>
                 <div>
                   <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">A comprovar</p>
-                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalAComprovar > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalAComprovar > 0 ? "text-[#282525]" : "text-black/30"}`}>
                     {totalAComprovar > 0 ? fmt(totalAComprovar) : "—"}
                   </p>
                 </div>
@@ -486,7 +486,7 @@ export default function PrestacaoDetalhe() {
             <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
               <div className="flex items-center justify-between mb-1.5">
                 <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Percentual comprovado</p>
-                <span className={`text-[0.6875rem] font-semibold tabular-nums ${pct ? "text-[#0D0D0D]" : "text-black/30"}`}>{pct}%</span>
+                <span className={`text-[0.6875rem] font-semibold tabular-nums ${pct ? "text-[#282525]" : "text-black/30"}`}>{pct}%</span>
               </div>
               <BarraCaptacao confirmado={totalComprovado} meta={totalAprovado} className="h-1.5" />
             </div>
@@ -513,7 +513,7 @@ export default function PrestacaoDetalhe() {
                             <p className="text-[0.6875rem] font-medium text-black/70 truncate" title={item.caminho.length ? `${item.caminho.join(" › ")} › ${item.nome}` : item.nome}>{item.nome}</p>
                             <div className="flex items-center gap-3 flex-shrink-0 ml-4">
                               <span className="text-[0.625rem] text-black/35 tabular-nums">{fmt(itemExecutado)} / {fmt(item.vigente)}</span>
-                              <span className={`text-[0.625rem] font-semibold tabular-nums ${itemPct ? "text-[#0D0D0D]" : "text-black/30"}`}>{itemPct}%</span>
+                              <span className={`text-[0.625rem] font-semibold tabular-nums ${itemPct ? "text-[#282525]" : "text-black/30"}`}>{itemPct}%</span>
                             </div>
                           </div>
                           <BarraCaptacao confirmado={itemExecutado} meta={item.vigente} className="h-1" />
@@ -603,7 +603,7 @@ export default function PrestacaoDetalhe() {
             <div className="flex items-center gap-2">
               {STATUS_ORDER.map((s, i) => {
                 const Icone = s === prestacao.status ? CircleDot : STATUS_ORDER.indexOf(prestacao.status) > i ? CircleCheck : Circle;
-                const tom = s === prestacao.status ? "text-[#0D0D0D]" : STATUS_ORDER.indexOf(prestacao.status) > i ? "text-black/40" : "text-black/20";
+                const tom = s === prestacao.status ? "text-[#282525]" : STATUS_ORDER.indexOf(prestacao.status) > i ? "text-black/40" : "text-black/20";
                 return (
                   <div key={s} className="flex items-center gap-1">
                     <Icone size={12} strokeWidth={1.75} aria-hidden="true" className={`shrink-0 ${tom}`} />
@@ -614,7 +614,7 @@ export default function PrestacaoDetalhe() {
                 );
               })}
             </div>
-            <p className="text-[0.6875rem] font-semibold text-[#0D0D0D] mt-2">{meta.label}</p>
+            <p className="text-[0.6875rem] font-semibold text-[#282525] mt-2">{meta.label}</p>
           </div>
 
           <ProximosPrazos prazos={prazos} />

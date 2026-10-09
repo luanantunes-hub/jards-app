@@ -290,10 +290,10 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
                 {lido.arquivo.name} <span className="font-normal text-black/40">· {extrato.formato.toUpperCase()}</span>
               </p>
               <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-[0.6875rem] sm:grid-cols-4">
-                <div><dt className={INDICADOR}>Período</dt><dd className={`mt-0.5 font-semibold tabular-nums ${extrato.periodo ? "text-[#0D0D0D]" : "text-black/30"}`}>{extrato.periodo ? `${dataCurta(extrato.periodo.inicio)} a ${dataCurta(extrato.periodo.fim)}` : "—"}</dd></div>
-                <div><dt className={INDICADOR}>Créditos</dt><dd className={`mt-0.5 font-semibold tabular-nums ${totais.creditos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.creditos)}</dd></div>
-                <div><dt className={INDICADOR}>Débitos</dt><dd className={`mt-0.5 font-semibold tabular-nums ${totais.debitos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.debitos)}</dd></div>
-                <div><dt className={INDICADOR}>Saldo final</dt><dd className={`mt-0.5 font-semibold tabular-nums ${extrato.saldoFinal ? "text-[#0D0D0D]" : "text-black/30"}`}>{extrato.saldoFinal === null ? "—" : fmt(extrato.saldoFinal)}</dd></div>
+                <div><dt className={INDICADOR}>Período</dt><dd className={`mt-0.5 font-semibold tabular-nums ${extrato.periodo ? "text-[#282525]" : "text-black/30"}`}>{extrato.periodo ? `${dataCurta(extrato.periodo.inicio)} a ${dataCurta(extrato.periodo.fim)}` : "—"}</dd></div>
+                <div><dt className={INDICADOR}>Créditos</dt><dd className={`mt-0.5 font-semibold tabular-nums ${totais.creditos ? "text-[#282525]" : "text-black/30"}`}>{fmt(totais.creditos)}</dd></div>
+                <div><dt className={INDICADOR}>Débitos</dt><dd className={`mt-0.5 font-semibold tabular-nums ${totais.debitos ? "text-[#282525]" : "text-black/30"}`}>{fmt(totais.debitos)}</dd></div>
+                <div><dt className={INDICADOR}>Saldo final</dt><dd className={`mt-0.5 font-semibold tabular-nums ${extrato.saldoFinal ? "text-[#282525]" : "text-black/30"}`}>{extrato.saldoFinal === null ? "—" : fmt(extrato.saldoFinal)}</dd></div>
               </dl>
               <p className="mt-2 text-[0.6875rem]" role="status">
                 {conferencia.situacao === "confere" && (

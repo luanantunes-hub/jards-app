@@ -331,10 +331,10 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
           {/* Header */}
           <header className="flex items-center justify-between px-6 py-4 border-b flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="flex items-center gap-3">
-              <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
+              <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-[#282525]">
                 <FolderOpen size={16} />
               </span>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{editData ? "Editar projeto" : "Novo projeto"}</h2>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">{editData ? "Editar projeto" : "Novo projeto"}</h2>
             </div>
             <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/[.06] transition">
               <X size={15} className="text-black/40" />
@@ -353,7 +353,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                 placeholder="Nome do projeto"
                 value={nome}
                 onChange={e => setNome(e.target.value)}
-                className="mb-4 w-full rounded border border-black/[.12] px-3 py-2.5 text-[0.8125rem] font-medium text-black outline-none placeholder:text-black/30 focus:border-black/25 transition"
+                className="mb-4 w-full rounded border border-black/[.12] px-3 py-2.5 text-[0.8125rem] font-medium text-[#282525] outline-none placeholder:text-black/30 focus:border-black/25 transition"
               />
               <input ref={logoInputRef} type="file" accept="image/png,image/webp" className="hidden" onChange={e => handleLogoChange(e.target.files?.[0])} />
               <IdentityEditor
@@ -382,7 +382,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                   value={descricao}
                   onChange={e => setDescricao(e.target.value)}
                   rows={3}
-                  className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition"
+                  className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition"
                   style={{ borderColor: "rgba(13,13,13,.12)" }}
                 />
               </div>
@@ -432,7 +432,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     value={proponenteQuery}
                     onChange={e => { setProponenteQuery(e.target.value); setProponenteId(null); setProponenteNome(""); setProponenteOpen(true); }}
                     onFocus={() => setProponenteOpen(true)}
-                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-black outline-none"
+                    className="min-w-0 flex-1 bg-transparent text-[0.8125rem] text-[#282525] outline-none"
                   />
                   {proponenteId && (
                     <button onClick={e => { e.stopPropagation(); setProponenteId(null); setProponenteNome(""); setProponenteQuery(""); }}
@@ -444,7 +444,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                     {proponenteOptions.map(opt => (
                       <button key={opt.id} onMouseDown={e => { e.preventDefault(); selectProponente(opt); }}
                         className="w-full px-3 py-2.5 text-left text-[0.8125rem] transition hover:bg-black/[0.04]">
-                        <span className="font-medium text-black">{opt.nome}</span>
+                        <span className="font-medium text-[#282525]">{opt.nome}</span>
                         {(opt.cidade || opt.estado) && (
                           <span className="ml-1.5 text-[0.6875rem] text-black/35">{[opt.cidade, opt.estado].filter(Boolean).join(", ")}</span>
                         )}

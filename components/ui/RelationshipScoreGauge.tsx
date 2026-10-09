@@ -103,12 +103,12 @@ export function RelationshipScoreGauge({ score, label = "Potencial de relacionam
         <path
           d={`M ${needleLeft.x} ${needleLeft.y} L ${needleTip.x} ${needleTip.y} L ${needleRight.x} ${needleRight.y} Z`}
           fill="white"
-          stroke="#0D0D0D"
+          stroke="#282525"
           strokeWidth="2"
           strokeLinejoin="round"
         />
-        <circle cx="80" cy="68" r="7" fill="white" stroke="#0D0D0D" strokeWidth="2.25" />
-        <circle cx="80" cy="68" r="2.25" fill="#0D0D0D" />
+        <circle cx="80" cy="68" r="7" fill="white" stroke="#282525" strokeWidth="2.25" />
+        <circle cx="80" cy="68" r="2.25" fill="#282525" />
       </svg>
       <div className={compact ? "-mt-1 text-center" : "text-center"}>
         <p className={`inline-flex items-center gap-1 text-[0.6875rem] font-medium ${score === null ? "text-black/30" : "text-black/60"}`}>

@@ -27,7 +27,7 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 const dataCurta = (d: string) => d.slice(0, 10).split("-").reverse().join("/");
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const SECAO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35";
-const BOTAO = "flex h-8 shrink-0 items-center gap-1.5 rounded border bg-white px-2.5 text-[0.6875rem] font-medium text-black/70 transition hover:border-black/25 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:cursor-wait disabled:text-black/35 motion-reduce:transform-none";
+const BOTAO = "flex h-8 shrink-0 items-center gap-1.5 rounded border bg-white px-2.5 text-[0.6875rem] font-medium text-black/70 transition hover:border-black/25 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:cursor-wait disabled:text-black/35 motion-reduce:transform-none";
 
 type Dados = {
   lancamentos: PrestacaoLancamento[];
@@ -188,7 +188,7 @@ export default function ConciliacaoPage() {
     <div className="space-y-5 px-4 py-6 sm:px-8">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-[0.875rem] font-semibold text-[#0D0D0D]">Conciliação</h2>
+          <h2 className="text-[0.875rem] font-semibold text-[#282525]">Conciliação</h2>
           <p className="mt-0.5 text-[0.75rem] text-black/50">
             {resumo.debitos === 0 && pagamentos.length === 0
               ? "Importe o extrato e registre os pagamentos das despesas para conciliar."
@@ -201,7 +201,7 @@ export default function ConciliacaoPage() {
           </p>
         </div>
         {podeEditar && fortes.length > 0 && (
-          <button type="button" onClick={conciliarFortes} disabled={ocupado !== ""} className="flex items-center gap-1.5 rounded bg-[#0D0D0D] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-wait disabled:opacity-50 motion-reduce:transform-none">
+          <button type="button" onClick={conciliarFortes} disabled={ocupado !== ""} className="flex items-center gap-1.5 rounded bg-[#282525] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-wait disabled:opacity-50 motion-reduce:transform-none">
             <ArrowLeftRight size={13} aria-hidden /> Conciliar {fortes.length} {fortes.length === 1 ? "sugestão certa" : "sugestões certas"}
           </button>
         )}

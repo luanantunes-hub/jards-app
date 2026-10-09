@@ -704,7 +704,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                   )}
                 </div>
               )}
-              <h1 className="max-w-4xl text-balance text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{projeto.nome}</h1>
+              <h1 className="max-w-4xl text-balance text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{projeto.nome}</h1>
               {projeto.proponente_nome && (
                 <p className="mt-2 text-[0.875rem] text-black/50">
                   {projeto.proponente_nome}
@@ -1011,7 +1011,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                             </p>
                             <div className="min-w-0 flex-1">
                               <div className="mb-1.5 flex items-baseline justify-between gap-3">
-                                <span title={formatarValorCompleto(linha.valor)} className={`text-[0.8125rem] font-semibold tabular-nums ${linha.valor ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmtValor(linha.valor)}</span>
+                                <span title={formatarValorCompleto(linha.valor)} className={`text-[0.8125rem] font-semibold tabular-nums ${linha.valor ? "text-[#282525]" : "text-black/30"}`}>{fmtValor(linha.valor)}</span>
                                 <span className="text-[0.6875rem] tabular-nums text-black/40">{linha.pct}</span>
                               </div>
                               <div className="h-1.5 overflow-hidden rounded bg-black/[.06]">
@@ -1094,7 +1094,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           style={{ borderBottom: i < captacoes.length - 1 ? "1px solid rgba(13,13,13,.06)" : "none" }}
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-[0.8125rem] font-semibold text-black line-clamp-1">{c.titulo ?? empresa}</p>
+                            <p className="text-[0.8125rem] font-semibold text-[#282525] line-clamp-1">{c.titulo ?? empresa}</p>
                             <p className="text-[0.6875rem] text-black/35">{empresa}</p>
                           </div>
                           <div className="flex items-center gap-3 flex-shrink-0">
@@ -1133,7 +1133,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                           style={{ borderBottom: i < inscricoes.length - 1 ? "1px solid rgba(13,13,13,.06)" : "none" }}
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-[0.8125rem] font-semibold text-black line-clamp-1">{insc.empresa_crm?.nome ?? "Inscrição sem empresa"}</p>
+                            <p className="text-[0.8125rem] font-semibold text-[#282525] line-clamp-1">{insc.empresa_crm?.nome ?? "Inscrição sem empresa"}</p>
                             {insc.data_submissao && (
                               <p className="text-[0.6875rem] text-black/35 flex items-center gap-1">
                                 <Calendar size={9} /> {fmtDate(insc.data_submissao)}
@@ -1244,7 +1244,7 @@ function MetricCard({ label, value, title, icon }: { label: string; value: strin
       <p className="mb-1 flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
         {icon}{label}
       </p>
-      <p title={value === "—" ? undefined : title} className={`text-[0.9375rem] font-semibold tabular-nums ${value === "—" ? "text-black/30" : "text-[#0D0D0D]"}`}>{value}</p>
+      <p title={value === "—" ? undefined : title} className={`text-[0.9375rem] font-semibold tabular-nums ${value === "—" ? "text-black/30" : "text-[#282525]"}`}>{value}</p>
     </div>
   );
 }

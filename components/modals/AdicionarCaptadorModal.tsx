@@ -211,10 +211,10 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-black">
+              <div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05] text-[#282525]">
                 {isEdit ? <Pencil size={15} /> : <UserPlus size={16} />}
               </div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">
                 {isEdit ? "Editar agência" : step === "form" ? "Adicionar agência" : "Agência cadastrada"}
               </h2>
             </div>
@@ -332,7 +332,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                     <Check size={18} style={{ color: "#2E8932" }} />
                   </div>
                   <div>
-                    <p className="text-[0.8125rem] font-bold text-black">{nome}</p>
+                    <p className="text-[0.8125rem] font-bold text-[#282525]">{nome}</p>
                     <p className="text-[0.6875rem] text-black/40">Agência cadastrada com sucesso</p>
                   </div>
                 </div>
@@ -341,7 +341,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-[0.75rem] font-bold text-black">Contatos da agência</p>
+                      <p className="text-[0.75rem] font-bold text-[#282525]">Contatos da agência</p>
                       <p className="text-[0.6875rem] text-black/35 mt-0.5">Pessoas vinculadas a esta agência no CRM</p>
                     </div>
                     <button
@@ -361,7 +361,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
                             <User size={12} style={{ color: "#7259B5" }} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-[0.75rem] font-semibold text-black truncate">{c.nome}</p>
+                            <p className="text-[0.75rem] font-semibold text-[#282525] truncate">{c.nome}</p>
                             {c.cargo && <p className="text-[0.6875rem] text-black/35 truncate">{c.cargo}</p>}
                           </div>
                           {c.email && <span className="text-[0.6875rem] text-black/30 truncate max-w-[8.125rem]">{c.email}</span>}

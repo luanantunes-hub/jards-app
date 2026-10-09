@@ -65,7 +65,7 @@ export function ConexoesAtivas({ chaves, verificacao, onRevogar, onTentarDeNovo 
           <button
             type="button"
             onClick={onTentarDeNovo}
-            className="underline underline-offset-2 hover:text-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+            className="underline underline-offset-2 hover:text-[#282525] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
           >
             Tentar de novo
           </button>

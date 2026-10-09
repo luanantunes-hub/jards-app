@@ -258,7 +258,7 @@ export default function AtividadesPage() {
                       onClick={() => toggle(at.id)}
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-[0.8125rem] font-semibold text-black">{at.titulo}</p>
+                        <p className="text-[0.8125rem] font-semibold text-[#282525]">{at.titulo}</p>
                         <div className="flex items-center gap-3 mt-1 flex-wrap">
                           <span className="flex items-center gap-1 text-[0.625rem] text-black/40">
                             <CalendarDays size={10} /> {fmtDate(at.data_realizacao)}
@@ -407,7 +407,7 @@ export default function AtividadesPage() {
       {form && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setForm(null); setErro(""); }}>
           <div className="bg-white rounded shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            <h3 className="text-[0.875rem] font-semibold text-black mb-4">
+            <h3 className="text-[0.875rem] font-semibold text-[#282525] mb-4">
               {form._new ? "Nova atividade" : "Editar atividade"}
             </h3>
             <div className="space-y-3">

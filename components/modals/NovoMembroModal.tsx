@@ -247,7 +247,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
               <Users size={16} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Equipe e usuários extras</h2>
+              <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Equipe e usuários extras</h2>
               <p className="text-[0.6875rem] text-black/40">Compre a capacidade e depois envie os convites.</p>
             </div>
           </div>
@@ -301,10 +301,10 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
           )}
 
           <div className="mb-5 flex rounded bg-black/[.035] p-1">
-            <button onClick={() => { setMode("invite"); setError(null); }} className={`flex flex-1 items-center justify-center gap-1.5 rounded px-3 py-2 text-[0.6875rem] font-semibold transition ${mode === "invite" ? "bg-white text-black" : "text-black/40 hover:text-black/60"}`}>
+            <button onClick={() => { setMode("invite"); setError(null); }} className={`flex flex-1 items-center justify-center gap-1.5 rounded px-3 py-2 text-[0.6875rem] font-semibold transition ${mode === "invite" ? "bg-white text-[#282525]" : "text-black/40 hover:text-black/60"}`}>
               <UserPlus size={12} /> Convidar pessoa
             </button>
-            <button onClick={() => { setMode("buy"); setError(null); }} className={`flex flex-1 items-center justify-center gap-1.5 rounded px-3 py-2 text-[0.6875rem] font-semibold transition ${mode === "buy" ? "bg-white text-black" : "text-black/40 hover:text-black/60"}`}>
+            <button onClick={() => { setMode("buy"); setError(null); }} className={`flex flex-1 items-center justify-center gap-1.5 rounded px-3 py-2 text-[0.6875rem] font-semibold transition ${mode === "buy" ? "bg-white text-[#282525]" : "text-black/40 hover:text-black/60"}`}>
               <CreditCard size={12} /> Comprar usuários extras
             </button>
           </div>
@@ -421,11 +421,11 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
               </div>
               <div className="flex items-center justify-between rounded border px-4 py-3" style={{ borderColor: "rgba(13,13,13,.10)" }}>
                 <button onClick={() => setQuantity(current => Math.max(1, current - 1))} className="flex h-8 w-8 items-center justify-center rounded border border-black/10 bg-white text-black/45 transition hover:bg-black/[.04]" aria-label="Diminuir quantidade"><Minus size={13} /></button>
-                <div className="text-center"><p className="text-[1.5rem] font-bold text-black">{quantity}</p><p className="text-[0.625rem] text-black/35">usuários extras</p></div>
+                <div className="text-center"><p className="text-[1.5rem] font-bold text-[#282525]">{quantity}</p><p className="text-[0.625rem] text-black/35">usuários extras</p></div>
                 <button onClick={() => setQuantity(current => Math.min(100, current + 1))} className="flex h-8 w-8 items-center justify-center rounded border border-black/10 bg-white text-black/45 transition hover:bg-black/[.04]" aria-label="Aumentar quantidade"><Plus size={13} /></button>
               </div>
               <div className="flex gap-2">{[1, 3, 5, 10].map(value => <button key={value} onClick={() => setQuantity(value)} className={`flex-1 rounded border px-2 py-2 text-[0.6875rem] font-semibold transition ${quantity === value ? "border-[#7259B5] text-[#7259B5]" : "border-black/10 text-black/40 hover:bg-black/[.04]"}`}>+{value}</button>)}</div>
-              <div className="flex items-center justify-between rounded bg-black/[.035] px-4 py-3"><span className="text-[0.75rem] text-black/50">Novo valor mensal</span><strong className="text-[0.875rem] text-black">+{money(quantity * (summary?.unit_price ?? 19.9))}/mês</strong></div>
+              <div className="flex items-center justify-between rounded bg-black/[.035] px-4 py-3"><span className="text-[0.75rem] text-black/50">Novo valor mensal</span><strong className="text-[0.875rem] text-[#282525]">+{money(quantity * (summary?.unit_price ?? 19.9))}/mês</strong></div>
               <p className="text-[0.625rem] leading-4 text-black/30">O Stripe calcula o valor proporcional do período atual e atualiza a quantidade de usuários extras da assinatura.</p>
             </div>
           )}

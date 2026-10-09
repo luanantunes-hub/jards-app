@@ -139,7 +139,7 @@ export default function ExtratoPage() {
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Extrato bancário</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Extrato bancário</h2>
           <p className="text-[0.6875rem] text-black/45">Lançamentos das contas do projeto, importados do arquivo do banco.</p>
         </div>
         {podeEditar && (
@@ -157,7 +157,7 @@ export default function ExtratoPage() {
               onClick={() => { setAviso(""); setImportando(true); }}
               disabled={contas.length === 0}
               title={contas.length === 0 ? "Cadastre a conta antes de importar" : undefined}
-              className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+              className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
             >
               <Upload size={13} aria-hidden /> Importar extrato
             </button>
@@ -171,7 +171,7 @@ export default function ExtratoPage() {
       {/* Contas */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="contas-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="contas-titulo" className="text-[0.75rem] font-semibold text-black">Contas</h3>
+          <h3 id="contas-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Contas</h3>
         </div>
         {carregando ? (
           <div className="space-y-2 p-5">{[0, 1].map(i => <div key={i} className="h-10 animate-pulse rounded bg-black/[.04] motion-reduce:animate-none" />)}</div>
@@ -211,7 +211,7 @@ export default function ExtratoPage() {
       {/* Lançamentos */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="lancamentos-titulo">
         <div className="flex flex-wrap items-center gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          <h3 id="lancamentos-titulo" className="mr-auto text-[0.75rem] font-semibold text-black">
+          <h3 id="lancamentos-titulo" className="mr-auto text-[0.75rem] font-semibold text-[#282525]">
             Lançamentos <span className="font-normal tabular-nums text-black/35">({filtrados.length})</span>
           </h3>
           {contas.length > 1 && (
@@ -241,9 +241,9 @@ export default function ExtratoPage() {
 
         {filtrados.length > 0 && (
           <dl className="flex flex-wrap gap-x-6 gap-y-1 border-b px-5 py-2.5 text-[0.6875rem]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
-            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Créditos</dt><dd className={`font-semibold tabular-nums ${totais.creditos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.creditos)}</dd></div>
-            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Débitos</dt><dd className={`font-semibold tabular-nums ${totais.debitos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.debitos)}</dd></div>
-            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Diferença</dt><dd className={`font-semibold tabular-nums ${totais.creditos - totais.debitos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.creditos - totais.debitos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Créditos</dt><dd className={`font-semibold tabular-nums ${totais.creditos ? "text-[#282525]" : "text-black/30"}`}>{fmt(totais.creditos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Débitos</dt><dd className={`font-semibold tabular-nums ${totais.debitos ? "text-[#282525]" : "text-black/30"}`}>{fmt(totais.debitos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Diferença</dt><dd className={`font-semibold tabular-nums ${totais.creditos - totais.debitos ? "text-[#282525]" : "text-black/30"}`}>{fmt(totais.creditos - totais.debitos)}</dd></div>
           </dl>
         )}
 
@@ -302,7 +302,7 @@ export default function ExtratoPage() {
       {importacoes.length > 0 && (
         <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="importacoes-titulo">
           <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <h3 id="importacoes-titulo" className="text-[0.75rem] font-semibold text-black">Arquivos importados</h3>
+            <h3 id="importacoes-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Arquivos importados</h3>
           </div>
           <ul className="divide-y divide-black/[.05]">
             {importacoes.map(imp => (

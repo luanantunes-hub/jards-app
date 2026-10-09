@@ -156,7 +156,7 @@ function DocForm({
         <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-2.5">
             <SelectedIcon size={16} className="text-black/40" />
-            <span id={titleId} className="text-[0.8125rem] font-bold text-black">
+            <span id={titleId} className="text-[0.8125rem] font-bold text-[#282525]">
               {doc ? "Editar documento" : "Novo documento"}
             </span>
           </div>
@@ -175,7 +175,7 @@ function DocForm({
               value={titulo}
               onChange={e => setTitulo(e.target.value)}
               placeholder="Ex: Plano de trabalho"
-              className="w-full px-3 py-2.5 text-sm border rounded bg-transparent text-black placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15"
+              className="w-full px-3 py-2.5 text-sm border rounded bg-transparent text-[#282525] placeholder-black/30 focus:outline-none focus:ring-2 focus:ring-black/15"
               style={{ borderColor: "rgba(13,13,13,.15)" }}
             />
           </div>
@@ -384,7 +384,7 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
                       style={{ background: cs.bg, borderColor: cs.border }}
                     >
                       <Icon size={22} className="mb-2" style={{ color: cs.text }} aria-hidden="true" />
-                      <p className="text-[0.75rem] font-semibold text-[#0D0D0D]">{doc.titulo}</p>
+                      <p className="text-[0.75rem] font-semibold text-[#282525]">{doc.titulo}</p>
                       {doc.arquivo_nome && (
                         <p className="text-[0.625rem] mt-1 truncate text-black/45">
                           {doc.arquivo_nome}

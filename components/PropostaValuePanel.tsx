@@ -113,7 +113,7 @@ export function PropostaValuePanel({
       >
         <span className="text-[0.75rem] font-semibold">
           <span style={{ color: aprovado ? "#2E8932" : "#D94E4E" }}>{aprovado ? "Aprovado" : "Recusado"}</span>
-          {aprovado && <span className="tabular-nums text-[#0D0D0D]"> · {formatCurrency(valorFinal)}</span>}
+          {aprovado && <span className="tabular-nums text-[#282525]"> · {formatCurrency(valorFinal)}</span>}
         </span>
       </div>
     );
@@ -146,7 +146,7 @@ export function PropostaValuePanel({
         >
           <div className="text-left">
             <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Valor</p>
-            <p className={`text-[0.75rem] font-semibold tabular-nums ${valorAtual ? "text-[#0D0D0D]" : "text-black/30"}`}>{valorAtual ? formatCurrency(valorAtual) : "Definir"}</p>
+            <p className={`text-[0.75rem] font-semibold tabular-nums ${valorAtual ? "text-[#282525]" : "text-black/30"}`}>{valorAtual ? formatCurrency(valorAtual) : "Definir"}</p>
           </div>
           <Pencil size={11} className="text-black/25" aria-hidden="true" />
         </button>
@@ -173,7 +173,7 @@ export function PropostaValuePanel({
         >
           <div className="text-left">
             <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Solicitado</p>
-            <p className="text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">{formatCurrency(valorAtual)}</p>
+            <p className="text-[0.75rem] font-semibold tabular-nums text-[#282525]">{formatCurrency(valorAtual)}</p>
           </div>
           <Plus size={11} className="text-black/25" />
         </button>
@@ -259,7 +259,7 @@ export function PropostaValuePanel({
           <p className="max-w-[12rem] truncate text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
             Proposta{cotaDaProposta && <span className="font-normal normal-case tracking-normal text-black/30"> · {cotaDaProposta.nome}</span>}
           </p>
-          <p className="text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">{formatCurrency(propostaAtual.valor_proposto)}</p>
+          <p className="text-[0.75rem] font-semibold tabular-nums text-[#282525]">{formatCurrency(propostaAtual.valor_proposto)}</p>
         </div>
         <div className="h-6 w-px bg-black/10" />
         <button disabled={salvandoDesfecho} onClick={handleAceitar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-black/[.04] disabled:opacity-40">Aceitar</button>

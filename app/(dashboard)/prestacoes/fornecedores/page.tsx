@@ -194,7 +194,7 @@ export default function FornecedoresPage() {
                     className="block w-full rounded border bg-white p-4 text-left transition hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                     style={{ borderColor: "rgba(13,13,13,.08)" }}
                   >
-                    <p className="text-[0.8125rem] font-semibold text-black">{l.nomeExibido}</p>
+                    <p className="text-[0.8125rem] font-semibold text-[#282525]">{l.nomeExibido}</p>
                     <p className="truncate text-[0.6875rem] tabular-nums text-black/40">
                       {[rotuloTipo(l.tipo_pessoa), formatarDocumento(l.documento, { mascararCpf: true })].filter(Boolean).join(" · ")}
                     </p>
@@ -236,7 +236,7 @@ export default function FornecedoresPage() {
                         <button
                           type="button"
                           onClick={event => { event.stopPropagation(); setAviso(""); setAberto(l); }}
-                          className="line-clamp-1 text-left text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                          className="line-clamp-1 text-left text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                         >
                           {l.nomeExibido}
                         </button>

@@ -21,7 +21,7 @@ import type { PrestacaoTurma } from "@/lib/supabase/types";
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const CABECALHO = "px-4 py-2 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
-const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#0D0D0D]" : "text-black/30"}`;
+const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#282525]" : "text-black/30"}`;
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 
 /** Aviso em texto neutro com o ícone âmbar de alerta. */
@@ -120,7 +120,7 @@ export function GradeSemanal({ prestacaoId }: { prestacaoId: string }) {
   const botaoIcone = "rounded p-2 text-black/35 transition hover:bg-black/5 hover:text-black/65 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
   const botaoExcluir = "rounded p-2 text-black/25 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]";
   const vazio = <span className="text-black/30">—</span>;
-  const linkObjeto = "underline decoration-black/20 underline-offset-2 transition hover:text-black hover:decoration-black/50 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
+  const linkObjeto = "underline decoration-black/20 underline-offset-2 transition hover:text-[#282525] hover:decoration-black/50 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 
   const acoes = (t: PrestacaoTurma) => podeEditar && (
     <>
@@ -133,7 +133,7 @@ export function GradeSemanal({ prestacaoId }: { prestacaoId: string }) {
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="grade-titulo">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="min-w-0">
-          <h3 id="grade-titulo" className="text-[0.75rem] font-semibold text-black">Grade semanal</h3>
+          <h3 id="grade-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Grade semanal</h3>
           <p className="max-w-[40rem] text-[0.6875rem] text-black/45">
             As turmas fixas de cada núcleo, com dias e horário. Vai na aba GRADE do formulário da prestação; as atividades abaixo vão na aba EVENTOS.
           </p>

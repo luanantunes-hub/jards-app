@@ -190,7 +190,7 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
           <span className="text-[0.6875rem] font-semibold text-black/50">{formatDate(data)}</span>
           <span className="text-[0.625rem] text-black/25">{formatRelative(data)}</span>
         </div>
-        <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{titulo}</p>
+        <p className="text-[0.8125rem] font-medium text-[#282525]">{titulo}</p>
         {descricao && <p className="text-xs text-black/40 mt-0.5">{descricao}</p>}
         {usuario && <p className="text-[0.625rem] text-black/25 mt-1">{usuario}</p>}
       </div>
@@ -591,7 +591,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             />
             <div className="min-w-0">
               {tituloNegociacao ? (
-                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">
                   {tituloNegociacao}
                 </h1>
               ) : (
@@ -720,7 +720,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Agência de captação</p>
             {(captacao as any).captador_externo ? (
               <div>
-                <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{(captacao as any).captador_externo.nome}</p>
+                <p className="text-[0.8125rem] font-medium text-[#282525]">{(captacao as any).captador_externo.nome}</p>
                 {(captacao as any).captador_externo.agencia && (
                   <p className="text-[0.6875rem] text-black/40">{(captacao as any).captador_externo.agencia}</p>
                 )}
@@ -799,7 +799,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                     <div className="w-7 h-7 rounded-full bg-[#7259B5] flex items-center justify-center">
                       <Plus size={13} className="text-white" />
                     </div>
-                    <span className="text-[0.8125rem] font-medium text-[#0D0D0D]">Nova atividade</span>
+                    <span className="text-[0.8125rem] font-medium text-[#282525]">Nova atividade</span>
                   </div>
 
                   <div className="space-y-3">
@@ -931,7 +931,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                         />
                         <Icon size={13} className="text-black/30 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.8125rem] font-medium text-[#0D0D0D] truncate">{atv.nome}</p>
+                          <p className="text-[0.8125rem] font-medium text-[#282525] truncate">{atv.nome}</p>
                           {atv.contato && (
                             <p className="text-[0.6875rem] text-black/35">{atv.contato.nome}</p>
                           )}
@@ -1195,7 +1195,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                   onClick={() => handlePrioridadeChange(p === "sem" ? null : p)}
                   className="flex w-full items-center justify-between px-3 py-2 text-left text-[0.75rem] transition hover:bg-black/[.03]"
                 >
-                  <span className="inline-flex items-center gap-1.5 text-black">
+                  <span className="inline-flex items-center gap-1.5 text-[#282525]">
                     {it ? (
                       <span className="flex h-3 w-3 items-center justify-center rounded text-white" style={{ background: it.color }}>
                         <it.Icon size={8} strokeWidth={2.5} />

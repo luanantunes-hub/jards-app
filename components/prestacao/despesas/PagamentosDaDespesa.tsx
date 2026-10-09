@@ -146,7 +146,7 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
                 type="button"
                 onClick={registrar}
                 disabled={salvando}
-                className="flex h-[2.375rem] w-full items-center justify-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] font-medium text-black/75 transition hover:border-black/25 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:cursor-wait disabled:text-black/35 motion-reduce:transform-none"
+                className="flex h-[2.375rem] w-full items-center justify-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] font-medium text-black/75 transition hover:border-black/25 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:cursor-wait disabled:text-black/35 motion-reduce:transform-none"
                 style={{ borderColor: "rgba(13,13,13,.16)" }}
               >
                 <Plus size={13} aria-hidden /> {salvando ? "Registrando…" : "Adicionar"}

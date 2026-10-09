@@ -78,7 +78,7 @@ export default function AdminRegimesPage() {
   return (
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-8 md:px-6">
       <div className="min-w-0">
-        <h1 className="text-xl font-bold text-[#0D0D0D]">Regimes</h1>
+        <h1 className="text-xl font-bold text-[#282525]">Regimes</h1>
         <p className="mt-0.5 max-w-[48rem] text-sm text-black/45">
           As regras de prestação de contas de cada lei, que o módulo usa nas checagens, nos prazos e no envio. Uma versão nova nasce de uma proposta da IA ou de uma mudança feita à mão, passa no schema do regime e é publicada sem deploy; mudança em regra que bloqueia o envio pede duas pessoas da equipe.
         </p>
@@ -104,7 +104,7 @@ export default function AdminRegimesPage() {
                   className="flex items-center gap-3 px-5 py-3.5 transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-[#7259B5]">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-[0.8125rem] font-medium text-[#0D0D0D]">{p.nome}</span>
+                      <span className="text-[0.8125rem] font-medium text-[#282525]">{p.nome}</span>
                       <Etiqueta texto={AREA[p.area] ?? p.area} />
                       {pendentes > 0 && <Etiqueta texto={pendentes === 1 ? "1 proposta para revisar" : `${pendentes} propostas para revisar`} cor={AMBAR} />}
                       {rascunho && (

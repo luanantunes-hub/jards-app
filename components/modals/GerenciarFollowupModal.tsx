@@ -67,7 +67,7 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
         <header className="flex items-start justify-between gap-4 border-b border-black/[.08] px-6 py-4">
           <div>
-            <p id={titleId} className="text-[0.875rem] font-bold text-black">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
+            <p id={titleId} className="text-[0.875rem] font-bold text-[#282525]">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
             <p className="mt-1 text-[0.75rem] text-black/55">{followup.titulo}</p>
           </div>
           <button type="button" onClick={onClose} disabled={saving} aria-label="Fechar" className="text-black/35 hover:text-black/60 disabled:opacity-40"><X size={16} /></button>

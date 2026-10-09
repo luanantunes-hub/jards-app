@@ -17,7 +17,7 @@ type Props = {
 };
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-[#282525]">{children}</label>;
 }
 
 function sugestaoData(): string {
@@ -69,7 +69,7 @@ export function RenovarCicloModal({ tipo, id, anoNovo, resultadoNegativo = false
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5">
               <RotateCw size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{acao} — Ciclo {cicloEscolhido}</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">{acao} — Ciclo {cicloEscolhido}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />
@@ -83,7 +83,7 @@ export function RenovarCicloModal({ tipo, id, anoNovo, resultadoNegativo = false
               type="number"
               value={cicloEscolhido}
               onChange={e => setCicloEscolhido(e.target.value ? Number(e.target.value) : anoNovo)}
-              className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30"
+              className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30"
               style={{ borderColor: "rgba(13,13,13,.15)" }}
             />
             <p className="mt-1.5 text-[0.625rem] text-black/35">Anual é a sugestão padrão — ajuste livremente se o ciclo for semestral, bianual ou outra cadência.</p>
@@ -94,7 +94,7 @@ export function RenovarCicloModal({ tipo, id, anoNovo, resultadoNegativo = false
               type="date"
               value={dataRetomada}
               onChange={e => setDataRetomada(e.target.value)}
-              className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30"
+              className="w-full rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30"
               style={{ borderColor: "rgba(13,13,13,.15)" }}
             />
           </div>
@@ -111,7 +111,7 @@ export function RenovarCicloModal({ tipo, id, anoNovo, resultadoNegativo = false
               onChange={event => setNota(event.target.value)}
               rows={3}
               placeholder="Contexto, aprendizados e próximo passo"
-              className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30"
+              className="w-full resize-none rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30"
               style={{ borderColor: "rgba(13,13,13,.15)" }}
             />
           </div>

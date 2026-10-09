@@ -368,7 +368,7 @@
     /* ── Reveal ── */
     section[id] { scroll-margin-top:96px; }
     :focus-visible { outline:3px solid rgba(104,77,176,.45); outline-offset:3px; }
-    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#0D0D0D; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
+    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#282525; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
     .skip-link:focus { transform:translateY(0); }
     .reveal { opacity:1; transform:none; }
     html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
@@ -767,8 +767,8 @@
     /* ── Alternativa: tokens ── */
     :root {
       --accent-gradient: linear-gradient(90deg,#7B35E8 0%,#B875FF 38%,#9145F5 68%,#684DB0 100%);
-      --alt-ink: #0D0D0D;
-      --alt-ink-hover: #2B2828;
+      --alt-ink: #282525;
+      --alt-ink-hover: #3A3535;
       --alt-purple: #684DB0;
       --alt-purple-focus: #7259B5;
       --alt-purple-on-dark: #CFC3F0;
@@ -955,21 +955,26 @@
 
     @media (prefers-reduced-motion: reduce) { .alt-nav-login, .lei-card-btn, .bi-destaque { transition:none; } }
 
+    /* Menu de ponta a ponta: transparente no topo e branco com desfoque ao rolar */
+    .site-nav { border-bottom:1px solid transparent; transition:background-color .24s ease, border-color .24s ease; }
+    .site-nav.is-rolado { background:rgba(255,255,255,.84); border-bottom-color:rgba(13,13,13,.06); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%); }
+    @media (prefers-reduced-motion: reduce) { .site-nav { transition:none; } }
+
   </style>
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
 
 <!-- ════════════════════════ NAV ════════════════════════ -->
-<header class="fixed inset-x-0 top-0 z-50">
-  <div class="landing-nav-shell max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
+<header id="siteNav" class="site-nav fixed inset-x-0 top-0 z-50">
+  <div class="px-5 md:px-8 h-16 flex items-center justify-between">
     <a href="#top" aria-label="Voltar ao início"><img src="assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
 
     <nav class="hidden md:flex items-center gap-8">
-      <a href="#bi"       class="text-sm font-medium text-black/50 hover:text-black transition-colors">Plataforma</a>
-      <a href="#produto-tabs" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Produto</a>
-      <a href="#operacao" class="text-sm font-medium text-black/50 hover:text-black transition-colors">Parcerias</a>
-      <a href="#precos"   class="text-sm font-medium text-black/50 hover:text-black transition-colors">Preços</a>
+      <a href="#bi"       class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Plataforma</a>
+      <a href="#produto-tabs" class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Produto</a>
+      <a href="#operacao" class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Parcerias</a>
+      <a href="#precos"   class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Preços</a>
     </nav>
 
     <div class="flex items-center gap-1 md:gap-3">
@@ -1156,7 +1161,7 @@
         <!-- Acc 1 open by default -->
         <div class="border-t border-black/10 py-5">
           <button onclick="toggleAcc(this)" aria-expanded="true" class="w-full flex items-center justify-between text-left acc-open">
-            <span class="flex items-center gap-3 font-semibold text-black text-sm">
+            <span class="flex items-center gap-3 font-semibold text-[#282525] text-sm">
               <img src="assets/ph-user-circle.svg" alt="" class="w-5 h-5 flex-shrink-0" />
               Encontre onde existe oportunidade
             </span>
@@ -1345,7 +1350,7 @@
         <div id="leis-lista-rows" class="relative" style="z-index:1"></div>
         <div id="leis-perfil" class="lp-perfil" aria-hidden="true"></div>
         <div id="leis-cursor" class="lp-cursor" aria-hidden="true">
-          <svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2v15.5l4.1-3.9 2.7 6.2 2.9-1.3-2.7-6H15.5z" fill="#0D0D0D" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
+          <svg width="22" height="22" viewBox="0 0 22 22"><path d="M3 2v15.5l4.1-3.9 2.7 6.2 2.9-1.3-2.7-6H15.5z" fill="#282525" stroke="#fff" stroke-width="1.5" stroke-linejoin="round"/></svg>
         </div>
       </div>
 
@@ -1469,12 +1474,12 @@
         '<div class="flex items-center gap-3 min-w-0">' +
           '<div class="lp-row-logo w-8 h-8 rounded border border-black/8 bg-white flex items-center justify-center flex-shrink-0 overflow-hidden p-1"><img src="' + logoUrl(e.dominio, 64) + '" alt="" class="w-full h-full object-contain" /></div>' +
           '<div class="min-w-0">' +
-            '<p class="lp-row-nome font-semibold text-[#0D0D0D] text-[13px] truncate">' + e.nome + '</p>' +
+            '<p class="lp-row-nome font-semibold text-[#282525] text-[13px] truncate">' + e.nome + '</p>' +
             '<p class="text-black/40 text-[11px]">' + e.setor + ' · ' + e.uf + '</p>' +
           '</div>' +
         '</div>' +
         '<div class="text-right flex-shrink-0">' +
-          '<p class="font-bold text-[#0D0D0D] text-[13px] tabular-nums">' + fmtValor(e.valorM) + '</p>' +
+          '<p class="font-bold text-[#282525] text-[13px] tabular-nums">' + fmtValor(e.valorM) + '</p>' +
         '</div>' +
       '</div>';
     }).join('');
@@ -1509,7 +1514,7 @@
         '<div class="flex items-center gap-3 min-w-0">' +
           '<div class="lp-perfil-logo w-12 h-12 rounded border border-black/8 bg-white p-1 flex-shrink-0 flex items-center justify-center"><img src="' + logoUrl(e.dominio, 128) + '" alt="" class="w-full h-full object-contain" /></div>' +
           '<div data-p class="min-w-0">' +
-            '<div class="flex items-center gap-2"><p class="font-bold text-[#0D0D0D] text-[20px] leading-tight truncate">' + e.nome + '</p><i class="ph ph-globe text-[13px] text-black/25"></i></div>' +
+            '<div class="flex items-center gap-2"><p class="font-bold text-[#282525] text-[20px] leading-tight truncate">' + e.nome + '</p><i class="ph ph-globe text-[13px] text-black/25"></i></div>' +
             '<p class="text-[11px] text-black/40 mt-0.5">Total investido: <span class="font-bold text-black/70">' + fmtValor(e.valorM) + '</span></p>' +
           '</div>' +
         '</div>' +
@@ -1557,10 +1562,10 @@
     var base = (pad.t + ph).toFixed(1);
     var area = d + ' L ' + pts[pts.length - 1].x.toFixed(1) + ' ' + base + ' L ' + pts[0].x.toFixed(1) + ' ' + base + ' Z';
     caixa.innerHTML = '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h + '" style="display:block">' +
-      '<defs><linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0D0D0D" stop-opacity=".12"/><stop offset="100%" stop-color="#0D0D0D" stop-opacity=".01"/></linearGradient></defs>' +
+      '<defs><linearGradient id="lpArea" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#282525" stop-opacity=".12"/><stop offset="100%" stop-color="#282525" stop-opacity=".01"/></linearGradient></defs>' +
       '<path class="lp-g-area" d="' + area + '" fill="url(#lpArea)"/>' +
-      '<path class="lp-g-linha" d="' + d + '" fill="none" stroke="#0D0D0D" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
-      pts.map(function(pt){ return '<circle class="lp-g-ponto" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="#fff" stroke="#0D0D0D" stroke-width="1.8" style="transform-box:fill-box;transform-origin:center"/>'; }).join('') +
+      '<path class="lp-g-linha" d="' + d + '" fill="none" stroke="#282525" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
+      pts.map(function(pt){ return '<circle class="lp-g-ponto" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="#fff" stroke="#282525" stroke-width="1.8" style="transform-box:fill-box;transform-origin:center"/>'; }).join('') +
       pts.map(function(pt, i){ return '<text x="' + pt.x.toFixed(1) + '" y="' + (h - 7) + '" text-anchor="middle" font-size="9" font-weight="600" fill="rgba(13,13,13,.3)" font-family="Google Sans, system-ui, sans-serif">' + ANOS[i] + '</text>'; }).join('') +
     '</svg>';
     var linha = caixa.querySelector('.lp-g-linha');
@@ -2665,7 +2670,7 @@
       <!-- Free -->
       <div class="reveal bg-white rounded p-8 border border-black/8">
         <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-5">Gratuito</p>
-        <p class="font-display font-bold text-5xl text-black tracking-tight mb-1">R$ 0</p>
+        <p class="font-display font-bold text-5xl text-[#282525] tracking-tight mb-1">R$ 0</p>
         <p class="text-sm text-black/40 mb-6">para sempre</p>
         <div class="h-px bg-black/8 mb-6"></div>
         <ul class="space-y-3 mb-8 text-sm text-black/70">
@@ -2680,7 +2685,7 @@
       <!-- Starter -->
       <div class="reveal bg-white rounded p-8 border border-black/8">
         <p class="text-xs font-bold text-black/40 uppercase tracking-widest mb-5">Starter</p>
-        <p class="font-display font-bold text-5xl text-black tracking-tight mb-1">R$ 62,90</p>
+        <p class="font-display font-bold text-5xl text-[#282525] tracking-tight mb-1">R$ 62,90</p>
         <p class="text-sm text-black/40 mb-6">por mês</p>
         <div class="h-px bg-black/8 mb-6"></div>
         <ul class="space-y-3 mb-8 text-sm text-black/70">
@@ -2694,7 +2699,7 @@
 
       <!-- Pro -->
       <div class="reveal pricing-pro-card rounded p-8 relative">
-        <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[11px] font-bold text-black bg-white rounded-full px-4 py-1.5 uppercase tracking-wide shadow-sm">Mais popular</span>
+        <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-[11px] font-bold text-[#282525] bg-white rounded-full px-4 py-1.5 uppercase tracking-wide shadow-sm">Mais popular</span>
         <p class="text-xs font-bold text-white/40 uppercase tracking-widest mb-5">Pro</p>
         <p class="font-display font-bold text-5xl text-white tracking-tight mb-1">R$ 92,80</p>
         <p class="text-sm text-white/40 mb-6">por mês</p>
@@ -2915,7 +2920,7 @@
     document.querySelectorAll('.acc-icon').forEach(i => i.textContent = '+');
     document.querySelectorAll('[onclick="toggleAcc(this)"]').forEach(b => b.setAttribute('aria-expanded','false'));
     document.querySelectorAll('[onclick="toggleAcc(this)"] span:first-child').forEach(s => {
-      s.classList.remove('text-black'); s.classList.add('text-black/40');
+      s.classList.remove('text-[#282525]'); s.classList.add('text-black/40');
     });
 
     if (!isOpen) {
@@ -2923,7 +2928,7 @@
       body.removeAttribute('inert');
       btn.setAttribute('aria-expanded','true');
       icon.textContent = '−';
-      btn.querySelector('span:first-child').classList.replace('text-black/40','text-black');
+      btn.querySelector('span:first-child').classList.replace('text-black/40','text-[#282525]');
       const idx = [...document.querySelectorAll('[onclick="toggleAcc(this)"]')].indexOf(btn);
       updateBiFeature(idx);
     }
@@ -3292,6 +3297,16 @@
       pranchetas.forEach(function(alvo){ io.observe(alvo.parentElement); });
     }
   });
+})();
+</script>
+<script>
+// Menu: ganha fundo branco assim que a página rola.
+(function () {
+  var nav = document.getElementById("siteNav");
+  if (!nav) return;
+  function atualizar() { nav.classList.toggle("is-rolado", window.scrollY > 8); }
+  window.addEventListener("scroll", atualizar, { passive: true });
+  atualizar();
 })();
 </script>
 </body>

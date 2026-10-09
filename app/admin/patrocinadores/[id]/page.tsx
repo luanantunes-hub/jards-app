@@ -288,7 +288,7 @@ export default function AdminPatrocinadorPage() {
       <div className="flex items-center justify-between mb-8">
         <button
           onClick={() => router.push("/admin/patrocinadores")}
-          className="flex items-center gap-1.5 text-sm text-black/40 hover:text-[#0D0D0D] transition"
+          className="flex items-center gap-1.5 text-sm text-black/40 hover:text-[#282525] transition"
         >
           <ChevronLeft size={16} /> Patrocinadores
         </button>
@@ -310,7 +310,7 @@ export default function AdminPatrocinadorPage() {
       <div className="flex items-center gap-4 mb-8">
         <CompanyLogo nome={form.nome} logo_url={form.logo_url} size={48} />
         <div>
-          <h1 className="text-xl font-bold text-[#0D0D0D]">{form.nome}</h1>
+          <h1 className="text-xl font-bold text-[#282525]">{form.nome}</h1>
           <p className="text-sm text-black/40">{form.setor ?? "Sem setor"}</p>
         </div>
       </div>
@@ -420,7 +420,7 @@ export default function AdminPatrocinadorPage() {
               className="accent-[#7259B5] w-4 h-4"
             />
             <div>
-              <span className="text-sm font-medium text-[#0D0D0D]">Detalhe disponível</span>
+              <span className="text-sm font-medium text-[#282525]">Detalhe disponível</span>
               <p className="text-xs text-black/40">Quando ativado, usuários podem solicitar as informações detalhadas desta empresa</p>
             </div>
           </label>

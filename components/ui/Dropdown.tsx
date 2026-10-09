@@ -140,7 +140,7 @@ export function Dropdown({
         className="flex h-10 w-full items-center gap-2 rounded border bg-white px-3 text-left text-[0.8125rem] transition focus-visible:border-[#7259B5]/45 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/15 disabled:cursor-not-allowed disabled:opacity-50"
         style={{ borderColor: open ? "rgba(13,13,13,.28)" : "rgba(13,13,13,.12)" }}
       >
-        <span className={`flex-1 truncate ${selected ? "text-black" : "text-black/30"}`}>
+        <span className={`flex-1 truncate ${selected ? "text-[#282525]" : "text-black/30"}`}>
           {selected?.label ?? placeholder}
         </span>
         <ChevronDown size={13} aria-hidden="true" className={`flex-shrink-0 text-black/30 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -167,7 +167,7 @@ export function Dropdown({
               // ao gatilho (a opção já saiu da tela) e o menu reabre.
               onClick={e => { e.preventDefault(); choose(opt.value); }}
               className="flex w-full items-center gap-2 px-3 py-2 text-left text-[0.8125rem] outline-none transition hover:bg-black/[.04] focus-visible:bg-black/[.04]"
-              style={{ color: opt.value === value ? "#0D0D0D" : "rgba(13,13,13,.60)" }}
+              style={{ color: opt.value === value ? "#282525" : "rgba(13,13,13,.60)" }}
             >
               <span className="flex-1 truncate">{opt.label}</span>
               {opt.value === value && <Check size={12} aria-hidden="true" className="flex-shrink-0 text-black/40" />}

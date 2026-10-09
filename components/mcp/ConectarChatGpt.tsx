@@ -89,7 +89,7 @@ export function ConectarChatGpt({ status, verificacao, origem, urlServidor, aoIn
     >
       <Detalhes titulo="Avançado: GPT personalizada (Actions)">
         <div>
-          <p className="font-medium text-black">GPT do time, com o login de cada pessoa (OAuth)</p>
+          <p className="font-medium text-[#282525]">GPT do time, com o login de cada pessoa (OAuth)</p>
           <p className="mt-1">
             Uma única GPT compartilhada, em que cada pessoa autoriza com a própria conta do Jards, sem chave e sem herdar
             o acesso de outra pessoa. Quem cria a GPT configura uma vez:
@@ -116,7 +116,7 @@ export function ConectarChatGpt({ status, verificacao, origem, urlServidor, aoIn
         </div>
 
         <div className="border-t border-black/10 pt-4">
-          <p className="font-medium text-black">GPT pessoal, com chave manual</p>
+          <p className="font-medium text-[#282525]">GPT pessoal, com chave manual</p>
           <p className="mt-2 rounded border bg-white px-3 py-2 text-sm" style={{ borderColor: "#B07A1440", color: "#8a5f0f" }}>
             Gere uma chave manual só para uma GPT própria sem OAuth, e nunca compartilhe uma GPT configurada com a sua
             chave.

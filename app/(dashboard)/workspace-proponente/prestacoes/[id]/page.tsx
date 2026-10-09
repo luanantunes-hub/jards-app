@@ -41,7 +41,7 @@ const dataBr = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split
 const reais = (v: number | string | null | undefined) => (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const hojeIso = () => new Date().toLocaleDateString("sv-SE");
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
-const LINK = "inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]";
+const LINK = "inline-flex items-center gap-1 rounded text-[0.6875rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 
 export default function PrestacaoDoProponentePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -140,7 +140,7 @@ export default function PrestacaoDoProponentePage({ params }: { params: Promise<
           <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{contexto.organizacao?.nome} · Prestação de contas</p>
-              <h1 className="mt-1 text-balance text-[1.5rem] font-semibold leading-tight tracking-[-0.03em] text-[#0D0D0D] sm:text-[1.75rem]">{contexto.titulo}</h1>
+              <h1 className="mt-1 text-balance text-[1.5rem] font-semibold leading-tight tracking-[-0.03em] text-[#282525] sm:text-[1.75rem]">{contexto.titulo}</h1>
               <p className="mt-1 text-[0.75rem] text-black/50">
                 {[contexto.regime, contexto.identificador_oficial, contexto.proponente,
                   contexto.data_inicio_execucao ? `Execução ${dataBr(contexto.data_inicio_execucao)}${contexto.data_fim_execucao ? ` a ${dataBr(contexto.data_fim_execucao)}` : ""}` : ""]
@@ -167,14 +167,14 @@ export default function PrestacaoDoProponentePage({ params }: { params: Promise<
         <section aria-labelledby="despesas-titulo" className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="despesas-titulo" className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Despesas</h2>
+              <h2 id="despesas-titulo" className="text-[0.9375rem] font-semibold text-[#282525]">Despesas</h2>
               <p className="mt-0.5 text-[0.75rem] text-black/50">
                 {resumo.total === 0 ? "Envie as notas e recibos do projeto; a equipe confere cada um."
                   : `${resumo.aceitas} ${resumo.aceitas === 1 ? "aceita" : "aceitas"} (${reais(resumo.valorAceito)}) · ${resumo.emAnalise} em análise (${reais(resumo.valorEmAnalise)})${resumo.recusadas ? ` · ${resumo.recusadas} ${resumo.recusadas === 1 ? "recusada" : "recusadas"}` : ""}`}
               </p>
             </div>
             <button type="button" onClick={() => setModal("despesa")}
-              className="flex items-center gap-1.5 rounded bg-[#0D0D0D] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98]">
+              className="flex items-center gap-1.5 rounded bg-[#282525] px-4 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
               <Upload size={14} aria-hidden /> Enviar despesa
             </button>
           </div>
@@ -213,7 +213,7 @@ export default function PrestacaoDoProponentePage({ params }: { params: Promise<
         <section aria-labelledby="evidencias-titulo" className="space-y-3">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 id="evidencias-titulo" className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Evidências</h2>
+              <h2 id="evidencias-titulo" className="text-[0.9375rem] font-semibold text-[#282525]">Evidências</h2>
               <p className="mt-0.5 text-[0.75rem] text-black/50">Fotos, vídeos, listas de presença e matérias que mostram o projeto acontecendo.</p>
             </div>
             <button type="button" onClick={() => setModal("evidencia")}

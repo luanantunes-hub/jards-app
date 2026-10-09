@@ -108,7 +108,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
     <div>
       <div className="flex justify-between text-xs mb-1.5">
         <span className="font-medium text-black/60">{label}</span>
-        <span className={`flex items-center gap-1 font-semibold tabular-nums ${used ? "text-[#0D0D0D]" : "text-black/30"}`}>
+        <span className={`flex items-center gap-1 font-semibold tabular-nums ${used ? "text-[#282525]" : "text-black/30"}`}>
           {over && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
           {used} / {limit === null ? "∞" : limit}
         </span>
@@ -248,7 +248,7 @@ function MeuPlanoInner() {
     <div className="px-8 py-8 max-w-5xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="font-bold text-[#0D0D0D] text-[1.75rem]">Meu plano</h1>
+        <h1 className="font-bold text-[#282525] text-[1.75rem]">Meu plano</h1>
       </div>
 
       {/* Alerts */}
@@ -315,8 +315,8 @@ function MeuPlanoInner() {
                   key={plan.key}
                   className={`relative flex flex-col rounded border p-6 ${isAtual && !dark ? "ring-2" : ""}`}
                   style={{
-                    background: dark ? "#0D0D0D" : "#fff",
-                    borderColor: dark ? "#0D0D0D" : "rgba(13,13,13,.08)",
+                    background: dark ? "#282525" : "#fff",
+                    borderColor: dark ? "#282525" : "rgba(13,13,13,.08)",
                     boxShadow: isAtual && !dark ? `0 0 0 2px ${plan.cor}` : undefined,
                   }}
                 >
@@ -325,7 +325,7 @@ function MeuPlanoInner() {
                       className="absolute -top-2.5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-2.5 py-0.5 text-[0.625rem] font-bold"
                       style={isAtual
                         ? { background: plan.cor, color: "#fff" }
-                        : { background: "#fff", color: "#0D0D0D", boxShadow: "0 1px 4px rgba(13,13,13,.18)" }}
+                        : { background: "#fff", color: "#282525", boxShadow: "0 1px 4px rgba(13,13,13,.18)" }}
                     >
                       {isAtual ? "Plano atual" : "Mais popular"}
                     </span>
@@ -338,7 +338,7 @@ function MeuPlanoInner() {
                   >
                     {plan.label}
                   </p>
-                  <p className="text-[2rem] font-semibold tabular-nums leading-none tracking-tight" style={{ color: dark ? "#fff" : "#0D0D0D" }}>
+                  <p className="text-[2rem] font-semibold tabular-nums leading-none tracking-tight" style={{ color: dark ? "#fff" : "#282525" }}>
                     {plan.preco}
                   </p>
                   <p className="mb-5 mt-1.5 text-[0.75rem]" style={{ color: dark ? "rgba(255,255,255,.40)" : "rgba(13,13,13,.35)" }}>
@@ -372,7 +372,7 @@ function MeuPlanoInner() {
                       disabled={!!upgrading || portalLoading || !stripeAtivo}
                       className="w-full rounded py-2.5 text-xs font-bold transition disabled:opacity-50"
                       style={dark
-                        ? { background: stripeAtivo ? "#fff" : "rgba(255,255,255,.25)", color: "#0D0D0D" }
+                        ? { background: stripeAtivo ? "#fff" : "rgba(255,255,255,.25)", color: "#282525" }
                         : { background: stripeAtivo ? plan.cor : "rgba(13,13,13,.35)", color: "#fff" }}
                     >
                       {isLoading || (temAssinatura && portalLoading) ? "Redirecionando…" : stripeAtivo ? `${temAssinatura ? "Mudar para" : "Assinar"} ${plan.label}` : <span className="flex items-center justify-center gap-1"><Lock size={11} /> Stripe pendente</span>}
@@ -405,7 +405,7 @@ function MeuPlanoInner() {
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <planDef.icon size={16} style={{ color: planDef.cor }} />
-                  <span className="text-base font-semibold text-[#0D0D0D]">{planDef.label}</span>
+                  <span className="text-base font-semibold text-[#282525]">{planDef.label}</span>
                 </div>
                 {profile?.stripe_subscription_status && profile.stripe_subscription_status !== "inactive" && (
                   <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
@@ -421,7 +421,7 @@ function MeuPlanoInner() {
                   <button
                     onClick={handlePortal}
                     disabled={portalLoading || !stripeAtivo}
-                    className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-black/40 hover:text-black transition disabled:opacity-40"
+                    className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-black/40 hover:text-[#282525] transition disabled:opacity-40"
                   >
                     <ExternalLink size={11} />
                     {portalLoading ? "Abrindo…" : "Gerenciar assinatura"}

@@ -199,7 +199,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
               <ClipboardCheck size={14} className="text-[#7259B5]" />
             </div>
             <div>
-              <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#0D0D0D]">Nova prestação de contas</h2>
+              <h2 id={titleId} className="text-[0.875rem] font-semibold text-[#282525]">Nova prestação de contas</h2>
               {prestacaoId && <p className="text-[0.625rem] text-black/40">Rascunho salvo. Você pode fechar e continuar depois.</p>}
             </div>
           </div>

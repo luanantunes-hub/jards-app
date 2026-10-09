@@ -164,12 +164,12 @@ export default function ClientDetailPage({ params }: { params: Promise<{ id: str
   return <div className="min-h-full">
     <header>
       <div className="mx-auto max-w-pagina px-4 pb-5 pt-6 sm:px-6 lg:px-10 lg:pt-8">
-      <Link href="/contas-patrocinio" className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-black/35 transition hover:text-black"><ArrowLeft size={13}/>Clientes</Link>
+      <Link href="/contas-patrocinio" className="mb-4 inline-flex items-center gap-1.5 text-xs font-medium text-black/35 transition hover:text-[#282525]"><ArrowLeft size={13}/>Clientes</Link>
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <CompanyLogo nome={account.empresa_crm?.nome ?? account.nome ?? "Cliente"} domain={account.empresa_crm?.domain_key} site={account.empresa_crm?.site} size={48} className="rounded"/>
           <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2.5"><h1 className="truncate text-[1.5rem] font-semibold tracking-[-.03em] text-[#0D0D0D]">{displayName}</h1></div>
+            <div className="flex flex-wrap items-center gap-2.5"><h1 className="truncate text-[1.5rem] font-semibold tracking-[-.03em] text-[#282525]">{displayName}</h1></div>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.75rem] text-black/40">{!repeatedCompanyName && companyName && <Link href={`/empresas-crm/${account.empresa_crm_id}`} className="inline-flex items-center gap-1 text-black/55 transition hover:text-[#7259B5]">{companyName}<ArrowUpRight size={10}/></Link>}{account.empresa_crm?.setor && <span>{!repeatedCompanyName && companyName ? "· " : ""}{account.empresa_crm.setor}</span>}{(account.empresa_crm?.site || account.empresa_crm?.domain_key) && <a href={(() => { const u = account.empresa_crm?.site || account.empresa_crm?.domain_key || ""; return u.startsWith("http") ? u : `https://${u}`; })()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 transition hover:text-[#7259B5]" title={account.empresa_crm?.site || account.empresa_crm?.domain_key || ""}><Globe size={11}/>Website</a>}</div>
           </div>
         </div>
@@ -236,7 +236,7 @@ function calculateHealth(rows: SaudeConta[]) {
 }
 
 function SummaryMetric({label,value,detail,title,vazio=false,className=""}:{label:string;value:string;detail?:string;title?:string;vazio?:boolean;className?:string}) {
-  return <div className={`flex min-h-[7rem] flex-col justify-center bg-white px-5 py-4 ${className}`}><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p className={`mt-1.5 text-[1rem] font-semibold tabular-nums tracking-[-.02em] ${vazio ? "text-black/30" : "text-[#0D0D0D]"}`} title={title}>{value}</p>{detail && <p className="mt-1 text-[0.625rem] text-black/30">{detail}</p>}</div>;
+  return <div className={`flex min-h-[7rem] flex-col justify-center bg-white px-5 py-4 ${className}`}><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p><p className={`mt-1.5 text-[1rem] font-semibold tabular-nums tracking-[-.02em] ${vazio ? "text-black/30" : "text-[#282525]"}`} title={title}>{value}</p>{detail && <p className="mt-1 text-[0.625rem] text-black/30">{detail}</p>}</div>;
 }
 
 function ClientNegotiationsHistory({ rows }: { rows: NegotiationHistoryRow[] }) {

@@ -27,7 +27,7 @@ import type { PrestacaoCargo, PrestacaoComprovante, PrestacaoFornecedor } from "
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const CABECALHO = "px-4 py-2 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
-const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#0D0D0D]" : "text-black/30"}`;
+const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#282525]" : "text-black/30"}`;
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 const juntar = (itens: readonly string[]) => (itens.length > 1 ? `${itens.slice(0, -1).join(", ")} e ${itens[itens.length - 1]}` : itens[0] ?? "");
 
@@ -197,7 +197,7 @@ export function GradeRh({ prestacaoId }: { prestacaoId: string }) {
     <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="grade-rh-titulo">
       <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="min-w-0">
-          <h3 id="grade-rh-titulo" className="text-[0.75rem] font-semibold text-black">Grade de RH</h3>
+          <h3 id="grade-rh-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Grade de RH</h3>
           <p className="max-w-[40rem] text-[0.6875rem] text-black/45">
             Os cargos da equipe, com o horário de cada dia, a carga semanal e a forma de contratação. Vai na PCP no modelo de grade horária dos recursos humanos, baixado na aba Envio, no formulário PCP/PCF.
           </p>

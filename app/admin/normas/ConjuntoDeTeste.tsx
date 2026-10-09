@@ -87,7 +87,7 @@ function CasoDaRodada({ n, regime }: { n: Nota; regime: unknown }) {
   return (
     <li className="px-5 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="w-full min-w-0 text-[0.8125rem] font-medium text-[#0D0D0D] sm:w-auto sm:flex-1">{n.titulo}</span>
+        <span className="w-full min-w-0 text-[0.8125rem] font-medium text-[#282525] sm:w-auto sm:flex-1">{n.titulo}</span>
         {n.erro ? (
           <Etiqueta texto="Não rodou" cor={VERMELHO} />
         ) : (
@@ -199,7 +199,7 @@ export function ConjuntoDeTeste() {
       <section className="rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="titulo-conjunto">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0 max-w-[48rem]">
-            <h2 id="titulo-conjunto" className="text-[0.875rem] font-semibold text-[#0D0D0D]">Conjunto de teste do agente</h2>
+            <h2 id="titulo-conjunto" className="text-[0.875rem] font-semibold text-[#282525]">Conjunto de teste do agente</h2>
             <p className="mt-1 text-[0.75rem] leading-relaxed text-black/55">
               A IA lê as mudanças de 2026 a partir do regime antigo (Portaria 424 → Portaria MESP 10/2026; Anexo LXXXVI → LXXXVI-A), uma alteração simulada da IN 29 e dois documentos que não mudam nada.
               A proposta é comparada com os regimes conferidos à mão, parâmetro a parâmetro; nada vira proposta de verdade.
@@ -215,7 +215,7 @@ export function ConjuntoDeTeste() {
         {erro && <p role="alert" className="mt-3 rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#D94A4A40" }}>{erro}</p>}
         {t && ultima && (
           <p className="mt-3 text-[0.75rem] tabular-nums text-black/70" role="status">
-            Última rodada em {horaBr(ultima.quando)}: <strong className="font-semibold text-[#0D0D0D]">{t.acertos} de {t.esperadas} mudanças esperadas</strong>
+            Última rodada em {horaBr(ultima.quando)}: <strong className="font-semibold text-[#282525]">{t.acertos} de {t.esperadas} mudanças esperadas</strong>
             {t.esperadas ? ` (${Math.round((t.acertos / t.esperadas) * 100)}%)` : ""} · {plural(t.alarmes, "falso alarme", "falsos alarmes")} ·{" "}
             {t.certas} de {t.casos} classificações certas{t.falhas ? ` · ${plural(t.falhas, "caso não rodou", "casos não rodaram")}` : ""}
             {custo > 0 ? ` · US$ ${custo.toFixed(4)}` : ""}

@@ -85,7 +85,7 @@ export default function AdminLogsPage() {
     <div className="mx-auto max-w-6xl px-6 py-8">
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold text-[#0D0D0D]"><ClipboardList size={19} className="text-[#7259B5]" /> Logs administrativos</h1>
+          <h1 className="flex items-center gap-2 text-xl font-bold text-[#282525]"><ClipboardList size={19} className="text-[#7259B5]" /> Logs administrativos</h1>
           <p className="mt-1 text-sm text-black/40">Histórico resumido das ações realizadas no backoffice.</p>
         </div>
         <button onClick={() => void load()} disabled={loading} className="inline-flex items-center gap-1.5 self-start rounded border border-black/[.12] bg-white px-3 py-2 text-[0.6875rem] font-semibold text-black/50 transition hover:bg-black/[.03] disabled:opacity-40"><RefreshCw size={12} className={loading ? "animate-spin" : ""} /> Atualizar</button>

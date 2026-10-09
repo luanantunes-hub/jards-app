@@ -25,8 +25,8 @@ import type { PrestacaoComprovante, PrestacaoFornecedor } from "@/lib/supabase/t
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
-const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#0D0D0D]" : "text-black/30"}`;
-const CAMPO = "h-9 rounded border border-black/[.12] bg-white px-2 text-[0.75rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:bg-black/[.02] disabled:text-black/45";
+const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#282525]" : "text-black/30"}`;
+const CAMPO = "h-9 rounded border border-black/[.12] bg-white px-2 text-[0.75rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:bg-black/[.02] disabled:text-black/45";
 const reais = (v: number | null) => (v === null ? "" : Number(v).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }));
 const dataBr = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
 
@@ -41,7 +41,7 @@ function Quadro({ titulo, linhas }: { titulo: string; linhas: readonly string[] 
   return (
     <div className="flex min-h-[8.5rem] flex-col rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.18)" }}>
       <span className="text-[0.5625rem] font-medium uppercase tracking-[.08em] text-black/40">{titulo}</span>
-      <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-[0.75rem] text-[#0D0D0D]">
+      <div className="flex flex-1 flex-col items-center justify-center gap-1 text-center text-[0.75rem] text-[#282525]">
         {linhas.map((l, i) => <p key={i} className={i === 0 || l === "ASSINATURA" ? "font-semibold" : ""}>{l}</p>)}
       </div>
     </div>
@@ -185,7 +185,7 @@ export default function CarimbosPage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Carimbo e atesto das notas</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Carimbo e atesto das notas</h2>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
             Cada nota original leva na frente o carimbo com o número do projeto no SLI e, no verso, o atesto de recebimento com a data e a assinatura.
             Registre aqui a data do atesto de cada nota; a folha em PDF traz o texto do modelo para conferir ou imprimir em etiqueta.
@@ -196,7 +196,7 @@ export default function CarimbosPage() {
             type="button"
             onClick={baixarFolha}
             disabled={gerando}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {gerando
               ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" aria-hidden />
@@ -238,7 +238,7 @@ export default function CarimbosPage() {
               {!prestacao.identificador_oficial && (
                 <span className="flex items-start gap-1 text-[0.625rem] text-black/50">
                   <AlertTriangle size={12} strokeWidth={1.75} aria-label="Alerta" className="mt-px shrink-0 text-[#B07A14]" />
-                  <span>Informe o número do SLI nos <Link href={`/prestacoes/${id}#dados-oficiais`} className="underline decoration-black/20 underline-offset-2 hover:text-black">dados oficiais</Link>.</span>
+                  <span>Informe o número do SLI nos <Link href={`/prestacoes/${id}#dados-oficiais`} className="underline decoration-black/20 underline-offset-2 hover:text-[#282525]">dados oficiais</Link>.</span>
                 </span>
               )}
             </div>
@@ -269,7 +269,7 @@ export default function CarimbosPage() {
 
           <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="notas-titulo">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <h3 id="notas-titulo" className="text-[0.75rem] font-semibold text-black">Notas <span className="font-normal tabular-nums text-black/35">({notas.length})</span></h3>
+              <h3 id="notas-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Notas <span className="font-normal tabular-nums text-black/35">({notas.length})</span></h3>
               {podeEditar && semAtesto.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2">
                   <input type="date" value={dataEmLote} onChange={e => setDataEmLote(e.target.value)} aria-label="Data do atesto para as notas sem data" className={CAMPO} />

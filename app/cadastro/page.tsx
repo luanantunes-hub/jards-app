@@ -113,22 +113,22 @@ export default function CadastroPage({ searchParams }: { searchParams: Promise<{
         {sent ? (
           <section className="py-5 text-center">
             <CheckCircle size={38} className="mx-auto mb-5 text-[#2E8932]" strokeWidth={1.6} />
-            <h1 className="text-2xl font-bold text-[#0D0D0D]">Confirme seu e-mail</h1>
+            <h1 className="text-2xl font-bold text-[#282525]">Confirme seu e-mail</h1>
             <p className="mt-3 text-sm leading-6 text-black/50">
               Enviamos um link de confirmação para <strong className="font-medium text-black/70">{email}</strong>.
               Abra-o para ativar sua conta e acessar o Jards.
             </p>
-            <a href="/login" className="mt-7 inline-flex items-center gap-2 text-sm font-medium text-black/45 transition hover:text-black">
+            <a href="/login" className="mt-7 inline-flex items-center gap-2 text-sm font-medium text-black/45 transition hover:text-[#282525]">
               <ArrowLeft size={14} /> Voltar ao login
             </a>
           </section>
         ) : (
           <>
-            <a href="/login" className="mb-4 inline-flex items-center gap-1.5 text-xs text-black/40 transition hover:text-black">
+            <a href="/login" className="mb-4 inline-flex items-center gap-1.5 text-xs text-black/40 transition hover:text-[#282525]">
               <ArrowLeft size={13} /> Voltar ao login
             </a>
             <p className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Crie seu workspace</p>
-            <h1 className="text-[clamp(2.15rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#0D0D0D]">{paraPrestacao ? "Prestação de contas." : "Comece gratuitamente."}</h1>
+            <h1 className="text-[clamp(2.15rem,5vw,3rem)] font-bold leading-[.98] tracking-[-.045em] text-[#282525]">{paraPrestacao ? "Prestação de contas." : "Comece gratuitamente."}</h1>
             <p className="mb-4 mt-2.5 text-sm leading-6 text-black/50">
               {paraPrestacao
                 ? "Crie a conta e assine o módulo em seguida: R$ 92,80 por mês, com 1 usuário."
@@ -181,7 +181,7 @@ export default function CadastroPage({ searchParams }: { searchParams: Promise<{
             </p>
 
             <p className="mt-2.5 text-center text-xs text-black/40">
-              Já possui uma conta? <a href="/login" className="font-semibold text-black hover:underline">Entrar</a>
+              Já possui uma conta? <a href="/login" className="font-semibold text-[#282525] hover:underline">Entrar</a>
             </p>
           </>
         )}
@@ -200,7 +200,7 @@ function GoogleMark() {
   );
 }
 
-const inputClass = "w-full rounded-xl border border-black/12 bg-white px-4 py-2.5 text-sm text-black placeholder-black/55 transition focus:border-[#684DB0]/55 focus:outline-none focus:ring-2 focus:ring-[#684DB0]/12";
+const inputClass = "w-full rounded-xl border border-black/12 bg-white px-4 py-2.5 text-sm text-[#282525] placeholder-black/55 transition focus:border-[#684DB0]/55 focus:outline-none focus:ring-2 focus:ring-[#684DB0]/12";
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (

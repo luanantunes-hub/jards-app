@@ -169,7 +169,7 @@ export function CapturaPorEmail({ prestacaoId, podeEditar }: { prestacaoId: stri
                   <label className="min-w-0 flex-1">
                     <span className="sr-only">E-mail para autorizar</span>
                     <input value={novo} onChange={e => setNovo(e.target.value)} type="email" placeholder="contador@escritorio.com.br"
-                      className="h-8 w-full rounded border border-black/[.12] bg-white px-2 text-[0.6875rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+                      className="h-8 w-full rounded border border-black/[.12] bg-white px-2 text-[0.6875rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
                   </label>
                   <button type="submit" disabled={salvando || !novo.trim()} className={BOTAO} style={{ borderColor: "rgba(13,13,13,.12)" }}>Autorizar</button>
                 </form>

@@ -24,9 +24,9 @@ export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }:
       >
         <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-black/[.04]">
-            <Check size={26} className="text-black" strokeWidth={2.5} />
+            <Check size={26} className="text-[#282525]" strokeWidth={2.5} />
           </span>
-          <h2 id="contato-exportado-title" className="mt-4 text-[0.9375rem] font-bold text-black">Contato salvo</h2>
+          <h2 id="contato-exportado-title" className="mt-4 text-[0.9375rem] font-bold text-[#282525]">Contato salvo</h2>
           <p className="mt-1.5 text-[0.75rem] leading-relaxed text-black/45">
             <strong className="font-semibold text-black/70">{nome}</strong> foi adicionado aos seus contatos
             {empresaNome ? <> e vinculado a <strong className="font-semibold text-black/70">{empresaNome}</strong></> : null}.

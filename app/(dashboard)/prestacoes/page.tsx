@@ -136,7 +136,7 @@ function BarraProntidao({ prontidao }: { prontidao: Prontidao }) {
         <div className="h-1.5 w-14 overflow-hidden rounded-full bg-black/[.07]" aria-hidden>
           <div className="h-full rounded-full" style={{ width: `${prontidao.percentual}%`, background: cor }} />
         </div>
-        <span className={`text-[0.6875rem] font-semibold tabular-nums ${prontidao.percentual ? "text-[#0D0D0D]" : "text-black/30"}`}>{prontidao.percentual}%</span>
+        <span className={`text-[0.6875rem] font-semibold tabular-nums ${prontidao.percentual ? "text-[#282525]" : "text-black/30"}`}>{prontidao.percentual}%</span>
       </div>
       <p className="mt-0.5 text-[0.625rem] text-black/40">
         {prontidao.pendencias.length ? `${prontidao.pendencias.length} ${prontidao.pendencias.length === 1 ? "pendência" : "pendências"}` : "Sem pendências"}
@@ -165,7 +165,7 @@ function RiscoCelula({ carteira, curto = false }: { carteira: Linha["carteira"];
   if (!carteira.valor_em_risco) return <p className="text-[0.6875rem] text-black/50">{achados}</p>;
   return (
     <div className="min-w-0">
-      <p className="flex items-center gap-1 text-[0.75rem] tabular-nums text-[#0D0D0D]">
+      <p className="flex items-center gap-1 text-[0.75rem] tabular-nums text-[#282525]">
         <AlertCircle size={12} strokeWidth={1.75} role="img" aria-label="Em risco" className="shrink-0 text-[#D94A4A]" />
         {curto ? <Valor v={carteira.valor_em_risco} /> : fmt(carteira.valor_em_risco)}
       </p>
@@ -437,7 +437,7 @@ export default function PrestacoesList() {
                   <KanbanColumn key={coluna.status} label={meta.label} accent={meta.color} count={loading ? null : coluna.linhas.length} total={risco > 0 ? `${formatarValorCurto(risco)} em risco` : null} compact>
                     {coluna.linhas.length === 0 ? <KanbanEmpty label="Nenhuma prestação" /> : coluna.linhas.map(p => (
                       <KanbanCard key={p.id} onClick={() => router.push(`/prestacoes/${p.id}`)}>
-                        <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-2 rounded text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
+                        <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-2 rounded text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
                         <p className="mt-0.5 truncate text-[0.6875rem] text-black/45">{[p.cliente?.nome, nomeDoResponsavel(p.responsavelId)].filter(Boolean).join(" · ") || "Sem cliente"}</p>
                         <div className="mt-3 grid grid-cols-2 gap-3">
                           <PrazoCelula prazo={p.prazoProximo} />
@@ -462,7 +462,7 @@ export default function PrestacoesList() {
                   <Link href={`/prestacoes/${p.id}`} className="block rounded border bg-white p-4 transition hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
-                        <p className="text-[0.8125rem] font-semibold text-black">{p.titulo}</p>
+                        <p className="text-[0.8125rem] font-semibold text-[#282525]">{p.titulo}</p>
                         <p className="truncate text-[0.6875rem] text-black/40">
                           {[p.cliente?.nome, p.regime?.identificadorOficial && p.identificador_oficial ? `${p.regime.identificadorOficial.rotulo} ${p.identificador_oficial}` : null, p.projeto?.nome].filter(Boolean).join(" · ") || "Sem projeto"}
                         </p>
@@ -511,7 +511,7 @@ export default function PrestacoesList() {
                         style={{ borderBottom: "1px solid rgba(13,13,13,.05)" }}
                       >
                         <td className="px-4 py-3">
-                          <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-1 text-[0.8125rem] font-semibold text-black hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
+                          <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-1 text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
                           {p.projeto && <p className="mt-0.5 line-clamp-1 text-[0.625rem] text-black/35">{p.projeto.nome}</p>}
                         </td>
                         <td className="px-4 py-3">

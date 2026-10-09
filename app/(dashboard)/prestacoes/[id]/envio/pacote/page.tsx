@@ -255,7 +255,7 @@ export default function PacotePage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Pacote do envio</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Pacote do envio</h2>
           <p className="max-w-[46rem] text-[0.6875rem] text-black/45">
             Os documentos do checklist e os comprovantes num arquivo .zip, renomeados no padrão {sistema ? `do ${sistema}` : "do sistema de destino"}, com o manifesto (tamanho e SHA-256 de cada arquivo) e o relatório da prestação em PDF. O pré-pacote sai a qualquer momento e mostra o que falta.
           </p>
@@ -281,18 +281,18 @@ export default function PacotePage() {
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.6875rem] md:grid-cols-4">
               <div>
                 <dt className={ROTULO}>Arquivos</dt>
-                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.itens.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{plano.itens.length} <span className="text-[0.6875rem] font-normal text-black/40">+ relatório e manifesto</span></dd>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.itens.length ? "text-[#282525]" : "text-black/30"}`}>{plano.itens.length} <span className="text-[0.6875rem] font-normal text-black/40">+ relatório e manifesto</span></dd>
               </div>
               <div>
                 <dt className={ROTULO}>Tamanho</dt>
-                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.tamanhoTotal ? "text-[#0D0D0D]" : "text-black/30"}`}>{tamanho(plano.tamanhoTotal)}</dd>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.tamanhoTotal ? "text-[#282525]" : "text-black/30"}`}>{tamanho(plano.tamanhoTotal)}</dd>
               </div>
               <div>
                 <dt className={ROTULO}>
                   {plano.comProblema > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
                   Fora da regra
                 </dt>
-                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.comProblema ? "text-[#0D0D0D]" : "text-black/30"}`}>{plano.comProblema}</dd>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.comProblema ? "text-[#282525]" : "text-black/30"}`}>{plano.comProblema}</dd>
               </div>
               <div>
                 <dt className={ROTULO}>Nomes</dt>
@@ -305,7 +305,7 @@ export default function PacotePage() {
                 type="button"
                 onClick={() => gerar("pacote")}
                 disabled={!plano.podeGerarPacote || ocupado}
-                className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+                className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <Package size={13} aria-hidden /> Gerar pacote
               </button>
@@ -351,7 +351,7 @@ export default function PacotePage() {
           {plano.faltas.length > 0 && (
             <section className="rounded border bg-white px-5 py-4" style={BORDA} aria-labelledby="faltas">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 id="faltas" className="text-[0.75rem] font-semibold text-black">O que falta</h3>
+                <h3 id="faltas" className="text-[0.75rem] font-semibold text-[#282525]">O que falta</h3>
                 <Link href={`/prestacoes/${id}/envio`} className="inline-flex items-center gap-1 rounded text-[0.6875rem] text-[#684DB0] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                   Resolver no checklist <ArrowRight size={11} aria-hidden />
                 </Link>

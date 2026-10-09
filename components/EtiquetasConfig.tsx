@@ -134,7 +134,7 @@ function EtiquetaRow({ etiqueta, onUpdate, onDelete }: {
         onChange={e => setLabel(e.target.value)}
         onBlur={commitLabel}
         onKeyDown={e => { if (e.key === "Enter") { e.currentTarget.blur(); } }}
-        className="flex-1 text-[0.8125rem] font-semibold text-black bg-transparent outline-none border-b border-transparent focus:border-black/20 transition py-0.5"
+        className="flex-1 text-[0.8125rem] font-semibold text-[#282525] bg-transparent outline-none border-b border-transparent focus:border-black/20 transition py-0.5"
         placeholder="Nome da etiqueta"
       />
 
@@ -301,7 +301,7 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
             onChange={e => setNovaLabel(e.target.value)}
             onKeyDown={e => { if (e.key === "Enter") handleCriar(); }}
             placeholder="Nova etiqueta…"
-            className="flex-1 text-[0.8125rem] text-black bg-transparent outline-none placeholder:text-black/25"
+            className="flex-1 text-[0.8125rem] text-[#282525] bg-transparent outline-none placeholder:text-black/25"
           />
           {novaLabel.trim() && (
             <button onClick={handleCriar} disabled={criando}
@@ -316,11 +316,11 @@ export function EtiquetasConfig({ entidade = "captacao" }: { entidade?: "captaca
       {etapaParaExcluir && (
         <div className="fixed inset-0 z-[210] flex items-center justify-center bg-black/45 p-4" onClick={() => !excluindo && setEtapaParaExcluir(null)}>
           <div role="dialog" aria-modal="true" aria-labelledby="excluir-etapa-titulo" className="w-full max-w-md rounded bg-white p-6 shadow-2xl" onClick={event => event.stopPropagation()}>
-            <h2 id="excluir-etapa-titulo" className="text-[1.0625rem] font-bold text-black">Excluir “{etapaParaExcluir.label}”?</h2>
+            <h2 id="excluir-etapa-titulo" className="text-[1.0625rem] font-bold text-[#282525]">Excluir “{etapaParaExcluir.label}”?</h2>
             <p className="mt-2 text-[0.8125rem] leading-relaxed text-black/55">Os registros nesta etapa serão transferidos para a etapa escolhida antes da exclusão.</p>
             <p className="mt-2 text-[0.75rem] text-black/40">Essa mudança também pode alterar indicadores que dependem do status dos registros.</p>
             <label htmlFor="destino-etapa" className="mt-5 block text-[0.75rem] font-semibold text-black/70">Mover registros para</label>
-            <select id="destino-etapa" value={destinoKey} onChange={event => setDestinoKey(event.target.value)} className="mt-2 w-full rounded border border-black/15 bg-white px-3 py-2 text-[0.8125rem] text-black">
+            <select id="destino-etapa" value={destinoKey} onChange={event => setDestinoKey(event.target.value)} className="mt-2 w-full rounded border border-black/15 bg-white px-3 py-2 text-[0.8125rem] text-[#282525]">
               {etiquetas.filter(item => item.key !== etapaParaExcluir.key).map(item => <option key={item.key} value={item.key}>{item.label}</option>)}
             </select>
             {erro && <p role="alert" className="mt-3 text-[0.75rem] text-[#B23A3A]">{erro}</p>}

@@ -17,7 +17,7 @@ Princípios:
 
 | Token | Cor | Uso |
 |---|---|---|
-| Tinta | `#0D0D0D` | texto e ações principais |
+| Tinta (grafite quente) | `#282525` | texto e ações principais |
 | Roxo Jards | `#684DB0` / `#7259B5` | navegação, seleção e identidade |
 | Coral Jards | `#D94A4A` | marca, atenção e prioridade alta |
 | Verde | `#2E8932` | salvar, confirmar e sucesso |
@@ -25,6 +25,7 @@ Princípios:
 | Âmbar | `#B07A14` | atenção moderada e prioridade média |
 | Teal | `#1A8B7A` | relacionamento e sinais positivos |
 
+- o preto do Jards é o grafite quente `#282525`, na landing, nas páginas públicas e no app; não usar `#000` nem `#0D0D0D` sólidos. Cinzas e bordas continuam em preto com baixa opacidade;
 - fundos são brancos ou neutros levemente tingidos;
 - **nunca tom sobre tom**: texto ou ícone colorido não fica sobre fundo claro da mesma cor (roxo sobre lilás, verde sobre verde-claro). A cor fica no texto, no ícone ou numa borda fina, sobre branco ou cinza neutro (`bg-black/[.04]`); quando precisa de peso, usa preenchimento sólido com texto branco;
 - passar o mouse, item selecionado, dia de hoje e linha arrastada usam cinza neutro, nunca a cor da marca diluída;
@@ -46,7 +47,7 @@ Princípios:
 ## Números e indicadores
 
 - rótulo neutro: `0.625rem`, peso 500, caixa alta, tracking `.08em`, `text-black/45`; nunca colorido nem em negrito;
-- valor em tinta (`#0D0D0D`), semibold, algarismos tabulares; valor zerado fica apagado (`text-black/30`);
+- valor em tinta (`#282525`), semibold, algarismos tabulares; valor zerado fica apagado (`text-black/30`);
 - cor só no gráfico (barra, segmento), nunca no rótulo nem no valor. Sem pontos ou quadrados coloridos como marcador: quando o rótulo precisa de apoio visual, usa ícone cinza (`text-black/40`, 12px); só um estado de alerta (em risco, expirado, atrasado) pode colorir o ícone;
 - captação: verde é confirmado, verde a 35% é em negociação, cinza é o que falta. Roxo é navegação, não é cor de dado;
 - exceção: um desfecho escrito em palavra ("Meta atingida") pode levar a cor no texto;
@@ -71,7 +72,7 @@ Princípios:
 Use preto para criar ou iniciar o objeto principal da página:
 
 ```tsx
-className="rounded bg-[#0D0D0D] px-4 py-2.5 text-white"
+className="rounded bg-[#282525] px-4 py-2.5 text-white hover:bg-[#3A3535]"
 ```
 
 ### Salvar ou confirmar

@@ -54,9 +54,9 @@ function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
   return (
     <main className="mx-auto max-w-[32rem] px-4 py-12">
       <div className="rounded-lg border bg-white px-6 py-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <h1 className="text-[1.0625rem] font-semibold text-[#0D0D0D]">{titulo}</h1>
+        <h1 className="text-[1.0625rem] font-semibold text-[#282525]">{titulo}</h1>
         <p className="mt-2 text-[0.8125rem] text-black/55">{texto}</p>
-        <Link href="/convidado" className="mt-4 inline-block rounded text-[0.75rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-black focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+        <Link href="/convidado" className="mt-4 inline-block rounded text-[0.75rem] text-black/60 underline decoration-black/20 underline-offset-2 hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
           Ver minhas prestações
         </Link>
       </div>
@@ -175,7 +175,7 @@ export default function PrestacaoDoConvidado({ params }: { params: Promise<{ id:
 
       <header className="mt-3">
         <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40">{acesso.organizacao?.nome ?? "Organização"}</p>
-        <h1 className="mt-1 text-balance text-[1.5rem] font-semibold leading-tight tracking-[-0.02em] text-[#0D0D0D]">{p.titulo}</h1>
+        <h1 className="mt-1 text-balance text-[1.5rem] font-semibold leading-tight tracking-[-0.02em] text-[#282525]">{p.titulo}</h1>
         <p className="mt-1 text-[0.75rem] text-black/50">
           {[p.regime, p.identificador_oficial, p.proponente, p.data_inicio_execucao ? `Execução ${dataBr(p.data_inicio_execucao)}${p.data_fim_execucao ? ` a ${dataBr(p.data_fim_execucao)}` : ""}` : ""].filter(Boolean).join(" · ")}
         </p>
@@ -185,7 +185,7 @@ export default function PrestacaoDoConvidado({ params }: { params: Promise<{ id:
       </header>
 
       <section className="mt-5 rounded-lg border bg-white px-4 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }} aria-labelledby="geral-titulo">
-        <h2 id="geral-titulo" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold text-[#0D0D0D]">
+        <h2 id="geral-titulo" className="flex items-center gap-1.5 text-[0.8125rem] font-semibold text-[#282525]">
           <MessageSquare size={14} className="text-black/40" aria-hidden /> Comentário para a equipe
         </h2>
         {comentariosGerais.length > 0 && (
@@ -202,7 +202,7 @@ export default function PrestacaoDoConvidado({ params }: { params: Promise<{ id:
           <span className="sr-only">Comentário geral sobre a prestação</span>
           <textarea value={geral} onChange={e => setGeral(e.target.value)} rows={2} maxLength={2000}
             placeholder="Algo sobre a prestação como um todo"
-            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-black outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
+            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.75rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10" />
         </label>
         {erroGeral && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23B3B]">{erroGeral}</p>}
         <div className="mt-1.5 flex justify-end">
@@ -218,7 +218,7 @@ export default function PrestacaoDoConvidado({ params }: { params: Promise<{ id:
           <button key={s.id} type="button" role="tab" id={`aba-${s.id}`} aria-selected={secao === s.id} aria-controls="painel-secao"
             onClick={() => { if (secao !== s.id) { setListas(null); setSecao(s.id); } }}
             className={`-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-[0.8125rem] transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-              secao === s.id ? "border-[#7259B5] text-[#0D0D0D]" : "border-transparent text-black/50 hover:text-black/80"}`}>
+              secao === s.id ? "border-[#7259B5] text-[#282525]" : "border-transparent text-black/50 hover:text-black/80"}`}>
             {s.rotulo}
           </button>
         ))}
@@ -232,7 +232,7 @@ export default function PrestacaoDoConvidado({ params }: { params: Promise<{ id:
         ) : listas.map(l => (
           <section key={l.tipo} className="rounded-lg border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }} aria-labelledby={`lista-${l.tipo}`}>
             <div className="flex items-center justify-between gap-2 border-b px-4 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <h2 id={`lista-${l.tipo}`} className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{l.titulo}</h2>
+              <h2 id={`lista-${l.tipo}`} className="text-[0.8125rem] font-semibold text-[#282525]">{l.titulo}</h2>
               {l.itens.length > 0 && (
                 <p className="text-[0.6875rem] tabular-nums text-black/45">{verificadosDaLista(l.itens, estado)} de {l.itens.length} verificados</p>
               )}

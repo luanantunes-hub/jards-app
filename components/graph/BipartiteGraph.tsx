@@ -69,7 +69,7 @@ function deterministicColor(s: string) {
 function renderTooltip(tip: HTMLDivElement, card: Card, edges: Edge[]) {
   const fragment = document.createDocumentFragment();
   const title = document.createElement("p");
-  title.style.cssText = "font-size:13px;font-weight:700;color:#0D0D0D;line-height:1.3";
+  title.style.cssText = "font-size:13px;font-weight:700;color:#282525;line-height:1.3";
   title.textContent = card.nome;
   fragment.appendChild(title);
 

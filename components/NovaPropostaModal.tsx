@@ -102,7 +102,7 @@ export function NovaPropostaModal({
             <div className="w-9 h-9 rounded bg-black/5 flex items-center justify-center">
               <Coins size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">{proposta ? "Editar proposta" : "Nova proposta"}</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/6 transition">
             <X size={15} className="text-black/40" />

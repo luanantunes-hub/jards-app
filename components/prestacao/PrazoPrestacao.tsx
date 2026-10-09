@@ -53,7 +53,7 @@ export function PrazoPrestacao({ prestacao, regime, podeEditar, onSalvar }: {
   return (
     <div>
       <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-2">Prazo de envio</p>
-      <p className={`flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums ${prestacao.prazo ? "text-[#0D0D0D]" : "text-black/30"}`}>
+      <p className={`flex items-center gap-1 text-[0.9375rem] font-semibold tabular-nums ${prestacao.prazo ? "text-[#282525]" : "text-black/30"}`}>
         {vencido && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Prazo vencido" className="shrink-0 text-[#D94A4A]" />}
         {dataBr(prestacao.prazo)}
       </p>

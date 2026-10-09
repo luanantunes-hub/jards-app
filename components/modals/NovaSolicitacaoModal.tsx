@@ -198,7 +198,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
             <div className="w-9 h-9 rounded flex items-center justify-center" style={{ background: "rgba(13,13,13,.04)" }}>
               <ArrowRightLeft size={16} style={{ color: "#7259B5" }} />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Solicitar transferência</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Solicitar transferência</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="w-8 h-8 flex items-center justify-center rounded hover:bg-black/5 transition">
             <X size={15} className="text-black/40" />
@@ -246,7 +246,7 @@ export default function NovaSolicitacaoModal({ open, onClose, onSaved }: NovaSol
                     className="w-full flex items-center gap-2.5 px-3 py-2 rounded text-left transition text-[0.75rem]"
                     style={
                       destinatarioId === m.user_id
-                        ? { background: "rgba(13,13,13,.08)", color: "#0D0D0D", fontWeight: 600 }
+                        ? { background: "rgba(13,13,13,.08)", color: "#282525", fontWeight: 600 }
                         : { color: "rgba(13,13,13,.40)" }
                     }
                   >

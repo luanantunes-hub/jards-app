@@ -89,7 +89,7 @@ export function RevisaoDaProposta({ codigo, proposta, regimeBase, temRascunho, o
   return (
     <article className="rounded border bg-white px-5 py-4" style={BORDA}>
       <div className="flex flex-wrap items-center gap-1.5">
-        <h3 className="text-[0.8125rem] font-semibold text-[#0D0D0D]">{documento}</h3>
+        <h3 className="text-[0.8125rem] font-semibold text-[#282525]">{documento}</h3>
         <Etiqueta texto={c.texto} cor={c.cor} />
         {proposta.documento?.url && (
           <a href={proposta.documento.url} target="_blank" rel="noreferrer"

@@ -185,7 +185,7 @@ export function NovoResultadoModal({
                 value={atm(captadoCents)}
                 onKeyDown={atmKey(setCaptadoCents)}
                 onChange={() => {}}
-                className="flex-1 text-[0.875rem] font-semibold outline-none bg-transparent text-black min-w-0"
+                className="flex-1 text-[0.875rem] font-semibold outline-none bg-transparent text-[#282525] min-w-0"
               />
             </div>
             {valueDelta !== null && valueDelta !== 0 && (

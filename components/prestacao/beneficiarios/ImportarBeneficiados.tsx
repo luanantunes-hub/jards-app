@@ -120,7 +120,7 @@ export function ImportarBeneficiados({ prestacaoId, jaCadastrados, onClose, onIm
             onChange={e => { setTexto(e.target.value); setArquivo(""); }}
             rows={5}
             placeholder={"Nome\tSexo\tIdade\tEscola\tModalidade\nAna Souza\tF\t11\tEMEF Vila Nova\tAtletismo"}
-            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 font-mono text-[0.6875rem] text-black outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
+            className="w-full rounded border border-black/[.12] bg-white px-3 py-2 font-mono text-[0.6875rem] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10"
           />
           <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
             <button
@@ -143,7 +143,7 @@ export function ImportarBeneficiados({ prestacaoId, jaCadastrados, onClose, onIm
         {tabela && mapa && (
           <>
             <fieldset>
-              <legend className="mb-2 text-[0.75rem] font-semibold text-black">Colunas</legend>
+              <legend className="mb-2 text-[0.75rem] font-semibold text-[#282525]">Colunas</legend>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {CAMPOS_DA_IMPORTACAO.map(c => (
                   <div key={c.campo}>

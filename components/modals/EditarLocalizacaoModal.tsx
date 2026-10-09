@@ -15,10 +15,10 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
   return <p className="text-[0.5625rem] font-bold uppercase tracking-widest text-black/30 mb-1.5">{children}</p>;
 }
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-black">{children}</label>;
+  return <label className="mb-1.5 flex items-center text-[0.75rem] font-semibold text-[#282525]">{children}</label>;
 }
 
-const fieldClass = "rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-black outline-none transition focus:border-black/30";
+const fieldClass = "rounded border bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-black/30";
 const fieldStyle = { borderColor: "rgba(13,13,13,.15)" } as const;
 
 export function EditarLocalizacaoModal({ empresa, onClose, onSaved }: Props) {
@@ -85,7 +85,7 @@ export function EditarLocalizacaoModal({ empresa, onClose, onSaved }: Props) {
             <div className="flex h-9 w-9 items-center justify-center rounded bg-black/5">
               <MapPin size={16} className="text-black/50" />
             </div>
-            <h2 id={titleId} className="text-[0.9375rem] font-bold text-black">Localização e cidades</h2>
+            <h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Localização e cidades</h2>
           </div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]">
             <X size={15} className="text-black/40" />

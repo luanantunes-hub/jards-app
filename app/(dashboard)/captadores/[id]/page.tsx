@@ -254,7 +254,7 @@ export default function CaptadorDetailPage({ params }: { params: Promise<{ id: s
                     </span>
                   </div>
                 )}
-                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#0D0D0D] sm:text-[2.375rem]">{captador.nome}</h1>
+                <h1 className="max-w-4xl text-[2rem] font-semibold leading-[1.04] tracking-[-.045em] text-[#282525] sm:text-[2.375rem]">{captador.nome}</h1>
                 <p className="mt-2 text-sm text-black/50">{captador.agencia || "Agência independente"}</p>
               </div>
             </div>
@@ -416,7 +416,7 @@ function AtribuicoesList({ rows }: { rows: AtribuicaoRow[] }) {
               />
               <div className="min-w-0">
                 {a.empresa_crm ? (
-                  <span className="block truncate text-[0.8125rem] font-semibold text-[#0D0D0D]">
+                  <span className="block truncate text-[0.8125rem] font-semibold text-[#282525]">
                     {a.empresa_crm.nome}
                   </span>
                 ) : (

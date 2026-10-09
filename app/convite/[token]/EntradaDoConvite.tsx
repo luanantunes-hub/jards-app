@@ -11,9 +11,9 @@ import { MailCheck } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-black outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
+const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
-const PRIMARIO = "flex items-center justify-center gap-1.5 rounded bg-[#0D0D0D] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50";
+const PRIMARIO = "flex items-center justify-center gap-1.5 rounded bg-[#282525] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50";
 
 function Girando() {
   return <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" />;
@@ -123,7 +123,7 @@ export function EntradaDoConvite({ token, email, nome: nomeDoConvite, logadoComo
 
   return (
     <section className={caixa} style={borda} aria-labelledby="entrada-titulo">
-      <h2 id="entrada-titulo" className="text-[0.875rem] font-semibold text-[#0D0D0D]">Entre com {email}</h2>
+      <h2 id="entrada-titulo" className="text-[0.875rem] font-semibold text-[#282525]">Entre com {email}</h2>
       <p className="mt-1 text-[0.75rem] text-black/50">Se você já usa a Jards com esse e-mail, entre com a sua senha. Se não, crie o acesso abaixo.</p>
       <Link href={`/login?next=${encodeURIComponent(voltar)}`} className={`${PRIMARIO} mt-4 w-full sm:w-auto sm:inline-flex`}>
         Já tenho conta: entrar

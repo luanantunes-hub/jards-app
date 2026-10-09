@@ -96,7 +96,7 @@ export default function AdminPedidosPage() {
     <div className="mx-auto max-w-5xl px-6 py-8">
       <header className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-[#0D0D0D]">Pedidos de pesquisa</h1>
+          <h1 className="text-xl font-bold text-[#282525]">Pedidos de pesquisa</h1>
           <p className="mt-1 text-sm text-black/40">A entrega libera o patrocinador e notifica o solicitante dentro da Jards.</p>
         </div>
         <div className="flex items-center gap-2 text-[0.6875rem]">
