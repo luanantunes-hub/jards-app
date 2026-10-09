@@ -297,7 +297,6 @@ export default function ObjetoPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Objeto</h2>
-          <p className="text-[0.6875rem] text-black/45">Metas propostas × resultados e locais de realização, como o relatório do objeto pede.</p>
         </div>
         {podeEditar && (
           <div className="flex flex-wrap items-center gap-2">

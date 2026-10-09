@@ -186,7 +186,7 @@ export default function PendenciasPage() {
                 type="button"
                 aria-pressed={soPendentes === opcao.valor}
                 onClick={() => setSoPendentes(opcao.valor)}
-                className={`rounded px-3 py-1.5 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${soPendentes === opcao.valor ? "bg-[#684DB0] text-white" : "text-black/55 hover:bg-black/[.04] hover:text-black/80"}`}
+                className={`rounded px-3 py-1.5 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5] ${soPendentes === opcao.valor ? "bg-black/[.06] font-medium text-[#282525]" : "text-black/55 hover:bg-black/[.03] hover:text-black/80"}`}
               >
                 {opcao.rotulo}
               </button>

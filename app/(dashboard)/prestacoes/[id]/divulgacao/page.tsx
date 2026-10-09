@@ -193,7 +193,6 @@ export default function DivulgacaoPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Divulgação</h2>
-          <p className="text-[0.6875rem] text-black/45">Peças de divulgação com as marcas, a aprovação prévia e a amostra para o relatório final.</p>
         </div>
         {podeEditar && (
           <button

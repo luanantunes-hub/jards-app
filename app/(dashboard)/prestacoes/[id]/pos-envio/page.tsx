@@ -254,9 +254,7 @@ export default function PosEnvioPage() {
     <div className="mx-auto max-w-pagina space-y-6 px-4 py-6 md:px-8">
       <div className="min-w-0">
         <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Após o envio</h2>
-        <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
-          Diligências, decisões, glosas e recursos. O prazo de cada um vem do regime e vira atividade, com aviso, para quem cuida da prestação.{guardaPelaDecisao ? " A decisão sobre as contas marca o início da guarda do que foi enviado." : ""}
-        </p>
+        {guardaPelaDecisao && <p className="max-w-[44rem] text-[0.6875rem] text-black/45">A decisão sobre as contas marca o início da guarda do que foi enviado.</p>}
       </div>
 
       {erro && <p role="alert" className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#D94A4A40" }}>{erro}</p>}

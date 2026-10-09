@@ -324,11 +324,6 @@ export default function DistribuicaoPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Distribuição</h2>
-          <p className="text-[0.6875rem] text-black/45">
-            {limites && regime
-              ? `Plano de distribuição por produto, com as cotas do regime (${regime.nome}).`
-              : "Plano de distribuição por produto: o previsto e o que foi distribuído ou vendido."}
-          </p>
         </div>
         {podeEditar && (
           <button
