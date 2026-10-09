@@ -208,7 +208,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const STATUS_META: Record<string, { label: string; cor: string; icone: string }> = Object.fromEntries(etiquetas.map(e => [e.key, e]));
   const { origens, canais, resultados } = useTaxonomiasComerciais();
   const taxonomyLabel = (items: {chave:string;label:string}[], value: string | null | undefined) => items.find(item=>item.chave===value)?.label ?? value?.replaceAll("_"," ") ?? "—";
-  const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number } | null>(null);
+  const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number; right?: number } | null>(null);
   const [leiMenuPos, setLeiMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [prioMenuPos, setPrioMenuPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -1043,7 +1043,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 onClick={(e) => {
                   const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
                   setSidebarStatusMenu(
-                    sidebarStatusMenu ? null : { top: rect.bottom + 4, left: rect.left }
+                    sidebarStatusMenu ? null : { top: rect.bottom + 4, left: rect.left, right: rect.right }
                   );
                 }}
                 className="block"

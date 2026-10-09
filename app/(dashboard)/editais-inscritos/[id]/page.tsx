@@ -180,7 +180,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
   const [newNota, setNewNota]     = useState("");
   const [salvando, setSalvando]   = useState(false);
 
-  const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number } | null>(null);
+  const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number; right?: number } | null>(null);
   const [leiMenuPos, setLeiMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [prioMenuPos, setPrioMenuPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -886,7 +886,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               <button
                 onClick={ev => {
                   const rect = ev.currentTarget.getBoundingClientRect();
-                  setSidebarStatusMenu(sidebarStatusMenu ? null : { top: rect.bottom + 4, left: rect.left });
+                  setSidebarStatusMenu(sidebarStatusMenu ? null : { top: rect.bottom + 4, left: rect.left, right: rect.right });
                 }}
               >
                 <StatusBadge status={inscricao.status} label={getStatusEtiqueta(inscricao.status)?.label} bg={getStatusEtiqueta(inscricao.status)?.cor} iconName={getStatusEtiqueta(inscricao.status)?.icone} withChevron />

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import { STATUS_BADGE } from "@/components/ui/StatusBadge";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import * as Icons from "lucide-react";
@@ -20,7 +20,8 @@ export type StatusDropdownCreateInput = { label: string; bg: string; iconName: s
 type Props = {
   options: string[] | Option[];
   current: string;
-  position: { top: number; left: number };
+  /** `right` é a borda direita do gatilho: sem espaço à direita, o menu abre alinhado a ela. */
+  position: { top: number; left: number; right?: number };
   onSelect: (status: string) => void;
   onClose: () => void;
   title?: string;
@@ -39,6 +40,19 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
   const [newIcon, setNewIcon] = useState(CREATE_ICONS[0]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [left, setLeft] = useState(position.left);
+
+  // Mede o menu antes de pintar: se passar da borda direita, abre para o outro lado.
+  useLayoutEffect(() => {
+    const largura = menuRef.current?.offsetWidth ?? 0;
+    const margem = 12;
+    const limite = window.innerWidth - margem;
+    let proximo = position.left;
+    if (position.left + largura > limite) proximo = position.right != null ? position.right - largura : limite - largura;
+    setLeft(Math.max(margem, proximo));
+  }, [position.left, position.right, creating]);
+
   const resolved = options.map(o => {
     const key = typeof o === "string" ? o : o.status;
     const badge = STATUS_BADGE[key];
@@ -67,10 +81,11 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
+        ref={menuRef}
         className="fixed z-50 overflow-x-hidden overflow-y-auto rounded border bg-white shadow-xl"
         style={{
           top: Math.max(12, Math.min(position.top, window.innerHeight - 532 * escalaUi())),
-          left: position.left,
+          left,
           borderColor: "rgba(13,13,13,.10)",
           minWidth: "17.5rem",
           maxWidth: "20rem",
@@ -100,8 +115,9 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
                 <button
                   type="button"
                   onClick={() => { onSelect(status); onClose(); }}
-                  className="relative flex h-full min-h-[4.375rem] w-full flex-col items-center justify-center gap-1.5 rounded px-1 py-2.5 text-white transition"
-                  style={{ background: bg, opacity: isActive ? 1 : 0.58, outline: isActive ? `2px solid ${bg}` : "none", outlineOffset: isActive ? 2 : 0 }}
+                  aria-pressed={isActive}
+                  className={`relative flex h-full min-h-[4.375rem] w-full flex-col items-center justify-center gap-1.5 rounded px-1 py-2.5 text-white transition-opacity duration-200 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 motion-reduce:transition-none ${isActive ? "opacity-100" : "opacity-60 hover:opacity-100"}`}
+                  style={{ background: bg, outline: isActive ? `2px solid ${bg}` : undefined, outlineOffset: isActive ? 2 : undefined, outlineColor: isActive ? undefined : bg }}
                 >
                   {Icon && <Icon size={14} strokeWidth={2.5} />}
                   <span className="text-center text-[0.5625rem] font-bold uppercase leading-tight tracking-wide">{label}</span>
