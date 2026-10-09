@@ -20,7 +20,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const CABECALHO = "px-3 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
-const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#0D0D0D]" : "text-black/30"}`;
+const VALOR = (n: number) => `font-semibold tabular-nums ${n ? "text-[#282525]" : "text-black/30"}`;
 const LINK = "inline-flex items-center gap-1 rounded text-[0.6875rem] text-[#684DB0] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 const reais = (c: number | null) => (c === null ? "—" : (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }));
 const dataBr = (iso: string | null) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "—");
@@ -110,7 +110,7 @@ export default function PlanilhasDaSaudePage() {
       </Link>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Planilhas da saúde</h2>
+          <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Planilhas da saúde</h2>
           <p className="max-w-[46rem] text-[0.6875rem] text-black/45">
             A Planilha II (conciliação bancária), a Tabela 1 (rendimentos), as informações compiladas e a relação de bens, montadas das despesas, dos pagamentos, do extrato e dos bens, para a prestação anual de um exercício ou para a final.
           </p>
@@ -133,7 +133,7 @@ export default function PlanilhasDaSaudePage() {
             type="button"
             onClick={baixar}
             disabled={!planilhas || !extras?.prestacao || gerando}
-            className="flex h-9 items-center gap-1.5 rounded bg-[#0D0D0D] px-4 text-[0.75rem] font-medium text-white transition hover:bg-black/80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D0D0D] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex h-9 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-40"
           >
             {gerando
               ? <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white motion-reduce:animate-none" aria-hidden />
@@ -170,7 +170,7 @@ export default function PlanilhasDaSaudePage() {
           </dl>
 
           <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="planilha-ii">
-            <h3 id="planilha-ii" className="border-b px-5 py-3 text-[0.75rem] font-semibold text-black" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+            <h3 id="planilha-ii" className="border-b px-5 py-3 text-[0.75rem] font-semibold text-[#282525]" style={{ borderColor: "rgba(13,13,13,.07)" }}>
               Planilha II – conciliação bancária <span className="font-normal tabular-nums text-black/35">({planilhas.planilhaII.length})</span>
             </h3>
             {planilhas.planilhaII.length === 0 ? (
@@ -226,7 +226,7 @@ export default function PlanilhasDaSaudePage() {
 
           <div className="grid gap-4 lg:grid-cols-2">
             <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="tabela-1">
-              <h3 id="tabela-1" className="border-b px-5 py-3 text-[0.75rem] font-semibold text-black" style={{ borderColor: "rgba(13,13,13,.07)" }}>Tabela 1 – rendimentos de aplicação financeira</h3>
+              <h3 id="tabela-1" className="border-b px-5 py-3 text-[0.75rem] font-semibold text-[#282525]" style={{ borderColor: "rgba(13,13,13,.07)" }}>Tabela 1 – rendimentos de aplicação financeira</h3>
               {anos.length === 0 ? (
                 <p className="px-5 py-8 text-center text-[0.75rem] text-black/50">Sem lançamentos do extrato no período. Os rendimentos e o IR e IOF da aplicação vêm do extrato da Conta Movimento.</p>
               ) : (
@@ -245,12 +245,12 @@ export default function PlanilhasDaSaudePage() {
                         <td className="px-3 py-2 text-black/70">{MESES[l.mes - 1]}/{l.ano}</td>
                         <td className="px-3 py-2 text-right tabular-nums text-black/70">{reais(l.rendimento)}</td>
                         <td className="px-3 py-2 text-right tabular-nums text-black/50">{reais(l.impostos)}</td>
-                        <td className="px-3 py-2 text-right font-semibold tabular-nums text-[#0D0D0D]">{reais(l.liquido)}</td>
+                        <td className="px-3 py-2 text-right font-semibold tabular-nums text-[#282525]">{reais(l.liquido)}</td>
                       </tr>
                     ))}
                     <tr>
                       <td className="px-3 py-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Total</td>
-                      <td colSpan={3} className="px-3 py-2 text-right font-semibold tabular-nums text-[#0D0D0D]">{reais(planilhas.tabela1.reduce((s, l) => s + l.liquido, 0))}</td>
+                      <td colSpan={3} className="px-3 py-2 text-right font-semibold tabular-nums text-[#282525]">{reais(planilhas.tabela1.reduce((s, l) => s + l.liquido, 0))}</td>
                     </tr>
                   </tbody>
                 </table>
@@ -259,7 +259,7 @@ export default function PlanilhasDaSaudePage() {
             </section>
 
             <section className="rounded border bg-white" style={BORDA} aria-labelledby="compiladas">
-              <h3 id="compiladas" className="border-b px-5 py-3 text-[0.75rem] font-semibold text-black" style={{ borderColor: "rgba(13,13,13,.07)" }}>Informações compiladas</h3>
+              <h3 id="compiladas" className="border-b px-5 py-3 text-[0.75rem] font-semibold text-[#282525]" style={{ borderColor: "rgba(13,13,13,.07)" }}>Informações compiladas</h3>
               <dl className="divide-y divide-black/[.05] text-[0.75rem]">
                 {([
                   ...(c.saldoAnterior === null ? [] : [["Saldo dos exercícios anteriores", c.saldoAnterior]]),
@@ -279,7 +279,7 @@ export default function PlanilhasDaSaudePage() {
               {c.semMovimento && (
                 <p className="flex items-start gap-1 border-t px-5 py-2.5 text-[0.625rem] text-black/50" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                   <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mt-px shrink-0 text-[#B07A14]" />
-                  <span>Sem lançamentos da Conta Movimento no período: importe o extrato em <Link href={`/prestacoes/${id}/extrato`} className="underline decoration-black/20 underline-offset-2 hover:text-black">Extrato</Link>.</span>
+                  <span>Sem lançamentos da Conta Movimento no período: importe o extrato em <Link href={`/prestacoes/${id}/extrato`} className="underline decoration-black/20 underline-offset-2 hover:text-[#282525]">Extrato</Link>.</span>
                 </p>
               )}
             </section>
@@ -287,7 +287,7 @@ export default function PlanilhasDaSaudePage() {
 
           <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="bens">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-              <h3 id="bens" className="text-[0.75rem] font-semibold text-black">Bens, equipamentos e materiais permanentes <span className="font-normal tabular-nums text-black/35">({planilhas.bens.length})</span></h3>
+              <h3 id="bens" className="text-[0.75rem] font-semibold text-[#282525]">Bens, equipamentos e materiais permanentes <span className="font-normal tabular-nums text-black/35">({planilhas.bens.length})</span></h3>
               <Link href={`/prestacoes/${id}/bens`} className={LINK}>Abrir bens <ArrowRight size={10} aria-hidden /></Link>
             </div>
             {planilhas.bens.length === 0 ? (
