@@ -1,6 +1,7 @@
 "use client";
 import { useLayoutEffect, useRef, useState } from "react";
 import { STATUS_BADGE } from "@/components/ui/StatusBadge";
+import { CINZA_ETIQUETA, corDeEtiqueta } from "@/lib/etiquetas-padrao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -57,7 +58,7 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
     const key = typeof o === "string" ? o : o.status;
     const badge = STATUS_BADGE[key];
     const label    = (typeof o === "object" && o.label)    || badge?.label || key;
-    const bg       = (typeof o === "object" && o.bg)       || badge?.bg    || "#888888";
+    const bg       = corDeEtiqueta(typeof o === "object" ? o.bg : undefined) || badge?.bg || CINZA_ETIQUETA;
     const iconName = (typeof o === "object" && o.iconName) || null;
     const Icon: LucideIcon | undefined =
       (typeof o === "object" && o.icon) ||

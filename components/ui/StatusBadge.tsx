@@ -5,12 +5,13 @@ import {
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import * as Icons from "lucide-react";
+import { CINZA_ETIQUETA, corDeEtiqueta } from "@/lib/etiquetas-padrao";
 
 type BadgeDef = { label: string; bg: string; icon: LucideIcon };
 
 export const STATUS_BADGE: Record<string, BadgeDef> = {
   // Captação
-  prospeccao:        { label: "Prospecção",       bg: "#888888",  icon: Eye },
+  prospeccao:        { label: "Prospecção",       bg: "#666666",  icon: Eye },
   primeiro_contato:  { label: "1º Contato",        bg: "#7259B5",  icon: Phone },
   proposta_enviada:  { label: "Proposta",          bg: "#2D72B0",  icon: Send },
   em_negociacao:     { label: "Negociação",        bg: "#B07A14",  icon: MessageSquare },
@@ -19,11 +20,11 @@ export const STATUS_BADGE: Record<string, BadgeDef> = {
   renovacao:         { label: "Renovação",         bg: "#2D72B0",  icon: RotateCcw },
 
   // Prestação de contas
-  rascunho:          { label: "Rascunho",          bg: "#888888",  icon: Pencil },
+  rascunho:          { label: "Rascunho",          bg: "#666666",  icon: Pencil },
   revisao_interna:   { label: "Revisão interna",   bg: "#2D72B0",  icon: Eye },
   enviado:           { label: "Enviado",           bg: "#B07A14",  icon: Send },
   ajuste_solicitado: { label: "Ajuste solicitado", bg: "#D94E4E",  icon: AlertTriangle },
-  arquivado:         { label: "Arquivado",         bg: "#888888",  icon: Archive },
+  arquivado:         { label: "Arquivado",         bg: "#666666",  icon: Archive },
 
   // Edital inscrito
   inscrito:          { label: "Inscrito",          bg: "#7259B5",  icon: FileText },
@@ -44,19 +45,19 @@ export const STATUS_BADGE: Record<string, BadgeDef> = {
   alto:              { label: "Risco alto",        bg: "#D94E4E",  icon: AlertTriangle },
 
   // Edital inscrito extras
-  interesse:         { label: "Interesse",         bg: "#888888",  icon: Eye },
-  cancelado:         { label: "Cancelado",         bg: "#888888",  icon: X },
+  interesse:         { label: "Interesse",         bg: "#666666",  icon: Eye },
+  cancelado:         { label: "Cancelado",         bg: "#666666",  icon: X },
   aguardando:        { label: "Aguardando",        bg: "#B07A14",  icon: Clock },
   enviada:           { label: "Enviada",           bg: "#2D72B0",  icon: Send },
   visualizada:       { label: "Visualizada",       bg: "#2D72B0",  icon: Eye },
   aceita:            { label: "Aceita",            bg: "#2E8932",  icon: Check },
   recusada:          { label: "Recusada",          bg: "#D94E4E",  icon: X },
-  expirada:          { label: "Expirada",          bg: "#888888",  icon: Clock },
-  arquivada:         { label: "Arquivada",         bg: "#888888",  icon: Archive },
+  expirada:          { label: "Expirada",          bg: "#666666",  icon: Clock },
+  arquivada:         { label: "Arquivada",         bg: "#666666",  icon: Archive },
 
   // Genérico
   ativo:             { label: "Ativo",             bg: "#2E8932",  icon: Zap },
-  inativo:           { label: "Inativo",           bg: "#888888",  icon: X },
+  inativo:           { label: "Inativo",           bg: "#666666",  icon: X },
 };
 
 type Props = {
@@ -73,7 +74,7 @@ type Props = {
 export default function StatusBadge({ status, label, size = "md", className = "", withChevron = false, bg, iconName, variant = "solid" }: Props) {
   const def = STATUS_BADGE[status];
   const Icon = (iconName ? (Icons as any)[iconName] as LucideIcon | undefined : undefined) ?? def?.icon ?? FileText;
-  const color = bg ?? def?.bg ?? "#888888";
+  const color = corDeEtiqueta(bg) ?? def?.bg ?? CINZA_ETIQUETA;
   const text = label ?? def?.label ?? status;
 
   const iconSize = size === "sm" ? 9 : 11;
