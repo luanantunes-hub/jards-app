@@ -17,7 +17,7 @@ export type OpcaoDeModulo = {
   icone: LucideIcon;
   /** Por que a pessoa não usa o módulo; null quando usa. */
   bloqueio: string | null;
-  /** Oferecido de graça a quem ainda não tem: a escolha abre o convite. */
+  /** Oferecido em teste grátis a quem ainda não tem: a escolha abre o convite. */
   promo?: boolean;
   /** O que o gatilho diz enquanto o módulo está em promoção. */
   chamada?: string;

@@ -1,4 +1,4 @@
--- Convite da primeira versão gratuita da prestação de contas.
+-- Convite da primeira versão da prestação de contas: teste grátis de 45 dias.
 --
 -- Cenário criado e desfeito dentro da transação: a organização A, só com a
 -- captação (o administrador, uma colaboradora e um captador), e a
@@ -9,7 +9,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(12);
+select plan(22);
 
 do $cenario$
 declare
@@ -52,23 +52,25 @@ select throws_ok($t$select public.fn_prestacao_aceitar_convite_gratuito('f400000
 select throws_ok($t$select public.fn_prestacao_aceitar_convite_gratuito('f4000000-0000-4000-8000-0000000000b0')$t$,
   'P0001', 'ja_contratado', 'convite: quem já tem o módulo não recebe o convite');
 
--- O administrador de A aceita: dois membros e sete vagas.
+-- O administrador de A aceita: dois membros, sete vagas e 45 dias.
 set local request.jwt.claims = '{"sub":"f4000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
 select is(public.fn_prestacao_aceitar_convite_gratuito('f4000000-0000-4000-8000-0000000000a0'),
-  '{"membros": 2, "vagas": 7}'::jsonb, 'convite: o aceite libera a equipe');
+  jsonb_build_object('membros', 2, 'vagas', 7, 'ate', (now() at time zone 'America/Sao_Paulo')::date + 45),
+  'convite: o aceite começa o teste para a equipe');
 select throws_ok($t$select public.fn_prestacao_aceitar_convite_gratuito('f4000000-0000-4000-8000-0000000000a0')$t$,
-  'P0001', 'ja_contratado', 'convite: o segundo aceite não cria outro contrato');
+  'P0001', 'ja_contratado', 'convite: o segundo aceite não começa outro teste');
 
 set local request.jwt.claims = '{"sub":"f4000000-0000-4000-8000-0000000000a2","role":"authenticated"}';
 select is(public.auth_tem_modulo('f4000000-0000-4000-8000-0000000000a0', 'prestacao'), true,
-  'convite: depois do aceite, a colaboradora usa a prestação');
+  'convite: durante o teste, a colaboradora usa a prestação');
 reset role;
 
-select is((select array[status, coalesce(cortesia_ate::text, '-'), vagas_cortesia::text, cortesia_por::text]
+select is((select array[status, cortesia_ate::text, vagas_cortesia::text, cortesia_por::text, teste_gratis::text]
            from public.organization_modulos
            where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and modulo = 'prestacao'),
-  array['cortesia', '-', '7', 'f4000000-0000-4000-8000-0000000000a1'],
-  'convite: o contrato é uma cortesia sem data de fim, com quem aceitou');
+  array['cortesia', ((now() at time zone 'America/Sao_Paulo')::date + 45)::text, '7',
+        'f4000000-0000-4000-8000-0000000000a1', 'true'],
+  'convite: o contrato é uma cortesia de 45 dias marcada como teste, com quem aceitou');
 select ok((select 'prestacao' = any(modulos_ativos) from public.organizations where id = 'f4000000-0000-4000-8000-0000000000a0'),
   'convite: a prestação entra nos módulos ativos da organização');
 select is((select array_agg(papel || ':' || ('prestacao' = any(modulos_acesso))::text order by papel)
@@ -78,6 +80,54 @@ select is((select array_agg(papel || ':' || ('prestacao' = any(modulos_acesso)):
 select is((select count(*)::integer from public.admin_audit_logs
            where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and metadata ->> 'origem' = 'convite_gratuito'),
   1, 'convite: o aceite fica no log de auditoria');
+
+-- Faltando 5 dias, a rotina avisa o administrador com o texto do teste.
+update public.organization_modulos set cortesia_ate = (now() at time zone 'America/Sao_Paulo')::date + 5
+where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and modulo = 'prestacao';
+select public.fn_prestacao_cortesias_diaria();
+select is((select array_agg(event_key order by event_key) from public.notification_events
+           where organization_id = 'f4000000-0000-4000-8000-0000000000a0'
+             and event_key in ('modulo_teste_fim', 'modulo_cortesia_fim', 'modulo_teste_encerrado')),
+  array['modulo_teste_fim'], 'teste: 7 dias antes, só o administrador recebe o aviso do teste');
+select is((select payload ->> 'recipient_id' from public.notification_events
+           where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and event_key = 'modulo_teste_fim'),
+  'f4000000-0000-4000-8000-0000000000a1', 'teste: o aviso vai para quem administra');
+
+-- Passado o último dia, a rotina encerra o teste e a prestação fica só para leitura.
+update public.organization_modulos set cortesia_ate = (now() at time zone 'America/Sao_Paulo')::date - 1
+where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and modulo = 'prestacao';
+select public.fn_prestacao_cortesias_diaria();
+select is((select array[status, teste_gratis::text] from public.organization_modulos
+           where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and modulo = 'prestacao'),
+  array['cancelado', 'true'], 'teste: no fim, o contrato é encerrado e continua marcado como teste');
+select is((select array['prestacao' = any(modulos_ativos), 'prestacao' = any(modulos_leitura)]
+           from public.organizations where id = 'f4000000-0000-4000-8000-0000000000a0'),
+  array[false, true], 'teste: no fim, a prestação passa para os módulos só de leitura');
+select is((select count(*)::integer from public.notification_events
+           where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and event_key = 'modulo_teste_encerrado'),
+  1, 'teste: o administrador é avisado de que o teste terminou');
+select is((select count(*)::integer from public.admin_audit_logs
+           where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and metadata ->> 'origem' = 'rotina'
+             and (metadata ->> 'teste_gratis')::boolean),
+  1, 'teste: o encerramento fica no log de auditoria');
+
+set local role authenticated;
+set local request.jwt.claims = '{"sub":"f4000000-0000-4000-8000-0000000000a2","role":"authenticated"}';
+select is(public.auth_tem_modulo('f4000000-0000-4000-8000-0000000000a0', 'prestacao'), false,
+  'teste: depois do fim, a colaboradora não edita');
+select is(public.auth_le_modulo_sem_assinatura('f4000000-0000-4000-8000-0000000000a0', 'prestacao'), true,
+  'teste: depois do fim, a colaboradora continua lendo');
+reset role;
+
+-- A assinatura desmarca o teste; a cortesia do suporte não é teste.
+update public.organization_modulos set status = 'ativo', encerrado_em = null
+where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and modulo = 'prestacao';
+select is((select teste_gratis from public.organization_modulos
+           where organization_id = 'f4000000-0000-4000-8000-0000000000a0' and modulo = 'prestacao'),
+  false, 'teste: a assinatura encerra a marca do teste');
+select is((select teste_gratis from public.organization_modulos
+           where organization_id = 'f4000000-0000-4000-8000-0000000000b0' and modulo = 'prestacao'),
+  false, 'teste: contrato que não veio do convite não é teste');
 
 select * from finish();
 rollback;

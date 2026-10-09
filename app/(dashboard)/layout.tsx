@@ -44,6 +44,7 @@ import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
 import { destinoSemAcesso, moduloDaRota, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
+import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 // ─── Definição dos módulos ──────────────────────────────────────────────────
@@ -354,13 +355,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // organização que convidou (essas continuam existindo, só não fazem
   // sentido pra alguém com acesso limitado a um único workspace).
   const isWorkspaceCaptador = papelAtual === "captador";
-  // A prestação é oferecida de graça a quem usa o CRM e nunca teve o módulo (nem só para leitura).
+  // A prestação é oferecida em teste grátis a quem usa o CRM e nunca teve o módulo (nem só para leitura).
   const prestacaoEmPromo = modulosCarregados && !isSuperAdmin && !modulosOrg.includes("prestacao");
   const opcoesDeModulo: OpcaoDeModulo[] = MODULOS.map(({ id, label, descricao, icone }) => {
     const promo = id === "prestacao" && prestacaoEmPromo;
     return {
       id, label, descricao, icone, promo,
-      chamada: promo ? "Novo módulo grátis" : undefined,
+      chamada: promo ? `${TESTE_GRATIS_DIAS} dias grátis` : undefined,
       bloqueio: promo || isSuperAdmin ? null
         : !modulosOrg.includes(id) ? "Módulo não contratado: fale com o suporte"
         : !modulosUser.includes(id) ? "Você não tem acesso: peça a quem administra a organização"

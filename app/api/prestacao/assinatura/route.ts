@@ -49,7 +49,7 @@ async function situacao(organizationId: string, userId: string) {
   const [membro, contrato, limite, emUso] = await Promise.all([
     admin.from("organization_members").select("papel").eq("organization_id", organizationId).eq("user_id", userId).maybeSingle(),
     admin.from("organization_modulos")
-      .select("status, cortesia_ate, past_due_since, vagas_cortesia, vagas_compradas, periodo_fim, encerrado_em, stripe_subscription_id, billing_user_id")
+      .select("status, cortesia_ate, past_due_since, vagas_cortesia, vagas_compradas, periodo_fim, encerrado_em, stripe_subscription_id, billing_user_id, teste_gratis")
       .eq("organization_id", organizationId).eq("modulo", MODULO_PRESTACAO).maybeSingle(),
     admin.rpc("modulo_vagas_limite", { p_org: organizationId, p_modulo: MODULO_PRESTACAO }),
     admin.rpc("modulo_vagas_em_uso", { p_org: organizationId, p_modulo: MODULO_PRESTACAO }),
