@@ -5,7 +5,8 @@
 // assinatura, a cortesia ou o teste grátis terminou. Sem assinatura nada é
 // apagado; o banco só não deixa escrever. Durante o teste grátis da primeira
 // versão, o aviso mostra quantos dias faltam (em âmbar na última semana); no
-// fim do teste, abre uma vez por sessão a explicação do que muda.
+// fim do teste, abre uma vez por sessão a explicação do que muda, com o
+// caminho para assinar.
 
 import { useState } from "react";
 import Link from "next/link";
@@ -58,12 +59,14 @@ export function AvisoAssinaturaPrestacao() {
           </Link>
         </p>
       </div>
-      {mostrarFimDoTeste && descricao.teste && (
+      {mostrarFimDoTeste && descricao.teste && organizationId && (
         <FimDoTestePrestacao
+          organizationId={organizationId}
           ate={descricao.teste.ate}
           admin={assinatura.admin}
           emUso={assinatura.vagas.emUso}
           precos={assinatura.precos}
+          cobrancaConfigurada={assinatura.cobrancaConfigurada}
           onClose={fecharFimDoTeste}
         />
       )}
