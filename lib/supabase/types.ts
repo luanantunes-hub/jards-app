@@ -1214,7 +1214,7 @@ export interface PrestacaoExtratoImportacao {
   id: string;
   prestacao_id: string;
   conta_id: string;
-  formato: "ofx" | "csv" | "pdf" | "agregador";
+  formato: "ofx" | "csv" | "pdf" | "agregador" | "transferegov";
   nome_arquivo: string | null;
   storage_path: string | null;
   hash_arquivo: string | null;

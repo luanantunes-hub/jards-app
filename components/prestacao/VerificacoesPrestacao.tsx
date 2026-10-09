@@ -35,6 +35,7 @@ const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> =
   divulgacao: { caminho: "/divulgacao", rotulo: "Abrir divulgação" },
   beneficiarios: { caminho: "/beneficiarios", rotulo: "Abrir beneficiários" },
   carimbos: { caminho: "/envio/carimbos", rotulo: "Abrir carimbo e atesto" },
+  devolucoes: { caminho: "/envio/devolucoes", rotulo: "Abrir devoluções" },
 };
 
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {

@@ -15,7 +15,7 @@ import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { BeneficiadoParaChecar } from "../beneficiarios";
 import type { TurmaDaGrade } from "../grade";
 import type { CargoDaGrade } from "../grade-rh";
-import type { ManifestacaoEsportiva, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
+import type { ManifestacaoEsportiva, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoDevolucao, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
 export const SEVERIDADES = ["bloqueio", "alerta", "justificativa", "info"] as const;
@@ -31,7 +31,7 @@ export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resol
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao" | "beneficiarios" | "carimbos";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao" | "beneficiarios" | "carimbos" | "devolucoes";
 
 type DoCatalogo = {
   titulo: string;
@@ -67,6 +67,7 @@ export const CATALOGO_CHECAGENS = {
   DOC_RECIBO_INCOMPLETO: { titulo: "Recibo incompleto", grupo: "despesa", resultado: "revisar", destino: "comprovantes" },
   DESPESA_VEDADA: { titulo: "Despesa possivelmente vedada", grupo: "despesa", resultado: "revisar", destino: "comprovantes", dimensao: "despesas" },
   // Análise por resultados (P9.2)
+  SALDO_DO_ENCERRAMENTO: { titulo: "Saldo do encerramento", grupo: "prestacao", resultado: "revisar", destino: "devolucoes", dimensao: "contas" },
   ANALISE_FINANCEIRA_PELA_META: { titulo: "Meta abaixo do previsto leva ao exame do financeiro", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["analise_por_resultados"] },
   // Obras vedadas (P9.1)
   ITEM_DE_OBRA: { titulo: "Item do orçamento com cara de obra", grupo: "orcamento", resultado: "revisar", destino: "orcamento", dimensao: "despesas" },
@@ -234,6 +235,10 @@ export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municip
 export type AtividadeDoEstado = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "local_id">
   & Partial<Pick<PrestacaoAtividade, "meta_id" | "status_realizacao" | "descricao" | "democratizacao_descricao" | "acessibilidade_descricao" | "justificativa_nao_realizacao" | "local" | "cidade" | "estado" | "meta_prevista">>;
 
+export type DevolucaoDoEstado = Pick<PrestacaoDevolucao, "motivo" | "situacao" | "valor_principal" | "valor_atualizado" | "valor_pago" | "pago_em" | "storage_path">;
+/** O saldo final da importação mais recente da conta que trouxe saldo. */
+export type SaldoDaConta = { conta_id: string; saldo: number; data: string };
+
 export type EstadoDaPrestacao = {
   regime: RegimeNormativo | null;
   despesas: readonly DespesaDoEstado[];
@@ -253,6 +258,9 @@ export type EstadoDaPrestacao = {
   turmas?: readonly TurmaDaGrade[];
   /** P8.7: cargos da grade horária dos recursos humanos. */
   cargos?: readonly CargoDaGrade[];
+  /** P9.4: guias de devolução e o último saldo informado de cada conta (pela importação do extrato). */
+  devolucoes?: readonly DevolucaoDoEstado[];
+  saldos?: readonly SaldoDaConta[];
   /** A conta vem junto para as planilhas por conta (P7.3). */
   lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */

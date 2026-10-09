@@ -25,6 +25,7 @@ import {
   camposDaGuia,
   devolucaoDoRegime,
   guiasDoRegime,
+  recolhimentoDoEncerramento,
   reais,
   referenciaDaPrestacao,
   ROTULO_DO_INDICE,
@@ -34,6 +35,7 @@ import {
   type TaxaDaPoupanca,
 } from "@/lib/prestacao/devolucoes";
 import { nomeDaConta, ultimoExtrato } from "@/lib/prestacao/envio";
+import { descreverRegra, prazoDoSaldo } from "@/lib/prestacao/prazo-final";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoDevolucao } from "@/lib/supabase/types";
 
@@ -46,6 +48,7 @@ const PAGTESOURO = "https://pagtesouro.tesouro.gov.br/portal-gru/#/emissao-gru";
 const centavos = (v: unknown) => Math.round((Number(v) || 0) * 100);
 const dataBr = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
 const hojeIso = () => new Date().toLocaleDateString("sv-SE");
+const diasAte = (de: string, ate: string) => Math.round((Date.parse(`${ate}T00:00:00Z`) - Date.parse(`${de}T00:00:00Z`)) / 86_400_000);
 const fator = (f: number) => f.toLocaleString("pt-BR", { minimumFractionDigits: 6, maximumFractionDigits: 6 });
 
 type Prestacao = { titulo: string; identificador_oficial: string | null; numero_processo: string | null; proponente: { nome: string; cnpj: string | null } | null };
@@ -238,6 +241,9 @@ export default function DevolucoesPage() {
   const podeEditar = permissoes.editar;
   // O formulário nasce com a guia e o índice do regime: só abre depois de tudo carregado.
   const carregado = dados !== null && devolucoes !== null;
+  // P9.4: o prazo do saldo no encerramento (na saúde, a GRU em 30 dias do término) e se as guias dele já estão pagas.
+  const prazoSaldo = prazoDoSaldo(regime, { data_fim_execucao: dados?.estado.prestacao?.data_fim_execucao ?? null });
+  const recolhido = devolucoes ? (() => { const r = recolhimentoDoEncerramento(devolucoes); return r.guias > 0 && r.aPagar === 0; })() : false;
 
   // Saldo pelo último extrato de cada conta: a sugestão da guia do saldo.
   const saldo = useMemo(() => {
@@ -335,6 +341,15 @@ export default function DevolucoesPage() {
       {doRegime && (
         <div className="space-y-1.5 rounded border bg-white px-5 py-4 text-[0.6875rem]" style={BORDA}>
           <p className="text-black/70">{doRegime.descricao}</p>
+          {prazoSaldo && (
+            <p className="flex items-start gap-1 text-black/60">
+              <Clock size={12} strokeWidth={1.75} aria-hidden className={`mt-px shrink-0 ${!recolhido && hoje > prazoSaldo.data ? "text-[#B07A14]" : "text-black/40"}`} />
+              <span>
+                {prazoSaldo.rotulo}: até <span className="tabular-nums">{dataBr(prazoSaldo.data)}</span> ({descreverRegra(prazoSaldo.regra)}).{" "}
+                {recolhido ? "As guias do saldo e dos rendimentos estão pagas." : hoje > prazoSaldo.data ? "O prazo venceu." : `Faltam ${diasAte(hoje, prazoSaldo.data)} dias.`}
+              </span>
+            </p>
+          )}
           <p className="text-black/50">Atualização: {doRegime.atualizacao}</p>
           {guias.length > 0 && (
             <ul className="space-y-0.5 tabular-nums text-black/50">
