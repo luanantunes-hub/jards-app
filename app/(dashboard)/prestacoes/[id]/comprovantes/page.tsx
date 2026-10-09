@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
-import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, AlertTriangle, Clock, ExternalLink, Receipt } from "lucide-react";
+import { Upload, FileText, Image as ImageIcon, File, FileSpreadsheet, X, CheckCircle, AlertCircle, AlertTriangle, Clock, ExternalLink, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoComprovante, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
 import { useItensDoOrcamento, type ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
@@ -28,26 +28,29 @@ import { definida } from "@/lib/prestacao/regimes/tipos";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
 import type { PrestacaoPagamento } from "@/lib/supabase/types";
 
+// Tipo de documento é categoria, não estado: grafite neutro. A cor fica no status.
+const TIPO_NEUTRO = "#6B6565";
+
 const TIPO_META: Record<TipoComprovante, { label: string; color: string; icon: React.ReactNode; hint?: string }> = {
-  nfe:             { label: "NF-e",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
-  recibo:          { label: "Recibo",            color: "#2D72B0", icon: <FileText size={13} />,      hint: "Usado quando NF não é obrigatória. Deve conter descrição do serviço, valor e assinatura." },
-  contrato:        { label: "Contrato",          color: "#1A8B7A", icon: <File size={13} />,          hint: "Contrato de prestação de serviços ou fornecimento. Necessário para cessão de direitos." },
-  extrato:         { label: "Extrato bancário",  color: "#2D72B0", icon: <FileSpreadsheet size={13} />, hint: "Comprovante do pagamento efetuado (TED/PIX). Deve confirmar a transação." },
-  invoice:         { label: "Invoice",           color: "#1A8B7A", icon: <FileText size={13} />,      hint: "Para prestadores estrangeiros. Se em outro idioma, inclua tradução livre." },
-  cartao_embarque: { label: "Cartão de embarque", color: "#B07A14", icon: <File size={13} />,         hint: "Para passagens aéreas. Inclua também NF da agência com nome, trecho, data e valor." },
-  print_screenshot:{ label: "Print/Screenshot",  color: "#B07A14", icon: <Image size={13} />,         hint: "Para mídia em redes sociais. Inclua NF da plataforma e prints das veiculações." },
-  folha_pagamento: { label: "Folha de pagamento", color: "#2E8932", icon: <FileSpreadsheet size={13} />, hint: "Para remuneração de equipe. Acompanhe com guias de encargos quando houver." },
-  guia_tributo:    { label: "Guia de tributo",   color: "#2E8932", icon: <File size={13} />,          hint: "ISS, INSS, IR — inclua junto ao comprovante de pagamento." },
-  rpa:             { label: "RPA",               color: "#7259B5", icon: <FileText size={13} />,      hint: "Recibo de Pagamento a Autônomo. Para sócios PF prestando serviço ao projeto." },
-  foto:            { label: "Foto",              color: "#B07A14", icon: <Image size={13} />,         hint: "Evidência de execução. Fotos devem mostrar banner/marca do projeto visível." },
-  planilha:        { label: "Planilha",          color: "#2E8932", icon: <FileSpreadsheet size={13} /> },
-  outro:           { label: "Outro",             color: "rgba(13,13,13,.40)", icon: <File size={13} /> },
-  nfse:            { label: "NFS-e",             color: "#7259B5", icon: <FileText size={13} />,      hint: "Nota de serviço em nome do proponente. Confira as retenções (ISS, INSS e IRRF)." },
-  cupom:           { label: "Cupom (NFC-e)",     color: "#2D72B0", icon: <FileText size={13} />,      hint: "Compra no varejo. Alguns regimes só aceitam para valores pequenos." },
-  rpci:            { label: "RPCI",              color: "#7259B5", icon: <FileText size={13} />,      hint: "Recibo de pagamento a contribuinte individual, com INSS retido." },
-  fatura:          { label: "Fatura",            color: "#2D72B0", icon: <FileText size={13} />,      hint: "Cobrança de serviço contínuo (telefone, energia, locação). De PJ, peça a nota fiscal." },
-  apolice:         { label: "Apólice de seguro", color: "#1A8B7A", icon: <File size={13} />,          hint: "Seguro contratado para o projeto, com o período coberto." },
-  nota_debito:     { label: "Nota de débito",    color: "#B07A14", icon: <File size={13} />,          hint: "Reembolso ou repasse sem tributo. Não substitui a nota fiscal de serviço." },
+  nfe:             { label: "NF-e",              color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Emitida em nome do proponente. Para PJ, é o documento principal." },
+  recibo:          { label: "Recibo",            color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Usado quando NF não é obrigatória. Deve conter descrição do serviço, valor e assinatura." },
+  contrato:        { label: "Contrato",          color: TIPO_NEUTRO, icon: <File size={13} />,          hint: "Contrato de prestação de serviços ou fornecimento. Necessário para cessão de direitos." },
+  extrato:         { label: "Extrato bancário",  color: TIPO_NEUTRO, icon: <FileSpreadsheet size={13} />, hint: "Comprovante do pagamento efetuado (TED/PIX). Deve confirmar a transação." },
+  invoice:         { label: "Invoice",           color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Para prestadores estrangeiros. Se em outro idioma, inclua tradução livre." },
+  cartao_embarque: { label: "Cartão de embarque", color: TIPO_NEUTRO, icon: <File size={13} />,         hint: "Para passagens aéreas. Inclua também NF da agência com nome, trecho, data e valor." },
+  print_screenshot:{ label: "Print/Screenshot",  color: TIPO_NEUTRO, icon: <ImageIcon size={13} />,         hint: "Para mídia em redes sociais. Inclua NF da plataforma e prints das veiculações." },
+  folha_pagamento: { label: "Folha de pagamento", color: TIPO_NEUTRO, icon: <FileSpreadsheet size={13} />, hint: "Para remuneração de equipe. Acompanhe com guias de encargos quando houver." },
+  guia_tributo:    { label: "Guia de tributo",   color: TIPO_NEUTRO, icon: <File size={13} />,          hint: "ISS, INSS, IR — inclua junto ao comprovante de pagamento." },
+  rpa:             { label: "RPA",               color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Recibo de Pagamento a Autônomo. Para sócios PF prestando serviço ao projeto." },
+  foto:            { label: "Foto",              color: TIPO_NEUTRO, icon: <ImageIcon size={13} />,         hint: "Evidência de execução. Fotos devem mostrar banner/marca do projeto visível." },
+  planilha:        { label: "Planilha",          color: TIPO_NEUTRO, icon: <FileSpreadsheet size={13} /> },
+  outro:           { label: "Outro",             color: TIPO_NEUTRO, icon: <File size={13} /> },
+  nfse:            { label: "NFS-e",             color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Nota de serviço em nome do proponente. Confira as retenções (ISS, INSS e IRRF)." },
+  cupom:           { label: "Cupom (NFC-e)",     color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Compra no varejo. Alguns regimes só aceitam para valores pequenos." },
+  rpci:            { label: "RPCI",              color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Recibo de pagamento a contribuinte individual, com INSS retido." },
+  fatura:          { label: "Fatura",            color: TIPO_NEUTRO, icon: <FileText size={13} />,      hint: "Cobrança de serviço contínuo (telefone, energia, locação). De PJ, peça a nota fiscal." },
+  apolice:         { label: "Apólice de seguro", color: TIPO_NEUTRO, icon: <File size={13} />,          hint: "Seguro contratado para o projeto, com o período coberto." },
+  nota_debito:     { label: "Nota de débito",    color: TIPO_NEUTRO, icon: <File size={13} />,          hint: "Reembolso ou repasse sem tributo. Não substitui a nota fiscal de serviço." },
 };
 
 const STATUS_META: Record<StatusComprovante, { label: string; color: string; icon: React.ReactNode }> = {
@@ -189,10 +192,24 @@ export default function ComprovantesPage() {
     setLido({ documento, sugestao: { ...sugestao, avisos: [...(opcoes.avisos ?? []), ...sugestao.avisos] }, motivos: opcoes.motivos ?? [] });
   }
 
-  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
-    if (!file) return;
+    if (file) void processarArquivo(file);
+  }
+
+  // Um arquivo arrastado para qualquer ponto da janela abre a área de soltar,
+  // que cobre a tela inteira e recebe o arquivo.
+  const [arrastando, setArrastando] = useState(false);
+  const aceitaArraste = permissoes.editar && !pendingFile;
+  useEffect(() => {
+    if (!aceitaArraste) return;
+    const aoEntrar = (e: DragEvent) => { if (e.dataTransfer?.types.includes("Files")) setArrastando(true); };
+    window.addEventListener("dragenter", aoEntrar);
+    return () => window.removeEventListener("dragenter", aoEntrar);
+  }, [aceitaArraste]);
+
+  async function processarArquivo(file: File) {
     if (!organizationId) {
       setUploadError("A prestação ainda está carregando. Tente de novo em instantes.");
       return;
@@ -399,28 +416,36 @@ export default function ComprovantesPage() {
 
   return (
     <div className="mx-auto max-w-pagina space-y-5 px-4 py-6 md:px-8">
+      <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.xml,.xlsx,.xls,.csv" />
+      {arrastando && aceitaArraste && (
+        <div
+          className="fixed inset-0 z-40 flex items-center justify-center bg-white/85 p-6 backdrop-blur-[2px]"
+          onDragOver={e => e.preventDefault()}
+          onDragLeave={() => setArrastando(false)}
+          onDrop={e => {
+            e.preventDefault();
+            setArrastando(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) void processarArquivo(file);
+          }}
+        >
+          <div className="pointer-events-none flex w-full max-w-[28rem] flex-col items-center gap-2 rounded border-2 border-dashed border-black/20 bg-white px-6 py-10 text-center">
+            <Upload size={20} aria-hidden="true" className="text-black/40" />
+            <p className="text-[0.8125rem] font-medium text-[#282525]">Solte para enviar o comprovante</p>
+          </div>
+        </div>
+      )}
       {/* Upload: só para quem edita (o leitor e a prestação sem assinatura só consultam) */}
-      {permissoes.editar && (
+      {permissoes.editar && pendingFile && (
         <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <p className="text-[0.75rem] font-semibold text-[#282525]">Enviar comprovante</p>
           </div>
           <div className="p-5">
-            {!pendingFile ? (
-              <button
-                onClick={() => fileRef.current?.click()}
-                className="w-full flex flex-col items-center justify-center gap-2 py-8 rounded border-2 border-dashed transition hover:border-[#7259B5]/40 hover:bg-black/[.04]"
-                style={{ borderColor: "rgba(13,13,13,.12)" }}
-              >
-                <Upload size={20} className="text-black/20" />
-                <p className="text-[0.75rem] text-black/40">Clique para selecionar arquivo</p>
-                <p className="text-[0.625rem] text-black/25">PDF, imagem, planilha, XML…</p>
-              </button>
-            ) : (
               <div className="space-y-3">
                 {/* Arquivo selecionado */}
                 <div className="flex items-center gap-3 p-3 rounded border" style={{ borderColor: "rgba(13,13,13,.10)", background: "#FAFAFA" }}>
-                  <FileText size={16} className="text-[#7259B5] flex-shrink-0" />
+                  <FileText size={16} className="text-black/45 flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-[0.75rem] font-medium text-[#282525] truncate">{pendingFile.name}</p>
                     <p className="text-[0.625rem] text-black/35">{(pendingFile.size / 1024).toFixed(1)} KB</p>
@@ -598,20 +623,30 @@ export default function ComprovantesPage() {
                   </button>
                 </div>
               </div>
-            )}
-            <input ref={fileRef} type="file" className="hidden" onChange={handleFileSelect} accept="image/*,.pdf,.xml,.xlsx,.xls,.csv" />
           </div>
         </div>
       )}
 
       {/* Lista */}
       <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-        <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           <p className="text-[0.75rem] font-semibold text-[#282525]">
             Documentos enviados
             {comprovantes.length > 0 && <span className="text-black/30 font-normal text-[0.6875rem] ml-1.5">({comprovantes.length})</span>}
           </p>
+          {permissoes.editar && !pendingFile && (
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              className="inline-flex h-9 items-center gap-1.5 rounded bg-[#282525] px-3.5 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]"
+            >
+              <Upload size={13} aria-hidden="true" /> Enviar comprovante
+            </button>
+          )}
         </div>
+        {uploadError && !pendingFile && (
+          <p role="alert" className="mx-5 mt-4 rounded border bg-white px-3 py-2 text-[0.6875rem]" style={{ borderColor: "#D94A4A30", color: "#D94A4A" }}>{uploadError}</p>
+        )}
 
         {erroLista && (
           <p role="alert" className="mx-5 mt-4 px-3 py-2 rounded border text-[0.6875rem]"

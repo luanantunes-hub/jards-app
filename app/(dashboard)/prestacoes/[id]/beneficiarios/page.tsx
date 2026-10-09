@@ -196,10 +196,9 @@ export default function BeneficiariosPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Beneficiários</h2>
-          <p className="max-w-[40rem] text-[0.6875rem] text-black/45">
-            Quem o projeto atendeu diretamente, com sexo, idade, rede de ensino e benefícios.
-            {pedeRelacao ? " Vai na aba BENEFICIADOS do formulário da prestação." : regime ? " O regime desta prestação não pede a relação; ela fica registrada aqui." : ""}
-          </p>
+          {(pedeRelacao || regime) && (
+            <p className="max-w-[40rem] text-[0.6875rem] text-black/45">{pedeRelacao ? "Vai na aba BENEFICIADOS do formulário da prestação." : "O regime desta prestação não pede a relação; ela fica registrada aqui."}</p>
+          )}
         </div>
         {podeEditar && (
           <div className="flex flex-wrap items-center gap-2">

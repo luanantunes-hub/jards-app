@@ -108,10 +108,6 @@ function semAcento(texto: string): string {
   return texto.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function corDaProntidao(percentual: number): string {
-  return percentual >= 80 ? "#2E8932" : percentual >= 50 ? "#B07A14" : "rgba(13,13,13,.45)";
-}
-
 /** Só o prazo do proponente vencido ou perto de vencer é alerta: pinta o ícone, não o texto. */
 function alertaDoPrazo(prazo: PrazoDaPrestacao): string | null {
   if (prazo.quem === "proponente" && prazo.dias < 0) return "#D94A4A";
@@ -129,12 +125,11 @@ function EtiquetaStatus({ status }: { status: StatusPrestacao }) {
 }
 
 function BarraProntidao({ prontidao }: { prontidao: Prontidao }) {
-  const cor = corDaProntidao(prontidao.percentual);
   return (
     <div className="min-w-0">
       <div className="flex items-center gap-2">
-        <div className="h-1.5 w-14 overflow-hidden rounded-full bg-black/[.07]" aria-hidden>
-          <div className="h-full rounded-full" style={{ width: `${prontidao.percentual}%`, background: cor }} />
+        <div className="h-1.5 w-14 overflow-hidden rounded bg-black/[.06]" aria-hidden>
+          <div className="h-full bg-[#2E8932]" style={{ width: `${prontidao.percentual}%` }} />
         </div>
         <span className={`text-[0.6875rem] font-semibold tabular-nums ${prontidao.percentual ? "text-[#282525]" : "text-black/30"}`}>{prontidao.percentual}%</span>
       </div>

@@ -182,7 +182,6 @@ export default function BensPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Bens</h2>
-          <p className="text-[0.6875rem] text-black/45">Bens permanentes adquiridos, produzidos ou construídos, com as cotações e a destinação.</p>
         </div>
         {podeEditar && (
           <button

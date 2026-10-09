@@ -17,10 +17,6 @@ function destino(prestacaoId: string, para: DestinoPendencia, codigo: string): s
   }
 }
 
-function cor(percentual: number): string {
-  return percentual >= 80 ? "#2E8932" : percentual >= 50 ? "#B07A14" : "rgba(13,13,13,.45)";
-}
-
 function Linha({ checagem, prestacaoId }: { checagem: Checagem; prestacaoId: string }) {
   const ok = checagem.situacao === "ok";
   return (
@@ -54,7 +50,6 @@ function Linha({ checagem, prestacaoId }: { checagem: Checagem; prestacaoId: str
 export function ProntidaoPrestacao({ prontidao, prestacaoId }: { prontidao: Prontidao; prestacaoId: string }) {
   const [verOk, setVerOk] = useState(false);
   const emOrdem = prontidao.checagens.filter(c => c.situacao === "ok");
-  const tom = cor(prontidao.percentual);
   return (
     <section aria-labelledby="prontidao-titulo" className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <div className="flex flex-wrap items-end justify-between gap-4 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
@@ -64,14 +59,15 @@ export function ProntidaoPrestacao({ prontidao, prestacaoId }: { prontidao: Pron
         </div>
         <div className="min-w-[12rem] flex-1 sm:max-w-[22rem]">
           <div
-            className="h-2 overflow-hidden rounded-full bg-black/[.07]"
+            className="h-2 overflow-hidden rounded bg-black/[.06]"
             role="progressbar"
             aria-valuemin={0}
             aria-valuemax={100}
             aria-valuenow={prontidao.percentual}
             aria-label="Prontidão para envio"
           >
-            <div className="h-full rounded-full transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${prontidao.percentual}%`, background: tom }} />
+            {/* Cor só na barra: verde é o que já está pronto, como na captação. */}
+            <div className="h-full bg-[#2E8932] transition-[width] duration-200 motion-reduce:transition-none" style={{ width: `${prontidao.percentual}%` }} />
           </div>
           <p className="mt-1.5 text-right text-[0.6875rem] text-black/45">
             {prontidao.pendencias.length

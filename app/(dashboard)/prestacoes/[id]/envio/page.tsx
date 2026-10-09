@@ -357,9 +357,6 @@ export default function EnvioPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Envio</h2>
-          <p className="text-[0.6875rem] text-black/45">
-            O que {checklist?.sistema ? `o ${checklist.sistema}` : "o sistema oficial"} pede para enviar a prestação: documentos e condições, com a fonte de cada um.
-          </p>
         </div>
         {checklist && (
           <EtapaDoEnvio
