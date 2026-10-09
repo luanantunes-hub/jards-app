@@ -3349,6 +3349,14 @@
     }
   }
   if('IntersectionObserver' in window){
+    // Começa a baixar cerca de uma tela antes de aparecer: ao chegar na seção ele já
+    // está tocando, em vez de mostrar o poster parado enquanto carrega.
+    var antecipar = new IntersectionObserver(function(entradas){
+      if(!entradas[0].isIntersecting || menosMovimento.matches) return;
+      antecipar.disconnect();
+      if(video.readyState === 0 && video.paused){ video.preload = 'auto'; video.load(); }
+    }, { rootMargin: '900px 0px' });
+    antecipar.observe(video);
     new IntersectionObserver(function(entradas){ visivel = entradas[0].isIntersecting; atualizar(); }, { threshold: .15 }).observe(video);
   } else { visivel = true; atualizar(); }
   if(menosMovimento.addEventListener) menosMovimento.addEventListener('change', atualizar);
