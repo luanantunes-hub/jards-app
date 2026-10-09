@@ -18,6 +18,8 @@ import { checarConciliacao } from "./checar-conciliacao";
 import { checarBeneficiarios } from "./checar-beneficiarios";
 import { checarRecursosHumanos } from "./checar-rh";
 import { checarCarimbo } from "./checar-carimbo";
+import { checarCaptacao } from "./checar-captacao";
+import { checarObras } from "./checar-obras";
 import { checarContas } from "./checar-contas";
 import { checarDespesas } from "./checar-despesas";
 import { checarEsporte } from "./checar-esporte";
@@ -37,7 +39,9 @@ export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado
   { id: "conciliacao", titulo: "Conciliação com o extrato", executar: checarConciliacao },
   { id: "contas", titulo: "Contas: saque, captação e vigência", executar: checarContas },
   { id: "periodo", titulo: "Período dos documentos e liberação", executar: checarPeriodo },
+  { id: "captacao", titulo: "Captação: liberação da execução, readequação e excedente", executar: checarCaptacao },
   { id: "orcamento", titulo: "Saldo dos itens, tetos, alterações e contrapartida", executar: checarOrcamento },
+  { id: "obras", titulo: "Obras e reformas vedadas", executar: checarObras },
   { id: "esporte", titulo: "Nível esportivo: elaboração, captação, bolsa e CRC", executar: checarEsporte },
   { id: "beneficiarios", titulo: "Beneficiados: relação, sexo e rede pública", executar: checarBeneficiarios },
   { id: "recursos_humanos", titulo: "Grade de RH: cargos, pessoas pagas e forma de contratação", executar: checarRecursosHumanos },

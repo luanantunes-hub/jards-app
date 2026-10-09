@@ -198,7 +198,7 @@ const EM_PREPARO: StatusPrestacao[] = ["rascunho", "revisao_interna", "ajuste_so
 
 /** Prazos em aberto da prestação, do mais cedo para o mais tarde. */
 export function prazosDaPrestacao(
-  prestacao: { status: StatusPrestacao; prazo: string | null; data_envio?: string | null },
+  prestacao: { status: StatusPrestacao; prazo: string | null; data_envio?: string | null; prazo_readequacao?: string | null },
   regime: RegimeNormativo | null,
   alteracoesAguardando: readonly { numero: number; solicitada_em: string | null }[],
   hoje: string,
@@ -210,6 +210,10 @@ export function prazosDaPrestacao(
   const analise = prazoDoRegime(regime, "analisePrestacao");
   if (prestacao.status === "enviado" && prestacao.data_envio && analise) {
     prazos.push({ data: calcularVencimento(prestacao.data_envio, analise).data, rotulo: "Análise do órgão", quem: "orgao" });
+  }
+  // P9.1: a readequação pela captação, quando cabe e ainda não foi pedida (situacaoDaCaptacao).
+  if (prestacao.prazo_readequacao) {
+    prazos.push({ data: prestacao.prazo_readequacao, rotulo: "Pedido de readequação", quem: "proponente" });
   }
   for (const alteracao of alteracoesAguardando) {
     const data = prazoDaAnalise(regime, alteracao.solicitada_em);

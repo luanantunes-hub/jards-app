@@ -66,6 +66,9 @@ export const CATALOGO_CHECAGENS = {
   DOC_DESCRICAO_VAGA: { titulo: "Descrição vaga no documento", grupo: "despesa", resultado: "revisar", destino: "comprovantes", regras: ["em_nome_do_proponente"] },
   DOC_RECIBO_INCOMPLETO: { titulo: "Recibo incompleto", grupo: "despesa", resultado: "revisar", destino: "comprovantes" },
   DESPESA_VEDADA: { titulo: "Despesa possivelmente vedada", grupo: "despesa", resultado: "revisar", destino: "comprovantes", dimensao: "despesas" },
+  // Obras vedadas (P9.1)
+  ITEM_DE_OBRA: { titulo: "Item do orçamento com cara de obra", grupo: "orcamento", resultado: "revisar", destino: "orcamento", dimensao: "despesas" },
+  DESPESA_DE_OBRA: { titulo: "Fornecedor da construção", grupo: "despesa", resultado: "revisar", destino: "comprovantes", dimensao: "despesas" },
   // Fornecedor (P2.3)
   FORNECEDOR_DOCUMENTO: { titulo: "CPF ou CNPJ do fornecedor", grupo: "fornecedor", resultado: "nao_conforme", destino: "comprovantes" },
   FORNECEDOR_NAO_CONSULTADO: { titulo: "Fornecedor sem consulta na Receita", grupo: "fornecedor", resultado: "nao_calculavel", destino: "comprovantes" },
@@ -98,7 +101,11 @@ export const CATALOGO_CHECAGENS = {
   DOC_EMISSAO_POS_DEBITO: { titulo: "Documento emitido muito depois do débito", grupo: "despesa", resultado: "nao_conforme", destino: "comprovantes", regras: ["emissao_30_dias"] },
   // Contas pelo extrato (P8.1, a partir da LIE).
   SAQUE_NO_EXTRATO: { titulo: "Saque em dinheiro na conta do projeto", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", dimensao: "pagamentos" },
-  CAPTADO_ACIMA_DO_AUTORIZADO: { titulo: "Captação acima do autorizado", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["captar_acima"] },
+  CAPTADO_ACIMA_DO_AUTORIZADO: { titulo: "Captação acima do autorizado", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["captar_acima", "captacao_acima"] },
+  // Captação e liberação da execução (P9.1)
+  EXECUCAO_SEM_CAPTACAO_MINIMA: { titulo: "Pagamentos sem a captação que libera a execução", grupo: "pagamento", resultado: "nao_conforme", destino: "extrato", dimensao: "contas" },
+  READEQUACAO_DA_CAPTACAO: { titulo: "Readequação pela captação", grupo: "orcamento", resultado: "revisar", destino: "orcamento", dimensao: "contas" },
+  CAPTACAO_INSUFICIENTE: { titulo: "Captação abaixo do mínimo", grupo: "prestacao", resultado: "nao_conforme", destino: "extrato", dimensao: "contas" },
   APORTE_FORA_DA_CAPTACAO: { titulo: "Aporte fora da conta de captação", grupo: "conciliacao", resultado: "nao_conforme", destino: "extrato", regras: ["deposito_identificado"] },
   DEBITO_FORA_DA_VIGENCIA: { titulo: "Débito fora da vigência", grupo: "conciliacao", resultado: "nao_conforme", destino: "conciliacao", dimensao: "despesas" },
   // Nível da manifestação esportiva e CRC (P8.4, LIE).
@@ -213,6 +220,8 @@ export type DatasDaPrestacao = {
   data_liberacao?: string | null;
   data_inicio_execucao?: string | null;
   data_fim_execucao?: string | null;
+  /** P9.1: fim da captação, de onde conta o prazo da readequação. */
+  data_fim_captacao?: string | null;
 };
 
 export type AlteracaoDoEstado = { id: string; numero: number; status: string; solicitada_em: string | null; tipo?: string; justificativa?: string | null; decidida_em?: string | null };
