@@ -16,6 +16,7 @@
 import { ehDespesa } from "../despesas";
 import { basesDoOrcamento, itensDaArvore, montarArvore, ROTULO_DA_BASE, tetosPorGrupo } from "../orcamento";
 import { limparDocumento } from "../fornecedores";
+import { limiteDeElaboracao } from "../nivel-esportivo";
 import { definida, regraDoRegime } from "../regimes";
 import { execucaoTerminou } from "../objeto";
 import type { BaseCalculo, LimiteConcentracao } from "../regimes/tipos";
@@ -121,8 +122,11 @@ export function checarOrcamento(estado: EstadoDaPrestacao): Achado[] {
 
     const captado = captadoDoExtrato(estado);
     const tetos = regime ? definida(regime.orcamento)?.tetos ?? [] : [];
+    // Com o nível esportivo na prestação, o limite de elaboração e captação é o do nível (checar-esporte.ts, P8.4).
+    const elaboracaoPeloNivel = limiteDeElaboracao(estado) !== null;
     for (const t of tetosPorGrupo(arvore.raizes, regime, { valor_captado: captado ? captado / 100 : null })) {
       if (!t.excedido || !t.limite || t.limite.maximo === null) continue;
+      if (elaboracaoPeloNivel && t.grupo === "elaboracao") continue;
       const regra = tetos.find(r => r.descricao === t.limite!.descricao);
       achados.push(novoAchado(regime, {
         codigo: "TETO_GRUPO_CUSTO", severidade: t.limite.severidade, entidade: { tipo: "prestacao", id: null }, ref: t.grupo ?? "sem_grupo",

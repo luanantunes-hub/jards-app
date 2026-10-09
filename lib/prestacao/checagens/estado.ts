@@ -13,6 +13,7 @@ import type { LinhaDistribuicao } from "../distribuicao";
 import { lerCotacoes, type BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
+import type { ManifestacaoEsportiva } from "@/lib/supabase/types";
 
 const PAGINA = 1000;
 
@@ -41,9 +42,9 @@ async function uma<T>(consulta: PromiseLike<Resposta>): Promise<T | null> {
 export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, hoje: Date = new Date()): Promise<EstadoDaPrestacao> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
   const db = cliente as any;
-  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null; obra_grupo: string | null } & DatasDaPrestacao>(
+  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null; obra_grupo: string | null; manifestacao_esportiva: ManifestacaoEsportiva | null; crc_validade: string | null } & DatasDaPrestacao>(
     db.from("prestacoes_contas")
-      .select("organization_id, regime_id, valor_aprovado, obra_grupo, data_aprovacao, data_liberacao, data_termo, data_inicio_execucao, data_fim_execucao")
+      .select("organization_id, regime_id, valor_aprovado, obra_grupo, manifestacao_esportiva, crc_validade, data_aprovacao, data_liberacao, data_termo, data_inicio_execucao, data_fim_execucao")
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
@@ -132,6 +133,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     pagamentos,
     lancamentos,
     contas,
+    manifestacaoEsportiva: prestacao.manifestacao_esportiva ?? null,
+    crcValidade: prestacao.crc_validade ?? null,
     alteracoes,
     metas,
     locais,

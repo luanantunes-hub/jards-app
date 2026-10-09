@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(332);
+select plan(335);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -1443,6 +1443,23 @@ select is((select count(*)::integer from public.prestacoes_contas
            where id in ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000001a5') and obra_grupo is not null),
   0, 'mesma obra: a que ficou sozinha também sai do grupo');
 reset role;
+
+-- ─── Nível da manifestação esportiva e CRC (P8.4) ────────────────────────────
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+update public.prestacoes_contas set manifestacao_esportiva = 'excelencia', crc_validade = '2026-12-31'
+  where id = 'f0000000-0000-4000-8000-0000000001a0';
+select is((select manifestacao_esportiva || ' ' || crc_validade::text from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
+  'excelencia 2026-12-31', 'nível esportivo: quem edita grava o nível e a validade da CRC');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a4","role":"authenticated"}';
+set local role authenticated;
+update public.prestacoes_contas set manifestacao_esportiva = 'formacao' where id = 'f0000000-0000-4000-8000-0000000001a0';
+reset role;
+select is((select manifestacao_esportiva from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
+  'excelencia', 'nível esportivo: o leitor não muda');
+select throws_ok($t$update public.prestacoes_contas set manifestacao_esportiva = 'rendimento' where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
+  '23514', null, 'nível esportivo: só formação, toda a vida ou excelência');
 
 select * from finish();
 rollback;
