@@ -26,7 +26,7 @@ import {
   devolucaoDoRegime,
   guiasDoRegime,
   reais,
-  referenciaDaGuia,
+  referenciaDaPrestacao,
   ROTULO_DO_INDICE,
   rotuloDoMotivo,
   situacaoDaDevolucao,
@@ -48,7 +48,7 @@ const dataBr = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split
 const hojeIso = () => new Date().toLocaleDateString("sv-SE");
 const fator = (f: number) => f.toLocaleString("pt-BR", { minimumFractionDigits: 6, maximumFractionDigits: 6 });
 
-type Prestacao = { titulo: string; identificador_oficial: string | null; proponente: { nome: string; cnpj: string | null } | null };
+type Prestacao = { titulo: string; identificador_oficial: string | null; numero_processo: string | null; proponente: { nome: string; cnpj: string | null } | null };
 
 const COR_DA_SITUACAO: Record<SituacaoDaDevolucao["estado"], string> = { paga: "#2E8932", vencida: "#D94A4A", a_pagar: "#B07A14" };
 
@@ -203,7 +203,7 @@ export default function DevolucoesPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     const [p, d] = await Promise.all([
-      db.from("prestacoes_contas").select("titulo, identificador_oficial, proponente:proponente_id(nome, cnpj)").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("titulo, identificador_oficial, numero_processo, proponente:proponente_id(nome, cnpj)").eq("id", id).maybeSingle(),
       db.from("prestacao_devolucoes").select("*").eq("prestacao_id", id).order("ordem").order("created_at"),
     ]);
     return {
@@ -432,7 +432,7 @@ export default function DevolucoesPage() {
           organizationId={organizationId}
           regime={regime}
           guias={guias}
-          referencia={referenciaDaGuia(prestacao?.identificador_oficial)}
+          referencia={referenciaDaPrestacao(regime, prestacao)}
           devolucao={editando.devolucao}
           inicio={editando.inicio}
           onClose={() => setEditando(null)}

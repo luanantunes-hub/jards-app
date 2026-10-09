@@ -14,7 +14,7 @@ export const BLOCO_GRADE_RH = { aba: "Cronograma Execução", primeira: 7, ultim
 /** Colunas dos dias, de segunda (E) a domingo (K). */
 const DIAS = ["E", "F", "G", "H", "I", "J", "K"] as const;
 
-export type DadosDaGradeRh = { projeto: string; proponente: string; sli: string; cargos: readonly CargoDaGrade[] };
+export type DadosDaGradeRh = { projeto: string; proponente: string; sli: string; processo?: string; cargos: readonly CargoDaGrade[] };
 
 export async function gravarGradeRh(modelo: Uint8Array, dados: DadosDaGradeRh): Promise<Uint8Array> {
   const pasta = await PastaDeTrabalho.abrir(modelo);
@@ -27,6 +27,7 @@ export async function gravarGradeRh(modelo: Uint8Array, dados: DadosDaGradeRh): 
   p.completar("A2", dados.projeto);
   p.completar("A3", dados.proponente);
   p.completar("H4", dados.sli);
+  p.completar("A4", dados.processo);
   linhas.forEach((l, i) => {
     const r = primeira + i;
     p.escrever(`A${r}`, l.cargo);

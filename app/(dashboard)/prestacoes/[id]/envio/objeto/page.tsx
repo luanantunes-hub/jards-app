@@ -213,7 +213,7 @@ function Secao({ secao, modelo, prestacaoId, podeEditar, guardar }: { secao: Sec
   );
 }
 
-type Prestacao = { titulo: string; identificador_oficial: string | null; proponente: { nome: string; cnpj: string | null } | null };
+type Prestacao = { titulo: string; identificador_oficial: string | null; numero_processo: string | null; proponente: { nome: string; cnpj: string | null } | null };
 
 export default function RelatorioDoObjetoPage() {
   const { id } = useParams<{ id: string }>();
@@ -228,7 +228,7 @@ export default function RelatorioDoObjetoPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     const [p, r] = await Promise.all([
-      db.from("prestacoes_contas").select("titulo, identificador_oficial, proponente:proponente_id(nome, cnpj)").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("titulo, identificador_oficial, numero_processo, proponente:proponente_id(nome, cnpj)").eq("id", id).maybeSingle(),
       db.from("prestacao_relatorio").select("secao, conteudo").eq("prestacao_id", id),
     ]);
     const falha = p.error ?? r.error;
@@ -287,7 +287,7 @@ export default function RelatorioDoObjetoPage() {
       if (!resposta.ok) throw new Error("Não foi possível abrir o modelo do RCO.");
       const dadosDoRco = {
         etapa, projeto: prestacao.titulo, sli: prestacao.identificador_oficial,
-        proponente: prestacao.proponente?.nome ?? null, cnpj: prestacao.proponente?.cnpj ?? null,
+        proponente: prestacao.proponente?.nome ?? null, cnpj: prestacao.proponente?.cnpj ?? null, processo: prestacao.numero_processo,
       };
       const arquivo = await gravarRco(new Uint8Array(await resposta.arrayBuffer()), rascunho, dadosDoRco);
       const url = URL.createObjectURL(new Blob([arquivo as BlobPart], { type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" }));

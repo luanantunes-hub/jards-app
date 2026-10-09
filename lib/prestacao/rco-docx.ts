@@ -21,6 +21,8 @@ export type DadosDoRco = {
   sli: string | null;
   proponente: string | null;
   cnpj: string | null;
+  /** Número do processo no SEI (P8.8). */
+  processo?: string | null;
 };
 
 // ─── Corpo do documento em blocos ───────────────────────────────────────────
@@ -169,7 +171,7 @@ export async function gravarRco(modelo: Uint8Array, r: RascunhoDoRelatorio, dado
   const temComplemento = Boolean(dadosDoProjeto?.complemento?.valor.trim());
   const campo = (rotulo: string, valor: string | null, lacuna = "preencher") =>
     editar(rotulo, xml => acrescentar(xml, valor ? run(` ${valor}`, { semNegrito: true }) : run(` [${lacuna}]`, { vermelho: true, semNegrito: true })));
-  campo("PROCESSO Nº:", null);
+  campo("PROCESSO Nº:", dados.processo?.trim() || null);
   campo("SLIE/SLI:", dados.sli);
   campo("PROPONENTE:", dados.proponente);
   campo("PROJETO:", dados.projeto);

@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(350);
+select plan(354);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -1485,6 +1485,21 @@ select is((select manifestacao_esportiva from public.prestacoes_contas where id 
   'excelencia', 'nível esportivo: o leitor não muda');
 select throws_ok($t$update public.prestacoes_contas set manifestacao_esportiva = 'rendimento' where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
   '23514', null, 'nível esportivo: só formação, toda a vida ou excelência');
+
+-- ─── Carimbo, atesto e processo (P8.8) ───────────────────────────────────────
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+update public.prestacoes_contas set numero_processo = '71000.012345/2026-11', carimbo_lei = 'LEI COMPLEMENTAR 222/2025'
+  where id = 'f0000000-0000-4000-8000-0000000001a0';
+select is((select numero_processo || ' ' || carimbo_lei from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
+  '71000.012345/2026-11 LEI COMPLEMENTAR 222/2025', 'carimbo: quem edita grava o processo e a lei do carimbo');
+select lives_ok($t$insert into public.prestacao_comprovantes (prestacao_id, nome_arquivo, storage_path, atestado_em) values ('f0000000-0000-4000-8000-0000000001a0', 'atesto.pdf', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a0/comprovantes/f0000000-0000-4000-8000-000000000cd0.pdf', '2026-09-02')$t$,
+  'carimbo: quem edita grava a nota com a data do atesto');
+reset role;
+select throws_ok($t$update public.prestacoes_contas set carimbo_lei = '  ' where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
+  '23514', null, 'carimbo: o texto da lei não fica em branco');
+select throws_ok($t$update public.prestacoes_contas set numero_processo = repeat('9', 61) where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
+  '23514', null, 'processo: até 60 caracteres');
 
 -- ─── Beneficiados (P8.5) ─────────────────────────────────────────────────────
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';

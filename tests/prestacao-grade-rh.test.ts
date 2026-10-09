@@ -178,7 +178,7 @@ test("críticas da planilha: cabeçalho, cargo incompleto, horário ilegível, c
     "aviso|Cargo|Coordenador: falta a forma de contratação.",
     "aviso|Horários|Coordenador: não deu para somar o horário de terça; escreva como 08:00-12:00 para o Jards conferir a carga.",
     "aviso|Item do orçamento|Coordenador não está ligado a um item do orçamento: o Jards não confere quem foi pago no cargo.",
-    "aviso|Nº do processo|O número do processo no SEI não fica na prestação: preencha no cabeçalho.",
+    "aviso|Nº do processo|Informe o número do processo no SEI nos dados oficiais da prestação: ele vai no cabeçalho.",
   ]);
   assert.deepEqual(criticasDaGradeRh([], { sli: "2600123", proponente: "A" }).map(c => c.mensagem), ["Nenhum cargo na grade de RH: o arquivo sai só com o cabeçalho."]);
   assert.equal(nomeDaGradeRh("26.00123"), "Grade_RH_2600123.xlsx");

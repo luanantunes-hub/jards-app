@@ -50,6 +50,8 @@ export type ItemDoRemanejamento = {
 
 export type PlanilhaDeRemanejamento = {
   projeto: string;
+  /** Número do processo no SEI (P8.8); vazio quando a prestação não tem. */
+  processo: string;
   numero: number;
   justificativa: string;
   itens: ItemDoRemanejamento[];
@@ -61,6 +63,7 @@ export type PlanilhaDeRemanejamento = {
 export type DadosDoRemanejamento = {
   estado: Pick<EstadoDaPrestacao, "nos" | "despesas" | "pagamentos">;
   projeto: string;
+  processo?: string | null;
   alteracao: { numero: number; justificativa: string | null; movimentos: readonly MovimentoAlteracao[] };
 };
 
@@ -99,6 +102,7 @@ export function planilhaDeRemanejamento(dados: DadosDoRemanejamento): PlanilhaDe
   if (!(dados.alteracao.justificativa ?? "").trim()) criticas.push("A alteração não tem justificativa: a coluna JUSTIFICATIVA sai vazia.");
   return {
     projeto: dados.projeto,
+    processo: (dados.processo ?? "").trim(),
     numero: dados.alteracao.numero,
     justificativa: (dados.alteracao.justificativa ?? "").trim(),
     itens,
@@ -117,7 +121,7 @@ export const nomeDaPlanilhaDeRemanejamento = (p: Pick<PlanilhaDeRemanejamento, "
 export async function gravarPlanilhaDeRemanejamento(modelo: Uint8Array, p: PlanilhaDeRemanejamento): Promise<Uint8Array> {
   const pasta = await PastaDeTrabalho.abrir(modelo);
   const aba = pasta.planilha(ABA_DO_REMANEJAMENTO);
-  aba.escrever("B1", `Projeto: ${p.projeto}\nProcesso nº: `);
+  aba.escrever("B1", `Projeto: ${p.projeto}\nProcesso nº: ${p.processo}`);
   const valor = (c: number | null) => (c === null ? null : c / 100);
   for (let k = 0; k < BLOCOS_NO_MODELO; k++) {
     const r = PRIMEIRO_BLOCO + k * LINHAS_POR_BLOCO;

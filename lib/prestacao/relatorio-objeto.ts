@@ -64,7 +64,7 @@ export type RascunhoDoRelatorio = {
 export type DadosDoRelatorio = {
   regime: RegimeNormativo | null;
   estado: EstadoDaPrestacao;
-  prestacao: { titulo: string; identificador_oficial: string | null; proponente: { nome: string; cnpj: string | null } | null };
+  prestacao: { titulo: string; identificador_oficial: string | null; numero_processo?: string | null; proponente: { nome: string; cnpj: string | null } | null };
   /** Conteúdo guardado por seção (chave de prestacao_relatorio.secao). */
   guardados: Readonly<Record<string, string>>;
   /** Checklist de envio (aceite de obra, documentos do RCO); sem ele, essas partes viram lacuna. */
@@ -388,8 +388,8 @@ function rascunhoRco(d: DadosDoRelatorio): SecaoDoRelatorio[] {
       tabela: {
         colunas: ["Campo", "Valor"],
         linhas: [
-          // O nº do processo no SEI não fica na prestação; o identificador oficial da LIE é o nº do projeto no SLI.
-          [[t("Processo nº")], [lacuna("número do processo no SEI")]],
+          // O processo no SEI fica nos dados oficiais (P8.8); o identificador oficial da LIE é o nº do projeto no SLI.
+          [[t("Processo nº")], d.prestacao.numero_processo ? [dado(d.prestacao.numero_processo, { aba: "visao_geral" })] : [lacuna("número do processo no SEI", { aba: "visao_geral" })]],
           [[t("SLIE/SLI")], d.prestacao.identificador_oficial ? [dado(d.prestacao.identificador_oficial, { aba: "visao_geral" })] : [lacuna("número do projeto no SLI", { aba: "visao_geral" })]],
           [[t("Projeto")], [dado(d.prestacao.titulo, { aba: "visao_geral" })]],
           [[t("Proponente")], proponente ? [dado(proponente.nome, { aba: "visao_geral" })] : [lacuna("proponente", { aba: "visao_geral" })]],

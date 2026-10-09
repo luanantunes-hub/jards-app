@@ -79,7 +79,7 @@ export default function OrcamentoPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
     const db = supabase as any;
     Promise.all([
-      db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, data_liberacao, data_termo, data_fim_execucao, manifestacao_esportiva").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("regime_id, titulo, identificador_oficial, numero_processo, data_liberacao, data_termo, data_fim_execucao, manifestacao_esportiva").eq("id", id).maybeSingle(),
       db.from("prestacao_orcamento_versoes").select("*").eq("prestacao_id", id).order("created_at"),
       db.from("prestacao_comprovantes").select("id, no_id, status, valor_extraido, valor_liquido").eq("prestacao_id", id),
       db.from("prestacao_pagamentos").select("despesa_id, valor, lancamento_id").eq("prestacao_id", id),
