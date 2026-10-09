@@ -25,7 +25,7 @@ export function FimDoTestePrestacao({ ate, admin, emUso, precos, onClose }: {
     <ModalIlustrado
       onClose={onClose}
       passos={[{
-        imagem: { src: "/email/tamandua-telefone.png", largura: 640, altura: 274, alt: "Tamanduá do Jards ao telefone" },
+        imagem: { src: "/illustrations/tamandua-contador.png", largura: 900, altura: 547, alt: "Tamanduá do Jards fazendo as contas na mesa, com a calculadora e os papéis" },
         rotulo: "Prestação de contas · primeira versão",
         titulo: "O teste grátis terminou",
         conteudo: (
