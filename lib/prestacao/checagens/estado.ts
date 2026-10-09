@@ -15,7 +15,7 @@ import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { BeneficiadoParaChecar } from "../beneficiarios";
 import type { TurmaDaGrade } from "../grade";
 import type { CargoDaGrade } from "../grade-rh";
-import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
+import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, DevolucaoDoEstado, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado, SaldoDaConta } from "./catalogo";
 import type { ManifestacaoEsportiva } from "@/lib/supabase/types";
 
 const PAGINA = 1000;
@@ -42,6 +42,17 @@ async function uma<T>(consulta: PromiseLike<Resposta>): Promise<T | null> {
   return (data as T | null) ?? null;
 }
 
+/** O saldo da importação mais recente de cada conta (pelo fim do período, depois pela gravação). */
+function ultimosSaldos(importacoes: readonly { conta_id: string; saldo_final: number; periodo_fim: string | null; created_at: string }[]): SaldoDaConta[] {
+  const ultimo = new Map<string, (typeof importacoes)[number]>();
+  for (const i of importacoes) {
+    const atual = ultimo.get(i.conta_id);
+    const chave = (x: (typeof importacoes)[number]) => `${x.periodo_fim ?? x.created_at.slice(0, 10)}|${x.created_at}`;
+    if (!atual || chave(i) > chave(atual)) ultimo.set(i.conta_id, i);
+  }
+  return [...ultimo.values()].map(i => ({ conta_id: i.conta_id, saldo: Number(i.saldo_final), data: i.periodo_fim ?? i.created_at.slice(0, 10) }));
+}
+
 export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, hoje: Date = new Date()): Promise<EstadoDaPrestacao> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
   const db = cliente as any;
@@ -51,7 +62,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios, turmas, cargos] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios, turmas, cargos, devolucoes, importacoes] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -94,6 +105,10 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .select("id, local_id, nome, modalidade, alunos, dias, hora_inicio, hora_fim, equipe, observacoes, ordem").eq("prestacao_id", prestacaoId).order("id")),
     todas<CargoDaGrade>(() => db.from("prestacao_cargos")
       .select("id, no_id, cargo, atribuicoes, quantidade, horarios, carga_semanal, contratacao, formacao, ordem").eq("prestacao_id", prestacaoId).order("id")),
+    todas<DevolucaoDoEstado>(() => db.from("prestacao_devolucoes")
+      .select("motivo, situacao, valor_principal, valor_atualizado, valor_pago, pago_em, storage_path").eq("prestacao_id", prestacaoId).order("id")),
+    todas<{ conta_id: string; saldo_final: number; periodo_fim: string | null; created_at: string }>(() => db.from("prestacao_extrato_importacoes")
+      .select("conta_id, saldo_final, periodo_fim, created_at").eq("prestacao_id", prestacaoId).not("saldo_final", "is", null).order("id")),
   ]);
 
   const nos = versao
@@ -148,6 +163,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     beneficiarios,
     turmas,
     cargos,
+    devolucoes,
+    saldos: ultimosSaldos(importacoes),
     alteracoes,
     metas,
     locais,

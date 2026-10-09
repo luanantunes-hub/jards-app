@@ -21,6 +21,7 @@ import { checarCarimbo } from "./checar-carimbo";
 import { checarCaptacao } from "./checar-captacao";
 import { checarObras } from "./checar-obras";
 import { checarResultados } from "./checar-resultados";
+import { checarEncerramento } from "./checar-encerramento";
 import { checarContas } from "./checar-contas";
 import { checarDespesas } from "./checar-despesas";
 import { checarEsporte } from "./checar-esporte";
@@ -41,6 +42,7 @@ export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado
   { id: "contas", titulo: "Contas: saque, captação e vigência", executar: checarContas },
   { id: "periodo", titulo: "Período dos documentos e liberação", executar: checarPeriodo },
   { id: "captacao", titulo: "Captação: liberação da execução, readequação e excedente", executar: checarCaptacao },
+  { id: "encerramento", titulo: "Saldo do encerramento: prazo e guia", executar: checarEncerramento },
   { id: "orcamento", titulo: "Saldo dos itens, tetos, alterações e contrapartida", executar: checarOrcamento },
   { id: "obras", titulo: "Obras e reformas vedadas", executar: checarObras },
   { id: "esporte", titulo: "Nível esportivo: elaboração, captação, bolsa e CRC", executar: checarEsporte },

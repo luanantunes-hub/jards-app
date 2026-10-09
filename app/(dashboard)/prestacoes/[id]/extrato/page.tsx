@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Landmark, Pencil, Plus, Search, Trash2, Undo2, Upload } from "lucide-react";
+import { CloudDownload, Landmark, Pencil, Plus, Search, Trash2, Undo2, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -10,6 +10,9 @@ import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { ContaBancariaModal, rotuloDaConta } from "@/components/prestacao/extrato/ContaBancariaModal";
 import { ImportarExtrato } from "@/components/prestacao/extrato/ImportarExtrato";
+import { ImportarDoTransferegov } from "@/components/prestacao/extrato/ImportarDoTransferegov";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { processoDoNup } from "@/lib/prestacao/transferegov";
 import { CATEGORIAS_LANCAMENTO } from "@/lib/prestacao/extrato";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
@@ -40,6 +43,10 @@ export default function ExtratoPage() {
 
   const [editandoConta, setEditandoConta] = useState<PrestacaoContaBancaria | "nova" | null>(null);
   const [importando, setImportando] = useState(false);
+  const [importandoTransferegov, setImportandoTransferegov] = useState(false);
+  // P9.4: nas prestações do Transferegov (Pronon e Pronas/PCD), o extrato também vem da API pública, pelo NUP.
+  const regimes = useRegimesPublicados();
+  const [dadosOficiais, setDadosOficiais] = useState<{ regime_id: string | null; identificador_oficial: string | null } | null>(null);
   const [filtroConta, setFiltroConta] = useState("todas");
   const [filtroNatureza, setFiltroNatureza] = useState<Natureza>("todos");
   const [busca, setBusca] = useState("");
@@ -47,10 +54,11 @@ export default function ExtratoPage() {
   const buscar = useCallback(async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas do extrato ainda não estão no tipo Database
     const db = supabase as any;
-    const [c, imp, l] = await Promise.all([
+    const [c, imp, l, p] = await Promise.all([
       db.from("prestacao_contas_bancarias").select("*").eq("prestacao_id", id).order("created_at"),
       db.from("prestacao_extrato_importacoes").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
       db.from("prestacao_lancamentos").select("*").eq("prestacao_id", id).order("data", { ascending: false }).order("created_at", { ascending: false }).limit(5000),
+      db.from("prestacoes_contas").select("regime_id, identificador_oficial").eq("id", id).maybeSingle(),
     ]);
     const falha = c.error ?? imp.error ?? l.error;
     return {
@@ -59,6 +67,7 @@ export default function ExtratoPage() {
       importacoes: (imp.data ?? []) as PrestacaoExtratoImportacao[],
       // Valor sempre como número para as somas da tela.
       lancamentos: ((l.data ?? []) as PrestacaoLancamento[]).map(x => ({ ...x, valor: Number(x.valor) })),
+      prestacao: (p.data ?? null) as { regime_id: string | null; identificador_oficial: string | null } | null,
     };
   }, [id, supabase]);
 
@@ -67,6 +76,7 @@ export default function ExtratoPage() {
     setContas(dados.contas);
     setImportacoes(dados.importacoes);
     setLancamentos(dados.lancamentos);
+    setDadosOficiais(dados.prestacao);
     setCarregando(false);
   }, []);
 
@@ -77,6 +87,9 @@ export default function ExtratoPage() {
     buscar().then(dados => { if (ativo) aplicar(dados); });
     return () => { ativo = false; };
   }, [aplicar, buscar]);
+
+  const doTransferegov = Boolean(dadosOficiais && regimes.find(r => r.id === dadosOficiais.regime_id)?.regime?.sistemaOficial?.includes("Transferegov"));
+  const nupValido = Boolean(processoDoNup(dadosOficiais?.identificador_oficial));
 
   const contaPorId = useMemo(() => new Map(contas.map(c => [c.id, c])), [contas]);
   const lancamentosPorConta = useMemo(() => {
@@ -152,6 +165,18 @@ export default function ExtratoPage() {
             >
               <Plus size={13} aria-hidden /> Nova conta
             </button>
+            {doTransferegov && (
+              <button
+                type="button"
+                onClick={() => { setAviso(""); setImportandoTransferegov(true); }}
+                disabled={!nupValido}
+                title={nupValido ? "Importar as linhas do extrato pela API pública do Transferegov" : "Informe o NUP nos dados oficiais da prestação"}
+                className="flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.75rem] text-black/70 transition hover:border-black/25 hover:text-black/90 focus-visible:outline-2 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:opacity-40"
+                style={{ borderColor: "rgba(13,13,13,.14)" }}
+              >
+                <CloudDownload size={13} aria-hidden /> Importar do Transferegov
+              </button>
+            )}
             <button
               type="button"
               onClick={() => { setAviso(""); setImportando(true); }}
@@ -339,6 +364,15 @@ export default function ExtratoPage() {
           conta={editandoConta === "nova" ? null : editandoConta}
           onClose={() => setEditandoConta(null)}
           onSaved={() => { setEditandoConta(null); void carregar(); }}
+        />
+      )}
+      {importandoTransferegov && (
+        <ImportarDoTransferegov
+          prestacaoId={id}
+          contas={contas}
+          lancamentos={lancamentos}
+          onClose={() => setImportandoTransferegov(false)}
+          onImported={mensagem => { setImportandoTransferegov(false); setAviso(mensagem); void carregar(); pedirVerificacao(id); }}
         />
       )}
       {importando && (

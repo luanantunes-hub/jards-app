@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(364);
+select plan(365);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -605,6 +605,10 @@ select throws_ok($t$select public.fn_prestacao_extrato_importar('f0000000-0000-4
 select throws_ok($t$select public.fn_prestacao_extrato_importar('f0000000-0000-4000-8000-0000000010a0',
     '{"formato":"csv"}', '[{"data":"2026-09-01","natureza":"debito","valor":10,"chave":"rls-3"}]')$t$,
   'P0001', 'extrato_sem_novos', 'arquivo sem lançamento novo é recusado');
+select lives_ok($t$select public.fn_prestacao_extrato_importar('f0000000-0000-4000-8000-0000000010a0',
+    '{"formato":"transferegov","nome_arquivo":"Transferegov"}',
+    '[{"data":"2026-09-03","natureza":"credito","valor":5,"historico":"Resgate Automático","id_externo":"991","categoria":"resgate","chave":"transferegov:991"}]')$t$,
+  'quem edita importa o extrato do Transferegov pela função');
 reset role;
 
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a4","role":"authenticated"}';

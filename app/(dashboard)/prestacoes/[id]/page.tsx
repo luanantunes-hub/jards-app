@@ -14,11 +14,12 @@ import { executadoPorItem, percentualExecutado, totalExecutado, type Comprovante
 import { mensagemErroPrestacao, proximosBloqueados, proximosStatus } from "@/lib/prestacao/status";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { DadosDaAncine } from "@/components/prestacao/DadosDaAncine";
+import { DadosDoTransferegov } from "@/components/prestacao/DadosDoTransferegov";
 import { MesmaObra } from "@/components/prestacao/MesmaObra";
 import { PrazoPrestacao } from "@/components/prestacao/PrazoPrestacao";
 import { RegimeDadosOficiais } from "@/components/prestacao/RegimeDadosOficiais";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
-import { avaliarProntidao, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
+import { avaliarProntidao, prazoDoSaldoEmAberto, prazosDaPrestacao } from "@/lib/prestacao/prontidao";
 import { coberturaDaMeta } from "@/lib/prestacao/objeto";
 import { ProntidaoPrestacao } from "@/components/prestacao/ProntidaoPrestacao";
 import { VerificacoesPrestacao } from "@/components/prestacao/VerificacoesPrestacao";
@@ -292,7 +293,9 @@ export default function PrestacaoDetalhe() {
   });
   const prazoReadequacao = captacao && !captacao.readequacaoPedida ? captacao.prazoDaReadequacao : null;
   const prazosAnuais = anuaisPendentes(exerciciosDaAnual(regime, prestacao, hoje), envios ? exerciciosEnviados(envios) : []);
-  const prazos = prazosDaPrestacao({ ...prestacao, prazo_readequacao: prazoReadequacao, prazos_anuais: prazosAnuais }, regime, alteracoesAguardando, hoje);
+  // P9.4: o prazo do saldo no encerramento, até as guias do saldo estarem pagas.
+  const prazoSaldo = dadosDoEnvio ? prazoDoSaldoEmAberto(regime, prestacao, dadosDoEnvio.devolucoes ?? []) : null;
+  const prazos = prazosDaPrestacao({ ...prestacao, prazo_readequacao: prazoReadequacao, prazos_anuais: prazosAnuais, prazo_saldo: prazoSaldo }, regime, alteracoesAguardando, hoje);
 
   // Alerta de prazo (60 dias após data_fim_execucao, ou campo prazo)
   const vencida = prestacao.prazo && new Date(prestacao.prazo) < new Date()
@@ -574,6 +577,10 @@ export default function PrestacaoDetalhe() {
           )}
           {/* Dados públicos do projeto na ANCINE (P7.5). */}
           {regimes.find(r => r.id === prestacao.regime_id)?.regime?.sistemaOficial?.includes("STR") && <DadosDaAncine prestacaoId={prestacao.id} />}
+          {/* Dados da parceria no Transferegov (P9.4): Pronon e Pronas/PCD. */}
+          {regimes.find(r => r.id === prestacao.regime_id)?.regime?.sistemaOficial?.includes("Transferegov") && (
+            <DadosDoTransferegov prestacao={prestacao} podeEditar={permissoes.editar} onSalvar={salvarCampos} />
+          )}
 
           <div id="dados-oficiais" className="scroll-mt-4">
             <RegimeDadosOficiais
