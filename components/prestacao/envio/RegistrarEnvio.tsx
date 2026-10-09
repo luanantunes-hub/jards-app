@@ -20,9 +20,11 @@ const hojeIso = () => new Date().toLocaleDateString("sv-SE");
  * o protocolo e o manifesto do pacote. O banco grava o retrato e trava o que
  * foi enviado.
  */
-export function RegistrarEnvio({ prestacaoId, etapa, sistema, manifesto, podeRegistrar, vigente, onRegistrado }: {
+export function RegistrarEnvio({ prestacaoId, etapa, exercicio = 0, sistema, manifesto, podeRegistrar, vigente, onRegistrado }: {
   prestacaoId: string;
   etapa: EtapaEnvio;
+  /** P9.2: o ano da prestação anual; 0 sem ela. */
+  exercicio?: number;
   sistema: string | null;
   /** O manifesto do pacote gerado agora; sem ele, só o aviso do envio que vale. */
   manifesto: Manifesto | null;
@@ -51,6 +53,7 @@ export function RegistrarEnvio({ prestacaoId, etapa, sistema, manifesto, podeReg
       p_protocolo: protocolo.trim() || null,
       p_manifesto: manifesto,
       p_comentario: comentario.trim() || null,
+      p_exercicio: exercicio,
     });
     setSalvando(false);
     if (error) { setErro(mensagemErroPrestacao(error, "Não foi possível registrar o envio")); return; }

@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(355);
+select plan(364);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -1551,6 +1551,38 @@ select throws_ok($t$insert into public.prestacao_cargos (prestacao_id, cargo, qu
   '23514', null, 'grade de RH: ao menos um contratado no cargo');
 select throws_ok($t$insert into public.prestacao_cargos (prestacao_id, no_id, cargo) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000003a2', 'RLS')$t$,
   '23514', 'item_invalido', 'grade de RH: o cargo se liga a um item do orçamento da prestação, não a um agrupador');
+
+-- ─── Prestação anual por exercício (P9.2) ────────────────────────────────────
+-- Uma prestação de saúde de A, verificada e sem bloqueio: cada exercício tem a sua prestação anual.
+insert into public.prestacoes_contas (id, titulo, organization_id, criado_por, regime_id, data_inicio_execucao, data_fim_execucao, verificada_em) values
+  ('f0000000-0000-4000-8000-0000000001a9', 'RLS prestação da saúde', 'f0000000-0000-4000-8000-0000000000a0', 'f0000000-0000-4000-8000-0000000000a1',
+   (select id from public.prestacao_regimes where codigo = 'pronon_pronas_lxxxvi_a_2025' and status = 'publicado' order by versao desc limit 1),
+   '2026-01-01', '2028-06-30', now());
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$insert into public.prestacao_envio_checklist (prestacao_id, etapa, exercicio, tipo, codigo, situacao) values
+  ('f0000000-0000-4000-8000-0000000001a9', 'parcial', 2026, 'documento', 'auditoria', 'pronto'),
+  ('f0000000-0000-4000-8000-0000000001a9', 'parcial', 2027, 'documento', 'auditoria', 'pronto')$t$,
+  'exercício: o mesmo item é marcado em cada prestação anual');
+select throws_ok($t$insert into public.prestacao_envio_checklist (prestacao_id, etapa, exercicio, tipo, codigo, situacao) values ('f0000000-0000-4000-8000-0000000001a9', 'final', 2026, 'documento', 'auditoria', 'pronto')$t$,
+  '23514', null, 'exercício: só a parcial tem exercício');
+select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a9', 'parcial', current_date)$t$,
+  'P0001', 'exercicio_obrigatorio', 'exercício: na saúde, a prestação anual diz o exercício');
+select lives_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a9', 'parcial', current_date, 'Transferegov 2026', null, null, 2026::smallint)$t$,
+  'exercício: registra a prestação anual de 2026');
+select lives_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a9', 'parcial', current_date, 'Transferegov 2027', null, null, 2027::smallint)$t$,
+  'exercício: a de 2027 entra com a de 2026 valendo');
+select is((select array_agg(exercicio || ':' || versao || ':' || situacao order by exercicio) from public.prestacao_envios
+            where prestacao_id = 'f0000000-0000-4000-8000-0000000001a9'),
+  array['2026:1:vigente', '2027:1:vigente'], 'exercício: uma prestação anual valendo por exercício, cada uma na versão 1');
+select is((select array[retrato ->> 'exercicio', jsonb_array_length(retrato -> 'checklist' -> 'marcacoes')::text] from public.prestacao_envios
+            where prestacao_id = 'f0000000-0000-4000-8000-0000000001a9' and exercicio = 2026),
+  array['2026', '1'], 'exercício: o retrato leva o exercício e só as marcações dele');
+select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a9', 'parcial', current_date, null, null, null, 2026::smallint)$t$,
+  'P0001', 'envio_vigente', 'exercício: não há duas prestações anuais valendo no mesmo exercício');
+select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a9', 'final', current_date, null, null, null, 2026::smallint)$t$,
+  'P0001', 'exercicio_invalido', 'exercício: a final não tem exercício');
+reset role;
 
 select * from finish();
 rollback;

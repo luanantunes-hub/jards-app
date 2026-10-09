@@ -66,6 +66,8 @@ export const CATALOGO_CHECAGENS = {
   DOC_DESCRICAO_VAGA: { titulo: "Descrição vaga no documento", grupo: "despesa", resultado: "revisar", destino: "comprovantes", regras: ["em_nome_do_proponente"] },
   DOC_RECIBO_INCOMPLETO: { titulo: "Recibo incompleto", grupo: "despesa", resultado: "revisar", destino: "comprovantes" },
   DESPESA_VEDADA: { titulo: "Despesa possivelmente vedada", grupo: "despesa", resultado: "revisar", destino: "comprovantes", dimensao: "despesas" },
+  // Análise por resultados (P9.2)
+  ANALISE_FINANCEIRA_PELA_META: { titulo: "Meta abaixo do previsto leva ao exame do financeiro", grupo: "objeto", resultado: "revisar", destino: "objeto", regras: ["analise_por_resultados"] },
   // Obras vedadas (P9.1)
   ITEM_DE_OBRA: { titulo: "Item do orçamento com cara de obra", grupo: "orcamento", resultado: "revisar", destino: "orcamento", dimensao: "despesas" },
   DESPESA_DE_OBRA: { titulo: "Fornecedor da construção", grupo: "despesa", resultado: "revisar", destino: "comprovantes", dimensao: "despesas" },

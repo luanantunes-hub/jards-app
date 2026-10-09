@@ -20,6 +20,7 @@ import { checarRecursosHumanos } from "./checar-rh";
 import { checarCarimbo } from "./checar-carimbo";
 import { checarCaptacao } from "./checar-captacao";
 import { checarObras } from "./checar-obras";
+import { checarResultados } from "./checar-resultados";
 import { checarContas } from "./checar-contas";
 import { checarDespesas } from "./checar-despesas";
 import { checarEsporte } from "./checar-esporte";
@@ -48,6 +49,7 @@ export const CHECAGENS: readonly { id: string; titulo: string; executar: (estado
   { id: "carimbo", titulo: "Carimbo e atesto das notas", executar: checarCarimbo },
   { id: "concentracao", titulo: "Concentração por fornecedor e partes relacionadas", executar: checarConcentracao },
   { id: "objeto", titulo: "Metas e locais do objeto", executar: checarObjeto },
+  { id: "resultados", titulo: "Análise por resultados: metas antes do financeiro", executar: checarResultados },
   { id: "evidencias", titulo: "Evidências: vínculo, data e local da foto", executar: checarEvidencias },
   { id: "cobertura", titulo: "Cobertura das metas e atividades por evidências", executar: checarCobertura },
   { id: "distribuicao", titulo: "Plano de distribuição: cotas, preços e realizado", executar: checarDistribuicao },

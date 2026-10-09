@@ -30,8 +30,8 @@ export function useDadosDoEnvio(prestacaoId: string): { dados: DadosDoEnvio | nu
         db.from("prestacao_verificacoes").select("check_codigo, status").eq("prestacao_id", prestacaoId).eq("status", "aberta"),
         db.from("prestacao_contas_bancarias").select("id, tipo, apelido, banco, conta, data_encerramento").eq("prestacao_id", prestacaoId).order("created_at"),
         db.from("prestacao_extrato_importacoes").select("conta_id, periodo_fim, saldo_final, created_at").eq("prestacao_id", prestacaoId),
-        db.from("prestacao_envio_checklist").select("etapa, tipo, codigo, situacao, justificativa, marcado_por, updated_at").eq("prestacao_id", prestacaoId),
-        db.from("prestacao_envio_arquivos").select("id, etapa, codigo, storage_path, nome_arquivo, mime_type, tamanho_bytes, created_at").eq("prestacao_id", prestacaoId).order("created_at"),
+        db.from("prestacao_envio_checklist").select("etapa, exercicio, tipo, codigo, situacao, justificativa, marcado_por, updated_at").eq("prestacao_id", prestacaoId),
+        db.from("prestacao_envio_arquivos").select("id, etapa, exercicio, codigo, storage_path, nome_arquivo, mime_type, tamanho_bytes, created_at").eq("prestacao_id", prestacaoId).order("created_at"),
         db.from("prestacao_devolucoes").select("motivo, situacao, valor_principal, valor_atualizado, valor_pago, pago_em, storage_path").eq("prestacao_id", prestacaoId),
         db.from("prestacao_diligencias").select("situacao").eq("prestacao_id", prestacaoId),
       ]);
