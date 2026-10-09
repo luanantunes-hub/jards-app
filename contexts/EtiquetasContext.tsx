@@ -8,6 +8,7 @@ import {
   DEFAULT_ETIQUETAS_INSCRICAO,
   DEFAULT_ETIQUETAS_MATURIDADE_PROPONENTE,
   DEFAULT_ETIQUETAS_PROPONENTE,
+  corDeEtiqueta,
   type Etiqueta,
 } from "@/lib/etiquetas-padrao";
 
@@ -46,7 +47,8 @@ export function EtiquetasProvider({ children }: { children: React.ReactNode }) {
       .order("ordem"),
       (supabase as any).from("funil_etapas_removidas").select("entidade, key").eq("organization_id", organizationId),
     ]);
-    const rows = (data ?? []) as Array<Etiqueta & { entidade: string }>;
+    // Etiquetas gravadas com o cinza antigo passam a usar o cinza firme.
+    const rows = ((data ?? []) as Array<Etiqueta & { entidade: string }>).map(item => ({ ...item, cor: corDeEtiqueta(item.cor) ?? item.cor }));
     const hidden = new Set(((removidas ?? []) as Array<{ entidade: string; key: string }>).map(item => `${item.entidade}:${item.key}`));
     const captacaoRows = rows.filter(item => item.entidade === "captacao");
     const captacaoDefaultKeys = new Set(DEFAULT_ETIQUETAS_CAPTACAO.map(item => item.key));
