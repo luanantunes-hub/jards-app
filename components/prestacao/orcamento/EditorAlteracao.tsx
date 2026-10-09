@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { Plus, Search, Trash2, X } from "lucide-react";
+import { FileText, Plus, Search, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
@@ -209,7 +209,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                             className={`${CAMPO} text-right tabular-nums`}
                           />
                         </td>
-                        <td className={`whitespace-nowrap px-3 py-2 text-right text-[0.75rem] tabular-nums ${diferenca > 0 ? "text-[#2E8932]" : diferenca < 0 ? "text-[#B23B3B]" : "text-black/25"}`}>
+                        <td className={`whitespace-nowrap px-3 py-2 text-right text-[0.75rem] tabular-nums ${diferenca ? "text-black/70" : "text-black/25"}`}>
                           {diferenca ? fmtSinal(diferenca) : "—"}
                         </td>
                       </tr>
@@ -270,10 +270,11 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
           {/* Cálculo */}
           <aside className="space-y-4 border-t bg-[#FAFAF9] px-5 py-4 lg:overflow-y-auto lg:border-l lg:border-t-0" style={{ borderColor: "rgba(13,13,13,.07)" }} aria-label="Cálculo da alteração">
             <div>
-              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">Tipo</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tipo</p>
               <p className="text-[0.875rem] font-semibold text-[#0D0D0D]">{movimentos.length ? rotuloTipoAlteracao(calculo.tipo) : "—"}</p>
               {calculo.classificacao ? (
-                <p className={`mt-0.5 text-[0.75rem] ${calculo.classificacao === "formal" ? "text-[#9A6A10]" : "text-[#2E8932]"}`}>
+                <p className="mt-0.5 flex items-center gap-1 text-[0.75rem] text-black/55">
+                  {calculo.classificacao === "formal" && <FileText size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />}
                   {calculo.classificacao === "formal" ? "Precisa de pedido ao órgão" : "Administrativa: aplica sem pedido"}
                 </p>
               ) : movimentos.length > 0 && (
@@ -308,7 +309,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                   </>
                 )}
                 <dt className="text-black/45">Diferença</dt>
-                <dd className={`text-right tabular-nums ${calculo.diferenca > 0 ? "text-[#2E8932]" : calculo.diferenca < 0 ? "text-[#B23B3B]" : "text-black/60"}`}>{calculo.diferenca ? fmtSinal(calculo.diferenca) : "Sem mudança"}</dd>
+                <dd className={`text-right tabular-nums ${calculo.diferenca ? "text-black/75" : "text-black/45"}`}>{calculo.diferenca ? fmtSinal(calculo.diferenca) : "Sem mudança"}</dd>
                 <dt className="text-black/45">Movido entre itens</dt>
                 <dd className="text-right tabular-nums text-black/75">{fmt(calculo.movido)}</dd>
               </dl>

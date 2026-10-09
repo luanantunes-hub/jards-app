@@ -109,10 +109,11 @@ export function PropostaValuePanel({
     return (
       <div
         className="flex h-11 items-center gap-2 rounded border px-4"
-        style={{ borderColor: aprovado ? "#2E893240" : "#D94E4E40", background: aprovado ? "#fff" : "#fff" }}
+        style={{ borderColor: aprovado ? "#2E893240" : "#D94E4E40", background: "#fff" }}
       >
-        <span className="text-[0.75rem] font-bold" style={{ color: aprovado ? "#2E8932" : "#D94E4E" }}>
-          {aprovado ? `Aprovado · ${formatCurrency(valorFinal)}` : "Recusado"}
+        <span className="text-[0.75rem] font-semibold">
+          <span style={{ color: aprovado ? "#2E8932" : "#D94E4E" }}>{aprovado ? "Aprovado" : "Recusado"}</span>
+          {aprovado && <span className="tabular-nums text-[#0D0D0D]"> · {formatCurrency(valorFinal)}</span>}
         </span>
       </div>
     );
@@ -144,8 +145,8 @@ export function PropostaValuePanel({
           aria-label={valorAtual ? `Valor da negociação: ${formatCurrency(valorAtual)}. Editar` : "Definir o valor da negociação"}
         >
           <div className="text-left">
-            <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Valor</p>
-            <p className={`text-[0.75rem] font-bold tabular-nums ${valorAtual ? "text-[#B07A14]" : "text-black/35"}`}>{valorAtual ? formatCurrency(valorAtual) : "Definir"}</p>
+            <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Valor</p>
+            <p className={`text-[0.75rem] font-semibold tabular-nums ${valorAtual ? "text-[#0D0D0D]" : "text-black/30"}`}>{valorAtual ? formatCurrency(valorAtual) : "Definir"}</p>
           </div>
           <Pencil size={11} className="text-black/25" aria-hidden="true" />
         </button>
@@ -171,8 +172,8 @@ export function PropostaValuePanel({
           title="Sem proposta formal registrada — clique para criar uma"
         >
           <div className="text-left">
-            <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">Solicitado</p>
-            <p className="text-[0.75rem] font-bold text-[#B07A14]">{formatCurrency(valorAtual)}</p>
+            <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Solicitado</p>
+            <p className="text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">{formatCurrency(valorAtual)}</p>
           </div>
           <Plus size={11} className="text-black/25" />
         </button>
@@ -255,10 +256,10 @@ export function PropostaValuePanel({
     <>
       <div className="flex h-11 items-center gap-1 rounded border border-black/[.12] bg-white pl-3 pr-1.5">
         <div className="pr-2 text-left">
-          <p className="max-w-[12rem] truncate text-[0.5625rem] font-semibold uppercase tracking-wide text-black/35">
+          <p className="max-w-[12rem] truncate text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
             Proposta{cotaDaProposta && <span className="font-normal normal-case tracking-normal text-black/30"> · {cotaDaProposta.nome}</span>}
           </p>
-          <p className="text-[0.75rem] font-bold tabular-nums text-[#B07A14]">{formatCurrency(propostaAtual.valor_proposto)}</p>
+          <p className="text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">{formatCurrency(propostaAtual.valor_proposto)}</p>
         </div>
         <div className="h-6 w-px bg-black/10" />
         <button disabled={salvandoDesfecho} onClick={handleAceitar} className="rounded px-2 py-1.5 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-black/[.04] disabled:opacity-40">Aceitar</button>

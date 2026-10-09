@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertTriangle, ArrowLeft, ExternalLink, FileText, Pencil, Plus, Receipt, RefreshCw, Trash2 } from "lucide-react";
+import { AlertCircle, AlertTriangle, ArrowLeft, Clock, ExternalLink, FileText, Pencil, Plus, Receipt, RefreshCw, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -38,6 +38,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import type { PrestacaoDevolucao } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:text-black/35 active:scale-[.98]";
 const ICONE = "rounded p-2 text-black/35 transition hover:bg-black/[.05] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-[#7259B5]";
 const PAGTESOURO = "https://pagtesouro.tesouro.gov.br/portal-gru/#/emissao-gru";
@@ -72,7 +73,7 @@ function Atualizacao({ d, podeEditar, atualizando, onAtualizar }: { d: Prestacao
         {d.valor_atualizado !== null && d.atualizado_ate
           ? <>: <span className="tabular-nums text-black/85">{reais(centavos(d.valor_atualizado))}</span> até {dataBr(d.atualizado_ate)}
               {d.indice === "poupanca" && <span className="tabular-nums text-black/40"> · {meses} {meses === 1 ? "mês" : "meses"}, fator {fator(Number(d.fator ?? 1))}</span>}</>
-          : <span className="text-[#B07A14]"> · ainda não atualizado</span>}
+          : <> · <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mr-0.5 inline-block align-[-0.125rem] text-[#B07A14]" />ainda não atualizado</>}
       </p>
       {d.indice === "poupanca" && podeEditar && d.situacao !== "paga" && (
         <button type="button" onClick={onAtualizar} disabled={atualizando} className={BOTAO} style={BORDA}>
@@ -132,7 +133,10 @@ function CartaoDaDevolucao({ d, hoje, podeEditar, atualizando, onGuia, onPagar, 
             <FileText size={12} aria-hidden /> {d.nome_arquivo ?? "Comprovante"}
           </button>
         ) : d.situacao === "paga" && (
-          <span className="text-[0.6875rem] text-[#B07A14]">Sem o comprovante do pagamento</span>
+          <span className="inline-flex items-center gap-1 text-[0.6875rem] text-black/55">
+            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+            Sem o comprovante do pagamento
+          </span>
         )}
         {podeEditar && (
           <span className="ml-auto flex items-center">
@@ -337,7 +341,7 @@ export default function DevolucoesPage() {
               {guias.map(g => (
                 <li key={`${g.unidadeGestora}:${g.codigo}`}>
                   UG {g.unidadeGestora}{g.gestao ? ` · gestão ${g.gestao}` : ""} · código {g.codigo} · referência: {g.referencia}
-                  {g.fonte.aConfirmar && <span className="text-[#B07A14]"> · a confirmar com o órgão</span>}
+                  {g.fonte.aConfirmar && <> · <AlertCircle size={12} strokeWidth={1.75} aria-hidden className="mr-0.5 inline-block align-[-0.125rem] text-black/40" />a confirmar com o órgão</>}
                 </li>
               ))}
             </ul>
@@ -377,20 +381,29 @@ export default function DevolucoesPage() {
         <>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded border bg-white px-5 py-4 text-[0.6875rem] md:grid-cols-4" style={BORDA}>
             <div>
-              <dt className="text-black/40">A pagar</dt>
-              <dd className={`text-[0.875rem] tabular-nums ${resumo.aPagar ? "text-[#B07A14]" : "text-black/80"}`}>{reais(resumo.aPagar)}</dd>
+              <dt className={ROTULO}>
+                {resumo.aPagar > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                A pagar
+              </dt>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.aPagar ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(resumo.aPagar)}</dd>
             </div>
             <div>
-              <dt className="text-black/40">Pago</dt>
-              <dd className="text-[0.875rem] tabular-nums text-black/80">{reais(resumo.pago)}</dd>
+              <dt className={ROTULO}>Pago</dt>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.pago ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(resumo.pago)}</dd>
             </div>
             <div>
-              <dt className="text-black/40">Vencidas</dt>
-              <dd className={`text-[0.875rem] tabular-nums ${resumo.vencidas ? "text-[#D94A4A]" : "text-black/80"}`}>{resumo.vencidas}</dd>
+              <dt className={ROTULO}>
+                {resumo.vencidas > 0 && <Clock size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
+                Vencidas
+              </dt>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.vencidas ? "text-[#0D0D0D]" : "text-black/30"}`}>{resumo.vencidas}</dd>
             </div>
             <div>
-              <dt className="text-black/40">Pagas sem comprovante</dt>
-              <dd className={`text-[0.875rem] tabular-nums ${resumo.semComprovante ? "text-[#B07A14]" : "text-black/80"}`}>{resumo.semComprovante}</dd>
+              <dt className={ROTULO}>
+                {resumo.semComprovante > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                Pagas sem comprovante
+              </dt>
+              <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${resumo.semComprovante ? "text-[#0D0D0D]" : "text-black/30"}`}>{resumo.semComprovante}</dd>
             </div>
           </dl>
           <ul className="divide-y divide-black/[.05] overflow-hidden rounded border bg-white" style={BORDA} aria-label="Devoluções">

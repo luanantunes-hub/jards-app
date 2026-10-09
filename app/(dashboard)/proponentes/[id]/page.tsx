@@ -129,12 +129,6 @@ const FASE_COLOR: Record<string, { bg: string; text: string }> = {
   concluido:    { bg: "#fff",          text: "#2E8932" },
 };
 
-const CAPTADOR_STATUS_COLOR: Record<string, string> = {
-  ativo:     "#2E8932",
-  encerrado: "rgba(13,13,13,.35)",
-  suspenso:  "#B07A14",
-};
-
 const AREA_PT: Record<string, string> = {
   musica: "Música", audiovisual: "Audiovisual", artes_cenicas: "Artes Cênicas",
   artes_visuais: "Artes Visuais", artes_integradas: "Artes Integradas",
@@ -547,7 +541,7 @@ export default function ProponenteDetailPage() {
                       <div className="flex items-center justify-between gap-2">
                         <p className="text-[0.8125rem] font-semibold text-black leading-tight truncate">{cp.captador?.nome ?? "—"}</p>
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          <span className="text-[0.5625rem] font-bold uppercase tracking-wide" style={{ color: CAPTADOR_STATUS_COLOR[cp.status] }}>{cp.status}</span>
+                          <span className="text-[0.625rem] font-medium capitalize text-black/45">{cp.status}</span>
                           {cp.status === "ativo" && (
                             <button onClick={() => handleDesvincular(cp.id)} className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 pointer-coarse:opacity-100 text-black/20 hover:text-[#D94E4E] transition">
                               <X size={11}/>

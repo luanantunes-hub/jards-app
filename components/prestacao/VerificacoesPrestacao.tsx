@@ -13,10 +13,10 @@ import type { PrestacaoVerificacao } from "@/lib/supabase/types";
 const VALIDADE_MS = 10 * 60 * 1000;
 
 const SEVERIDADE = {
-  bloqueio: { rotulo: "Bloqueia o envio", cor: "#B23B3B", icone: Ban },
+  bloqueio: { rotulo: "Bloqueia o envio", cor: "#D94A4A", icone: Ban },
   alerta: { rotulo: "Revisar ou justificar", cor: "#B07A14", icone: AlertTriangle },
   justificativa: { rotulo: "Pede justificativa", cor: "#B07A14", icone: AlertTriangle },
-  info: { rotulo: "Aviso", cor: "#2D72B0", icone: Info },
+  info: { rotulo: "Aviso", cor: "rgba(13,13,13,.4)", icone: Info },
 } as const;
 
 const ORDEM: Record<PrestacaoVerificacao["severidade"], number> = { bloqueio: 0, alerta: 1, justificativa: 1, info: 2 };
@@ -312,11 +312,19 @@ export function VerificacoesPrestacao({ prestacaoId, permissoes, resumo = false 
     <section aria-labelledby="verificacoes-titulo" className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <div className="flex flex-wrap items-start justify-between gap-3 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="min-w-0">
-          <h2 id="verificacoes-titulo" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40">Verificações</h2>
+          <h2 id="verificacoes-titulo" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Verificações</h2>
           <p className="mt-1 text-[0.75rem] text-black/65" aria-live="polite">
             {!carregado ? "Carregando…" : (
               <>
-                {contagem.bloqueio > 0 && <span className="font-medium text-[#B23B3B] tabular-nums">{contagem.bloqueio} {contagem.bloqueio === 1 ? "bloqueia" : "bloqueiam"} o envio · </span>}
+                {contagem.bloqueio > 0 && (
+                  <>
+                    <span className="inline-flex items-center gap-1 font-medium tabular-nums text-black/70">
+                      <Ban size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />
+                      {contagem.bloqueio} {contagem.bloqueio === 1 ? "bloqueia" : "bloqueiam"} o envio
+                    </span>
+                    {" · "}
+                  </>
+                )}
                 <span className="tabular-nums">{contagem.alerta + contagem.justificativa}</span> a revisar ou justificar
                 {avisos.length > 0 && <span className="text-black/45"> · <span className="tabular-nums">{avisos.length}</span> {avisos.length === 1 ? "aviso" : "avisos"}</span>}
               </>
@@ -339,7 +347,7 @@ export function VerificacoesPrestacao({ prestacaoId, permissoes, resumo = false 
 
       {carregado && !abertas.length && !decididas.length && (
         <p className="flex items-center gap-2 px-5 py-4 text-[0.75rem] text-black/55">
-          <CheckCircle2 size={14} className="shrink-0 text-[#2E8932]" aria-hidden />
+          <CheckCircle2 size={14} className="shrink-0 text-black/40" aria-hidden />
           {dados?.verificadaEm ? "Nenhuma pendência nas checagens." : "Ainda sem verificação."}
         </p>
       )}

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Camera, MapPin, Pencil, Plus, Target, Trash2 } from "lucide-react";
+import { AlertTriangle, Camera, MapPin, Pencil, Plus, Target, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
@@ -22,6 +22,7 @@ import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
 import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 
 const SITUACAO: Record<SituacaoDaMeta, { rotulo: string; cor: string }> = {
@@ -63,8 +64,14 @@ function Atividades({ resumo }: { resumo: ResumoDaMeta }) {
 }
 
 function Cobertura({ cobertura }: { cobertura: CoberturaDaMeta }) {
-  if (cobertura.comprovada) return <span className="text-[#2E8932]">{cobertura.texto}</span>;
-  return <span className={cobertura.evidencias === 0 ? "text-black/35" : "text-[#B07A14]"}>{cobertura.texto}</span>;
+  if (cobertura.comprovada) return <span className="text-black/60">{cobertura.texto}</span>;
+  if (cobertura.evidencias === 0) return <span className="text-black/35">{cobertura.texto}</span>;
+  return (
+    <span className="inline-flex items-center gap-1 text-black/60">
+      <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+      {cobertura.texto}
+    </span>
+  );
 }
 
 /** O que a meta custou: despesas dos itens abaixo do agrupador dela; sem agrupador, não há como saber. */
@@ -301,14 +308,20 @@ export default function ObjetoPage() {
 
       {!carregando && (metas.length > 0 || locais.length > 0) && (
         <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
-          <div className="flex gap-1.5"><dt className="text-black/40">Metas com resultado</dt><dd className="tabular-nums text-black/75">{placar.comResultado} de {metas.length}</dd></div>
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Metas com resultado</dt><dd className={`font-semibold tabular-nums ${placar.comResultado ? "text-[#0D0D0D]" : "text-black/30"}`}>{placar.comResultado} de {metas.length}</dd></div>
           {placar.semJustificativa > 0 && (
-            <div className="flex gap-1.5"><dt className="text-black/40">Abaixo do previsto sem justificativa</dt><dd className="tabular-nums text-[#B07A14]">{placar.semJustificativa}</dd></div>
+            <div className="flex items-center gap-1.5">
+              <dt className={`${ROTULO} inline-flex items-center gap-1`}>
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                Abaixo do previsto sem justificativa
+              </dt>
+              <dd className="font-semibold tabular-nums text-[#0D0D0D]">{placar.semJustificativa}</dd>
+            </div>
           )}
           {placar.porStatus.length > 0 && (
-            <div className="flex gap-1.5">
-              <dt className="text-black/40">Locais</dt>
-              <dd className="tabular-nums text-black/75">{placar.porStatus.map(s => `${s.quantos} ${s.rotulo.toLowerCase()}`).join(" · ")}</dd>
+            <div className="flex items-baseline gap-1.5">
+              <dt className={ROTULO}>Locais</dt>
+              <dd className="font-semibold tabular-nums text-[#0D0D0D]">{placar.porStatus.map(s => `${s.quantos} ${s.rotulo.toLowerCase()}`).join(" · ")}</dd>
             </div>
           )}
         </dl>
@@ -355,7 +368,12 @@ export default function ObjetoPage() {
                       <td className="whitespace-nowrap px-4 py-3 text-right text-black/70"><Resultado meta={meta} resumo={resumo} /></td>
                       <td className="px-4 py-3">
                         <Etiqueta {...SITUACAO[resumo.situacao]} />
-                        {resumo.faltaJustificativa && <p className="mt-1 whitespace-nowrap text-[0.625rem] text-[#B07A14]">Falta a justificativa</p>}
+                        {resumo.faltaJustificativa && (
+                          <p className="mt-1 flex items-center gap-1 whitespace-nowrap text-[0.625rem] text-black/45">
+                            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                            Falta a justificativa
+                          </p>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] text-black/60"><Atividades resumo={resumo} /></td>
                       <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem]"><Cobertura cobertura={coberturas.get(meta.id)!} /></td>
@@ -394,7 +412,12 @@ export default function ObjetoPage() {
                     </dl>
                     <div className="flex flex-wrap items-center gap-2">
                       <Etiqueta {...SITUACAO[resumo.situacao]} />
-                      {resumo.faltaJustificativa && <span className="text-[0.625rem] text-[#B07A14]">Falta a justificativa</span>}
+                      {resumo.faltaJustificativa && (
+                        <span className="inline-flex items-center gap-1 text-[0.625rem] text-black/45">
+                          <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                          Falta a justificativa
+                        </span>
+                      )}
                     </div>
                   </li>
                 );
@@ -453,7 +476,12 @@ export default function ObjetoPage() {
         <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           <h3 id="evidencias-titulo" className="text-[0.75rem] font-semibold text-black">
             Evidências <span className="font-normal tabular-nums text-black/35">({evidencias.length})</span>
-            {alertasDasEvidencias.size > 0 && <span className="ml-2 font-normal text-[#B07A14]">{alertasDasEvidencias.size} com alerta</span>}
+            {alertasDasEvidencias.size > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 align-middle font-normal text-black/45">
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                {alertasDasEvidencias.size} com alerta
+              </span>
+            )}
           </h3>
           {podeEditar && (
             <button

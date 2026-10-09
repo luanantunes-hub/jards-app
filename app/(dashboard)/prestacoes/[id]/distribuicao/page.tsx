@@ -30,8 +30,7 @@ import type { PrestacaoDistribuicao } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
-const COR_BLOQUEIO = "#B23B3B";
-const COR_ALERTA = "#B07A14";
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 
 type DadosDaPrestacao = {
   regime_id: string | null;
@@ -48,11 +47,12 @@ function Cota({ c }: { c: SituacaoDaCota }) {
   const Icone = c.dentro ? CheckCircle2 : Ban;
   return (
     <div className="rounded border bg-white px-3 py-2.5" style={BORDA}>
-      <p className="text-[0.625rem] text-black/45">{c.rotulo}</p>
-      <p className="mt-0.5 text-[1rem] font-semibold tabular-nums text-black/85">{formatarPercentual(c.percentual)}</p>
+      <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{c.rotulo}</p>
+      <p className={`mt-0.5 text-[1rem] font-semibold tabular-nums ${c.percentual ? "text-[#0D0D0D]" : "text-black/30"}`}>{formatarPercentual(c.percentual)}</p>
       <p className="text-[0.625rem] text-black/40">{c.sentido === "max" ? "até" : "ao menos"} {formatarPercentual(c.limite)} · {c.dispositivo}</p>
-      <p className="mt-1 flex items-center gap-1 text-[0.625rem] font-medium" style={{ color: c.dentro ? "#2E8932" : COR_BLOQUEIO }}>
-        <Icone size={11} aria-hidden /> {c.dentro ? "Dentro" : c.sentido === "max" ? "Acima do máximo" : "Abaixo do mínimo"}
+      <p className="mt-1 flex items-center gap-1 text-[0.625rem] text-black/55">
+        <Icone size={12} strokeWidth={1.75} aria-hidden className={`shrink-0 ${c.dentro ? "text-black/40" : "text-[#D94A4A]"}`} />
+        {c.dentro ? "Dentro" : c.sentido === "max" ? "Acima do máximo" : "Abaixo do mínimo"}
       </p>
     </div>
   );
@@ -67,8 +67,8 @@ function Avisos({ achados }: { achados: readonly Achado[] }) {
         const bloqueio = a.severidade === "bloqueio";
         const Icone = bloqueio ? Ban : AlertTriangle;
         return (
-          <li key={a.chave} className="flex items-start gap-1 text-[0.6875rem]" style={{ color: a.justificativa ? "rgba(13,13,13,.45)" : bloqueio ? COR_BLOQUEIO : COR_ALERTA }}>
-            <Icone size={11} className="mt-0.5 shrink-0" aria-hidden />
+          <li key={a.chave} className={`flex items-start gap-1 text-[0.6875rem] ${a.justificativa ? "text-black/45" : "text-black/60"}`}>
+            <Icone size={12} strokeWidth={1.75} className={`mt-0.5 shrink-0 ${a.justificativa ? "text-black/40" : bloqueio ? "text-[#D94A4A]" : "text-[#B07A14]"}`} aria-hidden />
             <span>{a.mensagem}{a.justificativa ? ` Justificativa: ${a.justificativa}` : ""}</span>
           </li>
         );
@@ -127,19 +127,19 @@ function Produto({ resumo, limites, achadosDoProduto, achadosDaLinha, podeEditar
           )}
           {resumo.vendidos > 0 && (
             <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[0.6875rem]">
-              <div className="flex gap-1.5">
-                <dt className="text-black/40">Meia-entrada</dt>
-                <dd className="tabular-nums text-black/75">
+              <div className="flex items-baseline gap-1.5">
+                <dt className={ROTULO}>Meia-entrada</dt>
+                <dd className="font-semibold tabular-nums text-[#0D0D0D]">
                   {inteiro(resumo.meias)} de {inteiro(resumo.vendidos)} vendidos · {formatarPercentual(percentual(resumo.meias, resumo.vendidos))}
-                  {limites?.meiaMin != null && <span className="text-black/40"> (ao menos {formatarPercentual(limites.meiaMin)})</span>}
+                  {limites?.meiaMin != null && <span className="font-normal text-black/40"> (ao menos {formatarPercentual(limites.meiaMin)})</span>}
                 </dd>
               </div>
               {resumo.precoMedio !== null && (
-                <div className="flex gap-1.5">
-                  <dt className="text-black/40">Preço médio da venda livre</dt>
-                  <dd className="tabular-nums text-black/75">
+                <div className="flex items-baseline gap-1.5">
+                  <dt className={ROTULO}>Preço médio da venda livre</dt>
+                  <dd className="font-semibold tabular-nums text-[#0D0D0D]">
                     {reais(resumo.precoMedio)}
-                    {limites?.precoMedioMax != null && <span className="text-black/40"> (até {reais(limites.precoMedioMax)})</span>}
+                    {limites?.precoMedioMax != null && <span className="font-normal text-black/40"> (até {reais(limites.precoMedioMax)})</span>}
                   </dd>
                 </div>
               )}
@@ -346,12 +346,15 @@ export default function DistribuicaoPage() {
       {!carregando && linhas.length > 0 && (
         <div className="rounded border bg-white px-5 py-3" style={BORDA}>
           <dl className="flex flex-wrap gap-x-6 gap-y-1 text-[0.6875rem]">
-            <div className="flex gap-1.5"><dt className="text-black/40">Produtos</dt><dd className="tabular-nums text-black/75">{resumos.length}</dd></div>
-            {receitaTotal > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Receita prevista</dt><dd className="tabular-nums text-black/75">{reais(receitaTotal)}</dd></div>}
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Produtos</dt><dd className={`font-semibold tabular-nums ${resumos.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{resumos.length}</dd></div>
+            {receitaTotal > 0 && <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Receita prevista</dt><dd className="font-semibold tabular-nums text-[#0D0D0D]">{reais(receitaTotal)}</dd></div>}
             {limites && (
-              <div className="flex gap-1.5">
-                <dt className="text-black/40">Cotas fora do limite</dt>
-                <dd className="tabular-nums" style={{ color: foraDasCotas ? COR_BLOQUEIO : "rgba(13,13,13,.75)" }}>{foraDasCotas}</dd>
+              <div className="flex items-center gap-1.5">
+                <dt className={`${ROTULO} inline-flex items-center gap-1`}>
+                  {foraDasCotas > 0 && <Ban size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
+                  Cotas fora do limite
+                </dt>
+                <dd className={`font-semibold tabular-nums ${foraDasCotas ? "text-[#0D0D0D]" : "text-black/30"}`}>{foraDasCotas}</dd>
               </div>
             )}
           </dl>

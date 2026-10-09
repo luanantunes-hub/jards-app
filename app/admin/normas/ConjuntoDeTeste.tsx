@@ -6,7 +6,7 @@
 // "avaliar" da função agente-normativo e não gera proposta.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FlaskConical, RefreshCw } from "lucide-react";
+import { AlertTriangle, FlaskConical, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { rotuloDoCaminho, valorLegivel } from "@/lib/prestacao/regimes/revisao";
 
@@ -96,7 +96,8 @@ function CasoDaRodada({ n, regime }: { n: Nota; regime: unknown }) {
             {n.esperadas > 0 && (
               <span className="text-[0.75rem] tabular-nums text-black/70">{n.acertos} de {n.esperadas} mudanças</span>
             )}
-            <span className="text-[0.75rem] tabular-nums" style={{ color: n.falsos_alarmes ? VERMELHO : "rgba(13,13,13,.5)" }}>
+            <span className={`inline-flex items-center gap-1 text-[0.75rem] tabular-nums ${n.falsos_alarmes ? "text-black/70" : "text-black/50"}`}>
+              {n.falsos_alarmes > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
               {plural(n.falsos_alarmes, "falso alarme", "falsos alarmes")}
             </span>
           </>
@@ -232,7 +233,7 @@ export function ConjuntoDeTeste() {
       ) : (
         <>
           <section className="rounded border bg-white" style={BORDA} aria-labelledby="titulo-ultima-rodada">
-            <h3 id="titulo-ultima-rodada" className="border-b px-5 py-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+            <h3 id="titulo-ultima-rodada" className="border-b px-5 py-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45" style={{ borderColor: "rgba(13,13,13,.06)" }}>
               Casos da última rodada
             </h3>
             <ul className="divide-y divide-black/[.06]">
@@ -242,7 +243,7 @@ export function ConjuntoDeTeste() {
 
           {rodadas.length > 1 && (
             <section className="rounded border bg-white" style={BORDA} aria-labelledby="titulo-rodadas">
-              <h3 id="titulo-rodadas" className="border-b px-5 py-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+              <h3 id="titulo-rodadas" className="border-b px-5 py-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                 Rodadas anteriores
               </h3>
               <ul className="divide-y divide-black/[.06]">
@@ -252,7 +253,10 @@ export function ConjuntoDeTeste() {
                     <li key={r.quando} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-2.5 text-[0.75rem] tabular-nums">
                       <span className="w-[7rem] text-black/55">{horaBr(r.quando)}</span>
                       <span className="text-black/75">{x.acertos} de {x.esperadas} mudanças</span>
-                      <span style={{ color: x.alarmes ? VERMELHO : "rgba(13,13,13,.5)" }}>{plural(x.alarmes, "falso alarme", "falsos alarmes")}</span>
+                      <span className={`inline-flex items-center gap-1 ${x.alarmes ? "text-black/70" : "text-black/50"}`}>
+                        {x.alarmes > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
+                        {plural(x.alarmes, "falso alarme", "falsos alarmes")}
+                      </span>
                       <span className="text-black/55">{x.certas} de {x.casos} classificações certas</span>
                     </li>
                   );

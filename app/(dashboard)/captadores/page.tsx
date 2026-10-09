@@ -223,7 +223,7 @@ function CaptadoresList({
       return <div><p className={`text-[0.75rem] font-semibold tabular-nums ${conversion === null ? "text-black/25" : "text-black/65"}`}>{conversion === null ? "—" : `${conversion}%`}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{captador.n_encerradas > 0 ? `${captador.n_aprovadas} de ${captador.n_encerradas} encerradas` : "Sem amostra"}</p></div>;
     }
     if (id === "valor") return <span className="text-[0.75rem] font-semibold tabular-nums text-black/60" title={captador.valor_captado ? formatarValorCompleto(captador.valor_captado) : undefined}>{fmtValor(captador.valor_captado)}</span>;
-    if (id === "proximo") return captador.proxima_atividade ? <div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60" title={captador.proxima_atividade.nome}>{captador.proxima_atividade.nome}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{fmtDate(captador.proxima_atividade.data_prevista)}</p></div> : <span className="text-[0.6875rem] text-[#B07A14]">Sem atividade</span>;
+    if (id === "proximo") return captador.proxima_atividade ? <div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60" title={captador.proxima_atividade.nome}>{captador.proxima_atividade.nome}</p><p className="mt-0.5 text-[0.625rem] tabular-nums text-black/30">{fmtDate(captador.proxima_atividade.data_prevista)}</p></div> : <span className="text-[0.6875rem] text-black/30">Sem atividade</span>;
     if (id === "adicionado") return <span className="text-[0.6875rem] tabular-nums text-black/40">{fmtDate(captador.created_at)}</span>;
     if (id === "atualizado") return <span className="text-[0.6875rem] tabular-nums text-black/40">{fmtDate(captador.updated_at)}</span>;
     if (id === "score") return <CompactDecisionScoreRing score={captador.score} />;
@@ -602,8 +602,8 @@ export default function CaptadoresPage() {
             {metricas && (
               <div className="rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)", background: "white" }}>
                 <div className="flex items-center gap-2 mb-4">
-                  <Activity size={14} className="text-[#7259B5]" />
-                  <span className="text-[0.75rem] font-bold text-black">Meu painel</span>
+                  <Activity size={14} aria-hidden="true" className="text-black/40" />
+                  <span className="text-[0.75rem] font-semibold text-[#0D0D0D]">Meu painel</span>
                 </div>
                 <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                   {[
@@ -624,10 +624,15 @@ export default function CaptadoresPage() {
                 </div>
                 <div className="mt-4 pt-4 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                   <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[0.6875rem] text-black/40">Taxa de conversão</span>
-                    <span className="text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">
-                      {metricas.total_captações > 0 ? Math.round((metricas.captações_ganhas / metricas.total_captações) * 100) : 0}%
-                    </span>
+                    <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Taxa de conversão</span>
+                    {(() => {
+                      const taxa = metricas.total_captações > 0 ? Math.round((metricas.captações_ganhas / metricas.total_captações) * 100) : 0;
+                      return (
+                        <span className={`text-[0.75rem] font-semibold tabular-nums ${taxa === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
+                          {taxa}%
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="w-full h-1.5 rounded-full" style={{ background: "rgba(13,13,13,.06)" }}>
                     <div className="h-full rounded-full" style={{ width: `${metricas.total_captações > 0 ? (metricas.captações_ganhas / metricas.total_captações) * 100 : 0}%`, background: "#2E8932" }} />
@@ -905,8 +910,12 @@ export default function CaptadoresPage() {
                       <span className="text-[0.75rem] text-black/50 truncate">{a.projeto?.nome || "Todos"}</span>
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[0.625rem] font-semibold w-fit text-white" style={{ background: st.bg }}>{st.label}</span>
                       <div className="flex items-center gap-1.5">
-                        {emRisco && <AlertTriangle size={12} className="text-[#B07A14]" />}
-                        <span className={`text-[0.75rem] ${emRisco?"text-[#B07A14] font-semibold":"text-black/40"}`}>{formatDias(a.dias_sem_avanco)}</span>
+                        {emRisco && (
+                          <span role="img" className="shrink-0" title="Em risco" aria-label="Em risco">
+                            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="text-[#B07A14]" />
+                          </span>
+                        )}
+                        <span className={`text-[0.75rem] tabular-nums ${emRisco ? "font-medium text-[#0D0D0D]" : "text-black/60"}`}>{formatDias(a.dias_sem_avanco)}</span>
                       </div>
                       <div className="flex items-center justify-end">
                         <button type="button" aria-label="Editar atribuição" title="Editar atribuição" onClick={(event) => { event.stopPropagation(); setEditData(a); setShowAtribuicaoModal(true); }} className="p-1.5 rounded hover:bg-black/6 text-black/30 hover:text-black/70 transition focus-visible:outline-2 focus-visible:outline-[#7259B5]">

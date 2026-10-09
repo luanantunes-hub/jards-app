@@ -15,6 +15,7 @@ import {
   textoDoPeriodo,
   type RelatorioPublico,
 } from "@/lib/prestacao/relatorio-patrocinador";
+import { formatarValorCompleto } from "@/lib/valor";
 import { AceiteDoRelatorio } from "./AceiteDoRelatorio";
 
 export const metadata: Metadata = {
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 const dataBr = (iso: string | null | undefined) => (iso ? iso.slice(0, 10).split("-").reverse().join("/") : "");
-const reais = (v: unknown) => (Number(v) || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
+const reais = (v: unknown) => formatarValorCompleto(Number(v) || 0);
 const numero = (v: unknown) => (Number(v) || 0).toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 
 async function lerRelatorio(token: string): Promise<RelatorioPublico | null | "erro"> {
@@ -108,7 +109,7 @@ export default async function RelatorioDoPatrocinador({ params }: { params: Prom
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Secao titulo="Execução" icone={Target}>
-            <p className="text-[1.375rem] font-bold tabular-nums text-[#0D0D0D]">{reais(r.execucao?.executado)}</p>
+            <p className={`text-[1.375rem] font-semibold tabular-nums ${Number(r.execucao?.executado) ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(r.execucao?.executado)}</p>
             <p className="text-[0.75rem] text-black/50">
               executados{Number(r.execucao?.orcamento) > 0 ? ` de ${reais(r.execucao?.orcamento)} do orçamento` : ""}
               {r.execucao?.despesas ? `, em ${r.execucao.despesas} ${r.execucao.despesas === 1 ? "despesa comprovada" : "despesas comprovadas"}` : ""}

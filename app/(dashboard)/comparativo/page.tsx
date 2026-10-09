@@ -146,11 +146,10 @@ function PotencialTag({ lei, potencial, valorEfetivo, potencialRealocado }: { le
   if (valorEfetivo > 0) {
     return (
       <div
-        className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-semibold"
-        style={{ color: "#B07A14" }}
+        className="flex items-center gap-1 whitespace-nowrap text-[0.75rem] font-medium text-black/60"
         title="Valor já está no teto legal estimado"
       >
-        <Lock size={10} strokeWidth={2.5} />
+        <Lock size={12} strokeWidth={1.75} className="shrink-0 text-black/40" aria-hidden="true" />
         No teto
       </div>
     );

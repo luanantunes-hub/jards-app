@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, CalendarDays, FileCheck2, FileText, Handshake, Paperclip, Plus, Upload, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 export type ClientContract = { id: string; numero: string | null; titulo: string | null; valor: number; status: string; data_inicio: string | null; data_fim: string | null; proxima_renovacao: string | null };
 export type ClientAgencyParticipation = {
@@ -26,7 +27,6 @@ const STATUS_META: Record<string, { label: string; color: string }> = {
   vigente: { label: "Vigente", color: "#2E8932" }, encerrado: { label: "Encerrado", color: "#777777" }, renovado: { label: "Renovado", color: "#1A8B7A" },
 };
 
-function money(value: number) { return value ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 }).format(value) : "Não informado"; }
 function date(value: string | null) { return value ? new Date(`${value.split("T")[0]}T12:00:00`).toLocaleDateString("pt-BR") : "—"; }
 
 export function ClientContractsView({ contaId, organizationId, accountId, contracts, participations, actionRequestNonce = 0, onSaved }: Props) {
@@ -114,10 +114,10 @@ export function ClientContractsView({ contaId, organizationId, accountId, contra
         const agency = participations.find(item => item.contrato_id === contract.id && item.status === "ativa");
         return <Link key={contract.id} href={`/contratos/${contract.id}`} className="group grid gap-3 py-4 transition hover:bg-black/[.018] sm:grid-cols-[minmax(0,1.5fr)_6.875rem_7.5rem_8.75rem_8.75rem_1.125rem] sm:items-center sm:px-2">
           <div className="flex min-w-0 items-center gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded bg-black/[.045] text-black/35">{attached.length ? <FileCheck2 size={17}/> : <FileText size={17}/>}</span><div className="min-w-0"><p className="truncate text-[0.8125rem] font-semibold text-black/75">{contract.titulo || "Contrato"}</p><p className="mt-1 flex items-center gap-1 text-[0.625rem] text-black/30"><Paperclip size={10}/>{attached.length ? `${attached.length} arquivo${attached.length === 1 ? "" : "s"}` : "Sem arquivo"}{contract.numero ? ` · ${contract.numero}` : ""}</p></div></div>
-          <div><p className="text-[0.625rem] text-black/25">Situação</p><p className="mt-1 text-[0.6875rem] font-medium" style={{ color: meta.color }}>{meta.label}</p></div>
-          <div><p className="text-[0.625rem] text-black/25">Valor</p><p className="mt-1 text-[0.6875rem] font-semibold tabular-nums text-black/60">{money(contract.valor)}</p></div>
-          <div><p className="text-[0.625rem] text-black/25">Vigência</p><p className="mt-1 flex items-center gap-1 text-[0.6875rem] text-black/45"><CalendarDays size={11}/>{contract.data_inicio || contract.data_fim ? `${date(contract.data_inicio)} — ${date(contract.data_fim)}` : "Não informada"}</p></div>
-          <div><p className="text-[0.625rem] text-black/25">Agência</p><p className="mt-1 flex items-center gap-1 truncate text-[0.6875rem] font-medium text-black/50"><Handshake size={11}/>{agency?.captador?.nome ?? "Sem agência"}</p></div>
+          <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Situação</p><div className="mt-1 flex"><span className="rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: meta.color.startsWith("#") ? `${meta.color}47` : "rgba(13,13,13,.12)", color: meta.color }}>{meta.label}</span></div></div>
+          <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Valor</p><p title={contract.valor ? formatarValorCompleto(contract.valor) : undefined} className={`mt-1 truncate text-[0.6875rem] font-semibold tabular-nums ${contract.valor ? "text-[#0D0D0D]" : "text-black/30"}`}>{contract.valor ? formatarValorCurto(contract.valor) : "Não informado"}</p></div>
+          <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Vigência</p><p className="mt-1 flex items-center gap-1 text-[0.6875rem] text-black/45"><CalendarDays size={11}/>{contract.data_inicio || contract.data_fim ? `${date(contract.data_inicio)} — ${date(contract.data_fim)}` : "Não informada"}</p></div>
+          <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Agência</p><p className="mt-1 flex items-center gap-1 truncate text-[0.6875rem] font-medium text-black/50"><Handshake size={11}/>{agency?.captador?.nome ?? "Sem agência"}</p></div>
           <ArrowUpRight size={14} className="text-black/20 transition group-hover:text-[#7259B5]"/>
         </Link>;
       })}</div>}

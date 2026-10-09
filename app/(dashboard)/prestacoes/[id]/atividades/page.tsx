@@ -237,11 +237,10 @@ export default function AtividadesPage() {
                 : null;
               return (
                 <div key={at.id} className="flex gap-4">
-                  {/* Dot */}
+                  {/* Marcador */}
                   <div className="flex-shrink-0 mt-3.5">
-                    <div className="w-5 h-5 rounded-full border-2 flex items-center justify-center"
-                      style={{ borderColor: "#7259B5", background: "white" }}>
-                      <div className="w-2 h-2 rounded-full" style={{ background: "#7259B5" }} />
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full border border-black/[.12] bg-white">
+                      <CalendarDays size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
                     </div>
                   </div>
 
@@ -272,7 +271,7 @@ export default function AtividadesPage() {
                           {at.publico_atingido !== null && (
                             <span className="flex items-center gap-1 text-[0.625rem] text-black/40">
                               <Users size={10} /> {at.publico_atingido.toLocaleString("pt-BR")} pessoas
-                              {pct !== null && <span style={{ color: pct >= 100 ? "#2E8932" : pct >= 70 ? "#B07A14" : "rgba(13,13,13,.35)" }}>({pct}% do previsto)</span>}
+                              {pct !== null && <span className="tabular-nums">({pct}% do previsto)</span>}
                             </span>
                           )}
                           {at.evidencias.length > 0 && (

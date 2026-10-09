@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useId, useState } from "react";
-import { X, Save } from "lucide-react";
+import { X, Save, TrendingDown, TrendingUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -189,7 +189,10 @@ export function NovoResultadoModal({
               />
             </div>
             {valueDelta !== null && valueDelta !== 0 && (
-              <p className="mt-1.5 text-[0.625rem] font-medium" style={{ color: valueDelta > 0 ? "#2E8932" : "#D94E4E" }}>
+              <p className="mt-1.5 flex items-center gap-1 text-[0.625rem] font-medium text-black/45">
+                {valueDelta > 0
+                  ? <TrendingUp size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
+                  : <TrendingDown size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />}
                 {valueDelta > 0 ? "+" : ""}{money(valueDelta)} em relação ao valor padrão da cota
               </p>
             )}

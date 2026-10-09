@@ -7,7 +7,7 @@
 
 import { use, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ExternalLink, FileText, Plus, Upload } from "lucide-react";
+import { ArrowLeft, Clock, ExternalLink, FileText, Plus, Upload } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
@@ -139,7 +139,7 @@ export default function PrestacaoDoProponentePage({ params }: { params: Promise<
           </Link>
           <div className="mt-3 flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40">{contexto.organizacao?.nome} · Prestação de contas</p>
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{contexto.organizacao?.nome} · Prestação de contas</p>
               <h1 className="mt-1 text-balance text-[1.5rem] font-semibold leading-tight tracking-[-0.03em] text-[#0D0D0D] sm:text-[1.75rem]">{contexto.titulo}</h1>
               <p className="mt-1 text-[0.75rem] text-black/50">
                 {[contexto.regime, contexto.identificador_oficial, contexto.proponente,
@@ -150,7 +150,12 @@ export default function PrestacaoDoProponentePage({ params }: { params: Promise<
             <span className="shrink-0 rounded border bg-white px-2 py-1 text-[0.6875rem] font-medium" style={{ borderColor: situacao.cor + "47", color: situacao.cor }}>{situacao.rotulo}</span>
           </div>
           <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-[0.75rem]">
-            {prazo && <span className={prazo.atrasado ? "text-[#B23B3B]" : "text-black/60"}>{prazo.texto}</span>}
+            {prazo && (
+              <span className="inline-flex items-center gap-1 text-black/60">
+                {prazo.atrasado && <Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
+                {prazo.texto}
+              </span>
+            )}
             {contexto.responsavel && <span className="text-black/50">Quem cuida: {contexto.responsavel}</span>}
           </div>
         </div>

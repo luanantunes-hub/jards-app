@@ -138,7 +138,7 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
             <span className="text-[0.6875rem] tabular-nums text-black/45">{feitos} de {total}</span>
             <span aria-hidden="true" className="block h-1 w-24 overflow-hidden rounded-full bg-black/[.06]">
               <span
-                className="block h-full origin-left bg-[#7259B5] transition-transform duration-[240ms] ease-out motion-reduce:transition-none"
+                className="block h-full origin-left bg-[#2E8932] transition-transform duration-[240ms] ease-out motion-reduce:transition-none"
                 style={{ transform: `scaleX(${total ? feitos / total : 0})` }}
               />
             </span>
@@ -160,7 +160,7 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
         <div className="flex flex-col justify-center px-5 py-5 md:py-6">
           {proximo ? (
             <>
-              <p className="text-[0.6875rem] font-medium text-[#7259B5]">Próximo passo</p>
+              <p className="text-[0.6875rem] font-medium text-black/45">Próximo passo</p>
               <p className="mt-1 text-[1.125rem] font-semibold tracking-[-.015em] text-[#0D0D0D] [text-wrap:balance]">{proximo.titulo}</p>
               <Link
                 href={proximo.href}
@@ -171,7 +171,7 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
             </>
           ) : (
             <>
-              <p className="text-[0.6875rem] font-medium text-[#2E8932]">Concluído</p>
+              <p className="text-[0.6875rem] font-medium text-black/45">Concluído</p>
               <p className="mt-1 text-[1.125rem] font-semibold tracking-[-.015em] text-[#0D0D0D] [text-wrap:balance]">Seu Jards está montado</p>
             </>
           )}
@@ -192,7 +192,7 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
                     aria-hidden="true"
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.625rem] font-semibold tabular-nums ${
                       passo.feito
-                        ? "bg-[#2E8932] text-white"
+                        ? "border border-black/15 text-black/40"
                         : atual
                           ? "border border-[#7259B5] text-[#7259B5]"
                           : "border border-black/15 text-black/35"
@@ -205,7 +205,7 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
                   </span>
                   <span className="sr-only">{passo.feito ? "(concluído)" : atual ? "(próximo passo)" : "(pendente)"}</span>
                   {passo.feito
-                    ? <span aria-hidden="true" className="text-[0.625rem] font-medium text-[#2E8932]">Feito</span>
+                    ? <span aria-hidden="true" className="text-[0.625rem] font-medium text-black/45">Feito</span>
                     : <ArrowRight size={12} aria-hidden="true" className="text-black/20 transition-transform group-hover:translate-x-0.5 group-hover:text-black/45 motion-reduce:transition-none" />}
                 </Link>
               </li>

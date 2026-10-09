@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowLeft, BadgeCheck, BriefcaseBusiness, Building2, CalendarClock, Check, ChevronDown,
-  CircleDollarSign, CircleHelp, Frown, Mail, Meh, MessageCircle, Phone, Radio, ShieldCheck,
+  CircleCheck, CircleDollarSign, CircleHelp, Frown, Mail, Meh, MessageCircle, Phone, Radio, ShieldCheck,
   Smile, Users, CheckSquare, MoreHorizontal, Calendar, MessageSquare, Pencil,
   Handshake, Sparkles, UserRound,
 } from "lucide-react";
@@ -134,16 +134,6 @@ const TIPO_ICON: Record<string, React.ElementType> = {
   evento:   Calendar,
   tarefa:   CheckSquare,
   outro:    MoreHorizontal,
-};
-
-const TIPO_COLOR: Record<string, string> = {
-  email:    "#2D72B0",
-  telefone: "#1A8B7A",
-  linkedin: "#2D72B0",
-  reuniao:  "rgba(13,13,13,.45)",
-  evento:   "#B07A14",
-  tarefa:   "#7259B5",
-  outro:    "rgba(13,13,13,.40)",
 };
 
 /* ─── Helpers ─────────────────────────────────────────────────────────── */
@@ -390,8 +380,8 @@ function InlineBars({
         })}
       </div>
       <div className="flex min-w-0 items-baseline justify-between gap-2">
-        <p className="truncate text-[0.6875rem] font-semibold" style={{ color: displayValue == null ? "rgba(13,13,13,.32)" : color }}>{reading}</p>
-        <p className="shrink-0 text-[0.875rem] font-semibold tabular-nums tracking-[-.02em] text-black/65">{displayValue ?? "—"}<span className="ml-0.5 text-[0.625rem] font-medium text-black/25">/{max}</span></p>
+        <p className={`truncate text-[0.6875rem] font-medium ${displayValue == null ? "text-black/30" : "text-black/55"}`}>{reading}</p>
+        <p className={`shrink-0 text-[0.875rem] font-semibold tabular-nums tracking-[-.02em] ${displayValue == null ? "text-black/30" : "text-[#0D0D0D]"}`}>{displayValue ?? "—"}<span className="ml-0.5 text-[0.625rem] font-medium text-black/25">/{max}</span></p>
       </div>
     </div>
   );
@@ -635,7 +625,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
               </div>
               <div className="grid gap-px sm:grid-cols-2 xl:grid-cols-4">
                 <div className="min-h-[5.75rem] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Empresa</p>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Empresa</p>
                   <div className="mt-2">
                     <CustomDropdown
                       value={contato.empresa_crm_id ?? ""}
@@ -659,7 +649,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                       <Icon size={15} />
                     </span>
                     <div className="min-w-0 flex-1">
-                      <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">{label}</p>
+                      <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{label}</p>
                       <InlineText
                         value={value}
                         onSave={nextValue => saveField(field, nextValue)}
@@ -670,13 +660,13 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                   </div>
                 ))}
                 <div className="min-h-[6.75rem] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Origem</p>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Origem</p>
                   <div className="mt-2">
                     <InlineSelect value={contato.origem} opts={ORIGEM_OPTS} onSave={value => saveField("origem", value)} />
                   </div>
                 </div>
                 <div className="min-h-[6.75rem] min-w-0 bg-white px-5 py-4">
-                  <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Notas de contato</p>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Notas de contato</p>
                   <InlineTextarea value={contato.notas} onSave={value => saveField("notas", value)} />
                 </div>
                 <div className="flex min-h-[6.75rem] min-w-0 items-start gap-3 bg-white px-5 py-4">
@@ -684,7 +674,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                     <CalendarClock size={15} />
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="text-[0.5625rem] font-bold uppercase tracking-[.08em] text-black/30">Registro</p>
+                    <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Registro</p>
                     <div className="mt-2 space-y-1.5 text-[0.6875rem] text-black/40">
                       <p className="flex items-center justify-between gap-2"><span>Adicionado</span><strong className="font-semibold tabular-nums text-black/65">{fmtDate(contato.created_at)}</strong></p>
                       <p className="flex items-center justify-between gap-2"><span>Atualizado</span><strong className="font-semibold tabular-nums text-black/65">{fmtDate(contato.updated_at)}</strong></p>
@@ -706,12 +696,11 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                 <div className="relative border-l ml-3 space-y-0" style={{ borderColor: "rgba(13,13,13,.10)" }}>
                   {atividades.map(a => {
                     const TipoIcon  = (a.tipo ? TIPO_ICON[a.tipo] : null) ?? MessageSquare;
-                    const tipoColor = a.tipo ? (TIPO_COLOR[a.tipo] ?? "rgba(13,13,13,.4)") : "rgba(13,13,13,.4)";
                     const dataStr   = a.data_realizada ?? a.data_prevista;
                     return (
                       <div key={a.id} className="relative flex gap-4 pb-5 pl-6">
                         <div className="absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white shadow-sm" style={{ background: "#fff" }}>
-                          <TipoIcon size={11} style={{ color: tipoColor }} />
+                          <TipoIcon size={12} strokeWidth={1.75} aria-hidden="true" className="text-black/40" />
                         </div>
                         <div className="min-w-0 flex-1 rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                           <div className="flex flex-wrap items-start justify-between gap-2">
@@ -720,7 +709,7 @@ export default function ContatoPage({ params }: { params: Promise<{ id: string }
                           </div>
                           {a.resultado && <p className="mt-1 text-[0.75rem] text-black/55 line-clamp-2">{a.resultado}</p>}
                           <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[0.625rem] text-black/35">
-                            {a.feita && <span className="font-semibold text-[#1A8B7A]">Concluída</span>}
+                            {a.feita && <span className="inline-flex items-center gap-1 font-medium text-black/55"><CircleCheck size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />Concluída</span>}
                             {a.responsavel?.full_name && <span>{a.responsavel.full_name}</span>}
                             {a.captacao?.titulo && (
                               <Link href={`/captacoes/${a.captacao.id}`} className="text-[#7259B5] hover:underline">{a.captacao.titulo}</Link>

@@ -4,8 +4,9 @@ import { useState } from "react";
 import {
   BarChart2, Calendar, Folder, Briefcase, FileText,
   Building2, Users, Globe, Building, UserCheck, Phone,
-  Settings, Bell, LogOut,
+  Settings, Bell, LogOut, Clock,
 } from "lucide-react";
+import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 /* ── helpers ─────────────────────────────────────────────── */
 function Logo({ name, size = 44 }: { name: string; size?: number }) {
@@ -190,7 +191,7 @@ function EditaisPanel() {
       <PageHeader title="Editais" action="Sugerir edital" />
       <Toolbar>
         <SearchBox placeholder="Buscar edital, empresa, estado…" />
-        <span style={{ fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ color: "#0D0D0D" }}>47</strong> editais</span>
+        <span style={{ fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>47</strong> editais</span>
         <div style={{ marginLeft: "auto", display: "flex", border: "1px solid rgba(13,13,13,.12)", borderRadius: 4, overflow: "hidden" }}>
           <SegBtn label="Abertos" on />
           <SegBtn label="Fechados" />
@@ -218,12 +219,12 @@ function EditaisPanel() {
                 <p style={{ fontSize: 12, color: "rgba(13,13,13,.50)", lineHeight: 1.45, marginBottom: 12, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{e.title}</p>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, fontSize: 10 }}>
                   <div>
-                    <p style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em", color: "rgba(13,13,13,.35)", marginBottom: 2 }}>Abertura</p>
+                    <p style={{ fontWeight: 500, textTransform: "uppercase", letterSpacing: ".08em", color: "rgba(13,13,13,.45)", marginBottom: 2 }}>Abertura</p>
                     <p style={{ fontWeight: 500, color: "rgba(13,13,13,.60)" }}>{e.ab}</p>
                   </div>
                   <div>
-                    <p style={{ fontWeight: 600, textTransform: "uppercase", letterSpacing: ".05em", color: "rgba(13,13,13,.35)", marginBottom: 2 }}>Fechamento</p>
-                    <p style={{ fontWeight: 700, color: e.urgency !== "open" ? c : "rgba(13,13,13,.60)" }}>{e.fe}</p>
+                    <p style={{ fontWeight: 500, textTransform: "uppercase", letterSpacing: ".08em", color: "rgba(13,13,13,.45)", marginBottom: 2 }}>Fechamento</p>
+                    <p style={{ fontWeight: 500, color: "rgba(13,13,13,.60)" }}>{e.fe}</p>
                   </div>
                 </div>
               </div>
@@ -244,19 +245,19 @@ const STATUS_COLOR: Record<string, { label: string; color: string }> = {
 };
 const KANBAN_COLS = [
   { key: "prospeccao", cards: [
-    { co: "TV Cultura",  title: "Captação Rouanet — Série Documental",  lei: "Rouanet",    val: "R$ 80k",  cap: "R" },
-    { co: "Sabesp",      title: "Programa Ambiental e Arte 2025",       lei: "Rouanet",    val: "R$ 120k", cap: "M" },
+    { co: "TV Cultura",  title: "Captação Rouanet — Série Documental",  lei: "Rouanet",    val: 80000,  cap: "R" },
+    { co: "Sabesp",      title: "Programa Ambiental e Arte 2025",       lei: "Rouanet",    val: 120000, cap: "M" },
   ]},
   { key: "primeiro_contato", cards: [
-    { co: "Porto Seguro", title: "Patrocínio Lei Esporte — Atletismo",   lei: "Esporte",    val: "R$ 90k",  cap: "F", dt: "22/09" },
-    { co: "Embraer",      title: "Arte e Inovação — Projeto Cultural",   lei: "Rouanet",    val: "R$ 160k", cap: "R" },
+    { co: "Porto Seguro", title: "Patrocínio Lei Esporte — Atletismo",   lei: "Esporte",    val: 90000,  cap: "F", dt: "22/09" },
+    { co: "Embraer",      title: "Arte e Inovação — Projeto Cultural",   lei: "Rouanet",    val: 160000, cap: "R" },
   ]},
   { key: "proposta_enviada", cards: [
-    { co: "Itaú BBA",   title: "Rouanet 2025 — Ciclo de Shows Nacionais", lei: "Rouanet",    val: "R$ 200k", cap: "L", dt: "30/09" },
-    { co: "Petrobras",  title: "Documentário Audiovisual 2025",            lei: "Audiovisual",val: "R$ 280k", cap: "M" },
+    { co: "Itaú BBA",   title: "Rouanet 2025 — Ciclo de Shows Nacionais", lei: "Rouanet",    val: 200000, cap: "L", dt: "30/09" },
+    { co: "Petrobras",  title: "Documentário Audiovisual 2025",            lei: "Audiovisual",val: 280000, cap: "M" },
   ]},
   { key: "em_negociacao", cards: [
-    { co: "Ambev",      title: "Rouanet — Turnê Nacional Música Brasileira", lei: "Rouanet", val: "R$ 350k", cap: "R", dt: "12/09" },
+    { co: "Ambev",      title: "Rouanet — Turnê Nacional Música Brasileira", lei: "Rouanet", val: 350000, cap: "R", dt: "12/09" },
   ]},
 ];
 
@@ -276,7 +277,7 @@ function NegociacoesPanel() {
           return (
             <div key={col.key} style={{ display: "flex", flexDirection: "column", gap: 8, overflow: "hidden" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: 8, borderBottom: `2px solid ${color}` }}>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color }}>{label}</span>
+                <span style={{ fontSize: 11.5, fontWeight: 600, color: "rgba(13,13,13,.75)" }}>{label}</span>
                 <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 7px", borderRadius: 100, background: "rgba(13,13,13,.08)", color: "rgba(13,13,13,.50)" }}>{col.cards.length}</span>
               </div>
               {col.cards.map((c) => (
@@ -291,11 +292,15 @@ function NegociacoesPanel() {
                   <p style={{ fontSize: 12.5, fontWeight: 600, lineHeight: 1.35, letterSpacing: "-.01em", color: "rgba(13,13,13,.85)", marginBottom: 10, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{c.title}</p>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                     <LeiBadge lei={c.lei} />
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "rgba(13,13,13,.65)" }}>{c.val}</span>
+                    <span title={formatarValorCompleto(c.val)} style={{ fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>{formatarValorCurto(c.val)}</span>
                   </div>
                   {"dt" in c && c.dt && (
-                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(13,13,13,.06)", display: "flex", justifyContent: "space-between", fontSize: 10, fontWeight: 500, color: "#B07A14" }}>
-                      <span>Próx. contato</span><span>📅 {c.dt}</span>
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(13,13,13,.06)", display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 10, fontWeight: 500 }}>
+                      <span style={{ color: "rgba(13,13,13,.45)" }}>Próx. contato</span>
+                      <span style={{ display: "flex", alignItems: "center", gap: "0.25rem", fontVariantNumeric: "tabular-nums", color: "rgba(13,13,13,.6)" }}>
+                        <Calendar size={12} strokeWidth={1.75} color="rgba(13,13,13,.4)" aria-hidden="true" />
+                        {c.dt}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -317,7 +322,7 @@ const ATIVS = [
   { done: true,  nome: "Confirmar reunião presencial",        tipo: "Email",   neg: "Proposta Embraer",    co: "Embraer",     prazo: "ontem",  prio: ["rgba(217,78,78,.28)", "#D94E4E",   "Alta"]  },
   { done: false, nome: "Preparar relatório de atividades",   tipo: "Tarefa",  neg: "—",                   co: "Interno",     prazo: "sexta",  prio: ["rgba(13,13,13,.12)", "rgba(13,13,13,.45)", "Baixa"] },
 ] as const;
-const DEADLINE_COLOR: Record<string, string> = { hoje: "#B07A14", amanhã: "rgba(13,13,13,.55)", sexta: "rgba(13,13,13,.55)", seg: "rgba(13,13,13,.55)", ontem: "rgba(13,13,13,.35)" };
+const DEADLINE_COLOR: Record<string, string> = { hoje: "rgba(13,13,13,.55)", amanhã: "rgba(13,13,13,.55)", sexta: "rgba(13,13,13,.55)", seg: "rgba(13,13,13,.55)", ontem: "rgba(13,13,13,.35)" };
 const TH = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 bg-[#F9F9F8] px-3.5 py-2.5 text-left whitespace-nowrap";
 
 function AtividadesPanel() {
@@ -365,7 +370,12 @@ function AtividadesPanel() {
                     <span style={{ fontSize: 11.5, fontWeight: 500, color: "rgba(13,13,13,.60)" }}>{a.co}</span>
                   </div>
                 </td>
-                <td style={{ padding: "11px 14px", fontSize: 11.5, fontWeight: 500, color: DEADLINE_COLOR[a.prazo] ?? "rgba(13,13,13,.50)", whiteSpace: "nowrap" }}>{a.prazo}</td>
+                <td style={{ padding: "11px 14px", fontSize: 11.5, fontWeight: 500, color: DEADLINE_COLOR[a.prazo] ?? "rgba(13,13,13,.50)", whiteSpace: "nowrap" }}>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: "0.25rem" }}>
+                    {a.prazo === "hoje" && <Clock size={12} strokeWidth={1.75} color="#B07A14" aria-hidden="true" />}
+                    {a.prazo}
+                  </span>
+                </td>
                 <td style={{ padding: "11px 14px" }}>
                   <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 7px", borderRadius: 100, background: "#fff", border: `1px solid ${a.prio[0]}`, color: a.prio[1] }}>{a.prio[2]}</span>
                 </td>
@@ -398,7 +408,7 @@ function PatrocinadoresPanel() {
         <div style={{ display: "flex", border: "1px solid rgba(13,13,13,.12)", borderRadius: 4, overflow: "hidden" }}>
           <SegBtn label="Todos" on /><SegBtn label="Rouanet" /><SegBtn label="Esporte" /><SegBtn label="Audiovisual" />
         </div>
-        <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ color: "#0D0D0D" }}>312</strong> empresas</span>
+        <span style={{ marginLeft: "auto", fontSize: 13, color: "rgba(13,13,13,.40)" }}><strong style={{ fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>312</strong> empresas</span>
       </Toolbar>
       <div style={{ flex: 1, overflow: "hidden" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -422,9 +432,9 @@ function PatrocinadoresPanel() {
                   </div>
                 </td>
                 <td style={{ padding: "13px 14px" }}><LeiBadge lei={s.lei} /></td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 700, color: "#0D0D0D" }}>{s.editais}</td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 700, color: "#0D0D0D" }}>{s.negs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>negociações</span></td>
-                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 700, color: "#0D0D0D" }}>{s.inscs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>inscrições</span></td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>{s.editais}</td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>{s.negs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>negociações</span></td>
+                <td style={{ padding: "13px 14px", fontSize: 13, fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "#0D0D0D" }}>{s.inscs} <span style={{ fontSize: 11, fontWeight: 400, color: "rgba(13,13,13,.40)" }}>inscrições</span></td>
               </tr>
             ))}
           </tbody>

@@ -5,7 +5,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronRight, ClipboardCheck } from "lucide-react";
+import { ChevronRight, ClipboardCheck, Clock, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { situacaoDaPrestacao, textoDoPrazo, type MinhaPrestacao } from "@/lib/prestacao/proponente";
 
@@ -48,18 +48,31 @@ export function PrestacoesDoProponente() {
                   className="group flex h-full flex-col rounded border bg-white p-5 transition hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                   style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <div className="flex items-start justify-between gap-3">
-                    <p className="min-w-0 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40">{p.organizacao}</p>
+                    <p className="min-w-0 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{p.organizacao}</p>
                     <span className="shrink-0 rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: s.cor + "47", color: s.cor }}>{s.rotulo}</span>
                   </div>
                   <p className="mt-2 text-[0.875rem] font-semibold text-black/80 group-hover:text-black">{p.titulo}</p>
                   <p className="mt-0.5 text-[0.6875rem] text-black/45">{[p.regime, p.identificador_oficial].filter(Boolean).join(" · ")}</p>
-                  {prazo && <p className={`mt-2 text-[0.6875rem] ${prazo.atrasado ? "text-[#B23B3B]" : "text-black/55"}`}>{prazo.texto}</p>}
+                  {prazo && (
+                    <p className="mt-2 flex items-center gap-1 text-[0.6875rem] text-black/55">
+                      {prazo.atrasado && <Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
+                      {prazo.texto}
+                    </p>
+                  )}
                   <div className="mt-auto pt-4">
                     <div className="flex items-center justify-between gap-2 border-t pt-3 text-[0.6875rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                       <span>
                         {plural(p.despesas, "despesa", "despesas")}
                         {p.em_analise > 0 && ` · ${p.em_analise} em análise`}
-                        {p.recusadas > 0 && <span className="text-[#B23B3B]">{` · ${plural(p.recusadas, "recusada", "recusadas")}`}</span>}
+                        {p.recusadas > 0 && (
+                          <>
+                            {" · "}
+                            <span className="inline-flex items-center gap-1">
+                              <XCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />
+                              {plural(p.recusadas, "recusada", "recusadas")}
+                            </span>
+                          </>
+                        )}
                       </span>
                       <ChevronRight size={14} className="shrink-0 text-black/30" aria-hidden />
                     </div>

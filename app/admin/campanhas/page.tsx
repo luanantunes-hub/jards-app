@@ -40,8 +40,8 @@ export default async function AdminCampanhasPage() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         {cards.map((card) => (
           <div key={card.rotulo} className="rounded p-5" style={{ border: "1px solid rgba(13,13,13,.08)" }}>
-            <p className="text-[0.6875rem] font-semibold text-black/40 uppercase tracking-wide">{card.rotulo}</p>
-            <p className="text-2xl font-bold text-[#0D0D0D] mt-1 tabular-nums">{card.valor}</p>
+            <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{card.rotulo}</p>
+            <p className={`mt-1 text-2xl font-semibold tabular-nums ${card.valor ? "text-[#0D0D0D]" : "text-black/30"}`}>{card.valor}</p>
           </div>
         ))}
       </div>

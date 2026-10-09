@@ -229,7 +229,7 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
 
         <div className="border-t border-black/[.06] bg-black/[.012] px-5 py-4 sm:px-6">
           <div className="flex items-center gap-1.5">
-            <span className="text-[0.625rem] font-semibold uppercase tracking-[.11em] text-black/30">Resultados do período</span>
+            <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Resultados do período</span>
             <Info size={10} className="text-black/20" aria-label="Negociações e inscrições podem chegar à aprovação por caminhos diferentes." />
           </div>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -251,7 +251,7 @@ export function CaptadorOverview({ data }: { data: CaptadorOverviewData | null }
           </div>
           {data.alertas.length === 0 ? (
             <div className="flex items-center gap-3 px-5 py-7 text-black/35">
-              <CheckCircle2 size={16} className="text-[#2E8932]" />
+              <CheckCircle2 size={16} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
               <p className="text-[0.75rem] font-medium">Nenhum ponto crítico identificado.</p>
             </div>
           ) : (

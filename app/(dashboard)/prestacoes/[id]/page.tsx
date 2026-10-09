@@ -2,10 +2,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useRouter } from "next/navigation";
-import { ChevronDown, ChevronRight, AlertCircle, ArrowRight } from "lucide-react";
+import { ChevronDown, ChevronRight, AlertCircle, ArrowRight, Circle, CircleCheck, CircleDot, Lock } from "lucide-react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
+import { BarraCaptacao } from "@/components/ui/IndicadoresFinanceiros";
+import { formatarValorCompleto } from "@/lib/valor";
 import type { PrestacaoContas, StatusPrestacao } from "@/lib/supabase/types";
 import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { executadoPorItem, percentualExecutado, totalExecutado, type ComprovanteParaExecucao } from "@/lib/prestacao/execucao";
@@ -57,12 +59,8 @@ const STATUS_META: Record<StatusPrestacao, { label: string; color: string; bg: s
   arquivado:        { label: "Arquivado",          color: "rgba(13,13,13,.35)", bg: "rgba(13,13,13,.05)"  },
 };
 
-const fmt = (v: number | null) => {
-  if (!v) return "—";
-  if (v >= 1_000_000) return `R$ ${(v / 1_000_000).toFixed(1)}M`;
-  if (v >= 1_000) return `R$ ${v.toLocaleString("pt-BR")}`;
-  return `R$ ${v}`;
-};
+// Prestação de contas mostra o valor exato, com centavos.
+const fmt = (v: number | null) => (v ? formatarValorCompleto(v) : "—");
 
 const fmtDate = (d: string | null) =>
   d ? new Date(d + "T00:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" }) : "—";
@@ -329,10 +327,7 @@ export default function PrestacaoDetalhe() {
                     className="w-full flex items-center gap-2 px-4 py-3 text-left text-[0.75rem] font-medium hover:bg-black/[.03] transition border-b last:border-0"
                     style={{ borderColor: "rgba(13,13,13,.05)" }}
                   >
-                    <span
-                      className="w-2 h-2 rounded-full flex-shrink-0"
-                      style={{ background: STATUS_META[s].color }}
-                    />
+                    <ArrowRight size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
                     {STATUS_META[s].label}
                   </button>
                 ))}
@@ -342,7 +337,7 @@ export default function PrestacaoDetalhe() {
                     className="flex items-start gap-2 px-4 py-3 text-[0.75rem] text-black/45 border-b last:border-0"
                     style={{ borderColor: "rgba(13,13,13,.05)" }}
                   >
-                    <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0 bg-black/15" />
+                    <Lock size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />
                     <span>
                       {STATUS_META[s].label}
                       <span className="block text-[0.625rem] text-[#B23B3B]">
@@ -365,7 +360,7 @@ export default function PrestacaoDetalhe() {
                     className="flex items-start gap-2 px-4 py-3 text-[0.75rem] text-black/35 border-b last:border-0"
                     style={{ borderColor: "rgba(13,13,13,.05)" }}
                   >
-                    <span className="mt-1 w-2 h-2 rounded-full flex-shrink-0 bg-black/15" />
+                    <Lock size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />
                     <span>
                       {STATUS_META[s].label}
                       <span className="block text-[0.625rem]">Cabe ao administrador ou ao responsável pela prestação.</span>
@@ -443,18 +438,18 @@ export default function PrestacaoDetalhe() {
               <p className="text-[0.6875rem] font-semibold text-black/50 mb-3">Comprovação financeira</p>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">Aprovado</p>
-                  <p className="text-[1.0625rem] font-bold text-black/80">{fmt(totalAprovado)}</p>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Aprovado</p>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalAprovado ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totalAprovado)}</p>
                 </div>
                 <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide mb-1" style={{ color: "#2E893280" }}>Comprovado</p>
-                  <p className="text-[1.0625rem] font-bold" style={{ color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "#7259B5" }}>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">Comprovado</p>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalComprovado ? "text-[#0D0D0D]" : "text-black/30"}`}>
                     {fmt(totalComprovado)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30 mb-1">A comprovar</p>
-                  <p className="text-[1.0625rem] font-bold" style={{ color: totalAComprovar > 0 ? "#D94E4E" : "#2E8932" }}>
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-1">A comprovar</p>
+                  <p className={`text-[1.0625rem] font-semibold tabular-nums ${totalAComprovar > 0 ? "text-[#0D0D0D]" : "text-black/30"}`}>
                     {totalAComprovar > 0 ? fmt(totalAComprovar) : "—"}
                   </p>
                 </div>
@@ -464,20 +459,10 @@ export default function PrestacaoDetalhe() {
             {/* Barra de progresso */}
             <div className="px-5 py-3 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
               <div className="flex items-center justify-between mb-1.5">
-                <p className="text-[0.625rem] text-black/35">Percentual comprovado</p>
-                <span className="text-[0.6875rem] font-bold tabular-nums" style={{
-                  color: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "rgba(13,13,13,.4)"
-                }}>{pct}%</span>
+                <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Percentual comprovado</p>
+                <span className={`text-[0.6875rem] font-semibold tabular-nums ${pct ? "text-[#0D0D0D]" : "text-black/30"}`}>{pct}%</span>
               </div>
-              <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(13,13,13,.07)" }}>
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${Math.min(pct, 100)}%`,
-                    background: pct >= 90 ? "#2E8932" : pct >= 50 ? "#B07A14" : "#7259B5",
-                  }}
-                />
-              </div>
+              <BarraCaptacao confirmado={totalComprovado} meta={totalAprovado} className="h-1.5" />
             </div>
 
             {/* Breakdown por rubrica */}
@@ -502,20 +487,10 @@ export default function PrestacaoDetalhe() {
                             <p className="text-[0.6875rem] font-medium text-black/70 truncate" title={item.caminho.length ? `${item.caminho.join(" › ")} › ${item.nome}` : item.nome}>{item.nome}</p>
                             <div className="flex items-center gap-3 flex-shrink-0 ml-4">
                               <span className="text-[0.625rem] text-black/35 tabular-nums">{fmt(itemExecutado)} / {fmt(item.vigente)}</span>
-                              <span className="text-[0.625rem] font-semibold tabular-nums" style={{
-                                color: itemPct >= 90 ? "#2E8932" : itemPct >= 50 ? "#B07A14" : "rgba(13,13,13,.35)"
-                              }}>{itemPct}%</span>
+                              <span className={`text-[0.625rem] font-semibold tabular-nums ${itemPct ? "text-[#0D0D0D]" : "text-black/30"}`}>{itemPct}%</span>
                             </div>
                           </div>
-                          <div className="h-1 rounded-full overflow-hidden" style={{ background: "rgba(13,13,13,.06)" }}>
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${Math.min(itemPct, 100)}%`,
-                                background: itemPct >= 90 ? "#2E8932" : itemPct >= 50 ? "#B07A14" : "#7259B5",
-                              }}
-                            />
-                          </div>
+                          <BarraCaptacao confirmado={itemExecutado} meta={item.vigente} className="h-1" />
                         </div>
                       );
                     })}
@@ -600,25 +575,20 @@ export default function PrestacaoDetalhe() {
           <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-3">Status atual</p>
             <div className="flex items-center gap-2">
-              {STATUS_ORDER.map((s, i) => (
-                <div key={s} className="flex items-center gap-1">
-                  <div
-                    className="w-2 h-2 rounded-full flex-shrink-0"
-                    style={{
-                      background: s === prestacao.status
-                        ? STATUS_META[s].color
-                        : STATUS_ORDER.indexOf(prestacao.status) > i
-                        ? "#2E8932"
-                        : "rgba(13,13,13,.12)",
-                    }}
-                  />
-                  {i < STATUS_ORDER.length - 1 && (
-                    <div className="w-3 h-px" style={{ background: "rgba(13,13,13,.10)" }} />
-                  )}
-                </div>
-              ))}
+              {STATUS_ORDER.map((s, i) => {
+                const Icone = s === prestacao.status ? CircleDot : STATUS_ORDER.indexOf(prestacao.status) > i ? CircleCheck : Circle;
+                const tom = s === prestacao.status ? "text-[#0D0D0D]" : STATUS_ORDER.indexOf(prestacao.status) > i ? "text-black/40" : "text-black/20";
+                return (
+                  <div key={s} className="flex items-center gap-1">
+                    <Icone size={12} strokeWidth={1.75} aria-hidden="true" className={`shrink-0 ${tom}`} />
+                    {i < STATUS_ORDER.length - 1 && (
+                      <div className="w-3 h-px" style={{ background: "rgba(13,13,13,.10)" }} />
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            <p className="text-[0.6875rem] font-semibold mt-2" style={{ color: meta.color }}>{meta.label}</p>
+            <p className="text-[0.6875rem] font-semibold text-[#0D0D0D] mt-2">{meta.label}</p>
           </div>
 
           <ProximosPrazos prazos={prazos} />
@@ -639,13 +609,10 @@ export default function PrestacaoDetalhe() {
                 <div className="space-y-3">
                   {log.map(entry => (
                     <div key={entry.id} className="flex gap-2.5">
-                      <div
-                        className="w-2 h-2 rounded-full flex-shrink-0 mt-1.5"
-                        style={{ background: STATUS_META[entry.status_novo].color }}
-                      />
+                      <ArrowRight size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-black/40" />
                       <div>
                         <p className="text-[0.6875rem] font-medium text-black/70">
-                          → {STATUS_META[entry.status_novo].label}
+                          {STATUS_META[entry.status_novo].label}
                         </p>
                         {entry.comentario && (
                           <p className="text-[0.625rem] text-black/40 mt-0.5 italic">"{entry.comentario}"</p>

@@ -107,7 +107,7 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
   return (
     <div>
       <div className="flex justify-between text-xs mb-1.5">
-        <span className="font-semibold text-black/60">{label}</span>
+        <span className="font-medium text-black/60">{label}</span>
         <span className={`flex items-center gap-1 font-semibold tabular-nums ${used ? "text-[#0D0D0D]" : "text-black/30"}`}>
           {over && <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />}
           {used} / {limit === null ? "∞" : limit}
@@ -302,7 +302,7 @@ function MeuPlanoInner() {
       <div className="grid xl:grid-cols-[1fr_18.75rem] gap-6">
         {/* Planos */}
         <div className="space-y-4">
-          <p className="text-xs font-bold text-black/35 uppercase tracking-wider">Planos disponíveis</p>
+          <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Planos disponíveis</p>
           <div className="grid md:grid-cols-3 gap-4 items-start">
             {PLANS.map((plan) => {
               const isAtual   = plan.key === planoAtual;
@@ -333,12 +333,12 @@ function MeuPlanoInner() {
 
                   {/* Eyebrow + preço */}
                   <p
-                    className="mb-4 text-[0.6875rem] font-bold uppercase tracking-widest"
+                    className="mb-4 text-[0.6875rem] font-medium uppercase tracking-[.08em]"
                     style={{ color: dark ? "rgba(255,255,255,.45)" : "rgba(13,13,13,.40)" }}
                   >
                     {plan.label}
                   </p>
-                  <p className="text-[2rem] font-bold leading-none tracking-tight" style={{ color: dark ? "#fff" : "#0D0D0D" }}>
+                  <p className="text-[2rem] font-semibold tabular-nums leading-none tracking-tight" style={{ color: dark ? "#fff" : "#0D0D0D" }}>
                     {plan.preco}
                   </p>
                   <p className="mb-5 mt-1.5 text-[0.75rem]" style={{ color: dark ? "rgba(255,255,255,.40)" : "rgba(13,13,13,.35)" }}>
@@ -395,7 +395,7 @@ function MeuPlanoInner() {
         <div className="space-y-4">
           {/* Plano atual */}
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-3">Plano atual</p>
+            <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-3">Plano atual</p>
             {loading ? (
               <div className="space-y-2 animate-pulse">
                 <div className="h-5 w-24 bg-black/8 rounded" />
@@ -405,10 +405,10 @@ function MeuPlanoInner() {
               <>
                 <div className="flex items-center gap-2 mb-1">
                   <planDef.icon size={16} style={{ color: planDef.cor }} />
-                  <span className="text-base font-bold" style={{ color: planDef.cor }}>{planDef.label}</span>
+                  <span className="text-base font-semibold text-[#0D0D0D]">{planDef.label}</span>
                 </div>
                 {profile?.stripe_subscription_status && profile.stripe_subscription_status !== "inactive" && (
-                  <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35">
+                  <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
                     {profile.stripe_subscription_status === "active" ? "Ativa" : profile.stripe_subscription_status === "trialing" ? "Período de teste" : profile.stripe_subscription_status === "canceled" ? "Cancelada" : "Pagamento pendente"}
                   </p>
                 )}
@@ -433,7 +433,7 @@ function MeuPlanoInner() {
 
           {/* Uso do mês */}
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-4">Uso este mês</p>
+            <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-4">Uso este mês</p>
             {loading ? (
               <div className="space-y-4 animate-pulse">
                 {[0, 1].map(i => (
@@ -461,7 +461,7 @@ function MeuPlanoInner() {
 
           {/* FAQ rápido */}
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-            <p className="text-[0.625rem] font-bold text-black/35 uppercase tracking-wide mb-3">Dúvidas</p>
+            <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-3">Dúvidas</p>
             <div className="space-y-3 text-xs text-black/50">
               <p><span className="font-semibold text-black/70">Posso cancelar a qualquer momento?</span><br />Sim. O acesso fica ativo até o fim do período pago.</p>
               <p><span className="font-semibold text-black/70">O que são desbloqueios?</span><br />Cada empresa com dados detalhados (contatos, histórico) consome 1 crédito por mês.</p>

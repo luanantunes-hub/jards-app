@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Plus, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Search, Plus, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown, Building2, Users } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -678,7 +678,10 @@ export default function EditaisInscritosPage() {
                             {e.responsavel_nome ? (
                               <span className="font-medium text-[0.78125rem] text-black/60">
                                 <span className="line-clamp-1 truncate">{e.responsavel_nome}</span>
-                                <span className="block text-[0.625rem] font-semibold uppercase tracking-wider" style={{ color: e.responsavel_tipo === "agencia" ? "#2D72B0" : "#1A8B7A" }}>
+                                <span className="flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                                  {e.responsavel_tipo === "agencia"
+                                    ? <Building2 size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
+                                    : <Users size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />}
                                   {e.responsavel_tipo === "agencia" ? "Agência" : "Equipe"}
                                 </span>
                               </span>
@@ -690,10 +693,15 @@ export default function EditaisInscritosPage() {
                           <td className="px-5 py-3.5 whitespace-nowrap">
                             <span className="block text-xs tabular-nums text-black/40">{fmtDate(e.updated_at)}</span>
                             <span
-                              className="mt-1 block max-w-[9.375rem] whitespace-normal text-[0.5625rem] font-semibold uppercase leading-tight tracking-[.06em]"
-                              style={{ color: timing.color }}
+                              className="mt-1 flex max-w-[9.375rem] items-start gap-1 whitespace-normal text-[0.625rem] font-medium leading-tight text-black/55"
                               title={timing.detail}
                             >
+                              <Clock
+                                size={12}
+                                strokeWidth={1.75}
+                                aria-hidden
+                                className={`shrink-0 ${timing.label === "Prazo perdido" || timing.label === "Prazo perdido há muito tempo" || timing.label === "Resultado atrasado" ? "text-[#D94A4A]" : timing.label === "Esfriando" || timing.label === "Sem retorno" ? "text-[#B07A14]" : "text-black/40"}`}
+                              />
                               {timing.label}
                             </span>
                           </td>
@@ -704,7 +712,8 @@ export default function EditaisInscritosPage() {
                               const urgente = dias !== null && dias >= 0 && dias < 7;
                               const passado = dias !== null && dias < 0;
                               return (
-                                <span className={`text-xs font-${urgente ? "bold" : "normal"}`} style={{ color: urgente ? "#D94E4E" : passado ? "rgba(13,13,13,.25)" : "rgba(13,13,13,.40)" }}>
+                                <span className={`inline-flex items-center gap-1 text-xs font-medium tabular-nums ${passado ? "text-black/25" : "text-black/55"}`}>
+                                  {urgente && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Fecha em menos de 7 dias" className="shrink-0 text-[#D94A4A]" />}
                                   {urgente ? `${dias}d` : fmtDate(e.data_fechamento)}
                                 </span>
                               );

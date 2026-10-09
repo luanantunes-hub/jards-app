@@ -53,19 +53,19 @@ const STATUS_LABEL: Record<string, { label: string; bg: string }> = {
   encerrada: { label: "Encerrada", bg: "#D94E4E" },
 };
 
-function diasSemAtividadeCor(dias: number | null): string {
-  if (dias === null) return "rgba(13,13,13,.25)";
-  if (dias <= 30)  return "#2E8932";
-  if (dias <= 60)  return "#B07A14";
-  return "#D94E4E";
+/** Só o atraso pinta o ícone: âmbar de 31 a 60 dias sem atividade, vermelho depois disso. */
+function diasSemAtividadeAlerta(dias: number | null): string | undefined {
+  if (dias === null || dias <= 30) return undefined;
+  return dias <= 60 ? "#B07A14" : "#D94A4A";
 }
 
-function healthMeta(score: number | null, readings: number) {
-  if (score === null || readings === 0) return { label: "Sem leitura", color: "rgba(13,13,13,.35)" };
-  if (score < 44) return { label: "Risco", color: "#D94E4E" };
-  if (score < 64) return { label: "Atenção", color: "#B07A14" };
-  if (score < 84) return { label: "Estável", color: "#2D72B0" };
-  return { label: "Saudável", color: "#2E8932" };
+/** A leitura fica neutra; só Risco e Atenção pintam o ícone de alerta. */
+function healthMeta(score: number | null, readings: number): { label: string; alerta?: string } {
+  if (score === null || readings === 0) return { label: "Sem leitura" };
+  if (score < 44) return { label: "Risco", alerta: "#D94A4A" };
+  if (score < 64) return { label: "Atenção", alerta: "#B07A14" };
+  if (score < 84) return { label: "Estável" };
+  return { label: "Saudável" };
 }
 
 function fmtDate(d: string | null): string {
@@ -144,13 +144,14 @@ const PORTFOLIO_LANES: Array<{
   key: PortfolioLane;
   label: string;
   description: string;
-  color: string;
+  /** Só a faixa de alerta pinta o ícone; as demais ficam cinza. */
+  alerta?: string;
   icon: typeof HeartPulse;
 }> = [
-  { key: "intervir", label: "Intervir", description: "Risco ou atraso exige ação", color: "#D94E4E", icon: HeartPulse },
-  { key: "renovar", label: "Renovar", description: "Renovação nos próximos 90 dias", color: "#B07A14", icon: RefreshCw },
-  { key: "expandir", label: "Expandir", description: "Parceria pronta para crescer", color: "#2E8932", icon: TrendingUp },
-  { key: "acompanhar", label: "Acompanhar", description: "Relacionamento em curso", color: "#2D72B0", icon: Eye },
+  { key: "intervir", label: "Intervir", description: "Risco ou atraso exige ação", alerta: "#D94A4A", icon: HeartPulse },
+  { key: "renovar", label: "Renovar", description: "Renovação nos próximos 90 dias", icon: RefreshCw },
+  { key: "expandir", label: "Expandir", description: "Parceria pronta para crescer", icon: TrendingUp },
+  { key: "acompanhar", label: "Acompanhar", description: "Relacionamento em curso", icon: Eye },
 ];
 
 function classifyPortfolio(account: Omit<ContaRow, "portfolio_lane" | "portfolio_reason" | "portfolio_action" | "portfolio_deadline" | "portfolio_urgency">) {
@@ -224,7 +225,7 @@ function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]
             <section key={lane.key} className="flex min-h-[32.5rem] flex-col rounded border border-black/[.08] bg-[#F7F7F5]">
               <header className="border-b border-black/[.07] px-3.5 py-3">
                 <div className="flex items-start justify-between gap-3">
-                  <div><div className="flex items-center gap-1.5"><LaneIcon size={13} aria-hidden="true" className="shrink-0" style={{ color: lane.color }}/><h2 className="text-[0.75rem] font-semibold text-black/75">{lane.label}</h2></div><p className="mt-1 text-[0.59375rem] text-black/30">{lane.description}</p></div>
+                  <div><div className="flex items-center gap-1.5"><LaneIcon size={12} strokeWidth={1.75} aria-hidden="true" className={lane.alerta ? "shrink-0" : "shrink-0 text-black/40"} style={lane.alerta ? { color: lane.alerta } : undefined}/><h2 className="text-[0.75rem] font-semibold text-black/75">{lane.label}</h2></div><p className="mt-1 text-[0.59375rem] text-black/30">{lane.description}</p></div>
                   <span className="text-[0.625rem] font-semibold tabular-nums text-black/30">{items.length}</span>
                 </div>
                 <p className="mt-2 text-[0.625rem] tabular-nums text-black/35">{total > 0 ? <span title={formatarValorCompleto(total)}>{formatarValorCurto(total)} na carteira</span> : "Sem valor registrado"}</p>
@@ -234,12 +235,13 @@ function CustomerPortfolio({ accounts, loading, onOpen }: { accounts: ContaRow[]
                   <div className="rounded border border-dashed border-black/10 px-3 py-10 text-center text-[0.65625rem] text-black/25">Nenhum cliente nesta faixa</div>
                 ) : items.map(account => {
                   const companyName = account.empresa_crm?.nome ?? account.nome ?? "Cliente";
+                  const alerta = healthMeta(account.health_score, account.health_readings).alerta;
                   return (
                     <button key={account.id} type="button" onClick={() => onOpen(account.id)} className="w-full rounded border border-black/[.08] bg-white p-3 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
                       <div className="flex items-start gap-2.5">
                         <CompanyLogo nome={companyName} domain={account.empresa_crm?.domain_key} site={account.empresa_crm?.site} size={32} className="shrink-0 border border-black/[.06]"/>
                         <div className="min-w-0 flex-1"><p className="truncate text-[0.75rem] font-semibold text-black">{companyName}</p><p className="mt-0.5 truncate text-[0.59375rem] text-black/30">{account.nome && account.nome !== companyName ? account.nome : account.empresa_crm?.setor ?? "Cliente"}</p></div>
-                        {account.health_score !== null && <span className="flex shrink-0 items-center gap-1 text-[0.625rem] font-semibold tabular-nums text-[#0D0D0D]"><HeartPulse size={12} strokeWidth={1.75} aria-hidden="true" className={account.health_score >= 70 ? "shrink-0 text-black/40" : "shrink-0"} style={account.health_score >= 70 ? undefined : { color: account.health_score >= 45 ? "#B07A14" : "#D94A4A" }}/>{account.health_score}</span>}
+                        {account.health_score !== null && <span className="flex shrink-0 items-center gap-1 text-[0.625rem] font-semibold tabular-nums text-[#0D0D0D]"><HeartPulse size={12} strokeWidth={1.75} aria-hidden="true" className={alerta ? "shrink-0" : "shrink-0 text-black/40"} style={alerta ? { color: alerta } : undefined}/>{account.health_score}</span>}
                       </div>
                       <div className="mt-3 border-t border-black/[.06] pt-2.5">
                         <p className="text-[0.625rem] font-semibold text-black/55">{account.portfolio_reason}</p>
@@ -568,10 +570,10 @@ export default function ContasPatrocinioPage() {
                     {/* Saúde da parceria */}
                     <td className="px-5 py-3.5">
                       <span
-                        className="text-[0.625rem] font-semibold uppercase tracking-wide whitespace-nowrap"
-                        style={{ color: health.color }}
+                        className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[0.75rem] font-medium ${c.health_score === null || c.health_readings === 0 ? "text-black/30" : "text-black/60"}`}
                         title={c.health_score === null ? "Saúde ainda não avaliada" : `Score de saúde: ${c.health_score} de 100`}
                       >
+                        {health.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: health.alerta }} />}
                         {health.label}
                       </span>
                     </td>
@@ -598,8 +600,12 @@ export default function ContasPatrocinioPage() {
                     <td className="px-5 py-3.5">
                       {c.proxima_renovacao ? (
                         <div className="flex items-center gap-1.5">
-                          {renovWarning && <AlertTriangle size={11} className="text-[#B07A14]" />}
-                          <span className={`text-[0.75rem] ${renovWarning ? "font-bold text-[#B07A14]" : "text-black/40"}`}>
+                          {renovWarning && (
+                            <span role="img" className="shrink-0" title="Renovação próxima" aria-label="Renovação próxima">
+                              <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="text-[#B07A14]" />
+                            </span>
+                          )}
+                          <span className="text-[0.75rem] tabular-nums text-black/60">
                             {fmtDate(c.proxima_renovacao)}
                           </span>
                         </div>
@@ -610,11 +616,17 @@ export default function ContasPatrocinioPage() {
 
                     {/* Última interação */}
                     <td className="px-5 py-3.5">
-                      {c.dias_sem_atividade !== null ? (
-                        <span className="text-[0.75rem] font-semibold" style={{ color: diasSemAtividadeCor(c.dias_sem_atividade) }}>
-                          {c.dias_sem_atividade === 0 ? "Hoje" : `há ${c.dias_sem_atividade} dias`}
-                        </span>
-                      ) : (
+                      {c.dias_sem_atividade !== null ? (() => {
+                        const alerta = diasSemAtividadeAlerta(c.dias_sem_atividade);
+                        return (
+                          <span className="inline-flex items-center gap-1.5">
+                            {alerta && <Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: alerta }} />}
+                            <span className="text-[0.75rem] font-medium tabular-nums text-black/60">
+                              {c.dias_sem_atividade === 0 ? "Hoje" : `há ${c.dias_sem_atividade} dias`}
+                            </span>
+                          </span>
+                        );
+                      })() : (
                         <span className="text-black/25 text-[0.75rem]">Sem registro</span>
                       )}
                     </td>

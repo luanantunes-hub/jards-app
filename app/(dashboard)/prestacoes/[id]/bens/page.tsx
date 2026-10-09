@@ -20,6 +20,7 @@ import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
 import type { PrestacaoBem } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 
 type DadosDaPrestacao = { regime_id: string | null; data_inicio_execucao: string | null; data_fim_execucao: string | null };
@@ -32,8 +33,8 @@ function Avisos({ achados }: { achados: readonly Achado[] }) {
   return (
     <ul className="mt-1 space-y-0.5">
       {achados.map(a => (
-        <li key={a.chave} className="flex items-start gap-1 text-[0.6875rem]" style={{ color: a.justificativa ? "rgba(13,13,13,.45)" : "#B07A14" }}>
-          <AlertTriangle size={11} className="mt-0.5 shrink-0" aria-hidden />
+        <li key={a.chave} className={`flex items-start gap-1 text-[0.6875rem] ${a.justificativa ? "text-black/45" : "text-black/60"}`}>
+          <AlertTriangle size={12} strokeWidth={1.75} className={`mt-0.5 shrink-0 ${a.justificativa ? "text-black/40" : "text-[#B07A14]"}`} aria-hidden />
           <span>{a.mensagem}{a.justificativa ? ` Justificativa: ${a.justificativa}` : ""}</span>
         </li>
       ))}
@@ -198,10 +199,18 @@ export default function BensPage() {
 
       {!carregando && (bens.length > 0 || itensDeBem.size > 0) && (
         <dl className="flex flex-wrap gap-x-6 gap-y-1 rounded border bg-white px-5 py-3 text-[0.6875rem]" style={BORDA}>
-          <div className="flex gap-1.5"><dt className="text-black/40">Bens</dt><dd className="tabular-nums text-black/75">{bens.length}</dd></div>
-          <div className="flex gap-1.5"><dt className="text-black/40">Itens de bem no orçamento</dt><dd className="tabular-nums text-black/75">{itensDeBem.size}</dd></div>
-          {totalDoacao > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Doados</dt><dd className="tabular-nums text-black/75">{totalDoacao}</dd></div>}
-          {semDestinacao > 0 && <div className="flex gap-1.5"><dt className="text-black/40">Sem destinação</dt><dd className="tabular-nums text-[#B07A14]">{semDestinacao}</dd></div>}
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Bens</dt><dd className={`font-semibold tabular-nums ${bens.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{bens.length}</dd></div>
+          <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Itens de bem no orçamento</dt><dd className={`font-semibold tabular-nums ${itensDeBem.size ? "text-[#0D0D0D]" : "text-black/30"}`}>{itensDeBem.size}</dd></div>
+          {totalDoacao > 0 && <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Doados</dt><dd className="font-semibold tabular-nums text-[#0D0D0D]">{totalDoacao}</dd></div>}
+          {semDestinacao > 0 && (
+            <div className="flex items-center gap-1.5">
+              <dt className={`${ROTULO} inline-flex items-center gap-1`}>
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                Sem destinação
+              </dt>
+              <dd className="font-semibold tabular-nums text-[#0D0D0D]">{semDestinacao}</dd>
+            </div>
+          )}
         </dl>
       )}
 

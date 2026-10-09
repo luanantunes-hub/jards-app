@@ -766,7 +766,7 @@ export default function EditaisAbertosPage() {
                     <button type="button" aria-label="Votar a favor" aria-pressed={meuVoto === 1} onClick={() => handleVotar(s.id, 1)} className="p-0.5 rounded hover:bg-black/5 transition">
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[0.6875rem] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                    <span className={`text-[0.6875rem] font-semibold tabular-nums ${saldo === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
                       {saldo}
                     </span>
                     <button type="button" aria-label="Votar contra" aria-pressed={meuVoto === -1} onClick={() => handleVotar(s.id, -1)} className="p-0.5 rounded hover:bg-black/5 transition">

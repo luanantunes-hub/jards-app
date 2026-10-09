@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, ArrowUpRight, BriefcaseBusiness, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Plus, ArrowUpRight, BriefcaseBusiness, Building2, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -462,10 +462,10 @@ export default function CaptacoesPage() {
           </div>
         )}
         {c.proxima_prospeccao && (
-          <div className="mt-3 flex items-center justify-between border-t pt-2.5 text-[0.625rem] font-medium" style={{ borderColor: "rgba(13,13,13,.06)", color: "#B07A14" }}>
-            <span>Próximo contato</span>
-            <span className="flex items-center gap-1 tabular-nums">
-            <Calendar size={10} />
+          <div className="mt-3 flex items-center justify-between border-t pt-2.5 text-[0.625rem] font-medium" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+            <span className="text-black/45">Próximo contato</span>
+            <span className="flex items-center gap-1 tabular-nums text-black/60">
+            <Calendar size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
             {fmtShortDate(c.proxima_prospeccao)}
             </span>
           </div>
@@ -832,7 +832,8 @@ export default function CaptacoesPage() {
                             {c.captador_externo?.nome ? (
                               <span className="font-medium text-[0.78125rem] text-black/60">
                                 <span className="line-clamp-1 truncate">{c.captador_externo.nome}</span>
-                                <span className="block text-[0.625rem] font-semibold uppercase tracking-wider" style={{ color: "#2D72B0" }}>
+                                <span className="flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                                  <Building2 size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                                   Agência
                                 </span>
                               </span>
@@ -842,8 +843,8 @@ export default function CaptacoesPage() {
                           {/* Próx. contato */}
                           <td className="px-4 py-3.5 whitespace-nowrap">
                             {c.proxima_prospeccao ? (
-                              <span className="flex items-center gap-1 text-[0.6875rem] text-amber-700 font-semibold">
-                                <Calendar size={10} />
+                              <span className="flex items-center gap-1 text-[0.6875rem] font-medium tabular-nums text-black/55">
+                                <Calendar size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                                 {fmtShortDate(c.proxima_prospeccao)}
                               </span>
                             ) : <span className="text-black/20 text-xs">—</span>}

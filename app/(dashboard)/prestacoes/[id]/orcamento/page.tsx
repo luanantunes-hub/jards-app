@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { CheckCircle2, ChevronsDownUp, ChevronsUpDown, CopyPlus, FolderPlus, Info, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ChevronsDownUp, ChevronsUpDown, CopyPlus, FolderPlus, Info, Pencil, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -307,7 +307,7 @@ export default function OrcamentoPage() {
 
       {versao && !versao.ativa && versaoAtiva && (
         <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">
-          <Info size={13} className="mt-px shrink-0 text-[#2D72B0]" aria-hidden />
+          <Info size={12} strokeWidth={1.75} className="mt-px shrink-0 text-black/40" aria-hidden />
           Você está vendo uma versão que não está em uso. O orçamento em uso é {nomeDaVersao(versaoAtiva)}; os comprovantes aparecem aqui nos itens copiados dele.
         </p>
       )}
@@ -341,15 +341,19 @@ export default function OrcamentoPage() {
                 rotulo: "Vigente",
                 valor: fmt(arvore.total.vigente),
                 nota: arvore.total.remanejado !== 0 ? `Aprovado ${fmt(arvore.total.aprovado)}` : `${arvore.total.itens} itens`,
+                zerado: arvore.total.vigente === 0,
               },
-              { rotulo: "Comprometido", valor: fmt(arvore.total.comprometido), nota: "Despesas ainda sem pagamento conciliado" },
-              { rotulo: "Pago", valor: fmt(arvore.total.pago), nota: "Conciliado com o extrato" },
-              { rotulo: "Saldo", valor: fmt(arvore.total.saldo), nota: "Vigente − comprometido − pago", alerta: arvore.total.saldo < 0 },
-              { rotulo: "% pago", valor: percentual !== null ? `${percentual}%` : "—", nota: "Sobre o vigente" },
+              { rotulo: "Comprometido", valor: fmt(arvore.total.comprometido), nota: "Despesas ainda sem pagamento conciliado", zerado: arvore.total.comprometido === 0 },
+              { rotulo: "Pago", valor: fmt(arvore.total.pago), nota: "Conciliado com o extrato", zerado: arvore.total.pago === 0 },
+              { rotulo: "Saldo", valor: fmt(arvore.total.saldo), nota: "Vigente − comprometido − pago", alerta: arvore.total.saldo < 0, zerado: arvore.total.saldo === 0 },
+              { rotulo: "% pago", valor: percentual !== null ? `${percentual}%` : "—", nota: "Sobre o vigente", zerado: !percentual },
             ].map(cartao => (
               <div key={cartao.rotulo} className={`${CARTAO} p-3`} style={BORDA}>
-                <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35">{cartao.rotulo}</p>
-                <p className={`mt-1 text-[1rem] font-semibold tabular-nums ${cartao.alerta ? "text-[#B23B3B]" : "text-[#0D0D0D]"}`}>{cartao.valor}</p>
+                <p className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                  {cartao.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
+                  {cartao.rotulo}
+                </p>
+                <p className={`mt-1 text-[1rem] font-semibold tabular-nums ${cartao.zerado ? "text-black/30" : "text-[#0D0D0D]"}`}>{cartao.valor}</p>
                 <p className="mt-0.5 text-[0.625rem] text-black/35">{cartao.nota}</p>
               </div>
             ))}
@@ -357,7 +361,7 @@ export default function OrcamentoPage() {
 
           {semLancamento.quantidade > 0 && (
             <p className="flex items-start gap-2 text-[0.6875rem] leading-4 text-black/50">
-              <Info size={13} className="mt-px shrink-0 text-[#2D72B0]" aria-hidden />
+              <Info size={12} strokeWidth={1.75} className="mt-px shrink-0 text-black/40" aria-hidden />
               <span>
                 {semLancamento.quantidade === 1 ? "1 pagamento registrado" : `${semLancamento.quantidade} pagamentos registrados`} (<span className="tabular-nums">{fmt(semLancamento.valor)}</span>) ainda sem o débito do extrato; {semLancamento.quantidade === 1 ? "ele conta" : "eles contam"} como comprometido até a conciliação.{" "}
                 <Link href={`/prestacoes/${id}/conciliacao`} className="text-[#684DB0] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">Conciliar</Link>

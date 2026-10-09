@@ -5,7 +5,7 @@ import {
   TrendingUp, Percent, ListChecks, AlertTriangle,
   Mail, Phone, Users, Calendar, MoreHorizontal, CheckSquare,
   ArrowRight, ArrowUpRight, Clock, CircleDollarSign, List, Filter,
-  type LucideIcon,
+  FileText, PhoneCall, type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PotencialFechamento, StatusCaptacao, TipoAtividade } from "@/lib/supabase/types";
@@ -276,7 +276,7 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
         ))}
         {ordered.map((metric, channelIndex) => {
           const option = canais.find(item => item.chave === metric.canal);
-          return <path key={metric.canal} d={pathForChannel(channelIndex)} fill={option?.cor ?? "#7259B5"} opacity={0.85} />;
+          return <path key={metric.canal} d={pathForChannel(channelIndex)} fill={option?.cor ?? "rgba(13,13,13,.35)"} opacity={0.85} />;
         })}
         {FUNNEL_STAGES.map((stage, i) => {
           const total = stageTotals[i];
@@ -286,9 +286,9 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
           const anchor = isLast ? "middle" : "start";
           return (
             <g key={stage.key}>
-              <text x={textX} y={28} textAnchor={anchor} fontSize={22} className="font-bold" fill="#0D0D0D">{total}</text>
+              <text x={textX} y={28} textAnchor={anchor} fontSize={22} className="font-semibold" style={{ fontVariantNumeric: "tabular-nums" }} fill="#0D0D0D">{total}</text>
               <text x={textX} y={48} textAnchor={anchor} fontSize={13} fill="rgba(13,13,13,.5)">{stage.label}</text>
-              <text x={textX} y={65} textAnchor={anchor} fontSize={13} className="font-bold" fill="rgba(13,13,13,.7)">{pct}%</text>
+              <text x={textX} y={65} textAnchor={anchor} fontSize={13} className="font-semibold" style={{ fontVariantNumeric: "tabular-nums" }} fill="rgba(13,13,13,.7)">{pct}%</text>
             </g>
           );
         })}
@@ -298,7 +298,7 @@ function ChannelFunnelChart({ metrics, canais }: { metrics: ChannelMetric[]; can
           const option = canais.find(item => item.chave === metric.canal);
           return (
             <div key={metric.canal} className="flex items-center gap-1.5">
-              <span className="h-2.5 w-2.5 rounded-full" style={{ background: option?.cor ?? "#7259B5" }} />
+              <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ background: option?.cor ?? "rgba(13,13,13,.35)" }} />
               <span className="text-[0.6875rem] font-medium text-black/55">{option?.label ?? metric.canal.replaceAll("_", " ")}</span>
             </div>
           );
@@ -922,22 +922,24 @@ export default function DashboardPage() {
                   {eventos.map((ev) => {
                     const { mes, dia } = fmtEventDate(ev.data);
                     const isEdital     = ev.tipo === "edital";
-                    const badge = isEdital ? { text: "#D94E4E" } : { text: "#7259B5" };
-                    const dayColor = daysUntil(ev.data) <= 5 ? "#D94E4E" : "#0D0D0D";
+                    const TipoIcone    = isEdital ? FileText : PhoneCall;
+                    // Prazo em até 5 dias é alerta: só o ícone ganha cor, o dia fica em tinta.
+                    const prazoProximo = daysUntil(ev.data) <= 5;
                     return (
                       <div key={ev.id} className="px-5 py-3.5 flex items-start gap-3">
                         <div className="w-9 text-center flex-shrink-0">
-                          <p className="text-[0.5625rem] font-bold text-black/25 uppercase tracking-[.06em]">{mes}</p>
-                          <p className="text-[1.125rem] font-bold leading-tight" style={{ color: dayColor }}>{dia}</p>
+                          <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{mes}</p>
+                          <p className="text-[1.125rem] font-semibold leading-tight tabular-nums text-[#0D0D0D]">{dia}</p>
                         </div>
                         <div className="flex-1 min-w-0 pt-0.5">
-                          <span
-                            className="mb-1.5 inline-block rounded border bg-transparent px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase tracking-[.05em]"
-                            style={{ borderColor: `${badge.text}59`, color: badge.text }}
-                          >
+                          <span className="mb-1.5 inline-flex items-center gap-1 rounded border border-black/[.12] bg-white px-1.5 py-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/55">
+                            <TipoIcone size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                             {isEdital ? "Edital" : "Follow-up"}
                           </span>
-                          <p className="text-[0.75rem] font-semibold text-[#0D0D0D] truncate">{ev.titulo}</p>
+                          <p className="flex items-center gap-1 text-[0.75rem] font-semibold text-[#0D0D0D]">
+                            {prazoProximo && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Prazo em até 5 dias" className="shrink-0 text-[#D94A4A]" />}
+                            <span className="min-w-0 truncate">{ev.titulo}</span>
+                          </p>
                           <p className="text-[0.6875rem] text-black/35 mt-0.5">{ev.sub}</p>
                         </div>
                       </div>
@@ -988,11 +990,11 @@ export default function DashboardPage() {
           ) : (
             <>
               <div className="hidden sm:grid grid-cols-[1fr_repeat(4,5.5rem)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25">Canal</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Resposta</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Reunião</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Proposta</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Conversão</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Canal</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Resposta</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Reunião</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Proposta</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Conversão</span>
               </div>
               <div className="divide-y divide-black/[.06]">
                 {channelMetrics.map(metric => {
@@ -1007,23 +1009,23 @@ export default function DashboardPage() {
                         <p className="truncate text-[0.75rem] font-semibold text-[#0D0D0D]">{option?.label ?? metric.canal.replaceAll("_", " ")}</p>
                         <p className="mt-0.5 text-[0.625rem] text-black/30">
                           {metric.interacoes} interações · {metric.negociacoes} negociações
-                          {metric.interacoes < 5 && <span className="text-[#D94E4E]"> · amostra pequena</span>}
+                          {metric.interacoes < 5 && <span> · amostra pequena</span>}
                         </p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Resposta</p>
-                        <p className="text-[0.8125rem] font-semibold text-black/65">{responseRate}%</p>
+                        <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Resposta</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${responseRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{responseRate}%</p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Reunião</p>
-                        <p className="text-[0.8125rem] font-semibold text-black/65">{meetingRate}%</p>
+                        <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Reunião</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${meetingRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{meetingRate}%</p>
                       </div>
                       <div className="text-center">
-                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Proposta</p>
-                        <p className="text-[0.8125rem] font-semibold text-black/65">{proposalRate}%</p>
+                        <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Proposta</p>
+                        <p className={`text-[0.8125rem] font-semibold tabular-nums ${proposalRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{proposalRate}%</p>
                       </div>
                       <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                        <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Conversão</p>
+                        <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Conversão</p>
                         <p className={`text-[0.9375rem] font-semibold tabular-nums ${winRate ? "text-[#0D0D0D]" : "text-black/30"}`}>{winRate === null ? "—" : `${winRate}%`}</p>
                       </div>
                     </div>
@@ -1063,10 +1065,10 @@ export default function DashboardPage() {
           ) : (
             <>
               <div className="hidden sm:grid grid-cols-[1fr_repeat(3,6.5rem)] gap-4 px-5 py-2 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25">Captador</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Ciclos fechados</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center">Tempo mediano</span>
-                <span className="text-[0.5625rem] font-bold uppercase tracking-[.06em] text-black/25 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Aprovação</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Captador</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Ciclos fechados</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center">Tempo mediano</span>
+                <span className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 text-center border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>Aprovação</span>
               </div>
               <div className="divide-y divide-black/[.06]">
                 {ranking[rankingView].map((item) => (
@@ -1074,19 +1076,19 @@ export default function DashboardPage() {
                     <div className="col-span-3 sm:col-span-1 min-w-0">
                       <p className="truncate text-[0.75rem] font-semibold text-[#0D0D0D]">{item.nome}</p>
                       {item.ciclos_fechados < 5 && (
-                        <p className="mt-0.5 text-[0.625rem] text-[#D94E4E]">amostra pequena</p>
+                        <p className="mt-0.5 text-[0.625rem] text-black/35">amostra pequena</p>
                       )}
                     </div>
                     <div className="text-center">
-                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Ciclos</p>
-                      <p className="text-[0.8125rem] font-semibold text-black/65 tabular-nums">{item.ciclos_fechados}</p>
+                      <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Ciclos</p>
+                      <p className={`text-[0.8125rem] font-semibold tabular-nums ${item.ciclos_fechados ? "text-[#0D0D0D]" : "text-black/30"}`}>{item.ciclos_fechados}</p>
                     </div>
                     <div className="text-center">
-                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Tempo</p>
-                      <p className="text-[0.8125rem] font-semibold text-black/65 tabular-nums">{fmtDias(item.mediana_dias)}</p>
+                      <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tempo</p>
+                      <p className={`text-[0.8125rem] font-semibold tabular-nums ${item.mediana_dias ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmtDias(item.mediana_dias)}</p>
                     </div>
                     <div className="text-center sm:border-l" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-                      <p className="sm:hidden text-[0.5625rem] uppercase tracking-wide text-black/25">Aprovação</p>
+                      <p className="sm:hidden text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Aprovação</p>
                       <p className={`text-[0.9375rem] font-semibold tabular-nums ${Math.round(item.taxa_aprovacao * 100) ? "text-[#0D0D0D]" : "text-black/30"}`}>{Math.round(item.taxa_aprovacao * 100)}%</p>
                     </div>
                   </div>

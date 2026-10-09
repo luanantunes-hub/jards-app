@@ -42,11 +42,11 @@ const ICONE_MAP: Record<string, React.ElementType> = {
 };
 const ICONES = Object.keys(ICONE_MAP);
 
-const COR_MAP: Record<string, { bg: string; text: string; border: string }> = {
-  azul:    { bg: "#DBEAFE", text: "#2D72B0", border: "#93C5FD" },
-  pessego: { bg: "#fff", text: "#D94E4E", border: "#D94E4E80" },
-  verde:   { bg: "#fff", text: "#2E8932", border: "#2E893280" },
-  roxo:    { bg: "#fff", text: "#7259B5", border: "#7259B580" },
+const COR_MAP: Record<string, { nome: string; bg: string; text: string; border: string }> = {
+  azul:    { nome: "Azul",    bg: "#fff", text: "#2D72B0", border: "#2D72B080" },
+  pessego: { nome: "Pêssego", bg: "#fff", text: "#D94E4E", border: "#D94E4E80" },
+  verde:   { nome: "Verde",   bg: "#fff", text: "#2E8932", border: "#2E893280" },
+  roxo:    { nome: "Roxo",    bg: "#fff", text: "#7259B5", border: "#7259B580" },
 };
 const CORES = Object.keys(COR_MAP);
 
@@ -212,17 +212,20 @@ function DocForm({
             </label>
             <div className="flex gap-2.5">
               {CORES.map(c => {
-                const { bg, border } = COR_MAP[c];
+                const { nome, text } = COR_MAP[c];
                 return (
                   <button
                     key={c}
+                    type="button"
                     onClick={() => setCor(c)}
+                    aria-label={nome}
+                    aria-pressed={cor === c}
+                    title={nome}
                     className="w-10 h-10 rounded transition"
                     style={{
-                      background: bg,
-                      border: `2px solid ${cor === c ? border.replace("FD", "80").replace("AC", "80") : "transparent"}`,
-                      outline: cor === c ? `2px solid ${border}` : "none",
-                      outlineOffset: 1,
+                      background: text,
+                      outline: cor === c ? `2px solid ${text}` : undefined,
+                      outlineOffset: 2,
                     }}
                   />
                 );
@@ -378,12 +381,12 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
                       key={doc.id}
                       onClick={() => openForm(doc)}
                       className="rounded border p-4 text-left hover:shadow-sm transition relative group"
-                      style={{ background: cs.bg, borderColor: cs.border + "80" }}
+                      style={{ background: cs.bg, borderColor: cs.border }}
                     >
-                      <Icon size={22} className="mb-2" style={{ color: cs.text }} />
-                      <p className="text-[0.75rem] font-bold" style={{ color: cs.text }}>{doc.titulo}</p>
+                      <Icon size={22} className="mb-2" style={{ color: cs.text }} aria-hidden="true" />
+                      <p className="text-[0.75rem] font-semibold text-[#0D0D0D]">{doc.titulo}</p>
                       {doc.arquivo_nome && (
-                        <p className="text-[0.625rem] mt-1 truncate" style={{ color: cs.text, opacity: .6 }}>
+                        <p className="text-[0.625rem] mt-1 truncate text-black/45">
                           {doc.arquivo_nome}
                         </p>
                       )}

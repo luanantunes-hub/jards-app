@@ -173,23 +173,15 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
   usuario?: string | null;
 }) {
   const Icon = TIPO_ICONS[tipo] || MoreHorizontal;
-  const iconColor = tipo === "email" ? "#2D72B0"
-    : tipo === "telefone" ? "#1A8B7A"
-    : tipo === "linkedin" ? "#2D72B0"
-    : tipo === "reuniao" ? "#7259B5"
-    : tipo === "evento" ? "#B07A14"
-    : tipo === "mudanca" ? "#7259B5"
-    : tipo === "nota" ? "#D94E4E"
-    : "rgba(13,13,13,.40)";
 
   return (
     <div className="flex gap-3">
       <div className="flex flex-col items-center">
         <div
-          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
-          style={{ background: "#fff", border: `1px solid ${iconColor}47`, color: iconColor }}
+          className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-black/40"
+          style={{ background: "#fff", border: "1px solid rgba(13,13,13,.08)" }}
         >
-          <Icon size={13} />
+          <Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
         </div>
         <div className="w-px flex-1 bg-black/8 my-1" />
       </div>
@@ -686,7 +678,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       {/* Stats Bar */}
       <div className="border-b bg-white" style={{ borderColor: "rgba(13,13,13,.06)" }}><div className="mx-auto grid max-w-pagina grid-cols-2 gap-5 px-4 py-5 sm:grid-cols-3 sm:px-6 lg:px-10">
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Prioridade</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prioridade</p>
             <button
               type="button"
               onClick={(e) => {
@@ -708,7 +700,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Tipo de patrocínio</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Tipo de patrocínio</p>
             <button
               type="button"
               onClick={(e) => {
@@ -725,7 +717,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             </button>
           </div>
           <div>
-            <p className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35 mb-0.5">Agência de captação</p>
+            <p className="mb-0.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Agência de captação</p>
             {(captacao as any).captador_externo ? (
               <div>
                 <p className="text-[0.8125rem] font-medium text-[#0D0D0D]">{(captacao as any).captador_externo.nome}</p>

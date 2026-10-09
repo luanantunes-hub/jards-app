@@ -118,15 +118,6 @@ const TIPO_ICONS: Record<string, React.ElementType> = {
   outro:    MoreHorizontal,
 };
 
-const TIPO_COLOR: Record<string, string> = {
-  email:    "#7259B5",
-  telefone: "#1A8B7A",
-  reuniao:  "rgba(13,13,13,.45)",
-  linkedin: "#2D72B0",
-  evento:   "#B07A14",
-  outro:    "rgba(13,13,13,.40)",
-};
-
 /* ─── Helpers ────────────────────────────────────────────────────────────── */
 
 function fmtDate(d: string | null): string {
@@ -798,7 +789,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   {pendentes.map((atv, i) => {
                     const Icon = TIPO_ICONS[atv.tipo || "outro"] ?? MoreHorizontal;
-                    const color = TIPO_COLOR[atv.tipo || "outro"] ?? "rgba(13,13,13,.40)";
                     return (
                       <div
                         key={atv.id}
@@ -810,8 +800,8 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                           className="w-5 h-5 rounded border-2 border-black/15 hover:border-[#7259B5] hover:bg-black/[.04] flex-shrink-0 transition flex items-center justify-center"
                           title="Marcar como feita"
                         />
-                        <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0" style={{ background: "rgba(13,13,13,.04)" }}>
-                          <Icon size={12} style={{ color }} />
+                        <div className="w-6 h-6 rounded flex items-center justify-center flex-shrink-0 text-black/40" style={{ background: "rgba(13,13,13,.04)" }}>
+                          <Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-[0.8125rem] font-medium text-[#0D0D0D] truncate">{atv.nome}</p>
@@ -847,9 +837,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                     const Icon = evt.tipo === "nota"
                       ? Star
                       : (TIPO_ICONS[evt.tipo_atv || "outro"] ?? MoreHorizontal);
-                    const color = evt.tipo === "nota"
-                      ? "#B07A14"
-                      : (TIPO_COLOR[evt.tipo_atv || "outro"] ?? "rgba(13,13,13,.40)");
                     return (
                       <div key={evt.id} className="flex gap-3 relative">
                         {/* Line */}
@@ -857,9 +844,9 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                           <div className="absolute left-[0.8125rem] top-7 bottom-0 w-px bg-black/6" />
                         )}
                         {/* Icon */}
-                        <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 mt-0.5 z-10"
-                          style={{ background: "#fff", border: `1px solid ${color}47` }}>
-                          <Icon size={12} style={{ color }} />
+                        <div className="w-7 h-7 rounded flex items-center justify-center flex-shrink-0 mt-0.5 z-10 text-black/40"
+                          style={{ background: "#fff", border: "1px solid rgba(13,13,13,.08)" }}>
+                          <Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                         </div>
                         {/* Content */}
                         <div className={`flex-1 min-w-0 ${!isLast ? "pb-5" : ""}`}>
@@ -918,7 +905,8 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 ].map(({ label, value, urgent }) => (
                   <div key={label} className="flex items-center justify-between">
                     <span className="text-[0.6875rem] text-black/35">{label}</span>
-                    <span className="text-[0.75rem] font-medium" style={{ color: urgent ? "#D94E4E" : "rgba(13,13,13,.70)" }}>
+                    <span className="inline-flex items-center gap-1 text-[0.75rem] font-medium tabular-nums text-black/70">
+                      {urgent && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Fecha em menos de 7 dias" className="shrink-0 text-[#D94A4A]" />}
                       {fmtDate(value)}
                     </span>
                   </div>

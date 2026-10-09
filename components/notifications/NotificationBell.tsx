@@ -287,7 +287,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       >
         <Bell size={16} className="text-black/45" />
         {unreadCount > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#D94E4E] px-1 text-[0.5625rem] font-bold text-white">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#0D0D0D] px-1 text-[0.5625rem] font-bold text-white">
             {unreadCount > 99 ? "99+" : unreadCount}
           </span>
         )}
@@ -334,12 +334,12 @@ export function NotificationBell({ userId }: { userId: string }) {
                     className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded"
                     style={{ background: "rgba(13,13,13,.04)" }}
                   >
-                    <Icon size={14} style={{ color: critical ? "#B83E3E" : "#7259B5" }} />
+                    <Icon size={14} className={critical ? "text-[#D94A4A]" : "text-black/45"} {...(critical ? { role: "img", "aria-label": "Crítica" } : { "aria-hidden": true })} />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
-                      <span className="truncate text-[0.75rem] font-semibold text-black/80">{notification.titulo}</span>
-                      {!notification.lida && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#7259B5]" />}
+                      <span className={`truncate text-[0.75rem] ${notification.lida ? "font-normal text-black/60" : "font-semibold text-[#0D0D0D]"}`}>{notification.titulo}</span>
+                      {!notification.lida && <span className="sr-only">Não lida</span>}
                     </span>
                     <span className="mt-0.5 line-clamp-2 block text-[0.6875rem] leading-4 text-black/45">{notification.mensagem}</span>
                     <span className="mt-1 block text-[0.5625rem] text-black/28">{relativeTime(notification.created_at)}</span>

@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Search, Shield, UserCheck } from "lucide-react";
+import { Building2, Trash2, List, Grid2X2, TrendingUp, UsersRound, Plus, Search, Shield, UserCheck, CalendarClock, CircleHelp } from "lucide-react";
 import { NovoProspectModal } from "@/components/modals/NovoProspectModal";
 import { NovoClienteModal } from "@/components/modals/NovoClienteModal";
 import { createClient } from "@/lib/supabase/client";
@@ -162,7 +162,7 @@ function CompanyMatrixView({ empresas, onOpen }: { empresas: EmpresaViewRow[]; o
                   {items.map(item => (
                     <button key={item.id} type="button" onClick={() => onOpen(item.id)} className="flex min-w-0 items-center gap-2.5 rounded border border-black/[.07] bg-white p-2.5 text-left transition hover:border-black/20 hover:bg-black/[.015] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                       <CompanyLogo nome={item.nome} domain={item.domain_key} site={item.site} size={item.activeNegotiations > 2 ? 36 : 30} className="shrink-0 border border-black/[.06]"/>
-                      <div className="min-w-0"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{item.nome}</p><p className="mt-0.5 text-[0.59375rem] text-black/30">{item.activeNegotiations} {item.activeNegotiations === 1 ? "negociação" : "negociações"}{item.activePipelineValue > 0 && <>, <span title={formatarValorCompleto(item.activePipelineValue)}>{formatarValorCurto(item.activePipelineValue)}</span></>}</p>{item.potencial_relacionamento == null && <p className="mt-0.5 text-[0.5625rem] text-[#B07A14]">Relação não avaliada</p>}</div>
+                      <div className="min-w-0"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{item.nome}</p><p className="mt-0.5 text-[0.59375rem] text-black/30">{item.activeNegotiations} {item.activeNegotiations === 1 ? "negociação" : "negociações"}{item.activePipelineValue > 0 && <>, <span title={formatarValorCompleto(item.activePipelineValue)}>{formatarValorCurto(item.activePipelineValue)}</span></>}</p>{item.potencial_relacionamento == null && <p className="mt-0.5 flex items-center gap-1 text-[0.5625rem] text-black/40"><CircleHelp size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />Relação não avaliada</p>}</div>
                     </button>
                   ))}
                 </div>
@@ -513,8 +513,15 @@ export default function EmpresasCrmPage() {
                         const d = new Date(e.proximoFollowup);
                         const isOverdue = d < new Date();
                         return (
-                          <span className={`text-[0.75rem] tabular-nums ${isOverdue ? "text-[#D94E4E] font-medium" : "text-black/50"}`}>
-                            {fmtDate(e.proximoFollowup)}
+                          <span className="inline-flex items-center gap-1.5">
+                            {isOverdue && (
+                              <span role="img" className="shrink-0" title="Follow-up atrasado" aria-label="Follow-up atrasado">
+                                <CalendarClock size={12} strokeWidth={1.75} aria-hidden="true" className="text-[#D94A4A]" />
+                              </span>
+                            )}
+                            <span className={`text-[0.75rem] tabular-nums ${isOverdue ? "font-medium text-[#0D0D0D]" : "text-black/50"}`}>
+                              {fmtDate(e.proximoFollowup)}
+                            </span>
                           </span>
                         );
                       })() : (
@@ -526,9 +533,14 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       {e.ultimoContatoDias !== null ? (() => {
                         const d = e.ultimoContatoDias!;
-                        const color = d <= 14 ? "#2E8932" : d <= 30 ? "#B07A14" : "#D94E4E";
+                        const alerta = d > 30 ? "#D94A4A" : d > 14 ? "#B07A14" : undefined;
                         const label = d === 0 ? "Hoje" : d === 1 ? "1 dia" : `${d} dias`;
-                        return <span className="text-[0.75rem] font-medium tabular-nums" style={{ color }}>{label}</span>;
+                        return (
+                          <span className="inline-flex items-center gap-1.5">
+                            {alerta && <CalendarClock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: alerta }} />}
+                            <span className="text-[0.75rem] font-medium tabular-nums text-black/60">{label}</span>
+                          </span>
+                        );
                       })() : (
                         <span className="text-black/20 text-xs">—</span>
                       )}

@@ -10,7 +10,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertTriangle, ArrowLeft, ArrowRight, FileArchive, Package } from "lucide-react";
+import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, FileArchive, Package } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
@@ -38,6 +38,7 @@ import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { partesDoZip, type ArquivoDoZip } from "@/lib/zip";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:text-black/35 active:scale-[.98]";
 const PADRAO: Record<PadraoDosNomes, string> = {
@@ -278,20 +279,23 @@ export default function PacotePage() {
           <div className="space-y-3 rounded border bg-white px-5 py-4" style={BORDA}>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[0.6875rem] md:grid-cols-4">
               <div>
-                <dt className="text-black/40">Arquivos</dt>
-                <dd className="text-[0.875rem] tabular-nums text-black/80">{plano.itens.length} <span className="text-[0.6875rem] text-black/40">+ relatório e manifesto</span></dd>
+                <dt className={ROTULO}>Arquivos</dt>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.itens.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{plano.itens.length} <span className="text-[0.6875rem] font-normal text-black/40">+ relatório e manifesto</span></dd>
               </div>
               <div>
-                <dt className="text-black/40">Tamanho</dt>
-                <dd className="text-[0.875rem] tabular-nums text-black/80">{tamanho(plano.tamanhoTotal)}</dd>
+                <dt className={ROTULO}>Tamanho</dt>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.tamanhoTotal ? "text-[#0D0D0D]" : "text-black/30"}`}>{tamanho(plano.tamanhoTotal)}</dd>
               </div>
               <div>
-                <dt className="text-black/40">Fora da regra</dt>
-                <dd className={`text-[0.875rem] tabular-nums ${plano.comProblema ? "text-[#B07A14]" : "text-black/80"}`}>{plano.comProblema}</dd>
+                <dt className={ROTULO}>
+                  {plano.comProblema > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                  Fora da regra
+                </dt>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${plano.comProblema ? "text-[#0D0D0D]" : "text-black/30"}`}>{plano.comProblema}</dd>
               </div>
               <div>
-                <dt className="text-black/40">Nomes</dt>
-                <dd className="text-[0.75rem] text-black/80">{PADRAO[plano.padrao]}</dd>
+                <dt className={ROTULO}>Nomes</dt>
+                <dd className="mt-0.5 text-[0.75rem] text-black/70">{PADRAO[plano.padrao]}</dd>
               </div>
             </dl>
             {plano.regra && <p className="text-[0.6875rem] text-black/50">Regra do regime: {plano.regra.descricao} <span className="text-black/35">({[plano.regra.fonte.documento, plano.regra.fonte.dispositivo].filter(Boolean).join(", ")})</span></p>}
@@ -315,8 +319,18 @@ export default function PacotePage() {
                   {progresso.texto}…
                 </span>
               )}
-              {!progresso && plano.motivo && <p className="text-[0.6875rem] text-[#B07A14]">Pacote ainda não: {plano.motivo} O pré-pacote sai agora, com o que falta.</p>}
-              {!progresso && gerado && <p role="status" className="text-[0.6875rem] text-[#2E8932]">Gerado: {gerado}</p>}
+              {!progresso && plano.motivo && (
+                <p className="flex items-start gap-1 text-[0.6875rem] text-black/55">
+                  <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#B07A14]" />
+                  <span>Pacote ainda não: {plano.motivo} O pré-pacote sai agora, com o que falta.</span>
+                </p>
+              )}
+              {!progresso && gerado && (
+                <p role="status" className="flex items-center gap-1 text-[0.6875rem] text-black/55">
+                  <CheckCircle2 size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
+                  Gerado: {gerado}
+                </p>
+              )}
             </div>
           </div>
 
@@ -342,8 +356,9 @@ export default function PacotePage() {
               </div>
               <ul className="mt-2 space-y-1 text-[0.6875rem]">
                 {plano.faltas.map(f => (
-                  <li key={f.texto} className={f.obrigatorio ? "text-[#B07A14]" : "text-black/60"}>
-                    {f.obrigatorio && <span className="font-medium">Obrigatório · </span>}{f.texto}
+                  <li key={f.texto} className="flex items-start gap-1 text-black/60">
+                    {f.obrigatorio && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#B07A14]" />}
+                    <span>{f.obrigatorio && <span className="font-medium text-black/75">Obrigatório · </span>}{f.texto}</span>
                   </li>
                 ))}
               </ul>
@@ -373,10 +388,10 @@ export default function PacotePage() {
                         <td className="break-all px-4 py-2.5 tabular-nums text-black/80">{i.caminho}</td>
                         <td className="px-4 py-2.5 text-black/60">
                           {i.origem}
-                          {i.problemas.length > 0 && <p className="mt-0.5 flex items-start gap-1 text-[0.6875rem] text-[#B07A14]"><AlertTriangle size={11} className="mt-0.5 shrink-0" aria-hidden />{i.problemas.join(" ")}</p>}
+                          {i.problemas.length > 0 && <p className="mt-0.5 flex items-start gap-1 text-[0.6875rem] text-black/55"><AlertTriangle size={12} strokeWidth={1.75} className="mt-0.5 shrink-0 text-[#B07A14]" aria-hidden />{i.problemas.join(" ")}</p>}
                         </td>
                         <td className="whitespace-nowrap px-4 py-2.5 text-right tabular-nums text-black/60">{tamanho(i.tamanho)}</td>
-                        <td className="px-4 py-2.5 text-[0.6875rem]">{i.problemas.length ? <span className="text-[#B07A14]">Revisar</span> : <span className="text-black/35">Ok</span>}</td>
+                        <td className="px-4 py-2.5 text-[0.6875rem]">{i.problemas.length ? <span className="inline-flex items-center gap-1 text-black/60"><AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />Revisar</span> : <span className="text-black/35">Ok</span>}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -390,7 +405,7 @@ export default function PacotePage() {
                       <span className="shrink-0 tabular-nums text-black/50">{tamanho(i.tamanho)}</span>
                     </div>
                     <p className="text-[0.6875rem] text-black/55">{i.origem}</p>
-                    {i.problemas.length > 0 && <p className="flex items-start gap-1 text-[0.6875rem] text-[#B07A14]"><AlertTriangle size={11} className="mt-0.5 shrink-0" aria-hidden />{i.problemas.join(" ")}</p>}
+                    {i.problemas.length > 0 && <p className="flex items-start gap-1 text-[0.6875rem] text-black/55"><AlertTriangle size={12} strokeWidth={1.75} className="mt-0.5 shrink-0 text-[#B07A14]" aria-hidden />{i.problemas.join(" ")}</p>}
                   </li>
                 ))}
               </ul>

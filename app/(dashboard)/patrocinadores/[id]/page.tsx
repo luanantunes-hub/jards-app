@@ -7,7 +7,7 @@ import {
   Phone, ExternalLink, Coins,
   ChevronUp, ChevronDown, UserPlus, X, Pencil, ThumbsUp, ThumbsDown, Copy, Check,
   Upload, FileText, Trash2, Newspaper, RefreshCw,
-  MoreHorizontal, Building2, BriefcaseBusiness, FilePenLine, ArrowUpRight, CircleHelp,
+  MoreHorizontal, Building2, BriefcaseBusiness, FilePenLine, ArrowUpRight, CircleHelp, TriangleAlert, Clock,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound } from "@/components/ui/DetailPagePrimitives";
@@ -1242,7 +1242,7 @@ export default function PatrocinadorPage() {
                     ))}
                     <div className="pt-1 flex items-center justify-between border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                       <span className="text-[0.5625rem] text-black/25">{newsLastSearch ? `Atualizado em ${fmtDate(newsLastSearch)}` : "Atualização semanal"}</span>
-                      {newsStatus === "quota_exceeded" && <span className="text-[0.5625rem] text-[#B07A14]">Cota atingida</span>}
+                      {newsStatus === "quota_exceeded" && <span className="inline-flex items-center gap-1 text-[0.5625rem] text-black/45"><TriangleAlert size={12} strokeWidth={1.75} className="shrink-0 text-[#B07A14]" aria-hidden="true" />Cota atingida</span>}
                     </div>
                   </div>
                 )}
@@ -1278,7 +1278,7 @@ export default function PatrocinadorPage() {
                             className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                             style={{ borderBottom: !isLast ? "1px solid rgba(13,13,13,.05)" : "none" }}
                           >
-                            <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "white", border: "1px solid #7259B540", color: "#7259B5" }}>Neg.</span>
+                            <span className="shrink-0 rounded border bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium text-black/55" style={{ borderColor: "rgba(13,13,13,.12)" }}>Neg.</span>
                             <p className="text-[0.6875rem] font-medium text-black/70 truncate flex-1 min-w-0">
                               {c.projeto?.nome ?? c.titulo}
                             </p>
@@ -1298,7 +1298,7 @@ export default function PatrocinadorPage() {
                             className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition hover:bg-black/[.025] focus-visible:bg-black/[.025] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-black/15"
                             style={{ borderBottom: !isLast ? "1px solid rgba(13,13,13,.05)" : "none" }}
                           >
-                            <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded flex-shrink-0" style={{ background: "white", border: "1px solid #2D72B040", color: "#2D72B0" }}>Edital</span>
+                            <span className="shrink-0 rounded border bg-white px-1.5 py-0.5 text-[0.5625rem] font-medium text-black/55" style={{ borderColor: "rgba(13,13,13,.12)" }}>Edital</span>
                             <p className="text-[0.6875rem] font-medium text-black/70 truncate flex-1 min-w-0">
                               {e.projeto?.nome ?? "Sem projeto"}
                             </p>
@@ -1465,7 +1465,7 @@ export default function PatrocinadorPage() {
                                   >
                                     <ThumbsUp size={12} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                                   </button>
-                                  <span className={`text-[0.6875rem] font-bold tabular-nums w-4 text-center ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                                  <span className={`text-[0.6875rem] font-semibold tabular-nums w-4 text-center ${saldo === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
                                     {saldo}
                                   </span>
                                   <button
@@ -1574,7 +1574,7 @@ export default function PatrocinadorPage() {
                               >
                                 <ThumbsUp size={12} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                               </button>
-                              <span className={`text-[0.6875rem] font-bold tabular-nums w-4 text-center ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                              <span className={`text-[0.6875rem] font-semibold tabular-nums w-4 text-center ${saldo === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
                                 {saldo}
                               </span>
                               <button
@@ -1654,22 +1654,20 @@ export default function PatrocinadorPage() {
                             <td className="px-5 py-3.5 text-black/40 text-xs whitespace-nowrap">{fmtDate(e.data_fechamento)}</td>
                             <td className="px-5 py-3.5">
                               {dias !== null ? (
-                                <span
-                                  className="text-[0.625rem] font-bold px-2 py-0.5 rounded whitespace-nowrap"
-                                  style={
-                                    dias < 0   ? { background: "rgba(13,13,13,.07)", color: "rgba(13,13,13,.35)" } :
-                                    dias <= 14 ? { background: "#fff", border: "1px solid #D94E4E47", color: "#D94E4E" } :
-                                    dias <= 30 ? { background: "#fff", border: "1px solid #B07A1447", color: "#B07A14" } :
-                                                 { background: "#fff", border: "1px solid #2E893247", color: "#2E8932" }
-                                  }
-                                >
-                                  {dias < 0 ? "Encerrado" : `${dias}d`}
-                                </span>
+                                dias < 0 ? (
+                                  <span className="whitespace-nowrap text-[0.6875rem] font-medium text-black/35">Encerrado</span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1 whitespace-nowrap text-[0.6875rem] font-medium tabular-nums text-black/60">
+                                    {dias <= 14 ? (
+                                      <Clock size={12} strokeWidth={1.75} role="img" aria-label="Fecha em até 14 dias" className="shrink-0 text-[#D94A4A]" />
+                                    ) : dias <= 30 ? (
+                                      <Clock size={12} strokeWidth={1.75} role="img" aria-label="Fecha em até 30 dias" className="shrink-0 text-[#B07A14]" />
+                                    ) : null}
+                                    {`${dias}d`}
+                                  </span>
+                                )
                               ) : (
-                                <span
-                                  className="text-[0.625rem] font-bold px-2 py-0.5 rounded whitespace-nowrap"
-                                  style={{ background: aberto ? "#fff" : "rgba(13,13,13,.07)", color: aberto ? "#2E8932" : "rgba(13,13,13,.35)" }}
-                                >
+                                <span className={`whitespace-nowrap text-[0.6875rem] font-medium ${aberto ? "text-black/55" : "text-black/35"}`}>
                                   {aberto ? "Aberto" : "Encerrado"}
                                 </span>
                               )}

@@ -99,7 +99,7 @@ export function SugestaoContatoList({ empresaId }: Props) {
                     >
                       <ChevronUp size={14} className={meuVoto === 1 ? "text-[#2E8932]" : "text-black/20"} />
                     </button>
-                    <span className={`text-[0.75rem] font-bold tabular-nums ${saldo > 0 ? "text-[#2E8932]" : saldo < 0 ? "text-[#D94E4E]" : "text-black/25"}`}>
+                    <span className={`text-[0.75rem] font-semibold tabular-nums ${saldo === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
                       {saldo}
                     </span>
                     <button

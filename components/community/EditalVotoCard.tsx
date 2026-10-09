@@ -25,22 +25,12 @@ function VotoRow({
   const total = counts.sim + counts.nao;
   const pct   = total > 0 ? Math.round((counts.sim / total) * 100) : null;
 
-  // Winning side when user hasn't voted yet
-  const simWins = counts.sim > counts.nao;
-  const naoWins = counts.nao > counts.sim;
-
   function btnStyle(lado: boolean) {
     const voted  = meuVoto === lado;
-    const wins   = meuVoto === null && (lado ? simWins : naoWins);
     const color  = lado ? "#2E8932" : "#D94E4E";
     const neutral: React.CSSProperties = {
       borderColor: "rgba(13,13,13,.12)",
       color: "rgba(13,13,13,.45)",
-      background: "white",
-    };
-    const winHint: React.CSSProperties = {
-      borderColor: lado ? "rgba(46,137,50,.35)" : "rgba(217,78,78,.35)",
-      color: lado ? "rgba(46,137,50,.55)" : "rgba(217,78,78,.55)",
       background: "white",
     };
     const active: React.CSSProperties = {
@@ -48,7 +38,7 @@ function VotoRow({
       color,
       background: "white",
     };
-    return voted ? active : wins ? winHint : neutral;
+    return voted ? active : neutral;
   }
 
   return (
@@ -72,7 +62,7 @@ function VotoRow({
       </div>
       {pct !== null && (
         <p className="text-[0.625rem] text-black/30">
-          <span style={{ color: pct >= 60 ? "#2E8932" : pct >= 40 ? "#B07A14" : "#D94E4E" }} className="font-bold">
+          <span className={`font-semibold tabular-nums ${pct === 0 ? "text-black/30" : "text-[#0D0D0D]"}`}>
             {pct}% positivo
           </span>
           {" "}· {total} {total === 1 ? "voto" : "votos"}

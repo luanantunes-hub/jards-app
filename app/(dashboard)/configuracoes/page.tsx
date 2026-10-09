@@ -495,6 +495,9 @@ const { data: perfilData } = await (supabase as any)
   }
 
   const currentSection = SETTINGS_SECTIONS.find((section) => section.id === activeSection) ?? SETTINGS_SECTIONS[0];
+  // Saldo baixo ou zerado é alerta: colore a barra e o ícone, nunca o número.
+  const creditosDisponiveis = creditos?.creditos_disponiveis ?? 0;
+  const alertaCreditos = creditosDisponiveis > 10 ? null : creditosDisponiveis > 0 ? "#B07A14" : "#D94A4A";
 
   return (
     <div className="w-full px-5 md:px-8 lg:px-10 py-8 md:py-10">
@@ -665,7 +668,7 @@ const { data: perfilData } = await (supabase as any)
           <div className="p-4 rounded border" style={{ borderColor: "rgba(13,13,13,.10)" }}>
             <div className="flex items-center justify-between mb-3">
               <p className="text-[0.8125rem] font-semibold text-black">Saldo de créditos</p>
-              <span className="text-[0.6875rem] text-black/40">
+              <span className="text-[0.6875rem] tabular-nums text-black/40">
                 {creditos?.creditos_usados ?? 0} / {creditos?.creditos_totais ?? 0} usados
               </span>
             </div>
@@ -675,14 +678,19 @@ const { data: perfilData } = await (supabase as any)
                 className="h-full rounded-full transition-all duration-500"
                 style={{
                   width: `${creditos?.creditos_totais ? ((creditos.creditos_totais - creditos.creditos_disponiveis) / creditos.creditos_totais) * 100 : 0}%`,
-                  background: (creditos?.creditos_disponiveis ?? 0) > 10 ? "#2E8932" : (creditos?.creditos_disponiveis ?? 0) > 0 ? "#B07A14" : "#D94E4E",
+                  background: alertaCreditos ?? "rgba(13,13,13,.75)",
                 }}
               />
             </div>
             <div className="flex items-center justify-between mt-2">
-              <span className="text-[0.6875rem] text-black/40">Disponível</span>
-              <span className="text-[0.875rem] font-bold" style={{ color: (creditos?.creditos_disponiveis ?? 0) > 10 ? "#2E8932" : (creditos?.creditos_disponiveis ?? 0) > 0 ? "#B07A14" : "#D94E4E" }}>
-                {creditos?.creditos_disponiveis ?? 0}
+              <span className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                {alertaCreditos && (
+                  <AlertCircle size={12} strokeWidth={1.75} role="img" aria-label={creditosDisponiveis > 0 ? "Saldo baixo" : "Sem créditos"} className="shrink-0" style={{ color: alertaCreditos }} />
+                )}
+                Disponível
+              </span>
+              <span className={`text-[0.875rem] font-semibold tabular-nums ${creditosDisponiveis ? "text-[#0D0D0D]" : "text-black/30"}`}>
+                {creditosDisponiveis}
               </span>
             </div>
           </div>
@@ -862,7 +870,7 @@ const { data: perfilData } = await (supabase as any)
           <div className="flex items-center gap-2 px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
             <MessageSquare size={14} className="text-black/30" />
             <span className="text-[0.75rem] font-bold text-black">Contribuições pendentes</span>
-            <span className="ml-2 text-[0.625rem] font-bold px-2 py-0.5 rounded-full border border-[#B07A14]/30 bg-white text-[#B07A14]">
+            <span className="ml-2 rounded border border-black/[.10] bg-white px-2 py-0.5 text-[0.625rem] font-semibold tabular-nums text-[#0D0D0D]">
               {contribuicoesPendentes.length}
             </span>
           </div>
@@ -990,7 +998,8 @@ const { data: perfilData } = await (supabase as any)
                   <span
                     className="text-[0.625rem] font-bold px-2 py-0.5 rounded uppercase"
                     style={{
-                      background: m.papel === "admin" ? "rgba(107,33,168,0.1)" : "rgba(13,13,13,.07)",
+                      background: m.papel === "admin" ? "#fff" : "rgba(13,13,13,.07)",
+                      border: `1px solid ${m.papel === "admin" ? "#7259B547" : "transparent"}`,
                       color: m.papel === "admin" ? "#7259B5" : "rgba(13,13,13,.55)",
                     }}
                   >

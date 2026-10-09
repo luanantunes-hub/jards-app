@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { X, Plus, Minus, GripVertical, Pencil, Trash2, Building2 } from "lucide-react";
+import { X, Plus, Minus, GripVertical, Pencil, Trash2, Building2, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -207,10 +207,10 @@ export function CotasProjetoManager({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-[0.8125rem] font-semibold text-black">{cota.nome}</p>
-                    {cota.modelo === "produto" && <span className="text-[0.625rem] font-medium text-[#7259B5]">{cota.produto_nome}</span>}
+                    {cota.modelo === "produto" && <span className="text-[0.625rem] font-medium text-black/45">{cota.produto_nome}</span>}
                     <span
-                      className="text-[0.625rem] font-bold px-2 py-0.5 rounded-full"
-                      style={{ background: "#fff", border: `1px solid ${st.color}47`, color: st.color }}
+                      className="rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium"
+                      style={{ borderColor: st.color.startsWith("#") ? `${st.color}47` : "rgba(13,13,13,.12)", color: st.color }}
                     >
                       {st.label}
                     </span>
@@ -223,7 +223,7 @@ export function CotasProjetoManager({
                 </div>
 
                 <div className="flex flex-col items-end flex-shrink-0 gap-0.5">
-                  <span className="text-[0.8125rem] font-bold text-black/60">{formatCotaValor(cota)}</span>
+                  <span className="text-[0.8125rem] font-semibold tabular-nums text-[#0D0D0D]">{formatCotaValor(cota)}</span>
                   {cota.unidades_ilimitadas ? (
                     <span className="text-[0.625rem] text-black/30 tabular-nums">Ilimitada · {cota.unidades_vendidas ?? 0} vendida(s)</span>
                   ) : (cota.unidades ?? 1) > 1 && (
@@ -257,7 +257,7 @@ export function CotasProjetoManager({
                   <div className="flex flex-wrap gap-x-4 gap-y-1.5">
                     {vendasDaCota.map(venda => (
                       <span key={venda.id} className="inline-flex items-center gap-1.5 text-[0.625rem] font-medium text-black/45">
-                        <Building2 size={10} className="text-[#2E8932]" />
+                        <Building2 size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-black/40" />
                         {venda.empresa_crm?.nome || venda.empresa_pub?.nome || "Empresa compradora"}
                         <span className="text-black/25">·</span>
                         <span className="tabular-nums">{venda.valor_vendido.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
@@ -295,9 +295,9 @@ export function CotasProjetoManager({
             return (
               <div className="pt-1 border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
                 <BarraCaptacao confirmado={valorContratado} meta={valorTotal} className="h-1.5" />
-                <p className="mt-1.5 text-[0.625rem] text-black/35">
-                  {pct}% do alvo contratado nestas cotas
-                  {over && <span className="ml-1 font-semibold text-[#B07A14]">— acima da meta atual</span>}
+                <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[0.625rem] text-black/35">
+                  <span className="tabular-nums">{pct}% do alvo contratado nestas cotas</span>
+                  {over && <span className="inline-flex items-center gap-1 font-medium text-black/55"><AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />acima da meta atual</span>}
                 </p>
               </div>
             );

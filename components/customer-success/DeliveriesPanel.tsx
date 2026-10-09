@@ -20,7 +20,7 @@ type DeliveryRow = CompromissoCliente & {
 };
 
 const STATUS = {
-  pendente: { label: "Pendente", color: "#7259B5" },
+  pendente: { label: "Pendente", color: "#0D0D0D" },
   em_andamento: { label: "Em andamento", color: "#2D72B0" },
   entregue: { label: "Entregue", color: "#B07A14" },
   aprovado: { label: "Aprovada", color: "#2E8932" },
@@ -170,8 +170,8 @@ function DeliveryListItem({ item, canWrite, updating, onComplete }: { item: Deli
     </button>
     <Link href={`/entregas/${item.id}`} className="grid min-w-0 flex-1 gap-3 sm:grid-cols-[minmax(0,1fr)_9.375rem_7.5rem_1.125rem] sm:items-center">
       <div className="min-w-0"><p className={`truncate text-[0.8125rem] font-semibold ${completed ? "text-black/45" : "text-black/75"}`}>{item.titulo}</p><p className="mt-1 truncate text-[0.625rem] text-black/30">{accountName || "Cliente"}{item.projeto?.nome ? ` · ${item.projeto.nome}` : ""}{item.contrato ? ` · ${item.contrato.titulo || item.contrato.numero || "Contrato"}` : ""}</p></div>
-      <div><p className="text-[0.625rem] text-black/25">Status</p><p className="mt-1 text-[0.6875rem] font-medium" style={{color:meta.color}}>{meta.label}</p></div>
-      <div><p className="text-[0.625rem] text-black/25">Prazo</p><p className="mt-1 flex items-center gap-1 text-[0.6875rem] font-medium" style={{color:late?"#D94E4E":"rgba(13,13,13,.52)"}}><CalendarDays size={11}/>{item.prazo ? new Date(`${item.prazo}T12:00:00`).toLocaleDateString("pt-BR") : "Sem prazo"}</p></div>
+      <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Status</p><span className="mt-1 inline-block rounded border bg-white px-2 py-0.5 text-[0.625rem] font-medium" style={{ borderColor: meta.color + "47", color: meta.color }}>{meta.label}</span></div>
+      <div><p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prazo</p><p className="mt-1 flex items-center gap-1 text-[0.6875rem] font-medium text-black/50"><CalendarDays size={12} strokeWidth={1.75} className="shrink-0" style={{ color: late ? "#D94A4A" : "rgba(13,13,13,.4)" }} {...(late ? { role: "img", "aria-label": "Atrasada" } : { "aria-hidden": true })}/>{item.prazo ? new Date(`${item.prazo}T12:00:00`).toLocaleDateString("pt-BR") : "Sem prazo"}</p></div>
       <ArrowUpRight size={14} className="text-black/20 transition group-hover:text-[#7259B5]"/>
     </Link>
   </article>;

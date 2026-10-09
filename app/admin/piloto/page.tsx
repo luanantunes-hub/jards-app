@@ -6,7 +6,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { FlaskConical, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Clock, FlaskConical, Pencil, Plus, Trash2 } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -130,7 +130,12 @@ function CartaoDaOrganizacao({ o, onEditar, onTirar }: { o: Organizacao; onEdita
               <p className="tabular-nums text-black/65">
                 {p.diasDeMontagem === null ? <span className="text-black/40">Final não enviada</span> : <>{plural(p.diasDeMontagem, "dia", "dias")} até o envio</>}
                 {p.enviadaEm && <span className="block text-black/40">em {dataBr(p.enviadaEm)}{p.noPrazo === false ? "" : p.noPrazo ? ", no prazo" : ""}</span>}
-                {p.noPrazo === false && <span className="block text-[#D94A4A]">depois do prazo</span>}
+                {p.noPrazo === false && (
+                  <span className="flex items-center gap-1 text-black/55">
+                    <Clock size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#D94A4A]" />
+                    depois do prazo
+                  </span>
+                )}
               </p>
               <p className="tabular-nums text-black/65">
                 {p.debitos.total ? `${p.debitos.conciliados} de ${p.debitos.total} débitos conciliados` : <span className="text-black/40">Sem débitos importados</span>}
@@ -138,7 +143,10 @@ function CartaoDaOrganizacao({ o, onEditar, onTirar }: { o: Organizacao; onEdita
               <p className="text-black/65">
                 {p.diligencias.total ? `${plural(p.diligencias.total, "diligência", "diligências")}, ${p.diligencias.preditivas} preditiva${p.diligencias.preditivas === 1 ? "" : "s"}` : <span className="text-black/40">Sem diligência</span>}
                 {p.diligencias.porErroFormal > 0 && (
-                  <span className="block text-[#D94A4A]">{p.diligencias.porErroFormal} por erro formal ({p.diligencias.codigos.map(tituloDoApontamento).join("; ")})</span>
+                  <span className="flex items-start gap-1 text-black/55">
+                    <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-[#D94A4A]" />
+                    <span>{p.diligencias.porErroFormal} por erro formal ({p.diligencias.codigos.map(tituloDoApontamento).join("; ")})</span>
+                  </span>
                 )}
               </p>
               <p className="tabular-nums text-black/65">

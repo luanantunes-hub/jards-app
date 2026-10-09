@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, FolderOpen, Trash2, List, Columns3, CalendarDays, UserRound, Calendar, TrendingUp, Zap, FileText, Check } from "lucide-react";
+import { Plus, FolderOpen, Trash2, List, Columns3, CalendarDays, UserRound, UserX, Calendar, TrendingUp, Zap, FileText, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -79,7 +79,7 @@ function FinancialProgress({ captured, target }: { captured: number; target: num
         <span className="text-[0.625rem] font-semibold tabular-nums tracking-[-.01em] text-black/55">
           {progress}%
         </span>
-        {completed && <span className="text-[0.5rem] font-semibold uppercase tracking-[.06em] text-[#2E8932]">Meta</span>}
+        {completed && <span className="inline-flex items-center gap-1 text-[0.625rem] font-medium text-black/55"><Check size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />Meta</span>}
       </div>
       <div
         className="h-1.5 overflow-hidden rounded bg-black/[.075] ring-1 ring-inset ring-black/[.025]"
@@ -440,7 +440,14 @@ export default function ProjetosPage() {
 
                         {/* Ponto focal */}
                         <td className="px-4 py-3.5">
-                          <span className={`block max-w-[8.75rem] truncate text-[0.6875rem] font-medium ${p.ponto_focal ? "text-black/55" : "text-[#B07A14]"}`}>{p.ponto_focal ?? "Sem ponto focal"}</span>
+                          {p.ponto_focal ? (
+                            <span className="block max-w-[8.75rem] truncate text-[0.6875rem] font-medium text-black/55">{p.ponto_focal}</span>
+                          ) : (
+                            <span className="inline-flex max-w-[8.75rem] items-center gap-1 text-[0.6875rem] font-medium text-black/35">
+                              <UserX size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
+                              <span className="truncate">Sem ponto focal</span>
+                            </span>
+                          )}
                         </td>
 
                         {/* Última atualização */}

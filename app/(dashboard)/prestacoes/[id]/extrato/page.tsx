@@ -19,6 +19,7 @@ const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", curren
 const dataCurta = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
 const rotuloCategoria = (id: string) => CATEGORIAS_LANCAMENTO.find(c => c.id === id)?.rotulo ?? id;
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const LINHA = { borderColor: "rgba(13,13,13,.05)" };
 
 type Natureza = "todos" | "credito" | "debito";
@@ -240,9 +241,9 @@ export default function ExtratoPage() {
 
         {filtrados.length > 0 && (
           <dl className="flex flex-wrap gap-x-6 gap-y-1 border-b px-5 py-2.5 text-[0.6875rem]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
-            <div className="flex gap-1.5"><dt className="text-black/40">Créditos</dt><dd className="tabular-nums text-[#1A8B7A]">{fmt(totais.creditos)}</dd></div>
-            <div className="flex gap-1.5"><dt className="text-black/40">Débitos</dt><dd className="tabular-nums text-black/75">{fmt(totais.debitos)}</dd></div>
-            <div className="flex gap-1.5"><dt className="text-black/40">Diferença</dt><dd className="tabular-nums text-black/75">{fmt(totais.creditos - totais.debitos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Créditos</dt><dd className={`font-semibold tabular-nums ${totais.creditos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.creditos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Débitos</dt><dd className={`font-semibold tabular-nums ${totais.debitos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.debitos)}</dd></div>
+            <div className="flex items-baseline gap-1.5"><dt className={ROTULO}>Diferença</dt><dd className={`font-semibold tabular-nums ${totais.creditos - totais.debitos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.creditos - totais.debitos)}</dd></div>
           </dl>
         )}
 
@@ -274,7 +275,7 @@ export default function ExtratoPage() {
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-black/50">{rotuloCategoria(l.categoria)}</td>
                     {contas.length > 1 && <td className="max-w-[12rem] truncate px-4 py-2 text-black/45">{contaPorId.get(l.conta_id) ? rotuloDaConta(contaPorId.get(l.conta_id)!) : "—"}</td>}
-                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-[#1A8B7A]">{l.natureza === "credito" ? fmt(l.valor) : ""}</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-black/75">{l.natureza === "credito" ? fmt(l.valor) : ""}</td>
                     <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-black/75">{l.natureza === "debito" ? fmt(l.valor) : ""}</td>
                   </tr>
                 ))}
@@ -287,7 +288,7 @@ export default function ExtratoPage() {
                     <p className="truncate text-[0.75rem] text-black/80">{l.historico || "—"}</p>
                     <p className="text-[0.625rem] text-black/40"><span className="tabular-nums">{dataCurta(l.data)}</span> · {rotuloCategoria(l.categoria)}</p>
                   </div>
-                  <p className={`shrink-0 text-[0.75rem] tabular-nums ${l.natureza === "credito" ? "text-[#1A8B7A]" : "text-black/75"}`}>
+                  <p className="shrink-0 text-[0.75rem] tabular-nums text-black/75">
                     {l.natureza === "credito" ? "+" : "−"} {fmt(l.valor)}
                   </p>
                 </li>

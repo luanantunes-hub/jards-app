@@ -326,13 +326,13 @@ export default function NotificacoesPage() {
                       }}
                     >
                       <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded" style={{ background: "rgba(13,13,13,.04)" }}>
-                        <Icon size={15} style={{ color: critical ? "#B83E3E" : "#7259B5" }} />
+                        <Icon size={15} aria-hidden="true" className={critical ? "text-[#D94A4A]" : "text-black/45"} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <p className="truncate text-[0.8125rem] font-semibold text-black/80">{item.titulo}</p>
-                          {!item.lida && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#7259B5]" />}
-                          {critical && <span className="rounded border border-[#D94E4E]/30 bg-white px-1.5 py-0.5 text-[0.5rem] font-bold uppercase tracking-wide text-[#A33A3A]">Crítica</span>}
+                          <p className={`truncate text-[0.8125rem] ${item.lida ? "font-normal text-black/60" : "font-semibold text-[#0D0D0D]"}`}>{item.titulo}</p>
+                          {!item.lida && <span className="sr-only">Não lida</span>}
+                          {critical && <span className="rounded border border-[#D94A4A]/[.28] bg-white px-1.5 py-0.5 text-[0.5rem] font-medium uppercase tracking-wide text-[#D94A4A]">Crítica</span>}
                         </div>
                         <p className="mt-0.5 text-[0.75rem] leading-5 text-black/48">{item.mensagem}</p>
                         <div className="mt-1.5 flex items-center gap-2 text-[0.5625rem] text-black/28">

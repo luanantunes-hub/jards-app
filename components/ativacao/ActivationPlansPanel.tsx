@@ -68,7 +68,7 @@ function PlanCard({ plan, hideProject }: { plan: PlanoAtivacaoResumo; hideProjec
   const subtitle = hideProject ? plan.empresa_nome : `${plan.empresa_nome} · ${plan.projeto_nome}`;
   return <Link href={`/ativacoes/${plan.id}`} className="group rounded border p-4 transition hover:bg-black/[.018]" style={{ borderColor: "rgba(13,13,13,.08)" }}>
     <div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="truncate text-[0.875rem] font-semibold text-black/75">{plan.nome}</p><p className="mt-1 truncate text-[0.6875rem] text-black/35">{subtitle}</p></div><ArrowUpRight size={14} className="shrink-0 text-black/20 transition group-hover:text-[#7259B5]"/></div>
-    <div className="mt-4 flex items-center justify-between"><span className="text-[0.625rem] font-medium" style={{ color: status.color }}>{status.label}</span><span className="text-[0.6875rem] font-semibold tabular-nums text-black/55">{progress}%</span></div>
+    <div className="mt-4 flex items-center justify-between"><span className="text-[0.625rem] font-medium text-black/55">{status.label}</span><span className={`text-[0.6875rem] font-semibold tabular-nums ${progress ? "text-[#0D0D0D]" : "text-black/30"}`}>{progress}%</span></div>
     <div className="mt-2 h-1.5 overflow-hidden rounded bg-black/[.06]"><div className="h-full rounded bg-[#0D0D0D]/70" style={{ width: `${progress}%` }}/></div>
     <div className="mt-4 grid grid-cols-3 gap-2 border-t pt-3" style={{ borderColor: "rgba(13,13,13,.06)" }}>
       <Mini icon={CalendarDays} label="Próximo prazo" value={shortDate(plan.proxima_data)} />
@@ -79,5 +79,5 @@ function PlanCard({ plan, hideProject }: { plan: PlanoAtivacaoResumo; hideProjec
 }
 
 function Mini({ icon: Icon, label, value, title }: { icon: typeof CalendarDays; label: string; value: string; title?: string }) {
-  return <div className="min-w-0"><p className="flex items-center gap-1 text-[0.5625rem] text-black/25"><Icon size={9}/>{label}</p><p title={title} className="mt-1 truncate text-[0.625rem] font-medium text-black/55">{value}</p></div>;
+  return <div className="min-w-0"><p className="flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45"><Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40"/>{label}</p><p title={title} className="mt-1 truncate text-[0.625rem] font-semibold tabular-nums text-[#0D0D0D]">{value}</p></div>;
 }

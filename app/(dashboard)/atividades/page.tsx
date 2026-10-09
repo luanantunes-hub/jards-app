@@ -728,10 +728,11 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
     setShowThresholds(false);
   }
 
-  const loadStyle = (count: number) => {
-    if (count > thresholds.attentionMax) return { color: "#D94E4E", label: "Sobrecarga" };
-    if (count > thresholds.balancedMax) return { color: "#B07A14", label: "Atenção" };
-    return { color: "#2E8932", label: count === 0 ? "Livre" : "Equilibrada" };
+  // A leitura fica neutra; só Atenção e Sobrecarga colorem o ícone de alerta.
+  const loadStyle = (count: number): { alerta: string | null; label: string } => {
+    if (count > thresholds.attentionMax) return { alerta: "#D94A4A", label: "Sobrecarga" };
+    if (count > thresholds.balancedMax) return { alerta: "#B07A14", label: "Atenção" };
+    return { alerta: null, label: count === 0 ? "Livre" : "Equilibrada" };
   };
 
   return (
@@ -753,14 +754,14 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
             <p className="text-[0.75rem] font-semibold text-black/70">Classificação da carga semanal</p>
             <div className="flex flex-wrap items-end gap-3">
               <label className="block">
-                <span className="mb-1.5 block text-[0.5625rem] font-medium uppercase tracking-[.1em] text-[#2E8932]">Equilibrada até</span>
+                <span className="mb-1.5 block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Equilibrada até</span>
                 <input type="number" min={1} max={99} value={draftThresholds.balancedMax} onChange={event => setDraftThresholds(current => ({ ...current, balancedMax: Math.max(1, Number(event.target.value) || 1) }))} className="h-9 w-24 rounded border border-black/10 bg-white px-3 text-[0.75rem] font-medium tabular-nums text-black/70 outline-none focus:border-[#7259B5]" />
               </label>
               <label className="block">
-                <span className="mb-1.5 block text-[0.5625rem] font-medium uppercase tracking-[.1em] text-[#B07A14]">Atenção até</span>
+                <span className="mb-1.5 block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Atenção até</span>
                 <input type="number" min={2} max={99} value={draftThresholds.attentionMax} onChange={event => setDraftThresholds(current => ({ ...current, attentionMax: Math.max(2, Number(event.target.value) || 2) }))} className="h-9 w-24 rounded border border-black/10 bg-white px-3 text-[0.75rem] font-medium tabular-nums text-black/70 outline-none focus:border-[#7259B5]" />
               </label>
-              <div className="pb-0.5 text-[0.625rem] text-[#D94E4E]">Acima de {draftThresholds.attentionMax}: sobrecarga</div>
+              <div className="pb-0.5 text-[0.625rem] text-black/55">Acima de {draftThresholds.attentionMax}: sobrecarga</div>
               <button type="button" onClick={() => { setDraftThresholds(DEFAULT_THRESHOLDS); setThresholdError(null); }} className="h-9 rounded border border-black/10 bg-white px-3 text-[0.6875rem] font-medium text-black/40 transition hover:bg-black/[.04]">Restaurar padrão</button>
               <button type="button" disabled={savingThresholds} onClick={() => void saveThresholds(draftThresholds)} className="h-9 rounded border border-[#7259B5]/35 bg-white px-3 text-[0.6875rem] font-medium text-[#7259B5] transition hover:bg-black/[.04] disabled:opacity-40">{savingThresholds ? "Salvando…" : "Salvar limites"}</button>
             </div>
@@ -811,7 +812,7 @@ function CargaEquipeView({ atividades, tipoFilter, onEdit, onReassign }: {
                       const dayItems = weeklyItems.filter(item => normDate(scheduledDate(item)!) === key);
                       return <div key={key} className={`space-y-1 border-l p-1.5 ${key === todayStr ? "bg-black/[.015]" : ""}`} style={{ borderColor: "rgba(13,13,13,.05)" }}>{dayItems.map(item => <DraggablePill key={item.id} item={item} onEdit={onEdit} />)}</div>;
                     })}
-                    <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className={`text-[1.125rem] font-semibold tabular-nums ${weeklyItems.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{weeklyItems.length}</span><span className="text-[0.5625rem] font-medium" style={{ color: status.color }}>{status.label}</span></div>
+                    <div className="flex flex-col items-center justify-center border-l px-3 py-2" style={{ borderColor: "rgba(13,13,13,.05)" }}><span className={`text-[1.125rem] font-semibold tabular-nums ${weeklyItems.length ? "text-[#0D0D0D]" : "text-black/30"}`}>{weeklyItems.length}</span><span className="flex items-center gap-1 text-[0.625rem] font-medium text-black/55">{status.alerta && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0" style={{ color: status.alerta }} />}{status.label}</span></div>
                   </MemberDropRow>
                 );
               })}
@@ -1619,11 +1620,13 @@ function AtividadesTable({ atividades, loading, tab, savingActivityId, onToggle,
     }
     return "—";
   };
-  const due = (a: AtividadeRow) => {
-    if (a.feita) return { color: "rgba(13,13,13,.35)", label: fmtDate(a.data_realizada) };
-    if (!a.data_prevista) return { color: "rgba(13,13,13,.25)", label: "Sem data" };
+  // A data fica neutra; atrasada e hoje só colorem o ícone de alerta.
+  const due = (a: AtividadeRow): { tom: string; label: string; alerta: { cor: string; rotulo: string } | null } => {
+    if (a.feita) return { tom: "text-black/35", label: fmtDate(a.data_realizada), alerta: null };
+    if (!a.data_prevista) return { tom: "text-black/25", label: "Sem data", alerta: null };
     const group = getGroup(a.data_prevista);
-    return { color: group === "atrasadas" ? "#D94E4E" : group === "hoje" ? "#B07A14" : "rgba(13,13,13,.50)", label: fmtDate(a.data_prevista) };
+    const alerta = group === "atrasadas" ? { cor: "#D94A4A", rotulo: "Atrasada" } : group === "hoje" ? { cor: "#B07A14", rotulo: "Vence hoje" } : null;
+    return { tom: "text-black/50", label: fmtDate(a.data_prevista), alerta };
   };
   const Header = ({ label, column }: { label: string; column?: ActivitySortKey }) => <button type="button" disabled={!column} onClick={() => column && changeSort(column)} className="flex items-center gap-1 whitespace-nowrap text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35 disabled:cursor-default">{label}{column && <ArrowUpDown size={10} className={sortKey === column ? "text-[#7259B5]" : "text-black/20"} />}</button>;
 
@@ -1644,9 +1647,9 @@ function AtividadesTable({ atividades, loading, tab, savingActivityId, onToggle,
         <td className="bg-white px-4 py-3 group-hover:bg-[#FBFBFA]"><div className="flex w-full items-center gap-2.5 text-left"><span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded" style={{ color: tc.color }}><Icon size={13} /></span><span className="min-w-0"><span className={`block truncate text-[0.78125rem] font-semibold ${a.feita ? "text-black/30 line-through" : "text-black/75"}`}>{a.nome}</span><span className="mt-0.5 block text-[0.625rem] text-black/30">{tc.label}</span></span></div></td>
         <td className="px-4 py-3"><span className="block max-w-[10.625rem] truncate text-[0.6875rem] font-medium text-black/55">{captacaoLabel(a)}</span></td>
         <td className="px-4 py-3"><div className="max-w-[12.5rem]"><span className="block truncate text-[0.6875rem] font-medium text-black/60">{a.contato?.nome ?? a.empresa_crm?.nome ?? "—"}</span>{a.contato?.email && <span className="mt-0.5 block truncate text-[0.59375rem] text-black/30">{a.contato.email}</span>}{a.contato?.telefone && <span className="block text-[0.59375rem] text-black/25">{a.contato.telefone}</span>}</div></td>
-        <td className="px-4 py-3"><span className="whitespace-nowrap text-[0.6875rem] font-medium tabular-nums" style={{ color: deadline.color }}>{deadline.label}</span>{a.hora_inicio && <span className="mt-0.5 block text-[0.59375rem] text-black/25">{a.hora_inicio.slice(0,5)}{a.hora_fim ? ` — ${a.hora_fim.slice(0,5)}` : ""}</span>}</td>
+        <td className="px-4 py-3"><span className={`flex items-center gap-1 whitespace-nowrap text-[0.6875rem] font-medium tabular-nums ${deadline.tom}`}>{deadline.alerta && <Clock size={12} strokeWidth={1.75} role="img" aria-label={deadline.alerta.rotulo} className="shrink-0" style={{ color: deadline.alerta.cor }} />}{deadline.label}</span>{a.hora_inicio && <span className="mt-0.5 block text-[0.59375rem] text-black/25">{a.hora_inicio.slice(0,5)}{a.hora_fim ? ` — ${a.hora_fim.slice(0,5)}` : ""}</span>}</td>
         <td className="px-4 py-3 text-[0.6875rem] tabular-nums text-black/40">{duration(a)}</td><td className="px-4 py-3"><PrioBadge prio={a.prioridade} size="sm" /></td>
-        <td className="px-4 py-3"><span className={`text-[0.6875rem] font-medium ${a.responsavel?.full_name ? "text-black/55" : "text-[#B07A14]"}`}>{a.responsavel?.full_name ?? "Sem responsável"}</span></td>
+        <td className="px-4 py-3">{a.responsavel?.full_name ? <span className="text-[0.6875rem] font-medium text-black/55">{a.responsavel.full_name}</span> : <span className="flex items-center gap-1 whitespace-nowrap text-[0.6875rem] font-medium text-black/35"><UserX size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />Sem responsável</span>}</td>
         <td className="px-4 py-3"><span className="block max-w-[8.4375rem] truncate text-[0.6875rem] text-black/45">{a.resultado || "—"}</span></td><td className="px-4 py-3"><span className="block max-w-[9.6875rem] truncate text-[0.6875rem] text-black/45">{a.projeto?.nome ?? a.captacao?.projeto?.nome ?? "—"}</span></td>
         <td className="px-4 py-3"><span className="block max-w-[12.8125rem] truncate text-[0.65625rem] text-black/35" title={a.nota ?? undefined}>{a.nota || "—"}</span></td>
       </tr>;

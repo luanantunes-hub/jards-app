@@ -304,7 +304,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
                               <td className="py-1 text-right tabular-nums text-black/45">{fmt(m.de)}</td>
                               <td className="px-2 py-1 text-center text-black/30">→</td>
                               <td className="py-1 text-right tabular-nums text-black/70">{fmt(m.para)}</td>
-                              <td className={`py-1 pl-3 text-right tabular-nums ${m.para - m.de > 0 ? "text-[#2E8932]" : "text-[#B23B3B]"}`}>{fmtSinal(m.para - m.de)}</td>
+                              <td className={`py-1 pl-3 text-right tabular-nums ${m.para - m.de === 0 ? "text-black/25" : "text-black/70"}`}>{fmtSinal(m.para - m.de)}</td>
                             </tr>
                           ))}
                         </tbody>

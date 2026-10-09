@@ -382,7 +382,7 @@ export function PropostaWizard({
                     {cotas.filter(cotaTemDisponibilidade).map(c => (
                       <div key={c.id} className="flex items-center justify-between px-3 py-2 rounded bg-black/[0.02]">
                         <span className="text-[0.75rem] font-semibold text-black">{c.nome}{c.modelo === "produto" && c.produto_nome ? ` · ${c.produto_nome}` : ""}</span>
-                        <span className="text-[0.75rem] font-bold text-[#7259B5]">
+                        <span className="text-[0.75rem] font-semibold tabular-nums text-[#0D0D0D]">
                           {formatCotaValor(c)}
                         </span>
                       </div>

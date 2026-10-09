@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { Dropdown } from "@/components/ui/Dropdown";
@@ -86,8 +86,13 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
       <p className="mb-2 text-[0.75rem] text-black/55">
         {situacao === "sem_pagamento" && (liquido !== null ? <>Nada pago ainda de <span className="tabular-nums">{reais(liquido)}</span>.</> : "Nada pago ainda.")}
         {situacao === "parcial" && <>Pago <span className="tabular-nums text-black/80">{reais(pago)}</span>{falta !== null && <>; faltam <span className="tabular-nums">{reais(falta)}</span></>}.</>}
-        {situacao === "pago" && <span className="text-[#2E8932]">Pago: <span className="tabular-nums">{reais(pago)}</span>.</span>}
-        {situacao === "excedido" && <span className="text-[#B23B3B]">Pago <span className="tabular-nums">{reais(pago)}</span>, acima do líquido.</span>}
+        {situacao === "pago" && <span>Pago: <span className="tabular-nums text-black/80">{reais(pago)}</span>.</span>}
+        {situacao === "excedido" && (
+          <span>
+            <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mr-1 inline-block align-[-0.125rem] text-[#D94A4A]" />
+            Pago <span className="tabular-nums text-black/80">{reais(pago)}</span>, acima do líquido.
+          </span>
+        )}
       </p>
 
       {ordenados.length > 0 && (
@@ -99,7 +104,7 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
                 {rotuloDaForma(p.forma)}
                 {p.numero_documento && <span className="text-black/40"> · nº {p.numero_documento}</span>}
                 {p.favorecido_documento && <span className="text-black/40"> · para {formatarDocumento(p.favorecido_documento)}</span>}
-                {p.lancamento_id && <span className="text-[#2E8932]"> · conciliado</span>}
+                {p.lancamento_id && <span className="text-black/40"> · conciliado</span>}
               </span>
               <span className="shrink-0 tabular-nums text-black/80">{reais(Number(p.valor))}</span>
               {podeEditar && (

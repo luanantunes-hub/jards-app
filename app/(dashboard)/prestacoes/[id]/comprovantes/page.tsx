@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
-import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, Clock, ExternalLink, Receipt } from "lucide-react";
+import { Upload, FileText, Image, File, FileSpreadsheet, X, CheckCircle, AlertCircle, AlertTriangle, Clock, ExternalLink, Receipt } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoComprovante, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
 import { useItensDoOrcamento, type ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
@@ -677,24 +677,30 @@ export default function ComprovantesPage() {
                     </div>
                     <div className="flex items-center gap-3 text-[0.625rem] text-black/35 flex-wrap">
                       {permissoes.editar && itens.length > 0 ? (
-                        <Select
-                          value={c.no_id ?? ""}
-                          onChange={e => mudarItem(c, e.target.value)}
-                          aria-label={`Item do orçamento de ${c.nome_arquivo}`}
-                          block={false}
-                          className="max-w-[11rem] truncate rounded border px-1.5 py-0.5 text-[0.625rem] focus:outline-none sm:max-w-[16rem]"
-                          style={{ borderColor: "rgba(13,13,13,.12)", color: rubrica ? "rgba(13,13,13,.65)" : "#B07A14" }}
-                        >
-                          <option value="">{c.no_id ? "Item de outra versão" : "Sem item"}</option>
-                          {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
-                        </Select>
+                        <span className="inline-flex items-center gap-1">
+                          {!rubrica && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />}
+                          <Select
+                            value={c.no_id ?? ""}
+                            onChange={e => mudarItem(c, e.target.value)}
+                            aria-label={`Item do orçamento de ${c.nome_arquivo}`}
+                            block={false}
+                            className="max-w-[11rem] truncate rounded border px-1.5 py-0.5 text-[0.625rem] focus:outline-none sm:max-w-[16rem]"
+                            style={{ borderColor: "rgba(13,13,13,.12)", color: rubrica ? "rgba(13,13,13,.65)" : "rgba(13,13,13,.55)" }}
+                          >
+                            <option value="">{c.no_id ? "Item de outra versão" : "Sem item"}</option>
+                            {itens.map(it => <option key={it.id} value={it.id}>{rotuloDoItem(it)}</option>)}
+                          </Select>
+                        </span>
                       ) : (
                         <span>{rubrica ? rotuloDoItem(rubrica) : "Sem item"}</span>
                       )}
                       {fornecedorC ? (
                         <span className="max-w-[12rem] truncate text-black/55" title={nomeDoFornecedor(fornecedorC)}>{nomeDoFornecedor(fornecedorC)}</span>
                       ) : ehDespesa(c.tipo) && c.tipo !== "guia_tributo" && c.tipo !== "folha_pagamento" ? (
-                        <span className="text-[#B07A14]">Sem fornecedor</span>
+                        <span className="inline-flex items-center gap-1 text-black/55">
+                          <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#B07A14]" />
+                          Sem fornecedor
+                        </span>
                       ) : null}
                       {c.canal === "proponente" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Enviada pelo cliente</span>
@@ -712,9 +718,14 @@ export default function ComprovantesPage() {
                       )}
                       {c.valor_extraido !== null && <span className="tabular-nums">{fmt(c.valor_extraido)}</span>}
                       {ehDespesa(c.tipo) && (
-                        pagamentoC.situacao === "pago" ? <span className="text-[#2E8932]">Pago</span>
+                        pagamentoC.situacao === "pago" ? <span>Pago</span>
                           : pagamentoC.situacao === "parcial" ? <span className="tabular-nums">Pago {fmt(pagamentoC.pago)}</span>
-                            : pagamentoC.situacao === "excedido" ? <span className="text-[#B23B3B]">Pago acima do líquido</span>
+                            : pagamentoC.situacao === "excedido" ? (
+                              <span className="inline-flex items-center gap-1 text-black/55">
+                                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />
+                                Pago acima do líquido
+                              </span>
+                            )
                               : <span>A pagar</span>
                       )}
                       {c.data_doc && <span>{fmtDate(c.data_doc)}</span>}

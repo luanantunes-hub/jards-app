@@ -59,7 +59,7 @@ const quando = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] disabled:cursor-not-allowed disabled:text-black/35 active:scale-[.98]";
 
 function IconeDaSituacao({ linha }: { linha: LinhaDoChecklist }) {
-  if (linha.situacao === "pronto") return <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-[#2E8932]" aria-label="Pronto" />;
+  if (linha.situacao === "pronto") return <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-black/40" aria-label="Pronto" />;
   if (linha.situacao === "nao_se_aplica") return <MinusCircle size={15} className="mt-0.5 shrink-0 text-black/35" aria-label="Não se aplica" />;
   return linha.obrigatorio
     ? <AlertCircle size={15} className="mt-0.5 shrink-0 text-[#B07A14]" aria-label="Pendente, obrigatório" />
@@ -84,7 +84,6 @@ function ItemDoChecklist({ linha, acoes }: { linha: LinhaDoChecklist; acoes: Aco
   const daPessoa = linha.origem === "pessoa";
   const pendente = linha.situacao === "pendente";
   const fonte = [linha.fonte.documento, linha.fonte.dispositivo].filter(Boolean).join(", ");
-  const corDoDetalhe = pendente ? (linha.obrigatorio ? "#B07A14" : "rgba(13,13,13,.6)") : "rgba(13,13,13,.5)";
 
   async function salvarMotivo() {
     const problema = erroDaMarcacao(linha, "nao_se_aplica", motivo);
@@ -106,7 +105,7 @@ function ItemDoChecklist({ linha, acoes }: { linha: LinhaDoChecklist; acoes: Aco
               {fonte ? ` · ${fonte}` : ""}
               {linha.origem === "dados" ? " · conferido pelos dados" : ""}
             </p>
-            <p className="mt-1 text-[0.6875rem]" style={{ color: corDoDetalhe }}>{linha.detalhe}</p>
+            <p className={`mt-1 text-[0.6875rem] ${pendente ? "text-black/60" : "text-black/50"}`}>{linha.detalhe}</p>
             {linha.marcacao && linha.situacao !== "pendente" && (
               <p className="mt-0.5 text-[0.625rem] text-black/35">Marcado em {quando(linha.marcacao.updated_at)}</p>
             )}
@@ -436,7 +435,15 @@ export default function EnvioPage() {
               <p className="text-[0.8125rem] text-black/80">
                 {resumo.pendentes === 0
                   ? <>Tudo pronto para a {ROTULO_DA_ETAPA[checklist.etapa].toLowerCase()}.</>
-                  : <><span className="tabular-nums">{resumo.resolvidos} de {resumo.total}</span> itens prontos{resumo.obrigatoriosPendentes ? <span className="text-[#B07A14]"> · {resumo.obrigatoriosPendentes} {resumo.obrigatoriosPendentes === 1 ? "obrigatório falta" : "obrigatórios faltam"}</span> : null}</>}
+                  : <><span className="tabular-nums">{resumo.resolvidos} de {resumo.total}</span> itens prontos{resumo.obrigatoriosPendentes ? (
+                      <>
+                        {" · "}
+                        <span className="inline-flex items-center gap-1">
+                          <AlertCircle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />
+                          {resumo.obrigatoriosPendentes} {resumo.obrigatoriosPendentes === 1 ? "obrigatório falta" : "obrigatórios faltam"}
+                        </span>
+                      </>
+                    ) : null}</>}
               </p>
               <div className="flex items-center gap-2">
                 <span className="text-[0.625rem] text-black/40">

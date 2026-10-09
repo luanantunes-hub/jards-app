@@ -86,12 +86,14 @@ export function TetosDoRegime({ tetos, regimeNome, bases }: { tetos: TetoDoGrupo
                   teto.limite.maximo === null ? (
                     <span className="text-black/45">Depende {teto.limite.base}</span>
                   ) : teto.excedido ? (
-                    <span className={`inline-flex items-center gap-1 font-medium ${teto.limite.severidade === "bloqueio" ? "text-[#B23B3B]" : "text-[#9A6A10]"}`}>
-                      <AlertTriangle size={12} aria-hidden /> Acima do teto em {fmt(teto.limite.valorLimitado - teto.limite.maximo)}
+                    <span className="inline-flex items-center gap-1 font-medium tabular-nums text-black/70">
+                      <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className={`shrink-0 ${teto.limite.severidade === "bloqueio" ? "text-[#D94A4A]" : "text-[#B07A14]"}`} />
+                      <span>Acima do teto em {fmt(teto.limite.valorLimitado - teto.limite.maximo)}</span>
                     </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1 text-[#2E8932]">
-                      <Check size={12} aria-hidden /> Dentro do teto
+                    <span className="inline-flex items-center gap-1 text-black/55">
+                      <Check size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
+                      Dentro do teto
                     </span>
                   )
                 ) : (

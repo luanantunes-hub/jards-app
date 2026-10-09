@@ -9,7 +9,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { ArrowLeft, Check, Copy, FileText } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Check, Copy, FileText } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
@@ -168,7 +168,12 @@ function Secao({ secao, modelo, prestacaoId, podeEditar, guardar }: { secao: Sec
           <h3 id={`secao-${secao.id}`} className="text-[0.75rem] font-semibold text-black">
             {secao.titulo}
             {secao.obrigatoria && <span className="ml-2 text-[0.625rem] font-normal text-black/40">obrigatório</span>}
-            {secao.lacunas > 0 && <span className="ml-2 text-[0.625rem] font-normal text-[#B07A14]">{secao.lacunas} {secao.lacunas === 1 ? "lacuna" : "lacunas"}</span>}
+            {secao.lacunas > 0 && (
+              <span className="ml-2 inline-flex items-center gap-1 text-[0.625rem] font-normal text-black/55">
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />
+                {secao.lacunas} {secao.lacunas === 1 ? "lacuna" : "lacunas"}
+              </span>
+            )}
           </h3>
           {secao.instrucao && <p className="mt-0.5 max-w-[48rem] text-[0.6875rem] text-black/45">{secao.instrucao}</p>}
         </div>
@@ -318,7 +323,8 @@ export default function RelatorioDoObjetoPage() {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className={`text-[0.75rem] ${rascunho.lacunas ? "text-[#B07A14]" : "text-[#2E8932]"}`}>
+              <span className="inline-flex items-center gap-1 text-[0.75rem] tabular-nums text-black/55">
+                {rascunho.lacunas > 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />}
                 {rascunho.lacunas ? `${rascunho.lacunas} ${rascunho.lacunas === 1 ? "lacuna" : "lacunas"}` : "Sem lacunas"}
               </span>
               <CopiarTudo texto={textoDoRascunho(rascunho)} />

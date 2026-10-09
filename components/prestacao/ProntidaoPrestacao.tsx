@@ -18,7 +18,7 @@ function destino(prestacaoId: string, para: DestinoPendencia, codigo: string): s
 }
 
 function cor(percentual: number): string {
-  return percentual >= 80 ? "#2E8932" : percentual >= 50 ? "#B07A14" : "#7259B5";
+  return percentual >= 80 ? "#2E8932" : percentual >= 50 ? "#B07A14" : "rgba(13,13,13,.45)";
 }
 
 function Linha({ checagem, prestacaoId }: { checagem: Checagem; prestacaoId: string }) {
@@ -26,7 +26,7 @@ function Linha({ checagem, prestacaoId }: { checagem: Checagem; prestacaoId: str
   return (
     <li className="flex items-start gap-3 py-2.5">
       {ok
-        ? <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-[#2E8932]" aria-label="Em ordem" />
+        ? <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-black/40" aria-label="Em ordem" />
         : <AlertCircle size={14} className="mt-0.5 shrink-0 text-[#B07A14]" aria-label="Pendente" />}
       <div className="min-w-0 flex-1">
         <p className="text-[0.75rem] font-medium text-black/75">
@@ -59,8 +59,8 @@ export function ProntidaoPrestacao({ prontidao, prestacaoId }: { prontidao: Pron
     <section aria-labelledby="prontidao-titulo" className="rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <div className="flex flex-wrap items-end justify-between gap-4 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div>
-          <h2 id="prontidao-titulo" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40">Prontidão para envio</h2>
-          <p className="mt-1 text-[2rem] font-semibold leading-none tracking-[-.02em] tabular-nums" style={{ color: tom }}>{prontidao.percentual}%</p>
+          <h2 id="prontidao-titulo" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Prontidão para envio</h2>
+          <p className={`mt-1 text-[2rem] font-semibold leading-none tracking-[-.02em] tabular-nums ${prontidao.percentual ? "text-[#0D0D0D]" : "text-black/30"}`}>{prontidao.percentual}%</p>
         </div>
         <div className="min-w-[12rem] flex-1 sm:max-w-[22rem]">
           <div

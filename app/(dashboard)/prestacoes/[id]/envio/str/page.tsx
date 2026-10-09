@@ -8,7 +8,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Download, FileSpreadsheet, Info } from "lucide-react";
+import { AlertCircle, AlertTriangle, ArrowLeft, ArrowRight, CheckCircle2, Download, FileSpreadsheet, Info } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
@@ -27,6 +27,7 @@ import { partesDoZip, type ArquivoDoZip } from "@/lib/zip";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
+const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const CABECALHO = "px-4 py-2.5 text-left text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/40";
 const reais = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const BOTAO = "inline-flex h-9 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] text-black/70 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:cursor-not-allowed disabled:text-black/30";
@@ -65,7 +66,7 @@ function ListaDeCriticas({ id, titulo, criticas, aviso }: { id: string; titulo: 
             <li key={`${c.arquivo}-${c.linha}-${c.campo}-${i}`} className="flex items-start gap-2.5 px-5 py-3 text-[0.75rem]">
               {aviso
                 ? <Info size={13} className="mt-0.5 shrink-0 text-black/40" aria-label="Aviso" />
-                : <AlertTriangle size={13} className="mt-0.5 shrink-0 text-[#B23B3B]" aria-label={c.momento === "carga" ? "Impede a carga" : "Impede o envio"} />}
+                : <AlertTriangle size={13} className="mt-0.5 shrink-0 text-[#D94A4A]" aria-label={c.momento === "carga" ? "Impede a carga" : "Impede o envio"} />}
               <div className="min-w-0 flex-1">
                 <p className="text-[0.625rem] text-black/45">
                   {[c.arquivo ?? "Todas as planilhas", c.linha ? `linha ${c.linha}` : null, c.campo, aviso ? null : c.momento === "carga" ? "recusa na carga" : "recusa no envio"].filter(Boolean).join(" · ")}
@@ -254,8 +255,8 @@ export default function PlanilhasStrPage() {
             </div>
             <dl className="grid grid-cols-2 gap-x-6 gap-y-3 rounded border bg-white px-5 py-4 text-[0.6875rem] md:grid-cols-3" style={BORDA}>
               <div>
-                <dt className="text-black/40">A comprovar</dt>
-                <dd className="text-[0.875rem] tabular-nums text-black/80">{reais(planilhas.totais.aComprovar)}</dd>
+                <dt className={ROTULO}>A comprovar</dt>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${planilhas.totais.aComprovar ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(planilhas.totais.aComprovar)}</dd>
                 <dd className="tabular-nums text-black/40">
                   captado {reais(planilhas.totais.captado)}
                   {planilhas.totais.contrapartidaMinima > 0 && ` + contrapartida ${reais(planilhas.totais.contrapartidaMinima)}`}
@@ -263,13 +264,14 @@ export default function PlanilhasStrPage() {
                 </dd>
               </div>
               <div>
-                <dt className="text-black/40">Comprovado</dt>
-                <dd className="text-[0.875rem] tabular-nums text-black/80">{reais(planilhas.totais.comprovado)}</dd>
+                <dt className={ROTULO}>Comprovado</dt>
+                <dd className={`mt-0.5 text-[0.875rem] font-semibold tabular-nums ${planilhas.totais.comprovado ? "text-[#0D0D0D]" : "text-black/30"}`}>{reais(planilhas.totais.comprovado)}</dd>
                 <dd className="tabular-nums text-black/40">RPs {reais(planilhas.totais.rps)} + despesas bancárias {reais(planilhas.totais.despesasBancarias)}</dd>
               </div>
               <div className="col-span-2 md:col-span-1">
-                <dt className="text-black/40">Comprovado × a comprovar</dt>
-                <dd className={`text-[0.875rem] tabular-nums ${diferenca >= 0 ? "text-[#2E8932]" : "text-[#B23B3B]"}`}>
+                <dt className={ROTULO}>Comprovado × a comprovar</dt>
+                <dd className={`mt-0.5 flex items-center gap-1 text-[0.875rem] tabular-nums ${diferenca >= 0 ? "font-medium text-black/70" : "font-semibold text-[#0D0D0D]"}`}>
+                  {diferenca < 0 && <AlertCircle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-[#D94A4A]" />}
                   {diferenca >= 0 ? "Fecha" : `Faltam ${reais(-diferenca)}`}
                 </dd>
                 <dd className="text-black/40">{diferenca >= 0 ? "O STR libera o envio." : "O STR bloqueia o envio."}</dd>

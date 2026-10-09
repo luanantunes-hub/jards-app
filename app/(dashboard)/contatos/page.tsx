@@ -222,7 +222,7 @@ function StakeholdersView({ contatos }: { contatos: ContatoRow[] }) {
                       return (
                         <article key={item.id} className="rounded border border-black/[.07] bg-white p-2.5 cursor-pointer hover:border-[#7259B5]/30 transition" onClick={() => { window.location.href = `/contatos/${item.id}`; }}>
                           <div className="flex items-start gap-2"><div className="flex h-7 w-7 shrink-0 items-center justify-center rounded bg-black/[.05] text-[0.625rem] font-bold text-black/35">{name.charAt(0).toUpperCase()}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-1.5"><p className="truncate text-[0.6875rem] font-semibold text-black/75">{name}</p>{SentimentoIcone && <span role="img" className="shrink-0" title={`Sentimento: ${item.sentimento}`} aria-label={`Sentimento: ${item.sentimento}`}><SentimentoIcone size={12} strokeWidth={1.75} aria-hidden="true" className={item.sentimento === "negativo" ? "text-[#D94A4A]" : "text-black/40"}/></span>}</div><p className="mt-0.5 truncate text-[0.59375rem] text-black/35">{item.cargo ?? item.responsavel?.cargo ?? role}</p></div>{item.email && <a href={`mailto:${item.email}`} className="rounded p-1 text-black/25 transition hover:bg-black/[.05] hover:text-black" aria-label={`Enviar e-mail para ${name}`}><Mail size={11}/></a>}</div>
-                          <div className="mt-2 flex items-center justify-between gap-2 border-t border-black/[.05] pt-2"><span className="truncate text-[0.5625rem] font-medium text-black/35">{role}</span><div className="flex items-center gap-1.5"><LevelMarks value={item.influencia}/><LevelMarks value={item.forca_relacao} color="#2E8932"/></div></div>
+                          <div className="mt-2 flex items-center justify-between gap-2 border-t border-black/[.05] pt-2"><span className="truncate text-[0.5625rem] font-medium text-black/35">{role}</span><div className="flex items-center gap-1.5"><LevelMarks value={item.influencia}/><LevelMarks value={item.forca_relacao} color="#1A8B7A"/></div></div>
                         </article>
                       );
                     })}
@@ -445,7 +445,7 @@ export default function ContatosPage() {
                   const empresa = c.empresa_pub?.nome ?? c.empresa_crm?.nome ?? "—";
                   const og      = c.origem ? ORIGEM_CONFIG[c.origem] : null;
                   const role    = c.papel_decisao ? ROLE_LABEL[c.papel_decisao] : "Não definido";
-                  const sentimentColor = c.sentimento === "positivo" ? "#2E8932" : c.sentimento === "negativo" ? "#D94E4E" : c.sentimento === "neutro" ? "#B07A14" : "rgba(13,13,13,.28)";
+                  const SentimentoIcone = c.sentimento && c.sentimento !== "desconhecido" ? SENTIMENTO_ICONE[c.sentimento] : null;
 
                   return (
                     <tr
@@ -495,15 +495,20 @@ export default function ContatosPage() {
                       {/* Relacionamento */}
                       <td className="px-6 py-3.5">
                         <div className="flex min-w-0 items-center gap-2">
-                          <LevelMarks value={c.forca_relacao} color="#2E8932" />
-                          <span className="truncate text-[0.6875rem] font-medium" style={{ color: sentimentColor }}>
-                            {relationshipLabel(c.forca_relacao)}{c.sentimento && c.sentimento !== "desconhecido" ? ` · ${c.sentimento}` : ""}
+                          <LevelMarks value={c.forca_relacao} color="#1A8B7A" />
+                          <span className={`truncate text-[0.6875rem] font-medium ${c.forca_relacao ? "text-black/55" : "text-black/30"}`}>
+                            {relationshipLabel(c.forca_relacao)}
                           </span>
+                          {SentimentoIcone && (
+                            <span role="img" className="shrink-0" title={`Sentimento: ${c.sentimento}`} aria-label={`Sentimento: ${c.sentimento}`}>
+                              <SentimentoIcone size={12} strokeWidth={1.75} aria-hidden="true" className={c.sentimento === "negativo" ? "text-[#D94A4A]" : "text-black/40"} />
+                            </span>
+                          )}
                         </div>
                       </td>
 
                       {/* Última interação */}
-                      <td className={`px-6 py-3.5 text-[0.6875rem] font-medium whitespace-nowrap ${c.ultima_interacao ? "text-black/50" : "text-[#D94E4E]"}`}>
+                      <td className={`px-6 py-3.5 text-[0.6875rem] font-medium tabular-nums whitespace-nowrap ${c.ultima_interacao ? "text-black/50" : "text-black/30"}`}>
                         {interactionLabel(c.ultima_interacao)}
                       </td>
 

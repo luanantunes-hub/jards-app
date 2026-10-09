@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileUp } from "lucide-react";
+import { AlertTriangle, CheckCircle2, FileUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
@@ -29,6 +29,7 @@ import type { PrestacaoContaBancaria } from "@/lib/supabase/types";
 const fmt = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const dataCurta = (d: string) => new Date(`${d}T00:00:00`).toLocaleDateString("pt-BR");
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/45";
+const INDICADOR = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const MAX_PREVIA = 60;
 const LIMITE_PDF = 15 * 1024 * 1024;
 
@@ -289,18 +290,31 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
                 {lido.arquivo.name} <span className="font-normal text-black/40">· {extrato.formato.toUpperCase()}</span>
               </p>
               <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 text-[0.6875rem] sm:grid-cols-4">
-                <div><dt className="text-black/40">Período</dt><dd className="tabular-nums text-black/75">{extrato.periodo ? `${dataCurta(extrato.periodo.inicio)} a ${dataCurta(extrato.periodo.fim)}` : "—"}</dd></div>
-                <div><dt className="text-black/40">Créditos</dt><dd className="tabular-nums text-[#1A8B7A]">{fmt(totais.creditos)}</dd></div>
-                <div><dt className="text-black/40">Débitos</dt><dd className="tabular-nums text-black/75">{fmt(totais.debitos)}</dd></div>
-                <div><dt className="text-black/40">Saldo final</dt><dd className="tabular-nums text-black/75">{extrato.saldoFinal === null ? "—" : fmt(extrato.saldoFinal)}</dd></div>
+                <div><dt className={INDICADOR}>Período</dt><dd className={`mt-0.5 font-semibold tabular-nums ${extrato.periodo ? "text-[#0D0D0D]" : "text-black/30"}`}>{extrato.periodo ? `${dataCurta(extrato.periodo.inicio)} a ${dataCurta(extrato.periodo.fim)}` : "—"}</dd></div>
+                <div><dt className={INDICADOR}>Créditos</dt><dd className={`mt-0.5 font-semibold tabular-nums ${totais.creditos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.creditos)}</dd></div>
+                <div><dt className={INDICADOR}>Débitos</dt><dd className={`mt-0.5 font-semibold tabular-nums ${totais.debitos ? "text-[#0D0D0D]" : "text-black/30"}`}>{fmt(totais.debitos)}</dd></div>
+                <div><dt className={INDICADOR}>Saldo final</dt><dd className={`mt-0.5 font-semibold tabular-nums ${extrato.saldoFinal ? "text-[#0D0D0D]" : "text-black/30"}`}>{extrato.saldoFinal === null ? "—" : fmt(extrato.saldoFinal)}</dd></div>
               </dl>
               <p className="mt-2 text-[0.6875rem]" role="status">
-                {conferencia.situacao === "confere" && <span className="text-[#2E8932]">Saldo inicial + créditos − débitos bate com o saldo final do arquivo.</span>}
-                {conferencia.situacao === "diverge" && <span className="text-[#B23B3B]">O saldo não bate: o arquivo diz {fmt(conferencia.informado)}, a soma dá {fmt(conferencia.esperado)} (diferença de {fmt(conferencia.diferenca)}). {extrato.formato === "pdf" ? "Compare a prévia com o PDF: a leitura pode ter errado algum valor." : "Confira se o arquivo está completo."}</span>}
+                {conferencia.situacao === "confere" && (
+                  <span className="flex items-start gap-1 text-black/60">
+                    <CheckCircle2 size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-black/40" />
+                    <span>Saldo inicial + créditos − débitos bate com o saldo final do arquivo.</span>
+                  </span>
+                )}
+                {conferencia.situacao === "diverge" && (
+                  <span className="flex items-start gap-1 text-black/70">
+                    <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#D94A4A]" />
+                    <span>O saldo não bate: o arquivo diz {fmt(conferencia.informado)}, a soma dá {fmt(conferencia.esperado)} (diferença de {fmt(conferencia.diferenca)}). {extrato.formato === "pdf" ? "Compare a prévia com o PDF: a leitura pode ter errado algum valor." : "Confira se o arquivo está completo."}</span>
+                  </span>
+                )}
                 {conferencia.situacao === "sem_saldos" && <span className="text-black/45">O arquivo não traz saldo inicial e final, então a soma não pôde ser conferida.</span>}
               </p>
               {contaDiferente(extrato, conta) && (
-                <p className="mt-1 text-[0.6875rem] text-[#B07A14]">O arquivo é da conta {extrato.conta?.conta}, e a conta escolhida é {conta?.conta}. Confira antes de importar.</p>
+                <p className="mt-1 flex items-start gap-1 text-[0.6875rem] text-black/60">
+                  <AlertTriangle size={12} strokeWidth={1.75} aria-hidden className="mt-0.5 shrink-0 text-[#B07A14]" />
+                  <span>O arquivo é da conta {extrato.conta?.conta}, e a conta escolhida é {conta?.conta}. Confira antes de importar.</span>
+                </p>
               )}
               {extrato.avisos.map(aviso => <p key={aviso} className="mt-1 text-[0.6875rem] text-black/45">{aviso}</p>)}
             </div>
@@ -355,7 +369,7 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
                           {l.documento && <p className="truncate text-[0.625rem] text-black/35">Doc. {l.documento}</p>}
                         </td>
                         <td className="whitespace-nowrap px-3 py-1.5 text-black/50">{CATEGORIAS_LANCAMENTO.find(c => c.id === l.categoria)?.rotulo}</td>
-                        <td className={`whitespace-nowrap px-3 py-1.5 text-right tabular-nums ${l.natureza === "credito" ? "text-[#1A8B7A]" : "text-black/75"}`}>
+                        <td className="whitespace-nowrap px-3 py-1.5 text-right tabular-nums text-black/75">
                           {l.natureza === "credito" ? "+" : "−"} {fmt(l.valor)}
                         </td>
                       </tr>
@@ -372,7 +386,7 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
                           {l.documento && <> · Doc. {l.documento}</>}
                         </p>
                       </div>
-                      <p className={`shrink-0 text-[0.6875rem] tabular-nums ${l.natureza === "credito" ? "text-[#1A8B7A]" : "text-black/75"}`}>
+                      <p className="shrink-0 text-[0.6875rem] tabular-nums text-black/75">
                         {l.natureza === "credito" ? "+" : "−"} {fmt(l.valor)}
                       </p>
                     </li>

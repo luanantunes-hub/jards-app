@@ -6,7 +6,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, ExternalLink, RefreshCw } from "lucide-react";
+import { AlertTriangle, ArrowRight, ExternalLink, RefreshCw } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { compararComSad, type ComparacaoComSad, type ProjetoNoSad } from "@/lib/prestacao/ancine-sad";
 
@@ -59,7 +59,7 @@ export function DadosDaAncine({ prestacaoId }: { prestacaoId: string }) {
     <section className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }} aria-labelledby="dados-ancine-titulo">
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
-          <h3 id="dados-ancine-titulo" className="text-[0.625rem] font-semibold uppercase tracking-wide text-black/35">Dados na ANCINE</h3>
+          <h3 id="dados-ancine-titulo" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Dados na ANCINE</h3>
           <p className="mt-1 text-[0.6875rem] text-black/50">Situação, aprovação, captação e contas do projeto na consulta pública da ANCINE, pelo SALIC.</p>
         </div>
         <button type="button" onClick={consultar} disabled={consultando} className={BOTAO} style={{ borderColor: "rgba(13,13,13,.1)" }}>
@@ -125,17 +125,23 @@ export function DadosDaAncine({ prestacaoId }: { prestacaoId: string }) {
           )}
 
           <ul className="space-y-1 text-[0.6875rem]">
-            <li className={diferencaCaptado === 0 ? "text-black/60" : "text-[#B07A14]"}>
-              Captado na ANCINE {reais(c.captadoNoSad / 100)}; aportes no extrato {reais(c.aportesNoExtrato / 100)}
-              {diferencaCaptado !== 0 && <>: diferença de {reais(Math.abs(diferencaCaptado) / 100)}. Confira se todos os aportes foram importados.</>}
+            <li className="flex items-start gap-1 text-black/60">
+              {diferencaCaptado !== 0 && <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-[#B07A14]" />}
+              <span>
+                Captado na ANCINE {reais(c.captadoNoSad / 100)}; aportes no extrato {reais(c.aportesNoExtrato / 100)}
+                {diferencaCaptado !== 0 && <>: diferença de {reais(Math.abs(diferencaCaptado) / 100)}. Confira se todos os aportes foram importados.</>}
+              </span>
             </li>
             {c.contasQueFaltam.length > 0 && (
-              <li className="text-[#B07A14]">
-                {c.contasQueFaltam.length === 1 ? "Conta da ANCINE que não está cadastrada na prestação" : "Contas da ANCINE que não estão cadastradas na prestação"}:{" "}
-                {c.contasQueFaltam.map(x => `${x.mecanismo} (ag. ${x.agencia}, conta ${x.conta})`).join("; ")}.{" "}
-                <Link href={`/prestacoes/${prestacaoId}/extrato`} className="inline-flex items-center gap-0.5 rounded text-[#684DB0] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">
-                  Cadastrar no Extrato <ArrowRight size={10} aria-hidden />
-                </Link>
+              <li className="flex items-start gap-1 text-black/60">
+                <AlertTriangle size={12} strokeWidth={1.75} aria-hidden="true" className="mt-0.5 shrink-0 text-[#B07A14]" />
+                <span>
+                  {c.contasQueFaltam.length === 1 ? "Conta da ANCINE que não está cadastrada na prestação" : "Contas da ANCINE que não estão cadastradas na prestação"}:{" "}
+                  {c.contasQueFaltam.map(x => `${x.mecanismo} (ag. ${x.agencia}, conta ${x.conta})`).join("; ")}.{" "}
+                  <Link href={`/prestacoes/${prestacaoId}/extrato`} className="inline-flex items-center gap-0.5 rounded text-[#684DB0] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                    Cadastrar no Extrato <ArrowRight size={10} aria-hidden />
+                  </Link>
+                </span>
               </li>
             )}
           </ul>

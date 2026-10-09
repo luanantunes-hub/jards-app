@@ -4,9 +4,9 @@
 import { use, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
-  ArrowLeft, ArrowUpRight, CalendarDays, Check, Circle, Clock3, Download,
+  ArrowLeft, ArrowUpRight, CalendarDays, Check, Circle, CircleCheck, CircleDot, Clock, Clock3, Download,
   FileCheck2, FileText, FolderKanban, History, Link2, Paperclip, Pencil,
-  Play, Plus, ShieldCheck, Trash2, Upload, UserRound, X,
+  Play, Plus, ShieldCheck, Trash2, TriangleAlert, Upload, UserRound, X,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { DetailNotFound } from "@/components/ui/DetailPagePrimitives";
@@ -294,13 +294,13 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
           <header className="border-b border-black/[.06] px-4 py-4"><p className="text-[0.625rem] font-semibold text-black/30">Controle</p><h2 className="mt-1 text-[0.9375rem] font-semibold text-black/70">Dados da entrega</h2></header>
           <div className="divide-y divide-black/[.06]">
             <ControlRow icon={Check} label="Status"><StatusBadge status={delivery.status} label={statusMeta.label} bg={statusMeta.color} iconName={statusMeta.icon} size="sm"/></ControlRow>
-            <ControlRow icon={CalendarDays} label="Prazo" value={delivery.prazo ? formatDate(delivery.prazo) : "Sem prazo"} color={late ? "#D94E4E" : undefined}/>
+            <ControlRow icon={CalendarDays} label="Prazo"><p className="mt-1 flex items-center gap-1 text-[0.75rem] font-semibold text-black/60">{late && <Clock size={12} strokeWidth={1.75} role="img" aria-label="Atrasada" className="shrink-0 text-[#D94A4A]"/>}{delivery.prazo ? formatDate(delivery.prazo) : "Sem prazo"}</p></ControlRow>
             <ControlRow icon={UserRound} label="Responsável" value={responsible?.full_name || responsible?.email || "Não atribuído"}/>
             <ControlRow icon={FolderKanban} label="Categoria" value={categoryLabel(delivery.categoria)}/>
             <ControlRow icon={Link2} label="Origem" value={originLabel(delivery.origem)}/>
             {project && <ControlRow icon={FolderKanban} label="Projeto" value={project.nome} href={`/projetos/${project.id}`}/>} 
             {contract && <ControlRow icon={FileText} label="Contrato" value={contract.titulo || contract.numero || "Contrato"} href={`/contratos/${contract.id}`}/>} 
-            <ControlRow icon={ShieldCheck} label="Evidência" value={delivery.evidencia_obrigatoria ? documents.length ? `${documents.length} anexada${documents.length === 1 ? "" : "s"}` : "Obrigatória" : "Opcional"} color={delivery.evidencia_obrigatoria && documents.length === 0 ? "#B07A14" : undefined}/>
+            <ControlRow icon={ShieldCheck} label="Evidência"><p className="mt-1 flex items-center gap-1 text-[0.75rem] font-semibold text-black/60">{delivery.evidencia_obrigatoria && documents.length === 0 && <TriangleAlert size={12} strokeWidth={1.75} role="img" aria-label="Evidência pendente" className="shrink-0 text-[#B07A14]"/>}{delivery.evidencia_obrigatoria ? documents.length ? `${documents.length} anexada${documents.length === 1 ? "" : "s"}` : "Obrigatória" : "Opcional"}</p></ControlRow>
           </div>
         </section>
       </aside>
@@ -318,7 +318,7 @@ function StatusProgress({ status }: { status: DeliveryStatus }) {
   return <div className="grid grid-cols-4" aria-label="Andamento da entrega">{stages.map(([value, label], index) => {
     const reached = index <= current;
     const active = index === current;
-    return <div key={value} className="relative flex min-w-0 flex-col items-center text-center">{index > 0 && <span className={`absolute right-1/2 top-[0.4375rem] h-px w-full ${index <= current ? "bg-[#2E8932]" : "bg-black/[.09]"}`}/>}<span className={`relative z-[1] flex h-[0.9375rem] w-[0.9375rem] items-center justify-center rounded border ${reached ? "border-[#2E8932] bg-[#2E8932] text-white" : "border-black/[.12] bg-white text-transparent"}`}>{index < current ? <Check size={9} strokeWidth={3}/> : <Circle size={5} fill="currentColor"/>}</span><span className={`mt-2 truncate text-[0.625rem] font-medium ${active ? "text-black/65" : reached ? "text-black/40" : "text-black/25"}`}>{label}</span></div>;
+    return <div key={value} className="relative flex min-w-0 flex-col items-center text-center">{index > 0 && <span className={`absolute right-1/2 top-[0.375rem] h-px w-full ${index <= current ? "bg-[#2E8932]" : "bg-black/[.09]"}`}/>}<span className="relative z-[1] flex bg-white px-0.5">{index < current ? <CircleCheck size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40"/> : active ? <CircleDot size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/65"/> : <Circle size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/25"/>}</span><span className={`mt-2 truncate text-[0.625rem] font-medium ${active ? "text-black/65" : reached ? "text-black/40" : "text-black/25"}`}>{label}</span></div>;
   })}</div>;
 }
 
@@ -326,8 +326,8 @@ function SectionHeader({ icon: Icon, eyebrow, title, action }: { icon: React.Ele
   return <header className="flex min-h-[4.25rem] items-center justify-between gap-4 border-b border-black/[.06] px-5 py-4"><div className="flex min-w-0 items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.035] text-black/35"><Icon size={14}/></span><div className="min-w-0"><p className="truncate text-[0.625rem] font-medium text-black/30">{eyebrow}</p><h2 className="mt-0.5 truncate text-[0.875rem] font-semibold text-black/70">{title}</h2></div></div>{action}</header>;
 }
 
-function ControlRow({ icon: Icon, label, value, href, color, children }: { icon: React.ElementType; label: string; value?: string; href?: string; color?: string; children?: React.ReactNode }) {
-  const content = children ?? <p className="mt-1 text-[0.75rem] font-semibold text-black/60" style={color ? { color } : undefined}>{value}</p>;
+function ControlRow({ icon: Icon, label, value, href, children }: { icon: React.ElementType; label: string; value?: string; href?: string; children?: React.ReactNode }) {
+  const content = children ?? <p className="mt-1 text-[0.75rem] font-semibold text-black/60">{value}</p>;
   return <div className="flex gap-3 px-4 py-3.5"><span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center text-black/25"><Icon size={13}/></span><div className="min-w-0 flex-1"><p className="text-[0.5625rem] font-medium text-black/25">{label}</p>{href ? <Link href={href} className="mt-1 inline-flex max-w-full items-center gap-1 truncate text-[0.75rem] font-semibold text-[#7259B5] hover:underline">{value}<ArrowUpRight size={10}/></Link> : content}</div></div>;
 }
 
