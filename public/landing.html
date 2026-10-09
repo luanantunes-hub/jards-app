@@ -3155,17 +3155,38 @@
       d.linha(quadro.r, 0, quadro.r, h, 'is-guia', 0);
       if (principal && principal.r < quadro.r - 40) d.linha(principal.r, 0, principal.r, h, 'is-guia', 0);
       [[quadro.x, quadro.y], [quadro.r, quadro.y], [quadro.x, quadro.b], [quadro.r, quadro.b]].forEach(function(p){ d.registro(p[0], p[1]); });
-      // Cada força ganha seu módulo na margem direita, na altura da sua linha;
-      // passar o mouse na força acende o módulo dela (CSS, via data-forca).
+      // Cada força ganha, na margem direita, uma etapa da construção do símbolo,
+      // em vez do mesmo quarto repetido: ver (o compasso traça o círculo e o
+      // quarto coral), fazer (o quarto roxo de meio raio ganha corpo, com o coral
+      // como guia) e cuidar (o J completo, com o seu vazio). Passar o mouse na
+      // força acende o desenho dela (CSS, via data-forca).
       var margem = w - quadro.r;
-      var cores = ['roxo', 'coral', 'grafite'];
       if (margem >= 96 && itens.length === 3 && itens[0].x > quadro.x + 40) {
-        var r = Math.min(30, (margem - 40) / 2);
+        var R = Math.min(32, (margem - 40) / 2);
+        var quarto = function(cx, cy, r, abre){
+          var ang = { ne:[-90,0], se:[0,90], so:[90,180], no:[180,270] }[abre];
+          var t0 = ang[0]*Math.PI/180, t1 = ang[1]*Math.PI/180;
+          return 'M' + cx + ' ' + cy + ' L' + (cx + r*Math.cos(t0)) + ' ' + (cy + r*Math.sin(t0)) +
+            ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r*Math.cos(t1)) + ' ' + (cy + r*Math.sin(t1)) + ' Z';
+        };
         itens.forEach(function(it, i){
-          var cx = quadro.r + margem / 2 + r / 2, cy = it.cy + r / 2;
-          d.linha(quadro.r, it.cy, cx - r - 6, it.cy, '', 0).setAttribute('data-forca', i + 1);
-          d.modulo(cx, cy, r, 'no', cores[i], .16, i + 1);
-          d.registro(cx, cy);
+          var n = i + 1, cx = quadro.r + margem / 2 + R / 2, cy = it.cy + R / 4, rx = cx - R / 2;
+          d.linha(quadro.r, it.cy, cx - R - 6, it.cy, '', 0).setAttribute('data-forca', n);
+          if (i === 0) {
+            d.circulo(cx, cy, R);
+            d.modulo(cx, cy, R, 'no', 'coral', .05, n);
+            d.linha(cx, cy, cx - R*Math.SQRT1_2, cy - R*Math.SQRT1_2, '', 0);
+            d.centro(cx, cy, R);
+          } else if (i === 1) {
+            no('path', { d:quarto(cx, cy, R, 'no'), 'class':'pr-arco' }, d.g);
+            d.circulo(rx, cy, R / 2);
+            d.modulo(rx, cy, R / 2, 'se', 'roxo', .18, n);
+            d.centro(rx, cy, R / 2);
+          } else {
+            d.modulo(cx, cy, R, 'no', 'coral', .16, n);
+            d.modulo(rx, cy, R / 2, 'se', 'roxo', .18, n);
+            d.registro(cx, cy);
+          }
         });
       }
     },
