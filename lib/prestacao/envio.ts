@@ -32,8 +32,8 @@ export type DestinoDoEnvio = DestinoDaChecagem | "pendencias" | "devolucoes" | "
 
 export const ROTULO_DA_ETAPA: Record<EtapaEnvio, string> = { final: "Prestação final", parcial: "Prestação parcial" };
 
-export type MarcacaoDoChecklist = Pick<PrestacaoEnvioMarcacao, "etapa" | "tipo" | "codigo" | "situacao" | "justificativa" | "marcado_por" | "updated_at">;
-export type ArquivoDoChecklist = Pick<PrestacaoEnvioArquivo, "id" | "etapa" | "codigo" | "storage_path" | "nome_arquivo" | "mime_type" | "tamanho_bytes" | "created_at">;
+export type MarcacaoDoChecklist = Pick<PrestacaoEnvioMarcacao, "etapa" | "exercicio" | "tipo" | "codigo" | "situacao" | "justificativa" | "marcado_por" | "updated_at">;
+export type ArquivoDoChecklist = Pick<PrestacaoEnvioArquivo, "id" | "etapa" | "exercicio" | "codigo" | "storage_path" | "nome_arquivo" | "mime_type" | "tamanho_bytes" | "created_at">;
 export type DevolucaoDoChecklist = Pick<PrestacaoDevolucao, "motivo" | "situacao" | "valor_principal" | "valor_atualizado" | "valor_pago" | "pago_em" | "storage_path">;
 export type ContaDoChecklist = Pick<PrestacaoContaBancaria, "id" | "tipo" | "apelido" | "banco" | "conta" | "data_encerramento"> & {
   extratos: readonly Pick<PrestacaoExtratoImportacao, "periodo_fim" | "saldo_final" | "created_at">[];
@@ -42,6 +42,8 @@ export type ContaDoChecklist = Pick<PrestacaoContaBancaria, "id" | "tipo" | "ape
 export type DadosDoChecklist = {
   regime: RegimeNormativo | null;
   etapa: EtapaEnvio;
+  /** P9.2: o ano da prestação anual (saúde); sem ele, 0. */
+  exercicio?: number;
   estado: EstadoDaPrestacao;
   /** Verificações da prestação; só as abertas pedem algo. */
   verificacoes: readonly { check_codigo: string; status: string }[];
@@ -82,6 +84,8 @@ export type OrientacaoDoEnvio = { codigo: string; descricao: string; fonte: Font
 
 export type ChecklistDeEnvio = {
   etapa: EtapaEnvio;
+  /** P9.2: o ano da prestação anual; 0 sem ela. */
+  exercicio: number;
   /** Etapas que o regime tem (a final sempre; a parcial quando algum documento é dela). */
   etapas: EtapaEnvio[];
   sistema: string | null;
@@ -97,6 +101,9 @@ export type ChecklistDeEnvio = {
 
 const plural = (n: number, um: string, varios: string) => `${n} ${n === 1 ? um : varios}`;
 const hojeDe = (d: Date) => d.toISOString().slice(0, 10);
+/** A marcação ou o arquivo é desta etapa e deste exercício. */
+const daEtapa = (x: { etapa: EtapaEnvio; exercicio?: number | null }, etapa: EtapaEnvio, exercicio: number | undefined) =>
+  x.etapa === etapa && (x.exercicio ?? 0) === (exercicio ?? 0);
 
 /** Etapas do envio no regime: a final e, quando algum documento é dela, a parcial. */
 export function etapasDoRegime(regime: RegimeNormativo | null | undefined): EtapaEnvio[] {
@@ -325,7 +332,7 @@ const anexos: Avaliador = (ctx, { regra }) => {
   const mb = Number(regra?.parametros?.mb);
   if (!Number.isFinite(mb) || mb <= 0) return null;
   const limite = mb * 1024 * 1024;
-  const doEnvio = ctx.arquivos.filter(a => a.etapa === ctx.etapa);
+  const doEnvio = ctx.arquivos.filter(a => daEtapa(a, ctx.etapa, ctx.exercicio));
   const foraDoFormato = doEnvio.filter(a => !ehPdf(a)).map(a => a.nome_arquivo);
   const grandes = doEnvio.filter(a => (a.tamanho_bytes ?? 0) > limite).map(a => a.nome_arquivo);
   const validas = despesasValidas(ctx);
@@ -341,6 +348,13 @@ const anexos: Avaliador = (ctx, { regra }) => {
   }
   return pronto(`Comprovantes${doEnvio.length ? " e arquivos anexados aqui" : ""} em PDF${doEnvio.length ? `, até ${mb} MB` : ""}.`);
 };
+
+/** P9.2: o parecer de auditoria é do exercício da prestação anual; a pessoa anexa. */
+const auditoria: Avaliador = ctx => ({
+  dica: ctx.exercicio
+    ? `Anexe as demonstrações contábeis de ${ctx.exercicio} com o parecer conclusivo do auditor independente registrado no CRC.`
+    : "Anexe as demonstrações contábeis com o parecer conclusivo do auditor independente registrado no CRC.",
+});
 
 /** Documentos que os dados respondem, pelo código no regime. */
 const DOCUMENTOS: Record<string, Avaliador> = {
@@ -368,6 +382,7 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   gru_saldos: recolhimento,
   gru_ou_transferencia: recolhimento,
   gru: recolhimento,
+  auditoria,
 };
 
 /** Condições do sistema oficial que os dados respondem. */
@@ -387,7 +402,7 @@ const CONDICOES: Record<string, Avaliador> = {
 export function checklistDeEnvio(dados: DadosDoChecklist): ChecklistDeEnvio {
   const { regime, etapa } = dados;
   const vazio = (semChecklist: string): ChecklistDeEnvio => ({
-    etapa, etapas: ["final"], sistema: null, descricao: null, fonte: null, documentos: [], condicoes: [], orientacoes: [],
+    etapa, exercicio: dados.exercicio ?? 0, etapas: ["final"], sistema: null, descricao: null, fonte: null, documentos: [], condicoes: [], orientacoes: [],
     resumo: { total: 0, resolvidos: 0, pendentes: 0, obrigatoriosPendentes: 0 }, semChecklist,
   });
   if (!regime) return vazio("Escolha o regime da prestação para ver o que o envio pede.");
@@ -407,8 +422,8 @@ export function checklistDeEnvio(dados: DadosDoChecklist): ChecklistDeEnvio {
 
   const linha = (tipo: TipoDoItem, codigo: string, descricao: string, obrigatorio: boolean, severidade: Regra["severidade"] | null,
     fonte: Fonte, avaliador: Avaliador | undefined, regra?: Regra): LinhaDoChecklist => {
-    const marcacao = dados.marcacoes.find(m => m.etapa === etapa && m.tipo === tipo && m.codigo === codigo) ?? null;
-    const arquivos = tipo === "documento" ? dados.arquivos.filter(a => a.etapa === etapa && a.codigo === codigo) : [];
+    const marcacao = dados.marcacoes.find(m => daEtapa(m, etapa, dados.exercicio) && m.tipo === tipo && m.codigo === codigo) ?? null;
+    const arquivos = tipo === "documento" ? dados.arquivos.filter(a => daEtapa(a, etapa, dados.exercicio) && a.codigo === codigo) : [];
     const base = { tipo, codigo, descricao, obrigatorio, severidade, fonte, arquivos, aceitaArquivo: tipo === "documento" };
     const resposta = avaliador?.(ctx, { obrigatorio, regra }) ?? null;
     if (resposta && "situacao" in resposta) {
@@ -447,6 +462,7 @@ export function checklistDeEnvio(dados: DadosDoChecklist): ChecklistDeEnvio {
   const pendentes = todas.filter(l => l.situacao === "pendente");
   return {
     etapa,
+    exercicio: dados.exercicio ?? 0,
     etapas: etapasDoRegime(regime),
     sistema: envio.sistema,
     descricao: envio.descricao,

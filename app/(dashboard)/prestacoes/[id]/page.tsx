@@ -33,6 +33,9 @@ import { CapturaPorEmail } from "@/components/prestacao/CapturaPorEmail";
 import { VersaoNovaDoRegime } from "@/components/prestacao/VersaoNovaDoRegime";
 import { CaptacaoDaPrestacao } from "@/components/prestacao/CaptacaoDaPrestacao";
 import { situacaoDaCaptacao } from "@/lib/prestacao/captacao";
+import { anuaisPendentes, exerciciosDaAnual } from "@/lib/prestacao/exercicios";
+import { exerciciosEnviados } from "@/lib/prestacao/envios";
+import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -112,6 +115,8 @@ export default function PrestacaoDetalhe() {
   const [objeto, setObjeto] = useState<{ metas: number; comprovadas: number } | undefined>(undefined);
   const permissoes = usePermissoesPrestacao(id);
   const regimes = useRegimesPublicados();
+  // P9.2: as prestações anuais já enviadas saem dos próximos prazos.
+  const { envios } = useEnviosRegistrados(id);
   // Checklist de envio da etapa final (P4.1), para a prontidão.
   const { dados: dadosDoEnvio } = useDadosDoEnvio(id);
   const resumoDoEnvio = useMemo(() => {
@@ -286,7 +291,8 @@ export default function PrestacaoDetalhe() {
     dataFimCaptacao: prestacao.data_fim_captacao ?? null,
   });
   const prazoReadequacao = captacao && !captacao.readequacaoPedida ? captacao.prazoDaReadequacao : null;
-  const prazos = prazosDaPrestacao({ ...prestacao, prazo_readequacao: prazoReadequacao }, regime, alteracoesAguardando, hoje);
+  const prazosAnuais = anuaisPendentes(exerciciosDaAnual(regime, prestacao, hoje), envios ? exerciciosEnviados(envios) : []);
+  const prazos = prazosDaPrestacao({ ...prestacao, prazo_readequacao: prazoReadequacao, prazos_anuais: prazosAnuais }, regime, alteracoesAguardando, hoje);
 
   // Alerta de prazo (60 dias após data_fim_execucao, ou campo prazo)
   const vencida = prestacao.prazo && new Date(prestacao.prazo) < new Date()

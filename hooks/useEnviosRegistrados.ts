@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { EnvioDaLista } from "@/lib/prestacao/envios";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 
-const CAMPOS = "id, etapa, versao, enviado_em, protocolo, sistema, comentario, situacao, registrado_em, reaberto_em, motivo_reabertura, guarda_ate, guarda_marco, retrato_sha256";
+const CAMPOS = "id, etapa, exercicio, versao, enviado_em, protocolo, sistema, comentario, situacao, registrado_em, reaberto_em, motivo_reabertura, guarda_ate, guarda_marco, retrato_sha256";
 
 /** Os envios registrados da prestação (P4.6), do mais novo para o mais antigo, sem o retrato. */
 export function useEnviosRegistrados(prestacaoId: string): { envios: EnvioDaLista[] | null; erro: string; recarregar: () => Promise<void> } {

@@ -16,8 +16,10 @@ import { useDadosDoEnvio } from "@/hooks/useDadosDoEnvio";
 import { useEnviosRegistrados } from "@/hooks/useEnviosRegistrados";
 import { usePermissoesPrestacao } from "@/hooks/usePermissoesPrestacao";
 import { RegistrarEnvio } from "@/components/prestacao/envio/RegistrarEnvio";
-import { envioVigente } from "@/lib/prestacao/envios";
-import { checklistDeEnvio, etapasDoRegime, nomeDaConta, ROTULO_DA_ETAPA, type EtapaEnvio } from "@/lib/prestacao/envio";
+import { envioVigente, exerciciosEnviados } from "@/lib/prestacao/envios";
+import { exercicioInicial, exerciciosDaAnual } from "@/lib/prestacao/exercicios";
+import { EtapaDoEnvio } from "@/components/prestacao/envio/EtapaDoEnvio";
+import { checklistDeEnvio, etapasDoRegime, nomeDaConta, type EtapaEnvio } from "@/lib/prestacao/envio";
 import {
   manifestoCsv,
   nomeDoPacote,
@@ -93,10 +95,11 @@ export default function PacotePage() {
   const { dados, erro: erroDoEnvio, recarregar: recarregarEnvio } = useDadosDoEnvio(id);
   const permissoes = usePermissoesPrestacao(id);
   const { envios, recarregar: recarregarEnvios } = useEnviosRegistrados(id);
-  const [ultimoPacote, setUltimoPacote] = useState<{ etapa: EtapaEnvio; manifesto: Manifesto } | null>(null);
+  const [ultimoPacote, setUltimoPacote] = useState<{ etapa: EtapaEnvio; exercicio: number; manifesto: Manifesto } | null>(null);
   const [extras, setExtras] = useState<Extras | null>(null);
   const [erro, setErro] = useState("");
   const [etapaEscolhida, setEtapa] = useState<EtapaEnvio>("final");
+  const [exercicioEscolhido, setExercicio] = useState<number | null>(null);
   const [progresso, setProgresso] = useState<{ texto: string; feito: number; total: number } | null>(null);
   const [gerado, setGerado] = useState<string | null>(null);
 
@@ -149,6 +152,10 @@ export default function PacotePage() {
 
   const etapas = useMemo(() => etapasDoRegime(dados?.regime), [dados]);
   const etapa = etapas.includes(etapaEscolhida) ? etapaEscolhida : "final";
+  // P9.2: na saúde, a parcial é a prestação anual de um exercício.
+  const exercicios = useMemo(() => (dados ? exerciciosDaAnual(dados.regime, dados.estado.prestacao ?? {}) : []), [dados]);
+  const enviados = useMemo(() => (envios ? exerciciosEnviados(envios) : []), [envios]);
+  const exercicio = etapa === "parcial" && exercicios.length ? exercicioEscolhido ?? exercicioInicial(exercicios, enviados) : 0;
 
   const dadosDoPacote = useMemo<DadosDoPacote | null>(() => {
     if (!dados || !extras?.prestacao) return null;
@@ -156,7 +163,7 @@ export default function PacotePage() {
     return {
       regime: dados.regime,
       etapa,
-      checklist: checklistDeEnvio({ ...dados, etapa }),
+      checklist: checklistDeEnvio({ ...dados, etapa, exercicio }),
       estado: dados.estado,
       prestacao: { titulo: extras.prestacao.titulo, identificador_oficial: extras.prestacao.identificador_oficial },
       arquivosDasDespesas: extras.despesas,
@@ -165,7 +172,7 @@ export default function PacotePage() {
       extratos: extras.extratos.map(e => ({ ...e, conta: contas.get(e.conta_id) ?? "Conta" })),
       metadados: extras.metadados,
     };
-  }, [dados, extras, etapa]);
+  }, [dados, extras, etapa, exercicio]);
   const plano = useMemo(() => (dadosDoPacote ? planoDoPacote(dadosDoPacote) : null), [dadosDoPacote]);
 
   async function gerar(tipo: TipoDoPacote) {
@@ -209,6 +216,7 @@ export default function PacotePage() {
         prestacao: { titulo: extras.prestacao.titulo, identificadorOficial: extras.prestacao.identificador_oficial },
         regime: dadosDoPacote.regime ? { codigo: dadosDoPacote.regime.codigo, versao: dadosDoPacote.regime.versao, sistema: dadosDoPacote.regime.sistemaOficial } : null,
         etapa,
+        exercicio: exercicio || null,
         padrao: plano.padrao,
         arquivos: todas.map(l => {
           const item = plano.itens.find(i => i.caminho === l.arquivo);
@@ -221,13 +229,13 @@ export default function PacotePage() {
         { nome: "relatorio-da-prestacao.pdf", dados: pdf, data: geradoEm },
         { nome: "manifesto.csv", dados: texto.encode("\uFEFF" + manifestoCsv(todas)), data: geradoEm },
         { nome: "manifesto.json", dados: texto.encode(JSON.stringify(manifesto, null, 2)), data: geradoEm },
-        ...(tipo === "pre-pacote" ? [{ nome: "o-que-falta.txt", dados: texto.encode(textoDasFaltas(plano, etapa)), data: geradoEm }] : []),
+        ...(tipo === "pre-pacote" ? [{ nome: "o-que-falta.txt", dados: texto.encode(textoDasFaltas(plano, etapa, exercicio)), data: geradoEm }] : []),
         ...arquivos,
       ]);
-      const nome = nomeDoPacote(tipo, dadosDoPacote.prestacao, etapa, geradoEm);
+      const nome = nomeDoPacote(tipo, dadosDoPacote.prestacao, etapa, geradoEm, exercicio);
       baixar(new Blob(zip as BlobPart[], { type: "application/zip" }), nome);
       setGerado(`${nome}: ${linhas.length + 1} ${linhas.length ? "arquivos" : "arquivo"}, com o manifesto${tipo === "pre-pacote" ? " e o que falta" : ""}.`);
-      if (tipo === "pacote") setUltimoPacote({ etapa, manifesto });
+      if (tipo === "pacote") setUltimoPacote({ etapa, exercicio, manifesto });
     } catch (x) {
       setErro(x instanceof Error ? x.message : "Não foi possível gerar o pacote.");
     }
@@ -237,8 +245,8 @@ export default function PacotePage() {
   const erroGeral = erro || erroDoEnvio;
   const ocupado = progresso !== null;
   const sistema = dadosDoPacote?.checklist.sistema;
-  const vigente = envios ? envioVigente(envios, etapa) : null;
-  const pacoteDaEtapa = ultimoPacote?.etapa === etapa ? ultimoPacote.manifesto : null;
+  const vigente = envios ? envioVigente(envios, etapa, exercicio) : null;
+  const pacoteDaEtapa = ultimoPacote?.etapa === etapa && ultimoPacote.exercicio === exercicio ? ultimoPacote.manifesto : null;
 
   return (
     <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
@@ -252,23 +260,16 @@ export default function PacotePage() {
             Os documentos do checklist e os comprovantes num arquivo .zip, renomeados no padrão {sistema ? `do ${sistema}` : "do sistema de destino"}, com o manifesto (tamanho e SHA-256 de cada arquivo) e o relatório da prestação em PDF. O pré-pacote sai a qualquer momento e mostra o que falta.
           </p>
         </div>
-        {etapas.length > 1 && (
-          <div role="radiogroup" aria-label="Etapa do envio" className="flex rounded border bg-white p-0.5" style={BORDA}>
-            {etapas.map(e => (
-              <button
-                key={e}
-                type="button"
-                role="radio"
-                aria-checked={etapa === e}
-                onClick={() => setEtapa(e)}
-                className="h-8 rounded px-3 text-[0.6875rem] transition focus-visible:outline-2 focus-visible:outline-[#7259B5]"
-                style={etapa === e ? { background: "#684DB0", color: "#fff" } : { color: "rgba(13,13,13,.6)" }}
-              >
-                {ROTULO_DA_ETAPA[e]}
-              </button>
-            ))}
-          </div>
-        )}
+        <EtapaDoEnvio
+          etapas={etapas}
+          etapa={etapa}
+          onEtapa={setEtapa}
+          regime={dados?.regime ?? null}
+          exercicios={exercicios}
+          exercicio={exercicio}
+          onExercicio={setExercicio}
+          enviados={enviados}
+        />
       </div>
 
       {erroGeral && <p role="alert" className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#D94A4A40" }}>{erroGeral}</p>}
@@ -338,6 +339,7 @@ export default function PacotePage() {
             <RegistrarEnvio
               prestacaoId={id}
               etapa={etapa}
+              exercicio={exercicio}
               sistema={sistema ?? null}
               manifesto={pacoteDaEtapa}
               podeRegistrar={permissoes.decidir}

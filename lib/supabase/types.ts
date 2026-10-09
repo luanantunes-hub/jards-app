@@ -954,6 +954,8 @@ export interface PrestacaoEnvioMarcacao {
   id: string;
   prestacao_id: string;
   etapa: "parcial" | "final";
+  /** P9.2: ano da prestação anual (saúde); 0 quando não há. */
+  exercicio?: number;
   tipo: "documento" | "condicao";
   /** Código do documento ou da condição no regime. */
   codigo: string;
@@ -969,6 +971,8 @@ export interface PrestacaoEnvioArquivo {
   id: string;
   prestacao_id: string;
   etapa: "parcial" | "final";
+  /** P9.2: ano da prestação anual (saúde); 0 quando não há. */
+  exercicio?: number;
   codigo: string;
   storage_path: string;
   nome_arquivo: string;
@@ -1016,6 +1020,8 @@ export interface PrestacaoEnvio {
   id: string;
   prestacao_id: string;
   etapa: "final" | "parcial";
+  /** P9.2: ano da prestação anual (saúde); 0 quando não há. A versão conta dentro da etapa e do exercício. */
+  exercicio?: number;
   versao: number;
   enviado_em: string;
   protocolo: string | null;
