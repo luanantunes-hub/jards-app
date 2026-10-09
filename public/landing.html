@@ -482,10 +482,10 @@
     .pr-contorno { fill:none; stroke-width:1.25; }
     .pr-nota { fill:rgba(40,37,37,.5); font-family:var(--font-mono); font-size:10.5px; font-weight:500; letter-spacing:.04em; }
     .pr-host { position:relative; isolation:isolate; }
-    /* A linha que chega ao botão principal fica roxa quando ele é apontado. */
+    /* A linha que chega ao botão principal escurece quando ele é apontado. */
     .pr-cta, .pr-aguada-cor, line[data-forca] { transition:stroke .2s ease, fill-opacity .2s ease; }
     .landing-hero:has(.hero-actions .alt-cta:is(:hover,:focus-visible)) .pr-cta,
-    .closing-cta:has(.alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:#684DB0; }
+    .closing-cta:has(.alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:rgba(40,37,37,.75); }
     /* Passar o mouse numa das três forças acende o módulo dela na margem. */
     .platform-forces:has(.ledger-item:nth-child(1):hover) [data-forca="1"].pr-aguada-cor,
     .platform-forces:has(.ledger-item:nth-child(2):hover) [data-forca="2"].pr-aguada-cor,
@@ -3051,6 +3051,16 @@
     this.linha(x-5, y, x+5, y, 'is-forte', 0);
     this.linha(x, y-5, x, y+5, 'is-forte', 0);
   };
+  // Cota: linha de medida com chamadas até o objeto, traços oblíquos de
+  // arquitetura nas pontas e o rótulo no meio, embaixo.
+  Desenho.prototype.cota = function(x1, x2, y, yObjeto, texto){
+    this.linha(x1, yObjeto + 6, x1, y + 6, 'is-guia', 0);
+    this.linha(x2, yObjeto + 6, x2, y + 6, 'is-guia', 0);
+    this.linha(x1, y, x2, y, '', 0);
+    this.linha(x1 - 4, y + 4, x1 + 4, y - 4, 'is-forte', 0);
+    this.linha(x2 - 4, y + 4, x2 + 4, y - 4, 'is-forte', 0);
+    if (texto) this.nota((x1 + x2) / 2, y + 20, texto);
+  };
   // Módulo: quarto de círculo com aguada, hachura e contorno.
   // Abre para 'no' (cima-esquerda), 'ne', 'so' ou 'se'.
   Desenho.prototype.modulo = function(cx, cy, r, abre, cor, aguada, marca){
@@ -3102,31 +3112,19 @@
       d.eixo(x0, h);
       d.linha(0, botao.cy, botao.x, botao.cy, 'pr-cta', 0);
       d.registro(x0, botao.cy);
-      // Módulo coral apoiado na base, a partir da borda do texto.
-      var R = Math.min(h - botao.b - 36, (titulo.w || 400) * .62);
-      if (R > 90) {
-        var cx = titulo.x + R;
-        d.circulo(cx, h, R);
-        d.linha(cx, h - R - 24, cx, h, 'is-guia', 0);
-        d.modulo(cx, h, R, 'no', 'coral', .12);
-      }
-      if (largo.matches) {
-        // Roxo na proporção da marca (metade do coral), preso à margem
-        // direita logo abaixo do menu.
-        var Rr = Math.max(R > 90 ? R / 2 : 80, 72), cyr = 96;
-        d.circulo(w, cyr, Rr);
-        d.modulo(w, cyr, Rr, 'so', 'roxo', .12);
-        d.registro(w - Rr, cyr);
-      } else {
-        // Celular: ao lado dos botões, depois do último item da mesma linha.
-        var naLinha = Array.prototype.map.call(sec.querySelectorAll('.hero-actions > *'), function(e){ return caixa(e, sec); })
-          .filter(function(c){ return Math.abs(c.cy - botao.cy) < 4; });
-        var dir = Math.max.apply(null, naLinha.map(function(c){ return c.r; }));
-        var Rc = Math.min(w - dir - 28, 132);
-        if (Rc > 60) {
-          d.modulo(w, botao.y - 8, Rc, 'so', 'roxo', .12);
-          d.registro(w - Rc, botao.y - 8);
-        }
+      if (!largo.matches) return;
+      // Cotas do produto, como numa planta: a largura do fluxo embaixo da
+      // tela e uma chamada para o valor que ela mostra.
+      var tela = caixa(sec.querySelector('.art-desktop-frame'), sec);
+      if (!tela) return;
+      d.cota(tela.x, tela.r, tela.b + 30, tela.b, 'negociação · contrato · entregas · renovação');
+      var valorEl = sec.querySelector('.art-money strong');
+      var valor = caixa(valorEl, sec);
+      if (valor && w - tela.r > 72) {
+        var xm = tela.r + 18, yt = tela.y - 26;
+        d.linha(tela.r + 4, valor.cy, xm, valor.cy, 'is-forte', 0);
+        d.linha(xm, valor.cy, xm, yt, '', 0);
+        d.nota(xm, yt - 8, valorEl.textContent.trim() + ' · contratado', 'end');
       }
     },
     leis: function(d, sec, w, h){
