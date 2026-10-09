@@ -21,13 +21,14 @@ import {
   Settings,
   LogOut,
   ClipboardCheck,
-  Lock,
+  HandCoins,
   Shield,
   Sparkles,
   ArrowLeftRight,
   Menu,
   Store,
   DoorOpen,
+  type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
@@ -37,6 +38,8 @@ import { EtiquetasProvider } from "@/contexts/EtiquetasContext";
 import { TaxonomiasComerciaisProvider } from "@/contexts/TaxonomiasComerciaisContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { SeletorDeModulo, type OpcaoDeModulo } from "@/components/navegacao/SeletorDeModulo";
+import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
@@ -45,9 +48,9 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 // ─── Definição dos módulos ──────────────────────────────────────────────────
 
-const MODULOS: { id: ModuloId; label: string; descricao: string }[] = [
-  { id: "captacao",  label: "Captação",  descricao: "Gestão de patrocinadores, editais e negociações" },
-  { id: "prestacao", label: "Prestação", descricao: "Prestação de contas e relatórios de projetos"   },
+const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIcon }[] = [
+  { id: "captacao",  label: "Captação",  descricao: "Patrocinadores, editais e negociações",       icone: HandCoins      },
+  { id: "prestacao", label: "Prestação", descricao: "Prestação de contas e relatórios do projeto", icone: ClipboardCheck },
 ];
 
 const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
@@ -147,6 +150,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
   const [orgSwitcherOpen, setOrgSwitcherOpen] = useState(false);
   const [mobileOpen, setMobileOpen]         = useState(false);
+  // Com a lista de módulos aberta, o menu lateral fica aberto até a escolha.
+  const [seletorAberto, setSeletorAberto]   = useState(false);
+  // Convite da primeira versão gratuita da prestação de contas.
+  const [conviteAberto, setConviteAberto]   = useState(false);
 
   const carregarModulosOrg = useCallback(async (orgId: string) => {
     setModulosCarregados(false);
@@ -297,8 +304,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }, [organizationId, loadOrg]);
 
   function trocarModulo(id: ModuloId) {
+    if (opcoesDeModulo.find(o => o.id === id)?.promo) {
+      setConviteAberto(true);
+      return;
+    }
     if (!podeUsarModulo({ superAdmin: isSuperAdmin, modulosOrganizacao: modulosOrg, modulosMembro: modulosUser }, id)) return;
     setModuloAtivo(id);
+    setMobileOpen(false);
     // Navega para a home do módulo
     const nav = NAV_POR_MODULO[id];
     if (nav.length > 0 && nav[0].items.length > 0) {
@@ -334,7 +346,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const navGroups   = NAV_POR_MODULO[moduloDoMenu];
   const usaCaptacao = podeUsarModulo(acessoModulos, "captacao");
   // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
-  const isExpanded  = expanded || mobileOpen;
+  const isExpanded  = expanded || mobileOpen || seletorAberto;
   const menuPath    = itemAtivoDoMenu(path);
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
   // EXPERIMENTAL: dentro de uma organização onde o papel é "captador", o
@@ -342,6 +354,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // organização que convidou (essas continuam existindo, só não fazem
   // sentido pra alguém com acesso limitado a um único workspace).
   const isWorkspaceCaptador = papelAtual === "captador";
+  // A prestação é oferecida de graça a quem usa o CRM e nunca teve o módulo (nem só para leitura).
+  const prestacaoEmPromo = modulosCarregados && !isSuperAdmin && !modulosOrg.includes("prestacao");
+  const opcoesDeModulo: OpcaoDeModulo[] = MODULOS.map(({ id, label, descricao, icone }) => {
+    const promo = id === "prestacao" && prestacaoEmPromo;
+    return {
+      id, label, descricao, icone, promo,
+      chamada: promo ? "Novo módulo grátis" : undefined,
+      bloqueio: promo || isSuperAdmin ? null
+        : !modulosOrg.includes(id) ? "Módulo não contratado: fale com o suporte"
+        : !modulosUser.includes(id) ? "Você não tem acesso: peça a quem administra a organização"
+        : null,
+    };
+  });
+
+  async function prestacaoAtivada() {
+    setConviteAberto(false);
+    if (!organizationId) return;
+    // Quem aceitou passa a usar o módulo; os módulos da organização são relidos antes de abrir a prestação.
+    setModulosUser(atual => (atual.includes("prestacao") ? atual : [...atual, "prestacao"]));
+    setMemberships(atual => atual.map(m => m.organizationId === organizationId && !m.modulosAcesso.includes("prestacao")
+      ? { ...m, modulosAcesso: [...m.modulosAcesso, "prestacao"] } : m));
+    await carregarModulosOrg(organizationId);
+    setModuloAtivo("prestacao");
+    router.push("/prestacoes");
+  }
 
   return (
     <OrganizationContext.Provider value={{ organizationId, organizationName: org.nome, papel: papelAtual }}>
@@ -356,6 +393,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           user={user}
           organizationId={organizationId}
           onComplete={(name) => setUser((current) => current ? ({ ...current, user_metadata: { ...current.user_metadata, full_name: name } } as User) : current)}
+        />
+      )}
+
+      {conviteAberto && (
+        <ConvitePrestacao
+          organizationId={organizationId}
+          podeAtivar={papelAtual === "admin"}
+          onClose={() => setConviteAberto(false)}
+          onAtivado={() => void prestacaoAtivada()}
         />
       )}
 
@@ -452,6 +498,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </Link>
           )}
         </div>
+
+        {/* Módulo: captação (o CRM) e prestação de contas */}
+        {!isWorkspaceCaptador && (
+          <SeletorDeModulo
+            opcoes={opcoesDeModulo}
+            ativo={moduloDoMenu}
+            expandido={isExpanded}
+            aberto={seletorAberto}
+            onAbrir={setSeletorAberto}
+            onTrocar={trocarModulo}
+          />
+        )}
 
         {/* Nav */}
         <nav className="flex-1 px-2 py-3 overflow-y-auto overflow-x-hidden">
@@ -649,55 +707,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </button>
             <img src="/jards-icon.svg" alt="Jards" className="h-6 w-6" />
           </div>
-          {/* Module switcher — até a liberação pública de Prestação, visível só para super admin */}
-          {isSuperAdmin && !isWorkspaceCaptador && (
-          <div className="mr-auto flex items-center gap-1 p-1 rounded" style={{ background: "rgba(13,13,13,.05)" }}>
-            {MODULOS.map(({ id, label }) => {
-              const orgTem    = isSuperAdmin || modulosOrg.includes(id);
-              const userTem   = isSuperAdmin || modulosUser.includes(id);
-              const acessivel = orgTem && userTem;
-              const ativo     = moduloAtivo === id;
-
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => trocarModulo(id)}
-                  disabled={!acessivel}
-                  aria-pressed={ativo}
-                  title={
-                    !orgTem
-                      ? "Módulo não contratado — fale com o suporte"
-                      : !userTem
-                      ? "Você não tem acesso a este módulo"
-                      : label
-                  }
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded text-[0.75rem] font-semibold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/40"
-                  style={{
-                    background: ativo ? "#FFFFFF" : "transparent",
-                    color: ativo
-                      ? "#282525"
-                      : acessivel
-                      ? "rgba(13,13,13,.45)"
-                      : "rgba(13,13,13,.25)",
-                    boxShadow: ativo ? "0 1px 3px rgba(0,0,0,.10)" : "none",
-                    cursor: acessivel ? "pointer" : "not-allowed",
-                  }}
-                >
-                  {!acessivel && <Lock size={10} style={{ color: "rgba(13,13,13,.25)" }} />}
-                  {label}
-                  {!orgTem && (
-                    <span className="text-[0.5625rem] font-bold px-1.5 py-0.5 rounded"
-                      style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}>
-                      Pro
-                    </span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-          )}
-
           {/* Right actions */}
           <div className="flex items-center gap-3">
             {user && <NotificationBell userId={user.id} />}
