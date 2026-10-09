@@ -2,7 +2,7 @@
 
 // Formulário PCP/PCF 2026 da LIE (P8.2): as 10 abas do formulário da DPPIE
 // montadas da prestação (receita e despesa, execução, pagamentos, recursos
-// humanos, a executar e bens), com o que falta corrigir ou completar, e o
+// humanos, beneficiados, a executar e bens), com o que falta corrigir ou completar, e o
 // arquivo gerado sobre o modelo oficial para juntar à PCP no SEI ou à PCF.
 
 import { useEffect, useMemo, useState } from "react";
@@ -47,6 +47,7 @@ function linkDoDestino(id: string, destino: DestinoDoFormulario | null): { href:
     case "conciliacao": return { href: `/prestacoes/${id}/conciliacao`, rotulo: "Abrir conciliação" };
     case "extrato": return { href: `/prestacoes/${id}/extrato`, rotulo: "Abrir extrato" };
     case "bens": return { href: `/prestacoes/${id}/bens`, rotulo: "Abrir bens" };
+    case "beneficiarios": return { href: `/prestacoes/${id}/beneficiarios`, rotulo: "Abrir beneficiários" };
     case "dados": return { href: `/prestacoes/${id}`, rotulo: "Abrir dados da prestação" };
   }
 }
@@ -105,6 +106,14 @@ function linhasDasAbas(f: FormularioLie): LinhaDaAba[] {
     f.etapa === "parcial"
       ? { aba: "A EXECUTAR", conteudo: `${plural(aExecutar.length, "ação", "ações")} com o orçado; os meses ficam para preencher`, total: f.acoes.reduce((s, a) => s + a.programado, 0), nota: "orçado" }
       : { aba: "A EXECUTAR", conteudo: "Só na PCP: sai vazia", total: null, nota: null },
+    {
+      aba: "BENEFICIADOS",
+      conteudo: f.beneficiados.linhas.length
+        ? `${plural(f.beneficiados.linhas.length, "beneficiado", "beneficiados")} · ${f.beneficiados.feminino} F e ${f.beneficiados.masculino} M`
+        : "Cabeçalho e marcador; nenhum beneficiado cadastrado",
+      total: null,
+      nota: null,
+    },
     { aba: "BENS ADQUIRIDOS", conteudo: plural(f.bens.length, "bem", "bens"), total: f.bens.reduce((s, b) => s + b.valor, 0), nota: null },
     ...ABAS_A_MAO.map(aba => ({ aba, conteudo: "Cabeçalho e marcador; os dados ficam para preencher", total: null, nota: null })),
   ];
@@ -183,7 +192,7 @@ export default function FormularioLiePage() {
         <div className="min-w-0">
           <h2 className="text-[0.9375rem] font-semibold text-[#0D0D0D]">Formulário PCP/PCF</h2>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
-            As 10 abas do formulário da DPPIE, montadas com o extrato, o orçamento, as despesas e os bens.
+            As 10 abas do formulário da DPPIE, montadas com o extrato, o orçamento, as despesas, os beneficiados e os bens.
             Corrija aqui o que sai errado, complete no Excel o que o Jards não sabe e junte o arquivo à PCP no SEI ou à PCF.
           </p>
         </div>

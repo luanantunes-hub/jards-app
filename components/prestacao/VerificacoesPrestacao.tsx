@@ -33,6 +33,7 @@ const DESTINOS: Record<DestinoDaChecagem, { caminho: string; rotulo: string }> =
   distribuicao: { caminho: "/distribuicao", rotulo: "Abrir distribuição" },
   bens: { caminho: "/bens", rotulo: "Abrir bens" },
   divulgacao: { caminho: "/divulgacao", rotulo: "Abrir divulgação" },
+  beneficiarios: { caminho: "/beneficiarios", rotulo: "Abrir beneficiários" },
 };
 
 function destino(prestacaoId: string, v: PrestacaoVerificacao): { href: string; rotulo: string } {

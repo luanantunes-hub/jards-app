@@ -12,6 +12,7 @@ import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
 import type { BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
+import type { BeneficiadoParaChecar } from "../beneficiarios";
 import type { ManifestacaoEsportiva, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
@@ -28,7 +29,7 @@ export const STATUS_VERIFICACAO = ["aberta", "justificada", "dispensada", "resol
 export type StatusVerificacao = (typeof STATUS_VERIFICACAO)[number];
 
 /** A aba da prestação onde a pendência se resolve. */
-export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao";
+export type DestinoDaChecagem = "visao_geral" | "orcamento" | "comprovantes" | "extrato" | "conciliacao" | "objeto" | "atividades" | "distribuicao" | "bens" | "divulgacao" | "beneficiarios";
 
 type DoCatalogo = {
   titulo: string;
@@ -104,6 +105,11 @@ export const CATALOGO_CHECAGENS = {
   CAPTACAO_ACIMA_DO_NIVEL: { titulo: "Captação acima do limite do nível", grupo: "orcamento", resultado: "nao_conforme", destino: "visao_geral", regras: ["limite_de_captacao"] },
   BOLSA_FORA_DA_EXCELENCIA: { titulo: "Bolsa fora do nível excelência", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento", regras: ["bolsa_auxilio"] },
   CRC_EXCELENCIA: { titulo: "CRC no nível excelência", grupo: "prestacao", resultado: "nao_conforme", destino: "visao_geral", regras: ["crc_excelencia"] },
+  // Beneficiados (P8.5, LIE).
+  BENEFICIADOS_AUSENTES: { titulo: "Relação de beneficiados", grupo: "objeto", resultado: "nao_calculavel", destino: "beneficiarios", regras: ["beneficiados"] },
+  BENEFICIADO_SEM_SEXO: { titulo: "Beneficiado sem sexo", grupo: "objeto", resultado: "revisar", destino: "beneficiarios", regras: ["beneficiados"] },
+  BENEFICIADO_REPETIDO: { titulo: "Beneficiado repetido", grupo: "objeto", resultado: "revisar", destino: "beneficiarios", regras: ["beneficiados"] },
+  REDE_PUBLICA_ABAIXO_DO_MINIMO: { titulo: "Rede pública abaixo do mínimo", grupo: "objeto", resultado: "nao_conforme", destino: "beneficiarios", regras: ["rede_publica"] },
   // Orçamento (P1.6, P1.7)
   ITEM_SEM_SALDO: { titulo: "Item sem saldo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
   TETO_GRUPO_CUSTO: { titulo: "Teto de grupo de custo", grupo: "orcamento", resultado: "nao_conforme", destino: "orcamento" },
@@ -221,6 +227,8 @@ export type EstadoDaPrestacao = {
   /** LIE (P8.4): nível da manifestação esportiva e validade da CRC. */
   manifestacaoEsportiva?: ManifestacaoEsportiva | null;
   crcValidade?: string | null;
+  /** P8.5: relação de beneficiados. */
+  beneficiarios?: readonly BeneficiadoParaChecar[];
   /** A conta vem junto para as planilhas por conta (P7.3). */
   lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */

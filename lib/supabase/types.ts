@@ -864,6 +864,25 @@ export interface CotacaoDoBem {
   nome_arquivo?: string | null;
 }
 
+/** Diretamente beneficiado da prestação (P8.5, LIE, aba BENEFICIADOS). */
+export interface PrestacaoBeneficiario {
+  id: string;
+  prestacao_id: string;
+  nome: string;
+  modalidade: string | null;
+  sexo: "feminino" | "masculino" | null;
+  idade: number | null;
+  /** Aluno da rede pública; null quando não informado. */
+  rede_publica: boolean | null;
+  telefone: string | null;
+  endereco: string | null;
+  beneficios: string[];
+  observacoes: string | null;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Bem permanente adquirido, produzido ou construído (P3.5). */
 export interface PrestacaoBem {
   id: string;

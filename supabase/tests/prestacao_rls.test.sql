@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(335);
+select plan(339);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -163,6 +163,9 @@ begin
   -- Um e-mail que chegou pela captura (P5.5).
   insert into public.prestacao_emails_recebidos (id, prestacao_id, resend_email_id, remetente, assunto, situacao, anexos, despesas) values
     ('f0000000-0000-4000-8000-0000000044a0', pa, 'rls-email-1', 'rls@teste.invalid', 'RLS nota', 'registrado', 1, 1);
+  -- Um beneficiado da relação (P8.5).
+  insert into public.prestacao_beneficiarios (id, prestacao_id, nome, sexo, idade, rede_publica) values
+    ('f0000000-0000-4000-8000-0000000045a0', pa, 'RLS Beneficiada', 'feminino', 11, true);
   insert into public.prestacao_convidado_notas (id, prestacao_id, convidado_id, autor_id, entidade_tipo, entidade_id, tipo) values
     ('f0000000-0000-4000-8000-0000000041a0', pa, 'f0000000-0000-4000-8000-0000000040a0', 'f0000000-0000-4000-8000-0000000000a7',
      'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'verificado');
@@ -193,7 +196,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes',
     'prestacao_envios', 'prestacao_envio_itens', 'prestacao_diligencias', 'prestacao_decisoes', 'prestacao_glosas',
     'prestacao_recursos', 'prestacao_links_patrocinador', 'prestacao_convidados', 'prestacao_convidado_notas',
-    'prestacao_emails_recebidos'
+    'prestacao_emails_recebidos', 'prestacao_beneficiarios'
   ];
 $$;
 
@@ -288,7 +291,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_links_patrocinador where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_convidados where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_convidado_notas where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_emails_recebidos where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_emails_recebidos where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_beneficiarios where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -328,7 +332,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_links_patrocinador (prestacao_id, patrocinador, token_hash, expira_em) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS direto', repeat('b', 64), current_date + 30)$c$),
     rls_teste.efeito($c$insert into public.prestacao_convidados (prestacao_id, email, papel, secoes, token_hash, expira_em) values ('f0000000-0000-4000-8000-0000000001a0', 'rls-direto@teste.invalid', 'auditor', '{objeto}', repeat('c', 64), current_date + 30)$c$),
     rls_teste.efeito($c$insert into public.prestacao_convidado_notas (prestacao_id, convidado_id, entidade_tipo, entidade_id, tipo, texto) values ('f0000000-0000-4000-8000-0000000001a0', 'f0000000-0000-4000-8000-0000000040a0', 'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'comentario', 'RLS direto')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_emails_recebidos (prestacao_id, resend_email_id, remetente, situacao) values ('f0000000-0000-4000-8000-0000000001a0', 'rls-direto', 'x@teste.invalid', 'sem_anexo')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_emails_recebidos (prestacao_id, resend_email_id, remetente, situacao) values ('f0000000-0000-4000-8000-0000000001a0', 'rls-direto', 'x@teste.invalid', 'sem_anexo')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_beneficiarios (prestacao_id, nome) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS novo beneficiado')$c$)
   ]);
 $$;
 
@@ -368,7 +373,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_links_patrocinador set mensagem = mensagem where id = 'f0000000-0000-4000-8000-0000000030a0'$c$),
     rls_teste.efeito($c$update public.prestacao_convidados set nome = nome where id = 'f0000000-0000-4000-8000-0000000040a0'$c$),
     rls_teste.efeito($c$update public.prestacao_convidado_notas set texto = texto where id = 'f0000000-0000-4000-8000-0000000041a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_emails_recebidos set detalhe = detalhe where id = 'f0000000-0000-4000-8000-0000000044a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_emails_recebidos set detalhe = detalhe where id = 'f0000000-0000-4000-8000-0000000044a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_beneficiarios set nome = nome where id = 'f0000000-0000-4000-8000-0000000045a0'$c$)
   ]);
 $$;
 
@@ -408,7 +414,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_links_patrocinador where id = 'f0000000-0000-4000-8000-0000000030a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_convidados where id = 'f0000000-0000-4000-8000-0000000040a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_convidado_notas where id = 'f0000000-0000-4000-8000-0000000041a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_emails_recebidos where id = 'f0000000-0000-4000-8000-0000000044a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_emails_recebidos where id = 'f0000000-0000-4000-8000-0000000044a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_beneficiarios where id = 'f0000000-0000-4000-8000-0000000045a0'$c$)
   ]);
 $$;
 
@@ -921,10 +928,10 @@ select lives_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-400
   'admin: registra o envio final, com o protocolo e o manifesto');
 select is((select array[status::text, data_envio::text] from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
   array['enviado', current_date::text], 'o envio final deixa a prestação enviada, com a data do envio');
-select is((select array[versao::text, jsonb_array_length(retrato -> 'despesas')::text,
+select is((select array[versao::text, jsonb_array_length(retrato -> 'despesas')::text, jsonb_array_length(retrato -> 'beneficiarios')::text,
                         (retrato_sha256 = encode(extensions.digest(convert_to(retrato::text, 'UTF8'), 'sha256'), 'hex'))::text]
              from public.prestacao_envios where prestacao_id = 'f0000000-0000-4000-8000-0000000001a0' and etapa = 'final'),
-  array['1', '1', 'true'], 'o retrato traz a despesa e o SHA-256 dele confere');
+  array['1', '1', '1', 'true'], 'o retrato traz a despesa e os beneficiados, e o SHA-256 dele confere');
 select ok(exists (select 1 from public.prestacao_envio_itens where tabela = 'prestacao_comprovantes'
                    and registro_id = 'f0000000-0000-4000-8000-0000000005a0' and storage_path like '%/comprovantes/f0000000-0000-4000-8000-000000000ca0.pdf'),
   'o arquivo da despesa entra na lista do que foi enviado');
@@ -1188,7 +1195,8 @@ select throws_ok($t$select public.fn_prestacao_aceitar_convite(repeat('e', 48))$
 select is(public.fn_prestacao_aceitar_convite(repeat('d', 48)), 'f0000000-0000-4000-8000-0000000001a0'::uuid, 'o convidado aceita o convite do próprio e-mail');
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), array[
     'prestacoes_contas', 'prestacao_atividades', 'prestacao_atividade_evidencias', 'prestacao_relatorio', 'prestacao_distribuicao',
-    'prestacao_pecas', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias', 'prestacao_bens', 'prestacao_convidados'],
+    'prestacao_pecas', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias', 'prestacao_bens', 'prestacao_convidados',
+    'prestacao_beneficiarios'],
   'convidado do objeto: lê só o objeto e o próprio convite');
 select is(rls_teste.arquivos(), '{}'::text[], 'convidado do objeto: não lê o comprovante');
 reset role;
@@ -1460,6 +1468,19 @@ select is((select manifestacao_esportiva from public.prestacoes_contas where id 
   'excelencia', 'nível esportivo: o leitor não muda');
 select throws_ok($t$update public.prestacoes_contas set manifestacao_esportiva = 'rendimento' where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
   '23514', null, 'nível esportivo: só formação, toda a vida ou excelência');
+
+-- ─── Beneficiados (P8.5) ─────────────────────────────────────────────────────
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$insert into public.prestacao_beneficiarios (prestacao_id, nome, modalidade, sexo, idade, rede_publica, telefone, endereco, beneficios, observacoes) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS Beneficiado', 'Atletismo', 'masculino', 12, false, '(19) 99999-0000', 'Rua A, 10, Campinas', array['Lanche', 'Transporte'], 'Turma da manhã')$t$,
+  'beneficiados: quem edita registra o beneficiado com a modalidade, a idade, a rede e os benefícios');
+reset role;
+select throws_ok($t$insert into public.prestacao_beneficiarios (prestacao_id, nome, sexo) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS', 'outro')$t$,
+  '23514', null, 'beneficiados: o sexo é feminino ou masculino, como os totais do formulário');
+select throws_ok($t$insert into public.prestacao_beneficiarios (prestacao_id, nome, idade) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS', 130)$t$,
+  '23514', null, 'beneficiados: idade de 0 a 120');
+select throws_ok($t$insert into public.prestacao_beneficiarios (prestacao_id, nome) values ('f0000000-0000-4000-8000-0000000001a0', '   ')$t$,
+  '23514', null, 'beneficiados: o nome é obrigatório');
 
 select * from finish();
 rollback;

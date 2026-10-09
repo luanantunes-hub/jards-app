@@ -12,6 +12,7 @@ import type { EvidenciaParaChecar } from "../evidencias";
 import type { LinhaDistribuicao } from "../distribuicao";
 import { lerCotacoes, type BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
+import type { BeneficiadoParaChecar } from "../beneficiarios";
 import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado } from "./catalogo";
 import type { ManifestacaoEsportiva } from "@/lib/supabase/types";
 
@@ -48,7 +49,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -85,6 +86,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     todas<DefesoEleitoral>(() => db.from("calendario_regulatorio")
       .select("inicio, fim, descricao").eq("tipo", "defeso_eleitoral").order("inicio")),
     todas<{ id: string; tipo: string }>(() => db.from("prestacao_contas_bancarias").select("id, tipo").eq("prestacao_id", prestacaoId).order("id")),
+    todas<BeneficiadoParaChecar>(() => db.from("prestacao_beneficiarios")
+      .select("id, nome, modalidade, sexo, idade, rede_publica, telefone, endereco, beneficios, observacoes").eq("prestacao_id", prestacaoId).order("id")),
   ]);
 
   const nos = versao
@@ -135,6 +138,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     contas,
     manifestacaoEsportiva: prestacao.manifestacao_esportiva ?? null,
     crcValidade: prestacao.crc_validade ?? null,
+    beneficiarios,
     alteracoes,
     metas,
     locais,
