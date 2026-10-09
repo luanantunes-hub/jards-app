@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(354);
+select plan(355);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -1500,6 +1500,14 @@ select throws_ok($t$update public.prestacoes_contas set carimbo_lei = '  ' where
   '23514', null, 'carimbo: o texto da lei não fica em branco');
 select throws_ok($t$update public.prestacoes_contas set numero_processo = repeat('9', 61) where id = 'f0000000-0000-4000-8000-0000000001a0'$t$,
   '23514', null, 'processo: até 60 caracteres');
+
+-- ─── Fim da captação (P9.1) ──────────────────────────────────────────────────
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+update public.prestacoes_contas set data_fim_captacao = '2026-06-30' where id = 'f0000000-0000-4000-8000-0000000001a0';
+select is((select data_fim_captacao from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a0'),
+  '2026-06-30'::date, 'captação: quem edita grava o fim da captação');
+reset role;
 
 -- ─── Beneficiados (P8.5) ─────────────────────────────────────────────────────
 set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';

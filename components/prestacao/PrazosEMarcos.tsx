@@ -57,6 +57,8 @@ export function ProximosPrazos({ prazos }: { prazos: PrazoDaPrestacao[] }) {
 export function MarcosDaPrestacao({ prestacao, hoje }: { prestacao: PrestacaoContas; hoje: string }) {
   const marcos = [
     ...MARCOS.map(m => ({ rotulo: m.rotulo, data: (prestacao[m.campo] as string | null | undefined) ?? null, prazo: false })),
+    // P9.1: o fim da captação só entra quando informado; nem todo regime conta prazo dele.
+    ...(prestacao.data_fim_captacao ? [{ rotulo: "Fim da captação", data: prestacao.data_fim_captacao, prazo: false }] : []),
     { rotulo: "Prazo de envio", data: prestacao.prazo, prazo: true },
   ];
   const preenchidos = marcos.filter(m => m.data).sort((a, b) => (a.data as string).localeCompare(b.data as string));

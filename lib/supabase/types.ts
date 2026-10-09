@@ -662,6 +662,8 @@ export interface PrestacaoContas {
   data_termo?: string | null;
   data_conclusao_objeto?: string | null;
   data_envio?: string | null;
+  /** P9.1: fim da captação; na saúde, conta o prazo da readequação. */
+  data_fim_captacao?: string | null;
   /** Última verificação do motor de checagens (P2.7); só o servidor grava. */
   verificada_em?: string | null;
   /** Calculado pelo banco a partir do regime e dos marcos. */

@@ -31,6 +31,8 @@ import { LinksDoPatrocinador } from "@/components/prestacao/LinksDoPatrocinador"
 import { ConvidadosDaPrestacao } from "@/components/prestacao/ConvidadosDaPrestacao";
 import { CapturaPorEmail } from "@/components/prestacao/CapturaPorEmail";
 import { VersaoNovaDoRegime } from "@/components/prestacao/VersaoNovaDoRegime";
+import { CaptacaoDaPrestacao } from "@/components/prestacao/CaptacaoDaPrestacao";
+import { situacaoDaCaptacao } from "@/lib/prestacao/captacao";
 
 type PrestacaoDetalhe = PrestacaoContas & {
   captacao: { id: string; titulo: string | null; lei: string | null; valor_solicitado: number | null } | null;
@@ -76,7 +78,10 @@ export default function PrestacaoDetalhe() {
   const { itens } = useItensDoOrcamento(id);
   const [atividadesCount, setAtividadesCount] = useState(0);
   const [comprovantes, setComprovantes] = useState<ComprovanteParaExecucao[]>([]);
-  const [alteracoesAguardando, setAlteracoesAguardando] = useState<{ numero: number; solicitada_em: string | null }[]>([]);
+  const [alteracoes, setAlteracoes] = useState<{ numero: number; solicitada_em: string | null; tipo: string | null; status: string }[]>([]);
+  const alteracoesAguardando = useMemo(() => alteracoes.filter(a => a.status === "solicitada"), [alteracoes]);
+  // P9.1: aportes do extrato (visão da carteira), para a captação diante da liberação.
+  const [captado, setCaptado] = useState(0);
   // Bloqueios abertos nas verificações (null até a primeira leitura).
   const [bloqueiosAbertos, setBloqueiosAbertos] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,6 +131,7 @@ export default function PrestacaoDetalhe() {
       { data: metasData },
       { data: atividadesData },
       { data: evidenciasData },
+      { data: carteiraData },
     ] = await Promise.all([
       (supabase as any)
         .from("prestacoes_contas")
@@ -148,9 +154,8 @@ export default function PrestacaoDetalhe() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- prestacao_alteracoes ainda não está no tipo Database
       (supabase as any)
         .from("prestacao_alteracoes")
-        .select("numero, solicitada_em")
-        .eq("prestacao_id", id)
-        .eq("status", "solicitada"),
+        .select("numero, solicitada_em, tipo, status")
+        .eq("prestacao_id", id),
       // Bloqueios abertos nas verificações: impedem o envio.
       (supabase as any)
         .from("prestacao_verificacoes")
@@ -162,6 +167,8 @@ export default function PrestacaoDetalhe() {
       (supabase as any).from("prestacao_metas").select("id").eq("prestacao_id", id),
       (supabase as any).from("prestacao_atividades").select("id, meta_id, status_realizacao").eq("prestacao_id", id),
       (supabase as any).from("prestacao_evidencias").select("atividade_id, meta_id").eq("prestacao_id", id),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a visão da carteira ainda não está no tipo Database
+      (supabase as any).from("prestacao_carteira").select("captado").eq("prestacao_id", id).maybeSingle(),
     ]);
 
     setPrestacao(data as PrestacaoDetalhe);
@@ -169,7 +176,8 @@ export default function PrestacaoDetalhe() {
 
     setAtividadesCount(atCount ?? 0);
     setComprovantes((compData as ComprovanteParaExecucao[]) ?? []);
-    setAlteracoesAguardando(alteracoesData ?? []);
+    setAlteracoes(alteracoesData ?? []);
+    setCaptado(Number(carteiraData?.captado) || 0);
     setBloqueiosAbertos(bloqueiosCount ?? 0);
     const metasLidas = (metasData ?? []) as { id: string }[];
     setObjeto(metasData ? {
@@ -270,7 +278,15 @@ export default function PrestacaoDetalhe() {
     verificacoes: bloqueiosAbertos === null ? undefined : { verificada: Boolean(prestacao.verificada_em), bloqueios: bloqueiosAbertos },
     envio: resumoDoEnvio,
   });
-  const prazos = prazosDaPrestacao(prestacao, regime, alteracoesAguardando, hoje);
+  const captacao = situacaoDaCaptacao(regime, {
+    captado: Math.round(captado * 100),
+    aprovado: prestacao.valor_aprovado ? Math.round(Number(prestacao.valor_aprovado) * 100) : null,
+    orcamentoVigente: itens.length ? Math.round(totalAprovado * 100) : null,
+    alteracoes,
+    dataFimCaptacao: prestacao.data_fim_captacao ?? null,
+  });
+  const prazoReadequacao = captacao && !captacao.readequacaoPedida ? captacao.prazoDaReadequacao : null;
+  const prazos = prazosDaPrestacao({ ...prestacao, prazo_readequacao: prazoReadequacao }, regime, alteracoesAguardando, hoje);
 
   // Alerta de prazo (60 dias após data_fim_execucao, ou campo prazo)
   const vencida = prestacao.prazo && new Date(prestacao.prazo) < new Date()
@@ -430,6 +446,10 @@ export default function PrestacaoDetalhe() {
           <ProntidaoPrestacao prontidao={prontidao} prestacaoId={id} />
 
           <VerificacoesPrestacao prestacaoId={id} permissoes={permissoes} resumo />
+
+          {captacao && (
+            <CaptacaoDaPrestacao situacao={captacao} prestacaoId={id} fimDaCaptacao={prestacao.data_fim_captacao ?? null} podeEditar={permissoes.editar} />
+          )}
 
           {/* Painel de comprovação financeira */}
           <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>

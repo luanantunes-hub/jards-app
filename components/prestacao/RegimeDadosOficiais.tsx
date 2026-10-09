@@ -4,16 +4,18 @@ import { Dropdown } from "@/components/ui/Dropdown";
 import type { RegimePublicado } from "@/hooks/useRegimesPublicados";
 import { NIVEIS_ESPORTIVOS, regimePedeNivel, rotulosDoNivel } from "@/lib/prestacao/nivel-esportivo";
 import { regimeUsaProcesso } from "@/lib/prestacao/devolucoes";
-import { regraDoRegime } from "@/lib/prestacao/regimes";
+import { regraDoRegime, type RegimeNormativo } from "@/lib/prestacao/regimes";
 import type { ManifestacaoEsportiva, PrestacaoContas } from "@/lib/supabase/types";
 
 type Campos = Partial<Pick<PrestacaoContas,
   "regime_id" | "identificador_oficial" | "identificador_tipo" | "fonte_recurso"
-  | "data_aprovacao" | "data_liberacao" | "data_termo" | "data_conclusao_objeto" | "data_envio"
+  | "data_aprovacao" | "data_liberacao" | "data_termo" | "data_conclusao_objeto" | "data_envio" | "data_fim_captacao"
   | "manifestacao_esportiva" | "crc_validade" | "numero_processo">>;
 
-const MARCOS: { campo: keyof Campos; rotulo: string }[] = [
+const MARCOS: { campo: keyof Campos; rotulo: string; soQuando?: (regime: RegimeNormativo | null) => boolean }[] = [
   { campo: "data_aprovacao", rotulo: "Aprovação" },
+  // P9.1: na saúde, o prazo da readequação conta do fim da captação.
+  { campo: "data_fim_captacao", rotulo: "Fim da captação", soQuando: regime => Object.values(regime?.prazos ?? {}).some(p => p && "marco" in p && p.marco === "fim_captacao") },
   { campo: "data_liberacao", rotulo: "Liberação" },
   { campo: "data_termo", rotulo: "Termo ou contrato" },
   { campo: "data_conclusao_objeto", rotulo: "Conclusão do objeto" },
@@ -173,7 +175,7 @@ export function RegimeDadosOficiais({ prestacao, regimes, podeEditar, onSalvar }
         <div>
           <span className="mb-1.5 block text-[0.5625rem] font-semibold uppercase tracking-wide text-black/30">Marcos</span>
           <div className="grid grid-cols-2 gap-2">
-            {MARCOS.map(({ campo, rotulo }) => (
+            {MARCOS.filter(m => !m.soQuando || m.soQuando(atual) || prestacao[m.campo]).map(({ campo, rotulo }) => (
               <label key={campo} className="block">
                 <span className={ROTULO}>{rotulo}</span>
                 <input

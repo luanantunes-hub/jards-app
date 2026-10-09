@@ -47,7 +47,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
   const db = cliente as any;
   const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null; obra_grupo: string | null; manifestacao_esportiva: ManifestacaoEsportiva | null; crc_validade: string | null } & DatasDaPrestacao>(
     db.from("prestacoes_contas")
-      .select("organization_id, regime_id, valor_aprovado, obra_grupo, manifestacao_esportiva, crc_validade, data_aprovacao, data_liberacao, data_termo, data_inicio_execucao, data_fim_execucao")
+      .select("organization_id, regime_id, valor_aprovado, obra_grupo, manifestacao_esportiva, crc_validade, data_aprovacao, data_liberacao, data_termo, data_inicio_execucao, data_fim_execucao, data_fim_captacao")
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
@@ -133,6 +133,7 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       data_liberacao: prestacao.data_liberacao ?? null,
       data_inicio_execucao: prestacao.data_inicio_execucao ?? null,
       data_fim_execucao: prestacao.data_fim_execucao ?? null,
+      data_fim_captacao: prestacao.data_fim_captacao ?? null,
     },
     despesas,
     fornecedores,
