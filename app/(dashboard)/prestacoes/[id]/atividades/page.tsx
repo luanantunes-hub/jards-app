@@ -206,7 +206,7 @@ export default function AtividadesPage() {
   }
 
   return (
-    <div className="px-8 py-6 space-y-4">
+    <div className="mx-auto max-w-pagina space-y-4 px-4 py-6 md:px-8">
       {/* Grade semanal (P8.6): só quando o regime pede ou já há turmas */}
       <GradeSemanal prestacaoId={id} />
       {/* Grade de RH (P8.7): só quando o regime pede ou já há cargos */}

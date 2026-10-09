@@ -94,6 +94,12 @@ export default function PrestacaoDetalhe() {
   const [erro, setErro] = useState("");
   const [aviso, setAviso] = useState("");
   const [avancarOpen, setAvancarOpen] = useState(false);
+  // Onde o layout reserva as ações do cabeçalho.
+  const [slotAcoes, setSlotAcoes] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    const quadro = requestAnimationFrame(() => setSlotAcoes(document.getElementById("prestacao-acoes")));
+    return () => cancelAnimationFrame(quadro);
+  }, []);
   const avancarBoxRef = useRef<HTMLDivElement>(null);
   const [avancarMenuPos, setAvancarMenuPos] = useState<{ right: number; top: number } | null>(null);
   useEffect(() => {
@@ -316,12 +322,8 @@ export default function PrestacaoDetalhe() {
 
   return (
     <div className="mx-auto max-w-pagina px-4 py-6 md:px-8">
-      {/* Avançar status */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="text-[0.6875rem] text-black/40">
-          {prestacao.captacao && <span>Negociação: {prestacao.captacao.titulo ?? "—"}</span>}
-          {prestacao.projeto && <span className="ml-2">· Projeto: {prestacao.projeto.nome}</span>}
-        </div>
+      {/* Avançar status: desenhado nas ações do cabeçalho da prestação (layout). */}
+      {slotAcoes && createPortal(<>
 
         {proximos.length + travados.length > 0 && (
           <div className="relative flex-shrink-0" ref={avancarBoxRef}>
@@ -406,7 +408,7 @@ export default function PrestacaoDetalhe() {
             Próximo passo: {bloqueados.map(s => STATUS_META[s].label.toLowerCase()).join(" ou ")}. Cabe ao administrador ou ao responsável pela prestação.
           </p>
         )}
-      </div>
+      </>, slotAcoes)}
 
       {erro && (
         <p role="alert" className="mb-4 px-4 py-3 rounded border text-[0.75rem]"
