@@ -13,6 +13,7 @@ import type { LinhaDistribuicao } from "../distribuicao";
 import type { BemParaChecar } from "../bens";
 import type { DefesoEleitoral, PecaParaChecar } from "../pecas";
 import type { BeneficiadoParaChecar } from "../beneficiarios";
+import type { TurmaDaGrade } from "../grade";
 import type { ManifestacaoEsportiva, PrestacaoAtividade, PrestacaoBem, PrestacaoComprovante, PrestacaoFornecedor, PrestacaoFornecedorDocumento, PrestacaoLocal, PrestacaoMeta, PrestacaoPagamento } from "@/lib/supabase/types";
 
 /** Bloqueio impede marcar como pronta para envio; alerta e justificativa pedem texto; info só avisa. */
@@ -210,9 +211,9 @@ export type AlteracaoDoEstado = { id: string; numero: number; status: string; so
 
 export type MetaDoEstado = Pick<PrestacaoMeta, "id" | "descricao" | "unidade" | "previsto" | "realizado" | "justificativa">;
 export type LocalDoEstado = Pick<PrestacaoLocal, "id" | "pais" | "uf" | "municipio" | "status">
-  & Partial<Pick<PrestacaoLocal, "latitude" | "longitude" | "espaco" | "inicio" | "fim" | "justificativa">>;
+  & Partial<Pick<PrestacaoLocal, "latitude" | "longitude" | "espaco" | "inicio" | "fim" | "justificativa" | "endereco" | "responsavel" | "telefone">>;
 export type AtividadeDoEstado = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "local_id">
-  & Partial<Pick<PrestacaoAtividade, "meta_id" | "status_realizacao" | "descricao" | "democratizacao_descricao" | "acessibilidade_descricao" | "justificativa_nao_realizacao">>;
+  & Partial<Pick<PrestacaoAtividade, "meta_id" | "status_realizacao" | "descricao" | "democratizacao_descricao" | "acessibilidade_descricao" | "justificativa_nao_realizacao" | "local" | "cidade" | "estado" | "meta_prevista">>;
 
 export type EstadoDaPrestacao = {
   regime: RegimeNormativo | null;
@@ -229,6 +230,8 @@ export type EstadoDaPrestacao = {
   crcValidade?: string | null;
   /** P8.5: relação de beneficiados. */
   beneficiarios?: readonly BeneficiadoParaChecar[];
+  /** P8.6: turmas da grade semanal. */
+  turmas?: readonly TurmaDaGrade[];
   /** A conta vem junto para as planilhas por conta (P7.3). */
   lancamentos: readonly (LancamentoParaConciliar & { conta_id?: string })[];
   /** P2.8: datas da prestação, nós da versão em uso e alterações do orçamento. */

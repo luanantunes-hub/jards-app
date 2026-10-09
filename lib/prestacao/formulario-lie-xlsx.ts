@@ -7,7 +7,7 @@
 // que os totais (SUM) incluam as novas. Sem React e sem Supabase.
 
 import { PastaDeTrabalho, type Planilha } from "../xlsx-modelo";
-import { BLOCOS, type FormularioLie } from "./formulario-lie";
+import { BLOCOS, GRADE, type FormularioLie } from "./formulario-lie";
 
 const reais = (c: number) => (c / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 const valor = (c: number) => Math.round(c) / 100;
@@ -129,6 +129,60 @@ export async function gravarFormularioLie(modelo: Uint8Array, f: FormularioLie):
       p.completar(`A${b.ultima + 1 + extra}`, String(f.beneficiados.feminino));
       p.completar(`A${b.ultima + 2 + extra}`, String(f.beneficiados.masculino));
     }
+  }
+
+  // GRADE: um bloco de 13 linhas por núcleo; com mais núcleos, o segundo bloco se repete, e com
+  // mais de 7 turmas, o bloco ganha linhas antes da última.
+  {
+    const g = GRADE;
+    const ultimoDoModelo = g.primeiroBloco + g.linhasPorBloco * (g.blocosNoModelo - 1);
+    for (let k = g.blocosNoModelo; k < f.grade.length; k++) {
+      pasta.copiarLinhas("GRADE", ultimoDoModelo, ultimoDoModelo + g.linhasPorBloco - 1, ultimoDoModelo);
+    }
+    const extras = f.grade.map(b => Math.max(0, b.turmas.length - g.turmasPorBloco));
+    for (let k = f.grade.length - 1; k >= 0; k--) {
+      const s = g.primeiroBloco + g.linhasPorBloco * k;
+      const ultima = s + g.primeiraTurma + g.turmasPorBloco - 1;
+      pasta.inserirLinhas("GRADE", ultima, extras[k], ultima - 1);
+    }
+    const p = pasta.planilha("GRADE");
+    let s = g.primeiroBloco;
+    f.grade.forEach((b, k) => {
+      p.completar(`A${s}`, b.nucleo);
+      p.completar(`A${s + 1}`, b.endereco);
+      p.completar(`A${s + 2}`, b.responsavel);
+      p.completar(`A${s + 3}`, b.telefone);
+      b.turmas.forEach((t, i) => {
+        const r = s + g.primeiraTurma + i;
+        p.escrever(`A${r}`, t.turma);
+        p.escrever(`B${r}`, t.modalidade || null);
+        p.escrever(`C${r}`, t.alunos);
+        p.escrever(`D${r}`, t.dias || null);
+        p.escrever(`E${r}`, t.de || null);
+        p.escrever(`F${r}`, t.ate || null);
+        p.escrever(`G${r}`, t.equipe || null);
+        p.escrever(`H${r}`, t.observacoes || null);
+      });
+      s += g.linhasPorBloco + extras[k];
+    });
+  }
+
+  // EVENTOS
+  {
+    const b = BLOCOS.eventos;
+    garantir(pasta, "EVENTOS", b, f.eventos.length);
+    const p = pasta.planilha("EVENTOS");
+    f.eventos.forEach((e, i) => {
+      const r = b.primeira + i;
+      p.escrever(`A${r}`, i + 1);
+      p.escrever(`B${r}`, e.nome);
+      p.escrever(`C${r}`, e.de || null);
+      p.escrever(`D${r}`, e.ate || null);
+      p.escrever(`E${r}`, e.endereco || null);
+      p.escrever(`F${r}`, e.cidade || null);
+      p.escrever(`G${r}`, e.pais || null);
+      p.escrever(`H${r}`, e.previstos);
+    });
   }
 
   // RECURSOS HUMANOS

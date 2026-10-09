@@ -5,6 +5,7 @@ import { Plus, Trash2, MapPin, Users, CalendarDays, ChevronDown, ChevronUp, Brie
 import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
 import { EvidenciaModal } from "@/components/prestacao/objeto/EvidenciaModal";
+import { GradeSemanal } from "@/components/prestacao/grade/GradeSemanal";
 import { ListaEvidencias } from "@/components/prestacao/objeto/ListaEvidencias";
 import { checarEvidencias } from "@/lib/prestacao/checagens/checar-evidencias";
 import type { Achado } from "@/lib/prestacao/checagens";
@@ -198,6 +199,9 @@ export default function AtividadesPage() {
 
   return (
     <div className="px-8 py-6 space-y-4">
+      {/* Grade semanal (P8.6): só quando o regime pede ou já há turmas */}
+      <GradeSemanal prestacaoId={id} />
+
       {/* Header */}
       <div className="flex items-center justify-between">
         <p className="text-[0.8125rem] font-semibold text-black/50">

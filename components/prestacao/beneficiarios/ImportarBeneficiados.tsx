@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { FileUp, Info } from "lucide-react";
+import { AlertTriangle, FileUp } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
@@ -137,7 +137,7 @@ export function ImportarBeneficiados({ prestacaoId, jaCadastrados, onClose, onIm
         </div>
 
         {texto.trim() && !tabela && (
-          <p className="text-[0.6875rem] text-[#B07A14]">Não deu para ler a tabela: ela precisa do cabeçalho e de ao menos uma linha.</p>
+          <p className="flex items-start gap-1.5 text-[0.6875rem] text-black/60"><AlertTriangle size={12} strokeWidth={1.75} className="mt-0.5 shrink-0 text-[#B07A14]" aria-hidden />Não deu para ler a tabela: ela precisa do cabeçalho e de ao menos uma linha.</p>
         )}
 
         {tabela && mapa && (
@@ -195,7 +195,7 @@ export function ImportarBeneficiados({ prestacaoId, jaCadastrados, onClose, onIm
                 {resultado.avisos.length > 0 && (
                   <ul className="space-y-0.5">
                     {resultado.avisos.map(a => (
-                      <li key={a} className="flex items-start gap-1.5 text-[0.6875rem] text-[#B07A14]"><Info size={11} className="mt-0.5 shrink-0" aria-hidden />{a}</li>
+                      <li key={a} className="flex items-start gap-1.5 text-[0.6875rem] text-black/60"><AlertTriangle size={12} strokeWidth={1.75} className="mt-0.5 shrink-0 text-[#B07A14]" aria-hidden />{a}</li>
                     ))}
                   </ul>
                 )}

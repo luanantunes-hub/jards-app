@@ -134,7 +134,7 @@ test("críticas: dados, despesa sem item, pagamentos sem fornecedor, total da re
   tem(/^corrigir\|PAGAMENTOS\|Tít\. crédito\|7\|/);
   tem(/^aviso\|PAGAMENTOS\|Pagamentos\|\|2 despesas sem pagamento registrado \(R\$\s1\.700,00\) ficam fora da relação: o total dos pagamentos \(R\$\s17\.300,00\) não bate com o das despesas \(R\$\s19\.000,00\)\./);
   tem(/^aviso\|RECEITA E DESPESA\|Saldo\|\|O saldo do formulário \(R\$\s31\.230,00\) difere do saldo das contas no último extrato \(R\$\s30\.000,00\) em R\$\s1\.230,00/);
-  tem(/^aviso\|-\|Abas para preencher\|\|GRADE, EVENTOS, DIÁRIAS saem com o cabeçalho e o marcador PARCIAL/);
+  tem(/^aviso\|-\|Abas para preencher\|\|DIÁRIAS saem com o cabeçalho e o marcador PARCIAL/);
   tem(/^aviso\|BENEFICIADOS\|Relação\|\|Nenhum beneficiado cadastrado/);
   // Na PCF, o saldo vai à GRU e a aba A EXECUTAR não pede os meses.
   const final = formularioLie(dados({}, { etapa: "final" }));

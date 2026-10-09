@@ -7,7 +7,7 @@
 // orientação, sem marcação.
 //
 // O que os dados respondem vem deles: metas comprovadas, evidências de
-// acessibilidade, peças com amostra, bens, beneficiados, despesas, extratos, saldo pelo último
+// acessibilidade, peças com amostra, bens, beneficiados, grade, eventos, despesas, extratos, saldo pelo último
 // extrato, alterações em aberto, as verificações abertas por assunto e as guias
 // do saldo e dos rendimentos registradas em Devoluções (P4.4). O resto
 // a pessoa resolve: arquivo anexado, "pronto" (ou, na condição, "conferido") e,
@@ -16,6 +16,7 @@
 
 import { CATALOGO_CHECAGENS, dataBr, reais, centavos, type DestinoDaChecagem, type EstadoDaPrestacao } from "./checagens/catalogo";
 import { despesasSemBem } from "./bens";
+import { faltasDaTurma } from "./grade";
 import { recolhimentoDoEncerramento } from "./devolucoes";
 import { coberturaDaMeta } from "./objeto";
 import { definida, type Fonte, type RegimeNormativo } from "./regimes";
@@ -193,6 +194,21 @@ const beneficiados: Avaliador = ctx => {
   return pronto(`${plural(lista.length, "beneficiado", "beneficiados")} na relação, sem pendência aberta.`);
 };
 
+const grade: Avaliador = ctx => {
+  const turmas = ctx.estado.turmas ?? [];
+  if (turmas.length === 0) return pendente("Cadastre a grade semanal: as turmas de cada núcleo, com dias e horário.", "atividades");
+  const incompletas = turmas.filter(t => faltasDaTurma(t).length).length;
+  if (incompletas) return pendente(`${plural(incompletas, "turma está", "turmas estão")} sem núcleo, dias, horário ou quantidade de alunos.`, "atividades");
+  const nucleos = new Set(turmas.map(t => t.local_id)).size;
+  return pronto(`${plural(turmas.length, "turma", "turmas")} em ${plural(nucleos, "núcleo", "núcleos")}, com dias e horário.`);
+};
+
+const eventos: Avaliador = ctx => {
+  const lista = (ctx.estado.atividades ?? []).filter(a => a.status_realizacao !== "nao_realizado");
+  if (lista.length === 0) return pendente("Cadastre os eventos na aba Atividades, com as datas e o local.", "atividades");
+  return pronto(`${plural(lista.length, "evento", "eventos")} na aba Atividades.`);
+};
+
 const despesas: Avaliador = ctx => {
   const validas = despesasValidas(ctx);
   if (validas.length === 0) return pendente("Nenhuma despesa lançada.", "comprovantes");
@@ -325,6 +341,8 @@ const DOCUMENTOS: Record<string, Avaliador> = {
   equipamentos: bens,
   beneficiados,
   beneficiarios: beneficiados,
+  grade,
+  eventos,
   comprovantes_despesa: despesas,
   documentos_fiscais: despesas,
   extratos,
