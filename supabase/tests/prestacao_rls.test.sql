@@ -24,7 +24,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(365);
+select plan(381);
 
 -- ─── Cenário ────────────────────────────────────────────────────────────────
 
@@ -172,6 +172,9 @@ begin
   -- Um cargo da grade de RH (P8.7), ligado ao item do orçamento.
   insert into public.prestacao_cargos (id, prestacao_id, no_id, cargo, quantidade, horarios, carga_semanal, contratacao) values
     ('f0000000-0000-4000-8000-0000000047a0', pa, 'f0000000-0000-4000-8000-0000000003a0', 'RLS Professor', 2, array['08:00-12:00', '', '08:00-12:00'], 8, 'rpa');
+  -- Uma competência da produção no CMD (P9.5), ligada à meta.
+  insert into public.prestacao_producao_cmd (id, prestacao_id, competencia, meta_id, quantidade, protocolo) values
+    ('f0000000-0000-4000-8000-0000000048a0', pa, '2026-09-01', 'f0000000-0000-4000-8000-0000000017a0', 120, 'RLS-CMD-1');
   insert into public.prestacao_convidado_notas (id, prestacao_id, convidado_id, autor_id, entidade_tipo, entidade_id, tipo) values
     ('f0000000-0000-4000-8000-0000000041a0', pa, 'f0000000-0000-4000-8000-0000000040a0', 'f0000000-0000-4000-8000-0000000000a7',
      'despesa', 'f0000000-0000-4000-8000-0000000005a0', 'verificado');
@@ -202,7 +205,7 @@ create function rls_teste.todas() returns text[] language sql immutable as $$
     'prestacao_bens', 'prestacao_envio_checklist', 'prestacao_envio_arquivos', 'prestacao_devolucoes',
     'prestacao_envios', 'prestacao_envio_itens', 'prestacao_diligencias', 'prestacao_decisoes', 'prestacao_glosas',
     'prestacao_recursos', 'prestacao_links_patrocinador', 'prestacao_convidados', 'prestacao_convidado_notas',
-    'prestacao_emails_recebidos', 'prestacao_beneficiarios', 'prestacao_turmas', 'prestacao_cargos'
+    'prestacao_emails_recebidos', 'prestacao_beneficiarios', 'prestacao_turmas', 'prestacao_cargos', 'prestacao_producao_cmd'
   ];
 $$;
 
@@ -300,7 +303,8 @@ create function rls_teste.ve(p uuid) returns text[] language sql as $$
     rls_teste.efeito(format('select 1 from public.prestacao_emails_recebidos where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_beneficiarios where prestacao_id = %L', p)),
     rls_teste.efeito(format('select 1 from public.prestacao_turmas where prestacao_id = %L', p)),
-    rls_teste.efeito(format('select 1 from public.prestacao_cargos where prestacao_id = %L', p))
+    rls_teste.efeito(format('select 1 from public.prestacao_cargos where prestacao_id = %L', p)),
+    rls_teste.efeito(format('select 1 from public.prestacao_producao_cmd where prestacao_id = %L', p))
   ]);
 $$;
 
@@ -343,7 +347,8 @@ create function rls_teste.insere() returns text[] language sql as $$
     rls_teste.efeito($c$insert into public.prestacao_emails_recebidos (prestacao_id, resend_email_id, remetente, situacao) values ('f0000000-0000-4000-8000-0000000001a0', 'rls-direto', 'x@teste.invalid', 'sem_anexo')$c$),
     rls_teste.efeito($c$insert into public.prestacao_beneficiarios (prestacao_id, nome) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS novo beneficiado')$c$),
     rls_teste.efeito($c$insert into public.prestacao_turmas (prestacao_id, nome) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS nova turma')$c$),
-    rls_teste.efeito($c$insert into public.prestacao_cargos (prestacao_id, cargo) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS novo cargo')$c$)
+    rls_teste.efeito($c$insert into public.prestacao_cargos (prestacao_id, cargo) values ('f0000000-0000-4000-8000-0000000001a0', 'RLS novo cargo')$c$),
+    rls_teste.efeito($c$insert into public.prestacao_producao_cmd (prestacao_id, competencia, quantidade) values ('f0000000-0000-4000-8000-0000000001a0', '2026-10-01', 5)$c$)
   ]);
 $$;
 
@@ -386,7 +391,8 @@ create function rls_teste.altera() returns text[] language sql as $$
     rls_teste.efeito($c$update public.prestacao_emails_recebidos set detalhe = detalhe where id = 'f0000000-0000-4000-8000-0000000044a0'$c$),
     rls_teste.efeito($c$update public.prestacao_beneficiarios set nome = nome where id = 'f0000000-0000-4000-8000-0000000045a0'$c$),
     rls_teste.efeito($c$update public.prestacao_turmas set nome = nome where id = 'f0000000-0000-4000-8000-0000000046a0'$c$),
-    rls_teste.efeito($c$update public.prestacao_cargos set cargo = cargo where id = 'f0000000-0000-4000-8000-0000000047a0'$c$)
+    rls_teste.efeito($c$update public.prestacao_cargos set cargo = cargo where id = 'f0000000-0000-4000-8000-0000000047a0'$c$),
+    rls_teste.efeito($c$update public.prestacao_producao_cmd set quantidade = quantidade where id = 'f0000000-0000-4000-8000-0000000048a0'$c$)
   ]);
 $$;
 
@@ -429,7 +435,8 @@ create function rls_teste.apaga() returns text[] language sql as $$
     rls_teste.efeito($c$delete from public.prestacao_emails_recebidos where id = 'f0000000-0000-4000-8000-0000000044a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_beneficiarios where id = 'f0000000-0000-4000-8000-0000000045a0'$c$),
     rls_teste.efeito($c$delete from public.prestacao_turmas where id = 'f0000000-0000-4000-8000-0000000046a0'$c$),
-    rls_teste.efeito($c$delete from public.prestacao_cargos where id = 'f0000000-0000-4000-8000-0000000047a0'$c$)
+    rls_teste.efeito($c$delete from public.prestacao_cargos where id = 'f0000000-0000-4000-8000-0000000047a0'$c$),
+    rls_teste.efeito($c$delete from public.prestacao_producao_cmd where id = 'f0000000-0000-4000-8000-0000000048a0'$c$)
   ]);
 $$;
 
@@ -1217,7 +1224,7 @@ select is(public.fn_prestacao_aceitar_convite(repeat('d', 48)), 'f0000000-0000-4
 select is(rls_teste.ve('f0000000-0000-4000-8000-0000000001a0'), array[
     'prestacoes_contas', 'prestacao_atividades', 'prestacao_atividade_evidencias', 'prestacao_relatorio', 'prestacao_distribuicao',
     'prestacao_pecas', 'prestacao_metas', 'prestacao_locais', 'prestacao_evidencias', 'prestacao_bens', 'prestacao_convidados',
-    'prestacao_beneficiarios', 'prestacao_turmas'],
+    'prestacao_beneficiarios', 'prestacao_turmas', 'prestacao_producao_cmd'],
   'convidado do objeto: lê só o objeto e o próprio convite');
 select is(rls_teste.arquivos(), '{}'::text[], 'convidado do objeto: não lê o comprovante');
 reset role;
@@ -1587,6 +1594,74 @@ select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-40
 select throws_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a9', 'final', current_date, null, null, null, 2026::smallint)$t$,
   'P0001', 'exercicio_invalido', 'exercício: a final não tem exercício');
 reset role;
+
+-- ─── Produção no CMD e descarte dos dados pessoais (P9.5) ───────────────────
+select throws_ok($t$insert into public.prestacao_producao_cmd (prestacao_id, competencia, quantidade) values ('f0000000-0000-4000-8000-0000000001a9', '2026-09-15', 10)$t$,
+  '23514', null, 'CMD: a competência é o mês (o primeiro dia)');
+select throws_ok($t$insert into public.prestacao_producao_cmd (prestacao_id, competencia, meta_id, quantidade) values ('f0000000-0000-4000-8000-0000000001a9', '2026-09-01', 'f0000000-0000-4000-8000-0000000017a0', 10)$t$,
+  '23514', 'meta_invalida', 'CMD: a meta é da mesma prestação');
+select throws_ok($t$insert into public.prestacao_producao_cmd (prestacao_id, competencia, quantidade) values ('f0000000-0000-4000-8000-0000000001a9', '2026-09-01', 0)$t$,
+  '23514', null, 'CMD: a produção é uma contagem positiva');
+
+-- A prestação da saúde de A ganha um beneficiado e uma foto, e a final é registrada.
+insert into public.prestacao_beneficiarios (id, prestacao_id, nome, sexo, idade, telefone, observacoes) values
+  ('f0000000-0000-4000-8000-0000000045a9', 'f0000000-0000-4000-8000-0000000001a9', 'RLS Paciente', 'feminino', 52, '11 99999-0000', 'RLS observação');
+insert into public.prestacao_evidencias (id, prestacao_id, tipo, nome_arquivo, storage_path, url, descricao) values
+  ('f0000000-0000-4000-8000-0000000019a9', 'f0000000-0000-4000-8000-0000000001a9', 'foto', 'atendimento.jpg',
+   'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a9/evidencias/f0000000-0000-4000-8000-0000000019a9.jpg', null, 'RLS foto'),
+  ('f0000000-0000-4000-8000-0000000019b9', 'f0000000-0000-4000-8000-0000000001a9', 'link', null, null, 'https://exemplo.org/reportagem', 'RLS reportagem');
+-- Verificações com nome: a do beneficiado repetido e a da foto saem no descarte; a da despesa fica.
+insert into public.prestacao_verificacoes (prestacao_id, chave, check_codigo, severidade, resultado, entidade_tipo, entidade_id, mensagem, dados) values
+  ('f0000000-0000-4000-8000-0000000001a9', 'RLS-DESCARTE-1', 'BENEFICIADO_REPETIDO', 'alerta', 'revisar', 'prestacao', null, 'RLS Paciente aparece 2 vezes', '{"nome": "RLS Paciente"}'),
+  ('f0000000-0000-4000-8000-0000000001a9', 'RLS-DESCARTE-2', 'EVIDENCIA_SEM_VINCULO', 'alerta', 'nao_calculavel', 'evidencia', 'f0000000-0000-4000-8000-0000000019a9', '"atendimento.jpg" não está ligada', '{}'),
+  ('f0000000-0000-4000-8000-0000000001a9', 'RLS-DESCARTE-3', 'DESPESA_SEM_VALOR', 'alerta', 'nao_calculavel', 'prestacao', null, 'RLS despesa sem valor', '{"x": 1}');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select lives_ok($t$select public.fn_prestacao_registrar_envio('f0000000-0000-4000-8000-0000000001a9', 'final', current_date, 'Transferegov final')$t$,
+  'descarte: a final da prestação da saúde é registrada');
+select throws_ok($t$select public.fn_prestacao_descarte_previa('f0000000-0000-4000-8000-0000000001a9')$t$,
+  'P0001', 'sem_decisao_final', 'descarte: antes da decisão final, nada sai');
+select throws_ok($t$update public.prestacoes_contas set dados_pessoais_descarte = '{}' where id = 'f0000000-0000-4000-8000-0000000001a9'$t$,
+  '42501', 'descarte_pela_funcao', 'descarte: o registro do descarte só sai da função');
+reset role;
+-- A guarda da final venceu, mas a das anuais ainda não começou.
+update public.prestacao_envios set guarda_ate = current_date - 1 where prestacao_id = 'f0000000-0000-4000-8000-0000000001a9' and etapa = 'final';
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_descarte_previa('f0000000-0000-4000-8000-0000000001a9')$t$,
+  'P0001', 'em_guarda', 'descarte: com algum envio ainda em guarda, nada sai');
+reset role;
+update public.prestacao_envios set guarda_ate = current_date - 1 where prestacao_id = 'f0000000-0000-4000-8000-0000000001a9' and guarda_ate is null;
+select throws_ok($t$update public.prestacao_envios set retrato = retrato || '{"x": 1}' where prestacao_id = 'f0000000-0000-4000-8000-0000000001a9'$t$,
+  'P0001', 'envio_imutavel', 'descarte: fora da função, o retrato continua imutável');
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a3","role":"authenticated"}';
+set local role authenticated;
+select throws_ok($t$select public.fn_prestacao_descartar_dados_pessoais('f0000000-0000-4000-8000-0000000001a9')$t$,
+  '42501', 'sem_permissao', 'descarte: só quem decide descarta');
+reset role;
+set local request.jwt.claims = '{"sub":"f0000000-0000-4000-8000-0000000000a1","role":"authenticated"}';
+set local role authenticated;
+select is((select array[(p ->> 'beneficiarios'), (p ->> 'evidencias'), (p -> 'arquivos' ->> 0)] from public.fn_prestacao_descarte_previa('f0000000-0000-4000-8000-0000000001a9') p),
+  array['1', '1', 'f0000000-0000-4000-8000-0000000000a0/prestacoes/f0000000-0000-4000-8000-0000000001a9/evidencias/f0000000-0000-4000-8000-0000000019a9.jpg'],
+  'descarte: a prévia diz o que sai e os arquivos que o servidor apaga');
+select is((select array[(r ->> 'evidencias'), (r ->> 'beneficiarios'), (r ->> 'envios'), (r ->> 'verificacoes')] from public.fn_prestacao_descartar_dados_pessoais('f0000000-0000-4000-8000-0000000001a9') r),
+  array['1', '1', '3', '2'], 'descarte: a foto sai, o beneficiado, o retrato dos três envios e duas verificações são anonimizados');
+reset role;
+select is((select array[nome, coalesce(telefone, '-'), coalesce(observacoes, '-'), coalesce(idade::text, '-'), sexo] from public.prestacao_beneficiarios where id = 'f0000000-0000-4000-8000-0000000045a9'),
+  array['Pessoa 1', '-', '-', '-', 'feminino'], 'descarte: o beneficiado fica só com o que conta');
+select is((select array_agg(tipo order by tipo) from public.prestacao_evidencias where prestacao_id = 'f0000000-0000-4000-8000-0000000001a9'),
+  array['link'], 'descarte: a reportagem (link) fica');
+select is((select array[retrato -> 'beneficiarios' -> 0 ->> 'nome', (retrato -> 'beneficiarios' -> 0 ? 'telefone')::text,
+                        (select string_agg(coalesce(ev ->> 'descartada', ev ->> 'tipo'), ',' order by ev ->> 'tipo') from jsonb_array_elements(retrato -> 'evidencias') ev),
+                        (retrato_anonimizado_em is not null)::text]
+            from public.prestacao_envios where prestacao_id = 'f0000000-0000-4000-8000-0000000001a9' and etapa = 'final'),
+  array['Pessoa 1', 'false', 'true,link', 'true'], 'descarte: o retrato da final também sai anonimizado');
+select is((select (dados_pessoais_descarte -> 'ultimo' ->> 'arquivos') || ':' || (dados_pessoais_descarte ->> 'vezes') from public.prestacoes_contas where id = 'f0000000-0000-4000-8000-0000000001a9'),
+  '1:1', 'descarte: a prestação guarda o registro do descarte');
+select is((select array_agg(check_codigo || ':' || (mensagem = 'Texto retirado no descarte dos dados pessoais.')::text || ':' || (dados = '{}'::jsonb)::text order by check_codigo)
+            from public.prestacao_verificacoes where prestacao_id = 'f0000000-0000-4000-8000-0000000001a9' and chave like 'RLS-DESCARTE-%'),
+  array['BENEFICIADO_REPETIDO:true:true', 'DESPESA_SEM_VALOR:false:false', 'EVIDENCIA_SEM_VINCULO:true:true'],
+  'descarte: as mensagens com nome saem das verificações; as outras ficam');
 
 select * from finish();
 rollback;

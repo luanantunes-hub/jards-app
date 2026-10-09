@@ -631,6 +631,25 @@ export type StatusPrestacao =
 
 export type ManifestacaoEsportiva = "formacao" | "toda_vida" | "excelencia";
 
+/** PRONON/PRONAS (P9.5): só o projeto assistencial registra a produção no CMD. */
+export type ModalidadeSaude = "assistencial" | "formacao" | "pesquisa";
+
+/** Registro do descarte dos dados pessoais (P9.5); só a função grava. */
+export interface DescarteDeDadosPessoais {
+  ultimo: {
+    guarda_ate: string;
+    evidencias: number;
+    arquivos: number;
+    beneficiarios: number;
+    envios: number;
+    /** Mensagens das verificações que traziam nome ou dado de saúde (desde a 20261010250000). */
+    verificacoes?: number;
+    por: string;
+    em: string;
+  };
+  vezes: number;
+}
+
 export interface PrestacaoContas {
   id: string;
   /** Null só em prestações antigas sem projeto, captação ou organização única de quem criou. */
@@ -654,6 +673,11 @@ export interface PrestacaoContas {
   /** LIE (P8.4): nível da manifestação esportiva e validade da CRC do proponente. */
   manifestacao_esportiva?: ManifestacaoEsportiva | null;
   crc_validade?: string | null;
+  /** PRONON/PRONAS (P9.5): vazio vale assistencial. */
+  modalidade_saude?: ModalidadeSaude | null;
+  /** P9.5: quando os dados pessoais foram descartados, depois da guarda; só a função grava. */
+  dados_pessoais_descartados_em?: string | null;
+  dados_pessoais_descarte?: DescarteDeDadosPessoais | null;
   /** P8.8: número do processo no órgão (SEI na LIE) e o texto da lei no carimbo das notas. */
   numero_processo?: string | null;
   carimbo_lei?: string | null;
@@ -890,6 +914,22 @@ export interface PrestacaoBeneficiario {
   updated_at: string;
 }
 
+/** Produção registrada no CMD do SUS por competência (PRONON/PRONAS, P9.5). */
+export interface PrestacaoProducaoCmd {
+  id: string;
+  prestacao_id: string;
+  /** Primeiro dia do mês: "2026-09-01". */
+  competencia: string;
+  meta_id: string | null;
+  quantidade: number;
+  /** Número do lote ou do registro no CMD. */
+  protocolo: string | null;
+  observacoes: string | null;
+  criado_por: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Bem permanente adquirido, produzido ou construído (P3.5). */
 export interface PrestacaoBem {
   id: string;
@@ -1036,6 +1076,8 @@ export interface PrestacaoEnvio {
   /** null: até a data do marco do regime (a decisão final, em geral). */
   guarda_ate: string | null;
   situacao: "vigente" | "reaberto";
+  /** P9.5: o retrato teve os dados pessoais trocados no descarte; o hash segue o do envio. */
+  retrato_anonimizado_em?: string | null;
   registrado_por: string | null;
   registrado_em: string;
   reaberto_em: string | null;

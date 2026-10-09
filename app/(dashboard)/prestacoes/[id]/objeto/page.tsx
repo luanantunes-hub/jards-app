@@ -11,15 +11,20 @@ import { MetaModal, type AgrupadorParaMeta } from "@/components/prestacao/objeto
 import { LocalModal } from "@/components/prestacao/objeto/LocalModal";
 import { EvidenciaModal } from "@/components/prestacao/objeto/EvidenciaModal";
 import { ListaEvidencias } from "@/components/prestacao/objeto/ListaEvidencias";
+import { ProducaoNoCmd } from "@/components/prestacao/objeto/ProducaoNoCmd";
+import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
+import { registraCmd } from "@/lib/prestacao/cmd";
+import { regraDoRegime } from "@/lib/prestacao/regimes";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { checarEvidencias } from "@/lib/prestacao/checagens/checar-evidencias";
+import { checarDadosPessoais } from "@/lib/prestacao/checagens/checar-dados-pessoais";
 import type { Achado } from "@/lib/prestacao/checagens";
 import { TIPOS_NO } from "@/lib/prestacao/orcamento";
 import { coberturaDaMeta, metaDoItem, periodoDoLocal, quantidade, resumoDaMeta, rotuloDoLocal, STATUS_LOCAL, type CoberturaDaMeta, type ResumoDaMeta, type SituacaoDaMeta } from "@/lib/prestacao/objeto";
 import { useItensDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { pedirVerificacao } from "@/lib/prestacao/verificar-cliente";
-import type { PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
+import type { ModalidadeSaude, PrestacaoAtividade, PrestacaoEvidencia, PrestacaoLocal, PrestacaoMeta } from "@/lib/supabase/types";
 
 const BORDA = { borderColor: "rgba(13,13,13,.08)" };
 const ROTULO = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
@@ -34,6 +39,8 @@ const SITUACAO: Record<SituacaoDaMeta, { rotulo: string; cor: string }> = {
 
 type AtividadeDoObjeto = Pick<PrestacaoAtividade, "id" | "titulo" | "data_realizacao" | "data_inicio" | "data_fim" | "meta_id" | "local_id" | "status_realizacao" | "publico_atingido">;
 type Execucao = { data_inicio_execucao: string | null; data_fim_execucao: string | null };
+/** O regime e a modalidade da saúde (P9.5) dizem se há produção no CMD e o aviso de dado de paciente. */
+type DoRegime = { regime_id: string | null; modalidade_saude: ModalidadeSaude | null };
 
 /** Etiqueta informativa: borda leve, fundo branco e a cor no texto. */
 function Etiqueta({ rotulo, cor }: { rotulo: string; cor: string }) {
@@ -99,6 +106,11 @@ export default function ObjetoPage() {
   const [agrupadores, setAgrupadores] = useState<AgrupadorParaMeta[]>([]);
   const [evidencias, setEvidencias] = useState<PrestacaoEvidencia[]>([]);
   const [execucao, setExecucao] = useState<Execucao>({ data_inicio_execucao: null, data_fim_execucao: null });
+  const [doRegime, setDoRegime] = useState<DoRegime>({ regime_id: null, modalidade_saude: null });
+  const regimes = useRegimesPublicados();
+  const regime = regimes.find(r => r.id === doRegime.regime_id)?.regime ?? null;
+  const mostraCmd = Boolean(regraDoRegime(regime, "cmd")) && registraCmd(doRegime.modalidade_saude);
+  const saude = Boolean(regraDoRegime(regime, "dados_de_pacientes"));
   const [editandoEvidencia, setEditandoEvidencia] = useState<PrestacaoEvidencia | "nova" | null>(null);
   const organizationId = usePrestacaoOrganizacao(id);
   const [despesas, setDespesas] = useState<{ id: string; no_id: string | null; valor_extraido: number | null; status: string }[]>([]);
@@ -119,7 +131,7 @@ export default function ObjetoPage() {
       db.from("prestacao_orcamento_nos").select("id, nome, tipo, ordem, versao:prestacao_orcamento_versoes!inner(ativa)")
         .eq("prestacao_id", id).neq("tipo", "item").eq("versao.ativa", true).order("ordem"),
       db.from("prestacao_evidencias").select("*").eq("prestacao_id", id).order("created_at", { ascending: false }),
-      db.from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao").eq("id", id).maybeSingle(),
+      db.from("prestacoes_contas").select("data_inicio_execucao, data_fim_execucao, regime_id, modalidade_saude").eq("id", id).maybeSingle(),
       // Despesas (P3.3): a meta a que cada uma serve vem do item, pelo agrupador da meta.
       db.from("prestacao_comprovantes").select("id, no_id, valor_extraido, status, tipo").eq("prestacao_id", id),
     ]);
@@ -131,6 +143,7 @@ export default function ObjetoPage() {
       atividades: (a.data ?? []) as AtividadeDoObjeto[],
       evidencias: (e.data ?? []) as PrestacaoEvidencia[],
       execucao: { data_inicio_execucao: p.data?.data_inicio_execucao ?? null, data_fim_execucao: p.data?.data_fim_execucao ?? null } as Execucao,
+      doRegime: { regime_id: p.data?.regime_id ?? null, modalidade_saude: p.data?.modalidade_saude ?? null } as DoRegime,
       despesas: (c.data ?? []) as { id: string; no_id: string | null; valor_extraido: number | null; status: string }[],
       agrupadores: ((n.data ?? []) as { id: string; nome: string; tipo: string }[]).map(no => ({
         id: no.id,
@@ -147,6 +160,7 @@ export default function ObjetoPage() {
     setAgrupadores(dados.agrupadores);
     setEvidencias(dados.evidencias);
     setExecucao(dados.execucao);
+    setDoRegime(dados.doRegime);
     setDespesas(dados.despesas);
     setCarregando(false);
     // Link das verificações: ?meta=<id> ou ?local=<id> abre o cadastro, só na primeira leitura.
@@ -199,14 +213,16 @@ export default function ObjetoPage() {
 
   // A conferência das evidências, a mesma do motor, para mostrar em cada linha.
   const alertasDasEvidencias = useMemo(() => {
-    const achados = checarEvidencias({
+    const estado = {
       regime: null, despesas: [], fornecedores: [], documentosDosFornecedores: [], itens: [], pagamentos: [], lancamentos: [],
       prestacao: execucao, atividades, locais, evidencias,
-    });
+    };
+    // Saúde (P9.5): o documento clínico nas evidências também alerta.
+    const achados = [...checarEvidencias(estado), ...(saude ? checarDadosPessoais({ ...estado, regime }).filter(a => a.entidade.tipo === "evidencia") : [])];
     const porEvidencia = new Map<string, Achado[]>();
     for (const a of achados) if (a.entidade.id) porEvidencia.set(a.entidade.id, [...(porEvidencia.get(a.entidade.id) ?? []), a]);
     return porEvidencia;
-  }, [execucao, atividades, locais, evidencias]);
+  }, [execucao, atividades, locais, evidencias, saude, regime]);
 
   function vinculosDaEvidencia(e: PrestacaoEvidencia): string {
     return [
@@ -427,6 +443,10 @@ export default function ObjetoPage() {
         )}
       </section>
 
+      {mostraCmd && !carregando && (
+        <ProducaoNoCmd prestacaoId={id} regime={regime} modalidade={doRegime.modalidade_saude} metas={metas} execucao={execucao} podeEditar={podeEditar} />
+      )}
+
       {/* Locais */}
       <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-labelledby="locais-titulo">
         <div className="border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
@@ -537,6 +557,7 @@ export default function ObjetoPage() {
           metas={metas}
           locais={locais}
           execucao={execucao}
+          saude={saude}
           onClose={() => setEditandoEvidencia(null)}
           onSaved={salvou}
         />

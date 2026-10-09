@@ -16,7 +16,8 @@ import type { BeneficiadoParaChecar } from "../beneficiarios";
 import type { TurmaDaGrade } from "../grade";
 import type { CargoDaGrade } from "../grade-rh";
 import type { AlteracaoDoEstado, AtividadeDoEstado, DatasDaPrestacao, DevolucaoDoEstado, EstadoDaPrestacao, LocalDoEstado, MetaDoEstado, SaldoDaConta } from "./catalogo";
-import type { ManifestacaoEsportiva } from "@/lib/supabase/types";
+import type { ProducaoDoCmd } from "../cmd";
+import type { ManifestacaoEsportiva, ModalidadeSaude } from "@/lib/supabase/types";
 
 const PAGINA = 1000;
 
@@ -56,13 +57,13 @@ function ultimosSaldos(importacoes: readonly { conta_id: string; saldo_final: nu
 export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, hoje: Date = new Date()): Promise<EstadoDaPrestacao> {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas da prestação ainda não estão no tipo Database
   const db = cliente as any;
-  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null; obra_grupo: string | null; manifestacao_esportiva: ManifestacaoEsportiva | null; crc_validade: string | null } & DatasDaPrestacao>(
+  const prestacao = await uma<{ organization_id: string; regime_id: string | null; valor_aprovado: number | null; obra_grupo: string | null; manifestacao_esportiva: ManifestacaoEsportiva | null; crc_validade: string | null; modalidade_saude?: ModalidadeSaude | null } & DatasDaPrestacao>(
     db.from("prestacoes_contas")
-      .select("organization_id, regime_id, valor_aprovado, obra_grupo, manifestacao_esportiva, crc_validade, data_aprovacao, data_liberacao, data_termo, data_inicio_execucao, data_fim_execucao, data_fim_captacao")
+      .select("organization_id, regime_id, valor_aprovado, obra_grupo, manifestacao_esportiva, crc_validade, modalidade_saude, data_aprovacao, data_liberacao, data_termo, data_inicio_execucao, data_fim_execucao, data_fim_captacao")
       .eq("id", prestacaoId).single());
   if (!prestacao) throw new Error("prestacao_inexistente");
 
-  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios, turmas, cargos, devolucoes, importacoes] = await Promise.all([
+  const [regimeLinha, versao, despesas, pagamentos, lancamentos, alteracoes, metas, locais, atividades, evidencias, distribuicao, bens, pecas, defesos, contas, beneficiarios, turmas, cargos, devolucoes, importacoes, producaoCmd] = await Promise.all([
     prestacao.regime_id
       ? uma<{ parametros: unknown }>(db.from("prestacao_regimes").select("parametros").eq("id", prestacao.regime_id).maybeSingle())
       : Promise.resolve(null),
@@ -109,6 +110,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
       .select("motivo, situacao, valor_principal, valor_atualizado, valor_pago, pago_em, storage_path").eq("prestacao_id", prestacaoId).order("id")),
     todas<{ conta_id: string; saldo_final: number; periodo_fim: string | null; created_at: string }>(() => db.from("prestacao_extrato_importacoes")
       .select("conta_id, saldo_final, periodo_fim, created_at").eq("prestacao_id", prestacaoId).not("saldo_final", "is", null).order("id")),
+    todas<ProducaoDoCmd>(() => db.from("prestacao_producao_cmd")
+      .select("id, competencia, meta_id, quantidade, protocolo").eq("prestacao_id", prestacaoId).order("competencia").order("id")),
   ]);
 
   const nos = versao
@@ -165,6 +168,8 @@ export async function estadoDaPrestacao(cliente: Cliente, prestacaoId: string, h
     cargos,
     devolucoes,
     saldos: ultimosSaldos(importacoes),
+    modalidadeSaude: prestacao.modalidade_saude ?? null,
+    producaoCmd: producaoCmd.map(p => ({ ...p, quantidade: Number(p.quantidade) })),
     alteracoes,
     metas,
     locais,
