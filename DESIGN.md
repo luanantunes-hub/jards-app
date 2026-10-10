@@ -159,7 +159,7 @@ Exceções:
 
 ## Formulários de cadastro
 
-Referência: `NovaCaptacaoModal` e `NovaInscricaoModal`.
+Referência: `NovaCaptacaoModal`, `NovaInscricaoModal` e `NovaAtividadeModal`.
 
 - o essencial vem primeiro, numa lista direta, sem título de seção;
 - campos opcionais ficam em "Mais detalhes", recolhido; ele já abre quando há algo preenchido lá dentro;
