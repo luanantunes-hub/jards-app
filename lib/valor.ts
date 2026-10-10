@@ -26,6 +26,59 @@ export function formatarValorBRL(valor: number | null | undefined): string {
 
 export const MENSAGEM_VALOR_INVALIDO = "Confira o valor: use só números, como 150.000,00.";
 
+/** Parte inteira aceita no campo de valor: até R$ 999 bilhões. */
+const MAX_DIGITOS_INTEIROS = 12;
+
+/**
+ * Máscara do campo de valor enquanto a pessoa digita: pontos de milhar e a
+ * vírgula dos centavos aparecem na hora ("1234,5" vira "1.234,5"), com no
+ * máximo dois centavos. Os pontos são sempre refeitos pela máscara; a vírgula
+ * é digitada por quem preenche (o campo troca o ponto do teclado numérico por
+ * vírgula antes de chamar). Devolve também onde o cursor fica, para ele não
+ * pular para o fim quando a pessoa edita no meio do número.
+ */
+export function mascararValorBRL(texto: string, cursor: number = texto.length): { texto: string; cursor: number } {
+  let inteiro = "";
+  let centavos = "";
+  let temVirgula = false;
+  // Caracteres que ficam (algarismos e a vírgula) antes do cursor.
+  let antes = 0;
+  for (let i = 0; i < texto.length; i++) {
+    const c = texto[i];
+    const antesDoCursor = i < cursor;
+    if (c >= "0" && c <= "9") {
+      if (!temVirgula) {
+        if (inteiro.replace(/^0+/, "").length >= MAX_DIGITOS_INTEIROS) continue;
+        inteiro += c;
+        if (antesDoCursor) antes++;
+      } else if (centavos.length < 2) {
+        centavos += c;
+        if (antesDoCursor) antes++;
+      }
+    } else if (c === "," && !temVirgula) {
+      temVirgula = true;
+      if (antesDoCursor) antes++;
+    }
+  }
+
+  // Zeros à esquerda saem ("007" vira "7"); vírgula sem inteiro ganha o zero (",5" vira "0,5").
+  const zeros = inteiro.length - inteiro.replace(/^0+(?=\d)/, "").length;
+  inteiro = inteiro.slice(zeros);
+  antes = Math.max(0, antes - zeros);
+  if (temVirgula && !inteiro) {
+    inteiro = "0";
+    if (antes > 0) antes++;
+  }
+  if (!inteiro && !temVirgula) return { texto: "", cursor: 0 };
+
+  const formatado = inteiro.replace(/\B(?=(\d{3})+(?!\d))/g, ".") + (temVirgula ? `,${centavos}` : "");
+  let posicao = 0;
+  for (let contados = 0; posicao < formatado.length && contados < antes; posicao++) {
+    if (formatado[posicao] !== ".") contados++;
+  }
+  return { texto: formatado, cursor: posicao };
+}
+
 const VALOR_INTEIRO = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", minimumFractionDigits: 0, maximumFractionDigits: 0 });
 const VALOR_COMPACTO = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", notation: "compact", minimumFractionDigits: 0, maximumFractionDigits: 1 });
 const VALOR_COMPLETO = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
