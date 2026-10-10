@@ -120,9 +120,9 @@ export function execucaoTerminou(fimDaExecucao: string | null | undefined, hoje:
   return fimDaExecucao.slice(0, 10) < dia;
 }
 
-/** Número como a pessoa digita: "1.500", "1500", "2,5" ou "2.5". Vazio vira null; texto inválido, NaN. */
+/** Número como a pessoa digita: "1.500", "1500", "2,5", "2.5" ou "1.500," (a vírgula sem centavos). Vazio vira null; texto inválido, NaN. */
 export function numeroDigitado(texto: string): number | null {
-  const limpo = texto.trim().replace(/\s/g, "");
+  const limpo = texto.trim().replace(/\s/g, "").replace(/,$/, "");
   if (!limpo) return null;
   // Com vírgula, ela é a decimal e o ponto separa milhar; sem vírgula, ponto com 3 casas depois é milhar.
   const normal = limpo.includes(",") ? limpo.replace(/\./g, "").replace(",", ".")

@@ -4,6 +4,8 @@ import { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import {
   CATEGORIAS_DISTRIBUICAO,
@@ -61,7 +63,7 @@ export function DistribuicaoModal({ prestacaoId, linha, produtos, limites, onClo
   const [categoria, setCategoria] = useState<CategoriaDistribuicao>(linha?.categoria ?? "social");
   const [quantidade, setQuantidade] = useState(texto(linha?.quantidade));
   const [meias, setMeias] = useState(linha?.quantidade_meia ? texto(linha.quantidade_meia) : "");
-  const [preco, setPreco] = useState(texto(linha?.preco));
+  const [preco, setPreco] = useState(formatarValorBRL(linha?.preco));
   const [realizada, setRealizada] = useState(texto(linha?.quantidade_realizada));
   const [beneficiario, setBeneficiario] = useState(linha?.beneficiario ?? "");
   const [documento, setDocumento] = useState(linha?.beneficiario_documento ? formatarDocumento(linha.beneficiario_documento) : "");
@@ -174,7 +176,7 @@ export function DistribuicaoModal({ prestacaoId, linha, produtos, limites, onClo
           <>
             <label>
               <span className={ROTULO}>Preço do inteiro (R$)</span>
-              <input value={preco} onChange={e => setPreco(e.target.value)} inputMode="decimal" placeholder="50,00" className={`${CAMPO} tabular-nums`} />
+              <InputValor value={preco} onChange={setPreco} placeholder="50,00" className={`${CAMPO} tabular-nums`} />
               {acimaDoTeto && <span className="mt-1 block text-[0.625rem] text-[#B23B3B]">Acima de {reais(limites!.precoPopular!)}, o ingresso não conta como preço popular.</span>}
             </label>
             <label>

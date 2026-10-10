@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import type { RegimeNormativo } from "@/lib/prestacao/regimes";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import { limparCnaesAceitos } from "@/lib/prestacao/cnae";
@@ -75,8 +77,8 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
   const [unidade, setUnidade] = useState(inicial?.unidade ?? "");
   const [quantidade, setQuantidade] = useState(textoDoNumero(inicial?.quantidade));
   const [ocorrencias, setOcorrencias] = useState(textoDoNumero(inicial?.ocorrencias));
-  const [unitario, setUnitario] = useState(textoDoNumero(inicial?.valor_unitario));
-  const [total, setTotal] = useState(textoDoNumero(inicial ? inicial.valor_total : null));
+  const [unitario, setUnitario] = useState(formatarValorBRL(inicial?.valor_unitario));
+  const [total, setTotal] = useState(formatarValorBRL(inicial ? inicial.valor_total : null));
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState("");
 
@@ -240,7 +242,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
                 </label>
                 <label className="block">
                   <span className={ROTULO}>Valor unitário</span>
-                  <input inputMode="decimal" value={unitario} onChange={e => setUnitario(e.target.value)} className={`${CAMPO} tabular-nums`} placeholder="R$" />
+                  <InputValor value={unitario} onChange={setUnitario} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
                 </label>
               </div>
               <label className="mt-3 block">
@@ -248,7 +250,7 @@ export function EditorNoOrcamento({ versaoId, raizes, edicao, ordemNova, regime 
                 {temUnitario ? (
                   <p className="rounded bg-black/[.03] px-3 py-2 text-[0.8125rem] font-medium tabular-nums text-black/70">{fmt(totalCalculado)}</p>
                 ) : (
-                  <input inputMode="decimal" value={total} onChange={e => setTotal(e.target.value)} className={`${CAMPO} tabular-nums`} placeholder="R$ 0,00" />
+                  <InputValor value={total} onChange={setTotal} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
                 )}
               </label>
               {inicial && inicial.valor_remanejado !== 0 && (
