@@ -2,7 +2,7 @@
 
 // Convite da primeira versão da prestação de contas: o seletor de módulos
 // abre este modal quando a organização ainda não tem o módulo. São três
-// passos com o tamanduá: a novidade, o que o módulo faz e o teste grátis de
+// passos com o tamanduá: a novidade, o que o módulo faz e o teste gratuito de
 // 45 dias. Quem administra a organização começa o teste para a equipe
 // (fn_prestacao_aceitar_convite_gratuito); as outras pessoas veem o convite e
 // o pedido para falar com quem administra.
@@ -91,7 +91,7 @@ export function ConvitePrestacao({ organizationId, podeAtivar, onClose, onAtivad
     },
     {
       imagem: { src: "/email/tamandua-brinde.png", largura: 168, altura: 222, alt: "Tamanduá do Jards brindando" },
-      rotulo: `${TESTE_GRATIS_DIAS} dias grátis`,
+      rotulo: `Teste gratuito de ${TESTE_GRATIS_DIAS} dias`,
       titulo: "Teste com a sua equipe, sem cartão",
       conteudo: (
         <>
