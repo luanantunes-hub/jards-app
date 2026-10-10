@@ -4,7 +4,8 @@
 // fica no alto do menu, acima das seções que ele define: recolhido, só o ícone;
 // aberto, a lista dos módulos com a descrição, e o que não está contratado ou
 // liberado para a pessoa aparece com cadeado e o motivo. O módulo em promoção
-// leva a etiqueta "Promo" e, escolhido, abre o convite (quem decide é a tela).
+// leva a etiqueta "Promo" (pequena, cinza, sem borda) e, escolhido, abre o
+// convite (quem decide é a tela).
 
 import { useEffect, useId, useRef } from "react";
 import { Check, ChevronsUpDown, Lock, type LucideIcon } from "lucide-react";
@@ -17,7 +18,7 @@ export type OpcaoDeModulo = {
   icone: LucideIcon;
   /** Por que a pessoa não usa o módulo; null quando usa. */
   bloqueio: string | null;
-  /** Oferecido em teste grátis a quem ainda não tem: a escolha abre o convite. */
+  /** Oferecido em teste gratuito a quem ainda não tem: a escolha abre o convite. */
   promo?: boolean;
   /** O que o gatilho diz enquanto o módulo está em promoção. */
   chamada?: string;
@@ -124,7 +125,7 @@ export function SeletorDeModulo({ opcoes, ativo, expandido, aberto, onAbrir, onT
                       {opcao.label}
                       {opcao.bloqueio && <Lock size={10} aria-hidden="true" className="text-black/35" />}
                       {opcao.promo && (
-                        <span className="ml-auto rounded border bg-white px-1.5 py-px text-[0.625rem] font-medium text-[#D94A4A]" style={{ borderColor: "#D94A4A47" }}>
+                        <span className="ml-auto rounded-full bg-black/[.06] px-1.5 text-[0.5625rem] font-medium leading-[1rem] text-black/65">
                           Promo
                         </span>
                       )}
