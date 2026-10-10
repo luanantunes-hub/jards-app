@@ -1835,16 +1835,13 @@
       <p class="alt-split-lede">A Jards conecta o que acontece antes, durante e depois de cada patrocínio.</p>
     </div>
     <div class="flow-journey-art reveal" aria-hidden="true">
-      <video class="jornada-video" src="assets/jornada-convergencia.mp4" poster="assets/jornada-convergencia-poster.webp" width="1040" height="352" muted loop playsinline preload="auto" disablepictureinpicture disableremoteplayback></video>
-      <script>
-        // Autoplay nativo: o navegador toca assim que pode e pausa sozinho fora da tela.
-        // Com menos movimento, nada toca e fica o poster.
-        (function(v){
-          if(!v || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) return;
-          v.muted = true; v.autoplay = true;
-          var p = v.play(); if(p && p.catch) p.catch(function(){});
-        })(document.currentScript.previousElementSibling);
-      </script>
+      <!-- Imagem animada, não vídeo: toca sem depender da regra de reprodução automática
+           (que alguns navegadores bloqueiam até um clique, como o Safari em pouca energia). -->
+      <picture>
+        <source media="(prefers-reduced-motion: reduce)" srcset="assets/jornada-convergencia-poster.webp" type="image/webp" />
+        <source srcset="assets/jornada-convergencia.avif" type="image/avif" />
+        <img class="jornada-video" src="assets/jornada-convergencia.webp" width="1040" height="352" alt="" decoding="async" loading="lazy" />
+      </picture>
     </div>
     <div class="flow-grid">
       <article class="jards-flow-step"><span class="flow-index">01</span><strong>Encontrar</strong><p>Mapeie patrocinadores, editais e oportunidades relevantes.</p></article>
@@ -3341,20 +3338,6 @@
   function atualizar() { nav.classList.toggle("is-rolado", window.scrollY > 8); }
   window.addEventListener("scroll", atualizar, { passive: true });
   atualizar();
-})();
-</script>
-<script>
-// Vídeo da jornada: se a pessoa ligar ou desligar "menos movimento", acompanha.
-// Se o navegador recusar o autoplay, tenta de novo no primeiro toque ou rolagem.
-(function(){
-  var video = document.querySelector('.jornada-video');
-  if(!video || !window.matchMedia) return;
-  var menos = matchMedia('(prefers-reduced-motion: reduce)');
-  function tocar(){ if(menos.matches || !video.paused) return; var p = video.play(); if(p && p.catch) p.catch(function(){}); }
-  function aplicar(){ if(menos.matches) video.pause(); else tocar(); }
-  if(menos.addEventListener) menos.addEventListener('change', aplicar);
-  ['scroll','pointerdown','touchstart','keydown'].forEach(function(ev){ window.addEventListener(ev, tocar, { passive:true }); });
-  video.addEventListener('playing', function(){ ['scroll','pointerdown','touchstart','keydown'].forEach(function(ev){ window.removeEventListener(ev, tocar); }); });
 })();
 </script>
 </body>
