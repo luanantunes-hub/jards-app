@@ -8,6 +8,7 @@ import { useMemo, useState } from "react";
 import { Paperclip } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { DOCUMENTOS_DO_PROPONENTE, erroDaDespesa } from "@/lib/prestacao/proponente";
@@ -105,7 +106,7 @@ export function EnviarDespesaModal({ prestacaoId, organizationId, onClose, onEnv
         </label>
         <label>
           <span className={ROTULO}>Valor (R$)</span>
-          <input value={valor} onChange={e => setValor(e.target.value)} inputMode="decimal" placeholder="1.500,00" className={`${CAMPO} tabular-nums`} />
+          <InputValor value={valor} onChange={setValor} placeholder="1.500,00" className={`${CAMPO} tabular-nums`} />
         </label>
         <label>
           <span className={ROTULO}>Data do documento</span>

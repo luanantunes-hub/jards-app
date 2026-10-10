@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import type { PrestacaoComprovante, TipoComprovante, StatusComprovante } from "@/lib/supabase/types";
 import { useItensDoOrcamento, type ItemDoOrcamento } from "@/hooks/useItensDoOrcamento";
 import { Select } from "@/components/ui/Select";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL, lerValorBRL } from "@/lib/valor";
 import { usePrestacaoOrganizacao } from "@/hooks/usePrestacaoOrganizacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -184,7 +186,7 @@ export default function ComprovantesPage() {
     });
     const campos = sugestao.campos;
     if (opcoes.tipo && campos.tipo in TIPO_META) setTipo(campos.tipo);
-    if (campos.valor_extraido !== null) setValorExtraido(String(campos.valor_extraido));
+    if (campos.valor_extraido !== null) setValorExtraido(formatarValorBRL(campos.valor_extraido));
     if (campos.data_doc) setDataDoc(campos.data_doc);
     if (campos.descricao_servico) setDescricaoServico(campos.descricao_servico);
     if (sugestao.fornecedorId) setFornecedorId(sugestao.fornecedorId);
@@ -320,7 +322,7 @@ export default function ComprovantesPage() {
       origem,
       nome_arquivo: pendingFile.name,
       storage_path: storagePath,
-      valor_extraido: valorExtraido ? Number(valorExtraido) : null,
+      valor_extraido: lerValorBRL(valorExtraido).valor,
       data_doc: dataDoc || null,
       descricao_servico: descricaoServico.trim() || null,
       observacao: observacao.trim() || null,
@@ -522,10 +524,9 @@ export default function ComprovantesPage() {
                   {/* Valor */}
                   <div>
                     <label className="block text-[0.625rem] font-bold uppercase tracking-wide text-black/40 mb-1.5">Valor (R$)</label>
-                    <input
-                      type="number"
+                    <InputValor
                       value={valorExtraido}
-                      onChange={e => setValorExtraido(e.target.value)}
+                      onChange={setValorExtraido}
                       placeholder="0,00"
                       className="w-full px-3 py-2 text-[0.75rem] border rounded focus:outline-none"
                       style={{ borderColor: "rgba(13,13,13,.12)" }}

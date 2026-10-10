@@ -20,8 +20,11 @@ export function lerValorBRL(texto: string): { valor: number | null; valido: bool
   return { valor: Math.round(valor * 100) / 100, valido: true };
 }
 
-export function formatarValorBRL(valor: number | null | undefined): string {
-  return valor == null ? "" : valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+/** Valor para o campo ("150.000,00"); vazio quando não há valor. Aceita o numeric do banco em texto. */
+export function formatarValorBRL(valor: number | string | null | undefined): string {
+  if (valor == null || valor === "") return "";
+  const numero = Number(valor);
+  return Number.isFinite(numero) ? numero.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "";
 }
 
 export const MENSAGEM_VALOR_INVALIDO = "Confira o valor: use só números, como 150.000,00.";

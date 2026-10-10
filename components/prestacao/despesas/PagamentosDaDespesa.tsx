@@ -5,6 +5,8 @@ import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { formatarDocumento, limparDocumento } from "@/lib/prestacao/fornecedores";
 import { lerValor } from "@/lib/prestacao/orcamento";
 import { FORMAS_PAGAMENTO, rotuloDaForma, situacaoDosPagamentos } from "@/lib/prestacao/pagamentos";
@@ -40,7 +42,7 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
   const [erro, setErro] = useState("");
 
   const ordenados = [...pagamentos].sort((a, b) => a.data.localeCompare(b.data) || a.created_at.localeCompare(b.created_at));
-  const valorSugerido = falta !== null && falta > 0 ? String(falta).replace(".", ",") : "";
+  const valorSugerido = falta !== null && falta > 0 ? formatarValorBRL(falta) : "";
   const favorecidoSugerido = fornecedor?.documento ? formatarDocumento(fornecedor.documento) : "";
 
   async function registrar() {
@@ -131,7 +133,7 @@ export function PagamentosDaDespesa({ despesaId, liquido, fornecedor, pagamentos
             </label>
             <label className="block" htmlFor={`${idBase}-valor`}>
               <span className={ROTULO}>Valor</span>
-              <input id={`${idBase}-valor`} inputMode="decimal" value={valor} onChange={e => setValor(e.target.value)} placeholder={valorSugerido || "0,00"} className={`${CAMPO} tabular-nums`} />
+              <InputValor id={`${idBase}-valor`} value={valor} onChange={setValor} placeholder={valorSugerido || "0,00"} className={`${CAMPO} tabular-nums`} />
             </label>
             <label className="block" htmlFor={`${idBase}-numero`}>
               <span className={ROTULO}>Nº do documento (igual ao extrato)</span>

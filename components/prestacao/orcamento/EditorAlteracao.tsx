@@ -4,6 +4,8 @@ import { useId, useMemo, useState } from "react";
 import { FileText, Plus, Search, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { mensagemErroPrestacao } from "@/lib/prestacao/status";
 import {
@@ -56,7 +58,7 @@ export type AlteracaoSalva = {
 type ItemNovo = { chave: number; nome: string; parent_id: string; grupo_custo: string; valor: string };
 
 function texto(valor: number): string {
-  return String(valor).replace(".", ",");
+  return formatarValorBRL(valor);
 }
 
 /**
@@ -200,12 +202,11 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                         </td>
                         <td className="whitespace-nowrap px-3 py-2 text-right text-[0.75rem] tabular-nums text-black/55">{fmt(linha.totais.vigente)}</td>
                         <td className="w-[9.5rem] px-3 py-2">
-                          <input
-                            inputMode="decimal"
+                          <InputValor
                             aria-label={`Novo valor de ${linha.no.nome}`}
                             value={valores[linha.no.id] ?? ""}
                             placeholder="Sem mudança"
-                            onChange={e => setValores({ ...valores, [linha.no.id]: e.target.value })}
+                            onChange={valor => setValores({ ...valores, [linha.no.id]: valor })}
                             className={`${CAMPO} text-right tabular-nums`}
                           />
                         </td>
@@ -250,7 +251,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
                   </div>
                   <label className="block">
                     <span className={ROTULO}>Valor</span>
-                    <input inputMode="decimal" value={novo.valor} onChange={e => setNovos(novos.map(n => n.chave === novo.chave ? { ...n, valor: e.target.value } : n))} className={`${CAMPO} text-right tabular-nums`} placeholder="R$ 0,00" />
+                    <InputValor value={novo.valor} onChange={valor => setNovos(novos.map(n => n.chave === novo.chave ? { ...n, valor } : n))} className={`${CAMPO} text-right tabular-nums`} placeholder="0,00" />
                   </label>
                   <button type="button" onClick={() => setNovos(novos.filter(n => n.chave !== novo.chave))} aria-label="Tirar o item novo" className="h-9 rounded px-2 text-black/30 transition hover:bg-black/[.04] hover:text-[#D94A4A] focus-visible:outline-2 focus-visible:outline-[#D94A4A]">
                     <Trash2 size={13} />
@@ -318,7 +319,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
             {calculo.tipo === "complementacao" && movimentos.length > 0 && (
               <label className="block">
                 <span className={ROTULO}>Valor captado até agora</span>
-                <input inputMode="decimal" value={captado} onChange={e => setCaptado(e.target.value)} className={`${CAMPO} tabular-nums`} placeholder="R$ 0,00" />
+                <InputValor value={captado} onChange={setCaptado} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
               </label>
             )}
 

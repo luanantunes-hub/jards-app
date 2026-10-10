@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { Check, ClipboardCheck, FileSpreadsheet, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { lerValorBRL } from "@/lib/valor";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { useRegimesPublicados } from "@/hooks/useRegimesPublicados";
@@ -152,7 +154,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
         identificador_tipo: regime?.identificadorOficial?.tipo ?? null,
         fonte_recurso: fonteRecurso.trim() || null,
         proponente_id: proponenteId || null,
-        valor_aprovado: dados.valorAprovado === "" ? null : Number(dados.valorAprovado),
+        valor_aprovado: lerValorBRL(dados.valorAprovado).valor,
         observacoes: observacoes.trim() || null,
       },
       importacao: null,
@@ -298,7 +300,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
                 </label>
                 <label className="block">
                   <span className={ROTULO}>Valor aprovado (R$)</span>
-                  <input type="number" inputMode="decimal" min={0} value={dados.valorAprovado} onChange={e => atualizar({ valorAprovado: e.target.value })} placeholder="0,00" className={`${CAMPO} tabular-nums`} />
+                  <InputValor value={dados.valorAprovado} onChange={valorAprovado => atualizar({ valorAprovado })} placeholder="0,00" className={`${CAMPO} tabular-nums`} />
                 </label>
               </div>
               <div className="grid gap-3 sm:grid-cols-2">

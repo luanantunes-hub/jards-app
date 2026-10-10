@@ -4,6 +4,7 @@
 // primeiro passo e grava cada passo seguinte; aqui fica o que dá para testar
 // sem tela.
 
+import { formatarValorBRL, lerValorBRL } from "../valor";
 import { prazoFinalCalculado } from "./prazo-final";
 import type { RegimeNormativo } from "./regimes";
 
@@ -34,10 +35,10 @@ export function tituloSugerido(captacao: CaptacaoParaCriacao | null, projeto: Pr
   return base ? `Prestação de contas — ${base}` : "";
 }
 
-/** Valor aprovado inicial: o aprovado da captação, senão o solicitado. */
+/** Valor aprovado inicial, como o campo mostra: o aprovado da captação, senão o solicitado. */
 export function valorInicial(captacao: CaptacaoParaCriacao | null): string {
   const valor = captacao?.valor_aprovado ?? captacao?.valor_solicitado ?? null;
-  return valor ? String(valor) : "";
+  return valor ? formatarValorBRL(valor) : "";
 }
 
 export type DadosCriacao = {
@@ -63,9 +64,8 @@ export function validarPasso(passo: PassoId, dados: DadosCriacao, regime: Regime
     case "regime":
       return dados.regimeId ? null : "Escolha o regime.";
     case "dados": {
-      if (dados.valorAprovado === "") return null;
-      const valor = Number(dados.valorAprovado);
-      return Number.isFinite(valor) && valor >= 0 ? null : "Valor aprovado inválido.";
+      const { valido } = lerValorBRL(dados.valorAprovado);
+      return valido ? null : "Valor aprovado inválido.";
     }
     case "importacao":
       return null;

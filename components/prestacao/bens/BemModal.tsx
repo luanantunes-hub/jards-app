@@ -4,6 +4,8 @@ import { useMemo, useRef, useState } from "react";
 import { ChevronDown, Paperclip, Plus, Trash2, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import {
@@ -95,13 +97,13 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
   const [descricao, setDescricao] = useState(bem?.descricao ?? inicial?.descricao ?? "");
   const [tipo, setTipo] = useState<TipoBem>(bem?.tipo ?? "equipamento");
   const [quantidade, setQuantidade] = useState(texto(bem?.quantidade ?? 1));
-  const [valor, setValor] = useState(texto(bem?.valor ?? inicial?.valor ?? null));
+  const [valor, setValor] = useState(formatarValorBRL(bem?.valor ?? inicial?.valor ?? null));
   const [noId, setNoId] = useState(bem?.no_id ?? inicial?.no_id ?? "");
   const [despesaId, setDespesaId] = useState(bem?.despesa_id ?? inicial?.despesa_id ?? "");
   const [patrimonio, setPatrimonio] = useState(bem?.numero_patrimonio ?? "");
   const [registro, setRegistro] = useState(bem?.registro_imovel ?? "");
   const [cotacoes, setCotacoes] = useState<CotacaoNoForm[]>((bem?.cotacoes ?? []).map(c => ({
-    fornecedor: c.fornecedor, valor: texto(c.valor), data: c.data ?? "", arquivo: arquivoDe(c.storage_path, c.nome_arquivo),
+    fornecedor: c.fornecedor, valor: formatarValorBRL(c.valor), data: c.data ?? "", arquivo: arquivoDe(c.storage_path, c.nome_arquivo),
   })));
   const [destinacao, setDestinacao] = useState<DestinacaoBem | "">(bem?.destinacao ?? "");
   const [destinacaoDescricao, setDestinacaoDescricao] = useState(bem?.destinacao_descricao ?? "");
@@ -252,7 +254,7 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
           </label>
           <label>
             <span className={ROTULO}>Valor (R$)</span>
-            <input value={valor} onChange={e => setValor(e.target.value)} inputMode="decimal" placeholder={despesa?.valor_extraido != null ? texto(despesa.valor_extraido) : "0,00"} className={`${CAMPO} tabular-nums`} />
+            <InputValor value={valor} onChange={setValor} placeholder={despesa?.valor_extraido != null ? formatarValorBRL(despesa.valor_extraido) : "0,00"} className={`${CAMPO} tabular-nums`} />
           </label>
         </div>
         <div>
@@ -305,7 +307,7 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
                 </label>
                 <label>
                   <span className={ROTULO}>Valor (R$)</span>
-                  <input value={c.valor} onChange={e => mudarCotacao(i, { valor: e.target.value })} inputMode="decimal" className={`${CAMPO} tabular-nums`} />
+                  <InputValor value={c.valor} onChange={valor => mudarCotacao(i, { valor })} placeholder="0,00" className={`${CAMPO} tabular-nums`} />
                 </label>
                 <label>
                   <span className={ROTULO}>Data</span>

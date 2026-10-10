@@ -21,6 +21,8 @@ test("campo vazio é válido e sem valor; texto estranho é inválido", () => {
 test("formata para exibir no campo", () => {
   assert.equal(formatarValorBRL(150000), "150.000,00");
   assert.equal(formatarValorBRL(null), "");
+  assert.equal(formatarValorBRL("1500.5"), "1.500,50", "numeric do banco em texto");
+  assert.equal(formatarValorBRL("abc"), "");
 });
 
 // Intl separa "R$" do número com espaço não separável.
