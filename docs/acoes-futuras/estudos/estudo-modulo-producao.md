@@ -196,6 +196,14 @@ Levantadas em 10/10/2026, só leitura.
   - "Contratos" já é o contrato com o patrocinador (rotas, avisos, MCP). Contrato de fornecedor precisa de outro nome.
   - Um módulo novo exige mudar os checks de módulo no banco, o que pede passo manual no editor SQL (ver `20261005130100`). `moduloDaRota` trata como captação tudo que não for `/prestacoes`.
 
-## Pendente
+### Master Tour, MeEventos e 4.events
 
-- Estudo aprofundado de Master Tour, MeEventos e 4.events, no mesmo formato dos quatro acima (em andamento).
+Estudados em 14/10/2026. O que entrou de cada um e as fraquezas observadas estão na seção 1.1 do plano. Em resumo:
+
+- **Master Tour:** turnê → data → evento, advance, agenda do dia, viagem, hotel, guest list, settlement e impressão do day sheet. Contabilidade rasa, advance só interno (sem o lado da casa) e exclusões em cascata perigosas.
+- **MeEventos:** do orçamento ao evento com pré-reserva, contrato, escalação, checklist, estoque com kits, locação de espaço e financeiro por evento. Sem roteiro do dia e sem logística.
+- **4.events:** evento, inscrição e lotes, programação, credenciamento e controle de acesso, expositores, tarefas e chamadas abertas. Sem equipe como objeto, sem logística e sem turnê.
+
+## Plano de implementação
+
+O plano está em [plano-implementacao-modulo-producao.md](./plano-implementacao-modulo-producao.md).

@@ -1,0 +1,652 @@
+# Plano de implementação — Módulo de Produção
+
+> 14/10/2026. Transforma o [estudo do módulo](./estudo-modulo-producao.md) em entregas executáveis. O estudo diz **o quê e por quê**; este documento diz **como, em que ordem e em quais PRs**.
+> As fases 0 e 1 estão detalhadas PR a PR. As fases seguintes aparecem como lista de entregas e serão detalhadas no início de cada uma, com o que a fase anterior ensinar e o que os pilotos pedirem.
+> O formato e as convenções seguem o [plano da prestação de contas](./plano-implementacao-prestacao-de-contas.md).
+
+## 0. Como ler
+
+- Cada entrega tem um código (`PD0.3` = fase 0, entrega 3) e vira **um PR** pequeno, que entra sozinho sem quebrar o que já existe. O prefixo `PD` evita confusão com as entregas da prestação (`P0.3`). As entregas da liberação comercial usam `PDL`.
+- As estimativas estão em **dias úteis de uma pessoa** e já incluem testes e revisão. O cronograma (seção 7) soma 15% de folga por fase para a revisão do dono e o retorno dos pilotos.
+- "Aceite" é o que precisa ser verdade para o PR ser aprovado. Todo aceite também exige o PR testado no branch (preview apontando para o ambiente de teste do banco, com a migration aplicada lá) antes de ir para a `main`, e a tela conferida no computador e a 390 px pelo `DESIGN.md`.
+- Os números de linha são da `main` de 14/10/2026 (commit `905aa32`). O que não foi conferido no banco de produção está marcado como "a confirmar".
+- Vocabulário do plano: **obra** (espetáculo, show, exposição, filme, curso), **temporada** (turnê, circulação, temporada fixa, edição de festival, programação anual, filmagem), **data** (a data num lugar: sessão, praça, diária), **bloco** (um item do dia: montagem, passagem de som, sessão, desmontagem), **pauta** (a reserva de uma sala do espaço). Na tela, os nomes mudam conforme o tipo de produção (PD0.12).
+- Princípio do módulo, vindo do dono: **produção é operação**. A prestação de contas só recebe o que a produção registra (fase 10). Ela não é o centro do módulo.
+- Depois do núcleo comum (fases 0 e 1), o plano corre em **duas trilhas**: a de quem circula (companhia, banda, turnê) e a de quem recebe (espaço cultural, festival). Elas se encontram nos acordos (fase 4) e na conexão companhia–espaço (fase 11).
+
+## Andamento
+
+Atualizar a cada entrega, no formato da prestação.
+
+| Entrega | Situação | O que falta para valer em produção |
+|---|---|---|
+| — | Nenhuma entrega iniciada | Pré-requisitos 1 a 4 |
+
+---
+
+## 1. Ponto de partida
+
+O levantamento do código define o que o plano precisa levar em conta.
+
+| Fato | Onde | Consequência |
+|---|---|---|
+| **As tabelas da captação são protegidas só por organização.** `auth_org_ids()` devolve toda organização de que a pessoa é membro, sem olhar o módulo, e as regras de `projetos_crm`, `contatos`, `atividades`, `captacoes`, `contas_patrocinio` e afins usam só ela | `20260726000012_org_rls.sql:14-23, 48-51, 90-93, 104-107`; `20260825000003_contas_contratos.sql:70-77` | Quem tem só a prestação (já hoje) ou só a produção lê pela API as negociações, os valores, os contatos e as empresas da organização. A tela esconde, o banco não. A PD0.4 isola a captação antes de existir membro só da produção |
+| O módulo é uma união fechada: `ModuloId = "captacao" \| "prestacao"`, e `MODULOS` dá a ordem canônica | `lib/modulos.ts:8-10, 20-24, 66-68` | Incluir `"producao"`. Os três `Record<ModuloId,…>` (`lib/modulos.ts:37`, `app/(dashboard)/layout.tsx:57`, `lib/equipe-modulos.ts:18`) quebram no typecheck, mas há listas fixas com cast e comparações de texto que não quebram (inventário na PD0.2) |
+| `moduloDaRota` devolve "captacao" para toda rota fora de `ROTAS_DO_MODULO`, e `destinoSemAcesso` só conhece `/prestacoes` e `/dashboard` | `lib/modulos.ts:37-52, 87-96` | Registrar `/producoes` e trocar os `if` por um mapa com a página inicial de cada módulo |
+| Há redirecionamentos fixos para `/dashboard` fora de `lib/modulos.ts` | `proxy.ts:101-105, 204-208`; `app/api/auth/callback/route.ts:12`; `app/(dashboard)/prestacoes/layout.tsx:41`; `app/(dashboard)/layout.tsx:330` | Todos passam a usar a página inicial do módulo da pessoa. Sem isso, quem usa só a produção passa pela captação ao entrar |
+| O seletor monta as opções a partir de **todos** os itens de `MODULOS` e mostra o módulo não contratado com cadeado | `app/(dashboard)/layout.tsx:358-372, 506-515` | Ao incluir a produção, todo cliente veria "Produção" bloqueada. Módulo em construção precisa ficar fora das opções para todos, não só para o super admin |
+| O bloqueio no servidor é um layout de servidor por seção. O `proxy.ts` não confere módulo | `app/(dashboard)/prestacoes/layout.tsx:16-49`; `proxy.ts:170-192` | Criar `app/(dashboard)/producoes/layout.tsx` no mesmo molde |
+| Quatro regras do banco listam os módulos: `organization_modulos.modulo` (check sem nome), `organization_members_modulos_acesso_check` e `organization_invitations_modulos_acesso_check` (criadas dentro de `if not exists`) e `organization_seat_purchases_modulo_check` | `20261005120000_organization_modulos.sql:12`; `20261005130000_convites_por_modulo.sql:23-42`; `20261009120000_prestacao_cobranca_modulo.sql:170-184` | Só mudam com DROP + ADD, numa migration própria aplicada no editor SQL antes de qualquer dado com `producao` |
+| Três funções repetem a lista: `modulos_canonicos` filtra por `['captacao','prestacao']`, `fn_conferir_modulos` recusa outro módulo e `modulo_vagas_limite` devolve 0 no `else` | `20261005130000_convites_por_modulo.sql:46-63, 93-101, 105-143` | `create or replace` com a produção. Antes disso, `admin_definir_acesso_modulo` descarta a produção e devolve sucesso; um convite só com a produção cai em `ultimo_modulo`; captação + produção perde a produção sem erro |
+| `auth_tem_modulo(org, modulo)`, `modulo_em_vigor` e o gatilho que mantém `modulos_ativos` servem para qualquer módulo | `20261005110000_modulos_acesso.sql:10-29`; `20261005120000_organization_modulos.sql:56-138` | As regras da produção usam `auth_tem_modulo(organization_id, 'producao')`. Gravar o contrato da produção já liga o módulo |
+| A regra restritiva que impede o navegador de inserir vínculo só olha `prestacao` | `20261005120000_organization_modulos.sql:225-236` | Criar a regra para qualquer módulo pago |
+| Equipe e vagas têm `prestacao` fixo; o POST de `/api/members/seats` trata qualquer módulo que não seja a prestação como compra de vaga **da captação** | `app/api/members/seats/route.ts:112, 144, 267, 297, 340`; `components/modals/NovoMembroModal.tsx:169, 213-221, 272, 341`; `app/(dashboard)/configuracoes/page.tsx:124, 999, 1150-1175` | Generalizar por módulo e recusar módulo desconhecido em vez de cair na captação |
+| Cobrança, teste grátis, rotina das cortesias, admin e Meu plano têm `prestacao` fixo. `fn_processar_cobranca_modulo` recusa outro módulo | `20261009120000_prestacao_cobranca_modulo.sql:231-232`; `20261011110000_prestacao_teste_gratis_45_dias.sql:59-120, 141`; `app/api/admin/modulos/route.ts:16`; `supabase/functions/_shared/cobranca-modulo.ts:9-14, 88-103`; `lib/stripe.ts:19-22`; `app/admin/organizacoes/page.tsx:424`; `app/api/admin/piloto/route.ts:52`; `app/cadastro/page.tsx:21`; `app/confirmacao-email/page.tsx:10` | Generalizar com o módulo como parâmetro, mantendo as funções da prestação como atalhos com a mesma assinatura (PDL.1) |
+| O preço da vaga é um só (`STRIPE_PRICE_SEAT`) para captação e prestação, e uma assinatura não reconhecida como de módulo, ao ser cancelada, cai no fluxo que cancela o **plano de captação** do perfil | `lib/stripe.ts:19-22`; `supabase/functions/stripe-webhook/index.ts:18-21`; `app/api/stripe/webhook/route.ts:189-195` | Uma assinatura por módulo (o checkout recusa juntar) ou um preço de vaga por módulo; o webhook recusa assinatura com módulo desconhecido, com teste |
+| No bucket `documentos`, leitura e envio vêm de `20261006160000` e alterar e apagar de `20261006170000`, com outras regras por cima: enviado não sai nem muda, convidado lê, proponente envia, leitura sem assinatura. Fora das pastas da prestação e de fornecedores, a escrita cai em `else true` | `20261006160000_prestacao_fornecedor_documentos.sql:130-158`; `20261006170000_prestacao_fornecedor_arquivo_registrado.sql:34-49`; `20261008090000_prestacao_envios.sql:241-256`; `20261008200000_prestacao_convidados.sql:228`; `20261008220000_prestacao_proponente.sql:254-266`; `20261009120000:148-166` | A pasta `{org}/producoes/` ganha um ramo próprio, escrito a partir do texto vigente em `pg_policies`, com os ramos da prestação idênticos (PD0.14) |
+| A trava do envio da prestação só age para `authenticated` e `anon`: uma função `security definer` passa por cima. `prestacao_atividades` nem está entre as tabelas travadas | `20261008090000_prestacao_envios.sql:155-175, 180-181` | A ponte para a prestação confere a trava, a guarda e o descarte por conta própria e só insere registros novos como pendentes (fase 10) |
+| `prestacao_comprovantes.canal` só aceita equipe, proponente e e-mail | `20261009090000:33-40` | Aceitar `producao` exige DROP + ADD em migration separada (PD10.1) |
+| O descarte LGPD da prestação apaga fotos e listas de presença depois da guarda e pode rodar de novo | `20261010240000_prestacao_cmd_lgpd.sql:220-341` | A produção nunca mora em `prestacao_*`; a ponte recusa prestação com dados pessoais descartados |
+| "Contratos" é o contrato do patrocinador: `conta_patrocinio_id` é obrigatório e `/contratos` é seção de Clientes | `20260825000003_contas_contratos.sql:35-56`; `lib/navigation/rotas.ts:21, 37` | O contrato com artista, casa ou fornecedor se chama **acordo** (`producao_acordos`) |
+| "Atividade" já tem dois sentidos: a tarefa (`atividades`) e a realização da prestação (`prestacao_atividades`) | `20260721000003_crm_expansion.sql:172-198`; `20260827074320_prestacao_base.sql:103-125` | O item do dia se chama **bloco**. A tarefa da produção é uma `atividade` com FK nova |
+| "Produção" já aparece no código com outro sentido: `prestacao_producao_cmd`, `ProducaoNoCmd`, `estado.producaoCmd` e a opção `producao` do `OnboardingModal` | `components/prestacao/objeto/ProducaoNoCmd.tsx`; `components/onboarding/OnboardingModal.tsx:22` | Testes e buscas usam o padrão ancorado `^producao_` |
+| `atividades` aceita FK por módulo (`prestacao_id ... on delete cascade`). A sincronização com Google e Microsoft não usa hora | `20261005170000_prestacao_prazos_avisos.sql:12-13`; `20260825000010_calendar_sync_push.sql:62-67` | Tarefas com prazo relativo viram atividades. Blocos do dia não; a agenda pessoal sai num `.ics` próprio |
+| O limite do plano gratuito vale quando nenhum admin tem plano pago, sem olhar módulos; a mesma função limita o comparativo da captação | `20260908000002_limites_plano_gratuito.sql:7-22`; `20261005081708_comparativo_limite_gratuito_regra_de_plano.sql:33-37` | Mudar a função mudaria a captação e a prestação publicadas. A produção ganha uma regra só dela (PD0.13) |
+| `projetos_crm.fase` aceita `execucao`, mas só muda à mão. O projeto já tem orçamento com rateio por cota | `20260828000006_projetos_operacao.sql:1-41`; `20260829000002_orcamento_projeto_cotas.sql:5-22`; `components/projects/ProjetoOrcamentoManager.tsx` | A produção se ancora no projeto por FK opcional e importa o orçamento do projeto como orçado inicial (PD5.1), em vez de criar um terceiro orçamento solto |
+| `/projetos`, `/atividades`, `/contatos` e `/empresas-crm` são rotas da captação | `app/(dashboard)/layout.tsx:58-91` | Quem tem só a produção não abre essas telas. A produção tem telas próprias sob `/producoes` |
+| `contatos` é agenda comercial, com score e funil | `20260526000001_schema.sql:165-181` | Artista, técnico e motorista ficam num cadastro próprio da produção. Casa, contratante e fornecedor se ligam à empresa por FK opcional |
+| O fechamento da negociação passa pelo `FecharNegocioSheet`; a inscrição é aprovada por update direto | `components/captacoes/FechamentoNegociacao.tsx:21-82`; `app/(dashboard)/editais-inscritos/[id]/page.tsx:275-279` | "Abrir produção" é uma oferta lida do banco, que cobre os dois caminhos (PD1.4) |
+| `compromissos_cliente` guarda as contrapartidas com prazo e aviso, sem data nem sessão. O plano de ativação já tem ações e evidências | `20260828000011_customer_success_jards.sql:51-69, 157-170`; `20260831000001_planos_ativacao_patrocinio.sql` | A fase 9 liga contrapartidas e ativações às datas, sem abrir um terceiro caminho de contrapartida |
+| O link do patrocinador guarda o hash do token, tem validade, RPC para anônimo e rota liberada no proxy | `20261008180000_prestacao_links_patrocinador.sql:20-41, 166-287`; `app/r/[token]/page.tsx:30-46` | É o molde da folha do dia, do acerto técnico e dos portais |
+| As páginas públicas têm limite de 60 acessos por minuto por IP, num balde que o login também usa | `proxy.ts:26, 131-158` | A equipe na rede do teatro divide esse limite. Os links da produção ganham balde próprio |
+| CSP: `connect-src` libera só Supabase, Stripe e Google; o `Permissions-Policy` bloqueia câmera e localização | `next.config.ts:11-14, 30` | Mapa e rotas pedem entrada na CSP; a leitura de QR libera a câmera só na rota da porta |
+| Não há PWA, service worker nem IndexedDB. `npm run build` usa o empacotador padrão do Next 16; só o CI usa `--webpack` | `package.json:7`; `.github/workflows/predeploy.yml:21`; `node_modules/next/dist/docs/01-app/02-guides/progressive-web-apps.md`, `offline-support.md` | Offline é infraestrutura nova, escrita à mão para não depender do empacotador. O empacotador da Vercel é a confirmar |
+| Não há biblioteca de mapa, canvas, QR ou leitura de PDF. Existem `@dnd-kit`, `pdf-lib`, `exifr`, `xlsx` e `zod` | `package.json:15-33` | A planta é SVG próprio; o PDF de fundo pede `pdfjs-dist`; mapa, rotas e QR entram no pré-requisito 6 |
+| Os municípios já existem com código IBGE e coordenadas, e há distância em linha reta | `public/dados/municipios.json`; `lib/prestacao/municipios.ts:46-71` | O mapa da turnê já sai na fase 1, sem serviço externo |
+| Calendário, Gantt e carga da equipe estão presos à página de atividades; o kanban arrasta com HTML5, que não funciona no toque | `app/(dashboard)/atividades/page.tsx:261-560, 598-832, 868-1157`; `components/kanban/KanbanPrimitives.tsx:38-48` | Extrair para `components/agenda/` (PD1.1). No celular, arrastar com dnd-kit ou pointer events |
+| `escalaUi()` converte px do JavaScript para o rem da tela | `lib/escala-ui.ts:5-9`; `app/globals.css:26-36` | Na planta, a posição fica em metros (`viewBox`) e o ponteiro é convertido por `getScreenCTM().inverse()` |
+| O tipo `Database` é escrito à mão, sem `Relationships`, e há centenas de `(supabase as any)` | `lib/supabase/types.ts:1-5` | A produção nasce com tipo próprio e cliente tipado, e um teste barra `as any` nas pastas dela |
+| `npm test` passa `tests/**/*.test.ts` pelo `sh`, sem globstar; hoje não há teste em subpasta | `package.json:11` | Um teste em subpasta faria os da raiz deixarem de rodar sem erro. Testes da produção ficam na raiz de `tests/`, com teste de guarda |
+| O CI não roda pgTAP nem e2e, e o e2e tem um só usuário e um só `storageState` | `.github/workflows/predeploy.yml:18-24`; `playwright.config.ts:25-38` | pgTAP no editor SQL antes de cada merge com tabela nova; o e2e ganha perfis na PD0.3 |
+| Por padrão, função nova recebe `EXECUTE` para `public`, `anon` e `authenticated`; o repositório sempre revoga antes de conceder | `20261005130000_convites_por_modulo.sql:87-90, 143` | Toda função da produção revoga e concede explicitamente, conferido em teste de texto |
+| O MCP só considera vínculos com a captação | `lib/mcp/auth.ts:52` | Quem usa só a produção fica sem o conector. Fica registrado |
+
+### 1.1 O que as referências mudaram no plano
+
+As quatro de que o dono gostou definem o desenho:
+
+| Referência | O que entra e onde | O que fica de fora |
+|---|---|---|
+| **SystemOne** | A data como página única, editada onde se lê, com painel lateral para qualquer registro (PD1.6). Situação da data, do acordo e da fatura separadas (PD0.7, PD4.5, PD5.5). Acerto técnico por modelo campo a campo, aprovado item a item (PD4.1, PD4.2). Revisão antes de todo envio. Tarefas com prazo relativo à data (PD1.11). Externos grátis, por link (PD1.12). Histórico em todo registro (PD0.10). Captura rápida no celular e próximos dias offline (PD1.13) | Faturamento fiscal europeu, modelos Word com mesclagem e dois fluxos de documento; eSign limitado a dois signatários |
+| **Eventival** | Pessoa da organização, vínculo por temporada, histórico de participação (PD1.9). Hospitalidade em massa: convite, estadia, transfer, hotel, roteiro pessoal (PD6.7 a PD6.11). Credencial com QR e presença por sessão (PD7.3). Grade por sala com conflitos (PD8.1). Chamada com avaliação (PD8.2). Consultas salvas e tabela compartilhável (PD8.6) | Campo demais, customização por cliente, portal ruim no celular |
+| **Saturation** | Orçamento que também é o relatório de custos, versões como colunas, comprometido e pago calculados, clicar no número abre a origem (PD5.1). Variáveis e cenários (PD5.2). Lançamento único com divisão entre linhas (PD5.3). Pedido com próxima pendência separada da situação (PD5.4). Comentários em qualquer registro (PD1.6). Gasto entrando pelo celular (PD5.3, PD6.3) | Banco e cartões próprios, Plaid, encargos sindicais americanos, construtor genérico de fluxos |
+| **Bizzabo** | Portal do parceiro com tarefas, prazos e aprovação (PD9.2). Nível, logo, ordem e visibilidade do patrocinador lidos das cotas. Sessão "apresentada por" uma marca. Cadastra uma vez e aparece em tudo: folha, programação pública, credencial (PD8.3, PD9.2). E o que o Bizzabo não tem e o Jards ocupa: o relatório de retorno por patrocinador, pronto e vivo (PD9.3) | Crachá com Bluetooth, mapa de calor, pontuação de leads |
+
+As três que o dono achou "mais ou menos" completam detalhes:
+
+| Referência | Entra no plano | Fica de fora (fraqueza observada) |
+|---|---|---|
+| Master Tour | Tipo de dia (apresentação, viagem, folga); hora exata, aproximada, a definir ou oculta; bloco que passa da meia-noite; assistente para criar datas em lote; folha do dia em PDF e para copiar no WhatsApp; lista de convidados com cota e horário de corte | Contabilidade rasa; advance só interno, sem o lado da casa; exclusão em cascata perigosa; conflitos de sincronização |
+| MeEventos | Agenda de salas em grade, com pré-reserva e validade; agenda anual; estoque que volta separado do que se consome, e kits; acordo que congela depois de enviado | Sem roteiro do dia, sem logística, financeiro genérico |
+| 4.events | Check-in com três respostas (permitido, já entrou, negado); leitura restrita pela função do operador; portal do terceiro com cota de credenciais; chamada aberta | Sem equipe como objeto, sem logística, sem turnê |
+
+---
+
+## 2. Pré-requisitos
+
+| # | Item | Por quê | Bloqueia |
+|---|---|---|---|
+| 1 | **Leitura do banco de produção.** O conector do Supabase pede autorização nesta sessão (configurações de conectores do claude.ai); sem ela, alguém com acesso consulta `pg_constraint`, `pg_policies` e `pg_extension` | Nome real das 4 regras de módulo, texto vigente das regras do bucket e das tabelas da captação, e se existem `pg_cron`, `pg_net` e `btree_gist` | PD0.1, PD0.4, PD0.14, PD3.3 |
+| 2a | **Decisões do dono para a fundação**: nome e rota do módulo; se captador e proponente externos podem ter a produção; se o acesso pode ser limitado às temporadas e espaços da pessoa; lista de tipos de produção; isolamento da captação no banco (muda também a prestação) | Mudam as funções de vaga e convite, as regras de acesso e o catálogo | PD0.1, PD0.4, PD0.11, PD0.12 |
+| 2b | **Decisões do dono para a venda**: preço, teste grátis, "só quem planeja paga" | Mudam a cobrança | PDL.1 a PDL.3 |
+| 2c | **Decisões do dono de produto**: o funil de venda de datas fica na captação ou na produção; fornecedores num cadastro comum aos dois módulos ou um da produção | Mudam a fase 4 e a fase 5 | PD4.7, PD5.3 |
+| 3 | **Três pilotos recrutados agora**: uma companhia em turnê (teatro ou show, com van ou caminhão), um espaço cultural com programação e um festival | A fase 1 é medida com a companhia e o espaço; o festival entra na fase 6 (convite em massa) e na 7 | M1 |
+| 4 | **Ambiente de teste do banco** (branch do Supabase) e usuários de e2e por perfil, com organização própria | Testar migrations, RLS e acesso por módulo sem tocar produção | PD0.1 em diante |
+| 5 | **Política de dados pessoais da equipe**: o que se coleta (CPF, RG, passaporte, CNH, banco, restrição alimentar e alergia, que é dado de saúde), base legal, quem vê, prazo de guarda | Cadastro de pessoas, hospedagem, transporte, convidados, credenciais | PD1.9 |
+| 6 | **Escolhas técnicas**, cada uma com versão fixa, custo e entrada na CSP: (a) `pdfjs-dist` para o PDF de fundo da planta; (b) mapa: MapLibre GL com provedor de tiles, ou SVG sobre `municipios.json`; (c) serviço de rotas; (d) assinatura eletrônica com vários signatários; (e) offline: service worker escrito à mão (decidido) com escopos `/folha/` e `/porta/`; (f) QR: geração e leitura (`BarcodeDetector` com alternativa em JavaScript) | Cada escolha muda `package.json`, `next.config.ts` e o custo mensal | (a) F2 · (b) e (c) F6 · (d) F4 · (f) F7 |
+| 7 | **Dados públicos do combustível**: formato, licença e atualização da tabela do PBE Veicular (Inmetro) e do levantamento semanal de preços da ANP, incluindo diesel S10 e S500; consumo de referência por categoria de veículo pesado (van, micro-ônibus, ônibus, caminhão), que o PBE não cobre | O cálculo de combustível importa essas tabelas | PD6.4 |
+| 8 | **Preço do módulo no Stripe** em modo de teste e as variáveis no `.env.example` (a da prestação também falta, `.env.example:19-25`) | Cobrança | PDL.1 |
+| 9 | **Regra fiscal do transporte de equipamento** entre estados (declaração de conteúdo ou nota fiscal de remessa), confirmada com um contador | Documentos do checklist de transporte | PD6.3 |
+
+---
+
+## 3. Convenções de execução
+
+**Processo**
+- Um PR pequeno por entrega, em branch própria. Testar no branch (preview apontando para o ambiente de teste, com a migration aplicada lá) antes de ir para a `main`. Na `main`, a migration vai para produção antes do app.
+- Conferir cada PR no navegador, no computador e a 390 px, com os dados de teste apagados depois.
+- O dono vê cada tela nova no preview antes do merge.
+
+**Banco**
+- Migrations aditivas e idempotentes, com nome `AAAAMMDDHHMMSS_producao_<assunto>.sql`. Nunca editar migration antiga.
+- Tabelas com prefixo `producao_`, funções de escrita `fn_producao_*`, funções de permissão `auth_producao_*`, rotinas `jards-producao-*`.
+- DROP só em migration separada, com o nome conferido em `pg_constraint`, um comentário dizendo que roda no editor SQL, aplicada antes de qualquer migration que dependa dela (precedente: `20261005130100_convites_papeis.sql`).
+- Expandir e contrair em dois PRs.
+- Toda escrita com regra de negócio passa por função `security definer` com `set search_path = public, pg_temp`, checagem de papel dentro, `revoke execute ... from public, anon` (e `authenticated`, quando for o caso) e `grant` só a quem precisa. O anônimo só chama RPC que devolve o permitido, nunca tabela.
+- Nenhuma escrita direta em `prestacao_*`, `captacoes`, `contratos`, `contas_patrocinio` ou `compromissos_cliente` pelas telas da produção. As pontes são funções.
+- Função publicada não ganha parâmetro: cria-se função com nome novo (parâmetro novo cria sobrecarga e o PostgREST falha com PGRST203, como em `20261010063828_remover_sobrecargas_workspace_captador.sql`).
+- Toda tabela nova com regra de leitura recebe a regra "leitura sem assinatura", no molde da P5.6 (`20261009120000_prestacao_cobranca_modulo.sql:119-145`).
+- Dado pessoal fica em tabela separada, com regra de acesso mais estreita, prazo de guarda e rotina de descarte, e fica fora do histórico.
+
+**Código**
+- Regras em `lib/producao/**`, em TypeScript puro, sem React e sem Supabase. Telas em `app/(dashboard)/producoes/**`, componentes em `components/producao/**`. Páginas públicas fora do painel (`app/folha/`, `app/acerto/`, `app/portal/`, `app/porta/`).
+- Tipo próprio do banco da produção (`lib/producao/banco.ts`, com `Relationships`) e cliente tipado (`lib/producao/cliente.ts`). Zero `as any` nas pastas da produção, com teste de texto.
+- Nenhuma lista literal de módulos fora de `lib/modulos.ts`, com teste de texto.
+- Next.js 16: ler o guia em `node_modules/next/dist/docs/` antes de escrever (PWA, offline, route handlers). Proteção de rota em layout de servidor.
+- Interface pelo `DESIGN.md`: raio de 4px, medidas em `rem`, verde para salvar, preto para a ação principal da página, roxo só para navegação e seleção, nunca tom sobre tom, cor só no gráfico, `formatarValorCurto` com `formatarValorCompleto` no `title`, nenhum `<select>` nativo, exclusão pelo `useDeleteConfirm()`, erros junto do formulário, cadastros no padrão de `NovaCaptacaoModal` ("Mais detalhes" recolhido).
+- Vocabulário pelo tipo de produção: nenhum "Show" ou "Espetáculo" fixo em componente.
+- Porte progressivo: painel que não se aplica não aparece; nenhum campo obrigatório além do essencial (o risco do Eventival).
+- Planta e mapa: posição em metros ou coordenadas, nunca em px de tela. Arrasto com dnd-kit ou pointer events, nunca com o drag do HTML5. Respeitar `prefers-reduced-motion`.
+- Mudança no webhook do Stripe vai sempre nos dois arquivos, com novo deploy da edge function.
+
+**Testes** (seção 8)
+- Função pura: teste unitário com casos reais dos pilotos.
+- Contrato SQL: teste de texto sobre a migration.
+- RLS: pgTAP em `supabase/tests/producao_*.test.sql`, com sonda para cada tabela `^producao_`.
+- Fluxo: Playwright, com perfis por módulo e um projeto de celular.
+
+**Antes de abrir o PR**: `npm run lint && npm run typecheck && npm test && npm run build -- --webpack`, com a migration aplicada no ambiente de teste e, quando houver tabela nova, o pgTAP rodado lá.
+
+---
+
+## 4. Fase 0 — Fundação (≈ 35 dias)
+
+Objetivo: a produção vira um módulo que se libera por organização e por pessoa, com acesso conferido no banco, no bucket e no servidor; a captação deixa de ser legível por quem não tem o módulo dela; e existe o esqueleto obra → temporada → data → dia, com vocabulário por tipo, ancorado no projeto e na organização. O cliente final ainda não vê nada. A cobrança fica para a liberação comercial (seção 6.1), porque os pilotos entram por cortesia.
+
+### PD0.1 — A produção nas regras de módulo do banco (2,5 dias; depende dos pré-requisitos 1, 2a e 4)
+
+- Migration `producao_modulo_regras.sql`, aplicada à mão no editor SQL: DROP + ADD das 4 regras com `['captacao','prestacao','producao']`, com os nomes conferidos em `pg_constraint`. O comentário traz o passo a passo.
+- Migration `producao_modulo_funcoes.sql`, sem DROP: `create or replace` de `modulos_canonicos` (na ordem de `MODULOS`), `fn_conferir_modulos` (captador e proponente sem a produção, se o dono confirmar) e `modulo_vagas_limite` (ramo `producao` igual ao da prestação).
+- Regra restritiva geral que barra a inserção pelo navegador de vínculo com qualquer módulo pago, ao lado da regra da prestação.
+- `tests/producao-modulo-sql.test.ts`: as listas do SQL (4 regras e 3 funções) são iguais a `MODULOS`; a migration de funções não tem DROP; toda função nova revoga de `public` e `anon`.
+- `supabase/tests/producao_modulo.test.sql`: convite só com a produção passa e não gasta a captação; sem contrato, sai `sem_vaga_producao`; captador com a produção é recusado; `admin_definir_acesso_modulo` grava a produção; inserção direta de vínculo pelo navegador é recusada.
+- **Aceite:** gravar um contrato de cortesia da produção em `organization_modulos` põe `producao` em `modulos_ativos`. Os testes de banco da prestação continuam verdes.
+
+### PD0.2 — A produção no app, escondida para todos (2,5 dias)
+
+- `lib/modulos.ts`: `ModuloId` e `MODULOS` com `producao`; `ROTAS_DO_MODULO.producao = ["/producoes"]`; `INICIO_DO_MODULO` (`/dashboard`, `/prestacoes`, `/producoes`), usado por `destinoSemAcesso`; `MODULOS_EM_CONSTRUCAO`.
+- O seletor filtra as opções **para todo mundo**: módulo em construção só aparece quando a organização o tem em `modulos_ativos` ou `modulos_leitura` (a mesma regra vale para o super admin).
+- `app/(dashboard)/layout.tsx`: a produção em `MODULOS` (rótulo, descrição, ícone) e em `NAV_POR_MODULO`, com a página inicial como primeiro item.
+- Inventário dos lugares com `"prestacao"` fixo fora de `lib/prestacao` (seção 1), cada um com a entrega que o corrige; os redirecionamentos fixos para `/dashboard` passam a usar `INICIO_DO_MODULO`.
+- `tests/modulos.test.ts` (lista do super admin, rota, destino, seletor com três módulos e "Produção" ausente para quem não a tem), `tests/navegacao.test.ts` e um teste que proíbe listas literais de módulos fora de `lib/modulos.ts`.
+- **Aceite:** o typecheck passa sem cast nos `Record`; quem só tem a captação não vê "Produção" e, ao abrir `/producoes`, vai para `/dashboard`.
+
+### PD0.3 — Espaço de quem usa só a produção (4 dias)
+
+- `app/(dashboard)/producoes/layout.tsx`, layout de servidor no molde do da prestação, com `"producao"`. Sem aviso de assinatura por enquanto (vem na PDL.2).
+- `app/(dashboard)/producoes/page.tsx`: estado vazio que explica a próxima ação.
+- `destinoDoConvite` passa a usar o módulo (`lib/equipe-modulos.ts:65-70`).
+- Infraestrutura de e2e por perfil: um setup por usuário semeado (só captação, só prestação, só produção, captação e produção), com contratos de cortesia no ambiente de teste.
+- `e2e/authenticated/producao-acesso.spec.ts`: menu, redirecionamentos e acesso direto pela URL nos quatro perfis.
+- **Aceite:** quem só tem a produção entra em `/producoes`, não vê o menu da captação e não passa por `/dashboard` ao entrar; qualquer rota da captação a manda para `/producoes`, sem laço.
+
+### PD0.4 — Captação isolada no banco (4 dias; depende dos pré-requisitos 1 e 2a)
+
+- Inventário das tabelas da captação, em duas listas: **comerciais** (negociações, contatos, contas de patrocínio, contratos, cotas, propostas, vendas, interações, histórico comercial e afins), que passam a exigir o módulo; e **compartilhadas** (`projetos_crm`, `atividades`, empresas como referência), que continuam por organização porque a prestação e a produção leem.
+- Regras restritivas `auth_tem_modulo(organization_id, 'captacao')` nas comerciais, em migration de expansão, sem tocar nas regras existentes. Leitura que a produção ou a prestação precisarem dessas tabelas passa por função definer.
+- `supabase/tests/captacao_isolada.test.sql`: membro só da prestação e membro só da produção não leem nem escrevem nas comerciais; membro com a captação continua igual; super admin continua igual.
+- **Aceite:** nenhuma tela da captação, da prestação ou do workspace do captador muda de comportamento para quem tem a captação (e2e dos quatro perfis verde). Isso fecha uma brecha que já existe hoje para quem usa só a prestação.
+
+### PD0.5 — Equipe por módulo para três módulos (3,5 dias; depende da PD0.4)
+
+- `lib/equipe-modulos.ts`: regra de externos por módulo, `NO_SEATS_PRODUCAO` e `respostaErroEquipe` para `sem_vaga_<modulo>` de cada módulo pago.
+- `/api/members/seats`: resumo por módulo (`?modulo=`) no GET e no POST; módulo desconhecido é recusado, nunca tratado como captação.
+- `/api/members/invite` e `/api/members/[userId]` recusam captador com a produção.
+- `NovoMembroModal` e Configurações → Equipe leem os módulos ativos da organização em vez de listas fixas.
+- **Aceite:** numa organização com captação e produção, convidar alguém só para a produção funciona do convite ao primeiro acesso, sem gastar vaga da captação; a mensagem de falta de vaga nomeia a produção.
+
+### PD0.6 — Liberação por cortesia, por módulo (2 dias)
+
+- `/api/admin/modulos` recebe o módulo, validado contra `MODULOS`. `app/admin/organizacoes` mostra um contrato por módulo pago.
+- Rotina diária: `create or replace` de `fn_prestacao_cortesias_diaria` com título, texto e link pelo módulo (o nome do job continua).
+- `lib/modulos-contrato.ts`: o nome do módulo como parâmetro nos textos. `app/api/admin/piloto/route.ts` mede o piloto por módulo.
+- **Aceite:** o super admin libera a produção como cortesia a uma organização piloto; os avisos de 7 dias e de encerramento chegam com o nome e o link da produção; tudo fica no log de auditoria.
+
+### PD0.7 — Permissões da produção (3 dias; depende da PD0.1; a tela depende da PD0.5)
+
+- `auth_producao_papel_permite(papel, acao)`, no molde de `auth_prestacao_papel_permite`: `ler` para todos com o módulo; `editar` para admin e colaborador; `dinheiro` e `aprovar` para admin ou quem tem a função.
+- `producao_funcoes` (`organization_id`, `user_id`, `dinheiro`, `alcada` = valor até onde aprova pedidos, `escopo` = organização inteira ou só onde está vinculado). Só `fn_producao_definir_funcao` escreve, e exige admin.
+- `auth_producao_pode(org, acao)` e `auth_producao_le_sem_assinatura(org)`. O recorte por vínculo (`auth_producao_ve_temporada`, `auth_producao_ve_espaco`) nasce aqui e passa a valer quando os vínculos existem (PD1.9).
+- Tela na edição do membro: "Vê o dinheiro da produção", "Aprova pedidos até R$ …" e "Vê só as temporadas e espaços em que está".
+- **Aceite (pgTAP):** o leitor lê e não escreve; quem não tem `dinheiro` não lê uma tabela de sonda de dinheiro; ninguém se dá a função pelo navegador.
+
+### PD0.8 — Esqueleto: obra, temporada, data e bloco (3 dias; depende da PD0.7)
+
+- `producao_obras`: `organization_id`, `projeto_id` (FK opcional, `on delete set null`), `tipo`, `titulo`, `descricao`, `duracao_min`, `classificacao`, `icone`, `cor`, `companhia_empresa_id` ou `companhia_nome` (obra de terceiros que o espaço ou o festival recebe), `arquivada`.
+- `producao_temporadas`: `organization_id`, `projeto_id` (opcional), `obra_id` (opcional: festival e programação têm várias obras), `formato`, `lado` (`circula` ou `recebe`), `tipo`, `titulo`, `inicio`, `fim`, `situacao`, `responsavel_id`.
+- `producao_datas`: `temporada_id`, `obra_id`, `tipo` (apresentação, viagem, folga, ensaio, montagem, filmagem, aula, visitação, outro), `data`, `data_fim`, `situacao` (opção, confirmada, realizada, cancelada) com `opcao_ordem` e `opcao_ate`, lugar (espaço e sala, ou só UF e município; a data de rua não tem sala), `fuso`, `contratante_empresa_id`.
+- `producao_blocos`: `data_id`, `dia`, `inicio` e `fim` (`timestamptz`), `exibicao` (exata, aproximada, a definir, oculta), `tipo`, `titulo`, `sala_id`, `confirmado`, `visivel_para`, `capacidade`, `ordem`, `notas`. A sessão é um bloco do tipo sessão.
+- Gatilhos de coerência (mesma organização) e RLS com leitura sem assinatura.
+- `tests/producao-schema.test.ts` e `supabase/tests/producao_rls.test.sql` (admin, colaborador, leitor, sem o módulo, captador, outra organização, visitante).
+- **Aceite:** pgTAP verde no ambiente de teste; data numa temporada de outra organização é recusada.
+
+### PD0.9 — Espaços e salas (1,5 dia)
+
+- `producao_espacos`: `nome`, `tipo`, `proprio`, `movel` (a lona do circo: viaja como item e recebe como espaço), `empresa_id` opcional, endereço, `uf`, `municipio_ibge`, coordenadas, `capacidade`. `producao_salas`: `espaco_id`, `nome`, `capacidade`.
+- **Aceite:** um espaço móvel aparece como lugar de datas em cidades diferentes; RLS e pgTAP como na PD0.8.
+
+### PD0.10 — Histórico (1,5 dia)
+
+- `producao_historico` (entidade, id, campo, antes, depois, quem, quando), gravado por gatilho, com **lista de exclusão** de campos sensíveis (documentos, cachê, dados bancários, saúde) testada. A regra de leitura do histórico acompanha a da tabela de origem.
+- **Aceite:** mudar a hora de um bloco aparece no histórico; mudar um campo excluído não aparece.
+
+### PD0.11 — Tipos e cliente tipado (1,5 dia)
+
+- `lib/producao/banco.ts` (com `Relationships`) e `lib/producao/cliente.ts`.
+- `tests/producao-sem-any.test.ts` e um teste de guarda que falha se houver `*.test.ts` em subpasta de `tests/`.
+- **Aceite:** o typecheck acusa coluna inexistente nas consultas da produção.
+
+### PD0.12 — Tipos de produção e vocabulário (2,5 dias; depende do pré-requisito 2a)
+
+- `lib/producao/vocabulario.ts`: para cada tipo, os nomes (obra, temporada, data, dia, sessão, no singular e no plural), os formatos de temporada, os modelos de dia (blocos sugeridos, com duração) e os painéis sugeridos.
+- Tipos iniciais, para não deixar ninguém de fora: show, teatro, dança, circo, música de concerto e ópera, artes de rua e cultura popular, exposição, festival, literatura e feiras, audiovisual, formação, educativo e "outro". A lista final é do dono.
+- `lib/producao/porte.ts`: `paineisDaData(data, contexto)` decide o que aparece (hospedagem só quando alguém viaja, convidados só com cota, dinheiro só com permissão).
+- Teste de cobertura (todo tipo tem todos os termos e um modelo de dia) e teste do esqueleto com um caso de cada formato difícil: lona como espaço móvel, espetáculo de rua sem sala, exposição com período de visitação, filmagem com diárias.
+- **Aceite:** mudar o tipo da temporada muda os nomes na tela sem mudar dado; um tipo novo exige só uma entrada no catálogo.
+
+### PD0.13 — Âncora no projeto e limite do gratuito (1 dia)
+
+- FK opcional para `projetos_crm` em obra e temporada (a interface vem na PD1.4).
+- Limite do gratuito: uma função **nova**, só para os gatilhos que a produção dispara, que considera a produção em vigor (ativa ou em teste). `organization_uses_free_plan` não muda, e uma organização com a prestação em cortesia continua limitada na captação (caso no pgTAP).
+- **Aceite:** apagar o projeto desliga a temporada (`set null`) sem apagá-la; apagar uma negociação não afeta a produção.
+
+### PD0.14 — Arquivos da produção (2 dias; depende do pré-requisito 1)
+
+- `supabase/functions/_shared/producao-caminho.ts` (sem imports) e `lib/producao/armazenamento.ts`: caminho `{org}/producoes/{temporadaId}/{pasta}/{uuid}.{ext}`, com pastas fixas (datas, pessoas, acordos, plantas, itens, documentos, deslocamentos, hospedagem, recebidos).
+- `producao_arquivos` (temporada, data, pasta, `storage_path`, nome, tipo, tamanho, sha256, quem enviou), com RLS da produção.
+- Regras do bucket `documentos` reescritas **a partir do texto vigente em `pg_policies`**: só o ramo `producoes` é acrescentado; os ramos da prestação e de fornecedores ficam idênticos, com um teste de texto que compara o antes e o depois. A pasta `pessoas/` só para admin ou quem tem `dinheiro`.
+- **Aceite (pgTAP no bucket):** membro sem a produção não lê nem escreve em `producoes/`; o leitor lê e não escreve; as pastas da prestação continuam como estão.
+
+### Ordem e paralelismo
+
+- PD0.1 → (PD0.2 → PD0.3) e (PD0.4 → PD0.5 → PD0.6).
+- PD0.1 → PD0.7 → PD0.8 → (PD0.9, PD0.10, PD0.11, PD0.12, PD0.13). A tela da PD0.7 espera a PD0.5.
+- PD0.14 depois da PD0.8.
+
+Com duas pessoas: A faz PD0.1 a PD0.6 (≈ 18,5 dias); B começa pelos pré-requisitos 4 e 5 enquanto a PD0.1 não entra e segue com PD0.7 a PD0.14 (≈ 16,5 dias).
+
+**Marco M0:** a produção liberada por cortesia a uma organização piloto, com acesso por módulo de ponta a ponta (convite, vaga, menu, bloqueio no servidor, RLS e bucket), a captação isolada no banco e o esqueleto com os testes verdes.
+
+---
+
+## 5. Fase 1 — Núcleo comum: a agenda, a data e o dia (≈ 52 dias)
+
+Objetivo: os dois lados usam o Jards no que fazem toda semana. A companhia monta a temporada, escala a equipe, vê conflitos e manda a folha do dia (com viagem e hotel) pelo celular, e a equipe confirma por ali. O espaço registra as pautas das salas e vê os conflitos. O centro é a página da data, no espírito da página do show do SystemOne.
+
+### PD1.1 — Visões de agenda extraídas (3,5 dias)
+
+- `components/agenda/`: `CalendarioMes`, `CalendarioSemana`, `LinhaDoTempo` (arrasto por pointer events × `escalaUi()`) e `CargaDaEquipe`, sobre um tipo genérico `EventoAgenda`. Saem de `app/(dashboard)/atividades/page.tsx:261-560, 598-832, 868-1157`.
+- `lib/agenda/geometria.ts`, com teste. `/atividades` passa a usar os componentes sem mudar de comportamento.
+- **Aceite:** a página de atividades fica igual, no computador e no celular; os componentes não importam nada de atividades.
+
+### PD1.2 — Primeiro uso (2 dias)
+
+- Assistente na primeira entrada: tipo de produção, lado (circula, recebe ou os dois) e porte. Define o vocabulário, os modelos de dia e os painéis visíveis, e pode ser refeito em Configurações.
+- **Aceite:** um artista solo e um teatro municipal veem telas diferentes desde o primeiro acesso, sem nenhum campo extra obrigatório.
+
+### PD1.3 — Agenda e "Hoje" (4,5 dias)
+
+- `/producoes`: lista de datas por mês, com o dia de hoje em cinza neutro, a situação, o lugar, a obra e o tipo do dia; calendário de mês e de semana (`EntityViewSwitcher`, `usePersistedViewMode`); filtros por temporada, obra, espaço, sala e situação.
+- "Hoje": pendências do módulo numa lista curta — opções e pré-reservas vencendo, escalas sem confirmação, folhas não abertas, documentos vencendo (a partir da PD4.8), pedidos aguardando aprovação (a partir da PD5.4).
+- "Nova data" e "Nova temporada" pelas regras de cadastro; datas em lote por intervalo de dias com o tipo de cada um, como no assistente do Master Tour.
+- **Aceite:** uma turnê de 20 datas é montada em menos de 5 minutos; não há `<select>` nativo.
+
+### PD1.4 — Temporadas, obras e "Abrir produção" (4 dias)
+
+- `/producoes/temporadas` pelo padrão de listas, e a página da temporada com datas, pessoas, o projeto ligado (cartão só leitura com `ProjectIdentity`, fase e patrocinadores) e datas por situação.
+- `/producoes/obras` e a ficha da obra.
+- Copiar uma temporada leva as datas sem situação, os vínculos e os modelos de dia.
+- "Abrir produção": no projeto com venda em `vendas_patrocinio` ou inscrição aprovada, a oferta cria a temporada já ligada (lida do banco, sem gatilho; cobre o `FecharNegocioSheet` e a inscrição). Ligar uma temporada a um projeto em captação sugere a fase "execução".
+- **Aceite:** copiar a turnê do ano anterior gera a nova em um passo; um proponente que fecha patrocínio abre a produção a partir do projeto.
+
+### PD1.5 — Pauta mínima do espaço (3 dias)
+
+- `producao_pautas`: sala × período, título, contratante, situação (consulta, pré-reserva com ordem e validade, confirmada, cancelada), ligação opcional a uma data ou temporada. O evento recebido nasce direto na sala, sem exigir temporada.
+- Grade sala × dia na agenda do espaço; aviso de conflito (não impede) e aviso de pré-reserva vencendo.
+- **Aceite:** o espaço piloto registra uma semana de pautas em 15 minutos e vê o conflito de duas confirmações na mesma sala.
+
+### PD1.6 — Página da data (5,5 dias)
+
+- `/producoes/datas/[id]`: cabeçalho com obra, temporada, lugar, situação editável, fuso e contratante; abas que rolam no celular; painéis Resumo, O dia, Equipe, Viagem e hospedagem, Arquivos, Notas, Tarefas e Histórico. Os painéis das fases seguintes só aparecem quando se aplicam.
+- Edita-se onde se lê, e qualquer registro abre num painel lateral: o primitivo novo `components/ui/PainelLateral.tsx` (cabeçalho fixo, rodapé sempre visível, foco preso, Escape, `BottomSheet` no celular), registrado no `DESIGN.md`.
+- `producao_notas` e comentários com @menção em qualquer registro da produção (avisam por notificação).
+- Anterior e próxima data sem fechar o painel.
+- **Aceite:** toda informação da data se edita na própria página, e o histórico diz quem mudou o horário da passagem de som.
+
+### PD1.7 — O dia em blocos (4 dias)
+
+- Lista e linha do tempo do dia, com blocos por sala; hora exata, aproximada, a definir ou oculta; bloco que passa da meia-noite; fuso quando difere do de quem lê.
+- Modelos de dia do tipo e da organização (`producao_modelos_dia`), salvos a partir de um dia pronto; copiar o dia para outras datas; confirmar blocos (o não confirmado leva marca de texto).
+- `lib/producao/dia.ts` com testes de virada de dia e fusos.
+- **Aceite:** um dia de show com 8 blocos sai do modelo em um clique.
+
+### PD1.8 — Viagem e hospedagem do dia (2 dias)
+
+- Dois cartões simples na data: "Viagem do dia" e "Hospedagem", com texto, horário, endereço, localizador e arquivo. Aparecem na folha geral e na pessoal. A fase 6 transforma esses cartões em deslocamentos e hospedagens, migrando o que já foi digitado.
+- **Aceite:** a folha do piloto traz o horário da van e o endereço do hotel.
+
+### PD1.9 — Pessoas e vínculos (5 dias; depende do pré-requisito 5)
+
+- `producao_pessoas`: nome, nome artístico, e-mail, telefone, foto, tipo principal, `user_id` e `contato_id` opcionais (cópia, não movimento).
+- `producao_pessoas_privado` (1 para 1): documentos, CNH, contato de emergência, restrições alimentares e alergias, banco e PIX. Só admin e quem tem `dinheiro` leem; prazo de guarda e rotina `jards-producao-descarte`.
+- `producao_vinculos`: pessoa × temporada (ou × espaço), função, grupo, período, situação, cachê e diária (só com `dinheiro`). O recorte por vínculo da PD0.7 passa a valer aqui.
+- Importação de pessoas por planilha.
+- **Aceite (pgTAP):** quem não tem `dinheiro` não lê CPF, cachê nem banco; quem vê só as próprias temporadas não vê as outras; a mesma pessoa aparece uma vez, com todas as temporadas.
+
+### PD1.10 — Escala e conflitos (3,5 dias)
+
+- `producao_escalas`: pessoa × data (e bloco), função no dia, chamada, saída e confirmação (pendente, confirmada, recusada).
+- Grade pessoa × data com arrasto por dnd-kit.
+- `lib/producao/conflitos.ts` e `fn_producao_conflitos`: a mesma pessoa em dois lugares, inclusive entre temporadas; a mesma sala com duas confirmações; descanso mínimo entre a saída e a próxima chamada (configurável). Fora do recorte da pessoa, a agenda mostra só "ocupado".
+- **Aceite:** escalar alguém que já está em outra temporada no mesmo dia mostra o conflito com link para a outra data.
+
+### PD1.11 — Tarefas com prazo relativo à data (3 dias)
+
+- `atividades.producao_data_id` e `producao_temporada_id`, anuláveis, `on delete cascade`.
+- `producao_tarefas_modelo` por tipo de produção ("30 dias antes da data", responsável por função). Mudar a data move os prazos abertos.
+- `/producoes/tarefas` com os componentes da PD1.1.
+- **Aceite:** adiar uma data em 7 dias adia as tarefas abertas; no limite do gratuito, a data é salva sem as tarefas e quem criou é avisado.
+
+### PD1.12a — Links públicos da produção (2,5 dias)
+
+- `producao_links` (hash do token, tipo, escopo data e pessoa, validade, revogação, visitas), criação e revogação por função.
+- `fn_producao_folha_publica(p_token)`: só blocos visíveis ao grupo, lugar, contatos-chave, escala, viagem e hospedagem do dia e notas públicas; nunca dinheiro nem dado privado.
+- `fn_producao_folha_confirmar(p_token, resposta)`: "Confirmo" ou "Não posso", com o token pessoal.
+- **Aceite:** um teste da RPC garante que nenhum campo de dinheiro ou dado pessoal sai; link revogado ou vencido não responde.
+
+### PD1.12b — Folha do dia (3,5 dias)
+
+- `/folha/[token]`, fora do painel, feita primeiro para o celular: hora local, "agora" e "próximo", endereço que abre o mapa, botões de confirmação na folha pessoal. Liberada nas duas listas do `proxy.ts`, com balde de limite próprio.
+- PDF da folha (o gerador sai de `lib/prestacao/relatorio-pdf.ts` para `lib/pdf/`, com reexport) e "Copiar como texto" para o WhatsApp.
+- Cartão "Folha do dia" na data: link da equipe ou de uma pessoa, copiar, revogar, visitas e confirmações.
+- **Aceite:** a escala mostra quem confirmou pela folha; a folha abre bem em 4G (medido com o piloto).
+
+### PD1.13 — Folha sem internet (4 dias)
+
+- Ler antes `progressive-web-apps.md` e `offline-support.md` do Next 16. Service worker escrito à mão em `public/folha-sw.js`, com escopo `/folha/`; o arquivo sai do matcher do `proxy.ts`, como `consentimento.js`.
+- Ao abrir, a folha guarda a página, a resposta da RPC, as imagens e a validade do link. Sem rede, mostra a última versão com "Salva às 14:32". Quando a RPC responde que o link foi revogado ou venceu, o cache é apagado.
+- Com link pessoal, os próximos dias da pessoa ficam guardados.
+- Projeto "Mobile" no Playwright e `e2e/guest/producao-folha-offline.spec.ts`.
+- **Aceite:** sem rede, a folha aberta antes reabre com dados e imagens; o service worker não controla nada fora de `/folha/`.
+
+### PD1.14 — Mapa da turnê, primeira versão (2 dias)
+
+- Terceira visão da agenda (lista, calendário e mapa): as praças em ordem sobre o mapa do Brasil em SVG, a partir de `municipios.json`, com a distância em linha reta. A fase 6 acrescenta rotas, horas de estrada, combustível e a régua de pessoas e equipamentos.
+- **Aceite:** a turnê do piloto aparece no mapa sem nenhum serviço externo.
+
+### Ordem
+
+- PD1.1 → PD1.3 → PD1.6 → PD1.7 → PD1.8.
+- PD1.2, PD1.4 e PD1.5 em paralelo com PD1.3.
+- PD1.9 → PD1.10 em paralelo com PD1.3 a PD1.6.
+- PD1.11 depois da PD1.6. PD1.12a depois da PD1.7 e da PD1.10; PD1.12b → PD1.13.
+- PD1.14 a qualquer momento depois da PD1.3.
+
+Com duas pessoas: A faz PD1.1, PD1.3, PD1.6, PD1.7, PD1.8 e PD1.12b (≈ 23 dias); B faz PD1.2, PD1.4, PD1.5, PD1.9, PD1.10, PD1.12a, PD1.13 e PD1.14 (≈ 26 dias), e a PD1.11 vai com quem terminar primeiro.
+
+**Marco M1:**
+- **Companhia piloto:** uma temporada real no Jards, com datas, dia em blocos, equipe escalada com conflitos e folha do dia (com viagem e hotel) aberta no celular, inclusive sem internet. Medidas: % das datas com folha enviada, pessoas que abriram, confirmações respondidas, conflitos apontados e, por relato, mensagens de WhatsApp que deixaram de ser necessárias.
+- **Espaço piloto:** pautas da semana registradas e conflitos evitados.
+- **Critério para seguir:** os dois pilotos usam por duas semanas seguidas sem voltar à planilha; senão, a próxima fase começa pelas correções.
+
+Nesse ponto, `MODULOS_EM_CONSTRUCAO` sai para as organizações piloto.
+
+---
+
+## 6. Fases 2 a 11 — entregas previstas
+
+Cada fase será detalhada quando começar. As estimativas estão entre parênteses, em dias de uma pessoa.
+
+**Fase 2 — Trilha de quem circula: inventário e mapa de palco (≈ 4 semanas).** A visão que dá identidade ao módulo sai cedo. O mapa de palco não depende do rider: é ele que gera a lista de canais e a energia que alimentam o rider.
+- **PD2.1 Inventário da produção (4).** `producao_itens`: dono (produção, espaço ou **locado**, com fornecedor, período, valor e devolução), obra opcional, categoria (cenário, figurino, instrumento, luz, som, vídeo, praticável, adereço, obra de arte), quantidade, dimensões, peso, volume, valor, série, foto, potência, canais. `producao_item_locais` (onde está e para qual data), `producao_kits` e importação por planilha. Aceite: a temporada mostra o total em m³, kg e R$ e onde está cada item em cada data.
+- **PD2.2 Motor da planta (6).** `producao_plantas` (sala, espaço, data, hospedagem ou exposição; tipo; imagem de fundo; escala calibrada por dois pontos; camadas) e `producao_planta_objetos` (registro ligado, x, y e rotação em metros, tamanho, camada, rótulo). SVG com `viewBox` em metros, zoom e arrasto por pointer events e dnd-kit, ícones no próprio SVG, seleção que abre o registro no `PainelLateral`, desfazer. Não é um CAD. Aceite: a posição salva não muda entre 390 px, 1800 px e 2400 px, e arrastar funciona no celular.
+- **PD2.3 Fundo vindo de PDF (2).** `pdfjs-dist` em versão fixa, carregado só na planta; escolhe-se a página do PDF exportado do Vectorworks. DWG fica de fora: exporta-se em PDF.
+- **PD2.4 Mapa de palco (4).** Instrumentos, praticáveis, cenário, monitores, microfones e pontos de energia, ligados ao inventário ou soltos, com biblioteca por tipo de produção e versões por data (o palco muda na praça pequena).
+- **PD2.5 Lista de canais, energia e rider (4).** `lib/producao/palco.ts` gera a lista de canais e a potência por circuito e fase, em PDF e planilha. O rider estruturado (`producao_riders`, `producao_rider_itens`: medidas mínimas, canais, energia, equipamento, camarim, catering) nasce do mapa, sem redigitar; o PDF antigo do rider pode ser lido pela IA como rascunho. Testes com um palco de banda de 5 integrantes.
+- **Marco M2:** mapa de palco da companhia piloto com lista de canais, energia e rider.
+
+**Fase 3 — Trilha de quem recebe: o espaço (≈ 4 semanas, em paralelo com a fase 2).**
+- **PD3.1 Ficha do espaço e das salas (4).** Funcionamento, contatos, acessibilidade, carga e descarga (doca, porta, caminhão), configurações de sala com capacidade, e a ficha técnica estruturada em `producao_sala_fichas` (palco, som, luz, energia, camarins), com medidas em número e unidade. Aceite: o espaço piloto preenche a ficha em 20 minutos.
+- **PD3.2 Equipamentos da casa e manutenção (3).** Itens do espaço com estado (em uso, manutenção, avariado, baixado) e `producao_manutencoes` (preventiva recorrente vira tarefa). O que está em uso alimenta a ficha. Aceite: item avariado sai da ficha e vira pendência.
+- **PD3.3 Pautas completas (4).** Restrição no banco (um só caminho, `btree_gist` ou gatilho, decidido no pré-requisito 1), fila de pré-reservas (1ª, 2ª, 3ª) que promove a seguinte quando a primeira cai e avisa o contratante da vez, visão anual de 12 meses.
+- **PD3.4 Equipe fixa da casa (2).** Vínculos com o espaço, escala por pauta e por data com turnos, carga semanal.
+- **PD3.5 Ficha técnica por link e PDF (2).** Link `ficha` para quem vai ocupar a sala.
+- **PD3.6 Base pública de espaços (4).** Semente a partir de dados abertos (Mapas Culturais, SNIIC), copiada para a organização no uso; o espaço que usa o Jards publica a própria ficha e pode ser achado, no movimento da base pública de patrocinadores.
+- **PD3.7 Planta do espaço com a ocupação (2; depende da PD2.2).** As salas como objetos e a ocupação da semana por cima.
+- **Marco M3:** espaço piloto com ficha, equipamentos, pautas com fila e equipe fixa.
+
+**Fase 4 — Acordos e venda: onde as trilhas se encontram (≈ 6 semanas).** O acerto técnico usa a ficha (fase 3) e o rider (fase 2).
+- **PD4.1 Modelos de acerto técnico (4).** Campos com seção, tipo e destino (campo real da data ou da sala, ou campo livre), e para o terceiro cada campo é oculto, só leitura, opcional ou obrigatório. Modelos por tipo e por lado.
+- **PD4.2 Acerto técnico por link (5).** `producao_acertos` e `producao_acerto_respostas`; o terceiro entra em `/acerto/[token]` sem conta; a produção aprova ou recusa item a item, e o aprovado grava no campo real. Aceite: a casa piloto preenche pelo celular e nada chega ao campo real sem aprovação.
+- **PD4.3 Rider × ficha e comparação na planta (3).** `lib/producao/rider-ficha.ts` compara item a item ("seu cenário pede 10 m de boca de cena; este teatro tem 8"); cada diferença vira item do acerto com um clique; com a data ligada a uma sala com ficha, a planta mostra por cima a boca de cena, a profundidade e as tomadas.
+- **PD4.4 Lista do que levar por data (3).** Saída da comparação com o mapa de palco: o que a casa atende fica; o que falta sai do inventário ou é locado na praça. A lista pré-preenche o checklist de transporte (PD6.3) e atualiza onde cada item estará. Aceite: trocar a sala da data muda a lista.
+- **PD4.5 Acordos (5).** `producao_acordos` (contraparte, tipo, datas cobertas, condições estruturadas: fixo, garantia, percentual da bilheteria, bônus por público, despesas de cada lado, retenções) com a situação rascunho → revisão → para assinatura → assinado → encerrado, separada da situação da data; `producao_acordo_versoes` com arquivo e hash; acordo assinado não muda.
+- **PD4.6 Assinatura eletrônica (3).** Integração com o provedor escolhido, vários signatários e testemunhas, troca de e-mail de signatário sem recomeçar; sem provedor, upload do PDF assinado.
+- **PD4.7 Venda de datas (4; depende do pré-requisito 2c).** Proposta de circulação por link ao contratante (SESC, prefeitura, festival, casa), com o kit de venda montado a partir da obra (release, rider, ficha, fotos, vídeo) e a resposta virando opção ou confirmação. Se o dono preferir, a proposta é uma negociação de outro tipo na captação.
+- **PD4.8 Pasta de documentos com validade (2).** Da organização e das pessoas: contrato social, certidões negativas, carta de exclusividade, CNH, passaporte. Avisos de vencimento em "Hoje"; anexáveis ao acordo como pasta de habilitação.
+- **PD4.9 Licenças e liberações por data (2).** Alvará, AVCB, ECAD, SBAT, Juizado para menores em cena, via pública, autorização de filmagem: responsável, prazo, arquivo; viram tarefas.
+- **Marco M4:** acerto técnico por link com uma casa real; lista do que levar; um acordo assinado. **Liberação pública** quando o M4 e a liberação comercial (6.1) estiverem prontos.
+
+**Fase 5 — Dinheiro da produção (≈ 5,5 semanas).** O comprometido vem dos acordos, e o orçamento precisa existir antes da logística, porque combustível, hotel e passagem entram como previsto.
+- **PD5.1 Orçamento vivo (6).** `producao_orcamentos` e `producao_orcamento_linhas` com categorias tipadas (cachê, comissão, hospedagem, alimentação, passagem, transporte, combustível, frete, som e luz, cenografia, figurino, direitos, imposto, seguro, divulgação, taxa da casa, acessibilidade). Colunas: orçado (com versões como colunas: estimativa, aprovado, revisado), comprometido, pago, custo final previsto e variação. Nasce do orçamento do projeto, quando houver (`projeto_orcamento_itens`), guardando a ligação de cada linha. Cada número abre a origem. Sem `dinheiro`, não aparece.
+- **PD5.2 Variáveis e cenários (3).** Praças, sessões, dias de estrada, pessoas viajando; fórmulas com parser seguro; cenários lado a lado.
+- **PD5.3 Lançamentos e documentos (4).** `producao_lancamentos` (transação única) e `producao_lancamento_linhas` (divisão). Documento enviado uma vez e ligado a vários registros; leitura por IA com custo registrado em `producao_ia_chamadas`; duplicata avisada pelo hash e pela chave. A folha pessoal ganha "Enviar nota": a foto vira documento pendente de conferência.
+- **PD5.4 Pedidos com alçada (4).** Rascunho → pendente → aprovado → pagando → pago, só pago com lançamento ligado; próxima pendência separada da situação.
+- **PD5.5 Faturas e recebíveis (4).** `producao_faturas` ao contratante, ligadas ao acordo e à data: rascunho → revisão → em aberto → quitada, sinal e parcelas, nota emitida, retenções, atraso. "A receber" ao lado do comprometido.
+- **PD5.6 Adiantamentos e diárias (4).** Adiantamento com prestação e saldo; diárias pelos dias de estrada × a diária do vínculo, com recibo.
+- **PD5.7 Exportação (2).** Orçamento e lançamentos em planilha e pacote de documentos.
+- **Marco M5:** orçamento vivo e faturas da temporada piloto.
+
+**Fase 6 — Logística e hospitalidade (≈ 8,5 semanas; trilha de quem circula).**
+- **PD6.1 Veículos (2,5).** Placa, modelo, ano, categoria (leve, van, micro-ônibus, ônibus, caminhão), combustível (gasolina, etanol, flex, diesel S10 e S500), contratação (próprio, locado sem motorista, fretado com combustível incluso), consumo (Inmetro para leves; referência por categoria para pesados; digitado para próprio ou locado), capacidade de carga, documentos com validade.
+- **PD6.2 Deslocamentos (4).** Tipo, origem e destino, saída e chegada com fuso, veículo, motorista, companhia, localizador e quem vai. Migra os cartões da PD1.8. Entra no dia, na escala, na folha e nos conflitos de veículo e motorista.
+- **PD6.3 Checklist de transporte (4,5).** Itens pré-preenchidos pela lista do que levar (PD4.4); pessoas, saída e chegada, motorista e veículo; documentos configuráveis por tipo de deslocamento (CNH na categoria do veículo, documento do veículo, declaração de conteúdo ou nota de remessa conforme o pré-requisito 9, lista de passageiros e licença da ANTT no fretamento); laudo de conservação para obras de arte; peso e volume contra a capacidade. Conferência na saída e na volta pelo celular, com foto: foi, voltou, faltou, avariado. O motorista registra abastecimento e quilometragem pela folha dele, com fila offline.
+- **PD6.4 Combustível (5).** Distância e tempo pelo serviço de rotas, com cache por par de municípios; consumo pela regra da PD6.1; preço médio semanal da ANP por município (senão, pela UF), mostrando a semana usada; estrada no trecho entre praças e cidade nos deslocamentos dentro da praça; no flex, sugere o combustível mais barato pela relação de preço da semana; fretado com combustível incluso não calcula. O valor entra como previsto no orçamento; a nota do abastecimento vira o realizado; a diária do motorista vai junto. Aceite com o veículo real do piloto.
+- **PD6.5 Jornada do motorista (2).** Avisos de limite de direção e descanso (Lei 13.103), calculados pelas horas de estrada; avisam, não impedem.
+- **PD6.6 Leitura de passagem (3).** PDF, print ou e-mail encaminhado lido pela IA, conferido antes de salvar.
+- **PD6.7 Hospedagem (4).** Hotel, bloco de quartos, quartos e ocupantes, rooming list e voucher. Migra os cartões da PD1.8. A alergia só aparece na rooming list com autorização da pessoa.
+- **PD6.8 Mapa de quartos (2).** As pessoas arrastadas para dentro dos quartos, na planta do hotel ou numa grade; a rooming list sai do desenho.
+- **PD6.9 Convite em massa (3).** Convite com resposta sem login (vou ou não vou, chegada, saída, restrições), que alimenta hospedagem e transfers. Serve ao festival piloto.
+- **PD6.10 Transfers (3).** Sugeridos a partir da chegada e da agenda, com motorista e veículo, na escala e na folha.
+- **PD6.11 Roteiro pessoal e aviso de mudança (4).** A folha pessoal traz deslocamentos, hotel, quarto e transfers; `.ics` próprio com hora e fuso; aviso só a quem foi afetado, agrupado; na folha aberta, a mudança chega por Broadcast em canal derivado do token, ou por consulta periódica à RPC (o anônimo não recebe `postgres_changes`).
+- **PD6.12 Carga (3).** O que vai, onde está e quando volta, com o plano de carga por veículo.
+- **PD6.13 Mapa da turnê completo (3).** Rotas, horas de estrada, combustível por trecho e a régua de tempo com o lugar de cada pessoa e de cada equipamento.
+- **Marco M6:** turnê com deslocamentos, checklist, combustível previsto × realizado e hospedagem.
+
+**Fase 7 — Operação do dia (≈ 8 semanas).** Precisa da folha (fase 1), dos acordos (fase 4) e do dinheiro (fase 5).
+- **PD7.1 Roteiro ao vivo (4).** "Começou" e "terminou" por bloco, atraso propagado, cronômetro e tela de palco por link (Broadcast, não `postgres_changes`).
+- **PD7.2 Convidados e cortesias (4).** Tipos de credencial com cota por sessão, pedidos por link com horário de corte e saldo, grade que funciona como planilha. Só nome e afiliação por padrão.
+- **PD7.3 Credenciais com QR e porta (5,5).** Credencial com token e hash, leitura em `/porta/[token]` com a câmera liberada só ali e um segundo service worker com escopo `/porta/`, lista da sessão no aparelho para ler sem internet, três respostas (permitido, já entrou, negado), presença por sessão.
+- **PD7.4 Borderô e público (4).** Por sessão ou por dia de visitação: categorias, receita, deduções (bilheteria, ISS, ECAD), público presente (das leituras ou digitado), foto do borderô da casa. O Jards não vende ingresso.
+- **PD7.5 Visitação e grupos (3).** Agendamento de escolas e grupos por link, com capacidade por horário; público por dia.
+- **PD7.6 Acessibilidade por sessão (2).** Libras, audiodescrição, legendagem e lugares reservados, com pessoas escaladas e custo no orçamento.
+- **PD7.7 Mapa da plateia (3).** Setores com as cotas pintadas (patrocinador, gratuidade, acessibilidade) e o borderô por cima.
+- **PD7.8 Relatório da sessão e ocorrências (2).** Tipo, gravidade, foto e providência pelo celular.
+- **PD7.9 Acerto de contas por data (5).** `producao_fechamentos` ("Acerto de contas" na tela): garantia contra percentual, bônus por público, despesas da casa, retenções; testado com casos reais. A contraparte que não usa o Jards vê, anexa o borderô e aprova ou contesta por um link `fechamento`; o resultado vira lançamento.
+- **PD7.10 Formação (4).** Matrícula, frequência por aula e certificado, como variante da credencial e da leitura.
+- **PD7.11 Voluntários (3).** Inscrição por link e turnos na escala.
+- **Marco M7:** festival piloto com credenciais na porta e borderô; acerto de contas por data aprovado pela contraparte.
+
+**Fase 8 — Programação (≈ 4,5 semanas; trilha de quem recebe).** Precisa das pautas (fase 3) e do motor da planta (fase 2).
+- **PD8.1 Grade de programação (5).** Sala × horário por dia, arrasto de sessões e aviso de conflito de sala, de pessoa e de obra; recortes por sala, dia e obra.
+- **PD8.2 Chamada de ocupação (5).** Inscrição sem conta, avaliação por critério com vários avaliadores e seleção; selecionar cria a temporada e a pré-reserva.
+- **PD8.3 Programação pública e catálogo (4).** Página pública e versão para embutir no site, com as sessões "apresentadas por" e as marcas dos patrocinadores, cadastradas uma vez.
+- **PD8.4 Linha do tempo de várias produções (3).** Por pessoa, espaço e temporada, com paginação no servidor.
+- **PD8.5 Planta expográfica (3).** Obras na parede ou no piso, com altura, ordem de montagem e luz; termos de empréstimo e seguro como acordos.
+- **PD8.6 Consultas salvas e tabela editável (2).** Recortes salvos e tabela compartilhável por link só leitura (hotel, transportadora, locadora).
+- **Marco M8:** grade e programação pública do festival ou do espaço piloto.
+
+**Fase 9 — Parceiros e divulgação (≈ 4,5 semanas).** A referência é o Bizzabo. Depende dos convidados (fase 7).
+- **PD9.1 Contrapartidas ligadas às datas (3).** `compromissos_cliente.producao_data_id` (anulável); sem compromisso, lê `cotas_patrocinio.contrapartidas`; `ativacao_acoes` ligadas às datas. As contrapartidas viram cota de credencial ou tarefa.
+- **PD9.2 Portal do patrocinador (6).** Link por conta e projeto (corrigindo o recorte de um patrocinador só do link da prestação, `20261008180000:104-107, 214-217`): nível, logo, ordem e visibilidade lidos das cotas; tarefas com prazo; aprovação de peças com versões e reenvio; convidados na cota; agenda; sessões "apresentadas por".
+- **PD9.3 Relatório de retorno ao patrocinador (4).** Pronto e vivo: público por sessão patrocinada, fotos, credenciais usadas, ativações realizadas, peças aprovadas. As fotos e os relatórios de sessão alimentam `ativacao_evidencias`. Fechamento poucos dias depois do evento.
+- **PD9.4 Portal do artista e da companhia convidada (5).** Roteiro, documentos, dados para pagamento e viagem, com consentimento; a companhia convidada do festival cadastra a equipe e as credenciais na cota.
+- **PD9.5 Comunicação por data (3).** Kit de imprensa, artes, credenciamento de imprensa.
+- **PD9.6 Relatório de fim de temporada (2).** Público, praças, custo por praça e por espectador, ocorrências: para vender a próxima circulação e para o retorno ao patrocinador.
+- **Marco M9:** portal e relatório de retorno em uso por um patrocinador real.
+
+**Fase 10 — Pontes com a prestação (≈ 2,5 semanas).** A prestação recebe cópia, nunca referência. A PD10.2 pode começar logo depois da fase 5.
+- **PD10.1 Regras da ponte (2).** Migration separada (editor SQL) que aceita `producao` em `prestacao_comprovantes_canal_check`; `producao_envios_prestacao` (fila e rastro, único por lançamento e prestação); as funções recusam prestação fora de preparação, travada (`fn_prestacao_trava_do_registro`), em guarda ou com dados pessoais descartados, e **só inserem** registros novos como pendentes. pgTAP para cada recusa.
+- **PD10.2 Despesas (4).** A pessoa escolhe a prestação e o item; uma rota do servidor copia o arquivo para `{org}/prestacoes/{id}/comprovantes/` e chama a função; sem prestação ativa, a despesa espera na fila.
+- **PD10.3 Objeto e público (4).** Data realizada sugere local e atividade; o borderô soma na distribuição por um mapa de categoria de ingresso para categoria do regime; fotos e relatórios de sessão viram evidências copiadas; listas de presença só com consentimento.
+- **PD10.4 Orçamentos comparados (2).** Projeto × produção × prestação, só leitura, dizendo de onde veio cada número. A produção nunca grava na árvore regulatória.
+- **Marco M10:** despesas e público da turnê na prestação do projeto, aceitos pela equipe da prestação.
+
+**Fase 11 — Conexão companhia–espaço (≈ 3 semanas).** Precisa dos dois lados maduros (fases 2, 3, 4 e 7).
+- **PD11.1 Vínculo entre organizações (4).** `producao_conexoes` liga a data de um lado à pauta do outro, com aceite das duas organizações; cada lado continua dono dos próprios registros; a leitura cruzada só por funções definer e só no compartilhado.
+- **PD11.2 Acerto técnico compartilhado (4).** A ficha da sala preenche sozinha os campos da companhia, o rider aparece na pauta, a aprovação é dos dois lados.
+- **PD11.3 Planta e ficha vistas pelos dois lados (3).** O mapa de palco da companhia sobre a planta da sala, com a comparação ao vivo.
+- **PD11.4 Borderô e acerto de contas compartilhados (4).** O espaço emite o borderô, a companhia confere, e o acerto é aprovado no mesmo registro.
+- **Marco M11:** companhia e espaço do Jards no mesmo acerto.
+
+### 6.1 Liberação comercial (≈ 1,5 semana; condição da liberação pública)
+
+Fora do caminho dos pilotos, que usam cortesia. Pode correr em paralelo a partir da fase 2.
+- **PDL.1 Cobrança por módulo (3,5).** `fn_processar_cobranca_modulo` aceita o módulo; funções novas com nome novo, e as da prestação viram atalhos com a mesma assinatura (os testes da prestação não mudam); `lib/stripe.ts` e `_shared/cobranca-modulo.ts` com preço por módulo; uma assinatura por módulo (o checkout recusa juntar) ou um preço de vaga por módulo; os dois webhooks no mesmo PR, com a edge function publicada no mesmo dia; assinatura com módulo desconhecido é recusada, nunca tratada como captação. `tests/cobranca-modulo-paridade.test.ts`.
+- **PDL.2 Checkout, Meu plano e aviso (2,5).** `/api/modulos/[modulo]/assinatura` (a da prestação vira atalho), `useAssinaturaModulo`, `AssinaturaDoModulo` e `AvisoAssinaturaModulo` por módulo, Meu plano com um cartão por módulo, cadastro com `?modulo=producao`.
+- **PDL.3 Teste grátis por módulo (2).** `fn_modulo_aceitar_convite_gratuito(p_modulo)` (nome novo; a da prestação vira atalho), `ConviteModulo`, dias por módulo e a promoção da produção no seletor, se o dono quiser.
+
+### 6.2 Depois (expansão contínua)
+
+Pedágio no combustível · turnê internacional (moeda, visto, carnê ATA) · integração com ticketeiras para o borderô · todas as folhas num app instalável · MCP da produção.
+
+### 6.3 Dependências e trilhas
+
+```
+F0 → F1 ─┬─ F2 (circula: inventário, mapa de palco) ─┐
+         └─ F3 (recebe: espaço, pautas)            ──┴─ F4 (acordos e venda) → F5 (dinheiro) ─┬─ F6 (logística) ─┐
+                                                                                             └─ F8 (programação) ┴─ F7 (operação do dia) → F9 (parceiros) → F11 (conexão)
+                                                                    F5 → F10 (pontes: despesas); F7 → F10 (objeto e público)
+                                                                    6.1 (liberação comercial) em paralelo, a partir da F2
+```
+
+- A PD3.7 (planta do espaço) depende da PD2.2. A PD6.8 (quartos), a PD7.7 (plateia) e a PD8.5 (expografia) dependem do motor da planta (PD2.2).
+- A PD7.9 (acerto de contas) depende da PD4.5 e da fase 5.
+- A fase 9 depende da 7; a PD9.1 pode começar depois da PD1.6.
+
+### 6.4 Quem passa a ser atendido em cada fase
+
+O teste concreto de "sem deixar ninguém de fora":
+
+| Perfil | Começa a usar | Fica forte em |
+|---|---|---|
+| Artista solo | F1 (agenda, folha) | F4 (venda de datas, acordos), F5 (faturas) |
+| Companhia em turnê | F1 | F2 (mapa de palco), F6 (logística), F7 (acerto de contas) |
+| Produtora com várias turnês | F1 (escopo por vínculo, conflitos entre temporadas) | F5, F6, F8.4 (linha do tempo) |
+| Teatro municipal / centro cultural | F1 (pauta mínima) | F3 (ficha, pautas, equipe fixa), F8 (grade, chamada) |
+| Casa de shows | F1 | F3.3 (fila de pré-reservas), F7.9 (acerto de contas) |
+| Museu e exposição | F1 (período de visitação) | F7.5 (visitação e grupos), F8.5 (expografia), F6.3 (laudo de conservação) |
+| Festival | F1 | F6.9 (convite em massa), F7 (credenciais, voluntários), F8 (grade, programação pública) |
+| Circo | F1 (lona como espaço móvel) | F3, F6 |
+| Rua e cultura popular | F1 (data sem sala) | F4.9 (licença de via pública) |
+| Audiovisual | F1 (diárias, ordem do dia) | F5, F6 |
+| Formação e educativo | F1 (turma, aula) | F7.10 (matrícula, frequência, certificado) |
+
+---
+
+## 7. Cronograma
+
+| Fase | Dias | Com 15% de folga | Marco |
+|---|---|---|---|
+| 0 Fundação | 35 | 40 | **M0:** cortesia, acesso de ponta a ponta, captação isolada |
+| 1 Núcleo comum | 52 | 60 | **M1:** companhia e espaço pilotos usando por duas semanas |
+| 2 Circula: inventário e mapa de palco | 20 | 23 | **M2:** mapa de palco do piloto |
+| 3 Recebe: espaço | 21 | 24 | **M3:** espaço piloto completo |
+| 4 Acordos e venda | 31 | 36 | **M4:** acerto técnico com casa real → liberação pública |
+| 5 Dinheiro | 27 | 31 | **M5:** orçamento vivo e faturas |
+| 6 Logística e hospitalidade | 43 | 49 | **M6:** turnê com combustível previsto × realizado |
+| 7 Operação do dia | 39,5 | 45 | **M7:** festival com credenciais, borderô e acerto de contas |
+| 8 Programação | 22 | 25 | **M8:** grade e programação pública |
+| 9 Parceiros | 23 | 26 | **M9:** relatório de retorno em uso |
+| 10 Pontes | 12 | 14 | **M10:** despesas e público na prestação |
+| 11 Conexão | 15 | 17 | **M11:** companhia e espaço no mesmo acerto |
+| 6.1 Liberação comercial | 8 | 9 | Cobrança ligada |
+| **Total** | **≈ 348** | **≈ 400 dias** | ≈ 80 semanas de uma pessoa; ≈ 10 meses com duas |
+
+Com duas pessoas, as trilhas correm em paralelo: depois do M1, uma pessoa segue a trilha de quem circula (F2, depois F6) e a outra a de quem recebe (F3, depois F8); as duas se juntam na F4, na F5 e na F7. O **M1 sai em ≈ 12 semanas com duas pessoas** (≈ 20 com uma), e o mapa de palco (M2) cerca de um mês depois. As estimativas das fases 2 a 11 serão revistas no início de cada uma.
+
+---
+
+## 8. Testes
+
+| Tipo | Onde | O que cobre | Quando roda |
+|---|---|---|---|
+| Unitário | `tests/producao-*.test.ts` | Módulo (rotas, destinos, seletor), vocabulário e porte, conflitos e fusos, dia em blocos, prazos relativos, caminhos de arquivo, palco (canais e energia), rider × ficha, lista do que levar, combustível, orçamento e fórmulas, acerto de contas | `npm test`, CI |
+| Contrato SQL | `tests/producao-schema.test.ts`, `tests/producao-modulo-sql.test.ts`, `tests/producao-sem-any.test.ts`, `tests/cobranca-modulo-paridade.test.ts` | Toda `^producao_` com RLS e sem `using (true)`; listas de módulos do SQL iguais a `MODULOS`; funções com `search_path` e `revoke` de `public`/`anon`; ramos do bucket da prestação idênticos; RPC pública sem dinheiro nem dado pessoal; histórico sem campo sensível; webhooks iguais; nenhum teste em subpasta | `npm test`, CI |
+| RLS | `supabase/tests/producao_*.test.sql`, `supabase/tests/captacao_isolada.test.sql` | Organização, papel, módulo, `dinheiro`, escopo por vínculo, dado pessoal, bucket, links, leitura sem assinatura, recusas da ponte com a prestação | Editor SQL ou conector, numa transação desfeita (`scripts/testes-banco-em-bloco.ts`), antes de cada merge com tabela nova |
+| Fluxo | `e2e/authenticated/producao-*.spec.ts`, `e2e/guest/producao-*.spec.ts`, projeto "Mobile" | Acesso por módulo com quatro perfis, temporada e datas, escala com conflito, folha por link, confirmação e sem rede, acerto técnico pelo terceiro, conferência de transporte, porta sem rede | Local e antes de cada liberação |
+| Saídas | `tests/producao-saidas-*.test.ts` | PDFs e planilhas (folha, rooming list, lista de canais, declaração de conteúdo, acerto de contas) lidos de volta | `npm test` |
+
+Os dados de teste dos e2e usam o prefixo de `e2e/helpers/supabaseAdmin.ts` e são apagados ao fim.
+
+---
+
+## 9. Implantação
+
+- **Ordem de deploy:** migration manual das regras de módulo (PD0.1) → migrations de expansão → app → conferência → contração. A edge function do Stripe é publicada no mesmo dia do app (PDL.1).
+- **Dados existentes:** as tabelas da produção nascem vazias. Mudam em estruturas existentes: as 4 regras de módulo, 3 funções de vaga e convite, as regras restritivas da captação (PD0.4), a rotina das cortesias, a cobrança por módulo, as regras do bucket e, na fase 10, a regra de canal das despesas.
+- **Visibilidade:** até o M1, só as organizações piloto, por cortesia. Liberação pública depois do M4 e da liberação comercial.
+- **Acompanhamento:** visitas e respostas 429 dos links públicos, versão do service worker em uso, custo de IA, rotas e tiles por organização, falhas das rotinas `jards-producao-*`.
+- **Volta atrás:** toda migration de expansão é compatível com o código anterior; a contração entra depois de uma semana sem erro.
+
+---
+
+## 10. Riscos de execução
+
+| Risco | Mitigação |
+|---|---|
+| Quem tem só um módulo lê a captação pelo banco (já hoje, com a prestação) | PD0.4 antes de qualquer membro só da produção; pgTAP por perfil |
+| As 4 regras de módulo só mudam com DROP e o conector pode parar | Migration separada no editor SQL, antes de tudo, com nomes conferidos; teste que compara as listas do SQL com `MODULOS` |
+| Incluir a produção em `MODULOS` mostra o módulo bloqueado a todos | Módulo em construção fora das opções para todos (PD0.2) |
+| `moduloDaRota`, `destinoSemAcesso` e redirecionamentos fixos mandam para a captação | Tudo sob `/producoes`; página inicial por módulo; e2e com quatro perfis |
+| Generalizar a cobrança quebra a prestação publicada ou cancela o plano de captação | Funções antigas como atalhos com a mesma assinatura; nome novo em vez de parâmetro novo; webhook recusa módulo desconhecido; deploy da edge function no mesmo dia; fora do caminho dos pilotos (6.1) |
+| Reescrever as regras do bucket tira proteções da prestação | Partir do texto vigente em `pg_policies`; teste que compara os ramos da prestação |
+| A ponte com a prestação passa por cima da trava do envio e do descarte | Recusas explícitas na função, só inserção de pendentes, pgTAP por recusa |
+| Mudar o limite do gratuito muda a captação e a prestação | Regra nova só para a produção (PD0.13) |
+| Confusão com "contratos" e com "produção" da prestação | "Acordo" com tabela e rota próprias; testes com `^producao_` |
+| Dado pessoal da equipe vazar (folha, link, colaborador, histórico, cache offline) | Tabela separada; RPC pública testada; histórico com lista de exclusão; cache apagado quando o link é revogado; descarte por rotina; consentimento no portal |
+| Offline: imagens com URL de 10 minutos, empacotador da Vercel a confirmar, versão velha no cache | Imagens guardadas ao abrir; service workers escritos à mão com escopos `/folha/` e `/porta/`; versão no nome do cache |
+| Realtime não chega ao anônimo | Broadcast em canal derivado do token, ou consulta periódica |
+| Custo e limites dos serviços externos (tiles, rotas, assinatura, IA) | Cache por par de municípios; cota por organização; custo registrado |
+| O PBE do Inmetro não cobre veículo pesado e diesel | Consumo de referência por categoria e consumo digitado (pré-requisito 7) |
+| Campo demais, o risco do Eventival | Primeiro uso e porte progressivo (PD1.2, PD0.12); cada tela revista com o piloto pequeno |
+| Conflito de agenda entre organizações não aparece, por causa do RLS | Dito na tela; a conexão da fase 11 resolve para quem tem conta |
+| Programação com milhares de sessões | Paginação no servidor a partir da fase 8 |
+| A cadeia de migrations não sobe do zero e o CI não roda pgTAP | pgTAP no editor SQL antes de cada merge, registrado no PR |
+| O escopo é grande e pode parecer parado para o negócio | Um marco com piloto real a cada 3 a 6 semanas; trilhas em paralelo; o mapa de palco sai logo depois do M1 |
+
+---
+
+## 11. Primeira semana
+
+| Dia | Pessoa A | Pessoa B |
+|---|---|---|
+| 1 | Pré-requisito 1: regras, políticas e extensões no banco. Pré-requisito 2a com o dono | Pré-requisito 4: ambiente de teste e usuários de e2e por perfil |
+| 2 | PD0.1: migration manual das regras e migration de funções | Pré-requisitos 3 e 5: contato com os pilotos e rascunho da política de dados pessoais |
+| 3 | PD0.1: testes de texto e pgTAP no ambiente de teste; abrir PR | PD0.7: `auth_producao_*` e `producao_funcoes` (sobre a PD0.1 no ambiente de teste) |
+| 4 | PD0.2: módulo no app, escondido; inventário de `prestacao` fixo; abrir PR | PD0.7: pgTAP; abrir PR (a tela espera a PD0.5) |
+| 5 | PD0.4: inventário das tabelas da captação e regras restritivas | PD0.8: tabelas, gatilhos de coerência e RLS |
+
+Com uma pessoa só, seguir a coluna A e depois a B.
+
+---
+
+## 12. Decisões do dono
+
+| # | Decisão | Proposta | Bloqueia |
+|---|---|---|---|
+| 1 | Nome e rota do módulo | "Produção", em `/producoes`; páginas públicas em `/folha`, `/acerto`, `/portal`, `/porta` | PD0.2 |
+| 2 | Isolar a captação no banco (vale também para quem usa só a prestação) | Sim, nas tabelas comerciais | PD0.4 |
+| 3 | Captador e proponente externos com a produção | Não; quem é de fora entra por links e portais | PD0.1 |
+| 4 | Acesso limitado às temporadas e espaços da pessoa | Sim, como opção por membro | PD0.7 |
+| 5 | Lista de tipos de produção | A da PD0.12 (inclui circo, concerto e ópera, rua e cultura popular, literatura e feiras, educativo) | PD0.12 |
+| 6 | Limite do gratuito para quem paga só a produção | Regra própria da produção, sem mudar a captação nem a prestação | PD0.13 |
+| 7 | Os três pilotos | Uma companhia em turnê com veículo, um espaço com programação, um festival | M1 |
+| 8 | Funil de venda de datas | Proposta por link na produção (PD4.7), ou negociação de outro tipo na captação | PD4.7 |
+| 9 | Fornecedores | Cadastro comum aos dois módulos | PD5.3 |
+| 10 | Preço, teste grátis e "só quem planeja paga" | Equipe de campo, motoristas e convidados entram por link, sem vaga | PDL.1 a PDL.3 |
+| 11 | Provedores pagos (tiles, rotas, assinatura, QR) e custo mensal aceito | Começar pelo SVG sem tiles; rotas com cache; assinatura com vários signatários | F2, F4, F6, F7 |
+| 12 | Política de dados pessoais da equipe | Pré-requisito 5 | PD1.9 |
+| 13 | Conexão companhia–espaço | Só o acerto, a planta e o borderô compartilhados, com aceite das duas organizações | F11 |
+| 14 | Ingressos | O Jards registra o borderô, não vende; ticketeiras depois | F7 |
+| 15 | Escopo internacional | Fora desta versão | — |
