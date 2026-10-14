@@ -4,7 +4,8 @@
 // fica no alto do menu, acima das seções que ele define: recolhido, só o ícone;
 // aberto, a lista dos módulos com a descrição, e o que não está contratado ou
 // liberado para a pessoa aparece com cadeado e o motivo. O módulo em promoção
-// leva a etiqueta "Promo" (pequena, cinza, sem borda) e, escolhido, abre o
+// leva a etiqueta "Promo" (pequena, cinza, sem borda) e o texto do teste no
+// próprio item da lista, nunca embaixo do módulo atual; escolhido, abre o
 // convite (quem decide é a tela).
 
 import { useEffect, useId, useRef } from "react";
@@ -20,7 +21,7 @@ export type OpcaoDeModulo = {
   bloqueio: string | null;
   /** Oferecido em teste gratuito a quem ainda não tem: a escolha abre o convite. */
   promo?: boolean;
-  /** O que o gatilho diz enquanto o módulo está em promoção. */
+  /** O que o item diz no lugar da descrição enquanto o módulo está em promoção. */
   chamada?: string;
 };
 
@@ -37,7 +38,6 @@ export function SeletorDeModulo({ opcoes, ativo, expandido, aberto, onAbrir, onT
   const raiz = useRef<HTMLDivElement>(null);
   const gatilho = useRef<HTMLButtonElement>(null);
   const atual = opcoes.find(o => o.id === ativo) ?? opcoes[0];
-  const emPromo = opcoes.find(o => o.promo && o.id !== ativo);
 
   // Escape fecha e devolve o foco ao gatilho; clicar fora fecha.
   useEffect(() => {
@@ -86,7 +86,7 @@ export function SeletorDeModulo({ opcoes, ativo, expandido, aberto, onAbrir, onT
             <span className="min-w-0 flex-1 text-left">
               <span className="block truncate whitespace-nowrap text-xs font-semibold text-[#282525]">{atual.label}</span>
               <span className="block truncate whitespace-nowrap text-[0.625rem] text-black/35">
-                {emPromo?.chamada ?? "Trocar de módulo"}
+                Trocar de módulo
               </span>
             </span>
             <ChevronsUpDown size={14} aria-hidden="true" className="flex-shrink-0 text-black/35" />
@@ -130,7 +130,7 @@ export function SeletorDeModulo({ opcoes, ativo, expandido, aberto, onAbrir, onT
                         </span>
                       )}
                     </span>
-                    <span className="block text-[0.625rem] leading-snug text-black/45">{opcao.bloqueio ?? opcao.descricao}</span>
+                    <span className="block text-[0.625rem] leading-snug text-black/45">{opcao.bloqueio ?? (opcao.promo && opcao.chamada ? opcao.chamada : opcao.descricao)}</span>
                   </span>
                   {atualDaLista && <Check size={13} aria-hidden="true" className="mt-1 flex-shrink-0 text-black/50" />}
                 </button>
