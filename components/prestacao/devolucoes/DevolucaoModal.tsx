@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { ChevronDown, Paperclip, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { montarCaminhoPrestacao } from "@/lib/prestacao/armazenamento";
 import {
@@ -204,7 +205,7 @@ export function DevolucaoModal({ prestacaoId, organizationId, regime, guias, ref
         </div>
         <label>
           <span className={ROTULO}>Valor a devolver (R$)</span>
-          <input value={valor} onChange={e => setValor(e.target.value)} inputMode="decimal" placeholder="0,00" className={`${CAMPO} tabular-nums`} autoFocus={!devolucao && !inicio?.valor} />
+          <InputValor value={valor} onChange={setValor} placeholder="0,00" className={`${CAMPO} tabular-nums`} autoFocus={!devolucao && !inicio?.valor} />
         </label>
 
         <fieldset className="sm:col-span-2">
@@ -272,7 +273,7 @@ export function DevolucaoModal({ prestacaoId, organizationId, regime, guias, ref
             <div className="mt-3 grid grid-cols-2 gap-3">
               <label>
                 <span className={ROTULO}>Valor atualizado (R$)</span>
-                <input value={valorAtualizado} onChange={e => setValorAtualizado(e.target.value)} inputMode="decimal" placeholder="Pela calculadora do órgão" className={`${CAMPO} tabular-nums`} />
+                <InputValor value={valorAtualizado} onChange={setValorAtualizado} placeholder="Pela calculadora do órgão" className={`${CAMPO} tabular-nums`} />
               </label>
               <label>
                 <span className={ROTULO}>Atualizado até</span>
@@ -314,7 +315,7 @@ export function DevolucaoModal({ prestacaoId, organizationId, regime, guias, ref
               </label>
               <label>
                 <span className={ROTULO}>Valor pago (R$)</span>
-                <input value={valorPago} onChange={e => setValorPago(e.target.value)} inputMode="decimal" className={`${CAMPO} tabular-nums`} />
+                <InputValor value={valorPago} onChange={setValorPago} placeholder="0,00" className={`${CAMPO} tabular-nums`} />
               </label>
               <div>
                 <span className={ROTULO}>Comprovante</span>

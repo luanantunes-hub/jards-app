@@ -1058,18 +1058,18 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                 const entity = entityLabel(a);
 
                 return (
-                  <div key={a.id} className="flex items-center border-b transition"
-                    style={{ borderColor: "rgba(13,13,13,.045)", height: remDe(36) }}>
+                  <div key={a.id} className="flex items-stretch border-b transition"
+                    style={{ borderColor: "rgba(13,13,13,.045)", minHeight: remDe(36) }}>
 
                     <button type="button" onClick={() => onEdit(a.id)}
                       aria-label={`Editar atividade ${a.nome}`}
                       style={{ width: remDe(GANTT_LEFT_W), flexShrink: 0 }}
-                      className="h-full px-4 flex items-center gap-2 min-w-0 text-left cursor-pointer hover:bg-black/[.025] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/25">
+                      className="px-4 py-1.5 flex items-center gap-2 min-w-0 text-left cursor-pointer hover:bg-black/[.025] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/25">
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center" style={{ color: pill.bar }}>
                         <TypeIcon size={12} strokeWidth={2} />
                       </span>
                       <div className="min-w-0">
-                        <p className={`text-[0.78125rem] font-semibold truncate leading-none ${a.feita ? "line-through text-black/25" : "text-black/80"}`}>
+                        <p className={`text-[0.78125rem] font-semibold break-words leading-snug ${a.feita ? "line-through text-black/25" : "text-black/80"}`}>
                           {a.nome}
                         </p>
                         {entity !== "—" && (
@@ -1079,7 +1079,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
                     </button>
 
                     {/* Timeline */}
-                    <div style={{ position: "relative", flex: 1, height: "100%" }}>
+                    <div style={{ position: "relative", flex: 1, alignSelf: "stretch" }}>
                       {/* Weekend shading */}
                       {days.map(({ d, str }, i) => {
                         if (d.getDay() !== 0 && d.getDay() !== 6) return null;
@@ -1644,7 +1644,7 @@ function AtividadesTable({ atividades, loading, tab, savingActivityId, onToggle,
       const tc = typeConfigFor(a); const Icon = tc.Icon; const deadline = due(a);
       return <tr key={a.id} className="group border-b last:border-b-0 hover:bg-black/[.018] cursor-pointer" style={{ borderColor: "rgba(13,13,13,.045)" }} onClick={() => onEdit(a.id)}>
         <td className="cursor-default bg-white px-4 py-3 text-left group-hover:bg-[#FBFBFA]" onClick={e => e.stopPropagation()}><button type="button" aria-label={a.feita ? `Reabrir “${a.nome}”` : `Concluir “${a.nome}”`} aria-pressed={a.feita} onClick={() => void onToggle(a.id, a.feita)} disabled={savingActivityId === a.id} className="inline-flex cursor-pointer text-black/20 transition hover:text-black/55 disabled:opacity-40 disabled:cursor-not-allowed">{savingActivityId === a.id ? <Clock size={17} className="animate-pulse text-[#7259B5]" /> : a.feita ? <CheckCircle2 size={17} className="text-[#2E8932]" /> : <Circle size={17} />}</button></td>
-        <td className="bg-white px-4 py-3 group-hover:bg-[#FBFBFA]"><div className="flex w-full items-center gap-2.5 text-left"><span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded" style={{ color: tc.color }}><Icon size={13} /></span><span className="min-w-0"><span className={`block truncate text-[0.78125rem] font-semibold ${a.feita ? "text-black/30 line-through" : "text-black/75"}`}>{a.nome}</span><span className="mt-0.5 block text-[0.625rem] text-black/30">{tc.label}</span></span></div></td>
+        <td className="bg-white px-4 py-3 group-hover:bg-[#FBFBFA]"><div className="flex w-full items-center gap-2.5 text-left"><span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded" style={{ color: tc.color }}><Icon size={13} /></span><span className="min-w-0"><span className={`block break-words text-[0.78125rem] font-semibold leading-snug ${a.feita ? "text-black/30 line-through" : "text-black/75"}`}>{a.nome}</span><span className="mt-0.5 block text-[0.625rem] text-black/30">{tc.label}</span></span></div></td>
         <td className="px-4 py-3"><span className="block max-w-[10.625rem] truncate text-[0.6875rem] font-medium text-black/55">{captacaoLabel(a)}</span></td>
         <td className="px-4 py-3"><div className="max-w-[12.5rem]"><span className="block truncate text-[0.6875rem] font-medium text-black/60">{a.contato?.nome ?? a.empresa_crm?.nome ?? "—"}</span>{a.contato?.email && <span className="mt-0.5 block truncate text-[0.59375rem] text-black/30">{a.contato.email}</span>}{a.contato?.telefone && <span className="block text-[0.59375rem] text-black/25">{a.contato.telefone}</span>}</div></td>
         <td className="px-4 py-3"><span className={`flex items-center gap-1 whitespace-nowrap text-[0.6875rem] font-medium tabular-nums ${deadline.tom}`}>{deadline.alerta && <Clock size={12} strokeWidth={1.75} role="img" aria-label={deadline.alerta.rotulo} className="shrink-0" style={{ color: deadline.alerta.cor }} />}{deadline.label}</span>{a.hora_inicio && <span className="mt-0.5 block text-[0.59375rem] text-black/25">{a.hora_inicio.slice(0,5)}{a.hora_fim ? ` — ${a.hora_fim.slice(0,5)}` : ""}</span>}</td>

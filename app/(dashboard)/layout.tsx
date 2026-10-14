@@ -354,13 +354,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // organização que convidou (essas continuam existindo, só não fazem
   // sentido pra alguém com acesso limitado a um único workspace).
   const isWorkspaceCaptador = papelAtual === "captador";
-  // A prestação é oferecida de graça a quem usa o CRM e nunca teve o módulo (nem só para leitura).
+  // A prestação é oferecida em teste gratuito a quem usa o CRM e nunca teve o módulo (nem só para leitura).
+  // A captação não tem teste: o plano gratuito tem as suas funções e nunca bloqueia.
   const prestacaoEmPromo = modulosCarregados && !isSuperAdmin && !modulosOrg.includes("prestacao");
   const opcoesDeModulo: OpcaoDeModulo[] = MODULOS.map(({ id, label, descricao, icone }) => {
     const promo = id === "prestacao" && prestacaoEmPromo;
     return {
       id, label, descricao, icone, promo,
-      chamada: promo ? "Novo módulo grátis" : undefined,
+      // Aparece embaixo do módulo atual (em geral a captação): diz de quem é o teste.
+      chamada: promo ? "Teste gratuito da Prestação" : undefined,
       bloqueio: promo || isSuperAdmin ? null
         : !modulosOrg.includes(id) ? "Módulo não contratado: fale com o suporte"
         : !modulosUser.includes(id) ? "Você não tem acesso: peça a quem administra a organização"

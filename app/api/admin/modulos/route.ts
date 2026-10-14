@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
   const [orgs, contratos, membros] = await Promise.all([
     admin.from("organizations").select("id, nome, created_at, modulos_ativos").order("nome"),
     admin.from("organization_modulos")
-      .select("organization_id, status, cortesia_ate, cortesia_motivo, cortesia_por, vagas_cortesia, vagas_compradas, past_due_since, encerrado_em, updated_at")
+      .select("organization_id, status, cortesia_ate, cortesia_motivo, cortesia_por, vagas_cortesia, vagas_compradas, past_due_since, encerrado_em, updated_at, teste_gratis")
       .eq("modulo", MODULO),
     admin.from("organization_members").select("organization_id, papel, modulos_acesso"),
   ]);
@@ -165,6 +165,8 @@ export async function POST(request: NextRequest) {
         vagas_cortesia: pedido.vagas,
         cortesia_por: user.id,
         encerrado_em: null,
+        // Cortesia do suporte, mesmo quando estende o teste grátis do convite.
+        teste_gratis: false,
         // Prazo novo, aviso novo: a rotina avisa de novo 7 dias antes.
         ...(mudouPrazo ? { cortesia_aviso_em: null } : {}),
       }, { onConflict: "organization_id,modulo" })

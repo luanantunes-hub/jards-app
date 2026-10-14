@@ -10,6 +10,7 @@ import {
   Camera, Building2, Lock,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { formatarTamanho, mensagemErroUpload, prepararImagem } from "@/lib/imagem-upload";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useCreditos } from "@/contexts/CreditosContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -26,6 +27,26 @@ import { FUNCOES_PRESTACAO, MODULO_LABEL, PAPEIS_EXTERNOS } from "@/lib/equipe-m
 import type { ModuloId } from "@/lib/modulos";
 
 const MOSTRAR_VISIBILIDADE_EQUIPE = false;
+
+type AvisoImagemEstado = { tipo: "ok" | "erro"; texto: string } | null;
+
+// Aviso junto do botão de foto/logo: enviando, sucesso ou o motivo da falha
+function AvisoImagem({ aviso, enviando }: { aviso: AvisoImagemEstado; enviando: boolean }) {
+  if (enviando) return <p className="mt-1.5 text-[0.6875rem] text-black/45" role="status">Enviando imagem…</p>;
+  if (aviso) {
+    const erro = aviso.tipo === "erro";
+    return (
+      <p
+        className={`mt-1.5 flex max-w-[22rem] items-start gap-1.5 text-[0.6875rem] font-medium leading-snug ${erro ? "text-[#D94E4E]" : "text-[#2E8932]"}`}
+        role={erro ? "alert" : "status"}
+      >
+        {erro ? <AlertCircle size={12} className="mt-[1px] flex-shrink-0" /> : <Check size={12} className="mt-[1px] flex-shrink-0" />}
+        {aviso.texto}
+      </p>
+    );
+  }
+  return <p className="mt-1.5 text-[0.625rem] text-black/35">PNG, JPG ou WEBP</p>;
+}
 
 /* -------------------------------------------------------------------------- */
 /*                                  TYPES                                     */
@@ -95,6 +116,9 @@ export default function ConfiguracoesPage() {
   const [email, setEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [savingAvatar, setSavingAvatar] = useState(false);
+  const [avisoFoto, setAvisoFoto] = useState<AvisoImagemEstado>(null);
+  const [savingLogo, setSavingLogo] = useState(false);
+  const [avisoLogo, setAvisoLogo] = useState<AvisoImagemEstado>(null);
   const [orgNome, setOrgNome] = useState("");
   const [orgAvatarUrl, setOrgAvatarUrl] = useState<string | null>(null);
   const [orgTemPrestacao, setOrgTemPrestacao] = useState(false);
@@ -214,30 +238,38 @@ const { data: perfilData } = await (supabase as any)
     setSalvando(false);
   }
 
+  // Aviso de sucesso some sozinho; erro fica até a próxima tentativa
+  function avisarSucesso(definir: (valor: AvisoImagemEstado | ((atual: AvisoImagemEstado) => AvisoImagemEstado)) => void, texto: string) {
+    definir({ tipo: "ok", texto });
+    window.setTimeout(() => definir((atual) => (atual?.texto === texto ? null : atual)), 5000);
+  }
+
   async function uploadUserAvatar(file: File) {
-    if (!file.type.startsWith("image/")) { setErro("Selecione um arquivo de imagem"); return; }
-    if (file.size > 2 * 1024 * 1024) { setErro("Imagem muito grande (máximo 2MB)"); return; }
+    setAvisoFoto(null);
     setSavingAvatar(true);
-    setErro(null);
+    const preparada = await prepararImagem(file);
+    if (!preparada.ok) { setAvisoFoto({ tipo: "erro", texto: preparada.mensagem }); setSavingAvatar(false); return; }
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSavingAvatar(false); return; }
+    if (!user) { setAvisoFoto({ tipo: "erro", texto: "Sua sessão expirou. Entre de novo para trocar a foto." }); setSavingAvatar(false); return; }
 
-    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-    const path = `user/${user.id}/avatar.${ext}`;
-    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
-    if (upErr) { setErro(upErr.message); setSavingAvatar(false); return; }
+    const path = `user/${user.id}/avatar.${preparada.extensao}`;
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, preparada.arquivo, { upsert: true, contentType: preparada.tipo });
+    if (upErr) { setAvisoFoto({ tipo: "erro", texto: mensagemErroUpload(upErr) }); setSavingAvatar(false); return; }
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-    const publicUrl = urlData.publicUrl;
+    // O arquivo é sempre o mesmo caminho: a versão no endereço evita o navegador mostrar a foto antiga em cache
+    const publicUrl = `${urlData.publicUrl}?v=${Date.now()}`;
 
     const [p1, p2] = await Promise.all([
       (supabase as any).from("profiles").update({ avatar_url: publicUrl }).eq("id", user.id),
       supabase.auth.updateUser({ data: { ...user.user_metadata, avatar_url: publicUrl } }),
     ]);
-    if (p1.error || p2.error) { setErro("Foto enviada, mas não foi possível salvar no perfil"); setSavingAvatar(false); return; }
+    if (p1.error || p2.error) { setAvisoFoto({ tipo: "erro", texto: "A foto foi enviada, mas não conseguimos salvá-la no perfil. Tente de novo." }); setSavingAvatar(false); return; }
     setAvatarUrl(publicUrl);
     setSavingAvatar(false);
-    showSuccess("Foto de perfil atualizada");
+    avisarSucesso(setAvisoFoto, preparada.reduzida
+      ? `Foto atualizada. A imagem tinha ${formatarTamanho(preparada.tamanhoOriginal)} e foi reduzida automaticamente.`
+      : "Foto atualizada.");
   }
 
   async function removeUserAvatar() {
@@ -245,15 +277,15 @@ const { data: perfilData } = await (supabase as any)
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
     setSavingAvatar(true);
-    setErro(null);
+    setAvisoFoto(null);
     const [p1, p2] = await Promise.all([
       (supabase as any).from("profiles").update({ avatar_url: null }).eq("id", user.id),
       supabase.auth.updateUser({ data: { ...user.user_metadata, avatar_url: null } }),
     ]);
-    if (p1.error || p2.error) { setErro("Não foi possível remover a foto"); setSavingAvatar(false); return; }
+    if (p1.error || p2.error) { setAvisoFoto({ tipo: "erro", texto: "Não foi possível remover a foto. Tente de novo." }); setSavingAvatar(false); return; }
     setAvatarUrl(null);
     setSavingAvatar(false);
-    showSuccess("Foto de perfil removida");
+    avisarSucesso(setAvisoFoto, "Foto removida.");
   }
 
   async function handleSalvarOrganizacao(event: React.FormEvent) {
@@ -290,17 +322,16 @@ const { data: perfilData } = await (supabase as any)
 
   async function uploadOrgAvatar(file: File) {
     if (!organizationId) return;
-    if (!file.type.startsWith("image/")) { setErro("Selecione um arquivo de imagem"); return; }
-    if (file.size > 2 * 1024 * 1024) { setErro("Imagem muito grande (máximo 2MB)"); return; }
-    setSavingOrg(true);
-    setErro(null);
+    setAvisoLogo(null);
+    setSavingLogo(true);
+    const preparada = await prepararImagem(file);
+    if (!preparada.ok) { setAvisoLogo({ tipo: "erro", texto: preparada.mensagem }); setSavingLogo(false); return; }
     const supabase = createClient();
-    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-    const path = `org/${organizationId}/avatar.${ext}`;
-    const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true, contentType: file.type });
-    if (upErr) { setErro(upErr.message); setSavingOrg(false); return; }
+    const path = `org/${organizationId}/avatar.${preparada.extensao}`;
+    const { error: upErr } = await supabase.storage.from("avatars").upload(path, preparada.arquivo, { upsert: true, contentType: preparada.tipo });
+    if (upErr) { setAvisoLogo({ tipo: "erro", texto: mensagemErroUpload(upErr) }); setSavingLogo(false); return; }
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-    const publicUrl = urlData.publicUrl;
+    const publicUrl = `${urlData.publicUrl}?v=${Date.now()}`;
 
     const response = await fetch("/api/settings/organization/basic", {
       method: "PATCH",
@@ -308,11 +339,13 @@ const { data: perfilData } = await (supabase as any)
       body: JSON.stringify({ organization_id: organizationId, avatar_url: publicUrl }),
     });
     const body = await response.json().catch(() => ({}));
-    if (!response.ok) { setErro(body.error ?? "Não foi possível salvar a logo"); setSavingOrg(false); return; }
+    if (!response.ok) { setAvisoLogo({ tipo: "erro", texto: body.error ?? "A logo foi enviada, mas não conseguimos salvá-la. Tente de novo." }); setSavingLogo(false); return; }
     setOrgAvatarUrl(publicUrl);
     window.dispatchEvent(new Event("jards:org-updated"));
-    setSavingOrg(false);
-    showSuccess("Logo da organização atualizada");
+    setSavingLogo(false);
+    avisarSucesso(setAvisoLogo, preparada.reduzida
+      ? `Logo atualizada. A imagem tinha ${formatarTamanho(preparada.tamanhoOriginal)} e foi reduzida automaticamente.`
+      : "Logo atualizada.");
   }
 
   async function handleUpdateVisibilidade(valor: "admin_only" | "team_shared") {
@@ -581,7 +614,7 @@ const { data: perfilData } = await (supabase as any)
                   <span className="inline-flex items-center gap-1.5 rounded border border-[#7259B5]/30 bg-white px-3 py-1.5 text-[0.6875rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04]">
                     {savingAvatar ? "Enviando…" : <>Alterar foto<Camera size={12} /></>}
                   </span>
-                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadUserAvatar(f); e.target.value = ""; }} />
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={savingAvatar} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadUserAvatar(f); e.target.value = ""; }} />
                 </label>
                 {avatarUrl && (
                   <button type="button" onClick={() => void removeUserAvatar()} disabled={savingAvatar} className="text-[0.6875rem] font-medium text-black/35 hover:text-[#D94E4E] transition disabled:opacity-40">
@@ -589,7 +622,7 @@ const { data: perfilData } = await (supabase as any)
                   </button>
                 )}
               </div>
-              <p className="mt-1.5 text-[0.625rem] text-black/35">PNG, JPG ou WEBP · até 2MB</p>
+              <AvisoImagem aviso={avisoFoto} enviando={savingAvatar} />
             </div>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -727,11 +760,11 @@ const { data: perfilData } = await (supabase as any)
               <div>
                 <label className="cursor-pointer">
                   <span className="inline-flex items-center gap-1.5 rounded border border-[#7259B5]/30 bg-white px-3 py-1.5 text-[0.6875rem] font-semibold text-[#7259B5] transition hover:bg-black/[.04]">
-                    {savingOrg ? "Enviando…" : <>Alterar logo<Camera size={12} /></>}
+                    {savingLogo ? "Enviando…" : <>Alterar logo<Camera size={12} /></>}
                   </span>
-                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadOrgAvatar(f); e.target.value = ""; }} />
+                  <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={savingLogo} onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadOrgAvatar(f); e.target.value = ""; }} />
                 </label>
-                <p className="mt-1.5 text-[0.625rem] text-black/35">PNG, JPG ou WEBP · até 2MB</p>
+                <AvisoImagem aviso={avisoLogo} enviando={savingLogo} />
               </div>
             </div>
             <div>

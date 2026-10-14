@@ -311,7 +311,8 @@ export function EditarAtividadeModal({
                   <div>
                     <label className="text-[0.75rem] font-semibold text-[#282525] mb-2 block">Tipo</label>
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      {TIPO_OPTIONS.map(t => {
+                      {/* "Tarefa" não existe como tipo no banco (atividades_tipo_check): fica só como ícone de tipo personalizado. */}
+                      {TIPO_OPTIONS.filter(t => t.key !== "tarefa").map(t => {
                         const active = tipo === t.key && !tipoCustomId;
                         return (
                           <button key={t.key} onClick={() => { setTipo(t.key); setTipoCustomId(null); }}

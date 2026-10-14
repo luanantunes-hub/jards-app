@@ -5,6 +5,8 @@ import Link from "next/link";
 import { AlertTriangle, CheckCircle2, Info, Sparkles } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { InputValor } from "@/components/ui/CampoValor";
+import { formatarValorBRL } from "@/lib/valor";
 import { ModalPrestacao } from "@/components/prestacao/ModalPrestacao";
 import { FornecedorCombobox } from "@/components/prestacao/despesas/FornecedorCombobox";
 import { PagamentosDaDespesa } from "@/components/prestacao/despesas/PagamentosDaDespesa";
@@ -40,7 +42,6 @@ const CAMPO = "w-full rounded border border-black/[.12] px-3 py-2 text-[0.8125re
 const SECAO = "mb-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35";
 
 const reais = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-const texto = (v: number | null | undefined) => (v === null || v === undefined ? "" : String(v).replace(".", ","));
 const valorOuZero = (t: string) => (t.trim() ? lerValor(t) : 0);
 
 /** De onde sai o dinheiro da despesa (P7.2); vazio é o recurso do projeto. */
@@ -138,11 +139,11 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [],
   const [identificacao, setIdentificacao] = useState<string>(c.identificacao_projeto ?? "");
   const [fornecedorId, setFornecedorId] = useState<string | null>(c.fornecedor_id ?? null);
   const [itemId, setItemId] = useState(c.no_id ?? "");
-  const [valor, setValor] = useState(texto(c.valor_extraido));
-  const [iss, setIss] = useState(texto(c.iss || null));
-  const [inss, setInss] = useState(texto(c.inss || null));
-  const [irrf, setIrrf] = useState(texto(c.irrf || null));
-  const [outras, setOutras] = useState(texto(c.outras_retencoes || null));
+  const [valor, setValor] = useState(formatarValorBRL(c.valor_extraido));
+  const [iss, setIss] = useState(formatarValorBRL(c.iss || null));
+  const [inss, setInss] = useState(formatarValorBRL(c.inss || null));
+  const [irrf, setIrrf] = useState(formatarValorBRL(c.irrf || null));
+  const [outras, setOutras] = useState(formatarValorBRL(c.outras_retencoes || null));
   const [justificativa, setJustificativa] = useState(c.justificativa ?? "");
   const [contrapartida, setContrapartida] = useState<string>(c.contrapartida ?? "");
   // O que a leitura por IA apontou; descartar tira da despesa ao salvar.
@@ -224,7 +225,7 @@ export function DespesaModal({ comprovante, tipos, itens, metas = [], bens = [],
   const campoValor = (id: string, rotulo: string, v: string, set: (t: string) => void) => (
     <label className="block" htmlFor={`${idBase}-${id}`}>
       <span className={ROTULO}>{rotulo}</span>
-      <input id={`${idBase}-${id}`} inputMode="decimal" value={v} onChange={e => set(e.target.value)} disabled={!podeEditar} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
+      <InputValor id={`${idBase}-${id}`} value={v} onChange={set} disabled={!podeEditar} className={`${CAMPO} tabular-nums`} placeholder="0,00" />
     </label>
   );
 

@@ -931,7 +931,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                         />
                         <Icon size={13} className="text-black/30 flex-shrink-0" />
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.8125rem] font-medium text-[#282525] truncate">{atv.nome}</p>
+                          <p className="text-[0.8125rem] font-medium text-[#282525] break-words">{atv.nome}</p>
                           {atv.contato && (
                             <p className="text-[0.6875rem] text-black/35">{atv.contato.nome}</p>
                           )}

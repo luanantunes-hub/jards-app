@@ -392,24 +392,19 @@
     .flow-index { display:block; margin-bottom:28px; font-size:clamp(34px,3.4vw,48px); line-height:.9; font-weight:800; letter-spacing:-.06em; font-variant-numeric:tabular-nums; }
     .jards-flow-step strong { display:block; margin-bottom:10px; font-size:20px; }
     .jards-flow-step p { color:rgba(40,37,37,.58); font-size:14px; line-height:1.6; }
-    .flow-journey-art { position:relative; height:clamp(120px,18vw,210px); margin-top:40px; overflow:hidden; }
-    .flow-journey-art img { position:absolute; top:50%; left:0; display:block; width:100%; height:auto; transform:translateY(-50%) scaleX(-1); pointer-events:none; user-select:none; }
     /* Alternativa: fluxo sem foto, pista como protagonista.
        A arte tem 2163×727 px e o traço ocupa as linhas 246–515 (37% da altura).
        A pista fica maior que o contêiner, encostada à direita, e sangra pela esquerda. */
+    /* Jornada: linhas convergindo para um ponto de luz, desenhadas em canvas (arte de 1040×352).
+       As bordas esmaecem na página: o leve tom azulado do fundo vira halo, não retângulo.
+       No desktop o ponto de luz cai sobre o passo 05 (Renovar); no celular aparece a metade direita. */
     .alt-fluxo { overflow:hidden; }
-    .alt-fluxo .flow-journey-art { height:auto; aspect-ratio:2163 / 363; margin:56px 0 48px; overflow:visible; }
-    .alt-fluxo .flow-journey-art img { top:0; right:-1.3%; left:auto; width:135%; max-width:none; transform:translateY(-33.84%) scaleX(-1); }
-    /* A pista esmaece na borda esquerda da janela, em vez de terminar num fragmento cortado.
-       --pista-corte é a distância (em % da largura da imagem) entre a ponta visual esquerda da imagem
-       e o centro do contêiner: (0,5 + 0,337) / 1,35 ≈ 62% no desktop; (0,5 + 1,575) / 2,6 ≈ 79,8% no celular.
-       Menos 50vw, cai na borda esquerda da janela. O gradiente vai "to left" porque a imagem está espelhada.
-       Os primeiros --pista-margem px ficam totalmente transparentes, para nenhum pedaço de curva sobrar colado na borda. */
-    .alt-fluxo { --pista-corte:62%; --pista-margem:24px; --pista-fade:160px; }
-    .alt-fluxo .flow-journey-art img {
-      -webkit-mask-image:linear-gradient(to left, transparent calc(var(--pista-corte) - 50vw + var(--pista-margem)), #000 calc(var(--pista-corte) - 50vw + var(--pista-margem) + var(--pista-fade)));
-      mask-image:linear-gradient(to left, transparent calc(var(--pista-corte) - 50vw + var(--pista-margem)), #000 calc(var(--pista-corte) - 50vw + var(--pista-margem) + var(--pista-fade)));
-    }
+    .alt-fluxo .flow-journey-art { position:relative; aspect-ratio:1040 / 300; margin:48px 0 40px; overflow:hidden; }
+    /* Esmaecimento por cima, em branco (a seção é branca). */
+    .alt-fluxo .flow-journey-art::after { content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+      background:linear-gradient(to right, #fff 0, rgba(255,255,255,0) 22%, rgba(255,255,255,0) 90%, #fff 100%),
+                 linear-gradient(to bottom, #fff 0, rgba(255,255,255,0) 16%, rgba(255,255,255,0) 84%, #fff 100%); }
+    .jornada-canvas { position:absolute; top:0; right:0; display:block; width:100%; height:100%; pointer-events:none; user-select:none; }
     .alt-fluxo .jards-flow-step:first-child { padding-left:0; }
     .alt-fluxo .jards-flow-step:last-child { padding-right:0; }
 
@@ -611,7 +606,13 @@
     .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
     .hero-actions a { white-space:nowrap; }
     .hero-visual { position:relative; justify-self:end; min-width:0; width:90%; aspect-ratio:1424 / 960; }
-    .hero-anteater-detail { position:absolute; z-index:3; right:44px; bottom:0; width:clamp(190px,19vw,300px); height:auto; pointer-events:none; user-select:none; transform:translateY(7%); filter:drop-shadow(0 16px 18px rgba(52,42,78,.08)); }
+    .hero-anteater-detail { display:block; position:absolute; z-index:3; right:44px; bottom:0; width:clamp(190px,19vw,300px); height:auto; pointer-events:none; user-select:none; transform:translateY(7%); filter:drop-shadow(0 16px 18px rgba(52,42,78,.08)); }
+    .hero-anteater-detail > img { display:block; width:100%; height:auto; }
+    /* Pisca como o tamanduá do cadastro (3s, troca instantânea, olho fechado nos últimos 8%).
+       O olho fechado é um remendo de 70×53 px sobre a cabeça, que é branca e opaca no desenho. */
+    .hero-anteater-olho { position:absolute; left:23.984%; top:25.111%; width:4.007%; height:5.889%; background:url('assets/tamandua-telefone-olho-fechado.png') center / 100% 100% no-repeat; visibility:hidden; animation:hero-tamandua-piscar 3s steps(1) infinite; }
+    @keyframes hero-tamandua-piscar { 0% { visibility:hidden; } 92% { visibility:visible; } 100% { visibility:visible; } }
+    @media (prefers-reduced-motion: reduce) { .hero-anteater-olho { animation:none; } }
     .landing-hero { min-height:100dvh; }
     /* Keep the device composition proportional within its column. */
     .art-stage { position:absolute; top:0; left:0; width:1424px; height:960px; margin:0; transform:scale(var(--hero-art-scale,.5)); transform-origin:top left; }
@@ -931,9 +932,10 @@
 
     /* Fluxo no celular: passos em 2 colunas compactas e pista larga, sangrando */
     @media (max-width:767px) {
-      .alt-fluxo { --pista-corte:79.8%; --pista-margem:8px; --pista-fade:72px; }
-      .alt-fluxo .flow-journey-art { aspect-ratio:2163 / 699; margin:28px 0 24px; }
-      .alt-fluxo .flow-journey-art img { right:-2.5%; width:260%; }
+      .alt-fluxo .flow-journey-art { aspect-ratio:1.9 / 1; margin:28px 0 24px; }
+      .alt-fluxo .flow-journey-art::after { background:linear-gradient(to right, #fff 0, rgba(255,255,255,0) 26%, rgba(255,255,255,0) 92%, #fff 100%),
+        linear-gradient(to bottom, #fff 0, rgba(255,255,255,0) 14%, rgba(255,255,255,0) 86%, #fff 100%); }
+      .jornada-canvas { width:182%; }
       .flow-grid { grid-template-columns:1fr 1fr; }
       .jards-flow-step { min-height:0; padding:20px 16px 22px 0; border-right:0; border-bottom:1px solid rgba(40,37,37,.12); }
       .jards-flow-step:nth-child(odd) { border-right:1px solid rgba(40,37,37,.12); }
@@ -1102,7 +1104,10 @@
     </div>
     </div>
 
-    <img class="hero-anteater-detail" src="assets/tamandua-telefone-transparent.png" alt="Tamanduá ao telefone" />
+    <span class="hero-anteater-detail">
+      <img src="assets/tamandua-telefone-transparent.png" alt="Tamanduá ao telefone" />
+      <span class="hero-anteater-olho" aria-hidden="true"></span>
+    </span>
   </div>
 </section>
 
@@ -1828,8 +1833,8 @@
       </div>
       <p class="alt-split-lede">A Jards conecta o que acontece antes, durante e depois de cada patrocínio.</p>
     </div>
-    <div class="flow-journey-art reveal">
-      <img src="assets/jornada-corrida-s-transparente.png" alt="Tamanduá em um carro de corrida percorrendo uma pista em curvas" />
+    <div class="flow-journey-art reveal" aria-hidden="true">
+      <canvas class="jornada-canvas"></canvas>
     </div>
     <div class="flow-grid">
       <article class="jards-flow-step"><span class="flow-index">01</span><strong>Encontrar</strong><p>Mapeie patrocinadores, editais e oportunidades relevantes.</p></article>
@@ -3150,17 +3155,38 @@
       d.linha(quadro.r, 0, quadro.r, h, 'is-guia', 0);
       if (principal && principal.r < quadro.r - 40) d.linha(principal.r, 0, principal.r, h, 'is-guia', 0);
       [[quadro.x, quadro.y], [quadro.r, quadro.y], [quadro.x, quadro.b], [quadro.r, quadro.b]].forEach(function(p){ d.registro(p[0], p[1]); });
-      // Cada força ganha seu módulo na margem direita, na altura da sua linha;
-      // passar o mouse na força acende o módulo dela (CSS, via data-forca).
+      // Cada força ganha, na margem direita, uma etapa da construção do símbolo,
+      // em vez do mesmo quarto repetido: ver (o compasso traça o círculo e o
+      // quarto coral), fazer (o quarto roxo de meio raio ganha corpo, com o coral
+      // como guia) e cuidar (o J completo, com o seu vazio). Passar o mouse na
+      // força acende o desenho dela (CSS, via data-forca).
       var margem = w - quadro.r;
-      var cores = ['roxo', 'coral', 'grafite'];
       if (margem >= 96 && itens.length === 3 && itens[0].x > quadro.x + 40) {
-        var r = Math.min(30, (margem - 40) / 2);
+        var R = Math.min(32, (margem - 40) / 2);
+        var quarto = function(cx, cy, r, abre){
+          var ang = { ne:[-90,0], se:[0,90], so:[90,180], no:[180,270] }[abre];
+          var t0 = ang[0]*Math.PI/180, t1 = ang[1]*Math.PI/180;
+          return 'M' + cx + ' ' + cy + ' L' + (cx + r*Math.cos(t0)) + ' ' + (cy + r*Math.sin(t0)) +
+            ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r*Math.cos(t1)) + ' ' + (cy + r*Math.sin(t1)) + ' Z';
+        };
         itens.forEach(function(it, i){
-          var cx = quadro.r + margem / 2 + r / 2, cy = it.cy + r / 2;
-          d.linha(quadro.r, it.cy, cx - r - 6, it.cy, '', 0).setAttribute('data-forca', i + 1);
-          d.modulo(cx, cy, r, 'no', cores[i], .16, i + 1);
-          d.registro(cx, cy);
+          var n = i + 1, cx = quadro.r + margem / 2 + R / 2, cy = it.cy + R / 4, rx = cx - R / 2;
+          d.linha(quadro.r, it.cy, cx - R - 6, it.cy, '', 0).setAttribute('data-forca', n);
+          if (i === 0) {
+            d.circulo(cx, cy, R);
+            d.modulo(cx, cy, R, 'no', 'coral', .05, n);
+            d.linha(cx, cy, cx - R*Math.SQRT1_2, cy - R*Math.SQRT1_2, '', 0);
+            d.centro(cx, cy, R);
+          } else if (i === 1) {
+            no('path', { d:quarto(cx, cy, R, 'no'), 'class':'pr-arco' }, d.g);
+            d.circulo(rx, cy, R / 2);
+            d.modulo(rx, cy, R / 2, 'se', 'roxo', .18, n);
+            d.centro(rx, cy, R / 2);
+          } else {
+            d.modulo(cx, cy, R, 'no', 'coral', .16, n);
+            d.modulo(rx, cy, R / 2, 'se', 'roxo', .18, n);
+            d.registro(cx, cy);
+          }
         });
       }
     },
@@ -3295,6 +3321,271 @@
       pranchetas.forEach(function(alvo){ io.observe(alvo.parentElement); });
     }
   });
+})();
+</script>
+<script>
+// Jornada: fios que vêm da esquerda e afinam num cone até uma bola de luz
+// branca, com halo roxo e coral, e pontos de luz correndo devagar pelos fios.
+// De tempos em tempos um dos pontos se adensa, vira uma segunda bola, entra na
+// bola de luz e é incorporado por ela, que cresce um pouco e volta ao normal.
+// Desenhado em canvas: nítido em qualquer densidade de tela, mesma velocidade
+// em todo navegador e sem depender de reprodução automática. Pausa fora da
+// tela e com a aba oculta; com menos movimento, fica um quadro parado.
+(function(){
+  var tela = document.querySelector('.jornada-canvas');
+  if(!tela || !tela.getContext) return;
+  var ctx = tela.getContext('2d');
+  var menos = window.matchMedia ? matchMedia('(prefers-reduced-motion: reduce)') : { matches:false };
+
+  // Coordenadas da arte (1040 × 352), encaixadas como object-fit: cover
+  // alinhado à direita, igual à imagem que esta animação substitui.
+  var AW = 1040, AH = 352, PX = 839, PY = 182;   // ponta do cone, já dentro do brilho da bola
+  var BX = 856, BY = 178, R0 = 19;                // bola de luz: centro e raio
+  // Ciclo da semente (s): viaja pelo fio do meio e pela agulha até o centro
+  // da bola; depois a bola volta devagar ao tamanho normal.
+  var CICLO = 12.5, VIAGEM = 8.5, ACALMA = 3.5, XS = 468, RS = 11;
+  var LA = PX - XS, LB = Math.sqrt((BX - PX) * (BX - PX) + (BY - PY) * (BY - PY)), LT = LA + LB;
+  var W = 0, H = 0, dpr = 1, esc = 1, ox = 0, oy = 0;
+  var fios = [], centrais = [], pontos = [], fundo = null, cabos = null, no = null, brilho = null, bola = null;
+  var visivel = false, quadro = 0, inicio = performance.now();
+
+  function sorteio(semente){ return function(){ semente = (semente * 1664525 + 1013904223) >>> 0; return semente / 4294967296; }; }
+
+  // Altura do fio em x: meia abertura e centro do leque crescem com a distância
+  // até a ponta (medidos na arte original), mais uma ondulação leve própria.
+  function altura(f, x){
+    var d = Math.max(0, PX - x) / 100;
+    return PY + .9 * d * d + f.v * (6 * d + 2.6 * d * d) + f.onda * d * .2 * Math.sin(x * f.freq + f.fase);
+  }
+
+  function suave(a, b, x){ var u = Math.min(1, Math.max(0, (x - a) / (b - a))); return u * u * (3 - 2 * u); }
+
+  function tela2d(w, h){ var c = document.createElement('canvas'); c.width = w; c.height = h; return c; }
+
+  function mancha(c, x, y, raio, cor, alfa, miolo){
+    var g = c.createRadialGradient(x, y, 0, x, y, raio);
+    g.addColorStop(0, 'rgba(' + cor + ',' + alfa + ')');
+    if(miolo) g.addColorStop(miolo, 'rgba(' + cor + ',' + alfa + ')');
+    g.addColorStop(1, 'rgba(' + cor + ',0)');
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, raio, 0, 6.2832); c.fill();
+  }
+
+  // Halo com queda gaussiana: sem borda visível, como luz difusa
+  function halo(c, x, y, raio, cor, alfa){
+    var g = c.createRadialGradient(x, y, 0, x, y, raio);
+    [[0, 1], [.2, .88], [.4, .6], [.6, .3], [.8, .1], [1, 0]].forEach(function(p){
+      g.addColorStop(p[0], 'rgba(' + cor + ',' + (alfa * p[1]).toFixed(3) + ')');
+    });
+    c.fillStyle = g; c.beginPath(); c.arc(x, y, raio, 0, 6.2832); c.fill();
+  }
+
+  function montar(){
+    W = tela.clientWidth; H = tela.clientHeight;
+    if(!W || !H) return false;
+    dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    tela.width = Math.round(W * dpr); tela.height = Math.round(H * dpr);
+    esc = Math.max(W / AW, H / AH); ox = W - AW * esc; oy = (H - AH * esc) / 2;
+    var k = dpr * esc, al = sorteio(7);
+
+    fios = [];
+    for(var i = 0; i < 78; i++){
+      var v = -1.25 + 2.5 * (i + al()) / 78;
+      v = v * (.75 + .25 * Math.abs(v));                 // mais fios no meio do cone
+      var tom = al(), nucleo = (v + .15) / .6;
+      var borda = .12 + .88 * Math.exp(-nucleo * nucleo);   // núcleo escuro, bordas claras
+      fios.push({
+        v: v, onda: 1 + al() * 3, freq: .006 + al() * .01, fase: al() * 6.28,
+        x0: 8 + al() * 90,
+        cor: tom < .1 ? '206,116,98' : tom < .55 ? '92,106,106' : tom < .85 ? '70,80,84' : '132,146,150',
+        alfa: (.3 + al() * .4) * borda,
+        larg: .45 + al() * .6
+      });
+    }
+
+    // Camadas fixas: no fundo, névoa azulada e poeira; nos cabos, fios e agulha
+    // coral. O halo da bola fica entre as duas, para os cabos passarem por cima
+    // dele e encostarem direto na bola.
+    fundo = tela2d(tela.width, tela.height);
+    var b0 = fundo.getContext('2d');
+    b0.setTransform(k, 0, 0, k, dpr * ox, dpr * oy);
+    b0.save(); b0.translate(408, 192); b0.scale(1, .3);
+    mancha(b0, 0, 0, 420, '206,220,242', .7, .25);
+    b0.restore();
+    cabos = tela2d(tela.width, tela.height);
+    var c = cabos.getContext('2d');
+    c.setTransform(k, 0, 0, k, dpr * ox, dpr * oy);
+    function tracar(f, largura, alfa){
+      var g = c.createLinearGradient(f.x0, 0, PX, 0);
+      g.addColorStop(0, 'rgba(' + f.cor + ',0)');
+      g.addColorStop(.3, 'rgba(' + f.cor + ',' + (alfa * .55).toFixed(3) + ')');
+      g.addColorStop(.78, 'rgba(' + f.cor + ',' + alfa.toFixed(3) + ')');
+      g.addColorStop(1, 'rgba(' + f.cor + ',' + (alfa * .6).toFixed(3) + ')');
+      c.strokeStyle = g; c.lineWidth = largura; c.lineCap = 'round'; c.lineJoin = 'round';
+      c.beginPath(); c.moveTo(f.x0, altura(f, f.x0));
+      for(var x = f.x0 + 12; x < PX; x += 12) c.lineTo(x, altura(f, x));
+      c.lineTo(PX, PY); c.stroke();
+    }
+    fios.forEach(function(f){ tracar(f, 12, f.alfa * .05); });   // halo que vira névoa
+    fios.forEach(function(f){ tracar(f, f.larg, f.alfa); });
+    var agulha = c.createLinearGradient(PX - 91, 0, PX + 6, 0);
+    agulha.addColorStop(0, 'rgba(206,116,98,0)');
+    agulha.addColorStop(.6, 'rgba(222,124,102,.45)');
+    agulha.addColorStop(1, 'rgba(246,150,124,.9)');
+    c.strokeStyle = agulha; c.lineWidth = 1.1;
+    c.beginPath(); c.moveTo(PX - 91, PY - 1); c.lineTo(PX + 4, PY); c.stroke();
+    c.save(); c.translate(PX - 39, PY); c.scale(1, .22);
+    mancha(c, 0, 0, 52, '232,140,118', .35);
+    c.restore();
+    for(var p = 0; p < 34; p++){
+      var gx = al() * AW, gy = al() * AH, grande = al() < .15;
+      mancha(b0, gx, gy, grande ? 3 + al() * 3 : .8 + al() * .8, '255,255,255', grande ? .5 : .95);
+    }
+
+    // Os fios mais centrais levam a semente, um por ciclo
+    centrais = fios.map(function(f, i){ return i; })
+      .sort(function(a, b){ return Math.abs(fios[a].v) - Math.abs(fios[b].v); }).slice(0, 6);
+
+    // Halo da bola numa camada própria, que cada quadro só redesenha com leve
+    // escala: roxo à esquerda, coral à direita e um anel fino.
+    // Janela da arte: x 680–1040, y 30–330.
+    no = tela2d(Math.round(360 * k), Math.round(300 * k));
+    var n = no.getContext('2d');
+    n.setTransform(k, 0, 0, k, 0, 0); n.translate(-680, -30);
+    halo(n, 886, 186, 130, '246,176,156', .2);
+    halo(n, 880, 178, 80, '240,132,112', .72);
+    halo(n, 834, 186, 58, '124,102,214', .74);
+    halo(n, 840, 166, 40, '124,102,214', .6);
+    n.strokeStyle = 'rgba(246,190,180,.45)'; n.lineWidth = .8;
+    n.beginPath(); n.arc(BX + 4, BY - 1, 43, 0, 6.2832); n.stroke();
+
+    // Bola de luz: miolo branco cheio e brilho em volta. O miolo ocupa 42% do
+    // raio do desenho; serve para a bola principal e para a semente.
+    bola = tela2d(512, 512);
+    var bl = bola.getContext('2d');
+    var gl = bl.createRadialGradient(256, 256, 0, 256, 256, 256);
+    [[0, 1], [.38, 1], [.46, .78], [.62, .3], [.8, .1], [1, 0]].forEach(function(e){ gl.addColorStop(e[0], 'rgba(255,255,255,' + e[1] + ')'); });
+    bl.fillStyle = gl; bl.fillRect(0, 0, 512, 512);
+
+    // Ponto de luz que corre nos fios (um só desenho, reaproveitado)
+    brilho = tela2d(64, 64);
+    var b = brilho.getContext('2d');
+    var gb = b.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gb.addColorStop(0, 'rgba(255,255,255,1)'); gb.addColorStop(.26, 'rgba(255,255,255,.92)');
+    gb.addColorStop(.5, 'rgba(246,250,255,.38)'); gb.addColorStop(1, 'rgba(240,246,255,0)');
+    b.fillStyle = gb; b.fillRect(0, 0, 64, 64);
+
+    pontos = [];
+    for(var j = 0; j < 22; j++){
+      var t = al();
+      pontos.push({ fio: Math.floor(al() * fios.length), fase: al(), dur: 10 + al() * 9, raio: t < .3 ? 11 + al() * 7 : 5 + al() * 4 });
+    }
+    return true;
+  }
+
+  function desenharBola(x, y, raio, alfa){
+    var lado = raio / .42;
+    ctx.globalAlpha = alfa;
+    ctx.drawImage(bola, x - lado, y - lado, lado * 2, lado * 2);
+  }
+
+  // Semente: anda pelo fio do meio, desacelerando; perto da ponta se adensa
+  // (cresce e ganha miolo cheio) e, ao entrar na bola, encolhe enquanto a bola
+  // cresce na mesma área. "feita" diz quanto dela já foi incorporado (0 a 1).
+  function semente(t){
+    var tc = t % CICLO, ciclo = Math.floor(t / CICLO);
+    if(tc >= VIAGEM) return { feita:1, tc:tc, alfa:0 };
+    var u = tc / VIAGEM, d = LT * (1 - Math.pow(1 - u, 1.6)), s = d / LT, x, y;
+    if(d < LA){ var f = fios[centrais[ciclo % centrais.length]]; x = XS + d; y = altura(f, x); }
+    else { var q = (d - LA) / LB; x = PX + (BX - PX) * q; y = PY + (BY - PY) * q; }
+    var r = 3.5 + (RS - 3.5) * suave(.35, .82, s), dens = suave(.45, .84, s);
+    var dentro = suave(0, 1, 1 - Math.sqrt((x - BX) * (x - BX) + (y - BY) * (y - BY)) / (R0 + RS));
+    return { feita:dentro * r * r / (RS * RS), tc:tc, x:x, y:y, dens:dens,
+      raio:r * Math.sqrt(1 - dentro), alfa:dentro < 1 ? Math.min(1, tc / .6) : 0 };
+  }
+
+  // Pescoço entre a semente e a bola quando se aproximam (metaball de dois
+  // círculos): a junção engrossa até as duas virarem uma só.
+  function pescoco(x1, y1, r1, x2, y2, r2, alfa){
+    var d = Math.sqrt((x2 - x1) * (x2 - x1) + (y2 - y1) * (y2 - y1)), longe = r1 + r2 * 2.2;
+    if(!alfa || d > longe || d <= Math.abs(r1 - r2) || r2 < .5) return;
+    var v = .5, u1 = 0, u2 = 0;
+    if(d < r1 + r2){
+      u1 = Math.acos((r1 * r1 + d * d - r2 * r2) / (2 * r1 * d));
+      u2 = Math.acos((r2 * r2 + d * d - r1 * r1) / (2 * r2 * d));
+    }
+    var ang = Math.atan2(y2 - y1, x2 - x1), abre = Math.acos((r1 - r2) / d);
+    var a1 = ang + u1 + (abre - u1) * v, a2 = ang - u1 - (abre - u1) * v;
+    var a3 = ang + Math.PI - u2 - (Math.PI - u2 - abre) * v, a4 = ang - Math.PI + u2 + (Math.PI - u2 - abre) * v;
+    function em(cx, cy, r, a){ return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
+    var p1 = em(x1, y1, r1, a1), p2 = em(x1, y1, r1, a2), p3 = em(x2, y2, r2, a3), p4 = em(x2, y2, r2, a4);
+    var dist13 = Math.sqrt((p3[0] - p1[0]) * (p3[0] - p1[0]) + (p3[1] - p1[1]) * (p3[1] - p1[1]));
+    var alca = Math.min(v * 2.4, dist13 / (r1 + r2)) * Math.min(1, d * 2 / (r1 + r2));
+    var h1 = em(p1[0], p1[1], r1 * alca, a1 - Math.PI / 2), h2 = em(p2[0], p2[1], r1 * alca, a2 + Math.PI / 2);
+    var h3 = em(p3[0], p3[1], r2 * alca, a3 + Math.PI / 2), h4 = em(p4[0], p4[1], r2 * alca, a4 - Math.PI / 2);
+    ctx.globalAlpha = alfa * suave(longe, longe * .82, d);
+    ctx.fillStyle = '#fff'; ctx.shadowColor = 'rgba(255,255,255,.9)'; ctx.shadowBlur = 3 * dpr * esc;
+    ctx.beginPath(); ctx.moveTo(p1[0], p1[1]);
+    ctx.bezierCurveTo(h1[0], h1[1], h3[0], h3[1], p3[0], p3[1]);
+    ctx.lineTo(p4[0], p4[1]);
+    ctx.bezierCurveTo(h4[0], h4[1], h2[0], h2[1], p2[0], p2[1]);
+    ctx.closePath(); ctx.fill();
+    ctx.shadowBlur = 0; ctx.shadowColor = 'rgba(0,0,0,0)';
+  }
+
+  function desenhar(agora){
+    if(!fundo || !cabos) return;
+    // o carimbo do primeiro quadro pode vir milésimos antes do início
+    var t = Math.max(0, (agora - inicio) / 1000), k = dpr * esc;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, tela.width, tela.height);
+    ctx.drawImage(fundo, 0, 0);
+    var sem = semente(t);
+    // quanto a bola está acima do normal: sobe com a semente incorporada e
+    // volta devagar depois que ela some
+    var extra = sem.tc < VIAGEM ? sem.feita : 1 - suave(0, ACALMA, sem.tc - VIAGEM);
+    var pulso = .5 - .5 * Math.cos(t * 2 * Math.PI / 5);
+    var e = 1 + .015 * pulso + .045 * extra;
+    ctx.setTransform(k, 0, 0, k, dpr * ox, dpr * oy);
+    ctx.globalAlpha = Math.min(1, .9 + .05 * pulso + .1 * extra);
+    ctx.drawImage(no, BX - 176 * e, BY - 148 * e, 360 * e, 300 * e);
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalAlpha = 1;
+    ctx.drawImage(cabos, 0, 0);
+    ctx.setTransform(k, 0, 0, k, dpr * ox, dpr * oy);
+    pontos.forEach(function(p){
+      var f = fios[p.fio], s = ((t / p.dur) + p.fase) % 1;
+      var x = f.x0 + (PX - f.x0) * (1 - Math.pow(1 - s, 1.25)), y = altura(f, x);
+      ctx.globalAlpha = Math.min(1, s / .1) * Math.min(1, (1 - s) / .08);
+      ctx.drawImage(brilho, x - p.raio, y - p.raio, p.raio * 2, p.raio * 2);
+    });
+    if(sem.alfa){
+      var pr = 6 + 4 * sem.dens;
+      ctx.globalAlpha = (1 - sem.dens) * sem.alfa;
+      ctx.drawImage(brilho, sem.x - pr, sem.y - pr, pr * 2, pr * 2);
+      desenharBola(sem.x, sem.y, sem.raio, sem.dens * sem.alfa);
+    }
+    var R = Math.sqrt(R0 * R0 + RS * RS * extra);
+    desenharBola(BX, BY, R, 1);
+    if(sem.alfa) pescoco(BX, BY, R, sem.x, sem.y, sem.raio, sem.dens * sem.alfa);
+    ctx.globalAlpha = 1;
+  }
+
+  function laco(agora){ desenhar(agora); quadro = requestAnimationFrame(laco); }
+  function ligar(){ if(quadro || menos.matches || !visivel || document.hidden) return; quadro = requestAnimationFrame(laco); }
+  function desligar(){ if(quadro){ cancelAnimationFrame(quadro); quadro = 0; } }
+  // quadro parado (menos movimento e primeira pintura): só a bola, em repouso
+  function refazer(){ if(!montar()) return; desenhar(inicio + (CICLO - .2) * 1000); }
+
+  refazer();
+  if('ResizeObserver' in window){
+    var pendente = 0;
+    new ResizeObserver(function(){ cancelAnimationFrame(pendente); pendente = requestAnimationFrame(refazer); }).observe(tela);
+  }
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(e){ visivel = e[0].isIntersecting; visivel ? ligar() : desligar(); }).observe(tela);
+  } else { visivel = true; ligar(); }
+  document.addEventListener('visibilitychange', function(){ document.hidden ? desligar() : ligar(); });
+  if(menos.addEventListener) menos.addEventListener('change', function(){ if(menos.matches){ desligar(); refazer(); } else ligar(); });
 })();
 </script>
 <script>

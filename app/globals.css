@@ -462,6 +462,22 @@ table thead th > span > span {
   }
 }
 
+/* Passo do modal ilustrado (components/ui/ModalIlustrado.tsx): entra deslizando de leve. */
+@keyframes passo-ilustrado-entra {
+  from { opacity: 0; transform: translateX(.75rem); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.passo-ilustrado {
+  animation: passo-ilustrado-entra 220ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .passo-ilustrado {
+    animation: none;
+  }
+}
+
 /* Tamanduá no divã: cena abaixo do leque, espelhada, mais à direita e levemente inclinada. */
 .auth-oblique-scene {
   display: block;
