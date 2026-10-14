@@ -44,6 +44,7 @@ import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
 import { destinoSemAcesso, moduloDaRota, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
+import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
 // ─── Definição dos módulos ──────────────────────────────────────────────────
@@ -361,8 +362,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const promo = id === "prestacao" && prestacaoEmPromo;
     return {
       id, label, descricao, icone, promo,
-      // Aparece embaixo do módulo atual (em geral a captação): diz de quem é o teste.
-      chamada: promo ? "Teste gratuito da Prestação" : undefined,
+      // Só no item da prestação, dentro da lista: embaixo da captação parecia que a captação tinha teste.
+      chamada: promo ? `Teste gratuito de ${TESTE_GRATIS_DIAS} dias` : undefined,
       bloqueio: promo || isSuperAdmin ? null
         : !modulosOrg.includes(id) ? "Módulo não contratado: fale com o suporte"
         : !modulosUser.includes(id) ? "Você não tem acesso: peça a quem administra a organização"

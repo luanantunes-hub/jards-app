@@ -875,7 +875,7 @@ export default function DashboardPage() {
                           <Icon size={12} className="text-black/45" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.75rem] font-semibold text-black/75 truncate">{a.nome}</p>
+                          <p className="text-[0.75rem] font-semibold text-black/75 break-words">{a.nome}</p>
                           {entity && (
                             a.empresa_crm?.nome && !a.contato?.nome && !a.captacao?.titulo ? (
                               <Link href={`/empresas-crm/${a.empresa_crm_id}`} className="text-[0.625rem] text-black/35 mt-0.5 truncate block hover:text-[#7259B5] transition">

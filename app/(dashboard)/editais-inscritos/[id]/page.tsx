@@ -804,7 +804,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                           <Icon size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[0.8125rem] font-medium text-[#282525] truncate">{atv.nome}</p>
+                          <p className="text-[0.8125rem] font-medium text-[#282525] break-words">{atv.nome}</p>
                           {atv.nota && <p className="text-[0.6875rem] text-black/30 truncate">{atv.nota}</p>}
                         </div>
                         {atv.data_prevista && (
