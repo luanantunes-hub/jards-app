@@ -16,12 +16,12 @@
 
 ## Andamento
 
-Atualizar a cada entrega, no formato da prestação.
+Atualizar a cada entrega, no formato da prestação. O [contexto para continuar](./producao-contexto.md) resume o que já foi feito e os próximos passos.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
-| PD0.2 | No branch: a produção em `lib/modulos.ts` (`MODULOS_EM_CONSTRUCAO`, `INICIO_DO_MODULO`, `moduloVisivel`), no menu e nos títulos, escondida do seletor para todos; teste que barra listas novas de módulos escritas à mão | A PD0.1 no banco para a produção poder ser liberada |
-| PD0.12 | No branch: `lib/producao/vocabulario.ts` (14 tipos, com ópera separada de concerto; nomes que mudam com o formato; modelos de dia com refeição, dia de viagem e folga) e `lib/producao/porte.ts` (sinais da data valem para qualquer tipo; painel com conteúdo nunca some; dinheiro só com permissão), com testes | O teste do esqueleto com lona e rua sem sala espera as tabelas (PD0.8 e PD0.9) |
+| PD0.2 | Na main (15/10/2026): a produção em `lib/modulos.ts` (`MODULOS_EM_CONSTRUCAO`, `INICIO_DO_MODULO`, `moduloVisivel`), no menu e nos títulos, escondida do seletor para todos; teste que barra listas novas de módulos escritas à mão | A PD0.1 no banco para a produção poder ser liberada |
+| PD0.12 | Na main (15/10/2026): `lib/producao/vocabulario.ts` (14 tipos, com ópera separada de concerto; nomes que mudam com o formato; modelos de dia com refeição, dia de viagem e folga) e `lib/producao/porte.ts` (sinais da data valem para qualquer tipo; painel com conteúdo nunca some; dinheiro só com permissão), com testes | O teste do esqueleto com lona e rua sem sala espera as tabelas (PD0.8 e PD0.9) |
 
 ---
 
