@@ -20,7 +20,8 @@ Atualizar a cada entrega, no formato da prestação.
 
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
-| — | Nenhuma entrega iniciada | Pré-requisitos 1 a 4 |
+| PD0.2 | No branch: a produção em `lib/modulos.ts` (`MODULOS_EM_CONSTRUCAO`, `INICIO_DO_MODULO`, `moduloVisivel`), no menu e nos títulos, escondida do seletor para todos; teste que barra listas novas de módulos escritas à mão | A PD0.1 no banco para a produção poder ser liberada |
+| PD0.12 | No branch: `lib/producao/vocabulario.ts` (13 tipos, termos, formatos, modelos de dia, painéis) e `lib/producao/porte.ts` (`paineisDaData`), com testes | O teste do esqueleto com lona e rua sem sala espera as tabelas (PD0.8 e PD0.9) |
 
 ---
 
@@ -632,6 +633,8 @@ Com uma pessoa só, seguir a coluna A e depois a B.
 ---
 
 ## 12. Decisões do dono
+
+Tomadas em 15/10/2026: começar a fase 0 pelas entregas que não dependem do banco, isolar a captação no banco (#2), lista ampla de tipos (#5) e acesso limitado às temporadas e espaços como opção por membro (#4).
 
 | # | Decisão | Proposta | Bloqueia |
 |---|---|---|---|

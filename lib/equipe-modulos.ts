@@ -4,7 +4,7 @@
 // 20261005130000_convites_por_modulo.sql); aqui o pedido é lido e explicado
 // antes, para a rota responder com uma mensagem clara.
 
-import { MODULOS, type ModuloId } from "@/lib/modulos";
+import { INICIO_DO_MODULO, MODULOS, type ModuloId } from "@/lib/modulos";
 import { mensagemErroAcesso } from "@/lib/modulos-contrato";
 
 export type FuncaoPrestacao = "preparador" | "revisor" | "responsavel";
@@ -18,6 +18,7 @@ export const FUNCOES_PRESTACAO: readonly { value: FuncaoPrestacao; label: string
 export const MODULO_LABEL: Record<ModuloId, string> = {
   captacao: "Captação",
   prestacao: "Prestação de contas",
+  producao: "Produção",
 };
 
 /** Captador e proponente são externos: usam só a captação e não ocupam vaga. */
@@ -45,7 +46,7 @@ export function lerPedidoModulos(
   }
   const canonicos = MODULOS.filter(m => pedidos.includes(m));
   if (canonicos.length === 0) return { ok: false, erro: "Escolha ao menos um módulo." };
-  if (PAPEIS_EXTERNOS.includes(papel) && canonicos.includes("prestacao")) {
+  if (PAPEIS_EXTERNOS.includes(papel) && canonicos.some(m => m !== "captacao")) {
     return { ok: false, erro: mensagemErroAcesso("captador_sem_modulo") };
   }
   const faltando = canonicos.find(m => !disponiveis.includes(m));
@@ -65,7 +66,8 @@ export function lerPedidoModulos(
 export function destinoDoConvite(papel: string, modulos: readonly ModuloId[]): string {
   if (papel === "captador") return "/workspace-captador";
   if (papel === "proponente") return "/workspace-proponente";
-  if (!modulos.includes("captacao")) return "/prestacoes";
+  const semCaptacao = modulos.find(m => m !== "captacao");
+  if (!modulos.includes("captacao") && semCaptacao) return INICIO_DO_MODULO[semCaptacao];
   return "/configuracoes";
 }
 

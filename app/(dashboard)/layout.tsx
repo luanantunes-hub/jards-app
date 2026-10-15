@@ -28,6 +28,7 @@ import {
   Menu,
   Store,
   DoorOpen,
+  Drama,
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -43,7 +44,7 @@ import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
-import { destinoSemAcesso, moduloDaRota, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
+import { destinoSemAcesso, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
 import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
@@ -52,6 +53,7 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIcon }[] = [
   { id: "captacao",  label: "Captação",  descricao: "Patrocinadores, editais e negociações",       icone: HandCoins      },
   { id: "prestacao", label: "Prestação", descricao: "Prestação de contas e relatórios do projeto", icone: ClipboardCheck },
+  { id: "producao",  label: "Produção",  descricao: "Agenda, equipe, logística e o dia",            icone: Drama          },
 ];
 
 const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
@@ -96,6 +98,15 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       items: [
         { label: "Prestações",   href: "/prestacoes",              icon: ClipboardCheck },
         { label: "Fornecedores", href: "/prestacoes/fornecedores", icon: Store },
+      ],
+    },
+  ],
+  // O primeiro item é a página inicial do módulo (trocarModulo abre ele).
+  producao: [
+    {
+      section: "Produção",
+      items: [
+        { label: "Agenda", href: "/producoes", icon: CalendarDays },
       ],
     },
   ],
@@ -358,7 +369,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // A prestação é oferecida em teste gratuito a quem usa o CRM e nunca teve o módulo (nem só para leitura).
   // A captação não tem teste: o plano gratuito tem as suas funções e nunca bloqueia.
   const prestacaoEmPromo = modulosCarregados && !isSuperAdmin && !modulosOrg.includes("prestacao");
-  const opcoesDeModulo: OpcaoDeModulo[] = MODULOS.map(({ id, label, descricao, icone }) => {
+  // Módulo em construção (a produção) fica fora do seletor para todos, até a organização tê-lo.
+  const opcoesDeModulo: OpcaoDeModulo[] = MODULOS.filter(({ id }) => moduloVisivel(id, modulosOrg)).map(({ id, label, descricao, icone }) => {
     const promo = id === "prestacao" && prestacaoEmPromo;
     return {
       id, label, descricao, icone, promo,

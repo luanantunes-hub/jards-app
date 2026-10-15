@@ -15,6 +15,8 @@ test("o prefixo mais específico vence", () => {
 });
 
 test("rota desconhecida cai no nome do produto", () => {
+  assert.equal(tituloDaPagina("/producoes"), "Produção — Jards");
+  assert.equal(tituloDaPagina("/producoes/datas/1"), "Produção — Jards");
   assert.equal(tituloDaPagina("/inexistente"), "Jards");
 });
 
