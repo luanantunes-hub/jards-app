@@ -21,7 +21,7 @@ Atualizar a cada entrega, no formato da prestação.
 | Entrega | Situação | O que falta para valer em produção |
 |---|---|---|
 | PD0.2 | No branch: a produção em `lib/modulos.ts` (`MODULOS_EM_CONSTRUCAO`, `INICIO_DO_MODULO`, `moduloVisivel`), no menu e nos títulos, escondida do seletor para todos; teste que barra listas novas de módulos escritas à mão | A PD0.1 no banco para a produção poder ser liberada |
-| PD0.12 | No branch: `lib/producao/vocabulario.ts` (13 tipos, termos, formatos, modelos de dia, painéis) e `lib/producao/porte.ts` (`paineisDaData`), com testes | O teste do esqueleto com lona e rua sem sala espera as tabelas (PD0.8 e PD0.9) |
+| PD0.12 | No branch: `lib/producao/vocabulario.ts` (14 tipos, com ópera separada de concerto; nomes que mudam com o formato; modelos de dia com refeição, dia de viagem e folga) e `lib/producao/porte.ts` (sinais da data valem para qualquer tipo; painel com conteúdo nunca some; dinheiro só com permissão), com testes | O teste do esqueleto com lona e rua sem sala espera as tabelas (PD0.8 e PD0.9) |
 
 ---
 
@@ -263,6 +263,7 @@ Objetivo: a produção vira um módulo que se libera por organização e por pes
 - PD0.1 → (PD0.2 → PD0.3) e (PD0.4 → PD0.5 → PD0.6).
 - PD0.1 → PD0.7 → PD0.8 → (PD0.9, PD0.10, PD0.11, PD0.12, PD0.13). A tela da PD0.7 espera a PD0.5.
 - PD0.14 depois da PD0.8.
+- Nenhuma organização recebe a produção (PD0.1, PD0.6) antes da PD0.3: sem a página `/producoes`, quem só tem a produção cairia numa página não encontrada.
 
 Com duas pessoas: A faz PD0.1 a PD0.6 (≈ 18,5 dias); B começa pelos pré-requisitos 4 e 5 enquanto a PD0.1 não entra e segue com PD0.7 a PD0.14 (≈ 16,5 dias).
 

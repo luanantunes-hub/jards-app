@@ -370,18 +370,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // A captação não tem teste: o plano gratuito tem as suas funções e nunca bloqueia.
   const prestacaoEmPromo = modulosCarregados && !isSuperAdmin && !modulosOrg.includes("prestacao");
   // Módulo em construção (a produção) fica fora do seletor para todos, até a organização tê-lo.
-  const opcoesDeModulo: OpcaoDeModulo[] = MODULOS.filter(({ id }) => moduloVisivel(id, modulosOrg)).map(({ id, label, descricao, icone }) => {
-    const promo = id === "prestacao" && prestacaoEmPromo;
-    return {
-      id, label, descricao, icone, promo,
-      // Só no item da prestação, dentro da lista: embaixo da captação parecia que a captação tinha teste.
-      chamada: promo ? `Teste gratuito de ${TESTE_GRATIS_DIAS} dias` : undefined,
-      bloqueio: promo || isSuperAdmin ? null
-        : !modulosOrg.includes(id) ? "Módulo não contratado: fale com o suporte"
-        : !modulosUser.includes(id) ? "Você não tem acesso: peça a quem administra a organização"
-        : null,
-    };
-  });
+  // O módulo aberto continua na lista (o super admin entra em qualquer um), para o seletor não mentir.
+  const opcoesDeModulo: OpcaoDeModulo[] = MODULOS
+    .filter(({ id }) => moduloVisivel(id, modulosOrg) || id === moduloDoMenu)
+    .map(({ id, label, descricao, icone }) => {
+      const promo = id === "prestacao" && prestacaoEmPromo;
+      return {
+        id, label, descricao, icone, promo,
+        // Só no item da prestação, dentro da lista: embaixo da captação parecia que a captação tinha teste.
+        chamada: promo ? `Teste gratuito de ${TESTE_GRATIS_DIAS} dias` : undefined,
+        bloqueio: promo || isSuperAdmin ? null
+          : !modulosOrg.includes(id) ? "Módulo não contratado: fale com o suporte"
+          : !modulosUser.includes(id) ? "Você não tem acesso: peça a quem administra a organização"
+          : null,
+      };
+    });
 
   async function prestacaoAtivada() {
     setConviteAberto(false);

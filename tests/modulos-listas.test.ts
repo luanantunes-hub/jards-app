@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import test from "node:test";
 
 // A lista de módulos mora em lib/modulos.ts (MODULOS). Lista escrita à mão em
@@ -11,8 +11,13 @@ const JA_EXISTENTES: Record<string, number> = {
   "components/modals/NovoMembroModal.tsx": 2, // PD0.5
 };
 
-const PASTAS = ["app", "components", "lib", "hooks", "contexts", "supabase/functions"];
-const LISTA_LITERAL = /\[\s*["']captacao["']\s*,\s*["']prestacao["']/g;
+const PASTAS = ["app", "components", "lib", "hooks", "contexts", "supabase/functions", "mcp-server/src"];
+const ARQUIVOS_DA_RAIZ = ["proxy.ts"];
+const MODULO = `["'\`](?:captacao|prestacao|producao)["'\`]`;
+/** Um array numa linha só com dois ou mais ids de módulo, em qualquer ordem. */
+const LISTA_LITERAL = new RegExp(`\\[[^\\]\\n]*${MODULO}[^\\]\\n]*${MODULO}[^\\]\\n]*\\]`, "g");
+/** As fases do projeto (planejamento, captação, execução, prestação) não são módulos. */
+const FASES_DO_PROJETO = /planejamento|execucao|concluido/;
 
 async function arquivos(pasta: string): Promise<string[]> {
   const entradas = await readdir(pasta, { withFileTypes: true }).catch(() => []);
@@ -25,16 +30,32 @@ async function arquivos(pasta: string): Promise<string[]> {
   return lista;
 }
 
+/** Caminho com "/" em qualquer sistema. */
+function relativo(caminho: string): string {
+  return caminho.split(sep).join("/");
+}
+
 test("nenhuma lista nova de módulos escrita à mão fora de lib/modulos.ts", async () => {
+  const todos = [...ARQUIVOS_DA_RAIZ];
+  for (const pasta of PASTAS) todos.push(...await arquivos(pasta));
   const encontradas: Record<string, number> = {};
-  for (const pasta of PASTAS) {
-    for (const arquivo of await arquivos(pasta)) {
-      if (arquivo === join("lib", "modulos.ts")) continue;
-      const quantas = (await readFile(arquivo, "utf8")).match(LISTA_LITERAL)?.length ?? 0;
-      if (quantas > 0) encontradas[arquivo] = quantas;
-    }
+  for (const arquivo of todos) {
+    const caminho = relativo(arquivo);
+    if (caminho === "lib/modulos.ts") continue;
+    const texto = await readFile(arquivo, "utf8").catch(() => "");
+    const quantas = (texto.match(LISTA_LITERAL) ?? []).filter(lista => !FASES_DO_PROJETO.test(lista)).length;
+    if (quantas > 0) encontradas[caminho] = quantas;
   }
   assert.deepEqual(encontradas, JA_EXISTENTES);
+});
+
+test("a busca pega listas em qualquer ordem e ignora as fases do projeto", () => {
+  const pega = (texto: string) => (texto.match(LISTA_LITERAL) ?? []).filter(lista => !FASES_DO_PROJETO.test(lista)).length;
+  assert.equal(pega(`(["captacao", "producao"] as ModuloId[])`), 1);
+  assert.equal(pega(`["prestacao", "captacao"]`), 1);
+  assert.equal(pega("[`producao`, 'prestacao']"), 1);
+  assert.equal(pega(`["planejamento", "captacao", "execucao", "prestacao", "concluido"]`), 0);
+  assert.equal(pega(`["captacao"]`), 0);
 });
 
 test("os testes ficam na raiz de tests/, onde o npm test os encontra", async () => {
