@@ -2,22 +2,20 @@
 --
 -- ESTA É A ÚNICA MIGRATION COM DROP DA ENTREGA. Cada uma das quatro regras
 -- lista os módulos que o banco aceita, e uma regra CHECK não troca de lista:
--- só se derruba e se cria de novo. O conector do Supabase não roda DROP;
--- aplique este arquivo à mão, no editor SQL do projeto, como o precedente
--- supabase/migrations/20261005130100_convites_papeis.sql.
+-- só se derruba e se cria de novo. Foi aplicada pelo conector do Supabase
+-- (apply_migration) em 15/10/2026, na versão 20261015062440: o conector aceita
+-- DROP CONSTRAINT. Se um dia recusar, o precedente é aplicar à mão, no editor
+-- SQL do projeto, como supabase/migrations/20261005130100_convites_papeis.sql.
 --
--- Passo a passo (quem aplica é a sessão principal, depois de revisar o PR):
---   1. Cole o arquivo inteiro no editor SQL e rode de uma vez.
---   2. Confira que as quatro regras agora listam 'producao':
+-- Como conferir depois de aplicar (feito em 15/10/2026: as quatro listam
+-- 'producao'):
 --        select conrelid::regclass as tabela, conname, pg_get_constraintdef(oid)
 --        from pg_constraint
 --        where conname in ('organization_invitations_modulos_acesso_check',
 --                          'organization_members_modulos_acesso_check',
 --                          'organization_modulos_modulo_check',
 --                          'organization_seat_purchases_modulo_check');
---   3. Só depois aplique 20261016090100_producao_modulo_funcoes.sql (sem DROP).
---   4. Confira que a versão deste arquivo aparece em
---      supabase_migrations.schema_migrations; se não aparecer, registre-a.
+-- Só depois aplique 20261015062658_producao_modulo_funcoes.sql (sem DROP).
 --
 -- Nomes conferidos em pg_constraint no banco de produção, em 15/10/2026:
 --   organization_invitations     organization_invitations_modulos_acesso_check

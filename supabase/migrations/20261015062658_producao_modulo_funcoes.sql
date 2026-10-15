@@ -1,7 +1,7 @@
 -- PD0.1 (2 de 2): as três funções que repetem a lista de módulos aceitam a produção.
 --
 -- Sem DROP: só create or replace, com a mesma assinatura. Aplique depois de
--- 20261016090000_producao_modulo_regras.sql, que é aplicada à mão no editor SQL.
+-- 20261015062440_producao_modulo_regras.sql (aplicada em 15/10/2026).
 -- As listas são as de MODULOS em lib/modulos.ts, na mesma ordem
 -- (tests/producao-modulo-sql.test.ts confere).
 --

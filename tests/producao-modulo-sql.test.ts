@@ -47,7 +47,7 @@ test("as duas migrations são da entrega, nesta ordem: regras antes das funçõe
   const regras = await migration("regras");
   const funcoes = await migration("funcoes");
   assert.ok(regras.nome < funcoes.nome, "a migration das regras vem primeiro");
-  assert.ok(regras.nome >= "20261016090000", "as migrations da fase 0 usam datas a partir de 20261016090000");
+  assert.ok(regras.nome >= "20261015062440", "as migrations da fase 0 usam as versões gravadas no banco, a partir de 20261015062440");
 });
 
 test("as quatro regras de módulo do banco listam os mesmos módulos que MODULOS, na mesma ordem", async () => {
