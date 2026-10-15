@@ -103,11 +103,13 @@ export const MENSAGEM_ALCADA_ACIMA_DO_LIMITE = `O valor máximo é R$ ${formatar
 export type LeituraDaAlcada = { ok: true; alcada: number | null } | { ok: false; erro: string };
 
 /**
- * Lê o valor digitado em reais ("5.000,00"). Campo vazio = não aprova (null).
- * O resultado é sempre um número finito de 0 a ALCADA_MAXIMA, com no máximo dois
- * decimais, contado em centavos para não herdar erro de ponto flutuante. O que
- * não é número, tem mais de dois decimais ou passa do limite é recusado aqui,
- * antes de chamar o banco.
+ * Lê o valor digitado em reais ("5.000,00"). Campo vazio = não aprova (null), e
+ * R$ 0 também: o banco dá o poder de aprovar a quem tem alçada, mesmo de zero
+ * (auth_producao_papel_permite pede só `alcada is not null`), e quem digita zero
+ * quer dizer que a pessoa não aprova. Fora isso, o resultado é um número finito
+ * de R$ 0,01 a ALCADA_MAXIMA, com no máximo dois decimais, contado em centavos
+ * para não herdar erro de ponto flutuante. O que não é número, tem mais de dois
+ * decimais ou passa do limite é recusado aqui, antes de chamar o banco.
  */
 export function lerAlcada(texto: string): LeituraDaAlcada {
   const { valor, valido } = lerValorBRL(texto);
@@ -121,7 +123,7 @@ export function lerAlcada(texto: string): LeituraDaAlcada {
   if (!Number.isSafeInteger(centavos) || centavos < 0 || centavos > ALCADA_MAXIMA_EM_CENTAVOS) {
     return { ok: false, erro: MENSAGEM_ALCADA_ACIMA_DO_LIMITE };
   }
-  return { ok: true, alcada: centavos / 100 };
+  return { ok: true, alcada: centavos === 0 ? null : centavos / 100 };
 }
 
 /** A alçada como o campo a mostra ("5.000,00"); vazio quando a pessoa não aprova. */
@@ -136,19 +138,23 @@ export type PedidoDePermissoes = FuncaoNaProducao;
 
 type MontagemDoPedido = { ok: true; pedido: PedidoDePermissoes } | { ok: false; erro: string };
 
+/** O que o modal mostra na hora de salvar. */
+export type EntradaDoPedido = {
+  /** O modal oferece a alçada (colaborador); o leitor nunca aprova. */
+  comAlcada: boolean;
+  dinheiro: boolean;
+  textoAlcada: string;
+  /** A função que a pessoa tem hoje; null = sem registro. */
+  atual: FuncaoNaProducao | null;
+};
+
 /**
  * O pedido a partir do que o modal mostra. A alçada só segue quando o modal a
  * oferece (colaborador) e o dinheiro está marcado: sem dinheiro o banco recusa
  * (alcada_sem_dinheiro), e o leitor nunca aprova, então para ele a alçada vai
  * sempre vazia, inclusive limpando uma que sobrou de quando era colaborador.
  */
-export function montarPedido(entrada: {
-  comAlcada: boolean;
-  dinheiro: boolean;
-  textoAlcada: string;
-  /** A função que a pessoa tem hoje; null = sem registro. */
-  atual: FuncaoNaProducao | null;
-}): MontagemDoPedido {
+export function montarPedido(entrada: EntradaDoPedido): MontagemDoPedido {
   const { comAlcada, dinheiro, textoAlcada, atual } = entrada;
   let alcada: number | null = null;
   if (comAlcada && dinheiro) {
@@ -166,6 +172,40 @@ export function montarPedido(entrada: {
 export function semMudancas(atual: FuncaoNaProducao | null, pedido: PedidoDePermissoes): boolean {
   const base = atual ?? SEM_FUNCAO;
   return base.dinheiro === pedido.dinheiro && base.alcada === pedido.alcada && base.escopo === pedido.escopo;
+}
+
+/** O que fazer ao salvar: recusar o valor, só fechar ou gravar o pedido. */
+export type PlanoDoSalvar =
+  | { tipo: "invalido"; erro: string }
+  | { tipo: "sem_mudanca" }
+  | { tipo: "gravar"; pedido: PedidoDePermissoes };
+
+/** A decisão do botão Salvar, antes de qualquer chamada ao banco. */
+export function planejarSalvar(entrada: EntradaDoPedido): PlanoDoSalvar {
+  const montado = montarPedido(entrada);
+  if (!montado.ok) return { tipo: "invalido", erro: montado.erro };
+  return semMudancas(entrada.atual, montado.pedido) ? { tipo: "sem_mudanca" } : { tipo: "gravar", pedido: montado.pedido };
+}
+
+export type LeituraParaEditar = { ok: true; atual: FuncaoNaProducao | null } | { ok: false };
+
+/**
+ * O que o modal abre mostrando: a função da pessoa lida agora, não a que a página
+ * guardou ao abrir. A página pode ter ficado para trás (outro administrador mudou
+ * a função, ou a pessoa saiu da equipe, o que apaga o registro, e voltou), e
+ * salvar em cima de um valor velho trocaria o que está no banco sem ninguém ver.
+ * Sem a leitura não há modal.
+ */
+export async function lerParaEditar(
+  recarregar: () => Promise<FuncoesPorPessoa | null>,
+  userId: string,
+): Promise<LeituraParaEditar> {
+  try {
+    const funcoes = await recarregar();
+    return funcoes ? { ok: true, atual: funcoes[userId] ?? null } : { ok: false };
+  } catch {
+    return { ok: false };
+  }
 }
 
 // ─── O que a tela mostra ────────────────────────────────────────────────────
@@ -218,6 +258,9 @@ export function lerFuncoes(linhas: unknown): FuncoesPorPessoa {
 
 /** Para o erro que a pessoa não resolve (dado fora do formato, falha de rede, erro desconhecido). */
 export const MENSAGEM_ERRO_DAS_PERMISSOES = "Não foi possível salvar as permissões. Tente de novo.";
+
+/** Quando a leitura das funções falha: o modal não abre sem ela, e a pessoa pode tentar de novo. */
+export const MENSAGEM_LEITURA_DAS_PERMISSOES = "Não foi possível ler as permissões. Tente de novo.";
 
 /**
  * Os erros de fn_producao_definir_funcao, em linguagem da tela, no molde de

@@ -32,6 +32,7 @@ function linha(props: Partial<LinhaProps> = {}): string {
     souAdmin: true,
     modulosDaOrganizacao: [...MODULOS],
     funcao: null,
+    recarregar: async () => ({}),
     onSaved() {},
     ...props,
   }));
@@ -86,8 +87,8 @@ test("a linha não desenha nada quando não há o que oferecer: a tela de Equipe
   assert.equal(linha({ membro: { ...membro("colaborador"), modulos_acesso: undefined } }), "", "sem lista de módulos");
   assert.equal(linha({ membro: { ...membro("colaborador"), modulos_acesso: null } }), "", "lista de módulos nula");
   assert.equal(linha({ organizationId: null }), "", "sem organização");
-  // Nem com a leitura em andamento ou a função lida: o que decide é quem, e não o dado.
-  assert.equal(linha({ modulosDaOrganizacao: SEM_PRODUCAO, funcao: undefined }), "");
+  // Nem com a função lida: o que decide é quem olha e onde, e não o dado.
+  assert.equal(linha({ modulosDaOrganizacao: SEM_PRODUCAO, funcao: { dinheiro: true, alcada: 100, escopo: "organizacao" } }), "");
   assert.equal(linha({ souAdmin: false, funcao: { dinheiro: true, alcada: 100, escopo: "organizacao" } }), "");
 });
 
@@ -96,7 +97,7 @@ test("colaborador e leitor que usam a produção: o botão 'Permissões da produ
     const html = linha({ membro: membro(papel) });
     const acao = botao(html, "Permissões da produção");
     assert.match(acao.tag, /type="button"/, papel);
-    assert.equal(desabilitado(acao.tag), false, `${papel}: a função já foi lida`);
+    assert.equal(desabilitado(acao.tag), false, `${papel}: a leitura é feita ao clicar, então o botão já vale`);
     assert.match(acao.classe, /\brounded\b/, papel);
     assert.doesNotMatch(acao.classe, /rounded-(sm|md|lg|xl|2xl|3xl|full)/, `${papel}: só os 4px`);
     // Secundário: branco com borda leve, nunca o verde do Salvar nem o preto da ação principal.
@@ -108,10 +109,18 @@ test("colaborador e leitor que usam a produção: o botão 'Permissões da produ
   }
 });
 
-test("enquanto a leitura das funções não termina, a edição espera: gravar o padrão por cima de uma função que existe seria um dano", () => {
-  const html = linha({ funcao: undefined });
-  assert.equal(desabilitado(botao(html, "Permissões da produção").tag), true);
-  assert.doesNotMatch(html, /Vê o dinheiro/);
+test("cada botão da lista tem o nome da pessoa para quem navega por leitor de tela, sem perder o rótulo visível", () => {
+  const html = linha();
+  const acao = botoes(html)[0];
+  assert.match(acao.tag, /aria-label="Permissões da produção de Carlos Colaborador"/);
+  // O rótulo visível é o começo do nome acessível (WCAG 2.5.3).
+  assert.equal(acao.texto, "Permissões da produção");
+  assert.match(linha({ membro: { ...membro("leitor"), full_name: null } }), /aria-label="Permissões da produção de carlos@org\.com"/);
+  assert.match(linha({ membro: { ...membro("leitor"), full_name: null, email: null } }), /aria-label="Permissões da produção de membro"/);
+  // Só a leitura nova pelo clique: a página nunca abre o modal sozinha, e o estado inicial não mostra erro nem espera.
+  assert.doesNotMatch(html, /aria-busy="true"/);
+  assert.doesNotMatch(html, /role="alert"/);
+  assert.doesNotMatch(html, /Não foi possível ler/);
 });
 
 test("o resumo ao lado do botão mostra o que a pessoa tem, e some quando não tem dinheiro", () => {
@@ -221,6 +230,30 @@ test("os componentes seguem o DESIGN.md: 4px, sem select nativo, sem alert do na
   assert.doesNotMatch(await readFile(TELA[1], "utf8"), /rounded-sm/);
 });
 
+test("o modal não prende a pessoa: o pedido tem fim, o foco volta ao Salvar no erro e o fundo só fecha com o clique inteiro nele", async () => {
+  const modal = await readFile(TELA[0], "utf8");
+  // Nunca fica em "Salvando…" para sempre, nem se o cliente do navegador falhar ao nascer.
+  assert.match(modal, /try \{\s*resultado = await definirFuncao\(createClient\(\) as unknown as ClienteDasPermissoes[^;]*;\s*\} catch \{[\s\S]*?\} finally \{\s*setSalvando\(false\);\s*\}/);
+  // Com os itens desabilitados durante o pedido o foco cai para a página: com o aviso na tela ele volta ao Salvar.
+  assert.match(modal, /useEffect\(\(\) => \{\s*if \(erro && !salvando\) botaoSalvar\.current\?\.focus\(\);\s*\}, \[erro, salvando\]\);/);
+  assert.match(modal, /<button\s+ref=\{botaoSalvar\}\s+type="submit"/);
+  // Arrastar a seleção do campo até fora do modal não fecha nem perde o valor: o clique precisa ter começado no fundo.
+  assert.match(modal, /onMouseDown=\{evento => \{ clicouNoFundo\.current = evento\.target === evento\.currentTarget; \}\}/);
+  assert.match(modal, /onClick=\{\(\) => \{ if \(clicouNoFundo\.current\) fechar\(\); \}\}/);
+  assert.doesNotMatch(modal, /onClick=\{fechar\}\s*>\s*\n?\s*<div role="dialog"/);
+});
+
+test("a linha só abre o modal com a leitura nova, e a falha dela aparece e deixa tentar de novo", async () => {
+  const linhaDoMembro = await readFile(TELA[1], "utf8");
+  assert.match(linhaDoMembro, /const leitura = await lerParaEditar\(recarregar, membro\.user_id\);/);
+  // O modal só vem depois de leitura que deu certo; a falha mostra a mensagem e não abre nada.
+  assert.match(linhaDoMembro, /if \(!leitura\.ok\) \{\s*setLeituraFalhou\(true\);\s*return;\s*\}\s*setAberta\(\{ atual: leitura\.atual \}\);/);
+  assert.match(linhaDoMembro, /role="alert"[^>]*>\{MENSAGEM_LEITURA_DAS_PERMISSOES\}/);
+  // Enquanto lê, o botão espera; depois volta, e clicar de novo tenta outra vez.
+  assert.match(linhaDoMembro, /aria-busy=\{lendo\}\s+disabled=\{lendo\}/);
+  assert.match(linhaDoMembro, /setLendo\(true\);\s*setLeituraFalhou\(false\);/);
+});
+
 test("a página de Configurações só liga a tela: um botão por linha, depois dos módulos, e a leitura só para o admin da organização com a produção", async () => {
   const pagina = await readFile("app/(dashboard)/configuracoes/page.tsx", "utf8");
   assert.match(pagina, /import \{ PermissoesProducaoDoMembro \} from "@\/components\/producao\/PermissoesProducaoDoMembro";/);
@@ -228,6 +261,10 @@ test("a página de Configurações só liga a tela: um botão por linha, depois 
   assert.match(pagina, /useFuncoesProducao\(organizationId, isAdmin && orgModulos\.includes\("producao"\)\)/);
   assert.equal((pagina.match(/<PermissoesProducaoDoMembro\b/g) ?? []).length, 1);
   assert.match(pagina, /<ModulosDoMembro\b[\s\S]*?\/>\s*<PermissoesProducaoDoMembro\b/);
+  // O modal abre com uma leitura nova (recarregar); o mapa da página serve só ao resumo e nunca vira "função de padrão" por falta de leitura.
+  assert.match(pagina, /recarregar=\{recarregarFuncoesProducao\}/);
+  assert.match(pagina, /funcao=\{funcoesProducao\?\.\[m\.user_id\] \?\? null\}/);
+  assert.doesNotMatch(pagina, /funcao=\{[^}]*undefined/);
   // A lógica fica nos arquivos próprios: a página não chama o banco da produção nem decide quem recebe a ação.
   assert.doesNotMatch(pagina, /fn_producao_definir_funcao|producao_funcoes|ofertaDePermissoes|montarPedido/);
   assert.match(pagina, /showSuccess\("Permissões da produção atualizadas"\)/);

@@ -8,18 +8,27 @@ import {
   CODIGOS_DE_ERRO_DAS_PERMISSOES,
   lerAlcada,
   lerFuncoes,
+  lerParaEditar,
   MENSAGEM_ERRO_DAS_PERMISSOES,
+  MENSAGEM_LEITURA_DAS_PERMISSOES,
   mensagemErroPermissoes,
   montarPedido,
   ofertaDePermissoes,
   papelNaProducao,
+  planejarSalvar,
   resumoDasPermissoes,
   SEM_FUNCAO,
   semMudancas,
   textoDaAlcada,
   type FuncaoNaProducao,
 } from "../lib/producao/permissoes";
-import { carregarFuncoes, definirFuncao, type ClienteDasPermissoes } from "../lib/producao/permissoes-banco";
+import {
+  carregarFuncoes,
+  definirFuncao,
+  PRAZO_DA_GRAVACAO_MS,
+  PRAZO_DA_LEITURA_MS,
+  type ClienteDasPermissoes,
+} from "../lib/producao/permissoes-banco";
 import { MENSAGEM_VALOR_INVALIDO } from "../lib/valor";
 import { bancoFalso, consultasDe } from "./_helpers/banco-falso";
 
@@ -101,15 +110,24 @@ test("alçada: vazio é não aprovar; o valor digitado em reais vira número com
     ["5.000", 5000],
     ["1.234,56", 1234.56],
     ["1234,5", 1234.5],
+    ["0,01", 0.01],
     ["0,07", 0.07],
     ["0,1", 0.1],
     ["R$ 10,50", 10.5],
-    ["0", 0],
-    ["0,00", 0],
     ["1.500.000,00", 1_500_000],
     ["999.999.999.999,99", ALCADA_MAXIMA],
   ];
   for (const [texto, esperado] of casos) assert.deepEqual(lerAlcada(texto), { ok: true, alcada: esperado }, texto);
+});
+
+test("alçada: R$ 0 vale como vazio, porque o banco dá o poder de aprovar a quem tem alçada, mesmo de zero", () => {
+  for (const texto of ["0", "0,00", "0,0", "00", "R$ 0", "R$ 0,00", "0,"]) {
+    assert.deepEqual(lerAlcada(texto), { ok: true, alcada: null }, texto);
+  }
+  assert.deepEqual(montarPedido({ comAlcada: true, dinheiro: true, textoAlcada: "0,00", atual: { dinheiro: true, alcada: 5000, escopo: "organizacao" } }),
+    { ok: true, pedido: { dinheiro: true, alcada: null, escopo: "organizacao" } });
+  // Um centavo já é alçada.
+  assert.deepEqual(lerAlcada("0,01"), { ok: true, alcada: 0.01 });
 });
 
 test("alçada: o que não é valor, é negativo, tem mais de dois decimais ou passa do limite do banco é recusado antes", () => {
@@ -152,7 +170,7 @@ test("a alçada volta ao campo como o campo a lê", () => {
   assert.equal(textoDaAlcada(null), "");
   assert.equal(textoDaAlcada(5000), "5.000,00");
   assert.equal(textoDaAlcada(0), "0,00");
-  for (const valor of [0, 0.01, 1234.56, 5000, 1_500_000.5, ALCADA_MAXIMA]) {
+  for (const valor of [0.01, 1234.56, 5000, 1_500_000.5, ALCADA_MAXIMA]) {
     assert.deepEqual(lerAlcada(textoDaAlcada(valor)), { ok: true, alcada: valor }, String(valor));
   }
 });
@@ -208,6 +226,48 @@ test("sem mudança não há o que gravar: o padrão vale como 'sem registro'", (
   assert.equal(semMudancas(COLABORADOR_COM_ALCADA, { ...COLABORADOR_COM_ALCADA, alcada: null }), false);
   assert.equal(semMudancas(COLABORADOR_COM_ALCADA, { dinheiro: false, alcada: null, escopo: "organizacao" }), false);
   assert.equal(semMudancas({ dinheiro: false, alcada: null, escopo: "vinculado" }, padrao), false);
+});
+
+test("o Salvar decide antes de tocar no banco: recusa o valor, só fecha ou grava o pedido", () => {
+  const entrada = (extra: Partial<Parameters<typeof planejarSalvar>[0]> = {}) =>
+    ({ comAlcada: true, dinheiro: true, textoAlcada: "5.000,00", atual: COLABORADOR_COM_ALCADA, ...extra });
+  // Nada mudou (com o valor de hoje, ou sem registro e com o padrão): só fecha.
+  assert.deepEqual(planejarSalvar(entrada()), { tipo: "sem_mudanca" });
+  assert.deepEqual(planejarSalvar(entrada({ dinheiro: false, textoAlcada: "", atual: null })), { tipo: "sem_mudanca" });
+  assert.deepEqual(planejarSalvar(entrada({ textoAlcada: "", atual: { dinheiro: true, alcada: null, escopo: "organizacao" } })), { tipo: "sem_mudanca" });
+  // Mudou: grava o pedido que montarPedido faria.
+  assert.deepEqual(planejarSalvar(entrada({ textoAlcada: "7.500,50" })),
+    { tipo: "gravar", pedido: { dinheiro: true, alcada: 7500.5, escopo: "organizacao" } });
+  assert.deepEqual(planejarSalvar(entrada({ dinheiro: false })),
+    { tipo: "gravar", pedido: { dinheiro: false, alcada: null, escopo: "organizacao" } });
+  assert.deepEqual(planejarSalvar(entrada({ atual: null })),
+    { tipo: "gravar", pedido: { dinheiro: true, alcada: 5000, escopo: "organizacao" } });
+  // R$ 0 sobre uma alçada que existe tira a alçada.
+  assert.deepEqual(planejarSalvar(entrada({ textoAlcada: "0" })),
+    { tipo: "gravar", pedido: { dinheiro: true, alcada: null, escopo: "organizacao" } });
+  // O leitor com uma alçada que sobrou de outro papel: grava, e a alçada sai.
+  assert.deepEqual(planejarSalvar(entrada({ comAlcada: false })),
+    { tipo: "gravar", pedido: { dinheiro: true, alcada: null, escopo: "organizacao" } });
+  // Valor que não é valor: recusa, com a mensagem do valor, sem gravar.
+  assert.deepEqual(planejarSalvar(entrada({ textoAlcada: "abc" })), { tipo: "invalido", erro: MENSAGEM_VALOR_INVALIDO });
+  assert.equal(planejarSalvar(entrada({ textoAlcada: "1.000.000.000.000,00" })).tipo, "invalido");
+});
+
+test("o modal só abre com uma leitura nova: o mapa da página pode estar velho, e sem leitura não há modal", async () => {
+  const pessoa = "0d070000-0000-4000-8000-0000000000cc";
+  let leituras = 0;
+  const lerComo = (mapa: Record<string, FuncaoNaProducao> | null) => async () => { leituras++; return mapa; };
+
+  // Com registro, vale o da leitura nova (e uma leitura só por abertura).
+  assert.deepEqual(await lerParaEditar(lerComo({ [pessoa]: COLABORADOR_COM_ALCADA }), pessoa), { ok: true, atual: COLABORADOR_COM_ALCADA });
+  assert.equal(leituras, 1);
+  // Sem registro (a pessoa saiu da equipe, o que apaga a função, e voltou): abre com o padrão, não com o que a página guardou.
+  assert.deepEqual(await lerParaEditar(lerComo({}), pessoa), { ok: true, atual: null });
+  assert.deepEqual(await lerParaEditar(lerComo({ outra: COLABORADOR_COM_ALCADA }), pessoa), { ok: true, atual: null });
+  // Leitura que falha, ou que lança, não abre o modal: o padrão nunca ocupa o lugar de uma função que não se leu.
+  assert.deepEqual(await lerParaEditar(lerComo(null), pessoa), { ok: false });
+  assert.deepEqual(await lerParaEditar(async () => { throw new Error("rede fora"); }, pessoa), { ok: false });
+  assert.match(MENSAGEM_LEITURA_DAS_PERMISSOES, /^Não foi possível ler as permissões\. Tente de novo\.$/);
 });
 
 // ─── O que a tela mostra ────────────────────────────────────────────────────
@@ -319,6 +379,24 @@ test("ler as funções: erro do banco ou falha de rede não deixa a tela editar 
   assert.deepEqual(await carregarFuncoes(comErro.admin as unknown as ClienteDasPermissoes, ORG), { ok: false });
   const queCai = { from: () => { throw new Error("rede fora"); }, rpc: () => { throw new Error("rede fora"); } } as unknown as ClienteDasPermissoes;
   assert.deepEqual(await carregarFuncoes(queCai, ORG), { ok: false });
+});
+
+test("as duas chamadas têm prazo: conexão que pendura vira erro e deixa tentar de novo, sem relógio sobrando", async () => {
+  const penduraTudo = {
+    from: () => ({ select: () => ({ eq: () => new Promise(() => {}) }) }),
+    rpc: () => new Promise(() => {}),
+  } as unknown as ClienteDasPermissoes;
+  const inicio = Date.now();
+  assert.deepEqual(await carregarFuncoes(penduraTudo, ORG, 25), { ok: false });
+  assert.deepEqual(await definirFuncao(penduraTudo, ORG, PESSOA, SEM_FUNCAO, 25), { ok: false, erro: MENSAGEM_ERRO_DAS_PERMISSOES });
+  assert.ok(Date.now() - inicio < 2000, "o prazo curto foi respeitado");
+  // O prazo de verdade (15 s e 30 s) fica longe do que uma conexão boa leva.
+  assert.ok(PRAZO_DA_LEITURA_MS >= 5_000 && PRAZO_DA_LEITURA_MS <= 30_000);
+  assert.ok(PRAZO_DA_GRAVACAO_MS >= PRAZO_DA_LEITURA_MS && PRAZO_DA_GRAVACAO_MS <= 60_000);
+  // Resposta dentro do prazo não é atrapalhada por ele.
+  const rapido = bancoFalso(c => (c.acao === "rpc" ? { data: "id" } : { data: [] }));
+  assert.deepEqual(await definirFuncao(rapido.admin as unknown as ClienteDasPermissoes, ORG, PESSOA, SEM_FUNCAO, 25), { ok: true });
+  assert.deepEqual(await carregarFuncoes(rapido.admin as unknown as ClienteDasPermissoes, ORG, 25), { ok: true, funcoes: {} });
 });
 
 test("dar a função: chama fn_producao_definir_funcao com os cinco argumentos e mais nada", async () => {

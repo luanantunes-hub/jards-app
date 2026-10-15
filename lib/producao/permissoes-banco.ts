@@ -5,6 +5,12 @@
 // então a chamada usa o cliente do navegador, nunca a chave de serviço, e só o
 // administrador da organização passa. O navegador só lê `producao_funcoes`
 // (a própria linha, ou todas se for admin da organização); não há outra escrita.
+//
+// As duas chamadas têm prazo: sem ele, uma conexão que pendura deixa o modal em
+// "Salvando…" (ou o botão esperando a leitura) até a pessoa recarregar a página.
+// Passado o prazo a tela mostra o erro comum e deixa tentar de novo; a chamada
+// que ficou para trás pode ainda chegar ao banco, o que é seguro: gravar a mesma
+// função duas vezes dá o mesmo resultado.
 
 import {
   lerFuncoes,
@@ -39,17 +45,38 @@ export type ClienteDasPermissoes = {
   rpc(nome: "fn_producao_definir_funcao", argumentos: ArgumentosDaFuncao): Retorno;
 };
 
-/** Falha de rede ou de leitura: quem chama não deve oferecer a edição com dados que não leu. */
+/** Quanto esperar a leitura e a gravação, em milissegundos. */
+export const PRAZO_DA_LEITURA_MS = 15_000;
+export const PRAZO_DA_GRAVACAO_MS = 30_000;
+
+const PRAZO_ESGOTADO = Symbol("prazo esgotado");
+
+/** Espera a operação até o prazo; o relógio é desligado quando ela termina, para não sobrar espera pendurada. */
+async function comPrazo<T>(operacao: PromiseLike<T>, prazoMs: number): Promise<T | typeof PRAZO_ESGOTADO> {
+  let relogio: ReturnType<typeof setTimeout> | undefined;
+  const prazo = new Promise<typeof PRAZO_ESGOTADO>(resolver => {
+    relogio = setTimeout(() => resolver(PRAZO_ESGOTADO), prazoMs);
+  });
+  try {
+    return await Promise.race([operacao, prazo]);
+  } finally {
+    clearTimeout(relogio);
+  }
+}
+
+/** Falha de rede, de leitura ou de prazo: quem chama não deve oferecer a edição com dados que não leu. */
 export async function carregarFuncoes(
   cliente: ClienteDasPermissoes,
   organizationId: string,
+  prazoMs: number = PRAZO_DA_LEITURA_MS,
 ): Promise<{ ok: true; funcoes: FuncoesPorPessoa } | { ok: false }> {
   try {
-    const { data, error } = await cliente
-      .from("producao_funcoes")
-      .select("user_id, dinheiro, alcada, escopo")
-      .eq("organization_id", organizationId);
-    return error ? { ok: false } : { ok: true, funcoes: lerFuncoes(data) };
+    const resposta = await comPrazo(
+      cliente.from("producao_funcoes").select("user_id, dinheiro, alcada, escopo").eq("organization_id", organizationId),
+      prazoMs,
+    );
+    if (resposta === PRAZO_ESGOTADO || resposta.error) return { ok: false };
+    return { ok: true, funcoes: lerFuncoes(resposta.data) };
   } catch {
     return { ok: false };
   }
@@ -61,16 +88,21 @@ export async function definirFuncao(
   organizationId: string,
   userId: string,
   pedido: PedidoDePermissoes,
+  prazoMs: number = PRAZO_DA_GRAVACAO_MS,
 ): Promise<{ ok: true } | { ok: false; erro: string }> {
   try {
-    const { error } = await cliente.rpc("fn_producao_definir_funcao", {
-      p_org: organizationId,
-      p_user: userId,
-      p_dinheiro: pedido.dinheiro,
-      p_alcada: pedido.alcada,
-      p_escopo: pedido.escopo,
-    });
-    return error ? { ok: false, erro: mensagemErroPermissoes(error) } : { ok: true };
+    const resposta = await comPrazo(
+      cliente.rpc("fn_producao_definir_funcao", {
+        p_org: organizationId,
+        p_user: userId,
+        p_dinheiro: pedido.dinheiro,
+        p_alcada: pedido.alcada,
+        p_escopo: pedido.escopo,
+      }),
+      prazoMs,
+    );
+    if (resposta === PRAZO_ESGOTADO) return { ok: false, erro: MENSAGEM_ERRO_DAS_PERMISSOES };
+    return resposta.error ? { ok: false, erro: mensagemErroPermissoes(resposta.error) } : { ok: true };
   } catch {
     return { ok: false, erro: MENSAGEM_ERRO_DAS_PERMISSOES };
   }

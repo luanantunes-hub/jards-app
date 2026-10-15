@@ -127,7 +127,7 @@ export default function ConfiguracoesPage() {
   const [savingOrg, setSavingOrg] = useState(false);
   const [cancelando, setCancelando] = useState(false);
   // Funções na produção (PD0.7b): só o administrador de uma organização com a produção as lê.
-  const { funcoes: funcoesProducao, atualizar: atualizarFuncaoProducao } = useFuncoesProducao(organizationId, isAdmin && orgModulos.includes("producao"));
+  const { funcoes: funcoesProducao, recarregar: recarregarFuncoesProducao, atualizar: atualizarFuncaoProducao } = useFuncoesProducao(organizationId, isAdmin && orgModulos.includes("producao"));
 
   useEffect(() => {
     const requestedSection = new URLSearchParams(window.location.search).get("section");
@@ -1012,7 +1012,8 @@ const { data: perfilData } = await (supabase as any)
                     membro={m}
                     souAdmin={isAdmin}
                     modulosDaOrganizacao={orgModulos}
-                    funcao={funcoesProducao ? funcoesProducao[m.user_id] ?? null : undefined}
+                    funcao={funcoesProducao?.[m.user_id] ?? null}
+                    recarregar={recarregarFuncoesProducao}
                     onSaved={funcao => { atualizarFuncaoProducao(m.user_id, funcao); showSuccess("Permissões da produção atualizadas"); }}
                   />
                 </div>

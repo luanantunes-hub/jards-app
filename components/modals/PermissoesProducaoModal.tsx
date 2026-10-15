@@ -1,14 +1,14 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { Check, SlidersHorizontal, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 import { CampoValor } from "@/components/ui/CampoValor";
 import { definirFuncao, type ClienteDasPermissoes } from "@/lib/producao/permissoes-banco";
 import {
-  montarPedido,
-  semMudancas,
+  MENSAGEM_ERRO_DAS_PERMISSOES,
+  planejarSalvar,
   textoDaAlcada,
   type FuncaoNaProducao,
   type MembroParaPermissoes,
@@ -17,7 +17,7 @@ import {
 interface PermissoesProducaoModalProps {
   organizationId: string;
   membro: Pick<MembroParaPermissoes, "user_id" | "full_name" | "email">;
-  /** O que a pessoa tem hoje em `producao_funcoes`; null = sem registro (sem dinheiro e sem alçada). */
+  /** O que a pessoa tem hoje em `producao_funcoes`, lido agora; null = sem registro (sem dinheiro e sem alçada). */
   atual: FuncaoNaProducao | null;
   /** O colaborador também aprova pedidos até um valor; o leitor nunca aprova, então não vê o campo. */
   comAlcada: boolean;
@@ -40,11 +40,19 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
   const [erro, setErro] = useState<string | null>(null);
   const titleId = useId();
   const campoId = useId();
+  const botaoSalvar = useRef<HTMLButtonElement>(null);
+  // O clique só fecha pelo fundo se também começou nele: arrastar a seleção do campo até fora do modal não perde o valor.
+  const clicouNoFundo = useRef(false);
 
   function fechar() {
     if (!salvando) onClose();
   }
   useModalDismiss(fechar);
+
+  // Durante o pedido os itens ficam desabilitados e o foco cai para a página; com o aviso na tela ele volta ao Salvar.
+  useEffect(() => {
+    if (erro && !salvando) botaoSalvar.current?.focus();
+  }, [erro, salvando]);
 
   // Mexer em qualquer item tira o aviso da tentativa anterior.
   function editou() {
@@ -55,31 +63,42 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
   async function salvar(evento: React.FormEvent) {
     evento.preventDefault();
     if (salvando) return;
-    const montado = montarPedido({ comAlcada, dinheiro, textoAlcada, atual });
-    if (!montado.ok) {
-      setErro(montado.erro);
+    const plano = planejarSalvar({ comAlcada, dinheiro, textoAlcada, atual });
+    if (plano.tipo === "invalido") {
+      setErro(plano.erro);
       setCampoInvalido(true);
       return;
     }
     // Nada mudou: não há o que gravar, e gravar trocaria "quem definiu" à toa.
-    if (semMudancas(atual, montado.pedido)) {
+    if (plano.tipo === "sem_mudanca") {
       onClose();
       return;
     }
     setSalvando(true);
     setErro(null);
-    const resultado = await definirFuncao(createClient() as unknown as ClienteDasPermissoes, organizationId, membro.user_id, montado.pedido);
-    setSalvando(false);
+    let resultado: Awaited<ReturnType<typeof definirFuncao>>;
+    try {
+      resultado = await definirFuncao(createClient() as unknown as ClienteDasPermissoes, organizationId, membro.user_id, plano.pedido);
+    } catch {
+      resultado = { ok: false, erro: MENSAGEM_ERRO_DAS_PERMISSOES };
+    } finally {
+      setSalvando(false);
+    }
     if (!resultado.ok) {
       setErro(resultado.erro);
       return;
     }
-    onSaved(montado.pedido);
+    onSaved(plano.pedido);
     onClose();
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={fechar}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,.45)" }}
+      onMouseDown={evento => { clicouNoFundo.current = evento.target === evento.currentTarget; }}
+      onClick={() => { if (clicouNoFundo.current) fechar(); }}
+    >
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[26.25rem] flex-col overflow-hidden rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between gap-3 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex min-w-0 items-center gap-3">
@@ -137,6 +156,7 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
           <div className="flex shrink-0 items-center justify-end gap-3 border-t px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <button type="button" onClick={fechar} className="px-3 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
             <button
+              ref={botaoSalvar}
               type="submit"
               disabled={salvando}
               className="rounded bg-[#2E8932] px-5 py-2 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] disabled:cursor-not-allowed disabled:opacity-40"
