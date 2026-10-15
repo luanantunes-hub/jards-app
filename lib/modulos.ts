@@ -12,7 +12,9 @@ export const MODULOS: readonly ModuloId[] = ["captacao", "prestacao", "producao"
 /**
  * Módulos ainda em construção: só aparecem (no seletor, nos convites) para a
  * organização que já os tem, como os pilotos liberados por cortesia. O banco
- * ainda não aceita a produção (plano do módulo de produção, PD0.1).
+ * já aceita a produção (PD0.1, aplicada em 15/10/2026), mas nenhuma organização
+ * a tem e a página /producoes ainda não existe (PD0.3): a produção só sai desta
+ * lista quando o plano do módulo de produção mandar.
  */
 export const MODULOS_EM_CONSTRUCAO: readonly ModuloId[] = ["producao"];
 
