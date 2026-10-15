@@ -2,8 +2,9 @@
 
 // Seletor de módulo no menu lateral. O módulo é o contexto da navegação, então
 // fica no alto do menu, acima das seções que ele define: recolhido, só o ícone;
-// aberto, a lista dos módulos com a descrição, e o que não está contratado ou
-// liberado para a pessoa aparece com cadeado e o motivo. O módulo em promoção
+// aberto, a lista dos módulos com a descrição, e o que não está liberado para
+// a pessoa aparece com cadeado e o motivo (situacaoNoSeletor, em
+// lib/modulos.ts). Enquanto os módulos carregam, os itens só esperam. O módulo em promoção
 // leva a etiqueta "Promo" (pequena, cinza, sem borda) e o texto do teste no
 // próprio item da lista, nunca embaixo do módulo atual; escolhido, abre o
 // convite (quem decide é a tela).
@@ -23,6 +24,8 @@ export type OpcaoDeModulo = {
   promo?: boolean;
   /** O que o item diz no lugar da descrição enquanto o módulo está em promoção. */
   chamada?: string;
+  /** Os módulos da organização ainda não chegaram: o item espera, sem cadeado nem promoção. */
+  carregando?: boolean;
 };
 
 export function SeletorDeModulo({ opcoes, ativo, expandido, aberto, onAbrir, onTrocar }: {
@@ -99,17 +102,21 @@ export function SeletorDeModulo({ opcoes, ativo, expandido, aberto, onAbrir, onT
           {opcoes.map(opcao => {
             const IconeDaOpcao = opcao.icone;
             const atualDaLista = opcao.id === atual.id;
+            const esperando = Boolean(opcao.carregando) && !atualDaLista;
             return (
               <li key={opcao.id}>
                 <button
                   type="button"
-                  disabled={Boolean(opcao.bloqueio)}
+                  disabled={Boolean(opcao.bloqueio) || esperando}
+                  aria-busy={esperando || undefined}
                   aria-current={atualDaLista ? "true" : undefined}
                   onClick={() => {
                     onAbrir(false);
                     if (!atualDaLista) onTrocar(opcao.id);
                   }}
-                  className={`flex w-full items-start gap-2.5 rounded px-2 py-2 text-left transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] active:scale-[.99] disabled:cursor-not-allowed disabled:active:scale-100 ${
+                  className={`flex w-full items-start gap-2.5 rounded px-2 py-2 text-left transition focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] active:scale-[.99] disabled:active:scale-100 ${
+                    esperando ? "disabled:cursor-progress" : "disabled:cursor-not-allowed"
+                  } ${
                     atualDaLista ? "bg-black/[.05]" : "hover:bg-black/[.04] disabled:hover:bg-transparent"
                   }`}
                 >

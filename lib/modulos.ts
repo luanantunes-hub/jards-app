@@ -95,6 +95,32 @@ export function destinoSemAcesso(path: string, acesso: AcessoModulos): string | 
   return "/configuracoes";
 }
 
+export type SituacaoNoSeletor =
+  | { tipo: "livre" }
+  /** Os módulos da organização ainda não chegaram: nada é bloqueado nem oferecido. */
+  | { tipo: "carregando" }
+  /** A organização nunca teve o módulo: a escolha abre o convite do teste grátis. */
+  | { tipo: "teste" }
+  | { tipo: "bloqueado"; motivo: string };
+
+/**
+ * Como o módulo aparece no seletor. A prestação nunca aparece como não
+ * contratada: toda organização tem direito ao teste grátis, e quem já teve o
+ * módulo (em vigor ou só para leitura, depois do teste) entra nele, onde o
+ * aviso da assinatura explica o que mudou.
+ */
+export function situacaoNoSeletor(acesso: AcessoModulos & { carregado: boolean }, modulo: ModuloId): SituacaoNoSeletor {
+  if (acesso.superAdmin) return { tipo: "livre" };
+  if (!acesso.carregado) return { tipo: "carregando" };
+  if (!acesso.modulosOrganizacao.includes(modulo)) {
+    return modulo === "prestacao" ? { tipo: "teste" } : { tipo: "bloqueado", motivo: "Módulo não contratado: fale com o suporte" };
+  }
+  if (!acesso.modulosMembro.includes(modulo)) {
+    return { tipo: "bloqueado", motivo: "Você não tem acesso: peça a quem administra a organização" };
+  }
+  return { tipo: "livre" };
+}
+
 /** O seletor só faz sentido para quem usa mais de um módulo. */
 export function mostraSeletorDeModulo(acesso: AcessoModulos): boolean {
   return modulosDisponiveis(acesso).length > 1;

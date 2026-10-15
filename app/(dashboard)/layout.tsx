@@ -43,7 +43,7 @@ import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
-import { destinoSemAcesso, moduloDaRota, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, type ModuloId } from "@/lib/modulos";
+import { destinoSemAcesso, moduloDaRota, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
 import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
@@ -180,41 +180,42 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       // EXPERIMENTAL (workspace de captador): busca todos os vínculos do
       // usuário, não só o primeiro — necessário pro "acesso duplo" (conta
       // própria + workspace limitado convidado em outra organização).
-      const { data: memberRows } = await (supabase as any)
-        .from("organization_members")
-        .select("organization_id, papel, modulos_acesso, organizations(nome, avatar_url)")
-        .eq("user_id", user.id);
+      // As consultas são independentes e vão juntas: o menu só mostra os
+      // módulos depois delas, e os módulos da organização vêm com o vínculo.
+      const [{ data: memberRows }, { data: profile }, { count: convites }, { count: cadastros }] = await Promise.all([
+        (supabase as any)
+          .from("organization_members")
+          .select("organization_id, papel, modulos_acesso, organizations(nome, avatar_url, modulos_ativos, modulos_leitura)")
+          .eq("user_id", user.id),
+        (supabase as any)
+          .from("profiles")
+          .select("jards_super_admin, plano")
+          .eq("id", user.id)
+          .maybeSingle(),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela nova, ainda fora do tipo Database
+        (supabase as any)
+          .from("prestacao_convidados")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- coluna user_id ainda fora do tipo Database
+        (supabase as any)
+          .from("proponentes")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user.id),
+      ]);
 
       const memberList = ((memberRows ?? []) as any[]).map(m => ({
         organizationId: m.organization_id as string,
         papel: m.papel as string,
         modulosAcesso: normalizarModulos(m.modulos_acesso),
+        modulosOrganizacao: modulosDaOrganizacao(m.organizations?.modulos_ativos, m.organizations?.modulos_leitura),
         nome: (m.organizations?.nome ?? "") as string,
         avatarUrl: (m.organizations?.avatar_url ?? null) as string | null,
       }));
       setMemberships(memberList);
-
-      const { data: profile } = await (supabase as any)
-        .from("profiles")
-        .select("jards_super_admin, plano")
-        .eq("id", user.id)
-        .maybeSingle();
-
       setIsSuperAdmin(profile?.jards_super_admin === true);
       setPlan((profile?.plano ?? null) as PlanTipo | null);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela nova, ainda fora do tipo Database
-      const { count: convites } = await (supabase as any)
-        .from("prestacao_convidados")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
       setTemConvites((convites ?? 0) > 0);
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- coluna user_id ainda fora do tipo Database
-      const { count: cadastros } = await (supabase as any)
-        .from("proponentes")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id);
       setEhProponente((cadastros ?? 0) > 0);
 
       if (memberList.length > 0) {
@@ -231,8 +232,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setOrganizationId(escolhido.organizationId);
         setModulosUser(escolhido.modulosAcesso);
         setOrg({ nome: escolhido.nome, avatar_url: escolhido.avatarUrl });
-
-        await carregarModulosOrg(escolhido.organizationId);
+        setModulosOrg(escolhido.modulosOrganizacao);
+        setModulosCarregados(true);
 
         if (escolhido.papel === "captador" && !path.startsWith("/workspace-captador")) {
           router.replace("/workspace-captador");
@@ -355,19 +356,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // organização que convidou (essas continuam existindo, só não fazem
   // sentido pra alguém com acesso limitado a um único workspace).
   const isWorkspaceCaptador = papelAtual === "captador";
-  // A prestação é oferecida em teste gratuito a quem usa o CRM e nunca teve o módulo (nem só para leitura).
+  // A prestação é oferecida em teste gratuito a quem nunca teve o módulo (nem só para leitura); quem
+  // já teve entra nele, e o aviso da assinatura explica o fim do teste. Nunca aparece como não contratada.
   // A captação não tem teste: o plano gratuito tem as suas funções e nunca bloqueia.
-  const prestacaoEmPromo = modulosCarregados && !isSuperAdmin && !modulosOrg.includes("prestacao");
   const opcoesDeModulo: OpcaoDeModulo[] = MODULOS.map(({ id, label, descricao, icone }) => {
-    const promo = id === "prestacao" && prestacaoEmPromo;
+    const situacao = situacaoNoSeletor({ ...acessoModulos, carregado: modulosCarregados }, id);
+    const promo = situacao.tipo === "teste";
     return {
       id, label, descricao, icone, promo,
       // Só no item da prestação, dentro da lista: embaixo da captação parecia que a captação tinha teste.
       chamada: promo ? `Teste gratuito de ${TESTE_GRATIS_DIAS} dias` : undefined,
-      bloqueio: promo || isSuperAdmin ? null
-        : !modulosOrg.includes(id) ? "Módulo não contratado: fale com o suporte"
-        : !modulosUser.includes(id) ? "Você não tem acesso: peça a quem administra a organização"
-        : null,
+      carregando: situacao.tipo === "carregando",
+      bloqueio: situacao.tipo === "bloqueado" ? situacao.motivo : null,
     };
   });
 
