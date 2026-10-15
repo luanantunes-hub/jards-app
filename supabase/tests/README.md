@@ -8,7 +8,9 @@
 
 `regimes_aviso_versao.test.sql` confere o aviso de versão nova (P6.4): publicar guarda o resumo e avisa, uma vez, quem decide e quem conduz as prestações em andamento na versão anterior, e não avisa organização com a prestação já aprovada nem em outro regime; só quem decide passa a prestação para a versão publicada (nem gravando direto quem só edita), outra organização não passa, prestação aprovada fica onde está, e o histórico registra a versão de antes e o prazo recalculado. Roda do mesmo jeito.
 
-O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`.
+`captacao_isolada.test.sql` confere a PD0.4 (a captação isolada no banco): quem não tem o módulo Captação não lê nem escreve nas tabelas comerciais, quem tem fica como estava, e captador e proponente não leem as tabelas de dinheiro e contratos. Monta três organizações (só captação, só prestação, as duas) e onze pessoas, sonda nove tabelas de cada jeito de proteção e confere, por catálogo, as 42 regras. Um caso reprova se surgir tabela com `organization_id` sem classificação (fechada, compartilhada, de plataforma ou sem regra): decida em qual grupo ela entra. Roda do mesmo jeito, de preferência com a migration `producao_captacao_isolada` na frente.
+
+O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`, e `tests/producao-captacao-isolada-sql.test.ts` faz o mesmo para a captação isolada.
 
 ## Rodar
 
