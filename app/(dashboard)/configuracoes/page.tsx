@@ -1117,6 +1117,7 @@ const { data: perfilData } = await (supabase as any)
       <NovoMembroModal
         open={showMembroModal}
         organizationId={organizationId}
+        modulosAtivos={orgModulos}
         onClose={() => setShowMembroModal(false)}
         onSaved={loadMembers}
       />

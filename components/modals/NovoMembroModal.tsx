@@ -6,12 +6,26 @@ import { createClient } from "@/lib/supabase/client";
 import { BoasVindasEquipeModal } from "@/components/modals/BoasVindasEquipeModal";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
-import { alternarModulo, avisoSemCaptacao, CODIGO_SEM_VAGA, FUNCOES_PRESTACAO, MODULO_LABEL, MODULOS_COM_CONTRATO, modulosDoConvite, modulosSemVaga } from "@/lib/equipe-modulos";
-import { moduloVisivel, normalizarModulos, type ModuloId } from "@/lib/modulos";
+import {
+  alternarModulo,
+  avisoSemCaptacao,
+  CODIGO_SEM_VAGA,
+  FUNCOES_PRESTACAO,
+  lerVagasDosModulos,
+  mensagemVagasNaoLidas,
+  MODULO_LABEL,
+  modulosDoConvite,
+  modulosParaConsultar,
+  modulosSemVaga,
+  type ResumoDoModulo,
+} from "@/lib/equipe-modulos";
+import type { ModuloId } from "@/lib/modulos";
 
 interface NovoMembroModalProps {
   open: boolean;
   organizationId?: string | null;
+  /** Módulos ativos da organização: só as vagas deles são consultadas (a produção, em construção, só quando está aqui). */
+  modulosAtivos: readonly ModuloId[];
   onClose: () => void;
   onSaved: () => void | Promise<void>;
 }
@@ -24,18 +38,6 @@ type SeatSummary = {
   pending: number;
   available: number;
   unit_price: number;
-};
-
-/** Vagas de um módulo com contrato, a prestação de contas ou a produção (GET /api/members/seats?modulo=…). */
-type ResumoDoModulo = {
-  modulo: ModuloId;
-  ativo: boolean;
-  status: string | null;
-  cortesia_ate: string | null;
-  total: number;
-  occupied: number;
-  pending: number;
-  available: number;
 };
 
 type Role = "admin" | "colaborador" | "leitor";
@@ -63,7 +65,7 @@ const money = (value: number) => value.toLocaleString("pt-BR", {
   currency: "BRL",
 });
 
-export default function NovoMembroModal({ open, organizationId: organizationIdProp, onClose, onSaved }: NovoMembroModalProps) {
+export default function NovoMembroModal({ open, organizationId: organizationIdProp, modulosAtivos, onClose, onSaved }: NovoMembroModalProps) {
   const [mode, setMode] = useState<"invite" | "buy">("invite");
   const [organizationId, setOrganizationId] = useState<string | null>(organizationIdProp ?? null);
   const [summary, setSummary] = useState<SeatSummary | null>(null);
@@ -78,6 +80,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("colaborador");
   const [contratados, setContratados] = useState<ResumoDoModulo[]>([]);
+  const [semLeitura, setSemLeitura] = useState<ModuloId[]>([]);
   const [modulos, setModulos] = useState<ModuloId[]>(["captacao"]);
   const [funcao, setFuncao] = useState("");
 
@@ -98,13 +101,8 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
   const loadSummary = useCallback(async (orgId: string) => {
     setLoading(true);
     const base = `/api/members/seats?organization_id=${encodeURIComponent(orgId)}`;
-    // Um módulo em construção (a produção) só é consultado quando a organização o tem ativo.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a coluna modulos_ativos ainda está fora do tipo Database
-    const lerOrganizacao = (createClient() as any).from("organizations").select("modulos_ativos").eq("id", orgId).maybeSingle();
-    const [response, { data: organizacao }] = await Promise.all([fetch(base), lerOrganizacao]);
-    const ativos = normalizarModulos(organizacao?.modulos_ativos);
-    const consultados = MODULOS_COM_CONTRATO.filter(modulo => moduloVisivel(modulo, ativos));
-    const respostas = await Promise.all(consultados.map(modulo => fetch(`${base}&modulo=${modulo}`)));
+    const consultados = modulosParaConsultar(modulosAtivos);
+    const [response, ...respostas] = await Promise.all([fetch(base), ...consultados.map(modulo => fetch(`${base}&modulo=${modulo}`))]);
     const body = await response.json().catch(() => ({}));
     const corpos = await Promise.all(respostas.map(resposta => resposta.json().catch(() => ({}))));
     setLoading(false);
@@ -113,11 +111,12 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
       return;
     }
     setSummary(body as SeatSummary);
-    // A escolha de módulos só aparece com algum módulo de contrato ativo na organização.
-    setContratados(respostas.flatMap((resposta, indice) => (
-      resposta.ok && corpos[indice].ativo ? [{ ...corpos[indice], modulo: consultados[indice] } as ResumoDoModulo] : []
-    )));
-  }, []);
+    // A escolha de módulos só aparece com algum módulo de contrato ativo na organização; se as vagas de um
+    // módulo ativo não chegarem, o convite não sai (sem o módulo ele iria só para a captação).
+    const lidos = lerVagasDosModulos(consultados, respostas.map((resposta, indice) => ({ ok: resposta.ok, corpo: corpos[indice] })));
+    setContratados(lidos.contratados);
+    setSemLeitura(lidos.semLeitura);
+  }, [modulosAtivos]);
 
   useEffect(() => {
     if (!open) return;
@@ -316,6 +315,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
           </div>
 
           {error && <div role="alert" className="mb-4 rounded border border-[#D94E4E]/30 bg-white px-3 py-2.5 text-[0.75rem] font-medium text-[#D94E4E]">{error}</div>}
+          {semLeitura.length > 0 && !loading && <div role="alert" className="mb-4 rounded border border-[#D94E4E]/30 bg-white px-3 py-2.5 text-[0.75rem] font-medium text-[#D94E4E]">{mensagemVagasNaoLidas(semLeitura)}</div>}
           {success && <div className="mb-4 rounded border border-[#2E8932]/30 bg-white px-3 py-2.5 text-[0.75rem] font-medium text-[#2E8932]"><div className="flex items-center gap-2"><CheckCircle2 size={14} />{success}</div>{manualInviteUrl && <button onClick={async () => { await navigator.clipboard.writeText(manualInviteUrl); setCopied(true); }} className="mt-2 flex items-center gap-1.5 rounded border border-[#2E8932]/30 bg-white px-3 py-2 text-[0.6875rem] font-semibold text-[#2E8932] transition hover:bg-black/[.04]"><Copy size={12} />{copied ? "Link copiado" : "Copiar link do convite"}</button>}</div>}
 
           {mode === "invite" ? (
@@ -439,7 +439,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
         <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={close} className="px-4 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
           {mode === "invite" ? (
-            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVaga.length > 0} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
+            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVaga.length > 0 || semLeitura.length > 0} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
           ) : (
             <button onClick={buySeats} disabled={saving || loading} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
           )}

@@ -93,7 +93,7 @@ export async function GET(req: NextRequest) {
   if (!await requireAdmin(organizationId, user.id)) {
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
   }
-  const modulo = lerModuloDeVagas(req.nextUrl.searchParams.get("modulo"));
+  const modulo = lerModuloDeVagas(req.nextUrl.searchParams.get("modulo") ?? undefined);
   if (!modulo) return NextResponse.json({ error: "Módulo inválido" }, { status: 400 });
   try {
     return NextResponse.json(modulo === "captacao" ? await seatSummary(organizationId) : await resumoDoModulo(organizationId, modulo));
@@ -124,15 +124,17 @@ export async function POST(req: NextRequest) {
   // Sem o campo vale a captação; nome que não é módulo é recusado, nunca vira compra da captação.
   const modulo = lerModuloDeVagas(body?.modulo);
   if (!modulo) return NextResponse.json({ error: "Módulo inválido" }, { status: 400 });
-  // Só a captação e a prestação vendem vaga extra por aqui. A produção espera a
-  // cobrança por módulo (PDL.1), que depende do preço, decisão do dono.
-  if (modulo !== "captacao" && modulo !== "prestacao") {
-    return NextResponse.json({ error: mensagemCompraIndisponivel(modulo) }, { status: 409 });
-  }
   if (!SEAT_PRICE_ID || !process.env.STRIPE_SECRET_KEY) {
     return NextResponse.json({ error: "Preço de usuário extra ainda não configurado" }, { status: 503 });
   }
-  if (modulo === "prestacao") return comprarVagasDaPrestacao(organizationId, user.id, quantity, requestId);
+  // Cada módulo vende as vagas do seu jeito. Só a captação e a prestação vendem vaga extra por aqui; a
+  // produção espera a cobrança por módulo (PDL.1), que depende do preço, decisão do dono. Módulo sem ramo
+  // próprio é recusado, nunca vira compra da captação.
+  switch (modulo) {
+    case "prestacao": return comprarVagasDaPrestacao(organizationId, user.id, quantity, requestId);
+    case "captacao": break;
+    default: return NextResponse.json({ error: mensagemCompraIndisponivel(modulo) }, { status: 409 });
+  }
 
   const admin = adminClient();
   const { data: previousPurchase } = await admin

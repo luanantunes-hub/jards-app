@@ -77,11 +77,12 @@ export const CODIGO_SEM_VAGA: Record<ModuloId, string> = {
 };
 
 /**
- * Módulo pedido na rota de vagas. Sem o campo vale a captação, como sempre foi;
- * um nome que não é módulo é recusado (null), nunca tratado como captação.
+ * Módulo pedido na rota de vagas. Sem o campo (undefined) vale a captação, como
+ * sempre foi; qualquer outro valor que não seja o nome de um módulo, inclusive
+ * null e texto vazio, é recusado (null), nunca tratado como captação.
  */
 export function lerModuloDeVagas(valor: unknown): ModuloId | null {
-  if (valor === undefined || valor === null) return "captacao";
+  if (valor === undefined) return "captacao";
   return MODULOS.find(m => m === valor) ?? null;
 }
 
@@ -152,8 +153,9 @@ export function respostaErroEquipe(erro: { code?: string; message?: string }): R
   // Falta de vaga num módulo com contrato: a mensagem e o código nomeiam o módulo.
   const semVaga = MODULOS_COM_CONTRATO.find(m => mensagem.includes(`sem_vaga_${m}`));
   if (semVaga) return { status: 409, error: mensagemErroAcesso(mensagem), code: CODIGO_SEM_VAGA[semVaga] };
-  // Captação, e as funções antigas, que só conhecem a captação.
-  if (erro.code === "23514" || mensagem.includes("sem_vaga") || mensagem.includes("assentos disponiveis")) {
+  // Captação, e as funções antigas, que só conhecem a captação. O texto da vaga é exigido: outro erro de
+  // regra do banco (código 23514) não é falta de vaga e não pode mandar comprar vaga da captação.
+  if (mensagem.includes("sem_vaga") || mensagem.includes("assentos disponiveis")) {
     return { status: 409, error: mensagemErroAcesso("sem_vaga_captacao"), code: CODIGO_SEM_VAGA.captacao };
   }
   const conhecida = mensagemErroAcesso(mensagem);
@@ -176,6 +178,56 @@ export function modulosDaEquipe(ativosDaOrganizacao: readonly ModuloId[], daPess
 export function alternarModulo(escolhidos: ModuloId[], modulo: ModuloId): ModuloId[] {
   if (escolhidos.includes(modulo)) return escolhidos.length > 1 ? escolhidos.filter(m => m !== modulo) : escolhidos;
   return MODULOS.filter(m => m === modulo || escolhidos.includes(m));
+}
+
+/** Vagas de um módulo com contrato, como a rota de vagas responde (GET /api/members/seats?modulo=…). */
+export type ResumoDoModulo = {
+  modulo: ModuloId;
+  ativo: boolean;
+  status: string | null;
+  cortesia_ate: string | null;
+  total: number;
+  occupied: number;
+  pending: number;
+  available: number;
+};
+
+/**
+ * Os módulos cujas vagas o convite consulta: os de contrato que a organização tem
+ * ativos. A produção, em construção, só entra quando a organização a tem.
+ */
+export function modulosParaConsultar(ativosDaOrganizacao: readonly ModuloId[]): ModuloId[] {
+  return MODULOS_COM_CONTRATO.filter(m => ativosDaOrganizacao.includes(m));
+}
+
+/**
+ * Lê as respostas da rota de vagas, uma por módulo consultado. Módulo com contrato
+ * em vigor (`ativo`) é oferecido no convite. Módulo que a organização tem ativo e
+ * não respondeu (erro, limite de requisições) fica em `semLeitura`: esconder o
+ * módulo faria o convite sair só para a captação, e gastar a vaga dela.
+ */
+export function lerVagasDosModulos(
+  consultados: readonly ModuloId[],
+  respostas: readonly { ok: boolean; corpo: unknown }[],
+): { contratados: ResumoDoModulo[]; semLeitura: ModuloId[] } {
+  const contratados: ResumoDoModulo[] = [];
+  const semLeitura: ModuloId[] = [];
+  consultados.forEach((modulo, indice) => {
+    const resposta = respostas[indice];
+    if (!resposta?.ok) {
+      semLeitura.push(modulo);
+      return;
+    }
+    const corpo = (resposta.corpo ?? {}) as Partial<ResumoDoModulo>;
+    if (corpo.ativo) contratados.push({ ...corpo, modulo } as ResumoDoModulo);
+  });
+  return { contratados, semLeitura };
+}
+
+/** Aviso do convite quando as vagas de um módulo ativo não puderam ser consultadas. */
+export function mensagemVagasNaoLidas(modulos: readonly ModuloId[]): string {
+  const nomes = juntar(modulos.map(m => `da ${MODULO_LABEL[m].toLowerCase()}`));
+  return `Não foi possível consultar as vagas ${nomes}. Feche esta janela e tente de novo em instantes.`;
 }
 
 /** Os módulos que o convite pede: os marcados que a organização ainda oferece, na ordem de MODULOS; sem nenhum, a captação. */

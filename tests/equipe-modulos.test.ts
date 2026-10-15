@@ -8,12 +8,15 @@ import {
   destinoDoConvite,
   lerModuloDeVagas,
   lerPedidoModulos,
+  lerVagasDosModulos,
   mensagemCompraIndisponivel,
   mensagemTirarModulosDoExterno,
+  mensagemVagasNaoLidas,
   MODULO_LABEL,
   MODULOS_COM_CONTRATO,
   modulosDaEquipe,
   modulosDoConvite,
+  modulosParaConsultar,
   modulosSemVaga,
   modulosVetadosAoPapel,
   ORIGEM_DAS_VAGAS,
@@ -199,8 +202,7 @@ test("falta de vaga: cada módulo tem a própria resposta, com o nome dele", () 
 
 test("falta de vaga das funções antigas e sem módulo vale a captação, como sempre", () => {
   for (const erro of [
-    { code: "23514", message: "Nao ha assentos disponiveis" },
-    { code: "23514", message: "" },
+    { code: "23514", message: "Nao ha assentos disponiveis nesta organizacao." },
     { code: "P0001", message: "sem_vaga" },
   ]) {
     const resposta = respostaErroEquipe(erro);
@@ -210,17 +212,27 @@ test("falta de vaga das funções antigas e sem módulo vale a captação, como 
   assert.equal(respostaErroEquipe({}).status, 500);
 });
 
+test("outro erro de regra do banco não é falta de vaga e não manda comprar vaga da captação", () => {
+  for (const message of [
+    'new row for relation "organization_invitations" violates check constraint "organization_invitations_modulos_acesso_check"',
+    "",
+  ]) {
+    const resposta = respostaErroEquipe({ code: "23514", message });
+    assert.equal(resposta.status, 500, message);
+    assert.equal(resposta.code, undefined, message);
+  }
+});
+
 test("os códigos de falta de vaga são os que a tela já conhecia", () => {
   assert.equal(CODIGO_SEM_VAGA.captacao, "NO_SEATS");
   assert.equal(CODIGO_SEM_VAGA.prestacao, "NO_SEATS_PRESTACAO");
   assert.equal(CODIGO_SEM_VAGA.producao, "NO_SEATS_PRODUCAO");
 });
 
-test("a rota de vagas lê o módulo pedido: sem o campo vale a captação, nome estranho é recusado", () => {
+test("a rota de vagas lê o módulo pedido: sem o campo vale a captação, qualquer outra coisa que não seja módulo é recusada", () => {
   assert.equal(lerModuloDeVagas(undefined), "captacao");
-  assert.equal(lerModuloDeVagas(null), "captacao");
   for (const modulo of MODULOS) assert.equal(lerModuloDeVagas(modulo), modulo);
-  for (const estranho of ["", "financeiro", "Captacao", "captacao ", 1, true, {}, []]) {
+  for (const estranho of [null, "", "financeiro", "Captacao", "captacao ", 1, true, {}, []]) {
     assert.equal(lerModuloDeVagas(estranho), null, JSON.stringify(estranho));
   }
 });
@@ -252,6 +264,33 @@ test("convite: marcar e desmarcar módulos mantém ao menos um, na ordem de MODU
   assert.deepEqual(alternarModulo(["captacao", "producao"], "captacao"), ["producao"]);
   assert.deepEqual(alternarModulo(["producao"], "producao"), ["producao"]);
   assert.deepEqual(alternarModulo(["captacao"], "captacao"), ["captacao"]);
+});
+
+test("convite: só se consultam as vagas dos módulos de contrato que a organização tem ativos", () => {
+  assert.deepEqual(modulosParaConsultar(["captacao"]), []);
+  assert.deepEqual(modulosParaConsultar(["captacao", "prestacao"]), ["prestacao"]);
+  assert.deepEqual(modulosParaConsultar(["captacao", "producao"]), ["producao"]);
+  assert.deepEqual(modulosParaConsultar(["producao", "prestacao", "captacao"]), ["prestacao", "producao"]);
+});
+
+test("convite: as vagas lidas oferecem o módulo com contrato em vigor e avisam do que não respondeu", () => {
+  const vagas = (total: number, ocupadas: number) => ({ ativo: true, status: "cortesia", cortesia_ate: "2026-12-31", total, occupied: ocupadas, pending: 0, available: total - ocupadas });
+  const lidos = lerVagasDosModulos(["prestacao", "producao"], [{ ok: true, corpo: vagas(2, 1) }, { ok: true, corpo: vagas(5, 2) }]);
+  assert.deepEqual(lidos.semLeitura, []);
+  assert.deepEqual(lidos.contratados.map(c => [c.modulo, c.available]), [["prestacao", 1], ["producao", 3]]);
+  // O contrato fora de vigor responde "inativo": não é oferecido, e não é erro.
+  const inativo = lerVagasDosModulos(["prestacao"], [{ ok: true, corpo: { ...vagas(0, 0), ativo: false } }]);
+  assert.deepEqual(inativo, { contratados: [], semLeitura: [] });
+  // Erro ou limite de requisições num módulo ativo: o módulo não some em silêncio.
+  const falhou = lerVagasDosModulos(["prestacao", "producao"], [{ ok: true, corpo: vagas(2, 1) }, { ok: false, corpo: { error: "Muitas requisições." } }]);
+  assert.deepEqual(falhou.semLeitura, ["producao"]);
+  assert.deepEqual(falhou.contratados.map(c => c.modulo), ["prestacao"]);
+  assert.deepEqual(lerVagasDosModulos(["producao"], [{ ok: true, corpo: null }]), { contratados: [], semLeitura: [] });
+  assert.deepEqual(lerVagasDosModulos(["producao"], []), { contratados: [], semLeitura: ["producao"] }, "sem resposta, sem leitura");
+  assert.equal(mensagemVagasNaoLidas(["producao"]),
+    "Não foi possível consultar as vagas da produção. Feche esta janela e tente de novo em instantes.");
+  assert.equal(mensagemVagasNaoLidas(["prestacao", "producao"]),
+    "Não foi possível consultar as vagas da prestação de contas e da produção. Feche esta janela e tente de novo em instantes.");
 });
 
 test("convite: só valem os módulos marcados que a organização ainda oferece", () => {

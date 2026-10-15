@@ -332,7 +332,8 @@ test("compra de vagas: sem o campo módulo e com captacao vale a captação; pre
 
 const COM_PRODUCAO = ["captacao", "producao"];
 
-test("convite só para a produção reserva a vaga da produção, não a da captação, e leva à produção", async () => {
+// Quem conta a vaga é o banco (fn_conferir_modulos, PD0.1): aqui se prova o que o app pede a ele.
+test("convite só para a produção pede ao banco só a produção, e o primeiro acesso leva à produção", async () => {
   const { consultas, convites } = preparar(bancoDoConvite({ modulosAtivos: COM_PRODUCAO }));
   const { status, corpo } = await ler(await convidar(convite({ modulos: ["producao"] })));
   assert.equal(status, 200);
@@ -517,7 +518,7 @@ test("vagas: ?modulo=captacao é o mesmo que não dizer o módulo", async () => 
 
 test("compra de vagas: módulo que não existe é recusado e nunca vira compra da captação", async () => {
   const { POST } = await rotaDeVagas();
-  for (const modulo of ["financeiro", "", "Captacao", "captacao ", 7, true, {}]) {
+  for (const modulo of ["financeiro", "", "Captacao", "captacao ", 7, true, {}, null]) {
     const { consultas } = preparar(bancoDasVagas());
     const { status, corpo } = await ler(await POST(compra({ modulo })));
     assert.equal(status, 400, JSON.stringify(modulo));
