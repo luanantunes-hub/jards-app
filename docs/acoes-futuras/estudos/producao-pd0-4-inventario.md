@@ -73,7 +73,7 @@ Total: **39 tabelas**.
 - **Funções que rodam com as permissões de quem chama** e leem tabelas comerciais, todas da própria Captação: `fn_create_activation_plan`, `fn_customer_success_automations`, `fn_receita_empresa`, `fn_score_empresa`, `fn_sync_empresa_tipo`, `fn_validate_activation_child`, `fn_validate_activation_commitment`, `fn_validate_plano_ativacao_relations`. E três visões com `security_invoker`: `vw_contas_carteira`, `vw_eficacia_canais`, `vw_planos_ativacao_resumo`.
 - **Fora do alcance das regras** (já exigem admin e Captação no código ou passam por função): o MCP do Claude e do ChatGPT (usa a chave de serviço, com `papel = admin` e `captacao` em `modulos_acesso`), o link público do patrocinador `/r/[token]` (só as funções `fn_relatorio_patrocinador_*`) e as funções de borda (chave de serviço).
 
-## 5. Decisões do dono
+## 5. Decisões do dono (15/10/2026: as três recomendações foram aceitas)
 
 1. **"Por pessoa" ou "por organização" nas tabelas centrais.** A Produção e a Prestação em equipe precisam que o projeto apareça para a organização inteira; hoje só aparece para quem o criou. Recomendação: passar `projetos_crm`, `atividades`, `notas`, `captacoes`, `contatos` e `editais_user` para "por organização" numa entrega separada (PD0.4b), agora, porque nenhuma organização tem dado de mais de um criador e a mudança é invisível hoje; depois dela fica mais difícil. Muda o que cada pessoa da equipe enxerga: passa a ver o que os colegas criaram.
 2. **Papéis externos.** Os 6 captadores e o 1 proponente são membros da organização e, pelas regras de hoje, também leem contratos, propostas, vendas e comissões dela pela API. Recomendação: nas tabelas de dinheiro e contratos (primeiro grupo da seção 2), a regra restritiva exige o módulo **e** que o membro não seja captador nem proponente. Pelo levantamento do código, nenhuma tela de `workspace-captador` ou `workspace-proponente` lê essas tabelas (o proponente usa `fn_proponente_projeto_detalhe`); confirmar no e2e do captador.
@@ -86,3 +86,16 @@ Total: **39 tabelas**.
 - Teste de texto `tests/producao-captacao-isolada-sql.test.ts`: a lista de tabelas da migration é a mesma deste documento; não há DROP; função nova revoga de `public` e `anon`.
 - **Ensaio no banco de produção, numa transação desfeita** (a migration e o pgTAP rodam juntos e terminam com um erro proposital que desfaz tudo): um branch do Supabase não serve, porque o banco real não se reconstrói só com as migrations do repositório (o histórico dele começa em 20260826).
 - Só depois do "ok" do dono: aplicar a migration e conferir os quatro perfis (só Captação, só Prestação, só Produção, Captação e Produção). Hoje só o primeiro existe nos dados; os outros nascem no ambiente de e2e (PD0.3).
+
+## 7. Resultado do ensaio (15/10/2026)
+
+A migration `producao_captacao_isolada` e o teste `captacao_isolada.test.sql` rodaram juntos no banco de produção, numa transação desfeita (nada ficou gravado), com a migration duas vezes para conferir que reaplicar não faz nada.
+
+- **Teste de acesso:** 28 de 28. As 42 regras existem, restritivas, para todos os comandos e só para quem está logado; só as 11 de dinheiro e contratos excluem captador e proponente; toda tabela com `organization_id` está classificada; as funções auxiliares não executam para o visitante.
+- **Dados reais, antes e depois:** a contagem de linhas visíveis em cada uma das 42 tabelas foi feita **como cada pessoa real** (149 pessoas, 6.258 comparações, nenhum erro). Mudaram **26** comparações, todas em tabelas de dinheiro e contratos e só para quem tem papel de captador ou proponente numa organização: 4 pessoas (3 captadores e 1 captador e proponente) deixam de ler as linhas de `contas_patrocinio` (4 e 5), `contratos` (4 e 5), `cotas_patrocinio`, `participacoes_agencia_cliente`, `propostas`, `vendas_patrocinio`, `previsoes_renovacao` e `renovacoes_cliente` da organização em que atuam como externas. Para todos os admins e colaboradores nada mudou, nem nas demais tabelas.
+- **Registros antigos sem organização:** a migration liga os 3 contatos e a negociação que estavam sem organização à única organização da conta que os criou.
+- **Aplicar e conferir:** depois de aplicada, os quatro perfis (só Captação, só Prestação, Captação e Prestação, e o externo) são conferidos de novo com a conta de teste, e o histórico do Supabase confirma a versão aplicada.
+
+### Observação fora do escopo
+
+`fn_sync_empresa_tipo` (gatilho de `contas_patrocinio`, `captacoes` e `editais_user`) roda com as permissões de quem grava e lê `contas_patrocinio`. Com a regra nova, um captador que grave numa negociação não enxerga a conta e poderia marcar a empresa como "ex-cliente"; a atualização de `empresas_crm` já é barrada para quem não a criou, então o efeito prático é nulo, mas vale torná-la `security definer` junto com a PD0.4b (passar as tabelas centrais para "por organização").
