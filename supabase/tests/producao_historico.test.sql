@@ -214,7 +214,8 @@ select is((select not prosecdef and proconfig @> array['search_path=public, pg_t
           true, 'a função da regra roda com a permissão de quem consulta (a origem passa pelas regras dele), é executada por quem está logado e não pelo visitante');
 select is((select array_agg(t.tgname::text || ' ' || t.tgtype || ' ' || (regexp_match(pg_get_triggerdef(t.oid), 'fn_producao_historico\((.*)\)$'))[1]
                             order by t.tgname collate "C")
-           from pg_trigger t where not t.tgisinternal and t.tgfoid = 'public.fn_producao_historico'::regproc),
+           from pg_trigger t where not t.tgisinternal and t.tgfoid = 'public.fn_producao_historico'::regproc
+             and t.tgname <> 'producao_arquivos_historico'), -- o dos arquivos (PD0.14) é conferido em producao_arquivos.test.sql
           array['producao_blocos_historico 29 '''', ''titulo,tipo''', 'producao_datas_historico 29 '''', ''data''',
                 'producao_espacos_historico 29 '''', ''nome''', 'producao_funcoes_historico 29 ''definido_por'', ''user_id''',
                 'producao_obras_historico 29 '''', ''titulo''', 'producao_salas_historico 29 '''', ''nome''',
