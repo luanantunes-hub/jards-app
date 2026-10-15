@@ -39,3 +39,13 @@ const TIPOS_DE_DATA_POR_ID: Record<TipoData, true> = {
   outro: true,
 };
 export const TIPOS_DE_DATA = Object.keys(TIPOS_DE_DATA_POR_ID) as TipoData[];
+
+// O histórico das alterações (PD0.10): o que ele registra de um registro. O banco confere esta lista
+// num CHECK de `producao_historico.acao` (supabase/migrations/*_producao_historico.sql) e
+// tests/producao-historico-sql.test.ts garante que o SQL e este arquivo dizem a mesma coisa. A tabela
+// de origem (`entidade`) NÃO está aqui: é aberta, e uma tabela nova da produção entra no histórico só
+// com um gatilho. A PD0.9 (espaços e salas) não fecha lista nenhuma: o tipo do espaço é do catálogo.
+
+/** `producao_historico.acao`: criou e apagou deixam uma linha só; alterou deixa uma linha por campo mudado. */
+export type AcaoDoHistorico = "criou" | "alterou" | "apagou";
+export const ACOES_DO_HISTORICO: readonly AcaoDoHistorico[] = ["criou", "alterou", "apagou"];
