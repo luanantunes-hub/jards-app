@@ -4,7 +4,7 @@ import { resposta, rotaMcp } from "@/lib/mcp/rota";
 import { erroDoBanco } from "@/lib/mcp/validacao";
 
 const COLUNAS_EMPRESA =
-  "id,nome,setor,site,domain_key,tipo,status,localizacao,cidades_interesse,ja_patrocina_cultura,patrocina_cultura_com,ja_patrocina_esporte,patrocina_esporte_com,leis_que_usa,janela_decisao,potencial_relacionamento,potencial_justificativa,responsavel_interno_id,empresa_pub_id,created_at,updated_at";
+  "id,nome,setor,site,domain_key,tipo,status,cidade,estado,localizacao,cidades_interesse,ja_patrocina_cultura,patrocina_cultura_com,ja_patrocina_esporte,patrocina_esporte_com,leis_que_usa,janela_decisao,potencial_relacionamento,potencial_justificativa,responsavel_interno_id,empresa_pub_id,created_at,updated_at";
 
 /** Ficha da empresa: ela mesma e o que está ligado a ela (contatos, negociações, o que falta fazer, o que já aconteceu). */
 export const GET = rotaMcp({ escrita: false }, async ({ admin, orgId, id, origem }) => {

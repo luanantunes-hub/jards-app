@@ -64,9 +64,13 @@ export function construirSpecOpenApi(baseUrl: string) {
 
   const uuid = (description?: string) => ({ type: "string", format: "uuid", ...(description ? { description } : {}) });
   const texto = (description?: string) => ({ type: "string", ...(description ? { description } : {}) });
+  // Toda criação aceita a chave: repetir o pedido com a mesma chave devolve o resultado de antes, sem duplicar.
+  const chaveIdempotencia = texto(
+    "Texto único por ação (ex.: um UUID novo). Se a rede falhar, repita o pedido com a MESMA chave: nada é criado duas vezes."
+  );
   const corpoJson = (required: string[], properties: Record<string, unknown>) => ({
     required: true,
-    content: { "application/json": { schema: { type: "object", required, properties } } },
+    content: { "application/json": { schema: { type: "object", required, properties: { ...properties, chave_idempotencia: chaveIdempotencia } } } },
   });
   const orgNoCorpo = { organization_id: uuid("Opcional se você pertence a uma única organização.") };
 
@@ -151,6 +155,8 @@ export function construirSpecOpenApi(baseUrl: string) {
             orgIdParam,
             buscaParam,
             { name: "tipo", in: "query", required: false, schema: { type: "string", enum: [...TIPOS_EMPRESA] } },
+            { name: "cidade", in: "query", required: false, schema: { type: "string" }, description: "Só empresas desta cidade, ex.: Curitiba." },
+            { name: "estado", in: "query", required: false, schema: { type: "string" }, description: "Sigla do estado, ex.: PR." },
             limiteParam,
             deslocamentoParam,
           ],
@@ -165,7 +171,9 @@ export function construirSpecOpenApi(baseUrl: string) {
             site: texto("Site (ex.: vale.com): dá o logotipo na tela."),
             setor: texto(),
             tipo: { type: "string", enum: [...TIPOS_EMPRESA], description: "prospect (padrão), cliente_ativo ou ex_cliente." },
-            localizacao: texto("Cidade/UF."),
+            cidade: texto("Cidade da sede. Sem ela, herda da empresa da base pública quando há ligação."),
+            estado: texto("Sigla do estado da sede (ex.: PR). Só aceita estados válidos."),
+            localizacao: texto('Atalho "Cidade-UF" (ex.: Curitiba-PR). Prefira cidade e estado.'),
             cidades_interesse: { type: "array", items: { type: "string" } },
             ja_patrocina_cultura: { type: "boolean" },
             ja_patrocina_esporte: { type: "boolean" },
@@ -459,9 +467,39 @@ export function construirSpecOpenApi(baseUrl: string) {
       "/patrocinadores-publicos": {
         get: {
           operationId: "listarPatrocinadoresPublicos",
-          summary: "Consulta a base pública de empresas/patrocinadores do Jards (não é a carteira da organização)",
-          parameters: [buscaParam, limiteParam],
+          summary:
+            "Consulta a base pública de empresas do Jards (não é a carteira da organização). Filtra por cidade, estado e setor; devolve o total, a próxima página e quantos contatos cada empresa tem e quanto custa liberá-los.",
+          parameters: [
+            orgIdParam,
+            { ...buscaParam, description: "Vale para nome, cidade e setor (sem diferenciar acento). Duas letras que são um estado, como PR, valem como estado." },
+            { name: "cidade", in: "query", required: false, schema: { type: "string" }, description: "Só empresas desta cidade, ex.: Curitiba." },
+            { name: "estado", in: "query", required: false, schema: { type: "string" }, description: "Sigla do estado, ex.: PR." },
+            { name: "setor", in: "query", required: false, schema: { type: "string" }, description: "Setor, ex.: Logística." },
+            limiteParam,
+            deslocamentoParam,
+          ],
           responses: { "200": { description: "OK" } },
+        },
+      },
+      "/empresas/base-publica": {
+        post: {
+          operationId: "adicionarEmpresasDaBasePublica",
+          summary:
+            "Adiciona ao CRM, em lote (até 50), empresas da base pública, por ids ou por filtro. Sem duplicar. Mostra quantos contatos há e o custo de liberá-los; só libera com desbloquear_contatos e a confirmação exata do custo.",
+          requestBody: corpoJson([], {
+            ...orgNoCorpo,
+            empresa_pub_ids: { type: "array", items: { type: "string" }, description: "Ids da base pública (listar_patrocinadores_publicos). Use estes ou os filtros." },
+            busca: texto("Filtro: vale para nome, cidade e setor."),
+            cidade: texto("Filtro: cidade."),
+            estado: texto("Filtro: sigla do estado."),
+            setor: texto("Filtro: setor."),
+            limite: { type: "integer", minimum: 1, maximum: 50, description: "Com filtro: quantas empresas do resultado adicionar (padrão 20)." },
+            deslocamento: { type: "integer", minimum: 0, description: "Com filtro: quantas pular, para o lote seguinte." },
+            tipo: { type: "string", enum: [...TIPOS_EMPRESA], description: "prospect (padrão), cliente_ativo ou ex_cliente." },
+            desbloquear_contatos: { type: "boolean", description: "Verdadeiro: libera os contatos (1 crédito por empresa). Exige confirmar_custo_creditos." },
+            confirmar_custo_creditos: { type: "integer", minimum: 0, description: "O custo total que a pessoa aceitou gastar. Tem de ser igual ao custo calculado (o pedido sem desbloquear_contatos mostra)." },
+          }),
+          responses: { "201": { description: "Criadas" }, "200": { description: "Já existiam" }, "402": { description: "Créditos insuficientes" }, "409": { description: "Custo não confirmado" } },
         },
       },
       "/analise/carteira-empresa": {
