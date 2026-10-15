@@ -44,7 +44,7 @@ import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
-import { destinoSemAcesso, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
+import { destinoSemAcesso, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, paginaDeEntrada, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
 import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
@@ -159,7 +159,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [ehProponente, setEhProponente]     = useState(false);
   const [plan, setPlan]                     = useState<PlanTipo | null>(null);
   const [org, setOrg]                       = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
-  const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
+  const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; modulosOrganizacao: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
   const [orgSwitcherOpen, setOrgSwitcherOpen] = useState(false);
   const [mobileOpen, setMobileOpen]         = useState(false);
   // Com a lista de módulos aberta, o menu lateral fica aberto até a escolha.
@@ -339,7 +339,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     setOrgSwitcherOpen(false);
     // Os módulos ativos são da organização: relê para a nova, antes de redirecionar por módulo.
     void carregarModulosOrg(alvo.organizationId);
-    router.push(alvo.papel === "captador" ? "/workspace-captador" : "/dashboard");
+    // Abre a página inicial do módulo que a pessoa usa na nova organização (a da captação, se a usa).
+    router.push(alvo.papel === "captador"
+      ? "/workspace-captador"
+      : paginaDeEntrada(isSuperAdmin, [{ modulosOrganizacao: alvo.modulosOrganizacao, modulosMembro: alvo.modulosAcesso }]));
   }
 
   async function handleLogout() {
