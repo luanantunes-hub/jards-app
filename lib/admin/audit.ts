@@ -17,11 +17,13 @@ export type AdminAuditInput = {
 /**
  * A auditoria nunca deve interromper a operação principal.
  * As rotas já validam o administrador antes de chamar esta função.
+ * `cliente` é o banco com a chave de serviço que a rota já abriu (os testes das
+ * rotas passam um falso); sem ele, a função abre o dela.
  */
-export async function writeAdminAuditLog(input: AdminAuditInput): Promise<void> {
+export async function writeAdminAuditLog(input: AdminAuditInput, cliente?: any): Promise<void> {
   try {
-    const admin = createAdminClient();
-    await (admin as any).from("admin_audit_logs").insert({
+    const admin = cliente ?? createAdminClient();
+    await admin.from("admin_audit_logs").insert({
       actor_user_id: input.actorUserId,
       organization_id: input.organizationId ?? null,
       action: input.action,

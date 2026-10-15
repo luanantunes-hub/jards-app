@@ -4,9 +4,11 @@
  */
 export interface Consulta {
   tabela: string;
-  acao: "select" | "insert" | "update" | "delete" | "rpc";
+  acao: "select" | "insert" | "upsert" | "update" | "delete" | "rpc";
   colunas?: string;
   valores?: unknown;
+  /** Segundo argumento do upsert (`onConflict`). */
+  opcoes?: unknown;
   filtros: Array<[operador: string, coluna: string, valor: unknown]>;
   unico: "maybe" | "single" | null;
 }
@@ -34,6 +36,12 @@ export function bancoFalso(resolver: Resolvedor) {
       insert(valores: unknown) {
         consulta.acao = "insert";
         consulta.valores = valores;
+        return cadeia;
+      },
+      upsert(valores: unknown, opcoes?: unknown) {
+        consulta.acao = "upsert";
+        consulta.valores = valores;
+        consulta.opcoes = opcoes;
         return cadeia;
       },
       update(valores: unknown) {
