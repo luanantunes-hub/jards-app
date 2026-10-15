@@ -1,19 +1,23 @@
 -- PD0.6: a rotina diária das cortesias avisa por módulo (prestação e produção).
 --
--- Confere a migration producao_cortesia_por_modulo sobre os mesmos dados que a
--- definição anterior da rotina (20261011110000, colada aqui como
--- pg_temp.cortesias_antiga). Em cada cenário da prestação a rotina antiga e a nova
--- rodam sobre o mesmo ponto de partida (cada rodada é desfeita por um ponto de
+-- Confere as migrations producao_cortesia_por_modulo e cortesia_prestacao_aviso_fim
+-- sobre os mesmos dados que a definição anterior da rotina (20261011110000, colada
+-- aqui como pg_temp.cortesias_antiga). Em cada cenário da prestação a rotina antiga e
+-- a nova rodam sobre o mesmo ponto de partida (cada rodada é desfeita por um ponto de
 -- salvamento) e o teste compara tudo o que elas deixam: contratos, eventos e
 -- notificações (texto, link, chave de deduplicação), log de auditoria e módulos
--- da organização. Depois a nova roda de verdade nos cenários da produção.
+-- da organização. A única diferença esperada na prestação é o aviso de fim da
+-- cortesia comum (cortesia_prestacao_aviso_fim, pedido do dono em 15/10/2026): a
+-- comparação o tira dos dois lados e as três últimas verificações da prestação o
+-- fixam. Depois a nova roda de verdade nos cenários da produção.
 --
 -- Cenário, criado e desfeito dentro da transação (nada fica gravado). Cada
 -- organização n tem 1 colaborador e o número de administradores indicado; os
 -- ids são 0d060000-0000-4000-8000-… (organizações, cm_teste.org(n)) e
 -- 0d060000-0000-4000-8001-… (pessoas, cm_teste.usr(n)). Fim = dias até o último
 -- dia da cortesia, contados de hoje em Brasília.
---   prestação (grupo P, tem de sair igual à rotina antiga):
+--   prestação (grupo P, tem de sair igual à rotina antiga, fora o aviso de fim da
+--   cortesia comum, que só a organização 7 gera):
 --     1 cortesia a 7 dias, 2 administradores     2 teste grátis a 7 dias
 --     3 cortesia a 3 dias                        4 cortesia a 8 dias (fora da janela)
 --     5 cortesia que termina hoje                6 cortesia a 2 dias, já avisada
@@ -28,14 +32,14 @@
 -- Hoje o banco tem duas cortesias reais da prestação, fora da janela de aviso; as
 -- rodadas também passam por elas, mas só os dados deste cenário entram na conta.
 --
--- Rodar: supabase/tests/README.md, com a migration producao_cortesia_por_modulo
--- na frente.
+-- Rodar: supabase/tests/README.md, com as migrations producao_cortesia_por_modulo e
+-- cortesia_prestacao_aviso_fim na frente (nessa ordem), se ainda não estiverem aplicadas.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(38);
+select plan(41);
 
 -- ─── Rotina antiga (20261011110000), só para comparar ──────────────────────
 
@@ -266,10 +270,23 @@ create function cm_teste.rodada(g text, r text) returns jsonb language sql stabl
   select resultado from cm_teste.rodadas where grupo = g and rotina = r;
 $$;
 
--- ─── A prestação não muda ───────────────────────────────────────────────────
+-- O aviso de fim da cortesia comum da prestação (cortesia_prestacao_aviso_fim) é a
+-- única diferença da rotina nova para a antiga na prestação: a comparação o tira
+-- (eventos e notificações) e as três últimas verificações da prestação o fixam.
+create function cm_teste.sem_fim_da_cortesia(p_depois jsonb) returns jsonb language sql as $$
+  select jsonb_set(
+    jsonb_set(p_depois, '{eventos}',
+      coalesce((select jsonb_agg(e order by o) from jsonb_array_elements(p_depois -> 'eventos') with ordinality t(e, o)
+                where e ->> 'evento' <> 'modulo_cortesia_encerrada'), '[]')),
+    '{notificacoes}',
+    coalesce((select jsonb_agg(n order by o) from jsonb_array_elements(p_depois -> 'notificacoes') with ordinality t(n, o)
+              where n ->> 'tipo' <> 'modulo_cortesia_encerrada'), '[]'));
+$$;
 
-select is(cm_teste.rodada('P', 'nova') -> 'depois', cm_teste.rodada('P', 'antiga') -> 'depois',
-  'prestação: a rotina nova deixa o mesmo que a antiga (contratos, eventos, notificações, auditoria e módulos)');
+-- ─── A prestação não muda (fora o aviso novo de fim da cortesia comum) ──────
+
+select is(cm_teste.sem_fim_da_cortesia(cm_teste.rodada('P', 'nova') -> 'depois'), cm_teste.rodada('P', 'antiga') -> 'depois',
+  'prestação: a rotina nova deixa o mesmo que a antiga (contratos, eventos, notificações, auditoria e módulos), fora o aviso novo de fim da cortesia comum');
 
 select is(cm_teste.rodada('P', 'nova') -> 'retorno', cm_teste.rodada('P', 'antiga') -> 'retorno',
   'prestação: devolve o mesmo número de cortesias encerradas');
@@ -292,6 +309,28 @@ select is((select count(*)::integer from jsonb_array_elements(cm_teste.rodada('P
            where (n ->> 'pessoa')::uuid in (select user_id from public.organization_members
                                             where papel = 'colaborador' and organization_id in (select cm_teste.org(g) from generate_series(1, 15) g))),
   0, 'prestação: colaborador não recebe aviso');
+
+-- ─── O aviso novo: o fim da cortesia comum da prestação ─────────────────────
+
+select is((select array_agg(e ->> 'org' order by e ->> 'org')
+           from jsonb_array_elements(cm_teste.rodada('P', 'nova') -> 'depois' -> 'eventos') e
+           where e ->> 'evento' = 'modulo_cortesia_encerrada'),
+  array[cm_teste.org(7)::text],
+  'prestação: só a cortesia comum encerrada (organização 7) ganha o aviso de fim; o teste grátis encerrado (8) segue com o dele');
+
+select is((select array[n ->> 'tipo', n ->> 'titulo', n ->> 'mensagem', n ->> 'link', n ->> 'categoria', n ->> 'prioridade']
+           from jsonb_array_elements(cm_teste.rodada('P', 'nova') -> 'depois' -> 'notificacoes') n
+           where (n ->> 'pessoa')::uuid = cm_teste.usr(71) and n ->> 'tipo' = 'modulo_cortesia_encerrada'),
+  array['modulo_cortesia_encerrada', 'A cortesia da prestação de contas terminou',
+        'O acesso de cortesia ao módulo de prestação de contas terminou em ' || to_char(cm_teste.hoje() - 1, 'DD/MM/YYYY')
+          || '. Os dados continuam guardados para consulta e exportação. Para voltar a editar, assine em Meu plano.',
+        '/meu-plano?assinar=prestacao', 'sistema', 'alta'],
+  'prestação: o aviso de fim da cortesia leva o texto da prestação e o link de Meu plano');
+
+select is((select n ->> 'dedupe' from jsonb_array_elements(cm_teste.rodada('P', 'nova') -> 'depois' -> 'notificacoes') n
+           where (n ->> 'pessoa')::uuid = cm_teste.usr(71) and n ->> 'tipo' = 'modulo_cortesia_encerrada'),
+  'modulo_cortesia_encerrada:' || cm_teste.contrato(7, 'prestacao') || ':' || (cm_teste.hoje() - 1) || ':' || cm_teste.usr(71),
+  'prestação: a chave de deduplicação do aviso de fim inclui o contrato, a data final e a pessoa');
 
 -- ─── A produção ao lado: o log de auditoria é o de sempre ───────────────────
 
