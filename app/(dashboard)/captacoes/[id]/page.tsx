@@ -388,6 +388,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
 
     const { error } = await (supabase as any).from("atividades").insert({
       account_id: user.id,
+      organization_id: captacao?.organization_id ?? null,
       nome: newAtividadeNome.trim(),
       tipo: newAtividadeTipo,
       nota: newAtividadeNota.trim() || null,
