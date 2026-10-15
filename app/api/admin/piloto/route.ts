@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeAdminAuditLog } from "@/lib/admin/audit";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { dependenciasDeAdmin, lerModuloDoContrato } from "@/lib/admin/servidor";
+import type { ModuloId } from "@/lib/modulos";
 import { erroDoPiloto, medidasDaPrestacao, resumoDaOrganizacao, type DadosDaPrestacaoNoPiloto } from "@/lib/prestacao/piloto";
 
 /* As tabelas da prestação e do piloto ainda não estão no tipo Database. */
@@ -10,12 +10,19 @@ import { erroDoPiloto, medidasDaPrestacao, resumoDaOrganizacao, type DadosDaPres
 // Piloto da prestação de contas (P4.8): as organizações do piloto, o tempo de
 // antes e as medidas da seção 16 do estudo. Só o super admin, com a chave de
 // serviço: piloto_organizacoes não tem política para quem está logado.
+//
+// PD0.6: a leitura (GET) mede o piloto por módulo (`?modulo=`, sem ele vale a
+// prestação). Estar no piloto é da organização (piloto_organizacoes não tem
+// coluna de módulo, e o tempo de antes é o de montar a prestação); o que muda por
+// módulo é o contrato mostrado, quem pode entrar e as medidas. Só a prestação tem
+// medidas hoje: a produção mede quando as fases dela existirem, e até lá devolve
+// as organizações com o contrato dela e nenhuma medida (resumo null).
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const PAGINA = 1000;
 
 async function requireSuperAdmin() {
-  const supabase = await createClient();
+  const supabase = await dependenciasDeAdmin.createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { user: null, allowed: false };
   const { data: profile } = await (supabase as any).from("profiles").select("jards_super_admin").eq("id", user.id).maybeSingle();
@@ -39,17 +46,71 @@ function agrupar(linhas: readonly any[]): Map<string, any[]> {
   return mapa;
 }
 
-export async function GET() {
+type Medidas = ReturnType<typeof medidasDaPrestacao> & { regime: string | null; status: string };
+
+/** As medidas da seção 16 do estudo, por prestação, agrupadas pela organização dela. */
+async function medirPrestacoes(admin: any, ids: string[]): Promise<Map<string, Medidas[]>> {
+  const prestacoes = ids.length
+    ? await todas((de, ate) => admin.from("prestacoes_contas")
+      .select("id, titulo, organization_id, created_at, prazo_final, prazo_final_override, status, regime:regime_id(codigo)")
+      .in("organization_id", ids).order("created_at").range(de, ate))
+    : [];
+  const pids = prestacoes.map(p => p.id as string);
+  const porPrestacao = async (tabela: string, campos: string, filtro?: (q: any) => any) => pids.length
+    ? agrupar(await todas((de, ate) => {
+      const q = admin.from(tabela).select(campos).in("prestacao_id", pids);
+      return (filtro ? filtro(q) : q).order("id").range(de, ate);
+    }))
+    : new Map<string, any[]>();
+
+  const [envios, contas, lancamentos, pagamentos, chamadas, diligencias] = await Promise.all([
+    porPrestacao("prestacao_envios", "id, prestacao_id, enviado_em", q => q.eq("etapa", "final")),
+    porPrestacao("prestacao_contas_bancarias", "id, prestacao_id, tipo"),
+    porPrestacao("prestacao_lancamentos", "id, prestacao_id, conta_id, data, natureza, valor, historico, numero_documento, numero_normalizado, categoria", q => q.eq("natureza", "debito")),
+    porPrestacao("prestacao_pagamentos", "id, prestacao_id, despesa_id, data, valor, numero_documento, favorecido_documento, lancamento_id"),
+    porPrestacao("prestacao_ia_chamadas", "id, prestacao_id, custo_usd, sucesso"),
+    porPrestacao("prestacao_diligencias", "id, prestacao_id, preditiva, apontamentos"),
+  ]);
+
+  const medidasPorOrg = new Map<string, Medidas[]>();
+  for (const p of prestacoes) {
+    const dados: DadosDaPrestacaoNoPiloto = {
+      id: p.id,
+      titulo: p.titulo,
+      criadaEm: p.created_at,
+      prazoFinal: p.prazo_final_override ?? p.prazo_final ?? null,
+      enviosFinais: envios.get(p.id) ?? [],
+      contas: contas.get(p.id) ?? [],
+      lancamentos: lancamentos.get(p.id) ?? [],
+      pagamentos: pagamentos.get(p.id) ?? [],
+      chamadasIa: chamadas.get(p.id) ?? [],
+      diligencias: (diligencias.get(p.id) ?? []).map(d => ({ preditiva: Boolean(d.preditiva), apontamentos: d.apontamentos ?? [] })),
+    };
+    const medidas = { ...medidasDaPrestacao(dados), regime: p.regime?.codigo ?? null, status: p.status };
+    medidasPorOrg.set(p.organization_id, [...(medidasPorOrg.get(p.organization_id) ?? []), medidas]);
+  }
+  return medidasPorOrg;
+}
+
+/** Quem mede o piloto de cada módulo. Módulo sem medida ainda (a produção) não aparece aqui. */
+const MEDIDAS_DO_MODULO: Partial<Record<ModuloId, (admin: any, ids: string[]) => Promise<Map<string, Medidas[]>>>> = {
+  prestacao: medirPrestacoes,
+};
+
+export async function GET(request: NextRequest) {
   const { user, allowed } = await requireSuperAdmin();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
   if (!allowed) return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
 
-  const admin = createAdminClient() as any;
+  const modulo = lerModuloDoContrato(request.nextUrl.searchParams.get("modulo") ?? undefined);
+  if (!modulo) return NextResponse.json({ error: "Módulo inválido" }, { status: 400 });
+
+  const admin = dependenciasDeAdmin.createAdminClient() as any;
   try {
     const [piloto, orgs, contratos] = await Promise.all([
       admin.from("piloto_organizacoes").select("organization_id, entrou_em, dias_antes, observacoes, created_at").order("created_at"),
       admin.from("organizations").select("id, nome").order("nome"),
-      admin.from("organization_modulos").select("organization_id, status, cortesia_ate").eq("modulo", "prestacao"),
+      admin.from("organization_modulos").select("organization_id, status, cortesia_ate").eq("modulo", modulo),
     ]);
     const falha = piloto.error ?? orgs.error ?? contratos.error;
     if (falha) throw new Error(falha.message);
@@ -58,46 +119,8 @@ export async function GET() {
     const contratoPorOrg = new Map((contratos.data ?? []).map((c: any) => [c.organization_id, c]));
     const ids = (piloto.data ?? []).map((p: any) => p.organization_id as string);
 
-    const prestacoes = ids.length
-      ? await todas((de, ate) => admin.from("prestacoes_contas")
-        .select("id, titulo, organization_id, created_at, prazo_final, prazo_final_override, status, regime:regime_id(codigo)")
-        .in("organization_id", ids).order("created_at").range(de, ate))
-      : [];
-    const pids = prestacoes.map(p => p.id as string);
-    const porPrestacao = async (tabela: string, campos: string, filtro?: (q: any) => any) => pids.length
-      ? agrupar(await todas((de, ate) => {
-        const q = admin.from(tabela).select(campos).in("prestacao_id", pids);
-        return (filtro ? filtro(q) : q).order("id").range(de, ate);
-      }))
-      : new Map<string, any[]>();
-
-    const [envios, contas, lancamentos, pagamentos, chamadas, diligencias] = await Promise.all([
-      porPrestacao("prestacao_envios", "id, prestacao_id, enviado_em", q => q.eq("etapa", "final")),
-      porPrestacao("prestacao_contas_bancarias", "id, prestacao_id, tipo"),
-      porPrestacao("prestacao_lancamentos", "id, prestacao_id, conta_id, data, natureza, valor, historico, numero_documento, numero_normalizado, categoria", q => q.eq("natureza", "debito")),
-      porPrestacao("prestacao_pagamentos", "id, prestacao_id, despesa_id, data, valor, numero_documento, favorecido_documento, lancamento_id"),
-      porPrestacao("prestacao_ia_chamadas", "id, prestacao_id, custo_usd, sucesso"),
-      porPrestacao("prestacao_diligencias", "id, prestacao_id, preditiva, apontamentos"),
-    ]);
-
-    type Medidas = ReturnType<typeof medidasDaPrestacao> & { regime: string | null; status: string };
-    const medidasPorOrg = new Map<string, Medidas[]>();
-    for (const p of prestacoes) {
-      const dados: DadosDaPrestacaoNoPiloto = {
-        id: p.id,
-        titulo: p.titulo,
-        criadaEm: p.created_at,
-        prazoFinal: p.prazo_final_override ?? p.prazo_final ?? null,
-        enviosFinais: envios.get(p.id) ?? [],
-        contas: contas.get(p.id) ?? [],
-        lancamentos: lancamentos.get(p.id) ?? [],
-        pagamentos: pagamentos.get(p.id) ?? [],
-        chamadasIa: chamadas.get(p.id) ?? [],
-        diligencias: (diligencias.get(p.id) ?? []).map(d => ({ preditiva: Boolean(d.preditiva), apontamentos: d.apontamentos ?? [] })),
-      };
-      const medidas = { ...medidasDaPrestacao(dados), regime: p.regime?.codigo ?? null, status: p.status };
-      medidasPorOrg.set(p.organization_id, [...(medidasPorOrg.get(p.organization_id) ?? []), medidas]);
-    }
+    const medir = MEDIDAS_DO_MODULO[modulo];
+    const medidasPorOrg = medir ? await medir(admin, ids) : new Map<string, Medidas[]>();
 
     return NextResponse.json({
       organizacoes: (piloto.data ?? []).map((o: any) => {
@@ -110,11 +133,11 @@ export async function GET() {
           dias_antes: o.dias_antes,
           observacoes: o.observacoes,
           contrato: contrato ? { status: contrato.status, cortesia_ate: contrato.cortesia_ate } : null,
-          resumo: resumoDaOrganizacao(medidas, o.dias_antes),
+          resumo: medir ? resumoDaOrganizacao(medidas, o.dias_antes) : null,
           prestacoes: medidas,
         };
       }),
-      // As que podem entrar: têm a prestação de contas e ainda não estão no piloto.
+      // As que podem entrar: têm o módulo e ainda não estão no piloto.
       candidatas: (orgs.data ?? [])
         .filter((o: any) => contratoPorOrg.has(o.id) && !ids.includes(o.id) && (contratoPorOrg.get(o.id) as any).status !== "cancelado")
         .map((o: any) => ({ id: o.id, nome: o.nome, status: (contratoPorOrg.get(o.id) as any).status })),
@@ -138,7 +161,7 @@ export async function POST(request: NextRequest) {
   const problema = erroDoPiloto({ diasAntes, observacoes });
   if (problema) return NextResponse.json({ error: problema }, { status: 400 });
 
-  const admin = createAdminClient() as any;
+  const admin = dependenciasDeAdmin.createAdminClient() as any;
   const [{ data: org }, { data: atual }] = await Promise.all([
     admin.from("organizations").select("id, nome").eq("id", organizationId).maybeSingle(),
     admin.from("piloto_organizacoes").select("organization_id").eq("organization_id", organizationId).maybeSingle(),
@@ -163,7 +186,7 @@ export async function POST(request: NextRequest) {
     resourceId: organizationId,
     summary: atual ? `Alterou ${org.nome} no piloto da prestação de contas` : `Incluiu ${org.nome} no piloto da prestação de contas`,
     metadata: { piloto: true, dias_antes: linha.dias_antes },
-  });
+  }, admin);
   return NextResponse.json({ ok: true });
 }
 
@@ -174,7 +197,7 @@ export async function DELETE(request: NextRequest) {
 
   const organizationId = request.nextUrl.searchParams.get("organizacao") ?? "";
   if (!UUID.test(organizationId)) return NextResponse.json({ error: "Organização inválida" }, { status: 400 });
-  const admin = createAdminClient() as any;
+  const admin = dependenciasDeAdmin.createAdminClient() as any;
   const { data: org } = await admin.from("organizations").select("nome").eq("id", organizationId).maybeSingle();
   const { error } = await admin.from("piloto_organizacoes").delete().eq("organization_id", organizationId);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -187,6 +210,6 @@ export async function DELETE(request: NextRequest) {
     resourceId: organizationId,
     summary: `Tirou ${org?.nome ?? "a organização"} do piloto da prestação de contas`,
     metadata: { piloto: true },
-  });
+  }, admin);
   return NextResponse.json({ ok: true });
 }
