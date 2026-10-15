@@ -125,7 +125,8 @@ export function validarCortesia(pedido: PedidoCortesia, emUso: number, hoje: str
 /**
  * Erros das funções de acesso por módulo (admin_definir_acesso_modulo,
  * alterar_modulos_membro, convites), em linguagem da tela. Os códigos mais
- * específicos vêm antes: "sem_vaga_prestacao" também contém "sem_vaga".
+ * específicos vêm antes: "sem_vaga_prestacao" e "sem_vaga_producao" também
+ * contêm "sem_vaga".
  */
 const ERROS_ACESSO: Record<string, string> = {
   membro_inexistente: "Essa pessoa não faz parte da organização.",
@@ -135,6 +136,7 @@ const ERROS_ACESSO: Record<string, string> = {
   funcao_invalida: "Função na prestação desconhecida.",
   sem_vaga_captacao: "Todas as vagas da captação estão em uso. Compre usuários extras antes.",
   sem_vaga_prestacao: "Todas as vagas da prestação de contas estão em uso.",
+  sem_vaga_producao: "Todas as vagas da produção estão em uso.",
   sem_vaga: "Todas as vagas estão em uso.",
   ultimo_modulo: "A pessoa ficaria sem nenhum módulo.",
 };

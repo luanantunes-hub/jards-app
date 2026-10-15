@@ -5,11 +5,9 @@ import test from "node:test";
 
 // A lista de módulos mora em lib/modulos.ts (MODULOS). Lista escrita à mão em
 // outro arquivo fica para trás quando entra um módulo novo, como a produção.
-// As que já existiam estão abaixo, com a entrega do plano da produção que as troca.
-const JA_EXISTENTES: Record<string, number> = {
-  "app/(dashboard)/configuracoes/page.tsx": 1, // PD0.5
-  "components/modals/NovoMembroModal.tsx": 2, // PD0.5
-};
+// As que existiam (convite e equipe) saíram na PD0.5: hoje não há exceção, e
+// uma nova só entra aqui com a entrega do plano que a troca.
+const JA_EXISTENTES: Record<string, number> = {};
 
 const PASTAS = ["app", "components", "lib", "hooks", "contexts", "supabase/functions", "mcp-server/src"];
 const ARQUIVOS_DA_RAIZ = ["proxy.ts"];
