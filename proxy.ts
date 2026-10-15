@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { INICIO_DO_MODULO } from "@/lib/modulos";
+import { entradaDoAcesso, lerAcessoAosModulos } from "@/lib/modulos-acesso";
 
 const WINDOW_MS = 60_000;
 
@@ -96,11 +98,12 @@ export async function proxy(request: NextRequest) {
   const ip = getIp(request);
   const identity = user?.id ?? ip;
 
-  // Usuário logado na raiz vai direto pro dashboard. Deslogado segue para
+  // Usuário logado na raiz vai direto pra página de entrada (a da captação, ou
+  // a do módulo que usa quando não usa a captação). Deslogado segue para
   // app/route.ts, que serve a landing page.
   if (pathname === "/" && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = await paginaDeEntradaDe(supabase, user.id);
     return NextResponse.redirect(url);
   }
 
@@ -200,15 +203,42 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Usuário logado acessando login → dashboard
+  // Usuário logado acessando login → página de entrada
   if (user && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = await paginaDeEntradaDe(supabase, user.id);
     url.searchParams.delete("next");
     return NextResponse.redirect(url);
   }
 
+  // Quem não usa a captação em nenhuma organização (só a produção, por exemplo)
+  // não passa por ela ao entrar: abrir /dashboard (depois do login, pela raiz ou
+  // por um favorito) leva à página inicial do módulo que usa, antes de qualquer
+  // tela. Só vale para abertura de página: a navegação dentro do app (RSC) e a
+  // pré-busca não trazem Sec-Fetch-Dest "document" e seguem pelo layout de
+  // cliente, que conhece a organização aberta. A consulta que falha não tira
+  // ninguém da captação. A busca (?_imp=1&...) vai junto no redirecionamento.
+  if (user && pathname === "/dashboard" && request.method === "GET" && request.headers.get("sec-fetch-dest") === "document") {
+    const entrada = await paginaDeEntradaDe(supabase, user.id);
+    if (entrada !== INICIO_DO_MODULO.captacao) {
+      const url = request.nextUrl.clone();
+      url.pathname = entrada;
+      const redirecionamento = NextResponse.redirect(url);
+      // O token pode ter sido renovado nesta requisição: o redirecionamento leva os cookies novos.
+      supabaseResponse.cookies.getAll().forEach(cookie => redirecionamento.cookies.set(cookie));
+      return redirecionamento;
+    }
+  }
+
   return supabaseResponse;
+}
+
+/** O proxy não espera mais que isto pela leitura que decide a página de entrada (a consulta normal leva dezenas de ms). */
+const LIMITE_DA_LEITURA_MS = 1_500;
+
+/** Página de entrada de quem está logado, lida do banco; sem leitura completa (ou fora do prazo), a da captação. */
+async function paginaDeEntradaDe(supabase: Parameters<typeof lerAcessoAosModulos>[0], userId: string): Promise<string> {
+  return entradaDoAcesso(await lerAcessoAosModulos(supabase, userId, { limiteMs: LIMITE_DA_LEITURA_MS }));
 }
 
 export const config = {
