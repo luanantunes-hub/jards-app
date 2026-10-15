@@ -10,7 +10,9 @@
 
 `captacao_isolada.test.sql` confere a PD0.4 (a captação isolada no banco): quem não tem o módulo Captação não lê nem escreve nas tabelas comerciais, quem tem fica como estava, e captador e proponente não leem as tabelas de dinheiro e contratos. Monta três organizações (só captação, só prestação, as duas) e onze pessoas, sonda nove tabelas de cada jeito de proteção e confere, por catálogo, as 42 regras. Um caso reprova se surgir tabela com `organization_id` sem classificação (fechada, compartilhada, de plataforma ou sem regra): decida em qual grupo ela entra. Roda do mesmo jeito, de preferência com a migration `producao_captacao_isolada` na frente.
 
-O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`, e `tests/producao-captacao-isolada-sql.test.ts` faz o mesmo para a captação isolada.
+`tabelas_por_organizacao.test.sql` confere a PD0.4b (as tabelas centrais por organização): a equipe da organização lê e edita projetos, atividades, negociações, contatos e inscrições dos colegas; captador e proponente seguem só com o que criaram; só o admin apaga o que é de outra pessoa; ninguém grava na organização de outro inquilino; o super admin não ganha leitura de outras organizações. Mesmo cenário de três organizações e onze pessoas, e o mesmo jeito de rodar.
+
+O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`, e `tests/producao-captacao-isolada-sql.test.ts` e `tests/producao-tabelas-por-organizacao-sql.test.ts` fazem o mesmo para a captação isolada e para as tabelas por organização.
 
 ## Rodar
 
