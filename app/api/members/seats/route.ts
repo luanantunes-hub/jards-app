@@ -1,31 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import Stripe from "stripe";
+import { dependenciasDeEquipe } from "@/lib/equipe-servidor";
 import { novoStripe } from "@/lib/stripe";
 
 const SEAT_PRICE_ID = process.env.STRIPE_PRICE_SEAT ?? "";
 const UNIT_PRICE = 19.9;
 
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
-}
-
-async function authenticatedUser() {
-  const cookieStore = await cookies();
-  const client = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } },
-  );
-  const { data: { user } } = await client.auth.getUser();
-  return user;
-}
+const adminClient = () => dependenciasDeEquipe.criarAdmin();
+const authenticatedUser = () => dependenciasDeEquipe.usuarioAtual();
 
 async function requireAdmin(organizationId: string, userId: string) {
   const admin = adminClient();

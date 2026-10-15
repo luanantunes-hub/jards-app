@@ -1,18 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 import { destinoDoConvite, lerPedidoModulos, respostaErroEquipe } from "@/lib/equipe-modulos";
+import { dependenciasDeEquipe } from "@/lib/equipe-servidor";
 
 type MemberRole = "admin" | "colaborador" | "leitor" | "captador" | "proponente";
 
-function adminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } },
-  );
-}
+const adminClient = () => dependenciasDeEquipe.criarAdmin();
 
 // ilike trata % e _ como curingas: "%@empresa.com" acharia qualquer perfil
 // daquele domínio. O e-mail é comparado literalmente.
@@ -26,13 +18,7 @@ function rpcErrorResponse(error: { code?: string; message?: string }) {
 }
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const userClient = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } },
-  );
-  const { data: { user } } = await userClient.auth.getUser();
+  const user = await dependenciasDeEquipe.usuarioAtual();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const body = await req.json().catch(() => null) as {
