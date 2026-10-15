@@ -475,6 +475,9 @@ export interface EmpresaCrm {
   potencial_relacionamento: number | null;
   potencial_justificativa: string | null;
   localizacao: string | null;
+  /** Cidade e UF da sede, separadas (um gatilho no banco as mantém em sincronia com `localizacao`). */
+  cidade?: string | null;
+  estado?: string | null;
   cidades_interesse: string[];
   ja_patrocina_cultura: boolean | null;
   patrocina_cultura_com: string | null;
