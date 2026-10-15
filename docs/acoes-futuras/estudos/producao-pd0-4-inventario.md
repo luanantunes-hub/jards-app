@@ -132,5 +132,5 @@ Decisão do dono: passar `captacoes`, `contatos`, `editais_user`, `projetos_crm`
 
 **Fica para depois**
 - **Contração (PD0.4c):** exigir organização na criação e apagar as regras "por pessoa" que viram redundantes.
-- **`fn_sync_empresa_tipo`** roda com as permissões de quem grava: quando um colega altera uma negociação, a atualização do tipo da empresa (cliente ativo ou ex-cliente) só vale se ele tiver criado a empresa. Tornar a função `security definer`, com a conferência da organização, é uma entrega pequena à parte.
+- **`fn_sync_empresa_tipo`** roda com as permissões de quem grava: quando um colega altera uma negociação, a atualização do tipo da empresa (cliente ativo ou ex-cliente) só vale se ele tiver criado a empresa. **Feito em 15/10/2026** (versão `20261015082216`, `sync_empresa_tipo_definer`): a função passou a `security definer`, com o caminho de busca fixo e toda leitura e atualização limitadas à organização da linha que disparou o gatilho; conferido numa transação desfeita (com a função antiga, o colega que encerrava a conta do cliente deixava a empresa como cliente ativo; com a nova vira ex-cliente) e com o teste `supabase/tests/sync_empresa_tipo.test.sql`.
 - **Leitor** ainda cria linhas próprias pela regra antiga; hoje a tela é que o impede.
