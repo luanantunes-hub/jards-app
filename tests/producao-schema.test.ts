@@ -471,3 +471,24 @@ test("o README dos testes de banco descreve o teste de acesso do esqueleto", asy
   assert.match(leia, /`producao_rls\.test\.sql` confere a PD0\.8/);
   assert.match(leia, /tests\/producao-schema\.test\.ts/);
 });
+
+test("o ajuste das chaves só adia a conferência das três que seguram apagar pai com filho", async () => {
+  const nome = (await readdir("supabase/migrations")).find(n => n.endsWith("_producao_esqueleto_chaves_adiadas.sql"));
+  assert.ok(nome, "migration producao_esqueleto_chaves_adiadas.sql não encontrada");
+  const sql = await readFile(`supabase/migrations/${nome}`, "utf8");
+  assert.doesNotMatch(semComentarios(sql), /\bdrop\b/i);
+  const comandos = comandosDe(sql);
+  assert.ok(comandos.includes("set local lock_timeout = '10s'"));
+  assert.deepEqual(comandos.filter(c => c.startsWith("alter table")).sort(), [
+    "alter table public.producao_datas alter constraint producao_datas_obra_id_fkey deferrable initially deferred",
+    "alter table public.producao_datas alter constraint producao_datas_temporada_id_fkey deferrable initially deferred",
+    "alter table public.producao_temporadas alter constraint producao_temporadas_obra_id_fkey deferrable initially deferred",
+  ]);
+  assert.equal(comandos.length, 4, "o lock_timeout e as três alterações, nada mais");
+  // São as chaves do esqueleto que não apagam em cascata nem desligam: sem on delete na migration base.
+  const base = normalizar(semComentarios((await migration()).sql));
+  assert.equal(base.match(/obra_id uuid references public\.producao_obras \(id\),/g)?.length, 2, "temporadas.obra_id e datas.obra_id");
+  assert.equal(base.match(/temporada_id uuid not null references public\.producao_temporadas \(id\),/g)?.length, 1, "datas.temporada_id");
+  // O motivo está dito: o apagamento da organização.
+  assert.match(sql, /apagamento de uma organização inteira/);
+});

@@ -51,8 +51,10 @@
 -- ─── Apagar ─────────────────────────────────────────────────────────────────
 -- O que tem filho de verdade não se apaga por engano (a exclusão em cascata foi
 -- um defeito apontado nas referências):
---   temporada com datas, e obra com temporadas ou datas: o banco recusa (23503,
---     no fim do comando). A obra se arquiva (arquivada); a temporada se esvazia
+--   temporada com datas, e obra com temporadas ou datas: o banco recusa (23503;
+--     as três chaves foram adiadas até o fim da transação por
+--     20261015092845_producao_esqueleto_chaves_adiadas.sql, para o apagamento da
+--     organização inteira, que apaga o pai antes do filho, passar). A obra se arquiva (arquivada); a temporada se esvazia
 --     antes, ou as datas e a temporada saem no mesmo comando ou numa função;
 --   data: apaga os blocos dela (o dia em blocos é o conteúdo da data);
 --   projeto, empresa e responsável: só se desligam (set null), sem apagar a obra,

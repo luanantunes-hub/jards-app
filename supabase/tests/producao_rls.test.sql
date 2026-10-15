@@ -45,7 +45,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(153);
+select plan(154);
 
 create schema pe_teste;
 grant usage on schema pe_teste to authenticated, anon;
@@ -156,6 +156,9 @@ declare
 begin
   begin
     execute comando;
+    -- As chaves entre obra, temporada e data são conferidas no fim da transação: força a
+    -- conferência aqui, para o comando ser aceito ou recusado como seria no commit.
+    set constraints all immediate;
     raise exception using errcode = 'RLS00', message = 'aceito';
   exception
     when sqlstate 'RLS00' then
@@ -177,6 +180,8 @@ begin
     foreach comando in array comandos loop
       execute comando;
     end loop;
+    -- Idem: as chaves adiadas são conferidas depois do último comando.
+    set constraints all immediate;
     execute consulta into resultado;
     raise exception using errcode = 'RLS00', message = coalesce(resultado, '(nulo)');
   exception
@@ -735,6 +740,12 @@ select is(pe_teste.depois(array[format($t$delete from public.producao_datas wher
           '0 0', 'esvaziada a temporada (as datas levam os blocos), ela se apaga');
 select is(pe_teste.tenta(format($t$with d as (delete from public.producao_datas where temporada_id = %L) delete from public.producao_temporadas where id = %L$t$, pe_teste.id('2d'), pe_teste.id('2d'))),
           'aceito', 'as datas e a temporada saem no mesmo comando');
+select is(pe_teste.depois(array[
+            format($t$delete from public.producao_obras where organization_id = %L$t$, pe_teste.id('b0')),
+            format($t$delete from public.producao_temporadas where organization_id = %L$t$, pe_teste.id('b0')),
+            format($t$delete from public.producao_datas where organization_id = %L$t$, pe_teste.id('b0'))],
+          format($t$select (select count(*) from public.producao_obras where organization_id = %1$L) || ' ' || (select count(*) from public.producao_temporadas where organization_id = %1$L) || ' ' || (select count(*) from public.producao_datas where organization_id = %1$L) || ' ' || (select count(*) from public.producao_blocos where organization_id = %1$L)$t$, pe_teste.id('b0'))),
+          '0 0 0 0', 'as tabelas de uma organização saem na mesma transação, do pai para o filho: a ordem em que o apagamento da organização as apaga');
 select is(pe_teste.depois(array[format($t$delete from public.producao_datas where id = %L$t$, pe_teste.id('3b'))],
                           format($t$select count(*) from public.producao_blocos where data_id = %L$t$, pe_teste.id('3b'))),
           '0', 'apagar a data apaga os blocos dela');
