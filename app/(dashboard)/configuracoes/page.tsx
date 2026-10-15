@@ -25,6 +25,8 @@ import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { Select } from "@/components/ui/Select";
 import { FUNCOES_PRESTACAO, MODULO_LABEL, modulosDaEquipe, papelPodeUsarModulo } from "@/lib/equipe-modulos";
 import { normalizarModulos, type ModuloId } from "@/lib/modulos";
+import { PermissoesProducaoDoMembro } from "@/components/producao/PermissoesProducaoDoMembro";
+import { useFuncoesProducao } from "@/hooks/useFuncoesProducao";
 
 const MOSTRAR_VISIBILIDADE_EQUIPE = false;
 
@@ -124,6 +126,8 @@ export default function ConfiguracoesPage() {
   const [orgModulos, setOrgModulos] = useState<ModuloId[]>(["captacao"]);
   const [savingOrg, setSavingOrg] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+  // Funções na produção (PD0.7b): só o administrador de uma organização com a produção as lê.
+  const { funcoes: funcoesProducao, atualizar: atualizarFuncaoProducao } = useFuncoesProducao(organizationId, isAdmin && orgModulos.includes("producao"));
 
   useEffect(() => {
     const requestedSection = new URLSearchParams(window.location.search).get("section");
@@ -1002,6 +1006,14 @@ const { data: perfilData } = await (supabase as any)
                     editavel={isAdmin}
                     ocupado={salvando}
                     onChange={(modulos, funcao) => handleAlterarModulos(m.user_id, modulos, funcao)}
+                  />
+                  <PermissoesProducaoDoMembro
+                    organizationId={organizationId}
+                    membro={m}
+                    souAdmin={isAdmin}
+                    modulosDaOrganizacao={orgModulos}
+                    funcao={funcoesProducao ? funcoesProducao[m.user_id] ?? null : undefined}
+                    onSaved={funcao => { atualizarFuncaoProducao(m.user_id, funcao); showSuccess("Permissões da produção atualizadas"); }}
                   />
                 </div>
                 {isAdmin ? (
