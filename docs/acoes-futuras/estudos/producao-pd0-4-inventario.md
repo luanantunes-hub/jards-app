@@ -128,6 +128,8 @@ Decisão do dono: passar `captacoes`, `contatos`, `editais_user`, `projetos_crm`
 
 **Ensaio (transação desfeita, no banco de produção):** teste de acesso 38 de 38, migration reaplicável e, com dados reais, 149 pessoas em 5 tabelas (745 comparações) sem nenhuma diferença: hoje ninguém passa a ver nada novo, porque nenhuma organização tem linhas de mais de uma pessoa nessas tabelas.
 
+**Aplicada em 15/10/2026** (versão `20261015054136`): 15 regras por organização e 4 guardas no catálogo; a atividade antiga foi ligada à organização da conta; 3 projetos do super admin seguem sem organização; a função auxiliar não executa para o visitante.
+
 **Fica para depois**
 - **Contração (PD0.4c):** exigir organização na criação e apagar as regras "por pessoa" que viram redundantes.
 - **`fn_sync_empresa_tipo`** roda com as permissões de quem grava: quando um colega altera uma negociação, a atualização do tipo da empresa (cliente ativo ou ex-cliente) só vale se ele tiver criado a empresa. Tornar a função `security definer`, com a conferência da organização, é uma entrega pequena à parte.
