@@ -15,7 +15,9 @@
 //
 // ─── De onde vêm os dados ───────────────────────────────────────────────────
 // As colunas, a anulabilidade e os padrões são os das migrations da produção
-// (supabase/migrations), conferidos contra o banco real em 15/10/2026.
+// (supabase/migrations), conferidos contra o banco real em 15/10/2026. A tabela
+// producao_arquivos e as três funções dos arquivos (PD0.14) foram escritas a partir das
+// migrations antes de elas serem aplicadas: conferir com o gerador depois de aplicá-las.
 // tests/producao-banco-tipos.test.ts compara este arquivo com elas: uma migration
 // que muda tabela, coluna, chave ou função da produção faz o teste falhar até este
 // arquivo ser atualizado. Para atualizar: escreva a migration, acrescente a coluna em
@@ -23,9 +25,11 @@
 //
 // ─── Onde difere do que o conector gera (supabase gen types) ────────────────
 // - As listas fechadas do banco (CHECK) usam os tipos de estados.ts, em vez de
-//   `string`. O tipo da data vem de vocabulario.ts, onde o tipo mora. O `escopo` de
-//   producao_funcoes ainda não tem tipo em estados.ts, e a união está escrita aqui
-//   (EscopoDaProducao). Tipo e formato do catálogo (obra, temporada, bloco, espaço)
+//   `string`. O tipo da data vem de vocabulario.ts, onde o tipo mora, e o da pasta de
+//   producao_arquivos (PastaDeArquivo) vem da função de borda que escreve o caminho
+//   dos arquivos (supabase/functions/_shared/producao-caminho.ts, sem imports). O
+//   `escopo` de producao_funcoes ainda não tem tipo em estados.ts, e a união está
+//   escrita aqui (EscopoDaProducao). Tipo e formato do catálogo (obra, temporada, bloco, espaço)
 //   seguem `string`: o banco só confere a forma, para um tipo novo não pedir migration.
 // - Functions traz só o que o navegador executa (`grant execute ... to authenticated`).
 //   A ficha da pessoa (auth_producao_ficha) e os gatilhos são internos.
@@ -33,8 +37,8 @@
 //   aprova) e o id dos três recortes (`p_temporada_id`, `p_espaco_id`, `p_obra_id`): com
 //   nulo, a função responde só se a pessoa tem recorte (é assim que auth_producao_ve_obra
 //   pergunta à temporada).
-// - Relationships não lista as chaves para auth.users (`definido_por` e `quem`): o
-//   PostgREST só expõe o schema public, e o gerador também as omite.
+// - Relationships não lista as chaves para auth.users (`definido_por`, `quem` e
+//   `enviado_por`): o PostgREST só expõe o schema public, e o gerador também as omite.
 //
 // ─── O que não está aqui ────────────────────────────────────────────────────
 // organizations, empresas_crm, projetos_crm e organization_members aparecem só como
@@ -50,6 +54,7 @@ import type {
   SituacaoDaTemporada,
 } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
+import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
 /** `producao_funcoes.escopo`: a organização inteira, ou só as temporadas e os espaços em que a pessoa está vinculada. */
 export type EscopoDaProducao = "organizacao" | "vinculado";
@@ -617,11 +622,87 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_arquivos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          data_id: string | null;
+          pasta: PastaDeArquivo;
+          storage_path: string;
+          nome: string;
+          tipo: string;
+          tamanho: number;
+          sha256: string;
+          enviado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        // Quem está logado altera só `nome` e `data_id` (privilégio por coluna); o gatilho recusa o resto.
+        // `enviado_por` é quem está logado (o padrão é auth.uid(), e o gatilho recusa outro valor).
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          data_id?: string | null;
+          pasta: PastaDeArquivo;
+          storage_path: string;
+          nome: string;
+          tipo: string;
+          tamanho: number;
+          sha256: string;
+          enviado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          data_id?: string | null;
+          pasta?: PastaDeArquivo;
+          storage_path?: string;
+          nome?: string;
+          tipo?: string;
+          tamanho?: number;
+          sha256?: string;
+          enviado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_arquivos_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_arquivos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_arquivos_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
     };
     Functions: {
+      auth_producao_arquivo_pode: {
+        Args: { p_nome: string; p_acao: string };
+        Returns: boolean;
+      };
       auth_producao_dinheiro_sem_assinatura: {
         Args: { p_org: string };
         Returns: boolean;
@@ -632,6 +713,10 @@ export type BancoDaProducao = {
       };
       auth_producao_papel_permite: {
         Args: { p_papel: string; p_dinheiro: boolean; p_alcada: number | null; p_acao: string };
+        Returns: boolean;
+      };
+      auth_producao_pasta_pode: {
+        Args: { p_org: string; p_pasta: string; p_acao: string };
         Returns: boolean;
       };
       auth_producao_pode: {
@@ -653,6 +738,10 @@ export type BancoDaProducao = {
       auth_producao_ve_temporada: {
         Args: { p_org: string; p_temporada_id: string | null };
         Returns: boolean;
+      };
+      fn_producao_caminho_partes: {
+        Args: { p_nome: string };
+        Returns: string[];
       };
       fn_producao_definir_funcao: {
         Args: { p_org: string; p_user: string; p_dinheiro: boolean; p_alcada: number | null; p_escopo: EscopoDaProducao };

@@ -4,6 +4,7 @@ import test from "node:test";
 import {
   ACOES_DO_HISTORICO, EXIBICOES_DO_BLOCO, LADOS_DA_TEMPORADA, SITUACOES_DA_DATA, SITUACOES_DA_TEMPORADA, TIPOS_DE_DATA,
 } from "../lib/producao/estados";
+import { PASTAS_DE_ARQUIVO } from "../supabase/functions/_shared/producao-caminho";
 import { lerBancoTs, unioesDeTextos, type BancoNoTipo, type ChaveDoTipo } from "./_helpers/producao-banco-ts";
 import { lerMigrations, tipoTsDe, type ArquivoSql, type BancoNasMigrations, type ColunaDaMigration } from "./_helpers/producao-migrations";
 
@@ -24,6 +25,8 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_datas.situacao": { tipo: "SituacaoDaData", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_DATA },
   "producao_blocos.exibicao": { tipo: "ExibicaoDoBloco", modulo: "@/lib/producao/estados", estados: EXIBICOES_DO_BLOCO },
   "producao_historico.acao": { tipo: "AcaoDoHistorico", modulo: "@/lib/producao/estados", estados: ACOES_DO_HISTORICO },
+  // A pasta do arquivo mora na função de borda do caminho (sem imports), onde a lista é escrita uma vez só (PD0.14).
+  "producao_arquivos.pasta": { tipo: "PastaDeArquivo", modulo: "@/supabase/functions/_shared/producao-caminho", estados: PASTAS_DE_ARQUIVO },
   // Ainda sem tipo em estados.ts: a união mora em banco.ts. Quando ganhar um lá, troque o módulo.
   "producao_funcoes.escopo": { tipo: "EscopoDaProducao", modulo: "banco.ts" },
 };
@@ -178,13 +181,14 @@ test("o tipo e as migrations da produção dizem a mesma coisa: tabelas, colunas
 
 test("o teste não passa em branco: lê as tabelas e as funções que o navegador executa", async () => {
   const { tipo, banco } = await estadoAtual();
-  for (const tabela of ["producao_obras", "producao_temporadas", "producao_datas", "producao_blocos", "producao_espacos", "producao_salas", "producao_historico", "producao_funcoes"]) {
+  for (const tabela of ["producao_obras", "producao_temporadas", "producao_datas", "producao_blocos", "producao_espacos", "producao_salas", "producao_historico", "producao_funcoes", "producao_arquivos"]) {
     assert.ok(banco.tabelas.has(tabela), `${tabela}: o leitor não a achou nas migrations`);
     assert.ok(tipo.tabelas.has(tabela), `${tabela}: o leitor não a achou no tipo`);
   }
   for (const funcao of [
     "auth_producao_dinheiro_sem_assinatura", "auth_producao_le_sem_assinatura", "auth_producao_papel_permite", "auth_producao_pode",
     "auth_producao_ve_espaco", "auth_producao_ve_historico", "auth_producao_ve_obra", "auth_producao_ve_temporada", "fn_producao_definir_funcao",
+    "auth_producao_arquivo_pode", "auth_producao_pasta_pode", "fn_producao_caminho_partes",
   ]) {
     assert.ok(banco.funcoes.get(funcao)?.doNavegador, `${funcao}: o leitor não viu o grant execute para authenticated`);
     assert.ok(tipo.funcoes.has(funcao), `${funcao}: o leitor não a achou no tipo`);
@@ -192,6 +196,7 @@ test("o teste não passa em branco: lê as tabelas e as funções que o navegado
   // Os gatilhos e a ficha da pessoa são internos: o navegador não os executa, e o tipo não os traz.
   assert.ok(banco.funcoes.has("auth_producao_ficha") && !tipo.funcoes.has("auth_producao_ficha"));
   assert.ok(banco.funcoes.has("fn_producao_historico") && !tipo.funcoes.has("fn_producao_historico"));
+  assert.ok(banco.funcoes.has("fn_producao_arquivo_coerencia") && !tipo.funcoes.has("fn_producao_arquivo_coerencia"));
   // O que só se vê nas migrations lidas até o fim: a chave composta, a que a PD0.9 liga num bloco `do` e a lista de ações.
   const chaves = (nome: string) => banco.tabelas.get(nome)!.chaves.map(c => c.nome);
   assert.ok(chaves("producao_funcoes").includes("producao_funcoes_membro_fkey"));
@@ -201,7 +206,7 @@ test("o teste não passa em branco: lê as tabelas e as funções que o navegado
 
 test("uma chave para auth.users fica de fora de Relationships, como no conector: o PostgREST só expõe o schema public", async () => {
   const { tipo, banco } = await estadoAtual();
-  for (const [tabela, coluna] of [["producao_funcoes", "definido_por"], ["producao_historico", "quem"]]) {
+  for (const [tabela, coluna] of [["producao_funcoes", "definido_por"], ["producao_historico", "quem"], ["producao_arquivos", "enviado_por"]]) {
     assert.ok(banco.tabelas.get(tabela)!.colunas.some(c => c.nome === coluna), `${tabela}.${coluna}`);
     assert.ok(!banco.tabelas.get(tabela)!.chaves.some(c => c.colunas.includes(coluna)), `${tabela}.${coluna}: chave para auth.users no leitor`);
     assert.ok(!tipo.tabelas.get(tabela)!.Relationships.some(c => c.columns.includes(coluna)), `${tabela}.${coluna}: chave para auth.users no tipo`);

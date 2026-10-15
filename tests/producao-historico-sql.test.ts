@@ -13,8 +13,8 @@ import { dividirComandos } from "../lib/supabase/sql-em-bloco";
 
 const TESTE = "supabase/tests/producao_historico.test.sql";
 
-/** As tabelas com histórico hoje: a lista de exclusão (1º argumento do gatilho) e as colunas do rótulo (2º). */
-const ORIGENS: Record<string, { fora: string; rotulos: string }> = {
+/** As tabelas com histórico desde a migration dele (PD0.10): a lista de exclusão (1º argumento do gatilho) e as colunas do rótulo (2º). */
+const ORIGENS_DA_PD0_10: Record<string, { fora: string; rotulos: string }> = {
   producao_obras: { fora: "", rotulos: "titulo" },
   producao_temporadas: { fora: "", rotulos: "titulo" },
   producao_datas: { fora: "", rotulos: "data" },
@@ -23,6 +23,18 @@ const ORIGENS: Record<string, { fora: string; rotulos: string }> = {
   producao_salas: { fora: "", rotulos: "nome" },
   producao_funcoes: { fora: "definido_por", rotulos: "user_id" },
 };
+
+/**
+ * As ligadas depois, cada uma na migration da própria tabela (gatilho e ramo novo em auth_producao_ve_historico, create or
+ * replace). Os arquivos (PD0.14) deixam o nome fora do histórico (na pasta pessoas pode ser o de uma pessoa), com o caminho,
+ * a impressão digital e quem enviou; o rótulo é a pasta. O teste de acesso deles é supabase/tests/producao_arquivos.test.sql.
+ */
+const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
+  producao_arquivos: { fora: "enviado_por,nome,sha256,storage_path", rotulos: "pasta" },
+};
+
+/** Todas as tabelas com histórico hoje. */
+const ORIGENS: Record<string, { fora: string; rotulos: string }> = { ...ORIGENS_DA_PD0_10, ...ORIGENS_POSTERIORES };
 
 /**
  * Tabelas da produção que NÃO têm gatilho de histórico, cada uma com o motivo. Uma tabela nova da
@@ -187,7 +199,7 @@ test("os índices: por registro (entidade, id, quando), por organização e por 
 test("toda tabela da produção tem o gatilho de histórico, com a lista de exclusão e o rótulo dela, ou um motivo escrito no teste", async () => {
   const { sql } = await migration();
   const gatilhos = comandosDe(sql).filter(c => c.startsWith("create or replace trigger "));
-  assert.deepEqual([...gatilhos].sort(), Object.entries(ORIGENS).map(([tabela, { fora, rotulos }]) =>
+  assert.deepEqual([...gatilhos].sort(), Object.entries(ORIGENS_DA_PD0_10).map(([tabela, { fora, rotulos }]) =>
     `create or replace trigger ${tabela}_historico after insert or update or delete on public.${tabela} for each row execute function public.fn_producao_historico('${fora}', '${rotulos}')`).sort());
   // Toda tabela da produção, de qualquer migration, está em ORIGENS ou em SEM_HISTORICO (com o motivo).
   const colunas = await colunasDaProducao();
@@ -219,8 +231,9 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
     // O rótulo de criar e apagar é de um campo à vista, nunca de um da lista.
     for (const coluna of rotulos.split(",")) assert.ok(!fora.includes(coluna), `${tabela}: o rótulo ${coluna} está na lista de exclusão`);
   }
-  // Hoje a única coluna fora é a que repete o autor.
-  assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`), ["producao_funcoes: definido_por"]);
+  // Hoje as colunas fora são as que repetem o autor e, nos arquivos, o nome (dado de pessoa na pasta pessoas), o caminho, a impressão digital e quem enviou.
+  assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
+    ["producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_funcoes: definido_por"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {
@@ -252,7 +265,7 @@ test("quem vê o histórico: a origem diz, com as regras de quem consulta, e a e
   assert.match(corpo, /^create or replace function public\.auth_producao_ve_historico\(p_org uuid, p_entidade text, p_entidade_id uuid\) returns boolean language sql stable set search_path = public, pg_temp as \$\$/);
   assert.doesNotMatch(corpo, /security definer/, "roda com a permissão de quem consulta: a origem passa pelas regras dele");
   const ramos = [...corpo.matchAll(/when '(\w+)' then exists \(select 1 from public\.(\w+) x where x\.id = p_entidade_id and x\.organization_id = p_org\)/g)];
-  assert.deepEqual(ramos.map(m => m[1]), Object.keys(ORIGENS), "um ramo por tabela com histórico, na ordem");
+  assert.deepEqual(ramos.map(m => m[1]), Object.keys(ORIGENS_DA_PD0_10), "um ramo por tabela com histórico, na ordem");
   assert.ok(ramos.every(m => m[1] === m[2]), "o ramo consulta a própria tabela");
   assert.match(corpo, /select coalesce\(case p_entidade when /);
   assert.match(corpo, / end, false\); \$\$$/, "o que a função não conhece nega");
@@ -309,7 +322,7 @@ test("o teste de acesso cobre o aceite, a lista de exclusão, a leitura por pess
       if (nome.endsWith("_check")) assert.ok(teste.includes(nome), `a restrição ${nome} fora do teste de acesso`);
     }
   }
-  for (const tabela of Object.keys(ORIGENS)) assert.ok(teste.includes(`${tabela}_historico`) || teste.includes(`'${tabela}'`), `${tabela} fora do teste de acesso`);
+  for (const tabela of Object.keys(ORIGENS_DA_PD0_10)) assert.ok(teste.includes(`${tabela}_historico`) || teste.includes(`'${tabela}'`), `${tabela} fora do teste de acesso`);
   for (const caso of [
     "'leitor'", "'captador'", "'proponente'", "status = 'cancelado'", "'vinculado'", "jards_super_admin", "ph_teste.como(null)",
     "mudar a hora de um bloco aparece no histórico", "cache,documento", "SEGREDO", "definido_por", "producao_sonda_hist",
