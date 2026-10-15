@@ -108,3 +108,29 @@ Migration `20261015023043_producao_captacao_isolada` aplicada no banco de produ�
 - **Teste de acesso rodado sobre o banco já migrado:** 28 de 28.
 - **Dados reais depois de aplicar:** 149 pessoas em 22 tabelas (3.278 comparações), contando o que cada pessoa vê contra o que as linhas das organizações dela mandam ver. 3.274 iguais. As 4 diferentes são de uma só pessoa, o super admin, que é captador em duas organizações e continua vendo as tabelas de dinheiro delas, como previsto (a regra dá acesso total ao super admin).
 - **Workspaces dos externos:** as 13 funções que as telas do captador e do proponente chamam são `security definer` e nenhuma lê as tabelas de dinheiro.
+
+## 9. PD0.4b — as tabelas centrais por organização (15/10/2026)
+
+Decisão do dono: passar `captacoes`, `contatos`, `editais_user`, `projetos_crm` e `atividades` de "por pessoa" para "por organização", porque a equipe, a Prestação e a Produção em mais de uma pessoa dependem disso (um colaborador não via nem o projeto do admin). É a primeira metade (expansão): as regras "por pessoa" ficam e a contração vem depois.
+
+| | Negociações, contatos, inscrições | Projetos e atividades |
+|---|---|---|
+| **Lê** | membro interno com o módulo Captação | membro interno com qualquer módulo |
+| **Edita** | o mesmo, menos o leitor | o mesmo, menos o leitor |
+| **Apaga** | admin da organização (ou quem criou) | admin da organização (ou quem criou) |
+| **Cria** | como hoje: `account_id` é quem está logado | como hoje, mais a guarda abaixo |
+
+- **Interno** é quem não é captador nem proponente: eles seguem vendo só o que criaram. As notas (`notas`) herdam a leitura do registro a que pertencem, então passam a aparecer para a equipe sem mudança; `empresas_crm` já era legível pela equipe.
+- **Guarda de escrita** em projetos e atividades (restritiva): com a leitura por organização, quem gravasse numa organização alheia poria a linha na frente do outro inquilino. A guarda exige que a organização seja uma das de quem grava. Linha sem organização ainda é aceita na criação enquanto o app antigo circula; a contração tira isso.
+- **Super admin** não ganha leitura de outras organizações: a função auxiliar `auth_org_ids_equipe(modulo, nivel)` não tem passe livre para ele.
+- **Registros antigos sem organização:** 1 atividade de conta com uma só organização foi ligada a ela; 3 projetos de setembro de uma conta com três organizações ficam como estão (não se adivinha em qual).
+- **Código:** a tela da negociação criava atividade sem `organization_id`; passa a levar a organização da negociação.
+
+**Ensaio (transação desfeita, no banco de produção):** teste de acesso 38 de 38, migration reaplicável e, com dados reais, 149 pessoas em 5 tabelas (745 comparações) sem nenhuma diferença: hoje ninguém passa a ver nada novo, porque nenhuma organização tem linhas de mais de uma pessoa nessas tabelas.
+
+**Aplicada em 15/10/2026** (versão `20261015054136`): 15 regras por organização e 4 guardas no catálogo; a atividade antiga foi ligada à organização da conta; 3 projetos do super admin seguem sem organização; a função auxiliar não executa para o visitante.
+
+**Fica para depois**
+- **Contração (PD0.4c):** exigir organização na criação e apagar as regras "por pessoa" que viram redundantes.
+- **`fn_sync_empresa_tipo`** roda com as permissões de quem grava: quando um colega altera uma negociação, a atualização do tipo da empresa (cliente ativo ou ex-cliente) só vale se ele tiver criado a empresa. Tornar a função `security definer`, com a conferência da organização, é uma entrega pequena à parte.
+- **Leitor** ainda cria linhas próprias pela regra antiga; hoje a tela é que o impede.
