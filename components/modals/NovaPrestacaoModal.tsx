@@ -1,10 +1,12 @@
 "use client";
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Check, ClipboardCheck, FileSpreadsheet, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { InputValor } from "@/components/ui/CampoValor";
+import { ComboboxCriavel, type OpcaoCriavel } from "@/components/ui/ComboboxCriavel";
+import { chaveDoNome } from "@/lib/dominio";
 import { lerValorBRL } from "@/lib/valor";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
@@ -26,7 +28,6 @@ type Props = {
   onSaved: () => void;
 };
 
-type Opcao = { value: string; label: string };
 
 const ROTULO = "mb-1.5 block text-[0.625rem] font-semibold uppercase tracking-wide text-black/40";
 const CAMPO = "w-full rounded border border-black/[.12] bg-white px-3 py-2 text-[0.8125rem] outline-none focus:border-[#7259B5] focus:ring-1 focus:ring-[#7259B5]/20";
@@ -48,7 +49,9 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
 
   const [captacoes, setCaptacoes] = useState<CaptacaoParaCriacao[]>([]);
   const [projetos, setProjetos] = useState<ProjetoParaCriacao[]>([]);
-  const [proponentes, setProponentes] = useState<Opcao[]>([]);
+  const [proponentes, setProponentes] = useState<OpcaoCriavel[]>([]);
+  // Projetos criados aqui, para a escolha achar o projeto antes de a lista ser relida.
+  const projetosCriados = useRef(new Map<string, ProjetoParaCriacao>());
 
   const [captacaoId, setCaptacaoId] = useState("");
   const [projetoId, setProjetoId] = useState("");
@@ -87,7 +90,7 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
       .then(({ data }: { data: ProjetoParaCriacao[] | null }) => setProjetos(data ?? []));
     sb.from("proponentes").select("id, nome").eq("organization_id", organizationId).order("nome")
       .then(({ data }: { data: { id: string; nome: string }[] | null }) =>
-        setProponentes((data ?? []).map(p => ({ value: p.id, label: p.nome }))));
+        setProponentes(data ?? []));
   }, [organizationId, supabase]);
 
   const captacao = captacoes.find(c => c.id === captacaoId) ?? null;
@@ -115,10 +118,39 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
   }
 
   function escolherProjeto(id: string) {
-    const novo = projetos.find(p => p.id === id) ?? null;
+    const novo = projetos.find(p => p.id === id) ?? projetosCriados.current.get(id) ?? null;
     setProjetoId(id);
     if (!dados.titulo.trim()) atualizar({ titulo: tituloSugerido(captacao, novo) });
     if (novo?.proponente_id && !proponenteId) setProponenteId(novo.proponente_id);
+  }
+
+  // Quem usa só a prestação cria o projeto e o proponente aqui mesmo; eles
+  // aparecem também na captação, para quem usa os dois módulos.
+  async function criarProjeto(nome: string): Promise<string | null> {
+    if (!organizationId) return null;
+    const { data: { user } } = await supabase.auth.getUser();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- projetos_crm fora do tipo Database
+    const { data, error } = await (supabase as any).from("projetos_crm")
+      .insert({ nome, nome_key: chaveDoNome(nome), account_id: user?.id, organization_id: organizationId, proponente_id: proponenteId || null })
+      .select("id, nome, proponente_id").single();
+    if (error || !data) { setErro("Não foi possível criar o projeto. Tente de novo."); return null; }
+    setErro(null);
+    projetosCriados.current.set(data.id, data);
+    setProjetos(atual => [...atual, data].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")));
+    return data.id;
+  }
+
+  async function criarProponente(nome: string): Promise<string | null> {
+    if (!organizationId) return null;
+    const { data: { user } } = await supabase.auth.getUser();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- proponentes fora do tipo Database
+    const { data, error } = await (supabase as any).from("proponentes")
+      .insert({ nome, nome_key: chaveDoNome(nome), account_id: user?.id, organization_id: organizationId })
+      .select("id, nome").single();
+    if (error || !data) { setErro("Não foi possível criar o proponente. Tente de novo."); return null; }
+    setErro(null);
+    setProponentes(atual => [...atual, data].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR")));
+    return data.id;
   }
 
   /** Grava o passo atual; devolve false quando não deu. */
@@ -173,6 +205,12 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
 
     const { error } = await tabela.update(campos).eq("id", prestacaoId);
     if (error) { setErro(mensagemErroPrestacao(error, "Não foi possível salvar")); return false; }
+    // O projeto sem proponente fica com o proponente escolhido na prestação.
+    const projeto = projetos.find(p => p.id === projetoId) ?? projetosCriados.current.get(projetoId);
+    if (atual.id === "dados" && projeto && !projeto.proponente_id && proponenteId) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- projetos_crm fora do tipo Database
+      await (supabase as any).from("projetos_crm").update({ proponente_id: proponenteId }).eq("id", projeto.id).is("proponente_id", null);
+    }
     return true;
   }
 
@@ -243,13 +281,15 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
               </div>
               <div>
                 <span className={ROTULO}>Projeto</span>
-                <Dropdown
-                  value={projetoId}
+                <ComboboxCriavel
+                  opcoes={projetos}
+                  valor={projetoId}
                   onChange={escolherProjeto}
-                  ariaLabel="Projeto"
-                  placeholder="Selecionar projeto"
-                  options={projetos.map(p => ({ value: p.id, label: p.nome }))}
+                  onCriar={criarProjeto}
+                  rotulo="Projeto"
+                  placeholder={projetos.length ? "Buscar ou criar projeto" : "Digite o nome do projeto"}
                 />
+                <p className="mt-1 text-[0.625rem] text-black/35">Escolha um projeto ou digite o nome para criar.</p>
               </div>
               <label className="block">
                 <span className={ROTULO}>Título <span className="text-[#D94A4A]">*</span></span>
@@ -306,12 +346,13 @@ export function NovaPrestacaoModal({ onClose, onSaved }: Props) {
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
                   <span className={ROTULO}>Proponente</span>
-                  <Dropdown
-                    value={proponenteId}
+                  <ComboboxCriavel
+                    opcoes={proponentes}
+                    valor={proponenteId}
                     onChange={setProponenteId}
-                    ariaLabel="Proponente"
-                    placeholder={proponentes.length ? "Selecionar proponente" : "Nenhum proponente cadastrado"}
-                    options={proponentes}
+                    onCriar={criarProponente}
+                    rotulo="Proponente"
+                    placeholder={proponentes.length ? "Buscar ou criar proponente" : "Digite o nome do proponente"}
                   />
                 </div>
                 <label className="block">
