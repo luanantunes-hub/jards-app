@@ -99,3 +99,12 @@ A migration `producao_captacao_isolada` e o teste `captacao_isolada.test.sql` ro
 ### Observação fora do escopo
 
 `fn_sync_empresa_tipo` (gatilho de `contas_patrocinio`, `captacoes` e `editais_user`) roda com as permissões de quem grava e lê `contas_patrocinio`. Com a regra nova, um captador que grave numa negociação não enxerga a conta e poderia marcar a empresa como "ex-cliente"; a atualização de `empresas_crm` já é barrada para quem não a criou, então o efeito prático é nulo, mas vale torná-la `security definer` junto com a PD0.4b (passar as tabelas centrais para "por organização").
+
+## 8. Aplicada (15/10/2026)
+
+Migration `20261015023043_producao_captacao_isolada` aplicada no banco de produção, com o ok do dono.
+
+- **No catálogo:** 42 regras restritivas (`for all`, só para quem está logado), 11 com a exclusão de externos; nenhum registro sem organização nas três tabelas "por pessoa" (os 3 contatos e a negociação antigos foram ligados à organização da conta); as funções auxiliares não executam para o visitante.
+- **Teste de acesso rodado sobre o banco já migrado:** 28 de 28.
+- **Dados reais depois de aplicar:** 149 pessoas em 22 tabelas (3.278 comparações), contando o que cada pessoa vê contra o que as linhas das organizações dela mandam ver. 3.274 iguais. As 4 diferentes são de uma só pessoa, o super admin, que é captador em duas organizações e continua vendo as tabelas de dinheiro delas, como previsto (a regra dá acesso total ao super admin).
+- **Workspaces dos externos:** as 13 funções que as telas do captador e do proponente chamam são `security definer` e nenhuma lê as tabelas de dinheiro.
