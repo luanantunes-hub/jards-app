@@ -37,7 +37,11 @@ function caminho(page: Page): string {
   return new URL(page.url()).pathname;
 }
 
-/** Caminhos em que a aba de fato parou. Um redirecionamento HTTP (307) não aparece aqui; um feito no navegador, sim. */
+/**
+ * Caminhos por onde a aba passou. Um redirecionamento HTTP (307) não aparece;
+ * um feito no navegador, sim. O Next também regrava o endereço ao montar a
+ * página (replaceState), então o mesmo caminho pode vir repetido em seguida.
+ */
 function registrarCaminhos(page: Page): string[] {
   const caminhos: string[] = [];
   page.on("framenavigated", frame => {
@@ -116,7 +120,8 @@ for (const perfil of PERFIS) {
         await page.waitForTimeout(1_500);
         expect(caminho(page)).toBe(destino);
         expect(caminhos.slice(naChegada).filter(c => c !== destino), `voltou a navegar: ${caminhos.join(" → ")}`).toEqual([]);
-        expect(caminhos.length, `passos: ${caminhos.join(" → ")}`).toBeLessThanOrEqual(3);
+        const passos = caminhos.filter((c, i) => c !== caminhos[i - 1]);
+        expect(passos.length, `passos: ${passos.join(" → ")}`).toBeLessThanOrEqual(3);
         // Quem não usa a captação não passa pela /dashboard no caminho.
         if (!perfil.modulos.includes("captacao")) {
           expect(caminhos, `passou por /dashboard: ${caminhos.join(" → ")}`).not.toContain("/dashboard");

@@ -57,7 +57,7 @@ Nenhuma tela nova está visível: o banco ainda não aceita `producao` (isso é 
   - A prestação já tem o mesmo problema hoje.
 - **Antes de os módulos carregarem, a captação aparece.** Em rota comum (`/configuracoes`, `/meu-plano`) aberta direto pela URL, o menu mostra a captação por um instante.
 - **O seletor de módulos.** Para quem só tem a produção, ele ainda lista a Captação (bloqueada) e o teste grátis da Prestação. `mostraSeletorDeModulo` existe, mas não é usado.
-- **Contas do e2e.** Uma conta por perfil, numa organização só (sem a organização pessoal com a captação), com o onboarding feito, sem super admin e sem papel de captador. Os perfis com a produção só podem ser criados depois da PD0.1.
+- **Contas do e2e.** Uma conta por perfil, numa organização só (sem a organização pessoal com a captação), com o onboarding feito, sem super admin e sem papel de captador. A organização de quem não usa a produção não pode tê-la, porque o seletor mostra módulo em construção pela organização. Os perfis com a produção só podem ser criados depois da PD0.1.
 
 ## Decisões do dono já tomadas (15/10/2026)
 
