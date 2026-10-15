@@ -13,6 +13,7 @@ import {
   MODULO_LABEL,
   MODULOS_COM_CONTRATO,
   modulosDaEquipe,
+  modulosDoConvite,
   modulosSemVaga,
   modulosVetadosAoPapel,
   ORIGEM_DAS_VAGAS,
@@ -251,6 +252,16 @@ test("convite: marcar e desmarcar módulos mantém ao menos um, na ordem de MODU
   assert.deepEqual(alternarModulo(["captacao", "producao"], "captacao"), ["producao"]);
   assert.deepEqual(alternarModulo(["producao"], "producao"), ["producao"]);
   assert.deepEqual(alternarModulo(["captacao"], "captacao"), ["captacao"]);
+});
+
+test("convite: só valem os módulos marcados que a organização ainda oferece", () => {
+  const oferecidos = ["captacao", "prestacao", "producao"] as const;
+  assert.deepEqual(modulosDoConvite(["producao", "captacao"], oferecidos), ["captacao", "producao"]);
+  assert.deepEqual(modulosDoConvite(["producao"], oferecidos), ["producao"]);
+  // Um módulo marcado que deixou de ser oferecido sai do pedido; sem nenhum que valha, fica a captação.
+  assert.deepEqual(modulosDoConvite(["captacao", "prestacao"], ["captacao", "producao"]), ["captacao"]);
+  assert.deepEqual(modulosDoConvite(["prestacao"], ["captacao", "producao"]), ["captacao"]);
+  assert.deepEqual(modulosDoConvite([], oferecidos), ["captacao"]);
 });
 
 test("convite só para a produção não depende da vaga da captação", () => {

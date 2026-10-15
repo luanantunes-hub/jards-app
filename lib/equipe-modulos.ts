@@ -178,6 +178,12 @@ export function alternarModulo(escolhidos: ModuloId[], modulo: ModuloId): Modulo
   return MODULOS.filter(m => m === modulo || escolhidos.includes(m));
 }
 
+/** Os módulos que o convite pede: os marcados que a organização ainda oferece, na ordem de MODULOS; sem nenhum, a captação. */
+export function modulosDoConvite(marcados: readonly ModuloId[], oferecidos: readonly ModuloId[]): ModuloId[] {
+  const validos = MODULOS.filter(m => marcados.includes(m) && oferecidos.includes(m));
+  return validos.length > 0 ? validos : ["captacao"];
+}
+
 /** Dos módulos escolhidos, os sem vaga livre; sem a contagem do módulo, vale como sem vaga. */
 export function modulosSemVaga(escolhidos: readonly ModuloId[], livres: Partial<Record<ModuloId, number>>): ModuloId[] {
   return escolhidos.filter(m => (livres[m] ?? 0) === 0);

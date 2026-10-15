@@ -6,8 +6,8 @@ import { createClient } from "@/lib/supabase/client";
 import { BoasVindasEquipeModal } from "@/components/modals/BoasVindasEquipeModal";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
-import { FUNCOES_PRESTACAO, MODULO_LABEL } from "@/lib/equipe-modulos";
-import type { ModuloId } from "@/lib/modulos";
+import { alternarModulo, avisoSemCaptacao, CODIGO_SEM_VAGA, FUNCOES_PRESTACAO, MODULO_LABEL, MODULOS_COM_CONTRATO, modulosDoConvite, modulosSemVaga } from "@/lib/equipe-modulos";
+import { moduloVisivel, normalizarModulos, type ModuloId } from "@/lib/modulos";
 
 interface NovoMembroModalProps {
   open: boolean;
@@ -26,8 +26,9 @@ type SeatSummary = {
   unit_price: number;
 };
 
-/** Vagas da prestação de contas (GET /api/members/seats?modulo=prestacao). */
-type PrestacaoSummary = {
+/** Vagas de um módulo com contrato, a prestação de contas ou a produção (GET /api/members/seats?modulo=…). */
+type ResumoDoModulo = {
+  modulo: ModuloId;
   ativo: boolean;
   status: string | null;
   cortesia_ate: string | null;
@@ -76,24 +77,46 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
   const [celebrationQuantity, setCelebrationQuantity] = useState<number | null>(null);
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<Role>("colaborador");
-  const [prestacao, setPrestacao] = useState<PrestacaoSummary | null>(null);
+  const [contratados, setContratados] = useState<ResumoDoModulo[]>([]);
   const [modulos, setModulos] = useState<ModuloId[]>(["captacao"]);
   const [funcao, setFuncao] = useState("");
+
+  // Com algum módulo de contrato ativo (prestação, produção), cada módulo escolhido ocupa uma vaga própria.
+  const linhas = [
+    { modulo: "captacao" as ModuloId, total: summary?.total, ocupadas: (summary?.occupied ?? 0) + (summary?.pending ?? 0), disponiveis: summary?.available },
+    ...contratados.map(c => ({ modulo: c.modulo, total: c.total, ocupadas: c.occupied + c.pending, disponiveis: c.available })),
+  ];
+  const livres: Partial<Record<ModuloId, number>> = {};
+  for (const linha of linhas) livres[linha.modulo] = linha.disponiveis;
+  const escolhidos: ModuloId[] = contratados.length > 0 ? modulosDoConvite(modulos, linhas.map(l => l.modulo)) : ["captacao"];
+  const semVaga = modulosSemVaga(escolhidos, livres);
+  const semVagaCaptacao = semVaga.includes("captacao");
+  const usaPrestacao = escolhidos.includes("prestacao");
+  const capacidade = escolhidos.length > 1 ? "Usa 1 vaga em cada módulo" : "Usa 1 vaga";
+  const avisoDoConvite = avisoSemCaptacao(escolhidos);
 
   const loadSummary = useCallback(async (orgId: string) => {
     setLoading(true);
     const base = `/api/members/seats?organization_id=${encodeURIComponent(orgId)}`;
-    const [response, prestacaoResponse] = await Promise.all([fetch(base), fetch(`${base}&modulo=prestacao`)]);
+    // Um módulo em construção (a produção) só é consultado quando a organização o tem ativo.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- a coluna modulos_ativos ainda está fora do tipo Database
+    const lerOrganizacao = (createClient() as any).from("organizations").select("modulos_ativos").eq("id", orgId).maybeSingle();
+    const [response, { data: organizacao }] = await Promise.all([fetch(base), lerOrganizacao]);
+    const ativos = normalizarModulos(organizacao?.modulos_ativos);
+    const consultados = MODULOS_COM_CONTRATO.filter(modulo => moduloVisivel(modulo, ativos));
+    const respostas = await Promise.all(consultados.map(modulo => fetch(`${base}&modulo=${modulo}`)));
     const body = await response.json().catch(() => ({}));
-    const prestacaoBody = await prestacaoResponse.json().catch(() => ({}));
+    const corpos = await Promise.all(respostas.map(resposta => resposta.json().catch(() => ({}))));
     setLoading(false);
     if (!response.ok) {
       setError(body.error ?? "Não foi possível consultar os usuários extras");
       return;
     }
     setSummary(body as SeatSummary);
-    // A escolha de módulos só aparece com a prestação ativa na organização.
-    setPrestacao(prestacaoResponse.ok && prestacaoBody.ativo ? prestacaoBody as PrestacaoSummary : null);
+    // A escolha de módulos só aparece com algum módulo de contrato ativo na organização.
+    setContratados(respostas.flatMap((resposta, indice) => (
+      resposta.ok && corpos[indice].ativo ? [{ ...corpos[indice], modulo: consultados[indice] } as ResumoDoModulo] : []
+    )));
   }, []);
 
   useEffect(() => {
@@ -166,14 +189,14 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
         organization_id: organizationId,
         email,
         role,
-        ...(prestacao ? { modulos, prestacao_funcao: modulos.includes("prestacao") ? funcao || null : null } : {}),
+        ...(contratados.length > 0 ? { modulos: escolhidos, prestacao_funcao: usaPrestacao ? funcao || null : null } : {}),
       }),
     });
     const body = await response.json().catch(() => ({}));
     setSaving(false);
     if (!response.ok) {
       setError(body.error ?? "Não foi possível enviar o convite");
-      if (response.status === 409 && body.code === "NO_SEATS") setMode("buy");
+      if (response.status === 409 && body.code === CODIGO_SEM_VAGA.captacao) setMode("buy");
       return;
     }
     if (body.invite_url) {
@@ -207,20 +230,6 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
 
   const titleId = useId();
   useModalDismiss(close, { enabled: open && celebrationQuantity === null });
-
-  // Com a prestação ativa, cada módulo escolhido ocupa uma vaga própria.
-  const usaCaptacao = prestacao === null || modulos.includes("captacao");
-  const usaPrestacao = prestacao !== null && modulos.includes("prestacao");
-  const semVagaCaptacao = usaCaptacao && (summary?.available ?? 0) === 0;
-  const semVagaPrestacao = usaPrestacao && (prestacao?.available ?? 0) === 0;
-  const capacidade = prestacao && modulos.length > 1 ? "Usa 1 vaga em cada módulo" : "Usa 1 vaga";
-
-  function alternarModulo(modulo: ModuloId) {
-    setModulos(atual => {
-      if (atual.includes(modulo)) return atual.length > 1 ? atual.filter(m => m !== modulo) : atual;
-      return (["captacao", "prestacao"] as ModuloId[]).filter(m => m === modulo || atual.includes(m));
-    });
-  }
 
   if (!open) return null;
 
@@ -257,7 +266,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
-          {prestacao ? (
+          {contratados.length > 0 ? (
             <table className="mb-5 w-full overflow-hidden rounded border text-left" style={{ borderColor: "rgba(13,13,13,.09)" }}>
               <thead>
                 <tr className="bg-black/[.02]">
@@ -267,10 +276,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
                 </tr>
               </thead>
               <tbody>
-                {([
-                  ["captacao", summary?.total, (summary?.occupied ?? 0) + (summary?.pending ?? 0), summary?.available],
-                  ["prestacao", prestacao.total, prestacao.occupied + prestacao.pending, prestacao.available],
-                ] as const).map(([modulo, total, ocupadas, disponiveis]) => (
+                {linhas.map(({ modulo, total, ocupadas, disponiveis }) => (
                   <tr key={modulo} className="border-t" style={{ borderColor: "rgba(13,13,13,.07)" }}>
                     <td className="px-3 py-2.5 text-[0.75rem] font-medium text-black/75">{MODULO_LABEL[modulo]}</td>
                     <td className="px-3 py-2.5 text-right text-[0.75rem] tabular-nums text-black/55">{loading ? "…" : total ?? "—"}</td>
@@ -294,7 +300,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
             ))}
           </div>
           )}
-          {!prestacao && !!summary?.pending && (
+          {contratados.length === 0 && !!summary?.pending && (
             <p className="-mt-3 mb-5 text-center text-[0.625rem] text-black/35">
               {summary.pending} vaga{summary.pending > 1 ? "s" : ""} reservada{summary.pending > 1 ? "s" : ""} por convite{summary.pending > 1 ? "s" : ""} pendente{summary.pending > 1 ? "s" : ""}.
             </p>
@@ -316,17 +322,17 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
             <div className="space-y-4">
               {semVagaCaptacao && !loading && (
                 <div className="rounded border border-[#B07A14]/25 bg-white px-4 py-3">
-                  <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas {prestacao ? "da captação" : "disponíveis"}</p>
+                  <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas {contratados.length > 0 ? "da captação" : "disponíveis"}</p>
                   <p className="mt-1 text-[0.6875rem] leading-5 text-black/45">Adicione um ou mais usuários extras antes de enviar o próximo convite.</p>
                   <button onClick={() => setMode("buy")} className="mt-2 text-[0.6875rem] font-semibold text-[#B07A14] hover:underline">Comprar usuários extras</button>
                 </div>
               )}
-              {semVagaPrestacao && !loading && (
-                <div className="rounded border border-[#B07A14]/25 bg-white px-4 py-3">
-                  <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas da prestação de contas</p>
+              {!loading && semVaga.filter(modulo => modulo !== "captacao").map(modulo => (
+                <div key={modulo} className="rounded border border-[#B07A14]/25 bg-white px-4 py-3">
+                  <p className="text-[0.75rem] font-semibold text-black/70">Não há vagas da {MODULO_LABEL[modulo].toLowerCase()}</p>
                   <p className="mt-1 text-[0.6875rem] leading-5 text-black/45">Todas as vagas do módulo estão em uso ou reservadas por convites. Para ampliar, fale com o suporte do Jards.</p>
                 </div>
-              )}
+              ))}
               <div>
                 <label className="mb-1.5 block text-[0.6875rem] font-bold uppercase tracking-widest text-black/30">E-mail</label>
                 <div className="relative">
@@ -334,20 +340,19 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
                   <input type="email" value={email} onChange={event => setEmail(event.target.value)} placeholder="pessoa@empresa.com" className="w-full rounded border bg-white py-2.5 pl-9 pr-3 text-[0.8125rem] outline-none focus:border-[#7259B5]" style={{ borderColor: "rgba(13,13,13,.12)" }} />
                 </div>
               </div>
-              {prestacao && (
+              {contratados.length > 0 && (
                 <div>
                   <p className="mb-2 block text-[0.6875rem] font-bold uppercase tracking-widest text-black/30">Módulos</p>
                   <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label="Módulos que a pessoa usa">
-                    {(["captacao", "prestacao"] as ModuloId[]).map(modulo => {
-                      const marcado = modulos.includes(modulo);
-                      const livres = modulo === "captacao" ? summary?.available : prestacao.available;
+                    {linhas.map(({ modulo, disponiveis: livres }) => {
+                      const marcado = escolhidos.includes(modulo);
                       return (
                         <button
                           key={modulo}
                           type="button"
                           role="checkbox"
                           aria-checked={marcado}
-                          onClick={() => alternarModulo(modulo)}
+                          onClick={() => setModulos(alternarModulo(escolhidos, modulo))}
                           className={`flex items-center gap-2.5 rounded border px-3 py-2.5 text-left transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] ${marcado ? "border-[#7259B5] bg-white" : "border-black/10 bg-white hover:bg-black/[.025]"}`}
                         >
                           <span className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-sm border ${marcado ? "border-[#7259B5] bg-[#7259B5] text-white" : "border-black/25 bg-white"}`}>
@@ -361,8 +366,8 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
                       );
                     })}
                   </div>
-                  {!modulos.includes("captacao") && (
-                    <p className="mt-2 text-[0.6875rem] leading-5 text-black/45">Usuário só da prestação: entra direto nas prestações de contas e não vê a captação.</p>
+                  {avisoDoConvite && (
+                    <p className="mt-2 text-[0.6875rem] leading-5 text-black/45">{avisoDoConvite}</p>
                   )}
                 </div>
               )}
@@ -434,7 +439,7 @@ export default function NovoMembroModal({ open, organizationId: organizationIdPr
         <div className="flex shrink-0 items-center justify-end gap-3 border-t px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <button onClick={close} className="px-4 py-2 text-[0.75rem] font-medium text-black/35 transition hover:text-black/55">Cancelar</button>
           {mode === "invite" ? (
-            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVagaCaptacao || semVagaPrestacao} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
+            <button onClick={sendInvite} disabled={saving || loading || !email.trim() || semVaga.length > 0} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Enviando…" : "Enviar convite"}</button>
           ) : (
             <button onClick={buySeats} disabled={saving || loading} className="rounded bg-[#2E8932] px-5 py-2.5 text-[0.75rem] font-semibold text-white transition hover:bg-[#26752A] disabled:opacity-40 disabled:cursor-not-allowed">{saving ? "Processando…" : `Comprar ${quantity} usuário${quantity > 1 ? "s" : ""} extra${quantity > 1 ? "s" : ""}`}</button>
           )}
