@@ -4,7 +4,8 @@
 // produção não pode nascer com `any` nem com um `as` em cada consulta. Este arquivo
 // descreve só o que a produção tem no banco, no formato que o @supabase/supabase-js
 // espera de um `Database`. O cliente criado com ele (cliente.ts) faz o compilador
-// acusar tabela, coluna, valor e função que não existem.
+// acusar tabela, coluna, valor de lista fechada e função que não existem (a única
+// exceção, o texto do `select`, está explicada em cliente.ts).
 //
 // ─── Formato ────────────────────────────────────────────────────────────────
 // Row é o que o banco devolve; Insert é o que se manda para inserir (coluna anulável
@@ -17,7 +18,8 @@
 // (supabase/migrations), conferidos contra o banco real em 15/10/2026.
 // tests/producao-banco-tipos.test.ts compara este arquivo com elas: uma migration
 // que muda tabela, coluna, chave ou função da produção faz o teste falhar até este
-// arquivo ser atualizado.
+// arquivo ser atualizado. Para atualizar: escreva a migration, acrescente a coluna em
+// Row, Insert e Update (e a chave em Relationships) e rode o teste, que diz o que falta.
 //
 // ─── Onde difere do que o conector gera (supabase gen types) ────────────────
 // - As listas fechadas do banco (CHECK) usam os tipos de estados.ts, em vez de
