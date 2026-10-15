@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test": "tsx --test tests/**/*.test.ts",
     "test:e2e": "playwright test",
+    "test:e2e:modulos": "playwright test --project=modulos",
     "predeploy": "npm run typecheck && npm test && npm run build -- --webpack"
   },
   "dependencies": {

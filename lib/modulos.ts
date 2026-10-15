@@ -87,14 +87,83 @@ export function modulosDisponiveis(acesso: AcessoModulos): ModuloId[] {
   return MODULOS.filter(modulo => podeUsarModulo(acesso, modulo));
 }
 
+/** Página inicial do primeiro módulo que a pessoa usa na organização; sem nenhum, as configurações. */
+export function inicioNaOrganizacao(acesso: AcessoModulos): string {
+  const modulo = modulosDisponiveis(acesso)[0];
+  return modulo ? INICIO_DO_MODULO[modulo] : "/configuracoes";
+}
+
+/** O vínculo da pessoa com uma organização, como o servidor o lê. */
+export type VinculoModulos = { modulosOrganizacao: readonly ModuloId[]; modulosMembro: readonly ModuloId[] };
+
 /** Para o bloqueio no servidor, que não sabe qual organização está aberta no navegador. */
 export function usaModuloEmAlgumaOrganizacao(
   superAdmin: boolean,
-  vinculos: readonly { modulosOrganizacao: readonly ModuloId[]; modulosMembro: readonly ModuloId[] }[],
+  vinculos: readonly VinculoModulos[],
   modulo: ModuloId,
 ): boolean {
   if (superAdmin) return true;
   return vinculos.some(v => podeUsarModulo({ superAdmin: false, ...v }, modulo));
+}
+
+/**
+ * Página inicial do primeiro módulo que a pessoa usa em alguma organização,
+ * na ordem de MODULOS; sem nenhum, as configurações (que não têm bloqueio).
+ */
+export function inicioEmAlgumaOrganizacao(superAdmin: boolean, vinculos: readonly VinculoModulos[]): string {
+  const modulo = MODULOS.find(m => usaModuloEmAlgumaOrganizacao(superAdmin, vinculos, m));
+  return modulo ? INICIO_DO_MODULO[modulo] : "/configuracoes";
+}
+
+type ModulosDaLinha = { modulos_ativos?: unknown; modulos_leitura?: unknown };
+
+/** Linha de organization_members com os módulos da organização embutidos. */
+export type LinhaVinculo = {
+  papel?: unknown;
+  modulos_acesso?: unknown;
+  /** O PostgREST devolve um objeto; sem o tipo Database, o supabase-js o declara como lista. */
+  organizations?: ModulosDaLinha | readonly ModulosDaLinha[] | null;
+};
+
+/** Lê a linha com as mesmas regras do navegador, para servidor e navegador decidirem igual. */
+export function vinculoDaLinha(linha: LinhaVinculo): VinculoModulos {
+  const org = Array.isArray(linha.organizations) ? linha.organizations[0] : linha.organizations;
+  return {
+    modulosMembro: normalizarModulos(linha.modulos_acesso),
+    modulosOrganizacao: modulosDaOrganizacao(org?.modulos_ativos, org?.modulos_leitura),
+  };
+}
+
+/** O que o servidor sabe dos vínculos da pessoa. */
+export type VinculosLidos = {
+  superAdmin: boolean;
+  vinculos: readonly VinculoModulos[];
+  /** Algum vínculo é de captador: o navegador o leva ao workspace dele. */
+  captador: boolean;
+  /** A leitura falhou. Os vínculos vêm vazios. */
+  erro: boolean;
+};
+
+/**
+ * Bloqueio de um módulo no servidor: null deixa entrar; senão, a página
+ * inicial do módulo que a pessoa usa. Com a leitura falhando, os vínculos vêm
+ * vazios e o destino são as configurações, nunca o /dashboard: a entrada abre
+ * na falha e o navegador mandaria de volta, num laço.
+ */
+export function destinoDoBloqueio(modulo: ModuloId, lidos: VinculosLidos): string | null {
+  if (usaModuloEmAlgumaOrganizacao(lidos.superAdmin, lidos.vinculos, modulo)) return null;
+  return inicioEmAlgumaOrganizacao(lidos.superAdmin, lidos.vinculos);
+}
+
+/**
+ * Entrada no app (o /dashboard): quem não usa a captação em nenhuma
+ * organização vai direto para a página do módulo dele. Na dúvida (erro,
+ * super admin, captador, nenhum vínculo) deixa abrir: o layout do navegador
+ * decide, como sempre fez.
+ */
+export function destinoDaEntrada(lidos: VinculosLidos): string | null {
+  if (lidos.erro || lidos.superAdmin || lidos.captador || lidos.vinculos.length === 0) return null;
+  return destinoDoBloqueio("captacao", lidos);
 }
 
 /** Rotas comuns que não pertencem a nenhum módulo. */
@@ -108,9 +177,8 @@ export function destinoSemAcesso(path: string, acesso: AcessoModulos): string | 
   if (ROTAS_COMUNS.some(prefixo => casaPrefixo(path, prefixo))) return null;
   const modulo = moduloDaRota(path);
   if (podeUsarModulo(acesso, modulo)) return null;
-  const outro = modulosDisponiveis(acesso)[0];
   // Sem nenhum módulo: as configurações continuam abertas para pedir acesso.
-  return outro ? INICIO_DO_MODULO[outro] : "/configuracoes";
+  return inicioNaOrganizacao(acesso);
 }
 
 export type SituacaoNoSeletor =
