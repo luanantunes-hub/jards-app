@@ -26,6 +26,10 @@ export async function consultasQueTemDeCompilar(c: ClienteDaProducao, bloco: Lin
   // Juntar tabelas da produção pela chave que o tipo descreve (Relationships).
   const { data: comTemporada } = await c.from("producao_datas").select("data, producao_temporadas(titulo)");
   const titulos: string[] = comTemporada?.map(linha => linha.producao_temporadas.titulo) ?? [];
+  // A chave no outro sentido vira lista (os blocos da data), e a que aceita nulo vira nulo (a sala da data).
+  const { data: comBlocos } = await c.from("producao_datas").select("id, producao_blocos(id, inicio), producao_salas(nome)");
+  const horas: (string | null)[] = comBlocos?.flatMap(linha => linha.producao_blocos.map(bloco => bloco.inicio)) ?? [];
+  const salas: (string | undefined)[] = comBlocos?.map(linha => linha.producao_salas?.nome) ?? [];
   // Inserir: só o que é obrigatório; o que aceita nulo ou tem padrão pode faltar.
   c.from("producao_obras").insert({ organization_id: ORG, tipo: "show", titulo: "Meu show" });
   c.from("producao_temporadas").insert({ organization_id: ORG, formato: "turne", lado: "circula", tipo: "show", titulo: "Turnê" });
@@ -42,7 +46,7 @@ export async function consultasQueTemDeCompilar(c: ClienteDaProducao, bloco: Lin
   const mudanca: Alteracao<"producao_blocos"> = { exibicao: "oculta", confirmado: true };
   const exibicao: "exata" | "aproximada" | "a_definir" | "oculta" = bloco.exibicao;
   const inicio: string | null = bloco.inicio;
-  return { tipos, titulos, novaData, mudanca, exibicao, inicio };
+  return { tipos, titulos, horas, salas, novaData, mudanca, exibicao, inicio };
 }
 
 /** Os três clientes que o app já usa (navegador, servidor e serviço) viram o cliente da produção. */
@@ -62,6 +66,8 @@ export async function consultasQueTemDeDarErro(c: ClienteDaProducao, bloco: Linh
   c.from("organizations");
   // @ts-expect-error coluna que não existe no select (a biblioteca não recusa o texto, mas a linha vira SelectQueryError, e usar qualquer campo dela dá erro)
   (await c.from("producao_datas").select("data, tipo, coluna_que_nao_existe")).data?.map(linha => linha.tipo);
+  // @ts-expect-error junção que não existe (a tabela existe, mas não há chave entre as duas): o campo da linha dá erro
+  (await c.from("producao_obras").select("id, producao_blocos(id)")).data?.map(linha => linha.producao_blocos.id);
   // @ts-expect-error coluna que não existe no filtro
   c.from("producao_datas").select("data").eq("coluna_que_nao_existe", 1);
   // @ts-expect-error coluna que não existe ao inserir
