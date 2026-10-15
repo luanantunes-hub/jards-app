@@ -12,9 +12,9 @@ export const MODULOS: readonly ModuloId[] = ["captacao", "prestacao", "producao"
 /**
  * Módulos ainda em construção: só aparecem (no seletor, nos convites) para a
  * organização que já os tem, como os pilotos liberados por cortesia. O banco
- * já aceita a produção (PD0.1, aplicada em 15/10/2026), mas nenhuma organização
- * a tem e a página /producoes ainda não existe (PD0.3): a produção só sai desta
- * lista quando o plano do módulo de produção mandar.
+ * já aceita a produção (PD0.1, aplicada em 15/10/2026) e a página /producoes
+ * existe (PD0.3), mas o módulo ainda não tem funcionalidade: a produção só sai
+ * desta lista quando o plano do módulo de produção mandar.
  */
 export const MODULOS_EM_CONSTRUCAO: readonly ModuloId[] = ["producao"];
 
@@ -89,14 +89,31 @@ export function modulosDisponiveis(acesso: AcessoModulos): ModuloId[] {
   return MODULOS.filter(modulo => podeUsarModulo(acesso, modulo));
 }
 
+/** O vínculo de uma pessoa com uma organização, do ponto de vista dos módulos. */
+export type VinculoModulos = { modulosOrganizacao: readonly ModuloId[]; modulosMembro: readonly ModuloId[] };
+
 /** Para o bloqueio no servidor, que não sabe qual organização está aberta no navegador. */
 export function usaModuloEmAlgumaOrganizacao(
   superAdmin: boolean,
-  vinculos: readonly { modulosOrganizacao: readonly ModuloId[]; modulosMembro: readonly ModuloId[] }[],
+  vinculos: readonly VinculoModulos[],
   modulo: ModuloId,
 ): boolean {
   if (superAdmin) return true;
   return vinculos.some(v => podeUsarModulo({ superAdmin: false, ...v }, modulo));
+}
+
+/**
+ * Para onde vai quem abre o app (raiz, login, /dashboard): a página da captação,
+ * a menos que a pessoa não a use em nenhuma organização; então vai à página
+ * inicial do primeiro módulo que usa (quem só tem a produção entra em
+ * /producoes sem passar pela captação). O servidor não sabe qual organização
+ * está aberta no navegador, por isso olha todas (usaModuloEmAlgumaOrganizacao).
+ * Sem nenhum módulo em uso fica a da captação: quem decide o resto é o layout de
+ * cliente (destinoSemAcesso), que conhece a organização aberta.
+ */
+export function paginaDeEntrada(superAdmin: boolean, vinculos: readonly VinculoModulos[]): string {
+  const modulo = MODULOS.find(m => usaModuloEmAlgumaOrganizacao(superAdmin, vinculos, m));
+  return INICIO_DO_MODULO[modulo ?? "captacao"];
 }
 
 /** Rotas comuns que não pertencem a nenhum módulo. */

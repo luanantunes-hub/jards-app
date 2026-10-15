@@ -7,13 +7,16 @@ import {
   MODULOS_EM_CONSTRUCAO,
   moduloDaRota,
   moduloVisivel,
+  modulosDaOrganizacao,
   modulosDisponiveis,
   mostraSeletorDeModulo,
   normalizarModulos,
+  paginaDeEntrada,
   podeUsarModulo,
   situacaoNoSeletor,
   usaModuloEmAlgumaOrganizacao,
   type AcessoModulos,
+  type VinculoModulos,
 } from "../lib/modulos";
 
 const SO_CAPTACAO: AcessoModulos = { superAdmin: false, modulosOrganizacao: ["captacao"], modulosMembro: ["captacao"] };
@@ -135,4 +138,60 @@ test("módulo em construção fica escondido até a organização tê-lo", () =>
   assert.equal(moduloVisivel("producao", ["captacao", "producao"]), true);
   assert.equal(moduloVisivel("prestacao", ["captacao"]), true);
   assert.equal(moduloVisivel("captacao", []), true);
+});
+
+const VINCULO_CAPTACAO: VinculoModulos = { modulosOrganizacao: ["captacao"], modulosMembro: ["captacao"] };
+const VINCULO_PRESTACAO: VinculoModulos = { modulosOrganizacao: ["captacao", "prestacao"], modulosMembro: ["prestacao"] };
+const VINCULO_PRODUCAO: VinculoModulos = { modulosOrganizacao: ["captacao", "producao"], modulosMembro: ["producao"] };
+
+test("página de entrada: a da captação, a menos que a pessoa não a use em nenhuma organização", () => {
+  assert.equal(paginaDeEntrada(false, [VINCULO_CAPTACAO]), "/dashboard");
+  assert.equal(paginaDeEntrada(false, [{ modulosOrganizacao: ["captacao", "prestacao"], modulosMembro: ["captacao", "prestacao"] }]), "/dashboard");
+  assert.equal(paginaDeEntrada(false, [VINCULO_PRESTACAO]), "/prestacoes");
+  assert.equal(paginaDeEntrada(false, [VINCULO_PRODUCAO]), "/producoes");
+  assert.equal(paginaDeEntrada(true, []), "/dashboard", "super admin usa todos: entra pela captação");
+});
+
+test("página de entrada: com mais de uma organização, vale a captação onde ela existir e a ordem dos módulos no resto", () => {
+  assert.equal(paginaDeEntrada(false, [VINCULO_PRODUCAO, VINCULO_CAPTACAO]), "/dashboard");
+  assert.equal(paginaDeEntrada(false, [VINCULO_PRODUCAO, VINCULO_PRESTACAO]), "/prestacoes", "prestação vem antes da produção na ordem de MODULOS");
+  assert.equal(paginaDeEntrada(false, [VINCULO_PRODUCAO, VINCULO_PRODUCAO]), "/producoes");
+});
+
+test("página de entrada: sem vínculos ou sem módulo em comum fica a da captação (o layout de cliente decide o resto)", () => {
+  assert.equal(paginaDeEntrada(false, []), "/dashboard");
+  assert.equal(paginaDeEntrada(false, [{ modulosOrganizacao: ["prestacao"], modulosMembro: ["captacao"] }]), "/dashboard");
+});
+
+test("a produção só para leitura (cortesia que acabou) ainda é a entrada de quem só a usa", () => {
+  // organizations.modulos_ativos sem a produção e modulos_leitura com ela: modulosDaOrganizacao junta as duas.
+  const vinculo: VinculoModulos = { modulosOrganizacao: modulosDaOrganizacao(["captacao"], ["producao"]), modulosMembro: normalizarModulos(["producao"]) };
+  assert.deepEqual([...vinculo.modulosOrganizacao], ["captacao", "producao"]);
+  assert.equal(paginaDeEntrada(false, [vinculo]), "/producoes");
+  assert.equal(usaModuloEmAlgumaOrganizacao(false, [vinculo], "producao"), true);
+  assert.equal(destinoSemAcesso("/dashboard", { superAdmin: false, ...vinculo }), "/producoes");
+  assert.equal(destinoSemAcesso("/producoes", { superAdmin: false, ...vinculo }), null);
+});
+
+test("colunas de módulo nulas ou vazias valem só a captação, sem erro", () => {
+  for (const coluna of [null, undefined, [], "producao", {}]) {
+    assert.deepEqual(modulosDaOrganizacao(coluna, coluna), ["captacao"]);
+  }
+  // Vínculo da produção numa organização que (ainda) não a tem: não entra, e nada quebra.
+  const vinculo: VinculoModulos = { modulosOrganizacao: modulosDaOrganizacao(null, null), modulosMembro: normalizarModulos(["producao"]) };
+  assert.equal(usaModuloEmAlgumaOrganizacao(false, [vinculo], "producao"), false);
+  assert.equal(paginaDeEntrada(false, [vinculo]), "/dashboard");
+  assert.equal(destinoSemAcesso("/producoes", { superAdmin: false, ...vinculo }), "/configuracoes");
+});
+
+test("quem só usa a produção: toda rota da captação e da prestação leva a /producoes", () => {
+  const rotas = [
+    "/dashboard", "/atividades", "/projetos", "/projetos/1", "/patrocinadores", "/comparativo", "/editais-abertos",
+    "/empresas-crm", "/captacoes", "/captacoes/1", "/editais-inscritos", "/proponentes", "/captadores", "/contatos",
+    "/contas-patrocinio", "/contratos/1", "/entregas/1", "/ativacoes/1", "/prestacoes", "/prestacoes/1/comprovantes", "/prestacoes/fornecedores",
+  ];
+  for (const rota of rotas) assert.equal(destinoSemAcesso(rota, SO_PRODUCAO), "/producoes", rota);
+  for (const rota of ["/producoes", "/producoes/datas/1", "/configuracoes", "/meu-plano", "/notificacoes"]) {
+    assert.equal(destinoSemAcesso(rota, SO_PRODUCAO), null, rota);
+  }
 });
