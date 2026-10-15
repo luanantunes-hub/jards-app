@@ -36,6 +36,8 @@ test("primeiro acesso: quem é só da prestação cai em /prestacoes", () => {
   assert.equal(destinoDoConvite("colaborador", ["captacao", "prestacao"]), "/configuracoes");
   assert.equal(destinoDoConvite("captador", ["captacao"]), "/workspace-captador");
   assert.equal(destinoDoConvite("proponente", ["captacao"]), "/workspace-proponente");
+  assert.equal(destinoDoConvite("colaborador", ["producao"]), "/producoes");
+  assert.equal(destinoDoConvite("colaborador", ["prestacao", "producao"]), "/prestacoes");
 });
 
 test("erros do banco viram resposta da rota", () => {
@@ -101,4 +103,15 @@ test("P0.6: rotas usam as funções com módulos", async () => {
   assert.match(membro, /rpc\("alterar_modulos_membro"/);
   const vagas = await readFile("app/api/members/seats/route.ts", "utf8");
   assert.match(vagas, /\.contains\("modulos_acesso", \["captacao"\]\)/);
+});
+
+test("externos não recebem a produção, e a produção só vale se a organização a tiver", () => {
+  const externo = lerPedidoModulos("captador", ["captacao", "producao"], null, ["captacao", "producao"]);
+  assert.equal(externo.ok, false);
+  const semAtiva = lerPedidoModulos("colaborador", ["producao"], null, ["captacao"]);
+  assert.equal(semAtiva.ok, false);
+  if (!semAtiva.ok) assert.match(semAtiva.erro, /produção/);
+  const ok = lerPedidoModulos("colaborador", ["producao"], null, ["captacao", "producao"]);
+  assert.equal(ok.ok, true);
+  if (ok.ok) assert.deepEqual(ok.valor, { modulos: ["producao"], funcao: null });
 });

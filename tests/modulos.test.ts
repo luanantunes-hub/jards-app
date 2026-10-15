@@ -2,7 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   destinoSemAcesso,
+  INICIO_DO_MODULO,
+  MODULOS,
+  MODULOS_EM_CONSTRUCAO,
   moduloDaRota,
+  moduloVisivel,
   modulosDisponiveis,
   mostraSeletorDeModulo,
   normalizarModulos,
@@ -69,7 +73,7 @@ test("seletor aparece só para quem usa os dois módulos", () => {
   assert.equal(mostraSeletorDeModulo(SO_CAPTACAO), false);
   assert.equal(mostraSeletorDeModulo(SO_PRESTACAO), false);
   assert.equal(mostraSeletorDeModulo(OS_DOIS), true);
-  assert.deepEqual(modulosDisponiveis(SUPER), ["captacao", "prestacao"]);
+  assert.deepEqual(modulosDisponiveis(SUPER), ["captacao", "prestacao", "producao"]);
 });
 
 test("a prestação nunca aparece como não contratada no seletor", () => {
@@ -104,4 +108,31 @@ test("bloqueio do servidor aceita acesso em qualquer organização", () => {
   assert.equal(usaModuloEmAlgumaOrganizacao(false, vinculos.slice(0, 1), "prestacao"), false);
   assert.equal(usaModuloEmAlgumaOrganizacao(false, [], "prestacao"), false);
   assert.equal(usaModuloEmAlgumaOrganizacao(true, [], "prestacao"), true);
+});
+
+const SO_PRODUCAO: AcessoModulos = { superAdmin: false, modulosOrganizacao: ["captacao", "producao"], modulosMembro: ["producao"] };
+
+test("rotas da produção pertencem ao módulo, sem confundir com a prestação", () => {
+  assert.equal(moduloDaRota("/producoes"), "producao");
+  assert.equal(moduloDaRota("/producoes/datas/1"), "producao");
+  assert.equal(moduloDaRota("/producoes-antigas"), "captacao");
+  assert.equal(moduloDaRota("/prestacoes"), "prestacao");
+});
+
+test("cada módulo tem página inicial, e quem só usa a produção vai para ela", () => {
+  for (const modulo of MODULOS) assert.ok(INICIO_DO_MODULO[modulo].startsWith("/"), modulo);
+  assert.equal(destinoSemAcesso("/dashboard", SO_PRODUCAO), "/producoes");
+  assert.equal(destinoSemAcesso("/prestacoes", SO_PRODUCAO), "/producoes");
+  assert.equal(destinoSemAcesso("/producoes", SO_PRODUCAO), null);
+  assert.equal(destinoSemAcesso("/producoes", SO_CAPTACAO), "/dashboard");
+  assert.equal(destinoSemAcesso("/producoes", SO_PRESTACAO), "/prestacoes");
+});
+
+test("módulo em construção fica escondido até a organização tê-lo", () => {
+  assert.deepEqual([...MODULOS_EM_CONSTRUCAO], ["producao"]);
+  assert.equal(moduloVisivel("producao", ["captacao"]), false);
+  assert.equal(moduloVisivel("producao", ["captacao", "prestacao"]), false);
+  assert.equal(moduloVisivel("producao", ["captacao", "producao"]), true);
+  assert.equal(moduloVisivel("prestacao", ["captacao"]), true);
+  assert.equal(moduloVisivel("captacao", []), true);
 });

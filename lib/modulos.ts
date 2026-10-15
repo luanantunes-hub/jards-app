@@ -1,13 +1,32 @@
-// Módulos do Jards (captação e prestação de contas) e quem pode usar cada um.
+// Módulos do Jards (captação, prestação de contas e produção) e quem pode usar cada um.
 //
 // Regra: a pessoa usa um módulo quando a organização o tem ativo
 // (organizations.modulos_ativos) e o vínculo dela com a organização dá acesso
 // a ele (organization_members.modulos_acesso). Super admin usa todos.
 // Sem valor nas colunas vale só a captação, como sempre foi.
 
-export type ModuloId = "captacao" | "prestacao";
+export type ModuloId = "captacao" | "prestacao" | "producao";
 
-export const MODULOS: readonly ModuloId[] = ["captacao", "prestacao"];
+export const MODULOS: readonly ModuloId[] = ["captacao", "prestacao", "producao"];
+
+/**
+ * Módulos ainda em construção: só aparecem (no seletor, nos convites) para a
+ * organização que já os tem, como os pilotos liberados por cortesia. O banco
+ * ainda não aceita a produção (plano do módulo de produção, PD0.1).
+ */
+export const MODULOS_EM_CONSTRUCAO: readonly ModuloId[] = ["producao"];
+
+/** Página inicial de cada módulo, para onde vai quem entra nele. */
+export const INICIO_DO_MODULO: Record<ModuloId, string> = {
+  captacao: "/dashboard",
+  prestacao: "/prestacoes",
+  producao: "/producoes",
+};
+
+/** Módulo em construção aparece só para a organização que já o tem. */
+export function moduloVisivel(modulo: ModuloId, modulosOrganizacao: readonly ModuloId[]): boolean {
+  return !MODULOS_EM_CONSTRUCAO.includes(modulo) || modulosOrganizacao.includes(modulo);
+}
 
 const PADRAO: readonly ModuloId[] = ["captacao"];
 
@@ -37,13 +56,14 @@ export function modulosDaOrganizacao(ativos: unknown, leitura: unknown): ModuloI
 const ROTAS_DO_MODULO: Record<ModuloId, readonly string[]> = {
   captacao: [],
   prestacao: ["/prestacoes"],
+  producao: ["/producoes"],
 };
 
 function casaPrefixo(path: string, prefixo: string): boolean {
   return path === prefixo || path.startsWith(`${prefixo}/`);
 }
 
-/** Módulo dono da rota; tudo que não é da prestação é da captação. */
+/** Módulo dono da rota; o que não é da prestação nem da produção é da captação. */
 export function moduloDaRota(path: string): ModuloId {
   for (const modulo of MODULOS) {
     if (ROTAS_DO_MODULO[modulo].some(prefixo => casaPrefixo(path, prefixo))) return modulo;
@@ -89,10 +109,8 @@ export function destinoSemAcesso(path: string, acesso: AcessoModulos): string | 
   const modulo = moduloDaRota(path);
   if (podeUsarModulo(acesso, modulo)) return null;
   const outro = modulosDisponiveis(acesso)[0];
-  if (outro === "prestacao") return "/prestacoes";
-  if (outro === "captacao") return "/dashboard";
   // Sem nenhum módulo: as configurações continuam abertas para pedir acesso.
-  return "/configuracoes";
+  return outro ? INICIO_DO_MODULO[outro] : "/configuracoes";
 }
 
 export type SituacaoNoSeletor =

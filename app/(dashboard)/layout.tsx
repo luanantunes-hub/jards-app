@@ -28,6 +28,7 @@ import {
   Menu,
   Store,
   DoorOpen,
+  Drama,
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -43,7 +44,7 @@ import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
 import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
-import { destinoSemAcesso, moduloDaRota, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
+import { destinoSemAcesso, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
 import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
 import { useModalDismiss } from "@/hooks/useModalDismiss";
 
@@ -52,6 +53,7 @@ import { useModalDismiss } from "@/hooks/useModalDismiss";
 const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIcon }[] = [
   { id: "captacao",  label: "Captação",  descricao: "Patrocinadores, editais e negociações",       icone: HandCoins      },
   { id: "prestacao", label: "Prestação", descricao: "Prestação de contas e relatórios do projeto", icone: ClipboardCheck },
+  { id: "producao",  label: "Produção",  descricao: "Agenda, equipe, logística e o dia",            icone: Drama          },
 ];
 
 const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
@@ -96,6 +98,15 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       items: [
         { label: "Prestações",   href: "/prestacoes",              icon: ClipboardCheck },
         { label: "Fornecedores", href: "/prestacoes/fornecedores", icon: Store },
+      ],
+    },
+  ],
+  // O primeiro item é a página inicial do módulo (trocarModulo abre ele).
+  producao: [
+    {
+      section: "Produção",
+      items: [
+        { label: "Agenda", href: "/producoes", icon: CalendarDays },
       ],
     },
   ],
@@ -359,17 +370,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // A prestação é oferecida em teste gratuito a quem nunca teve o módulo (nem só para leitura); quem
   // já teve entra nele, e o aviso da assinatura explica o fim do teste. Nunca aparece como não contratada.
   // A captação não tem teste: o plano gratuito tem as suas funções e nunca bloqueia.
-  const opcoesDeModulo: OpcaoDeModulo[] = MODULOS.map(({ id, label, descricao, icone }) => {
-    const situacao = situacaoNoSeletor({ ...acessoModulos, carregado: modulosCarregados }, id);
-    const promo = situacao.tipo === "teste";
-    return {
-      id, label, descricao, icone, promo,
-      // Só no item da prestação, dentro da lista: embaixo da captação parecia que a captação tinha teste.
-      chamada: promo ? `Teste gratuito de ${TESTE_GRATIS_DIAS} dias` : undefined,
-      carregando: situacao.tipo === "carregando",
-      bloqueio: situacao.tipo === "bloqueado" ? situacao.motivo : null,
-    };
-  });
+  // Módulo em construção (a produção) fica fora do seletor para todos, até a organização tê-lo.
+  // O módulo aberto continua na lista (o super admin entra em qualquer um), para o seletor não mentir.
+  const opcoesDeModulo: OpcaoDeModulo[] = MODULOS
+    .filter(({ id }) => moduloVisivel(id, modulosOrg) || id === moduloDoMenu)
+    .map(({ id, label, descricao, icone }) => {
+      const situacao = situacaoNoSeletor({ ...acessoModulos, carregado: modulosCarregados }, id);
+      const promo = situacao.tipo === "teste";
+      return {
+        id, label, descricao, icone, promo,
+        // Só no item da prestação, dentro da lista: embaixo da captação parecia que a captação tinha teste.
+        chamada: promo ? `Teste gratuito de ${TESTE_GRATIS_DIAS} dias` : undefined,
+        carregando: situacao.tipo === "carregando",
+        bloqueio: situacao.tipo === "bloqueado" ? situacao.motivo : null,
+      };
+    });
 
   async function prestacaoAtivada() {
     setConviteAberto(false);
