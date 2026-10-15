@@ -11,6 +11,7 @@ import {
   mostraSeletorDeModulo,
   normalizarModulos,
   podeUsarModulo,
+  situacaoNoSeletor,
   usaModuloEmAlgumaOrganizacao,
   type AcessoModulos,
 } from "../lib/modulos";
@@ -73,6 +74,29 @@ test("seletor aparece só para quem usa os dois módulos", () => {
   assert.equal(mostraSeletorDeModulo(SO_PRESTACAO), false);
   assert.equal(mostraSeletorDeModulo(OS_DOIS), true);
   assert.deepEqual(modulosDisponiveis(SUPER), ["captacao", "prestacao", "producao"]);
+});
+
+test("a prestação nunca aparece como não contratada no seletor", () => {
+  const carregado = { carregado: true };
+  // Nunca teve: convite do teste grátis, para administrador ou não.
+  assert.deepEqual(situacaoNoSeletor({ ...SO_CAPTACAO, ...carregado }, "prestacao"), { tipo: "teste" });
+  // Em vigor, ou só para leitura depois do teste (modulosDaOrganizacao junta as duas listas): entra.
+  assert.deepEqual(situacaoNoSeletor({ ...OS_DOIS, ...carregado }, "prestacao"), { tipo: "livre" });
+  // Antes de saber os módulos da organização, nada de cadeado nem de convite.
+  assert.deepEqual(situacaoNoSeletor({ ...SO_CAPTACAO, carregado: false }, "prestacao"), { tipo: "carregando" });
+  assert.deepEqual(situacaoNoSeletor({ ...OS_DOIS, carregado: false }, "captacao"), { tipo: "carregando" });
+  // Super admin usa todos, mesmo antes de carregar.
+  assert.deepEqual(situacaoNoSeletor({ ...SUPER, carregado: false }, "prestacao"), { tipo: "livre" });
+  // A organização tem o módulo e a pessoa não tem a vaga: quem decide é o administrador.
+  const semVaga = situacaoNoSeletor({ ...OS_DOIS, modulosMembro: ["captacao"], ...carregado }, "prestacao");
+  assert.equal(semVaga.tipo, "bloqueado");
+  assert.match(semVaga.tipo === "bloqueado" ? semVaga.motivo : "", /peça a quem administra/);
+  for (const acesso of [SO_CAPTACAO, SO_PRESTACAO, OS_DOIS, SUPER]) {
+    for (const carregadoOuNao of [true, false]) {
+      const situacao = situacaoNoSeletor({ ...acesso, carregado: carregadoOuNao }, "prestacao");
+      assert.ok(situacao.tipo !== "bloqueado" || !/não contratado/.test(situacao.motivo));
+    }
+  }
 });
 
 test("bloqueio do servidor aceita acesso em qualquer organização", () => {
