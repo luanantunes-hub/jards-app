@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { authenticateMcpRequest, isErrorResponse, requireWriteScope, resolveOrgId, type McpAuthContext } from "@/lib/mcp/auth";
 import type { Admin } from "@/lib/mcp/crm";
+import { executarComIdempotencia, impressaoDoPedido, separarChave } from "@/lib/mcp/idempotencia";
 import { ErroMcp, type Corpo } from "@/lib/mcp/validacao";
 
 export interface ContextoDaRota {
@@ -55,7 +56,17 @@ export function rotaMcp(opcoes: { escrita: boolean }, executar: (contexto: Conte
       if (isErrorResponse(orgId)) return orgId;
 
       const id = (rota ? (await rota.params).id : null) ?? null;
-      return await executar({ req, ctx, orgId, admin: dependenciasDaRota.criarAdmin(), query, corpo, id, origem: req.nextUrl.origin });
+      const admin = dependenciasDaRota.criarAdmin();
+      const operacao = `${req.method} ${req.nextUrl.pathname}`;
+      // Nas criações, a chave de idempotência (campo ou cabeçalho) deixa repetir o pedido com segurança depois de um erro de rede.
+      const pedido = opcoes.escrita ? separarChave(corpo, req.headers.get("idempotency-key")) : { chave: null, corpo };
+      const rodar = () => executar({ req, ctx, orgId, admin, query, corpo: pedido.corpo, id, origem: req.nextUrl.origin });
+      if (!pedido.chave) return await rodar();
+      return await executarComIdempotencia(
+        admin,
+        { orgId, userId: ctx.userId, chave: pedido.chave, operacao, impressao: impressaoDoPedido(operacao, pedido.corpo) },
+        rodar
+      );
     } catch (erro) {
       if (erro instanceof ErroMcp) return NextResponse.json({ error: erro.message, ...erro.extra }, { status: erro.status });
       console.error("[mcp] erro inesperado em", req.method, req.nextUrl.pathname, erro);

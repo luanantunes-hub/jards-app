@@ -18,6 +18,7 @@ const ferramenta = (nome: string) => {
 
 const CRIACOES = [
   "criar_empresa_crm",
+  "adicionar_empresas_da_base_publica",
   "criar_contato",
   "criar_projeto",
   "criar_proponente",
@@ -97,6 +98,7 @@ test("o esquema da ferramenta junta parâmetros de consulta, de caminho e corpo"
 test("toda criação exige o campo certo e declara a organização", () => {
   const obrigatorios: Record<string, string[]> = {
     criar_empresa_crm: ["nome"],
+    adicionar_empresas_da_base_publica: [],
     criar_contato: ["nome"],
     criar_projeto: ["nome"],
     criar_proponente: ["nome"],

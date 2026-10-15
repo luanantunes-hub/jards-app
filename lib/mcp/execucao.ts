@@ -7,6 +7,7 @@ import { GET as projetosGET, POST as projetosPOST } from "@/app/api/mcp/projetos
 import { GET as projetoGET } from "@/app/api/mcp/projetos/[id]/route";
 import { GET as empresasGET, POST as empresasPOST } from "@/app/api/mcp/empresas/route";
 import { GET as empresaGET } from "@/app/api/mcp/empresas/[id]/route";
+import { POST as empresasBasePublicaPOST } from "@/app/api/mcp/empresas/base-publica/route";
 import { GET as contatosDaEmpresaGET } from "@/app/api/mcp/empresas/[id]/contatos/route";
 import { GET as contatosGET, POST as contatosPOST } from "@/app/api/mcp/contatos/route";
 import { GET as negociacoesGET, POST as negociacoesPOST } from "@/app/api/mcp/negociacoes/route";
@@ -42,6 +43,7 @@ export const MANIPULADORES: Record<string, Manipulador> = {
   obterProjeto: (req, args) => projetoGET(req, comId(args)),
   listarEmpresasCrm: (req) => empresasGET(req, SEM_PARAMETROS),
   criarEmpresaCrm: (req) => empresasPOST(req, SEM_PARAMETROS),
+  adicionarEmpresasDaBasePublica: (req) => empresasBasePublicaPOST(req, SEM_PARAMETROS),
   obterEmpresaCrm: (req, args) => empresaGET(req, comId(args)),
   listarContatosDaEmpresa: (req, args) => contatosDaEmpresaGET(req, comId(args)),
   listarContatos: (req) => contatosGET(req, SEM_PARAMETROS),

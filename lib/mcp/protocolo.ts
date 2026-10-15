@@ -16,7 +16,13 @@ export const INSTRUCOES =
   "nasce na primeira etapa em aberto, e aprovar ou recusar só se faz no app. " +
   "Tarefa é atividade (criar_atividade, listar_atividades); para lembrar de retomar um contato numa data use criar_followup; " +
   "conversa que já aconteceu vira registrar_interacao e observação solta vira criar_nota. " +
-  "Ler os contatos do CRM não gasta crédito. Depois de criar algo, entregue à pessoa o link (url) da resposta.";
+  "Ler os contatos do CRM não gasta crédito. Depois de criar algo, entregue à pessoa o link (url) da resposta. " +
+  "A base pública (listar_patrocinadores_publicos) aceita busca por cidade, estado e setor, devolve o total e a próxima página " +
+  "(proximo_deslocamento) e mostra quantos contatos cada empresa tem e quanto custa liberá-los. adicionar_empresas_da_base_publica " +
+  "traz um lote para o CRM sem gastar crédito e mostra o custo; liberar contatos gasta 1 crédito por empresa, então só repita com " +
+  "desbloquear_contatos e confirmar_custo_creditos depois de a pessoa concordar com o gasto. " +
+  "Em toda criação envie chave_idempotencia (um texto único por ação, como um UUID): se a conexão cair e você não souber se gravou, " +
+  "repita com a MESMA chave que nada é criado duas vezes.";
 
 /** Resposta do tipo "tool result" maior que isso é cortada: o cliente de IA não aproveita e estoura o contexto. */
 const MAX_TEXTO_DA_FERRAMENTA = 60_000;

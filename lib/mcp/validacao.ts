@@ -1,4 +1,5 @@
 import { lerValorBRL } from "@/lib/valor";
+import { normalizarUf, type Uf } from "@/lib/mcp/ufs";
 
 export type Corpo = Record<string, unknown>;
 
@@ -179,6 +180,16 @@ export function listaDeTextos(corpo: Corpo, campo: string, { maxItens = 30, max 
   return [...new Set(limpos)];
 }
 
+/** Lista de UUIDs (lista ou texto separado por vírgulas), sem repetidos e em minúsculas. */
+export function listaDeUuids(corpo: Corpo, campo: string, maxItens = 100): string[] | null {
+  const itens = listaDeTextos(corpo, campo, { maxItens, max: 60 });
+  if (!itens) return null;
+  return itens.map((item) => {
+    if (!UUID_RE.test(item)) throw new ErroMcp(400, `${campo} deve ter só UUIDs válidos (recebi "${item.slice(0, 40)}").`);
+    return item.toLowerCase();
+  });
+}
+
 /** Tira o que quebraria um filtro do PostgREST (vírgula, parênteses, aspas, curingas) e deixa só o termo. */
 export function termoDeBusca(valor: string | null | undefined): string | null {
   if (!valor) return null;
@@ -226,6 +237,29 @@ export function paramData(query: URLSearchParams, campo: string): string | null 
 
 export function paramBooleano(query: URLSearchParams, campo: string): boolean {
   return query.get(campo) === "true";
+}
+
+/** Texto de um filtro de consulta, aparado e limitado; vazio vira null. */
+export function paramTexto(query: URLSearchParams, campo: string, max = 120): string | null {
+  const valor = query.get(campo)?.trim();
+  return valor ? valor.slice(0, max) : null;
+}
+
+/** Estado (sigla ou nome por extenso) de um campo do corpo, já como sigla maiúscula. */
+export function ufDe(corpo: Corpo, campo: string): Uf | null {
+  const valor = corpo[campo];
+  if (ausente(valor)) return null;
+  const dica = `${campo} deve ser a sigla de um estado, como SP ou PR.`;
+  if (typeof valor !== "string") throw new ErroMcp(400, dica);
+  const uf = normalizarUf(valor);
+  if (!uf) throw new ErroMcp(400, `${dica} Recebi "${valor.trim().slice(0, 40)}".`);
+  return uf;
+}
+
+export function paramUf(query: URLSearchParams, campo: string): Uf | null {
+  const valor = query.get(campo);
+  if (valor === null || valor.trim() === "") return null;
+  return ufDe({ [campo]: valor }, campo);
 }
 
 /** Traduz o erro do banco em resposta que o assistente entende (nunca devolve texto interno cru). */
