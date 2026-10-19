@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import BannerCiclo from "@/components/site/BannerCiclo";
 
 type Post = {
   id: string;
@@ -189,33 +190,7 @@ export default async function BlogPublicPage() {
         </section>
       )}
 
-      <section className="mx-auto max-w-pagina px-5 py-20 md:px-8 md:py-28">
-        <div className="grid items-center gap-8 rounded bg-[#F7F7F5] px-6 py-10 md:grid-cols-12 md:px-12 md:py-14">
-          <div className="md:col-span-8">
-            <h2 className="text-[clamp(1.5rem,2.6vw,2.25rem)] leading-[1.12] font-bold tracking-[-0.02em] text-balance text-[#282525]">
-              Da prospecção à renovação, toda a captação num só lugar.
-            </h2>
-            <p className="mt-3 max-w-[56ch] text-base leading-relaxed text-black/55">
-              Veja quem incentiva cada lei, empresa por empresa, e acompanhe negociações, propostas e prazos até a renovação.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-3 md:col-span-4 md:justify-end">
-            <a
-              href="/cadastro"
-              className="inline-flex h-11 items-center gap-2 rounded bg-[#282525] px-5 text-sm font-medium text-white transition-colors hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
-            >
-              Começar grátis
-              <i className="ph ph-arrow-right" aria-hidden="true" />
-            </a>
-            <a
-              href="/crm"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-[#282525] underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
-            >
-              Conhecer o CRM
-            </a>
-          </div>
-        </div>
-      </section>
+      <BannerCiclo />
     </main>
   );
 }
