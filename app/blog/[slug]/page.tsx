@@ -45,15 +45,19 @@ function renderBlock(block: Block) {
       return (
         <figure key={block.id} className="my-8">
           {block.url && (
+            // Imagem inteira, sem corte: retratos e cartazes verticais ficam
+            // centralizados, com altura limitada.
             <img
               src={block.url}
               alt={block.alt ?? ""}
-              className="w-full rounded-lg object-cover max-h-96"
+              loading="lazy"
+              decoding="async"
+              className="mx-auto block h-auto w-auto max-w-full max-h-[36rem] rounded-lg"
               style={{ border: "1px solid rgba(13,13,13,.06)" }}
             />
           )}
           {block.caption && (
-            <figcaption className="text-center text-xs text-black/35 mt-2">{block.caption}</figcaption>
+            <figcaption className="text-center text-xs leading-relaxed text-black/45 mt-3">{block.caption}</figcaption>
           )}
         </figure>
       );
