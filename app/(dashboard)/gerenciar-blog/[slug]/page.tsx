@@ -52,7 +52,7 @@ const BLOCK_LABELS: Record<BlockType, string> = {
   image:     "Imagem",
   quote:     "Citação",
   box:       "Caixa explicativa",
-  destaque:  "Frase em destaque",
+  destaque:  "Frase em destaque (repete um trecho do texto)",
   infografico: "Infográfico",
 };
 
@@ -156,7 +156,7 @@ function BlockEditor({
         {block.type === "destaque" && (
           <textarea
             className={`${inputCls} text-lg font-bold leading-snug`}
-            placeholder="Frase em destaque..."
+            placeholder="Trecho do texto repetido em destaque..."
             value={block.content ?? ""}
             rows={2}
             onChange={(e) => onChange({ ...block, content: e.target.value })}
@@ -178,7 +178,7 @@ function BlockEditor({
             />
             <textarea
               className={`${inputCls} text-sm leading-relaxed`}
-              placeholder={"Texto. Linhas começando com \"- \" viram lista; \"Rótulo: texto\" destaca o rótulo."}
+              placeholder={"Texto. Linhas começando com \"- \" viram lista; \"Rótulo: texto\" no começo da linha destaca o rótulo."}
               value={block.content ?? ""}
               rows={4}
               onChange={(e) => onChange({ ...block, content: e.target.value })}
@@ -285,6 +285,12 @@ export default function BlogEditorPage() {
 
       setTitulo(post.titulo ?? "");
       setSlug(post.slug ?? "");
+      // O endereço só acompanha o título enquanto o post é rascunho e ainda usa
+      // o endereço provisório da criação (post-<data>) ou o gerado do título.
+      // Publicado, nunca muda sozinho: trocar o slug derruba os links.
+      const slugAutomatico = post.status !== "publicado"
+        && (/^post-\d+$/.test(post.slug ?? "") || post.slug === slugify(post.titulo ?? ""));
+      setSlugManual(!slugAutomatico);
       setTagsRaw((post.tags ?? []).join(", "));
       setSeoDesc(post.seo_descricao ?? "");
       setImgCapa(post.imagem_capa ?? "");

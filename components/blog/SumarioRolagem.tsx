@@ -4,7 +4,7 @@
 // fixo ao lado da coluna; nas telas menores vira uma barra fina sob o menu do
 // site, com a seção atual e o progresso, que abre a lista ao toque.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export type ItemSumario = { id: string; titulo: string };
 
@@ -25,10 +25,14 @@ function useLeitura(itens: ItemSumario[], alvo: string) {
       const caixa = artigo.getBoundingClientRect();
       const percurso = caixa.height - window.innerHeight;
       setProgresso(percurso > 0 ? Math.min(1, Math.max(0, -caixa.top / percurso)) : 1);
+      // No fim da página uma seção final curta nunca chega à linha de leitura:
+      // ali vale o último título que já está na tela.
+      const noFim = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2;
+      const limite = noFim ? window.innerHeight : LINHA_DE_LEITURA;
       let indice = 0;
       itens.forEach((item, i) => {
         const titulo = document.getElementById(item.id);
-        if (titulo && titulo.getBoundingClientRect().top <= LINHA_DE_LEITURA) indice = i;
+        if (titulo && titulo.getBoundingClientRect().top <= limite) indice = i;
       });
       setAtual(indice);
     };
@@ -51,7 +55,7 @@ const ROTULO = "font-(family-name:--font-mono) text-[0.6875rem] font-medium uppe
 export function SumarioLateral({ itens, alvo }: { itens: ItemSumario[]; alvo: string }) {
   const { atual, progresso } = useLeitura(itens, alvo);
   return (
-    <nav aria-label="Neste texto" className="sticky top-28 ml-auto mr-12 w-56 pt-16">
+    <nav aria-label="Neste texto" className="sticky top-28 ml-auto mr-12 max-h-[calc(100vh-8rem)] w-56 overflow-y-auto pt-16">
       <p className={`${ROTULO} text-black/45`}>Neste texto</p>
       <div className="relative mt-4 pl-4">
         <span className="absolute top-0 bottom-0 left-0 w-px bg-black/10" aria-hidden="true" />
@@ -83,10 +87,12 @@ export function SumarioLateral({ itens, alvo }: { itens: ItemSumario[]; alvo: st
 export function SumarioBarra({ itens, alvo }: { itens: ItemSumario[]; alvo: string }) {
   const { atual, progresso } = useLeitura(itens, alvo);
   const [aberto, setAberto] = useState(false);
+  const botao = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (!aberto) return;
-    const fechar = (e: KeyboardEvent) => { if (e.key === "Escape") setAberto(false); };
+    // Esc fecha a lista e devolve o foco ao botão, sem jogá-lo para o topo da página.
+    const fechar = (e: KeyboardEvent) => { if (e.key === "Escape") { setAberto(false); botao.current?.focus(); } };
     window.addEventListener("keydown", fechar);
     return () => window.removeEventListener("keydown", fechar);
   }, [aberto]);
@@ -94,6 +100,7 @@ export function SumarioBarra({ itens, alvo }: { itens: ItemSumario[]; alvo: stri
   return (
     <div className="sticky top-16 z-40 border-b border-black/[.06] bg-white/90 backdrop-blur-xl xl:hidden">
       <button
+        ref={botao}
         type="button"
         onClick={() => setAberto((v) => !v)}
         aria-expanded={aberto}
@@ -106,7 +113,7 @@ export function SumarioBarra({ itens, alvo }: { itens: ItemSumario[]; alvo: stri
       </button>
       <span className="absolute bottom-0 left-0 h-0.5 bg-[#684DB0]" style={{ width: `${progresso * 100}%` }} aria-hidden="true" />
       {aberto && (
-        <ol id="sumario-lista" className="mx-auto max-w-2xl px-6 pb-4">
+        <ol id="sumario-lista" className="mx-auto max-h-[calc(100dvh-7rem)] max-w-2xl overflow-y-auto px-6 pb-4">
           {itens.map((item, i) => (
             <li key={item.id}>
               <a

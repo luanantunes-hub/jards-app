@@ -19,7 +19,8 @@ export default function InfograficoEscalas() {
   return (
     <figure className="my-12" aria-labelledby="info-escalas-titulo">
       <div className="grid items-center gap-8 rounded bg-[#F7F7F5] px-5 py-7 sm:grid-cols-[15rem_1fr] sm:px-8">
-        <svg viewBox="0 0 280 280" className="mx-auto w-full max-w-[15rem]" role="img" aria-label="Quatro anéis, um dentro do outro: doméstica, comunitária, institucional e global.">
+        {/* Desenho decorativo: os nomes das escalas estão na lista ao lado */}
+        <svg viewBox="0 0 280 280" className="mx-auto w-full max-w-[15rem]" aria-hidden="true" focusable="false">
           <defs>
             <radialGradient id="escalas-casa">
               <stop offset="0" stopColor="#E08A3C" stopOpacity=".55" />

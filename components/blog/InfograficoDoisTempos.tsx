@@ -4,10 +4,18 @@
 // comunidade e o tempo corporativo, que o texto diz raramente coincidirem. O
 // corporativo sobe e volta ao zero a cada ciclo orçamentário anual; o da
 // comunidade segue em linha contínua, atravessando os ciclos. Dois pontos de
-// luz percorrem as linhas no mesmo intervalo (SMIL); com menos movimento, o
-// desenho fica parado.
+// luz percorrem as linhas no mesmo intervalo (SMIL). Os pontos só entram
+// depois que a página carrega e quando o sistema não pede menos movimento;
+// sem eles, o desenho fica parado.
 
-import { useEffect, useRef } from "react";
+import { useSyncExternalStore } from "react";
+
+const MENOS_MOVIMENTO = "(prefers-reduced-motion: reduce)";
+function assinar(aviso: () => void) {
+  const consulta = window.matchMedia(MENOS_MOVIMENTO);
+  consulta.addEventListener("change", aviso);
+  return () => consulta.removeEventListener("change", aviso);
+}
 
 const ROTULO = "font-(family-name:--font-mono) text-[0.6875rem] font-medium uppercase tracking-[.08em]";
 const DURACAO = 9;
@@ -23,20 +31,8 @@ const TEMPOS = "0;0.3333;0.345;0.6667;0.678;1";
 const COMUNIDADE = "M40,198 C90,196 110,190 150,188 S230,176 270,178 S340,166 380,162 S460,152 500,148 S560,140 580,138";
 
 export default function InfograficoDoisTempos() {
-  const desenho = useRef<SVGSVGElement>(null);
-
-  useEffect(() => {
-    const consulta = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const aplicar = () => {
-      const svg = desenho.current;
-      if (!svg) return;
-      if (consulta.matches) { svg.pauseAnimations(); svg.setCurrentTime(DURACAO * 0.6); }
-      else svg.unpauseAnimations();
-    };
-    aplicar();
-    consulta.addEventListener("change", aplicar);
-    return () => consulta.removeEventListener("change", aplicar);
-  }, []);
+  // No servidor (e antes de hidratar) conta como "menos movimento": sem pontos.
+  const comMovimento = useSyncExternalStore(assinar, () => !window.matchMedia(MENOS_MOVIMENTO).matches, () => false);
 
   const visivel = { values: "0;1;1;0", keyTimes: "0;0.04;0.94;1", dur: `${DURACAO}s`, repeatCount: "indefinite" };
 
@@ -59,20 +55,20 @@ export default function InfograficoDoisTempos() {
           </li>
         </ul>
 
+        {/* Ciclos em HTML: dentro do desenho ficariam com ~6px no celular */}
+        <div className="mt-6 grid grid-cols-[40fr_180fr_180fr_180fr_20fr]" aria-hidden="true">
+          {["Ciclo 1", "Ciclo 2", "Ciclo 3"].map((t, i) => (
+            <span key={t} className={`${ROTULO} text-center text-black/50`} style={{ gridColumn: i + 2 }}>{t}</span>
+          ))}
+        </div>
         <svg
-          ref={desenho}
           viewBox="0 0 600 224"
-          className="mt-6 h-auto w-full"
+          className="mt-1 h-auto w-full"
           role="img"
           aria-label="Ao longo de três ciclos anuais, a linha corporativa sobe e volta ao zero a cada ciclo; a linha da comunidade sobe devagar e sem interrupção."
         >
           {[220, 400].map((x) => (
             <line key={x} x1={x} y1={30} x2={x} y2={212} className="stroke-[#282525]/20" strokeWidth={1} strokeDasharray="3 5" />
-          ))}
-          {["Ciclo 1", "Ciclo 2", "Ciclo 3"].map((t, i) => (
-            <text key={t} x={130 + 180 * i} y={20} textAnchor="middle" className="fill-[#282525]/50 font-(family-name:--font-mono) text-[13px] font-medium uppercase tracking-[.06em]">
-              {t}
-            </text>
           ))}
           <line x1={40} y1={100} x2={580} y2={100} className="stroke-[#282525]/12" strokeWidth={1} />
           <line x1={40} y1={204} x2={580} y2={204} className="stroke-[#282525]/12" strokeWidth={1} />
@@ -80,6 +76,7 @@ export default function InfograficoDoisTempos() {
           <path d={CORPORATIVO} fill="none" stroke="#4A6385" strokeWidth={1.75} strokeLinejoin="round" />
           <path d={COMUNIDADE} fill="none" stroke="#E08A3C" strokeWidth={2.5} strokeLinecap="round" />
 
+          {comMovimento && (<>
           <g>
             <animateMotion path={CORPORATIVO} keyPoints={PONTOS} keyTimes={TEMPOS} calcMode="linear" dur={`${DURACAO}s`} repeatCount="indefinite" />
             <animate attributeName="opacity" {...visivel} />
@@ -92,10 +89,11 @@ export default function InfograficoDoisTempos() {
             <circle r={10} fill="#E08A3C" opacity=".22" />
             <circle r={4} fill="#E08A3C" />
           </g>
+          </>)}
         </svg>
 
         <figcaption className="mt-4 text-xs leading-relaxed text-black/50">
-          Projetos de longo prazo pedem permanência, repetição e escuta, que nem sempre cabem nos ciclos orçamentários anuais.
+          Projetos híbridos exigem permanência e continuidade; a inovação social de longo prazo nasce da repetição e da escuta, que nem sempre cabem nos ciclos orçamentários anuais.
         </figcaption>
       </div>
     </figure>

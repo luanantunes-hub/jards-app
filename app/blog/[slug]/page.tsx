@@ -21,18 +21,22 @@ const ROTULO = "font-(family-name:--font-mono) text-[0.6875rem] font-medium uppe
 // Os títulos de seção ficam abaixo do menu do site e da barra "Neste texto".
 const ANCORA = "scroll-mt-32 xl:scroll-mt-24";
 
-// Âncora legível para cada título de seção ("quando-o-desenvolvimento-...").
+// Âncora legível para cada título de seção ("quando-o-desenvolvimento-..."),
+// indexada pela posição do bloco. Nunca repete nem usa um id que a página já
+// tem (introdução, artigo, menus).
+const IDS_DA_PAGINA = ["introducao", "artigo", "sumario-lista", "menuproduto", "menucelular", "conteudo", "rodape"];
 function ancoras(blocks: Block[]) {
-  const usados = new Map<string, number>();
-  const ids = new Map<string, string>();
-  for (const b of blocks) {
-    if (b.type !== "heading2" || !b.content) continue;
+  const usados = new Set(IDS_DA_PAGINA);
+  const ids = new Map<number, string>();
+  blocks.forEach((b, i) => {
+    if (b.type !== "heading2" || !b.content?.trim()) return;
     const base = b.content.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "secao";
-    const n = usados.get(base) ?? 0;
-    usados.set(base, n + 1);
-    ids.set(b.id, n ? `${base}-${n + 1}` : base);
-  }
+    let id = base, n = 1;
+    while (usados.has(id)) id = `${base}-${++n}`;
+    usados.add(id);
+    ids.set(i, id);
+  });
   return ids;
 }
 
@@ -61,7 +65,7 @@ function ConteudoBox({ texto }: { texto: string }) {
           ))}
         </ul>
       ) : (
-        <p key={i} className="mt-4 text-[0.9375rem] leading-relaxed text-black/70">{g.linhas[0]}</p>
+        <p key={i} className="mt-4 text-[0.9375rem] leading-relaxed text-black/70">{comRotulo(g.linhas[0])}</p>
       ))}
     </>
   );
@@ -72,11 +76,11 @@ function fmtDate(d: string | null) {
   return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-function renderBlock(block: Block, ids: Map<string, string>) {
+function renderBlock(block: Block, ids: Map<number, string>, indice: number) {
   switch (block.type) {
     case "heading2":
       return (
-        <h2 key={block.id} id={ids.get(block.id)} className={`text-2xl font-bold text-[#282525] mt-8 mb-3 leading-snug ${ANCORA}`}>
+        <h2 key={block.id} id={ids.get(indice)} className={`text-2xl font-bold text-[#282525] mt-8 mb-3 leading-snug ${ANCORA}`}>
           {block.content}
         </h2>
       );
@@ -117,13 +121,14 @@ function renderBlock(block: Block, ids: Map<string, string>) {
         </figure>
       );
     case "destaque":
+      // Repete um trecho do próprio texto: leitores de tela já o leram no parágrafo.
       return (
-        <figure key={block.id} className="my-12">
-          <span className="block h-0.5 w-10 bg-[#684DB0]" aria-hidden="true" />
-          <blockquote className="mt-5 text-[1.5rem] leading-[1.25] font-bold tracking-[-0.015em] text-balance text-[#282525] sm:text-[1.75rem]">
+        <div key={block.id} className="my-12" aria-hidden="true">
+          <span className="block h-0.5 w-10 bg-[#684DB0]" />
+          <p className="mt-5 text-[1.5rem] leading-[1.25] font-bold tracking-[-0.015em] text-balance text-[#282525] sm:text-[1.75rem]">
             {block.content}
-          </blockquote>
-        </figure>
+          </p>
+        </div>
       );
     case "box":
       return (
@@ -197,10 +202,16 @@ export default async function BlogPostPage({ params }: Props) {
   // "Neste texto": a introdução (o que vem antes do primeiro título) e cada
   // título de seção. Só aparece quando o post tem pelo menos duas seções.
   const ids = ancoras(blocks);
-  const secoes: ItemSumario[] = blocks
-    .filter((b) => b.type === "heading2" && ids.has(b.id))
-    .map((b) => ({ id: ids.get(b.id)!, titulo: b.content! }));
-  const comIntroducao = blocks.length > 0 && blocks[0].type !== "heading2";
+  const secoes: ItemSumario[] = blocks.flatMap((b, i) => {
+    const id = ids.get(i);
+    return id ? [{ id, titulo: b.content!.trim() }] : [];
+  });
+  // Introdução só quando há conteúdo de verdade antes do primeiro título (o
+  // editor começa todo post com um parágrafo vazio).
+  const primeiroTitulo = blocks.findIndex((b) => b.type === "heading2");
+  const comIntroducao = blocks
+    .slice(0, primeiroTitulo < 0 ? blocks.length : primeiroTitulo)
+    .some((b) => b.content?.trim() || b.url || b.chave || b.title?.trim());
   const sumario: ItemSumario[] = secoes.length >= 2
     ? [...(comIntroducao ? [{ id: "introducao", titulo: "Introdução" }] : []), ...secoes]
     : [];
@@ -209,9 +220,9 @@ export default async function BlogPostPage({ params }: Props) {
     <main className="min-h-screen" style={{ background: "#FAFAFA" }}>
       {sumario.length > 0 && <SumarioBarra itens={sumario} alvo="artigo" />}
       <div className="xl:grid xl:grid-cols-[1fr_minmax(0,42rem)_1fr]">
-      <aside className="hidden xl:block">
-        {sumario.length > 0 && <SumarioLateral itens={sumario} alvo="artigo" />}
-      </aside>
+      {sumario.length > 0
+        ? <aside className="hidden xl:block"><SumarioLateral itens={sumario} alvo="artigo" /></aside>
+        : <div className="hidden xl:block" aria-hidden="true" />}
       <article id="artigo" className="max-w-2xl mx-auto px-6 py-16 xl:mx-0 xl:max-w-none">
         {/* Back */}
         <Link
@@ -262,7 +273,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* Content */}
         <div id="introducao" className={`prose-content ${ANCORA}`}>
-          {blocks.map((block) => renderBlock(block, ids))}
+          {blocks.map((block, i) => renderBlock(block, ids, i))}
         </div>
       </article>
       <div className="hidden xl:block" aria-hidden="true" />

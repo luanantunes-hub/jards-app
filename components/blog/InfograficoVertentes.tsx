@@ -57,7 +57,7 @@ const LINHAS: { pergunta: string; respostas: [string, string, string] }[] = [
   {
     pergunta: "Quem conduz",
     respostas: [
-      "Especialistas e instituições. A comunidade é destinatária.",
+      "Especialistas e instituições. A comunidade tende a ser destinatária.",
       "A comunidade. A empresa facilita processos e articula redes.",
       "Empresa, Estado e comunidade, como coautores com papéis distintos.",
     ],
