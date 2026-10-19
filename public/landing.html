@@ -963,6 +963,7 @@
     @media (prefers-reduced-motion: reduce) { .site-nav { transition:none; } }
 
   </style>
+  <link rel="stylesheet" href="/menu-site.css" />
 </head>
 <body>
 <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
@@ -972,19 +973,40 @@
   <div class="px-5 md:px-8 h-16 flex items-center justify-between">
     <a href="#top" aria-label="Voltar ao início"><img src="assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
 
-    <nav class="hidden md:flex items-center gap-8">
-      <a href="#bi"       class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Plataforma</a>
-      <a href="#produto-tabs" class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Produto</a>
-      <a href="#operacao" class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Parcerias</a>
-      <a href="#precos"   class="text-sm font-medium text-black/50 hover:text-[#282525] transition-colors">Preços</a>
+    <nav class="menu-site" aria-label="Principal">
+      <div class="menu-site__grupo" data-menu-grupo>
+        <button type="button" class="menu-site__gatilho" data-menu-gatilho aria-expanded="false" aria-controls="menuProduto">Produto <i class="ph ph-caret-down menu-site__seta" aria-hidden="true"></i></button>
+        <div class="menu-site__painel" id="menuProduto" style="--colunas:1">
+          <div class="menu-site__coluna">
+            <p class="menu-site__secao">Captação de recursos</p>
+            <a class="menu-site__item" href="/incentivadores"><span class="menu-site__titulo">Inteligência</span><span class="menu-site__desc">Quem incentiva cada lei, empresa por empresa, e os editais abertos.</span></a>
+            <a class="menu-site__item" href="/crm"><span class="menu-site__titulo">CRM</span><span class="menu-site__desc">Empresas, negociações, propostas e prazos, até a renovação.</span></a>
+          </div>
+        </div>
+      </div>
+      <a class="menu-site__link" href="/#precos">Preços</a>
+      <a class="menu-site__link" href="/blog">Blog</a>
     </nav>
 
     <div class="flex items-center gap-1 md:gap-3">
-      <a href="/login" data-app-path="/login" class="alt-nav-login"><span class="md:hidden">Entrar</span><span class="hidden md:inline">Fazer login</span></a>
+      <a href="/login" data-app-path="/login" class="alt-nav-login menu-site__login"><span class="md:hidden">Entrar</span><span class="hidden md:inline">Fazer login</span></a>
       <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--header">
         Começar grátis
         <i class="ph ph-arrow-right" aria-hidden="true"></i>
       </a>
+      <button type="button" class="menu-site__botao-celular" data-menu-celular aria-expanded="false" aria-controls="menuCelular" aria-label="Abrir menu"><i class="ph ph-list" aria-hidden="true"></i></button>
+    </div>
+  </div>
+  <div class="menu-celular" id="menuCelular" hidden>
+    <div class="menu-celular__secao">
+      <span class="menu-celular__rotulo">Captação de recursos</span>
+      <a class="menu-celular__link" href="/incentivadores">Inteligência</a>
+      <a class="menu-celular__link" href="/crm">CRM</a>
+    </div>
+    <div class="menu-celular__secao">
+      <a class="menu-celular__link" href="/#precos">Preços</a>
+      <a class="menu-celular__link" href="/blog">Blog</a>
+      <a class="menu-celular__link" href="/login" data-app-path="/login">Fazer login</a>
     </div>
   </div>
 </header>
@@ -2124,7 +2146,7 @@
           <div class="ms-tb">
             <div class="ms-seg"><span class="ms-seg-btn on">Lista</span><span class="ms-seg-btn">Calendário</span><span class="ms-seg-btn">Gantt</span><span class="ms-seg-btn">Carga da equipe</span></div>
             <div class="ms-seg"><span class="ms-seg-btn on">A fazer</span><span class="ms-seg-btn">Histórico</span></div>
-            <div class="ms-seg"><span class="ms-seg-btn on">Todas</span><span class="ms-seg-btn">Email</span><span class="ms-seg-btn">Reunião</span><span class="ms-seg-btn">Tarefa</span></div>
+            <div class="ms-seg"><span class="ms-seg-btn on">Todas</span><span class="ms-seg-btn">Email</span><span class="ms-seg-btn">Reunião</span><span class="ms-seg-btn">Telefone</span></div>
           </div>
           <div class="ms-body" style="padding:0 0 0 32px">
             <table class="ms-tbl">
@@ -2375,10 +2397,10 @@
       var ATIVS=[
         {done:false,nome:'Enviar proposta Rouanet atualizada',tipo:'Email',neg:'Captação Itaú BBA',co:'Itaú BBA',prazo:'hoje',prio:'alta'},
         {done:false,nome:'Reunião de alinhamento do projeto',tipo:'Reunião',neg:'Ambev: Turnê',co:'Ambev',prazo:'amanhã',prio:'media'},
-        {done:true,nome:'Follow-up sobre edital Rouanet',tipo:'Ligação',neg:'Petrobras Audio',co:'Petrobras',prazo:'ontem',prio:'baixa'},
+        {done:true,nome:'Follow-up sobre edital Rouanet',tipo:'Telefone',neg:'Petrobras Audio',co:'Petrobras',prazo:'ontem',prio:'baixa'},
         {done:false,nome:'Conectar com dir. de patrocínio',tipo:'LinkedIn',neg:'Prosp. Porto Seg.',co:'Porto Seguro',prazo:'seg',prio:'media'},
         {done:true,nome:'Confirmar reunião presencial',tipo:'Email',neg:'Proposta Embraer',co:'Embraer',prazo:'ontem',prio:'alta'},
-        {done:false,nome:'Preparar relatório de atividades',tipo:'Tarefa',neg:'-',co:'Interno',prazo:'sexta',prio:'baixa'},
+        {done:false,nome:'Preparar relatório de atividades',tipo:'Outro',neg:'-',co:'Interno',prazo:'sexta',prio:'baixa'},
       ];
       document.getElementById('ms-ativ-body').innerHTML=ATIVS.map(function(a){
         return '<tr>'+
@@ -2443,20 +2465,20 @@
           Conecte sua conta Jards e pergunte. O assistente consulta o CRM ao vivo, sem copiar e colar.
         </p>
         <ul class="space-y-3 mt-8 text-sm text-black/70 max-w-md">
-          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Lê projetos, propostas, tarefas, captadores, proponentes e empresas</li>
-          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Avalia uma empresa: histórico, total investido, áreas recorrentes, último aporte</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Lê projetos, propostas, atividades, captadores, proponentes e empresas</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Avalia o histórico da empresa com você: patrocínios fechados, valor total, áreas recorrentes e último patrocínio</li>
           <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Traz contatos de uma patrocinadora (1 crédito, como no app)</li>
           <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Resume a organização: projetos por fase, propostas por status, total captado</li>
-          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Cria contatos e tarefas pela conversa</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Cria contatos e atividades pela conversa</li>
         </ul>
         <div class="grid grid-cols-2 gap-3 mt-8 max-w-md">
           <div class="mcp-plat">
             <img src="assets/icons/logo-claude.png" alt="" />
-            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">Claude</p><p class="text-[11px] leading-snug text-black/60">Servidor MCP local · Desktop ou Code</p></div>
+            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">Claude</p><p class="text-[11px] leading-snug text-black/60">Conector no claude.ai · também no Claude Code</p></div>
           </div>
           <div class="mcp-plat">
             <img src="assets/icons/logo-chatgpt.png" alt="" />
-            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">ChatGPT</p><p class="text-[11px] leading-snug text-black/60">Custom GPT · login ou chave de API</p></div>
+            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">ChatGPT</p><p class="text-[11px] leading-snug text-black/60">Servidor MCP no ChatGPT · ou GPT personalizada</p></div>
           </div>
         </div>
         <p class="text-black/60 text-xs mt-4 max-w-md">Nos planos pagos. Acesso só às organizações de que você é membro. Editais e patrocinadores: base pública do Jards.</p>
@@ -2493,10 +2515,10 @@
 (function(){
   var LOGOS = { chatgpt: 'assets/icons/logo-chatgpt.png', claude: 'assets/icons/logo-claude.png' };
   var NOMES = { chatgpt: 'ChatGPT', claude: 'Claude' };
-  // Uma leitura (carteira da empresa) e uma escrita (criar tarefa), uma em cada assistente
+  // Uma leitura (carteira da empresa) e uma escrita (criar atividade), uma em cada assistente
   var CONVERSAS = [
-    { assistente: 'chatgpt', pergunta: 'A Ambev combina com o nosso projeto de esporte?', ferramenta: 'Jards · carteira da empresa', chamada: ['avaliar_carteira_empresa', '{ empresa_crm_id }'], destaque: 'R$ 95M investidos · Esporte, SP', resposta: 'Esporte é a área recorrente dela, e o último aporte foi há 8 meses: boa janela para apresentar o projeto.' },
-    { assistente: 'claude', pergunta: 'Cria uma tarefa: enviar a proposta à Ambev até sexta', ferramenta: 'Jards · criar tarefa', chamada: ['criar_tarefa', '{ titulo: "Enviar proposta à Ambev", data_prazo }'], destaque: 'Tarefa criada · prazo sexta', resposta: '“Enviar proposta à Ambev” já está nas suas tarefas no Jards. Ficou gravada no CRM, não só nesta conversa.' }
+    { assistente: 'chatgpt', pergunta: 'A Ambev combina com o nosso projeto de esporte?', ferramenta: 'Jards · carteira da empresa', chamada: ['avaliar_carteira_empresa', '{ empresa_crm_id }'], destaque: '2 patrocínios com você · R$ 420 mil · Esporte', resposta: 'Ela já patrocinou dois projetos de esporte seus, o último há 8 meses: boa janela para o novo.' },
+    { assistente: 'claude', pergunta: 'Cria uma atividade: enviar a proposta à Ambev até sexta', ferramenta: 'Jards · criar atividade', chamada: ['criar_atividade', '{ nome: "Enviar proposta à Ambev", tipo: "email", data_prevista }'], destaque: 'Atividade criada · prazo sexta', resposta: '“Enviar proposta à Ambev” já está nas suas atividades no Jards. Ficou gravada no CRM, não só nesta conversa.' }
   ];
   var CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#2E8932"/><path d="M3.4 6.2l1.8 1.8 3.6-3.8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
@@ -2793,10 +2815,9 @@
       <nav aria-label="Navegação do rodapé">
         <p class="footer-column-title">Navegue</p>
         <div class="footer-nav">
-          <a href="#bi">Plataforma</a>
-          <a href="#produto-tabs">Produto</a>
-          <a href="#operacao">Parcerias</a>
-          <a href="#precos">Preços</a>
+          <a href="/incentivadores">Inteligência</a>
+          <a href="/crm">CRM</a>
+          <a href="/#precos">Preços</a>
           <a href="/blog" data-app-path="/blog">Blog</a>
         </div>
       </nav>
@@ -3598,5 +3619,6 @@
   atualizar();
 })();
 </script>
+<script src="/menu-site.js" defer></script>
 </body>
 </html>
