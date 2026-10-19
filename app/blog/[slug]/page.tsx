@@ -2,26 +2,81 @@ import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import { INFOGRAFICOS } from "@/components/blog/infograficos";
+import { SumarioBarra, SumarioLateral, type ItemSumario } from "@/components/blog/SumarioRolagem";
 
 type Block = {
   id: string;
-  type: "paragraph" | "heading2" | "heading3" | "image" | "quote";
+  type: "paragraph" | "heading2" | "heading3" | "image" | "quote" | "box" | "destaque" | "infografico";
   content?: string;
   url?: string;
   alt?: string;
   caption?: string;
+  title?: string; // box
+  label?: string; // box: rótulo pequeno acima do título
+  chave?: string; // infografico
 };
+
+const ROTULO = "font-(family-name:--font-mono) text-[0.6875rem] font-medium uppercase tracking-[.08em]";
+// Os títulos de seção ficam abaixo do menu do site e da barra "Neste texto".
+const ANCORA = "scroll-mt-32 xl:scroll-mt-24";
+
+// Âncora legível para cada título de seção ("quando-o-desenvolvimento-...").
+function ancoras(blocks: Block[]) {
+  const usados = new Map<string, number>();
+  const ids = new Map<string, string>();
+  for (const b of blocks) {
+    if (b.type !== "heading2" || !b.content) continue;
+    const base = b.content.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60) || "secao";
+    const n = usados.get(base) ?? 0;
+    usados.set(base, n + 1);
+    ids.set(b.id, n ? `${base}-${n + 1}` : base);
+  }
+  return ids;
+}
+
+// Texto da caixa: linhas com "- " viram lista; "Rótulo: texto" destaca o rótulo.
+function ConteudoBox({ texto }: { texto: string }) {
+  const grupos: { lista: boolean; linhas: string[] }[] = [];
+  for (const linha of texto.split("\n").map((l) => l.trim()).filter(Boolean)) {
+    const lista = linha.startsWith("- ");
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.lista === lista && lista) ultimo.linhas.push(linha.slice(2));
+    else grupos.push({ lista, linhas: [lista ? linha.slice(2) : linha] });
+  }
+  const comRotulo = (t: string) => {
+    const i = t.indexOf(": ");
+    if (i < 1 || i > 40) return t;
+    return <><strong className="font-semibold text-[#282525]">{t.slice(0, i)}:</strong>{t.slice(i + 1)}</>;
+  };
+  return (
+    <>
+      {grupos.map((g, i) => g.lista ? (
+        <ul key={i} className="mt-4 flex flex-col gap-3">
+          {g.linhas.map((l, j) => (
+            <li key={j} className="relative pl-4 text-[0.9375rem] leading-relaxed text-black/70 before:absolute before:top-[0.6em] before:left-0 before:h-1.5 before:w-1.5 before:rounded-full before:bg-[#684DB0]">
+              {comRotulo(l)}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p key={i} className="mt-4 text-[0.9375rem] leading-relaxed text-black/70">{g.linhas[0]}</p>
+      ))}
+    </>
+  );
+}
 
 function fmtDate(d: string | null) {
   if (!d) return "";
   return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
 }
 
-function renderBlock(block: Block) {
+function renderBlock(block: Block, ids: Map<string, string>) {
   switch (block.type) {
     case "heading2":
       return (
-        <h2 key={block.id} className="text-2xl font-bold text-[#282525] mt-8 mb-3 leading-snug">
+        <h2 key={block.id} id={ids.get(block.id)} className={`text-2xl font-bold text-[#282525] mt-8 mb-3 leading-snug ${ANCORA}`}>
           {block.content}
         </h2>
       );
@@ -61,6 +116,27 @@ function renderBlock(block: Block) {
           )}
         </figure>
       );
+    case "destaque":
+      return (
+        <figure key={block.id} className="my-12">
+          <span className="block h-0.5 w-10 bg-[#684DB0]" aria-hidden="true" />
+          <blockquote className="mt-5 text-[1.5rem] leading-[1.25] font-bold tracking-[-0.015em] text-balance text-[#282525] sm:text-[1.75rem]">
+            {block.content}
+          </blockquote>
+        </figure>
+      );
+    case "box":
+      return (
+        <aside key={block.id} className="my-10 rounded border border-black/10 bg-white px-6 py-6">
+          {block.label && <p className={`${ROTULO} text-[#684DB0]`}>{block.label}</p>}
+          {block.title && <p className="mt-2 text-lg leading-snug font-bold text-balance text-[#282525]">{block.title}</p>}
+          {block.content && <ConteudoBox texto={block.content} />}
+        </aside>
+      );
+    case "infografico": {
+      const Infografico = block.chave ? INFOGRAFICOS[block.chave] : undefined;
+      return Infografico ? <Infografico key={block.id} /> : null;
+    }
     default:
       return (
         <p key={block.id} className="text-base text-black/70 leading-relaxed my-4 whitespace-pre-line">
@@ -118,9 +194,25 @@ export default async function BlogPostPage({ params }: Props) {
   let blocks: Block[] = [];
   try { blocks = JSON.parse(post.conteudo || "[]"); } catch { blocks = []; }
 
+  // "Neste texto": a introdução (o que vem antes do primeiro título) e cada
+  // título de seção. Só aparece quando o post tem pelo menos duas seções.
+  const ids = ancoras(blocks);
+  const secoes: ItemSumario[] = blocks
+    .filter((b) => b.type === "heading2" && ids.has(b.id))
+    .map((b) => ({ id: ids.get(b.id)!, titulo: b.content! }));
+  const comIntroducao = blocks.length > 0 && blocks[0].type !== "heading2";
+  const sumario: ItemSumario[] = secoes.length >= 2
+    ? [...(comIntroducao ? [{ id: "introducao", titulo: "Introdução" }] : []), ...secoes]
+    : [];
+
   return (
     <main className="min-h-screen" style={{ background: "#FAFAFA" }}>
-      <article className="max-w-2xl mx-auto px-6 py-16">
+      {sumario.length > 0 && <SumarioBarra itens={sumario} alvo="artigo" />}
+      <div className="xl:grid xl:grid-cols-[1fr_minmax(0,42rem)_1fr]">
+      <aside className="hidden xl:block">
+        {sumario.length > 0 && <SumarioLateral itens={sumario} alvo="artigo" />}
+      </aside>
+      <article id="artigo" className="max-w-2xl mx-auto px-6 py-16 xl:mx-0 xl:max-w-none">
         {/* Back */}
         <Link
           href="/blog"
@@ -169,10 +261,12 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="h-px mb-8" style={{ background: "rgba(13,13,13,.08)" }} />
 
         {/* Content */}
-        <div className="prose-content">
-          {blocks.map((block) => renderBlock(block))}
+        <div id="introducao" className={`prose-content ${ANCORA}`}>
+          {blocks.map((block) => renderBlock(block, ids))}
         </div>
       </article>
+      <div className="hidden xl:block" aria-hidden="true" />
+      </div>
     </main>
   );
 }
