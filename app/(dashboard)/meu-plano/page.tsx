@@ -7,7 +7,8 @@ import {
   AlertCircle, CheckCircle2,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
+import { useCreditos } from "@/contexts/CreditosContext";
 import type { Profile, PlanTipo } from "@/lib/supabase/types";
 import { AssinaturaDoModulo } from "@/components/prestacao/AssinaturaDoModulo";
 
@@ -130,6 +131,9 @@ function UsageBar({ label, used, limit }: { label: string; used: number; limit: 
 function MeuPlanoInner() {
   const supabase    = createClient();
   const organizationId = useOrganizationId();
+  const papel       = useOrganizationRole();
+  // O plano é o da organização aberta (de quem paga), o mesmo que o banco usa para créditos e conector.
+  const { assinatura, loading: carregandoAssinatura } = useCreditos();
   const params      = useSearchParams();
   // A volta do checkout da prestação de contas (P5.6) é tratada no cartão do módulo.
   const doModulo    = params.get("modulo") === "prestacao";
@@ -206,11 +210,11 @@ function MeuPlanoInner() {
       const res  = await fetch("/api/stripe/checkout", {
         method:  "POST",
         headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify({ plano }),
+        body:    JSON.stringify({ plano, organization_id: organizationId }),
       });
       const json = await res.json().catch(() => ({})) as { url?: string; error?: string };
       if (!res.ok || !json.url) {
-        setErro(res.status === 409 && json.error ? json.error : res.status === 401 ? "Sua sessão expirou. Entre de novo para assinar." : "Não foi possível abrir o pagamento. Tente de novo.");
+        setErro((res.status === 409 || res.status === 403) && json.error ? json.error : res.status === 401 ? "Sua sessão expirou. Entre de novo para assinar." : "Não foi possível abrir o pagamento. Tente de novo.");
         setUpgrading(null);
         return;
       }
@@ -239,10 +243,19 @@ function MeuPlanoInner() {
     }
   }
 
-  const planoAtual = profile?.plano ?? "gratuito";
-  const planDef    = PLANS.find((p) => p.key === planoAtual)!;
+  // Plano, status e datas são os da organização (de quem paga); o perfil de quem vê só diz
+  // se ele tem a própria assinatura no Stripe (trocar de plano é pelo portal).
+  const planoAtual: PlanTipo = assinatura?.plano ?? "gratuito";
+  const planDef    = PLANS.find((p) => p.key === planoAtual) ?? PLANS[0];
   const usageEntries = (Object.entries(planDef.limites) as Array<[UsageKey, number | null]>);
   const temAssinatura = !!profile?.stripe_subscription_id && ASSINATURA_VIGENTE.includes(profile.stripe_subscription_status);
+  const ehPagador  = assinatura?.ehPagador === true;
+  const statusOrg  = assinatura?.status ?? "inactive";
+  // Outra pessoa paga a organização: um segundo checkout criaria outra cobrança.
+  const outroPaga  = !!assinatura?.temPagador && !ehPagador && ASSINATURA_VIGENTE.includes(statusOrg);
+  // Assina quem administra a organização; quem paga troca de plano pelo portal.
+  const podeAssinar = ehPagador || (papel === "admin" && !outroPaga);
+  const carregando = loading || carregandoAssinatura;
 
   return (
     <div className="px-8 py-8 max-w-5xl">
@@ -276,12 +289,12 @@ function MeuPlanoInner() {
           </div>
         </div>
       )}
-      {profile && ["past_due", "unpaid", "paused", "incomplete", "incomplete_expired"].includes(profile.stripe_subscription_status) && (
+      {assinatura && ["past_due", "unpaid", "paused", "incomplete", "incomplete_expired"].includes(statusOrg) && (
         <div className="flex items-center gap-3 bg-white border border-[#D94E4E]/25 rounded px-5 py-4 mb-6">
           <AlertCircle size={18} className="text-[#B23A3A] flex-shrink-0" />
           <div>
             <p className="text-sm font-bold text-[#7A2626]">Assinatura temporariamente suspensa</p>
-            <p className="text-xs text-[#B23A3A] mt-0.5">Regularize o pagamento no portal para restaurar o plano e renovar os créditos automaticamente.</p>
+            <p className="text-xs text-[#B23A3A] mt-0.5">{ehPagador ? "Regularize o pagamento no portal para restaurar o plano e renovar os créditos automaticamente." : "Quem paga a assinatura regulariza o pagamento no portal."}</p>
           </div>
         </div>
       )}
@@ -365,7 +378,7 @@ function MeuPlanoInner() {
                     >
                       Ativo
                     </div>
-                  ) : isUpgrade ? (
+                  ) : !podeAssinar ? null : isUpgrade ? (
                     <button
                       type="button"
                       onClick={() => temAssinatura ? handlePortal() : handleUpgrade(plan.key)}
@@ -396,7 +409,7 @@ function MeuPlanoInner() {
           {/* Plano atual */}
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-3">Plano atual</p>
-            {loading ? (
+            {carregando ? (
               <div className="space-y-2 animate-pulse">
                 <div className="h-5 w-24 bg-black/8 rounded" />
                 <div className="h-3 w-32 bg-black/8 rounded" />
@@ -407,17 +420,22 @@ function MeuPlanoInner() {
                   <planDef.icon size={16} style={{ color: planDef.cor }} />
                   <span className="text-base font-semibold text-[#282525]">{planDef.label}</span>
                 </div>
-                {profile?.stripe_subscription_status && profile.stripe_subscription_status !== "inactive" && (
+                {statusOrg !== "inactive" && (
                   <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
-                    {profile.stripe_subscription_status === "active" ? "Ativa" : profile.stripe_subscription_status === "trialing" ? "Período de teste" : profile.stripe_subscription_status === "canceled" ? "Cancelada" : "Pagamento pendente"}
+                    {statusOrg === "active" ? "Ativa" : statusOrg === "trialing" ? "Período de teste" : statusOrg === "canceled" ? "Cancelada" : "Pagamento pendente"}
                   </p>
                 )}
-                {profile?.periodo_fim && (
+                {assinatura?.periodoFim && (
                   <p className="text-xs text-black/40">
-                    Renova em {new Date(profile.periodo_fim).toLocaleDateString("pt-BR")}
+                    Renova em {new Date(assinatura.periodoFim).toLocaleDateString("pt-BR")}
                   </p>
                 )}
-                {(planoAtual !== "gratuito" || temAssinatura) && profile?.stripe_subscription_id && (
+                {outroPaga ? (
+                  <p className="mt-3 text-xs text-black/45">{assinatura?.pagadorNome ? `Paga por ${assinatura.pagadorNome}` : "Paga por outra pessoa da equipe"}</p>
+                ) : !podeAssinar ? (
+                  <p className="mt-3 text-xs text-black/45">Quem administra a organização assina o plano.</p>
+                ) : null}
+                {ehPagador && profile?.stripe_subscription_id && (
                   <button
                     onClick={handlePortal}
                     disabled={portalLoading || !stripeAtivo}
@@ -434,7 +452,7 @@ function MeuPlanoInner() {
           {/* Uso do mês */}
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-4">Uso este mês</p>
-            {loading ? (
+            {carregando ? (
               <div className="space-y-4 animate-pulse">
                 {[0, 1].map(i => (
                   <div key={i} className="space-y-1.5">

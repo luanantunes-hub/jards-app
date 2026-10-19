@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useCreditos } from "@/contexts/CreditosContext";
+import { useOrganizationRole } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { AcessoContatosModal } from "@/components/modals/AcessoContatosModal";
 import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
@@ -24,6 +25,7 @@ export default function ConfiguracoesMcpPage() {
   const router = useRouter();
   const { confirmDelete } = useDeleteConfirm();
   const { assinatura, loading: loadingAssinatura } = useCreditos();
+  const papel = useOrganizationRole();
   const [assistente, setAssistente] = useState<Assistente>("claude");
   const [origem, setOrigem] = useState<string | null>(null);
   const { chaves, status, verificacao, carregar, aguardarConexao } = useConexoesMcp(assistente);
@@ -65,6 +67,18 @@ export default function ConfiguracoesMcpPage() {
   const urlServidor = origem ? `${origem}/api/mcp/server` : null;
 
   if (loadingAssinatura) return null;
+
+  // Organização paga, mas o conector é de quem a administra (o servidor nega aos demais).
+  if (assinatura?.ativa && papel !== "admin") {
+    return (
+      <div className="mx-auto max-w-2xl px-4 py-10">
+        <Link href="/configuracoes" className="mb-6 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/50 transition hover:text-black/70">
+          <ArrowLeft size={14} aria-hidden="true" /> Configurações
+        </Link>
+        <p className="text-[0.8125rem] text-black/55">A conexão com o Claude e o ChatGPT é de quem administra a organização.</p>
+      </div>
+    );
+  }
 
   if (!assinatura?.ativa) {
     return (

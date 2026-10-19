@@ -33,8 +33,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { User } from "@supabase/supabase-js";
-import { OrganizationContext } from "@/contexts/OrganizationContext";
-import { CreditosProvider } from "@/contexts/CreditosContext";
+import { OrganizationContext, useOrganizationRole } from "@/contexts/OrganizationContext";
+import { CreditosProvider, useCreditos } from "@/contexts/CreditosContext";
 import { EtiquetasProvider } from "@/contexts/EtiquetasContext";
 import { TaxonomiasComerciaisProvider } from "@/contexts/TaxonomiasComerciaisContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
@@ -42,7 +42,6 @@ import { NotificationBell } from "@/components/notifications/NotificationBell";
 import { SeletorDeModulo, type OpcaoDeModulo } from "@/components/navegacao/SeletorDeModulo";
 import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
-import type { PlanTipo } from "@/lib/supabase/types";
 import { correspondeRota, hrefAtivoDoMenu, itemAtivoDoMenu } from "@/lib/navigation/rotas";
 import { destinoSemAcesso, moduloDaRota, moduloVisivel, modulosDaOrganizacao, modulosDisponiveis, normalizarModulos, paginaDeEntrada, podeUsarModulo, situacaoNoSeletor, type ModuloId } from "@/lib/modulos";
 import { TESTE_GRATIS_DIAS } from "@/lib/modulos-contrato";
@@ -138,6 +137,45 @@ function getDisplayName(user: User | null): string {
 const COLLAPSED_W = "3.5rem";
 const EXPANDED_W  = "14rem";
 
+// ─── Plano da organização ──────────────────────────────────────────────────
+// O rótulo e o "Fazer upgrade" seguem a assinatura da organização aberta (useCreditos),
+// não o perfil de quem está vendo. Ficam em componentes próprios porque o
+// CreditosProvider é montado dentro deste layout.
+
+const ROTULO_DO_PLANO: Record<string, string> = {
+  gratuito: "Plano gratuito",
+  basico: "Plano Starter",
+  profissional: "Plano Pro",
+};
+
+function RotuloDoPlano() {
+  const { assinatura } = useCreditos();
+  return <>{(assinatura && ROTULO_DO_PLANO[assinatura.plano]) ?? "Jards"}</>;
+}
+
+function BotaoUpgrade({ expandido }: { expandido: boolean }) {
+  const { assinatura, loading } = useCreditos();
+  const papel = useOrganizationRole();
+  // Só quem administra a organização assina: o checkout cobra a organização em que a pessoa é admin.
+  if (loading || assinatura?.plano !== "gratuito" || papel !== "admin") return null;
+  return (
+    <Link
+      href="/meu-plano"
+      title={!expandido ? "Fazer upgrade" : undefined}
+      aria-label="Fazer upgrade"
+      className="mt-4 flex items-center overflow-hidden whitespace-nowrap rounded bg-[#7259B5] text-[0.8125rem] font-semibold text-white transition-colors hover:bg-[#5D489D] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+      style={{
+        gap: expandido ? 10 : 0,
+        padding: expandido ? "9px 10px" : "9px 0",
+        justifyContent: expandido ? "flex-start" : "center",
+      }}
+    >
+      <Sparkles size={16} className="flex-shrink-0" aria-hidden="true" />
+      {expandido && <span>Fazer upgrade</span>}
+    </Link>
+  );
+}
+
 // ─── Layout ─────────────────────────────────────────────────────────────────
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -157,7 +195,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [temConvites, setTemConvites]       = useState(false);
   // Espaço do proponente (P5.4): a conta está ligada a um cadastro de proponente.
   const [ehProponente, setEhProponente]     = useState(false);
-  const [plan, setPlan]                     = useState<PlanTipo | null>(null);
   const [org, setOrg]                       = useState<{ nome: string; avatar_url: string | null }>({ nome: "", avatar_url: null });
   const [memberships, setMemberships]       = useState<{ organizationId: string; papel: string; modulosAcesso: ModuloId[]; modulosOrganizacao: ModuloId[]; nome: string; avatarUrl: string | null }[]>([]);
   const [orgSwitcherOpen, setOrgSwitcherOpen] = useState(false);
@@ -200,7 +237,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           .eq("user_id", user.id),
         (supabase as any)
           .from("profiles")
-          .select("jards_super_admin, plano")
+          .select("jards_super_admin")
           .eq("id", user.id)
           .maybeSingle(),
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela nova, ainda fora do tipo Database
@@ -225,7 +262,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }));
       setMemberships(memberList);
       setIsSuperAdmin(profile?.jards_super_admin === true);
-      setPlan((profile?.plano ?? null) as PlanTipo | null);
       setTemConvites((convites ?? 0) > 0);
       setEhProponente((cadastros ?? 0) > 0);
 
@@ -259,7 +295,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       if (!session?.user) {
         setOrganizationId(null);
         setIsSuperAdmin(false);
-        setPlan(null);
       }
     });
     return () => subscription.unsubscribe();
@@ -512,7 +547,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-[#282525] truncate whitespace-nowrap">{displayName}</p>
                   <p className="text-[0.625rem] text-black/35 truncate whitespace-nowrap">
-                    {plan === "gratuito" ? "Plano gratuito" : plan === "basico" ? "Plano Starter" : plan === "profissional" ? "Plano Pro" : "Jards"}
+                    <RotuloDoPlano />
                   </p>
                 </div>
               )}
@@ -598,22 +633,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
             </div>
           ))}
-          {plan === "gratuito" && usaCaptacao && (
-            <Link
-              href="/meu-plano"
-              title={!isExpanded ? "Fazer upgrade" : undefined}
-              aria-label="Fazer upgrade"
-              className="mt-4 flex items-center overflow-hidden whitespace-nowrap rounded bg-[#7259B5] text-[0.8125rem] font-semibold text-white transition-colors hover:bg-[#5D489D] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
-              style={{
-                gap: isExpanded ? 10 : 0,
-                padding: isExpanded ? "9px 10px" : "9px 0",
-                justifyContent: isExpanded ? "flex-start" : "center",
-              }}
-            >
-              <Sparkles size={16} className="flex-shrink-0" aria-hidden="true" />
-              {isExpanded && <span>Fazer upgrade</span>}
-            </Link>
-          )}
+          {usaCaptacao && <BotaoUpgrade expandido={isExpanded} />}
         </nav>
 
         {/* Bottom */}

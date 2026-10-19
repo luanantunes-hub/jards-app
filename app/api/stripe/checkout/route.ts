@@ -41,9 +41,50 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Você já tem uma assinatura. Para trocar de plano, use Gerenciar assinatura." }, { status: 409 });
   }
 
-  const { plano } = await req.json() as { plano: string };
+  const { plano, organization_id } = await req.json() as { plano: string; organization_id?: string };
   const price_id = PRICE_IDS[plano];
   if (!price_id) return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
+
+  // A assinatura é da organização. O webhook (fn_process_stripe_billing_event) cobra a
+  // organização da linha de créditos de quem paga ou, sem ela, a primeira em que a pessoa
+  // é admin: assinar pela organização aberta só vale se a pessoa a administra, se ninguém
+  // já paga por ela e se é essa a organização que o webhook vai cobrar.
+  if (organization_id) {
+    const { data: vinculo } = await supabase
+      .from("organization_members")
+      .select("papel")
+      .eq("organization_id", organization_id)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (vinculo?.papel !== "admin") {
+      return NextResponse.json({ error: "Quem administra a organização assina o plano." }, { status: 403 });
+    }
+    const { data: ativa } = await supabase.rpc("fn_org_assinatura_ativa", { p_organization_id: organization_id });
+    if (ativa === true) {
+      return NextResponse.json({ error: "A organização já tem uma assinatura ativa." }, { status: 409 });
+    }
+    const { data: linhaPropria } = await supabase
+      .from("creditos")
+      .select("organization_id")
+      .eq("account_id", user.id)
+      .order("created_at")
+      .limit(1)
+      .maybeSingle();
+    const { data: primeiraAdmin } = linhaPropria
+      ? { data: null }
+      : await supabase
+          .from("organization_members")
+          .select("organization_id")
+          .eq("user_id", user.id)
+          .eq("papel", "admin")
+          .order("created_at")
+          .limit(1)
+          .maybeSingle();
+    const cobrada = linhaPropria?.organization_id ?? primeiraAdmin?.organization_id ?? null;
+    if (cobrada !== organization_id) {
+      return NextResponse.json({ error: "Esta assinatura seria cobrada em outra organização sua. Fale com o suporte para assinar esta." }, { status: 409 });
+    }
+  }
 
   const origin = req.headers.get("origin") ?? "http://localhost:3000";
   // A volta do pagamento passa pela tela que confere a compra e a avisa ao

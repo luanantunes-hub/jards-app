@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronRight } from "lucide-react";
 import { useCreditos } from "@/contexts/CreditosContext";
+import { useOrganizationRole } from "@/contexts/OrganizationContext";
 import { AcessoContatosModal } from "@/components/modals/AcessoContatosModal";
 import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
 
@@ -17,6 +18,10 @@ interface ChaveMcp {
 export function McpConnectionCard() {
   const router = useRouter();
   const { assinatura } = useCreditos();
+  const papel = useOrganizationRole();
+  // A assinatura é a da organização aberta; o conector é de quem a administra
+  // (PAPEL_COM_ACESSO_AO_CRM em lib/mcp/enums.ts), como o servidor confere.
+  const semPapel = !!assinatura?.ativa && papel !== "admin";
   const [ativas, setAtivas] = useState<number | null>(null);
   const [showPaywall, setShowPaywall] = useState(false);
 
@@ -35,6 +40,7 @@ export function McpConnectionCard() {
   }, []);
 
   function handleClick() {
+    if (semPapel) return;
     if (!assinatura?.ativa) {
       setShowPaywall(true);
       return;
@@ -56,7 +62,8 @@ export function McpConnectionCard() {
       )}
       <button
         onClick={handleClick}
-        className="w-full p-4 rounded border text-left transition hover:border-black/20"
+        disabled={semPapel}
+        className="w-full p-4 rounded border text-left transition hover:border-black/20 disabled:cursor-default disabled:hover:border-black/10"
         style={{ borderColor: "rgba(13,13,13,.10)" }}
       >
         <div className="flex items-center gap-3">
@@ -71,7 +78,9 @@ export function McpConnectionCard() {
           <div className="flex-1 min-w-0">
             <p className="text-[0.8125rem] font-semibold text-[#282525]">Claude e ChatGPT (MCP)</p>
             <p className="text-[0.6875rem] text-black/40 mt-0.5">
-              {ativas === null
+              {semPapel
+                ? "Para quem administra a organização"
+                : ativas === null
                 ? "Conecte assistentes de IA aos dados do Jards"
                 : ativas > 0
                   ? `${ativas} chave${ativas === 1 ? "" : "s"} ativa${ativas === 1 ? "" : "s"}`

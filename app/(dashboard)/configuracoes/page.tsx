@@ -732,7 +732,7 @@ const { data: perfilData } = await (supabase as any)
             </div>
           </div>
 
-          {assinatura?.plano && assinatura.plano !== "gratuito" && (
+          {assinatura?.ehPagador && assinatura.plano !== "gratuito" && (
             <div className="flex justify-end">
               <button
                 type="button"

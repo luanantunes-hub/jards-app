@@ -9,17 +9,18 @@
   function gatilhoDe(grupo) { return grupo.querySelector("[data-menu-gatilho]"); }
   function itensDe(grupo) { return Array.prototype.slice.call(grupo.querySelectorAll(".menu-site__item")); }
 
-  // O painel abre alinhado ao botão; se passar da borda da tela, desliza para dentro.
+  // O painel se alinha pela direita do botão (assim, mesmo fechado, não passa da borda
+  // direita nem cria rolagem lateral); ao abrir, se passar de alguma borda, desliza para dentro.
   function encaixar(grupo) {
     var painel = grupo.querySelector(".menu-site__painel");
     if (!painel) return;
-    painel.style.left = "";
+    painel.style.right = "";
     var margem = 12;
     var r = painel.getBoundingClientRect();
     var desloc = 0;
     if (r.right > window.innerWidth - margem) desloc = window.innerWidth - margem - r.right;
     if (r.left + desloc < margem) desloc = margem - r.left;
-    if (desloc) painel.style.left = desloc + "px";
+    if (desloc) painel.style.right = (-desloc) + "px";
   }
 
   function abrir(grupo) {

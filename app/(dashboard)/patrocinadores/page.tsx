@@ -21,9 +21,7 @@ import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import type { Empresa } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
-import { PesquisaEmpresaModal } from "@/components/modals/PesquisaEmpresaModal";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
-import { useCreditos } from "@/contexts/CreditosContext";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type Lei = "esporte" | "ancine" | "saude";
@@ -299,7 +297,6 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const supabase = createClient();
-  const { solicitarPesquisaEmpresa } = useCreditos();
   const topRef = useRef<HTMLDivElement>(null);
 
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
@@ -317,39 +314,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [sortCol, setSortCol] = useState<SortCol>(() => (searchParams.get("sort") as SortCol) ?? "aporte_estimado");
   const [sortDir, setSortDir] = useState<"asc" | "desc">(() => (searchParams.get("dir") as "asc" | "desc") ?? "desc");
   const [setores, setSetores] = useState<string[]>([]);
-  const [empresaPesquisa, setEmpresaPesquisa] = useState<Empresa | null>(null);
-  const [usuarioNome, setUsuarioNome] = useState("Olá");
-  const [priorizandoPesquisa, setPriorizandoPesquisa] = useState(false);
-  const [pesquisaConcluida, setPesquisaConcluida] = useState(false);
-  const [pesquisaJaSolicitada, setPesquisaJaSolicitada] = useState(false);
-  const [pesquisaErro, setPesquisaErro] = useState<string | null>(null);
 
-  useEffect(() => {
-    let active = true;
-
-    async function loadUserName() {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user || !active) return;
-
-      const { data: profile } = await (supabase as any)
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      if (!active) return;
-      const fullName = profile?.full_name
-        || user.user_metadata?.full_name
-        || user.user_metadata?.name
-        || "";
-      const firstName = String(fullName).trim().split(/\s+/)[0];
-      if (firstName) setUsuarioNome(firstName);
-    }
-
-    void loadUserName();
-    return () => { active = false; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Sincroniza filtros na URL — pula o primeiro render (estado já vem da URL)
   const didMount = useRef(false);
@@ -474,41 +439,9 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   }
 
   function abrirEmpresa(empresa: Empresa) {
-    if (empresa.tem_detalhe) {
-      router.push(`/patrocinadores/${empresa.id}?lei=cultura`);
-      return;
-    }
-
-    setEmpresaPesquisa(empresa);
-    setPesquisaConcluida(false);
-    setPesquisaJaSolicitada(false);
-    setPesquisaErro(null);
+    router.push(`/patrocinadores/${empresa.id}?lei=cultura`);
   }
 
-  function fecharPesquisa() {
-    if (priorizandoPesquisa) return;
-    setEmpresaPesquisa(null);
-    setPesquisaConcluida(false);
-    setPesquisaJaSolicitada(false);
-    setPesquisaErro(null);
-  }
-
-  async function iniciarPesquisa() {
-    if (!empresaPesquisa || priorizandoPesquisa) return;
-
-    setPriorizandoPesquisa(true);
-    setPesquisaErro(null);
-    const resultado = await solicitarPesquisaEmpresa(empresaPesquisa.id);
-    setPriorizandoPesquisa(false);
-
-    if (!resultado.sucesso) {
-      setPesquisaErro(resultado.erro ?? "Não foi possível priorizar esta busca. Tente novamente.");
-      return;
-    }
-
-    setPesquisaJaSolicitada(resultado.jaSolicitada);
-    setPesquisaConcluida(true);
-  }
 
   const hasFilters = !!(search || estado || setor || trimestre || incompletas);
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -669,7 +602,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
                             ev.stopPropagation();
                             abrirEmpresa(e);
                           }}
-                          title={e.tem_detalhe ? "Ver perfil" : "Solicitar pesquisa"}
+                          title="Ver perfil"
                         >
                           <Crosshair size={14} weight="bold" />
                         </button>
@@ -702,18 +635,6 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         {!loading && <Pagination page={page} totalPages={totalPages} onChange={goToPage} />}
       </div>
 
-      {empresaPesquisa && (
-        <PesquisaEmpresaModal
-          empresaNome={empresaPesquisa.nome}
-          usuarioNome={usuarioNome}
-          loading={priorizandoPesquisa}
-          concluida={pesquisaConcluida}
-          jaSolicitada={pesquisaJaSolicitada}
-          erro={pesquisaErro}
-          onClose={fecharPesquisa}
-          onStart={iniciarPesquisa}
-        />
-      )}
     </div>
   );
 }
