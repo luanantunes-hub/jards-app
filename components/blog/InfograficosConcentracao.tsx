@@ -6,7 +6,8 @@
 
 const ROTULO = "font-(family-name:--font-mono) text-[0.6875rem] font-medium uppercase tracking-[.08em]";
 const AZUL = "#4A6385"; // empresas, contagens
-const LARANJA = "#E08A3C"; // dinheiro e o topo
+const LARANJA = "#E08A3C"; // dinheiro e o topo (barras e traços)
+const LARANJA_TEXTO = "#A3561A"; // o mesmo laranja escurecido para texto (contraste ~5:1)
 
 const pct = (n: number, casas = 1) => `${n.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas })}%`;
 const int = (n: number) => n.toLocaleString("pt-BR");
@@ -18,7 +19,7 @@ function Quadro({ id, rotulo, titulo, nota, children }: { id: string; rotulo: st
         <p className={`${ROTULO} text-[#684DB0]`}>{rotulo}</p>
         <p id={id} className="mt-2 text-lg leading-snug font-bold tracking-[-0.01em] text-balance text-[#282525]">{titulo}</p>
         {children}
-        <figcaption className="mt-5 flex flex-col gap-1.5 text-xs leading-relaxed text-black/50">
+        <figcaption className="mt-5 flex flex-col gap-1.5 text-xs leading-relaxed text-black/60">
           {nota && <span>{nota}</span>}
           <span>Fonte: Ministério da Cultura e Portal da Transparência, Lei de Incentivo à Cultura, 2023 e 2025.</span>
         </figcaption>
@@ -30,7 +31,7 @@ function Quadro({ id, rotulo, titulo, nota, children }: { id: string; rotulo: st
 function Barra({ valor, maximo, cor, rotulo, texto }: { valor: number; maximo: number; cor: string; rotulo: string; texto: string }) {
   return (
     <div className="grid grid-cols-[4.75rem_1fr_3.5rem] items-center gap-3">
-      <span className={`${ROTULO} text-black/45`}>{rotulo}</span>
+      <span className={`${ROTULO} text-black/60`}>{rotulo}</span>
       <span className="h-2.5 overflow-hidden rounded-sm bg-black/[.06]">
         <span className="block h-full rounded-sm" style={{ width: `${Math.max(0.6, (valor / maximo) * 100)}%`, background: cor }} />
       </span>
@@ -67,7 +68,7 @@ export function InfograficoFaixas() {
           <div key={f.nome} className="border-t border-black/[.08] py-4">
             <p className="flex flex-wrap items-baseline justify-between gap-x-3">
               <span className="text-[0.9375rem] font-medium text-[#282525]">{f.nome}</span>
-              <span className={`${ROTULO} text-black/45`}>{int(f.empresas)}{f.calculado ? "*" : ""} empresas · {f.valor}</span>
+              <span className={`${ROTULO} text-black/60`}>{int(f.empresas)}{f.calculado ? "*" : ""} empresas · {f.valor}</span>
             </p>
             <div className="mt-3 flex flex-col gap-2">
               <Barra rotulo="Empresas" valor={f.empresas} maximo={TOTAL_EMPRESAS_2025} cor={AZUL}
@@ -84,9 +85,11 @@ export function InfograficoFaixas() {
 
 // ─── 2. Quem ganhou e quem perdeu participação ──────────────────────────────
 
+// Escala de 15% a 45% na altura do desenho.
+const yParticipacao = (p: number) => 34 - ((p - 15) / 30) * 30;
+
 function Inclinacao({ de, para, cor }: { de: number; para: number; cor: string }) {
-  // Escala de 15% a 45% na altura do desenho.
-  const y = (p: number) => 34 - ((p - 15) / 30) * 30;
+  const y = yParticipacao;
   return (
     <svg viewBox="0 0 64 36" className="h-9 w-16 shrink-0" aria-hidden="true">
       <line x1={6} y1={y(de)} x2={58} y2={y(para)} stroke={cor} strokeWidth={2} strokeLinecap="round" />
@@ -96,29 +99,41 @@ function Inclinacao({ de, para, cor }: { de: number; para: number; cor: string }
   );
 }
 
+// O texto dá só o intervalo da faixa intermediária ("em torno de 37% a 40%"):
+// desenha a faixa inteira, sem um ponto que o texto não dá.
+function Intervalo({ de, ate }: { de: number; ate: number }) {
+  const y = yParticipacao;
+  return (
+    <svg viewBox="0 0 64 36" className="h-9 w-16 shrink-0" aria-hidden="true">
+      <rect x={6} y={y(ate)} width={52} height={y(de) - y(ate)} rx={1.5} fill="#282525" opacity=".18" />
+    </svg>
+  );
+}
+
 export function InfograficoParticipacao() {
   const linhas = [
-    { nome: "Acima de R$ 10 milhões", de: 35.93, para: 41.17, delta: "+5,24 p.p.", cor: LARANJA },
-    { nome: "R$ 1 milhão a R$ 10 milhões", de: 38.5, para: 38.5, delta: "estável", cor: "#282525", faixa: "entre 37% e 40%" },
-    { nome: "R$ 100 mil a R$ 1 milhão", de: 21.48, para: 18.21, delta: "−3,27 p.p.", cor: AZUL },
+    { nome: "Acima de R$ 10 milhões", de: 35.93, para: 41.17, delta: "+5,24 p.p.*", cor: LARANJA, corTexto: LARANJA_TEXTO },
+    { nome: "R$ 1 milhão a R$ 10 milhões", de: 37, para: 40, delta: "estável", cor: "#282525", corTexto: "rgba(13,13,13,.6)", faixa: "em torno de 37% a 40%" },
+    { nome: "R$ 100 mil a R$ 1 milhão", de: 21.48, para: 18.21, delta: "−3,27 p.p.", cor: AZUL, corTexto: AZUL },
   ];
   return (
     <Quadro
       id="info-participacao-titulo"
       rotulo="Participação no total, 2023 → 2025"
       titulo="O topo cresceu mais rápido que o total"
+      nota="* +5,24 p.p. é a diferença entre 41,17% e 35,93%. Para a faixa de R$ 1 milhão a R$ 10 milhões, o texto dá só o intervalo, desenhado como faixa."
     >
       <div className="mt-5 flex flex-col">
         {linhas.map((l) => (
           <div key={l.nome} className="flex items-center gap-4 border-t border-black/[.08] py-4">
-            <Inclinacao de={l.de} para={l.para} cor={l.cor} />
+            {l.faixa ? <Intervalo de={l.de} ate={l.para} /> : <Inclinacao de={l.de} para={l.para} cor={l.cor} />}
             <div className="min-w-0 flex-1">
               <p className="text-[0.9375rem] font-medium text-[#282525]">{l.nome}</p>
               <p className="mt-0.5 text-[0.8125rem] tabular-nums text-black/60">
                 {l.faixa ?? `${pct(l.de, 2)} → ${pct(l.para, 2)}`}
               </p>
             </div>
-            <span className={`${ROTULO} shrink-0`} style={{ color: l.cor === "#282525" ? "rgba(13,13,13,.45)" : l.cor }}>{l.delta}</span>
+            <span className={`${ROTULO} shrink-0`} style={{ color: l.corTexto }}>{l.delta}</span>
           </div>
         ))}
       </div>
@@ -221,9 +236,9 @@ export function InfograficoConcentracao() {
       <div className="mt-5 grid gap-px overflow-hidden rounded bg-black/[.08] sm:grid-cols-2">
         {numeros.map((n) => (
           <div key={n.rotulo} className="bg-white px-5 py-5">
-            <p className={`${ROTULO} text-black/45`}>{n.rotulo}</p>
+            <p className={`${ROTULO} text-black/60`}>{n.rotulo}</p>
             <p className="mt-3 flex items-baseline gap-2.5 tabular-nums">
-              <span className="text-xl font-medium text-black/45">{int(n.de)}</span>
+              <span className="text-xl font-medium text-black/60">{int(n.de)}</span>
               <span className="text-black/35" aria-hidden="true">→</span>
               <span className="sr-only">para</span>
               <span className="text-[2rem] leading-none font-bold tracking-[-0.02em] text-[#282525]">{int(n.para)}</span>
