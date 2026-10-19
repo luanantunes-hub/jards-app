@@ -143,6 +143,7 @@ export async function proxy(request: NextRequest) {
         pathname === "/privacidade" ||
         pathname === "/incentivadores" ||
         pathname === "/crm" ||
+        pathname === "/precos" ||
         pathname.startsWith("/redefinir-senha") ||
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
@@ -193,7 +194,8 @@ export async function proxy(request: NextRequest) {
     pathname === "/termos" ||
     pathname === "/privacidade" ||
     pathname === "/incentivadores" ||
-    pathname === "/crm";
+    pathname === "/crm" ||
+    pathname === "/precos";
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {

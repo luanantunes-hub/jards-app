@@ -34,10 +34,10 @@ test("tela Meu Plano comunica o freemium e mantém os limites de uso", async () 
   const page = await readFile(path.join(root, "app/(dashboard)/meu-plano/page.tsx"), "utf8");
 
   for (const feature of [
-    "Oportunidades ilimitadas",
-    "Patrocinadores para explorar",
-    "CRM essencial com uso limitado",
-    "Projetos e inscrições em um só lugar",
+    "Negociações, empresas e contatos sem limite",
+    "Incentivadores, editais e histórico de aportes",
+    "1 projeto ativo e 1 usuário",
+    "Comparativo com até 15 empresas",
   ]) {
     assert.match(page, new RegExp(`"${feature}"`));
   }

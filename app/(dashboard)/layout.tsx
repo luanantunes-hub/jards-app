@@ -512,7 +512,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-[#282525] truncate whitespace-nowrap">{displayName}</p>
                   <p className="text-[0.625rem] text-black/35 truncate whitespace-nowrap">
-                    {plan === "gratuito" ? "Plano gratuito" : plan === "basico" ? "Plano Básico" : plan === "profissional" ? "Plano Profissional" : "Jards"}
+                    {plan === "gratuito" ? "Plano gratuito" : plan === "basico" ? "Plano Starter" : plan === "profissional" ? "Plano Pro" : "Jards"}
                   </p>
                 </div>
               )}

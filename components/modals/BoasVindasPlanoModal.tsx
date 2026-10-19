@@ -13,8 +13,8 @@ type Props = {
 };
 
 const PLAN_LABELS: Record<Plano, string> = {
-  basico: "Básico",
-  profissional: "Profissional",
+  basico: "Starter",
+  profissional: "Pro",
 };
 
 export function BoasVindasPlanoModal({ plano, onClose }: Props) {

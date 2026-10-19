@@ -38,8 +38,7 @@ export default function CabecalhoSite({ atual }: Props) {
               </div>
             </div>
           </div>
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a raiz é a landing em HTML (app/route.ts), não uma página do Next */}
-          <a className="menu-site__link" href="/#precos">Preços</a>
+          <a className="menu-site__link" href="/precos">Preços</a>
           <Link
             className="menu-site__link"
             href="/blog"
@@ -84,8 +83,7 @@ export default function CabecalhoSite({ atual }: Props) {
           <a className="menu-celular__link" href="/crm">CRM</a>
         </div>
         <div className="menu-celular__secao">
-          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a raiz é a landing em HTML (app/route.ts), não uma página do Next */}
-          <a className="menu-celular__link" href="/#precos">Preços</a>
+          <a className="menu-celular__link" href="/precos">Preços</a>
           <Link className="menu-celular__link" href="/blog" aria-current={atual === "blog" ? "page" : undefined}>Blog</Link>
           <a className="menu-celular__link" href="/login">Fazer login</a>
         </div>

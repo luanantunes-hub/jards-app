@@ -83,8 +83,8 @@ const SETTINGS_SECTIONS: {
 
 const PLANO_LABEL: Record<string, string> = {
   gratuito: "Gratuito",
-  basico: "Básico",
-  profissional: "Profissional",
+  basico: "Starter",
+  profissional: "Pro",
 };
 
 const PAPEL_LABEL: Record<string, string> = {

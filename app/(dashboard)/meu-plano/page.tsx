@@ -48,10 +48,10 @@ const PLANS: PlanDef[] = [
     icon: Building2,
     cor: "rgba(13,13,13,.40)",
     features: [
-      "Oportunidades ilimitadas",
-      "Patrocinadores para explorar",
-      "CRM essencial com uso limitado",
-      "Projetos e inscrições em um só lugar",
+      "Negociações, empresas e contatos sem limite",
+      "Incentivadores, editais e histórico de aportes",
+      "1 projeto ativo e 1 usuário",
+      "Comparativo com até 15 empresas",
     ],
     limites: { projetos: 1, atividades: 5, inscricoes: 5, captadores: 1, proponentes: 1, clientes: 5 },
   },
@@ -64,10 +64,10 @@ const PLANS: PlanDef[] = [
     icon: Zap,
     cor: "#7259B5",
     features: [
-      "Negociações ilimitadas",
-      "100 créditos mensais",
-      "Operação comercial e atividades",
-      "Dashboard com KPIs e alertas",
+      "Tudo do Gratuito, sem os limites",
+      "100 créditos a cada mês pago",
+      "Claude e ChatGPT conectados",
+      "Usuários extras por R$ 19,90",
     ],
     limites: { desbloqueios: 100 },
   },
@@ -81,10 +81,10 @@ const PLANS: PlanDef[] = [
     cor: "#7259B5",
     destaque: true,
     features: [
-      "Tudo do Starter",
-      "200 créditos mensais",
-      "Inteligência e histórico completos",
-      "Clientes, entregas e renovação",
+      "As mesmas funções do Starter",
+      "200 créditos a cada mês pago",
+      "Créditos que se acumulam",
+      "Usuários extras por R$ 19,90",
     ],
     limites: { desbloqueios: 200 },
   },
@@ -463,9 +463,9 @@ function MeuPlanoInner() {
           <div className="bg-white rounded border p-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 mb-3">Dúvidas</p>
             <div className="space-y-3 text-xs text-black/50">
-              <p><span className="font-semibold text-black/70">Posso cancelar a qualquer momento?</span><br />Sim. O acesso fica ativo até o fim do período pago.</p>
-              <p><span className="font-semibold text-black/70">O que são desbloqueios?</span><br />Cada empresa com dados detalhados (contatos, histórico) consome 1 crédito por mês.</p>
-              <p><span className="font-semibold text-black/70">Como os créditos são renovados?</span><br />No início de cada mês o contador volta a zero.</p>
+              <p><span className="font-semibold text-black/70">Como gerencio a assinatura?</span><br />Em Gerenciar assinatura, que abre o portal de pagamento.</p>
+              <p><span className="font-semibold text-black/70">O que os créditos liberam?</span><br />Os contatos de quem decide numa empresa: 1 crédito por empresa, uma única vez, para toda a equipe.</p>
+              <p><span className="font-semibold text-black/70">Como os créditos são renovados?</span><br />Cada mês pago soma 100 (Starter) ou 200 (Pro) créditos ao saldo. Se a assinatura for cancelada, o saldo zera.</p>
             </div>
           </div>
         </div>

@@ -27,8 +27,7 @@ export default function RodapeSite() {
             <div className="flex flex-col items-start gap-3">
               <a className={link} href="/incentivadores">Inteligência</a>
               <a className={link} href="/crm">CRM</a>
-              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- a raiz é a landing em HTML (app/route.ts), não uma página do Next */}
-              <a className={link} href="/#precos">Preços</a>
+              <a className={link} href="/precos">Preços</a>
               <Link className={link} href="/blog">Blog</Link>
             </div>
           </nav>

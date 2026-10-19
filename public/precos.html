@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <script>document.documentElement.classList.add('js');if('scrollRestoration' in history)history.scrollRestoration='manual';</script>
+  <script src="/consentimento.js" defer></script>
+  <script src="/origem-campanha.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preços | Jards</title>
+  <meta name="description" content="Captação de recursos com plano gratuito para sempre, Starter por R$ 62,90 e Pro por R$ 92,80 por mês. Prestação de contas por R$ 92,80 por mês, com 45 dias de teste gratuito." />
+  <link rel="canonical" href="https://jards.com.br/precos" />
+  <meta property="og:title" content="Preços | Jards" />
+  <meta property="og:description" content="Captação de recursos com plano gratuito para sempre, Starter por R$ 62,90 e Pro por R$ 92,80 por mês. Prestação de contas por R$ 92,80 por mês, com 45 dias de teste gratuito." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jards.com.br/precos" />
+  <meta property="og:site_name" content="Jards" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:image" content="https://jards.com.br/assets/brand/modulos-conectados.jpeg" />
+  <meta property="og:image:width" content="960" />
+  <meta property="og:image:height" content="1200" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Preços | Jards" />
+  <meta name="twitter:description" content="Captação de recursos com plano gratuito para sempre, Starter por R$ 62,90 e Pro por R$ 92,80 por mês. Prestação de contas por R$ 92,80 por mês, com 45 dias de teste gratuito." />
+  <meta name="twitter:image" content="https://jards.com.br/assets/brand/modulos-conectados.jpeg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+  <link rel="icon" href="/assets/jards-icon-final.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans:    ['"Google Sans"','system-ui','sans-serif'],
+            display: ['"Google Sans"','system-ui','sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-SemiBold.ttf') format('truetype'); font-weight:600; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Bold.ttf') format('truetype'); font-weight:700 800; font-display:swap; }
+    h1, h2 { text-wrap: balance; }
+    p { text-wrap: pretty; }
+
+    :root {
+      --cream:  #FFFFFF;
+      --ink:    #282525;
+    }
+    body { font-family:'Google Sans',system-ui,sans-serif; background:var(--cream); color:var(--ink); overflow-x:hidden; }
+
+    /* ── Reveal ── */
+    section[id] { scroll-margin-top:96px; }
+    :focus-visible { outline:3px solid rgba(104,77,176,.45); outline-offset:3px; }
+    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#282525; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
+    .skip-link:focus { transform:translateY(0); }
+    .reveal { opacity:1; transform:none; }
+    html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
+    html.js .reveal.in { opacity:1; transform:translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal, html.js .reveal, html.js .reveal.in { opacity:1; transform:none; transition:none; }
+    }
+
+    /* Mono só para dados: as notas da prancheta.
+       Títulos, preços e texto seguem em Google Sans, que é o lado amigável. */
+    :root { --font-mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .section-space { padding-top:clamp(6rem,8vw,9rem); padding-bottom:clamp(6rem,8vw,9rem); }
+
+    /* Prancheta: linhas de construção alinhadas à página e os módulos do
+       símbolo feitos a compasso (desenhados pelo script "Prancheta"). */
+    .prancheta { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
+    .prancheta svg { position:absolute; inset:0; width:100%; height:100%; }
+    .pr-linha { fill:none; stroke:rgba(40,37,37,.26); stroke-width:1; }
+    .pr-linha.is-guia { stroke:rgba(40,37,37,.17); stroke-dasharray:3 7; }
+    .pr-linha.is-forte { stroke:rgba(40,37,37,.5); }
+    .pr-arco { fill:none; stroke:rgba(40,37,37,.2); stroke-width:1; stroke-dasharray:2 6; }
+    .pr-marca { fill:none; stroke:rgba(40,37,37,.5); stroke-width:1; }
+    .pr-contorno { fill:none; stroke-width:1.25; }
+    .pr-nota { fill:rgba(40,37,37,.5); font-family:var(--font-mono); font-size:10.5px; font-weight:500; letter-spacing:.04em; }
+    /* A linha que chega ao botão principal fica roxa quando ele é apontado. */
+    .pr-cta, .pr-aguada-cor { transition:stroke .2s ease, fill-opacity .2s ease; }
+    .closing-cta:has(.alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:#684DB0; }
+    @media print {
+      .prancheta { display:none !important; }
+      html.js .reveal { opacity:1 !important; transform:none !important; }
+    }
+    @media (forced-colors: active) { .prancheta { display:none; } }
+
+    .landing-nav-shell { margin-top:10px; border:1px solid rgba(40,37,37,.08); border-radius:4px; background:rgba(255,255,255,.76); backdrop-filter:blur(22px) saturate(150%); -webkit-backdrop-filter:blur(22px) saturate(150%); box-shadow:0 12px 44px rgba(104,77,176,.09),inset 0 1px 0 rgba(255,255,255,.8); }
+    .closing-cta { position:relative; isolation:isolate; overflow:hidden; background:#F7F7F5; }
+    .site-footer { position:relative; overflow:hidden; padding:88px 24px 28px; background:#F7F7F5; color:#282525; }
+    .site-footer-main { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); gap:64px; align-items:start; }
+    .footer-brand { min-height:390px; }
+    .footer-icon-stack { position:relative; display:block; width:430px; height:390px; }
+    .footer-icon { position:absolute; top:-78px; left:-96px; display:block; width:430px; height:430px; transform:rotate(-32deg); transform-origin:center; transition:transform .45s cubic-bezier(.2,.7,.2,1); }
+    .footer-icon-stack:hover .footer-icon { transform:rotate(-27deg) scale(1.02); }
+    .footer-column-title { margin-bottom:22px; color:rgba(40,37,37,.42); font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    .footer-nav,.footer-social-links { display:flex; flex-direction:column; align-items:flex-start; gap:13px; }
+    .footer-nav a,.footer-social-links a { color:#282525; font-size:15px; font-weight:650; line-height:1.25; transition:color .2s ease,transform .2s ease; }
+    .footer-social-links a { display:inline-flex; align-items:center; gap:9px; }
+    .footer-social-links i { font-size:21px; line-height:1; }
+    .footer-nav a:hover,.footer-social-links a:hover { color:#684DB0; transform:translateX(3px); }
+    .footer-social-note { max-width:22ch; margin-top:28px; color:rgba(40,37,37,.48); font-size:13px; line-height:1.6; }
+    .footer-social-illustration { display:block; width:min(260px,22vw); height:auto; margin:26px 0 10px -16px; }
+    .site-footer-bottom { position:relative; z-index:2; display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); align-items:center; gap:64px; padding-top:28px; border-top:1px solid rgba(40,37,37,.12); }
+    .site-footer-legal { display:flex; flex-wrap:wrap; gap:20px; }
+    .site-footer-bottom .site-footer-legal { grid-column:2; }
+    .site-footer-bottom>p { justify-self:end; }
+    .site-footer-bottom a,.site-footer-bottom p { color:rgba(40,37,37,.42); font-size:11px; font-weight:600; }
+    .site-footer-bottom a:hover { color:#684DB0; }
+    .site-footer-cookies { padding:0; border:0; background:none; color:rgba(40,37,37,.42); font:inherit; font-size:11px; font-weight:600; cursor:pointer; }
+    .site-footer-cookies:hover { color:#684DB0; }
+    .site-footer-cookies:focus-visible { outline:2px solid #7259B5; outline-offset:2px; border-radius:2px; }
+    @media (max-width:800px) {
+      .site-footer { padding-top:64px; }
+      .site-footer-main { grid-template-columns:1fr 1fr; gap:48px 28px; }
+      .footer-brand { grid-column:1 / -1; }
+      .footer-brand { min-height:340px; }
+      .footer-icon-stack { width:350px; height:340px; }
+      .footer-icon { top:-64px; left:-82px; width:360px; height:360px; }
+      .footer-social-illustration { width:min(230px,42vw); margin-left:-10px; }
+      .site-footer-bottom { display:flex; align-items:flex-start; flex-direction:column; gap:14px; }
+    }
+    @media (max-width:430px) {
+      .site-footer-main { grid-template-columns:1fr; }
+      .footer-brand { grid-column:auto; }
+      .footer-brand { min-height:280px; }
+      .footer-icon-stack { width:280px; height:280px; }
+      .footer-icon { top:-54px; left:-72px; width:300px; height:300px; }
+      .footer-social-illustration { width:min(250px,78vw); margin-bottom:8px; }
+    }
+    @media (max-width:767px) { .landing-nav-shell { margin:8px 8px 0; padding-left:14px; padding-right:10px; } }
+
+    /* ── Alternativa: tokens ── */
+    :root {
+      --alt-ink: #282525;
+      --alt-ink-hover: #3A3535;
+      --alt-purple: #684DB0;
+      --alt-purple-focus: #7259B5;
+      --alt-surface: #F7F7F5;
+      --alt-radius: 4px;
+      --alt-container: 72rem;
+      --alt-h2-section: clamp(34px, 3.6vw, 52px);
+      /* coluna da direita dos cabeçalhos divididos (fluxo, preços, blog): mesma largura, mesmo x */
+      --alt-split-side: clamp(260px, 30vw, 360px);
+    }
+
+    /* Rolagem das âncoras sem animação quando o sistema pede movimento reduzido
+       (html.scroll-smooth vence a classe .scroll-smooth do Tailwind) */
+    @media (prefers-reduced-motion: reduce) { html.scroll-smooth { scroll-behavior:auto; } }
+
+    /* CTA principal único ("Começar grátis") e variantes */
+    .alt-cta { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 18px; border:1px solid transparent; border-radius:var(--alt-radius); background:var(--alt-ink); color:#fff; font-size:14px; font-weight:500; line-height:1; white-space:nowrap; text-decoration:none; cursor:pointer; transition:background-color .18s ease, border-color .18s ease, color .18s ease, transform .12s ease; }
+    .alt-cta:hover { background:var(--alt-ink-hover); }
+    .alt-cta:active { transform:translateY(1px); }
+    .alt-cta:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; }
+    .alt-cta .ph { font-size:16px; line-height:1; }
+    .alt-cta--header { height:40px; }
+    .alt-cta--block { display:flex; width:100%; }
+
+    /* Títulos h2 de seção */
+    h2.alt-h2 { font-weight:700; letter-spacing:-.035em; line-height:1.04; text-wrap:balance; }
+    h2.alt-h2--section { font-size:var(--alt-h2-section); }
+
+    /* Cabeçalho dividido: título à esquerda, texto de apoio numa coluna de largura fixa à direita */
+    .alt-split-head { display:grid; grid-template-columns:minmax(0,1fr) var(--alt-split-side); align-items:end; gap:48px; }
+    .alt-split-head .alt-h2 { margin:0; }
+    .alt-split-lede { color:rgba(40,37,37,.56); font-size:15px; line-height:1.65; }
+    @media (max-width:767px) { .alt-split-head { grid-template-columns:minmax(0,1fr); gap:18px; } }
+
+    /* Kicker único acima de cada h2 */
+    .alt-kicker { display:block; margin:0 0 16px; font-size:12px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:var(--alt-purple); }
+
+    .alt-check { flex:0 0 auto; width:16px; height:16px; margin-top:2px; color:var(--alt-purple); }
+
+    /* Uma superfície neutra só */
+    .alt-surface { background:var(--alt-surface); }
+
+    @media (prefers-reduced-motion: reduce) { .alt-cta { transition:none; } }
+
+    /* ── Alternativa: estrutura e mobile ── */
+
+    /* Header: "Entrar" visível no celular, mesmo destino do "Fazer login" */
+    .alt-nav-login { display:inline-flex; align-items:center; min-height:40px; padding:0 12px; border-radius:var(--alt-radius); color:rgba(13,13,13,.55); font-size:14px; font-weight:500; white-space:nowrap; transition:color .18s ease; }
+    .alt-nav-login:hover { color:var(--alt-ink); }
+    .alt-nav-login:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; }
+    @media (max-width:767px) { .alt-nav-login { padding:0 10px; } }
+
+    @media (prefers-reduced-motion: reduce) { .alt-nav-login { transition:none; } }
+
+  </style>
+  <style>
+    .faq-lista { border-top:1px solid rgba(40,37,37,.12); }
+    .faq-lista details { border-bottom:1px solid rgba(40,37,37,.12); }
+    .faq-lista summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 0; list-style:none; cursor:pointer; font-size:17px; font-weight:600; color:#282525; }
+    .faq-lista summary::-webkit-details-marker { display:none; }
+    .faq-lista summary .ph { font-size:18px; color:rgba(40,37,37,.4); transition:transform .18s ease; }
+    .faq-lista details[open] summary .ph { transform:rotate(45deg); }
+    .faq-lista p { margin:-6px 0 22px; max-width:62ch; font-size:15px; line-height:1.7; color:rgba(40,37,37,.6); }
+
+    /* Página atual no menu: o menu-site.css só marca os itens do painel Produto */
+    .menu-site__link[aria-current="page"] { color:var(--alt-ink); }
+    .menu-celular__link[aria-current="page"] { background:var(--alt-surface); }
+
+    /* ── Abertura compacta, sem visual ── */
+    .pc-topo { position:relative; isolation:isolate; overflow:hidden; padding-top:clamp(120px,13vw,168px); padding-bottom:clamp(48px,6vw,80px); background:#F7F7F5; }
+    .pc-topo::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.22; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
+    .pc-topo-titulo { max-width:18ch; margin:0; font-size:clamp(42px,5.4vw,76px); font-weight:700; line-height:.98; letter-spacing:-.055em; color:#282525; text-wrap:balance; }
+    .pc-topo-texto { max-width:56ch; margin-top:24px; font-size:17px; line-height:1.65; color:#625f68; }
+    @media (max-width:767px) { .pc-topo-texto { font-size:16px; } }
+
+    /* ── Captação: cartões de plano ── */
+    .pc-sec-planos { padding-top:clamp(4rem,6vw,6rem); padding-bottom:clamp(5rem,7vw,8rem); }
+    .pc-link { color:#684DB0; text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; transition:color .18s ease; }
+    .pc-link:hover { color:#282525; }
+    .pc-planos { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; max-width:36rem; margin-top:48px; }
+    .pc-plano { display:flex; flex-direction:column; min-width:0; padding:28px 24px; border:1px solid rgba(13,13,13,.08); border-radius:var(--alt-radius); background:#fff; }
+    /* Pro: só a borda escura, sem selo */
+    .pc-plano--destaque { border-color:#282525; }
+    .pc-plano-nome { margin:0 0 14px; font-size:12px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:rgba(40,37,37,.5); }
+    .pc-preco { margin:0; color:#282525; line-height:1; white-space:nowrap; font-variant-numeric:tabular-nums; }
+    .pc-preco-moeda { font-size:20px; font-weight:600; letter-spacing:-.02em; }
+    .pc-preco-valor { font-size:clamp(40px,4vw,48px); font-weight:700; letter-spacing:-.045em; }
+    .pc-preco-periodo { margin-left:2px; font-size:14px; font-weight:500; letter-spacing:0; color:rgba(40,37,37,.5); }
+    .pc-plano-frase { margin:14px 0 0; font-size:15px; line-height:1.5; color:rgba(40,37,37,.62); }
+    .pc-lista { display:grid; align-content:start; gap:12px; margin:24px 0 0; padding:24px 0 0; list-style:none; border-top:1px solid rgba(13,13,13,.08); }
+    .pc-lista li { display:flex; align-items:flex-start; gap:10px; font-size:14.5px; line-height:1.5; color:rgba(40,37,37,.78); }
+    .pc-plano-rodape { margin-top:auto; padding-top:28px; }
+    .pc-nota { margin:10px 0 0; font-size:12.5px; line-height:1.5; text-align:center; color:rgba(40,37,37,.5); }
+    @media (min-width:1024px) {
+      .pc-planos { grid-template-columns:repeat(3,minmax(0,1fr)); gap:20px; max-width:none; }
+      .pc-plano { padding:32px 28px; }
+    }
+    /* Computador: as linhas dos três cartões se alinham (nome e preço, frase,
+       lista, rodapé), e os botões ficam na mesma altura mesmo sem nota no Gratuito. */
+    @supports (grid-template-rows:subgrid) {
+      @media (min-width:1024px) {
+        .pc-planos { grid-template-rows:auto auto 1fr auto; row-gap:0; }
+        .pc-planos .pc-plano { display:grid; grid-row:span 4; grid-template-rows:subgrid; }
+        .pc-planos .pc-plano-rodape { margin-top:0; }
+      }
+    }
+
+    /* ── Créditos: faixa curta em três colunas ── */
+    .pc-faixa { padding-top:clamp(4rem,6vw,6rem); padding-bottom:clamp(4rem,6vw,6rem); }
+    .pc-tres { display:grid; grid-template-columns:minmax(0,1fr); margin-top:40px; border-top:1px solid rgba(40,37,37,.12); }
+    .pc-tres article { padding:28px 0; border-bottom:1px solid rgba(40,37,37,.12); }
+    .pc-tres-icone { display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center; margin-bottom:22px; border:1px solid rgba(104,77,176,.28); border-radius:4px; color:#684DB0; font-size:20px; }
+    .pc-tres h3 { margin-bottom:10px; font-size:20px; font-weight:700; line-height:1.2; letter-spacing:-.02em; color:#282525; }
+    .pc-tres p { max-width:36ch; font-size:15px; line-height:1.6; color:rgba(40,37,37,.58); }
+    @media (min-width:768px) {
+      .pc-tres { grid-template-columns:repeat(3,minmax(0,1fr)); }
+      .pc-tres article { padding:36px 28px 40px; border-bottom:0; border-right:1px solid rgba(40,37,37,.12); }
+      .pc-tres article:first-child { padding-left:0; }
+      .pc-tres article:last-child { padding-right:0; border-right:0; }
+      .pc-tres { border-bottom:1px solid rgba(40,37,37,.12); }
+    }
+    .pc-obs { margin-top:20px; font-size:13px; line-height:1.6; color:rgba(40,37,37,.5); }
+
+    /* ── Prestação de contas: texto e cartão único ── */
+    .fx-grade { display:grid; grid-template-columns:minmax(0,1fr); gap:40px; align-items:center; }
+    @media (min-width:1024px) {
+      .fx-grade { gap:64px; }
+      .fx-grade--texto { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    }
+    .fx-texto { margin-top:20px; max-width:46ch; font-size:16px; line-height:1.65; color:#625f68; }
+    .pc-plano--modulo { width:100%; max-width:30rem; }
+    @media (min-width:1024px) { .pc-plano--modulo { justify-self:end; } }
+  </style>
+  <link rel="stylesheet" href="/menu-site.css" />
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+
+<!-- ════════════════════════ NAV ════════════════════════ -->
+<header class="fixed inset-x-0 top-0 z-50">
+  <div class="landing-nav-shell max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
+    <a href="/" aria-label="Jards, página inicial"><img src="/assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
+
+    <nav class="menu-site" aria-label="Principal">
+      <div class="menu-site__grupo" data-menu-grupo>
+        <button type="button" class="menu-site__gatilho" data-menu-gatilho aria-expanded="false" aria-controls="menuProduto">Produto <i class="ph ph-caret-down menu-site__seta" aria-hidden="true"></i></button>
+        <div class="menu-site__painel" id="menuProduto" style="--colunas:1">
+          <div class="menu-site__coluna">
+            <p class="menu-site__secao">Captação de recursos</p>
+            <a class="menu-site__item" href="/incentivadores"><span class="menu-site__titulo">Inteligência</span><span class="menu-site__desc">Quem incentiva cada lei, empresa por empresa, e os editais abertos.</span></a>
+            <a class="menu-site__item" href="/crm"><span class="menu-site__titulo">CRM</span><span class="menu-site__desc">Empresas, negociações, propostas e prazos, até a renovação.</span></a>
+          </div>
+        </div>
+      </div>
+      <a class="menu-site__link" href="/precos" aria-current="page">Preços</a>
+      <a class="menu-site__link" href="/blog">Blog</a>
+    </nav>
+
+    <div class="flex items-center gap-1 md:gap-3">
+      <a href="/login" data-app-path="/login" class="alt-nav-login menu-site__login"><span class="md:hidden">Entrar</span><span class="hidden md:inline">Fazer login</span></a>
+      <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--header">
+        Começar grátis
+        <i class="ph ph-arrow-right" aria-hidden="true"></i>
+      </a>
+      <button type="button" class="menu-site__botao-celular" data-menu-celular aria-expanded="false" aria-controls="menuCelular" aria-label="Abrir menu"><i class="ph ph-list" aria-hidden="true"></i></button>
+    </div>
+  </div>
+  <div class="menu-celular" id="menuCelular" hidden>
+    <div class="menu-celular__secao">
+      <span class="menu-celular__rotulo">Captação de recursos</span>
+      <a class="menu-celular__link" href="/incentivadores">Inteligência</a>
+      <a class="menu-celular__link" href="/crm">CRM</a>
+    </div>
+    <div class="menu-celular__secao">
+      <a class="menu-celular__link" href="/precos" aria-current="page">Preços</a>
+      <a class="menu-celular__link" href="/blog">Blog</a>
+      <a class="menu-celular__link" href="/login" data-app-path="/login">Fazer login</a>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo">
+
+<!-- ════════════════════════ ABERTURA ════════════════════════ -->
+<section id="top" class="pc-topo px-6" aria-labelledby="precos-titulo">
+  <div class="max-w-6xl mx-auto">
+    <p class="alt-kicker">Preços</p>
+    <h1 id="precos-titulo" class="pc-topo-titulo font-display">Preços por módulo, sem surpresa.</h1>
+    <p class="pc-topo-texto">A Captação de recursos tem um plano gratuito para sempre. A Prestação de contas tem 45 dias de teste gratuito. Todas as assinaturas são mensais, e você gerencia a sua em Meu plano, dentro do app.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════ CAPTAÇÃO DE RECURSOS ════════════════════════ -->
+<section id="captacao" class="pc-sec-planos bg-white px-6" aria-labelledby="captacao-titulo">
+  <div class="max-w-6xl mx-auto">
+    <div class="alt-split-head reveal">
+      <div>
+        <p class="alt-kicker">Captação de recursos</p>
+        <h2 id="captacao-titulo" class="alt-h2 alt-h2--section font-display">Inteligência e CRM no mesmo plano.</h2>
+      </div>
+      <p class="alt-split-lede">Os três planos têm a <a class="pc-link" href="/incentivadores">Inteligência</a> e o <a class="pc-link" href="/crm">CRM</a>. O que muda são os limites, os créditos e a conexão com Claude e ChatGPT.</p>
+    </div>
+
+    <div class="pc-planos">
+      <!-- Gratuito -->
+      <article class="pc-plano reveal" aria-labelledby="plano-gratuito">
+        <div>
+          <h3 id="plano-gratuito" class="pc-plano-nome">Gratuito</h3>
+          <p class="pc-preco"><span class="pc-preco-moeda">R$</span> <span class="pc-preco-valor">0</span> <span class="pc-preco-periodo">para sempre</span></p>
+        </div>
+        <p class="pc-plano-frase">Para começar a organizar a captação.</p>
+        <ul class="pc-lista">
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Negociações, empresas e contatos sem limite</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Incentivadores, editais abertos e histórico de aportes</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>1 projeto ativo</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>5 atividades em aberto e 5 inscrições em andamento</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>1 captador, 1 proponente e 5 clientes ativos</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Comparativo com até 15 empresas, no total</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>1 usuário</li>
+        </ul>
+        <div class="pc-plano-rodape">
+          <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--block">
+            Começar grátis
+            <i class="ph ph-arrow-right" aria-hidden="true"></i>
+          </a>
+        </div>
+      </article>
+
+      <!-- Starter -->
+      <article class="pc-plano reveal" aria-labelledby="plano-starter">
+        <div>
+          <h3 id="plano-starter" class="pc-plano-nome">Starter</h3>
+          <p class="pc-preco"><span class="pc-preco-moeda">R$</span> <span class="pc-preco-valor">62,90</span> <span class="pc-preco-periodo">por mês</span></p>
+        </div>
+        <p class="pc-plano-frase">Para captar sem os limites do Gratuito.</p>
+        <ul class="pc-lista">
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Tudo do Gratuito, sem os limites</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>100 créditos a cada mês pago, que se acumulam</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Comparações de empresas sem limite</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Claude e ChatGPT conectados ao seu Jards</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>1 usuário incluído; extras por R$ 19,90 por mês</li>
+        </ul>
+        <div class="pc-plano-rodape">
+          <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--block">
+            Criar conta
+            <i class="ph ph-arrow-right" aria-hidden="true"></i>
+          </a>
+          <p class="pc-nota">Você assina em Meu plano, dentro do app.</p>
+        </div>
+      </article>
+
+      <!-- Pro -->
+      <article class="pc-plano pc-plano--destaque reveal" aria-labelledby="plano-pro">
+        <div>
+          <h3 id="plano-pro" class="pc-plano-nome">Pro</h3>
+          <p class="pc-preco"><span class="pc-preco-moeda">R$</span> <span class="pc-preco-valor">92,80</span> <span class="pc-preco-periodo">por mês</span></p>
+        </div>
+        <p class="pc-plano-frase">Para equipes que abrem muitas empresas.</p>
+        <ul class="pc-lista">
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>As mesmas funções do Starter</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>200 créditos a cada mês pago, que se acumulam</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>1 usuário incluído; extras por R$ 19,90 por mês</li>
+        </ul>
+        <div class="pc-plano-rodape">
+          <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--block">
+            Criar conta
+            <i class="ph ph-arrow-right" aria-hidden="true"></i>
+          </a>
+          <p class="pc-nota">Você assina em Meu plano, dentro do app.</p>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ CRÉDITOS ════════════════════════ -->
+<section id="creditos" class="pc-faixa alt-surface px-6" aria-labelledby="creditos-titulo">
+  <div class="max-w-6xl mx-auto reveal">
+    <h2 id="creditos-titulo" class="alt-h2 alt-h2--section font-display">Como funcionam os créditos.</h2>
+    <div class="pc-tres">
+      <article>
+        <span class="pc-tres-icone"><i class="ph ph-lock-key-open" aria-hidden="true"></i></span>
+        <h3>1 crédito, 1 empresa</h3>
+        <p>Libera os contatos de quem decide numa empresa, uma única vez, para toda a equipe.</p>
+      </article>
+      <article>
+        <span class="pc-tres-icone"><i class="ph ph-stack" aria-hidden="true"></i></span>
+        <h3>O saldo se acumula</h3>
+        <p>Cada mês pago soma créditos ao saldo. Se a assinatura for cancelada, o saldo zera.</p>
+      </article>
+      <article>
+        <span class="pc-tres-icone"><i class="ph ph-chart-bar" aria-hidden="true"></i></span>
+        <h3>O resto é livre</h3>
+        <p>Gráficos e histórico de aportes de cada empresa ficam abertos em todos os planos, inclusive no Gratuito.</p>
+      </article>
+    </div>
+    <p class="pc-obs">Pedir prioridade na pesquisa de uma empresa também usa 1 crédito.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════ PRESTAÇÃO DE CONTAS ════════════════════════ -->
+<section id="prestacao" class="section-space bg-white px-6" aria-labelledby="prestacao-titulo">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade fx-grade--texto">
+      <div class="reveal">
+        <p class="alt-kicker">Prestação de contas</p>
+        <h2 id="prestacao-titulo" class="alt-h2 alt-h2--section font-display">Um módulo à parte, com 45 dias de teste gratuito.</h2>
+        <p class="fx-texto">A Prestação de contas tem assinatura própria, independente do plano da Captação.</p>
+      </div>
+      <div class="pc-plano pc-plano--modulo reveal">
+        <p class="pc-preco"><span class="pc-preco-moeda">R$</span> <span class="pc-preco-valor">92,80</span> <span class="pc-preco-periodo">por mês</span></p>
+        <ul class="pc-lista">
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>45 dias de teste gratuito, uma vez por organização</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>1 usuário incluído; extras por R$ 19,90 por mês</li>
+          <li><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Sem assinatura depois do teste, os dados ficam disponíveis para consulta e exportação</li>
+        </ul>
+        <div class="pc-plano-rodape">
+          <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--block">
+            Criar conta
+            <i class="ph ph-arrow-right" aria-hidden="true"></i>
+          </a>
+          <p class="pc-nota">Quem administra a organização começa o teste no seletor de módulos, dentro do app.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ USUÁRIOS ════════════════════════ -->
+<section id="usuarios" class="pc-faixa alt-surface px-6" aria-labelledby="usuarios-titulo">
+  <div class="max-w-6xl mx-auto alt-split-head reveal">
+    <h2 id="usuarios-titulo" class="alt-h2 alt-h2--section font-display">Usuários extras.</h2>
+    <p class="alt-split-lede">R$ 19,90 por usuário por mês, nos planos pagos e na Prestação de contas. As vagas são por módulo: quem usa a Captação e a Prestação conta nos dois. Captadores e proponentes externos não ocupam vaga.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════ DÚVIDAS ════════════════════════ -->
+<section id="duvidas" class="section-space bg-white px-6" aria-labelledby="duvidas-titulo">
+  <div class="max-w-3xl mx-auto reveal">
+    <p class="alt-kicker">Dúvidas</p>
+    <h2 id="duvidas-titulo" class="alt-h2 alt-h2--section font-display mb-10">Antes de começar.</h2>
+    <div class="faq-lista">
+      <details>
+        <summary>Qual a diferença entre o Starter e o Pro?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>A quantidade de créditos: 100 ou 200 a cada mês pago. As funções são as mesmas.</p>
+      </details>
+      <details>
+        <summary>Preciso de cartão para usar o plano gratuito?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Não. Você cria a conta e usa o Gratuito sem informar cartão.</p>
+      </details>
+      <details>
+        <summary>Os créditos vencem?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Não enquanto a assinatura estiver ativa: cada mês pago soma créditos ao saldo. Se a assinatura for cancelada, o saldo zera.</p>
+      </details>
+      <details>
+        <summary>O que acontece se eu cancelar?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Nada é apagado. Na Captação, você volta aos limites do Gratuito: o que já existe fica, mas novos registros acima do limite não são criados nem reativados. Os contatos já liberados continuam visíveis.</p>
+      </details>
+      <details>
+        <summary>E se um pagamento atrasar?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Você tem até 15 dias para regularizar sem perder os créditos nem a conexão com Claude e ChatGPT.</p>
+      </details>
+      <details>
+        <summary>Tem plano anual?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Não. Hoje todas as assinaturas são mensais.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ CTA FINAL ════════════════════════ -->
+<section class="closing-cta section-space px-6" aria-labelledby="fechamento-titulo">
+  <div class="prancheta" data-prancheta="fechamento" aria-hidden="true"></div>
+  <div class="max-w-3xl mx-auto text-center reveal">
+    <h2 id="fechamento-titulo" class="alt-h2 alt-h2--section font-display text-[#282525] mb-5">Comece pelo gratuito.</h2>
+    <p class="text-black/55 text-lg mb-10">Crie a conta, cadastre a primeira empresa e assine quando precisar de mais.</p>
+    <a href="/cadastro" data-app-path="/cadastro" class="alt-cta">
+      Começar grátis
+      <i class="ph ph-arrow-right" aria-hidden="true"></i>
+    </a>
+  </div>
+</section>
+
+</main>
+
+<!-- ════════════════════════ FOOTER ════════════════════════ -->
+<footer id="rodape" class="site-footer">
+  <div class="max-w-6xl mx-auto">
+    <div class="site-footer-main">
+      <div class="footer-brand">
+        <a href="#top" class="footer-icon-stack" aria-label="Voltar ao início">
+          <img src="/assets/jards-icon-final.svg" alt="" class="footer-icon" />
+        </a>
+      </div>
+
+      <nav aria-label="Navegação do rodapé">
+        <p class="footer-column-title">Navegue</p>
+        <div class="footer-nav">
+          <a href="/incentivadores">Inteligência</a>
+          <a href="/crm">CRM</a>
+          <a href="/precos">Preços</a>
+          <a href="/blog" data-app-path="/blog">Blog</a>
+        </div>
+      </nav>
+
+      <div>
+        <p class="footer-column-title">Acompanhe a Jards</p>
+        <div class="footer-social-links">
+          <a href="https://www.linkedin.com/company/jardsapp/home/?viewAsMember=true" target="_blank" rel="noopener noreferrer"><i class="ph ph-linkedin-logo" aria-hidden="true"></i><span>LinkedIn</span></a>
+          <a href="https://www.instagram.com/jardsapp/" target="_blank" rel="noopener noreferrer"><i class="ph ph-instagram-logo" aria-hidden="true"></i><span>Instagram</span></a>
+        </div>
+        <p class="footer-social-note">Conteúdo sobre captação, patrocínios, impacto e continuidade.</p>
+        <img src="/assets/tamandua-celular-footer.png" alt="Tamanduá segurando um celular" class="footer-social-illustration" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="site-footer-bottom">
+      <div class="site-footer-legal">
+        <a href="/privacidade" data-app-path="/privacidade">Política de Privacidade</a>
+        <a href="/termos" data-app-path="/termos">Termos de Uso</a>
+        <button type="button" class="site-footer-cookies" data-preferencias-cookies>Preferências de cookies</button>
+      </div>
+      <p>© 2026 Jards. Feito no Brasil.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── Destinos da aplicação ──
+  (function() {
+    var links = document.querySelectorAll('[data-app-path]');
+    if (!links.length) return;
+    var appOrigin = window.location.protocol === 'file:' ? 'http://localhost:3000' : window.location.origin;
+    links.forEach(function(link) {
+      if (!link.dataset.appPath) return;
+      var destino = new URL(link.dataset.appPath, appOrigin);
+      var atual = new URL(link.getAttribute('href') || '', location.href);
+      destino.search = atual.search;
+      link.href = destino.href;
+    });
+  })();
+
+  // ── Revelação ao rolar ──
+  (function() {
+    var alvos = document.querySelectorAll('.reveal');
+    if (!alvos.length) return;
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entries) {
+        entries.forEach(function(e) { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } });
+      }, { threshold: 0.06 });
+      alvos.forEach(function(el) { io.observe(el); });
+    } else {
+      alvos.forEach(function(el) { el.classList.add('in'); });
+    }
+  })();
+</script>
+<script>
+// ── Prancheta ──
+// A superfície de papel do fechamento é desenhada como uma prancha técnica:
+// um eixo único na margem do conteúdo, linhas de construção que nascem de
+// elementos reais da página e passam um pouco das quinas, e os módulos do
+// símbolo da Jards (quarto de círculo coral + quarto roxo de meio raio)
+// feitos a compasso.
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var COR = { coral:'#D94A4A', roxo:'#684DB0', grafite:'#282525' };
+  if (!window.matchMedia) return;
+  var movimento = window.matchMedia('(prefers-reduced-motion: no-preference)');
+  var pranchetas = Array.prototype.slice.call(document.querySelectorAll('[data-prancheta]'));
+  if (!pranchetas.length) return;
+
+  function no(tag, attrs, pai){
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (pai) pai.appendChild(n);
+    return n;
+  }
+  // Posição final do elemento: desconta o deslocamento de entrada dos .reveal,
+  // que ainda pode estar em andamento quando a prancha é medida.
+  function caixa(alvo, base){
+    if (!alvo || !base) return null;
+    var a = alvo.getBoundingClientRect(), b = base.getBoundingClientRect(), dx = 0, dy = 0;
+    for (var n = alvo; n && n !== base; n = n.parentElement) {
+      if (n.classList && n.classList.contains('reveal')) {
+        var t = getComputedStyle(n).transform;
+        if (t && t !== 'none' && typeof DOMMatrixReadOnly === 'function') { var m = new DOMMatrixReadOnly(t); dx += m.m41; dy += m.m42; }
+      }
+    }
+    var x = a.left - b.left - dx, y = a.top - b.top - dy;
+    return { x:x, y:y, w:a.width, h:a.height, r:x + a.width, b:y + a.height, cx:x + a.width/2, cy:y + a.height/2 };
+  }
+  // O eixo corre na margem, 12px antes da borda do container de conteúdo
+  // (72rem centralizado, 24px no mínimo): igual em todas as seções e sem
+  // encostar nas letras.
+  function eixo(w){
+    var rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return Math.floor(Math.max(24, (w - 72*rem) / 2) - 12) + .5;
+  }
+  // Traço de 1px nítido: a coordenada fixa de linhas retas cai no meio do pixel.
+  function px(v){ return Math.round(v - .5) + .5; }
+
+  function Desenho(svg, id){
+    this.svg = svg; this.id = id; this.hachuras = {};
+    this.defs = no('defs', {}, svg);
+    this.g = no('g', {}, svg);
+  }
+  Desenho.prototype.hachura = function(cor){
+    if (this.hachuras[cor]) return this.hachuras[cor];
+    var pid = 'pr-' + this.id + '-' + cor;
+    var p = no('pattern', { id:pid, width:7, height:7, patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)' }, this.defs);
+    no('line', { x1:3.5, y1:0, x2:3.5, y2:7, stroke:COR[cor], 'stroke-width':1, 'stroke-opacity':.3 }, p);
+    return (this.hachuras[cor] = 'url(#' + pid + ')');
+  };
+  // Linha de construção: passa das pontas, como no traço à mão.
+  Desenho.prototype.linha = function(x1, y1, x2, y2, tipo, sobra){
+    sobra = sobra == null ? 16 : sobra;
+    if (x1 === x2) x1 = x2 = px(x1);
+    if (y1 === y2) y1 = y2 = px(y1);
+    var dx = x2-x1, dy = y2-y1, L = Math.hypot(dx, dy) || 1, ux = dx/L*sobra, uy = dy/L*sobra;
+    return no('line', { x1:x1-ux, y1:y1-uy, x2:x2+ux, y2:y2+uy, 'class':'pr-linha ' + (tipo || '') }, this.g);
+  };
+  Desenho.prototype.circulo = function(cx, cy, r){
+    return no('circle', { cx:cx, cy:cy, r:r, 'class':'pr-arco' }, this.g);
+  };
+  Desenho.prototype.centro = function(cx, cy, r){
+    var b = r ? Math.min(8, Math.max(4, r * .22)) : 8;
+    this.linha(cx-b, cy, cx+b, cy, 'is-forte', 0);
+    this.linha(cx, cy-b, cx, cy+b, 'is-forte', 0);
+    no('circle', { cx:px(cx), cy:px(cy), r:b * .44, 'class':'pr-marca' }, this.g);
+  };
+  Desenho.prototype.nota = function(x, y, texto, ancora){
+    var t = no('text', { x:x, y:y, 'class':'pr-nota', 'text-anchor':ancora || 'middle' }, this.g);
+    t.textContent = texto;
+    return t;
+  };
+  // Cruz de registro: só onde duas linhas reais se encontram.
+  Desenho.prototype.registro = function(x, y){
+    this.linha(x-5, y, x+5, y, 'is-forte', 0);
+    this.linha(x, y-5, x, y+5, 'is-forte', 0);
+  };
+  // Módulo: quarto de círculo com aguada, hachura e contorno.
+  // Abre para 'no' (cima-esquerda), 'ne', 'so' ou 'se'.
+  Desenho.prototype.modulo = function(cx, cy, r, abre, cor, aguada, marca){
+    var ang = { ne:[-90,0], se:[0,90], so:[90,180], no:[180,270] }[abre];
+    if (!ang) return;
+    var t0 = ang[0]*Math.PI/180, t1 = ang[1]*Math.PI/180;
+    var d = 'M' + cx + ' ' + cy +
+      ' L' + (cx + r*Math.cos(t0)) + ' ' + (cy + r*Math.sin(t0)) +
+      ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r*Math.cos(t1)) + ' ' + (cy + r*Math.sin(t1)) + ' Z';
+    var extra = marca ? { 'data-forca':marca } : {};
+    function com(o){ for (var k in extra) o[k] = extra[k]; return o; }
+    no('path', com({ d:d, fill:COR[cor], 'fill-opacity':aguada == null ? .1 : aguada, 'class':'pr-aguada pr-aguada-cor' }), this.g);
+    no('path', { d:d, fill:this.hachura(cor), 'class':'pr-aguada' }, this.g);
+    no('path', com({ d:d, 'class':'pr-contorno', stroke:COR[cor], 'stroke-opacity':.6 }), this.g);
+  };
+  // O símbolo da Jards: o quarto roxo (raio R/2) encaixa embaixo do coral.
+  Desenho.prototype.simbolo = function(cx, cy, R, w, h, compacto){
+    var rx = cx - R/2;
+    if (compacto) {
+      this.linha(cx - R - 24, cy, cx + 24, cy, 'is-guia', 0);
+      this.linha(cx, cy - R - 16, cx, cy + R/2 + 16, 'is-guia', 0);
+      this.linha(rx, cy - R - 16, rx, cy + R/2 + 16, 'is-guia', 0);
+    } else {
+      this.linha(0, cy, w, cy, 'is-guia', 0);
+      this.linha(cx, 0, cx, h, 'is-guia', 0);
+      this.linha(rx, 0, rx, h, 'is-guia', 0);
+    }
+    this.circulo(cx, cy, R);
+    this.circulo(rx, cy, R/2);
+    this.modulo(cx, cy, R, 'no', 'coral', .12);
+    this.modulo(rx, cy, R/2, 'se', 'roxo', .14);
+    this.centro(cx, cy, R);
+    this.centro(rx, cy, R/2);
+    // A proporção real da marca: o roxo tem metade do raio do coral.
+    this.linha(cx, cy, cx - R*Math.SQRT1_2, cy - R*Math.SQRT1_2, '', 0);
+    this.linha(rx, cy, rx + R/2*Math.SQRT1_2, cy + R/2*Math.SQRT1_2, '', 0);
+    if (!compacto) {
+      this.nota(cx - R*.36, cy - R*.36 - 10, 'r');
+      this.nota(rx + R*.2 + 10, cy + R*.2 - 2, 'r/2', 'start');
+    }
+  };
+
+  var desenhos = {
+    fechamento: function(d, sec, w, h){
+      var conteudo = caixa(sec.querySelector('.max-w-3xl'), sec);
+      var botao = caixa(sec.querySelector('.alt-cta'), sec);
+      if (!conteudo || !botao) return;
+      var x0 = eixo(w), fim = h - 28;
+      // Aqui a prancha termina: o eixo para na última cruz.
+      d.linha(x0, 0, x0, fim, 'is-guia', 0);
+      d.registro(x0, fim);
+      var margem = w - conteudo.r;
+      var R = Math.min(margem * .78, h * .5);
+      if (R >= 120) {
+        // O símbolo completo à direita; a linha de base sai do eixo, passa
+        // pelo botão e chega ao símbolo.
+        var cx = conteudo.r + margem / 2 + R / 2;
+        d.simbolo(cx, botao.cy, R, w, h);
+        d.linha(x0, botao.cy, cx - R, botao.cy, 'pr-cta', 0);
+        d.registro(x0, botao.cy);
+      } else {
+        // Telas estreitas: o símbolo pequeno embaixo de tudo, como assinatura.
+        var Rm = Math.min(56, (h - conteudo.b - 28) / 1.5);
+        if (Rm >= 28) d.simbolo(w / 2 + Rm / 2, conteudo.b + 12 + Rm, Rm, w, h, true);
+      }
+    }
+  };
+
+  var estado = new Map();
+
+  // Só entram as pranchetas com desenho conhecido; um nome sem desenho fica sem prancha.
+  pranchetas = pranchetas.filter(function(alvo){
+    return typeof desenhos[alvo.getAttribute('data-prancheta')] === 'function' && alvo.parentElement;
+  });
+  if (!pranchetas.length) return;
+
+  function desenhar(alvo, animar){
+    var sec = alvo.parentElement, st = estado.get(alvo);
+    if (!sec || !st) return;
+    var w = sec.clientWidth, h = sec.clientHeight;
+    if (!w || !h) return;
+    st.tam = w + 'x' + h;
+    alvo.textContent = '';
+    var nome = alvo.getAttribute('data-prancheta'), desenho = desenhos[nome];
+    if (typeof desenho !== 'function') return;
+    var svg = no('svg', { viewBox:'0 0 ' + w + ' ' + h, width:w, height:h, focusable:'false' }, alvo);
+    var d = new Desenho(svg, nome);
+    desenho(d, sec, w, h);
+    if (animar) revelar(svg);
+  }
+
+  // Primeiro o conteúdo assenta, depois o lápis traça: os traços sólidos se
+  // desenham e os tracejados e aguadas aparecem em seguida.
+  function revelar(svg){
+    if (!movimento.matches || !svg.animate) return;
+    var tracos = svg.querySelectorAll('.pr-linha:not(.is-guia), .pr-contorno');
+    Array.prototype.forEach.call(tracos, function(el, i){
+      var L = el.getTotalLength ? el.getTotalLength() : 0;
+      if (!L) return;
+      el.animate([{ strokeDasharray:L, strokeDashoffset:L }, { strokeDasharray:L, strokeDashoffset:0 }],
+        { duration:900, delay:80 + i*35, easing:'cubic-bezier(.65,0,.35,1)', fill:'backwards' });
+    });
+    Array.prototype.forEach.call(svg.querySelectorAll('.is-guia, .pr-arco, .pr-aguada, .pr-marca, .pr-nota'), function(el, i){
+      el.animate([{ opacity:0 }, { opacity:1 }], { duration:700, delay:300 + (i % 12)*40, easing:'ease-out', fill:'backwards' });
+    });
+  }
+
+  var pendentes = new Set(), quadro = 0;
+  function agendar(alvo){
+    pendentes.add(alvo);
+    if (quadro) return;
+    quadro = requestAnimationFrame(function(){
+      quadro = 0;
+      pendentes.forEach(function(a){
+        var sec = a.parentElement, st = estado.get(a);
+        if (sec && st && st.visto && st.tam !== sec.clientWidth + 'x' + sec.clientHeight) desenhar(a, false);
+      });
+      pendentes.clear();
+    });
+  }
+
+  var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  // Com animação, a prancha só aparece quando a seção entra na tela (senão
+  // ela surgiria pronta, sumiria e se redesenharia). Sem animação, já nasce
+  // desenhada.
+  var anima = movimento.matches && 'IntersectionObserver' in window;
+  pronto.then(function(){
+    pranchetas.forEach(function(alvo){
+      estado.set(alvo, { visto:!anima, tam:'' });
+      if (!anima) desenhar(alvo, false);
+    });
+    if ('ResizeObserver' in window) {
+      var ro = new ResizeObserver(function(entradas){
+        entradas.forEach(function(e){
+          var alvo = e.target.querySelector(':scope > [data-prancheta]');
+          if (alvo) agendar(alvo);
+        });
+      });
+      pranchetas.forEach(function(alvo){ ro.observe(alvo.parentElement); });
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entradas){
+        entradas.forEach(function(e){
+          if (!e.isIntersecting) return;
+          var alvo = e.target.querySelector(':scope > [data-prancheta]');
+          var st = alvo && estado.get(alvo);
+          if (!st || st.visto) return;
+          st.visto = true;
+          io.unobserve(e.target);
+          setTimeout(function(){ desenhar(alvo, true); }, movimento.matches ? 450 : 0);
+        });
+      }, { threshold:.2 });
+      pranchetas.forEach(function(alvo){ io.observe(alvo.parentElement); });
+    }
+  });
+})();
+</script>
+<script src="/menu-site.js" defer></script>
+</body>
+</html>
