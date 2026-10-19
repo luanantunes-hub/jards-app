@@ -1,21 +1,23 @@
-import Link from "next/link";
 import Script from "next/script";
+import { Geist_Mono } from "next/font/google";
+import CabecalhoSite from "@/components/site/CabecalhoSite";
+import RodapeSite from "@/components/site/RodapeSite";
 
-// Aviso de cookies e Google Analytics (só após consentimento) — ver public/consentimento.js.
+// Rótulos pequenos (temas, datas, tempo de leitura) na mesma mono da landing.
+const mono = Geist_Mono({ subsets: ["latin"], weight: ["400", "500"], variable: "--font-mono" });
+
+// Menu e rodapé do site, iguais aos da landing; aviso de cookies e Google
+// Analytics (só após consentimento) — ver public/consentimento.js.
 export default function BlogLayout({ children }: { children: React.ReactNode }) {
   return (
-    <>
+    <div className={`${mono.variable} bg-white`}>
+      <link rel="stylesheet" href="/menu-site.css" precedence="default" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" precedence="default" />
+      <CabecalhoSite atual="blog" />
       {children}
-      <footer className="border-t border-black/8" style={{ background: "#FAFAFA" }}>
-        <div className="mx-auto flex max-w-3xl flex-wrap gap-x-5 gap-y-2 px-6 py-6 text-xs text-black/40">
-          <Link href="/privacidade" className="hover:text-black/60">Política de Privacidade</Link>
-          <Link href="/termos" className="hover:text-black/60">Termos de Uso</Link>
-          <button type="button" data-preferencias-cookies className="hover:text-black/60">
-            Preferências de cookies
-          </button>
-        </div>
-      </footer>
+      <RodapeSite />
       <Script src="/consentimento.js" strategy="afterInteractive" />
-    </>
+      <Script src="/menu-site.js" strategy="afterInteractive" />
+    </div>
   );
 }
