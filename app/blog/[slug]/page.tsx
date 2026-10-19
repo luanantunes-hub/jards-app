@@ -263,7 +263,7 @@ export default async function BlogPostPage({ params }: Props) {
             <img
               src={post.imagem_capa}
               alt={post.imagem_alt ?? post.titulo}
-              className="w-full max-h-80 object-cover"
+              className="aspect-[4/3] w-full object-cover"
             />
           </div>
         )}
