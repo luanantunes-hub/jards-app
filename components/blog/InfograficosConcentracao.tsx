@@ -4,7 +4,8 @@
 // Cultura, incentivadores contados por CNPJ, 2023 e 2025). O que é conta feita
 // a partir deles fica sinalizado na nota de cada quadro.
 
-const ROTULO = "font-(family-name:--font-mono) text-[0.6875rem] font-medium uppercase tracking-[.08em]";
+import QuadroBase, { ROTULO } from "./Quadro";
+
 const AZUL = "#4A6385"; // empresas, contagens
 const LARANJA = "#E08A3C"; // dinheiro e o topo (barras e traços)
 const LARANJA_TEXTO = "#A3561A"; // o mesmo laranja escurecido para texto (contraste ~5:1)
@@ -12,20 +13,10 @@ const LARANJA_TEXTO = "#A3561A"; // o mesmo laranja escurecido para texto (contr
 const pct = (n: number, casas = 1) => `${n.toLocaleString("pt-BR", { minimumFractionDigits: casas, maximumFractionDigits: casas })}%`;
 const int = (n: number) => n.toLocaleString("pt-BR");
 
-function Quadro({ id, rotulo, titulo, nota, children }: { id: string; rotulo: string; titulo: string; nota?: string; children: React.ReactNode }) {
-  return (
-    <figure className="my-12" aria-labelledby={id}>
-      <div className="rounded bg-[#F7F7F5] px-5 py-7 sm:px-8">
-        <p className={`${ROTULO} text-[#684DB0]`}>{rotulo}</p>
-        <p id={id} className="mt-2 text-lg leading-snug font-bold tracking-[-0.01em] text-balance text-[#282525]">{titulo}</p>
-        {children}
-        <figcaption className="mt-5 flex flex-col gap-1.5 text-xs leading-relaxed text-black/60">
-          {nota && <span>{nota}</span>}
-          <span>Fonte: Ministério da Cultura e Portal da Transparência, Lei de Incentivo à Cultura, 2023 e 2025.</span>
-        </figcaption>
-      </div>
-    </figure>
-  );
+const FONTE = "Ministério da Cultura e Portal da Transparência, Lei de Incentivo à Cultura, 2023 e 2025.";
+
+function Quadro(props: Omit<React.ComponentProps<typeof QuadroBase>, "fonte">) {
+  return <QuadroBase {...props} fonte={FONTE} />;
 }
 
 function Barra({ valor, maximo, cor, rotulo, texto }: { valor: number; maximo: number; cor: string; rotulo: string; texto: string }) {

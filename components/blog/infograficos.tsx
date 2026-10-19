@@ -4,6 +4,7 @@ import InfograficoDoisTempos from "./InfograficoDoisTempos";
 import {
   InfograficoConcentracao, InfograficoCrescimento, InfograficoFaixas, InfograficoParticipacao, InfograficoUmaEmpresa,
 } from "./InfograficosConcentracao";
+import { InfograficoEspecializacao, InfograficoFunil, InfograficoIndicadores, InfograficoMetricas } from "./InfograficosB2B";
 
 // Chave do bloco "infografico" → componente (nomes em lib/blog-infograficos.ts).
 export const INFOGRAFICOS: Record<string, () => React.ReactElement> = {
@@ -15,4 +16,8 @@ export const INFOGRAFICOS: Record<string, () => React.ReactElement> = {
   "uma-empresa": InfograficoUmaEmpresa,
   "crescimento-faixas": InfograficoCrescimento,
   "numeros-concentracao": InfograficoConcentracao,
+  "funil-captacao": InfograficoFunil,
+  "metricas-b2b": InfograficoMetricas,
+  "generalista-especializacao": InfograficoEspecializacao,
+  "indicadores-funcao": InfograficoIndicadores,
 };

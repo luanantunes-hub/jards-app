@@ -10,4 +10,8 @@ export const NOMES_INFOGRAFICOS: Record<string, string> = {
   "uma-empresa": "Uma empresa e uma faixa inteira",
   "crescimento-faixas": "De onde veio o R$ 1 bilhão a mais",
   "numeros-concentracao": "Mais incentivadores, quase a mesma concentração",
+  "funil-captacao": "O funil da captação",
+  "metricas-b2b": "Métricas: vendas B2B e captação",
+  "generalista-especializacao": "Do vendedor generalista às funções especializadas",
+  "indicadores-funcao": "Cada função, seus indicadores",
 };
