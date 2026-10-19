@@ -24,7 +24,7 @@ export default function CabecalhoSite({ atual }: Props) {
             <button type="button" className="menu-site__gatilho" data-menu-gatilho aria-expanded="false" aria-controls="menuProduto">
               Produto <i className="ph ph-caret-down menu-site__seta" aria-hidden="true" />
             </button>
-            <div className="menu-site__painel" id="menuProduto" style={{ "--colunas": 1 } as React.CSSProperties}>
+            <div className="menu-site__painel" id="menuProduto" style={{ "--colunas": 2 } as React.CSSProperties}>
               <div className="menu-site__coluna">
                 <p className="menu-site__secao">Captação de recursos</p>
                 <a className="menu-site__item" href="/incentivadores">
@@ -34,6 +34,13 @@ export default function CabecalhoSite({ atual }: Props) {
                 <a className="menu-site__item" href="/crm">
                   <span className="menu-site__titulo">CRM</span>
                   <span className="menu-site__desc">Empresas, negociações, propostas e prazos, até a renovação.</span>
+                </a>
+              </div>
+              <div className="menu-site__coluna">
+                <p className="menu-site__secao">Prestação de contas</p>
+                <a className="menu-site__item" href="/prestacao-de-contas">
+                  <span className="menu-site__titulo">Prestação de contas</span>
+                  <span className="menu-site__desc">Orçamento, extrato, comprovantes e envio, conferidos pelas regras de cada lei.</span>
                 </a>
               </div>
             </div>
@@ -81,6 +88,10 @@ export default function CabecalhoSite({ atual }: Props) {
           <span className="menu-celular__rotulo">Captação de recursos</span>
           <a className="menu-celular__link" href="/incentivadores">Inteligência</a>
           <a className="menu-celular__link" href="/crm">CRM</a>
+        </div>
+        <div className="menu-celular__secao">
+          <span className="menu-celular__rotulo">Prestação de contas</span>
+          <a className="menu-celular__link" href="/prestacao-de-contas">Prestação de contas</a>
         </div>
         <div className="menu-celular__secao">
           <a className="menu-celular__link" href="/precos">Preços</a>

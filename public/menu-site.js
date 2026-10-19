@@ -9,9 +9,23 @@
   function gatilhoDe(grupo) { return grupo.querySelector("[data-menu-gatilho]"); }
   function itensDe(grupo) { return Array.prototype.slice.call(grupo.querySelectorAll(".menu-site__item")); }
 
+  // O painel abre alinhado ao botão; se passar da borda da tela, desliza para dentro.
+  function encaixar(grupo) {
+    var painel = grupo.querySelector(".menu-site__painel");
+    if (!painel) return;
+    painel.style.left = "";
+    var margem = 12;
+    var r = painel.getBoundingClientRect();
+    var desloc = 0;
+    if (r.right > window.innerWidth - margem) desloc = window.innerWidth - margem - r.right;
+    if (r.left + desloc < margem) desloc = margem - r.left;
+    if (desloc) painel.style.left = desloc + "px";
+  }
+
   function abrir(grupo) {
     grupos.forEach(function (outro) { if (outro !== grupo) fechar(outro); });
     clearTimeout(timers.get(grupo));
+    encaixar(grupo);
     grupo.classList.add("is-aberto");
     gatilhoDe(grupo).setAttribute("aria-expanded", "true");
   }
@@ -65,6 +79,7 @@
   document.addEventListener("click", function (evento) {
     grupos.forEach(function (grupo) { if (!grupo.contains(evento.target)) fechar(grupo); });
   });
+  window.addEventListener("resize", function () { grupos.forEach(fechar); });
 
   // Celular
   var botao = document.querySelector("[data-menu-celular]");

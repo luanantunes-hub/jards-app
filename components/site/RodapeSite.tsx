@@ -27,6 +27,7 @@ export default function RodapeSite() {
             <div className="flex flex-col items-start gap-3">
               <a className={link} href="/incentivadores">Inteligência</a>
               <a className={link} href="/crm">CRM</a>
+              <a className={link} href="/prestacao-de-contas">Prestação de contas</a>
               <a className={link} href="/precos">Preços</a>
               <Link className={link} href="/blog">Blog</Link>
             </div>
