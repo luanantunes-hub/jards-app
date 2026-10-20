@@ -35,9 +35,9 @@ test("tela Meu Plano comunica o freemium e mantém os limites de uso", async () 
 
   for (const feature of [
     "Negociações, empresas e contatos sem limite",
-    "Incentivadores, editais e histórico de aportes",
+    "Incentivadores, editais abertos e histórico de aportes",
     "1 projeto ativo e 1 usuário",
-    "Comparativo com até 15 empresas",
+    "Comparativo com até 15 empresas, no total",
   ]) {
     assert.match(page, new RegExp(`"${feature}"`));
   }

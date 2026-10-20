@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     .eq("id", user.id)
     .maybeSingle();
   if (perfil?.stripe_subscription_id && ASSINATURA_VIGENTE.includes(perfil.stripe_subscription_status)) {
-    return NextResponse.json({ error: "Você já tem uma assinatura. Para trocar de plano, use Gerenciar assinatura." }, { status: 409 });
+    return NextResponse.json({ error: "Você já tem uma assinatura. Para trocar de plano, fale com o suporte do Jards." }, { status: 409 });
   }
 
   const { plano, organization_id } = await req.json() as { plano: string; organization_id?: string };
