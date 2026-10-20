@@ -102,7 +102,7 @@ Deno.serve(async (req) => {
         { apiVersion: VERSAO_DA_API_COM_MARCA },
       );
     } catch (erroDaMarca) {
-      // Rede, limite ou cliente inválido não têm a ver com a marca: repetir só abriria outra sessão.
+      // Erros de rede ou de limite não têm a ver com a marca: repetir só abriria outra sessão.
       if ((erroDaMarca as { type?: string } | null)?.type !== "StripeInvalidRequestError") throw erroDaMarca;
       console.error("Checkout sem a aparência da marca", erroDaMarca);
       session = await stripe.checkout.sessions.create(parametros);
