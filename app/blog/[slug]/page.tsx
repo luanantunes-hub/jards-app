@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { INFOGRAFICOS } from "@/components/blog/infograficos";
 import { SumarioBarra, SumarioLateral, type ItemSumario } from "@/components/blog/SumarioRolagem";
+import { Capa, FOCO, Meta, Temas, TITULO_HOVER, fmtData, minutosDeLeitura, type PostResumo } from "@/components/blog/partes";
+import BannerCiclo from "@/components/site/BannerCiclo";
 
 type Block = {
   id: string;
@@ -71,22 +73,17 @@ function ConteudoBox({ texto }: { texto: string }) {
   );
 }
 
-function fmtDate(d: string | null) {
-  if (!d) return "";
-  return new Date(d).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
-}
-
 function renderBlock(block: Block, ids: Map<number, string>, indice: number) {
   switch (block.type) {
     case "heading2":
       return (
-        <h2 key={block.id} id={ids.get(indice)} className={`text-2xl font-bold text-[#282525] mt-8 mb-3 leading-snug ${ANCORA}`}>
+        <h2 key={block.id} id={ids.get(indice)} className={`mt-14 mb-4 text-[1.625rem] leading-tight font-bold tracking-[-0.015em] text-balance text-[#282525] ${ANCORA}`}>
           {block.content}
         </h2>
       );
     case "heading3":
       return (
-        <h3 key={block.id} className="text-lg font-semibold text-[#282525] mt-6 mb-2">
+        <h3 key={block.id} className="mt-10 mb-3 text-xl leading-snug font-semibold text-[#282525]">
           {block.content}
         </h3>
       );
@@ -94,7 +91,7 @@ function renderBlock(block: Block, ids: Map<number, string>, indice: number) {
       return (
         <blockquote
           key={block.id}
-          className="my-6 pl-5 py-1 italic text-black/55 text-base leading-relaxed"
+          className="my-8 py-1 pl-5 text-[1.0625rem] leading-[1.75] italic text-black/60"
           style={{ borderLeft: "3px solid rgba(114,89,181,.4)" }}
         >
           {block.content}
@@ -144,7 +141,7 @@ function renderBlock(block: Block, ids: Map<number, string>, indice: number) {
     }
     default:
       return (
-        <p key={block.id} className="text-base text-black/70 leading-relaxed my-4 whitespace-pre-line">
+        <p key={block.id} className="my-5 text-[1.0625rem] leading-[1.75] text-pretty whitespace-pre-line text-black/75 sm:text-[1.125rem] sm:leading-[1.7]">
           {block.content}
         </p>
       );
@@ -186,15 +183,18 @@ export default async function BlogPostPage({ params }: Props) {
 
   if (!data) notFound();
 
-  const post = data as {
-    titulo: string;
-    tags: string[];
-    seo_descricao: string | null;
-    imagem_capa: string | null;
-    imagem_alt: string | null;
-    conteudo: string;
-    publicado_em: string | null;
-  };
+  const post = data as PostResumo;
+
+  // "Continue lendo": os dois textos publicados mais recentes, fora este.
+  const { data: outrosDados } = await supabase
+    .from("blog_posts" as any)
+    .select("id, titulo, slug, tags, seo_descricao, imagem_capa, imagem_alt, publicado_em, conteudo")
+    .eq("status", "publicado")
+    .neq("slug", slug)
+    .order("publicado_em", { ascending: false })
+    .limit(2);
+  const outros = (outrosDados ?? []) as PostResumo[];
+  const minutos = minutosDeLeitura(post.conteudo);
 
   let blocks: Block[] = [];
   try { blocks = JSON.parse(post.conteudo || "[]"); } catch { blocks = []; }
@@ -217,67 +217,77 @@ export default async function BlogPostPage({ params }: Props) {
     : [];
 
   return (
-    <main className="min-h-screen" style={{ background: "#FAFAFA" }}>
+    <main className="min-h-screen">
       {sumario.length > 0 && <SumarioBarra itens={sumario} alvo="artigo" />}
       <div className="xl:grid xl:grid-cols-[1fr_minmax(0,42rem)_1fr]">
       {sumario.length > 0
         ? <aside className="hidden xl:block"><SumarioLateral itens={sumario} alvo="artigo" /></aside>
         : <div className="hidden xl:block" aria-hidden="true" />}
-      <article id="artigo" className="max-w-2xl mx-auto px-6 py-16 xl:mx-0 xl:max-w-none">
-        {/* Back */}
-        <Link
-          href="/blog"
-          className="inline-flex items-center gap-1 text-xs text-black/40 hover:text-[#7259B5] mb-10 transition-colors"
-        >
-          ← Blog
-        </Link>
+      <article id="artigo" className="mx-auto max-w-2xl px-6 pt-12 pb-16 md:pt-16 xl:mx-0 xl:max-w-none">
+        <header>
+          <nav aria-label="Trilha" className={`${ROTULO} flex flex-wrap items-baseline gap-x-2 gap-y-1 text-black/55`}>
+            <Link href="/blog" className={`hover:text-[#282525] ${FOCO}`}>Blog</Link>
+            {post.tags && post.tags.length > 0 && (
+              <>
+                <span aria-hidden="true">/</span>
+                <Temas tags={post.tags} className="inline" />
+              </>
+            )}
+          </nav>
+          <h1 className="mt-5 text-[clamp(2.125rem,4.4vw,3.125rem)] leading-[1.06] font-bold tracking-[-0.03em] text-balance text-[#282525]">
+            {post.titulo}
+          </h1>
+          {post.seo_descricao && (
+            <p className="mt-5 text-[1.1875rem] leading-relaxed text-pretty text-black/60">{post.seo_descricao}</p>
+          )}
+          {(post.publicado_em || minutos) && (
+            <p className={`${ROTULO} mt-6 text-black/55`}>
+              {post.publicado_em && <time dateTime={post.publicado_em}>{fmtData(post.publicado_em)}</time>}
+              {post.publicado_em && minutos && " · "}
+              {minutos && `${minutos} min de leitura`}
+            </p>
+          )}
+        </header>
 
-        {/* Tags */}
-        {post.tags?.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {post.tags.map((tag: string) => (
-              <span
-                key={tag}
-                className="text-[0.625rem] font-semibold px-2 py-0.5 rounded"
-                style={{ background: "#fff", border: "1px solid #7259B547", color: "#7259B5" }}
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Title */}
-        <h1 className="text-4xl font-bold text-[#282525] leading-tight mb-4 tracking-tight">
-          {post.titulo}
-        </h1>
-
-        {/* Date */}
-        {post.publicado_em && (
-          <p className="text-sm text-black/35 mb-8">{fmtDate(post.publicado_em)}</p>
-        )}
-
-        {/* Cover */}
         {post.imagem_capa && (
-          <div className="mb-10 rounded-lg overflow-hidden" style={{ border: "1px solid rgba(13,13,13,.06)" }}>
+          <figure className="mt-10">
             <img
               src={post.imagem_capa}
-              alt={post.imagem_alt ?? post.titulo}
-              className="aspect-[4/3] w-full object-cover"
+              alt={post.imagem_alt ?? ""}
+              fetchPriority="high"
+              className="aspect-[4/3] w-full rounded object-cover"
             />
-          </div>
+          </figure>
         )}
 
-        {/* Divider */}
-        <div className="h-px mb-8" style={{ background: "rgba(13,13,13,.08)" }} />
-
-        {/* Content */}
-        <div id="introducao" className={`prose-content ${ANCORA}`}>
+        <div id="introducao" className={`prose-content mt-10 ${ANCORA}`}>
           {blocks.map((block, i) => renderBlock(block, ids, i))}
         </div>
       </article>
       <div className="hidden xl:block" aria-hidden="true" />
       </div>
+
+      {outros.length > 0 && (
+        <section aria-labelledby="continue-lendo" className="mx-auto max-w-pagina px-5 pt-8 md:px-8">
+          <h2 id="continue-lendo" className={`${ROTULO} border-t border-black/10 pt-4 text-black/55`}>Continue lendo</h2>
+          <ul className="mt-8 grid gap-x-8 gap-y-12 sm:grid-cols-2">
+            {outros.map((o) => (
+              <li key={o.id}>
+                <Link href={`/blog/${o.slug}`} className={`group flex flex-col ${FOCO}`}>
+                  <Capa post={o} className="aspect-[16/10]" />
+                  <Temas tags={o.tags} className="mt-5" />
+                  <h3 className={`mt-2 text-[1.375rem] leading-[1.2] font-bold tracking-[-0.015em] text-balance text-[#282525] ${TITULO_HOVER}`}>
+                    {o.titulo}
+                  </h3>
+                  <Meta post={o} className="mt-3" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
+      <BannerCiclo />
     </main>
   );
 }
