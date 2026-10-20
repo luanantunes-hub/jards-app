@@ -20,6 +20,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/mcp/oauth/consent", 20],
   ["/api/mcp/server", 600],
   ["/api/mcp", 60],
+  // Página de envio de arquivos do assistente (sem login): preparar e concluir, por IP.
+  ["/api/enviar", 40],
   ["/api/auth/conta-sem-senha", 10],
   ["/api/", 60],
 ];
@@ -134,6 +136,7 @@ export async function proxy(request: NextRequest) {
       const isPublicPage =
         pathname.startsWith("/p/") ||
         pathname.startsWith("/r/") ||
+        pathname.startsWith("/enviar/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
         pathname === "/" ||
@@ -186,6 +189,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/p/") ||
     // Relatório do patrocinador por link (P5.2): o banco confere o link.
     pathname.startsWith("/r/") ||
+    // Envio de arquivos pelo link que o assistente deu (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/enviar/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||
     pathname.startsWith("/.well-known") ||

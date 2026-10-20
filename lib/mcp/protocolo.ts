@@ -1,8 +1,11 @@
 import type { Ferramenta } from "@/lib/mcp/ferramentas";
+import type { ModuloMcp } from "@/lib/mcp/modulos";
+import { INSTRUCOES_PRESTACAO } from "@/lib/mcp/prestacao/instrucoes";
 
 /** Versões do protocolo MCP que o servidor entende, da mais nova para a mais antiga. */
 export const VERSOES_SUPORTADAS = ["2025-06-18", "2025-03-26", "2024-11-05"] as const;
 
+/** Instruções do módulo de captação (o CRM). Quem só autorizou a captação recebe exatamente este texto. */
 export const INSTRUCOES =
   "Jards é um CRM de captação de patrocínio por leis de incentivo (Rouanet/Cultura, Ancine, Esporte e Saúde). " +
   "As ferramentas leem e gravam no CRM da organização da pessoa conectada: empresas, contatos, negociações (o funil), " +
@@ -24,6 +27,15 @@ export const INSTRUCOES =
   "Em toda criação envie chave_idempotencia (um texto único por ação, como um UUID): se a conexão cair e você não souber se gravou, " +
   "repita com a MESMA chave que nada é criado duas vezes.";
 
+/** O que o assistente lê ao conectar: o texto de cada módulo que a chave fala (a captação sozinha segue igual a antes dos módulos). */
+export function instrucoesDosModulos(modulos: readonly ModuloMcp[]): string {
+  const captacao = modulos.includes("captacao");
+  const prestacao = modulos.includes("prestacao");
+  if (prestacao && !captacao) return INSTRUCOES_PRESTACAO;
+  if (prestacao) return `${INSTRUCOES}\n\n${INSTRUCOES_PRESTACAO}`;
+  return INSTRUCOES;
+}
+
 /** Resposta do tipo "tool result" maior que isso é cortada: o cliente de IA não aproveita e estoura o contexto. */
 const MAX_TEXTO_DA_FERRAMENTA = 60_000;
 
@@ -44,9 +56,11 @@ export type SaidaDaFerramenta =
 export interface DependenciasMcp {
   /** Confere o token; lança ErroHttp se for inválido, expirado ou sem plano. */
   garantirAutenticacao(): Promise<void>;
-  /** Ferramentas que o escopo do token permite. */
+  /** Ferramentas que o escopo e os módulos do token permitem. */
   listarFerramentas(): Promise<readonly Ferramenta[]>;
   chamarFerramenta(nome: string, argumentos: Record<string, unknown>): Promise<SaidaDaFerramenta>;
+  /** Instruções dos módulos do token. Sem isto vale o texto da captação, como antes dos módulos. */
+  instrucoes?(): Promise<string>;
 }
 
 /** Erro que vira resposta HTTP (e não resposta JSON-RPC): token inválido, limite, plano. */
@@ -126,7 +140,7 @@ export async function tratarMensagem(mensagem: unknown, deps: DependenciasMcp): 
         protocolVersion,
         capabilities: { tools: { listChanged: false } },
         serverInfo: { name: "jards", title: "Jards", version: "1.0.0" },
-        instructions: INSTRUCOES,
+        instructions: deps.instrucoes ? await deps.instrucoes() : INSTRUCOES,
       });
     }
 

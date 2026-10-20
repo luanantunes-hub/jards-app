@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { Check, Circle, ExternalLink } from "lucide-react";
 import type { StatusConexao } from "@/lib/mcp/conexoes";
+import { NOME_DO_MODULO } from "@/lib/mcp/modulos";
 import { CaixaCopiavel } from "@/components/mcp/BotaoCopiar";
 import { useCopiado } from "@/components/mcp/useCopiado";
 
@@ -27,7 +28,7 @@ function LinhaNeutra({ children }: { children: ReactNode }) {
   );
 }
 
-function StatusDaConexao({ assistente, status, verificacao }: { assistente: string; status: StatusConexao; verificacao: Verificacao }) {
+function StatusDaConexao({ assistente, status, verificacao, mostrarModulos }: { assistente: string; status: StatusConexao; verificacao: Verificacao; mostrarModulos: boolean }) {
   let conteudo: ReactNode;
   if (status.conectado) {
     const quando = status.ultimaAtividade ? new Date(status.ultimaAtividade).toLocaleDateString("pt-BR") : null;
@@ -36,7 +37,9 @@ function StatusDaConexao({ assistente, status, verificacao }: { assistente: stri
         <Check size={14} className="flex-shrink-0 text-[#2E8932]" aria-hidden="true" />
         <span className="font-medium">{assistente} conectado</span>
         <span className="text-black/60">
-          {quando ? `· atividade em ${quando} ` : ""}· {status.escrita ? "leitura e criação" : "somente leitura"}
+          {quando ? `· atividade em ${quando} ` : ""}
+          {mostrarModulos && status.modulos.length > 0 ? `· ${status.modulos.map((modulo) => NOME_DO_MODULO[modulo]).join(" e ")} ` : ""}
+          · {status.escrita ? "leitura e criação" : "somente leitura"}
         </span>
       </p>
     );
@@ -77,6 +80,10 @@ interface Props {
   passoUsar: ReactNode;
   /** Chamado quando a pessoa age (copia, abre): a tela passa a conferir se a conexão já aconteceu. */
   aoInteragir: () => void;
+  /** Diz quais módulos a conexão tem; só vale a pena quando a pessoa pode usar mais de um. */
+  mostrarModulos?: boolean;
+  /** Recado logo abaixo do status (ex.: a conexão ainda não inclui a prestação de contas). */
+  aviso?: ReactNode;
   children?: ReactNode;
 }
 
@@ -98,13 +105,16 @@ export function PassosConexao({
   tituloUsar,
   passoUsar,
   aoInteragir,
+  mostrarModulos = false,
+  aviso,
   children,
 }: Props) {
   const { copiado, copiar } = useCopiado();
 
   return (
     <div className="space-y-5">
-      <StatusDaConexao assistente={assistente} status={status} verificacao={verificacao} />
+      <StatusDaConexao assistente={assistente} status={status} verificacao={verificacao} mostrarModulos={mostrarModulos} />
+      {aviso}
 
       <ol className="space-y-5">
         <li className="flex gap-3">

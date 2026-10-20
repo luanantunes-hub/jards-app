@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { authenticateMcpRequest, isErrorResponse, resolveOrgId } from "@/lib/mcp/auth";
+import { authenticateMcpRequest, isErrorResponse, requireModulo, resolveOrgId } from "@/lib/mcp/auth";
 
 export async function GET(req: NextRequest) {
   const ctx = await authenticateMcpRequest(req);
   if (isErrorResponse(ctx)) return ctx;
+  // Esta rota é da captação: uma chave que só autorizou a prestação de contas não passa.
+  const semModulo = requireModulo(ctx, "captacao");
+  if (semModulo) return semModulo;
 
   const params = req.nextUrl.searchParams;
   const orgId = resolveOrgId(ctx, params.get("organization_id"));

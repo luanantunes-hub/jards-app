@@ -35,7 +35,7 @@ test("só rótulo terminado em (OAuth) conta como conexão por OAuth", () => {
 });
 
 test("sem nenhuma conexão, o assistente aparece como não conectado", () => {
-  assert.deepEqual(statusDoAssistente([], "claude", agora), { conectado: false, ultimaAtividade: null, escrita: false });
+  assert.deepEqual(statusDoAssistente([], "claude", agora), { conectado: false, ultimaAtividade: null, escrita: false, modulos: [] });
 });
 
 test("autorização recém-feita (nunca usada) já conta como conectado", () => {
@@ -72,4 +72,19 @@ test("a conexão pode criar registros se alguma delas tiver permissão de escrit
   const escrita = chave({ id: "k2", scope: "write" });
   assert.equal(statusDoAssistente([leitura], "claude", agora).escrita, false);
   assert.equal(statusDoAssistente([leitura, escrita], "claude", agora).escrita, true);
+});
+
+test("os módulos autorizados somam os das conexões ativas do assistente; conexão antiga, sem o campo, é só captação", () => {
+  assert.deepEqual(statusDoAssistente([chave({})], "claude", agora).modulos, ["captacao"]);
+  assert.deepEqual(statusDoAssistente([chave({ modulos: ["prestacao"] })], "claude", agora).modulos, ["prestacao"]);
+  assert.deepEqual(statusDoAssistente([chave({ id: "a", modulos: ["captacao"] }), chave({ id: "b", modulos: ["prestacao"] })], "claude", agora).modulos, ["captacao", "prestacao"]);
+  assert.deepEqual(statusDoAssistente([chave({ modulos: ["captacao", "prestacao"] })], "claude", agora).modulos, ["captacao", "prestacao"]);
+});
+
+test("os módulos de uma conexão revogada ou de outro assistente não entram na conta", () => {
+  const revogada = chave({ id: "a", modulos: ["prestacao"], revoked_at: diasAtras(1) });
+  const doChatGpt = chave({ id: "b", label: "ChatGPT (OAuth)", modulos: ["prestacao"] });
+  assert.deepEqual(statusDoAssistente([revogada, chave({ id: "c" })], "claude", agora).modulos, ["captacao"]);
+  assert.deepEqual(statusDoAssistente([doChatGpt], "claude", agora).modulos, []);
+  assert.deepEqual(statusDoAssistente([doChatGpt], "chatgpt", agora).modulos, ["prestacao"]);
 });

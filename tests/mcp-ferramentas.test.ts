@@ -9,6 +9,10 @@ import {
 } from "../lib/mcp/ferramentas";
 import { construirSpecOpenApi } from "../lib/mcp/openapi";
 import { MANIPULADORES } from "../lib/mcp/execucao";
+import { MODULOS_MCP } from "../lib/mcp/modulos";
+
+/** As ferramentas do CRM (módulo de captação): é o que as chaves de antes dos módulos sempre enxergaram. */
+const CRM = FERRAMENTAS.filter((f) => f.modulo === "captacao");
 
 const ferramenta = (nome: string) => {
   const achada = FERRAMENTAS.find((f) => f.nome === nome);
@@ -52,15 +56,31 @@ const LEITURAS = [
   "resumo_organizacao",
 ];
 
-test("cada operação da spec OpenAPI vira uma ferramenta MCP em snake_case", () => {
-  const operacoes = Object.values(construirSpecOpenApi("http://x").paths).flatMap((metodos) =>
+const operacoesDaSpec = (modulo?: (typeof MODULOS_MCP)[number]) =>
+  Object.values(construirSpecOpenApi("http://x", modulo).paths).flatMap((metodos) =>
     Object.values(metodos as Record<string, { operationId: string }>).map((o) => o.operationId)
   );
-  assert.equal(FERRAMENTAS.length, operacoes.length);
-  assert.deepEqual(new Set(FERRAMENTAS.map((f) => f.operationId)), new Set(operacoes));
+
+test("cada operação da spec OpenAPI vira uma ferramenta MCP em snake_case, módulo a módulo", () => {
+  for (const modulo of MODULOS_MCP) {
+    const operacoes = operacoesDaSpec(modulo);
+    const doModulo = FERRAMENTAS.filter((f) => f.modulo === modulo);
+    assert.equal(doModulo.length, operacoes.length, modulo);
+    assert.deepEqual(new Set(doModulo.map((f) => f.operationId)), new Set(operacoes), modulo);
+  }
+  assert.equal(FERRAMENTAS.length, MODULOS_MCP.reduce((soma, modulo) => soma + operacoesDaSpec(modulo).length, 0));
   assert.equal(paraSnakeCase("listarEmpresasCrm"), "listar_empresas_crm");
   assert.equal(paraSnakeCase("listarMinhasOrganizacoes"), "listar_minhas_organizacoes");
-  assert.equal(new Set(FERRAMENTAS.map((f) => f.nome)).size, FERRAMENTAS.length, "nomes repetidos");
+  assert.equal(new Set(FERRAMENTAS.map((f) => f.nome)).size, FERRAMENTAS.length, "nomes repetidos entre módulos");
+});
+
+test("a spec sem módulo é a da captação, como sempre foi, e nenhuma spec invade a outra", () => {
+  assert.deepEqual(construirSpecOpenApi("http://x"), construirSpecOpenApi("http://x", "captacao"));
+  assert.deepEqual(new Set(operacoesDaSpec()), new Set(CRM.map((f) => f.operationId)));
+  const prestacao = new Set(operacoesDaSpec("prestacao"));
+  for (const operacao of operacoesDaSpec("captacao")) assert.ok(!prestacao.has(operacao), `${operacao} está nos dois módulos`);
+  const caminhosDaCaptacao = Object.keys(construirSpecOpenApi("http://x").paths);
+  assert.ok(!caminhosDaCaptacao.some((c) => c.startsWith("/prestacoes")), "a GPT do CRM não pode enxergar a prestação");
 });
 
 test("toda ferramenta tem handler registrado e todo handler tem ferramenta", () => {
@@ -68,7 +88,7 @@ test("toda ferramenta tem handler registrado e todo handler tem ferramenta", () 
 });
 
 test("o conector cobre a criação e a leitura do CRM, e nenhuma ferramenta usa a tabela legada de tarefas", () => {
-  const nomes = new Set(FERRAMENTAS.map((f) => f.nome));
+  const nomes = new Set(CRM.map((f) => f.nome));
   for (const nome of [...CRIACOES, ...LEITURAS]) assert.ok(nomes.has(nome), `falta a ferramenta ${nome}`);
   assert.equal(nomes.size, CRIACOES.length + LEITURAS.length, "há ferramenta fora da lista esperada");
   assert.ok(!nomes.has("criar_tarefa") && !nomes.has("listar_tarefas"), "tarefa do Jards é atividade");
@@ -79,7 +99,10 @@ test("resumo e descrição de cada operação cabem no limite de 300 caracteres 
     assert.ok(f.titulo.length > 0 && f.titulo.length <= 300, `${f.nome}: título com ${f.titulo.length} caracteres`);
     assert.ok(f.descricao.length <= 300, `${f.nome}: descrição com ${f.descricao.length} caracteres`);
   }
-  assert.ok(FERRAMENTAS.length <= 30, "mais de 30 operações passa do limite de uma Action do ChatGPT");
+  // O limite vale por Action, e cada módulo tem a sua (uma GPT por módulo).
+  for (const modulo of MODULOS_MCP) {
+    assert.ok(operacoesDaSpec(modulo).length <= 30, `${modulo}: mais de 30 operações passa do limite de uma Action do ChatGPT`);
+  }
 });
 
 test("o esquema da ferramenta junta parâmetros de consulta, de caminho e corpo", () => {
@@ -120,7 +143,24 @@ test("quem autorizou só leitura vê todas as consultas e nenhuma criação", ()
   const leitura = ferramentasDoEscopo("read").map((f) => f.nome);
   for (const nome of CRIACOES) assert.ok(!leitura.includes(nome), `${nome} não deveria aparecer para leitura`);
   for (const nome of LEITURAS) assert.ok(leitura.includes(nome), `${nome} deveria aparecer para leitura`);
-  assert.equal(ferramentasDoEscopo("write").length, FERRAMENTAS.length);
+  assert.equal(ferramentasDoEscopo("write").length, CRM.length);
+});
+
+test("sem módulo informado a chave enxerga só o CRM; a prestação só aparece para quem a autorizou", () => {
+  assert.ok(ferramentasDoEscopo("write").every((f) => f.modulo === "captacao"));
+  assert.ok(ferramentasDoEscopo("write", ["captacao"]).every((f) => f.modulo === "captacao"));
+
+  const soPrestacao = ferramentasDoEscopo("write", ["prestacao"]);
+  assert.ok(soPrestacao.length > 0 && soPrestacao.every((f) => f.modulo === "prestacao"));
+  assert.ok(!soPrestacao.some((f) => f.nome === "listar_projetos"), "o CRM não pode vazar para a chave da prestação");
+
+  const ambos = ferramentasDoEscopo("write", ["captacao", "prestacao"]);
+  assert.equal(ambos.length, FERRAMENTAS.length);
+
+  const leituraDaPrestacao = ferramentasDoEscopo("read", ["prestacao"]);
+  assert.ok(leituraDaPrestacao.every((f) => !f.exigeEscrita));
+  assert.ok(leituraDaPrestacao.some((f) => f.nome === "listar_prestacoes"));
+  assert.ok(!leituraDaPrestacao.some((f) => f.nome === "diagnosticar_arquivos"), "o diagnóstico recebe arquivo: exige o acesso de gravação");
 });
 
 test("somenteLeitura marca só as consultas, e ver os contatos de uma empresa não gasta crédito", () => {

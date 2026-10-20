@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { generateApiKey, userHasPaidOrg } from "@/lib/mcp/auth";
+import { generateApiKey, modulosQueAPessoaPodeAutorizar } from "@/lib/mcp/auth";
+import { ehModuloMcp, MODULO_PADRAO, MODULOS_MCP, NOME_DO_MODULO, type ModuloMcp } from "@/lib/mcp/modulos";
 
 function adminClient() {
   return createSupabaseClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
@@ -31,11 +32,13 @@ export async function GET() {
   const admin = adminClient();
   const { data, error } = await admin
     .from("mcp_api_keys")
-    .select("id,key_prefix,label,scope,expires_at,created_at,last_used_at,revoked_at")
+    .select("id,key_prefix,label,scope,modulos,expires_at,created_at,last_used_at,revoked_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  return NextResponse.json({ chaves: data });
+  // Os módulos que a pessoa pode autorizar agora (a tela de conexão só oferece o que ela pode usar).
+  const modulosDisponiveis = await modulosQueAPessoaPodeAutorizar(admin, { id: user.id, email: user.email });
+  return NextResponse.json({ chaves: data, modulos_disponiveis: modulosDisponiveis });
 }
 
 /** Gera uma nova chave. A chave crua só aparece nesta resposta, uma vez. */
@@ -44,16 +47,29 @@ export async function POST(req: NextRequest) {
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const admin0 = adminClient();
-  if (!(await userHasPaidOrg(admin0, user.id))) {
-    return NextResponse.json(
+  const disponiveis = await modulosQueAPessoaPodeAutorizar(admin0, { id: user.id, email: user.email });
+  const assinaturaNecessaria = () =>
+    NextResponse.json(
       { error: "Assinatura necessária. O acesso via MCP/ChatGPT está disponível nos planos pagos do Jards.", upgrade_url: "/meu-plano?acao=assinar" },
       { status: 402 }
     );
-  }
+  if (disponiveis.length === 0) return assinaturaNecessaria();
 
   const body = await req.json().catch(() => ({}));
   const label = typeof body.label === "string" && body.label.trim() ? body.label.trim() : null;
   const scope = body.scope === "write" ? "write" : "read";
+
+  // Módulos da chave: sem informar, só a captação (como sempre foi). Nunca além dos que a pessoa pode autorizar agora.
+  const pedidos: unknown = body.modulos === undefined ? [MODULO_PADRAO] : body.modulos;
+  if (!Array.isArray(pedidos) || pedidos.length === 0 || !pedidos.every(ehModuloMcp)) {
+    return NextResponse.json({ error: `modulos deve ser uma lista com ${MODULOS_MCP.join(" e/ou ")}.` }, { status: 400 });
+  }
+  const modulos: ModuloMcp[] = MODULOS_MCP.filter((modulo) => pedidos.includes(modulo));
+  if (modulos.includes("captacao") && !disponiveis.includes("captacao")) return assinaturaNecessaria();
+  const semAcesso = modulos.filter((modulo) => !disponiveis.includes(modulo));
+  if (semAcesso.length > 0) {
+    return NextResponse.json({ error: `Você não pode usar o módulo de ${NOME_DO_MODULO[semAcesso[0]]} pelo conector.` }, { status: 403 });
+  }
 
   // Prazo obrigatório, com teto de 1 ano — chave sem validade é o tipo de coisa
   // que fica esquecida ativa para sempre. Padrão 90 dias se nada for informado.
@@ -64,8 +80,8 @@ export async function POST(req: NextRequest) {
   const admin = adminClient();
   const { data, error } = await admin
     .from("mcp_api_keys")
-    .insert({ user_id: user.id, key_hash: hash, key_prefix: prefix, label, scope, expires_at: expiresAt })
-    .select("id,key_prefix,label,scope,expires_at,created_at")
+    .insert({ user_id: user.id, key_hash: hash, key_prefix: prefix, label, scope, modulos, expires_at: expiresAt })
+    .select("id,key_prefix,label,scope,modulos,expires_at,created_at")
     .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
@@ -98,6 +114,10 @@ export async function DELETE(req: NextRequest) {
     .eq("user_id", user.id)
     .is("revoked_at", null);
   if (refreshError) return NextResponse.json({ error: refreshError.message }, { status: 500 });
+
+  // Os links de envio de arquivos (/enviar/...) que esta conexão criou deixam de valer junto com ela.
+  const { error: linksError } = await admin.from("assistente_sessoes_envio").update({ revogada_em: agora }).eq("chave_id", id).is("revogada_em", null);
+  if (linksError) return NextResponse.json({ error: linksError.message }, { status: 500 });
 
   return NextResponse.json({ ok: true });
 }

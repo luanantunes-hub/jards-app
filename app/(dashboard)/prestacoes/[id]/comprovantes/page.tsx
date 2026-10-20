@@ -744,6 +744,9 @@ export default function ComprovantesPage() {
                       {c.canal === "email" && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Recebida por e-mail</span>
                       )}
+                      {c.canal === "assistente" && (
+                        <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2D72B047", color: "#2D72B0" }}>Enviada pelo assistente</span>
+                      )}
                       {c.contrapartida && (
                         <span className="px-1.5 py-0.5 rounded text-[0.5625rem] font-semibold" style={{ background: "#fff", border: "1px solid #2825252E", color: "#282525A6" }}>
                           {c.contrapartida === "doacao" ? "Contrapartida por doação" : "Contrapartida"}

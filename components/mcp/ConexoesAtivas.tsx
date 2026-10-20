@@ -3,6 +3,7 @@
 import type { ReactNode } from "react";
 import { KeyRound, Trash2 } from "lucide-react";
 import { assistenteDaChave, ehConexaoOAuth, type ChaveMcp } from "@/lib/mcp/conexoes";
+import { normalizarModulosDaChave } from "@/lib/mcp/modulos";
 import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
 import type { Verificacao } from "@/components/mcp/PassosConexao";
 
@@ -86,6 +87,7 @@ export function ConexoesAtivas({ chaves, verificacao, onRevogar, onTentarDeNovo 
                     <Etiqueta cor={c.scope === "write" ? "#D94A4A" : "#2D72B0"}>
                       {c.scope === "write" ? "leitura + criação" : "somente leitura"}
                     </Etiqueta>
+                    {normalizarModulosDaChave(c.modulos).includes("prestacao") && <Etiqueta cor="#6B6565">prestação de contas</Etiqueta>}
                     {!oauth && c.expirada && <Etiqueta cor="#D94A4A">expirada</Etiqueta>}
                   </p>
                   <p className="mt-0.5 text-xs text-black/60">
