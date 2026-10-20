@@ -402,6 +402,9 @@
     @media (min-width:640px) { .pc-quatro { grid-template-columns:repeat(2,minmax(0,1fr)); } }
     @media (min-width:1024px) { .pc-quatro { grid-template-columns:repeat(4,minmax(0,1fr)); } }
     .pc-faixa { padding-top:clamp(4rem,6vw,6rem); padding-bottom:clamp(4rem,6vw,6rem); }
+    /* O tamanduá contador, o mesmo do convite e do fim do teste no app, em cima do título do teste */
+    .pc-teste-tamandua { display:block; width:min(360px,78%); height:auto; margin:0 0 18px -10px; }
+    @media (max-width:767px) { .pc-teste-tamandua { width:min(300px,82%); margin-bottom:12px; } }
     .pc-preco-link { margin-top:12px; }
     .pc-borda-topo { border-top:1px solid rgba(40,37,37,.08); }
     .pc-fechamento-link { margin-top:18px; }
@@ -759,7 +762,10 @@
 <!-- ════════════════════════ PREÇO E TESTE ════════════════════════ -->
 <section id="preco" class="pc-faixa bg-white px-6" aria-labelledby="preco-titulo">
   <div class="max-w-6xl mx-auto alt-split-head reveal">
-    <h2 id="preco-titulo" class="alt-h2 alt-h2--section font-display">45 dias de teste gratuito.</h2>
+    <div>
+      <img src="/illustrations/tamandua-contador.png" width="900" height="547" alt="Tamanduá da Jards fazendo as contas na mesa, com a calculadora e os papéis" class="pc-teste-tamandua" loading="lazy" decoding="async" />
+      <h2 id="preco-titulo" class="alt-h2 alt-h2--section font-display">45 dias de teste gratuito.</h2>
+    </div>
     <div>
       <p class="alt-split-lede">Teste com a sua equipe, sem cartão, uma vez por organização. Depois, R$ 92,80 por mês com 1 usuário, mais R$ 19,90 por usuário extra. Sem assinatura, as prestações ficam disponíveis para consulta e exportação.</p>
       <p class="pc-preco-link"><a href="/precos" class="alt-link">Ver todos os preços <i class="ph ph-arrow-right" aria-hidden="true"></i></a></p>
