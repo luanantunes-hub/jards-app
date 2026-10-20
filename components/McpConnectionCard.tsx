@@ -19,10 +19,13 @@ export function McpConnectionCard() {
   const router = useRouter();
   const { assinatura } = useCreditos();
   const papel = useOrganizationRole();
-  // A assinatura é a da organização aberta; o conector é de quem a administra
-  // (PAPEL_COM_ACESSO_AO_CRM em lib/mcp/enums.ts), como o servidor confere.
-  const semPapel = !!assinatura?.ativa && papel !== "admin";
   const [ativas, setAtivas] = useState<number | null>(null);
+  // Quantos módulos a pessoa pode conectar, como o servidor confere; null até ele responder. A prestação de contas conta
+  // mesmo sem a assinatura da captação e para a equipe toda, não só para quem administra.
+  const [modulosPossiveis, setModulosPossiveis] = useState<number | null>(null);
+  // A assinatura é a da organização aberta; a captação pelo conector é de quem a administra
+  // (PAPEL_COM_ACESSO_AO_CRM em lib/mcp/enums.ts), como o servidor confere. Quem usa a prestação conecta sem ser admin.
+  const semPapel = !!assinatura?.ativa && papel !== "admin" && !modulosPossiveis;
   const [showPaywall, setShowPaywall] = useState(false);
 
   useEffect(() => {
@@ -33,6 +36,7 @@ export function McpConnectionCard() {
       const data = await res.json();
       const chaves: ChaveMcp[] = data.chaves ?? [];
       setAtivas(chaves.filter((c) => !c.revoked_at).length);
+      setModulosPossiveis(Array.isArray(data.modulos_disponiveis) ? data.modulos_disponiveis.length : 0);
     })();
     return () => {
       cancelado = true;
@@ -41,7 +45,7 @@ export function McpConnectionCard() {
 
   function handleClick() {
     if (semPapel) return;
-    if (!assinatura?.ativa) {
+    if (!assinatura?.ativa && !modulosPossiveis) {
       setShowPaywall(true);
       return;
     }

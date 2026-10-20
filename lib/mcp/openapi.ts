@@ -13,69 +13,21 @@ import {
   WORKFLOWS_FOLLOWUP,
   DIRECOES_INTERACAO,
 } from "@/lib/mcp/enums";
+import { orgIdParam, buscaParam, limiteParam, deslocamentoParam, uuidQuery, booleanQuery, idNoCaminho, uuid, texto, corpoJson, orgNoCorpo, dataTexto } from "@/lib/mcp/openapi-comum";
+import type { ModuloMcp } from "@/lib/mcp/modulos";
+import { construirSpecPrestacao } from "@/lib/mcp/openapi-prestacao";
 
 /**
- * Spec OpenAPI da camada REST do MCP/Custom GPT. É a fonte única das operações: a Action do
- * ChatGPT lê esta spec e o servidor MCP remoto (Claude) deriva as ferramentas dela.
- * Resumo e descrição de cada operação ficam abaixo de 300 caracteres (limite das Actions do ChatGPT).
+ * Specs OpenAPI da camada REST do MCP/Custom GPT, uma por módulo. São a fonte única das operações: a Action do
+ * ChatGPT lê a spec do módulo e o servidor MCP remoto (Claude) deriva as ferramentas delas.
+ * Resumo e descrição de cada operação ficam abaixo de 300 caracteres (limite das Actions do ChatGPT) e cada spec
+ * tem no máximo 30 operações (teto de uma Action): por isso cada módulo tem a sua.
  */
-export function construirSpecOpenApi(baseUrl: string) {
-  const orgIdParam = {
-    name: "organization_id",
-    in: "query",
-    required: false,
-    schema: { type: "string", format: "uuid" },
-    description: "Opcional se você pertence a uma única organização.",
-  };
-  const buscaParam = {
-    name: "busca",
-    in: "query",
-    required: false,
-    schema: { type: "string" },
-  };
-  const limiteParam = {
-    name: "limite",
-    in: "query",
-    required: false,
-    schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
-  };
-  const deslocamentoParam = {
-    name: "deslocamento",
-    in: "query",
-    required: false,
-    schema: { type: "integer", minimum: 0, default: 0 },
-    description: "Quantos resultados pular, para ver a página seguinte (use junto com limite).",
-  };
-  const uuidQuery = (name: string, description?: string) => ({
-    name,
-    in: "query",
-    required: false,
-    schema: { type: "string", format: "uuid" },
-    ...(description ? { description } : {}),
-  });
-  const booleanQuery = (name: string, description: string) => ({
-    name,
-    in: "query",
-    required: false,
-    description,
-    schema: { type: "boolean", default: false },
-  });
-  const idNoCaminho = { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } };
+export function construirSpecOpenApi(baseUrl: string, modulo: ModuloMcp = "captacao") {
+  return modulo === "prestacao" ? construirSpecPrestacao(baseUrl) : construirSpecCaptacao(baseUrl);
+}
 
-  const uuid = (description?: string) => ({ type: "string", format: "uuid", ...(description ? { description } : {}) });
-  const texto = (description?: string) => ({ type: "string", ...(description ? { description } : {}) });
-  // Toda criação aceita a chave: repetir o pedido com a mesma chave devolve o resultado de antes, sem duplicar.
-  const chaveIdempotencia = texto(
-    "Texto único por ação (ex.: um UUID novo). Se a rede falhar, repita o pedido com a MESMA chave: nada é criado duas vezes."
-  );
-  const corpoJson = (required: string[], properties: Record<string, unknown>) => ({
-    required: true,
-    content: { "application/json": { schema: { type: "object", required, properties: { ...properties, chave_idempotencia: chaveIdempotencia } } } },
-  });
-  const orgNoCorpo = { organization_id: uuid("Opcional se você pertence a uma única organização.") };
-
-  const dataTexto = "Dia (AAAA-MM-DD) ou dia e hora (AAAA-MM-DDTHH:MM, horário de Brasília).";
-
+function construirSpecCaptacao(baseUrl: string) {
   const spec = {
     openapi: "3.1.0",
     info: {
