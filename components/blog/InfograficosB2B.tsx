@@ -120,7 +120,7 @@ export function InfograficoMetricas() {
     <Quadro
       id="info-metricas-titulo"
       rotulo="Ciência de pipeline"
-      titulo="As métricas das vendas encontram correspondência na captação"
+      titulo="A ciência de pipeline encontra correspondência na captação moderna"
       nota="As duas listas se correspondem como conjunto, não item a item."
     >
       <div className="mt-6 grid items-center gap-3 sm:grid-cols-[1fr_auto_1fr]">
@@ -129,7 +129,7 @@ export function InfograficoMetricas() {
           <i className="ph ph-arrows-left-right hidden text-xl sm:block" />
           <i className="ph ph-arrows-down-up text-xl sm:hidden" />
         </span>
-        <ListaMetricas titulo="Captação" itens={METRICAS_CAPTACAO} />
+        <ListaMetricas titulo="Captação moderna · começa a adotar" itens={METRICAS_CAPTACAO} />
       </div>
     </Quadro>
   );
