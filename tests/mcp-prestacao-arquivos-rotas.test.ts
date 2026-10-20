@@ -6,7 +6,8 @@ import { GET as arquivosGET, POST as arquivosPOST } from "../app/api/mcp/prestac
 import { POST as conferirPOST } from "../app/api/mcp/prestacoes/[id]/arquivos/conferir/route";
 import { POST as envioPOST } from "../app/api/mcp/prestacoes/[id]/arquivos/envio/route";
 import { memoriaFalsa } from "./_helpers/memoria-falsa";
-import { DE_OUTRA_ORG, ORG, PRESTACAO, comId, ler, pedido, prepararComStorage } from "./_helpers/prestacao-cenario";
+import { construirSpecPrestacao } from "../lib/mcp/openapi-prestacao";
+import { DE_OUTRA_ORG, ORG, PRESTACAO, comId, daTabela, ler, pedido, prepararComStorage } from "./_helpers/prestacao-cenario";
 
 const PDF = Buffer.from("%PDF-1.7 comprovante de teste");
 const FOTO = Buffer.concat([Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 0x10]), Buffer.from("JFIF foto de teste")]);
@@ -23,6 +24,8 @@ const nfeXml = () => readFile("tests/fixtures/fiscal/nfe-autorizada.xml", "utf8"
 const enviar = (corpo: unknown, id: string = PRESTACAO) => arquivosPOST(pedido(`/prestacoes/${id}/arquivos`, { metodo: "POST", corpo }), comId(id));
 const preparar = (corpo: unknown, id: string = PRESTACAO) => envioPOST(pedido(`/prestacoes/${id}/arquivos/envio`, { metodo: "POST", corpo }), comId(id));
 const conferir = (corpo: unknown = {}, id: string = PRESTACAO) => conferirPOST(pedido(`/prestacoes/${id}/arquivos/conferir`, { metodo: "POST", corpo }), comId(id));
+/** A mesma conferência, disparada sem esperar a outra terminar (a resposta chega em Promise para o Promise.all intercalar as duas). */
+const conferirEmParalelo = (arquivoId: string) => conferirPOST(pedido(`/prestacoes/${PRESTACAO}/arquivos/conferir`, { metodo: "POST", corpo: { arquivo_ids: [arquivoId] } }), comId(PRESTACAO));
 
 test("texto de XML colado no chat vira arquivo da caixa de entrada, com o resumo da nota e sem caminho do Storage", async () => {
   const memoria = tabelasVazias();
@@ -283,8 +286,97 @@ test("conferir apaga o arquivo que chegou mas não serve: disfarçado de PDF, gr
   assert.equal(repetido.corpo.arquivos[0].arquivo_id, tres.arquivo_id, "vale o que entrou antes");
   assert.equal(memoria.linhas("assistente_arquivos").find((l) => l.id === quatro.arquivo_id)!.situacao, "descartado");
 
-  const removidos = chamadas.filter((c) => c.acao === "remove").flatMap((c) => c.argumentos[0] as string[]);
-  assert.ok(removidos.length >= 3, "os três que não serviram saíram do Storage");
+  // O endereço assinado vale 2 horas e não se revoga: o que não serviu não é apagado (o endereço ficaria livre para outro envio),
+  // o conteúdo é trocado por um marcador de poucos bytes.
+  const tumulos = chamadas.filter((c) => c.acao === "upload" && Buffer.from(c.argumentos[1] as Uint8Array).toString() === "descartado");
+  assert.equal(tumulos.length, 3, "os três que não serviram viraram marcador");
+  assert.ok(tumulos.every((c) => (c.argumentos[2] as { upsert?: boolean }).upsert === true));
+  assert.equal(chamadas.filter((c) => c.acao === "remove").length, 0, "nada foi apagado: o endereço de envio não fica reutilizável");
+});
+
+test("o arquivo que serve é regravado com o tipo verdadeiro, não com o que quem enviou declarou", async () => {
+  const memoria = tabelasVazias();
+  const { chamadas } = prepararComStorage({ escopo: "write" }, memoria.resolver, {
+    list: (_pasta, opcoes) => ({ data: [{ name: (opcoes as { search?: string }).search, metadata: { size: PDF.length } }], error: null }),
+    download: () => ({ data: new Blob([new Uint8Array(PDF)], { type: "text/html" }), error: null }),
+  });
+  const { enderecos } = (await ler(await preparar({ nomes: ["a.pdf"] }))).corpo;
+  assert.equal((await ler(await conferir({ arquivo_ids: [enderecos[0].arquivo_id] }))).corpo.chegaram, 1);
+  const regravacao = chamadas.find((c) => c.acao === "upload");
+  assert.ok(regravacao, "o objeto foi regravado");
+  assert.deepEqual(regravacao.argumentos[2], { contentType: "application/pdf", upsert: true });
+  assert.equal(Buffer.from(regravacao.argumentos[1] as Uint8Array).toString(), PDF.toString(), "com os mesmos bytes que foram conferidos");
+});
+
+test("duas conferências ao mesmo tempo do mesmo arquivo (página e assistente) não apagam o que acabou de chegar", async () => {
+  const memoria = tabelasVazias();
+  // A segunda conferência fica parada no download até a primeira terminar: é a intercalação que apagava o arquivo que acabou de chegar.
+  let baixadas = 0;
+  let liberarSegunda: (() => void) | null = null;
+  const conteudo = () => ({ data: new Blob([new Uint8Array(PDF)]), error: null });
+  const { chamadas } = prepararComStorage({ escopo: "write" }, memoria.resolver, {
+    list: (_pasta, opcoes) => ({ data: [{ name: (opcoes as { search?: string }).search, metadata: { size: PDF.length } }], error: null }),
+    download: () => {
+      baixadas += 1;
+      if (baixadas === 1) return conteudo();
+      return new Promise((resolver) => {
+        liberarSegunda = () => resolver(conteudo());
+      });
+    },
+  });
+  const { enderecos } = (await ler(await preparar({ nomes: ["a.pdf"] }))).corpo;
+  const id = enderecos[0].arquivo_id;
+
+  const primeira = conferirEmParalelo(id);
+  const segunda = conferirEmParalelo(id);
+  const respostaA = await primeira;
+  while (!liberarSegunda) await new Promise((r) => setImmediate(r));
+  (liberarSegunda as () => void)();
+  const respostaB = await segunda;
+  const [a, b] = [await ler(respostaA), await ler(respostaB)];
+
+  assert.equal(a.corpo.chegaram, 1);
+  for (const resposta of [a, b]) assert.ok(!resposta.corpo.arquivos.some((x: { resultado: string }) => x.resultado === "recusado" || x.resultado === "repetido"), JSON.stringify(resposta.corpo.arquivos));
+  assert.equal(b.corpo.arquivos[0].arquivo_id, id);
+  const linha = memoria.linhas("assistente_arquivos").find((l) => l.id === id)!;
+  assert.equal(linha.situacao, "recebido", "o arquivo continua na caixa");
+  const tumulos = chamadas.filter((c) => c.acao === "upload" && Buffer.from(c.argumentos[1] as Uint8Array).toString() === "descartado");
+  assert.equal(tumulos.length, 0, "ninguém o trocou por marcador");
+  assert.equal(chamadas.filter((c) => c.acao === "remove").length, 0);
+});
+
+test("o mesmo PDF volta a poder ser enviado depois que a equipe apaga a despesa no app; com a despesa de pé, segue repetido", async () => {
+  const xml = await nfeXml();
+  const sha256 = sha(xml.trim());
+  const registrado = (registroId: string, id: string) => ({
+    id, prestacao_id: PRESTACAO, origem: "texto", destino: "despesa", situacao: "registrado", nome_arquivo: "nf.xml", tipo_real: "xml", tamanho_bytes: 10, sha256,
+    storage_path: `${ORG}/prestacoes/${PRESTACAO}/comprovantes/velho.xml`, registro_tabela: "prestacao_comprovantes", registro_id: registroId, detalhe: null, expira_em: "2099-01-01T00:00:00Z", created_at: "2026-10-19T10:00:00Z",
+  });
+
+  // Despesa apagada no app: o registro já não existe.
+  const apagada = memoriaFalsa({ assistente_arquivos: [registrado("5c1b0f0e-0000-4000-8000-0000000000f1", "5c1b0f0e-0000-4000-8000-0000000000e1")], assistente_acoes: [], prestacao_comprovantes: [] });
+  prepararComStorage({ escopo: "write" }, apagada.resolver);
+  const nova = await ler(await enviar({ conteudo_texto: xml, nome_do_arquivo: "nf-1234.xml" }));
+  assert.equal(nova.corpo.arquivos[0].repetido, false, "não é repetido de algo que sumiu");
+  assert.equal(nova.corpo.arquivos[0].situacao, "recebido");
+  const velho = apagada.linhas("assistente_arquivos").find((l) => l.id === "5c1b0f0e-0000-4000-8000-0000000000e1")!;
+  assert.equal(velho.situacao, "descartado");
+  assert.match(String(velho.detalhe), /apagado no app/);
+
+  // Despesa de pé: continua repetido.
+  const dePe = memoriaFalsa({ assistente_arquivos: [registrado("5c1b0f0e-0000-4000-8000-0000000000f2", "5c1b0f0e-0000-4000-8000-0000000000e2")], assistente_acoes: [], prestacao_comprovantes: [{ id: "5c1b0f0e-0000-4000-8000-0000000000f2", prestacao_id: PRESTACAO }] });
+  prepararComStorage({ escopo: "write" }, dePe.resolver);
+  const repetido = await ler(await enviar({ conteudo_texto: xml, nome_do_arquivo: "nf-1234.xml" }));
+  assert.equal(repetido.corpo.arquivos[0].repetido, true);
+  assert.equal(dePe.linhas("assistente_arquivos")[0].situacao, "registrado");
+});
+
+test("o nome do arquivo não disfarça a extensão: marcas de direção do texto e controles saem", async () => {
+  const { nomeLimpo } = await import("../lib/mcp/prestacao/caixa");
+  assert.equal(nomeLimpo("recibo\u202Efdp.exe"), "recibo fdp.exe");
+  assert.equal(nomeLimpo("nota\u2066.pdf\u2069"), "nota .pdf");
+  assert.equal(nomeLimpo("a\u0085b\u009fc\u200fd"), "a b c d");
+  assert.equal(nomeLimpo("pasta/../a.pdf"), "pasta .. a.pdf");
 });
 
 test("conferir sem nada esperando avisa; ids que não são UUID são recusados", async () => {
@@ -294,6 +386,23 @@ test("conferir sem nada esperando avisa; ids que não são UUID são recusados",
   assert.equal(vazio.status, 200);
   assert.match(vazio.corpo.aviso, /Nada esperando/);
   assert.equal((await ler(await conferir({ arquivo_ids: ["abc"] }))).status, 400);
+});
+
+test("preparar o envio não guarda a resposta na tabela de idempotência (tem o código do link e endereços assinados) e a spec nem oferece a chave", async () => {
+  const memoria = tabelasVazias();
+  const { consultas } = prepararComStorage({ escopo: "write" }, memoria.resolver);
+  const a = await ler(await preparar({ modo: "link", chave_idempotencia: "k-1" }));
+  const b = await ler(await preparar({ modo: "link", chave_idempotencia: "k-1" }));
+  assert.equal(a.status, 200);
+  assert.notEqual(a.corpo.link_de_envio, b.corpo.link_de_envio, "a mesma chave não devolve o link de antes: cada pedido é um link novo");
+  assert.equal(memoria.linhas("assistente_sessoes_envio").length, 2);
+  assert.equal(daTabela(consultas, "mcp_idempotencia").length, 0, "nada foi lido nem gravado na tabela de idempotência");
+
+  const spec = construirSpecPrestacao("https://app.jards.test") as unknown as { paths: Record<string, Record<string, { requestBody?: { content: Record<string, { schema: { properties: Record<string, unknown> } }> } }>> };
+  const propriedades = spec.paths["/prestacoes/{id}/arquivos/envio"].post.requestBody!.content["application/json"].schema.properties;
+  assert.ok(!("chave_idempotencia" in propriedades));
+  const outras = spec.paths["/prestacoes/{id}/arquivos"].post.requestBody!.content["application/json"].schema.properties;
+  assert.ok("chave_idempotencia" in outras, "as outras gravações seguem com a chave");
 });
 
 test("conferir sem nada esperando mostra o que o envio pelo link já deixou na caixa, à espera do registro", async () => {

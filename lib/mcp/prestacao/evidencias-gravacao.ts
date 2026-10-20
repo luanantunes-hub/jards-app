@@ -1,5 +1,5 @@
 import type { Admin } from "@/lib/mcp/crm";
-import { COLUNAS_DA_CAIXA, type LinhaDaCaixa } from "@/lib/mcp/prestacao/caixa";
+import { COLUNAS_DA_CAIXA, reivindicarArquivo, soltarArquivo, type LinhaDaCaixa } from "@/lib/mcp/prestacao/caixa";
 import { avisarEquipe, registrarAcao, type QuemGrava } from "@/lib/mcp/prestacao/gravacao";
 import { ErroMcp, dataDe, erroDoBanco, listaDeTextos, numero, opcao, texto, uuidDe, type Corpo } from "@/lib/mcp/validacao";
 import { REQUISITOS_EVIDENCIA, rotuloDoTipo, TIPOS_EVIDENCIA, type RequisitoEvidencia, type TipoEvidencia } from "@/lib/prestacao/evidencias";
@@ -104,6 +104,12 @@ export async function registrarEvidencia(entrada: { admin: Admin; prestacaoId: s
 
   const tipo: TipoEvidencia = informada.tipo ?? (informada.url ? "link" : arquivo?.tipo_real && arquivo.tipo_real !== "pdf" ? "foto" : "outro");
   const comDados = informada.capturadaEm !== null || informada.latitude !== null;
+
+  // Reivindica o arquivo ANTES de criar a evidência: duas chamadas ao mesmo tempo não criam duas evidências do mesmo arquivo.
+  if (arquivo && !(await reivindicarArquivo(admin, arquivo.id, "prestacao_evidencias"))) {
+    return falha("Este arquivo já está sendo registrado ou já foi registrado. Use listar_arquivos_recebidos para ver a situação.");
+  }
+
   const { data: inserida, error: erroAoInserir } = await admin
     .from("prestacao_evidencias" as never)
     .insert({
@@ -130,20 +136,21 @@ export async function registrarEvidencia(entrada: { admin: Admin; prestacaoId: s
     .select("id")
     .single();
   if (erroAoInserir || !inserida) {
+    if (arquivo) await soltarArquivo(admin, arquivo.id);
     if (erroAoInserir?.code === "23514" || erroAoInserir?.code === "23503") return falha("O banco recusou os dados da evidência. Confira o tipo, o link, as datas e os vínculos.");
     throw erroDoBanco(erroAoInserir);
   }
   const evidenciaId = (inserida as { id: string }).id;
   const desfazer = async () => {
     await admin.from("prestacao_evidencias" as never).delete().eq("id", evidenciaId).eq("prestacao_id", prestacaoId);
+    if (arquivo) await soltarArquivo(admin, arquivo.id);
   };
 
   if (arquivo) {
     const { error } = await admin
       .from("assistente_arquivos" as never)
-      .update({ situacao: "registrado", registro_tabela: "prestacao_evidencias", registro_id: evidenciaId, atualizado_em: new Date().toISOString() } as never)
-      .eq("id", arquivo.id)
-      .eq("situacao", "recebido");
+      .update({ registro_id: evidenciaId, atualizado_em: new Date().toISOString() } as never)
+      .eq("id", arquivo.id);
     if (error) {
       await desfazer();
       throw erroDoBanco(error);
@@ -162,7 +169,6 @@ export async function registrarEvidencia(entrada: { admin: Admin; prestacaoId: s
       depois: { arquivo_id: arquivo?.id ?? null, tipo, url: informada.url, atividade_id: informada.atividadeId, meta_id: informada.metaId, local_id: informada.localId },
     });
   } catch (erro) {
-    if (arquivo) await admin.from("assistente_arquivos" as never).update({ situacao: "recebido", registro_tabela: null, registro_id: null, atualizado_em: new Date().toISOString() } as never).eq("id", arquivo.id);
     await desfazer();
     throw erro;
   }

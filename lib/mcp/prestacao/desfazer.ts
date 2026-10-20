@@ -57,8 +57,13 @@ export async function retirarRegistro(entrada: { admin: Admin; prestacaoId: stri
     }
   }
 
-  const { error: erroAoApagar } = await admin.from(tabela as never).delete().eq("id", registroId).eq("prestacao_id", prestacaoId).eq("canal", "assistente");
+  // A leitura de cima e o apagamento são dois passos: a equipe pode ter aceitado a despesa no meio. O apagamento repete a condição
+  // (continua pendente e do assistente) e confere que apagou mesmo.
+  let apagamento = admin.from(tabela as never).delete().eq("id", registroId).eq("prestacao_id", prestacaoId).eq("canal", "assistente");
+  if (tabela === "prestacao_comprovantes") apagamento = apagamento.eq("status", "pendente");
+  const { data: apagados, error: erroAoApagar } = await apagamento.select("id");
   if (erroAoApagar) throw erroDoBanco(erroAoApagar);
+  if (!apagados || apagados.length === 0) throw new ErroMcp(409, "A equipe acabou de avaliar este registro, ou ele mudou; peça a exclusão no app.");
   if (registro.storage_path) await admin.storage.from("documentos").remove([registro.storage_path]);
 
   const agora = new Date().toISOString();

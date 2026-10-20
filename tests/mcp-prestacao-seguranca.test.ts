@@ -165,3 +165,71 @@ test("a equipe retira pelo app com a sessão de quem pediu: a rota confere login
   const posicoes = ["enxerga(", "podeEditar(", "retirarRegistro("].map((trecho) => logica.indexOf(trecho));
   assert.ok(posicoes.every((p) => p > 0) && posicoes[0] < posicoes[1] && posicoes[1] < posicoes[2], "a ordem é ver, depois editar, depois retirar");
 });
+
+// ─── Dado pessoal nas mensagens das verificações ────────────────────────────
+
+test("verificação que cita o extrato ou um beneficiado só chega ao assistente pelo título: a lista cobre todas as checagens que citam", async () => {
+  const { CODIGOS_COM_DADO_PESSOAL, mensagemParaOAssistente } = await import("../lib/mcp/prestacao/mensagens");
+
+  // Cada checagem cujo texto interpola o histórico do extrato ou o nome de um beneficiado precisa estar na lista.
+  const pasta = "lib/prestacao/checagens";
+  const arquivosDasChecagens = (await readdir(pasta)).filter((nome) => /^checar-.*\.ts$/.test(nome));
+  const citam: { arquivo: string; codigo: string }[] = [];
+  for (const nome of arquivosDasChecagens) {
+    const linhas = (await readFile(join(pasta, nome), "utf8")).split("\n");
+    linhas.forEach((linha, i) => {
+      if (!/mensagem:/.test(linha) || !/historico|\$\{debito\}|debito\(|\$\{r\.nome\}/.test(linha)) return;
+      for (let j = i; j >= Math.max(0, i - 12); j--) {
+        const codigo = /codigo:\s*"([A-Z0-9_]+)"/.exec(linhas[j])?.[1];
+        if (codigo) {
+          citam.push({ arquivo: nome, codigo });
+          return;
+        }
+      }
+      citam.push({ arquivo: nome, codigo: "?" });
+    });
+  }
+  assert.ok(citam.length >= 5, `checagens que citam extrato ou beneficiado: ${citam.length}`);
+  for (const { arquivo, codigo } of citam) assert.ok(CODIGOS_COM_DADO_PESSOAL.has(codigo), `${arquivo}: ${codigo} cita extrato ou beneficiado e não está em CODIGOS_COM_DADO_PESSOAL`);
+
+  // O que sai para o assistente: só o título, sem o histórico nem o nome.
+  const original = "Débito de R$ 800,00 em 12/06/2026 (PIX ENVIADO MARIA DA SILVA 123.456.789-00): o regime veda.";
+  const saida = mensagemParaOAssistente({ check_codigo: "SAQUE_NO_EXTRATO", mensagem: original, entidade_tipo: "lancamento" });
+  assert.doesNotMatch(saida, /MARIA|PIX|123\.456/);
+  assert.match(saida, /fica no app/);
+  assert.equal(mensagemParaOAssistente({ check_codigo: "BENEFICIADO_REPETIDO", mensagem: "João (12 anos) aparece 2 vezes", entidade_tipo: "prestacao" }).includes("João"), false);
+  // Uma verificação comum segue como está.
+  assert.equal(mensagemParaOAssistente({ check_codigo: "DOC_RETENCOES", mensagem: "Falta o ISS.", entidade_tipo: "despesa" }), "Falta o ISS.");
+  // Qualquer código sobre uma linha do extrato, mesmo um que ainda não exista, também vai só pelo título.
+  assert.match(mensagemParaOAssistente({ check_codigo: "CODIGO_NOVO", mensagem: "Débito (JOAO) ...", entidade_tipo: "lancamento" }), /fica no app/);
+
+  // Os três pontos em que o conector entrega mensagem de verificação passam pelo filtro.
+  for (const arquivo of ["lib/mcp/prestacao/pendencias.ts", "lib/mcp/prestacao/despesas.ts"]) {
+    const texto = semComentarios(await readFile(arquivo, "utf8"));
+    assert.doesNotMatch(texto, /mensagem:\s*v\.mensagem/, `${arquivo}: entrega a mensagem da verificação sem passar por mensagemParaOAssistente`);
+    assert.match(texto, /mensagemParaOAssistente\(/, arquivo);
+  }
+});
+
+// ─── Toda rota de dados do conector sabe de que módulo é ────────────────────
+
+test("rota do conector que autentica por conta própria (fora da casca) confere o módulo da chave", async () => {
+  const todas = (await arquivos("app/api/mcp")).filter((caminho) => caminho.endsWith("route.ts"));
+  const proprias: string[] = [];
+  for (const caminho of todas) {
+    const texto = semComentarios(await readFile(caminho, "utf8"));
+    // Rotas da casca (rotaMcp) declaram o módulo nas opções; as demais autenticam direto.
+    if (!/authenticateMcpRequest\(|dependenciasDaRota\.autenticar\(/.test(texto)) continue;
+    proprias.push(caminho);
+    assert.match(texto, /requireModulo\(\s*ctx\s*,\s*"captacao"\s*\)/, `${caminho}: autentica a chave mas não confere o módulo da captação (uma chave só da prestação passaria)`);
+  }
+  assert.ok(proprias.length >= 7, `rotas que autenticam por conta própria: ${proprias.length}`);
+});
+
+test("revogar a conexão derruba também os links de envio que ela criou", async () => {
+  const rota = semComentarios(await readFile("app/api/mcp/keys/route.ts", "utf8"));
+  const exclusao = rota.slice(rota.indexOf("export async function DELETE"));
+  assert.match(exclusao, /assistente_sessoes_envio/);
+  assert.match(exclusao, /revogada_em:\s*agora/);
+  assert.match(exclusao, /\.eq\("chave_id",\s*id\)/);
+});

@@ -93,9 +93,9 @@ export function memoriaFalsa(iniciais: Record<string, Linha[]> = {}) {
       return { data: c.unico ? (alvo[0] ?? null) : alvo };
     }
     if (c.acao === "delete") {
-      const restantes = linhas.filter(l => !satisfaz(l));
-      tabelas.set(c.tabela, restantes);
-      return { data: [] };
+      const apagadas = linhas.filter(satisfaz);
+      tabelas.set(c.tabela, linhas.filter(l => !satisfaz(l)));
+      return { data: apagadas };
     }
     let achadas = linhas.filter(satisfaz);
     const total = achadas.length;

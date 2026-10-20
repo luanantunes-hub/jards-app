@@ -259,9 +259,10 @@ test("concluir confere o que chegou: entra na caixa com tipo e impressão digita
   assert.ok(!JSON.stringify(corpo).includes("storage_path") && !JSON.stringify(corpo).includes(ORG));
 });
 
-test("concluir apaga o arquivo disfarçado e devolve a vaga ao link; o repetido também devolve", async () => {
+test("concluir tira de circulação o arquivo disfarçado e o repetido (marcador no lugar) e não devolve vagas: o link prepara só o que aceita", async () => {
   let conteudo: Buffer = FALSO;
   const { memoria, codigo, chamadas } = await comLink({ maximo: 3, bucket: comConteudo(() => conteudo) });
+  const marcadores = () => chamadas.filter((c) => c.acao === "upload" && Buffer.from(c.argumentos[1] as Uint8Array).toString() === "descartado");
 
   const falso = (await ler(await preparar(codigo, { nomes: ["falso.pdf"] }))).corpo.arquivos[0];
   assert.equal(sessaoDe(memoria).enviados, 1);
@@ -269,20 +270,25 @@ test("concluir apaga o arquivo disfarçado e devolve a vaga ao link; o repetido 
   assert.equal(recusado.corpo.arquivos[0].resultado, "recusado");
   assert.match(recusado.corpo.arquivos[0].motivo, /não é PDF, XML ou foto/);
   assert.equal(recusado.corpo.chegaram, 0);
-  assert.equal(sessaoDe(memoria).enviados, 0, "a vaga voltou");
+  assert.equal(recusado.corpo.restantes, 2);
+  assert.equal(sessaoDe(memoria).enviados, 1, "a vaga não volta: recusar e mandar de novo não prepara arquivo à vontade");
   assert.equal(memoria.linhas("assistente_arquivos").find((l) => l.id === falso.arquivo_id)?.situacao, "descartado");
-  assert.ok(chamadas.some((c) => c.acao === "remove"), "o arquivo saiu do Storage");
+  assert.equal(marcadores().length, 1, "o conteúdo foi trocado por um marcador, e o endereço assinado não serve mais para outro arquivo");
+  assert.equal(chamadas.filter((c) => c.acao === "remove").length, 0, "apagar deixaria o endereço de envio livre por até 2 horas");
   assert.equal(memoria.linhas("assistente_acoes").length, 0, "nada chegou: nada a registrar");
 
   conteudo = PDF;
   const primeiro = (await ler(await preparar(codigo, { nomes: ["a.pdf"] }))).corpo.arquivos[0];
   assert.equal((await ler(await concluir(codigo, { arquivo_ids: [primeiro.arquivo_id] }))).corpo.chegaram, 1);
   const segundo = (await ler(await preparar(codigo, { nomes: ["b.pdf"] }))).corpo.arquivos[0];
-  assert.equal(sessaoDe(memoria).enviados, 2);
   const repetido = await ler(await concluir(codigo, { arquivo_ids: [segundo.arquivo_id] }));
   assert.equal(repetido.corpo.arquivos[0].resultado, "repetido");
   assert.equal(repetido.corpo.chegaram, 0);
-  assert.equal(sessaoDe(memoria).enviados, 1, "o repetido não ocupa vaga");
+  assert.equal(marcadores().length, 2);
+  assert.equal(sessaoDe(memoria).enviados, 3, "o repetido também gastou a vaga");
+
+  const esgotado = await ler(await preparar(codigo, { nomes: ["c.pdf"] }));
+  assert.deepEqual([esgotado.status, esgotado.corpo.situacao], [409, "esgotado"]);
 });
 
 test("concluir sem ids, com id que não é UUID ou de arquivo que este link não preparou não confere nada além do que é dele", async () => {
@@ -323,6 +329,38 @@ test("o último arquivo ainda pode ser conferido depois do prazo, mas um link de
   const { status, corpo } = await ler(await concluir(codigo, { arquivo_ids: [arquivo.arquivo_id] }));
   assert.equal(status, 200, "vencido, mas não desativado: termina o que já subiu");
   assert.equal(corpo.chegaram, 1);
+});
+
+test("depois do prazo só dá meia hora para conferir o que já subiu; passada a janela, o link não serve mais para nada", async () => {
+  const { memoria, codigo } = await comLink({ bucket: comConteudo(() => PDF) });
+  const [arquivo] = (await ler(await preparar(codigo, { nomes: ["a.pdf"] }))).corpo.arquivos;
+
+  sessaoDe(memoria).expira_em = new Date(Date.now() - 29 * 60_000).toISOString();
+  const dentro = await ler(await concluir(codigo, { arquivo_ids: [arquivo.arquivo_id] }));
+  assert.equal(dentro.status, 200, "vencido há 29 minutos: ainda confere o que já tinha subido");
+  assert.equal(dentro.corpo.chegaram, 1);
+
+  sessaoDe(memoria).expira_em = new Date(Date.now() - 31 * 60_000).toISOString();
+  const fora = await ler(await concluir(codigo, { arquivo_ids: [arquivo.arquivo_id] }));
+  assert.deepEqual([fora.status, fora.corpo.situacao], [410, "expirado"]);
+});
+
+test("o link só confere o que a página dele enviou: arquivo do envio por endereço, mesmo do mesmo destino, fica de fora", async () => {
+  const { memoria, codigo } = await comLink({ bucket: comConteudo(() => PDF) });
+  memoria.tabela("assistente_arquivos").push({
+    id: "5c1b0f0e-0000-4000-8000-0000000000e5",
+    prestacao_id: PRESTACAO,
+    origem: "url_assinada",
+    destino: "despesa",
+    situacao: "aguardando",
+    nome_arquivo: "do-assistente.pdf",
+    storage_path: `${ORG}/prestacoes/${PRESTACAO}/comprovantes/x.pdf`,
+    created_at: new Date().toISOString(),
+  });
+  const { status, corpo } = await ler(await concluir(codigo, { arquivo_ids: ["5c1b0f0e-0000-4000-8000-0000000000e5"] }));
+  assert.equal(status, 200);
+  assert.deepEqual(corpo.arquivos, []);
+  assert.equal(memoria.linhas("assistente_arquivos")[0].situacao, "aguardando");
 });
 
 test("as respostas das rotas públicas nunca ficam em cache", async () => {

@@ -111,7 +111,8 @@ export interface Cenario {
 /** O Storage de mentira: o que cada teste quer devolver, e o registro das chamadas em `chamadas`. */
 export interface BucketFalso {
   list?: (pasta: string, opcoes: unknown) => { data: unknown[]; error: null };
-  download?: (caminho: string) => { data: Blob | null; error: { message: string } | null };
+  /** Pode devolver uma Promise, para o teste segurar a resposta e escolher como as chamadas se intercalam. */
+  download?: (caminho: string) => { data: Blob | null; error: { message: string } | null } | Promise<{ data: Blob | null; error: { message: string } | null }>;
   upload?: (caminho: string, conteudo: unknown, opcoes: unknown) => { data: unknown; error: { message: string } | null };
   assinar?: (caminho: string) => { data: { signedUrl: string; token: string; path: string } | null; error: { message: string } | null };
 }
@@ -156,7 +157,7 @@ export function prepararComStorage(cenario: Cenario = {}, extra: Resolvedor = ()
       return {
         list: async (pasta: string, opcoes: unknown) => registrar("list", [pasta, opcoes], bucket.list?.(pasta, opcoes) ?? { data: [], error: null }),
         remove: async (caminhos: string[]) => registrar("remove", [caminhos], { data: [], error: null }),
-        download: async (caminho: string) => registrar("download", [caminho], bucket.download?.(caminho) ?? { data: null, error: { message: "Object not found" } }),
+        download: async (caminho: string) => registrar("download", [caminho], (await bucket.download?.(caminho)) ?? { data: null, error: { message: "Object not found" } }),
         upload: async (caminho: string, conteudo: unknown, opcoes: unknown) => registrar("upload", [caminho, conteudo, opcoes], bucket.upload?.(caminho, conteudo, opcoes) ?? { data: { path: caminho }, error: null }),
         createSignedUploadUrl: async (caminho: string) =>
           registrar(

@@ -10,12 +10,19 @@ import { ACCEPT_DO_SELETOR, FRASE_ACEITA, nomeParaEnvio, problemaDoArquivo, type
 
 type Estado = "na_fila" | "enviando" | "recebido" | "repetido" | "erro";
 
+/** O endereço de envio que o servidor deu para este arquivo: guardado para repetir o envio sem gastar outra vaga do link. */
+interface Preparo {
+  arquivoId: string;
+  endereco: string;
+}
+
 interface Item {
   chave: string;
   arquivo: File;
   nome: string;
   estado: Estado;
   mensagem?: string;
+  preparo?: Preparo;
 }
 
 interface EnderecoPreparado {
@@ -50,14 +57,19 @@ async function chamar(codigo: string, passo: "preparar" | "concluir", corpo: unk
   }
 }
 
-/** Envia o arquivo ao endereço assinado do Storage, do mesmo jeito que o cliente oficial do Supabase faz no navegador. */
+/**
+ * Envia o arquivo ao endereço assinado do Storage, do mesmo jeito que o cliente oficial do Supabase faz no navegador. "Já existe"
+ * conta como enviado: o envio anterior chegou e só a resposta se perdeu (o servidor confere o conteúdo de qualquer jeito).
+ */
 async function subir(endereco: string, arquivo: File): Promise<boolean> {
   const corpo = new FormData();
   corpo.append("cacheControl", "3600");
   corpo.append("", arquivo);
   try {
     const resposta = await fetch(endereco, { method: "PUT", body: corpo });
-    return resposta.ok;
+    if (resposta.ok) return true;
+    const texto = await resposta.text().catch(() => "");
+    return /already exists|duplicate/i.test(texto);
   } catch {
     return false;
   }
@@ -100,7 +112,8 @@ export function EnvioDeArquivos({ codigo, destino, organizacao, titulo, restante
 
   function adicionar(lista: FileList | File[] | null) {
     if (!lista || bloqueio) return;
-    let livres = vagas - fila.length;
+    // Quem já tem endereço de envio já gastou a vaga dele no servidor; só os novos disputam o que sobra.
+    let livres = vagas - fila.filter(i => !i.preparo).length;
     const novos: Item[] = [];
     for (const arquivo of Array.from(lista)) {
       const nome = nomeParaEnvio(arquivo.name, arquivo.type);
@@ -136,45 +149,58 @@ export function EnvioDeArquivos({ codigo, destino, organizacao, titulo, restante
     setOcupado(true);
     fila.forEach(i => atualizar(i.chave, { estado: "enviando", mensagem: undefined }));
 
-    const preparo = await chamar(codigo, "preparar", { nomes: fila.map(i => i.nome) });
-    if (!preparo.ok) {
-      const motivo = typeof preparo.dados.error === "string" ? preparo.dados.error : "Não foi possível preparar o envio agora.";
-      if (typeof preparo.dados.situacao === "string" && LINK_SEM_VALOR.has(preparo.dados.situacao)) {
-        setBloqueio(motivo);
-        fila.forEach(i => atualizar(i.chave, { estado: "erro", mensagem: "Não enviado." }));
-      } else {
-        fila.forEach(i => atualizar(i.chave, { estado: "na_fila", mensagem: motivo }));
-      }
-      setOcupado(false);
-      return;
-    }
-    const enderecos = (preparo.dados.arquivos ?? []) as EnderecoPreparado[];
-    if (typeof preparo.dados.restantes === "number") setVagas(preparo.dados.restantes);
+    // Só os arquivos novos pedem endereço (e gastam vaga). Quem já tem o seu, de uma tentativa que falhou, repete o envio nele.
+    const preparados = new Map<string, Preparo>();
+    for (const item of fila) if (item.preparo) preparados.set(item.chave, item.preparo);
+    const novos = fila.filter(i => !i.preparo);
 
-    const enviados: { chave: string; id: string; nome: string }[] = [];
-    await emParalelo(fila, 3, async (item, indice) => {
-      const endereco = enderecos[indice];
-      if (!endereco) {
+    if (novos.length > 0) {
+      const preparo = await chamar(codigo, "preparar", { nomes: novos.map(i => i.nome) });
+      if (!preparo.ok) {
+        const motivo = typeof preparo.dados.error === "string" ? preparo.dados.error : "Não foi possível preparar o envio agora.";
+        if (typeof preparo.dados.situacao === "string" && LINK_SEM_VALOR.has(preparo.dados.situacao)) {
+          setBloqueio(motivo);
+          fila.forEach(i => atualizar(i.chave, { estado: "erro", mensagem: "Não enviado." }));
+        } else {
+          fila.forEach(i => atualizar(i.chave, { estado: "na_fila", mensagem: i.preparo ? undefined : motivo }));
+        }
+        setOcupado(false);
+        return;
+      }
+      const enderecos = (preparo.dados.arquivos ?? []) as EnderecoPreparado[];
+      novos.forEach((item, indice) => {
+        const endereco = enderecos[indice];
+        if (endereco) preparados.set(item.chave, { arquivoId: endereco.arquivo_id, endereco: endereco.upload_url });
+      });
+      if (typeof preparo.dados.restantes === "number") setVagas(preparo.dados.restantes);
+    }
+
+    const enviados: { chave: string; id: string; nome: string; preparo: Preparo }[] = [];
+    await emParalelo(fila, 3, async item => {
+      const preparo = preparados.get(item.chave);
+      if (!preparo) {
         atualizar(item.chave, { estado: "na_fila", mensagem: "Não foi possível preparar este arquivo. Tente de novo." });
         return;
       }
-      if (await subir(endereco.upload_url, item.arquivo)) enviados.push({ chave: item.chave, id: endereco.arquivo_id, nome: item.nome });
-      else atualizar(item.chave, { estado: "na_fila", mensagem: "Não foi possível enviar. Tente de novo." });
+      if (await subir(preparo.endereco, item.arquivo)) enviados.push({ chave: item.chave, id: preparo.arquivoId, nome: item.nome, preparo });
+      else atualizar(item.chave, { estado: "na_fila", mensagem: "Não foi possível enviar. Tente de novo.", preparo });
     });
 
     if (enviados.length > 0) {
       const conclusao = await chamar(codigo, "concluir", { arquivo_ids: enviados.map(e => e.id) });
       if (!conclusao.ok) {
         const motivo = typeof conclusao.dados.error === "string" ? conclusao.dados.error : "Não foi possível conferir o arquivo.";
-        enviados.forEach(e => atualizar(e.chave, { estado: "erro", mensagem: motivo }));
+        if (typeof conclusao.dados.situacao === "string" && LINK_SEM_VALOR.has(conclusao.dados.situacao)) setBloqueio(motivo);
+        // O arquivo já subiu: tentar de novo repete só a conferência, no mesmo endereço.
+        enviados.forEach(e => atualizar(e.chave, { estado: "na_fila", mensagem: motivo, preparo: e.preparo }));
       } else {
         const conferidos = new Map(((conclusao.dados.arquivos ?? []) as ArquivoConferido[]).map(a => [a.arquivo_id, a]));
         for (const e of enviados) {
           const r = conferidos.get(e.id);
-          if (r?.resultado === "chegou") atualizar(e.chave, { estado: "recebido", mensagem: undefined });
-          else if (r?.resultado === "repetido") atualizar(e.chave, { estado: "repetido", mensagem: undefined });
-          else if (r?.resultado === "ainda_nao_chegou") atualizar(e.chave, { estado: "na_fila", mensagem: "O arquivo ainda não chegou. Tente de novo." });
-          else atualizar(e.chave, { estado: "erro", mensagem: r?.motivo ? semONome(r.motivo, e.nome) : "Não foi possível conferir este arquivo." });
+          if (r?.resultado === "chegou") atualizar(e.chave, { estado: "recebido", mensagem: undefined, preparo: undefined });
+          else if (r?.resultado === "repetido") atualizar(e.chave, { estado: "repetido", mensagem: undefined, preparo: undefined });
+          else if (r?.resultado === "ainda_nao_chegou") atualizar(e.chave, { estado: "na_fila", mensagem: "O arquivo ainda não chegou. Tente de novo.", preparo: e.preparo });
+          else atualizar(e.chave, { estado: "erro", mensagem: r?.motivo ? semONome(r.motivo, e.nome) : "Não foi possível conferir este arquivo.", preparo: undefined });
         }
         if (typeof conclusao.dados.restantes === "number") setVagas(conclusao.dados.restantes);
       }
@@ -182,7 +208,7 @@ export function EnvioDeArquivos({ codigo, destino, organizacao, titulo, restante
     setOcupado(false);
   }
 
-  const podeEscolher = !ocupado && !bloqueio && vagas - fila.length > 0;
+  const podeEscolher = !ocupado && !bloqueio && vagas - fila.filter(i => !i.preparo).length > 0;
 
   return (
     <main className="min-h-screen bg-[#FAFAF9] px-4 py-8 md:py-12">

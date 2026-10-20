@@ -12,6 +12,12 @@ import { ErroMcp, erroDoBanco } from "@/lib/mcp/validacao";
  * pedido) e se quem criou o link ainda edita a prestação.
  */
 
+/**
+ * Depois que o link vence, ainda dá para conferir o que já tinha sido enviado (o último arquivo pode terminar de subir fora do
+ * prazo), mas só por mais meia hora: nada de usar um link velho indefinidamente.
+ */
+export const JANELA_DE_CONCLUSAO_MS = 30 * 60 * 1000;
+
 /** 32 bytes em base64url: o formato que criarLinkDeEnvio gera. Qualquer outra coisa nem chega ao banco. */
 export const CODIGO_DO_LINK = /^[A-Za-z0-9_-]{43}$/;
 
@@ -51,8 +57,8 @@ export interface LinkDeEnvio {
 
 /**
  * Confere o link: formato, existência, revogação, validade, vagas e se quem o criou ainda edita a prestação.
- * `aceitaVencido` e `aceitaEsgotado` servem para concluir um envio já feito (o último arquivo pode terminar de subir
- * depois do prazo) sem abrir o link para arquivos novos.
+ * `aceitaVencido` (só até JANELA_DE_CONCLUSAO_MS depois do prazo) e `aceitaEsgotado` servem para concluir um envio já feito
+ * (o último arquivo pode terminar de subir depois do prazo) sem abrir o link para arquivos novos.
  */
 export async function conferirLink(admin: Admin, codigo: string, opcoes: { aceitaVencido?: boolean; aceitaEsgotado?: boolean } = {}): Promise<LinkDeEnvio> {
   if (!CODIGO_DO_LINK.test(codigo)) return { situacao: "inexistente" };
@@ -66,7 +72,9 @@ export async function conferirLink(admin: Admin, codigo: string, opcoes: { aceit
   const sessao = data as unknown as SessaoDeEnvio;
 
   if (sessao.revogada_em) return { situacao: "revogado" };
-  if (!opcoes.aceitaVencido && Date.parse(sessao.expira_em) <= Date.now()) return { situacao: "expirado" };
+  const vencimento = Date.parse(sessao.expira_em);
+  if (!opcoes.aceitaVencido && vencimento <= Date.now()) return { situacao: "expirado" };
+  if (opcoes.aceitaVencido && vencimento + JANELA_DE_CONCLUSAO_MS <= Date.now()) return { situacao: "expirado" };
   if (!opcoes.aceitaEsgotado && sessao.enviados >= sessao.max_arquivos) return { situacao: "esgotado" };
 
   // Quem criou o link precisa continuar editando a prestação (papel e módulo em vigor), senão o link morre junto.
@@ -134,7 +142,7 @@ async function reservarVagas(admin: Admin, sessao: SessaoDeEnvio, quantidade: nu
   throw new ErroMcp(409, "Muitos envios ao mesmo tempo neste link. Tente de novo em instantes.");
 }
 
-/** Devolve vagas ao link (arquivo recusado, repetido ou que não chegou a ser preparado). Melhor esforço: nunca atrapalha quem chamou. */
+/** Devolve vagas ao link quando o preparo falhou antes de entregar os endereços. Melhor esforço: nunca atrapalha quem chamou. */
 async function devolverVagas(admin: Admin, sessaoId: string, quantidade: number): Promise<void> {
   try {
     for (let tentativa = 0; tentativa < 3; tentativa++) {
@@ -190,8 +198,10 @@ export interface ConclusaoDaPagina {
 }
 
 /**
- * Confere o que a pessoa acabou de enviar: tamanho, tipo pelo conteúdo e impressão digital. O que não serve é apagado e
- * devolve a vaga ao link. Só entram na conta os arquivos que este link preparou (pelos ids que a página recebeu).
+ * Confere o que a pessoa acabou de enviar: tamanho, tipo pelo conteúdo e impressão digital. O que não serve sai de circulação
+ * e NÃO devolve a vaga: um link prepara no máximo o número de arquivos que ele aceita, aconteça o que acontecer com eles (quem
+ * erra um envio pede outro link). Só entram na conta os arquivos que este link preparou: os ids que a página recebeu, enviados
+ * pela página, dentro da vida do link.
  */
 export async function concluirEnvioDaPagina(admin: Admin, codigo: string, ids: readonly string[]): Promise<ConclusaoDaPagina> {
   const link = await exigirLink(admin, codigo, { aceitaVencido: true, aceitaEsgotado: true });
@@ -200,10 +210,13 @@ export async function concluirEnvioDaPagina(admin: Admin, codigo: string, ids: r
   if (ids.length > MAX_ARQUIVOS_POR_ENVIO) throw new ErroMcp(400, `Informe até ${MAX_ARQUIVOS_POR_ENVIO} arquivos por vez.`);
 
   const contexto = contextoDoLink(admin, link);
-  const resultados = await conferirEnvio(contexto, { ids, destino: link.sessao.destino, desde: link.sessao.created_at });
-
-  const devolver = resultados.filter(r => r.resultado === "recusado" || r.resultado === "repetido").length;
-  if (devolver > 0) await devolverVagas(admin, link.sessao.id, devolver);
+  const resultados = await conferirEnvio(contexto, {
+    ids,
+    destino: link.sessao.destino,
+    origem: "pagina",
+    desde: link.sessao.created_at,
+    ate: new Date(Date.parse(link.sessao.expira_em) + JANELA_DE_CONCLUSAO_MS).toISOString(),
+  });
 
   const chegaram = resultados.filter(r => r.resultado === "chegou");
   if (chegaram.length > 0) {

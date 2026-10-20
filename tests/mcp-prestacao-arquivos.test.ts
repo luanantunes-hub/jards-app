@@ -57,6 +57,39 @@ test("só endereço https público passa: nada de rede interna, número, usuári
   for (const texto of recusados) assert.equal(enderecoPermitido(texto), null, texto);
 });
 
+test("só domínio de arquivos do ChatGPT passa: nome público qualquer, mesmo parecido, não vale", () => {
+  for (const ok of [LINK, "https://cdn.openai.com/a", "https://files.chatgpt.com/a", "https://oaiusercontent.com/a", "https://a.b.oaiusercontent.com/a"]) {
+    assert.ok(enderecoPermitido(ok), ok);
+  }
+  const recusados = [
+    "https://127.0.0.1.nip.io/x",
+    "https://169.254.169.254.nip.io/x",
+    "https://evil.example.com/x",
+    "https://files.oaiusercontent.com.evil.com/x",
+    "https://notoaiusercontent.com/x",
+    "https://oaiusercontent.com.br/x",
+    "https://openai.com.evil.test/x",
+    "https://evil-openai.com/x",
+    "https://metadata.google.internal/x",
+  ];
+  for (const texto of recusados) assert.equal(enderecoPermitido(texto), null, texto);
+});
+
+test("MCP_ARQUIVOS_HOSTS_EXTRAS acrescenta domínios sem mexer no código, com os subdomínios deles", () => {
+  const antes = process.env.MCP_ARQUIVOS_HOSTS_EXTRAS;
+  try {
+    assert.equal(enderecoPermitido("https://arquivos.exemplo.com.br/a"), null);
+    process.env.MCP_ARQUIVOS_HOSTS_EXTRAS = " exemplo.com.br, .outro.net ,";
+    assert.ok(enderecoPermitido("https://arquivos.exemplo.com.br/a"));
+    assert.ok(enderecoPermitido("https://x.outro.net/a"));
+    assert.equal(enderecoPermitido("https://exemplo.com.br.evil.com/a"), null);
+    assert.equal(enderecoPermitido("https://127.0.0.1.nip.io/a"), null, "o extra não abre o resto");
+  } finally {
+    if (antes === undefined) delete process.env.MCP_ARQUIVOS_HOSTS_EXTRAS;
+    else process.env.MCP_ARQUIVOS_HOSTS_EXTRAS = antes;
+  }
+});
+
 function respostaFalsa(corpo: Buffer | string, init: { status?: number; headers?: Record<string, string> } = {}): Response {
   return new Response(typeof corpo === "string" ? corpo : new Uint8Array(corpo), { status: init.status ?? 200, headers: init.headers });
 }
@@ -75,6 +108,25 @@ test("baixa o arquivo, devolve os bytes e o host, e não manda credencial nem se
   assert.deepEqual(chamadas, [{ url: LINK, redirect: "manual" }]);
 });
 
+test("link de domínio que não é do ChatGPT é recusado sem fazer requisição nenhuma, e o diagnóstico mostra o domínio", async () => {
+  let requisicoes = 0;
+  const buscar = (async () => {
+    requisicoes++;
+    return respostaFalsa("%PDF-1.7");
+  }) as unknown as typeof fetch;
+
+  const alheio = await baixarArquivoDoChat("https://127.0.0.1.nip.io/x", buscar);
+  assert.ok(!alheio.ok);
+  assert.equal(alheio.host, "127.0.0.1.nip.io");
+  assert.match(alheio.erro, /domínio que o Jards não aceita/);
+
+  const numerico = await baixarArquivoDoChat("https://10.0.0.5/x", buscar);
+  assert.ok(!numerico.ok);
+  assert.equal(numerico.host, null);
+  assert.match(numerico.erro, /https público/);
+  assert.equal(requisicoes, 0, "nenhuma requisição saiu");
+});
+
 test("redirecionamento para fora das regras é recusado, e o que passa é conferido a cada salto", async () => {
   const para = (location: string) => (async () => respostaFalsa("", { status: 302, headers: { location } })) as unknown as typeof fetch;
 
@@ -84,6 +136,10 @@ test("redirecionamento para fora das regras é recusado, e o que passa é confer
 
   const aberto = await baixarArquivoDoChat(LINK, para("http://files.oaiusercontent.com/x"));
   assert.ok(!aberto.ok);
+
+  const deOutroDominio = await baixarArquivoDoChat(LINK, para("https://127.0.0.1.nip.io/x"));
+  assert.ok(!deOutroDominio.ok);
+  assert.match(deOutroDominio.erro, /redirecionou para um endereço não permitido \(127\.0\.0\.1\.nip\.io\)/, "o domínio recusado aparece, para quem diagnostica");
 
   let saltos = 0;
   const infinito = (async () => {

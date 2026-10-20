@@ -14,7 +14,7 @@ const MODOS = ["endereco", "link"] as const;
  *  - "link": uma página curta do Jards, sem login, onde a pessoa arrasta os arquivos ou tira a foto no celular.
  * Depois do envio, conferir_envio_de_arquivos confere o que chegou.
  */
-export const POST = rotaMcp({ escrita: true, modulo: "prestacao" }, async ({ admin, orgId, id, ctx, corpo, origem }) => {
+export const POST = rotaMcp({ escrita: true, modulo: "prestacao", semIdempotencia: true }, async ({ admin, orgId, id, ctx, corpo, origem }) => {
   const prestacao = await prestacaoDaOrganizacao(admin, orgId, id);
   const quem = quemGrava(ctx);
   await exigirEdicao(admin, quem.usuarioId, prestacao.id);

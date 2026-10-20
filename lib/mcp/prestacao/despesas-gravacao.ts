@@ -1,5 +1,5 @@
 import type { Admin } from "@/lib/mcp/crm";
-import { COLUNAS_DA_CAIXA, type LinhaDaCaixa } from "@/lib/mcp/prestacao/caixa";
+import { COLUNAS_DA_CAIXA, reivindicarArquivo, soltarArquivo, type LinhaDaCaixa } from "@/lib/mcp/prestacao/caixa";
 import { avisarEquipe, registrarAcao, type QuemGrava } from "@/lib/mcp/prestacao/gravacao";
 import { ErroMcp, dataDe, erroDoBanco, numero, opcao, texto, uuidDe, type Corpo } from "@/lib/mcp/validacao";
 import { despesaDoDocumento, lerDocumentoFiscal, type AvisoDoDocumento, type DespesaSugerida } from "@/lib/prestacao/documento-fiscal";
@@ -243,6 +243,12 @@ export async function registrarDespesa(
   if (!consolidada.ok) return falha(consolidada.erro);
   const { campos, avisos } = consolidada;
 
+  // Reivindica o arquivo ANTES de criar a despesa: duas chamadas ao mesmo tempo (um retry com a primeira ainda rodando) não criam
+  // duas despesas do mesmo arquivo.
+  if (!(await reivindicarArquivo(admin, arquivo.id, "prestacao_comprovantes"))) {
+    return falha("Este arquivo já está sendo registrado ou já foi registrado. Use listar_arquivos_recebidos para ver a situação.");
+  }
+
   const { data: inserida, error: erroAoInserir } = await admin
     .from("prestacao_comprovantes" as never)
     .insert({
@@ -276,6 +282,7 @@ export async function registrarDespesa(
     .select("id")
     .single();
   if (erroAoInserir || !inserida) {
+    await soltarArquivo(admin, arquivo.id);
     if (erroAoInserir?.code === "23505") return falha("Esta nota já está na prestação (mesma chave de acesso).");
     if (erroAoInserir?.code === "23514" || erroAoInserir?.code === "23503") return falha("O banco recusou os dados da despesa. Confira o item do orçamento, o fornecedor, as datas e os valores.");
     throw erroDoBanco(erroAoInserir);
@@ -284,13 +291,13 @@ export async function registrarDespesa(
 
   const desfazer = async () => {
     await admin.from("prestacao_comprovantes" as never).delete().eq("id", despesaId).eq("prestacao_id", prestacaoId);
+    await soltarArquivo(admin, arquivo.id);
   };
 
   const { error: erroAoMarcar } = await admin
     .from("assistente_arquivos" as never)
-    .update({ situacao: "registrado", registro_tabela: "prestacao_comprovantes", registro_id: despesaId, atualizado_em: new Date().toISOString() } as never)
-    .eq("id", arquivo.id)
-    .eq("situacao", "recebido");
+    .update({ registro_id: despesaId, atualizado_em: new Date().toISOString() } as never)
+    .eq("id", arquivo.id);
   if (erroAoMarcar) {
     await desfazer();
     throw erroDoBanco(erroAoMarcar);
@@ -308,7 +315,6 @@ export async function registrarDespesa(
       depois: { arquivo_id: arquivo.id, tipo: campos.tipo, valor_extraido: campos.valor_extraido, data_doc: campos.data_doc, numero_documento: campos.numero_documento, no_id: campos.no_id },
     });
   } catch (erro) {
-    await admin.from("assistente_arquivos" as never).update({ situacao: "recebido", registro_tabela: null, registro_id: null, atualizado_em: new Date().toISOString() } as never).eq("id", arquivo.id);
     await desfazer();
     throw erro;
   }

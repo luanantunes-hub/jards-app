@@ -1,5 +1,5 @@
 import { isRateLimited } from "@/lib/mcp/rateLimit";
-import { exigirEdicao, quemGrava } from "@/lib/mcp/prestacao/gravacao";
+import { exigirEdicao, quemGrava, registrarAcao } from "@/lib/mcp/prestacao/gravacao";
 import { prestacaoDaOrganizacao } from "@/lib/mcp/prestacao/leitura";
 import { linkDaPrestacao } from "@/lib/mcp/prestacao/resumo";
 import { resposta, rotaMcp } from "@/lib/mcp/rota";
@@ -15,12 +15,21 @@ const VERIFICACOES_POR_MINUTO = 3;
  */
 export const POST = rotaMcp({ escrita: true, modulo: "prestacao" }, async ({ admin, orgId, id, ctx, origem }) => {
   const prestacao = await prestacaoDaOrganizacao(admin, orgId, id);
-  await exigirEdicao(admin, quemGrava(ctx).usuarioId, prestacao.id);
+  const quem = quemGrava(ctx);
+  await exigirEdicao(admin, quem.usuarioId, prestacao.id);
   if (isRateLimited(`mcp-verificar:${prestacao.id}`, VERIFICACOES_POR_MINUTO)) {
     throw new ErroMcp(429, "Esta prestação foi verificada agora há pouco. Aguarde um minuto e peça de novo.");
   }
 
   const resumo = await verificarPrestacao(admin as never, prestacao.id);
+  // A verificação só recalcula o que está aberto (não muda dado da prestação): a trilha é para a equipe saber quando e por quem foi pedida,
+  // e uma falha em guardá-la não desfaz nada.
+  await registrarAcao(admin, quem, {
+    prestacaoId: prestacao.id,
+    ferramenta: "rodar_verificacoes",
+    acao: "verificar",
+    resumo: `Rodou a verificação: ${resumo.bloqueios} ${resumo.bloqueios === 1 ? "bloqueio aberto" : "bloqueios abertos"}, ${Math.max(0, resumo.abertas - resumo.bloqueios)} outras abertas`,
+  }).catch(() => undefined);
   return resposta({
     prestacao: { id: prestacao.id, titulo: prestacao.titulo, url: linkDaPrestacao(origem, prestacao.id) },
     verificada_em: resumo.verificada_em,

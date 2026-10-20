@@ -64,6 +64,12 @@ export const corpoJson = (required: string[], properties: Record<string, unknown
   content: { "application/json": { schema: { type: "object", required, properties: { ...properties, chave_idempotencia: chaveIdempotencia } } } },
 });
 
+/** Corpo sem chave_idempotencia, para as operações cuja resposta tem um segredo (código de link, endereços assinados) e não pode ser guardada. */
+export const corpoJsonSemChave = (required: string[], properties: Record<string, unknown>) => ({
+  required: true,
+  content: { "application/json": { schema: { type: "object", required, properties } } },
+});
+
 export const orgNoCorpo = { organization_id: uuid("Opcional se você pertence a uma única organização.") };
 
 export const dataTexto = "Dia (AAAA-MM-DD) ou dia e hora (AAAA-MM-DDTHH:MM, horário de Brasília).";

@@ -43,8 +43,24 @@ export function lerReferenciasDeArquivo(valor: unknown): ArquivoDoChat[] {
   return referencias;
 }
 
-/** Só https, e nunca um endereço de rede interna ou numérico: o link vem do cliente e o servidor busca por ele. */
-export function enderecoPermitido(texto: string): URL | null {
+/**
+ * Domínios de onde o ChatGPT entrega os arquivos anexados à conversa. O link vem do cliente e o servidor busca por ele,
+ * então só estes valem (com os subdomínios): qualquer outro nome, mesmo "público", poderia apontar para dentro da rede.
+ * Se a OpenAI passar a entregar de outro domínio, o diagnóstico mostra qual; MCP_ARQUIVOS_HOSTS_EXTRAS (domínios separados
+ * por vírgula) o acrescenta sem mexer no código.
+ */
+export const DOMINIOS_DOS_ARQUIVOS_DO_CHATGPT = ["oaiusercontent.com", "openai.com", "chatgpt.com"] as const;
+
+const dominiosExtras = () =>
+  (process.env.MCP_ARQUIVOS_HOSTS_EXTRAS ?? "")
+    .split(",")
+    .map((dominio) => dominio.trim().toLowerCase().replace(/^\./, ""))
+    .filter(Boolean);
+
+const hostDeArquivoDoChatGpt = (host: string) => [...DOMINIOS_DOS_ARQUIVOS_DO_CHATGPT, ...dominiosExtras()].some((dominio) => host === dominio || host.endsWith(`.${dominio}`));
+
+/** O que há de errado no endereço, sem ainda olhar se o domínio é do ChatGPT: https, sem usuário, sem rede interna, sem número. */
+function urlPublica(texto: string): URL | null {
   let url: URL;
   try {
     url = new URL(texto);
@@ -59,12 +75,26 @@ export function enderecoPermitido(texto: string): URL | null {
   return url;
 }
 
+/** Só https de um domínio de arquivos do ChatGPT, nunca rede interna, número ou usuário no endereço. */
+export function enderecoPermitido(texto: string): URL | null {
+  const url = urlPublica(texto);
+  return url && hostDeArquivoDoChatGpt(url.hostname.toLowerCase()) ? url : null;
+}
+
+/** Por que o link foi recusado, em palavras, e o domínio dele (para o diagnóstico mostrar de onde a OpenAI está entregando). */
+function recusaDoLink(texto: string): { erro: string; host: string | null } {
+  const publica = urlPublica(texto);
+  if (!publica) return { erro: "O link do arquivo não é um endereço https público.", host: null };
+  const host = publica.hostname.toLowerCase();
+  return { erro: `O link do arquivo é de ${host}, um domínio que o Jards não aceita para arquivos do ChatGPT.`, host };
+}
+
 export type ResultadoDoDownload = { ok: true; bytes: Buffer; host: string } | { ok: false; erro: string; host: string | null };
 
 /** Baixa o arquivo do link temporário do chat, com teto de tamanho e de tempo, conferindo cada redirecionamento. */
 export async function baixarArquivoDoChat(link: string, buscar: typeof fetch = fetch): Promise<ResultadoDoDownload> {
   const inicial = enderecoPermitido(link);
-  if (!inicial) return { ok: false, erro: "O link do arquivo não é um endereço https público.", host: null };
+  if (!inicial) return { ok: false, ...recusaDoLink(link) };
   const host = inicial.hostname;
   let atual: URL = inicial;
 
@@ -73,8 +103,12 @@ export async function baixarArquivoDoChat(link: string, buscar: typeof fetch = f
       const resposta: Response = await buscar(atual, { redirect: "manual", signal: AbortSignal.timeout(PRAZO_DO_DOWNLOAD_MS) });
       if ([301, 302, 303, 307, 308].includes(resposta.status)) {
         const destino = resposta.headers.get("location");
-        const proximo: URL | null = destino ? enderecoPermitido(new URL(destino, atual).toString()) : null;
-        if (!proximo) return { ok: false, erro: "O link do arquivo redirecionou para um endereço não permitido.", host };
+        const alvo = destino ? new URL(destino, atual).toString() : null;
+        const proximo: URL | null = alvo ? enderecoPermitido(alvo) : null;
+        if (!proximo) {
+          const recusa = alvo ? recusaDoLink(alvo) : null;
+          return { ok: false, erro: `O link do arquivo redirecionou para um endereço não permitido${recusa?.host ? ` (${recusa.host})` : ""}.`, host };
+        }
         atual = proximo;
         continue;
       }

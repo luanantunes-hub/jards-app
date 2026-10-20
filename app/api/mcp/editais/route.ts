@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { authenticateMcpRequest, isErrorResponse } from "@/lib/mcp/auth";
+import { authenticateMcpRequest, isErrorResponse, requireModulo } from "@/lib/mcp/auth";
 import { hojeEmSaoPaulo } from "@/lib/mcp/datas";
 
 /** Base pública, compartilhada entre todos os clientes do Jards — não é escopada por organização. */
 export async function GET(req: NextRequest) {
   const ctx = await authenticateMcpRequest(req);
   if (isErrorResponse(ctx)) return ctx;
+  // Esta rota é da captação: uma chave que só autorizou a prestação de contas não passa.
+  const semModulo = requireModulo(ctx, "captacao");
+  if (semModulo) return semModulo;
 
   const params = req.nextUrl.searchParams;
   const busca = params.get("busca");

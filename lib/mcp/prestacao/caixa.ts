@@ -81,7 +81,8 @@ export function nomeLimpo(nome: unknown): string {
   const texto = typeof nome === "string" ? nome : "";
   const limpo = texto
     .replace(/[\\/]+/g, " ")
-    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    // Controles (inclusive os C1) e as marcas de direção do texto: com elas, "recibo\u202Efdp.exe" se mostraria como "recibo exe.pdf".
+    .replace(/[\u0000-\u001f\u007f-\u009f\u200e\u200f\u202a-\u202e\u2066-\u2069]/g, " ")
     .replace(/\s+/g, " ")
     .trim()
     .slice(0, 300);
@@ -126,7 +127,37 @@ async function linhaPorConteudo(admin: Admin, prestacaoId: string, destino: Dest
     .in("situacao", ["recebido", "registrado"])
     .maybeSingle();
   if (error) throw erroDoBanco(error);
-  return (data as unknown as LinhaDaCaixa | null) ?? null;
+  const linha = (data as unknown as LinhaDaCaixa | null) ?? null;
+  if (!linha) return null;
+
+  // A equipe pode ter apagado a despesa ou a evidência no app: a caixa não segura um arquivo cujo registro já não existe,
+  // senão o mesmo PDF nunca mais poderia ser enviado ("repetido" de algo que sumiu).
+  if (linha.situacao === "registrado" && linha.registro_tabela && linha.registro_id) {
+    const { data: existe, error: erroDoRegistro } = await admin.from(linha.registro_tabela as never).select("id").eq("id", linha.registro_id).maybeSingle();
+    if (erroDoRegistro) throw erroDoBanco(erroDoRegistro);
+    if (!existe) {
+      await admin
+        .from("assistente_arquivos" as never)
+        .update({ situacao: "descartado", detalhe: "O registro foi apagado no app.", atualizado_em: new Date().toISOString() } as never)
+        .eq("id", linha.id)
+        .eq("situacao", "registrado");
+      return null;
+    }
+  }
+  return linha;
+}
+
+const TUMULO = Buffer.from("descartado");
+
+/**
+ * Tira de circulação o arquivo recusado ou repetido que chegou por um endereço de envio. O endereço assinado vale 2 horas e não
+ * se revoga: apagar o objeto o deixaria livre para quem tem o endereço mandar outro arquivo ao mesmo lugar, sem linha na caixa e
+ * sem ninguém para limpar. Por isso o conteúdo é trocado por um marcador de poucos bytes; o endereço, que não troca arquivo que
+ * já existe, deixa de servir. Se a troca falhar, apaga.
+ */
+async function descartarObjeto(bucket: ReturnType<Admin["storage"]["from"]>, caminho: string): Promise<void> {
+  const troca = await bucket.upload(caminho, TUMULO, { contentType: "text/plain", upsert: true });
+  if (troca.error) await bucket.remove([caminho]);
 }
 
 /**
@@ -251,7 +282,7 @@ export interface ResultadoDaConferencia {
 /** Confere o que chegou ao endereço de envio: tamanho, tipo pelo conteúdo e impressão digital. O que não serve é apagado. */
 export async function conferirEnvio(
   contexto: ContextoDaCaixa,
-  filtro: { ids?: readonly string[]; destino?: Destino; desde?: string } = {},
+  filtro: { ids?: readonly string[]; destino?: Destino; desde?: string; ate?: string; origem?: Origem } = {},
 ): Promise<ResultadoDaConferencia[]> {
   const { admin, prestacaoId } = contexto;
   let consulta = admin
@@ -264,6 +295,8 @@ export async function conferirEnvio(
   if (filtro.ids && filtro.ids.length > 0) consulta = consulta.in("id", [...filtro.ids]);
   if (filtro.destino) consulta = consulta.eq("destino", filtro.destino);
   if (filtro.desde) consulta = consulta.gte("created_at", filtro.desde);
+  if (filtro.ate) consulta = consulta.lt("created_at", filtro.ate);
+  if (filtro.origem) consulta = consulta.eq("origem", filtro.origem);
   const { data, error } = await consulta;
   if (error) throw erroDoBanco(error);
 
@@ -282,7 +315,7 @@ export async function conferirEnvio(
     }
 
     const recusar = async (motivo: string): Promise<void> => {
-      await bucket.remove([linha.storage_path]);
+      await descartarObjeto(bucket, linha.storage_path);
       const { data: atualizada } = await admin
         .from("assistente_arquivos" as never)
         .update({ situacao: "descartado", detalhe: motivo.slice(0, 500), atualizado_em: new Date().toISOString() } as never)
@@ -319,10 +352,27 @@ export async function conferirEnvio(
     }
     const sha256 = impressaoDigital(bytes);
     const igual = await linhaPorConteudo(admin, prestacaoId, linha.destino, sha256);
+    if (igual && igual.id === linha.id) {
+      // Outra conferência (a página de envio e o assistente ao mesmo tempo, ou um retry) já fez este arquivo chegar: não é repetido, é o mesmo.
+      resultados.push(
+        igual.situacao === "recebido"
+          ? { linha: igual, resultado: "chegou" }
+          : { linha: igual, resultado: "repetido", motivo: "Este arquivo já foi conferido e registrado." },
+      );
+      continue;
+    }
     if (igual) {
-      await bucket.remove([linha.storage_path]);
+      await descartarObjeto(bucket, linha.storage_path);
       await admin.from("assistente_arquivos" as never).update({ situacao: "descartado", detalhe: "O mesmo conteúdo já estava na prestação.", atualizado_em: new Date().toISOString() } as never).eq("id", linha.id);
       resultados.push({ linha: igual, resultado: "repetido", motivo: "O mesmo conteúdo já estava na prestação; vale o que entrou antes." });
+      continue;
+    }
+
+    // O tipo gravado no Storage é o que quem enviou declarou (um "%PDF-" disfarçado de text/html, por exemplo): depois de conferir
+    // pelos bytes, o objeto é regravado com o tipo verdadeiro.
+    const regravado = await bucket.upload(linha.storage_path, bytes, { contentType: CONTENT_TYPE[tipo] ?? "application/octet-stream", upsert: true });
+    if (regravado.error) {
+      resultados.push({ linha, resultado: "ainda_nao_chegou", motivo: "Não foi possível guardar o arquivo agora. Tente conferir de novo." });
       continue;
     }
     const { data: atualizada, error: erroAtualizar } = await admin
@@ -342,7 +392,7 @@ export async function conferirEnvio(
     if (erroAtualizar || !atualizada) {
       // Corrida com outra cópia igual: ela ficou com o conteúdo.
       if (erroAtualizar?.code === "23505") {
-        await bucket.remove([linha.storage_path]);
+        await descartarObjeto(bucket, linha.storage_path);
         const primeira = await linhaPorConteudo(admin, prestacaoId, linha.destino, sha256);
         if (primeira) {
           resultados.push({ linha: primeira, resultado: "repetido", motivo: "O mesmo conteúdo já estava na prestação; vale o que entrou antes." });
@@ -354,6 +404,30 @@ export async function conferirEnvio(
     resultados.push({ linha: atualizada as unknown as LinhaDaCaixa, resultado: "chegou" });
   }
   return resultados;
+}
+
+/**
+ * Reivindica o arquivo da caixa para virar despesa ou evidência: só uma chamada ganha, mesmo com duas ao mesmo tempo (um retry
+ * enquanto a primeira ainda roda). Quem não ganha não cria registro nenhum.
+ */
+export async function reivindicarArquivo(admin: Admin, arquivoId: string, tabela: "prestacao_comprovantes" | "prestacao_evidencias"): Promise<boolean> {
+  const { data, error } = await admin
+    .from("assistente_arquivos" as never)
+    .update({ situacao: "registrado", registro_tabela: tabela, atualizado_em: new Date().toISOString() } as never)
+    .eq("id", arquivoId)
+    .eq("situacao", "recebido")
+    .select("id");
+  if (error) throw erroDoBanco(error);
+  return ((data as unknown[] | null)?.length ?? 0) > 0;
+}
+
+/** Devolve à caixa o arquivo reivindicado cujo registro não chegou a existir, para poder ser registrado de novo. */
+export async function soltarArquivo(admin: Admin, arquivoId: string): Promise<void> {
+  await admin
+    .from("assistente_arquivos" as never)
+    .update({ situacao: "recebido", registro_tabela: null, registro_id: null, atualizado_em: new Date().toISOString() } as never)
+    .eq("id", arquivoId)
+    .eq("situacao", "registrado");
 }
 
 /** Os arquivos da prestação na caixa, os mais novos primeiro. */

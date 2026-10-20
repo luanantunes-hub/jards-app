@@ -1,3 +1,4 @@
+import { mensagemParaOAssistente } from "@/lib/mcp/prestacao/mensagens";
 import { destinoDaVerificacao } from "@/lib/prestacao/destino-da-verificacao";
 import { pendenciasPorSeveridade, tituloDaChecagem } from "@/lib/prestacao/checagens";
 import type { NoOrcamento } from "@/lib/prestacao/orcamento";
@@ -25,7 +26,7 @@ function verificacaoParaOAssistente(v: VerificacaoDaFila, prestacaoId: string, o
     codigo: v.check_codigo,
     titulo: tituloDaChecagem(v.check_codigo),
     severidade: v.severidade,
-    mensagem: v.mensagem,
+    mensagem: mensagemParaOAssistente(v),
     entidade_tipo: v.entidade_tipo,
     entidade_id: v.entidade_id,
     onde_resolver: absoluto(origem, prestacaoId, destino.href),
@@ -51,7 +52,7 @@ function itemParaOAssistente(linha: LinhaDaFila, prestacaoId: string, origem: st
       nome: d.nome,
       valor: d.valor,
       sem_pagamento_conciliado: d.aConciliar,
-      pendencias: d.pendencias.map(v => ({ codigo: v.check_codigo, titulo: tituloDaChecagem(v.check_codigo), severidade: v.severidade, mensagem: v.mensagem })),
+      pendencias: d.pendencias.map(v => ({ codigo: v.check_codigo, titulo: tituloDaChecagem(v.check_codigo), severidade: v.severidade, mensagem: mensagemParaOAssistente(v) })),
       onde_resolver: `${origem}/prestacoes/${prestacaoId}/comprovantes?despesa=${d.id}`,
     })),
     despesas_omitidas: Math.max(0, comPendencia.length - MAX_DESPESAS_POR_ITEM),

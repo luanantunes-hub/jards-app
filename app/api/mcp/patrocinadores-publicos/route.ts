@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isErrorResponse, resolveOrgId } from "@/lib/mcp/auth";
+import { isErrorResponse, requireModulo, resolveOrgId } from "@/lib/mcp/auth";
 import { buscarBasePublica, creditosDisponiveis, fichaDaEmpresaPublica } from "@/lib/mcp/basePublica";
 import { dependenciasDaRota } from "@/lib/mcp/rota";
 import { ErroMcp, paginacao, paramTexto, paramUf } from "@/lib/mcp/validacao";
@@ -12,6 +12,9 @@ import { ErroMcp, paginacao, paramTexto, paramUf } from "@/lib/mcp/validacao";
 export async function GET(req: NextRequest) {
   const ctx = await dependenciasDaRota.autenticar(req);
   if (isErrorResponse(ctx)) return ctx;
+  // Base pública da captação: uma chave que só autorizou a prestação de contas não passa.
+  const semModulo = requireModulo(ctx, "captacao");
+  if (semModulo) return semModulo;
 
   try {
     const query = req.nextUrl.searchParams;

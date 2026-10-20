@@ -363,6 +363,45 @@ test("evidência também exige quem pode editar", async () => {
   }
 });
 
+// ─── Duas chamadas ao mesmo tempo ───────────────────────────────────────────
+
+test("duas chamadas ao mesmo tempo com o mesmo arquivo criam uma despesa só: a segunda é recusada", async () => {
+  const memoria = memoriaPadrao();
+  prepararComStorage({ escopo: "write" }, memoria.resolver);
+  const pedido1 = despesas({ despesas: [{ arquivo_id: ARQ_PDF, valor: 800, descricao: "Oficina" }] });
+  const pedido2 = despesas({ despesas: [{ arquivo_id: ARQ_PDF, valor: 800, descricao: "Oficina" }] });
+  const [r1, r2] = [await ler(await pedido1), await ler(await pedido2)];
+
+  assert.equal(r1.corpo.registradas + r2.corpo.registradas, 1, "só uma venceu");
+  assert.equal(memoria.linhas("prestacao_comprovantes").length, 1, "uma despesa, não duas com o mesmo arquivo");
+  const perdedora = [r1, r2].find((r) => r.corpo.registradas === 0)!;
+  assert.match(perdedora.corpo.resultados[0].erro, /já está sendo registrado ou já foi registrado/);
+  const arquivo = memoria.linhas("assistente_arquivos").find((l) => l.id === ARQ_PDF)!;
+  assert.equal(arquivo.situacao, "registrado");
+  assert.equal(arquivo.registro_id, memoria.linhas("prestacao_comprovantes")[0].id);
+  assert.equal(memoria.linhas("assistente_acoes").length, 1);
+});
+
+test("o mesmo vale para evidência: duas chamadas ao mesmo tempo, uma evidência", async () => {
+  const memoria = memoriaPadrao();
+  prepararComStorage({ escopo: "write" }, memoria.resolver);
+  const p1 = evidencias({ evidencias: [{ arquivo_id: ARQ_FOTO, descricao: "Oficina de teatro" }] });
+  const p2 = evidencias({ evidencias: [{ arquivo_id: ARQ_FOTO, descricao: "Oficina de teatro" }] });
+  const [r1, r2] = [await ler(await p1), await ler(await p2)];
+  assert.equal(r1.corpo.registradas + r2.corpo.registradas, 1);
+  assert.equal(memoria.linhas("prestacao_evidencias").length, 1);
+});
+
+test("se a despesa não puder ser criada, o arquivo volta à caixa e pode ser registrado de novo", async () => {
+  const memoria = memoriaPadrao();
+  prepararComStorage({ escopo: "write" }, primeiroQueResponder((c) => (c.tabela === "prestacao_comprovantes" && c.acao === "insert" ? { error: { message: "violates check", code: "23514" } } : undefined), memoria.resolver));
+  const { corpo } = await ler(await despesas({ despesas: [{ arquivo_id: ARQ_PDF, valor: 800, descricao: "Oficina" }] }));
+  assert.equal(corpo.registradas, 0);
+  assert.match(corpo.resultados[0].erro, /O banco recusou os dados da despesa/);
+  const arquivo = memoria.linhas("assistente_arquivos").find((l) => l.id === ARQ_PDF)!;
+  assert.deepEqual([arquivo.situacao, arquivo.registro_tabela ?? null, arquivo.registro_id ?? null], ["recebido", null, null], "o arquivo não ficou preso como registrado");
+});
+
 // ─── Ações do assistente e retirar ──────────────────────────────────────────
 
 async function comUmaDespesa(cenario: Parameters<typeof prepararComStorage>[0] = { escopo: "write" }, extra: Resolvedor = () => undefined) {
@@ -429,6 +468,23 @@ test("retirar recusa o que a equipe já avaliou, o que foi enviado ao órgão, o
   const daEquipe = await ler(await retirar({ acao_id: alheia.acaoId }));
   assert.equal(daEquipe.status, 409);
   assert.equal(alheia.memoria.linhas("prestacao_comprovantes").length, 1, "nunca apaga o que a equipe criou");
+});
+
+test("se a equipe aceita a despesa entre a leitura e o apagamento, retirar não apaga: o apagamento repete a condição e confere", async () => {
+  // O banco de verdade tem a despesa já aceita; a leitura que o retirar fez (um instante antes) ainda a via pendente.
+  const { memoria, acaoId, despesaId } = await comUmaDespesa();
+  memoria.linhas("prestacao_comprovantes")[0].status = "aceito";
+  const leituraAntiga: Resolvedor = (c) =>
+    c.tabela === "prestacao_comprovantes" && c.acao === "select" && String(c.colunas).includes("canal")
+      ? { data: { id: despesaId, canal: "assistente", status: "pendente", storage_path: "x/y.pdf", nome_arquivo: "recibo.pdf", valor_extraido: 800 } }
+      : undefined;
+  prepararComStorage({ escopo: "write" }, primeiroQueResponder(leituraAntiga, memoria.resolver));
+
+  const { status, corpo } = await ler(await retirar({ acao_id: acaoId }));
+  assert.equal(status, 409);
+  assert.match(corpo.error, /acabou de avaliar/);
+  assert.equal(memoria.linhas("prestacao_comprovantes").length, 1, "a despesa aceita continua lá");
+  assert.equal(memoria.linhas("assistente_acoes").find((a) => a.id === acaoId)!.desfeita_em ?? null, null, "e a ação não foi dada como retirada");
 });
 
 test("retirar só vale para ação do assistente desta prestação que criou algo; acao_id errado ou de outro tipo é recusado", async () => {

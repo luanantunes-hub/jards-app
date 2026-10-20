@@ -115,5 +115,9 @@ export async function DELETE(req: NextRequest) {
     .is("revoked_at", null);
   if (refreshError) return NextResponse.json({ error: refreshError.message }, { status: 500 });
 
+  // Os links de envio de arquivos (/enviar/...) que esta conexão criou deixam de valer junto com ela.
+  const { error: linksError } = await admin.from("assistente_sessoes_envio").update({ revogada_em: agora }).eq("chave_id", id).is("revogada_em", null);
+  if (linksError) return NextResponse.json({ error: linksError.message }, { status: 500 });
+
   return NextResponse.json({ ok: true });
 }

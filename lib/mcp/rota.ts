@@ -35,7 +35,7 @@ export const dependenciasDaRota = { autenticar: authenticateMcpRequest, criarAdm
  * Casca das rotas do conector: confere a chave, o escopo de escrita e a organização, lê o corpo e transforma
  * qualquer ErroMcp em resposta JSON com o status certo. Quem chama só escreve o que a rota faz.
  */
-export function rotaMcp(opcoes: { escrita: boolean; modulo?: ModuloMcp; semOrganizacao?: boolean }, executar: (contexto: ContextoDaRota) => Promise<NextResponse>) {
+export function rotaMcp(opcoes: { escrita: boolean; modulo?: ModuloMcp; semOrganizacao?: boolean; semIdempotencia?: boolean }, executar: (contexto: ContextoDaRota) => Promise<NextResponse>) {
   const modulo = opcoes.modulo ?? "captacao";
   // O segundo argumento é obrigatório no tipo: o Next confere isso no build (RouteContext) e sempre o entrega.
   return async (req: NextRequest, rota: ParametrosDaRota): Promise<NextResponse> => {
@@ -67,7 +67,8 @@ export function rotaMcp(opcoes: { escrita: boolean; modulo?: ModuloMcp; semOrgan
       const admin = dependenciasDaRota.criarAdmin();
       const operacao = `${req.method} ${req.nextUrl.pathname}`;
       // Nas criações, a chave de idempotência (campo ou cabeçalho) deixa repetir o pedido com segurança depois de um erro de rede.
-      const pedido = opcoes.escrita ? separarChave(corpo, req.headers.get("idempotency-key")) : { chave: null, corpo };
+      // semIdempotencia: a resposta tem um segredo (o código de um link, endereços assinados) e não pode ficar guardada na tabela de idempotência.
+      const pedido = opcoes.escrita && !opcoes.semIdempotencia ? separarChave(corpo, req.headers.get("idempotency-key")) : { chave: null, corpo };
       const acessoNaPrestacao = modulo === "prestacao" ? (ctx.prestacao?.porOrganizacao[orgId] ?? null) : null;
       const rodar = () => executar({ req, ctx, orgId, admin, query, corpo: pedido.corpo, id, origem: req.nextUrl.origin, acessoNaPrestacao });
       if (!pedido.chave) return await rodar();

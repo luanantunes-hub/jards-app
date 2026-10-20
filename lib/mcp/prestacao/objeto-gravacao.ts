@@ -2,7 +2,7 @@ import type { Admin } from "@/lib/mcp/crm";
 import { vinculoValido } from "@/lib/mcp/prestacao/evidencias-gravacao";
 import { avisarEquipe, registrarAcao, type QuemGrava } from "@/lib/mcp/prestacao/gravacao";
 import { COLUNAS_DA_ATIVIDADE, COLUNAS_DA_META, atividadeParaOAssistente, metaParaOAssistente, type AtividadeLida, type MetaLida } from "@/lib/mcp/prestacao/objeto-leitura";
-import { ErroMcp, ausente, dataDe, erroDoBanco, inteiro, listaDeTextos, numero, opcao, soDia, texto, ufDe, uuidDe, type Corpo } from "@/lib/mcp/validacao";
+import { ErroMcp, ausente, booleano, dataDe, erroDoBanco, inteiro, listaDeTextos, numero, opcao, soDia, texto, ufDe, uuidDe, type Corpo } from "@/lib/mcp/validacao";
 import { LIMITE_JUSTIFICATIVA_META, erroDaMeta } from "@/lib/prestacao/objeto";
 
 /**
@@ -79,7 +79,11 @@ function lerCampos(corpo: Corpo, { nova }: { nova: boolean }): Partial<CamposDaA
   comContagem("empregos_indiretos");
   comTexto("democratizacao_descricao", 2000);
   comTexto("acessibilidade_descricao", 2000);
-  if (presente(corpo, "status_realizacao")) {
+  if (nova) {
+    // Dizer se a atividade aconteceu é uma decisão de quem conta, não um padrão: uma atividade "realizada" entra na cobertura das metas e na prontidão.
+    if (!presente(corpo, "status_realizacao")) throw new ErroMcp(400, "Informe status_realizacao: realizado (a atividade aconteceu) ou nao_realizado (não aconteceu, com a justificativa).");
+    campos.status_realizacao = opcao(corpo, "status_realizacao", STATUS_DA_ATIVIDADE, true) as StatusDaAtividade;
+  } else if (presente(corpo, "status_realizacao")) {
     const status = opcao(corpo, "status_realizacao", STATUS_DA_ATIVIDADE);
     if (status) campos.status_realizacao = status;
   }
@@ -119,7 +123,7 @@ export function lerAtividadeInformada(bruto: unknown, posicao: number): CamposDa
       empregos_indiretos: lidos.empregos_indiretos ?? null,
       democratizacao_descricao: lidos.democratizacao_descricao ?? null,
       acessibilidade_descricao: lidos.acessibilidade_descricao ?? null,
-      status_realizacao: lidos.status_realizacao ?? "realizado",
+      status_realizacao: lidos.status_realizacao as StatusDaAtividade,
       justificativa_nao_realizacao: lidos.justificativa_nao_realizacao ?? null,
       meta_id: lidos.meta_id ?? null,
       local_id: lidos.local_id ?? null,
@@ -215,6 +219,22 @@ const CAMPOS_ATUALIZAVEIS = Object.keys({
 
 const iguais = (a: unknown, b: unknown) => (a ?? null) === (b ?? null);
 
+const vazio = (valor: unknown) => valor === null || valor === undefined || (typeof valor === "string" && valor.trim() === "");
+
+const recortarValor = (valor: unknown) => (typeof valor === "string" && valor.length > 300 ? `${valor.slice(0, 300).trimEnd()}…` : valor);
+
+/**
+ * O assistente completa o que está vazio, mas não troca nem esvazia o que já tem valor sem a confirmação da pessoa
+ * (`substituir: true`): o que a equipe lançou não some por um engano ou por uma instrução que veio dentro de um documento.
+ * O valor de antes volta na resposta e fica na trilha.
+ */
+function exigirSubstituir(corpo: Corpo, campos: readonly string[], atual: Record<string, unknown>, quem: string): void {
+  if (campos.length === 0 || booleano(corpo, "substituir") === true) return;
+  throw new ErroMcp(409, `${quem} já tem valor em ${campos.join(", ")}. Mostre à pessoa e, se ela confirmar a troca, envie substituir=true; o valor de antes fica guardado em "Ações do assistente".`, {
+    valores_atuais: Object.fromEntries(campos.map(campo => [campo, recortarValor(atual[campo]) ?? null])),
+  });
+}
+
 /** Os campos de uma atividade que o assistente pode esvaziar (a pedido da pessoa), por `limpar`. Título, data e situação nunca ficam vazios. */
 export const CAMPOS_QUE_SE_LIMPAM = ["descricao", "data_inicio", "data_fim", "local", "cidade", "estado", "publico_atingido", "meta_prevista", "empregos_diretos", "empregos_indiretos", "democratizacao_descricao", "acessibilidade_descricao", "meta_id", "local_id"] as const;
 
@@ -257,6 +277,9 @@ export async function atualizarAtividade(entrada: { admin: Admin; prestacaoId: s
     }
   }
   if (Object.keys(mudancas).length === 0) return { mudou: false as const, atividade: atividadeParaOAssistente(atual) };
+
+  // Completar o que está vazio é livre; trocar ou esvaziar o que já tem valor (o que a equipe lançou) pede a confirmação da pessoa.
+  exigirSubstituir(corpo, Object.keys(mudancas).filter(campo => !vazio((atual as unknown as Record<string, unknown>)[campo])), atual as unknown as Record<string, unknown>, "A atividade");
 
   const { data: atualizada, error: erroAoGravar } = await admin
     .from("prestacao_atividades" as never)
@@ -324,6 +347,9 @@ export async function atualizarMeta(entrada: { admin: Admin; prestacaoId: string
     mudancas.justificativa = justificativaDepois;
     antes.justificativa = atual.justificativa;
   }
+
+  // Lançar o resultado de uma meta ainda sem resultado é livre; trocar ou esvaziar o que já está lá pede a confirmação da pessoa.
+  exigirSubstituir(corpo, Object.keys(mudancas).filter(campo => !vazio(campo === "realizado" ? (atual.realizado === null ? null : Number(atual.realizado)) : atual.justificativa)), { realizado: atual.realizado === null ? null : Number(atual.realizado), justificativa: atual.justificativa }, "A meta");
 
   const lerAtividades = async () => {
     const { data: leves, error: erroDasAtividades } = await admin.from("prestacao_atividades" as never).select("meta_id,status_realizacao,publico_atingido").eq("prestacao_id", prestacaoId).eq("meta_id", metaId);

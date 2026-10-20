@@ -39,6 +39,24 @@ test("verificar pelo conector roda o motor do app e devolve as contagens de depo
   }
 });
 
+test("a verificação deixa trilha de quem pediu e quando, e falhar em guardá-la não derruba a verificação", async () => {
+  // Prestações próprias deste teste, para não esbarrar no limite de verificações por minuto das outras.
+  const livre = "5c1b0f0e-0000-4000-8000-0000000000d6";
+  const registro = prepararPrestacao({ escopo: "write", prestacoes: { [livre]: ORG } }, sincronizando);
+  assert.equal((await ler(await verificar(livre))).status, 200);
+  const trilha = daTabela(registro, "assistente_acoes").filter((c) => c.acao === "insert");
+  assert.equal(trilha.length, 1);
+  const linha = trilha[0].valores as { acao: string; ferramenta: string; resumo: string; prestacao_id: string };
+  assert.deepEqual([linha.acao, linha.ferramenta, linha.prestacao_id], ["verificar", "rodar_verificacoes", livre]);
+  assert.match(linha.resumo, /Rodou a verificação: 1 bloqueio aberto, 3 outras abertas/);
+
+  const sem = "5c1b0f0e-0000-4000-8000-0000000000d7";
+  prepararPrestacao({ escopo: "write", prestacoes: { [sem]: ORG } }, (c) => (c.tabela === "assistente_acoes" ? { error: { message: "trilha fora do ar" } } : sincronizando(c)));
+  const { status, corpo } = await ler(await verificar(sem));
+  assert.equal(status, 200, "a trilha é só um registro: a verificação vale mesmo sem ela");
+  assert.equal(corpo.resultado.bloqueios_abertos, 1);
+});
+
 test("sem bloqueio aberto a verificação diz que o envio não está travado por ela", async () => {
   // Outra prestação, para não esbarrar no limite de verificações por minuto da primeira.
   const livre = "5c1b0f0e-0000-4000-8000-0000000000d4";

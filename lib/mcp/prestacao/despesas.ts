@@ -1,3 +1,4 @@
+import { mensagemParaOAssistente } from "@/lib/mcp/prestacao/mensagens";
 import { tituloDaChecagem } from "@/lib/prestacao/checagens";
 import { motivosDaIa } from "@/lib/prestacao/leitura-ia";
 import { limparDocumento } from "@/lib/prestacao/fornecedores";
@@ -52,6 +53,7 @@ export interface VerificacaoDaDespesa {
   check_codigo: string;
   severidade: string;
   mensagem: string;
+  entidade_tipo?: string | null;
   entidade_id: string | null;
 }
 
@@ -103,7 +105,7 @@ export function despesaParaOAssistente(
     verificacoes_abertas: {
       bloqueios: abertas.filter(v => v.severidade === "bloqueio").length,
       outras: abertas.filter(v => v.severidade !== "bloqueio").length,
-      itens: abertas.slice(0, 3).map(v => ({ codigo: v.check_codigo, titulo: tituloDaChecagem(v.check_codigo), severidade: v.severidade, mensagem: v.mensagem })),
+      itens: abertas.slice(0, 3).map(v => ({ codigo: v.check_codigo, titulo: tituloDaChecagem(v.check_codigo), severidade: v.severidade, mensagem: mensagemParaOAssistente(v) })),
     },
     avaliada_em: d.avaliado_em,
     criada_em: d.created_at,

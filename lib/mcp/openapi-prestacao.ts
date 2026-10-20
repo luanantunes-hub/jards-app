@@ -1,4 +1,4 @@
-import { booleanQuery, buscaParam, corpoJson, deslocamentoParam, idNoCaminho, limiteParam, orgIdParam, orgNoCorpo, SEGURANCA_BEARER, texto, uuid, uuidQuery } from "@/lib/mcp/openapi-comum";
+import { booleanQuery, buscaParam, corpoJson, corpoJsonSemChave, deslocamentoParam, idNoCaminho, limiteParam, orgIdParam, orgNoCorpo, SEGURANCA_BEARER, texto, uuid, uuidQuery } from "@/lib/mcp/openapi-comum";
 import { STATUS_PRESTACAO, TIPOS_DA_DESPESA } from "@/lib/mcp/prestacao/enums";
 import { REQUISITOS_EVIDENCIA, TIPOS_EVIDENCIA } from "@/lib/prestacao/evidencias";
 
@@ -207,7 +207,7 @@ export function construirSpecPrestacao(baseUrl: string) {
           operationId: "prepararEnvioDeArquivos",
           summary: "Prepara o envio de arquivos que não cabem no texto: endereços de upload direto (PUT) para o ambiente de código do assistente, ou um link curto para a pessoa enviar pelo navegador ou celular (a página já confere o que ela envia).",
           parameters: [idNoCaminho],
-          requestBody: corpoJson([], {
+          requestBody: corpoJsonSemChave([], {
             ...orgNoCorpo,
             destino: { type: "string", enum: ["despesa", "evidencia"], description: "Para que os arquivos vêm; padrão despesa." },
             modo: { type: "string", enum: ["endereco", "link"], description: "endereco: upload direto, informe nomes. link: página para a pessoa enviar pelo navegador." },
@@ -247,8 +247,8 @@ export function construirSpecPrestacao(baseUrl: string) {
             atividades: {
               type: "array",
               maxItems: 20,
-              description: "Uma atividade por item. Título e data_realizacao são obrigatórios.",
-              items: { type: "object", required: ["titulo", "data_realizacao"], properties: propriedadesDaAtividade },
+              description: "Uma atividade por item. Título, data_realizacao e status_realizacao (aconteceu ou não) são obrigatórios.",
+              items: { type: "object", required: ["titulo", "data_realizacao", "status_realizacao"], properties: propriedadesDaAtividade },
             },
           }),
           responses: { "200": { description: "OK" }, "403": { description: "Sem permissão para editar" } },
@@ -268,6 +268,7 @@ export function construirSpecPrestacao(baseUrl: string) {
               items: { type: "string" },
               description: "Campos a esvaziar, só quando a pessoa pedir para apagar o valor: descricao, data_inicio, data_fim, local, cidade, estado, publico_atingido, meta_prevista, empregos_diretos, empregos_indiretos, democratizacao_descricao, acessibilidade_descricao, meta_id, local_id. Campo vazio ou null em outro lugar não muda nada.",
             },
+            substituir: { type: "boolean", default: false, description: "true só depois de confirmar com a pessoa que o valor que já existe deve ser trocado ou esvaziado. Completar campo vazio não precisa." },
           }),
           responses: { "200": { description: "OK" }, "403": { description: "Sem permissão para editar" }, "404": { description: "Atividade não encontrada" } },
         },
@@ -283,6 +284,7 @@ export function construirSpecPrestacao(baseUrl: string) {
             realizado: { type: "number", minimum: 0, description: "Quanto foi alcançado, na unidade da meta." },
             justificativa: texto("Por que o realizado ficou diferente do previsto (até 2000 caracteres)."),
             limpar: { type: "array", items: { type: "string" }, description: "realizado e/ou justificativa, para esvaziar, só quando a pessoa pedir. Vazio ou null nos outros campos não muda nada." },
+            substituir: { type: "boolean", default: false, description: "true só depois de confirmar com a pessoa que o resultado ou a justificativa que já existe deve ser trocado ou esvaziado. Lançar o que está vazio não precisa." },
           }),
           responses: { "200": { description: "OK" }, "403": { description: "Sem permissão para editar" }, "404": { description: "Meta não encontrada" } },
         },

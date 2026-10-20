@@ -53,7 +53,7 @@ const atualizarMeta = (corpo: unknown, id: string = PRESTACAO) => atualizarMetaP
 const relatorio = (id: string = PRESTACAO) => relatorioGET(pedido(`/prestacoes/${id}/relatorio`), comId(id));
 const salvar = (corpo: unknown, id: string = PRESTACAO) => relatorioPOST(pedido(`/prestacoes/${id}/relatorio`, { metodo: "POST", corpo }), comId(id));
 
-const oficina = (parcial: Record<string, unknown> = {}) => ({ titulo: "Oficina de dança", data_realizacao: "2026-06-12", ...parcial });
+const oficina = (parcial: Record<string, unknown> = {}) => ({ titulo: "Oficina de dança", data_realizacao: "2026-06-12", status_realizacao: "realizado", ...parcial });
 const avisos = (consultas: ReturnType<typeof prepararComStorage>["consultas"]) => daTabela(consultas, "fn_prestacao_avisar_assistente");
 
 // ─── Leitura do objeto ──────────────────────────────────────────────────────
@@ -145,7 +145,7 @@ test("a mesma atividade (título e data) não entra duas vezes: a repetida volta
   assert.ok(segundo.corpo.resultados[0].atividade_id);
   assert.equal(memoria.linhas("prestacao_atividades").filter((a) => a.titulo === "Oficina de dança").length, 1);
 
-  const daOutra = await ler(await registrar({ atividades: [{ titulo: "Atividade de outra prestação", data_realizacao: "2026-05-11" }] }));
+  const daOutra = await ler(await registrar({ atividades: [{ titulo: "Atividade de outra prestação", data_realizacao: "2026-05-11", status_realizacao: "realizado" }] }));
   assert.equal(daOutra.corpo.registradas, 1, "o título repetido numa outra prestação não conta");
 });
 
@@ -171,6 +171,8 @@ test("pedido mal feito é recusado antes de gravar, apontando a posição e o ca
     [{ atividades: Array.from({ length: 21 }, (_, i) => oficina({ titulo: `A${i}` })) }, /até 20/],
     [{ atividades: [{ data_realizacao: "2026-06-12" }] }, /atividades\[0\]: Informe titulo/],
     [{ atividades: [{ titulo: "Sem data" }] }, /atividades\[0\]: Informe data_realizacao/],
+    [{ atividades: [{ titulo: "Sem status", data_realizacao: "2026-06-12" }] }, /atividades\[0\]: Informe status_realizacao/],
+    [{ atividades: [oficina({ status_realizacao: "talvez" })] }, /status_realizacao deve ser um destes/],
     [{ atividades: [oficina(), oficina({ data_realizacao: "12/06/2026" })] }, /atividades\[1\]: data_realizacao/],
     [{ atividades: [oficina({ data_realizacao: "2026-06-12T10:00" })] }, /sem hora/],
     [{ atividades: [oficina({ data_inicio: "2026-06-12", data_fim: "2026-06-10" })] }, /data_fim vem antes/],
@@ -193,7 +195,7 @@ test("null e texto vazio nos opcionais não atrapalham: valem como não informad
   const { memoria } = preparar();
   const { corpo } = await ler(
     await registrar({
-      atividades: [oficina({ descricao: null, local: "", cidade: null, estado: null, publico_atingido: null, empregos_diretos: null, status_realizacao: null, justificativa_nao_realizacao: null, meta_id: null, local_id: "", data_inicio: null, data_fim: "" })],
+      atividades: [oficina({ descricao: null, local: "", cidade: null, estado: null, publico_atingido: null, empregos_diretos: null, justificativa_nao_realizacao: null, meta_id: null, local_id: "", data_inicio: null, data_fim: "" })],
     })
   );
   assert.equal(corpo.registradas, 1);
@@ -212,7 +214,7 @@ test("atividade realizada não leva justificativa de não realização", async (
 
 test("atualizar mexe só nos campos informados e guarda o que havia antes", async () => {
   const { memoria } = preparar();
-  const { status, corpo } = await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 52, descricao: "Aula aberta, com intérprete de Libras" }));
+  const { status, corpo } = await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 52, descricao: "Aula aberta, com intérprete de Libras", substituir: true }));
   assert.equal(status, 200);
   assert.equal(corpo.mudou, true);
   assert.deepEqual([...corpo.campos_mudados].sort(), ["descricao", "publico_atingido"]);
@@ -241,18 +243,18 @@ test("null e vazio nos opcionais não mudam nada: só o que foi informado de ver
   assert.match(soNulos.corpo.error, /ao menos um campo/);
   assert.deepEqual([linha().descricao, linha().local, linha().meta_id, linha().local_id, linha().empregos_diretos], ["Aula aberta", "Teatro Municipal", META_OFICINAS, LOCAL_TEATRO, 2]);
 
-  const comNulos = await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 40, descricao: null, meta_id: null, local_id: "" }));
+  const comNulos = await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 40, descricao: null, meta_id: null, local_id: "", substituir: true }));
   assert.deepEqual(comNulos.corpo.campos_mudados, ["publico_atingido"]);
   assert.deepEqual([linha().publico_atingido, linha().descricao, linha().meta_id, linha().local_id], [40, "Aula aberta", META_OFICINAS, LOCAL_TEATRO]);
 
-  const limpar = await ler(await atualizar({ atividade_id: ATIVIDADE_1, limpar: ["empregos_diretos", "local", "meta_id"] }));
+  const limpar = await ler(await atualizar({ atividade_id: ATIVIDADE_1, limpar: ["empregos_diretos", "local", "meta_id"], substituir: true }));
   assert.equal(limpar.corpo.mudou, true);
   assert.deepEqual([...limpar.corpo.campos_mudados].sort(), ["empregos_diretos", "local", "meta_id"]);
   assert.deepEqual([linha().empregos_diretos, linha().local, linha().meta_id], [null, null, null]);
   assert.deepEqual(memoria.linhas("assistente_acoes").at(-1)!.antes, { empregos_diretos: 2, local: "Teatro Municipal", meta_id: META_OFICINAS });
 
   const antesDaTrilha = memoria.linhas("assistente_acoes").length;
-  const igual = await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 40 }));
+  const igual = await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 40, substituir: true }));
   assert.equal(igual.corpo.mudou, false, "o mesmo valor não muda nada");
   assert.equal(memoria.linhas("assistente_acoes").length, antesDaTrilha, "e não deixa trilha");
 });
@@ -274,15 +276,15 @@ test("limpar só aceita campos que podem ficar vazios e não convive com o mesmo
 
 test("marcar como não realizada pede justificativa; voltar para realizada limpa a justificativa", async () => {
   const { memoria } = preparar();
-  const semMotivo = await ler(await atualizar({ atividade_id: ATIVIDADE_1, status_realizacao: "nao_realizado" }));
+  const semMotivo = await ler(await atualizar({ atividade_id: ATIVIDADE_1, status_realizacao: "nao_realizado", substituir: true }));
   assert.equal(semMotivo.status, 400);
   assert.match(semMotivo.corpo.error, /pede justificativa/);
 
-  const ok = await ler(await atualizar({ atividade_id: ATIVIDADE_1, status_realizacao: "nao_realizado", justificativa_nao_realizacao: "Teatro interditado" }));
+  const ok = await ler(await atualizar({ atividade_id: ATIVIDADE_1, status_realizacao: "nao_realizado", justificativa_nao_realizacao: "Teatro interditado", substituir: true }));
   assert.equal(ok.corpo.mudou, true);
   assert.equal(ok.corpo.atividade.justificativa_da_nao_realizacao, "Teatro interditado");
 
-  const volta = await ler(await atualizar({ atividade_id: ATIVIDADE_1, status_realizacao: "realizado" }));
+  const volta = await ler(await atualizar({ atividade_id: ATIVIDADE_1, status_realizacao: "realizado", substituir: true }));
   assert.equal(volta.corpo.mudou, true);
   const linha = memoria.linhas("prestacao_atividades").find((a) => a.id === ATIVIDADE_1)!;
   assert.deepEqual([linha.status_realizacao, linha.justificativa_nao_realizacao], ["realizado", null]);
@@ -299,6 +301,34 @@ test("atualizar recusa pedido sem campo, vínculo de outra prestação e ativida
   assert.equal((await ler(await atualizar({ atividade_id: ATIVIDADE_ALHEIA, descricao: "invadida" }))).status, 404, "atividade de outra prestação");
   assert.equal(memoria.linhas("prestacao_atividades").find((a) => a.id === ATIVIDADE_ALHEIA)!.descricao, undefined);
   assert.equal(memoria.linhas("assistente_acoes").length, 0);
+});
+
+test("trocar ou esvaziar o que a equipe já lançou numa atividade pede substituir=true; completar o que está vazio é livre", async () => {
+  const { memoria } = preparar();
+  const linha = () => memoria.linhas("prestacao_atividades").find((a) => a.id === ATIVIDADE_1)!;
+
+  // Completar: campos vazios (empregos_indiretos, acessibilidade) entram sem confirmação.
+  const completa = await ler(await atualizar({ atividade_id: ATIVIDADE_1, empregos_indiretos: 5, acessibilidade_descricao: "Rampa e intérprete de Libras" }));
+  assert.equal(completa.status, 200);
+  assert.deepEqual([...completa.corpo.campos_mudados].sort(), ["acessibilidade_descricao", "empregos_indiretos"]);
+
+  // Trocar: publico_atingido (30) e descricao já têm valor.
+  const recusa = await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 99, descricao: "Outra descrição", empregos_indiretos: 6 }));
+  assert.equal(recusa.status, 409);
+  assert.match(recusa.corpo.error, /já tem valor em descricao, publico_atingido, empregos_indiretos/);
+  assert.match(recusa.corpo.error, /substituir=true/);
+  assert.deepEqual(recusa.corpo.valores_atuais, { publico_atingido: 30, descricao: "Aula aberta", empregos_indiretos: 5 });
+  assert.deepEqual([linha().publico_atingido, linha().descricao, linha().empregos_indiretos], [30, "Aula aberta", 5], "nada mudou");
+
+  // Esvaziar também pede.
+  const esvazia = await ler(await atualizar({ atividade_id: ATIVIDADE_1, limpar: ["local"] }));
+  assert.equal(esvazia.status, 409);
+  assert.equal(linha().local, "Teatro Municipal");
+
+  const confirmada = await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 99, substituir: true }));
+  assert.equal(confirmada.status, 200);
+  assert.equal(linha().publico_atingido, 99);
+  assert.deepEqual(memoria.linhas("assistente_acoes").at(-1)!.antes, { publico_atingido: 30 });
 });
 
 // ─── Atualizar meta ─────────────────────────────────────────────────────────
@@ -328,7 +358,7 @@ test("a meta abaixo do previsto sem justificativa volta marcada para a pessoa ju
   preparar();
   const { corpo } = await ler(await atualizarMeta({ meta_id: META_OFICINAS, realizado: 7 }));
   assert.equal(corpo.meta.falta_justificativa, true);
-  const batida = await ler(await atualizarMeta({ meta_id: META_OFICINAS, realizado: 10 }));
+  const batida = await ler(await atualizarMeta({ meta_id: META_OFICINAS, realizado: 10, substituir: true }));
   assert.equal(batida.corpo.meta.situacao, "atingida");
   assert.equal(batida.corpo.meta.falta_justificativa, false);
 });
@@ -344,7 +374,7 @@ test("na meta, null e vazio não mudam nada e limpar esvazia o realizado ou a ju
   assert.deepEqual(juntos.corpo.campos_mudados, ["justificativa"]);
   assert.equal(meta().realizado, 300);
 
-  const limpar = await ler(await atualizarMeta({ meta_id: META_PESSOAS, limpar: ["realizado"] }));
+  const limpar = await ler(await atualizarMeta({ meta_id: META_PESSOAS, limpar: ["realizado"], substituir: true }));
   assert.equal(limpar.corpo.mudou, true);
   assert.equal(meta().realizado, null);
   assert.equal(meta().justificativa, "Chuva afastou o público");
@@ -353,6 +383,25 @@ test("na meta, null e vazio não mudam nada e limpar esvazia o realizado ou a ju
   const previsto = await ler(await atualizarMeta({ meta_id: META_PESSOAS, limpar: ["previsto"] }));
   assert.equal(previsto.status, 400, "o previsto não se esvazia por aqui");
   assert.equal(meta().previsto, 500);
+});
+
+test("na meta, completar o que está vazio é livre; trocar o resultado ou a justificativa que já existem pede substituir=true", async () => {
+  const { memoria } = preparar();
+  const meta = () => memoria.linhas("prestacao_metas").find((m) => m.id === META_PESSOAS)!;
+
+  const completa = await ler(await atualizarMeta({ meta_id: META_PESSOAS, justificativa: "Chuva afastou o público" }));
+  assert.equal(completa.status, 200, "a justificativa estava vazia");
+
+  const recusa = await ler(await atualizarMeta({ meta_id: META_PESSOAS, realizado: 100, justificativa: "Outra razão" }));
+  assert.equal(recusa.status, 409);
+  assert.match(recusa.corpo.error, /A meta já tem valor em realizado, justificativa/);
+  assert.deepEqual(recusa.corpo.valores_atuais, { realizado: 300, justificativa: "Chuva afastou o público" });
+  assert.deepEqual([meta().realizado, meta().justificativa], [300, "Chuva afastou o público"], "o que a equipe tinha continua lá");
+
+  const confirmada = await ler(await atualizarMeta({ meta_id: META_PESSOAS, realizado: 100, substituir: true }));
+  assert.equal(confirmada.status, 200);
+  assert.equal(meta().realizado, 100);
+  assert.deepEqual(memoria.linhas("assistente_acoes").at(-1)!.antes, { realizado: 300 });
 });
 
 test("atualizar meta recusa número negativo, texto longo, pedido vazio e meta de outra prestação", async () => {
@@ -551,7 +600,7 @@ test("se a trilha não puder ser gravada, a gravação não fica: atividade nova
   assert.ok(!JSON.stringify(nova.corpo).includes("trilha fora do ar"), "o erro interno não vaza");
   assert.equal(banco.linhas("prestacao_atividades").filter((a) => a.titulo === "Sem trilha").length, 0);
 
-  assert.equal((await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 99 }))).status, 500);
+  assert.equal((await ler(await atualizar({ atividade_id: ATIVIDADE_1, publico_atingido: 99, substituir: true }))).status, 500);
   assert.equal(banco.linhas("prestacao_atividades").find((a) => a.id === ATIVIDADE_1)!.publico_atingido, 30);
 
   assert.equal((await ler(await atualizarMeta({ meta_id: META_OFICINAS, realizado: 9 }))).status, 500);
