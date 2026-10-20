@@ -13,6 +13,9 @@ const LINK = "rounded text-[0.6875rem] text-black/45 underline decoration-black/
 const VISIVEIS = 5;
 const BUSCADAS = 30;
 
+/** Quem fez: a retirada feita pela equipe, pelo app, não é do assistente (a trilha guarda as duas no mesmo lugar). */
+const quemFez = (a: Pick<LinhaDaAcao, "ferramenta" | "plataforma">) => (a.ferramenta === "retirada_pela_equipe" ? "Equipe" : (ROTULO_DO_ASSISTENTE[a.plataforma] ?? ROTULO_DO_ASSISTENTE.outro));
+
 const quando = (iso: string) => new Date(iso).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 
 export function AcoesDoAssistente({ prestacaoId, podeEditar }: { prestacaoId: string; podeEditar: boolean }) {
@@ -84,7 +87,7 @@ export function AcoesDoAssistente({ prestacaoId, podeEditar }: { prestacaoId: st
             <div className="min-w-0 flex-1">
               <p className={a.desfeita_em ? "text-black/40 line-through" : "text-black/75"}>{a.resumo}</p>
               <p className="text-black/45">
-                {ROTULO_DO_ASSISTENTE[a.plataforma] ?? ROTULO_DO_ASSISTENTE.outro} · {quando(a.created_at)}
+                {quemFez(a)} · {quando(a.created_at)}
                 {a.desfeita_em && " · retirada"}
               </p>
             </div>
