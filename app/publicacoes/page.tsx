@@ -6,7 +6,7 @@ import { Capa, FOCO, Meta, ROTULO, Temas, TITULO_HOVER, fmtData, type PostResumo
 type Post = PostResumo;
 
 export const metadata = {
-  title: "Blog — Jards",
+  title: "Publicações — Jards",
   description: "Insights, descobertas e conversas interessantes sobre captação de recursos.",
 };
 
@@ -29,7 +29,7 @@ export default async function BlogPublicPage() {
   return (
     <main>
       <section className="mx-auto max-w-pagina px-5 pt-12 pb-10 md:px-8 md:pt-20 md:pb-14">
-        <p className={`${ROTULO} text-[#684DB0]`}>Blog</p>
+        <p className={`${ROTULO} text-[#684DB0]`}>Publicações</p>
         <div className="mt-4 grid gap-5 md:grid-cols-12 md:items-end md:gap-10">
           <h1 className="text-[clamp(2.25rem,5.2vw,4.25rem)] leading-[1.02] font-bold tracking-[-0.035em] text-[#282525] md:col-span-8">
             Insights, descobertas e conversas sobre captação
@@ -49,7 +49,7 @@ export default async function BlogPublicPage() {
       {destaque && (
         <section aria-labelledby="destaque" className="mx-auto max-w-pagina px-5 md:px-8">
           <Link
-            href={`/blog/${destaque.slug}`}
+            href={`/publicacoes/${destaque.slug}`}
             className={`group grid gap-6 border-t border-black/10 pt-6 md:grid-cols-12 md:gap-10 md:pt-10 ${FOCO}`}
           >
             <Capa post={destaque} prioridade className="aspect-[4/3] md:col-span-7 md:aspect-[5/4]" />
@@ -83,7 +83,7 @@ export default async function BlogPublicPage() {
           <ul className="mt-8 grid gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
             {grade.map((post) => (
               <li key={post.id}>
-                <Link href={`/blog/${post.slug}`} className={`group flex flex-col ${FOCO}`}>
+                <Link href={`/publicacoes/${post.slug}`} className={`group flex flex-col ${FOCO}`}>
                   <Capa post={post} className="aspect-[4/3] sm:aspect-[4/5]" />
                   <Temas tags={post.tags} className="mt-5" />
                   <h3 className={`mt-2 text-[1.375rem] leading-[1.2] font-bold tracking-[-0.015em] text-balance text-[#282525] ${TITULO_HOVER}`}>
@@ -107,7 +107,7 @@ export default async function BlogPublicPage() {
             {arquivo.map((post) => (
               <li key={post.id}>
                 <Link
-                  href={`/blog/${post.slug}`}
+                  href={`/publicacoes/${post.slug}`}
                   className={`group grid gap-1.5 py-5 md:grid-cols-12 md:items-baseline md:gap-8 ${FOCO}`}
                 >
                   <span className={`${ROTULO} text-black/45 md:col-span-2`}>{fmtData(post.publicado_em)}</span>

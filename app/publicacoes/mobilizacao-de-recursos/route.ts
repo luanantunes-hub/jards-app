@@ -1,7 +1,7 @@
 import { html } from "./html";
 
-// Rota estática: tem prioridade sobre /blog/[slug] para este endereço.
-// Fora do layout do blog, então o aviso de cookies e o acesso às
+// Rota estática: tem prioridade sobre /publicacoes/[slug] para este endereço.
+// Fora do layout das publicações, então o aviso de cookies e o acesso às
 // preferências entram aqui.
 const RODAPE = '<a href="https://jards.com.br">jards.com.br</a>\n</footer>';
 const RODAPE_COM_PRIVACIDADE =

@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 
-type Props = { atual?: "blog" };
+type Props = { atual?: "publicacoes" };
 
 const corAtual = { color: "#282525" };
 
@@ -48,11 +48,11 @@ export default function CabecalhoSite({ atual }: Props) {
           <a className="menu-site__link" href="/precos">Preços</a>
           <Link
             className="menu-site__link"
-            href="/blog"
-            aria-current={atual === "blog" ? "page" : undefined}
-            style={atual === "blog" ? corAtual : undefined}
+            href="/publicacoes"
+            aria-current={atual === "publicacoes" ? "page" : undefined}
+            style={atual === "publicacoes" ? corAtual : undefined}
           >
-            Blog
+            Publicações
           </Link>
         </nav>
 
@@ -95,7 +95,7 @@ export default function CabecalhoSite({ atual }: Props) {
         </div>
         <div className="menu-celular__secao">
           <a className="menu-celular__link" href="/precos">Preços</a>
-          <Link className="menu-celular__link" href="/blog" aria-current={atual === "blog" ? "page" : undefined}>Blog</Link>
+          <Link className="menu-celular__link" href="/publicacoes" aria-current={atual === "publicacoes" ? "page" : undefined}>Publicações</Link>
           <a className="menu-celular__link" href="/login">Fazer login</a>
         </div>
       </div>

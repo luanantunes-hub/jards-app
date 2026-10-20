@@ -16,7 +16,7 @@ export default function BlogLayout({ children }: { children: React.ReactNode }) 
     <div className={`${mono.variable} overflow-x-clip bg-white`}>
       <link rel="stylesheet" href="/menu-site.css" precedence="default" />
       <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" precedence="default" />
-      <CabecalhoSite atual="blog" />
+      <CabecalhoSite atual="publicacoes" />
       {children}
       <RodapeSite />
       <Script src="/consentimento.js" strategy="afterInteractive" />

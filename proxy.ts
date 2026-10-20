@@ -150,11 +150,12 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/cadastro") ||
         pathname.startsWith("/confirmacao-email") ||
         pathname.startsWith("/.well-known") ||
+        pathname.startsWith("/publicacoes") ||
         pathname.startsWith("/blog");
 
       const publicBucket = pathname.startsWith("/p/")
         ? "proposal"
-        : pathname.startsWith("/blog")
+        : pathname.startsWith("/publicacoes") || pathname.startsWith("/blog")
           ? "blog"
           : pathname === "/"
             ? "root"
@@ -180,6 +181,7 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/confirmacao-email") ||
     pathname.startsWith("/redefinir-senha") ||
     pathname.startsWith("/nova-senha") ||
+    pathname.startsWith("/publicacoes") ||
     pathname.startsWith("/blog") ||
     pathname.startsWith("/p/") ||
     // Relatório do patrocinador por link (P5.2): o banco confere o link.

@@ -29,7 +29,7 @@ export default function RodapeSite() {
               <a className={link} href="/crm">CRM</a>
               <a className={link} href="/prestacao-de-contas">Prestação de contas</a>
               <a className={link} href="/precos">Preços</a>
-              <Link className={link} href="/blog">Blog</Link>
+              <Link className={link} href="/publicacoes">Publicações</Link>
             </div>
           </nav>
 

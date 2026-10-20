@@ -164,7 +164,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = data as { titulo: string; seo_descricao: string | null; imagem_capa: string | null };
 
   return {
-    title: `${post.titulo} — Blog Jards`,
+    title: `${post.titulo} — Jards`,
     description: post.seo_descricao ?? undefined,
     openGraph: post.imagem_capa ? { images: [post.imagem_capa] } : undefined,
   };
@@ -226,7 +226,7 @@ export default async function BlogPostPage({ params }: Props) {
       <article id="artigo" className="mx-auto max-w-2xl px-6 pt-12 pb-16 md:pt-16 xl:mx-0 xl:max-w-none">
         <header>
           <nav aria-label="Trilha" className={`${ROTULO} flex flex-wrap items-baseline gap-x-2 gap-y-1 text-black/55`}>
-            <Link href="/blog" className={`hover:text-[#282525] ${FOCO}`}>Blog</Link>
+            <Link href="/publicacoes" className={`hover:text-[#282525] ${FOCO}`}>Publicações</Link>
             {post.tags && post.tags.length > 0 && (
               <>
                 <span aria-hidden="true">/</span>
@@ -273,7 +273,7 @@ export default async function BlogPostPage({ params }: Props) {
           <ul className="mt-8 grid gap-x-8 gap-y-12 sm:grid-cols-2">
             {outros.map((o) => (
               <li key={o.id}>
-                <Link href={`/blog/${o.slug}`} className={`group flex flex-col ${FOCO}`}>
+                <Link href={`/publicacoes/${o.slug}`} className={`group flex flex-col ${FOCO}`}>
                   <Capa post={o} className="aspect-[16/10]" />
                   <Temas tags={o.tags} className="mt-5" />
                   <h3 className={`mt-2 text-[1.375rem] leading-[1.2] font-bold tracking-[-0.015em] text-balance text-[#282525] ${TITULO_HOVER}`}>

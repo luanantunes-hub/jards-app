@@ -502,7 +502,7 @@ export default function BlogEditorPage() {
           <div>
             <label className="block text-xs font-medium text-black/50 mb-1">Slug</label>
             <div className="flex items-center gap-1">
-              <span className="text-xs text-black/30 flex-shrink-0">/blog/</span>
+              <span className="text-xs text-black/30 flex-shrink-0">/publicacoes/</span>
               <input
                 className={`${inputCls} flex-1`}
                 style={inputStyle}
