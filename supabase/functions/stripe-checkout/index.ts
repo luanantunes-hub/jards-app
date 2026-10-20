@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import Stripe from "https://esm.sh/stripe@14?target=deno";
+import { MARCA_DO_CHECKOUT, VERSAO_DA_API_COM_MARCA } from "../_shared/marca-checkout.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -73,7 +74,7 @@ Deno.serve(async (req) => {
       if (updateError) throw updateError;
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const parametros: Stripe.Checkout.SessionCreateParams = {
       customer: customerId,
       mode: "subscription",
       line_items: [{ price: price_id, quantity: 1 }],
@@ -84,7 +85,28 @@ Deno.serve(async (req) => {
         metadata: { user_id: user.id },
       },
       metadata: { user_id: user.id },
-    });
+    };
+
+    // A aparência da marca só existe nas versões novas da API (esta função usa a
+    // 2024-06-20). Nelas a assinatura nasceria em cobrança "flexible": fica a
+    // "classic" de sempre, para mudar só a aparência. Se o Stripe recusar o
+    // pedido com a marca, o pagamento abre com a aparência padrão.
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create(
+        {
+          ...parametros,
+          subscription_data: { ...parametros.subscription_data, billing_mode: { type: "classic" } },
+          branding_settings: MARCA_DO_CHECKOUT,
+        } as Stripe.Checkout.SessionCreateParams,
+        { apiVersion: VERSAO_DA_API_COM_MARCA },
+      );
+    } catch (erroDaMarca) {
+      // Rede, limite ou cliente inválido não têm a ver com a marca: repetir só abriria outra sessão.
+      if ((erroDaMarca as { type?: string } | null)?.type !== "StripeInvalidRequestError") throw erroDaMarca;
+      console.error("Checkout sem a aparência da marca", erroDaMarca);
+      session = await stripe.checkout.sessions.create(parametros);
+    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

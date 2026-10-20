@@ -11,6 +11,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import type Stripe from "stripe";
 import { novoStripe, PRECOS_MODULO } from "@/lib/stripe";
 import { descricaoDaAssinatura, type AssinaturaDoModulo } from "@/lib/modulos-contrato";
 import {
@@ -20,6 +21,7 @@ import {
   PRECO_VAGA_MENSAL,
   vagasExtrasValidas,
 } from "@/supabase/functions/_shared/cobranca-modulo";
+import { MARCA_DO_CHECKOUT } from "@/supabase/functions/_shared/marca-checkout";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -133,7 +135,7 @@ export async function POST(req: NextRequest) {
     const origin = req.headers.get("origin") ?? req.nextUrl.origin;
     const destino = "/meu-plano?modulo=prestacao&success=1";
     const metadata = { organization_id: organizationId, modulo: MODULO_PRESTACAO, user_id: user.id };
-    const sessao = await stripe.checkout.sessions.create({
+    const parametros = {
       customer: customerId,
       mode: "subscription",
       line_items: itensDoCheckout(PRECOS_MODULO, vagasExtras),
@@ -142,7 +144,15 @@ export async function POST(req: NextRequest) {
       locale: "pt-BR",
       subscription_data: { metadata },
       metadata,
-    });
+    } satisfies Stripe.Checkout.SessionCreateParams;
+    // Se o Stripe recusar o pedido com a aparência da marca, o pagamento abre com a padrão.
+    // Outros erros (rede, limite) seguem adiante: repetir só abriria outra sessão.
+    const sessao = await stripe.checkout.sessions.create({ ...parametros, branding_settings: MARCA_DO_CHECKOUT })
+      .catch((erroDaMarca: unknown) => {
+        if ((erroDaMarca as { type?: string } | null)?.type !== "StripeInvalidRequestError") throw erroDaMarca;
+        console.error("Checkout do módulo sem a aparência da marca", erroDaMarca);
+        return stripe.checkout.sessions.create(parametros);
+      });
     if (!sessao.url) throw new Error("Checkout sem endereço");
     return NextResponse.json({ url: sessao.url });
   } catch (error) {

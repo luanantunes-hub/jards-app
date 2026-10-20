@@ -177,7 +177,7 @@ function Valor({ valor, escuro }: { valor: string | boolean; escuro?: boolean })
 const RECURSOS_PRESTACAO = [
   "O checklist do envio de cada lei, com a fonte de cada regra",
   "Extrato, despesas e pagamentos conferidos, com as pendências antes do envio",
-  "Metas, evidências, relatórios e o pacote pronto para o sistema do órgão",
+  "Metas, evidências, relatórios e o pacote com os arquivos do envio ao órgão",
 ];
 
 const ERROS_DO_TESTE: Record<string, string> = {
