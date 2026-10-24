@@ -21,6 +21,8 @@ import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import type { Empresa } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { FiltroMesorregiao } from "@/components/patrocinadores/FiltroMesorregiao";
+import { lerSelecaoDaUrl } from "@/lib/filtro-mesorregiao";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
@@ -53,6 +55,8 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   const [setor, setSetor] = useState("");
   const [setores, setSetores] = useState<string[]>([]);
   const [incompletas, setIncompletas] = useState(false);
+  const [mesorregioes, setMesorregioes] = useState<number[]>([]);
+  const chaveMesorregioes = mesorregioes.join(",");
 
   useEffect(() => {
     const t = setTimeout(() => setDSearch(search), 300);
@@ -66,7 +70,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => { setPage(0); }, [lei, dSearch, estado, setor, incompletas]);
+  useEffect(() => { setPage(0); }, [lei, dSearch, estado, setor, incompletas, chaveMesorregioes]);
 
   useEffect(() => {
     let cancelled = false;
@@ -81,6 +85,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
       const s = dSearch.trim();
       if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`, { foreignTable: "empresas" });
       if (estado) q = q.eq("empresas.estado", estado);
+      if (mesorregioes.length > 0) q = q.in("empresas.mesorregiao_id", mesorregioes);
       if (setor) q = q.eq("empresas.setor", setor);
       if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null", { foreignTable: "empresas" });
 
@@ -94,10 +99,10 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
     }
     void load();
     return () => { cancelled = true; };
-  }, [lei, page, dSearch, estado, setor, incompletas]);
+  }, [lei, page, dSearch, estado, setor, incompletas, chaveMesorregioes]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const hasFilters = !!(search || estado || setor || incompletas);
+  const hasFilters = !!(search || estado || setor || incompletas || mesorregioes.length > 0);
 
   return (
     <div className="px-4 pb-8 md:px-8">
@@ -121,6 +126,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
           compact
           emphasized={false}
         />
+        <FiltroMesorregiao lei={lei} estado={estado} selecionadas={mesorregioes} onChange={setMesorregioes} />
         <CustomDropdown
           value={setor}
           onChange={setSetor}
@@ -137,7 +143,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
           </FilterButton>
         )}
         {hasFilters && (
-          <FilterButton onClick={() => { setSearch(""); setEstado(""); setSetor(""); setIncompletas(false); }}>
+          <FilterButton onClick={() => { setSearch(""); setEstado(""); setMesorregioes([]); setSetor(""); setIncompletas(false); }}>
             <X size={12} />
             Limpar
           </FilterButton>
@@ -308,6 +314,8 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [search, setSearch] = useState(() => searchParams.get("q") ?? "");
   const [dSearch, setDSearch] = useState(() => searchParams.get("q") ?? "");
   const [estado, setEstado] = useState(() => searchParams.get("uf") ?? "");
+  const [mesorregioes, setMesorregioes] = useState<number[]>(() => lerSelecaoDaUrl(searchParams.get("meso")));
+  const chaveMesorregioes = mesorregioes.join(",");
   const [setor, setSetor] = useState(() => searchParams.get("setor") ?? "");
   const [trimestre, setTrimestre] = useState<Trimestre | null>(() => (searchParams.get("tri") as Trimestre) ?? null);
   const [incompletas, setIncompletas] = useState(() => searchParams.get("inc") === "1");
@@ -323,6 +331,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     const params = new URLSearchParams();
     if (dSearch)   params.set("q", dSearch);
     if (estado)    params.set("uf", estado);
+    if (chaveMesorregioes) params.set("meso", chaveMesorregioes);
     if (setor)     params.set("setor", setor);
     if (trimestre) params.set("tri", trimestre);
     if (incompletas) params.set("inc", "1");
@@ -332,7 +341,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     const qs = params.toString();
     router.replace(`/patrocinadores${qs ? `?${qs}` : ""}`, { scroll: false });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dSearch, estado, setor, trimestre, incompletas, sortCol, sortDir, page]);
+  }, [dSearch, estado, chaveMesorregioes, setor, trimestre, incompletas, sortCol, sortDir, page]);
 
   // Debounce search 300ms
   useEffect(() => {
@@ -375,6 +384,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     const s = dSearch.trim();
     if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`);
     if (estado) q = q.eq("estado", estado);
+    if (mesorregioes.length > 0) q = q.in("mesorregiao_id", mesorregioes);
     if (setor) q = q.eq("setor", setor);
     if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null");
     if (trimestre === "T1") q = q.eq("trimestre_1", true);
@@ -407,7 +417,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     fetchData();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dSearch, estado, setor, trimestre, incompletas, sortCol, sortDir]);
+  }, [dSearch, estado, chaveMesorregioes, setor, trimestre, incompletas, sortCol, sortDir]);
 
   async function goToPage(n: number) {
     setLoading(true);
@@ -433,6 +443,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   function clearFilters() {
     setSearch("");
     setEstado("");
+    setMesorregioes([]);
     setSetor("");
     setTrimestre(null);
     setIncompletas(false);
@@ -443,7 +454,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   }
 
 
-  const hasFilters = !!(search || estado || setor || trimestre || incompletas);
+  const hasFilters = !!(search || estado || mesorregioes.length > 0 || setor || trimestre || incompletas);
   const totalPages = Math.ceil(total / PAGE_SIZE);
 
   const SortIcon = ({ col }: { col: SortCol }) =>
@@ -489,6 +500,9 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
           compact
           emphasized={false}
         />
+
+        {/* Mesorregião (várias de uma vez): a cidade sede da empresa está num município da mesorregião */}
+        <FiltroMesorregiao lei="cultura" estado={estado} selecionadas={mesorregioes} onChange={setMesorregioes} />
 
         {/* Setor */}
         <CustomDropdown
