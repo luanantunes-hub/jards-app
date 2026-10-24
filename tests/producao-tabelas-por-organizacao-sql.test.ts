@@ -71,3 +71,9 @@ test("a tela da negociação cria a atividade pela folha, que grava a organizaç
   const payload = /const payload = \{([\s\S]*?)\n {4}\};/.exec(folha)?.[1] ?? "";
   assert.match(payload, /organization_id:/, "atividade sem organização some da equipe");
 });
+
+test("a tela da inscrição também cria a atividade pela folha, ligada à inscrição", async () => {
+  const pagina = await readFile("app/(dashboard)/editais-inscritos/[id]/page.tsx", "utf8");
+  assert.doesNotMatch(pagina, /from\("atividades"\)\.insert/, "a tela não grava atividade por conta própria: quem grava é a folha");
+  assert.match(pagina, /<NovaAtividadeModal[\s\S]*?edital_user_id: inscricao\.id/, "a folha abre ligada à inscrição");
+});

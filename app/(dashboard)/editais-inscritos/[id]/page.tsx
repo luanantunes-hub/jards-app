@@ -3,10 +3,10 @@ import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Plus, Pencil, X, Send, ChevronDown, Check,
+  ArrowLeft, Pencil, ChevronDown, Check,
   ArrowUp, ArrowDown, Minus,
   Clock, ExternalLink, FileCheck,
-  Calendar, Users, Mail, Phone, MoreHorizontal, Globe, Star,
+  Calendar, CalendarClock, Users, Mail, Phone, MoreHorizontal, Globe, Star,
   ClipboardList, LayoutDashboard, BriefcaseBusiness, RotateCw, Layers,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -16,9 +16,10 @@ import { ProjetoResumo } from "@/components/projects/ProjetoResumo";
 import StatusBadge from "@/components/ui/StatusBadge";
 import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
+import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RegistrosPanel } from "@/components/modals/RegistrosPanel";
-import { DetailPageContent, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
+import { DetailHeaderAction, DetailPageContent, DetailTabs, DetailNotFound, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PropostaValuePanel } from "@/components/PropostaValuePanel";
 import { CotasReferenceTab } from "@/components/CotasReferenceTab";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
@@ -174,11 +175,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
   const [activeTab, setActiveTab] = useState<"visao-geral" | "cotas" | "conteudo">("visao-geral");
 
   const [showNewAtividade, setShowNewAtividade] = useState(false);
-  const [newNome, setNewNome]     = useState("");
-  const [newTipo, setNewTipo]     = useState("reuniao");
-  const [newData, setNewData]     = useState("");
-  const [newNota, setNewNota]     = useState("");
-  const [salvando, setSalvando]   = useState(false);
 
   const [sidebarStatusMenu, setSidebarStatusMenu] = useState<{ top: number; left: number; right?: number } | null>(null);
   const [leiMenuPos, setLeiMenuPos] = useState<{ top: number; left: number } | null>(null);
@@ -288,33 +284,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     await fetchData();
   }
 
-  async function handleSalvarAtividade() {
-    if (!newNome.trim()) return;
-    setSalvando(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSalvando(false); return; }
-    const { data: orgData } = await (supabase as any)
-      .from("organization_members")
-      .select("organization_id")
-      .eq("user_id", user.id)
-      .limit(1)
-      .single();
-    await (supabase as any).from("atividades").insert({
-      account_id:      user.id,
-      organization_id: orgData?.organization_id ?? null,
-      nome:            newNome.trim(),
-      tipo:            newTipo,
-      data_prevista:   newData || null,
-      nota:            newNota.trim() || null,
-      edital_user_id:  id,
-      empresa_crm_id:  inscricao?.empresa_crm_id ?? null,
-    });
-    setNewNome(""); setNewTipo("reuniao"); setNewData(""); setNewNota("");
-    setShowNewAtividade(false);
-    setSalvando(false);
-    await fetchData();
-  }
-
   async function handleToggleAtividade(atvId: string, feita: boolean) {
     const now = new Date().toISOString().split("T")[0];
     await (supabase as any)
@@ -367,6 +336,13 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
     <div className="min-h-full">
 
       {/* Modals */}
+      {showNewAtividade && (
+        <NovaAtividadeModal
+          prefill={{ edital_user_id: inscricao.id, empresa_crm_id: inscricao.empresa_crm_id ?? undefined }}
+          onClose={() => setShowNewAtividade(false)}
+          onSaved={() => { setShowNewAtividade(false); void fetchData(); }}
+        />
+      )}
       {showEditModal && (
         <NovaInscricaoModal
           editData={{
@@ -548,17 +524,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               <Pencil size={12} /> Editar
             </button>
 
-            <button
-              onClick={() => setShowNewAtividade(v => !v)}
-              className={`flex h-11 items-center gap-2 rounded border px-4 text-[0.75rem] font-medium transition ${
-                showNewAtividade
-                  ? "bg-white border-[#7259B5]/25 text-[#7259B5]"
-                  : "bg-white border-black/[.12] text-black/55 hover:bg-black/[.04]"
-              }`}
-            >
-              {showNewAtividade ? <X size={12} /> : <Plus size={12} />}
-              {showNewAtividade ? "Cancelar" : "Atividade"}
-            </button>
+            <DetailHeaderAction label="Nova atividade" icon={CalendarClock} onClick={() => setShowNewAtividade(true)} />
 
           </div>
         </div>
@@ -710,75 +676,6 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
               </section>
             )}
 
-            {/* Nova atividade inline */}
-            {showNewAtividade && (
-              <div className="bg-white rounded border p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <p className="text-[0.75rem] font-medium text-black/50 uppercase tracking-wide mb-3">Nova atividade</p>
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={newNome}
-                    onChange={e => setNewNome(e.target.value)}
-                    placeholder="Nome da atividade..."
-                    autoFocus
-                    className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
-                    style={{ borderColor: "rgba(13,13,13,.12)" }}
-                  />
-                  <div className="flex gap-1.5 flex-wrap">
-                    {[
-                      { value: "reuniao",  label: "Reunião",  Icon: Users   },
-                      { value: "email",    label: "E-mail",   Icon: Mail    },
-                      { value: "telefone", label: "Telefone", Icon: Phone   },
-                      { value: "outro",    label: "Outro",    Icon: MoreHorizontal },
-                    ].map(({ value, label, Icon }) => (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setNewTipo(value)}
-                        className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[0.6875rem] font-medium rounded border transition ${
-                          newTipo === value
-                            ? "bg-white text-[#7259B5] border-[#7259B5]/25"
-                            : "bg-white text-black/50 border-black/10 hover:border-black/20"
-                        }`}
-                      >
-                        <Icon size={11} /> {label}
-                      </button>
-                    ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <input
-                      type="date"
-                      value={newData}
-                      onChange={e => setNewData(e.target.value)}
-                      className="flex-1 px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-                    <input
-                      type="text"
-                      value={newNota}
-                      onChange={e => setNewNota(e.target.value)}
-                      placeholder="Nota"
-                      className="flex-1 px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <button onClick={() => setShowNewAtividade(false)} className="px-3 py-1.5 text-[0.6875rem] font-medium text-black/40 hover:text-black/60 transition">
-                      Cancelar
-                    </button>
-                    <button
-                      onClick={handleSalvarAtividade}
-                      disabled={!newNome.trim() || salvando}
-                      className="flex items-center gap-1.5 px-4 py-1.5 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
-                    >
-                      {salvando ? <span className="w-3 h-3 border-2 border-[#7259B5]/30 border-t-[#7259B5] rounded-full animate-spin" /> : <Send size={11} />}
-                      Salvar
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Atividades pendentes */}
             {pendentes.length > 0 && (
               <section>
@@ -824,7 +721,7 @@ export default function InscricaoDetailPage({ params }: { params: Promise<{ id: 
                 <span className="text-[0.6875rem] text-black/25 font-medium">{timeline.length} eventos</span>
               </div>
 
-              {timeline.length === 0 && !showNewAtividade ? (
+              {timeline.length === 0 ? (
                 <div className="bg-white rounded border p-10 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <Clock size={22} className="mx-auto text-black/12 mb-3" />
                   <p className="text-sm text-black/30 font-medium">Nenhum evento ainda</p>
