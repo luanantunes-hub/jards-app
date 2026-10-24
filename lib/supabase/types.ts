@@ -783,8 +783,8 @@ export interface PrestacaoComprovante {
   justificativa?: string | null;
   /** O que a leitura por IA apontou, com códigos do catálogo de checagens (P2.10b). */
   motivos_ia?: MotivoLido[];
-  /** Por onde entrou: a equipe lançou, o proponente enviou pelo espaço dele (P5.4) ou chegou por e-mail (P5.5). */
-  canal?: "equipe" | "proponente" | "email";
+  /** Por onde entrou: a equipe lançou, o proponente enviou pelo espaço dele (P5.4), chegou por e-mail (P5.5) ou o assistente (Claude ou ChatGPT) registrou. */
+  canal?: "equipe" | "proponente" | "email" | "assistente";
   /** Paga como contrapartida, em dinheiro ou por doação (P7.2); vazio é o recurso do projeto. */
   contrapartida?: "financeira" | "doacao" | null;
   /** Data do atesto de recebimento no verso da nota (LIE, P8.8). */
@@ -859,8 +859,8 @@ export interface PrestacaoEvidencia {
   origem_dados: "arquivo" | "informado" | null;
   justificativa: string | null;
   criado_por: string | null;
-  /** Por onde entrou: a equipe lançou ou o proponente enviou pelo espaço dele (P5.4). */
-  canal?: "equipe" | "proponente";
+  /** Por onde entrou: a equipe lançou, o proponente enviou pelo espaço dele (P5.4) ou o assistente (Claude ou ChatGPT) registrou. */
+  canal?: "equipe" | "proponente" | "assistente";
   created_at: string;
   updated_at: string;
 }

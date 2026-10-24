@@ -1,3 +1,5 @@
+import { MODULOS_MCP, normalizarModulosDaChave, type ModuloMcp } from "@/lib/mcp/modulos";
+
 export type Assistente = "claude" | "chatgpt";
 
 export interface ChaveMcp {
@@ -5,6 +7,8 @@ export interface ChaveMcp {
   key_prefix: string;
   label: string | null;
   scope: "read" | "write";
+  /** Módulos que a pessoa autorizou nesta chave; chaves antigas, sem o campo, são só da captação. */
+  modulos?: ModuloMcp[];
   expires_at: string | null;
   created_at: string;
   last_used_at: string | null;
@@ -17,6 +21,8 @@ export interface StatusConexao {
   /** Última atividade da conexão (último uso, ou a autorização se nunca foi usada). */
   ultimaAtividade: string | null;
   escrita: boolean;
+  /** Módulos autorizados nas conexões ativas deste assistente (a captação é o padrão das conexões antigas). */
+  modulos: ModuloMcp[];
 }
 
 // O assistente renova o acesso sozinho enquanto o refresh token vale (90 dias, ver OAUTH_REFRESH_TOKEN_TTL_MS).
@@ -42,10 +48,12 @@ export function statusDoAssistente(chaves: ChaveMcp[], assistente: Assistente, a
     .filter(({ atividade }) => agora - new Date(atividade).getTime() <= JANELA_CONEXAO_MS)
     .sort((a, b) => new Date(b.atividade).getTime() - new Date(a.atividade).getTime());
 
-  if (recentes.length === 0) return { conectado: false, ultimaAtividade: null, escrita: false };
+  if (recentes.length === 0) return { conectado: false, ultimaAtividade: null, escrita: false, modulos: [] };
+  const autorizados = recentes.flatMap(({ chave }) => normalizarModulosDaChave(chave.modulos));
   return {
     conectado: true,
     ultimaAtividade: recentes[0].atividade,
     escrita: recentes.some(({ chave }) => chave.scope === "write"),
+    modulos: MODULOS_MCP.filter((modulo) => autorizados.includes(modulo)),
   };
 }

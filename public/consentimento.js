@@ -20,7 +20,8 @@
   var historicoNativo = { pushState: history.pushState, replaceState: history.replaceState };
 
   function ehPublica(caminho) {
-    return caminho === "/" || caminho === "/privacidade" || caminho === "/termos" || caminho === "/incentivadores" ||
+    return caminho === "/" || caminho === "/privacidade" || caminho === "/termos" || caminho === "/incentivadores" || caminho === "/crm" || caminho === "/precos" || caminho === "/prestacao-de-contas" ||
+      caminho === "/publicacoes" || caminho.indexOf("/publicacoes/") === 0 ||
       caminho === "/blog" || caminho.indexOf("/blog/") === 0 ||
       caminho === "/cadastro" || caminho.indexOf("/cadastro/") === 0 ||
       caminho === "/assinatura/concluida";

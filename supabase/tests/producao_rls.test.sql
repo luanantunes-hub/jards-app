@@ -39,7 +39,11 @@
 -- com o prelúdio e as seções-base de que precisam (Dados, Pessoas e módulos,
 -- Ferramentas, Efeito, Sondas e Entrar e sair) na frente, ajustando o plan().
 --
--- Rodar: supabase/tests/README.md, com a migration producao_esqueleto na frente.
+-- Desde a PD0.9, as colunas espaco_id e sala_id da data e do bloco têm chave (migration producao_espacos),
+-- e as três verificações que olhavam o estado de antes (gatilhos de coerência, chaves e 'uuid solto')
+-- descrevem o estado de depois. O resto do arquivo não muda.
+--
+-- Rodar: supabase/tests/README.md, com as migrations producao_esqueleto e producao_espacos na frente.
 
 begin;
 create extension if not exists pgtap with schema extensions;
@@ -363,8 +367,9 @@ select is((select count(*)::int from pg_proc p
                   or p.proacl is null or exists (select 1 from aclexplode(p.proacl) a where a.grantee = 0))),
           0, 'o visitante não executa nenhuma das seis, e nenhuma fica executável por public');
 
+-- (O gatilho do histórico, da PD0.10, liga nas mesmas tabelas e é conferido em producao_historico.test.sql.)
 select is((select array_agg(tgname::text || ' ' || tgtype order by tgname collate "C") from pg_trigger
-           where not tgisinternal and tgrelid in ('public.producao_obras'::regclass, 'public.producao_temporadas'::regclass,
+           where not tgisinternal and tgname not like '%\_historico' and tgrelid in ('public.producao_obras'::regclass, 'public.producao_temporadas'::regclass,
                                                   'public.producao_datas'::regclass, 'public.producao_blocos'::regclass)),
           array['producao_blocos_coerencia 23', 'producao_blocos_updated_at 19', 'producao_datas_coerencia 23',
                 'producao_datas_updated_at 19', 'producao_obras_coerencia 23', 'producao_obras_updated_at 19',
@@ -375,25 +380,27 @@ select is((select array_agg(t.tgname::text || ': ' || (select string_agg(a.attna
                             order by t.tgname collate "C")
            from pg_trigger t
            where not t.tgisinternal and t.tgname like '%\_coerencia'),
-          array['producao_blocos_coerencia: organization_id, data_id',
-                'producao_datas_coerencia: organization_id, temporada_id, obra_id, fuso, contratante_empresa_id',
+          array['producao_blocos_coerencia: organization_id, data_id, sala_id',
+                'producao_datas_coerencia: organization_id, temporada_id, obra_id, espaco_id, sala_id, fuso, contratante_empresa_id',
+                'producao_espacos_coerencia: organization_id, empresa_id',
                 'producao_obras_coerencia: organization_id, projeto_id, companhia_empresa_id',
+                'producao_salas_coerencia: organization_id, espaco_id',
                 'producao_temporadas_coerencia: organization_id, projeto_id, obra_id'],
-          'os gatilhos de coerência olham as colunas que ligam a tabela ao pai');
+          'os gatilhos de coerência olham as colunas que ligam a tabela ao pai (a data e o bloco, também o espaço e a sala, desde a PD0.9)');
 
 -- ─── O catálogo: chaves, restrições e colunas ───────────────────────────────
 
 select is((select array_agg(conname::text || ' ' || confdeltype::text order by conname::text collate "C") from pg_constraint
            where contype = 'f' and conrelid in ('public.producao_obras'::regclass, 'public.producao_temporadas'::regclass,
                                                 'public.producao_datas'::regclass, 'public.producao_blocos'::regclass)),
-          array['producao_blocos_data_id_fkey c', 'producao_blocos_organization_id_fkey c',
-                'producao_datas_contratante_empresa_id_fkey n', 'producao_datas_obra_id_fkey a',
-                'producao_datas_organization_id_fkey c', 'producao_datas_temporada_id_fkey a',
+          array['producao_blocos_data_id_fkey c', 'producao_blocos_organization_id_fkey c', 'producao_blocos_sala_id_fkey a',
+                'producao_datas_contratante_empresa_id_fkey n', 'producao_datas_espaco_id_fkey a', 'producao_datas_obra_id_fkey a',
+                'producao_datas_organization_id_fkey c', 'producao_datas_sala_id_fkey a', 'producao_datas_temporada_id_fkey a',
                 'producao_obras_companhia_empresa_id_fkey n', 'producao_obras_organization_id_fkey c',
                 'producao_obras_projeto_id_fkey n', 'producao_temporadas_obra_id_fkey a',
                 'producao_temporadas_organization_id_fkey c', 'producao_temporadas_projeto_id_fkey n',
                 'producao_temporadas_responsavel_fkey n'],
-          'ao apagar: o bloco vai com a data; temporada e obra com filhos são recusadas; projeto, empresa e responsável só se desligam');
+          'ao apagar: o bloco vai com a data; temporada, obra, espaço e sala com filhos são recusados; projeto, empresa e responsável só se desligam');
 select is((select confdelsetcols from pg_constraint where conname = 'producao_temporadas_responsavel_fkey'),
           array[(select attnum from pg_attribute where attrelid = 'public.producao_temporadas'::regclass and attname = 'responsavel_id')]::int2[],
           'sair da organização desliga só o responsável, não a organização da temporada');
@@ -724,7 +731,7 @@ select is(pe_teste.tenta(format($t$insert into public.producao_datas (organizati
 select is(pe_teste.tenta(format($t$insert into public.producao_datas (organization_id, temporada_id, obra_id, data) values (%L, %L, %L, '2026-12-14')$t$, pe_teste.id('a0'), pe_teste.id('82'), pe_teste.id('72'))),
           'aceito', 'festival: a temporada sem obra recebe datas de obras diferentes');
 select is(pe_teste.tenta(format($t$insert into public.producao_datas (organization_id, temporada_id, espaco_id, sala_id, data) values (%L, %L, gen_random_uuid(), gen_random_uuid(), '2026-12-15')$t$, pe_teste.id('a0'), pe_teste.id('2a'))),
-          'aceito', 'espaço e sala são uuid soltos até a PD0.9 (a lona de circo, espaço móvel, espera essa entrega)');
+          '23514 espaco_de_outra_organizacao', 'espaço e sala deixaram de ser uuid solto na PD0.9: um espaço que não existe é recusado (a lona de circo, espaço móvel, está em producao_espacos.test.sql)');
 
 -- ─── Apagar ─────────────────────────────────────────────────────────────────
 

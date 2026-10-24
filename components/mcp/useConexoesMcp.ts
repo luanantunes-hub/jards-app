@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { statusDoAssistente, type Assistente, type ChaveMcp, type StatusConexao } from "@/lib/mcp/conexoes";
+import { ehModuloMcp, type ModuloMcp } from "@/lib/mcp/modulos";
 import type { Verificacao } from "@/components/mcp/PassosConexao";
 
 /** Enquanto a pessoa configura o assistente em outra aba, a tela confere a conexão a cada 15 s, por até 5 minutos. */
@@ -10,7 +11,7 @@ const JANELA_ESPERA_MS = 5 * 60_000;
 /** Voltar para esta aba também confere, mas nunca mais de uma vez a cada 8 s (a rota aceita 10 pedidos por minuto). */
 const INTERVALO_MINIMO_MS = 8_000;
 
-const SEM_CONEXAO: StatusConexao = { conectado: false, ultimaAtividade: null, escrita: false };
+const SEM_CONEXAO: StatusConexao = { conectado: false, ultimaAtividade: null, escrita: false, modulos: [] };
 
 /**
  * Carrega as conexões e chaves do Jards e mantém o status de cada assistente em dia: confere ao voltar
@@ -20,6 +21,7 @@ export function useConexoesMcp(assistenteAtivo: Assistente) {
   const [chaves, setChaves] = useState<ChaveMcp[]>([]);
   const [status, setStatus] = useState<Record<Assistente, StatusConexao>>({ claude: SEM_CONEXAO, chatgpt: SEM_CONEXAO });
   const [verificacao, setVerificacao] = useState<Verificacao>("carregando");
+  const [modulosDisponiveis, setModulosDisponiveis] = useState<ModuloMcp[]>([]);
   const [aguardando, setAguardando] = useState(false);
   const ultimaBusca = useRef(0);
   const emAndamento = useRef(false);
@@ -42,6 +44,7 @@ export function useConexoesMcp(assistenteAtivo: Assistente) {
         expirada: c.expires_at ? new Date(c.expires_at).getTime() <= agora : false,
       }));
       setChaves(lista);
+      setModulosDisponiveis(Array.isArray(data.modulos_disponiveis) ? (data.modulos_disponiveis as unknown[]).filter(ehModuloMcp) : []);
       setStatus({ claude: statusDoAssistente(lista, "claude", agora), chatgpt: statusDoAssistente(lista, "chatgpt", agora) });
       setVerificacao("ok");
     } catch {
@@ -91,5 +94,5 @@ export function useConexoesMcp(assistenteAtivo: Assistente) {
     fimDaEspera.current = setTimeout(() => setAguardando(false), JANELA_ESPERA_MS);
   }, []);
 
-  return { chaves, status, verificacao, carregar, aguardarConexao };
+  return { chaves, status, verificacao, modulosDisponiveis, carregar, aguardarConexao };
 }

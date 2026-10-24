@@ -1,7 +1,9 @@
 "use client";
 
 import type { StatusConexao } from "@/lib/mcp/conexoes";
-import { CaixaCopiavel } from "@/components/mcp/BotaoCopiar";
+import type { ModuloMcp } from "@/lib/mcp/modulos";
+import { INSTRUCOES_PRESTACAO } from "@/lib/mcp/prestacao/instrucoes";
+import { BotaoCopiar, CaixaCopiavel } from "@/components/mcp/BotaoCopiar";
 import { ChaveManual } from "@/components/mcp/ChaveManual";
 import { Detalhes } from "@/components/mcp/Detalhes";
 import { ListaDeCliques, PassosConexao, type Verificacao } from "@/components/mcp/PassosConexao";
@@ -17,6 +19,8 @@ interface Props {
   urlServidor: string | null;
   aoInteragir: () => void;
   aoCriarChave: () => Promise<void>;
+  /** Módulos que a pessoa pode autorizar (a prestação de contas só aparece para quem a usa e está liberada). */
+  modulosDisponiveis: readonly ModuloMcp[];
 }
 
 function CampoCopiavel({ rotulo, valor, id }: { rotulo: string; valor: string | null; id: string }) {
@@ -35,8 +39,29 @@ function CampoCopiavel({ rotulo, valor, id }: { rotulo: string; valor: string | 
   );
 }
 
-export function ConectarChatGpt({ status, verificacao, origem, urlServidor, aoInteragir, aoCriarChave }: Props) {
+/** Texto comprido (as instruções da GPT) numa caixa que rola, com o botão Copiar. */
+function TextoLongoCopiavel({ rotulo, valor, id }: { rotulo: string; valor: string; id: string }) {
+  const { copiado, copiar } = useCopiado();
+  return (
+    <div className="mt-2">
+      <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/60">{rotulo}</p>
+      <textarea
+        readOnly
+        value={valor}
+        rows={6}
+        aria-label={rotulo}
+        className="mt-2 w-full resize-y select-all rounded border border-black/10 bg-black/[0.02] px-3 py-2.5 text-[0.75rem] leading-relaxed text-black/75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+      />
+      <div className="mt-2">
+        <BotaoCopiar copiado={copiado === id} onCopiar={() => void copiar(id, valor)} rotulo={`Copiar ${rotulo}`} />
+      </div>
+    </div>
+  );
+}
+
+export function ConectarChatGpt({ status, verificacao, origem, urlServidor, aoInteragir, aoCriarChave, modulosDisponiveis }: Props) {
   const em = (caminho: string) => (origem ? `${origem}${caminho}` : null);
+  const comPrestacao = modulosDisponiveis.includes("prestacao");
 
   return (
     <PassosConexao
@@ -86,6 +111,7 @@ export function ConectarChatGpt({ status, verificacao, origem, urlServidor, aoIn
         </p>
       }
       aoInteragir={aoInteragir}
+      mostrarModulos={comPrestacao}
     >
       <Detalhes titulo="Avançado: GPT personalizada (Actions)">
         <div>
@@ -115,6 +141,34 @@ export function ConectarChatGpt({ status, verificacao, origem, urlServidor, aoIn
           </ol>
         </div>
 
+        {comPrestacao && (
+          <div className="border-t border-black/10 pt-4">
+            <p className="font-medium text-[#282525]">GPT da prestação de contas, com arquivos pelo chat</p>
+            <p className="mt-1">
+              Uma segunda GPT, só da prestação: nela você anexa notas, recibos e fotos direto na conversa e o Jards
+              recebe os arquivos. O que ela registrar fica anotado em &ldquo;Ações do assistente&rdquo;, e despesas e
+              evidências entram como pendentes, para a equipe conferir. Cada pessoa autoriza com a própria conta, como na
+              GPT acima.
+            </p>
+            <ol className="mt-3 list-decimal space-y-3 pl-5 marker:text-black/40">
+              <li>
+                Em Explorar GPTs → Criar → aba Configurar, cole estas instruções:
+                <TextoLongoCopiavel id="instrucoes-prestacao" rotulo="Instruções da GPT" valor={INSTRUCOES_PRESTACAO} />
+              </li>
+              <li>
+                Em Actions, clique em <strong>Criar nova ação</strong> e importe o schema da prestação:
+                <CampoCopiavel id="schema-prestacao" rotulo="Endereço do schema" valor={em("/api/mcp/openapi.json?modulo=prestacao")} />
+              </li>
+              <li>
+                Em autenticação, escolha <strong>OAuth</strong> com os mesmos Authorization URL, Token URL, Client ID e
+                Client Secret da GPT acima. Scope: <code>read prestacao</code> para só consultar, ou{" "}
+                <code>write prestacao</code> para também registrar despesas e evidências.
+              </li>
+              <li>Ao usar a GPT pela primeira vez, cada pessoa autoriza com a própria conta na tela de consentimento.</li>
+            </ol>
+          </div>
+        )}
+
         <div className="border-t border-black/10 pt-4">
           <p className="font-medium text-[#282525]">GPT pessoal, com chave manual</p>
           <p className="mt-2 rounded border bg-white px-3 py-2 text-sm" style={{ borderColor: "#B07A1440", color: "#8a5f0f" }}>
@@ -129,7 +183,7 @@ export function ConectarChatGpt({ status, verificacao, origem, urlServidor, aoIn
             </li>
           </ol>
           <div className="mt-4">
-            <ChaveManual aoCriar={aoCriarChave} />
+            <ChaveManual aoCriar={aoCriarChave} modulosDisponiveis={modulosDisponiveis} />
           </div>
         </div>
       </Detalhes>

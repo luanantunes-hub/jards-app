@@ -2,13 +2,14 @@
 
 import { useId, useState } from "react";
 import { Select } from "@/components/ui/Select";
+import { NOME_DO_MODULO, type ModuloMcp } from "@/lib/mcp/modulos";
 import { CaixaCopiavel } from "@/components/mcp/BotaoCopiar";
 import { useCopiado } from "@/components/mcp/useCopiado";
 
 const ROTULO = "block text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/60";
 
 /** Gera uma chave manual (para uma GPT própria, sem OAuth). A chave só aparece uma vez, logo depois de criada. */
-export function ChaveManual({ aoCriar }: { aoCriar: () => Promise<void> }) {
+export function ChaveManual({ aoCriar, modulosDisponiveis }: { aoCriar: () => Promise<void>; modulosDisponiveis: readonly ModuloMcp[] }) {
   const idNome = useId();
   const idPermissao = useId();
   const idValidade = useId();
@@ -19,8 +20,21 @@ export function ChaveManual({ aoCriar }: { aoCriar: () => Promise<void> }) {
   const [criando, setCriando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [chaveGerada, setChaveGerada] = useState<string | null>(null);
+  // Só a captação (o que a chave sempre foi) vem marcada; a prestação de contas é uma escolha explícita.
+  const [modulos, setModulos] = useState<ModuloMcp[]>(["captacao"]);
+  const escolhe = modulosDisponiveis.length > 1;
+  // Com um módulo só, a chave é desse módulo; com mais de um, vale o que a pessoa marcou.
+  const modulosDaChave: ModuloMcp[] = escolhe ? modulos.filter((modulo) => modulosDisponiveis.includes(modulo)) : [...modulosDisponiveis];
+
+  function alternar(modulo: ModuloMcp) {
+    setModulos((atual) => (atual.includes(modulo) ? atual.filter((m) => m !== modulo) : [...atual, modulo]));
+  }
 
   async function criarChave() {
+    if (modulosDaChave.length === 0) {
+      setErro("Marque ao menos um módulo para a chave.");
+      return;
+    }
     setCriando(true);
     setErro(null);
     setChaveGerada(null);
@@ -28,7 +42,7 @@ export function ChaveManual({ aoCriar }: { aoCriar: () => Promise<void> }) {
       const res = await fetch("/api/mcp/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: label.trim() || null, scope, expires_in_days: Number(expiresInDays) }),
+        body: JSON.stringify({ label: label.trim() || null, scope, expires_in_days: Number(expiresInDays), ...(modulosDaChave.length > 0 ? { modulos: modulosDaChave } : {}) }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
@@ -72,6 +86,25 @@ export function ChaveManual({ aoCriar }: { aoCriar: () => Promise<void> }) {
           </div>
         </div>
       </div>
+
+      {escolhe && (
+        <fieldset className="mt-3">
+          <legend className={ROTULO}>Módulos</legend>
+          <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+            {modulosDisponiveis.map((modulo) => (
+              <label key={modulo} className="flex items-center gap-2 text-sm text-black/75">
+                <input
+                  type="checkbox"
+                  checked={modulos.includes(modulo)}
+                  onChange={() => alternar(modulo)}
+                  className="h-4 w-4 rounded border-black/30 accent-[#7259B5] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                />
+                <span className="first-letter:uppercase">{NOME_DO_MODULO[modulo]}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      )}
 
       <div className="mt-3">
         <label htmlFor={idValidade} className={ROTULO}>

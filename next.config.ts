@@ -37,6 +37,15 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/(.*)", headers: securityHeaders }];
   },
+  // O blog virou "Publicações" (/publicacoes): as páginas antigas redirecionam
+  // de vez. Arquivos em /blog/... (capas, imagens e fontes em public/blog)
+  // continuam servidos ali, por isso o slug redirecionado não tem ponto nem barra.
+  async redirects() {
+    return [
+      { source: "/blog", destination: "/publicacoes", permanent: true },
+      { source: "/blog/:slug([^./]+)", destination: "/publicacoes/:slug", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

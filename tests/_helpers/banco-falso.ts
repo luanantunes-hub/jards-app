@@ -11,6 +11,12 @@ export interface Consulta {
   opcoes?: unknown;
   filtros: Array<[operador: string, coluna: string, valor: unknown]>;
   unico: "maybe" | "single" | null;
+  /** .order(coluna, { ascending }) na ordem em que foram pedidos. */
+  ordens?: Array<[coluna: string, ascendente: boolean]>;
+  /** .limit(n). */
+  limite?: number;
+  /** .range(de, ate), inclusive nos dois lados como no PostgREST. */
+  intervalo?: [de: number, ate: number];
 }
 
 export type Resposta = { data?: unknown; error?: { message: string; code?: string } | null; count?: number | null };
@@ -71,7 +77,18 @@ export function bancoFalso(resolver: Resolvedor) {
         return cadeia;
       };
     }
-    for (const passo of ["order", "limit", "range"]) cadeia[passo] = () => cadeia;
+    cadeia.order = (coluna: string, opcoes?: { ascending?: boolean }) => {
+      (consulta.ordens ??= []).push([coluna, opcoes?.ascending !== false]);
+      return cadeia;
+    };
+    cadeia.limit = (n: number) => {
+      consulta.limite = n;
+      return cadeia;
+    };
+    cadeia.range = (de: number, ate: number) => {
+      consulta.intervalo = [de, ate];
+      return cadeia;
+    };
     return cadeia;
   }
 

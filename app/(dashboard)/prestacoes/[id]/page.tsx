@@ -33,6 +33,7 @@ import { ResponsavelDaPrestacao } from "@/components/prestacao/ResponsavelDaPres
 import { LinksDoPatrocinador } from "@/components/prestacao/LinksDoPatrocinador";
 import { ConvidadosDaPrestacao } from "@/components/prestacao/ConvidadosDaPrestacao";
 import { CapturaPorEmail } from "@/components/prestacao/CapturaPorEmail";
+import { AcoesDoAssistente } from "@/components/prestacao/AcoesDoAssistente";
 import { VersaoNovaDoRegime } from "@/components/prestacao/VersaoNovaDoRegime";
 import { CaptacaoDaPrestacao } from "@/components/prestacao/CaptacaoDaPrestacao";
 import { situacaoDaCaptacao } from "@/lib/prestacao/captacao";
@@ -635,6 +636,7 @@ export default function PrestacaoDetalhe() {
           <LinksDoPatrocinador prestacaoId={id} captacaoId={prestacao.captacao_id} projetoId={prestacao.projeto_id} podeEditar={permissoes.editar} />
           <ConvidadosDaPrestacao prestacaoId={id} podeEditar={permissoes.editar} />
           <CapturaPorEmail prestacaoId={id} podeEditar={permissoes.editar} />
+          <AcoesDoAssistente prestacaoId={id} podeEditar={permissoes.editar} />
           {/* P9.5: guarda e descarte dos dados pessoais; na saúde sempre, nos outros regimes depois da final. */}
           {(saude || envios?.some(e => e.etapa === "final") || prestacao.dados_pessoais_descartados_em) && (
             <DadosPessoaisDaPrestacao

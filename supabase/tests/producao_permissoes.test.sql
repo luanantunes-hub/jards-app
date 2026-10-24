@@ -259,32 +259,40 @@ select is((select array[has_table_privilege('anon', 'public.producao_funcoes', '
                         has_table_privilege('anon', 'public.producao_funcoes', 'delete')]),
           array[false, false, false, false], 'o visitante não tem privilégio nenhum na tabela');
 
+-- As oito funções da PD0.7a, pelo nome: as entregas seguintes criam outras auth_producao_* (a PD0.8 o recorte da obra,
+-- a PD0.10 o do histórico), e a conferência delas está no teste de cada uma.
+create function pp_teste.das_oito() returns text[] language sql immutable as $$
+  select array['auth_producao_dinheiro_sem_assinatura', 'auth_producao_ficha', 'auth_producao_le_sem_assinatura',
+               'auth_producao_papel_permite', 'auth_producao_pode', 'auth_producao_ve_espaco',
+               'auth_producao_ve_temporada', 'fn_producao_definir_funcao'];
+$$;
+
 select is((select count(*)::int from pg_proc
            where pronamespace = 'public'::regnamespace
-             and (proname like 'auth\_producao\_%' or proname = 'fn_producao_definir_funcao')
+             and proname = any (pp_teste.das_oito())
              and proconfig @> array['search_path=public, pg_temp']),
           8, 'as oito funções da entrega têm o search_path fixo');
 
 select is((select array_agg(proname::text order by proname::text) from pg_proc
            where pronamespace = 'public'::regnamespace
-             and (proname like 'auth\_producao\_%' or proname = 'fn_producao_definir_funcao') and not prosecdef),
+             and proname = any (pp_teste.das_oito()) and not prosecdef),
           array['auth_producao_papel_permite'], 'só a regra por papel roda com a permissão de quem chama; as outras sete rodam com a do dono');
 
 select is((select coalesce(array_agg(proname::text order by proname::text), '{}') from pg_proc
            where pronamespace = 'public'::regnamespace
-             and (proname like 'auth\_producao\_%' or proname = 'fn_producao_definir_funcao')
+             and proname = any (pp_teste.das_oito())
              and has_function_privilege('anon', oid, 'execute')),
           '{}'::text[], 'o visitante não executa nenhuma das oito');
 
 select is((select count(*)::int from pg_proc p
            where p.pronamespace = 'public'::regnamespace
-             and (p.proname like 'auth\_producao\_%' or p.proname = 'fn_producao_definir_funcao')
+             and p.proname = any (pp_teste.das_oito())
              and (p.proacl is null or exists (select 1 from aclexplode(p.proacl) a where a.grantee = 0))),
           0, 'nenhuma das oito fica executável por public');
 
 select is((select array_agg(proname::text order by proname::text) from pg_proc
            where pronamespace = 'public'::regnamespace
-             and (proname like 'auth\_producao\_%' or proname = 'fn_producao_definir_funcao')
+             and proname = any (pp_teste.das_oito())
              and has_function_privilege('authenticated', oid, 'execute')),
           array['auth_producao_dinheiro_sem_assinatura', 'auth_producao_le_sem_assinatura', 'auth_producao_papel_permite',
                 'auth_producao_pode', 'auth_producao_ve_espaco', 'auth_producao_ve_temporada', 'fn_producao_definir_funcao'],

@@ -28,7 +28,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/configuracoes", "Configurações"],
   ["/meu-plano", "Meu plano"],
   ["/notificacoes", "Notificações"],
-  ["/gerenciar-blog", "Blog"],
+  ["/gerenciar-blog", "Publicações"],
   ["/workspace-captador", "Meu workspace"],
   ["/workspace-proponente", "Meus projetos"],
 ];
@@ -64,6 +64,6 @@ export function tituloDaPagina(path: string): string {
   const encontrado = TITULOS
     .filter(([prefixo]) => correspondeRota(path, prefixo))
     .sort((a, b) => b[0].length - a[0].length)[0];
-  // Mesmo formato das páginas públicas ("Entrar — Jards", "Blog — Jards").
+  // Mesmo formato das páginas públicas ("Entrar — Jards", "Publicações — Jards").
   return encontrado ? `${encontrado[1]} — Jards` : "Jards";
 }

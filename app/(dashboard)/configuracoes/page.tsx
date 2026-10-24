@@ -25,6 +25,8 @@ import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { Select } from "@/components/ui/Select";
 import { FUNCOES_PRESTACAO, MODULO_LABEL, modulosDaEquipe, papelPodeUsarModulo } from "@/lib/equipe-modulos";
 import { normalizarModulos, type ModuloId } from "@/lib/modulos";
+import { PermissoesProducaoDoMembro } from "@/components/producao/PermissoesProducaoDoMembro";
+import { useFuncoesProducao } from "@/hooks/useFuncoesProducao";
 
 const MOSTRAR_VISIBILIDADE_EQUIPE = false;
 
@@ -81,8 +83,8 @@ const SETTINGS_SECTIONS: {
 
 const PLANO_LABEL: Record<string, string> = {
   gratuito: "Gratuito",
-  basico: "Básico",
-  profissional: "Profissional",
+  basico: "Starter",
+  profissional: "Pro",
 };
 
 const PAPEL_LABEL: Record<string, string> = {
@@ -124,6 +126,8 @@ export default function ConfiguracoesPage() {
   const [orgModulos, setOrgModulos] = useState<ModuloId[]>(["captacao"]);
   const [savingOrg, setSavingOrg] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+  // Funções na produção (PD0.7b): só o administrador de uma organização com a produção as lê.
+  const { funcoes: funcoesProducao, recarregar: recarregarFuncoesProducao, atualizar: atualizarFuncaoProducao } = useFuncoesProducao(organizationId, isAdmin && orgModulos.includes("producao"));
 
   useEffect(() => {
     const requestedSection = new URLSearchParams(window.location.search).get("section");
@@ -728,7 +732,7 @@ const { data: perfilData } = await (supabase as any)
             </div>
           </div>
 
-          {assinatura?.plano && assinatura.plano !== "gratuito" && (
+          {assinatura?.ehPagador && assinatura.plano !== "gratuito" && (
             <div className="flex justify-end">
               <button
                 type="button"
@@ -1002,6 +1006,15 @@ const { data: perfilData } = await (supabase as any)
                     editavel={isAdmin}
                     ocupado={salvando}
                     onChange={(modulos, funcao) => handleAlterarModulos(m.user_id, modulos, funcao)}
+                  />
+                  <PermissoesProducaoDoMembro
+                    organizationId={organizationId}
+                    membro={m}
+                    souAdmin={isAdmin}
+                    modulosDaOrganizacao={orgModulos}
+                    funcao={funcoesProducao?.[m.user_id] ?? null}
+                    recarregar={recarregarFuncoesProducao}
+                    onSaved={funcao => { atualizarFuncaoProducao(m.user_id, funcao); showSuccess("Permissões da produção atualizadas"); }}
                   />
                 </div>
                 {isAdmin ? (

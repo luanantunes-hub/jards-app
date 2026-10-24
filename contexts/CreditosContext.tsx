@@ -24,6 +24,12 @@ interface ConfigOrg {
 
 const CARENCIA_PAST_DUE_DIAS = 15;
 
+/**
+ * A assinatura da ORGANIZAÇÃO aberta, a mesma que o banco usa (fn_org_assinatura_ativa):
+ * plano, status e datas são os do perfil de quem paga (creditos.account_id), nunca os de
+ * quem está vendo. Um usuário extra (perfil "gratuito") numa organização paga vê a
+ * organização como paga.
+ */
 export interface AssinaturaInfo {
   plano: PlanTipo;
   ativa: boolean;
@@ -31,14 +37,11 @@ export interface AssinaturaInfo {
   periodoFim: string | null;
   pastDueSince: string | null;
   diasRestantesCarencia: number | null;
-}
-
-export interface ResultadoPesquisaEmpresa {
-  sucesso: boolean;
-  consumiuCredito: boolean;
-  jaSolicitada: boolean;
-  status?: string;
-  erro?: string;
+  /** Quem está vendo é quem paga: só essa pessoa gerencia a cobrança no Stripe. */
+  ehPagador: boolean;
+  /** A organização tem (ou já teve) quem pague: a linha de créditos existe. */
+  temPagador: boolean;
+  pagadorNome: string | null;
 }
 
 interface CreditosContextValue {
@@ -48,7 +51,6 @@ interface CreditosContextValue {
   loading: boolean;
   desbloquearEmpresa: (empresaId: string) => Promise<boolean>;
   consumirCredito: (empresaId: string) => Promise<boolean>;
-  solicitarPesquisaEmpresa: (empresaId: string) => Promise<ResultadoPesquisaEmpresa>;
   podeVerContatos: () => boolean;
   recarregar: () => Promise<void>;
 }
@@ -64,7 +66,6 @@ const CreditosContext = createContext<CreditosContextValue>({
   loading: true,
   desbloquearEmpresa: async () => false,
   consumirCredito: async () => false,
-  solicitarPesquisaEmpresa: async () => ({ sucesso: false, consumiuCredito: false, jaSolicitada: false }),
   podeVerContatos: () => false,
   recarregar: async () => {},
 });
@@ -96,39 +97,7 @@ export function CreditosProvider({ children }: { children: ReactNode }) {
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
-    if (user) {
-      const { data: profileData } = await (supabase as any)
-        .from("profiles")
-        .select("plano, periodo_fim, stripe_subscription_status, past_due_since")
-        .eq("id", user.id)
-        .maybeSingle();
-
-      const plano = (profileData?.plano ?? "gratuito") as PlanTipo;
-      const periodoFim = (profileData?.periodo_fim as string | null | undefined) ?? null;
-      const pastDueSince = (profileData?.past_due_since as string | null | undefined) ?? null;
-      const status = (profileData?.stripe_subscription_status ?? "inactive") as AssinaturaInfo["status"];
-      const periodoValido = !periodoFim || new Date(periodoFim).getTime() > Date.now();
-
-      // Espelha fn_org_assinatura_ativa: past_due tem 15 dias de carência
-      // contados de past_due_since, sem depender de periodo_fim (que já pode
-      // ter rolado para o período novo, cuja fatura foi a que falhou).
-      const diasEmAtraso = pastDueSince ? (Date.now() - new Date(pastDueSince).getTime()) / 86_400_000 : null;
-      const dentroDaCarencia = status === "past_due" && diasEmAtraso !== null && diasEmAtraso <= CARENCIA_PAST_DUE_DIAS;
-      const diasRestantesCarencia = dentroDaCarencia ? Math.max(0, Math.ceil(CARENCIA_PAST_DUE_DIAS - diasEmAtraso!)) : null;
-
-      setAssinatura({
-        plano,
-        ativa: plano !== "gratuito" && ((periodoValido && (status === "active" || status === "trialing")) || dentroDaCarencia),
-        status,
-        periodoFim,
-        pastDueSince,
-        diasRestantesCarencia,
-      });
-    } else {
-      setAssinatura(null);
-    }
-
-    // Carregar créditos
+    // Carregar créditos: a linha é da organização e diz quem paga (account_id).
     const { data: creditosData } = await (supabase as any)
       .from("creditos")
       .select("*")
@@ -152,6 +121,56 @@ export function CreditosProvider({ children }: { children: ReactNode }) {
         creditos_disponiveis: 0,
         usuarios_extras: 0,
       });
+    }
+
+    if (user) {
+      // A assinatura é da organização: quem decide é fn_org_assinatura_ativa, a mesma
+      // checagem de fn_desbloquear_empresa e do conector. O perfil de quem paga (colega
+      // de equipe, legível pela policy "profiles: select team members") só dá o plano,
+      // o status e as datas para mostrar.
+      const pagadorId = (creditosData?.account_id as string | null | undefined) ?? null;
+      const [ativaRes, pagadorRes] = await Promise.all([
+        (supabase as any).rpc("fn_org_assinatura_ativa", { p_organization_id: organizationId }),
+        pagadorId
+          ? (supabase as any)
+              .from("profiles")
+              .select("plano, periodo_fim, stripe_subscription_status, past_due_since, full_name")
+              .eq("id", pagadorId)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+      const pagador = pagadorRes.data;
+
+      const plano = (pagador?.plano ?? "gratuito") as PlanTipo;
+      const periodoFim = (pagador?.periodo_fim as string | null | undefined) ?? null;
+      const pastDueSince = (pagador?.past_due_since as string | null | undefined) ?? null;
+      const status = (pagador?.stripe_subscription_status ?? "inactive") as AssinaturaInfo["status"];
+      const periodoValido = !periodoFim || new Date(periodoFim).getTime() > Date.now();
+
+      // past_due tem 15 dias de carência contados de past_due_since, como no banco
+      // (sem depender de periodo_fim, que já pode ter rolado para o período novo).
+      const diasEmAtraso = pastDueSince ? (Date.now() - new Date(pastDueSince).getTime()) / 86_400_000 : null;
+      const dentroDaCarencia = status === "past_due" && diasEmAtraso !== null && diasEmAtraso <= CARENCIA_PAST_DUE_DIAS;
+      const diasRestantesCarencia = dentroDaCarencia ? Math.max(0, Math.ceil(CARENCIA_PAST_DUE_DIAS - diasEmAtraso!)) : null;
+
+      // Se a RPC falhar, espelha a regra do banco para não trancar quem paga por um erro de rede.
+      const espelhoDoBanco = plano !== "gratuito"
+        && (creditosData?.creditos_totais ?? 0) > 0
+        && ((periodoValido && (status === "active" || status === "trialing")) || dentroDaCarencia);
+
+      setAssinatura({
+        plano,
+        ativa: ativaRes.error ? espelhoDoBanco : ativaRes.data === true,
+        status,
+        periodoFim,
+        pastDueSince,
+        diasRestantesCarencia,
+        ehPagador: pagadorId !== null && pagadorId === user.id,
+        temPagador: pagadorId !== null,
+        pagadorNome: (pagador?.full_name as string | null | undefined) ?? null,
+      });
+    } else {
+      setAssinatura(null);
     }
 
     // Carregar config
@@ -231,46 +250,6 @@ export function CreditosProvider({ children }: { children: ReactNode }) {
     return true;
   }
 
-  async function solicitarPesquisaEmpresa(empresaId: string): Promise<ResultadoPesquisaEmpresa> {
-    if (!organizationId) {
-      return { sucesso: false, consumiuCredito: false, jaSolicitada: false, erro: "Organização não identificada." };
-    }
-    if (!assinatura?.ativa) {
-      return { sucesso: false, consumiuCredito: false, jaSolicitada: false, erro: "Assinatura inativa. Regularize o pagamento para continuar." };
-    }
-
-    const supabase = createClient();
-    const { data, error } = await (supabase as any).rpc("fn_solicitar_pesquisa_empresa", {
-      p_organization_id: organizationId,
-      p_empresa_id: empresaId,
-    });
-
-    if (error) {
-      console.error("Erro ao solicitar pesquisa de empresa:", error.code, error.message, error.details);
-      return {
-        sucesso: false,
-        consumiuCredito: false,
-        jaSolicitada: false,
-        erro: error.message || "Não foi possível priorizar esta busca.",
-      };
-    }
-
-    const consumiuCredito = data?.consumiu_credito === true;
-    if (consumiuCredito) {
-      setCreditos(prev => prev ? {
-        ...prev,
-        creditos_usados: prev.creditos_usados + 1,
-        creditos_disponiveis: Math.max(prev.creditos_disponiveis - 1, 0),
-      } : null);
-    }
-
-    return {
-      sucesso: data?.sucesso === true,
-      consumiuCredito,
-      jaSolicitada: data?.ja_solicitada === true,
-      status: data?.status,
-    };
-  }
 
   function podeVerContatos(): boolean {
     if (!config || !assinatura?.ativa) return false;
@@ -291,7 +270,6 @@ export function CreditosProvider({ children }: { children: ReactNode }) {
       loading,
       desbloquearEmpresa,
       consumirCredito,
-      solicitarPesquisaEmpresa,
       podeVerContatos,
       recarregar: carregarDados,
     }}>
