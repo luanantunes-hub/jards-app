@@ -3,10 +3,10 @@ import { use, useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft, Pencil, Plus, RefreshCw, Mail, Phone,
-  Users, Calendar, MoreHorizontal, FileText, ExternalLink,
-  FolderOpen, Clock, Send,
-  X, Upload, Trash2,
+  ArrowLeft, Pencil, RefreshCw, Mail, Phone,
+  Users, Calendar, CalendarClock, MoreHorizontal, FileText, ExternalLink,
+  FolderOpen, Clock,
+  Upload, Trash2,
   LayoutDashboard, MessagesSquare, RotateCw, Tag, Info, Layers,
   ChevronDown, ArrowUp, ArrowDown, Minus, Check,
 } from "lucide-react";
@@ -23,6 +23,7 @@ import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
+import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
 import { RenovarCicloModal } from "@/components/modals/RenovarCicloModal";
 import { RelationshipWorkspace } from "@/components/relationship/RelationshipWorkspace";
 import { ConcluirAtividadeModal } from "@/components/modals/ConcluirAtividadeModal";
@@ -230,11 +231,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNewAtividade, setShowNewAtividade] = useState(false);
-  const [newAtividadeNome, setNewAtividadeNome] = useState("");
-  const [newAtividadeTipo, setNewAtividadeTipo] = useState<string>("reuniao");
-  const [newAtividadeNota, setNewAtividadeNota] = useState("");
-  const [newAtividadeData, setNewAtividadeData] = useState("");
-  const [salvandoAtividade, setSalvandoAtividade] = useState(false);
   const [atividadeConcluir, setAtividadeConcluir] = useState<(Atividade & { contato: { nome: string } | null }) | null>(null);
   const [uploadandoDoc, setUploadandoDoc] = useState(false);
   const [documentoErro, setDocumentoErro] = useState<string | null>(null);
@@ -374,41 +370,6 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
 
   async function recarregarNotas() {
     try { setNotas(await buscarNotas(supabase, { coluna: "captacao_id", id })); } catch { /* a lista anterior continua na tela */ }
-  }
-
-  async function handleSalvarAtividade() {
-    if (!newAtividadeNome.trim()) return;
-    setSalvandoAtividade(true);
-
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setSalvandoAtividade(false);
-      return;
-    }
-
-    const { error } = await (supabase as any).from("atividades").insert({
-      account_id: user.id,
-      organization_id: captacao?.organization_id ?? null,
-      nome: newAtividadeNome.trim(),
-      tipo: newAtividadeTipo,
-      nota: newAtividadeNota.trim() || null,
-      data_prevista: newAtividadeData || null,
-      captacao_id: id,
-      empresa_crm_id: captacao?.empresa_crm_id || null,
-      projeto_id: captacao?.projeto_id || null,
-      feita: false,
-      calendar_sync_requested: ["reuniao", "evento"].includes(newAtividadeTipo),
-    } as any);
-
-    if (!error) {
-      setNewAtividadeNome("");
-      setNewAtividadeTipo("reuniao");
-      setNewAtividadeNota("");
-      setNewAtividadeData("");
-      setShowNewAtividade(false);
-      await fetchData();
-    }
-    setSalvandoAtividade(false);
   }
 
   async function handleToggleAtividade(atividadeId: string, feita: boolean) {
@@ -661,17 +622,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
             >
               <Pencil size={12} /> Editar
             </button>
-            <button
-              onClick={() => setShowNewAtividade(!showNewAtividade)}
-              className={`flex h-11 items-center gap-2 rounded border px-4 text-[0.75rem] font-medium transition ${
-                showNewAtividade
-                  ? "bg-white border-[#7259B5]/25 text-[#7259B5]"
-                  : "bg-white border-black/[.12] text-black/55 hover:bg-black/[.04]"
-              }`}
-            >
-              {showNewAtividade ? <X size={12} /> : <Plus size={12} />}
-              {showNewAtividade ? "Cancelar" : "Atividade"}
-            </button>
+            <DetailHeaderAction label="Nova atividade" icon={CalendarClock} onClick={() => setShowNewAtividade(true)} />
           </div>
         </div>
       </div></header>
@@ -793,98 +744,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
                 <span className="text-[0.6875rem] text-black/25 font-medium">{timelineEvents.length} eventos</span>
               </div>
 
-              {/* Formulário inline de nova atividade */}
-              {showNewAtividade && (
-                <div className="bg-white rounded border p-4 mb-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="w-7 h-7 rounded-full bg-[#7259B5] flex items-center justify-center">
-                      <Plus size={13} className="text-white" />
-                    </div>
-                    <span className="text-[0.8125rem] font-medium text-[#282525]">Nova atividade</span>
-                  </div>
-
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      value={newAtividadeNome}
-                      onChange={e => setNewAtividadeNome(e.target.value)}
-                      placeholder="Nome da atividade..."
-                      className="w-full px-3 py-2 text-[0.8125rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 focus:border-[#7259B5] transition"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-
-                    <div className="flex gap-2">
-                      {[
-                        { value: "reuniao", label: "Reunião", Icon: Users },
-                        { value: "email", label: "E-mail", Icon: Mail },
-                        { value: "telefone", label: "Telefone", Icon: Phone },
-                        { value: "linkedin", label: "LinkedIn", Icon: () => (
-                          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-                          </svg>
-                        )},
-                        { value: "outro", label: "Outro", Icon: MoreHorizontal },
-                      ].map(({ value, label, Icon }) => (
-                        <button
-                          key={value}
-                          type="button"
-                          onClick={() => setNewAtividadeTipo(value)}
-                          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-[0.6875rem] font-medium rounded border transition ${
-                            newAtividadeTipo === value
-                              ? "bg-white text-[#7259B5] border-[#7259B5]/25"
-                              : "bg-white text-black/50 border-black/10 hover:border-black/20"
-                          }`}
-                        >
-                          <Icon size={11} />
-                          {label}
-                        </button>
-                      ))}
-                    </div>
-
-                    <div className="flex gap-2">
-                      <input
-                        type="date"
-                        value={newAtividadeData}
-                        onChange={e => setNewAtividadeData(e.target.value)}
-                        className="flex-1 px-3 py-2 text-[0.75rem] border rounded focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
-                        style={{ borderColor: "rgba(13,13,13,.12)" }}
-                      />
-                    </div>
-
-                    <textarea
-                      value={newAtividadeNota}
-                      onChange={e => setNewAtividadeNota(e.target.value)}
-                      placeholder="Nota"
-                      rows={2}
-                      className="w-full px-3 py-2 text-[0.75rem] border rounded resize-none focus:outline-none focus:ring-2 focus:ring-[#7259B5]/20 transition"
-                      style={{ borderColor: "rgba(13,13,13,.12)" }}
-                    />
-
-                    <div className="flex justify-end gap-2 pt-1">
-                      <button
-                        onClick={() => setShowNewAtividade(false)}
-                        className="px-3 py-1.5 text-[0.6875rem] font-medium text-black/40 hover:text-black/60 transition"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        onClick={handleSalvarAtividade}
-                        disabled={!newAtividadeNome.trim() || salvandoAtividade}
-                        className="flex items-center gap-1.5 px-4 py-1.5 text-[0.6875rem] font-medium bg-white text-[#7259B5] border border-[#7259B5]/25 rounded hover:bg-black/[.04] transition disabled:opacity-40"
-                      >
-                        {salvandoAtividade ? (
-                          <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                        ) : (
-                          <Send size={11} />
-                        )}
-                        Salvar
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {timelineEvents.length === 0 && !showNewAtividade ? (
+              {timelineEvents.length === 0 ? (
                 <div className="bg-white rounded border p-8 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <Clock size={24} className="mx-auto text-black/15 mb-3" />
                   <p className="text-sm text-black/35">Nenhum evento registrado</p>
@@ -1141,6 +1001,17 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
           propostaAceitaId={propostas.find(p => p.status === "aceita")?.id ?? null}
           onClose={() => setFechandoPeloStatus(false)}
           onChanged={fetchData}
+        />
+      )}
+      {showNewAtividade && (
+        <NovaAtividadeModal
+          prefill={{
+            captacao_id: captacao.id,
+            empresa_crm_id: captacao.empresa_crm_id ?? undefined,
+            projeto_id: captacao.projeto_id ?? undefined,
+          }}
+          onClose={() => setShowNewAtividade(false)}
+          onSaved={() => { setShowNewAtividade(false); void fetchData(); }}
         />
       )}
       {showEditModal && (

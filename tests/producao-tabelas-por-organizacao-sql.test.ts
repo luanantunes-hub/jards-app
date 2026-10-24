@@ -63,8 +63,11 @@ test("o plano do teste de acesso bate com as verificações e tudo é desfeito",
   assert.equal(comandos.at(-1), "rollback");
 });
 
-test("a tela da negociação grava a atividade com a organização", async () => {
+test("a tela da negociação cria a atividade pela folha, que grava a organização", async () => {
   const pagina = await readFile("app/(dashboard)/captacoes/[id]/page.tsx", "utf8");
-  const insercao = /from\("atividades"\)\.insert\(\{([\s\S]*?)\} as any\)/.exec(pagina)?.[1] ?? "";
-  assert.match(insercao, /organization_id:/, "atividade sem organização some da equipe");
+  assert.doesNotMatch(pagina, /from\("atividades"\)\.insert/, "a tela não grava atividade por conta própria: quem grava é a folha");
+  assert.match(pagina, /<NovaAtividadeModal[\s\S]*?captacao_id: captacao\.id/, "a folha abre ligada à negociação");
+  const folha = await readFile("components/modals/NovaAtividadeModal.tsx", "utf8");
+  const payload = /const payload = \{([\s\S]*?)\n {4}\};/.exec(folha)?.[1] ?? "";
+  assert.match(payload, /organization_id:/, "atividade sem organização some da equipe");
 });
