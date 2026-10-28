@@ -621,14 +621,22 @@ function Dropdown({
   acaoCriar?: { label: string; onClick: () => void };
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  // Onde o campo estava quando o menu abriu: o menu é fixo na tela, então só faz sentido fechá-lo se o campo sair do lugar.
+  const ancora = useRef<{ top: number; left: number } | null>(null);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
       if (ref.current && !ref.current.contains(e.target as Node)) onClose();
     }
+    // Fecha quando algo de fora rola e leva o campo junto (o menu ficaria solto). Rolagem que não move o campo — o fim da
+    // lista "vazando" para fora, o rebote do Safari, outra lista qualquer — não pode fechar o menu enquanto se rola a lista.
     function handleScroll(e: Event) {
-      if (!ref.current?.contains(e.target as Node)) onClose();
+      if (ref.current?.contains(e.target as Node)) return;
+      const agora = ref.current?.getBoundingClientRect();
+      const antes = ancora.current;
+      if (agora && antes && Math.abs(agora.top - antes.top) < 1 && Math.abs(agora.left - antes.left) < 1) return;
+      onClose();
     }
     if (open) {
       document.addEventListener("mousedown", handleClick);
@@ -643,6 +651,7 @@ function Dropdown({
   function handleToggle() {
     const rect = ref.current?.getBoundingClientRect();
     if (!open && rect) {
+      ancora.current = { top: rect.top, left: rect.left };
       const spaceBelow = window.innerHeight - rect.bottom - 4;
       // 192 = lista (max-h-48) e 36 = atalho de criar no pé do menu, quando existe.
       setMenuStyle(spaceBelow >= Math.min((192 + (acaoCriar ? 36 : 0)) * escalaUi(), rect.top - 4)
@@ -671,7 +680,7 @@ function Dropdown({
       </button>
       {open && (
         <div className="fixed z-[999] flex flex-col overflow-hidden bg-white border rounded shadow-lg" style={{ ...menuStyle, borderColor: "rgba(13,13,13,.1)" }}>
-          <div className="max-h-48 min-h-0 overflow-y-auto">
+          <div className="max-h-48 min-h-0 overflow-y-auto overscroll-contain">
             {value && (
               <button onClick={() => { onChange(null); onClose(); }}
                 className="w-full text-left px-3 py-2 text-[0.75rem] text-[#D94E4E] hover:bg-black/[.04] transition border-b"
