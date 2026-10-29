@@ -24,6 +24,7 @@ import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { FiltroMesorregiao } from "@/components/patrocinadores/FiltroMesorregiao";
 import { lerSelecaoDaUrl } from "@/lib/filtro-mesorregiao";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
+import { carregarSetores, variantesDoSetor, type SetorFiltro } from "@/lib/setores";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type Lei = "esporte" | "ancine" | "saude";
@@ -53,7 +54,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   const [dSearch, setDSearch] = useState("");
   const [estado, setEstado] = useState("");
   const [setor, setSetor] = useState("");
-  const [setores, setSetores] = useState<string[]>([]);
+  const [setores, setSetores] = useState<SetorFiltro[]>([]);
   const [incompletas, setIncompletas] = useState(false);
   const [mesorregioes, setMesorregioes] = useState<number[]>([]);
   const chaveMesorregioes = mesorregioes.join(",");
@@ -64,8 +65,8 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   }, [search]);
 
   useEffect(() => {
-    supabase.from("empresas").select("setor").not("setor", "is", null).then(({ data }) => {
-      if (data) setSetores([...new Set((data as { setor: string | null }[]).map((r) => r.setor).filter((s): s is string => !!s))].sort());
+    carregarSetores(supabase).then((lista) => {
+      setSetores(lista);
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -86,7 +87,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
       if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`, { foreignTable: "empresas" });
       if (estado) q = q.eq("empresas.estado", estado);
       if (mesorregioes.length > 0) q = q.in("empresas.mesorregiao_id", mesorregioes);
-      if (setor) q = q.eq("empresas.setor", setor);
+      if (setor) q = q.in("empresas.setor", variantesDoSetor(setores, setor));
       if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null", { foreignTable: "empresas" });
 
       const { data, count } = await q
@@ -99,7 +100,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
     }
     void load();
     return () => { cancelled = true; };
-  }, [lei, page, dSearch, estado, setor, incompletas, chaveMesorregioes]);
+  }, [lei, page, dSearch, estado, setor, setores, incompletas, chaveMesorregioes]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const hasFilters = !!(search || estado || setor || incompletas || mesorregioes.length > 0);
@@ -130,7 +131,9 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
         <CustomDropdown
           value={setor}
           onChange={setSetor}
-          options={setores.map((s) => ({ value: s, label: s }))}
+          options={setores.map((s) => ({ value: s.label, label: s.label }))}
+          searchable
+          menuMinWidth={280}
           placeholder="Setor"
           icon={<Buildings size={13} />}
           compact
@@ -321,7 +324,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
   const [incompletas, setIncompletas] = useState(() => searchParams.get("inc") === "1");
   const [sortCol, setSortCol] = useState<SortCol>(() => (searchParams.get("sort") as SortCol) ?? "aporte_estimado");
   const [sortDir, setSortDir] = useState<"asc" | "desc">(() => (searchParams.get("dir") as "asc" | "desc") ?? "desc");
-  const [setores, setSetores] = useState<string[]>([]);
+  const [setores, setSetores] = useState<SetorFiltro[]>([]);
 
 
   // Sincroniza filtros na URL — pula o primeiro render (estado já vem da URL)
@@ -351,19 +354,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
   // Load distinct setores for dropdown
   useEffect(() => {
-    supabase
-      .from("empresas")
-      .select("setor")
-      .not("setor", "is", null)
-      .then(({ data }) => {
-        if (data) {
-          const rows = data as Array<{ setor: string | null }>;
-          const unique = [
-            ...new Set(rows.map((r) => r.setor).filter((s): s is string => !!s)),
-          ].sort();
-          setSetores(unique);
-        }
-      });
+    carregarSetores(supabase).then(setSetores);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -385,7 +376,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`);
     if (estado) q = q.eq("estado", estado);
     if (mesorregioes.length > 0) q = q.in("mesorregiao_id", mesorregioes);
-    if (setor) q = q.eq("setor", setor);
+    if (setor) q = q.in("setor", variantesDoSetor(setores, setor));
     if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null");
     if (trimestre === "T1") q = q.eq("trimestre_1", true);
     if (trimestre === "T2") q = q.eq("trimestre_2", true);
@@ -417,7 +408,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     fetchData();
     return () => { cancelled = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dSearch, estado, chaveMesorregioes, setor, trimestre, incompletas, sortCol, sortDir]);
+  }, [dSearch, estado, chaveMesorregioes, setor, setores, trimestre, incompletas, sortCol, sortDir]);
 
   async function goToPage(n: number) {
     setLoading(true);
@@ -508,7 +499,9 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
         <CustomDropdown
           value={setor}
           onChange={setSetor}
-          options={setores.map(s => ({ value: s, label: s }))}
+          options={setores.map((s) => ({ value: s.label, label: s.label }))}
+          searchable
+          menuMinWidth={280}
           placeholder="Setor"
           icon={<Buildings size={13} />}
           compact
