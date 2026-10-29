@@ -672,10 +672,12 @@ export default function DashboardPage() {
 
       <PrimeirosPassos />
 
-      <div className="flex flex-col">
+      {/* O espaço entre os blocos vem do gap, não da margem de cada bloco: a pessoa reordena
+          os blocos em Personalizar módulos, e a distância fica a mesma em qualquer ordem. */}
+      <div className="flex flex-col gap-4">
 
       {/* KPIs */}
-      {dashboardPreferences.isEnabled("kpis") && <div className="grid grid-cols-2 xl:grid-cols-5 gap-3 mb-5" style={{ order: modulePosition("kpis") }}>
+      {dashboardPreferences.isEnabled("kpis") && <div className="grid grid-cols-2 xl:grid-cols-5 gap-3" style={{ order: modulePosition("kpis") }}>
         {loading
           ? Array.from({ length: 5 }).map((_, i) => <KpiSkeleton key={i} />)
           : (
@@ -692,7 +694,7 @@ export default function DashboardPage() {
 
       {/* Prioridades do dia: regras operacionais transparentes e acionáveis */}
       {dashboardPreferences.isEnabled("priorities") && (loading ? <div style={{ order: modulePosition("priorities") }}><BlockSkeleton h={132} /></div> : (
-        <section className="mb-4 overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("priorities") }}>
+        <section className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("priorities") }}>
           <div className="flex items-center justify-between border-b px-5 py-3.5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold uppercase tracking-[.09em] text-black/30">Foco</p>
@@ -731,7 +733,7 @@ export default function DashboardPage() {
       ))}
 
       {/* Funil + Estagnadas */}
-      {(dashboardPreferences.isEnabled("funnel") || dashboardPreferences.isEnabled("risks")) && <div className={`grid gap-4 mb-4 ${dashboardPreferences.isEnabled("funnel") && dashboardPreferences.isEnabled("risks") ? "xl:grid-cols-[1fr_18.75rem]" : "grid-cols-1"}`} style={{ order: Math.min(modulePosition("funnel"), modulePosition("risks")) }}>
+      {(dashboardPreferences.isEnabled("funnel") || dashboardPreferences.isEnabled("risks")) && <div className={`grid gap-4 ${dashboardPreferences.isEnabled("funnel") && dashboardPreferences.isEnabled("risks") ? "xl:grid-cols-[1fr_18.75rem]" : "grid-cols-1"}`} style={{ order: Math.min(modulePosition("funnel"), modulePosition("risks")) }}>
 
         {/* Funil */}
         {dashboardPreferences.isEnabled("funnel") && (loading ? <BlockSkeleton h={250} /> : (
@@ -962,8 +964,8 @@ export default function DashboardPage() {
       </div>}
 
       {/* Eficácia dos canais */}
-      {dashboardPreferences.isEnabled("channelEffectiveness") && (loading ? <div className="mt-4" style={{ order: modulePosition("channelEffectiveness") }}><BlockSkeleton h={220} /></div> : (
-        <div className="mt-4 bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("channelEffectiveness") }}>
+      {dashboardPreferences.isEnabled("channelEffectiveness") && (loading ? <div style={{ order: modulePosition("channelEffectiveness") }}><BlockSkeleton h={220} /></div> : (
+        <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("channelEffectiveness") }}>
           <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Aquisição</p>
@@ -1038,8 +1040,8 @@ export default function DashboardPage() {
       ))}
 
       {/* Velocidade por captador */}
-      {dashboardPreferences.isEnabled("captadoresRanking") && (velocidadeLoading ? <div className="mt-4" style={{ order: modulePosition("captadoresRanking") }}><BlockSkeleton h={220} /></div> : (
-        <div className="mt-4 bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("captadoresRanking") }}>
+      {dashboardPreferences.isEnabled("captadoresRanking") && (velocidadeLoading ? <div style={{ order: modulePosition("captadoresRanking") }}><BlockSkeleton h={220} /></div> : (
+        <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)", order: modulePosition("captadoresRanking") }}>
           <div className="flex items-center justify-between gap-4 px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
             <div>
               <p className="text-[0.625rem] font-bold text-black/30 uppercase tracking-[.09em] mb-0.5">Velocidade</p>
