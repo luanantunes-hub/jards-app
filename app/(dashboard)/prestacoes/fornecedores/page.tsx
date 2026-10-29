@@ -37,7 +37,7 @@ function ResumoAlertas({ alertas }: { alertas: AlertaFornecedor[] }) {
   return (
     <p className="flex items-start gap-1.5 text-[0.6875rem] text-[#B23B3B]" title={graves.map(a => a.texto).join("\n")}>
       <AlertTriangle size={12} className="mt-0.5 shrink-0" aria-hidden />
-      <span className="min-w-0 break-words">{graves[0].texto}{graves.length > 1 ? ` (+${graves.length - 1})` : ""}</span>
+      <span className="line-clamp-2">{graves[0].texto}{graves.length > 1 ? ` (+${graves.length - 1})` : ""}</span>
     </p>
   );
 }

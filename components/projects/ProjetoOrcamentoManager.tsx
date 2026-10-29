@@ -378,7 +378,7 @@ export function ProjetoOrcamentoManager({
                 {itens.map(item => (
                   <tr key={item.id} className="border-b last:border-0 hover:bg-black/[.015]" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                     <td className="px-4 py-3 font-semibold text-black/75">{item.rubrica}</td>
-                    <td className="max-w-[12.5rem] min-w-0 break-words px-4 py-3 text-black/40">{item.descricao || "—"}</td>
+                    <td className="max-w-[12.5rem] truncate px-4 py-3 text-black/40">{item.descricao || "—"}</td>
                     <td className="px-4 py-3 text-right font-semibold tabular-nums text-black/65">{fmt(item.valor)}</td>
                     {activeCota ? (
                       <td className="px-4 py-3 text-right">

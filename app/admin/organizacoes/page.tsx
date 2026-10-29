@@ -217,7 +217,7 @@ export default function AdminOrganizacoesPage() {
                   {MODULOS_COM_CONTRATO.map(modulo => {
                     const motivo = doModulo(o, modulo).contrato?.cortesia_motivo;
                     return motivo ? (
-                      <p key={modulo} className="mt-0.5 break-words text-[0.6875rem] text-black/40">{MODULO_LABEL[modulo]}: {motivo}</p>
+                      <p key={modulo} className="mt-0.5 line-clamp-1 text-[0.6875rem] text-black/40">{MODULO_LABEL[modulo]}: {motivo}</p>
                     ) : null;
                   })}
                   {/* As colunas dos módulos só cabem a partir de sm: no celular as situações vêm aqui, com o nome do módulo. */}

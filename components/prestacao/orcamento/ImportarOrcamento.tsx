@@ -267,7 +267,7 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
                 <tr key={i} className="border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                   <td className="px-4 py-2">
                     <p className="text-black/80">{linha.nome}</p>
-                    {linha.descricao && <p className="max-w-[16rem] min-w-0 break-words text-[0.625rem] text-black/40">{linha.descricao}</p>}
+                    {linha.descricao && <p className="max-w-[16rem] truncate text-[0.625rem] text-black/40">{linha.descricao}</p>}
                   </td>
                   <td className="px-4 py-2 text-black/50">{linha.etapa ?? "—"}</td>
                   <td className={`px-4 py-2 ${linha.grupo_custo ? "text-[#684DB0]" : "text-black/30"}`}>{linha.grupo_custo ? rotuloGrupo(linha.grupo_custo, regime) : "Sem grupo"}</td>

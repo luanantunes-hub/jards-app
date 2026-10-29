@@ -294,7 +294,7 @@ export default function ExtratoPage() {
                   <tr key={l.id} className="border-b last:border-0 hover:bg-black/[.015]" style={LINHA}>
                     <td className="whitespace-nowrap px-4 py-2 tabular-nums text-black/55">{dataCurta(l.data)}</td>
                     <td className="max-w-[28rem] px-4 py-2">
-                      <p className="min-w-0 break-words text-black/80" title={l.historico}>{l.historico || "—"}</p>
+                      <p className="truncate text-black/80" title={l.historico}>{l.historico || "—"}</p>
                       {l.numero_documento && <p className="min-w-0 break-words text-[0.625rem] text-black/35">Doc. {l.numero_documento}</p>}
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-black/50">{rotuloCategoria(l.categoria)}</td>

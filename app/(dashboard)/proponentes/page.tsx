@@ -336,7 +336,7 @@ export default function ProponentesPage() {
                               <div className="min-w-0">
                                 <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight break-words">{p.nome}</p>
                                 {p.descricao && (
-                                  <p className="text-[0.6875rem] text-black/35 break-words mt-0.5">{p.descricao}</p>
+                                  <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
                                 )}
                               </div>
                             </div>
@@ -380,7 +380,7 @@ export default function ProponentesPage() {
                           </td>
 
                           <td className="px-4 py-3.5">{p.cnpj ? <span className="text-[0.6875rem] font-mono text-black/45">{p.cnpj}</span> : <span className="text-black/20">—</span>}</td>
-                          <td className="px-4 py-3.5">{p.site ? <a href={p.site} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[0.625rem] text-black/40 hover:text-[#7259B5]" onClick={e=>e.stopPropagation()}><ExternalLink size={11}/><span className="min-w-0 break-words">{p.site.replace(/^https?:\/\//, "")}</span></a> : <span className="text-black/20">—</span>}</td>
+                          <td className="px-4 py-3.5">{p.site ? <a href={p.site} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[0.625rem] text-black/40 hover:text-[#7259B5]" onClick={e=>e.stopPropagation()}><ExternalLink size={11}/><span className="truncate">{p.site.replace(/^https?:\/\//, "")}</span></a> : <span className="text-black/20">—</span>}</td>
                           <td className="px-4 py-3.5 text-[0.625rem] tabular-nums text-black/35 whitespace-nowrap">{fmtDate(p.created_at)}</td>
                           <td className="px-4 py-3.5 text-[0.625rem] tabular-nums text-black/35 whitespace-nowrap">{fmtDate(p.updated_at)}</td>
 

@@ -366,6 +366,9 @@ export default function ProjetosPage() {
                             <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} size="sm" semFundo />
                             <div className="min-w-0">
                               <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight break-words">{p.nome}</p>
+                              {p.descricao && (
+                                <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
+                              )}
                             </div>
                           </div>
                         </td>

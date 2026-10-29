@@ -1660,8 +1660,8 @@ function AtividadesTable({ atividades, loading, tab, savingActivityId, onToggle,
         <td className="px-4 py-3"><span className={`flex items-center gap-1 whitespace-nowrap text-[0.6875rem] font-medium tabular-nums ${deadline.tom}`}>{deadline.alerta && <Clock size={12} strokeWidth={1.75} role="img" aria-label={deadline.alerta.rotulo} className="shrink-0" style={{ color: deadline.alerta.cor }} />}{deadline.label}</span>{a.hora_inicio && <span className="mt-0.5 block text-[0.59375rem] text-black/25">{a.hora_inicio.slice(0,5)}{a.hora_fim ? ` — ${a.hora_fim.slice(0,5)}` : ""}</span>}</td>
         <td className="px-4 py-3 text-[0.6875rem] tabular-nums text-black/40">{duration(a)}</td><td className="px-4 py-3"><PrioBadge prio={a.prioridade} size="sm" /></td>
         <td className="px-4 py-3">{a.responsavel?.full_name ? <span className="text-[0.6875rem] font-medium text-black/55">{a.responsavel.full_name}</span> : <span className="flex items-center gap-1 whitespace-nowrap text-[0.6875rem] font-medium text-black/35"><UserX size={12} strokeWidth={1.75} aria-hidden="true" className="shrink-0 text-[#B07A14]" />Sem responsável</span>}</td>
-        <td className="px-4 py-3"><span className="block min-w-0 break-words text-[0.6875rem] text-black/45">{a.resultado || "—"}</span></td><td className="px-4 py-3"><span className="block min-w-0 break-words text-[0.6875rem] text-black/45">{a.projeto?.nome ?? a.captacao?.projeto?.nome ?? "—"}</span></td>
-        <td className="px-4 py-3"><span className="block min-w-0 break-words text-[0.65625rem] text-black/35" title={a.nota ?? undefined}>{a.nota || "—"}</span></td>
+        <td className="px-4 py-3"><span className="block max-w-[8.4375rem] truncate text-[0.6875rem] text-black/45">{a.resultado || "—"}</span></td><td className="px-4 py-3"><span className="block min-w-0 break-words text-[0.6875rem] text-black/45">{a.projeto?.nome ?? a.captacao?.projeto?.nome ?? "—"}</span></td>
+        <td className="px-4 py-3"><span className="block max-w-[12.8125rem] truncate text-[0.65625rem] text-black/35" title={a.nota ?? undefined}>{a.nota || "—"}</span></td>
       </tr>;
     })}</tbody>
   </ManagedTable></div>;

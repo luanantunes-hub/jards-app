@@ -377,7 +377,7 @@ export default function ObjetoPage() {
                     <tr key={meta.id} className="align-top transition hover:bg-black/[.02]">
                       <td className="px-4 py-3">
                         <p className="text-black/80">{meta.descricao}</p>
-                        {meta.justificativa && <p className="mt-0.5 break-words text-[0.6875rem] text-black/45">{meta.justificativa}</p>}
+                        {meta.justificativa && <p className="mt-0.5 line-clamp-2 text-[0.6875rem] text-black/45">{meta.justificativa}</p>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-black/70">{quantidade(meta.previsto, meta.unidade)}</td>
                       <td className="whitespace-nowrap px-4 py-3 text-right text-black/70"><Resultado meta={meta} resumo={resumo} /></td>

@@ -254,7 +254,7 @@ export function ProducaoNoCmd({ prestacaoId, regime, modalidade, metas, execucao
                     <td className="whitespace-nowrap px-4 py-2.5 tabular-nums text-black/75">{rotuloDaCompetencia(p.competencia)}</td>
                     <td className="px-4 py-2.5 text-black/70">
                       {meta ? meta.descricao : <span className="text-black/30">Sem meta</span>}
-                      {p.observacoes && <p className="mt-0.5 break-words text-[0.6875rem] text-black/45">{p.observacoes}</p>}
+                      {p.observacoes && <p className="mt-0.5 line-clamp-2 text-[0.6875rem] text-black/45">{p.observacoes}</p>}
                     </td>
                     <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold tabular-nums text-[#282525]">{quantidade(p.quantidade, meta?.unidade ?? null)}</td>
                     <td className="whitespace-nowrap px-4 py-2.5 text-[0.6875rem] text-black/55">{p.protocolo ?? <span className="text-black/30">—</span>}</td>
