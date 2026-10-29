@@ -25,9 +25,13 @@ export const INICIO_DO_MODULO: Record<ModuloId, string> = {
   producao: "/producoes",
 };
 
-/** Módulo em construção aparece só para a organização que já o tem. */
-export function moduloVisivel(modulo: ModuloId, modulosOrganizacao: readonly ModuloId[]): boolean {
-  return !MODULOS_EM_CONSTRUCAO.includes(modulo) || modulosOrganizacao.includes(modulo);
+/**
+ * Módulo em construção aparece só para a organização que já o tem e, no
+ * seletor, para o super admin, que testa o módulo antes de ele abrir para os
+ * clientes (o banco já deixa o super admin usar qualquer módulo).
+ */
+export function moduloVisivel(modulo: ModuloId, modulosOrganizacao: readonly ModuloId[], superAdmin = false): boolean {
+  return superAdmin || !MODULOS_EM_CONSTRUCAO.includes(modulo) || modulosOrganizacao.includes(modulo);
 }
 
 const PADRAO: readonly ModuloId[] = ["captacao"];
