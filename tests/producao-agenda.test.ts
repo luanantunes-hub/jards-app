@@ -104,3 +104,22 @@ test("Hoje: opção vencida ou vencendo, e as próximas datas", async () => {
   assert.deepEqual(pendenciasDeHoje(lista, "2026-10-29").map(p => [p.tipo, p.data.id]), [["opcao_vencida", "vencida"], ["opcao_vencendo", "vencendo"]]);
   assert.deepEqual(proximasDatas(lista, "2026-10-29", 3).map(item => item.id), ["confirmada", "vencida", "vencendo"]);
 });
+
+test("mudar a situação: só a opção guarda ordem; as outras limpam", async () => {
+  const { mudancaDeSituacao } = await import("../lib/producao/agenda");
+  assert.deepEqual(mudancaDeSituacao("confirmada"), { situacao: "confirmada", opcao_ordem: null, opcao_ate: null });
+  assert.deepEqual(mudancaDeSituacao("opcao"), { situacao: "opcao", opcao_ordem: 1, opcao_ate: null });
+  assert.equal(mudancaDeSituacao("cancelada").opcao_ordem, null);
+});
+
+test("copiar a temporada anda todas as datas o mesmo tanto, inclusive as de vários dias", async () => {
+  const { copiarDatas, diasEntre } = await import("../lib/producao/agenda");
+  assert.equal(diasEntre("2026-11-05", "2027-11-05"), 365);
+  const copia = copiarDatas([
+    { data: "2026-11-07", data_fim: null, tipo: "apresentacao", uf: "RS" },
+    { data: "2026-11-05", data_fim: "2026-11-06", tipo: "montagem", uf: null },
+  ], "2027-03-01");
+  // A primeira data (05/11) vai para 01/03; a outra, o mesmo tanto depois.
+  assert.deepEqual(copia.map(item => [item.data, item.data_fim]), [["2027-03-03", null], ["2027-03-01", "2027-03-02"]]);
+  assert.deepEqual(copiarDatas([], "2027-03-01"), []);
+});

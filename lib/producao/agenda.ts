@@ -204,3 +204,33 @@ export function proximasDatas(datas: readonly DataDaAgenda[], hoje: string, quan
     .sort((a, b) => a.data.localeCompare(b.data))
     .slice(0, quantas);
 }
+
+// ─── Mudar a situação e copiar a temporada (PD1.4) ──────────────────────────
+
+/** O que gravar ao mudar a situação de uma data: só a opção guarda ordem e prazo (o banco confere). */
+export function mudancaDeSituacao(nova: SituacaoDaData): { situacao: SituacaoDaData; opcao_ordem: number | null; opcao_ate: null } {
+  return { situacao: nova, opcao_ordem: nova === "opcao" ? 1 : null, opcao_ate: null };
+}
+
+/** Quantos dias separam duas datas AAAA-MM-DD (b − a). */
+export function diasEntre(a: string, b: string): number {
+  return Math.round((instante(b) - instante(a)) / DIA_EM_MS);
+}
+
+export type DataParaCopiar = Pick<DataDaAgenda, "data" | "data_fim" | "tipo" | "uf">;
+
+/**
+ * As datas de uma temporada copiadas para um começo novo: cada uma anda o mesmo
+ * tanto de dias que a primeira. Nascem como opção, sem prazo: a situação não se copia.
+ */
+export function copiarDatas(datas: readonly DataParaCopiar[], novoInicio: string): { data: string; data_fim: string | null; tipo: TipoData; uf: string | null }[] {
+  if (datas.length === 0) return [];
+  const primeira = datas.reduce((menor, item) => (item.data < menor ? item.data : menor), datas[0].data);
+  const deslocamento = diasEntre(primeira, novoInicio);
+  return datas.map(item => ({
+    data: somarDias(item.data, deslocamento),
+    data_fim: item.data_fim ? somarDias(item.data_fim, deslocamento) : null,
+    tipo: item.tipo,
+    uf: item.uf,
+  }));
+}
