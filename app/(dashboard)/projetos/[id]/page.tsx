@@ -10,6 +10,8 @@ import { EditarObjetivoModal } from "@/components/modals/EditarObjetivoModal";
 import { NovoResultadoModal, type EditDataResultado } from "@/components/modals/NovoResultadoModal";
 import { CotasProjetoManager, type VendaPatrocinioComEmpresa } from "@/components/CotasProjetoManager";
 import { PROJECT_ICON_COLORS, PROJECT_ICON_OPTIONS, ProjectIdentity } from "@/components/ui/ProjectIdentity";
+import { AbrirProducaoBotao } from "@/components/producao/AbrirProducaoBotao";
+import { podeAbrirProducao } from "@/lib/producao/abrir";
 import { TextoRecolhivel } from "@/components/ui/TextoRecolhivel";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { BarraCaptacao, ICONE_CAPTACAO, Indicador, MARCA_CAPTACAO } from "@/components/ui/IndicadoresFinanceiros";
@@ -727,6 +729,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
             >
               <Pencil size={14} /> Editar
             </button>
+            <AbrirProducaoBotao projetoId={projeto.id} projetoNome={projeto.nome} organizationId={projeto.organization_id} elegivel={podeAbrirProducao({ vendas: vendasPatrocinio.length, inscricoesAprovadas: inscricoes.filter(item => item.status === "aprovado").length })} />
           </div>
         </div>
 

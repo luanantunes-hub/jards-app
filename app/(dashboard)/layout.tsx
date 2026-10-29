@@ -439,7 +439,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <OrganizationContext.Provider value={{ organizationId, organizationName: org.nome, papel: papelAtual }}>
+    <OrganizationContext.Provider value={{ organizationId, organizationName: org.nome, papel: papelAtual, usaProducao: modulosCarregados && modulosOrg.includes("producao") && modulosUser.includes("producao") }}>
       <DeleteConfirmProvider>
       <CreditosProvider>
       <EtiquetasProvider>

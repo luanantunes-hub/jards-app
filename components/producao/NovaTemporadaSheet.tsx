@@ -13,16 +13,19 @@ const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
 
 /** Cadastro de uma temporada: o essencial numa lista direta (tipo, formato, lado e nome). */
-export function NovaTemporadaSheet({ organizationId, tipoInicial = "show", onClose, onCreated }: {
+export function NovaTemporadaSheet({ organizationId, tipoInicial = "show", projetoId, tituloInicial = "", onClose, onCreated }: {
   organizationId: string;
   tipoInicial?: TipoProducao;
+  /** Liga a temporada a um projeto (o "Abrir produção" do projeto). */
+  projetoId?: string;
+  tituloInicial?: string;
   onClose: () => void;
   onCreated: (temporadaId: string) => void;
 }) {
   const [tipo, setTipo] = useState<TipoProducao>(tipoInicial);
   const [formato, setFormato] = useState<FormatoTemporada>(tipoDeProducao(tipoInicial).formatos[0]);
   const [lado, setLado] = useState<LadoDaTemporada>("circula");
-  const [titulo, setTitulo] = useState("");
+  const [titulo, setTitulo] = useState(tituloInicial);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -41,7 +44,7 @@ export function NovaTemporadaSheet({ organizationId, tipoInicial = "show", onClo
     setErro(null);
     const { data, error } = await clienteDaProducao(createClient())
       .from("producao_temporadas")
-      .insert({ organization_id: organizationId, tipo, formato, lado, titulo: titulo.trim() })
+      .insert({ organization_id: organizationId, tipo, formato, lado, titulo: titulo.trim(), ...(projetoId ? { projeto_id: projetoId } : {}) })
       .select("id")
       .single();
     setSalvando(false);
