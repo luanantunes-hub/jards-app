@@ -6,6 +6,8 @@ import { Eye, EyeOff, ArrowRight, Mail, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AuthShell } from "@/components/auth/AuthShell";
 import { ObliqueStrategyCard } from "@/components/auth/ObliqueStrategyCard";
+import { destinoInterno } from "@/lib/destino-interno";
+import { lembrarOrganizacaoAtual, organizacaoDoConvite } from "@/lib/convite-sessao";
 
 function PasswordResetModal({
   email,
@@ -122,13 +124,6 @@ async function contaSemSenha(email: string): Promise<boolean> {
   }
 }
 
-// Só caminhos do próprio site: "?next=https://outro.site" ou "//outro.site"
-// levariam a pessoa para fora depois do login.
-function destinoInterno(next: string | null) {
-  if (!next || !next.startsWith("/") || next.startsWith("//") || next.startsWith("/\\")) return "/dashboard";
-  return next;
-}
-
 function LoginForm() {
   const searchParams = useSearchParams();
   const next = destinoInterno(searchParams.get("next"));
@@ -174,7 +169,7 @@ function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data: entrada, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       if (error.message === "Invalid login credentials") {
@@ -196,12 +191,10 @@ function LoginForm() {
     }
 
     // Convite de equipe ainda pendente (conta criada por outro caminho que não o link do convite): aceita agora,
-    // para a pessoa entrar na equipe. Não impede o login se falhar.
-    try {
-      await supabase.rpc("accept_my_organization_invitations");
-    } catch {
-      // o aceite também acontece pelo link do convite e pela redefinição de senha
-    }
+    // para a pessoa entrar na equipe. Falhar aqui não impede o login. Quando aceitou algum convite, o app abre a
+    // organização do convite, e não a própria que a conta ganha ao ser criada.
+    const { data: aceitos } = await supabase.rpc("accept_my_organization_invitations");
+    if (typeof aceitos === "number" && aceitos > 0) lembrarOrganizacaoAtual(organizacaoDoConvite(entrada.user));
 
     window.location.href = next;
   }

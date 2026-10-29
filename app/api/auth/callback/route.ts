@@ -13,8 +13,8 @@ export async function GET(request: Request) {
 
   // Convite de equipe (inviteUserByEmail): o Supabase devolve a sessão no fragmento do endereço (#access_token=...),
   // que o servidor não lê, e sem "code". A tela /aceitar-convite lê o fragmento, pede a senha e aceita o convite.
-  // O navegador leva o fragmento junto no redirecionamento. Erros do provedor (?error=) seguem para o login.
-  if (!code && !searchParams.get("error")) {
+  // O navegador leva o fragmento junto no redirecionamento. Erros do provedor (?error=, ?error_code=) seguem para o login.
+  if (!code && !searchParams.get("error") && !searchParams.get("error_code") && !searchParams.get("error_description")) {
     const destinoDoConvite = next.startsWith("/") ? next : "/dashboard";
     return NextResponse.redirect(`${origin}/aceitar-convite?next=${encodeURIComponent(destinoDoConvite)}`);
   }

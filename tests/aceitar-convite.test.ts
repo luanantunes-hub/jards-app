@@ -22,9 +22,11 @@ test("sem next, o destino é o dashboard; next de fora do site é descartado", a
   );
 });
 
-test("erro devolvido pelo provedor (?error=) continua indo para o login", async () => {
-  const resposta = await volta("?error=access_denied&error_code=otp_expired&next=%2Fconfiguracoes");
-  assert.equal(resposta.headers.get("location"), "https://app.jards.com.br/login?error=auth_callback_failed");
+test("erro devolvido pelo provedor (?error=, ?error_code=) continua indo para o login", async () => {
+  for (const consulta of ["?error=access_denied&error_code=otp_expired&next=%2Fconfiguracoes", "?error_code=otp_expired", "?error_description=link+expirado"]) {
+    const resposta = await volta(consulta);
+    assert.equal(resposta.headers.get("location"), "https://app.jards.com.br/login?error=auth_callback_failed", consulta);
+  }
 });
 
 test("a tela de criar senha é pública no proxy e o login aceita convites pendentes", async () => {
@@ -36,6 +38,7 @@ test("a tela de criar senha é pública no proxy e o login aceita convites pende
   assert.ok(login.indexOf("accept_my_organization_invitations") > login.indexOf("signInWithPassword"));
 
   const pagina = await readFile("app/aceitar-convite/page.tsx", "utf8");
-  assert.ok(pagina.includes('supabase.auth.updateUser({ password: senha })'));
-  assert.ok(pagina.indexOf("updateUser") < pagina.indexOf("accept_my_organization_invitations"), "cria a senha e só então aceita");
+  assert.ok(pagina.includes("estabelecerSessaoDoConvite("), "a sessão vem dos tokens do fragmento (tests/convite-sessao.test.ts roda isso contra o cliente real)");
+  assert.ok(pagina.indexOf("auth.updateUser") < pagina.lastIndexOf("await entrarNaEquipe()"), "cria a senha e só então aceita");
+  assert.ok(pagina.includes('rpc("accept_my_organization_invitations")'));
 });

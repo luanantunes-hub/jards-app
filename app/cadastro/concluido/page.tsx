@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { destinoInterno } from "@/lib/destino-interno";
 import { consentiuMedicao } from "@/lib/origem-cadastro";
 import { esperarTagDoGoogle, registrarCadastroNoGoogleAds } from "@/lib/conversao-google-ads";
 
@@ -11,7 +12,7 @@ import { esperarTagDoGoogle, registrarCadastroNoGoogleAds } from "@/lib/conversa
 export default function CadastroConcluidoPage() {
   useEffect(() => {
     const next = new URLSearchParams(window.location.search).get("next");
-    const destino = next?.startsWith("/") ? next : "/dashboard?onboarding=1";
+    const destino = destinoInterno(next, "/dashboard?onboarding=1");
 
     (async () => {
       try {

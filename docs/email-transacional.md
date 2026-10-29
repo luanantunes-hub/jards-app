@@ -57,7 +57,7 @@ Use endereços reais diferentes e valide:
 1. cadastro novo recebe confirmação e só entra depois de confirmar;
 2. “esqueci minha senha” abre `/nova-senha` e permite trocar a senha;
 3. senha alterada gera aviso de segurança;
-4. convite de membro chega, cria a senha e ocupa a vaga reservada;
+4. convite de membro chega e o link abre `/aceitar-convite`, que pede a senha. Depois de criá-la, o convite sai de `pending` para `accepted` em `organization_invitations` e a pessoa abre a organização que convidou (não a própria que a conta ganha ao ser criada). Quem confirmou o e-mail antes dessa tela existir usa "Esqueci minha senha", ou entra com e-mail e senha: o login também aceita convites pendentes;
 5. ao marcar um patrocinador solicitado como “Detalhe disponível”, o solicitante recebe o aviso uma única vez;
 6. confirme no painel do Resend os estados `delivered`, `bounced` e `complained`.
 
