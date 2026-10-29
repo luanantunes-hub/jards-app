@@ -140,6 +140,11 @@ test("módulo em construção fica escondido até a organização tê-lo", () =>
   assert.equal(moduloVisivel("captacao", []), true);
 });
 
+test("o super admin vê o módulo em construção no seletor, para testar", () => {
+  assert.equal(moduloVisivel("producao", ["captacao"], true), true);
+  assert.equal(moduloVisivel("producao", ["captacao"], false), false);
+});
+
 const VINCULO_CAPTACAO: VinculoModulos = { modulosOrganizacao: ["captacao"], modulosMembro: ["captacao"] };
 const VINCULO_PRESTACAO: VinculoModulos = { modulosOrganizacao: ["captacao", "prestacao"], modulosMembro: ["prestacao"] };
 const VINCULO_PRODUCAO: VinculoModulos = { modulosOrganizacao: ["captacao", "producao"], modulosMembro: ["producao"] };
