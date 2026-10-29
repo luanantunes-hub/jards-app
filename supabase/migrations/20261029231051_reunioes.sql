@@ -1,3 +1,6 @@
+-- Aplicada em produção em 29/10/2026 (versão 20261029231051), sem os `drop policy if exists`: em tabelas novas
+-- eles não faziam nada, e o conector do banco recusa script com DROP. O arquivo mantém os DROPs só para poder
+-- reaplicar em um banco que já tenha as tabelas.
 -- Feature "Reuniões": bot (Vexa self-hosted) entra numa reunião de Google Meet ou
 -- Microsoft Teams, grava e transcreve com timestamp. Consulta só depois da reunião
 -- (sem visualização ao vivo) — ver planejamento na conversa com o time de produto.
