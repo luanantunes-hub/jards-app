@@ -68,8 +68,16 @@ export default function CadastroPage({ searchParams }: { searchParams: Promise<{
       return;
     }
 
-    // E-mail já cadastrado volta sem identidade: não é cadastro novo.
-    if (data.user?.identities?.length) await registrarCadastroNoGoogleAds(email);
+    // Com a confirmação de e-mail ligada, o Supabase responde a um e-mail já cadastrado como se fosse
+    // um cadastro novo (sem erro, sem identidade) e não envia nada. Sem este aviso a tela dizia
+    // "enviamos o link" para um e-mail que nunca chega.
+    if (data.user && !data.user.identities?.length) {
+      setError("Este e-mail já possui uma conta. Entre ou redefina sua senha.");
+      setLoading(false);
+      return;
+    }
+
+    if (data.user) await registrarCadastroNoGoogleAds(email);
 
     if (data.session) {
       window.location.href = paraPrestacao ? DESTINO_PRESTACAO : "/dashboard";
