@@ -7,6 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { Select } from "@/components/ui/Select";
+import { mostraFiltro, opcoesDoFiltro, passaNoFiltro, TODOS, type Marcador } from "@/lib/filtros-do-funil";
 import type { StatusEdital } from "@/lib/supabase/types";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -196,6 +198,9 @@ export default function EditaisInscritosPage() {
   const [search, setSearch]             = useState("");
   const [dSearch, setDSearch]           = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusEdital | "todos">("todos");
+  const [filtroResponsavel, setFiltroResponsavel] = useState(TODOS);
+  const [filtroLei, setFiltroLei] = useState(TODOS);
+  const [filtroProjeto, setFiltroProjeto] = useState(TODOS);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [cicloFiltro, setCicloFiltro] = useState<string>("atual");
@@ -321,8 +326,23 @@ export default function EditaisInscritosPage() {
     ? editais.filter(e => !idsComRenovacaoMaisNova.has(e.id))
     : editais.filter(e => e.ciclo_ano === Number(cicloFiltro));
 
-  const filtered = editaisVisiveis.filter((e) => {
-    if (statusFilter !== "todos" && e.status !== statusFilter) return false;
+  // Busca, responsável, tipo de patrocínio e projeto valem nas três visões. O
+  // status só na lista e no potencial: no kanban as colunas já são os status.
+  const responsavelDaInscricao = (e: EditalInscrito): Marcador[] => {
+    const chave = e.responsavel_id ?? e.responsavel_nome;
+    if (!chave) return [];
+    const agencia = e.responsavel_tipo === "agencia";
+    return [{ valor: `${agencia ? "agencia" : "membro"}:${chave}`, nome: `${e.responsavel_nome ?? "Sem nome"}${agencia ? " (agência)" : ""}` }];
+  };
+  const leiDaInscricao = (e: EditalInscrito): Marcador[] => e.lei ? [{ valor: e.lei, nome: leiOptions.find(option => option.status === e.lei)?.label ?? e.lei }] : [];
+  const projetoDaInscricao = (e: EditalInscrito): Marcador[] => e.projeto_id ? [{ valor: e.projeto_id, nome: e.projetos_crm?.nome ?? "Projeto sem nome" }] : [];
+  const opcoesResponsavel = opcoesDoFiltro(editaisVisiveis, responsavelDaInscricao, "Sem responsável");
+  const opcoesLei = opcoesDoFiltro(editaisVisiveis, leiDaInscricao, "Sem tipo de patrocínio");
+  const opcoesProjeto = opcoesDoFiltro(editaisVisiveis, projetoDaInscricao, "Sem projeto");
+
+  const nosFiltros = editaisVisiveis.filter((e) => {
+    if (!passaNoFiltro(e, filtroResponsavel, responsavelDaInscricao) || !passaNoFiltro(e, filtroLei, leiDaInscricao)
+      || !passaNoFiltro(e, filtroProjeto, projetoDaInscricao)) return false;
     if (!dSearch.trim()) return true;
     const s       = dSearch.toLowerCase();
     const empresa = e.empresas_crm?.nome ?? e.empresas?.nome ?? "";
@@ -331,6 +351,15 @@ export default function EditaisInscritosPage() {
     const lei = leiOptions.find(option => option.status === e.lei)?.label ?? e.lei ?? "";
     return empresa.toLowerCase().includes(s) || projeto.toLowerCase().includes(s) || responsavel.toLowerCase().includes(s) || lei.toLowerCase().includes(s);
   });
+  const filtraStatus = view !== "kanban";
+  const filtered = filtraStatus && statusFilter !== "todos" ? nosFiltros.filter(e => e.status === statusFilter) : nosFiltros;
+
+  const filtrosAtivos = Boolean(search) || cicloFiltro !== "atual" || (filtraStatus && statusFilter !== "todos")
+    || filtroResponsavel !== TODOS || filtroLei !== TODOS || filtroProjeto !== TODOS;
+  function limparFiltros() {
+    setSearch(""); setStatusFilter("todos"); setCicloFiltro("atual");
+    setFiltroResponsavel(TODOS); setFiltroLei(TODOS); setFiltroProjeto(TODOS);
+  }
 
   function toggleSort(key: string) {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -360,7 +389,7 @@ export default function EditaisInscritosPage() {
   }) : filtered;
 
   const byStatus = Object.fromEntries(
-    kanbanCols.map((st) => [st, editaisVisiveis.filter((e) => e.status === st)])
+    kanbanCols.map((st) => [st, filtered.filter((e) => e.status === st)])
   ) as Record<StatusEdital, EditalInscrito[]>;
 
   const countByStatus = (st: StatusEdital) => editais.filter((e) => e.status === st).length;
@@ -567,11 +596,33 @@ export default function EditaisInscritosPage() {
             {cicloFiltro === "atual" ? "Ciclo atual" : cicloFiltro === "todos" ? "Todos os ciclos" : `Ciclo ${cicloFiltro}`}
             <ChevronDown size={11} className="opacity-40" />
           </button>
-          <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
-          <SegmentedControl value={statusFilter} onChange={setStatusFilter} ariaLabel="Filtrar inscrições por status" options={statusFilterOptions} />
-          {(search || statusFilter !== "todos" || cicloFiltro !== "atual") && (
-            <button onClick={() => { setSearch(""); setStatusFilter("todos"); setCicloFiltro("atual"); }} className="flex h-9 shrink-0 items-center gap-1.5 rounded border border-black/[.12] bg-white px-3 text-xs font-semibold text-black/50 transition hover:bg-black/[.04]">
-              <X size={12} /> Limpar
+          {filtraStatus && (
+            <>
+              <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
+              <SegmentedControl value={statusFilter} onChange={setStatusFilter} ariaLabel="Filtrar inscrições por status" options={statusFilterOptions} />
+            </>
+          )}
+          {mostraFiltro(opcoesResponsavel, filtroResponsavel) && (
+            <Select block={false} aria-label="Filtrar por responsável" value={filtroResponsavel} onChange={event => setFiltroResponsavel(event.target.value)} className="h-9 shrink-0 pl-3 text-black/60">
+              <option value={TODOS}>Todos os responsáveis</option>
+              {opcoesResponsavel.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
+            </Select>
+          )}
+          {mostraFiltro(opcoesLei, filtroLei) && (
+            <Select block={false} aria-label="Filtrar por tipo de patrocínio" value={filtroLei} onChange={event => setFiltroLei(event.target.value)} className="h-9 shrink-0 pl-3 text-black/60">
+              <option value={TODOS}>Todos os tipos</option>
+              {opcoesLei.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
+            </Select>
+          )}
+          {mostraFiltro(opcoesProjeto, filtroProjeto) && (
+            <Select block={false} aria-label="Filtrar por projeto" value={filtroProjeto} onChange={event => setFiltroProjeto(event.target.value)} className="h-9 max-w-[13.75rem] shrink-0 truncate pl-3 text-black/60">
+              <option value={TODOS}>Todos os projetos</option>
+              {opcoesProjeto.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
+            </Select>
+          )}
+          {filtrosAtivos && (
+            <button type="button" onClick={limparFiltros} className="flex h-9 shrink-0 items-center gap-1.5 rounded px-2.5 text-[0.75rem] font-medium text-black/50 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              <X size={12} aria-hidden="true" /> Limpar filtros
             </button>
           )}
         </div>
@@ -623,7 +674,7 @@ export default function EditaisInscritosPage() {
                   ) : filteredSorted.length === 0 ? (
                     <tr><td colSpan={15}>{editaisVisiveis.length === 0
                       ? <ListEmptyState icon={FilePenLine} title="Nenhuma inscrição neste ciclo" description="Acompanhe aqui os editais em que seus projetos estão inscritos, do interesse ao resultado." action={<PrimaryListAction onClick={() => setShowModal(true)}><Plus size={13} aria-hidden="true" /> Nova inscrição</PrimaryListAction>} />
-                      : <ListEmptyState icon={Search} title="Nenhuma inscrição corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setStatusFilter("todos"); }} />}</td></tr>
+                      : <ListEmptyState icon={Search} title="Nenhuma inscrição corresponde aos filtros" filtered onClearFilters={limparFiltros} />}</td></tr>
                   ) : (
                     filteredSorted.map((e, i) => {
                       const sc      = statusConfig[e.status] ?? statusConfig.inscrito;
@@ -824,7 +875,9 @@ export default function EditaisInscritosPage() {
                         ? Array.from({ length: 2 }).map((_, i) => <KanbanSkeleton key={i} />)
                         : null
                     ) : cards.length === 0 ? (
-                      <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_INSCRICAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
+                      filtrosAtivos
+                        ? <KanbanEmpty label="Nada com esses filtros" />
+                        : <KanbanEmpty label="Nenhuma inscrição" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_INSCRICAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
                     ) : (
                       cards.slice(0, getVisible(status)).map((e) => {
                         const projeto = e.projetos_crm?.nome ?? "Sem projeto";
