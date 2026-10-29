@@ -4,6 +4,24 @@
 // (supabase/migrations/20261005120000_organization_modulos.sql): o banco
 // decide o acesso; aqui elas servem para a tela explicar a situação e para a
 // rota de admin validar o pedido antes de gravar.
+//
+// Cada módulo com contrato (prestação e produção) usa as mesmas regras: o que
+// muda é o nome dele nos textos, que vem de NOME_NO_TEXTO.
+
+import type { ModuloId } from "@/lib/modulos";
+
+/**
+ * Como cada módulo se chama nos textos do contrato: o nome completo ("a prestação
+ * de contas") e o curto ("a prestação"). Os dois módulos com contrato são
+ * femininos, e os textos usam "a", "da" e "à": um módulo masculino pede o artigo
+ * aqui. Em lib/equipe-modulos.ts, MODULO_LABEL é o mesmo nome com inicial
+ * maiúscula (tests/modulos-contrato.test.ts confere).
+ */
+export const NOME_NO_TEXTO: Record<ModuloId, { completo: string; curto: string }> = {
+  captacao: { completo: "captação", curto: "captação" },
+  prestacao: { completo: "prestação de contas", curto: "prestação" },
+  producao: { completo: "produção", curto: "produção" },
+};
 
 export type StatusContrato = "ativo" | "teste" | "atraso" | "cancelado" | "cortesia";
 
@@ -106,7 +124,7 @@ export function testeGratis(contrato: ContratoModulo | null, agora: Date = new D
 export type PedidoCortesia = { ate: string; motivo: string; vagas: number };
 
 /** Devolve a mensagem para a tela ou null quando o pedido pode ser gravado. */
-export function validarCortesia(pedido: PedidoCortesia, emUso: number, hoje: string): string | null {
+export function validarCortesia(pedido: PedidoCortesia, emUso: number, hoje: string, modulo: ModuloId = "prestacao"): string | null {
   if (!ehData(pedido.ate)) return "Informe a data final da cortesia.";
   if (pedido.ate < hoje) return "A data final não pode estar no passado.";
   if (diasEntre(hoje, pedido.ate) > CORTESIA_MAX_DIAS) return "A cortesia pode durar até um ano por vez.";
@@ -117,7 +135,7 @@ export function validarCortesia(pedido: PedidoCortesia, emUso: number, hoje: str
     return `As vagas vão de 1 a ${VAGAS_CORTESIA_MAX}.`;
   }
   if (pedido.vagas < emUso) {
-    return `${emUso} pessoas já usam a prestação. Tire o acesso de alguém antes de reduzir as vagas.`;
+    return `${emUso} pessoas já usam a ${NOME_NO_TEXTO[modulo].curto}. Tire o acesso de alguém antes de reduzir as vagas.`;
   }
   return null;
 }
@@ -125,7 +143,8 @@ export function validarCortesia(pedido: PedidoCortesia, emUso: number, hoje: str
 /**
  * Erros das funções de acesso por módulo (admin_definir_acesso_modulo,
  * alterar_modulos_membro, convites), em linguagem da tela. Os códigos mais
- * específicos vêm antes: "sem_vaga_prestacao" também contém "sem_vaga".
+ * específicos vêm antes: "sem_vaga_prestacao" e "sem_vaga_producao" também
+ * contêm "sem_vaga".
  */
 const ERROS_ACESSO: Record<string, string> = {
   membro_inexistente: "Essa pessoa não faz parte da organização.",
@@ -135,6 +154,7 @@ const ERROS_ACESSO: Record<string, string> = {
   funcao_invalida: "Função na prestação desconhecida.",
   sem_vaga_captacao: "Todas as vagas da captação estão em uso. Compre usuários extras antes.",
   sem_vaga_prestacao: "Todas as vagas da prestação de contas estão em uso.",
+  sem_vaga_producao: "Todas as vagas da produção estão em uso.",
   sem_vaga: "Todas as vagas estão em uso.",
   ultimo_modulo: "A pessoa ficaria sem nenhum módulo.",
 };
@@ -145,8 +165,8 @@ export function mensagemErroAcesso(erro: string | null | undefined): string {
 }
 
 /** Texto curto da situação, para a lista de organizações. */
-export function situacaoDoContrato(contrato: ContratoModulo | null, agora: Date = new Date()): string {
-  if (!contrato) return "Sem prestação";
+export function situacaoDoContrato(contrato: ContratoModulo | null, agora: Date = new Date(), modulo: ModuloId = "prestacao"): string {
+  if (!contrato) return `Sem ${NOME_NO_TEXTO[modulo].curto}`;
   const hoje = hojeEmBrasilia(agora);
   const teste = testeGratis(contrato, agora);
   if (teste) {
@@ -205,7 +225,11 @@ function textoDoPrazo(teste: TesteGratis): string {
   return teste.diasRestantes === 1 ? `Falta 1 dia, até ${data}.` : `Faltam ${teste.diasRestantes} dias, até ${data}.`;
 }
 
-/** Como a tela explica a assinatura do módulo (P5.6). */
+/**
+ * Como a tela explica a assinatura da prestação de contas (P5.6). É o Meu plano da
+ * prestação, com o teste grátis e a consulta das prestações: o da produção chega
+ * com a cobrança por módulo (PDL.2), com os textos que o dono decidir.
+ */
 export function descricaoDaAssinatura(contrato: AssinaturaDoModulo | null, agora: Date = new Date()): DescricaoDaAssinatura {
   const SOMENTE_LEITURA = "Prestação de contas em somente leitura.";
   if (!contrato) {

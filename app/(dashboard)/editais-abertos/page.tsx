@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, ArrowUpDown, X, ChevronLeft, ChevronRight, ChevronsRight, Download, UserPlus, ChevronUp, ChevronDown, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Search, ArrowUpDown, X, ChevronLeft, ChevronRight, ChevronsRight, Download, UserPlus, ChevronUp, ChevronDown, ThumbsUp, ThumbsDown, MapPin } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { SegmentedControl } from "@/components/ui/FilterControls";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
@@ -9,6 +9,11 @@ import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
 
 const CARDS_PER_PAGE = 12;
+
+const ESTADOS_BR = [
+  "AC","AL","AM","AP","BA","CE","DF","ES","GO","MA","MG","MS","MT",
+  "PA","PB","PE","PI","PR","RJ","RN","RO","RR","RS","SC","SE","SP","TO",
+];
 
 type SugestaoEdital = {
   id: string;
@@ -136,6 +141,7 @@ export default function EditaisAbertosPage() {
   const [search, setSearch] = useState("");
   const [dSearch, setDSearch] = useState("");
   const [sort, setSort] = useState<SortOpt>("aporte_desc");
+  const [estadoFilter, setEstadoFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [showInscricaoModal, setShowInscricaoModal] = useState(false);
   const [selectedEdital, setSelectedEdital] = useState<EditalAberto | null>(null);
@@ -273,7 +279,7 @@ export default function EditaisAbertosPage() {
   // Reset to page 0 when filter/sort changes
   useEffect(() => {
     setCurrentPage(0);
-  }, [dSearch, sort, statusFilter]);
+  }, [dSearch, sort, statusFilter, estadoFilter]);
 
   // Fetch on mount
   useEffect(() => {
@@ -325,6 +331,11 @@ export default function EditaisAbertosPage() {
       if (statusFilter === "fechados" && dias > 0) return false;
       const modificadoEm = item.data.updated_at ?? item.data.created_at;
       if (statusFilter === "recentes" && (Date.now() - new Date(modificadoEm).getTime()) > TRINTA_DIAS) return false;
+      // O estado é o da sede da empresa. Sugestões da comunidade não trazem estado: saem do filtro.
+      if (estadoFilter) {
+        const uf = item.source === "adm" ? item.data.empresas?.estado?.trim().toUpperCase() : null;
+        if (uf !== estadoFilter) return false;
+      }
       if (!dSearch.trim()) return true;
       const sq = dSearch.toLowerCase();
       const nome = item.source === "adm" ? item.data.empresas?.nome : item.data.empresa_nome;
@@ -545,9 +556,18 @@ export default function EditaisAbertosPage() {
           emphasized={false}
         />
 
-        {search && (
+        <CustomDropdown
+          value={estadoFilter}
+          onChange={setEstadoFilter}
+          options={[{ value: "", label: "Todos os estados" }, ...ESTADOS_BR.map((uf) => ({ value: uf, label: uf }))]}
+          icon={<MapPin size={13} />}
+          compact
+          emphasized={false}
+        />
+
+        {(search || estadoFilter) && (
           <button
-            onClick={() => setSearch("")}
+            onClick={() => { setSearch(""); setEstadoFilter(""); }}
             className="flex items-center gap-1.5 px-3 py-2.5 text-xs font-semibold text-black/50 bg-white border rounded hover:bg-black/5 transition"
             style={{ borderColor: "rgba(13,13,13,.12)" }}
           >

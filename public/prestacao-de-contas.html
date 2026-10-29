@@ -1,0 +1,1463 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+  <script>document.documentElement.classList.add('js');if('scrollRestoration' in history)history.scrollRestoration='manual';</script>
+  <script src="/consentimento.js" defer></script>
+  <script src="/origem-campanha.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prestação de contas de projetos incentivados | Jards</title>
+  <meta name="description" content="Orçamento, extrato, comprovantes e execução conferidos pelas regras da Lei Rouanet, do Esporte, do Audiovisual e da Saúde, com o pacote pronto para o sistema do órgão. 45 dias de teste gratuito." />
+  <link rel="canonical" href="https://jards.com.br/prestacao-de-contas" />
+  <meta property="og:title" content="Prestação de contas de projetos incentivados | Jards" />
+  <meta property="og:description" content="Orçamento, extrato, comprovantes e execução conferidos pelas regras da Lei Rouanet, do Esporte, do Audiovisual e da Saúde, com o pacote pronto para o sistema do órgão. 45 dias de teste gratuito." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://jards.com.br/prestacao-de-contas" />
+  <meta property="og:site_name" content="Jards" />
+  <meta property="og:locale" content="pt_BR" />
+  <meta property="og:image" content="https://jards.com.br/assets/brand/modulos-conectados.jpeg" />
+  <meta property="og:image:width" content="960" />
+  <meta property="og:image:height" content="1200" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Prestação de contas de projetos incentivados | Jards" />
+  <meta name="twitter:description" content="Orçamento, extrato, comprovantes e execução conferidos pelas regras da Lei Rouanet, do Esporte, do Audiovisual e da Saúde, com o pacote pronto para o sistema do órgão. 45 dias de teste gratuito." />
+  <meta name="twitter:image" content="https://jards.com.br/assets/brand/modulos-conectados.jpeg" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+  <link rel="icon" href="/assets/jards-icon-final.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans:    ['"Google Sans"','system-ui','sans-serif'],
+            display: ['"Google Sans"','system-ui','sans-serif'],
+          },
+        }
+      }
+    }
+  </script>
+  <style>
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Regular.ttf') format('truetype'); font-weight:400; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Medium.ttf') format('truetype'); font-weight:500; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-SemiBold.ttf') format('truetype'); font-weight:600; font-display:swap; }
+    @font-face { font-family:'Google Sans'; src:url('/assets/fonts/GoogleSans-Bold.ttf') format('truetype'); font-weight:700 800; font-display:swap; }
+    h1, h2 { text-wrap: balance; }
+    p { text-wrap: pretty; }
+
+    :root {
+      --cream:  #FFFFFF;
+      --ink:    #282525;
+    }
+    body { font-family:'Google Sans',system-ui,sans-serif; background:var(--cream); color:var(--ink); overflow-x:hidden; }
+
+    /* ── Reveal ── */
+    section[id] { scroll-margin-top:96px; }
+    :focus-visible { outline:3px solid rgba(104,77,176,.45); outline-offset:3px; }
+    .skip-link { position:fixed; left:16px; top:12px; z-index:100; transform:translateY(-160%); padding:10px 14px; border-radius:4px; background:#282525; color:#fff; font-size:13px; font-weight:500; transition:transform .18s ease; }
+    .skip-link:focus { transform:translateY(0); }
+    .reveal { opacity:1; transform:none; }
+    html.js .reveal { opacity:0; transform:translateY(20px); transition:opacity .55s ease,transform .55s ease; }
+    html.js .reveal.in { opacity:1; transform:translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal, html.js .reveal, html.js .reveal.in { opacity:1; transform:none; transition:none; }
+    }
+
+    /* Mono só para dados: numerais, contadores e notas da prancheta.
+       Títulos e texto seguem em Google Sans, que é o lado amigável. */
+    :root { --font-mono:'Geist Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+    .section-space { padding-top:clamp(6rem,8vw,9rem); padding-bottom:clamp(6rem,8vw,9rem); }
+
+    /* Prancheta: linhas de construção alinhadas à página e os módulos do
+       símbolo feitos a compasso (desenhados pelo script "Prancheta"). */
+    .prancheta { position:absolute; inset:0; z-index:-2; overflow:hidden; pointer-events:none; }
+    .prancheta svg { position:absolute; inset:0; width:100%; height:100%; }
+    .pr-linha { fill:none; stroke:rgba(40,37,37,.26); stroke-width:1; }
+    .pr-linha.is-guia { stroke:rgba(40,37,37,.17); stroke-dasharray:3 7; }
+    .pr-linha.is-forte { stroke:rgba(40,37,37,.5); }
+    .pr-arco { fill:none; stroke:rgba(40,37,37,.2); stroke-width:1; stroke-dasharray:2 6; }
+    .pr-marca { fill:none; stroke:rgba(40,37,37,.5); stroke-width:1; }
+    .pr-contorno { fill:none; stroke-width:1.25; }
+    .pr-nota { fill:rgba(40,37,37,.5); font-family:var(--font-mono); font-size:10.5px; font-weight:500; letter-spacing:.04em; }
+    /* A linha que chega ao botão principal fica roxa quando ele é apontado. */
+    .pr-cta, .pr-aguada-cor { transition:stroke .2s ease, fill-opacity .2s ease; }
+    .landing-hero:has(.hero-actions .alt-cta:is(:hover,:focus-visible)) .pr-cta,
+    .closing-cta:has(.alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:#684DB0; }
+    @media print {
+      .prancheta { display:none !important; }
+      html.js .reveal { opacity:1 !important; transform:none !important; }
+    }
+    @media (forced-colors: active) { .prancheta { display:none; } }
+
+    .landing-nav-shell { margin-top:10px; border:1px solid rgba(40,37,37,.08); border-radius:4px; background:rgba(255,255,255,.76); backdrop-filter:blur(22px) saturate(150%); -webkit-backdrop-filter:blur(22px) saturate(150%); box-shadow:0 12px 44px rgba(104,77,176,.09),inset 0 1px 0 rgba(255,255,255,.8); }
+    .landing-hero { position:relative; isolation:isolate; overflow:hidden; min-height:100dvh; background:#F7F7F5; }
+    .landing-hero::before { content:""; position:absolute; inset:0; z-index:-3; background:#F7F7F5; }
+    .landing-hero::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.22; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
+    .closing-cta { position:relative; isolation:isolate; overflow:hidden; background:#F7F7F5; }
+    .site-footer { position:relative; overflow:hidden; padding:88px 24px 28px; background:#F7F7F5; color:#282525; }
+    .site-footer-main { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); gap:64px; align-items:start; }
+    .footer-brand { min-height:390px; }
+    .footer-icon-stack { position:relative; display:block; width:430px; height:390px; }
+    .footer-icon { position:absolute; top:-78px; left:-96px; display:block; width:430px; height:430px; transform:rotate(-32deg); transform-origin:center; transition:transform .45s cubic-bezier(.2,.7,.2,1); }
+    .footer-icon-stack:hover .footer-icon { transform:rotate(-27deg) scale(1.02); }
+    .footer-column-title { margin-bottom:22px; color:rgba(40,37,37,.42); font-size:10px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+    .footer-nav,.footer-social-links { display:flex; flex-direction:column; align-items:flex-start; gap:13px; }
+    .footer-nav a,.footer-social-links a { color:#282525; font-size:15px; font-weight:650; line-height:1.25; transition:color .2s ease,transform .2s ease; }
+    .footer-social-links a { display:inline-flex; align-items:center; gap:9px; }
+    .footer-social-links i { font-size:21px; line-height:1; }
+    .footer-nav a:hover,.footer-social-links a:hover { color:#684DB0; transform:translateX(3px); }
+    .footer-social-note { max-width:22ch; margin-top:28px; color:rgba(40,37,37,.48); font-size:13px; line-height:1.6; }
+    .footer-social-illustration { display:block; width:min(260px,22vw); height:auto; margin:26px 0 10px -16px; }
+    .site-footer-bottom { position:relative; z-index:2; display:grid; grid-template-columns:minmax(0,1.45fr) minmax(150px,.55fr) minmax(180px,.55fr); align-items:center; gap:64px; padding-top:28px; border-top:1px solid rgba(40,37,37,.12); }
+    .site-footer-legal { display:flex; flex-wrap:wrap; gap:20px; }
+    .site-footer-bottom .site-footer-legal { grid-column:2; }
+    .site-footer-bottom>p { justify-self:end; }
+    .site-footer-bottom a,.site-footer-bottom p { color:rgba(40,37,37,.42); font-size:11px; font-weight:600; }
+    .site-footer-bottom a:hover { color:#684DB0; }
+    .site-footer-cookies { padding:0; border:0; background:none; color:rgba(40,37,37,.42); font:inherit; font-size:11px; font-weight:600; cursor:pointer; }
+    .site-footer-cookies:hover { color:#684DB0; }
+    .site-footer-cookies:focus-visible { outline:2px solid #7259B5; outline-offset:2px; border-radius:2px; }
+    @media (max-width:800px) {
+      .site-footer { padding-top:64px; }
+      .site-footer-main { grid-template-columns:1fr 1fr; gap:48px 28px; }
+      .footer-brand { grid-column:1 / -1; }
+      .footer-brand { min-height:340px; }
+      .footer-icon-stack { width:350px; height:340px; }
+      .footer-icon { top:-64px; left:-82px; width:360px; height:360px; }
+      .footer-social-illustration { width:min(230px,42vw); margin-left:-10px; }
+      .site-footer-bottom { display:flex; align-items:flex-start; flex-direction:column; gap:14px; }
+    }
+    @media (max-width:430px) {
+      .site-footer-main { grid-template-columns:1fr; }
+      .footer-brand { grid-column:auto; }
+      .footer-brand { min-height:280px; }
+      .footer-icon-stack { width:280px; height:280px; }
+      .footer-icon { top:-54px; left:-72px; width:300px; height:300px; }
+      .footer-social-illustration { width:min(250px,78vw); margin-bottom:8px; }
+    }
+    .hero-layout { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); align-items:center; gap:40px; width:min(1480px,100%); min-height:100dvh; margin:auto; padding:112px 40px 72px; }
+    .hero-copy { min-width:0; text-align:left; }
+    .hero-copy h1 { max-width:100%; margin:0; font-size:clamp(52px,5.2vw,80px); font-weight:700; line-height:.98; letter-spacing:-.06em; color:#282525; text-wrap:balance; }
+    .hero-description { max-width:43ch; margin-top:24px; font-size:17px; line-height:1.65; color:#625f68; }
+    .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
+    .hero-actions a { white-space:nowrap; }
+    .hero-visual { position:relative; justify-self:end; min-width:0; width:90%; aspect-ratio:1424 / 960; }
+    .landing-hero { min-height:100dvh; }
+    @media (max-width:1023px) { .hero-layout { gap:28px; padding-right:24px; padding-left:24px; } .hero-copy h1 { font-size:clamp(48px,5.5vw,58px); } .hero-description { font-size:16px; } }
+    @media (max-width:767px) { .hero-layout { grid-template-columns:minmax(0,1fr); gap:42px; min-height:100svh; padding:118px 24px 92px; } .hero-copy h1 { max-width:14ch; font-size:clamp(42px,11vw,52px); } .hero-visual { justify-self:center; width:94%; margin-top:2px; } }
+    @media (max-width:767px) { .landing-nav-shell { margin:8px 8px 0; padding-left:14px; padding-right:10px; } .landing-hero { min-height:auto; } }
+
+    /* ── Alternativa: tokens ── */
+    :root {
+      --alt-ink: #282525;
+      --alt-ink-hover: #3A3535;
+      --alt-purple: #684DB0;
+      --alt-purple-focus: #7259B5;
+      --alt-surface: #F7F7F5;
+      --alt-radius: 4px;
+      --alt-container: 72rem;
+      --alt-h2-section: clamp(34px, 3.6vw, 52px);
+      /* coluna da direita dos cabeçalhos divididos (fluxo, preços, blog): mesma largura, mesmo x */
+      --alt-split-side: clamp(260px, 30vw, 360px);
+    }
+
+    /* Rolagem das âncoras sem animação quando o sistema pede movimento reduzido
+       (html.scroll-smooth vence a classe .scroll-smooth do Tailwind) */
+    @media (prefers-reduced-motion: reduce) { html.scroll-smooth { scroll-behavior:auto; } }
+
+    /* CTA principal único ("Começar grátis") e variantes */
+    .alt-cta { display:inline-flex; align-items:center; justify-content:center; gap:8px; height:44px; padding:0 18px; border:1px solid transparent; border-radius:var(--alt-radius); background:var(--alt-ink); color:#fff; font-size:14px; font-weight:500; line-height:1; white-space:nowrap; text-decoration:none; cursor:pointer; transition:background-color .18s ease, border-color .18s ease, color .18s ease, transform .12s ease; }
+    .alt-cta:hover { background:var(--alt-ink-hover); }
+    .alt-cta:active { transform:translateY(1px); }
+    .alt-cta:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; }
+    .alt-cta .ph, .alt-link .ph { font-size:16px; line-height:1; }
+    .alt-cta--header { height:40px; }
+    /* secundário: texto com seta, sem borda e sem fundo */
+    .alt-link { display:inline-flex; align-items:center; gap:8px; min-height:44px; padding:0; border:0; background:none; color:var(--alt-ink); font-size:14px; font-weight:500; line-height:1.2; white-space:nowrap; text-decoration:none; cursor:pointer; transition:color .18s ease; }
+    .alt-link .ph { transition:transform .18s ease; }
+    .alt-link:hover .ph { transform:translateX(3px); }
+    .alt-link:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; border-radius:var(--alt-radius); }
+    .hero-actions { gap:12px 28px; }
+
+    /* Títulos h2 de seção */
+    h2.alt-h2 { font-weight:700; letter-spacing:-.035em; line-height:1.04; text-wrap:balance; }
+    h2.alt-h2--section { font-size:var(--alt-h2-section); }
+
+    /* Cabeçalho dividido: título à esquerda, texto de apoio numa coluna de largura fixa à direita */
+    .alt-split-head { display:grid; grid-template-columns:minmax(0,1fr) var(--alt-split-side); align-items:end; gap:48px; }
+    .alt-split-head .alt-h2 { margin:0; }
+    .alt-split-lede { color:rgba(40,37,37,.56); font-size:15px; line-height:1.65; }
+    @media (max-width:767px) { .alt-split-head { grid-template-columns:minmax(0,1fr); gap:18px; } }
+
+    /* Kicker único acima de cada h2 */
+    .alt-kicker { display:block; margin:0 0 16px; font-size:12px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:var(--alt-purple); }
+
+    /* Uma superfície neutra só */
+    .alt-surface { background:var(--alt-surface); }
+
+    /* Grade: texto do hero alinhado ao contêiner de 1152px (o mockup continua sangrando à direita) */
+    @media (min-width:1024px) {
+      .hero-layout { padding-left:max(24px, calc(min(50%, 740px) - (var(--alt-container) / 2))); }
+    }
+
+    @media (prefers-reduced-motion: reduce) { .alt-cta, .alt-link, .alt-link .ph { transition:none; } }
+
+    /* ── Alternativa: estrutura e mobile ── */
+
+    /* Header: "Entrar" visível no celular, mesmo destino do "Fazer login" */
+    .alt-nav-login { display:inline-flex; align-items:center; min-height:40px; padding:0 12px; border-radius:var(--alt-radius); color:rgba(13,13,13,.55); font-size:14px; font-weight:500; white-space:nowrap; transition:color .18s ease; }
+    .alt-nav-login:hover { color:var(--alt-ink); }
+    .alt-nav-login:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:2px; }
+    @media (max-width:767px) { .alt-nav-login { padding:0 10px; } }
+
+    /* Abas roláveis: o JS marca o lado que ainda tem conteúdo e só esse lado esmaece */
+    .alt-scroll-x { overflow-x:auto; scrollbar-width:none; overscroll-behavior-x:contain; }
+    .alt-scroll-x::-webkit-scrollbar { display:none; }
+    .alt-scroll-x.is-fade-r { -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(90deg,#000 calc(100% - 40px),transparent); }
+    .alt-scroll-x.is-fade-l { -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px); mask-image:linear-gradient(90deg,transparent,#000 40px); }
+    .alt-scroll-x.is-fade-l.is-fade-r { -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); }
+
+    @media (prefers-reduced-motion: reduce) { .alt-nav-login { transition:none; } }
+
+  </style>
+  <style>
+    .faq-lista { border-top:1px solid rgba(40,37,37,.12); }
+    .faq-lista details { border-bottom:1px solid rgba(40,37,37,.12); }
+    .faq-lista summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:22px 0; list-style:none; cursor:pointer; font-size:17px; font-weight:600; color:#282525; }
+    .faq-lista summary::-webkit-details-marker { display:none; }
+    .faq-lista summary .ph { font-size:18px; color:rgba(40,37,37,.4); transition:transform .18s ease; }
+    .faq-lista details[open] summary .ph { transform:rotate(45deg); }
+    .faq-lista p { margin:-6px 0 22px; max-width:62ch; font-size:15px; line-height:1.7; color:rgba(40,37,37,.6); }
+    .faq-lista a { color:#684DB0; text-decoration:underline; text-underline-offset:2px; }
+    @media (min-width: 1024px) {
+      .hero-layout { grid-template-columns:minmax(0,.86fr) minmax(0,1.14fr); gap:56px; }
+      .hero-copy h1 { font-size:clamp(48px,4.3vw,70px); }
+    }
+    /* Abertura: a visão geral da prestação ocupa a coluna inteira */
+    .pc-hero-tela { aspect-ratio:auto; width:100%; max-width:700px; justify-self:end; }
+    @media (max-width: 1023px) { .pc-hero-tela { justify-self:stretch; max-width:none; } }
+    .pc-hero-nota { margin-top:14px; font-size:13px; line-height:1.5; color:rgba(40,37,37,.5); }
+
+    /* ── Seções "texto + tela" (molde do /incentivadores) ── */
+    .fx-sec { position:relative; }
+    .fx-grade { display:grid; grid-template-columns:minmax(0,1fr); gap:40px; align-items:center; }
+    @media (min-width:1024px) {
+      .fx-grade { grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr); gap:64px; }
+      .fx-grade--inverso { grid-template-columns:minmax(0,1.18fr) minmax(0,.82fr); }
+      .fx-grade--inverso .fx-copia { order:2; }
+      .fx-grade--texto { grid-template-columns:minmax(0,1fr) minmax(0,1fr); }
+    }
+    .fx-texto { margin-top:20px; max-width:46ch; font-size:16px; line-height:1.65; color:#625f68; }
+    .fx-lista { display:grid; gap:12px; margin:26px 0 0; padding:0; list-style:none; }
+    .fx-lista li { display:flex; gap:10px; align-items:flex-start; font-size:15px; line-height:1.5; color:rgba(40,37,37,.78); }
+    .fx-lista .ph { flex:0 0 auto; margin-top:2px; font-size:17px; color:var(--fx-cor,#684DB0); }
+    /* janela do app */
+    .app-frame { position:relative; overflow:hidden; background:#fff; border:1px solid rgba(13,13,13,.08); border-radius:4px; box-shadow:0 22px 44px -12px rgba(52,42,78,.18),0 6px 14px -6px rgba(52,42,78,.10); font-size:12px; color:#282525; }
+    .app-barra { display:flex; align-items:center; gap:8px; padding:10px 14px; border-bottom:1px solid rgba(13,13,13,.07); background:#F9F9F8; font-size:11px; color:rgba(13,13,13,.4); white-space:nowrap; }
+    .app-barra img { width:14px; height:14px; }
+    .app-barra b { color:rgba(13,13,13,.75); font-weight:600; }
+    .mk-rotulo { font-size:9px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(13,13,13,.35); }
+    .mk-painel { border:1px solid rgba(13,13,13,.08); border-radius:4px; background:#fff; overflow:hidden; }
+    .mk-painel-topo { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:9px 12px; border-bottom:1px solid rgba(13,13,13,.06); }
+    .mk-painel-topo > span:first-child { display:flex; align-items:center; gap:6px; font-size:10.5px; font-weight:700; color:rgba(13,13,13,.75); }
+
+    /* ── Telas estáticas da prestação: visão geral, orçamento, verificações e envio ── */
+    .pc-tela { container-type:inline-size; }
+    .pc-barra-proj { min-width:0; overflow:hidden; text-overflow:ellipsis; }
+    .pc-topo { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 16px; padding:14px 16px; border-bottom:1px solid rgba(13,13,13,.07); }
+    .pc-topo > div:first-child { min-width:0; }
+    .pc-sobre { overflow:hidden; font-size:10.5px; color:rgba(13,13,13,.45); text-overflow:ellipsis; white-space:nowrap; }
+    .pc-nome { display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:2px; font-size:17px; font-weight:650; line-height:1.2; letter-spacing:-.025em; color:#282525; }
+    .pc-selo { display:inline-flex; align-items:center; padding:2px 7px; border:1px solid; border-radius:4px; background:#fff; font-size:9.5px; font-weight:600; letter-spacing:0; white-space:nowrap; }
+    .pc-envio-ate { display:inline-flex; align-items:center; gap:5px; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.6); white-space:nowrap; }
+    .pc-envio-ate .ph { font-size:13px; color:rgba(13,13,13,.4); }
+    .pc-abas { display:flex; gap:16px; padding:0 16px; box-shadow:inset 0 -1px 0 rgba(13,13,13,.07); }
+    .pc-abas span { position:relative; flex:0 0 auto; padding:9px 0; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.4); white-space:nowrap; }
+    .pc-abas span.is-ativa { color:#7259B5; }
+    .pc-abas span.is-ativa::after { content:""; position:absolute; left:0; right:0; bottom:0; height:2px; background:#7259B5; }
+    .pc-corpo { display:grid; grid-template-columns:minmax(0,1fr); gap:10px; padding:12px; background:rgba(13,13,13,.018); }
+    .pc-corpo > * { min-width:0; }
+    .pc-acoes { display:flex; flex-wrap:wrap; gap:6px; }
+    .pc-botao { display:inline-flex; align-items:center; gap:5px; height:28px; padding:0 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; background:#fff; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.6); white-space:nowrap; }
+    .pc-botao .ph { font-size:12px; }
+    .pc-botao.is-destaque { border-color:rgba(114,89,181,.4); color:#7259B5; }
+    .pc-seletor { display:inline-flex; align-items:center; gap:6px; height:28px; padding:0 10px; border:1px solid rgba(13,13,13,.12); border-radius:4px; background:#fff; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.72); white-space:nowrap; }
+    .pc-seletor .ph { font-size:11px; color:rgba(13,13,13,.4); }
+    .pc-barra { height:6px; overflow:hidden; border-radius:3px; background:rgba(13,13,13,.07); }
+    .pc-barra > span { display:block; height:100%; border-radius:inherit; background:#684DB0; }
+    .pc-mini { display:block; flex:0 0 auto; width:56px; height:4px; overflow:hidden; border-radius:2px; background:rgba(13,13,13,.08); }
+    .pc-mini > span { display:block; height:100%; border-radius:inherit; background:#B07A14; }
+
+    /* visão geral */
+    .pc-visao { display:grid; grid-template-columns:minmax(0,1.6fr) minmax(0,1fr); gap:10px; align-items:start; }
+    .pc-percentual { font-size:12px; font-weight:650; color:#282525; font-variant-numeric:tabular-nums; }
+    .pc-prontidao { padding:12px 12px 4px; }
+    .pc-checks { margin:10px 0 0; padding:0; list-style:none; }
+    .pc-checks li { display:flex; align-items:center; gap:8px; padding:7px 0; border-top:1px solid rgba(13,13,13,.05); font-size:11px; color:rgba(13,13,13,.72); }
+    .pc-checks li > span:first-of-type { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pc-checks .ph { flex:0 0 auto; font-size:14px; }
+    .pc-checks .is-ok .ph { color:#2E8932; }
+    .pc-checks .is-parcial .ph { color:#B07A14; }
+    .pc-checks .is-bloqueio .ph { color:#D94A4A; }
+    .pc-checks em { flex:0 0 auto; font-size:10px; font-style:normal; font-weight:600; color:rgba(13,13,13,.5); font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .pc-checks .is-bloqueio em { color:#D94A4A; }
+    .pc-prazo { padding:14px 12px 16px; }
+    .pc-prazo strong { display:block; font-size:30px; font-weight:650; line-height:1; letter-spacing:-.03em; color:#282525; font-variant-numeric:tabular-nums; }
+    .pc-prazo span { display:block; margin-top:5px; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.7); }
+    .pc-prazo small { display:block; margin-top:10px; font-size:10px; color:rgba(13,13,13,.45); }
+
+    /* orçamento */
+    .pc-ferramentas { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px; }
+    .pc-metricas { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:8px; }
+    .pc-metrica { min-width:0; padding:10px 11px; border:1px solid rgba(13,13,13,.08); border-radius:4px; background:#fff; }
+    .pc-metrica .mk-rotulo { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .pc-metrica strong { display:block; overflow:hidden; margin-top:6px; font-size:13.5px; font-weight:650; letter-spacing:-.02em; color:#282525; font-variant-numeric:tabular-nums; text-overflow:ellipsis; white-space:nowrap; }
+    .pc-metrica small { display:block; overflow:hidden; margin-top:3px; font-size:9px; color:#2E8932; text-overflow:ellipsis; white-space:nowrap; }
+    .pc-rolagem.alt-scroll-x { scrollbar-width:thin; scrollbar-color:rgba(13,13,13,.20) transparent; }
+    .pc-rolagem.alt-scroll-x::-webkit-scrollbar { display:block; height:6px; }
+    .pc-rolagem.alt-scroll-x::-webkit-scrollbar-thumb { border-radius:3px; background:rgba(13,13,13,.20); }
+    .pc-tbl { width:100%; min-width:560px; border-collapse:collapse; }
+    .pc-tbl th { padding:8px 10px; background:#F9F9F8; text-align:right; font-size:9px; font-weight:500; letter-spacing:.08em; text-transform:uppercase; color:rgba(40,37,37,.38); white-space:nowrap; }
+    .pc-tbl td { padding:9px 10px; border-top:1px solid rgba(40,37,37,.05); text-align:right; font-size:11px; color:rgba(13,13,13,.62); font-variant-numeric:tabular-nums; white-space:nowrap; }
+    .pc-tbl th:first-child, .pc-tbl td:first-child { text-align:left; }
+    .pc-tbl td:first-child { font-weight:600; color:rgba(13,13,13,.78); }
+    .pc-pct { display:inline-flex; align-items:center; gap:6px; }
+    .pc-pct .pc-mini { width:36px; }
+    .pc-pct .pc-mini > span { background:#2E8932; }
+
+    /* verificações */
+    .pc-verif-topo { display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px 12px; padding:12px; border-bottom:1px solid rgba(13,13,13,.06); }
+    .pc-verif-titulo { display:flex; align-items:center; gap:6px; font-size:13px; font-weight:650; color:#282525; }
+    .pc-verif-titulo .ph { font-size:15px; color:#684DB0; }
+    .pc-verif-data { margin-top:2px; font-size:10px; color:rgba(13,13,13,.45); }
+    .pc-grupo + .pc-grupo { border-top:1px solid rgba(13,13,13,.06); }
+    .pc-grupo-titulo { display:flex; align-items:center; gap:6px; padding:10px 12px 4px; font-size:10.5px; font-weight:700; }
+    .pc-grupo-titulo .ph { font-size:13px; }
+    .pc-grupo.is-bloqueio .pc-grupo-titulo { color:#D94A4A; }
+    .pc-grupo.is-revisar .pc-grupo-titulo { color:#B07A14; }
+    .pc-achado { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px; margin:0 12px; padding:8px 0 8px 10px; }
+    .pc-achado + .pc-achado { border-top:1px solid rgba(13,13,13,.045); }
+    .pc-grupo.is-bloqueio .pc-achado { box-shadow:inset 2px 0 0 rgba(217,74,74,.55); }
+    .pc-grupo.is-revisar .pc-achado { box-shadow:inset 2px 0 0 rgba(176,122,20,.5); }
+    .pc-grupo:last-child .pc-achado:last-child { margin-bottom:6px; }
+    .pc-achado strong { display:block; font-size:11.5px; font-weight:600; line-height:1.35; color:rgba(13,13,13,.78); }
+    .pc-achado small { display:block; overflow:hidden; margin-top:2px; font-size:10px; color:rgba(13,13,13,.45); text-overflow:ellipsis; white-space:nowrap; }
+
+    /* envio */
+    .pc-envio-resumo { padding:12px; }
+    .pc-envio-resumo p { margin-bottom:9px; font-size:11px; color:rgba(13,13,13,.55); }
+    .pc-envio-resumo strong { font-weight:650; color:#282525; }
+    .pc-doc { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; gap:10px; padding:10px 12px; }
+    .pc-doc + .pc-doc { border-top:1px solid rgba(13,13,13,.05); }
+    .pc-doc strong { display:block; font-size:11.5px; font-weight:600; line-height:1.35; color:rgba(13,13,13,.78); }
+    .pc-marca { display:inline-flex; margin-top:4px; padding:1px 6px; border:1px solid rgba(13,13,13,.14); border-radius:4px; font-size:9px; font-weight:600; color:rgba(13,13,13,.55); white-space:nowrap; }
+    .pc-marca.is-obrigatorio { border-color:rgba(114,89,181,.35); color:#7259B5; }
+    .pc-estado { display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:600; white-space:nowrap; }
+    .pc-estado .ph { font-size:13px; }
+    .pc-estado.is-pronto { color:#2E8932; }
+    .pc-estado.is-na { color:rgba(13,13,13,.42); }
+
+    @container (max-width:560px) {
+      .pc-metricas { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    }
+    @container (max-width:480px) {
+      .pc-visao { grid-template-columns:minmax(0,1fr); }
+      .pc-topo { padding:12px; }
+      .pc-abas { padding:0 12px; }
+    }
+
+    /* ── Leis: quatro cartões ── */
+    .pc-leis { display:grid; grid-template-columns:minmax(0,1fr); gap:12px; margin-top:48px; }
+    .pc-lei { display:flex; flex-direction:column; min-width:0; padding:24px 22px 22px; border:1px solid rgba(13,13,13,.08); border-radius:var(--alt-radius); background:#fff; }
+    .pc-lei-icone { display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center; margin-bottom:20px; border:1px solid rgba(13,13,13,.12); border-color:color-mix(in srgb, var(--lei-cor,#684DB0) 30%, transparent); border-radius:4px; color:var(--lei-cor,#684DB0); font-size:20px; }
+    .pc-lei h3 { margin:0; font-size:18px; font-weight:700; line-height:1.25; letter-spacing:-.02em; color:#282525; }
+    .pc-lei-norma { margin:8px 0 22px; font-size:14px; line-height:1.5; color:rgba(40,37,37,.6); }
+    .pc-lei-sistema { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:4px 12px; margin-top:auto; padding-top:14px; border-top:1px solid rgba(13,13,13,.08); }
+    .pc-lei-sistema span { font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(40,37,37,.42); }
+    .pc-lei-sistema strong { font-size:14px; font-weight:600; color:#282525; }
+    @media (min-width:640px) { .pc-leis { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (min-width:1024px) { .pc-leis { grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; } }
+    .pc-leis-lista { margin-top:40px; }
+    @media (min-width:768px) { .pc-leis-lista { grid-template-columns:repeat(3,minmax(0,1fr)); gap:28px; } }
+    .pc-obs { margin-top:24px; font-size:13px; line-height:1.6; color:rgba(40,37,37,.5); }
+
+    /* ── Seções de texto ── */
+    .pc-link { color:#684DB0; text-decoration:underline; text-decoration-thickness:1px; text-underline-offset:2px; transition:color .18s ease; }
+    .pc-link:hover { color:#282525; }
+    .pc-itens { margin:0; padding:0; list-style:none; border-top:1px solid rgba(40,37,37,.12); }
+    .pc-itens li { display:flex; align-items:flex-start; gap:16px; padding:22px 0; border-bottom:1px solid rgba(40,37,37,.12); font-size:16px; line-height:1.55; color:rgba(40,37,37,.78); }
+    .pc-itens .ph { display:inline-flex; flex:0 0 auto; width:36px; height:36px; align-items:center; justify-content:center; border:1px solid rgba(13,13,13,.12); border-radius:4px; background:#fff; color:var(--fx-cor,#684DB0); font-size:18px; }
+    .pc-itens li span { padding-top:6px; }
+    .pc-quatro { display:grid; grid-template-columns:minmax(0,1fr); gap:0 32px; margin-top:56px; border-bottom:1px solid rgba(40,37,37,.12); }
+    .pc-quatro article { min-width:0; padding:26px 0 30px; border-top:1px solid rgba(40,37,37,.12); }
+    .pc-quatro-icone { display:inline-flex; width:40px; height:40px; align-items:center; justify-content:center; margin-bottom:18px; border:1px solid rgba(13,13,13,.12); border-radius:4px; background:#fff; color:var(--fx-cor,#684DB0); font-size:20px; }
+    .pc-quatro p { max-width:34ch; font-size:15px; line-height:1.6; color:rgba(40,37,37,.7); }
+    @media (min-width:640px) { .pc-quatro { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+    @media (min-width:1024px) { .pc-quatro { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+    /* ── Mockup de conversa (conector MCP) ── */
+    .mcp-chat { background: linear-gradient(165deg,#fff,#F7F7F5); border: 1px solid rgba(13,13,13,.10); border-radius: 4px; box-shadow: 0 22px 44px -12px rgba(52,42,78,.18), 0 6px 14px -6px rgba(52,42,78,.10); overflow: hidden; }
+    .mcp-chat-head { display:flex; align-items:center; gap:7px; padding:12px 50px 12px 16px; border-bottom:1px solid rgba(40,37,37,.08); }
+    .mcp-chat-dot { width:7px; height:7px; border-radius:50%; background:rgba(40,37,37,.15); flex-shrink:0; }
+    .mcp-tabs { display:grid; grid-template-columns:1fr 1fr; gap:3px; margin-left:8px; padding:3px; border-radius:6px; background:rgba(13,13,13,.05); }
+    .mcp-tab { display:flex; align-items:center; justify-content:center; gap:6px; padding:5px 12px; border-radius:4px; font-size:12px; font-weight:600; color:rgba(13,13,13,.58); transition:background-color .25s ease, color .25s ease, box-shadow .25s ease; }
+    .mcp-tab img { width:15px; height:15px; object-fit:contain; filter:grayscale(1); opacity:.5; transition:filter .25s ease, opacity .25s ease; }
+    .mcp-tab.is-on { background:#fff; color:#282525; box-shadow:0 1px 3px rgba(13,13,13,.12); }
+    .mcp-tab.is-on img { filter:none; opacity:1; }
+    .mcp-conectado { display:flex; align-items:center; gap:5px; margin-left:auto; font-size:10.5px; font-weight:600; color:rgba(13,13,13,.6); white-space:nowrap; }
+    .mcp-conectado::before { content:""; width:6px; height:6px; border-radius:50%; background:#2E8932; }
+    .mcp-chat-body { height:292px; padding:20px 18px; display:flex; flex-direction:column; justify-content:flex-end; gap:12px; overflow:hidden; transition:opacity .22s ease; }
+    .mcp-msg { font-size:13.5px; line-height:1.55; }
+    .mcp-msg-user { align-self:flex-end; max-width:82%; padding:9px 13px; border-radius:12px 12px 4px 12px; background:rgba(13,13,13,.06); color:#282525; }
+    .mcp-tool { align-self:flex-start; display:flex; flex-wrap:wrap; align-items:center; gap:3px 7px; max-width:calc(100% - 32px); margin-left:32px; padding:5px 10px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; font-size:11.5px; font-weight:600; color:rgba(13,13,13,.6); }
+    /* a chamada real da ferramenta do servidor MCP, alinhada sob o rótulo */
+    .mcp-tool-chamada { flex-basis:100%; padding-left:19px; font-family:var(--font-mono); font-size:10.5px; font-weight:400; line-height:1.45; color:rgba(13,13,13,.5); overflow-wrap:anywhere; }
+    .mcp-tool-chamada b { font-weight:500; color:#684DB0; }
+    .mcp-tool-icone { width:12px; height:12px; flex-shrink:0; border-radius:50%; border:1.5px solid rgba(13,13,13,.18); border-top-color:#684DB0; animation:mcp-gira .8s linear infinite; }
+    .mcp-tool svg { width:12px; height:12px; flex-shrink:0; }
+    .mcp-tool.is-ok { color:rgba(13,13,13,.62); }
+    .mcp-ai { align-self:flex-start; display:flex; gap:10px; max-width:94%; color:#282525; }
+    .mcp-ai-avatar { width:22px; height:22px; flex-shrink:0; margin-top:1px; object-fit:contain; }
+    .mcp-ai strong { display:block; margin-bottom:3px; color:#684DB0; font-weight:700; }
+    .mcp-input { display:flex; align-items:center; gap:10px; margin:0 14px 14px; padding:9px 9px 9px 13px; border:1px solid rgba(13,13,13,.11); border-radius:10px; background:#fff; }
+    .mcp-input-texto { flex:1; min-width:0; overflow:hidden; white-space:nowrap; text-overflow:clip; font-size:13px; color:#282525; }
+    .mcp-input-texto.is-vazio { color:rgba(13,13,13,.35); }
+    .mcp-caret { display:inline-block; width:1.5px; height:15px; margin-left:1px; vertical-align:-3px; background:#282525; animation:mcp-pisca 1s steps(1) infinite; }
+    .mcp-enviar { display:flex; align-items:center; justify-content:center; width:28px; height:28px; flex-shrink:0; border-radius:50%; background:rgba(13,13,13,.12); color:#fff; transition:background-color .2s ease, transform .15s ease; }
+    .mcp-enviar.is-pronto { background:#282525; }
+    .mcp-enviar.is-apertado { transform:scale(.86); }
+    .mcp-entra { animation:mcp-entra .32s cubic-bezier(.16,1,.3,1) both; }
+    .mcp-plat { display:flex; align-items:flex-start; gap:10px; padding:11px 12px; border:1px solid rgba(13,13,13,.09); border-radius:4px; background:#fff; }
+    .mcp-plat img { width:28px; height:28px; flex-shrink:0; object-fit:contain; }
+    .mcp-figura { position:relative; }
+    .mcp-pausar { position:absolute; top:10px; right:12px; z-index:1; display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:4px; color:rgba(13,13,13,.6); transition:background-color .2s ease, color .2s ease; }
+    .mcp-pausar:hover { background:rgba(13,13,13,.06); color:#282525; }
+    .mcp-pausar:focus-visible { outline:2px solid rgba(104,77,176,.5); outline-offset:1px; }
+    .mcp-pausar .icone-retomar, .mcp-pausar[aria-pressed="true"] .icone-pausar { display:none; }
+    .mcp-pausar[aria-pressed="true"] .icone-retomar { display:block; }
+    .mcp-chat.is-pausado .mcp-tool-icone, .mcp-chat.is-pausado .mcp-caret { animation-play-state:paused; }
+    .mcp-chat-body.is-estatico { height:auto; justify-content:flex-start; }
+    .mcp-chat-body.is-estatico + .mcp-input { display:none; }
+    @media (max-width:400px) {
+      .mcp-chat-dot { display:none; }
+      .mcp-tabs { margin-left:0; }
+      .mcp-tab { padding:5px 8px; }
+      .mcp-conectado { font-size:0; gap:0; }
+    }
+    @keyframes mcp-gira { to { transform:rotate(360deg); } }
+    @keyframes mcp-pisca { 50% { opacity:0; } }
+    @keyframes mcp-entra { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+    @media (prefers-reduced-motion: reduce) { .mcp-tool-icone, .mcp-caret { animation:none; } .mcp-entra { animation:none; } }
+    .alt-h2-line { display:block; }
+    .alt-check { flex:0 0 auto; width:16px; height:16px; margin-top:2px; color:var(--alt-purple); }
+    .pc-faixa { padding-top:clamp(4rem,6vw,6rem); padding-bottom:clamp(4rem,6vw,6rem); }
+    /* O tamanduá contador, o mesmo do convite e do fim do teste no app, em cima do título do teste */
+    .pc-teste-tamandua { display:block; width:min(360px,78%); height:auto; margin:0 0 18px -10px; }
+    @media (max-width:767px) { .pc-teste-tamandua { width:min(300px,82%); margin-bottom:12px; } }
+    .pc-preco-link { margin-top:12px; }
+    .pc-borda-topo { border-top:1px solid rgba(40,37,37,.08); }
+    .pc-fechamento-link { margin-top:18px; }
+  </style>
+  <link rel="stylesheet" href="/menu-site.css" />
+</head>
+<body>
+<a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+
+<!-- ════════════════════════ NAV ════════════════════════ -->
+<header class="fixed inset-x-0 top-0 z-50">
+  <div class="landing-nav-shell max-w-6xl mx-auto px-5 h-14 flex items-center justify-between">
+    <a href="/" aria-label="Jards, página inicial"><img src="/assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
+
+    <nav class="menu-site" aria-label="Principal">
+      <div class="menu-site__grupo" data-menu-grupo>
+        <button type="button" class="menu-site__gatilho" data-menu-gatilho aria-expanded="false" aria-controls="menuProduto">Produto <i class="ph ph-caret-down menu-site__seta" aria-hidden="true"></i></button>
+        <div class="menu-site__painel" id="menuProduto" style="--colunas:2">
+          <div class="menu-site__coluna">
+            <p class="menu-site__secao">Captação de recursos</p>
+            <a class="menu-site__item" href="/incentivadores"><span class="menu-site__titulo">Inteligência</span><span class="menu-site__desc">Quem incentiva cada lei, empresa por empresa, e os editais abertos.</span></a>
+            <a class="menu-site__item" href="/crm"><span class="menu-site__titulo">CRM</span><span class="menu-site__desc">Empresas, negociações, propostas e prazos, até a renovação.</span></a>
+          </div>
+          <div class="menu-site__coluna">
+            <p class="menu-site__secao">Prestação de contas</p>
+            <a class="menu-site__item" href="/prestacao-de-contas" aria-current="page"><span class="menu-site__titulo">Prestação de contas</span><span class="menu-site__desc">Orçamento, extrato, comprovantes e envio, conferidos pelas regras de cada lei.</span></a>
+          </div>
+        </div>
+      </div>
+      <a class="menu-site__link" href="/precos">Preços</a>
+      <a class="menu-site__link" href="/publicacoes">Publicações</a>
+    </nav>
+
+    <div class="flex items-center gap-1 md:gap-3">
+      <a href="/login" data-app-path="/login" class="alt-nav-login menu-site__login"><span class="md:hidden">Entrar</span><span class="hidden md:inline">Fazer login</span></a>
+      <a href="/cadastro" data-app-path="/cadastro" class="alt-cta alt-cta--header">
+        Começar grátis
+        <i class="ph ph-arrow-right" aria-hidden="true"></i>
+      </a>
+      <button type="button" class="menu-site__botao-celular" data-menu-celular aria-expanded="false" aria-controls="menuCelular" aria-label="Abrir menu"><i class="ph ph-list" aria-hidden="true"></i></button>
+    </div>
+  </div>
+  <div class="menu-celular" id="menuCelular" hidden>
+    <div class="menu-celular__secao">
+      <span class="menu-celular__rotulo">Captação de recursos</span>
+      <a class="menu-celular__link" href="/incentivadores">Inteligência</a>
+      <a class="menu-celular__link" href="/crm">CRM</a>
+    </div>
+    <div class="menu-celular__secao">
+      <span class="menu-celular__rotulo">Prestação de contas</span>
+      <a class="menu-celular__link" href="/prestacao-de-contas" aria-current="page">Prestação de contas</a>
+    </div>
+    <div class="menu-celular__secao">
+      <a class="menu-celular__link" href="/precos">Preços</a>
+      <a class="menu-celular__link" href="/publicacoes">Publicações</a>
+      <a class="menu-celular__link" href="/login" data-app-path="/login">Fazer login</a>
+    </div>
+  </div>
+</header>
+
+<main id="conteudo">
+
+<!-- ════════════════════════ ABERTURA ════════════════════════ -->
+<section id="top" class="landing-hero" aria-labelledby="pc-titulo">
+  <div class="prancheta" data-prancheta="topo" aria-hidden="true"></div>
+  <div class="hero-layout">
+    <div class="hero-copy">
+      <p class="alt-kicker mb-6">Prestação de contas</p>
+      <h1 id="pc-titulo" class="font-display">Prestação de contas sem susto na análise.</h1>
+      <p class="hero-description">Orçamento, extrato, comprovantes e execução no mesmo lugar, conferidos pelas regras da lei do projeto antes do envio ao órgão.</p>
+      <div class="hero-actions">
+        <a href="/cadastro" data-app-path="/cadastro" class="alt-cta">
+          Criar conta grátis
+          <i class="ph ph-arrow-right" aria-hidden="true"></i>
+        </a>
+        <a href="#leis" class="alt-link">Ver como funciona <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+      </div>
+      <p class="pc-hero-nota">45 dias de teste gratuito, sem cartão.</p>
+    </div>
+    <div class="hero-visual pc-hero-tela">
+      <!-- Visão geral de uma prestação, no padrão do app -->
+      <div class="app-frame pc-tela reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span>Prestações</span><span>/</span><b class="pc-barra-proj">Festival de Música Popular 2026</b></div>
+        <div class="pc-topo">
+          <div>
+            <p class="pc-sobre">Prestação de contas · Lei Rouanet</p>
+            <p class="pc-nome">Festival de Música Popular 2026<span class="pc-selo" style="border-color:rgba(176,122,20,.3);color:#B07A14">Revisão interna</span></p>
+          </div>
+          <span class="pc-envio-ate"><i class="ph ph-calendar-blank"></i>Envio até 14/12/2026</span>
+        </div>
+        <div class="pc-abas alt-scroll-x" tabindex="-1"><span class="is-ativa">Visão geral</span><span>Financeiro</span><span>Execução</span><span>Pendências</span><span>Relatório</span><span>Envio</span></div>
+        <div class="pc-corpo">
+          <div class="pc-visao">
+            <div class="mk-painel">
+              <div class="mk-painel-topo"><span><i class="ph ph-gauge"></i>Prontidão para envio</span><span class="pc-percentual">82%</span></div>
+              <div class="pc-prontidao">
+                <div class="pc-barra"><span style="width:82%"></span></div>
+                <ul class="pc-checks">
+                  <li class="is-ok"><i class="ph ph-check-circle"></i><span>Orçamento</span></li>
+                  <li class="is-ok"><i class="ph ph-check-circle"></i><span>Comprovantes avaliados</span></li>
+                  <li class="is-parcial"><i class="ph ph-circle-half"></i><span>Comprovação do orçamento</span><span class="pc-mini"><span style="width:73%"></span></span></li>
+                  <li class="is-ok"><i class="ph ph-check-circle"></i><span>Metas comprovadas</span></li>
+                  <li class="is-bloqueio"><i class="ph ph-warning-circle"></i><span>Verificações sem bloqueio</span><em>2 bloqueios</em></li>
+                  <li class="is-parcial"><i class="ph ph-circle-half"></i><span>Checklist de envio</span><em>12 de 15</em></li>
+                </ul>
+              </div>
+            </div>
+            <div class="mk-painel">
+              <div class="mk-painel-topo"><span><i class="ph ph-calendar-blank"></i>Prazo de envio</span></div>
+              <div class="pc-prazo"><strong>14/12</strong><span>prazo final</span><small>Calculado pelo regime</small></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ REGRAS DE CADA LEI ════════════════════════ -->
+<section id="leis" class="section-space bg-white px-6" aria-labelledby="leis-titulo" style="--fx-cor:#684DB0">
+  <div class="max-w-6xl mx-auto">
+    <div class="alt-split-head reveal">
+      <div>
+        <p class="alt-kicker">Regras de cada lei</p>
+        <h2 id="leis-titulo" class="alt-h2 alt-h2--section font-display">As regras de cada lei, já no sistema.</h2>
+      </div>
+      <p class="alt-split-lede">Cada prestação segue o regime da lei do projeto: prazos, tetos de gastos, checagens e a lista do que o órgão pede no envio.</p>
+    </div>
+    <div class="pc-leis reveal">
+      <article class="pc-lei" style="--lei-cor:#684DB0">
+        <span class="pc-lei-icone"><i class="ph ph-piano-keys" aria-hidden="true"></i></span>
+        <h3>Lei Rouanet</h3>
+        <p class="pc-lei-norma">IN MinC 29/2026</p>
+        <p class="pc-lei-sistema"><span>Sistema oficial</span><strong>Salic</strong></p>
+      </article>
+      <article class="pc-lei" style="--lei-cor:#2D72B0">
+        <span class="pc-lei-icone"><i class="ph ph-soccer-ball" aria-hidden="true"></i></span>
+        <h3>Lei de Incentivo ao Esporte</h3>
+        <p class="pc-lei-norma">Portaria MESP 10/2026 e Portaria 424/2020</p>
+        <p class="pc-lei-sistema"><span>Sistema oficial</span><strong>SLI e SEI</strong></p>
+      </article>
+      <article class="pc-lei" style="--lei-cor:#D94A4A">
+        <span class="pc-lei-icone"><i class="ph ph-film-slate" aria-hidden="true"></i></span>
+        <h3>Audiovisual (ANCINE)</h3>
+        <p class="pc-lei-norma">IN 159/2021 e IN 150/2019</p>
+        <p class="pc-lei-sistema"><span>Sistema oficial</span><strong>STR e Protocolo Digital</strong></p>
+      </article>
+      <article class="pc-lei" style="--lei-cor:#1A8B7A">
+        <span class="pc-lei-icone"><i class="ph ph-stethoscope" aria-hidden="true"></i></span>
+        <h3>Pronon e Pronas/PCD</h3>
+        <p class="pc-lei-norma">Anexos LXXXVI-A e LXXXVI (Saúde)</p>
+        <p class="pc-lei-sistema"><span>Sistema oficial</span><strong>Transferegov</strong></p>
+      </article>
+    </div>
+    <ul class="fx-lista pc-leis-lista reveal">
+      <li><i class="ph ph-check" aria-hidden="true"></i>O prazo de envio é calculado pela regra da lei, contando feriados nacionais.</li>
+      <li><i class="ph ph-check" aria-hidden="true"></i>O prazo vira atividade do responsável, com avisos de 30, 15, 7, 3 e 1 dia no app.</li>
+      <li><i class="ph ph-check" aria-hidden="true"></i>Quando o Jards atualiza a norma, a prestação mostra o que mudou e você decide se passa para a versão nova.</li>
+    </ul>
+    <p class="pc-obs reveal">Patrocínio direto e outras leis usam o modo genérico, sem regras de lei. Nas normas anteriores (Portaria 424/2020 e IN 150/2019), parte das regras só gera alerta.</p>
+  </div>
+</section>
+
+<!-- ════════════════════════ FINANCEIRO ════════════════════════ -->
+<section id="financeiro" class="fx-sec section-space alt-surface px-6" aria-labelledby="financeiro-titulo" style="--fx-cor:#2E8932">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Financeiro</p>
+        <h2 id="financeiro-titulo" class="alt-h2 alt-h2--section font-display">O dinheiro do projeto, conferido linha a linha.</h2>
+        <p class="fx-texto">Importe o orçamento e o extrato, envie os comprovantes e ligue cada pagamento ao débito do banco. O Jards mostra o comprometido, o pago e o saldo de cada item.</p>
+        <ul class="fx-lista">
+          <li><i class="ph ph-check" aria-hidden="true"></i>Orçamento por CSV ou PDF, com versões e os tetos de cada grupo de custo.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Extrato em OFX, CSV ou PDF, com conferência de saldo.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>XML de NF-e e NFS-e lido na hora; outros formatos, PDF e foto lidos por IA, sempre com a sua confirmação.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Conciliação com sugestões por valor, data e documento: você confirma cada uma.</li>
+        </ul>
+      </div>
+      <!-- Financeiro > Orçamento, no padrão do app -->
+      <div class="app-frame pc-tela reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span class="pc-barra-proj">Festival de Música Popular 2026</span><span>/</span><b>Orçamento</b></div>
+        <div class="pc-abas alt-scroll-x" tabindex="-1"><span class="is-ativa">Orçamento</span><span>Comprovantes</span><span>Extrato</span><span>Conciliação</span></div>
+        <div class="pc-corpo">
+          <div class="pc-ferramentas">
+            <span class="pc-seletor">Versão 2 · em uso<i class="ph ph-caret-down"></i></span>
+            <span class="pc-botao"><i class="ph ph-upload-simple"></i>Importar CSV ou PDF</span>
+          </div>
+          <div class="pc-metricas">
+            <div class="pc-metrica"><span class="mk-rotulo">Vigente</span><strong>R$ 340.000,00</strong></div>
+            <div class="pc-metrica"><span class="mk-rotulo">Comprometido</span><strong>R$ 40.700,00</strong></div>
+            <div class="pc-metrica"><span class="mk-rotulo">Pago</span><strong>R$ 246.800,00</strong><small>Conciliado com o extrato</small></div>
+            <div class="pc-metrica"><span class="mk-rotulo">Saldo</span><strong>R$ 52.500,00</strong></div>
+          </div>
+          <div class="mk-painel">
+            <div class="mk-painel-topo"><span><i class="ph ph-list-bullets"></i>Itens do orçamento</span><span class="mk-rotulo">Valores em R$</span></div>
+            <div class="pc-rolagem alt-scroll-x" tabindex="-1">
+              <table class="pc-tbl">
+                <thead><tr><th>Item</th><th>Vigente</th><th>Comprometido</th><th>Pago</th><th>Saldo</th><th>% pago</th></tr></thead>
+                <tbody>
+                  <tr><td>Cachê dos artistas</td><td>180.000,00</td><td>30.000,00</td><td>120.000,00</td><td>30.000,00</td><td><span class="pc-pct"><span class="pc-mini"><span style="width:67%"></span></span>67%</span></td></tr>
+                  <tr><td>Sonorização e luz</td><td>95.000,00</td><td>0,00</td><td>95.000,00</td><td>0,00</td><td><span class="pc-pct"><span class="pc-mini"><span style="width:100%"></span></span>100%</span></td></tr>
+                  <tr><td>Divulgação</td><td>40.000,00</td><td>6.500,00</td><td>22.000,00</td><td>11.500,00</td><td><span class="pc-pct"><span class="pc-mini"><span style="width:55%"></span></span>55%</span></td></tr>
+                  <tr><td>Acessibilidade</td><td>25.000,00</td><td>4.200,00</td><td>9.800,00</td><td>11.000,00</td><td><span class="pc-pct"><span class="pc-mini"><span style="width:39%"></span></span>39%</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ CHECAGENS ════════════════════════ -->
+<section id="checagens" class="fx-sec section-space bg-white px-6" aria-labelledby="checagens-titulo" style="--fx-cor:#684DB0">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade fx-grade--inverso">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Checagens</p>
+        <h2 id="checagens-titulo" class="alt-h2 alt-h2--section font-display">Os problemas aparecem antes da análise do órgão.</h2>
+        <p class="fx-texto">Mais de cem checagens conferem despesas, fornecedores, pagamentos, orçamento e execução pelas regras do regime, com a norma de origem quando a regra vem da lei.</p>
+        <ul class="fx-lista">
+          <li><i class="ph ph-check" aria-hidden="true"></i>Bloqueios, alertas e avisos, cada um com o caminho para resolver.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Nota repetida, pagamento antes da emissão, teto de grupo de custo, débito sem despesa.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Fornecedores consultados na Receita e nas listas de sanções do TCU, do CNJ e da CGU.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Prontidão para envio: o percentual pronto e o que falta, item por item.</li>
+        </ul>
+      </div>
+      <!-- Painel de verificações, no padrão do app -->
+      <div class="app-frame pc-tela reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span class="pc-barra-proj">Festival de Música Popular 2026</span><span>/</span><b>Pendências</b></div>
+        <div class="pc-corpo">
+          <div class="mk-painel">
+            <div class="pc-verif-topo">
+              <div>
+                <p class="pc-verif-titulo"><i class="ph ph-shield-check"></i>Verificações</p>
+                <p class="pc-verif-data">Última verificação: hoje, 09:42</p>
+              </div>
+              <span class="pc-botao is-destaque"><i class="ph ph-arrows-clockwise"></i>Verificar agora</span>
+            </div>
+            <div class="pc-grupo is-bloqueio">
+              <p class="pc-grupo-titulo"><i class="ph ph-prohibit"></i>Bloqueiam o envio (2)</p>
+              <div class="pc-achado"><div><strong>Débito do extrato sem despesa</strong><small>R$ 3.200,00 em 18/09 sem despesa ligada</small></div><span class="pc-botao">Conciliar</span></div>
+              <div class="pc-achado"><div><strong>Concentração em um fornecedor</strong><small>41% do valor captado; o limite é 20%</small></div><span class="pc-botao">Abrir despesas</span></div>
+            </div>
+            <div class="pc-grupo is-revisar">
+              <p class="pc-grupo-titulo"><i class="ph ph-warning"></i>Revisar ou justificar (3)</p>
+              <div class="pc-achado"><div><strong>Chave de acesso repetida</strong><small>A mesma NF-e em duas despesas</small></div><span class="pc-botao">Justificar</span></div>
+              <div class="pc-achado"><div><strong>Pagamento antes da emissão</strong><small>Pago em 02/09, nota emitida em 05/09</small></div><span class="pc-botao">Justificar</span></div>
+              <div class="pc-achado"><div><strong>Foto longe do local</strong><small>Evidência a 62 km do local de realização</small></div><span class="pc-botao">Justificar</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ EXECUÇÃO ════════════════════════ -->
+<section id="execucao" class="fx-sec section-space alt-surface px-6" aria-labelledby="execucao-titulo" style="--fx-cor:#2D72B0">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade fx-grade--texto">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Execução</p>
+        <h2 id="execucao-titulo" class="alt-h2 alt-h2--section font-display">O que foi feito, com prova.</h2>
+        <p class="fx-texto">Metas, atividades, locais, beneficiários, distribuição, bens e divulgação ficam registrados com as evidências. A data e o local das fotos são lidos do próprio arquivo, quando a foto guarda esses dados.</p>
+      </div>
+      <ul class="pc-itens reveal">
+        <li><i class="ph ph-target" aria-hidden="true"></i><span>Metas previstas e realizadas, com justificativa quando ficam abaixo.</span></li>
+        <li><i class="ph ph-camera" aria-hidden="true"></i><span>Evidências: fotos, vídeos, listas de presença, clipping e links.</span></li>
+        <li><i class="ph ph-ticket" aria-hidden="true"></i><span>Plano de distribuição conferido pelas cotas da Lei Rouanet.</span></li>
+        <li><i class="ph ph-package" aria-hidden="true"></i><span>Bens permanentes com cotações e destinação.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ ENVIO ════════════════════════ -->
+<section id="envio" class="fx-sec section-space bg-white px-6" aria-labelledby="envio-titulo" style="--fx-cor:#7259B5">
+  <div class="max-w-6xl mx-auto">
+    <div class="fx-grade">
+      <div class="fx-copia reveal">
+        <p class="alt-kicker">Envio</p>
+        <h2 id="envio-titulo" class="alt-h2 alt-h2--section font-display">O pacote pronto para o sistema do órgão.</h2>
+        <p class="fx-texto">O checklist do regime mostra o que falta. Com tudo certo, o Jards gera o pacote com os arquivos nos modelos e nomes que o órgão pede, o relatório e o manifesto. Você envia pelo sistema do órgão e registra o protocolo no Jards.</p>
+        <ul class="fx-lista">
+          <li><i class="ph ph-check" aria-hidden="true"></i>Espelho do Salic, planilhas do STR, formulário PCP/PCF e planilhas da saúde.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Rascunho do relatório do objeto com o que já está cadastrado; o que falta vira lacuna.</li>
+          <li><i class="ph ph-check" aria-hidden="true"></i>Depois do envio: diligências, decisões, glosas e devoluções com os campos da GRU.</li>
+        </ul>
+      </div>
+      <!-- Envio: checklist do regime, no padrão do app -->
+      <div class="app-frame pc-tela reveal" aria-hidden="true">
+        <div class="app-barra"><img src="/assets/jards-icon-final.svg" alt="" /><span class="pc-barra-proj">Festival de Música Popular 2026</span><span>/</span><b>Envio</b></div>
+        <div class="pc-topo">
+          <div>
+            <p class="pc-sobre">Etapa final · Lei Rouanet</p>
+            <p class="pc-nome">Envio</p>
+          </div>
+          <div class="pc-acoes">
+            <span class="pc-botao is-destaque"><i class="ph ph-file-zip"></i>Pacote</span>
+            <span class="pc-botao"><i class="ph ph-table"></i>Espelho do Salic</span>
+          </div>
+        </div>
+        <div class="pc-corpo">
+          <div class="mk-painel pc-envio-resumo">
+            <p><strong>12 de 15 itens prontos</strong> · 2 obrigatórios faltam</p>
+            <div class="pc-barra"><span style="width:80%"></span></div>
+          </div>
+          <div class="mk-painel">
+            <div class="mk-painel-topo"><span><i class="ph ph-files"></i>Documentos</span></div>
+            <div class="pc-doc"><div><strong>Comprovante de recolhimento ao FNC</strong><span class="pc-marca is-obrigatorio">Obrigatório</span></div><span class="pc-estado is-pronto"><i class="ph ph-check-circle"></i>Pronto</span></div>
+            <div class="pc-doc"><div><strong>Comprovantes das despesas</strong><span class="pc-marca is-obrigatorio">Obrigatório</span></div><span class="pc-estado is-pronto"><i class="ph ph-check-circle"></i>Pronto</span></div>
+            <div class="pc-doc"><div><strong>Relatório de cumprimento do objeto</strong><span class="pc-marca is-obrigatorio">Obrigatório</span></div><span class="pc-botao"><i class="ph ph-paperclip"></i>Anexar</span></div>
+            <div class="pc-doc"><div><strong>Recibo de doação de bem permanente</strong><span class="pc-marca">Quando houver</span></div><span class="pc-estado is-na"><i class="ph ph-minus-circle"></i>Não se aplica</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ ACOMPANHAMENTO ════════════════════════ -->
+<section id="acompanhamento" class="section-space alt-surface px-6" aria-labelledby="acompanhamento-titulo" style="--fx-cor:#1A8B7A">
+  <div class="max-w-6xl mx-auto">
+    <div class="alt-split-head reveal">
+      <div>
+        <p class="alt-kicker">Acompanhamento</p>
+        <h2 id="acompanhamento-titulo" class="alt-h2 alt-h2--section font-display">Patrocinador, contador e cliente acompanham sem planilha.</h2>
+      </div>
+      <p class="alt-split-lede">Mande ao patrocinador um link com execução, metas, contrapartidas e fotos, e, com a empresa ligada ao link, receba o aceite no histórico dela no <a class="pc-link" href="/crm">CRM</a>. Convide contador ou auditor para ler as seções que você escolher.</p>
+    </div>
+    <div class="pc-quatro reveal">
+      <article>
+        <span class="pc-quatro-icone"><i class="ph ph-link" aria-hidden="true"></i></span>
+        <p>Relatório do patrocinador por link, com validade e aceite.</p>
+      </article>
+      <article>
+        <span class="pc-quatro-icone"><i class="ph ph-eye" aria-hidden="true"></i></span>
+        <p>Convidados só leitura, sem ocupar vaga: contabilidade, auditoria e patrocínio.</p>
+      </article>
+      <article>
+        <span class="pc-quatro-icone"><i class="ph ph-upload-simple" aria-hidden="true"></i></span>
+        <p>O proponente envia despesas e evidências pelo espaço dele; a equipe confere.</p>
+      </article>
+      <article>
+        <span class="pc-quatro-icone"><i class="ph ph-users-three" aria-hidden="true"></i></span>
+        <p>Funções na equipe: quem prepara, quem revisa e quem responde pelo envio.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ CONECTOR (CLAUDE E CHATGPT) ════════════════════════ -->
+<section id="conector-ia" class="section-space bg-white px-6" aria-labelledby="conector-titulo">
+  <div class="max-w-6xl mx-auto">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+      <div class="reveal min-w-0">
+        <p class="alt-kicker">Conector MCP</p>
+        <h2 id="conector-titulo" class="alt-h2 alt-h2--section font-display">
+          <span class="alt-h2-line">Claude e ChatGPT.</span>
+          <span class="alt-h2-line">A prestação vem do seu&nbsp;Jards.</span>
+        </h2>
+        <p class="text-black/55 text-[15px] leading-relaxed mt-6 max-w-md">
+          Conecte sua conta Jards, marque Prestação de contas e pergunte. O assistente consulta a prestação ao vivo e recebe notas e comprovantes pela conversa.
+        </p>
+        <ul class="space-y-3 mt-8 text-sm text-black/70 max-w-md">
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Diz o que falta para enviar: pendências por item do orçamento e verificações abertas, com o link de onde resolver</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Consulta despesas, orçamento, o objeto e o relatório de cada prestação</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Recebe arquivos pela conversa: anexo no ChatGPT, link de envio para o celular ou o XML da nota colado</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Registra despesas, evidências, atividades e metas, e roda as verificações</li>
+          <li class="flex gap-2.5"><svg class="alt-check" viewBox="0 0 256 256" aria-hidden="true"><path fill="currentColor" d="M232.49,80.49l-128,128a12,12,0,0,1-17,0l-56-56a12,12,0,1,1,17-17L96,183,215.51,63.51a12,12,0,0,1,17,17Z"/></svg>Tudo o que grava fica para a equipe conferir em Ações do assistente; despesas e evidências entram pendentes, com o selo “Enviada pelo assistente”</li>
+        </ul>
+        <div class="grid grid-cols-2 gap-3 mt-8 max-w-md">
+          <div class="mcp-plat">
+            <img src="/assets/icons/logo-claude.png" alt="" />
+            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">Claude</p><p class="text-[11px] leading-snug text-black/60">Conector no claude.ai · também no Claude Code</p></div>
+          </div>
+          <div class="mcp-plat">
+            <img src="/assets/icons/logo-chatgpt.png" alt="" />
+            <div class="min-w-0"><p class="text-[13px] font-bold text-[#282525]">ChatGPT</p><p class="text-[11px] leading-snug text-black/60">Servidor MCP no ChatGPT · ou GPT personalizada</p></div>
+          </div>
+        </div>
+        <p class="text-black/60 text-xs mt-4 max-w-md">Nunca muda status, não registra o envio ao órgão e só retira o que ele mesmo criou. No teste gratuito e na assinatura; sem assinatura, só consulta. Acesso só às organizações de que você é membro.</p>
+      </div>
+
+      <figure class="reveal min-w-0 mcp-figura">
+        <figcaption class="sr-only" id="mcp-transcricao">Exemplo de conversa com o ChatGPT e o Claude conectados à prestação de contas no Jards.</figcaption>
+        <button type="button" class="mcp-pausar" id="mcp-pausar" aria-pressed="false" aria-label="Pausar animação">
+          <svg class="icone-pausar" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><rect x="2" y="1.5" width="2.6" height="9" rx=".8" fill="currentColor"/><rect x="7.4" y="1.5" width="2.6" height="9" rx=".8" fill="currentColor"/></svg>
+          <svg class="icone-retomar" width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 1.8v8.4c0 .5.5.8.9.5l6.4-4.2a.6.6 0 0 0 0-1L3.9 1.3c-.4-.3-.9 0-.9.5z" fill="currentColor"/></svg>
+        </button>
+        <div class="mcp-chat" id="mcp-chat" aria-hidden="true">
+          <div class="mcp-chat-head">
+            <span class="mcp-chat-dot"></span><span class="mcp-chat-dot"></span><span class="mcp-chat-dot"></span>
+            <div class="mcp-tabs">
+              <span class="mcp-tab is-on" data-assistente="chatgpt"><img src="/assets/icons/logo-chatgpt.png" alt="" />ChatGPT</span>
+              <span class="mcp-tab" data-assistente="claude"><img src="/assets/icons/logo-claude.png" alt="" />Claude</span>
+            </div>
+            <span class="mcp-conectado">Jards</span>
+          </div>
+          <div class="mcp-chat-body" id="mcp-chat-body"></div>
+          <div class="mcp-input">
+            <span class="mcp-input-texto is-vazio" id="mcp-input-texto">Pergunte ao ChatGPT</span>
+            <span class="mcp-enviar" id="mcp-enviar" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 11.5V2.5M7 2.5L3 6.5M7 2.5l4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </div>
+</section>
+<script>
+(function(){
+  var LOGOS = { chatgpt: '/assets/icons/logo-chatgpt.png', claude: '/assets/icons/logo-claude.png' };
+  var NOMES = { chatgpt: 'ChatGPT', claude: 'Claude' };
+  // Três conversas da prestação: o que falta (consulta), o link de envio pelo
+  // celular (arquivos) e o registro das notas, que entram pendentes (gravação)
+  var CONVERSAS = [
+    { assistente: 'chatgpt', pergunta: 'O que falta para enviar a prestação do Festival de Música?', ferramenta: 'Jards · pendências da prestação', chamada: ['listar_pendencias_da_prestacao', '{ id }'], destaque: '3 pendências · 1 item a conciliar', resposta: 'Faltam três coisas: o item Sonorização tem R$ 4.200 a conciliar e há duas verificações abertas. Quer mandar as notas por aqui?' },
+    { assistente: 'claude', pergunta: 'As notas estão no meu celular. Como eu mando?', ferramenta: 'Jards · link de envio', chamada: ['preparar_envio_de_arquivos', '{ id, modo: "link" }'], destaque: 'Link de envio · vale 15 minutos', resposta: 'Abra o link no celular e escolha os arquivos ou tire a foto das notas. A página já confere o que chegar.' },
+    { assistente: 'chatgpt', pergunta: 'Anexei duas notas de sonorização. Lança na prestação?', ferramenta: 'Jards · registrar despesas', chamada: ['registrar_despesas', '{ id, despesas: [{ arquivo_id, valor, item_id }, …] }'], destaque: '2 despesas pendentes · Enviada pelo assistente', resposta: 'Registrei as duas como pendentes, com o selo do assistente. A equipe confere em Ações do assistente.' }
+  ];
+  var CHECK = '<svg viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="6" r="6" fill="#2E8932"/><path d="M3.4 6.2l1.8 1.8 3.6-3.8" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  var chat = document.getElementById('mcp-chat');
+  var corpo = document.getElementById('mcp-chat-body');
+  var campo = document.getElementById('mcp-input-texto');
+  var enviar = document.getElementById('mcp-enviar');
+  var pausar = document.getElementById('mcp-pausar');
+  var transcricao = document.getElementById('mcp-transcricao');
+  if(!chat || !corpo || !campo || !enviar || !pausar) return;
+  var abas = chat.querySelectorAll('.mcp-tab');
+  var movimento = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : { matches: false };
+  var visivel = false, pausado = false, rodando = false;
+
+  if(transcricao){
+    transcricao.textContent = 'Exemplo de conversa com os assistentes conectados à prestação de contas no Jards. ' + CONVERSAS.map(function(c){
+      return 'No ' + NOMES[c.assistente] + ', a pessoa pede: “' + c.pergunta + '”. O ' + NOMES[c.assistente] + ' usa ' + c.ferramenta + (c.chamada ? ' (ferramenta ' + c.chamada[0] + ')' : '') + ' e responde: ' + c.destaque + '. ' + c.resposta;
+    }).join(' ');
+  }
+
+  function dormir(ms){ return new Promise(function(r){ setTimeout(r, ms); }); }
+  async function esperar(ms){ await dormir(ms); while(pausado) await dormir(150); }
+  async function quandoVisivel(){ while(!visivel || pausado) await dormir(300); }
+  function el(tag, classe){ var e = document.createElement(tag); if(classe) e.className = classe; return e; }
+
+  function ativarAba(assistente){
+    abas.forEach(function(t){ t.classList.toggle('is-on', !assistente || t.dataset.assistente === assistente); });
+  }
+  function esvaziarCampo(assistente){
+    campo.classList.add('is-vazio');
+    campo.textContent = 'Pergunte ao ' + NOMES[assistente];
+    campo.scrollLeft = 0;
+    enviar.classList.remove('is-pronto');
+  }
+  function balaoUsuario(c){ var u = el('div', 'mcp-msg mcp-msg-user'); u.textContent = c.pergunta; return u; }
+  function linhaFerramenta(c, pronta){
+    var t = el('div', 'mcp-tool' + (pronta ? ' is-ok' : ''));
+    if(pronta){ t.innerHTML = CHECK; t.appendChild(document.createTextNode(c.ferramenta)); }
+    else { t.appendChild(el('span', 'mcp-tool-icone')); t.appendChild(document.createTextNode('Acessando o Jards…')); }
+    if(c.chamada){
+      var cod = el('code', 'mcp-tool-chamada'), nome = el('b');
+      nome.textContent = c.chamada[0];
+      cod.appendChild(nome);
+      cod.appendChild(document.createTextNode('(' + c.chamada[1] + ')'));
+      t.appendChild(cod);
+    }
+    return t;
+  }
+  function resposta(c, texto){
+    var r = el('div', 'mcp-msg mcp-ai');
+    var avatar = el('img', 'mcp-ai-avatar'); avatar.src = LOGOS[c.assistente]; avatar.alt = '';
+    var bloco = el('div'), forte = el('strong'), corpoTexto = el('span');
+    forte.textContent = c.destaque; corpoTexto.textContent = texto;
+    bloco.appendChild(forte); bloco.appendChild(corpoTexto);
+    r.appendChild(avatar); r.appendChild(bloco);
+    return r;
+  }
+  function entrar(no){ no.classList.add('mcp-entra'); corpo.appendChild(no); return no; }
+
+  // Movimento reduzido: as duas conversas prontas, sem alternar nem digitar
+  function mostrarEstatico(){
+    corpo.classList.add('is-estatico');
+    corpo.style.opacity = '';
+    corpo.innerHTML = '';
+    ativarAba(null);
+    CONVERSAS.forEach(function(c){
+      corpo.appendChild(balaoUsuario(c));
+      corpo.appendChild(linhaFerramenta(c, true));
+      corpo.appendChild(resposta(c, c.resposta));
+    });
+    pausar.hidden = true;
+  }
+
+  async function tocar(c){
+    corpo.style.opacity = '0';
+    await esperar(240);
+    corpo.innerHTML = '';
+    corpo.style.opacity = '';
+    ativarAba(c.assistente);
+    esvaziarCampo(c.assistente);
+    await esperar(650);
+
+    campo.classList.remove('is-vazio');
+    campo.textContent = '';
+    var digitado = document.createTextNode('');
+    campo.appendChild(digitado);
+    campo.appendChild(el('span', 'mcp-caret'));
+    enviar.classList.add('is-pronto');
+    for(var i = 1; i <= c.pergunta.length; i++){
+      digitado.nodeValue = c.pergunta.slice(0, i);
+      campo.scrollLeft = campo.scrollWidth;
+      await esperar(c.pergunta.charAt(i - 1) === ' ' ? 60 : 34);
+    }
+    await esperar(320);
+    enviar.classList.add('is-apertado');
+    await esperar(150);
+    enviar.classList.remove('is-apertado');
+    esvaziarCampo(c.assistente);
+    entrar(balaoUsuario(c));
+
+    await esperar(550);
+    var ferramenta = entrar(linhaFerramenta(c, false));
+    await esperar(1200);
+    ferramenta.replaceWith(linhaFerramenta(c, true));
+
+    await esperar(350);
+    var r = entrar(resposta(c, ''));
+    var alvo = r.querySelector('span');
+    var palavras = c.resposta.split(' ');
+    for(var k = 1; k <= palavras.length; k++){
+      alvo.textContent = palavras.slice(0, k).join(' ');
+      await esperar(62);
+    }
+    await esperar(3400);
+  }
+
+  async function ciclo(){
+    if(rodando) return;
+    rodando = true;
+    corpo.classList.remove('is-estatico');
+    pausar.hidden = false;
+    for(var i = 0; !movimento.matches; i++){
+      await quandoVisivel();
+      if(movimento.matches) break;
+      await tocar(CONVERSAS[i % CONVERSAS.length]);
+    }
+    rodando = false;
+    mostrarEstatico();
+  }
+
+  pausar.addEventListener('click', function(){
+    pausado = !pausado;
+    pausar.setAttribute('aria-pressed', String(pausado));
+    pausar.setAttribute('aria-label', pausado ? 'Retomar animação' : 'Pausar animação');
+    chat.classList.toggle('is-pausado', pausado);
+  });
+
+  if('IntersectionObserver' in window){
+    new IntersectionObserver(function(entradas){
+      visivel = entradas.some(function(e){ return e.isIntersecting; });
+    }, { threshold: 0.35 }).observe(chat);
+  } else {
+    visivel = true;
+  }
+
+  if(movimento.addEventListener){
+    movimento.addEventListener('change', function(){
+      if(movimento.matches){ if(!rodando) mostrarEstatico(); }
+      else ciclo();
+    });
+  }
+
+  if(movimento.matches) mostrarEstatico();
+  else ciclo();
+})();
+</script>
+
+<!-- ════════════════════════ PREÇO E TESTE ════════════════════════ -->
+<section id="preco" class="pc-faixa bg-white pc-borda-topo px-6" aria-labelledby="preco-titulo">
+  <div class="max-w-6xl mx-auto alt-split-head reveal">
+    <div>
+      <img src="/illustrations/tamandua-contador.png" width="900" height="547" alt="Tamanduá da Jards fazendo as contas na mesa, com a calculadora e os papéis" class="pc-teste-tamandua" loading="lazy" decoding="async" />
+      <h2 id="preco-titulo" class="alt-h2 alt-h2--section font-display">45 dias de teste gratuito.</h2>
+    </div>
+    <div>
+      <p class="alt-split-lede">Teste com a sua equipe, sem cartão, uma vez por organização. Depois, R$ 92,80 por mês com 1 usuário, mais R$ 19,90 por usuário extra. Sem assinatura, as prestações ficam disponíveis para consulta e exportação.</p>
+      <p class="pc-preco-link"><a href="/precos" class="alt-link">Ver todos os preços <i class="ph ph-arrow-right" aria-hidden="true"></i></a></p>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ DÚVIDAS ════════════════════════ -->
+<section id="duvidas" class="section-space bg-white pc-borda-topo px-6" aria-labelledby="duvidas-titulo">
+  <div class="max-w-3xl mx-auto reveal">
+    <p class="alt-kicker">Dúvidas</p>
+    <h2 id="duvidas-titulo" class="alt-h2 alt-h2--section font-display mb-10">Antes de começar.</h2>
+    <div class="faq-lista">
+      <details>
+        <summary>Quais leis o Jards conhece?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Lei Rouanet (IN 29/2026), Lei de Incentivo ao Esporte (Portarias 10/2026 e 424/2020), Audiovisual da ANCINE (INs 159/2021 e 150/2019) e Pronon e Pronas/PCD. Patrocínio direto e outras leis usam o modo genérico, sem regras de lei.</p>
+      </details>
+      <details>
+        <summary>O Jards envia a prestação ao órgão?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Não. O Jards prepara os arquivos nos modelos e nomes que o órgão pede; você envia pelo sistema oficial e registra o protocolo no Jards.</p>
+      </details>
+      <details>
+        <summary>A IA preenche tudo sozinha?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Não. O XML da NF-e, da NFC-e e da NFS-e (padrão nacional, ABRASF e Nota Paulistana) é lido sem IA. Outros formatos, PDF e foto são lidos por IA só como sugestão: nada é gravado sem a sua confirmação.</p>
+      </details>
+      <details>
+        <summary>Preciso assinar a Captação para usar?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Não. A Prestação de contas tem assinatura própria, independente do plano da Captação.</p>
+      </details>
+      <details>
+        <summary>Como começa o teste?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Crie a conta e, no seletor de módulos do menu, escolha Prestação de contas. Quem administra a organização começa o teste.</p>
+      </details>
+      <details>
+        <summary>E se eu não assinar depois do teste?<i class="ph ph-plus" aria-hidden="true"></i></summary>
+        <p>Nada é apagado. As prestações ficam em somente leitura, disponíveis para consulta e exportação. Convidados e proponentes perdem o acesso até a assinatura.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════ CTA FINAL ════════════════════════ -->
+<section class="closing-cta section-space px-6" aria-labelledby="fechamento-titulo">
+  <div class="prancheta" data-prancheta="fechamento" aria-hidden="true"></div>
+  <div class="max-w-3xl mx-auto text-center reveal">
+    <h2 id="fechamento-titulo" class="alt-h2 alt-h2--section font-display text-[#282525] mb-5">Prepare a próxima prestação com tempo.</h2>
+    <p class="text-black/55 text-lg mb-10">Crie a conta e comece os 45 dias de teste gratuito pelo seletor de módulos.</p>
+    <a href="/cadastro" data-app-path="/cadastro" class="alt-cta">
+      Criar conta
+      <i class="ph ph-arrow-right" aria-hidden="true"></i>
+    </a>
+    <p class="pc-fechamento-link"><a href="/precos" class="alt-link">Ver os preços <i class="ph ph-arrow-right" aria-hidden="true"></i></a></p>
+  </div>
+</section>
+
+</main>
+
+<!-- ════════════════════════ FOOTER ════════════════════════ -->
+<footer id="rodape" class="site-footer">
+  <div class="max-w-6xl mx-auto">
+    <div class="site-footer-main">
+      <div class="footer-brand">
+        <a href="#top" class="footer-icon-stack" aria-label="Voltar ao início">
+          <img src="/assets/jards-icon-final.svg" alt="" class="footer-icon" />
+        </a>
+      </div>
+
+      <nav aria-label="Navegação do rodapé">
+        <p class="footer-column-title">Navegue</p>
+        <div class="footer-nav">
+          <a href="/incentivadores">Inteligência</a>
+          <a href="/crm">CRM</a>
+          <a href="/prestacao-de-contas">Prestação de contas</a>
+          <a href="/precos">Preços</a>
+          <a href="/publicacoes" data-app-path="/publicacoes">Publicações</a>
+        </div>
+      </nav>
+
+      <div>
+        <p class="footer-column-title">Acompanhe a Jards</p>
+        <div class="footer-social-links">
+          <a href="https://www.linkedin.com/company/jardsapp/home/?viewAsMember=true" target="_blank" rel="noopener noreferrer"><i class="ph ph-linkedin-logo" aria-hidden="true"></i><span>LinkedIn</span></a>
+          <a href="https://www.instagram.com/jardsapp/" target="_blank" rel="noopener noreferrer"><i class="ph ph-instagram-logo" aria-hidden="true"></i><span>Instagram</span></a>
+        </div>
+        <p class="footer-social-note">Conteúdo sobre captação, patrocínios, impacto e continuidade.</p>
+        <img src="/assets/tamandua-celular-footer.png" alt="Tamanduá segurando um celular" class="footer-social-illustration" loading="lazy" />
+      </div>
+    </div>
+
+    <div class="site-footer-bottom">
+      <div class="site-footer-legal">
+        <a href="/privacidade" data-app-path="/privacidade">Política de Privacidade</a>
+        <a href="/termos" data-app-path="/termos">Termos de Uso</a>
+        <button type="button" class="site-footer-cookies" data-preferencias-cookies>Preferências de cookies</button>
+      </div>
+      <p>© 2026 Jards. Feito no Brasil.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // ── Destinos da aplicação ──
+  const appOrigin = window.location.protocol === 'file:' ? 'http://localhost:3000' : window.location.origin;
+  document.querySelectorAll('[data-app-path]').forEach(function(link) {
+    var destino = new URL(link.dataset.appPath, appOrigin);
+    var atual = new URL(link.href, location.href);
+    destino.search = atual.search;
+    link.href = destino.href;
+  });
+
+  // ── Listas roláveis: sombra nas bordas ──
+  document.querySelectorAll('.alt-scroll-x').forEach(function(trilho) {
+    const atualizar = function() {
+      const max = trilho.scrollWidth - trilho.clientWidth;
+      trilho.classList.toggle('is-fade-l', max > 1 && trilho.scrollLeft > 1);
+      trilho.classList.toggle('is-fade-r', max > 1 && trilho.scrollLeft < max - 1);
+    };
+    trilho.addEventListener('scroll', atualizar, { passive: true });
+    if ('ResizeObserver' in window) new ResizeObserver(atualizar).observe(trilho);
+    window.addEventListener('load', atualizar);
+    atualizar();
+  });
+
+  // ── Revelação ao rolar ──
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }});
+    }, { threshold: 0.06 });
+    document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+  } else {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+  }
+</script>
+<script>
+// ── Prancheta ──
+// As superfícies de papel (topo e fechamento) são desenhadas como uma
+// prancha técnica: um eixo único na margem do conteúdo, linhas de construção
+// que nascem de elementos reais da página e passam um pouco das quinas, e os
+// módulos do símbolo da Jards (quarto de círculo coral + quarto roxo de meio
+// raio) feitos a compasso. As seções brancas são folhas sobre a prancha.
+(function(){
+  var NS = 'http://www.w3.org/2000/svg';
+  var COR = { coral:'#D94A4A', roxo:'#684DB0', grafite:'#282525' };
+  var movimento = window.matchMedia('(prefers-reduced-motion: no-preference)');
+  var largo = window.matchMedia('(min-width: 768px)');
+  var pranchetas = Array.prototype.slice.call(document.querySelectorAll('[data-prancheta]'));
+  if (!pranchetas.length) return;
+
+  function no(tag, attrs, pai){
+    var n = document.createElementNS(NS, tag);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (pai) pai.appendChild(n);
+    return n;
+  }
+  // Posição final do elemento: desconta o deslocamento de entrada dos .reveal,
+  // que ainda pode estar em andamento quando a prancha é medida.
+  function caixa(alvo, base){
+    if (!alvo) return null;
+    var a = alvo.getBoundingClientRect(), b = base.getBoundingClientRect(), dx = 0, dy = 0;
+    for (var n = alvo; n && n !== base; n = n.parentElement) {
+      if (n.classList && n.classList.contains('reveal')) {
+        var t = getComputedStyle(n).transform;
+        if (t && t !== 'none') { var m = new DOMMatrixReadOnly(t); dx += m.m41; dy += m.m42; }
+      }
+    }
+    var x = a.left - b.left - dx, y = a.top - b.top - dy;
+    return { x:x, y:y, w:a.width, h:a.height, r:x + a.width, b:y + a.height, cx:x + a.width/2, cy:y + a.height/2 };
+  }
+  // O eixo corre na margem, 12px antes da borda do container de conteúdo
+  // (72rem centralizado, 24px no mínimo): igual em todas as seções e sem
+  // encostar nas letras.
+  function eixo(w){
+    var rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    return Math.floor(Math.max(24, (w - 72*rem) / 2) - 12) + .5;
+  }
+  // Traço de 1px nítido: a coordenada fixa de linhas retas cai no meio do pixel.
+  function px(v){ return Math.round(v - .5) + .5; }
+
+  function Desenho(svg, id){
+    this.svg = svg; this.id = id; this.hachuras = {};
+    this.defs = no('defs', {}, svg);
+    this.g = no('g', {}, svg);
+  }
+  Desenho.prototype.hachura = function(cor){
+    if (this.hachuras[cor]) return this.hachuras[cor];
+    var pid = 'pr-' + this.id + '-' + cor;
+    var p = no('pattern', { id:pid, width:7, height:7, patternUnits:'userSpaceOnUse', patternTransform:'rotate(45)' }, this.defs);
+    no('line', { x1:3.5, y1:0, x2:3.5, y2:7, stroke:COR[cor], 'stroke-width':1, 'stroke-opacity':.3 }, p);
+    return (this.hachuras[cor] = 'url(#' + pid + ')');
+  };
+  // Linha de construção: passa das pontas, como no traço à mão.
+  Desenho.prototype.linha = function(x1, y1, x2, y2, tipo, sobra){
+    sobra = sobra == null ? 16 : sobra;
+    if (x1 === x2) x1 = x2 = px(x1);
+    if (y1 === y2) y1 = y2 = px(y1);
+    var dx = x2-x1, dy = y2-y1, L = Math.hypot(dx, dy) || 1, ux = dx/L*sobra, uy = dy/L*sobra;
+    return no('line', { x1:x1-ux, y1:y1-uy, x2:x2+ux, y2:y2+uy, 'class':'pr-linha ' + (tipo || '') }, this.g);
+  };
+  Desenho.prototype.eixo = function(x, h){ return this.linha(x, 0, x, h, 'is-guia', 0); };
+  Desenho.prototype.circulo = function(cx, cy, r){
+    return no('circle', { cx:cx, cy:cy, r:r, 'class':'pr-arco' }, this.g);
+  };
+  Desenho.prototype.centro = function(cx, cy, r){
+    var b = r ? Math.min(8, Math.max(4, r * .22)) : 8;
+    this.linha(cx-b, cy, cx+b, cy, 'is-forte', 0);
+    this.linha(cx, cy-b, cx, cy+b, 'is-forte', 0);
+    no('circle', { cx:px(cx), cy:px(cy), r:b * .44, 'class':'pr-marca' }, this.g);
+  };
+  Desenho.prototype.nota = function(x, y, texto, ancora){
+    var t = no('text', { x:x, y:y, 'class':'pr-nota', 'text-anchor':ancora || 'middle' }, this.g);
+    t.textContent = texto;
+    return t;
+  };
+  // Cruz de registro: só onde duas linhas reais se encontram.
+  Desenho.prototype.registro = function(x, y){
+    this.linha(x-5, y, x+5, y, 'is-forte', 0);
+    this.linha(x, y-5, x, y+5, 'is-forte', 0);
+  };
+  // Módulo: quarto de círculo com aguada, hachura e contorno.
+  // Abre para 'no' (cima-esquerda), 'ne', 'so' ou 'se'.
+  Desenho.prototype.modulo = function(cx, cy, r, abre, cor, aguada, marca){
+    var ang = { ne:[-90,0], se:[0,90], so:[90,180], no:[180,270] }[abre];
+    var t0 = ang[0]*Math.PI/180, t1 = ang[1]*Math.PI/180;
+    var d = 'M' + cx + ' ' + cy +
+      ' L' + (cx + r*Math.cos(t0)) + ' ' + (cy + r*Math.sin(t0)) +
+      ' A' + r + ' ' + r + ' 0 0 1 ' + (cx + r*Math.cos(t1)) + ' ' + (cy + r*Math.sin(t1)) + ' Z';
+    var extra = marca ? { 'data-forca':marca } : {};
+    function com(o){ for (var k in extra) o[k] = extra[k]; return o; }
+    no('path', com({ d:d, fill:COR[cor], 'fill-opacity':aguada == null ? .1 : aguada, 'class':'pr-aguada pr-aguada-cor' }), this.g);
+    no('path', { d:d, fill:this.hachura(cor), 'class':'pr-aguada' }, this.g);
+    no('path', com({ d:d, 'class':'pr-contorno', stroke:COR[cor], 'stroke-opacity':.6 }), this.g);
+  };
+  // O símbolo da Jards: o quarto roxo (raio R/2) encaixa embaixo do coral.
+  Desenho.prototype.simbolo = function(cx, cy, R, w, h, compacto){
+    var rx = cx - R/2;
+    if (compacto) {
+      this.linha(cx - R - 24, cy, cx + 24, cy, 'is-guia', 0);
+      this.linha(cx, cy - R - 16, cx, cy + R/2 + 16, 'is-guia', 0);
+      this.linha(rx, cy - R - 16, rx, cy + R/2 + 16, 'is-guia', 0);
+    } else {
+      this.linha(0, cy, w, cy, 'is-guia', 0);
+      this.linha(cx, 0, cx, h, 'is-guia', 0);
+      this.linha(rx, 0, rx, h, 'is-guia', 0);
+    }
+    this.circulo(cx, cy, R);
+    this.circulo(rx, cy, R/2);
+    this.modulo(cx, cy, R, 'no', 'coral', .12);
+    this.modulo(rx, cy, R/2, 'se', 'roxo', .14);
+    this.centro(cx, cy, R);
+    this.centro(rx, cy, R/2);
+    // A proporção real da marca: o roxo tem metade do raio do coral.
+    this.linha(cx, cy, cx - R*Math.SQRT1_2, cy - R*Math.SQRT1_2, '', 0);
+    this.linha(rx, cy, rx + R/2*Math.SQRT1_2, cy + R/2*Math.SQRT1_2, '', 0);
+    if (!compacto) {
+      this.nota(cx - R*.36, cy - R*.36 - 10, 'r');
+      this.nota(rx + R*.2 + 10, cy + R*.2 - 2, 'r/2', 'start');
+    }
+  };
+
+  var desenhos = {
+    topo: function(d, sec, w, h){
+      var titulo = caixa(sec.querySelector('.hero-copy h1'), sec);
+      var botao = caixa(sec.querySelector('.hero-actions .alt-cta'), sec);
+      if (!titulo || !botao) return;
+      // A nota do teste fica embaixo dos botões: o módulo coral começa depois dela.
+      var nota = caixa(sec.querySelector('.pc-hero-nota'), sec);
+      var piso = nota && nota.b > botao.b ? nota.b : botao.b;
+      var x0 = eixo(w);
+      // O eixo da prancha e a linha que chega ao botão principal.
+      d.eixo(x0, h);
+      d.linha(0, botao.cy, botao.x, botao.cy, 'pr-cta', 0);
+      d.registro(x0, botao.cy);
+      // Módulo coral apoiado na base, a partir da borda do texto.
+      var R = Math.min(h - piso - 36, (titulo.w || 400) * .62);
+      if (R > 90) {
+        var cx = titulo.x + R;
+        d.circulo(cx, h, R);
+        d.linha(cx, h - R - 24, cx, h, 'is-guia', 0);
+        d.modulo(cx, h, R, 'no', 'coral', .12);
+      }
+      if (largo.matches) {
+        // Roxo na proporção da marca (metade do coral), preso à margem
+        // direita logo abaixo do menu.
+        var Rr = Math.max(R > 90 ? R / 2 : 80, 72), cyr = 96;
+        d.circulo(w, cyr, Rr);
+        d.modulo(w, cyr, Rr, 'so', 'roxo', .12);
+        d.registro(w - Rr, cyr);
+      } else {
+        // Celular: ao lado dos botões, depois do último item da mesma linha.
+        var naLinha = Array.prototype.map.call(sec.querySelectorAll('.hero-actions > *'), function(e){ return caixa(e, sec); })
+          .filter(function(c){ return c && Math.abs(c.cy - botao.cy) < 4; });
+        if (!naLinha.length) return;
+        var dir = Math.max.apply(null, naLinha.map(function(c){ return c.r; }));
+        var Rc = Math.min(w - dir - 28, 132);
+        if (Rc > 60) {
+          d.modulo(w, botao.y - 8, Rc, 'so', 'roxo', .12);
+          d.registro(w - Rc, botao.y - 8);
+        }
+      }
+    },
+    fechamento: function(d, sec, w, h){
+      var conteudo = caixa(sec.querySelector('.max-w-3xl'), sec);
+      var botao = caixa(sec.querySelector('.alt-cta'), sec);
+      if (!conteudo || !botao) return;
+      var x0 = eixo(w), fim = h - 28;
+      // Aqui a prancha termina: o eixo para na última cruz.
+      d.linha(x0, 0, x0, fim, 'is-guia', 0);
+      d.registro(x0, fim);
+      var margem = w - conteudo.r;
+      var R = Math.min(margem * .78, h * .5);
+      if (R >= 120) {
+        // O símbolo completo à direita; a linha de base sai do eixo, passa
+        // pelo botão e chega ao símbolo.
+        var cx = conteudo.r + margem / 2 + R / 2;
+        d.simbolo(cx, botao.cy, R, w, h);
+        d.linha(x0, botao.cy, cx - R, botao.cy, 'pr-cta', 0);
+        d.registro(x0, botao.cy);
+      } else {
+        // Telas estreitas: o símbolo pequeno embaixo de tudo, como assinatura.
+        var Rm = Math.min(56, (h - conteudo.b - 28) / 1.5);
+        if (Rm >= 28) d.simbolo(w / 2 + Rm / 2, conteudo.b + 12 + Rm, Rm, w, h, true);
+      }
+    }
+  };
+
+  var estado = new Map();
+
+  // Só entram as pranchetas com desenho conhecido; um nome sem desenho fica sem prancha.
+  pranchetas = pranchetas.filter(function(alvo){
+    return typeof desenhos[alvo.getAttribute('data-prancheta')] === 'function' && alvo.parentElement;
+  });
+  if (!pranchetas.length) return;
+
+  function desenhar(alvo, animar){
+    var sec = alvo.parentElement, w = sec.clientWidth, h = sec.clientHeight;
+    if (!w || !h) return;
+    estado.get(alvo).tam = w + 'x' + h;
+    alvo.textContent = '';
+    var nome = alvo.getAttribute('data-prancheta'), desenho = desenhos[nome];
+    if (typeof desenho !== 'function') return;
+    var svg = no('svg', { viewBox:'0 0 ' + w + ' ' + h, width:w, height:h, focusable:'false' }, alvo);
+    var d = new Desenho(svg, nome);
+    desenho(d, sec, w, h);
+    if (animar) revelar(svg);
+  }
+
+  // Primeiro o conteúdo assenta, depois o lápis traça: os traços sólidos se
+  // desenham e os tracejados e aguadas aparecem em seguida.
+  function revelar(svg){
+    if (!movimento.matches || !svg.animate) return;
+    var tracos = svg.querySelectorAll('.pr-linha:not(.is-guia), .pr-contorno');
+    Array.prototype.forEach.call(tracos, function(el, i){
+      var L = el.getTotalLength ? el.getTotalLength() : 0;
+      if (!L) return;
+      el.animate([{ strokeDasharray:L, strokeDashoffset:L }, { strokeDasharray:L, strokeDashoffset:0 }],
+        { duration:900, delay:80 + i*35, easing:'cubic-bezier(.65,0,.35,1)', fill:'backwards' });
+    });
+    Array.prototype.forEach.call(svg.querySelectorAll('.is-guia, .pr-arco, .pr-aguada, .pr-marca, .pr-nota'), function(el, i){
+      el.animate([{ opacity:0 }, { opacity:1 }], { duration:700, delay:300 + (i % 12)*40, easing:'ease-out', fill:'backwards' });
+    });
+  }
+
+  var pendentes = new Set(), quadro = 0;
+  function agendar(alvo){
+    pendentes.add(alvo);
+    if (quadro) return;
+    quadro = requestAnimationFrame(function(){
+      quadro = 0;
+      pendentes.forEach(function(a){
+        var sec = a.parentElement, st = estado.get(a);
+        if (st && st.visto && st.tam !== sec.clientWidth + 'x' + sec.clientHeight) desenhar(a, false);
+      });
+      pendentes.clear();
+    });
+  }
+
+  var pronto = document.fonts && document.fonts.ready ? document.fonts.ready : Promise.resolve();
+  // Com animação, a prancha só aparece quando a seção entra na tela (senão
+  // ela surgiria pronta, sumiria e se redesenharia). Sem animação, já nasce
+  // desenhada.
+  var anima = movimento.matches && 'IntersectionObserver' in window;
+  pronto.then(function(){
+    pranchetas.forEach(function(alvo){
+      estado.set(alvo, { visto:!anima, tam:'' });
+      if (!anima) desenhar(alvo, false);
+    });
+    if ('ResizeObserver' in window) {
+      var ro = new ResizeObserver(function(entradas){
+        entradas.forEach(function(e){
+          var alvo = e.target.querySelector(':scope > [data-prancheta]');
+          if (alvo) agendar(alvo);
+        });
+      });
+      pranchetas.forEach(function(alvo){ ro.observe(alvo.parentElement); });
+    }
+    if ('IntersectionObserver' in window) {
+      var io = new IntersectionObserver(function(entradas){
+        entradas.forEach(function(e){
+          if (!e.isIntersecting) return;
+          var alvo = e.target.querySelector(':scope > [data-prancheta]');
+          var st = alvo && estado.get(alvo);
+          if (!st || st.visto) return;
+          st.visto = true;
+          io.unobserve(e.target);
+          setTimeout(function(){ desenhar(alvo, true); }, movimento.matches ? 450 : 0);
+        });
+      }, { threshold:.2 });
+      pranchetas.forEach(function(alvo){ io.observe(alvo.parentElement); });
+    }
+  });
+})();
+</script>
+<script src="/menu-site.js" defer></script>
+</body>
+</html>

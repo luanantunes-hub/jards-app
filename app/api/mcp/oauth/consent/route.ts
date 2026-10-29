@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { OAUTH_CODE_TTL_MS, generateOpaqueToken, normalizeScope, validateAuthorizationRequest } from "@/lib/mcp/oauth";
-import { userHasPaidOrg } from "@/lib/mcp/auth";
+import { modulosQueAPessoaPodeAutorizar } from "@/lib/mcp/auth";
+import { modulosAutorizados } from "@/lib/mcp/consentimento";
 import { paginaDeRetorno } from "@/lib/mcp/retorno-oauth";
 
 /** Devolve a pessoa ao assistente por uma página com refresh (um redirect direto do formulário é bloqueado pela política de segurança). */
@@ -48,7 +49,8 @@ export async function POST(req: NextRequest) {
   }
 
   // ChatGPT: o escopo vem do pedido. Assistentes MCP (Claude): quem autoriza decide, e o padrão é só leitura.
-  const scope = validacao.client.kind === "chatgpt" ? normalizeScope(String(form.get("scope") ?? "")) : form.has("escrita") ? "write" : "read";
+  const scopeDoPedido = String(form.get("scope") ?? "");
+  const scope = validacao.client.kind === "chatgpt" ? normalizeScope(scopeDoPedido) : form.has("escrita") ? "write" : "read";
 
   const callback = new URL(redirectUri);
   if (state) callback.searchParams.set("state", state);
@@ -59,10 +61,24 @@ export async function POST(req: NextRequest) {
     return voltarAoAssistente(callback, "Acesso negado", `Você negou o acesso. Voltando ao ${assistente}…`);
   }
 
-  if (!(await userHasPaidOrg(admin, user.id))) {
+  // O que a pessoa pode autorizar é recalculado aqui: o formulário só diz o que ela escolheu, nunca o que ela pode.
+  const disponiveis = await modulosQueAPessoaPodeAutorizar(admin, { id: user.id, email: user.email });
+  if (disponiveis.length === 0) {
     callback.searchParams.set("error", "access_denied");
     callback.searchParams.set("error_description", "Assinatura necessária");
     return voltarAoAssistente(callback, "Assinatura necessária", `O acesso por assistentes está nos planos pagos. Voltando ao ${assistente}…`);
+  }
+
+  const modulos = modulosAutorizados({
+    cliente: validacao.client.kind,
+    scope: scopeDoPedido,
+    formulario: form,
+    disponiveis,
+  });
+  if (modulos.length === 0) {
+    callback.searchParams.set("error", "access_denied");
+    callback.searchParams.set("error_description", "Nenhum módulo liberado");
+    return voltarAoAssistente(callback, "Nenhum módulo liberado", `Nenhum módulo do Jards ficou liberado para este acesso. Voltando ao ${assistente}…`);
   }
 
   const { raw, hash } = generateOpaqueToken("jards_oauth_code_");
@@ -72,6 +88,7 @@ export async function POST(req: NextRequest) {
     client_id: clientId,
     redirect_uri: redirectUri,
     scope,
+    modulos,
     code_challenge: codeChallenge,
     code_challenge_method: codeChallengeMethod,
     expires_at: new Date(Date.now() + OAUTH_CODE_TTL_MS).toISOString(),

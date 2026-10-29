@@ -4,11 +4,19 @@
  */
 export interface Consulta {
   tabela: string;
-  acao: "select" | "insert" | "update" | "delete" | "rpc";
+  acao: "select" | "insert" | "upsert" | "update" | "delete" | "rpc";
   colunas?: string;
   valores?: unknown;
+  /** Segundo argumento do upsert (`onConflict`). */
+  opcoes?: unknown;
   filtros: Array<[operador: string, coluna: string, valor: unknown]>;
   unico: "maybe" | "single" | null;
+  /** .order(coluna, { ascending }) na ordem em que foram pedidos. */
+  ordens?: Array<[coluna: string, ascendente: boolean]>;
+  /** .limit(n). */
+  limite?: number;
+  /** .range(de, ate), inclusive nos dois lados como no PostgREST. */
+  intervalo?: [de: number, ate: number];
 }
 
 export type Resposta = { data?: unknown; error?: { message: string; code?: string } | null; count?: number | null };
@@ -36,6 +44,12 @@ export function bancoFalso(resolver: Resolvedor) {
         consulta.valores = valores;
         return cadeia;
       },
+      upsert(valores: unknown, opcoes?: unknown) {
+        consulta.acao = "upsert";
+        consulta.valores = valores;
+        consulta.opcoes = opcoes;
+        return cadeia;
+      },
       update(valores: unknown) {
         consulta.acao = "update";
         consulta.valores = valores;
@@ -57,13 +71,24 @@ export function bancoFalso(resolver: Resolvedor) {
         return Promise.resolve(resolver_(consulta)).then(resolve, rejeitar);
       },
     };
-    for (const operador of ["eq", "neq", "in", "ilike", "is", "not", "gte", "lt", "or"]) {
+    for (const operador of ["eq", "neq", "in", "ilike", "is", "not", "gte", "lt", "or", "contains"]) {
       cadeia[operador] = (coluna: string, valor?: unknown, extra?: unknown) => {
         consulta.filtros.push([operador, coluna, extra === undefined ? valor : [valor, extra]]);
         return cadeia;
       };
     }
-    for (const passo of ["order", "limit", "range"]) cadeia[passo] = () => cadeia;
+    cadeia.order = (coluna: string, opcoes?: { ascending?: boolean }) => {
+      (consulta.ordens ??= []).push([coluna, opcoes?.ascending !== false]);
+      return cadeia;
+    };
+    cadeia.limit = (n: number) => {
+      consulta.limite = n;
+      return cadeia;
+    };
+    cadeia.range = (de: number, ate: number) => {
+      consulta.intervalo = [de, ate];
+      return cadeia;
+    };
     return cadeia;
   }
 

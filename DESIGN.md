@@ -106,6 +106,7 @@ Todos os botões precisam de estado `hover`, `focus-visible`, `disabled` e feedb
 | formulário ou modal simples | `Dropdown` |
 | toolbar compacta | `Select` |
 | ícone, busca, conteúdo rico ou portal | `CustomDropdown` |
+| várias opções de uma lista longa, com busca | `MultiSelectDropdown` |
 | prioridade | `PrioridadeSelect` |
 
 Regras:

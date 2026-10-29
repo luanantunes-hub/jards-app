@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { authenticateMcpRequest, isErrorResponse, type McpAuthContext } from "@/lib/mcp/auth";
-import { FERRAMENTAS, ferramentasDoEscopo, normalizarArgumentos, validarArgumentos } from "@/lib/mcp/ferramentas";
-import { executarFerramenta } from "@/lib/mcp/execucao";
 import { pedidoDeNavegador } from "@/lib/mcp/navegador";
-import { ErroHttp, VERSOES_SUPORTADAS, tratarMensagem, type DependenciasMcp, type RespostaJsonRpc } from "@/lib/mcp/protocolo";
+import { ErroHttp, VERSOES_SUPORTADAS, tratarMensagem, type RespostaJsonRpc } from "@/lib/mcp/protocolo";
+import { criarDependencias } from "@/lib/mcp/servidor";
 
 /**
  * Servidor MCP remoto do Jards (transporte Streamable HTTP, sem sessão): o Claude conecta aqui
  * pela URL, autoriza com a própria conta via OAuth e passa a chamar as ferramentas. A
  * autenticação e as regras de escopo, organização e plano são as das rotas REST em /api/mcp/*.
  */
+
+// Cada ferramenta roda dentro desta chamada (inclusive receber arquivos de até 15 MB e rodar a verificação da prestação): um minuto, que é o que um cliente espera.
+export const maxDuration = 60;
 
 const SEM_CACHE = { "Cache-Control": "no-store" };
 
@@ -30,50 +31,6 @@ function desafio(origem: string, tokenInvalido: boolean) {
 
 function erroJsonRpc(status: number, code: number, message: string) {
   return NextResponse.json({ jsonrpc: "2.0", id: null, error: { code, message } }, { status, headers: SEM_CACHE });
-}
-
-async function converterErroDeAutenticacao(resposta: NextResponse): Promise<ErroHttp> {
-  const corpo = await resposta.json().catch(() => ({}));
-  const mensagem = typeof corpo?.error === "string" ? corpo.error : "Não autorizado.";
-  if (resposta.status === 401) return new ErroHttp(401, mensagem, true);
-  // Plano sem assinatura ativa: para o cliente MCP é falta de permissão, não "pagamento exigido".
-  return new ErroHttp(resposta.status === 402 ? 403 : resposta.status, mensagem);
-}
-
-function criarDependencias(req: NextRequest): DependenciasMcp {
-  let contexto: Promise<McpAuthContext> | null = null;
-  const autenticar = () =>
-    (contexto ??= (async () => {
-      const resultado = await authenticateMcpRequest(req);
-      if (isErrorResponse(resultado)) throw await converterErroDeAutenticacao(resultado);
-      return resultado;
-    })());
-
-  return {
-    garantirAutenticacao: async () => {
-      await autenticar();
-    },
-    listarFerramentas: async () => ferramentasDoEscopo((await autenticar()).scope),
-    chamarFerramenta: async (nome, argumentos) => {
-      const ferramenta = FERRAMENTAS.find((f) => f.nome === nome);
-      if (!ferramenta) return { tipo: "desconhecida" };
-
-      const normalizados = normalizarArgumentos(ferramenta, argumentos);
-      const problema = validarArgumentos(ferramenta, normalizados);
-      if (problema) return { tipo: "argumentos_invalidos", mensagem: problema };
-
-      const { status, corpo } = await executarFerramenta(ferramenta, normalizados, req);
-      if (status === 401) throw new ErroHttp(401, "Token inválido, expirado ou revogado.", true);
-      if (status === 403 && typeof (corpo as { error?: string })?.error === "string" && (corpo as { error: string }).error.includes("somente leitura")) {
-        return {
-          tipo: "resposta",
-          status,
-          corpo: { error: "Esta conexão é somente leitura. Para criar registros, reconecte o Jards e marque a permissão de criar registros no CRM (empresas, contatos, negociações, atividades e mais)." },
-        };
-      }
-      return { tipo: "resposta", status, corpo };
-    },
-  };
 }
 
 export async function POST(req: NextRequest) {

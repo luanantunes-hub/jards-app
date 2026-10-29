@@ -23,8 +23,10 @@ import { TaxonomiasComerciaisConfig } from "@/components/TaxonomiasComerciaisCon
 import { RenewalDecisionTreeConfig } from "@/components/customer-success/RenewalDecisionTreeConfig";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { Select } from "@/components/ui/Select";
-import { FUNCOES_PRESTACAO, MODULO_LABEL, PAPEIS_EXTERNOS } from "@/lib/equipe-modulos";
-import type { ModuloId } from "@/lib/modulos";
+import { FUNCOES_PRESTACAO, MODULO_LABEL, modulosDaEquipe, papelPodeUsarModulo } from "@/lib/equipe-modulos";
+import { normalizarModulos, type ModuloId } from "@/lib/modulos";
+import { PermissoesProducaoDoMembro } from "@/components/producao/PermissoesProducaoDoMembro";
+import { useFuncoesProducao } from "@/hooks/useFuncoesProducao";
 
 const MOSTRAR_VISIBILIDADE_EQUIPE = false;
 
@@ -81,8 +83,8 @@ const SETTINGS_SECTIONS: {
 
 const PLANO_LABEL: Record<string, string> = {
   gratuito: "Gratuito",
-  basico: "Básico",
-  profissional: "Profissional",
+  basico: "Starter",
+  profissional: "Pro",
 };
 
 const PAPEL_LABEL: Record<string, string> = {
@@ -121,9 +123,11 @@ export default function ConfiguracoesPage() {
   const [avisoLogo, setAvisoLogo] = useState<AvisoImagemEstado>(null);
   const [orgNome, setOrgNome] = useState("");
   const [orgAvatarUrl, setOrgAvatarUrl] = useState<string | null>(null);
-  const [orgTemPrestacao, setOrgTemPrestacao] = useState(false);
+  const [orgModulos, setOrgModulos] = useState<ModuloId[]>(["captacao"]);
   const [savingOrg, setSavingOrg] = useState(false);
   const [cancelando, setCancelando] = useState(false);
+  // Funções na produção (PD0.7b): só o administrador de uma organização com a produção as lê.
+  const { funcoes: funcoesProducao, recarregar: recarregarFuncoesProducao, atualizar: atualizarFuncaoProducao } = useFuncoesProducao(organizationId, isAdmin && orgModulos.includes("producao"));
 
   useEffect(() => {
     const requestedSection = new URLSearchParams(window.location.search).get("section");
@@ -181,7 +185,7 @@ const { data: perfilData } = await (supabase as any)
       if (orgData) {
         setOrgNome(orgData.nome ?? "");
         setOrgAvatarUrl(orgData.avatar_url ?? null);
-        setOrgTemPrestacao((orgData.modulos_ativos ?? []).includes("prestacao"));
+        setOrgModulos(normalizarModulos(orgData.modulos_ativos));
       }
 
       await loadMembers();
@@ -728,7 +732,7 @@ const { data: perfilData } = await (supabase as any)
             </div>
           </div>
 
-          {assinatura?.plano && assinatura.plano !== "gratuito" && (
+          {assinatura?.ehPagador && assinatura.plano !== "gratuito" && (
             <div className="flex justify-end">
               <button
                 type="button"
@@ -996,14 +1000,22 @@ const { data: perfilData } = await (supabase as any)
                 <div className="flex-1 min-w-0">
                   <p className="text-[0.8125rem] font-semibold text-[#282525]">{m.full_name ?? "Sem nome"}</p>
                   <p className="text-[0.6875rem] text-black/40 truncate">{m.email}</p>
-                  {(orgTemPrestacao || m.modulos_acesso?.includes("prestacao")) && (
-                    <ModulosDoMembro
-                      membro={m}
-                      editavel={isAdmin}
-                      ocupado={salvando}
-                      onChange={(modulos, funcao) => handleAlterarModulos(m.user_id, modulos, funcao)}
-                    />
-                  )}
+                  <ModulosDoMembro
+                    membro={m}
+                    modulosDaOrganizacao={orgModulos}
+                    editavel={isAdmin}
+                    ocupado={salvando}
+                    onChange={(modulos, funcao) => handleAlterarModulos(m.user_id, modulos, funcao)}
+                  />
+                  <PermissoesProducaoDoMembro
+                    organizationId={organizationId}
+                    membro={m}
+                    souAdmin={isAdmin}
+                    modulosDaOrganizacao={orgModulos}
+                    funcao={funcoesProducao?.[m.user_id] ?? null}
+                    recarregar={recarregarFuncoesProducao}
+                    onSaved={funcao => { atualizarFuncaoProducao(m.user_id, funcao); showSuccess("Permissões da produção atualizadas"); }}
+                  />
                 </div>
                 {isAdmin ? (
                   <div className="flex items-center gap-2">
@@ -1118,6 +1130,7 @@ const { data: perfilData } = await (supabase as any)
       <NovoMembroModal
         open={showMembroModal}
         organizationId={organizationId}
+        modulosAtivos={orgModulos}
         onClose={() => setShowMembroModal(false)}
         onSaved={loadMembers}
       />
@@ -1131,17 +1144,20 @@ const { data: perfilData } = await (supabase as any)
 
 /**
  * Módulos que a pessoa usa e a função dela na prestação (P0.6). Admin liga e
- * desliga cada módulo; o servidor confere as vagas e recusa deixar alguém sem
- * nenhum. Captador e proponente externos usam só a captação.
+ * desliga cada módulo que a organização tem ativo (ou que a pessoa já usa); o
+ * servidor confere as vagas e recusa deixar alguém sem nenhum. Captador e
+ * proponente externos usam só a captação. Sem módulo além da captação, não
+ * aparece nada.
  */
-function ModulosDoMembro({ membro, editavel, ocupado, onChange }: {
+function ModulosDoMembro({ membro, modulosDaOrganizacao, editavel, ocupado, onChange }: {
   membro: MembroOrg;
+  modulosDaOrganizacao: ModuloId[];
   editavel: boolean;
   ocupado: boolean;
   onChange: (modulos: string[], funcao: string | null) => void;
 }) {
   const modulos = membro.modulos_acesso?.length ? membro.modulos_acesso : ["captacao"];
-  const externo = PAPEIS_EXTERNOS.includes(membro.papel);
+  const oferecidos = modulosDaEquipe(modulosDaOrganizacao, membro.modulos_acesso ?? []);
   const funcao = membro.prestacao_funcao ?? "";
 
   function alternar(modulo: ModuloId) {
@@ -1150,11 +1166,13 @@ function ModulosDoMembro({ membro, editavel, ocupado, onChange }: {
     onChange(novos, novos.includes("prestacao") ? funcao || null : null);
   }
 
+  if (oferecidos.length < 2) return null;
+
   return (
     <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-      {(["captacao", "prestacao"] as ModuloId[]).map(modulo => {
+      {oferecidos.map(modulo => {
         const ativo = modulos.includes(modulo);
-        const bloqueado = !editavel || ocupado || (modulo === "prestacao" && externo) || (ativo && modulos.length === 1);
+        const bloqueado = !editavel || ocupado || !papelPodeUsarModulo(membro.papel, modulo) || (ativo && modulos.length === 1);
         if (!editavel && !ativo) return null;
         return (
           <button

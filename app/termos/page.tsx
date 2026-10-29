@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Condições para uso da plataforma Jards.",
 };
 
-const UPDATED = "29 de agosto de 2026";
+const UPDATED = "19 de outubro de 2026";
 
 export default function TermosPage() {
   return (
@@ -98,8 +98,8 @@ export default function TermosPage() {
               de cada plano estão disponíveis em <a href="https://jards.com.br/precos" className="text-[#7259B5] hover:underline">jards.com.br/precos</a>.
             </p>
             <p>
-              Pagamentos são processados pelo Stripe. Assinaturas são cobradas de forma recorrente
-              (mensal ou anual conforme o plano escolhido). O cancelamento pode ser feito a qualquer
+              Pagamentos são processados pelo Stripe. Assinaturas são cobradas de forma recorrente,
+              todo mês. O cancelamento pode ser feito a qualquer
               momento em <em>Configurações → Meu Plano</em>; o acesso permanece ativo até o fim
               do período já pago, sem reembolso proporcional.
             </p>

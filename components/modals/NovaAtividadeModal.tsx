@@ -47,6 +47,9 @@ const ICONES_DE_TIPO: { key: TipoAtividade; Icon: React.ElementType }[] = [
 
 const ICONE_DO_TIPO: Record<string, React.ElementType> = Object.fromEntries(ICONES_DE_TIPO.map(({ key, Icon }) => [key, Icon]));
 
+const SELECT_CAPTACAO = "id, titulo, projeto:projetos_crm!projeto_id(nome), empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_id(nome)";
+const SELECT_INSCRICAO = "id, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_pub_id(nome), projeto:projetos_crm!projeto_id(nome)";
+
 type Opcao = { id: string; label: string; sublabel?: string };
 type VinculoTipo = "captacao" | "empresa" | "projeto" | "agencia" | "proponente" | "contato" | "inscricao" | "entrega";
 type TipoPersonalizado = { id: string; nome: string; icone: TipoAtividade; cor: string };
@@ -237,13 +240,13 @@ export function NovaAtividadeModal({
     ] = await Promise.all([
       banco
         .from("captacoes")
-        .select("id, titulo, projeto:projetos_crm!projeto_id(nome), empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_id(nome)")
+        .select(SELECT_CAPTACAO)
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false })
         .limit(50),
       banco
         .from("editais_user")
-        .select("id, empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_pub_id(nome), projeto:projetos_crm!projeto_id(nome)")
+        .select(SELECT_INSCRICAO)
         .eq("organization_id", organizationId)
         .order("created_at", { ascending: false })
         .limit(50),
@@ -264,14 +267,28 @@ export function NovaAtividadeModal({
     ]);
 
     if (caps) {
-      setCaptacoes((caps as LinhaCaptacao[]).map(c => vinculoOpcao(c.id, {
+      const linhasCaptacao = caps as LinhaCaptacao[];
+      // A negociação da tela de origem sempre aparece na lista, mesmo fora das 50 mais novas.
+      const aberta = prefill?.captacao_id;
+      if (aberta && !linhasCaptacao.some(c => c.id === aberta)) {
+        const { data: atual } = await banco.from("captacoes").select(SELECT_CAPTACAO).eq("id", aberta).maybeSingle();
+        if (atual) linhasCaptacao.unshift(atual as LinhaCaptacao);
+      }
+      setCaptacoes(linhasCaptacao.map(c => vinculoOpcao(c.id, {
         titulo: c.titulo,
         projeto: c.projeto?.nome,
         empresa: c.empresa_crm?.nome ?? c.empresa?.nome,
       })));
     }
     if (insc) {
-      setInscricoes((insc as LinhaInscricao[]).map(i => vinculoOpcao(i.id, {
+      const linhasInscricao = insc as LinhaInscricao[];
+      // Igual à negociação: a inscrição da tela de origem sempre aparece na lista.
+      const aberta = prefill?.edital_user_id;
+      if (aberta && !linhasInscricao.some(i => i.id === aberta)) {
+        const { data: atual } = await banco.from("editais_user").select(SELECT_INSCRICAO).eq("id", aberta).maybeSingle();
+        if (atual) linhasInscricao.unshift(atual as LinhaInscricao);
+      }
+      setInscricoes(linhasInscricao.map(i => vinculoOpcao(i.id, {
         projeto: i.projeto?.nome,
         empresa: i.empresa_crm?.nome ?? i.empresa?.nome,
       })));
@@ -384,6 +401,14 @@ export function NovaAtividadeModal({
       return;
     }
 
+    // Aberta na página de uma negociação ou de uma inscrição, a atividade também fica na empresa (e no projeto) dela,
+    // como sempre ficou: é o que a faz aparecer na linha do tempo da empresa. Só vale enquanto o vínculo for esse
+    // mesmo registro.
+    const daOrigemAberta = !!vinculoId && (
+      (vinculoTipo === "captacao" && vinculoId === prefill?.captacao_id) ||
+      (vinculoTipo === "inscricao" && vinculoId === prefill?.edital_user_id)
+    );
+
     const payload = {
       account_id: user.id,
       nome: nome.trim(),
@@ -396,8 +421,8 @@ export function NovaAtividadeModal({
       // sejam consistentes entre si.
       captacao_id:    vinculoTipo === "captacao"   ? vinculoId : null,
       edital_user_id: vinculoTipo === "inscricao"  ? vinculoId : null,
-      empresa_crm_id: vinculoTipo === "empresa"    ? vinculoId : null,
-      projeto_id:     vinculoTipo === "projeto"    ? vinculoId : null,
+      empresa_crm_id: vinculoTipo === "empresa"    ? vinculoId : daOrigemAberta ? prefill?.empresa_crm_id ?? null : null,
+      projeto_id:     vinculoTipo === "projeto"    ? vinculoId : daOrigemAberta ? prefill?.projeto_id ?? null : null,
       captador_id:    vinculoTipo === "agencia"    ? vinculoId : null,
       proponente_id:  vinculoTipo === "proponente" ? vinculoId : null,
       contato_id:     vinculoTipo === "contato"    ? vinculoId : null,

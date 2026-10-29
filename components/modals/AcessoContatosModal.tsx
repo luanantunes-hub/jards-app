@@ -31,8 +31,8 @@ const CONTEUDO: Record<
     eyebrow: "Créditos do ciclo",
     titulo: "Seus créditos acabaram por enquanto.",
     descricao:
-      "Seu plano continua ativo. Os créditos serão renovados no início do próximo mês. Se precisar continuar agora, você pode comprar créditos adicionais.",
-    botao: "Comprar créditos",
+      "Seu plano continua ativo. Cada mês pago soma novos créditos ao saldo; no Pro, são 200 por mês.",
+    botao: "Ver planos",
   },
   sem_plano: {
     eyebrow: "Acesso aos contatos",

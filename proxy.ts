@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { INICIO_DO_MODULO } from "@/lib/modulos";
+import { entradaDoAcesso, lerAcessoAosModulos } from "@/lib/modulos-acesso";
 
 const WINDOW_MS = 60_000;
 
@@ -18,6 +20,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/mcp/oauth/consent", 20],
   ["/api/mcp/server", 600],
   ["/api/mcp", 60],
+  // Página de envio de arquivos do assistente (sem login): preparar e concluir, por IP.
+  ["/api/enviar", 40],
   ["/api/auth/conta-sem-senha", 10],
   ["/api/", 60],
 ];
@@ -96,11 +100,12 @@ export async function proxy(request: NextRequest) {
   const ip = getIp(request);
   const identity = user?.id ?? ip;
 
-  // Usuário logado na raiz vai direto pro dashboard. Deslogado segue para
+  // Usuário logado na raiz vai direto pra página de entrada (a da captação, ou
+  // a do módulo que usa quando não usa a captação). Deslogado segue para
   // app/route.ts, que serve a landing page.
   if (pathname === "/" && user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = await paginaDeEntradaDe(supabase, user.id);
     return NextResponse.redirect(url);
   }
 
@@ -131,6 +136,7 @@ export async function proxy(request: NextRequest) {
       const isPublicPage =
         pathname.startsWith("/p/") ||
         pathname.startsWith("/r/") ||
+        pathname.startsWith("/enviar/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
         pathname === "/" ||
@@ -139,16 +145,20 @@ export async function proxy(request: NextRequest) {
         pathname === "/termos" ||
         pathname === "/privacidade" ||
         pathname === "/incentivadores" ||
+        pathname === "/crm" ||
+        pathname === "/precos" ||
+        pathname === "/prestacao-de-contas" ||
         pathname.startsWith("/redefinir-senha") ||
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
         pathname.startsWith("/confirmacao-email") ||
         pathname.startsWith("/.well-known") ||
+        pathname.startsWith("/publicacoes") ||
         pathname.startsWith("/blog");
 
       const publicBucket = pathname.startsWith("/p/")
         ? "proposal"
-        : pathname.startsWith("/blog")
+        : pathname.startsWith("/publicacoes") || pathname.startsWith("/blog")
           ? "blog"
           : pathname === "/"
             ? "root"
@@ -174,10 +184,13 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/confirmacao-email") ||
     pathname.startsWith("/redefinir-senha") ||
     pathname.startsWith("/nova-senha") ||
+    pathname.startsWith("/publicacoes") ||
     pathname.startsWith("/blog") ||
     pathname.startsWith("/p/") ||
     // Relatório do patrocinador por link (P5.2): o banco confere o link.
     pathname.startsWith("/r/") ||
+    // Envio de arquivos pelo link que o assistente deu (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/enviar/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||
     pathname.startsWith("/.well-known") ||
@@ -188,7 +201,10 @@ export async function proxy(request: NextRequest) {
     pathname === "/sitemap.xml" ||
     pathname === "/termos" ||
     pathname === "/privacidade" ||
-    pathname === "/incentivadores";
+    pathname === "/incentivadores" ||
+    pathname === "/crm" ||
+    pathname === "/precos" ||
+    pathname === "/prestacao-de-contas";
 
   // Usuário não logado tentando acessar rota privada → login
   if (!user && !isPublicRoute) {
@@ -200,20 +216,48 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Usuário logado acessando login → dashboard
+  // Usuário logado acessando login → página de entrada
   if (user && pathname.startsWith("/login")) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = await paginaDeEntradaDe(supabase, user.id);
     url.searchParams.delete("next");
     return NextResponse.redirect(url);
+  }
+
+  // Quem não usa a captação em nenhuma organização (só a produção, por exemplo)
+  // não passa por ela ao entrar: abrir /dashboard (depois do login, pela raiz ou
+  // por um favorito) leva à página inicial do módulo que usa, antes de qualquer
+  // tela. Só vale para abertura de página: a navegação dentro do app (RSC) e a
+  // pré-busca não trazem Sec-Fetch-Dest "document" e seguem pelo layout de
+  // cliente, que conhece a organização aberta. A consulta que falha não tira
+  // ninguém da captação. A busca (?_imp=1&...) vai junto no redirecionamento.
+  if (user && pathname === "/dashboard" && request.method === "GET" && request.headers.get("sec-fetch-dest") === "document") {
+    const entrada = await paginaDeEntradaDe(supabase, user.id);
+    if (entrada !== INICIO_DO_MODULO.captacao) {
+      const url = request.nextUrl.clone();
+      url.pathname = entrada;
+      const redirecionamento = NextResponse.redirect(url);
+      // O token pode ter sido renovado nesta requisição: o redirecionamento leva os cookies novos.
+      supabaseResponse.cookies.getAll().forEach(cookie => redirecionamento.cookies.set(cookie));
+      return redirecionamento;
+    }
   }
 
   return supabaseResponse;
 }
 
+/** O proxy não espera mais que isto pela leitura que decide a página de entrada (a consulta normal leva dezenas de ms). */
+const LIMITE_DA_LEITURA_MS = 1_500;
+
+/** Página de entrada de quem está logado, lida do banco; sem leitura completa (ou fora do prazo), a da captação. */
+async function paginaDeEntradaDe(supabase: Parameters<typeof lerAcessoAosModulos>[0], userId: string): Promise<string> {
+  return entradaDoAcesso(await lerAcessoAosModulos(supabase, userId, { limiteMs: LIMITE_DA_LEITURA_MS }));
+}
+
 export const config = {
   matcher: [
     // dados/: tabelas públicas que a tela baixa (CNAE do IBGE), sem passar pela sessão.
-    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|origem-campanha\\.js$|dados/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|ttf|woff|woff2|otf|eot)$).*)",
+    // menu-site.css/js: o menu das páginas públicas; sem isto, quem está deslogado recebia o redirecionamento para o login.
+    "/((?!_next/static|_next/image|favicon.ico|consentimento\\.js$|origem-campanha\\.js$|menu-site\\.(?:css|js)$|dados/|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|mp4|webm|ttf|woff|woff2|otf|eot)$).*)",
   ],
 };

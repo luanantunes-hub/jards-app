@@ -47,6 +47,8 @@ type AtividadeRow = {
   projeto: { nome: string } | null;
   captador: { nome: string; agencia: string | null } | null;
   proponente: { nome: string } | null;
+  proponente_id?: string | null;
+  conta_patrocinio_id?: string | null;
   captacao: {
     titulo: string | null;
     projeto: { nome: string } | null;
@@ -1159,13 +1161,13 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
 /* ─── Page ──────────────────────────────────────────────────────────────── */
 
 const SELECT_FIELDS = `
-  id, nome, tipo, prioridade, data_inicio, data_prevista, data_realizada, hora_inicio, hora_fim, resultado, feita, nota, responsavel_id, captacao_id,
+  id, nome, tipo, prioridade, data_inicio, data_prevista, data_realizada, hora_inicio, hora_fim, resultado, feita, nota, responsavel_id, captacao_id, conta_patrocinio_id,
   responsavel:profiles!responsavel_id(id, full_name, avatar_url),
   tipo_custom:atividade_tipos!tipo_custom_id(nome, icone, cor),
   empresa_crm:empresas_crm!empresa_crm_id(nome), empresa_crm_id,
   projeto:projetos_crm!projeto_id(nome),
   captador:captadores!captador_id(nome, agencia),
-  proponente:proponentes!proponente_id(nome),
+  proponente:proponentes!proponente_id(nome), proponente_id,
   captacao:captacoes!captacao_id(titulo, projeto:projetos_crm!projeto_id(nome), empresa_crm:empresas_crm!empresa_crm_id(nome), empresa:empresas!empresa_id(nome)),
   contato:contatos!contato_id(nome, email, telefone)
 `;

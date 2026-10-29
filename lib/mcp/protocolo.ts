@@ -1,8 +1,11 @@
 import type { Ferramenta } from "@/lib/mcp/ferramentas";
+import type { ModuloMcp } from "@/lib/mcp/modulos";
+import { INSTRUCOES_PRESTACAO } from "@/lib/mcp/prestacao/instrucoes";
 
 /** Versões do protocolo MCP que o servidor entende, da mais nova para a mais antiga. */
 export const VERSOES_SUPORTADAS = ["2025-06-18", "2025-03-26", "2024-11-05"] as const;
 
+/** Instruções do módulo de captação (o CRM). Quem só autorizou a captação recebe exatamente este texto. */
 export const INSTRUCOES =
   "Jards é um CRM de captação de patrocínio por leis de incentivo (Rouanet/Cultura, Ancine, Esporte e Saúde). " +
   "As ferramentas leem e gravam no CRM da organização da pessoa conectada: empresas, contatos, negociações (o funil), " +
@@ -16,7 +19,22 @@ export const INSTRUCOES =
   "nasce na primeira etapa em aberto, e aprovar ou recusar só se faz no app. " +
   "Tarefa é atividade (criar_atividade, listar_atividades); para lembrar de retomar um contato numa data use criar_followup; " +
   "conversa que já aconteceu vira registrar_interacao e observação solta vira criar_nota. " +
-  "Ler os contatos do CRM não gasta crédito. Depois de criar algo, entregue à pessoa o link (url) da resposta.";
+  "Ler os contatos do CRM não gasta crédito. Depois de criar algo, entregue à pessoa o link (url) da resposta. " +
+  "A base pública (listar_patrocinadores_publicos) aceita busca por cidade, estado e setor, devolve o total e a próxima página " +
+  "(proximo_deslocamento) e mostra quantos contatos cada empresa tem e quanto custa liberá-los. adicionar_empresas_da_base_publica " +
+  "traz um lote para o CRM sem gastar crédito e mostra o custo; liberar contatos gasta 1 crédito por empresa, então só repita com " +
+  "desbloquear_contatos e confirmar_custo_creditos depois de a pessoa concordar com o gasto. " +
+  "Em toda criação envie chave_idempotencia (um texto único por ação, como um UUID): se a conexão cair e você não souber se gravou, " +
+  "repita com a MESMA chave que nada é criado duas vezes.";
+
+/** O que o assistente lê ao conectar: o texto de cada módulo que a chave fala (a captação sozinha segue igual a antes dos módulos). */
+export function instrucoesDosModulos(modulos: readonly ModuloMcp[]): string {
+  const captacao = modulos.includes("captacao");
+  const prestacao = modulos.includes("prestacao");
+  if (prestacao && !captacao) return INSTRUCOES_PRESTACAO;
+  if (prestacao) return `${INSTRUCOES}\n\n${INSTRUCOES_PRESTACAO}`;
+  return INSTRUCOES;
+}
 
 /** Resposta do tipo "tool result" maior que isso é cortada: o cliente de IA não aproveita e estoura o contexto. */
 const MAX_TEXTO_DA_FERRAMENTA = 60_000;
@@ -38,9 +56,11 @@ export type SaidaDaFerramenta =
 export interface DependenciasMcp {
   /** Confere o token; lança ErroHttp se for inválido, expirado ou sem plano. */
   garantirAutenticacao(): Promise<void>;
-  /** Ferramentas que o escopo do token permite. */
+  /** Ferramentas que o escopo e os módulos do token permitem. */
   listarFerramentas(): Promise<readonly Ferramenta[]>;
   chamarFerramenta(nome: string, argumentos: Record<string, unknown>): Promise<SaidaDaFerramenta>;
+  /** Instruções dos módulos do token. Sem isto vale o texto da captação, como antes dos módulos. */
+  instrucoes?(): Promise<string>;
 }
 
 /** Erro que vira resposta HTTP (e não resposta JSON-RPC): token inválido, limite, plano. */
@@ -120,7 +140,7 @@ export async function tratarMensagem(mensagem: unknown, deps: DependenciasMcp): 
         protocolVersion,
         capabilities: { tools: { listChanged: false } },
         serverInfo: { name: "jards", title: "Jards", version: "1.0.0" },
-        instructions: INSTRUCOES,
+        instructions: deps.instrucoes ? await deps.instrucoes() : INSTRUCOES,
       });
     }
 

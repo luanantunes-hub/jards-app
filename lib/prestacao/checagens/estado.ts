@@ -23,7 +23,9 @@ const PAGINA = 1000;
 
 type Resposta = { data: unknown; error: { message: string } | null };
 type Consulta = PromiseLike<Resposta> & { range: (de: number, ate: number) => PromiseLike<Resposta> };
-type Cliente = { from: (tabela: string) => { select: (colunas: string) => unknown } };
+/** O que o carregador pede ao cliente do Supabase: o do navegador (RLS) ou o do service role. */
+export type ClienteDoEstado = { from: (tabela: string) => { select: (colunas: string) => unknown } };
+type Cliente = ClienteDoEstado;
 
 /** Todas as linhas, de mil em mil (o PostgREST corta em mil por resposta). */
 async function todas<T>(consulta: () => Consulta): Promise<T[]> {

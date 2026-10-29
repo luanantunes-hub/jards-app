@@ -11,7 +11,7 @@ const NAV = [
   { href: "/admin/piloto",         label: "Piloto",         icon: FlaskConical },
   { href: "/admin/normas",         label: "Normas",         icon: ScrollText },
   { href: "/admin/regimes",        label: "Regimes",        icon: Scale      },
-  { href: "/admin/blog",           label: "Blog",           icon: Newspaper  },
+  { href: "/admin/blog",           label: "Publicações",    icon: Newspaper  },
   { href: "/admin/pedidos",        label: "Pedidos",        icon: Inbox      },
   { href: "/admin/campanhas",      label: "Campanhas",      icon: Megaphone  },
   { href: "/admin/logs",           label: "Logs",           icon: ClipboardList },

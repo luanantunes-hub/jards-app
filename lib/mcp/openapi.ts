@@ -13,65 +13,21 @@ import {
   WORKFLOWS_FOLLOWUP,
   DIRECOES_INTERACAO,
 } from "@/lib/mcp/enums";
+import { orgIdParam, buscaParam, limiteParam, deslocamentoParam, uuidQuery, booleanQuery, idNoCaminho, uuid, texto, corpoJson, orgNoCorpo, dataTexto } from "@/lib/mcp/openapi-comum";
+import type { ModuloMcp } from "@/lib/mcp/modulos";
+import { construirSpecPrestacao } from "@/lib/mcp/openapi-prestacao";
 
 /**
- * Spec OpenAPI da camada REST do MCP/Custom GPT. É a fonte única das operações: a Action do
- * ChatGPT lê esta spec e o servidor MCP remoto (Claude) deriva as ferramentas dela.
- * Resumo e descrição de cada operação ficam abaixo de 300 caracteres (limite das Actions do ChatGPT).
+ * Specs OpenAPI da camada REST do MCP/Custom GPT, uma por módulo. São a fonte única das operações: a Action do
+ * ChatGPT lê a spec do módulo e o servidor MCP remoto (Claude) deriva as ferramentas delas.
+ * Resumo e descrição de cada operação ficam abaixo de 300 caracteres (limite das Actions do ChatGPT) e cada spec
+ * tem no máximo 30 operações (teto de uma Action): por isso cada módulo tem a sua.
  */
-export function construirSpecOpenApi(baseUrl: string) {
-  const orgIdParam = {
-    name: "organization_id",
-    in: "query",
-    required: false,
-    schema: { type: "string", format: "uuid" },
-    description: "Opcional se você pertence a uma única organização.",
-  };
-  const buscaParam = {
-    name: "busca",
-    in: "query",
-    required: false,
-    schema: { type: "string" },
-  };
-  const limiteParam = {
-    name: "limite",
-    in: "query",
-    required: false,
-    schema: { type: "integer", minimum: 1, maximum: 100, default: 20 },
-  };
-  const deslocamentoParam = {
-    name: "deslocamento",
-    in: "query",
-    required: false,
-    schema: { type: "integer", minimum: 0, default: 0 },
-    description: "Quantos resultados pular, para ver a página seguinte (use junto com limite).",
-  };
-  const uuidQuery = (name: string, description?: string) => ({
-    name,
-    in: "query",
-    required: false,
-    schema: { type: "string", format: "uuid" },
-    ...(description ? { description } : {}),
-  });
-  const booleanQuery = (name: string, description: string) => ({
-    name,
-    in: "query",
-    required: false,
-    description,
-    schema: { type: "boolean", default: false },
-  });
-  const idNoCaminho = { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } };
+export function construirSpecOpenApi(baseUrl: string, modulo: ModuloMcp = "captacao") {
+  return modulo === "prestacao" ? construirSpecPrestacao(baseUrl) : construirSpecCaptacao(baseUrl);
+}
 
-  const uuid = (description?: string) => ({ type: "string", format: "uuid", ...(description ? { description } : {}) });
-  const texto = (description?: string) => ({ type: "string", ...(description ? { description } : {}) });
-  const corpoJson = (required: string[], properties: Record<string, unknown>) => ({
-    required: true,
-    content: { "application/json": { schema: { type: "object", required, properties } } },
-  });
-  const orgNoCorpo = { organization_id: uuid("Opcional se você pertence a uma única organização.") };
-
-  const dataTexto = "Dia (AAAA-MM-DD) ou dia e hora (AAAA-MM-DDTHH:MM, horário de Brasília).";
-
+function construirSpecCaptacao(baseUrl: string) {
   const spec = {
     openapi: "3.1.0",
     info: {
@@ -151,6 +107,8 @@ export function construirSpecOpenApi(baseUrl: string) {
             orgIdParam,
             buscaParam,
             { name: "tipo", in: "query", required: false, schema: { type: "string", enum: [...TIPOS_EMPRESA] } },
+            { name: "cidade", in: "query", required: false, schema: { type: "string" }, description: "Só empresas desta cidade, ex.: Curitiba." },
+            { name: "estado", in: "query", required: false, schema: { type: "string" }, description: "Sigla do estado, ex.: PR." },
             limiteParam,
             deslocamentoParam,
           ],
@@ -165,7 +123,9 @@ export function construirSpecOpenApi(baseUrl: string) {
             site: texto("Site (ex.: vale.com): dá o logotipo na tela."),
             setor: texto(),
             tipo: { type: "string", enum: [...TIPOS_EMPRESA], description: "prospect (padrão), cliente_ativo ou ex_cliente." },
-            localizacao: texto("Cidade/UF."),
+            cidade: texto("Cidade da sede. Sem ela, herda da empresa da base pública quando há ligação."),
+            estado: texto("Sigla do estado da sede (ex.: PR). Só aceita estados válidos."),
+            localizacao: texto('Atalho "Cidade-UF" (ex.: Curitiba-PR). Prefira cidade e estado.'),
             cidades_interesse: { type: "array", items: { type: "string" } },
             ja_patrocina_cultura: { type: "boolean" },
             ja_patrocina_esporte: { type: "boolean" },
@@ -459,9 +419,39 @@ export function construirSpecOpenApi(baseUrl: string) {
       "/patrocinadores-publicos": {
         get: {
           operationId: "listarPatrocinadoresPublicos",
-          summary: "Consulta a base pública de empresas/patrocinadores do Jards (não é a carteira da organização)",
-          parameters: [buscaParam, limiteParam],
+          summary:
+            "Consulta a base pública de empresas do Jards (não é a carteira da organização). Filtra por cidade, estado e setor; devolve o total, a próxima página e quantos contatos cada empresa tem e quanto custa liberá-los.",
+          parameters: [
+            orgIdParam,
+            { ...buscaParam, description: "Vale para nome, cidade e setor (sem diferenciar acento). Duas letras que são um estado, como PR, valem como estado." },
+            { name: "cidade", in: "query", required: false, schema: { type: "string" }, description: "Só empresas desta cidade, ex.: Curitiba." },
+            { name: "estado", in: "query", required: false, schema: { type: "string" }, description: "Sigla do estado, ex.: PR." },
+            { name: "setor", in: "query", required: false, schema: { type: "string" }, description: "Setor, ex.: Logística." },
+            limiteParam,
+            deslocamentoParam,
+          ],
           responses: { "200": { description: "OK" } },
+        },
+      },
+      "/empresas/base-publica": {
+        post: {
+          operationId: "adicionarEmpresasDaBasePublica",
+          summary:
+            "Adiciona ao CRM, em lote (até 50), empresas da base pública, por ids ou por filtro. Sem duplicar. Mostra quantos contatos há e o custo de liberá-los; só libera com desbloquear_contatos e a confirmação exata do custo.",
+          requestBody: corpoJson([], {
+            ...orgNoCorpo,
+            empresa_pub_ids: { type: "array", items: { type: "string" }, description: "Ids da base pública (listar_patrocinadores_publicos). Use estes ou os filtros." },
+            busca: texto("Filtro: vale para nome, cidade e setor."),
+            cidade: texto("Filtro: cidade."),
+            estado: texto("Filtro: sigla do estado."),
+            setor: texto("Filtro: setor."),
+            limite: { type: "integer", minimum: 1, maximum: 50, description: "Com filtro: quantas empresas do resultado adicionar (padrão 20)." },
+            deslocamento: { type: "integer", minimum: 0, description: "Com filtro: quantas pular, para o lote seguinte." },
+            tipo: { type: "string", enum: [...TIPOS_EMPRESA], description: "prospect (padrão), cliente_ativo ou ex_cliente." },
+            desbloquear_contatos: { type: "boolean", description: "Verdadeiro: libera os contatos (1 crédito por empresa). Exige confirmar_custo_creditos." },
+            confirmar_custo_creditos: { type: "integer", minimum: 0, description: "O custo total que a pessoa aceitou gastar. Tem de ser igual ao custo calculado (o pedido sem desbloquear_contatos mostra)." },
+          }),
+          responses: { "201": { description: "Criadas" }, "200": { description: "Já existiam" }, "402": { description: "Créditos insuficientes" }, "409": { description: "Custo não confirmado" } },
         },
       },
       "/analise/carteira-empresa": {

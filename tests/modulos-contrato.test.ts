@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { lerModuloDoContrato } from "../lib/admin/servidor";
+import { MODULO_LABEL, MODULOS_COM_CONTRATO } from "../lib/equipe-modulos";
+import { MODULOS } from "../lib/modulos";
 import {
   contratoEmVigor, contratoPago, diasEntre, fimDoTesteGratis, hojeEmBrasilia, limiteDeVagas, mensagemErroAcesso,
-  situacaoDoContrato, somarDias, TESTE_GRATIS_DIAS, testeGratis, validarCortesia, type ContratoModulo,
+  NOME_NO_TEXTO, situacaoDoContrato, somarDias, TESTE_GRATIS_DIAS, testeGratis, validarCortesia, type ContratoModulo,
 } from "../lib/modulos-contrato";
 
 const cortesia = (ate: string | null, vagas = 2): ContratoModulo => ({
@@ -115,4 +118,43 @@ test("P0.9: mensagens cobrem os erros que a função levanta", async () => {
   for (const [, codigo] of sql.matchAll(/raise exception '([a-z_]+)'/g)) {
     assert.doesNotMatch(mensagemErroAcesso(codigo), /Tente de novo/, `erro ${codigo} sem mensagem`);
   }
+});
+
+// ─── PD0.6: o nome do módulo nos textos ─────────────────────────────────────
+
+test("PD0.6: todo módulo tem nome nos textos, e o completo é o rótulo da equipe em minúsculas", () => {
+  assert.deepEqual(Object.keys(NOME_NO_TEXTO).sort(), [...MODULOS].sort());
+  for (const modulo of MODULOS) {
+    assert.equal(NOME_NO_TEXTO[modulo].completo, MODULO_LABEL[modulo].toLowerCase(), modulo);
+    assert.ok(NOME_NO_TEXTO[modulo].completo.startsWith(NOME_NO_TEXTO[modulo].curto), `${modulo}: o curto abrevia o completo`);
+  }
+});
+
+test("PD0.6: sem dizer o módulo, os textos são os da prestação, como eram", () => {
+  assert.equal(situacaoDoContrato(null, AGORA), "Sem prestação");
+  const ok = { ate: "2026-12-31", motivo: "Piloto com a produtora", vagas: 1 };
+  assert.equal(validarCortesia(ok, 2, "2026-10-05"), "2 pessoas já usam a prestação. Tire o acesso de alguém antes de reduzir as vagas.");
+});
+
+test("PD0.6: situação e validação da cortesia nomeiam o módulo pedido", () => {
+  assert.equal(situacaoDoContrato(null, AGORA, "prestacao"), "Sem prestação");
+  assert.equal(situacaoDoContrato(null, AGORA, "producao"), "Sem produção");
+  const ok = { ate: "2026-12-31", motivo: "Piloto com a produtora", vagas: 1 };
+  assert.equal(validarCortesia(ok, 3, "2026-10-05", "producao"), "3 pessoas já usam a produção. Tire o acesso de alguém antes de reduzir as vagas.");
+  assert.equal(validarCortesia({ ...ok, vagas: 3 }, 3, "2026-10-05", "producao"), null);
+  // O resto da situação não depende do módulo: a mesma cortesia, o mesmo texto.
+  for (const modulo of MODULOS_COM_CONTRATO) {
+    assert.equal(situacaoDoContrato(cortesia("2026-11-12"), AGORA, modulo), "Cortesia até 12/11/2026", modulo);
+    assert.equal(situacaoDoContrato({ ...cortesia("2026-10-01"), status: "cancelado" }, AGORA, modulo), "Encerrada", modulo);
+  }
+});
+
+test("PD0.6: a rota de admin lê o módulo do contrato: ausente vale a prestação; só módulo com contrato passa", () => {
+  assert.equal(lerModuloDoContrato(undefined), "prestacao");
+  assert.equal(lerModuloDoContrato("prestacao"), "prestacao");
+  assert.equal(lerModuloDoContrato("producao"), "producao");
+  for (const invalido of [null, "", "captacao", "xyz", 7, ["producao"], {}]) {
+    assert.equal(lerModuloDoContrato(invalido), null, JSON.stringify(invalido));
+  }
+  assert.deepEqual(MODULOS_COM_CONTRATO.map(m => lerModuloDoContrato(m)), [...MODULOS_COM_CONTRATO]);
 });

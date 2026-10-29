@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useCreditos } from "@/contexts/CreditosContext";
+import { useOrganizationRole } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { AcessoContatosModal } from "@/components/modals/AcessoContatosModal";
 import { ClaudeMark, OpenAIMark } from "@/components/icons/AiLogos";
@@ -24,9 +25,10 @@ export default function ConfiguracoesMcpPage() {
   const router = useRouter();
   const { confirmDelete } = useDeleteConfirm();
   const { assinatura, loading: loadingAssinatura } = useCreditos();
+  const papel = useOrganizationRole();
   const [assistente, setAssistente] = useState<Assistente>("claude");
   const [origem, setOrigem] = useState<string | null>(null);
-  const { chaves, status, verificacao, carregar, aguardarConexao } = useConexoesMcp(assistente);
+  const { chaves, status, verificacao, modulosDisponiveis, carregar, aguardarConexao } = useConexoesMcp(assistente);
 
   useEffect(() => {
     setOrigem(window.location.origin); // eslint-disable-line react-hooks/set-state-in-effect
@@ -66,7 +68,24 @@ export default function ConfiguracoesMcpPage() {
 
   if (loadingAssinatura) return null;
 
-  if (!assinatura?.ativa) {
+  // O que a pessoa pode conectar vem do servidor (modulosDisponiveis): a captação é de quem administra uma organização com
+  // assinatura; a prestação de contas, de quem a usa (a equipe toda, sem precisar da assinatura da captação). Enquanto o
+  // servidor não responde, só segue direto quem já sabemos que administra uma organização com assinatura.
+  const administraComAssinatura = !!assinatura?.ativa && papel === "admin";
+  if (verificacao === "carregando" && !administraComAssinatura) return null;
+
+  if (modulosDisponiveis.length === 0 && !administraComAssinatura) {
+    // Organização paga, mas o conector é de quem a administra (o servidor nega aos demais).
+    if (assinatura?.ativa) {
+      return (
+        <div className="mx-auto max-w-2xl px-4 py-10">
+          <Link href="/configuracoes" className="mb-6 inline-flex items-center gap-2 text-[0.75rem] font-medium text-black/50 transition hover:text-black/70">
+            <ArrowLeft size={14} aria-hidden="true" /> Configurações
+          </Link>
+          <p className="text-[0.8125rem] text-black/55">A conexão com o Claude e o ChatGPT é de quem administra a organização.</p>
+        </div>
+      );
+    }
     return (
       <AcessoContatosModal
         variant="mcp_gpt"
@@ -108,7 +127,7 @@ export default function ConfiguracoesMcpPage() {
           className="mt-3 rounded border border-black/10 bg-white p-5"
         >
           {assistente === "claude" ? (
-            <ConectarClaude status={status.claude} verificacao={verificacao} urlServidor={urlServidor} aoInteragir={aguardarConexao} />
+            <ConectarClaude status={status.claude} verificacao={verificacao} urlServidor={urlServidor} aoInteragir={aguardarConexao} modulosDisponiveis={modulosDisponiveis} />
           ) : (
             <ConectarChatGpt
               status={status.chatgpt}
@@ -117,6 +136,7 @@ export default function ConfiguracoesMcpPage() {
               urlServidor={urlServidor}
               aoInteragir={aguardarConexao}
               aoCriarChave={carregar}
+              modulosDisponiveis={modulosDisponiveis}
             />
           )}
         </div>

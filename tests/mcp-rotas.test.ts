@@ -682,3 +682,71 @@ test("a ferramenta chega à rota com o corpo certo e o endereço do site para mo
   assert.equal(saida.status, 201);
   assert.equal((inserido(consultas, "notas") as Json).conteudo, "Falou com a Ana");
 });
+
+// ─── Localização da empresa: cidade e estado em campos próprios ─────────────
+
+test("empresa nova guarda cidade e estado em campos próprios (estado por extenso vira sigla) e a localização acompanha", async () => {
+  const consultas = preparar((c) => {
+    if (ehDe(c, "empresas_crm", "insert")) return { data: { id: EMPRESA, nome: "Rumo" } };
+  });
+  const { status } = await ler(await chamar(empresasPOST, pedido("POST", "/empresas", { nome: "Rumo", cidade: " Curitiba ", estado: "Paraná" })));
+  assert.equal(status, 201);
+  const campos = inserido(consultas, "empresas_crm") as Json;
+  assert.equal(campos.cidade, "Curitiba");
+  assert.equal(campos.estado, "PR");
+  assert.equal(campos.localizacao, "Curitiba-PR");
+});
+
+test("localizacao no formato Cidade-UF é separada em cidade e estado", async () => {
+  const consultas = preparar((c) => {
+    if (ehDe(c, "empresas_crm", "insert")) return { data: { id: EMPRESA, nome: "Rumo" } };
+  });
+  for (const [texto, cidade, estado] of [["Londrina-PR", "Londrina", "PR"], ["Mogi-Guaçu - sp", "Mogi-Guaçu", "SP"], ["Curitiba", "Curitiba", undefined]] as const) {
+    const { status } = await ler(await chamar(empresasPOST, pedido("POST", "/empresas", { nome: "Rumo", localizacao: texto })));
+    assert.equal(status, 201, texto);
+    const campos = consultasDe(consultas, "empresas_crm", "insert").at(-1)?.valores as Json;
+    assert.equal(campos.cidade, cidade, texto);
+    assert.equal(campos.estado, estado, texto);
+  }
+});
+
+test("localização malformada ou estado que não existe é recusado, sem gravar", async () => {
+  const consultas = preparar(() => undefined);
+  const lixo = await ler(await chamar(empresasPOST, pedido("POST", "/empresas", { nome: "Rumo", localizacao: "d-D" })));
+  assert.equal(lixo.status, 400);
+  assert.match(lixo.corpo.error, /Cidade-UF/);
+  const semUf = await ler(await chamar(empresasPOST, pedido("POST", "/empresas", { nome: "Rumo", localizacao: "Curitiba-XX" })));
+  assert.equal(semUf.status, 400);
+  const estado = await ler(await chamar(empresasPOST, pedido("POST", "/empresas", { nome: "Rumo", cidade: "Curitiba", estado: "Atlantida" })));
+  assert.equal(estado.status, 400);
+  assert.match(estado.corpo.error, /sigla de um estado/);
+  assert.equal(consultasDe(consultas, "empresas_crm", "insert").length, 0);
+});
+
+test("empresa ligada à base pública herda cidade e estado de lá, e o que a pessoa informar vale mais", async () => {
+  const consultas = preparar((c) => {
+    if (ehDe(c, "empresas")) return { data: [{ id: BASE_PUBLICA, nome: "Vale S.A.", site: "https://www.vale.com", setor: "Mineração", cidade: "Rio de Janeiro", estado: "RJ " }] };
+    if (ehDe(c, "empresas_crm", "insert")) return { data: { id: EMPRESA, nome: "Vale S.A." } };
+  });
+  await ler(await chamar(empresasPOST, pedido("POST", "/empresas", { nome: "Vale S.A." })));
+  let campos = inserido(consultas, "empresas_crm") as Json;
+  assert.equal(campos.cidade, "Rio de Janeiro");
+  assert.equal(campos.estado, "RJ");
+  assert.equal(campos.localizacao, "Rio de Janeiro-RJ");
+
+  await ler(await chamar(empresasPOST, pedido("POST", "/empresas", { nome: "Vale S.A.", cidade: "Belo Horizonte", estado: "MG" })));
+  campos = consultasDe(consultas, "empresas_crm", "insert").at(-1)?.valores as Json;
+  assert.equal(campos.cidade, "Belo Horizonte");
+  assert.equal(campos.estado, "MG");
+});
+
+test("a lista de empresas do CRM filtra por cidade e estado", async () => {
+  const consultas = preparar((c) => (ehDe(c, "empresas_crm") ? { data: [{ id: EMPRESA, nome: "Rumo", cidade: "Curitiba", estado: "PR" }] } : undefined), "read");
+  const { status, corpo } = await ler(await chamar(empresasGET, pedido("GET", "/empresas?cidade=Curitiba&estado=paraná")));
+  assert.equal(status, 200);
+  assert.equal(corpo.empresas[0].cidade, "Curitiba");
+  const filtros = consultas[0].filtros;
+  assert.ok(filtros.some(([op, col, valor]) => op === "ilike" && col === "cidade" && valor === "%Curitiba%"), JSON.stringify(filtros));
+  assert.ok(filtros.some(([op, col, valor]) => op === "eq" && col === "estado" && valor === "PR"), JSON.stringify(filtros));
+  assert.match(consultas[0].colunas ?? "", /cidade,estado/);
+});

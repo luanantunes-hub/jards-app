@@ -51,8 +51,10 @@ export function verifyPkce(codeVerifier: string, codeChallenge: string, method: 
 
 export type OAuthScope = "read" | "write";
 
+/** O scope do pedido é uma lista de palavras: `write` pede gravar; as demais (read, nomes de módulo) não. Qualquer outra coisa vale só leitura. */
 export function normalizeScope(raw: string | null | undefined): OAuthScope {
-  return raw === "write" ? "write" : "read";
+  const palavras = (raw ?? "").split(/[\s,]+/).filter(Boolean);
+  return palavras.includes("write") ? "write" : "read";
 }
 
 /* ─── Clientes públicos registrados dinamicamente (RFC 7591) — Claude e outros assistentes MCP ─── */

@@ -117,6 +117,7 @@ const CAMINHOS_DO_APP = {
   negociacao: "/captacoes",
   projeto: "/projetos",
   proponente: "/proponentes",
+  prestacao: "/prestacoes",
 } as const;
 
 export type TipoDeLink = keyof typeof CAMINHOS_DO_APP;

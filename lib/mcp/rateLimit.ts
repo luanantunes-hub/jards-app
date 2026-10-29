@@ -24,8 +24,8 @@ function cleanup() {
   }
 }
 
-/** true = requisição deve ser bloqueada com 429. */
-export function isRateLimited(key: string, limit: number, windowMs = WINDOW_MS): boolean {
+/** Soma uma ocorrência na janela da chave e devolve o total. */
+function contar(key: string, windowMs: number): number {
   cleanup();
   const now = Date.now();
   const entry = store.get(key);
@@ -36,9 +36,27 @@ export function isRateLimited(key: string, limit: number, windowMs = WINDOW_MS):
       if (oldestKey) store.delete(oldestKey);
     }
     store.set(key, { count: 1, resetAt: now + windowMs });
-    return false;
+    return 1;
   }
 
   entry.count += 1;
-  return entry.count > limit;
+  return entry.count;
+}
+
+/** true = requisição deve ser bloqueada com 429. Conta a própria requisição. */
+export function isRateLimited(key: string, limit: number, windowMs = WINDOW_MS): boolean {
+  return contar(key, windowMs) > limit;
+}
+
+/** true = a chave já registrou `limite` ocorrências na janela. Só consulta, não conta. */
+export function estaNoLimite(key: string, limite: number): boolean {
+  cleanup();
+  const entry = store.get(key);
+  if (!entry || Date.now() > entry.resetAt) return false;
+  return entry.count >= limite;
+}
+
+/** Registra uma ocorrência (ex.: uma tentativa com chave que não existe) sem decidir nada. */
+export function registrarOcorrencia(key: string, windowMs = WINDOW_MS): void {
+  contar(key, windowMs);
 }
