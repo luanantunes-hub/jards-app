@@ -23,9 +23,7 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [
-    { name: "setup", testMatch: /auth\.setup\.ts/ },
-    // Um usuário por combinação de módulos (PD0.3); perfil sem variável é pulado.
-    { name: "perfis", testMatch: /perfis\.setup\.ts/ },
+    { name: "setup", testMatch: /.*\.setup\.ts/ },
     {
       name: "guest",
       testDir: "./e2e/guest",
@@ -36,13 +34,6 @@ export default defineConfig({
       testDir: "./e2e/authenticated",
       use: { ...devices["Desktop Chrome"], storageState: "playwright/.auth/user.json" },
       dependencies: ["setup"],
-    },
-    {
-      name: "modulos",
-      testDir: "./e2e/modulos",
-      // O storageState vem de cada perfil, por test.use no spec.
-      use: { ...devices["Desktop Chrome"] },
-      dependencies: ["perfis"],
     },
   ],
   webServer: {

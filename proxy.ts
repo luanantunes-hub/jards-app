@@ -1,7 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { destinoDaEntrada } from "@/lib/modulos";
-import { lerVinculos } from "@/lib/modulos-servidor";
 
 const WINDOW_MS = 60_000;
 
@@ -208,22 +206,6 @@ export async function proxy(request: NextRequest) {
     url.pathname = "/dashboard";
     url.searchParams.delete("next");
     return NextResponse.redirect(url);
-  }
-
-  // Entrada no app: quem não usa a captação em nenhuma organização vai direto
-  // para a página do módulo dele, sem abrir o /dashboard (PD0.3). Aqui, antes
-  // de a página começar, o desvio é um 307 de verdade; num layout ele viria
-  // depois do "Carregando…". A navegação dentro do app passa por aqui também.
-  if (user && pathname === "/dashboard" && request.method === "GET") {
-    const destino = destinoDaEntrada(await lerVinculos(supabase, user.id));
-    if (destino) {
-      const url = request.nextUrl.clone();
-      url.pathname = destino;
-      const resposta = NextResponse.redirect(url);
-      // A sessão renovada nesta requisição vai junto, senão se perde.
-      supabaseResponse.cookies.getAll().forEach(cookie => resposta.cookies.set(cookie));
-      return resposta;
-    }
   }
 
   return supabaseResponse;
