@@ -56,3 +56,51 @@ test("o lote recusa intervalo ao contrário, vazio, sem data ou grande demais", 
   const noLimite = diasDoLote("2026-01-01", "2026-04-30"); // 120 dias
   assert.equal(noLimite.ok && noLimite.dias.length, MAXIMO_DE_DATAS_NO_LOTE);
 });
+
+test("somar dias e meses vira mês e ano", async () => {
+  const { somarDias, somarMes, inicioDaSemana } = await import("../lib/producao/agenda");
+  assert.equal(somarDias("2026-12-31", 1), "2027-01-01");
+  assert.equal(somarDias("2026-03-01", -1), "2026-02-28");
+  assert.equal(somarMes("2026-12", 1), "2027-01");
+  assert.equal(somarMes("2026-01", -1), "2025-12");
+  assert.equal(inicioDaSemana("2026-11-05"), "2026-11-01"); // quinta → domingo
+  assert.equal(inicioDaSemana("2026-11-01"), "2026-11-01");
+});
+
+test("a grade do mês tem semanas inteiras e põe a data no dia certo (inclusive vários dias)", async () => {
+  const { gradeDoMes, gradeDaSemana } = await import("../lib/producao/agenda");
+  const unica = data("a", "2026-11-05");
+  const longa = data("b", "2026-11-09", { data_fim: "2026-11-11" });
+  const semanas = gradeDoMes("2026-11", [unica, longa]);
+  assert.ok(semanas.every(semana => semana.length === 7));
+  assert.equal(semanas[0][0].data, "2026-11-01");
+  assert.equal(semanas.at(-1)?.at(-1)?.data, "2026-12-05");
+  const dias = semanas.flat();
+  assert.deepEqual(dias.find(dia => dia.data === "2026-11-05")?.datas.map(item => item.id), ["a"]);
+  assert.deepEqual(dias.filter(dia => dia.datas.some(item => item.id === "b")).map(dia => dia.data), ["2026-11-09", "2026-11-10", "2026-11-11"]);
+  assert.equal(dias.find(dia => dia.data === "2026-12-02")?.doMes, false);
+  assert.deepEqual(gradeDaSemana("2026-11-05", [unica]).map(dia => dia.datas.length), [0, 0, 0, 0, 1, 0, 0]);
+});
+
+test("filtros por temporada e situação", async () => {
+  const { filtrarDatas } = await import("../lib/producao/agenda");
+  const lista = [data("a", "2026-11-05"), data("b", "2026-11-06", { temporada_id: "t2" }), data("c", "2026-11-07", { situacao: "opcao" })];
+  assert.deepEqual(filtrarDatas(lista, { temporada: "todas", situacao: "todas" }).length, 3);
+  assert.deepEqual(filtrarDatas(lista, { temporada: "t2", situacao: "todas" }).map(item => item.id), ["b"]);
+  assert.deepEqual(filtrarDatas(lista, { temporada: "todas", situacao: "opcao" }).map(item => item.id), ["c"]);
+});
+
+test("Hoje: opção vencida ou vencendo, e as próximas datas", async () => {
+  const { pendenciasDeHoje, proximasDatas } = await import("../lib/producao/agenda");
+  const lista = [
+    data("vencida", "2026-11-20", { situacao: "opcao", opcao_ate: "2026-10-25" }),
+    data("vencendo", "2026-11-21", { situacao: "opcao", opcao_ate: "2026-11-01" }),
+    data("longe", "2026-11-22", { situacao: "opcao", opcao_ate: "2026-12-01" }),
+    data("semprazo", "2026-11-23", { situacao: "opcao" }),
+    data("confirmada", "2026-10-30"),
+    data("passada", "2026-10-01"),
+    data("cancelada", "2026-10-31", { situacao: "cancelada" }),
+  ];
+  assert.deepEqual(pendenciasDeHoje(lista, "2026-10-29").map(p => [p.tipo, p.data.id]), [["opcao_vencida", "vencida"], ["opcao_vencendo", "vencendo"]]);
+  assert.deepEqual(proximasDatas(lista, "2026-10-29", 3).map(item => item.id), ["confirmada", "vencida", "vencendo"]);
+});

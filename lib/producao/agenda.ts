@@ -112,3 +112,95 @@ export function diasDoLote(inicio: string, fim: string, semDiasDaSemana: readonl
   if (dias.length === 0) return { ok: false, erro: "Nenhum dia sobrou no intervalo." };
   return { ok: true, dias };
 }
+
+// ─── Calendário, filtros e "Hoje" (PD1.3) ──────────────────────────────────
+
+const DIA_EM_MS = 86_400_000;
+
+function instante(data: string): number {
+  const [ano, mes, dia] = data.split("-").map(Number);
+  return Date.UTC(ano, mes - 1, dia);
+}
+
+function iso(ms: number): string {
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+/** Soma dias a uma data AAAA-MM-DD, sem depender do fuso. */
+export function somarDias(data: string, dias: number): string {
+  return iso(instante(data) + dias * DIA_EM_MS);
+}
+
+/** O domingo da semana da data (a semana do calendário começa no domingo). */
+export function inicioDaSemana(data: string): string {
+  return somarDias(data, -new Date(instante(data)).getUTCDay());
+}
+
+export type DiaDoCalendario = { data: string; doMes: boolean; datas: DataDaAgenda[] };
+
+/** As datas que caem num dia: de `data` até `data_fim`, quando há. */
+function caiNoDia(item: DataDaAgenda, dia: string): boolean {
+  return dia >= item.data && dia <= (item.data_fim ?? item.data);
+}
+
+/** A grade do mês: semanas completas (domingo a sábado), com as datas de cada dia. `mes` é AAAA-MM. */
+export function gradeDoMes(mes: string, datas: readonly DataDaAgenda[]): DiaDoCalendario[][] {
+  const primeiro = `${mes}-01`;
+  const ultimo = somarDias(`${somarMes(mes, 1)}-01`, -1);
+  const inicio = inicioDaSemana(primeiro);
+  const fim = somarDias(inicioDaSemana(ultimo), 6);
+  const semanas: DiaDoCalendario[][] = [];
+  for (let dia = inicio; dia <= fim; dia = somarDias(dia, 7)) {
+    semanas.push(Array.from({ length: 7 }, (_, i) => {
+      const data = somarDias(dia, i);
+      return { data, doMes: data.slice(0, 7) === mes, datas: datas.filter(item => caiNoDia(item, data)) };
+    }));
+  }
+  return semanas;
+}
+
+/** Os sete dias da semana da data, com as datas de cada um. */
+export function gradeDaSemana(data: string, datas: readonly DataDaAgenda[]): DiaDoCalendario[] {
+  const inicio = inicioDaSemana(data);
+  return Array.from({ length: 7 }, (_, i) => {
+    const dia = somarDias(inicio, i);
+    return { data: dia, doMes: true, datas: datas.filter(item => caiNoDia(item, dia)) };
+  });
+}
+
+/** "2026-11" + 1 → "2026-12"; vira o ano. */
+export function somarMes(mes: string, quantos: number): string {
+  const [ano, m] = mes.split("-").map(Number);
+  const total = ano * 12 + (m - 1) + quantos;
+  return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
+}
+
+export type FiltrosDaAgenda = { temporada: string; situacao: "todas" | SituacaoDaData };
+
+export function filtrarDatas(datas: readonly DataDaAgenda[], filtros: FiltrosDaAgenda): DataDaAgenda[] {
+  return datas.filter(item =>
+    (filtros.temporada === "todas" || item.temporada_id === filtros.temporada)
+    && (filtros.situacao === "todas" || item.situacao === filtros.situacao));
+}
+
+export type PendenciaDaAgenda = { tipo: "opcao_vencida" | "opcao_vencendo"; data: DataDaAgenda };
+
+/** O que pede decisão: opção com o prazo vencido, ou vencendo nos próximos `dias` dias. A mais urgente primeiro. */
+export function pendenciasDeHoje(datas: readonly DataDaAgenda[], hoje: string, dias = 3): PendenciaDaAgenda[] {
+  const limite = somarDias(hoje, dias);
+  const itens: PendenciaDaAgenda[] = [];
+  for (const data of datas) {
+    if (data.situacao !== "opcao" || !data.opcao_ate) continue;
+    if (data.opcao_ate < hoje) itens.push({ tipo: "opcao_vencida", data });
+    else if (data.opcao_ate <= limite) itens.push({ tipo: "opcao_vencendo", data });
+  }
+  return itens.sort((a, b) => (a.data.opcao_ate as string).localeCompare(b.data.opcao_ate as string));
+}
+
+/** As próximas datas, a partir de hoje, sem cancelada nem realizada. */
+export function proximasDatas(datas: readonly DataDaAgenda[], hoje: string, quantas = 5): DataDaAgenda[] {
+  return datas
+    .filter(item => (item.data_fim ?? item.data) >= hoje && item.situacao !== "cancelada" && item.situacao !== "realizada")
+    .sort((a, b) => a.data.localeCompare(b.data))
+    .slice(0, quantas);
+}
