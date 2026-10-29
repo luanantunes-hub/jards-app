@@ -37,7 +37,7 @@ function ResumoAlertas({ alertas }: { alertas: AlertaFornecedor[] }) {
   return (
     <p className="flex items-start gap-1.5 text-[0.6875rem] text-[#B23B3B]" title={graves.map(a => a.texto).join("\n")}>
       <AlertTriangle size={12} className="mt-0.5 shrink-0" aria-hidden />
-      <span className="line-clamp-2">{graves[0].texto}{graves.length > 1 ? ` (+${graves.length - 1})` : ""}</span>
+      <span className="min-w-0 break-words">{graves[0].texto}{graves.length > 1 ? ` (+${graves.length - 1})` : ""}</span>
     </p>
   );
 }
@@ -236,11 +236,11 @@ export default function FornecedoresPage() {
                         <button
                           type="button"
                           onClick={event => { event.stopPropagation(); setAviso(""); setAberto(l); }}
-                          className="line-clamp-1 text-left text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
+                          className="break-words text-left text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"
                         >
                           {l.nomeExibido}
                         </button>
-                        {l.nome && l.razao_social && <p className="mt-0.5 line-clamp-1 text-[0.625rem] text-black/35">{l.razao_social}</p>}
+                        {l.nome && l.razao_social && <p className="mt-0.5 break-words text-[0.625rem] text-black/35">{l.razao_social}</p>}
                         {l.parte_relacionada && <p className="mt-0.5 text-[0.625rem] text-[#684DB0]">Parte relacionada</p>}
                       </td>
                       <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] tabular-nums text-black/60">{formatarDocumento(l.documento, { mascararCpf: true }) || <span className="text-black/25">—</span>}</td>

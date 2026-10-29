@@ -365,8 +365,8 @@ export function ImportarExtrato({ prestacaoId, organizationId, contas, contaInic
                       <tr key={i} className="border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
                         <td className="whitespace-nowrap px-3 py-1.5 tabular-nums text-black/55">{dataCurta(l.data)}</td>
                         <td className="max-w-[18rem] px-3 py-1.5">
-                          <p className="truncate text-black/75" title={l.historico}>{l.historico || "—"}</p>
-                          {l.documento && <p className="truncate text-[0.625rem] text-black/35">Doc. {l.documento}</p>}
+                          <p className="min-w-0 break-words text-black/75" title={l.historico}>{l.historico || "—"}</p>
+                          {l.documento && <p className="min-w-0 break-words text-[0.625rem] text-black/35">Doc. {l.documento}</p>}
                         </td>
                         <td className="whitespace-nowrap px-3 py-1.5 text-black/50">{CATEGORIAS_LANCAMENTO.find(c => c.id === l.categoria)?.rotulo}</td>
                         <td className="whitespace-nowrap px-3 py-1.5 text-right tabular-nums text-black/75">

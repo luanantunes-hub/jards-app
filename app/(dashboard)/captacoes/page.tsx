@@ -884,7 +884,7 @@ export default function CaptacoesPage() {
                           <td className="px-4 py-3.5">
                             {c.captador_externo?.nome ? (
                               <span className="font-medium text-[0.78125rem] text-black/60">
-                                <span className="line-clamp-1 truncate">{c.captador_externo.nome}</span>
+                                <span className="break-words min-w-0">{c.captador_externo.nome}</span>
                                 <span className="flex items-center gap-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
                                   <Building2 size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
                                   Agência

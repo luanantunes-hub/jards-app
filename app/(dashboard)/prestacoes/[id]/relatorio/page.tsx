@@ -375,8 +375,8 @@ export default function RelatorioPage() {
                               : <span className="text-[0.625rem] text-black/25 italic">Sem rubrica</span>}
                           </td>
                           <td className="px-4 py-3 max-w-[13.75rem]">
-                            <p className="font-medium text-black/80 truncate">{c.descricao_servico || c.nome_arquivo}</p>
-                            {c.observacao && <p className="text-[0.625rem] text-black/35 truncate italic">{c.observacao}</p>}
+                            <p className="font-medium text-black/80 min-w-0 break-words">{c.descricao_servico || c.nome_arquivo}</p>
+                            {c.observacao && <p className="text-[0.625rem] text-black/35 min-w-0 break-words italic">{c.observacao}</p>}
                           </td>
                           <td className="px-4 py-3">
                             <span className="rounded border border-black/[.12] bg-white px-1.5 py-0.5 text-[0.625rem] font-medium uppercase tracking-wide text-black/55">

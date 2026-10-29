@@ -506,11 +506,11 @@ export default function PrestacoesList() {
                         style={{ borderBottom: "1px solid rgba(13,13,13,.05)" }}
                       >
                         <td className="px-4 py-3">
-                          <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="line-clamp-1 text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
-                          {p.projeto && <p className="mt-0.5 line-clamp-1 text-[0.625rem] text-black/35">{p.projeto.nome}</p>}
+                          <Link href={`/prestacoes/${p.id}`} onClick={event => event.stopPropagation()} className="break-words text-[0.8125rem] font-semibold text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{p.titulo}</Link>
+                          {p.projeto && <p className="mt-0.5 break-words text-[0.625rem] text-black/35">{p.projeto.nome}</p>}
                         </td>
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-[0.6875rem] text-black/60">{p.cliente?.nome ?? <span className="text-black/25">—</span>}</p>
+                          <p className="break-words text-[0.6875rem] text-black/60">{p.cliente?.nome ?? <span className="text-black/25">—</span>}</p>
                         </td>
                         <td className="px-4 py-3 text-[0.6875rem] tabular-nums text-black/60">
                           {p.identificador_oficial
@@ -518,11 +518,11 @@ export default function PrestacoesList() {
                             : <span className="text-black/25">—</span>}
                         </td>
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-[0.6875rem] text-black/60" title={p.regime?.normaReferencia}>{p.regime?.nome ?? <span className="text-black/30">Sem regime</span>}</p>
+                          <p className="break-words text-[0.6875rem] text-black/60" title={p.regime?.normaReferencia}>{p.regime?.nome ?? <span className="text-black/30">Sem regime</span>}</p>
                         </td>
                         <td className="px-4 py-3"><EtiquetaStatus status={p.status} /></td>
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-[0.6875rem] text-black/60">{nomeDoResponsavel(p.responsavelId) ?? <span className="text-black/30">Automático</span>}</p>
+                          <p className="break-words text-[0.6875rem] text-black/60">{nomeDoResponsavel(p.responsavelId) ?? <span className="text-black/30">Automático</span>}</p>
                         </td>
                         <td className="px-4 py-3"><PrazoCelula prazo={p.prazoProximo} /></td>
                         <td className="px-4 py-3"><BarraProntidao prontidao={p.prontidao} /></td>
@@ -538,7 +538,7 @@ export default function PrestacoesList() {
                         </td>
                         <td className="px-4 py-3"><CaptadoCelula carteira={p.carteira} /></td>
                         <td className="px-4 py-3">
-                          <p className="line-clamp-2 text-[0.6875rem] text-black/55">{p.captacao?.titulo ?? <span className="text-black/25">—</span>}</p>
+                          <p className="break-words text-[0.6875rem] text-black/55">{p.captacao?.titulo ?? <span className="text-black/25">—</span>}</p>
                         </td>
                       </tr>
                     );

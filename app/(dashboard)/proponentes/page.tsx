@@ -334,9 +334,9 @@ export default function ProponentesPage() {
                             <div className="flex items-center gap-2.5">
                               <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} iconOptions={PROPONENTE_ICON_OPTIONS} semFundo />
                               <div className="min-w-0">
-                                <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight line-clamp-1">{p.nome}</p>
+                                <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight break-words">{p.nome}</p>
                                 {p.descricao && (
-                                  <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
+                                  <p className="text-[0.6875rem] text-black/35 break-words mt-0.5">{p.descricao}</p>
                                 )}
                               </div>
                             </div>
@@ -346,7 +346,7 @@ export default function ProponentesPage() {
                           <td className="px-4 py-3.5">
                             <div className="space-y-1">
                               <p className="text-[0.6875rem] font-medium" style={{ color: tipoBg ?? "rgba(13,13,13,.35)" }}>{p.tipo ? tipoMeta?.label ?? TIPO_LABEL[p.tipo] ?? p.tipo : "Sem tipo"}</p>
-                              <p className="truncate text-[0.625rem] text-black/35">{[p.cidade, p.estado].filter(Boolean).join(" · ") || "Sem localização"}</p>
+                              <p className="min-w-0 break-words text-[0.625rem] text-black/35">{[p.cidade, p.estado].filter(Boolean).join(" · ") || "Sem localização"}</p>
                             </div>
                           </td>
 
@@ -366,12 +366,12 @@ export default function ProponentesPage() {
 
                           {/* Próximo movimento */}
                           <td className="px-4 py-3.5">
-                            {p.proxima_atividade ? <div className="flex items-start gap-2"><CalendarClock size={12} className="mt-0.5 shrink-0 text-black/25"/><div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60">{p.proxima_atividade.nome}</p><p className="mt-1 text-[0.625rem] tabular-nums text-black/30">{p.proxima_atividade.data_prevista ? fmtDate(p.proxima_atividade.data_prevista) : "Sem data"}</p></div></div> : <span className="text-[0.6875rem] text-black/30">Sem atividade</span>}
+                            {p.proxima_atividade ? <div className="flex items-start gap-2"><CalendarClock size={12} className="mt-0.5 shrink-0 text-black/25"/><div className="min-w-0"><p className="min-w-0 break-words text-[0.6875rem] font-medium text-black/60">{p.proxima_atividade.nome}</p><p className="mt-1 text-[0.625rem] tabular-nums text-black/30">{p.proxima_atividade.data_prevista ? fmtDate(p.proxima_atividade.data_prevista) : "Sem data"}</p></div></div> : <span className="text-[0.6875rem] text-black/30">Sem atividade</span>}
                           </td>
 
                           {/* Contato principal */}
                           <td className="px-4 py-3.5">
-                            {p.contato_principal ? <div className="min-w-0"><p className="truncate text-[0.6875rem] font-medium text-black/60">{p.contato_principal.nome || "Contato sem nome"}</p><p className="mt-1 truncate text-[0.625rem] text-black/30">{p.contato_principal.cargo || p.contato_principal.email || "Sem detalhes"}</p></div> : p.email ? <div className="flex min-w-0 items-center gap-1.5"><Mail size={11} className="shrink-0 text-black/25"/><span className="truncate text-[0.625rem] text-black/40">{p.email}</span></div> : <span className="text-[0.6875rem] text-black/25">Sem contato</span>}
+                            {p.contato_principal ? <div className="min-w-0"><p className="min-w-0 break-words text-[0.6875rem] font-medium text-black/60">{p.contato_principal.nome || "Contato sem nome"}</p><p className="mt-1 min-w-0 break-words text-[0.625rem] text-black/30">{p.contato_principal.cargo || p.contato_principal.email || "Sem detalhes"}</p></div> : p.email ? <div className="flex min-w-0 items-center gap-1.5"><Mail size={11} className="shrink-0 text-black/25"/><span className="min-w-0 break-words text-[0.625rem] text-black/40">{p.email}</span></div> : <span className="text-[0.6875rem] text-black/25">Sem contato</span>}
                           </td>
 
                           {/* Score */}
@@ -380,7 +380,7 @@ export default function ProponentesPage() {
                           </td>
 
                           <td className="px-4 py-3.5">{p.cnpj ? <span className="text-[0.6875rem] font-mono text-black/45">{p.cnpj}</span> : <span className="text-black/20">—</span>}</td>
-                          <td className="px-4 py-3.5">{p.site ? <a href={p.site} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[0.625rem] text-black/40 hover:text-[#7259B5]" onClick={e=>e.stopPropagation()}><ExternalLink size={11}/><span className="truncate">{p.site.replace(/^https?:\/\//, "")}</span></a> : <span className="text-black/20">—</span>}</td>
+                          <td className="px-4 py-3.5">{p.site ? <a href={p.site} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[0.625rem] text-black/40 hover:text-[#7259B5]" onClick={e=>e.stopPropagation()}><ExternalLink size={11}/><span className="min-w-0 break-words">{p.site.replace(/^https?:\/\//, "")}</span></a> : <span className="text-black/20">—</span>}</td>
                           <td className="px-4 py-3.5 text-[0.625rem] tabular-nums text-black/35 whitespace-nowrap">{fmtDate(p.created_at)}</td>
                           <td className="px-4 py-3.5 text-[0.625rem] tabular-nums text-black/35 whitespace-nowrap">{fmtDate(p.updated_at)}</td>
 

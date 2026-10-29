@@ -463,7 +463,7 @@ export default function ContatosPage() {
                           >
                             {nome.charAt(0).toUpperCase()}
                           </div>
-                          <span className="truncate font-semibold text-[#282525] text-[0.8125rem]" title={nome}>{nome}</span>
+                          <span className="min-w-0 break-words font-semibold text-[#282525] text-[0.8125rem]" title={nome}>{nome}</span>
                         </div>
                       </td>
 
@@ -478,13 +478,13 @@ export default function ContatosPage() {
                             size={20}
                             className="rounded flex-shrink-0"
                           />
-                          <span title={empresa} className="truncate text-black/65 font-medium text-[0.78125rem]">{empresa}</span>
+                          <span title={empresa} className="min-w-0 break-words text-black/65 font-medium text-[0.78125rem]">{empresa}</span>
                         </div>
                       </td>
 
                       {/* Cargo */}
                       <td className="px-6 py-3.5 text-black/50 text-[0.78125rem] max-w-[11.25rem]">
-                        <span className="line-clamp-1">{cargo}</span>
+                        <span className="break-words">{cargo}</span>
                       </td>
 
                       {/* Papel na decisão */}
@@ -496,7 +496,7 @@ export default function ContatosPage() {
                       <td className="px-6 py-3.5">
                         <div className="flex min-w-0 items-center gap-2">
                           <LevelMarks value={c.forca_relacao} color="#1A8B7A" />
-                          <span className={`truncate text-[0.6875rem] font-medium ${c.forca_relacao ? "text-black/55" : "text-black/30"}`}>
+                          <span className={`min-w-0 break-words text-[0.6875rem] font-medium ${c.forca_relacao ? "text-black/55" : "text-black/30"}`}>
                             {relationshipLabel(c.forca_relacao)}
                           </span>
                           {SentimentoIcone && (
