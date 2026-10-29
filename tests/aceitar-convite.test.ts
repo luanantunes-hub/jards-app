@@ -22,6 +22,16 @@ test("sem next, o destino é o dashboard; next de fora do site é descartado", a
   );
 });
 
+test("com code o retorno segue o fluxo de sempre (Google, cadastro, redefinição) e nunca vai para o convite", async () => {
+  let destino: string | null = null;
+  try {
+    destino = (await volta("?code=abc&next=%2Fdashboard")).headers.get("location");
+  } catch {
+    // Fora do Next não há cookies(): o ramo do código foi seguido, e é isso que importa aqui.
+  }
+  assert.ok(!destino?.includes("/aceitar-convite"), `foi para ${destino}`);
+});
+
 test("erro devolvido pelo provedor (?error=, ?error_code=) continua indo para o login", async () => {
   for (const consulta of ["?error=access_denied&error_code=otp_expired&next=%2Fconfiguracoes", "?error_code=otp_expired", "?error_description=link+expirado"]) {
     const resposta = await volta(consulta);

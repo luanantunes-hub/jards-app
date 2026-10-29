@@ -2364,6 +2364,10 @@ export interface Database {
       };
     };
     Functions: {
+      accept_my_organization_invitations: {
+        Args: Record<string, never>;
+        Returns: number;
+      };
       fn_aceitar_proposta_comercial: {
         Args: { p_proposta_id: string };
         Returns: Json;

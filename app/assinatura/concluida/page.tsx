@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { stripe } from "@/lib/stripe";
+import { destinoInterno } from "@/lib/destino-interno";
 import type { CompraVerificada } from "@/lib/conversao-google-ads";
 import AvisoAssinatura from "./AvisoAssinatura";
 
@@ -15,7 +16,7 @@ export default async function AssinaturaConcluidaPage({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { session_id, next } = await searchParams;
-  const destino = typeof next === "string" && next.startsWith("/") && !next.startsWith("//") ? next : DESTINO_PADRAO;
+  const destino = destinoInterno(typeof next === "string" ? next : undefined, DESTINO_PADRAO);
   const compra = typeof session_id === "string" ? await compraVerificada(session_id) : null;
   return <AvisoAssinatura compra={compra} destino={destino} />;
 }

@@ -2,6 +2,7 @@
 
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import type { User } from "@supabase/supabase-js";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { AuthShell } from "@/components/auth/AuthShell";
@@ -18,15 +19,26 @@ type Estado = "verificando" | "senha" | "invalido";
 type Etapa = "senha" | "aceite";
 
 /**
+ * Aceita os convites pendentes da conta. Quando entra numa equipe, o app passa a abrir a organização do convite:
+ * a conta nasce com uma organização própria vazia, e sem isto o app abriria essa. Devolve false se o aceite falhou.
+ */
+async function aceitarConvites(convidado: User): Promise<boolean> {
+  const { data, error } = await createClient().rpc("accept_my_organization_invitations");
+  if (error) return false;
+  if (typeof data === "number" && data > 0) lembrarOrganizacaoAtual(organizacaoDoConvite(convidado));
+  return true;
+}
+
+/**
  * Destino do link do convite de equipe (/api/auth/callback leva para cá). A sessão do convite vem no fragmento
- * do endereço (lib/convite-sessao.ts); aqui ela é gravada, a pessoa cria a senha (o convite nasce sem uma) e
- * aceita o convite, que a coloca na equipe.
+ * do endereço (lib/convite-sessao.ts); aqui ela é gravada, o convite é aceito (a pessoa já entra na equipe) e ela
+ * cria a senha, que o convite não traz.
  */
 export default function AceitarConvitePage({ searchParams }: { searchParams: Promise<{ next?: string | string[] }> }) {
   const destino = destinoInterno(use(searchParams).next);
   const [estado, setEstado] = useState<Estado>("verificando");
   const [etapa, setEtapa] = useState<Etapa>("senha");
-  const [organizacao, setOrganizacao] = useState<string | null>(null);
+  const [convidado, setConvidado] = useState<User | null>(null);
   const [senha, setSenha] = useState("");
   const [confirmacao, setConfirmacao] = useState("");
   const [mostrar, setMostrar] = useState(false);
@@ -39,41 +51,49 @@ export default function AceitarConvitePage({ searchParams }: { searchParams: Pro
     // já tirou do endereço. A guarda faz a verificação rodar uma vez só.
     if (iniciouRef.current) return;
     iniciouRef.current = true;
-    async function verificar() {
-      const fragmento = lerFragmentoDoConvite(window.location.hash);
-      // Os tokens saem do endereço já: não precisam ficar no histórico nem à vista de extensões do navegador.
-      if (window.location.hash) window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    const tirarFragmento = () => window.history.replaceState(null, "", window.location.pathname + window.location.search);
 
-      const supabase = createClient();
-      let convidado = null;
-      if (fragmento.tipo === "tokens") {
-        convidado = await estabelecerSessaoDoConvite(supabase, fragmento);
-      } else if (fragmento.tipo === "nenhum") {
-        // Sem fragmento: a pessoa recarregou a página depois de abrir o link, e a sessão do convite já está
-        // gravada. Só vale a de quem foi convidado (o convite guarda a organização nos metadados da conta),
-        // nunca uma sessão qualquer que o navegador já tivesse.
-        const { data } = await supabase.auth.getSession();
-        const usuario = data.session?.user;
-        convidado = organizacaoDoConvite(usuario) ? usuario ?? null : null;
+    async function verificar() {
+      try {
+        const fragmento = lerFragmentoDoConvite(window.location.hash);
+        const supabase = createClient();
+        let usuario: User | null = null;
+        if (fragmento.tipo === "tokens") {
+          usuario = await estabelecerSessaoDoConvite(supabase, fragmento);
+          // Os tokens saem do endereço (histórico, extensões do navegador) assim que viram sessão. Se falhou,
+          // ficam lá para uma recarga tentar de novo.
+          if (usuario) tirarFragmento();
+        } else if (fragmento.tipo === "erro") {
+          tirarFragmento();
+        } else {
+          // Sem fragmento: a pessoa recarregou a página depois de abrir o link, e a sessão do convite já está
+          // gravada. Só vale a de quem foi convidado (o convite guarda a organização nos metadados da conta),
+          // nunca uma sessão qualquer que o navegador já tivesse.
+          const { data } = await supabase.auth.getSession();
+          const atual = data.session?.user ?? null;
+          usuario = organizacaoDoConvite(atual) ? atual : null;
+        }
+        // Já aceita aqui: quem abriu o link entra na equipe mesmo que saia antes de criar a senha. Se falhar,
+        // o aceite é repetido depois da senha.
+        if (usuario) await aceitarConvites(usuario);
+        setConvidado(usuario);
+        setEstado(usuario ? "senha" : "invalido");
+      } catch {
+        setEstado("invalido");
       }
-      setOrganizacao(organizacaoDoConvite(convidado));
-      setEstado(convidado ? "senha" : "invalido");
     }
     verificar();
   }, []);
 
   async function entrarNaEquipe() {
-    const { error: erroAceite } = await createClient().rpc("accept_my_organization_invitations");
-    if (erroAceite) {
+    if (!convidado || !(await aceitarConvites(convidado))) {
       setEtapa("aceite");
       setErro("Sua senha foi criada, mas não conseguimos colocar você na equipe agora. Tente de novo; se continuar assim, avise quem convidou você.");
       setSalvando(false);
       return;
     }
-    // A conta nasce com uma organização própria vazia; sem isto o app abriria essa e não a da equipe.
-    lembrarOrganizacaoAtual(organizacao);
-    // Navegação completa: o servidor passa a ler a sessão que o navegador acabou de gravar.
-    window.location.href = destino;
+    // Navegação completa (e sem deixar esta tela no histórico): o servidor passa a ler a sessão gravada no navegador.
+    window.location.replace(destino);
   }
 
   async function salvar(event: React.FormEvent) {
@@ -109,6 +129,13 @@ export default function AceitarConvitePage({ searchParams }: { searchParams: Pro
     await entrarNaEquipe();
   }
 
+  // O link do convite entra na conta de quem o abre. Mostrar qual conta é e dar a saída protege quem abriu por
+  // engano o link de outra pessoa.
+  async function sair() {
+    await createClient().auth.signOut();
+    window.location.replace("/login");
+  }
+
   return (
     <AuthShell
       eyebrow="Convite para a equipe"
@@ -127,8 +154,8 @@ export default function AceitarConvitePage({ searchParams }: { searchParams: Pro
         <section>
           <h1 className="text-2xl font-bold text-[#282525]">Este link não vale mais</h1>
           <p className="mt-3 text-sm leading-6 text-black/50">
-            O link expirou ou já foi usado. Se você já criou sua senha, é só entrar. Se não, peça um novo convite
-            a quem convidou você ou use “Esqueci minha senha” com o e-mail do convite.
+            O link expirou ou já foi usado. Se você acabou de abri-lo, recarregue a página. Se já criou sua senha, é só
+            entrar. Se não, peça um novo convite a quem convidou você ou use “Esqueci minha senha” com o e-mail do convite.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <a href={`/login?next=${encodeURIComponent(destino)}`} className="inline-flex items-center gap-2 rounded-xl border border-[#684DB0] bg-[#684DB0] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[#59409B]">
@@ -155,9 +182,15 @@ export default function AceitarConvitePage({ searchParams }: { searchParams: Pro
         <>
           <p className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-[.14em] text-[#684DB0]">Último passo</p>
           <h1 className="text-[clamp(2rem,4.5vw,2.75rem)] font-bold leading-[1] tracking-[-.04em] text-[#282525]">Crie sua senha.</h1>
-          <p className="mb-5 mt-2.5 text-sm leading-6 text-black/50">
+          <p className="mt-2.5 text-sm leading-6 text-black/50">
             Com ela você entra no Jards sempre que precisar, sem esperar um novo e-mail.
           </p>
+          {convidado?.email && (
+            <p className="mb-5 mt-1 text-xs leading-5 text-black/45">
+              Conta: <strong className="font-medium text-black/70">{convidado.email}</strong>.{" "}
+              <button type="button" onClick={sair} className="underline transition hover:text-black/70">Não é você? Sair</button>
+            </p>
+          )}
 
           <form onSubmit={salvar} className="space-y-3">
             <label className="block">

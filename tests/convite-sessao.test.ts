@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { after } from "node:test";
 import { createBrowserClient } from "@supabase/ssr";
 import { destinoInterno } from "../lib/destino-interno";
 import { estabelecerSessaoDoConvite, lerFragmentoDoConvite, organizacaoDoConvite } from "../lib/convite-sessao";
@@ -14,6 +14,16 @@ const codificar = (objeto: object) => Buffer.from(JSON.stringify(objeto)).toStri
 const agora = Math.floor(Date.now() / 1000);
 const ACESSO = `${codificar({ alg: "HS256", typ: "JWT" })}.${codificar({ sub: USUARIO, exp: agora + 3600, role: "authenticated", aud: "authenticated" })}.assinatura`;
 const FRAGMENTO = `#access_token=${ACESSO}&expires_at=${agora + 3600}&expires_in=3600&refresh_token=renovacao123456&token_type=bearer&type=invite`;
+
+// O simulador troca globais do Node; o que existia antes volta ao fim do arquivo.
+const GLOBAIS = ["window", "document", "navigator", "BroadcastChannel", "fetch"] as const;
+const originais = new Map(GLOBAIS.map((chave) => [chave, Object.getOwnPropertyDescriptor(globalThis, chave)]));
+after(() => {
+  for (const [chave, descritor] of originais) {
+    if (descritor) Object.defineProperty(globalThis, chave, descritor);
+    else delete (globalThis as Record<string, unknown>)[chave];
+  }
+});
 
 function navegadorSimulado(hash: string, autorizado = true) {
   const cookies: Record<string, string> = {};
@@ -52,8 +62,8 @@ function navegadorSimulado(hash: string, autorizado = true) {
       user_metadata: { organization_id: ORGANIZACAO, organization_role: "colaborador" }, created_at: "2026-10-29T13:47:00Z",
     }), { status: 200, headers: { "content-type": "application/json" } });
   }) as typeof fetch;
-  // Sem a renovação automática, que também manteria o processo de teste vivo.
-  const cliente = createBrowserClient("http://localhost:54321", "anon-key-de-teste-xxxxxxxxxxxx", { auth: { autoRefreshToken: false } });
+  // Cliente novo a cada teste (o padrão é um só por processo) e sem a renovação automática, que também manteria o processo vivo.
+  const cliente = createBrowserClient("http://localhost:54321", "anon-key-de-teste-xxxxxxxxxxxx", { isSingleton: false, auth: { autoRefreshToken: false } });
   return { cliente, cookies, chamadas };
 }
 
@@ -73,7 +83,7 @@ test("os tokens do fragmento viram a sessão do convidado, gravada em cookie par
   assert.equal(convidado?.id, USUARIO);
   assert.equal(organizacaoDoConvite(convidado), ORGANIZACAO);
   assert.ok(chamadas.some((url) => url.includes("/auth/v1/user")), "o token é conferido no Supabase");
-  assert.ok(Object.keys(cookies).some((nome) => nome.endsWith("-auth-token")), "a sessão fica em cookie");
+  assert.ok(Object.keys(cookies).some((nome) => /-auth-token(\.\d+)?$/.test(nome)), "a sessão fica em cookie (em pedaços, se for grande)");
   assert.equal((await cliente.auth.getSession()).data.session?.user.id, USUARIO);
 });
 
