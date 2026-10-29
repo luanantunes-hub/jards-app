@@ -74,10 +74,10 @@ for (const perfil of PERFIS) {
     }
 
     if (usa(perfil, "producao")) {
-      test("a página inicial da produção mostra o estado vazio", async ({ page }) => {
+      test("a página inicial da produção mostra a agenda", async ({ page }) => {
         await page.goto("/producoes");
         await expect(page.getByRole("heading", { name: "Agenda", level: 1 })).toBeVisible();
-        await expect(page.getByText("A agenda ainda está sendo montada")).toBeVisible();
+        await expect(page.getByText("Nenhuma temporada ainda")).toBeVisible();
       });
     }
   });
