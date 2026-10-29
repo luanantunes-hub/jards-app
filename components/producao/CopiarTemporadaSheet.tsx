@@ -80,7 +80,7 @@ export function CopiarTemporadaSheet({ organizationId, temporada, datas, onClose
             <input id="copia-inicio" type="date" className={CAMPO} value={inicio} onChange={event => setInicio(event.target.value)} disabled={salvando} />
           </div>
         )}
-        <p className="text-[0.6875rem] text-black/45">{datas.length === 1 ? "1 data vai junto" : `${datas.length} datas vão juntas`}, como opção.</p>
+        <p className="text-[0.6875rem] text-black/45">{datas.length === 1 ? "1 data copiada" : `${datas.length} datas copiadas`}, como opção.</p>
       </div>
     </TopSheet>
   );

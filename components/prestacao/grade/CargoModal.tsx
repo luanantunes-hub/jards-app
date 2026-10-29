@@ -109,7 +109,7 @@ export function CargoModal({ prestacaoId, cargo, itens, ordem, onClose, onSaved 
         <div className="sm:col-span-2">
           <span className={ROTULO}>Item do orçamento</span>
           <Dropdown value={noId} onChange={escolherItem} ariaLabel="Item do orçamento" placeholder="Escolha o item que paga o cargo" options={opcoesDeItem} />
-          <span className="mt-1 block text-[0.625rem] text-black/35">Com o item, o Jards confere quem foi pago no cargo e o documento de cada pagamento.</span>
+          <span className="mt-1 block text-[0.625rem] text-black/35">Com o item, você confere quem foi pago no cargo e o documento de cada pagamento.</span>
         </div>
         <label>
           <span className={ROTULO}>Cargo</span>

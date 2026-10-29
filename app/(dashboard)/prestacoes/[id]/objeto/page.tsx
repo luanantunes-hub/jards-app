@@ -353,7 +353,7 @@ export default function ObjetoPage() {
           <div className="px-5 py-8 text-center">
             <Target size={20} className="mx-auto text-black/20" aria-hidden />
             <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma meta cadastrada.</p>
-            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre as metas aprovadas com o previsto; o realizado entra quando houver resultado." : "Quem edita a prestação cadastra as metas."}</p>
+            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre as metas aprovadas com o previsto; o realizado entra depois." : "Nenhuma meta cadastrada."}</p>
           </div>
         ) : (
           <>
@@ -457,7 +457,7 @@ export default function ObjetoPage() {
           <div className="px-5 py-8 text-center">
             <MapPin size={20} className="mx-auto text-black/20" aria-hidden />
             <p className="mt-2 text-[0.75rem] text-black/55">Nenhum local cadastrado.</p>
-            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre os municípios aprovados; depois diga em cada um se o projeto aconteceu." : "Quem edita a prestação cadastra os locais."}</p>
+            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre os municípios aprovados e marque onde o projeto aconteceu." : "Nenhum local cadastrado."}</p>
           </div>
         ) : (
           <ul className="divide-y divide-black/[.05]">
@@ -527,7 +527,7 @@ export default function ObjetoPage() {
               <div className="px-5 py-8 text-center">
                 <Camera size={20} className="mx-auto text-black/20" aria-hidden />
                 <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma evidência.</p>
-                <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Fotos, vídeos, listas de presença e matérias que comprovam a realização. Da foto, a data e o local são lidos sozinhos." : "Quem edita a prestação envia as evidências."}</p>
+                <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Envie fotos, vídeos, listas de presença e matérias. A data e o local da foto são lidos sozinhos." : "Nenhuma evidência enviada."}</p>
               </div>
             }
           />

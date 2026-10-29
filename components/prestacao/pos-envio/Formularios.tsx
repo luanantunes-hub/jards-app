@@ -53,7 +53,7 @@ function useGravar(tabela: string) {
     linha: Record<string, unknown>;
     padrao: string;
   }): Promise<boolean> {
-    if (Object.values(p.arquivos).some(a => a.novo) && !p.organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return false; }
+    if (Object.values(p.arquivos).some(a => a.novo) && !p.organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return false; }
     setSalvando(true);
     setErro("");
     const enviados: string[] = [];

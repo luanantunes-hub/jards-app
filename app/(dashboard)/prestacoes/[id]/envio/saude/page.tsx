@@ -174,7 +174,7 @@ export default function PlanilhasDaSaudePage() {
               Planilha II – conciliação bancária <span className="font-normal tabular-nums text-black/35">({planilhas.planilhaII.length})</span>
             </h3>
             {planilhas.planilhaII.length === 0 ? (
-              <p className="px-5 py-8 text-center text-[0.75rem] text-black/50">Nenhuma despesa no período. As despesas lançadas em Comprovantes, com os pagamentos, entram aqui.</p>
+              <p className="px-5 py-8 text-center text-[0.75rem] text-black/50">Nenhuma despesa no período. As despesas de Comprovantes, com os pagamentos, entram aqui.</p>
             ) : (
               <>
                 <div className="hidden overflow-x-auto md:block">
@@ -291,7 +291,7 @@ export default function PlanilhasDaSaudePage() {
               <Link href={`/prestacoes/${id}/bens`} className={LINK}>Abrir bens <ArrowRight size={10} aria-hidden /></Link>
             </div>
             {planilhas.bens.length === 0 ? (
-              <p className="px-5 py-8 text-center text-[0.75rem] text-black/50">Nenhum bem no período. Os bens cadastrados em Bens, com o número de patrimônio, entram aqui.</p>
+              <p className="px-5 py-8 text-center text-[0.75rem] text-black/50">Nenhum bem no período. Os bens de Bens, com o patrimônio, entram aqui.</p>
             ) : (
               <ul className="divide-y divide-black/[.05]">
                 {planilhas.bens.map(b => (

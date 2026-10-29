@@ -162,7 +162,7 @@ export function BemModal({ prestacaoId, organizationId, bem, inicial, itens, des
     const problema = erroDoBem(campos);
     if (problema) { setErro(problema); return; }
     const arquivosNovos = [...cotacoes.map(c => c.arquivo), ...(doacao ? [termo, aceite] : [])].filter(a => a.novo);
-    if (arquivosNovos.length > 0 && !organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return; }
+    if (arquivosNovos.length > 0 && !organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return; }
     setSalvando(true);
     setErro("");
 

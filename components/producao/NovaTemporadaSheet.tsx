@@ -73,20 +73,20 @@ export function NovaTemporadaSheet({ organizationId, tipoInicial = "show", proje
           <input id="temporada-nome" autoFocus className={CAMPO} value={titulo} onChange={event => setTitulo(event.target.value)} placeholder="Ex.: Turnê Sul 2027" maxLength={200} disabled={salvando} />
         </div>
         <div>
-          <span className={ROTULO}>O que vocês produzem</span>
+          <span className={ROTULO}>Tipo de produção</span>
           <Dropdown ariaLabel="Tipo de produção" value={tipo} onChange={valor => trocarTipo(valor as TipoProducao)} disabled={salvando} options={TIPOS_DE_PRODUCAO.map(item => ({ value: item.id, label: item.rotulo }))} />
         </div>
         <div>
-          <span className={ROTULO}>Como acontece</span>
+          <span className={ROTULO}>Formato</span>
           <Dropdown ariaLabel="Formato" value={formato} onChange={valor => setFormato(valor as FormatoTemporada)} disabled={salvando} options={tipoDeProducao(tipo).formatos.map(item => ({ value: item, label: ROTULO_DO_FORMATO[item] }))} />
         </div>
         <div>
-          <span className={ROTULO}>Vocês</span>
+          <span className={ROTULO}>Atuação</span>
           <SegmentedControl
             value={lado}
             onChange={setLado}
             ariaLabel="Lado da produção"
-            options={[{ value: "circula", label: "Viajam com a produção" }, { value: "recebe", label: "Recebem em um espaço" }] as const}
+            options={[{ value: "circula", label: "Circula com a produção" }, { value: "recebe", label: "Recebe em um espaço" }] as const}
           />
         </div>
       </div>

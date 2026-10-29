@@ -135,7 +135,7 @@ export function DevolucaoModal({ prestacaoId, organizationId, regime, guias, ref
       atualizacao = { atualizado_ate: atualizadoAte, fator: Number((atualizado / campos.valor_principal).toFixed(10)), valor_atualizado: atualizado };
     }
 
-    if (comprovante.novo && !organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return; }
+    if (comprovante.novo && !organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return; }
     setSalvando(true);
     setErro("");
     let enviado: string | null = null;

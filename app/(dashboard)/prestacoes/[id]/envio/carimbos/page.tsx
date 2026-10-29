@@ -289,7 +289,7 @@ export default function CarimbosPage() {
               <div className="px-5 py-10 text-center">
                 <Stamp size={22} className="mx-auto text-black/20" aria-hidden />
                 <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma nota para carimbar.</p>
-                <p className="mx-auto max-w-[30rem] text-[0.6875rem] text-black/35">As notas fiscais, faturas, cupons e recibos lançados em Comprovantes aparecem aqui.</p>
+                <p className="mx-auto max-w-[30rem] text-[0.6875rem] text-black/35">Notas, faturas, cupons e recibos lançados em Comprovantes aparecem aqui.</p>
               </div>
             ) : (
               <>

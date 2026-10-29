@@ -171,7 +171,7 @@ export default function PendenciasPage() {
         <div>
           <h2 className="text-[0.875rem] font-semibold text-[#282525]">Pendências</h2>
           <p className="mt-0.5 text-[0.75rem] text-black/50">
-            {semNada ? "Cadastre o orçamento e envie as despesas: aqui aparece o que falta em cada item." : <>
+            {semNada ? "Cadastre o orçamento e envie as despesas para ver o que falta em cada item." : <>
               <span className="tabular-nums">{resumo.itensComPendencia}</span> {resumo.itensComPendencia === 1 ? "item com pendência" : "itens com pendência"}
               {resumo.aConciliar.quantidade > 0 && <> · <span className="tabular-nums">{fmt(resumo.aConciliar.valor)}</span> sem pagamento conciliado</>}
               {resumo.bloqueios > 0 && <> · <Ban size={12} strokeWidth={1.75} aria-hidden className="mr-0.5 inline-block align-[-0.125rem] text-[#D94A4A]" /><span className="font-medium text-black/70"><span className="tabular-nums">{resumo.bloqueios}</span> {resumo.bloqueios === 1 ? "bloqueio" : "bloqueios"}</span></>}

@@ -66,7 +66,7 @@ export default function TemporadasPage() {
             <ListEmptyState
               icon={CalendarRange}
               title="Nenhuma temporada ainda"
-              description="Comece criando a temporada: é nela que ficam as datas."
+              description="Crie a primeira temporada para organizar as datas."
               action={podeEditar ? <PrimaryListAction onClick={() => setCriando(true)}><Plus size={13} aria-hidden="true" /> Nova temporada</PrimaryListAction> : undefined}
             />
           </ListTableSurface>

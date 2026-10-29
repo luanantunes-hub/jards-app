@@ -156,7 +156,7 @@ export function AssinaturaDoModulo({ destacar, retorno }: { destacar: boolean; r
         {retorno === "pago" && (
           <p role="status" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#2E8932]" style={{ borderColor: "rgba(46,137,50,.28)" }}>
             {descricao?.paga
-              ? "Assinatura confirmada. A prestação de contas está liberada para a organização."
+              ? "Assinatura confirmada. A prestação de contas está liberada."
               : "Pagamento recebido. A prestação de contas é liberada assim que o Stripe confirmar, em alguns segundos."}
           </p>
         )}
@@ -183,7 +183,7 @@ export function AssinaturaDoModulo({ destacar, retorno }: { destacar: boolean; r
             )}
 
             {!assinatura.admin ? (
-              <p className="text-[0.75rem] text-black/45">Quem administra a organização assina e gerencia a prestação de contas.</p>
+              <p className="text-[0.75rem] text-black/45">O administrador assina e gerencia a prestação de contas.</p>
             ) : descricao.podeAssinar ? (
               <div className="flex flex-wrap items-end gap-x-4 gap-y-3">
                 <div>

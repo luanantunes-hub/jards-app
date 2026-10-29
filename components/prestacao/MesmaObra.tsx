@@ -121,7 +121,7 @@ export function MesmaObra({ prestacao, podeEditar, onMudou }: {
         </div>
       )}
       {outras && !doGrupo.length && !disponiveis.length && (
-        <p className="mt-2 text-[0.6875rem] text-black/40">Não há outra prestação na organização para vincular.</p>
+        <p className="mt-2 text-[0.6875rem] text-black/40">Não há outra prestação para vincular.</p>
       )}
       {erro && <p role="alert" className="mt-2 rounded border bg-white px-3 py-2 text-[0.6875rem] text-[#B23B3B]" style={{ borderColor: "#D94A4A47" }}>{erro}</p>}
     </section>

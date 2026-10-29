@@ -416,7 +416,7 @@ export default function PrestacoesList() {
             <ListEmptyState
               icon={ClipboardCheck}
               title={hasFilter ? "Nenhuma prestação com esses filtros" : "Nenhuma prestação cadastrada"}
-              description={hasFilter ? undefined : "Crie a prestação a partir de um projeto ou de uma negociação aprovada; o Jards calcula o prazo pelo regime."}
+              description={hasFilter ? undefined : "Crie a prestação a partir de um projeto ou de uma negociação aprovada. O prazo sai do regime."}
               filtered={hasFilter}
               onClearFilters={limparFiltros}
               action={hasFilter || !podeCriar ? undefined : <PrimaryListAction onClick={() => setShowNova(true)}><Plus size={13} aria-hidden="true" />Nova prestação</PrimaryListAction>}

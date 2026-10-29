@@ -117,7 +117,7 @@ export function AgendaDaProducao() {
             <ListEmptyState
               icon={CalendarDays}
               title={temporadas.length === 0 ? "Nenhuma temporada ainda" : "Nenhuma data ainda"}
-              description={temporadas.length === 0 ? "Comece criando a temporada: é nela que ficam as datas." : "Crie a primeira data da temporada: apresentação, ensaio, montagem ou viagem."}
+              description={temporadas.length === 0 ? "Crie a primeira temporada para organizar as datas." : "Crie a primeira data: apresentação, ensaio, montagem ou viagem."}
               action={podeEditar ? <PrimaryListAction onClick={() => setFolha(temporadas.length === 0 ? "temporada" : "data")}><Plus size={13} aria-hidden="true" /> {temporadas.length === 0 ? "Nova temporada" : "Nova data"}</PrimaryListAction> : undefined}
             />
           </ListTableSurface>

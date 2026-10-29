@@ -204,7 +204,7 @@ export function AlteracoesOrcamento({ prestacaoId, organizationId, prestacao, re
         </div>
       ) : alteracoes.length === 0 ? (
         <p className="px-5 py-6 text-[0.75rem] leading-5 text-black/45">
-          Nenhuma alteração ainda. Quando um item precisar de mais ou menos dinheiro, monte a alteração aqui: o Jards mostra se ela dispensa autorização ou precisa de pedido ao órgão, com a regra e o artigo.
+          Nenhuma alteração ainda. Monte a alteração quando um item precisar de mais ou menos dinheiro: você vê se precisa de autorização do órgão.
         </p>
       ) : (
         <ul className="divide-y divide-black/[.06]">

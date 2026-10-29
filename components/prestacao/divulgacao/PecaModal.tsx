@@ -96,7 +96,7 @@ export function PecaModal({ prestacaoId, organizationId, peca, regime, divulgaca
     };
     const problema = erroDaPeca(campos);
     if (problema) { setErro(problema); return; }
-    if (arquivo.novo && !organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return; }
+    if (arquivo.novo && !organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return; }
     setSalvando(true);
     setErro("");
 

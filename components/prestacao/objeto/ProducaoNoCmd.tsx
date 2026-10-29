@@ -177,7 +177,7 @@ export function ProducaoNoCmd({ prestacaoId, regime, modalidade, metas, execucao
       <div className="flex flex-wrap items-center justify-between gap-2 border-b px-5 py-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div>
           <h3 id="cmd-titulo" className="text-[0.75rem] font-semibold text-[#282525]">Produção no CMD <span className="font-normal tabular-nums text-black/35">({linhas.length})</span></h3>
-          <p className="text-[0.625rem] text-black/40">O que foi lançado no Conjunto Mínimo de Dados, por competência. Vai na prestação final.</p>
+          <p className="text-[0.625rem] text-black/40">Lançamentos do Conjunto Mínimo de Dados, por competência.</p>
         </div>
         {podeEditar && (
           <button
@@ -200,7 +200,7 @@ export function ProducaoNoCmd({ prestacaoId, regime, modalidade, metas, execucao
           <Activity size={20} className="mx-auto text-black/20" aria-hidden />
           <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma produção registrada.</p>
           <p className="mx-auto max-w-[30rem] text-[0.6875rem] text-black/35">
-            {podeEditar ? "A cada mês, registre a quantidade lançada no CMD e a meta a que ela serve. Só a contagem: nada de paciente." : "Quem edita a prestação registra a produção."}
+            {podeEditar ? "Registre por mês a quantidade lançada no CMD e a meta. Só a contagem, sem dados de paciente." : "Nenhuma produção registrada."}
           </p>
         </div>
       ) : (

@@ -64,7 +64,7 @@ export function FimDoTestePrestacao({ organizationId, ate, admin, emUso, precos,
             </p>
             <p>
               Nada foi apagado: as prestações, os comprovantes e os arquivos continuam aqui para consulta e exportação. A
-              edição volta assim que a organização assinar.
+              edição volta assim que a assinatura for feita.
             </p>
             <div className="rounded border border-black/[.08] px-4 py-3">
               <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Assinatura</p>
@@ -90,8 +90,8 @@ export function FimDoTestePrestacao({ organizationId, ate, admin, emUso, precos,
             </div>
             <p className="text-[0.75rem] text-black/50">
               {admin
-                ? "Se faltou alguma coisa na primeira versão, conte para a gente: é isso que decide as próximas."
-                : "Peça a quem administra a organização para assinar: a assinatura vale para a equipe."}
+                ? "Faltou alguma coisa? Conte o que você precisa."
+                : "Peça ao administrador para assinar: a assinatura vale para a equipe."}
             </p>
             {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#D94A4A47" }}>{erro}</p>}
           </>

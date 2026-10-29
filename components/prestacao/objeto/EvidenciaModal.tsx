@@ -109,7 +109,7 @@ export function EvidenciaModal({ prestacaoId, organizationId, evidencia, inicial
     const novoArquivo = modo === "arquivo" && !evidencia?.storage_path;
     if (novoArquivo && !arquivo) { setErro("Escolha o arquivo da evidência."); return; }
     if (modo === "link" && !/^https?:\/\/\S+$/i.test(url.trim())) { setErro("Informe um link que comece com http:// ou https://."); return; }
-    if (novoArquivo && !organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return; }
+    if (novoArquivo && !organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return; }
     setSalvando(true);
     const campos = {
       tipo,

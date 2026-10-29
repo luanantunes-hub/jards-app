@@ -243,8 +243,8 @@ export default function DivulgacaoPage() {
             <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma peça cadastrada.</p>
             <p className="mx-auto max-w-[30rem] text-[0.6875rem] text-black/35">
               {podeEditar
-                ? "Cadastre cartazes, posts, vídeos e placas com as marcas que aparecem, a aprovação prévia e a amostra, que entra no relatório final."
-                : "Quem edita a prestação cadastra as peças."}
+                ? "Cadastre cartazes, posts, vídeos e placas, com as marcas, a aprovação prévia e a amostra."
+                : "Nenhuma peça cadastrada."}
             </p>
           </div>
         ) : (

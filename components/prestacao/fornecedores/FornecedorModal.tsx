@@ -73,7 +73,7 @@ export function FornecedorModal({ organizationId, fornecedor, onClose, onSaved }
     if (error) {
       setSalvando("");
       setErro(error.code === "23505"
-        ? `Já existe um fornecedor com esse ${rotuloDocumento} nesta organização.`
+        ? `Já existe um fornecedor com esse ${rotuloDocumento} no cadastro.`
         : mensagemErroPrestacao(error, "Não foi possível salvar o fornecedor"));
       return;
     }
@@ -97,7 +97,7 @@ export function FornecedorModal({ organizationId, fornecedor, onClose, onSaved }
   return (
     <ModalPrestacao
       titulo={fornecedor ? "Editar fornecedor" : "Novo fornecedor"}
-      subtitulo="Vale para todas as prestações da organização"
+      subtitulo="Vale para todas as suas prestações"
       onClose={onClose}
       largura="max-w-[34rem]"
       rodape={<>

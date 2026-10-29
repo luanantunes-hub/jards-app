@@ -203,7 +203,7 @@ export default function ExtratoPage() {
           <div className="px-5 py-8 text-center">
             <Landmark size={20} className="mx-auto text-black/20" aria-hidden />
             <p className="mt-2 text-[0.75rem] text-black/55">Nenhuma conta cadastrada.</p>
-            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre a conta do projeto para importar o extrato do banco." : "Quem edita a prestação cadastra as contas."}</p>
+            <p className="text-[0.6875rem] text-black/35">{podeEditar ? "Cadastre a conta do projeto para importar o extrato." : "Nenhuma conta cadastrada."}</p>
           </div>
         ) : (
           <ul className="divide-y divide-black/[.05]">

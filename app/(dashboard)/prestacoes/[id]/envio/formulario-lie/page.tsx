@@ -284,7 +284,7 @@ export default function FormularioLiePage() {
           <h2 className="text-[0.9375rem] font-semibold text-[#282525]">Formulário PCP/PCF</h2>
           <p className="max-w-[44rem] text-[0.6875rem] text-black/45">
             As 10 abas do formulário da DPPIE, montadas com o extrato, o orçamento, as despesas, os beneficiados, a grade, as atividades e os bens.
-            Corrija aqui o que sai errado, complete no Excel o que o Jards não sabe e junte o arquivo à PCP no SEI ou à PCF.
+            Corrija o que saiu errado, complete no Excel o que faltar e junte o arquivo à PCP no SEI ou à PCF.
           </p>
         </div>
         {formulario && modelo && (

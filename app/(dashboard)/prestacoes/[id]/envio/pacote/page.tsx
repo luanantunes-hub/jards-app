@@ -370,7 +370,7 @@ export default function PacotePage() {
           {plano.itens.length === 0 ? (
             <div className="rounded border bg-white px-5 py-10 text-center" style={BORDA}>
               <Package size={22} className="mx-auto text-black/20" aria-hidden />
-              <p className="mx-auto mt-2 max-w-[30rem] text-[0.75rem] text-black/55">Nenhum arquivo ainda. Anexe os documentos no checklist e os comprovantes das despesas; o pré-pacote já sai com o relatório e o que falta.</p>
+              <p className="mx-auto mt-2 max-w-[30rem] text-[0.75rem] text-black/55">Nenhum arquivo ainda. Anexe os documentos do checklist e os comprovantes das despesas.</p>
             </div>
           ) : (
             <section className="overflow-hidden rounded border bg-white" style={BORDA} aria-label="Arquivos do pacote">

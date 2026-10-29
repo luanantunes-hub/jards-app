@@ -12,7 +12,7 @@ const AMBAR = "#B07A14";
 const MOSTRAR = 5;
 
 const ERROS: Record<string, string> = {
-  sem_permissao: "Só quem decide na organização (administrador ou responsável pela prestação) passa a prestação para a versão nova.",
+  sem_permissao: "Só o administrador ou o responsável pela prestação passa para a versão nova.",
   versao_invalida: "A versão publicada mudou desde que a página abriu. Atualize a página e confira de novo.",
   prestacao_encerrada: "Prestação aprovada ou arquivada fica na versão em que foi decidida.",
   prestacao_inexistente: "Prestação não encontrada ou sem acesso.",
@@ -159,7 +159,7 @@ export function VersaoNovaDoRegime({ prestacao, regimes, podeDecidir, onPassou }
               </>
             ) : (
               <span className="text-[0.6875rem] text-black/50">
-                Quem decide na organização (administrador ou responsável pela prestação) pode passar para a versão nova.
+                Só o administrador ou o responsável pela prestação passa para a versão nova.
               </span>
             )}
           </div>

@@ -110,7 +110,7 @@ export default function FornecedoresPage() {
   function excluir(fornecedor: PrestacaoFornecedor) {
     confirmDelete({
       title: "Excluir fornecedor?",
-      description: `"${nomeDoFornecedor(fornecedor)}" sai do cadastro da organização, com os comprovantes guardados.`,
+      description: `"${nomeDoFornecedor(fornecedor)}" sai do cadastro, com os comprovantes guardados.`,
       onConfirm: async () => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabela ainda não está no tipo Database
         const tabela = (nome: string) => (supabase as any).from(nome);
@@ -139,7 +139,7 @@ export default function FornecedoresPage() {
       <ListPageHeader
         eyebrow="Prestação de contas"
         title="Fornecedores"
-        description="Cadastro da organização, com a situação na Receita e as sanções consultadas no TCU."
+        description="Situação na Receita e sanções consultadas no TCU."
         summary={!carregando && (
           <>
             <ListSummary strong={linhas.length}>{linhas.length === 1 ? "fornecedor" : "fornecedores"}</ListSummary>
@@ -174,7 +174,7 @@ export default function FornecedoresPage() {
             <ListEmptyState
               icon={Store}
               title={hasFilter ? "Nenhum fornecedor com esses filtros" : "Nenhum fornecedor cadastrado"}
-              description={hasFilter ? undefined : "Cadastre o CNPJ e o Jards consulta a situação na Receita e as sanções no TCU, na CGU e no CNJ."}
+              description={hasFilter ? undefined : "Cadastre o CNPJ para consultar a situação na Receita e as sanções no TCU, na CGU e no CNJ."}
               filtered={hasFilter}
               onClearFilters={() => { setFiltro("todos"); setBusca(""); }}
               action={hasFilter || !podeEditar ? undefined : <PrimaryListAction onClick={() => setEditando("novo")}><Plus size={13} aria-hidden="true" />Novo fornecedor</PrimaryListAction>}

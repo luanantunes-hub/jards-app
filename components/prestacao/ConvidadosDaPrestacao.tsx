@@ -126,7 +126,7 @@ function ConvidarModal({ prestacaoId, onClose, onCriado }: { prestacaoId: string
             {criado.emailEnviado ? `Enviamos o convite para ${email.trim().toLowerCase()}.` : "O e-mail não pôde ser enviado daqui: copie o endereço e mande à pessoa."}
           </p>
           <CampoParaCopiar rotulo="Endereço do convite" valor={criado.link} />
-          <p className="px-6 text-[0.6875rem] text-[#B07A14]">O endereço aparece só agora. Ele só vale para quem entrar com o e-mail convidado; se perder, revogue o convite e convide de novo.</p>
+          <p className="px-6 text-[0.6875rem] text-[#B07A14]">Copie o endereço agora: ele não aparece de novo. Vale só para o e-mail convidado. Se perder, revogue o convite e convide de novo.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 px-6 py-5 sm:grid-cols-2">

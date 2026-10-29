@@ -209,7 +209,7 @@ export default function OrcamentoPage() {
     setAtivando(false);
     if (error) {
       setErro(error.message?.includes("sem_permissao")
-        ? "Tornar uma versão a que está em uso cabe ao administrador ou ao responsável pela prestação."
+        ? "Só o administrador ou o responsável pela prestação muda a versão em uso."
         : mensagemErroPrestacao(error, "Não foi possível trocar a versão em uso"));
       return;
     }
@@ -323,7 +323,7 @@ export default function OrcamentoPage() {
         </p>
       )}
       {!podeEditar && !carregando && (
-        <p className="text-[0.6875rem] text-black/45">Você pode consultar o orçamento. Editar cabe ao administrador ou ao colaborador com a prestação.</p>
+        <p className="text-[0.6875rem] text-black/45">Você só consulta o orçamento.</p>
       )}
 
       {carregando ? (
@@ -340,8 +340,8 @@ export default function OrcamentoPage() {
           <p className="text-[0.875rem] font-medium text-black/60">{versao ? "Nenhum item nesta versão." : "O orçamento ainda não foi cadastrado."}</p>
           <p className="mx-auto mt-1 max-w-[32rem] text-[0.75rem] leading-5 text-black/40">
             {podeEditar
-              ? "Importe o orçamento aprovado (CSV ou PDF) ou adicione os itens. Etapas e produtos agrupam os itens; o grupo de custo de cada item alimenta os tetos do regime."
-              : "Quando o orçamento for cadastrado, ele aparece aqui com o executado de cada item."}
+              ? "Importe o orçamento aprovado (CSV ou PDF) ou adicione os itens."
+              : "Nenhum orçamento cadastrado."}
           </p>
         </div>
       ) : (

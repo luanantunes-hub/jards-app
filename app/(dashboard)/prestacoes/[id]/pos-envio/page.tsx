@@ -321,11 +321,11 @@ export default function PosEnvioPage() {
 
           <Secao
             titulo="Diligências"
-            descricao="O que o órgão pede depois do envio. Diligência aberta impede registrar um novo envio."
+            descricao="Pedidos do órgão depois do envio. Com diligência aberta, não dá para registrar novo envio."
             acao={podeEditar && <BotaoNovo onClick={() => setEditando({ tipo: "diligencia", linha: null })}>Nova diligência</BotaoNovo>}
           >
             {lidos.diligencias.length === 0 ? (
-              <Vazio>Nenhuma diligência registrada. Quando o órgão pedir algo, registre aqui: o prazo do regime vira atividade com aviso.</Vazio>
+              <Vazio>Nenhuma diligência registrada. Registre o pedido do órgão: o prazo vira atividade com aviso.</Vazio>
             ) : (
               <ul className="divide-y divide-black/[.05] overflow-hidden rounded border bg-white" style={BORDA} aria-label="Diligências">
                 {lidos.diligencias.map(d => {
@@ -376,7 +376,7 @@ export default function PosEnvioPage() {
 
           <Secao
             titulo="Decisões"
-            descricao="O resultado da análise das contas e do recurso, sempre com o documento. Os prazos de recurso e de devolução contam da ciência."
+            descricao="Resultado da análise das contas e do recurso, com o documento. Os prazos contam da ciência."
             acao={podeEditar && <BotaoNovo onClick={() => setEditando({ tipo: "decisao", linha: null })}>Registrar decisão</BotaoNovo>}
           >
             {lidos.decisoes.length === 0 ? (
@@ -431,7 +431,7 @@ export default function PosEnvioPage() {
 
           <Secao
             titulo="Glosas"
-            descricao="O valor que o órgão não aceitou. A glosa mantida vira devolução, atualizada pelo índice do regime a partir da data-base."
+            descricao="Valor que o órgão não aceitou. A glosa mantida vira devolução, atualizada pelo índice do regime."
             acao={podeEditar && <BotaoNovo onClick={() => setEditando({ tipo: "glosa", linha: null })}>Nova glosa</BotaoNovo>}
           >
             {lidos.glosas.length === 0 ? (
@@ -494,7 +494,7 @@ export default function PosEnvioPage() {
 
           <Secao
             titulo="Recursos"
-            descricao="Contra a decisão que não aprovou as contas por inteiro, dentro do prazo do regime."
+            descricao="Contra a decisão que não aprovou as contas por inteiro, no prazo do regime."
             acao={podeEditar && (
               <BotaoNovo onClick={() => setEditando({ tipo: "recurso", linha: null })} disabled={recorriveis.length === 0} title={recorriveis.length === 0 ? "Registre antes a decisão que será recorrida" : undefined}>
                 Registrar recurso

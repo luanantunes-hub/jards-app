@@ -370,8 +370,8 @@ export default function DistribuicaoPage() {
           <p className="mt-2 text-[0.75rem] text-black/55">Nenhum plano de distribuição.</p>
           <p className="mx-auto max-w-[28rem] text-[0.6875rem] text-black/35">
             {podeEditar
-              ? "Cadastre como os ingressos ou produtos serão distribuídos: as cotas gratuitas, o preço popular e a venda, produto a produto."
-              : "Quem edita a prestação cadastra o plano de distribuição."}
+              ? "Cadastre a distribuição dos ingressos ou produtos: cotas gratuitas, preço popular e venda."
+              : "Nenhum plano de distribuição cadastrado."}
           </p>
         </div>
       ) : (

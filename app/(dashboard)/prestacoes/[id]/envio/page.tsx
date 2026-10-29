@@ -294,7 +294,7 @@ export default function EnvioPage() {
 
   async function anexar(linha: LinhaDoChecklist, arquivos: File[]) {
     if (!checklist) return;
-    if (!organizationId) { setErro("Aguarde: a organização da prestação ainda está carregando."); return; }
+    if (!organizationId) { setErro("Aguarde: a prestação ainda está carregando."); return; }
     const grande = arquivos.find(f => f.size > LIMITE_MB * 1024 * 1024);
     if (grande) { setErro(`"${grande.name}" passa de ${LIMITE_MB} MB.`); return; }
     setOcupado(true);
