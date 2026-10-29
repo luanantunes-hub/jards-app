@@ -21,6 +21,7 @@ import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import type { Empresa } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { carregarSetores } from "@/lib/setores";
 import { FiltroMesorregiao } from "@/components/patrocinadores/FiltroMesorregiao";
 import { lerSelecaoDaUrl } from "@/lib/filtro-mesorregiao";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
@@ -64,9 +65,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
   }, [search]);
 
   useEffect(() => {
-    supabase.from("empresas").select("setor").not("setor", "is", null).then(({ data }) => {
-      if (data) setSetores([...new Set((data as { setor: string | null }[]).map((r) => r.setor).filter((s): s is string => !!s))].sort());
-    });
+    carregarSetores(supabase).then(setSetores);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -86,7 +85,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
       if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`, { foreignTable: "empresas" });
       if (estado) q = q.eq("empresas.estado", estado);
       if (mesorregioes.length > 0) q = q.in("empresas.mesorregiao_id", mesorregioes);
-      if (setor) q = q.eq("empresas.setor", setor);
+      if (setor) q = q.ilike("empresas.setor", setor);
       if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null", { foreignTable: "empresas" });
 
       const { data, count } = await q
@@ -351,19 +350,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
 
   // Load distinct setores for dropdown
   useEffect(() => {
-    supabase
-      .from("empresas")
-      .select("setor")
-      .not("setor", "is", null)
-      .then(({ data }) => {
-        if (data) {
-          const rows = data as Array<{ setor: string | null }>;
-          const unique = [
-            ...new Set(rows.map((r) => r.setor).filter((s): s is string => !!s)),
-          ].sort();
-          setSetores(unique);
-        }
-      });
+    carregarSetores(supabase).then(setSetores);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -385,7 +372,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`);
     if (estado) q = q.eq("estado", estado);
     if (mesorregioes.length > 0) q = q.in("mesorregiao_id", mesorregioes);
-    if (setor) q = q.eq("setor", setor);
+    if (setor) q = q.ilike("setor", setor);
     if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null");
     if (trimestre === "T1") q = q.eq("trimestre_1", true);
     if (trimestre === "T2") q = q.eq("trimestre_2", true);
