@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, ArrowUpRight, BriefcaseBusiness, Building2, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown } from "lucide-react";
+import { Plus, ArrowUpRight, BriefcaseBusiness, Building2, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -18,7 +18,9 @@ import { PotentialKanban, type PotencialFechamento } from "@/components/kanban/P
 import { KanbanBoard, KanbanCard, KanbanColumn, KanbanEmpty, KanbanSkeleton } from "@/components/kanban/KanbanPrimitives";
 import { useIncrementalReveal, RevealSentinel } from "@/components/kanban/useIncrementalReveal";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { Select } from "@/components/ui/Select";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
+import { mostraFiltro, opcoesDoFiltro, passaNoFiltro, TODOS, type Marcador } from "@/lib/filtros-do-funil";
 import { ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
@@ -195,6 +197,9 @@ export default function CaptacoesPage() {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [search, setSearch] = useState("");
+  const [filtroResponsavel, setFiltroResponsavel] = useState(TODOS);
+  const [filtroLei, setFiltroLei] = useState(TODOS);
+  const [filtroProjeto, setFiltroProjeto] = useState(TODOS);
   const [recentCutoff, setRecentCutoff] = useState<number | null>(null);
   const [showModal, setShowModal]           = useState(false);
   const [preStatus, setPreStatus]           = useState<StatusCaptacao>("prospeccao");
@@ -345,15 +350,41 @@ export default function CaptacoesPage() {
     ? captacoes.filter(c => !idsComRenovacaoMaisNova.has(c.id))
     : captacoes.filter(c => c.ciclo_ano === Number(cicloFiltro));
 
+  // Busca, responsável, tipo de patrocínio e projeto valem nas três visões. A
+  // etapa (abertas, fechadas, recentes) só na lista e no potencial: no kanban
+  // as colunas já são as etapas, e o filtro só esvaziaria colunas.
+  const pessoasDaNegociacao = (c: CaptacaoRow): Marcador[] => [
+    ...[c.captador_id, c.supervisor_id].filter((id): id is string => Boolean(id))
+      .map(id => ({ valor: `membro:${id}`, nome: membros[id]?.nome ?? "Sem nome" })),
+    ...(c.captador_externo_id ? [{ valor: `agencia:${c.captador_externo_id}`, nome: `${c.captador_externo?.nome ?? "Agência"} (agência)` }] : []),
+  ];
+  const leiDaNegociacao = (c: CaptacaoRow): Marcador[] => c.lei ? [{ valor: c.lei, nome: leiMap[c.lei]?.label ?? c.lei }] : [];
+  const projetoDaNegociacao = (c: CaptacaoRow): Marcador[] => c.projeto_id ? [{ valor: c.projeto_id, nome: c.projeto?.nome ?? "Projeto sem nome" }] : [];
+  const opcoesResponsavel = opcoesDoFiltro(captacoesVisiveis, pessoasDaNegociacao, "Sem responsável");
+  const opcoesLei = opcoesDoFiltro(captacoesVisiveis, leiDaNegociacao, "Sem tipo de patrocínio");
+  const opcoesProjeto = opcoesDoFiltro(captacoesVisiveis, projetoDaNegociacao, "Sem projeto");
+
+  const term = search.trim().toLocaleLowerCase("pt-BR");
+  const captacoesNosFiltros = captacoesVisiveis.filter(c =>
+    (!term || [c.titulo, c.empresa_pub?.nome, c.empresa_crm?.nome, c.projeto?.nome, c.lei].some(value => value?.toLocaleLowerCase("pt-BR").includes(term)))
+    && passaNoFiltro(c, filtroResponsavel, pessoasDaNegociacao)
+    && passaNoFiltro(c, filtroLei, leiDaNegociacao)
+    && passaNoFiltro(c, filtroProjeto, projetoDaNegociacao));
+
   const closedStatuses = new Set<StatusCaptacao>(["aprovado", "recusado"]);
-  const filteredCaptacoes = captacoesVisiveis.filter(c => {
+  const filtraEtapa = view !== "kanban";
+  const filteredCaptacoes = !filtraEtapa ? captacoesNosFiltros : captacoesNosFiltros.filter(c => {
     const isClosed = closedStatuses.has(c.status);
     const isRecent = recentCutoff !== null && new Date(c.created_at).getTime() >= recentCutoff;
-    const matchesFilter = pipelineFilter === "todas" || (pipelineFilter === "abertas" && !isClosed) || (pipelineFilter === "fechadas" && isClosed) || (pipelineFilter === "recentes" && isRecent);
-    const term = search.trim().toLocaleLowerCase("pt-BR");
-    const matchesSearch = !term || [c.titulo, c.empresa_pub?.nome, c.empresa_crm?.nome, c.projeto?.nome, c.lei].some(value => value?.toLocaleLowerCase("pt-BR").includes(term));
-    return matchesFilter && matchesSearch;
+    return pipelineFilter === "todas" || (pipelineFilter === "abertas" && !isClosed) || (pipelineFilter === "fechadas" && isClosed) || (pipelineFilter === "recentes" && isRecent);
   });
+
+  const filtrosAtivos = Boolean(term) || cicloFiltro !== "atual" || (filtraEtapa && pipelineFilter !== "todas")
+    || filtroResponsavel !== TODOS || filtroLei !== TODOS || filtroProjeto !== TODOS;
+  function limparFiltros() {
+    setSearch(""); setPipelineFilter("todas"); setCicloFiltro("atual");
+    setFiltroResponsavel(TODOS); setFiltroLei(TODOS); setFiltroProjeto(TODOS);
+  }
 
   function toggleSort(key: string) {
     if (sortKey === key) setSortDir(d => d === "asc" ? "desc" : "asc");
@@ -595,18 +626,45 @@ export default function CaptacoesPage() {
             {cicloFiltro === "atual" ? "Ciclo atual" : cicloFiltro === "todos" ? "Todos os ciclos" : `Ciclo ${cicloFiltro}`}
             <ChevronDown size={11} className="opacity-40" aria-hidden="true" />
           </button>
-          <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
-          <SegmentedControl
-            value={pipelineFilter}
-            onChange={setPipelineFilter}
-            ariaLabel="Filtrar negociações"
-            options={[
-              { value: "todas",    label: "Todas" },
-              { value: "abertas",  label: "Abertas",  icon: Clock3 },
-              { value: "fechadas", label: "Fechadas", icon: CheckCircle2 },
-              { value: "recentes", label: "Recentes", icon: Calendar },
-            ] as const}
-          />
+          {filtraEtapa && (
+            <>
+              <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
+              <SegmentedControl
+                value={pipelineFilter}
+                onChange={setPipelineFilter}
+                ariaLabel="Filtrar negociações"
+                options={[
+                  { value: "todas",    label: "Todas" },
+                  { value: "abertas",  label: "Abertas",  icon: Clock3 },
+                  { value: "fechadas", label: "Fechadas", icon: CheckCircle2 },
+                  { value: "recentes", label: "Recentes", icon: Calendar },
+                ] as const}
+              />
+            </>
+          )}
+          {mostraFiltro(opcoesResponsavel, filtroResponsavel) && (
+            <Select block={false} aria-label="Filtrar por responsável" value={filtroResponsavel} onChange={event => setFiltroResponsavel(event.target.value)} className="h-9 shrink-0 pl-3 text-black/60">
+              <option value={TODOS}>Todos os responsáveis</option>
+              {opcoesResponsavel.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
+            </Select>
+          )}
+          {mostraFiltro(opcoesLei, filtroLei) && (
+            <Select block={false} aria-label="Filtrar por tipo de patrocínio" value={filtroLei} onChange={event => setFiltroLei(event.target.value)} className="h-9 shrink-0 pl-3 text-black/60">
+              <option value={TODOS}>Todos os tipos</option>
+              {opcoesLei.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
+            </Select>
+          )}
+          {mostraFiltro(opcoesProjeto, filtroProjeto) && (
+            <Select block={false} aria-label="Filtrar por projeto" value={filtroProjeto} onChange={event => setFiltroProjeto(event.target.value)} className="h-9 max-w-[13.75rem] shrink-0 truncate pl-3 text-black/60">
+              <option value={TODOS}>Todos os projetos</option>
+              {opcoesProjeto.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
+            </Select>
+          )}
+          {filtrosAtivos && (
+            <button type="button" onClick={limparFiltros} className="flex h-9 shrink-0 items-center gap-1.5 rounded px-2.5 text-[0.75rem] font-medium text-black/50 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              <X size={12} aria-hidden="true" /> Limpar filtros
+            </button>
+          )}
       </ListToolbar>
 
       {/* ── Kanban view ── */}
@@ -636,7 +694,9 @@ export default function CaptacoesPage() {
                         ? Array.from({ length: 2 }).map((_, i) => <KanbanSkeleton key={i} />)
                         : null
                     ) : cards.length === 0 ? (
-                      <KanbanEmpty label="Nenhuma negociação" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_NEGOCIACAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
+                      filtrosAtivos
+                        ? <KanbanEmpty label="Nada com esses filtros" />
+                        : <KanbanEmpty label="Nenhuma negociação" actionLabel="Adicionar primeira" onAction={ehDesfecho(status, DESFECHOS_NEGOCIACAO) ? undefined : () => { setPreStatus(status); setShowModal(true); }}/>
                     ) : (
                       <>
                         {cards.slice(0, getVisible(status)).map((c) => renderCard(c, false, { onDragStart: () => setDraggingId(c.id), onDragEnd: () => { setDraggingId(null); setDragOverStatus(null); } }))}
@@ -724,7 +784,7 @@ export default function CaptacoesPage() {
                             icon={Search}
                             title="Nenhuma negociação corresponde aos filtros"
                             filtered
-                            onClearFilters={() => { setSearch(""); setPipelineFilter("todas"); }}
+                            onClearFilters={limparFiltros}
                           />
                         )}
                       </td>
