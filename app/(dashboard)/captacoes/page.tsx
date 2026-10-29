@@ -21,6 +21,8 @@ import { SegmentedControl } from "@/components/ui/FilterControls";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { ListEmptyState, ListPageHeader, ListSearch, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { useFiltroResponsavel } from "@/hooks/useFiltroResponsavel";
+import { FiltroResponsavel } from "@/components/list/FiltroResponsavel";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
 import { escalaUi } from "@/lib/escala-ui";
@@ -174,6 +176,7 @@ export default function CaptacoesPage() {
   const [fechando, setFechando] = useState<CaptacaoRow | null>(null);
   const router = useRouter();
   const organizationId = useOrganizationId();
+  const responsavel = useFiltroResponsavel(organizationId);
   const { options: leiOptions, create: createLei } = useLeiOptions();
   const leiMap = Object.fromEntries(leiOptions.map(option => [option.status, {
     label: option.label,
@@ -352,7 +355,7 @@ export default function CaptacoesPage() {
     const matchesFilter = pipelineFilter === "todas" || (pipelineFilter === "abertas" && !isClosed) || (pipelineFilter === "fechadas" && isClosed) || (pipelineFilter === "recentes" && isRecent);
     const term = search.trim().toLocaleLowerCase("pt-BR");
     const matchesSearch = !term || [c.titulo, c.empresa_pub?.nome, c.empresa_crm?.nome, c.projeto?.nome, c.lei].some(value => value?.toLocaleLowerCase("pt-BR").includes(term));
-    return matchesFilter && matchesSearch;
+    return matchesFilter && matchesSearch && responsavel.casa([c.captador_id, c.supervisor_id]);
   });
 
   function toggleSort(key: string) {
@@ -607,6 +610,7 @@ export default function CaptacoesPage() {
               { value: "recentes", label: "Recentes", icon: Calendar },
             ] as const}
           />
+          <FiltroResponsavel membros={responsavel.membros} meuId={responsavel.meuId} value={responsavel.filtro} onChange={responsavel.setFiltro} />
       </ListToolbar>
 
       {/* ── Kanban view ── */}
@@ -724,7 +728,7 @@ export default function CaptacoesPage() {
                             icon={Search}
                             title="Nenhuma negociação corresponde aos filtros"
                             filtered
-                            onClearFilters={() => { setSearch(""); setPipelineFilter("todas"); }}
+                            onClearFilters={() => { setSearch(""); setPipelineFilter("todas"); responsavel.setFiltro("todos"); }}
                           />
                         )}
                       </td>

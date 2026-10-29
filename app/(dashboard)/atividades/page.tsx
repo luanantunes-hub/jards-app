@@ -17,6 +17,8 @@ import type { TipoAtividade, Prioridade } from "@/lib/supabase/types";
 import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
+import { useFiltroResponsavel } from "@/hooks/useFiltroResponsavel";
+import { FiltroResponsavel } from "@/components/list/FiltroResponsavel";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { followupSourceLink } from "@/lib/activities/followupSourceLink";
 import { escalaUi } from "@/lib/escala-ui";
@@ -1191,6 +1193,7 @@ const WORKSPACE_SELECT_FIELDS = `
 export default function AtividadesPage() {
   const router = useRouter();
   const supabase = createClient();
+  const responsavel = useFiltroResponsavel(useOrganizationId());
 
   const [atividades,    setAtividades]       = useState<AtividadeRow[]>([]);
   const [allAtividades, setAllAtividades]    = useState<AtividadeRow[]>([]);
@@ -1398,9 +1401,12 @@ export default function AtividadesPage() {
     localStorage.setItem("jards-atividades-view", v);
   }
 
-  const filtered = tipoFilter === "todos" ? atividades : atividades.filter(a => a.tipo === tipoFilter);
-  const atrasadas = atividades.filter(a => !a.feita && getGroup(a.data_prevista) === "atrasadas").length;
-  const hoje      = atividades.filter(a => !a.feita && getGroup(a.data_prevista) === "hoje").length;
+  // O filtro por responsável vale para a lista, o calendário, o Gantt e a carga da equipe.
+  const doResponsavel = atividades.filter(a => responsavel.casa([a.responsavel_id]));
+  const todasDoResponsavel = allAtividades.filter(a => responsavel.casa([a.responsavel_id]));
+  const filtered = tipoFilter === "todos" ? doResponsavel : doResponsavel.filter(a => a.tipo === tipoFilter);
+  const atrasadas = doResponsavel.filter(a => !a.feita && getGroup(a.data_prevista) === "atrasadas").length;
+  const hoje      = doResponsavel.filter(a => !a.feita && getGroup(a.data_prevista) === "hoje").length;
 
   const TIPOS_FILTER: { value: TipoFilter; label: string }[] = [
     { value: "todos",    label: "Todos"    },
@@ -1530,6 +1536,8 @@ export default function AtividadesPage() {
           options={TIPOS_FILTER}
         />
 
+        <FiltroResponsavel membros={responsavel.membros} meuId={responsavel.meuId} value={responsavel.filtro} onChange={responsavel.setFiltro} />
+
         {tipoFilter !== "todos" && (
           <FilterButton onClick={() => setTipoFilter("todos")}>
             <X size={12} /> Limpar
@@ -1551,7 +1559,7 @@ export default function AtividadesPage() {
           ? <div className="bg-white rounded border py-20 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-xs text-black/30">Carregando…</p>
             </div>
-          : <CalendarioView atividades={allAtividades} tipoFilter={tipoFilter} onEdit={openAgendaItem} onNew={(d) => { setNovaPrefillDate(d); setShowNovaAtividade(true); }} />
+          : <CalendarioView atividades={todasDoResponsavel} tipoFilter={tipoFilter} onEdit={openAgendaItem} onNew={(d) => { setNovaPrefillDate(d); setShowNovaAtividade(true); }} />
       )}
 
       {viewMode === "gantt" && (
@@ -1560,7 +1568,7 @@ export default function AtividadesPage() {
               <p className="text-xs text-black/30">Carregando…</p>
             </div>
           : <GanttView
-              atividades={allAtividades}
+              atividades={todasDoResponsavel}
               tipoFilter={tipoFilter}
               onEdit={openAgendaItem}
               onDatesChange={updateActivityDates}
@@ -1572,7 +1580,7 @@ export default function AtividadesPage() {
           ? <div className="bg-white rounded border py-20 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-xs text-black/30">Carregando…</p>
             </div>
-          : <CargaEquipeView atividades={allAtividades} tipoFilter={tipoFilter} onEdit={openAgendaItem} onReassign={updateActivityResponsible} />
+          : <CargaEquipeView atividades={todasDoResponsavel} tipoFilter={tipoFilter} onEdit={openAgendaItem} onReassign={updateActivityResponsible} />
       )}
 
       {viewMode === "lista" && (

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -998,7 +999,9 @@ const { data: perfilData } = await (supabase as any)
                   {(m.full_name || m.email || "?").charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-[0.8125rem] font-semibold text-[#282525]">{m.full_name ?? "Sem nome"}</p>
+                  {isAdmin && m.papel !== "captador" && m.papel !== "proponente"
+                    ? <Link href={`/equipe/${m.user_id}`} className="text-[0.8125rem] font-semibold text-[#282525] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">{m.full_name ?? "Sem nome"}</Link>
+                    : <p className="text-[0.8125rem] font-semibold text-[#282525]">{m.full_name ?? "Sem nome"}</p>}
                   <p className="text-[0.6875rem] text-black/40 truncate">{m.email}</p>
                   <ModulosDoMembro
                     membro={m}

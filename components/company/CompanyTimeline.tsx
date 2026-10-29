@@ -95,7 +95,7 @@ export function CompanyTimeline({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         supabase
           .from("atividades")
-          .select("id, nome, tipo, data_realizada, nota, created_at, contato:contatos!contato_id(nome), captacao:captacoes!captacao_id(titulo)")
+          .select("id, nome, tipo, data_realizada, nota, created_at, responsavel:profiles!responsavel_id(full_name), contato:contatos!contato_id(nome), captacao:captacoes!captacao_id(titulo)")
           .eq("empresa_crm_id", empresaCrmId)
           .order("created_at", { ascending: false })
           .limit(50) as any
@@ -109,7 +109,7 @@ export function CompanyTimeline({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         supabase
           .from("notas")
-          .select("id, titulo, conteudo, created_at")
+          .select("id, titulo, conteudo, created_at, account_id")
           .eq("empresa_crm_id", empresaCrmId)
           .order("created_at", { ascending: false })
           .limit(30) as any
@@ -147,7 +147,7 @@ export function CompanyTimeline({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         supabase
           .from("editais_user")
-          .select("id, status, created_at, projeto:projetos_crm!projeto_id(nome)")
+          .select("id, status, created_at, account_id, projeto:projetos_crm!projeto_id(nome)")
           .eq("empresa_crm_id", empresaCrmId)
           .order("created_at", { ascending: false })
           .limit(30) as any
@@ -158,13 +158,23 @@ export function CompanyTimeline({
 
     const [atvRes, notRes, histRes, inscRes] = await Promise.all(promises);
 
+    // Quem escreveu as notas e as inscrições: perfis de quem é da mesma organização.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const autoresIds = [...new Set([...((notRes.data ?? []) as any[]), ...((inscRes.data ?? []) as any[])].map(item => item.account_id).filter(Boolean))] as string[];
+    const nomes = new Map<string, string>();
+    if (autoresIds.length > 0) {
+      const { data: perfis } = await supabase.from("profiles").select("id, full_name").in("id", autoresIds);
+      for (const perfil of (perfis ?? []) as { id: string; full_name: string | null }[]) if (perfil.full_name?.trim()) nomes.set(perfil.id, perfil.full_name.trim());
+    }
+    const porAutor = (id: string | null | undefined) => (id ? nomes.get(id) ?? null : null);
+
     const atividades = ((atvRes.data ?? []) as any[]).map(a => ({
       tipo: "atividade" as const,
       atividade_tipo: a.tipo || "outro",
       titulo: a.nome,
       descricao: a.nota || (a.contato?.nome ? `Contato: ${a.contato.nome}` : null),
       data: a.data_realizada || a.created_at,
-      usuario: null,
+      usuario: a.responsavel?.full_name ?? null,
       created_at: a.created_at,
       captacao_titulo: a.captacao?.titulo,
     }));
@@ -175,7 +185,7 @@ export function CompanyTimeline({
       titulo: n.titulo || (n.conteudo.length > 80 ? n.conteudo.slice(0, 80) + "…" : n.conteudo),
       descricao: n.titulo ? (n.conteudo || null) : null,
       data: n.created_at,
-      usuario: null,
+      usuario: porAutor(n.account_id),
       created_at: n.created_at,
     }));
 
@@ -198,7 +208,7 @@ export function CompanyTimeline({
       titulo: e.projeto?.nome ? `Inscrição: ${e.projeto.nome}` : "Inscrição",
       descricao: `Status: ${EDITAL_STATUS_LABEL[e.status] || e.status}`,
       data: e.created_at,
-      usuario: null,
+      usuario: porAutor(e.account_id),
       created_at: e.created_at,
     }));
 
@@ -262,7 +272,7 @@ export function CompanyTimeline({
                 {evt.captacao_titulo && (
                   <p className="text-[0.625rem] text-[#7259B5] mt-1">↗ {evt.captacao_titulo}</p>
                 )}
-                {evt.usuario && <p className="text-[0.625rem] text-black/25 mt-1">{evt.usuario}</p>}
+                {evt.usuario && <p className="text-[0.625rem] text-black/45 mt-1">por {evt.usuario}</p>}
               </div>
             </div>
           ))}

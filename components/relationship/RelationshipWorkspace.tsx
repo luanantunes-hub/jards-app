@@ -12,7 +12,7 @@ import { NotasRelacionais } from "@/components/relationship/NotasRelacionais";
 
 type Contact = { id: string; nome: string; cargo: string | null };
 type Member = { id: string; nome: string };
-type Interaction = { id: string; tipo: string; canal: string | null; direcao: "entrada" | "saida" | null; assunto: string; resumo: string | null; resultado: string | null; ocorreu_em: string; email_id: string | null; contato: { nome: string } | null };
+type Interaction = { id: string; tipo: string; canal: string | null; direcao: "entrada" | "saida" | null; assunto: string; resumo: string | null; resultado: string | null; ocorreu_em: string; email_id: string | null; contato: { nome: string } | null; created_by: string | null; account_id: string | null };
 type Followup = {
   id: string; titulo: string; motivo: string | null; canal: string; previsto_para: string;
   status: "pendente" | "concluido" | "cancelado"; tentativa: number; workflow: string | null;
@@ -102,7 +102,7 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
       return query;
     };
     const [i, f, q, memberResult] = await Promise.all([
-      scope("crm_interacoes", "id,tipo,canal,direcao,assunto,resumo,resultado,ocorreu_em,email_id,contato:contatos(nome)").order("ocorreu_em", { ascending: false }),
+      scope("crm_interacoes", "id,tipo,canal,direcao,assunto,resumo,resultado,ocorreu_em,email_id,created_by,account_id,contato:contatos(nome)").order("ocorreu_em", { ascending: false }),
       scope("crm_followups", "id,titulo,motivo,canal,previsto_para,status,tentativa,workflow,contato_id,responsavel_id,concluido_em,resultado,contato:contatos(nome),responsavel:profiles!responsavel_id(full_name)").order("previsto_para"),
       scope("crm_duvidas", "id,tipo,titulo,resposta,status,contato:contatos(nome)").order("created_at", { ascending: false }),
       fetchOrganizationMembers(organizationId)
@@ -204,6 +204,11 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
   const visible = followups.filter(item => filter === "todos" || (filter === "pendentes" && item.status === "pendente") || (filter === "concluidos" && item.status === "concluido") || (filter === "cancelados" && item.status === "cancelado"));
   const overdue = pending.filter(item => new Date(item.previsto_para).getTime() < Date.now()).length;
   const lastInteraction = interactions[0]?.ocorreu_em;
+  // Quem da equipe registrou o contato (o e-mail sincronizado fica em nome de quem sincronizou).
+  const autorDe = (item: Interaction) => {
+    const id = item.created_by ?? item.account_id;
+    return id ? members.find(member => member.id === id)?.nome ?? null : null;
+  };
   const coldDays = lastInteraction ? Math.floor((Date.now() - new Date(lastInteraction).getTime()) / 86_400_000) : null;
   const workflows = mode === "customer_success" ? CUSTOMER_SUCCESS_WORKFLOWS : WORKFLOWS;
 
@@ -222,7 +227,7 @@ export function RelationshipWorkspace({ organizationId: organizationIdProp, acco
       {error && !form && !finishing && <p className="m-5 rounded border border-[#D94E4E]/20 px-3 py-2 text-xs text-[#D94E4E]">{error}</p>}
       {section === "notas" ? <NotasRelacionais empresaCrmId={empresaCrmId} proponenteId={proponenteId} showNew={notaFormOpen} setShowNew={setNotaFormOpen} /> : (
         <div className="divide-y divide-black/[.06]">
-          {loading ? <p className="px-5 py-12 text-center text-xs text-black/30">Carregando…</p> : section === "followups" ? visible.map(item => <FollowupRow key={item.id} item={item} channelLabel={channelLabel} saving={saving} onFinish={() => setFinishing(item)} onEdit={() => editFollowup(item)} onCancel={() => void updateStatus(item, "cancelado")} onReopen={() => void updateStatus(item, "pendente")} />) : section === "interacoes" ? interactions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-start justify-between gap-4"><div className="min-w-0"><div className="flex items-center gap-2">{item.email_id && <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-black/[.04] text-black/45" title="Sincronizado do e-mail"><Mail size={10}/></span>}<p className="truncate text-[0.8125rem] font-semibold text-[#282525]">{item.assunto}</p></div></div><span className="flex-shrink-0 text-[0.6875rem] text-black/30">{dateLabel(item.ocorreu_em)}</span></div>{item.resumo && <p className="mt-2 whitespace-pre-line text-[0.75rem] leading-relaxed text-black/50">{item.resumo}</p>}<p className="mt-1 text-[0.625rem] text-black/30">{item.contato?.nome ?? "Empresa"} · {channelLabel(item.canal ?? item.tipo)}{item.direcao ? ` · ${item.direcao === "entrada" ? "Recebido" : "Enviado"}` : ""}{item.resultado ? ` · ${resultLabel(item.resultado)}` : ""}</p></div>) : questions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase" style={{ color: item.tipo === "objecao" ? "#D94E4E" : "#2D72B0", borderColor: item.tipo === "objecao" ? "#D94E4E40" : "#2D72B040" }}>{item.tipo}</span><p className="text-[0.8125rem] font-semibold text-[#282525]">{item.titulo}</p></div>{item.resposta && <p className="mt-2 text-[0.75rem] text-black/50">{item.resposta}</p>}</div>)}
+          {loading ? <p className="px-5 py-12 text-center text-xs text-black/30">Carregando…</p> : section === "followups" ? visible.map(item => <FollowupRow key={item.id} item={item} channelLabel={channelLabel} saving={saving} onFinish={() => setFinishing(item)} onEdit={() => editFollowup(item)} onCancel={() => void updateStatus(item, "cancelado")} onReopen={() => void updateStatus(item, "pendente")} />) : section === "interacoes" ? interactions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-start justify-between gap-4"><div className="min-w-0"><div className="flex items-center gap-2">{item.email_id && <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded bg-black/[.04] text-black/45" title="Sincronizado do e-mail"><Mail size={10}/></span>}<p className="truncate text-[0.8125rem] font-semibold text-[#282525]">{item.assunto}</p></div></div><span className="flex-shrink-0 text-[0.6875rem] text-black/30">{dateLabel(item.ocorreu_em)}</span></div>{item.resumo && <p className="mt-2 whitespace-pre-line text-[0.75rem] leading-relaxed text-black/50">{item.resumo}</p>}<p className="mt-1 text-[0.625rem] text-black/30">{item.contato?.nome ?? "Empresa"} · {channelLabel(item.canal ?? item.tipo)}{item.direcao ? ` · ${item.direcao === "entrada" ? "Recebido" : "Enviado"}` : ""}{item.resultado ? ` · ${resultLabel(item.resultado)}` : ""}{autorDe(item) ? ` · por ${autorDe(item)}` : ""}</p></div>) : questions.map(item => <div key={item.id} className="px-5 py-4"><div className="flex items-center gap-2"><span className="rounded border px-1.5 py-0.5 text-[0.5625rem] font-bold uppercase" style={{ color: item.tipo === "objecao" ? "#D94E4E" : "#2D72B0", borderColor: item.tipo === "objecao" ? "#D94E4E40" : "#2D72B040" }}>{item.tipo}</span><p className="text-[0.8125rem] font-semibold text-[#282525]">{item.titulo}</p></div>{item.resposta && <p className="mt-2 text-[0.75rem] text-black/50">{item.resposta}</p>}</div>)}
           {!loading && ((section === "followups" && !visible.length) || (section === "interacoes" && !interactions.length) || (section === "duvidas" && !questions.length)) && <div className="px-5 py-14 text-center"><p className="text-sm font-medium text-black/30">Nada registrado aqui ainda</p></div>}
         </div>
       )}

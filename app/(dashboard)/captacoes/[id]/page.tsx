@@ -21,6 +21,7 @@ import PrioBadge from "@/components/ui/PrioBadge";
 import SharedStatusBadge from "@/components/ui/StatusBadge";
 import { StatusDropdown } from "@/components/ui/StatusDropdown";
 import { useLeiOptions } from "@/hooks/useLeiOptions";
+import { useAutoriaDasNotas } from "@/hooks/useAutoriaDasNotas";
 import { useEtiquetas } from "@/contexts/EtiquetasContext";
 import { NovaCaptacaoModal } from "@/components/modals/NovaCaptacaoModal";
 import { NovaAtividadeModal } from "@/components/modals/NovaAtividadeModal";
@@ -193,7 +194,7 @@ function TimelineEvent({ tipo, titulo, descricao, data, usuario }: {
         </div>
         <p className="text-[0.8125rem] font-medium text-[#282525]">{titulo}</p>
         {descricao && <p className="text-xs text-black/40 mt-0.5">{descricao}</p>}
-        {usuario && <p className="text-[0.625rem] text-black/25 mt-1">{usuario}</p>}
+        {usuario && <p className="text-[0.625rem] text-black/45 mt-1">por {usuario}</p>}
       </div>
     </div>
   );
@@ -227,7 +228,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   const [documentos, setDocumentos] = useState<Documento[]>([]);
   const [propostas, setPropostas] = useState<PropostaDocumento[]>([]);
   const [historico, setHistorico] = useState<(Historico & { user: { full_name: string } | null })[]>([]);
-  const [interacoes, setInteracoes] = useState<{ id: string; tipo: string; canal: string | null; assunto: string; resumo: string | null; resultado: string | null; ocorreu_em: string; contato: { nome: string } | null }[]>([]);
+  const [interacoes, setInteracoes] = useState<{ id: string; tipo: string; canal: string | null; assunto: string; resumo: string | null; resultado: string | null; ocorreu_em: string; created_by: string | null; account_id: string | null; contato: { nome: string } | null }[]>([]);
   const [loading, setLoading] = useState(true);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showNewAtividade, setShowNewAtividade] = useState(false);
@@ -291,7 +292,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         .from("atividades")
         .select(`
           id, nome, tipo, prioridade, data_prevista, data_realizada, feita, nota, created_at, captacao_id,
-          contato:contatos!contato_id(nome)
+          contato:contatos!contato_id(nome), responsavel:profiles!responsavel_id(full_name)
         `)
         .eq("captacao_id", id)
         .order("data_prevista", { ascending: true }),
@@ -312,7 +313,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         .order("created_at", { ascending: false }),
       (supabase as any)
         .from("crm_interacoes")
-        .select("id,tipo,canal,assunto,resumo,resultado,ocorreu_em,contato:contatos(nome)")
+        .select("id,tipo,canal,assunto,resumo,resultado,ocorreu_em,created_by,account_id,contato:contatos(nome)")
         .eq("captacao_id", id)
         .order("ocorreu_em", { ascending: false }),
       (supabase as any)
@@ -364,6 +365,8 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
   }, [id, supabase]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+  const autoria = useAutoriaDasNotas([...notas, ...interacoes.map(i => ({ account_id: i.created_by ?? i.account_id }))]);
+  const autorDe = (id: string | null | undefined) => (id ? (id === autoria.usuarioId ? "você" : autoria.nomes[id] ?? null) : null);
   useEffect(() => {
     if (new URLSearchParams(window.location.search).get("tab") === "relacionamento") setActiveTab("relacionamento");
   }, []);
@@ -495,9 +498,9 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       tipo: "interacao",
       atividade_tipo: interacao.canal ?? interacao.tipo,
       titulo: interacao.assunto,
-      descricao: [taxonomyLabel(resultados, interacao.resultado), interacao.resumo].filter(value=>value&&value!=="—").join(" · ") || null,
+      descricao: [interacao.contato?.nome, taxonomyLabel(resultados, interacao.resultado), interacao.resumo].filter(value=>value&&value!=="—").join(" · ") || null,
       data: interacao.ocorreu_em,
-      usuario: interacao.contato?.nome ?? null,
+      usuario: autorDe(interacao.created_by ?? interacao.account_id),
       created_at: interacao.ocorreu_em,
     })),
     ...atividades.map(a => ({
@@ -506,7 +509,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       titulo: a.nome,
       descricao: a.nota,
       data: a.data_realizada || a.data_prevista || a.created_at,
-      usuario: null,
+      usuario: (a as { responsavel?: { full_name: string | null } | null }).responsavel?.full_name ?? null,
       created_at: a.data_realizada || a.data_prevista || a.created_at,
     })),
     ...notas.map(n => ({
@@ -515,7 +518,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
       titulo: n.titulo || resumoNota(n.conteudo),
       descricao: n.titulo ? resumoNota(n.conteudo) : null,
       data: n.created_at,
-      usuario: null,
+      usuario: autorDe(n.account_id),
       created_at: n.created_at,
     })),
     ...historico.map(h => ({

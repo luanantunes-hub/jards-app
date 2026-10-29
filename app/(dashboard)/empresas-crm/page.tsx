@@ -15,6 +15,8 @@ import { ListContent, ListEmptyState, ListPageHeader, ListSearch, ListSummary, L
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { fetchOrganizationMembers } from "@/lib/organization/members";
+import { useFiltroResponsavel } from "@/hooks/useFiltroResponsavel";
+import { FiltroResponsavel } from "@/components/list/FiltroResponsavel";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 
 type ViewMode = "lista" | "matriz";
@@ -35,6 +37,8 @@ type EmpresaViewRow = EmpresaCrm & {
   ultimoContatoDias: number | null;
   proximoFollowup: string | null;
   responsavelNome: string | null;
+  /** Quem responde pela empresa: o responsável dela e os das negociações com ela. */
+  donos: string[];
   atribuicao: { captadorNome: string; tipo: string } | null;
 };
 
@@ -43,6 +47,8 @@ type CaptacaoMetricRow = {
   status: string;
   valor_solicitado: number | null;
   projeto_id: string | null;
+  captador_id: string | null;
+  supervisor_id: string | null;
 };
 
 const TIPO_ETIQUETA: Record<string, { label: string; color: string }> = {
@@ -180,6 +186,7 @@ export default function EmpresasCrmPage() {
   const supabase = createClient();
   const { confirmDelete } = useDeleteConfirm();
   const organizationId = useOrganizationId();
+  const responsavel = useFiltroResponsavel(organizationId);
 
   const [empresas, setEmpresas] = useState<EmpresaViewRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -220,7 +227,7 @@ export default function EmpresasCrmPage() {
         { data: interacoes },
       ] = await Promise.all([
         supabase.from("empresas_crm").select("*").order("created_at", { ascending: false }),
-        supabase.from("captacoes").select("empresa_crm_id, status, valor_solicitado, projeto_id"),
+        supabase.from("captacoes").select("empresa_crm_id, status, valor_solicitado, projeto_id, captador_id, supervisor_id"),
         (supabase as any).from("atribuicoes").select("empresa_crm_id, tipo, captadores!captador_user_id(nome)").eq("status", "ativa"),
         supabase.from("editais_user").select("empresa_crm_id, valor").not("empresa_crm_id", "is", null),
         supabase.from("contatos").select("empresa_crm_id").not("empresa_crm_id", "is", null),
@@ -237,8 +244,12 @@ export default function EmpresasCrmPage() {
         const metrics = new Map<string, { value: number; count: number }>();
         const convertedMap = new Map<string, number>();
         const projectsMap = new Map<string, Set<string>>();
+        const donosMap = new Map<string, Set<string>>();
         for (const captacao of (captacoes ?? []) as unknown as CaptacaoMetricRow[]) {
           if (!captacao.empresa_crm_id) continue;
+          const donos = donosMap.get(captacao.empresa_crm_id) ?? new Set<string>();
+          for (const dono of [captacao.captador_id, captacao.supervisor_id]) if (dono) donos.add(dono);
+          donosMap.set(captacao.empresa_crm_id, donos);
           if (!terminalStatuses.has(captacao.status)) {
             const current = metrics.get(captacao.empresa_crm_id) ?? { value: 0, count: 0 };
             current.value += Number(captacao.valor_solicitado ?? 0);
@@ -306,6 +317,7 @@ export default function EmpresasCrmPage() {
             proximoFollowup: followupMap.get(item.id) ?? null,
             ultimoContatoDias,
             responsavelNome: item.responsavel_interno_id ? (memberMap.get(item.responsavel_interno_id) ?? null) : null,
+            donos: [...(donosMap.get(item.id) ?? []), ...(item.responsavel_interno_id ? [item.responsavel_interno_id] : [])],
             atribuicao: atribuicaoMap.get(item.id) ?? null,
           };
         }));
@@ -318,6 +330,7 @@ export default function EmpresasCrmPage() {
 
   const filtered = empresas.filter((e) => {
     if (tipoFilter !== "todos" && e.tipo !== tipoFilter) return false;
+    if (!responsavel.casa(e.donos)) return false;
     if (!dSearch.trim()) return true;
     const s = dSearch.toLowerCase();
     return (
@@ -369,6 +382,7 @@ export default function EmpresasCrmPage() {
             { value: "ex_cliente",    label: "Ex-Clientes" },
           ] as const}
         />
+        <FiltroResponsavel membros={responsavel.membros} meuId={responsavel.meuId} value={responsavel.filtro} onChange={responsavel.setFiltro} />
       </ListToolbar>
 
       <ListContent className="md:pr-0">{viewMode === "matriz" ? (
@@ -414,7 +428,7 @@ export default function EmpresasCrmPage() {
                   <td colSpan={COL_COUNT}>
                     {empresas.length === 0
                       ? <ListEmptyState icon={Building2} title="Nenhuma empresa cadastrada" description="Adicione empresas que você está prospectando ou explore a base de patrocinadores." action={<PrimaryListAction onClick={() => setShowNovoProspect(true)}><Plus size={13} aria-hidden="true" /> Novo prospect</PrimaryListAction>} />
-                      : <ListEmptyState icon={Search} title="Nenhuma empresa corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setTipoFilter("todos"); }} />}
+                      : <ListEmptyState icon={Search} title="Nenhuma empresa corresponde aos filtros" filtered onClearFilters={() => { setSearch(""); setTipoFilter("todos"); responsavel.setFiltro("todos"); }} />}
                   </td>
                 </tr>
               ) : (
