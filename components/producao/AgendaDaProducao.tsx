@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { CalendarDays, CalendarRange, List, Plus } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
@@ -154,7 +155,7 @@ export function AgendaDaProducao() {
                 <ListTableSurface>
                   <ul className="divide-y divide-black/[.06]">
                     {mes.datas.map(item => (
-                      <li key={item.id} className="flex items-center gap-4 px-4 py-3">
+                      <li key={item.id}><Link href={`/producoes/datas/${item.id}`} className="flex items-center gap-4 px-4 py-3 transition hover:bg-black/[.02] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
                         <div className="w-14 shrink-0 text-[0.75rem] tabular-nums text-black/55">
                           <p className="font-semibold text-[#282525]">{diaEMes(item.data)}</p>
                           <p className="text-[0.625rem] uppercase tracking-[.08em] text-black/45">{diaDaSemana(item.data)}</p>
@@ -175,7 +176,7 @@ export function AgendaDaProducao() {
                         >
                           {opcaoVencida(item, hoje) ? "Opção vencida" : item.situacao === "opcao" && item.opcao_ordem ? `${item.opcao_ordem}ª opção` : ROTULO_DA_SITUACAO_DA_DATA[item.situacao]}
                         </span>
-                      </li>
+                      </Link></li>
                     ))}
                   </ul>
                 </ListTableSurface>

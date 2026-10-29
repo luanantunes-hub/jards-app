@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Copy, Plus } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
@@ -109,7 +110,7 @@ export default function TemporadaPage() {
                     <p className="text-[0.625rem] uppercase tracking-[.08em] text-black/45">{diaDaSemana(item.data)}</p>
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{ROTULO_DO_TIPO_DE_DATA[item.tipo]}{item.data_fim ? ` até ${diaEMes(item.data_fim)}` : ""}</p>
+                    <Link href={`/producoes/datas/${item.id}`} className="truncate text-[0.8125rem] font-medium text-[#282525] underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">{ROTULO_DO_TIPO_DE_DATA[item.tipo]}{item.data_fim ? ` até ${diaEMes(item.data_fim)}` : ""}</Link>
                     {opcaoVencida(item, hoje) && <p className="text-[0.6875rem] text-[#B23B3B]">Opção vencida</p>}
                   </div>
                   {podeEditar ? (
