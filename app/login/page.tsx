@@ -195,6 +195,14 @@ function LoginForm() {
       return;
     }
 
+    // Convite de equipe ainda pendente (conta criada por outro caminho que não o link do convite): aceita agora,
+    // para a pessoa entrar na equipe. Não impede o login se falhar.
+    try {
+      await supabase.rpc("accept_my_organization_invitations");
+    } catch {
+      // o aceite também acontece pelo link do convite e pela redefinição de senha
+    }
+
     window.location.href = next;
   }
 

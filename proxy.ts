@@ -151,6 +151,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/redefinir-senha") ||
         pathname.startsWith("/nova-senha") ||
         pathname.startsWith("/cadastro") ||
+        pathname.startsWith("/aceitar-convite") ||
         pathname.startsWith("/confirmacao-email") ||
         pathname.startsWith("/.well-known") ||
         pathname.startsWith("/publicacoes") ||
@@ -181,6 +182,8 @@ export async function proxy(request: NextRequest) {
     pathname === "/" ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/cadastro") ||
+    // Convite de equipe: o link chega com a sessão no fragmento do endereço; a tela pede a senha e aceita o convite.
+    pathname.startsWith("/aceitar-convite") ||
     pathname.startsWith("/confirmacao-email") ||
     pathname.startsWith("/redefinir-senha") ||
     pathname.startsWith("/nova-senha") ||

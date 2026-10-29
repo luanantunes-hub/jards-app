@@ -11,13 +11,22 @@ export async function GET(request: Request) {
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/dashboard";
 
+  // Convite de equipe (inviteUserByEmail): o Supabase devolve a sessão no fragmento do endereço (#access_token=...),
+  // que o servidor não lê, e sem "code". A tela /aceitar-convite lê o fragmento, pede a senha e aceita o convite.
+  // O navegador leva o fragmento junto no redirecionamento. Erros do provedor (?error=) seguem para o login.
+  if (!code && !searchParams.get("error")) {
+    const destinoDoConvite = next.startsWith("/") ? next : "/dashboard";
+    return NextResponse.redirect(`${origin}/aceitar-convite?next=${encodeURIComponent(destinoDoConvite)}`);
+  }
+
   if (code) {
     const supabase = await createClient();
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
       // Marca convites de equipe como aceitos depois que o usuário conclui o login.
-      await supabase.rpc("accept_my_organization_invitations");
+      const { error: aceiteError } = await supabase.rpc("accept_my_organization_invitations");
+      if (aceiteError) console.error("Falha ao aceitar convites de equipe", aceiteError.message);
       const destino = next.startsWith("/") ? next : "/dashboard";
 
       const { data: { user } } = await supabase.auth.getUser();
