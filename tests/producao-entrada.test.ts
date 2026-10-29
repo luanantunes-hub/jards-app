@@ -247,11 +247,14 @@ test("todo módulo com rota própria tem layout de servidor que o exige, e a pro
   }
 });
 
-test("a página inicial da produção existe e não depende de dados do banco", async () => {
-  const texto = await readFile("app/(dashboard)/producoes/page.tsx", "utf8");
-  assert.ok(texto.startsWith('"use client"'));
-  assert.ok(!/createClient|supabase|fetch\(/.test(texto), "estado vazio puro: nada para dar erro");
-  assert.match(texto, /ListEmptyState/);
+test("a página inicial da produção é a agenda, e a agenda tem estado vazio", async () => {
+  const pagina = await readFile("app/(dashboard)/producoes/page.tsx", "utf8");
+  assert.ok(pagina.startsWith('"use client"'));
+  assert.match(pagina, /AgendaDaProducao/);
+  const agenda = await readFile("components/producao/AgendaDaProducao.tsx", "utf8");
+  assert.match(agenda, /ListEmptyState/);
+  // O bloqueio por módulo é do layout de servidor; a agenda só lê com as regras do banco (cliente da pessoa).
+  assert.match(agenda, /clienteDaProducao\(createClient\(\)\)/);
 });
 
 // ─── Salto 5 e a prova de que não há laço ───────────────────────────────────

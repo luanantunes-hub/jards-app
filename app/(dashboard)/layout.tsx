@@ -7,6 +7,7 @@ import { PastDueBanner } from "@/components/PastDueBanner";
 import {
   BarChart2,
   CalendarDays,
+  CalendarRange,
   BriefcaseBusiness,
   ContactRound,
   FilePenLine,
@@ -106,6 +107,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       section: "Produção",
       items: [
         { label: "Agenda", href: "/producoes", icon: CalendarDays },
+        { label: "Temporadas", href: "/producoes/temporadas", icon: CalendarRange },
       ],
     },
   ],
