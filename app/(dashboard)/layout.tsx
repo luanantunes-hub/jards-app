@@ -30,6 +30,7 @@ import {
   Store,
   DoorOpen,
   Drama,
+  Video,
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -63,6 +64,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       items: [
         { label: "Visão geral",  href: "/dashboard",    icon: BarChart2    },
         { label: "Atividades",   href: "/atividades",   icon: CalendarDays },
+        { label: "Reuniões",     href: "/reunioes",     icon: Video        },
         { label: "Projetos",     href: "/projetos",     icon: FolderOpen   },
       ],
     },
@@ -410,10 +412,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // A prestação é oferecida em teste gratuito a quem nunca teve o módulo (nem só para leitura); quem
   // já teve entra nele, e o aviso da assinatura explica o fim do teste. Nunca aparece como não contratada.
   // A captação não tem teste: o plano gratuito tem as suas funções e nunca bloqueia.
-  // Módulo em construção (a produção) fica fora do seletor para todos, até a organização tê-lo.
-  // O módulo aberto continua na lista (o super admin entra em qualquer um), para o seletor não mentir.
+  // Módulo em construção (a produção) fica fora do seletor até a organização tê-lo; o super admin
+  // vê para testar. O módulo aberto continua na lista, para o seletor não mentir.
   const opcoesDeModulo: OpcaoDeModulo[] = MODULOS
-    .filter(({ id }) => moduloVisivel(id, modulosOrg) || id === moduloDoMenu)
+    .filter(({ id }) => moduloVisivel(id, modulosOrg, isSuperAdmin) || id === moduloDoMenu)
     .map(({ id, label, descricao, icone }) => {
       const situacao = situacaoNoSeletor({ ...acessoModulos, carregado: modulosCarregados }, id);
       const promo = situacao.tipo === "teste";

@@ -7,8 +7,8 @@ import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
-import { Select } from "@/components/ui/Select";
-import { mostraFiltro, opcoesDoFiltro, passaNoFiltro, TODOS, type Marcador } from "@/lib/filtros-do-funil";
+import { FiltrosDoFunil } from "@/components/list/FiltrosDoFunil";
+import { opcoesDoFiltro, passaNoFiltro, TODOS, type Marcador } from "@/lib/filtros-do-funil";
 import type { StatusEdital } from "@/lib/supabase/types";
 import { NovaInscricaoModal, type EditDataInscricao } from "@/components/modals/NovaInscricaoModal";
 import { CompanyLogo } from "@/components/CompanyLogo";
@@ -602,24 +602,11 @@ export default function EditaisInscritosPage() {
               <SegmentedControl value={statusFilter} onChange={setStatusFilter} ariaLabel="Filtrar inscrições por status" options={statusFilterOptions} />
             </>
           )}
-          {mostraFiltro(opcoesResponsavel, filtroResponsavel) && (
-            <Select block={false} aria-label="Filtrar por responsável" value={filtroResponsavel} onChange={event => setFiltroResponsavel(event.target.value)} className="h-9 shrink-0 pl-3 text-black/60">
-              <option value={TODOS}>Todos os responsáveis</option>
-              {opcoesResponsavel.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
-            </Select>
-          )}
-          {mostraFiltro(opcoesLei, filtroLei) && (
-            <Select block={false} aria-label="Filtrar por tipo de patrocínio" value={filtroLei} onChange={event => setFiltroLei(event.target.value)} className="h-9 shrink-0 pl-3 text-black/60">
-              <option value={TODOS}>Todos os tipos</option>
-              {opcoesLei.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
-            </Select>
-          )}
-          {mostraFiltro(opcoesProjeto, filtroProjeto) && (
-            <Select block={false} aria-label="Filtrar por projeto" value={filtroProjeto} onChange={event => setFiltroProjeto(event.target.value)} className="h-9 max-w-[13.75rem] shrink-0 truncate pl-3 text-black/60">
-              <option value={TODOS}>Todos os projetos</option>
-              {opcoesProjeto.map(o => <option key={o.valor} value={o.valor}>{o.nome} ({o.quantos})</option>)}
-            </Select>
-          )}
+          <FiltrosDoFunil
+            responsavel={{ valor: filtroResponsavel, opcoes: opcoesResponsavel, onChange: setFiltroResponsavel }}
+            lei={{ valor: filtroLei, opcoes: opcoesLei, onChange: setFiltroLei }}
+            projeto={{ valor: filtroProjeto, opcoes: opcoesProjeto, onChange: setFiltroProjeto }}
+          />
           {filtrosAtivos && (
             <button type="button" onClick={limparFiltros} className="flex h-9 shrink-0 items-center gap-1.5 rounded px-2.5 text-[0.75rem] font-medium text-black/50 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
               <X size={12} aria-hidden="true" /> Limpar filtros
