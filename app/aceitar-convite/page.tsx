@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useEffect, useState } from "react";
+import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { ArrowRight, Eye, EyeOff } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -33,8 +33,12 @@ export default function AceitarConvitePage({ searchParams }: { searchParams: Pro
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
+  const iniciouRef = useRef(false);
   useEffect(() => {
-    let ativo = true;
+    // Em desenvolvimento o React roda o efeito duas vezes; a segunda não acharia mais o fragmento, que a primeira
+    // já tirou do endereço. A guarda faz a verificação rodar uma vez só.
+    if (iniciouRef.current) return;
+    iniciouRef.current = true;
     async function verificar() {
       const fragmento = lerFragmentoDoConvite(window.location.hash);
       // Os tokens saem do endereço já: não precisam ficar no histórico nem à vista de extensões do navegador.
@@ -52,12 +56,10 @@ export default function AceitarConvitePage({ searchParams }: { searchParams: Pro
         const usuario = data.session?.user;
         convidado = organizacaoDoConvite(usuario) ? usuario ?? null : null;
       }
-      if (!ativo) return;
       setOrganizacao(organizacaoDoConvite(convidado));
       setEstado(convidado ? "senha" : "invalido");
     }
     verificar();
-    return () => { ativo = false; };
   }, []);
 
   async function entrarNaEquipe() {
