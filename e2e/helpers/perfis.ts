@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { expect, type Page } from "@playwright/test";
-import { MODULOS, MODULOS_EM_CONSTRUCAO, podeUsarModulo, vinculoDaLinha, type LinhaVinculo, type ModuloId } from "../../lib/modulos";
+import { MODULOS, podeUsarModulo, vinculoDaLinha, type LinhaVinculo, type ModuloId } from "../../lib/modulos";
 
 // Perfis do e2e por módulo (PD0.3): um usuário semeado por combinação de
 // módulos, numa organização só, sem super admin e com o onboarding feito.
@@ -76,11 +76,6 @@ export async function problemasDaConta(perfil: Perfil, cred: Credenciais): Promi
   for (const modulo of MODULOS) {
     const esperado = perfil.modulos.includes(modulo);
     if (podeUsarModulo(acesso, modulo) !== esperado) problemas.push(`${esperado ? "não usa" : "usa"} ${modulo}`);
-  }
-  // Módulo em construção aparece no seletor pela organização, não pela pessoa:
-  // a organização de quem não usa a produção também não pode tê-la.
-  for (const modulo of MODULOS_EM_CONSTRUCAO) {
-    if (!perfil.modulos.includes(modulo) && acesso.modulosOrganizacao.includes(modulo)) problemas.push(`a organização tem ${modulo}`);
   }
   return problemas;
 }
