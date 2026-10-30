@@ -41,6 +41,7 @@ import { EtiquetasProvider } from "@/contexts/EtiquetasContext";
 import { TaxonomiasComerciaisProvider } from "@/contexts/TaxonomiasComerciaisContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { AjudaFlutuante } from "@/components/suporte/AjudaFlutuante";
 import { SeletorDeModulo, type OpcaoDeModulo } from "@/components/navegacao/SeletorDeModulo";
 import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
@@ -56,6 +57,11 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
   { id: "prestacao", label: "Prestação", descricao: "Prestação de contas e relatórios do projeto", icone: ClipboardCheck },
   { id: "producao",  label: "Produção",  descricao: "Agenda, equipe, logística e o dia",            icone: Drama          },
 ];
+
+// Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
+// "Reuniões" depende do servidor do Vexa (docs/reunioes-deploy-vexa.md), que ainda não está
+// no ar; sem ele, toda reunião criada termina como "falhou". Tire a rota daqui quando ligar.
+const ROTAS_SO_SUPER_ADMIN = ["/reunioes"];
 
 const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
   captacao: [
@@ -398,7 +404,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const moduloDoMenu = modulosCarregados && !podeUsarModulo(acessoModulos, moduloAtivo)
     ? (modulosDisponiveis(acessoModulos)[0] ?? moduloAtivo)
     : moduloAtivo;
-  const navGroups   = NAV_POR_MODULO[moduloDoMenu];
+  const navGroups   = NAV_POR_MODULO[moduloDoMenu].map(grupo => ({
+    ...grupo,
+    items: grupo.items.filter(item => isSuperAdmin || !ROTAS_SO_SUPER_ADMIN.includes(item.href)),
+  }));
   const usaCaptacao = podeUsarModulo(acessoModulos, "captacao");
   // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
   const isExpanded  = expanded || mobileOpen || seletorAberto;
@@ -455,6 +464,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onComplete={(name) => setUser((current) => current ? ({ ...current, user_metadata: { ...current.user_metadata, full_name: name } } as User) : current)}
         />
       )}
+
+      {/* O "?" de ajuda: perguntar como usar o Jards ou falar com a equipe. */}
+      {user && <AjudaFlutuante />}
 
       {conviteAberto && (
         <ConvitePrestacao

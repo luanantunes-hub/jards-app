@@ -46,6 +46,16 @@ export function agruparSetores(valores: ReadonlyArray<string | null | undefined>
   return setores.sort((a, b) => a.localeCompare(b, "pt-BR", { sensitivity: "base" }));
 }
 
+// Todas as grafias lidas na última carga, por chave, para o filtro buscar as
+// empresas de qualquer uma delas ("Indústria", "Industria", "indústria ").
+let grafiasPorChave = new Map<string, Set<string>>();
+
+/** Grafias do banco que equivalem ao setor escolhido; sem carga, só ele mesmo. */
+export function grafiasDoSetor(setor: string): string[] {
+  const grafias = grafiasPorChave.get(chaveSetor(setor));
+  return grafias ? [...grafias] : [setor];
+}
+
 /** Lê todos os setores de `empresas` (em páginas) e devolve a lista sem repetição. */
 export async function carregarSetores(supabase: ReturnType<typeof createClient>): Promise<string[]> {
   const linhas: Array<string | null> = [];
@@ -62,5 +72,12 @@ export async function carregarSetores(supabase: ReturnType<typeof createClient>)
     for (const linha of lidas) linhas.push(linha.setor);
     if (lidas.length < TAMANHO_PAGINA) break;
   }
+  const mapa = new Map<string, Set<string>>();
+  for (const linha of linhas) {
+    if (!linha?.trim()) continue;
+    const chave = chaveSetor(linha);
+    mapa.set(chave, (mapa.get(chave) ?? new Set<string>()).add(linha));
+  }
+  grafiasPorChave = mapa;
   return agruparSetores(linhas);
 }

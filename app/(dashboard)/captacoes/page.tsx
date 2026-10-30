@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Plus, ArrowUpRight, BriefcaseBusiness, Building2, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, CheckCircle2, ChevronUp, ChevronDown, ChevronsUpDown, X } from "lucide-react";
+import { Plus, ArrowUpRight, BriefcaseBusiness, Building2, Calendar, List, Columns2, Scale, Trash2, Search, Clock3, Tag, ChevronUp, ChevronDown, ChevronsUpDown, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -18,6 +18,7 @@ import { PotentialKanban, type PotencialFechamento } from "@/components/kanban/P
 import { KanbanBoard, KanbanCard, KanbanColumn, KanbanEmpty, KanbanSkeleton } from "@/components/kanban/KanbanPrimitives";
 import { useIncrementalReveal, RevealSentinel } from "@/components/kanban/useIncrementalReveal";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { FiltrosDoFunil } from "@/components/list/FiltrosDoFunil";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { opcoesDoFiltro, passaNoFiltro, TODOS, type Marcador } from "@/lib/filtros-do-funil";
@@ -64,7 +65,6 @@ type CaptacaoRow = {
 };
 
 type ViewMode = "kanban" | "list" | "potential";
-type PipelineFilter = "todas" | "abertas" | "fechadas" | "recentes";
 type AtividadeIndicador = { nome: string; atrasada: boolean; dias: number; responsavel: string | null };
 
 // COLUNAS agora vem do EtiquetasContext (ver abaixo no componente)
@@ -191,7 +191,7 @@ export default function CaptacoesPage() {
   const [atividadesPorCaptacao, setAtividadesPorCaptacao] = useState<Record<string, AtividadeIndicador>>({});
   const [loading, setLoading]     = useState(true);
   const [view, setView]           = useState<ViewMode>("list");
-  const [pipelineFilter, setPipelineFilter] = useState<PipelineFilter>("todas");
+  const [filtroEtapa, setFiltroEtapa] = useState<string>(TODOS);
   const [cicloFiltro, setCicloFiltro] = useState<string>("atual");
   const [cicloMenuPos, setCicloMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -206,7 +206,6 @@ export default function CaptacoesPage() {
   );
   const [filtroLei, setFiltroLei] = useState(TODOS);
   const [filtroProjeto, setFiltroProjeto] = useState(TODOS);
-  const [recentCutoff, setRecentCutoff] = useState<number | null>(null);
   const [showModal, setShowModal]           = useState(false);
   const [preStatus, setPreStatus]           = useState<StatusCaptacao>("prospeccao");
   const [editingRecord, setEditingRecord]   = useState<CaptacaoRow | null>(null);
@@ -340,10 +339,6 @@ export default function CaptacoesPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [organizationId]);
 
-  useEffect(() => {
-    setRecentCutoff(Date.now() - 30 * 86_400_000);
-  }, []);
-
   // Ciclos antigos: uma renovação cria um NOVO registro apontando pro anterior via
   // ciclo_anterior_id — "é o ciclo atual" = nenhum outro registro carregado aponta pra ele.
   // Anos disponíveis vêm sempre dos próprios dados carregados — nunca uma lista fixa,
@@ -357,7 +352,7 @@ export default function CaptacoesPage() {
     : captacoes.filter(c => c.ciclo_ano === Number(cicloFiltro));
 
   // Busca, responsável, tipo de patrocínio e projeto valem nas três visões. A
-  // etapa (abertas, fechadas, recentes) só na lista e no potencial: no kanban
+  // etapa do funil só na lista e no potencial: no kanban
   // as colunas já são as etapas, e o filtro só esvaziaria colunas.
   const pessoasDaNegociacao = (c: CaptacaoRow): Marcador[] => [
     ...[c.captador_id, c.supervisor_id].filter((id): id is string => Boolean(id))
@@ -377,18 +372,20 @@ export default function CaptacoesPage() {
     && passaNoFiltro(c, filtroLei, leiDaNegociacao)
     && passaNoFiltro(c, filtroProjeto, projetoDaNegociacao));
 
-  const closedStatuses = new Set<StatusCaptacao>(["aprovado", "recusado"]);
+  // As opções são as etapas do funil da organização, na ordem configurada.
   const filtraEtapa = view !== "kanban";
-  const filteredCaptacoes = !filtraEtapa ? captacoesNosFiltros : captacoesNosFiltros.filter(c => {
-    const isClosed = closedStatuses.has(c.status);
-    const isRecent = recentCutoff !== null && new Date(c.created_at).getTime() >= recentCutoff;
-    return pipelineFilter === "todas" || (pipelineFilter === "abertas" && !isClosed) || (pipelineFilter === "fechadas" && isClosed) || (pipelineFilter === "recentes" && isRecent);
-  });
+  const opcoesEtapa = [
+    { value: TODOS, label: "Todas as etapas" },
+    ...COLUNAS.map(col => ({ value: col.status, label: `${col.label} (${captacoesNosFiltros.filter(c => c.status === col.status).length})` })),
+  ];
+  const filteredCaptacoes = !filtraEtapa || filtroEtapa === TODOS
+    ? captacoesNosFiltros
+    : captacoesNosFiltros.filter(c => c.status === filtroEtapa);
 
-  const filtrosAtivos = Boolean(term) || cicloFiltro !== "atual" || (filtraEtapa && pipelineFilter !== "todas")
+  const filtrosAtivos = Boolean(term) || cicloFiltro !== "atual" || (filtraEtapa && filtroEtapa !== TODOS)
     || filtroResponsavel !== TODOS || filtroLei !== TODOS || filtroProjeto !== TODOS;
   function limparFiltros() {
-    setSearch(""); setPipelineFilter("todas"); setCicloFiltro("atual");
+    setSearch(""); setFiltroEtapa(TODOS); setCicloFiltro("atual");
     setFiltroResponsavel(TODOS); setFiltroLei(TODOS); setFiltroProjeto(TODOS);
   }
 
@@ -635,16 +632,13 @@ export default function CaptacoesPage() {
           {filtraEtapa && (
             <>
               <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
-              <SegmentedControl
-                value={pipelineFilter}
-                onChange={setPipelineFilter}
-                ariaLabel="Filtrar negociações"
-                options={[
-                  { value: "todas",    label: "Todas" },
-                  { value: "abertas",  label: "Abertas",  icon: Clock3 },
-                  { value: "fechadas", label: "Fechadas", icon: CheckCircle2 },
-                  { value: "recentes", label: "Recentes", icon: Calendar },
-                ] as const}
+              <CustomDropdown
+                value={filtroEtapa}
+                onChange={setFiltroEtapa}
+                options={opcoesEtapa}
+                icon={<Tag size={13} />}
+                compact
+                emphasized={false}
               />
             </>
           )}

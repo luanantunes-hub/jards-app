@@ -21,7 +21,7 @@ import { FilterButton, SegmentedControl } from "@/components/ui/FilterControls";
 import type { Empresa } from "@/lib/supabase/types";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
-import { carregarSetores } from "@/lib/setores";
+import { carregarSetores, grafiasDoSetor } from "@/lib/setores";
 import { FiltroMesorregiao } from "@/components/patrocinadores/FiltroMesorregiao";
 import { lerSelecaoDaUrl } from "@/lib/filtro-mesorregiao";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
@@ -85,7 +85,7 @@ function LeiTabContent({ lei, isSuperAdmin }: { lei: Lei; isSuperAdmin: boolean 
       if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`, { foreignTable: "empresas" });
       if (estado) q = q.eq("empresas.estado", estado);
       if (mesorregioes.length > 0) q = q.in("empresas.mesorregiao_id", mesorregioes);
-      if (setor) q = q.ilike("empresas.setor", setor);
+      if (setor) q = q.in("empresas.setor", grafiasDoSetor(setor));
       if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null", { foreignTable: "empresas" });
 
       const { data, count } = await q
@@ -372,7 +372,7 @@ function PatrocinadoresContent({ isSuperAdmin }: { isSuperAdmin: boolean }) {
     if (s) q = q.or(`nome.ilike.%${s}%,setor.ilike.%${s}%,cidade.ilike.%${s}%`);
     if (estado) q = q.eq("estado", estado);
     if (mesorregioes.length > 0) q = q.in("mesorregiao_id", mesorregioes);
-    if (setor) q = q.ilike("setor", setor);
+    if (setor) q = q.in("setor", grafiasDoSetor(setor));
     if (incompletas) q = q.or("setor.is.null,cidade.is.null,estado.is.null,site.is.null");
     if (trimestre === "T1") q = q.eq("trimestre_1", true);
     if (trimestre === "T2") q = q.eq("trimestre_2", true);
