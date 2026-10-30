@@ -406,6 +406,10 @@ verify_jwt = true
 [functions.consultar-fornecedor]
 verify_jwt = true
 
+# Ajuda do app (o botão "?"): só quem está logado pergunta; limite por pessoa dentro da função.
+[functions.suporte-assistente]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

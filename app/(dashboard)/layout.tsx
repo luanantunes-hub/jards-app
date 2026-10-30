@@ -41,6 +41,7 @@ import { EtiquetasProvider } from "@/contexts/EtiquetasContext";
 import { TaxonomiasComerciaisProvider } from "@/contexts/TaxonomiasComerciaisContext";
 import { OnboardingModal } from "@/components/onboarding/OnboardingModal";
 import { NotificationBell } from "@/components/notifications/NotificationBell";
+import { AjudaFlutuante } from "@/components/suporte/AjudaFlutuante";
 import { SeletorDeModulo, type OpcaoDeModulo } from "@/components/navegacao/SeletorDeModulo";
 import { ConvitePrestacao } from "@/components/navegacao/ConvitePrestacao";
 import { DeleteConfirmProvider } from "@/contexts/DeleteConfirmContext";
@@ -463,6 +464,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           onComplete={(name) => setUser((current) => current ? ({ ...current, user_metadata: { ...current.user_metadata, full_name: name } } as User) : current)}
         />
       )}
+
+      {/* O "?" de ajuda: perguntar como usar o Jards ou falar com a equipe. */}
+      {user && <AjudaFlutuante />}
 
       {conviteAberto && (
         <ConvitePrestacao
