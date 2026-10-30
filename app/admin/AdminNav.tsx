@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Building2, Building, Users, Newspaper, Inbox, ClipboardList, ChevronLeft, Megaphone, FlaskConical, ScrollText, Scale } from "lucide-react";
+import { LayoutDashboard, Building2, Building, Users, Newspaper, Inbox, ClipboardList, ChevronLeft, Megaphone, FlaskConical, ScrollText, Scale, LifeBuoy } from "lucide-react";
 
 const NAV = [
   { href: "/admin/dashboard",      label: "Dashboard",      icon: LayoutDashboard },
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/regimes",        label: "Regimes",        icon: Scale      },
   { href: "/admin/blog",           label: "Publicações",    icon: Newspaper  },
   { href: "/admin/pedidos",        label: "Pedidos",        icon: Inbox      },
+  { href: "/admin/suporte",        label: "Suporte",        icon: LifeBuoy   },
   { href: "/admin/campanhas",      label: "Campanhas",      icon: Megaphone  },
   { href: "/admin/logs",           label: "Logs",           icon: ClipboardList },
 ];
