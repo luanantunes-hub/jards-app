@@ -2,11 +2,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, Plus, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown, Building2, Users } from "lucide-react";
+import { Search, Plus, FilePenLine, X, List, Columns2, Calendar, Files, ClipboardList, StickyNote, Scale, Trash2, Clock, Clock3, ArrowUpRight, ChevronUp, ChevronDown, ChevronsUpDown, Building2, Users, Tag } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { excluirPorId } from "@/lib/supabase/exclusao";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { CustomDropdown } from "@/components/ui/CustomDropdown";
 import { FiltrosDoFunil } from "@/components/list/FiltrosDoFunil";
 import { opcoesDoFiltro, passaNoFiltro, TODOS, type Marcador } from "@/lib/filtros-do-funil";
 import type { StatusEdital } from "@/lib/supabase/types";
@@ -181,7 +182,7 @@ export default function EditaisInscritosPage() {
     { label: etiqueta.label, bg: "#fff", text: etiqueta.cor, accent: etiqueta.cor, iconName: etiqueta.icone },
   ])) as Record<StatusEdital, { label: string; bg: string; text: string; accent: string; iconName: string }>;
   const statusFilterOptions: { value: StatusEdital | "todos"; label: string }[] = [
-    { value: "todos", label: "Todos" },
+    { value: "todos", label: "Todos os status" },
     ...etiquetasInscricao.map((etiqueta) => ({ value: etiqueta.key as StatusEdital, label: etiqueta.label })),
   ];
 
@@ -599,7 +600,15 @@ export default function EditaisInscritosPage() {
           {filtraStatus && (
             <>
               <span className="mx-0.5 h-5 w-px shrink-0 bg-black/10" aria-hidden="true"/>
-              <SegmentedControl value={statusFilter} onChange={setStatusFilter} ariaLabel="Filtrar inscrições por status" options={statusFilterOptions} />
+              {/* Um menu, não uma barra de botões: as etiquetas são da organização e, muitas, a barra rolava por dentro */}
+              <CustomDropdown
+                value={statusFilter}
+                onChange={(v) => setStatusFilter(v as StatusEdital | "todos")}
+                options={statusFilterOptions}
+                icon={<Tag size={13} />}
+                compact
+                emphasized={false}
+              />
             </>
           )}
           <FiltrosDoFunil
