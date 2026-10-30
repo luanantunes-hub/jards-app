@@ -57,6 +57,11 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
   { id: "producao",  label: "Produção",  descricao: "Agenda, equipe, logística e o dia",            icone: Drama          },
 ];
 
+// Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
+// "Reuniões" depende do servidor do Vexa (docs/reunioes-deploy-vexa.md), que ainda não está
+// no ar; sem ele, toda reunião criada termina como "falhou". Tire a rota daqui quando ligar.
+const ROTAS_SO_SUPER_ADMIN = ["/reunioes"];
+
 const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
   captacao: [
     {
@@ -398,7 +403,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const moduloDoMenu = modulosCarregados && !podeUsarModulo(acessoModulos, moduloAtivo)
     ? (modulosDisponiveis(acessoModulos)[0] ?? moduloAtivo)
     : moduloAtivo;
-  const navGroups   = NAV_POR_MODULO[moduloDoMenu];
+  const navGroups   = NAV_POR_MODULO[moduloDoMenu].map(grupo => ({
+    ...grupo,
+    items: grupo.items.filter(item => isSuperAdmin || !ROTAS_SO_SUPER_ADMIN.includes(item.href)),
+  }));
   const usaCaptacao = podeUsarModulo(acessoModulos, "captacao");
   // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
   const isExpanded  = expanded || mobileOpen || seletorAberto;
