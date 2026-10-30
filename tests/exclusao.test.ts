@@ -51,3 +51,9 @@ test("tabela desconhecida usa a mensagem do chamador", () => {
   const outro = { code: "23503", message: "fk", details: "Key (id)=(1) is still referenced from table \"tabela_nova\"." };
   assert.equal(mensagemDeExclusao(outro, "Mensagem do chamador."), "Mensagem do chamador.");
 });
+
+test("gatilho que altera o registro em exclusão vira aviso claro, sem o texto do Postgres", () => {
+  const msg = mensagemDeExclusao({ code: "27000", message: "tuple to be deleted was already modified by an operation triggered by the current command" });
+  assert.match(msg, /Nada foi apagado/);
+  assert.doesNotMatch(msg, /tuple/);
+});
