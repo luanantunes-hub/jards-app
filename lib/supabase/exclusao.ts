@@ -40,6 +40,9 @@ export function mensagemDeExclusao(error: PostgrestLikeError, vinculado?: string
     return vinculado ?? "Este registro ainda tem itens vinculados e não pode ser excluído.";
   }
   if (error.code === "42501") return SEM_PERMISSAO;
+  // 27000: um gatilho do banco alterou o próprio registro durante a exclusão.
+  // É falha do sistema, não da pessoa; a mensagem do Postgres vem em inglês técnico.
+  if (error.code === "27000") return "Não foi possível excluir por uma falha interna do Jards. Nada foi apagado. Tente de novo em instantes; se continuar, fale com o suporte.";
   return error.message?.trim() || "Não foi possível excluir agora. Tente novamente.";
 }
 
