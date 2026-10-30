@@ -62,7 +62,13 @@ test("a função da ajuda exige login, só toca nas tabelas do suporte e não pa
   assert.match(funcao, /montarPedidoDaIa\(\{ guia: GUIA_DO_JARDS, pedido \}\)/);
   assert.doesNotMatch(funcao, /user\.email|user_metadata|organization_id[^\n]*(texto|text:)/);
   // Sem a contagem do limite (banco fora do ar), a função recusa em vez de deixar perguntar sem controle.
-  assert.match(funcao, /noMinuto === null \|\| noDia === null/);
+  assert.match(funcao, /contagens\.some\(\(n\) => n === null\)/);
+  // Conta também todo mundo junto (minuto, hora e dia: o teto geral) e grava a pergunta ANTES de ir à IA, para quem
+  // pergunta ao mesmo tempo já entrar na conta.
+  assert.equal((funcao.match(/contarPerguntas\(admin, null, /g) ?? []).length, 3);
+  const reserva = funcao.indexOf('erro: "em andamento"');
+  const chamada = funcao.indexOf("await perguntarAoGemini(");
+  assert.ok(reserva > 0 && chamada > reserva, "a pergunta precisa ser gravada antes de ir à IA");
 });
 
 test("a tela da ajuda manda à função só a pergunta, o caminho e as trocas anteriores", async () => {

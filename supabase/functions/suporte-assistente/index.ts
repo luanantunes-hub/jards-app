@@ -2,8 +2,8 @@
 //
 // A IA não recebe dado de cliente, de organização nem de pessoa: só a pergunta, as últimas trocas da conversa, o caminho
 // da tela (sem ids) e o guia (guia.ts). Cada pergunta fica em suporte_perguntas, com o custo, para a equipe melhorar o
-// guia e vigiar o gasto. A escrita usa a chave de serviço; quem chama precisa estar logado (verify_jwt) e tem limite por
-// minuto e por dia (suporte-regras.ts).
+// guia e vigiar o gasto. A escrita usa a chave de serviço; quem chama precisa estar logado (verify_jwt). Há limite por
+// pessoa e um teto de todo mundo junto, por minuto, hora e dia (suporte-regras.ts).
 import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { custoDaChamada, usoDaResposta } from "../_shared/leitura-documento.ts";
 import { modeloDaIa } from "../_shared/modelo-ia.ts";
@@ -27,13 +27,21 @@ function json(corpo: unknown, status = 200): Response {
 
 const MENSAGEM_DE_FALHA = "Não consegui responder agora. Tente de novo ou fale com a equipe.";
 
-/** Quantas perguntas a pessoa fez desde `janelaMs` atrás; null quando o banco não respondeu (falha fechada). */
-async function contarPerguntas(admin: SupabaseClient, userId: string, janelaMs: number): Promise<number | null> {
-  const { count, error } = await admin
+const MINUTO = 60_000;
+const HORA = 3_600_000;
+const DIA = 86_400_000;
+
+/**
+ * Quantas perguntas foram feitas desde `janelaMs` atrás: da pessoa, ou de todo mundo quando `userId` é null.
+ * Devolve null quando o banco não respondeu (falha fechada).
+ */
+async function contarPerguntas(admin: SupabaseClient, userId: string | null, janelaMs: number): Promise<number | null> {
+  let consulta = admin
     .from("suporte_perguntas")
     .select("id", { count: "exact", head: true })
-    .eq("user_id", userId)
     .gte("created_at", new Date(Date.now() - janelaMs).toISOString());
+  if (userId) consulta = consulta.eq("user_id", userId);
+  const { count, error } = await consulta;
   if (error) {
     console.error("suporte-assistente: contagem de perguntas:", error.message);
     return null;
@@ -108,12 +116,20 @@ Deno.serve(async (req) => {
   const lido = lerPedido(corpo);
   if (!lido.ok) return json({ error: lido.erro }, 400);
 
-  const [noMinuto, noDia] = await Promise.all([
-    contarPerguntas(admin, user.id, 60_000),
-    contarPerguntas(admin, user.id, 86_400_000),
+  const [contagens, { data: vinculo }] = await Promise.all([
+    Promise.all([
+      contarPerguntas(admin, user.id, MINUTO),
+      contarPerguntas(admin, user.id, DIA),
+      contarPerguntas(admin, null, MINUTO),
+      contarPerguntas(admin, null, HORA),
+      contarPerguntas(admin, null, DIA),
+    ]),
+    // Só para registro (organização e custo): o guia e a resposta não dependem disso.
+    admin.from("organization_members").select("organization_id").eq("user_id", user.id).limit(1).maybeSingle(),
   ]);
-  if (noMinuto === null || noDia === null) return json({ error: MENSAGEM_DE_FALHA, escalar: true }, 503);
-  const limite = decidirLimite(noMinuto, noDia);
+  if (contagens.some((n) => n === null)) return json({ error: MENSAGEM_DE_FALHA, escalar: true }, 503);
+  const [pessoaMinuto, pessoaDia, geralMinuto, geralHora, geralDia] = contagens as number[];
+  const limite = decidirLimite({ pessoaMinuto, pessoaDia, geralMinuto, geralHora, geralDia });
   if (!limite.permitido) return json({ error: limite.motivo, escalar: true }, 429);
 
   const apiKey = Deno.env.get("GOOGLE_AI_API_KEY");
@@ -125,34 +141,44 @@ Deno.serve(async (req) => {
   const inicio = Date.now();
   const modelo = modeloDaIa();
   const { pedido } = lido;
+
+  // A pergunta entra no registro ANTES de ir à IA: quem perguntar enquanto ela responde já conta nos limites.
+  const { data: reserva, error: erroDaReserva } = await admin
+    .from("suporte_perguntas")
+    .insert({
+      user_id: user.id,
+      organization_id: vinculo?.organization_id ?? null,
+      pergunta: pedido.pergunta,
+      pagina: pedido.pagina || null,
+      modelo,
+      sucesso: false,
+      erro: "em andamento",
+    })
+    .select("id")
+    .single();
+  if (erroDaReserva || !reserva) {
+    console.error("suporte-assistente: registro da pergunta:", erroDaReserva?.message);
+    return json({ error: MENSAGEM_DE_FALHA, escalar: true }, 503);
+  }
+
   const resultado = await perguntarAoGemini(apiKey, modelo, pedido);
   const uso = usoDaResposta(resultado.corpo);
   const limpa = resultado.ok ? limparResposta(resultado.texto) : null;
 
-  // Só para registro (organização e custo): o guia e a resposta não dependem disso.
-  const { data: vinculo } = await admin
-    .from("organization_members")
-    .select("organization_id")
-    .eq("user_id", user.id)
-    .limit(1)
-    .maybeSingle();
-
-  const { error: erroDoRegistro } = await admin.from("suporte_perguntas").insert({
-    user_id: user.id,
-    organization_id: vinculo?.organization_id ?? null,
-    pergunta: pedido.pergunta,
-    resposta: limpa?.resposta ?? null,
-    escalou: limpa?.escalar ?? false,
-    pagina: pedido.pagina || null,
-    modelo,
-    tokens_entrada: uso.entrada,
-    tokens_saida: uso.saida,
-    custo_usd: custoDaChamada(Deno.env.get("GOOGLE_AI_PRECOS"), modelo, uso),
-    duracao_ms: Math.max(Date.now() - inicio, 0),
-    sucesso: resultado.ok,
-    erro: resultado.ok ? null : resultado.erro.slice(0, 500),
-  });
-  if (erroDoRegistro) console.error("suporte-assistente: registro da pergunta:", erroDoRegistro.message);
+  const { error: erroDoRegistro } = await admin
+    .from("suporte_perguntas")
+    .update({
+      resposta: limpa?.resposta ?? null,
+      escalou: limpa?.escalar ?? false,
+      tokens_entrada: uso.entrada,
+      tokens_saida: uso.saida,
+      custo_usd: custoDaChamada(Deno.env.get("GOOGLE_AI_PRECOS"), modelo, uso),
+      duracao_ms: Math.max(Date.now() - inicio, 0),
+      sucesso: resultado.ok,
+      erro: resultado.ok ? null : resultado.erro.slice(0, 500),
+    })
+    .eq("id", reserva.id);
+  if (erroDoRegistro) console.error("suporte-assistente: resultado da pergunta:", erroDoRegistro.message);
 
   if (!limpa || !limpa.resposta) {
     if (!resultado.ok) console.error(`suporte-assistente: Gemini (${modelo}):`, resultado.erro);
