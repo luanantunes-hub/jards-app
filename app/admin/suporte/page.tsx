@@ -4,6 +4,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { LifeBuoy } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { LIMITES_DO_SUPORTE } from "@/supabase/functions/_shared/suporte-regras";
 
 type Mensagem = {
   id: string;
@@ -39,6 +40,8 @@ export default function AdminSuportePage() {
   const [aba, setAba] = useState<"mensagens" | "perguntas">("mensagens");
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [perguntas, setPerguntas] = useState<Pergunta[]>([]);
+  /** Perguntas à IA nas últimas 24 horas, de todo mundo: o que já foi usado do teto geral do dia. */
+  const [ultimas24h, setUltimas24h] = useState<number | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -47,18 +50,22 @@ export default function AdminSuportePage() {
     async function carregar() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any -- tabelas novas, ainda fora do tipo Database
       const banco = supabase as any;
-      const [m, p] = await Promise.all([
+      const [m, p, dia] = await Promise.all([
         banco.from("suporte_mensagens")
           .select("id, nome, email, organizacao, mensagem, pagina, conversa, email_enviado, created_at")
           .order("created_at", { ascending: false }).limit(100),
         banco.from("suporte_perguntas")
           .select("id, pergunta, resposta, escalou, pagina, custo_usd, sucesso, erro, created_at")
           .order("created_at", { ascending: false }).limit(100),
+        banco.from("suporte_perguntas")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", new Date(Date.now() - 86_400_000).toISOString()),
       ]);
       if (!ativo) return;
       if (m.error || p.error) setErro((m.error ?? p.error).message);
       setMensagens((m.data ?? []) as Mensagem[]);
       setPerguntas((p.data ?? []) as Pergunta[]);
+      setUltimas24h(dia.error ? null : (dia.count ?? 0));
       setCarregando(false);
     }
     void carregar();
@@ -128,6 +135,7 @@ export default function AdminSuportePage() {
         <>
           <p className="mb-3 text-[0.75rem] text-black/45">
             {perguntas.length} perguntas · {semResposta} sem resposta ou com erro · {temCusto ? `custo estimado US$ ${custoTotal.toFixed(4)}` : "custo ainda não calculado"}
+            {ultimas24h !== null && ` · últimas 24 h: ${ultimas24h} de ${LIMITES_DO_SUPORTE.geralPorDia} do teto geral`}
           </p>
           {perguntas.length === 0 ? (
             <p className="rounded border bg-white px-4 py-10 text-center text-[0.8125rem] text-black/40" style={BORDA}>Nenhuma pergunta ainda.</p>

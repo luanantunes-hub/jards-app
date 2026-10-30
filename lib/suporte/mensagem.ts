@@ -7,8 +7,14 @@ import { paginaParaContexto } from "../../supabase/functions/_shared/suporte-reg
 
 export const LIMITES_DA_MENSAGEM = {
   max: 4000,
+  /** Por pessoa. */
   porHora: 5,
   porDia: 15,
+  /**
+   * Teto de e-mails à equipe em 24 horas, de todo mundo junto: segura a caixa de entrada e a cota do Resend (a mesma dos
+   * convites e avisos do app). Passou disso, a mensagem é guardada do mesmo jeito e aparece em /admin/suporte.
+   */
+  emailsPorDia: 30,
   /** Quantas trocas com a IA seguem junto, para a equipe saber o que a pessoa já tentou. */
   trocas: 3,
   textoDaTroca: 1500,
@@ -156,18 +162,32 @@ async function contarMensagens(admin: SupabaseClient, userId: string, desdeISO: 
   return error ? null : (count ?? 0);
 }
 
+/** E-mails à equipe que já saíram desde `desdeISO`, de todo mundo. */
+async function contarEmailsEnviados(admin: SupabaseClient, desdeISO: string): Promise<number | null> {
+  const { count, error } = await admin
+    .from("suporte_mensagens")
+    .select("id", { count: "exact", head: true })
+    .eq("email_enviado", true)
+    .gte("created_at", desdeISO);
+  return error ? null : (count ?? 0);
+}
+
 export async function registrarMensagemDeSuporte(
   deps: DependenciasDaMensagem,
   autor: QuemMandou,
   lida: MensagemLida,
 ): Promise<ResultadoDaMensagem> {
   const agora = deps.agora();
-  const [naHora, noDia] = await Promise.all([
+  const umDiaAtras = new Date(agora - 86_400_000).toISOString();
+  const [naHora, noDia, emailsHoje] = await Promise.all([
     contarMensagens(deps.admin, autor.userId, new Date(agora - 3_600_000).toISOString()),
-    contarMensagens(deps.admin, autor.userId, new Date(agora - 86_400_000).toISOString()),
+    contarMensagens(deps.admin, autor.userId, umDiaAtras),
+    contarEmailsEnviados(deps.admin, umDiaAtras),
   ]);
   // Sem conseguir contar, não deixa passar: o limite é o que segura abuso.
-  if (naHora === null || noDia === null) return { ok: false, status: 503, erro: "Não foi possível enviar agora. Tente de novo em instantes." };
+  if (naHora === null || noDia === null || emailsHoje === null) {
+    return { ok: false, status: 503, erro: "Não foi possível enviar agora. Tente de novo em instantes." };
+  }
   const limite = decidirLimiteDeMensagens(naHora, noDia);
   if (!limite.permitido) return { ok: false, status: 429, erro: limite.motivo };
 
@@ -198,6 +218,11 @@ export async function registrarMensagemDeSuporte(
     .single();
   const id = (gravada as { id?: string } | null)?.id;
   if (error || !id) return { ok: false, status: 500, erro: "Não foi possível enviar agora. Tente de novo em instantes." };
+
+  if (emailsHoje >= LIMITES_DA_MENSAGEM.emailsPorDia) {
+    console.error(`Mensagem de suporte ${id} guardada sem e-mail: o teto de ${LIMITES_DA_MENSAGEM.emailsPorDia} e-mails em 24 horas foi atingido.`);
+    return { ok: true, emailEnviado: false };
+  }
 
   const email = emailDaMensagem({
     nome: autor.nome,

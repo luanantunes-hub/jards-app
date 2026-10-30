@@ -18,6 +18,8 @@ const LIDA = { mensagem: "Preciso trocar de plano", pagina: "/meu-plano", conver
 function montar(opcoes: {
   naHora?: number;
   noDia?: number;
+  /** E-mails à equipe que já saíram nas últimas 24 horas, de todo mundo. */
+  emailsHoje?: number;
   erroDeContagem?: boolean;
   erroNaGravacao?: boolean;
   organizacoes?: unknown;
@@ -27,6 +29,7 @@ function montar(opcoes: {
   const { admin, consultas } = bancoFalso((consulta: Consulta) => {
     if (consulta.tabela === "suporte_mensagens" && consulta.acao === "select") {
       if (opcoes.erroDeContagem) return { error: { message: "falhou" } };
+      if (consulta.filtros.some(([op, coluna]) => op === "eq" && coluna === "email_enviado")) return { count: opcoes.emailsHoje ?? 0 };
       const desde = String(consulta.filtros.find(([op]) => op === "gte")?.[2]);
       const umaHora = new Date(AGORA - 3_600_000).toISOString();
       return { count: desde === umaHora ? (opcoes.naHora ?? 0) : (opcoes.noDia ?? 0) };
@@ -121,6 +124,19 @@ test("a mensagem é guardada, a equipe é avisada por e-mail com resposta direta
   const [marca] = consultasDe(consultas, "suporte_mensagens", "update");
   assert.deepEqual(marca.valores, { email_enviado: true });
   assert.deepEqual(marca.filtros, [["eq", "id", "msg-1"]]);
+
+  // O teto de e-mails conta todo mundo junto: sem filtro de pessoa.
+  const tetoGeral = consultasDe(consultas, "suporte_mensagens", "select").find((c) => c.filtros.some(([op, coluna]) => op === "eq" && coluna === "email_enviado"));
+  assert.ok(tetoGeral, "faltou contar os e-mails do dia");
+  assert.ok(!tetoGeral.filtros.some(([, coluna]) => coluna === "user_id"));
+});
+
+test("com o teto de e-mails do dia atingido, a mensagem fica guardada (aparece no admin) e não sai mais e-mail", async () => {
+  const { deps, consultas, enviados } = montar({ emailsHoje: LIMITES_DA_MENSAGEM.emailsPorDia });
+  const resultado = await registrarMensagemDeSuporte(deps, AUTOR, LIDA);
+  assert.deepEqual(resultado, { ok: true, emailEnviado: false });
+  assert.equal(consultasDe(consultas, "suporte_mensagens", "insert").length, 1);
+  assert.equal(enviados.length, 0);
 });
 
 test("a organização vem do vínculo mesmo quando o banco devolve a relação como lista", async () => {

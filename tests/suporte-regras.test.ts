@@ -61,15 +61,33 @@ test("só as últimas trocas completas da conversa entram como contexto", () => 
   assert.deepEqual(lido.pedido.historico.map((t) => t.pergunta), ["p3", "p4"]);
 });
 
-test("o limite por minuto e por dia segura quem exagera", () => {
-  assert.deepEqual(decidirLimite(0, 0), { permitido: true });
-  assert.deepEqual(decidirLimite(LIMITES_DO_SUPORTE.porMinuto - 1, LIMITES_DO_SUPORTE.porDia - 1), { permitido: true });
-  const minuto = decidirLimite(LIMITES_DO_SUPORTE.porMinuto, 3);
-  assert.equal(minuto.permitido, false);
-  assert.match(minuto.permitido ? "" : minuto.motivo, /minuto/);
-  const dia = decidirLimite(1, LIMITES_DO_SUPORTE.porDia);
-  assert.equal(dia.permitido, false);
-  assert.match(dia.permitido ? "" : dia.motivo, /hoje/);
+const SEM_PERGUNTAS = { pessoaMinuto: 0, pessoaDia: 0, geralMinuto: 0, geralHora: 0, geralDia: 0 };
+const motivoDoLimite = (contagem: Partial<typeof SEM_PERGUNTAS>) => {
+  const decisao = decidirLimite({ ...SEM_PERGUNTAS, ...contagem });
+  return decisao.permitido ? "" : decisao.motivo;
+};
+
+test("o limite da pessoa e o teto de todo mundo junto seguram quem exagera", () => {
+  const L = LIMITES_DO_SUPORTE;
+  assert.deepEqual(decidirLimite(SEM_PERGUNTAS), { permitido: true });
+  assert.deepEqual(
+    decidirLimite({ pessoaMinuto: L.porMinuto - 1, pessoaDia: L.porDia - 1, geralMinuto: L.geralPorMinuto - 1, geralHora: L.geralPorHora - 1, geralDia: L.geralPorDia - 1 }),
+    { permitido: true },
+  );
+  assert.match(motivoDoLimite({ pessoaMinuto: L.porMinuto }), /Espere um minuto/);
+  assert.match(motivoDoLimite({ pessoaDia: L.porDia }), /Você chegou ao limite de perguntas de hoje/);
+  assert.match(motivoDoLimite({ geralMinuto: L.geralPorMinuto }), /muita procura agora/);
+  assert.match(motivoDoLimite({ geralHora: L.geralPorHora }), /muita procura agora/);
+  assert.match(motivoDoLimite({ geralDia: L.geralPorDia }), /A ajuda chegou ao limite de perguntas de hoje/);
+  // O limite da pessoa vem antes: ela fica sabendo que o limite é dela, não da turma.
+  assert.match(motivoDoLimite({ pessoaDia: L.porDia, geralDia: L.geralPorDia }), /Você chegou/);
+});
+
+test("os tetos fazem sentido juntos: uma pessoa sozinha não gasta mais que um décimo do teto do dia", () => {
+  const L = LIMITES_DO_SUPORTE;
+  assert.ok(L.porMinuto <= L.geralPorMinuto);
+  assert.ok(L.geralPorMinuto <= L.geralPorHora && L.geralPorHora <= L.geralPorDia);
+  assert.ok(L.porDia * 10 <= L.geralPorDia);
 });
 
 test("o pedido à IA leva instruções, guia e tela no sistema; a conversa e a pergunta nova vão em ordem", () => {

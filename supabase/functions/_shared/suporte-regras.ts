@@ -10,8 +10,16 @@ export const LIMITES_DO_SUPORTE = {
   turnosDoHistorico: 3,
   respostaDoHistoricoMax: 1500,
   respostaMax: 1800,
+  /** Por pessoa. */
   porMinuto: 5,
-  porDia: 40,
+  porDia: 20,
+  /**
+   * Teto de todo mundo junto, para a turma não estourar o custo nem a cota do Gemini (a chave é a mesma da leitura de
+   * comprovantes e extratos da Prestação, que não pode parar por causa da ajuda).
+   */
+  geralPorMinuto: 15,
+  geralPorHora: 60,
+  geralPorDia: 200,
 } as const;
 
 export interface Turno {
@@ -71,13 +79,27 @@ export function lerPedido(corpo: unknown): { ok: true; pedido: PedidoDeAjuda } |
 
 export type DecisaoDeLimite = { permitido: true } | { permitido: false; motivo: string };
 
-/** Quantas perguntas a pessoa já fez no último minuto e nas últimas 24 horas. */
-export function decidirLimite(noUltimoMinuto: number, nasUltimas24h: number): DecisaoDeLimite {
-  if (noUltimoMinuto >= LIMITES_DO_SUPORTE.porMinuto) {
+/** Perguntas já feitas (incluindo as que ainda esperam a IA): da pessoa e de todo mundo, por janela de tempo. */
+export interface ContagemDePerguntas {
+  pessoaMinuto: number;
+  pessoaDia: number;
+  geralMinuto: number;
+  geralHora: number;
+  geralDia: number;
+}
+
+export function decidirLimite(c: ContagemDePerguntas): DecisaoDeLimite {
+  if (c.pessoaMinuto >= LIMITES_DO_SUPORTE.porMinuto) {
     return { permitido: false, motivo: "Muitas perguntas em pouco tempo. Espere um minuto e tente de novo." };
   }
-  if (nasUltimas24h >= LIMITES_DO_SUPORTE.porDia) {
+  if (c.pessoaDia >= LIMITES_DO_SUPORTE.porDia) {
     return { permitido: false, motivo: "Você chegou ao limite de perguntas de hoje. Fale com a equipe." };
+  }
+  if (c.geralMinuto >= LIMITES_DO_SUPORTE.geralPorMinuto || c.geralHora >= LIMITES_DO_SUPORTE.geralPorHora) {
+    return { permitido: false, motivo: "A ajuda está com muita procura agora. Tente de novo em alguns minutos ou fale com a equipe." };
+  }
+  if (c.geralDia >= LIMITES_DO_SUPORTE.geralPorDia) {
+    return { permitido: false, motivo: "A ajuda chegou ao limite de perguntas de hoje. Tente de novo amanhã ou fale com a equipe." };
   }
   return { permitido: true };
 }
