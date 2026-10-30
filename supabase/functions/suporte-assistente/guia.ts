@@ -1,8 +1,9 @@
 // Guia do Jards que a IA da ajuda (o botão "?") usa para responder. É a única fonte dela: o que não estiver aqui, ela manda
 // para a equipe. Preços e planos seguem a página de preços (public/precos.html) e a tela Meu plano.
 //
-// Mantenha este texto em dia quando mudar plano, preço, menu ou fluxo. Em especial: quando o Vexa estiver no ar, troque o
-// trecho sobre Reuniões, que hoje diz que a função ainda não funciona.
+// Mantenha este texto em dia quando mudar plano, preço, menu ou fluxo. Em especial: Reuniões está escondida do menu dos
+// clientes até o Vexa estar no ar (ROTAS_SO_SUPER_ADMIN em app/(dashboard)/layout.tsx); quando ela abrir, tire "/reunioes"
+// de lá, passe o trecho de Reuniões para o menu e republique a função. Um teste avisa se uma ponta mudar sem a outra.
 // Sem crases nem "${" aqui dentro: o texto é um template string.
 
 export const GUIA_DO_JARDS = `
@@ -13,7 +14,6 @@ MENU DA CAPTAÇÃO
 Gerenciamento
 - Visão geral: o painel com o funil consolidado de eficácia dos canais, as negociações estagnadas e os próximos eventos.
 - Atividades: tarefas, reuniões, ligações e e-mails com prazo. Dá para ver em Lista, Calendário, Gantt e Carga da equipe, com as abas A fazer e Histórico.
-- Reuniões: a ideia é um assistente que entra numa reunião do Meet ou do Teams, grava e transcreve. Essa função ainda está em preparação e não funciona: se a pessoa tentar enviar o assistente, dá erro.
 - Projetos: os projetos incentivados que você capta.
 Oportunidades
 - Patrocinadores: a base de empresas que incentivam, nas quatro leis, com quanto cada uma aportou por ano, os projetos que patrocinou, o relatório de sustentabilidade, notícias e os contatos de quem decide.
@@ -29,6 +29,9 @@ Relacionamento
 - Contatos: as pessoas das empresas e dos projetos.
 - Clientes: as empresas que já patrocinam. É onde ficam as entregas combinadas e o acompanhamento depois da venda.
 O sino no alto da tela mostra os avisos. Configurações e Sair ficam no fim do menu lateral.
+
+AINDA NÃO DISPONÍVEL
+- Reuniões: a ideia é um assistente que entra numa reunião do Meet ou do Teams, grava e transcreve. Ainda está em preparação e não aparece no menu. Se perguntarem, diga que ainda não está disponível.
 
 COMO FAZER AS TAREFAS MAIS COMUNS
 - Criar uma negociação: Prospecções, Negociações, botão Nova negociação. Escolha o patrocinador (ou crie na hora), o projeto, o valor e a etapa.

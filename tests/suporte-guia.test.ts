@@ -30,6 +30,19 @@ test("o guia cita só telas e botões que existem no menu e nas páginas do app"
   assert.ok(configuracoes.includes("Saldo de créditos"));
 });
 
+test("Reuniões: o guia diz que ainda não existe enquanto o menu a esconde dos clientes, e deixa de dizer quando ela abrir", async () => {
+  const layout = await ler("app/(dashboard)/layout.tsx");
+  const escondida = /ROTAS_SO_SUPER_ADMIN\s*=\s*\[[^\]]*"\/reunioes"/.test(layout);
+  const guiaDizQueNaoExiste = /Reuniões[^\n]*ainda está em preparação/.test(GUIA_DO_JARDS);
+  assert.equal(
+    guiaDizQueNaoExiste,
+    escondida,
+    escondida
+      ? "Reuniões está escondida dos clientes, mas o guia não diz que ainda não está disponível"
+      : "Reuniões abriu para os clientes: passe o trecho dela em guia.ts para o menu e tire o aviso de \"ainda está em preparação\"",
+  );
+});
+
 test("o guia não carrega segredo nem dado de cliente e cabe no pedido à IA", () => {
   assert.doesNotMatch(GUIA_DO_JARDS, /sk_(live|test)|rk_live|service_role|eyJ[a-zA-Z0-9]{10,}|api[_-]?key/i);
   assert.doesNotMatch(GUIA_DO_JARDS, /[\w.+-]+@[\w-]+\.[\w.]+/, "o guia não deve ter e-mail de ninguém");
