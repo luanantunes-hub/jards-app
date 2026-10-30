@@ -33,7 +33,7 @@ test("o guia cita só telas e botões que existem no menu e nas páginas do app"
 test("Reuniões: o guia diz que ainda não existe enquanto o menu a esconde dos clientes, e deixa de dizer quando ela abrir", async () => {
   const layout = await ler("app/(dashboard)/layout.tsx");
   const escondida = /ROTAS_SO_SUPER_ADMIN\s*=\s*\[[^\]]*"\/reunioes"/.test(layout);
-  const guiaDizQueNaoExiste = /Reuniões[^\n]*ainda está em preparação/.test(GUIA_DO_JARDS);
+  const guiaDizQueNaoExiste = /Reuniões[^\n]*ainda está em preparação/i.test(GUIA_DO_JARDS);
   assert.equal(
     guiaDizQueNaoExiste,
     escondida,
