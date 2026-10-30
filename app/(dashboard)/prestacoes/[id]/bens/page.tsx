@@ -290,7 +290,7 @@ export default function BensPage() {
                         </td>
                         <td className="min-w-[10rem] px-4 py-3 text-[0.6875rem] text-black/60">
                           {b.no_id ? nomeDoItem.get(b.no_id) ?? "Item de outra versão" : <span className="text-black/30">Sem item</span>}
-                          {d && <span className="block truncate text-black/40">{d.nome_arquivo ?? "Despesa"}</span>}
+                          {d && <span className="block min-w-0 break-words text-black/40">{d.nome_arquivo ?? "Despesa"}</span>}
                         </td>
                         <td className="whitespace-nowrap px-4 py-3 text-right tabular-nums text-black/70">{valor !== null && valor !== undefined ? reais(Number(valor)) : <span className="text-black/30">—</span>}</td>
                         <td className="whitespace-nowrap px-4 py-3 text-[0.6875rem] text-black/60"><Cotacoes b={b} /></td>

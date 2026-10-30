@@ -295,10 +295,10 @@ export default function ExtratoPage() {
                     <td className="whitespace-nowrap px-4 py-2 tabular-nums text-black/55">{dataCurta(l.data)}</td>
                     <td className="max-w-[28rem] px-4 py-2">
                       <p className="truncate text-black/80" title={l.historico}>{l.historico || "—"}</p>
-                      {l.numero_documento && <p className="truncate text-[0.625rem] text-black/35">Doc. {l.numero_documento}</p>}
+                      {l.numero_documento && <p className="min-w-0 break-words text-[0.625rem] text-black/35">Doc. {l.numero_documento}</p>}
                     </td>
                     <td className="whitespace-nowrap px-4 py-2 text-black/50">{rotuloCategoria(l.categoria)}</td>
-                    {contas.length > 1 && <td className="max-w-[12rem] truncate px-4 py-2 text-black/45">{contaPorId.get(l.conta_id) ? rotuloDaConta(contaPorId.get(l.conta_id)!) : "—"}</td>}
+                    {contas.length > 1 && <td className="max-w-[12rem] min-w-0 break-words px-4 py-2 text-black/45">{contaPorId.get(l.conta_id) ? rotuloDaConta(contaPorId.get(l.conta_id)!) : "—"}</td>}
                     <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-black/75">{l.natureza === "credito" ? fmt(l.valor) : ""}</td>
                     <td className="whitespace-nowrap px-4 py-2 text-right tabular-nums text-black/75">{l.natureza === "debito" ? fmt(l.valor) : ""}</td>
                   </tr>

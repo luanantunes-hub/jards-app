@@ -443,7 +443,7 @@ export default function EmpresasCrmPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
                         <CompanyLogo nome={e.nome} domain={e.domain_key} size={28} className="flex-shrink-0" />
-                        <span className="text-[0.8125rem] font-semibold text-[#282525] truncate block">
+                        <span className="text-[0.8125rem] font-semibold text-[#282525] min-w-0 break-words block">
                           {e.nome}
                         </span>
                       </div>
@@ -510,7 +510,7 @@ export default function EmpresasCrmPage() {
                         const ExcIcon = exc.icon;
                         return (
                           <div className="min-w-0">
-                            <p className="text-[0.75rem] font-medium text-black/70 truncate max-w-[8.125rem]">{e.atribuicao.captadorNome}</p>
+                            <p className="text-[0.75rem] font-medium text-black/70 min-w-0 break-words">{e.atribuicao.captadorNome}</p>
                             <span className="mt-1 inline-flex w-fit items-center gap-1 rounded px-2 py-0.5 text-[0.625rem] font-semibold text-white" style={{ background: exc.bg }}>
                               <ExcIcon size={10} />{exc.label}
                             </span>
@@ -618,7 +618,7 @@ export default function EmpresasCrmPage() {
                     {/* Responsável */}
                     <td className="px-5 py-3.5">
                       {e.responsavelNome ? (
-                        <span className="text-[0.75rem] text-black/55 truncate block max-w-[8.125rem]">
+                        <span className="text-[0.75rem] text-black/55 min-w-0 break-words block">
                           {e.responsavelNome.split(" ")[0]}
                         </span>
                       ) : (

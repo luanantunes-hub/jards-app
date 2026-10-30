@@ -548,7 +548,7 @@ export default function ContasPatrocinioPage() {
                           className="flex-shrink-0"
                         />
                         <div className="min-w-0">
-                          <span className="text-[0.8125rem] font-semibold text-[#282525] truncate block">
+                          <span className="text-[0.8125rem] font-semibold text-[#282525] min-w-0 break-words block">
                             {c.empresa_crm?.nome || "—"}
                           </span>
                         </div>
@@ -582,7 +582,7 @@ export default function ContasPatrocinioPage() {
                     <td className="px-5 py-3.5">
                       <div className="flex min-w-0 items-center gap-1.5 text-[0.75rem] text-black/55">
                         <UserRound size={12} className="shrink-0 text-black/25" />
-                        <span className="truncate">{c.responsavel_nome ?? "Sem responsável"}</span>
+                        <span className="min-w-0 break-words">{c.responsavel_nome ?? "Sem responsável"}</span>
                       </div>
                     </td>
 
