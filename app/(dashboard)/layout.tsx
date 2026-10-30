@@ -58,6 +58,11 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
   { id: "producao",  label: "Produção",  descricao: "Agenda, equipe, logística e o dia",            icone: Drama          },
 ];
 
+// Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
+// "Reuniões" depende do servidor do Vexa (docs/reunioes-deploy-vexa.md), que ainda não está
+// no ar; sem ele, toda reunião criada termina como "falhou". Tire a rota daqui quando ligar.
+const ROTAS_SO_SUPER_ADMIN = ["/reunioes"];
+
 const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
   captacao: [
     {
@@ -399,7 +404,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const moduloDoMenu = modulosCarregados && !podeUsarModulo(acessoModulos, moduloAtivo)
     ? (modulosDisponiveis(acessoModulos)[0] ?? moduloAtivo)
     : moduloAtivo;
-  const navGroups   = NAV_POR_MODULO[moduloDoMenu];
+  const navGroups   = NAV_POR_MODULO[moduloDoMenu].map(grupo => ({
+    ...grupo,
+    items: grupo.items.filter(item => isSuperAdmin || !ROTAS_SO_SUPER_ADMIN.includes(item.href)),
+  }));
   const usaCaptacao = podeUsarModulo(acessoModulos, "captacao");
   // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
   const isExpanded  = expanded || mobileOpen || seletorAberto;
@@ -413,10 +421,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // A prestação é oferecida em teste gratuito a quem nunca teve o módulo (nem só para leitura); quem
   // já teve entra nele, e o aviso da assinatura explica o fim do teste. Nunca aparece como não contratada.
   // A captação não tem teste: o plano gratuito tem as suas funções e nunca bloqueia.
-  // Módulo em construção (a produção) fica fora do seletor para todos, até a organização tê-lo.
-  // O módulo aberto continua na lista (o super admin entra em qualquer um), para o seletor não mentir.
+  // Módulo em construção (a produção) fica fora do seletor até a organização tê-lo; o super admin
+  // vê para testar. O módulo aberto continua na lista, para o seletor não mentir.
   const opcoesDeModulo: OpcaoDeModulo[] = MODULOS
-    .filter(({ id }) => moduloVisivel(id, modulosOrg) || id === moduloDoMenu)
+    .filter(({ id }) => moduloVisivel(id, modulosOrg, isSuperAdmin) || id === moduloDoMenu)
     .map(({ id, label, descricao, icone }) => {
       const situacao = situacaoNoSeletor({ ...acessoModulos, carregado: modulosCarregados }, id);
       const promo = situacao.tipo === "teste";

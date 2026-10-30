@@ -1648,7 +1648,7 @@ export default function PatrocinadorPage() {
                             style={{ borderBottom: i < editais.length - 1 ? "1px solid rgba(13,13,13,.05)" : "none" }}
                           >
                             <td className="px-5 py-3.5 font-medium text-[#282525] text-[0.8125rem] max-w-[12.5rem]">
-                              <span className="line-clamp-2">{e.titulo ?? "Sem título"}</span>
+                              <span className="break-words">{e.titulo ?? "Sem título"}</span>
                             </td>
                             <td className="px-5 py-3.5 text-black/40 text-xs whitespace-nowrap">{fmtDate(e.data_abertura)}</td>
                             <td className="px-5 py-3.5 text-black/40 text-xs whitespace-nowrap">{fmtDate(e.data_fechamento)}</td>

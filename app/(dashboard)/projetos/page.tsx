@@ -365,7 +365,7 @@ export default function ProjetosPage() {
                           <div className="flex items-center gap-2">
                             <ProjectIdentity nome={p.nome} tipo={p.identidade_tipo} valor={p.identidade_valor} logoUrl={p.identidade_logo_url} cor={p.identidade_cor} size="sm" semFundo />
                             <div className="min-w-0">
-                              <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight line-clamp-1">{p.nome}</p>
+                              <p className="text-[0.8125rem] font-semibold text-[#282525] leading-tight break-words">{p.nome}</p>
                               {p.descricao && (
                                 <p className="text-[0.6875rem] text-black/35 line-clamp-1 mt-0.5">{p.descricao}</p>
                               )}
@@ -441,11 +441,11 @@ export default function ProjetosPage() {
                         {/* Ponto focal */}
                         <td className="px-4 py-3.5">
                           {p.ponto_focal ? (
-                            <span className="block max-w-[8.75rem] truncate text-[0.6875rem] font-medium text-black/55">{p.ponto_focal}</span>
+                            <span className="block min-w-0 break-words text-[0.6875rem] font-medium text-black/55">{p.ponto_focal}</span>
                           ) : (
                             <span className="inline-flex max-w-[8.75rem] items-center gap-1 text-[0.6875rem] font-medium text-black/35">
                               <UserX size={12} strokeWidth={1.75} aria-hidden className="shrink-0 text-black/40" />
-                              <span className="truncate">Sem ponto focal</span>
+                              <span className="min-w-0 break-words">Sem ponto focal</span>
                             </span>
                           )}
                         </td>

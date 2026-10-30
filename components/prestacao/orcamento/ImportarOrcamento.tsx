@@ -219,8 +219,8 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
                   <tbody>
                     {exemplo.map((linha, i) => (
                       <tr key={i} className="border-b last:border-0" style={{ borderColor: "rgba(13,13,13,.05)" }}>
-                        <td className="max-w-[12rem] truncate px-3 py-1.5 text-black/70">{linha[Number(mapa.nome)] || "—"}</td>
-                        {mapa.etapa !== "" && <td className="max-w-[8rem] truncate px-3 py-1.5 text-black/45">{linha[Number(mapa.etapa)] || "—"}</td>}
+                        <td className="max-w-[12rem] min-w-0 break-words px-3 py-1.5 text-black/70">{linha[Number(mapa.nome)] || "—"}</td>
+                        {mapa.etapa !== "" && <td className="max-w-[8rem] min-w-0 break-words px-3 py-1.5 text-black/45">{linha[Number(mapa.etapa)] || "—"}</td>}
                         {mapa.valor !== "" && <td className="px-3 py-1.5 text-right tabular-nums text-black/70">{linha[Number(mapa.valor)] || "—"}</td>}
                       </tr>
                     ))}
