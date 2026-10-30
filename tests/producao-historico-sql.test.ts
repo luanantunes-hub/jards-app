@@ -31,6 +31,10 @@ const ORIGENS_DA_PD0_10: Record<string, { fora: string; rotulos: string }> = {
  */
 const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_arquivos: { fora: "enviado_por,nome,sha256,storage_path", rotulos: "pasta" },
+  // A equipe (PD1.9 e PD1.10): o e-mail e o telefone da pessoa ficam de fora. Teste: supabase/tests/producao_equipe.test.sql.
+  producao_pessoas: { fora: "email,telefone", rotulos: "nome" },
+  producao_vinculos: { fora: "", rotulos: "funcao" },
+  producao_escalas: { fora: "", rotulos: "funcao" },
 };
 
 /** Todas as tabelas com histórico hoje. */
@@ -43,6 +47,7 @@ const ORIGENS: Record<string, { fora: string; rotulos: string }> = { ...ORIGENS_
  */
 const SEM_HISTORICO: Record<string, string> = {
   producao_historico: "é o próprio histórico: nunca grava o histórico do próprio histórico",
+  producao_vinculos_valores: "é só cachê e diária: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
 };
 
 /** Nome de coluna que parece dinheiro, documento, banco, saúde ou contato: precisa estar na lista de exclusão. */
@@ -231,9 +236,10 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
     // O rótulo de criar e apagar é de um campo à vista, nunca de um da lista.
     for (const coluna of rotulos.split(",")) assert.ok(!fora.includes(coluna), `${tabela}: o rótulo ${coluna} está na lista de exclusão`);
   }
-  // Hoje as colunas fora são as que repetem o autor e, nos arquivos, o nome (dado de pessoa na pasta pessoas), o caminho, a impressão digital e quem enviou.
+  // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
+  // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_funcoes: definido_por"]);
+    ["producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_funcoes: definido_por", "producao_pessoas: email,telefone"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {

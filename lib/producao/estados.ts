@@ -49,3 +49,15 @@ export const TIPOS_DE_DATA = Object.keys(TIPOS_DE_DATA_POR_ID) as TipoData[];
 /** `producao_historico.acao`: criou e apagou deixam uma linha só; alterou deixa uma linha por campo mudado. */
 export type AcaoDoHistorico = "criou" | "alterou" | "apagou";
 export const ACOES_DO_HISTORICO: readonly AcaoDoHistorico[] = ["criou", "alterou", "apagou"];
+
+// A equipe (PD1.9 e PD1.10): o banco confere estas listas num CHECK
+// (supabase/migrations/*_producao_equipe.sql) e tests/producao-equipe-sql.test.ts garante que o SQL e
+// este arquivo dizem a mesma coisa. O tipo principal da pessoa NÃO está aqui: é do catálogo.
+
+/** `producao_vinculos.situacao`. O vínculo cancelado não dá o recorte por vínculo; o previsto e o confirmado dão. */
+export type SituacaoDoVinculo = "prevista" | "confirmada" | "cancelada";
+export const SITUACOES_DO_VINCULO: readonly SituacaoDoVinculo[] = ["prevista", "confirmada", "cancelada"];
+
+/** `producao_escalas.confirmacao`: a resposta da pessoa à escala da data. */
+export type ConfirmacaoDaEscala = "pendente" | "confirmada" | "recusada";
+export const CONFIRMACOES_DA_ESCALA: readonly ConfirmacaoDaEscala[] = ["pendente", "confirmada", "recusada"];
