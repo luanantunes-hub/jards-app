@@ -17,7 +17,9 @@
 // As colunas, a anulabilidade e os padrões são os das migrations da produção
 // (supabase/migrations), conferidos contra o banco real em 15/10/2026. A tabela
 // producao_arquivos e as três funções dos arquivos (PD0.14) foram escritas a partir das
-// migrations antes de elas serem aplicadas: conferir com o gerador depois de aplicá-las.
+// migrations antes de elas serem aplicadas: conferir com o gerador depois de aplicá-las. As
+// quatro tabelas da equipe e auth_producao_ve_pessoa (PD1.9) também, a partir de
+// *_producao_equipe.sql, aplicada sem mudança em 30/10/2026.
 // tests/producao-banco-tipos.test.ts compara este arquivo com elas: uma migration
 // que muda tabela, coluna, chave ou função da produção faz o teste falhar até este
 // arquivo ser atualizado. Para atualizar: escreva a migration, acrescente a coluna em
@@ -48,10 +50,12 @@
 
 import type {
   AcaoDoHistorico,
+  ConfirmacaoDaEscala,
   ExibicaoDoBloco,
   LadoDaTemporada,
   SituacaoDaData,
   SituacaoDaTemporada,
+  SituacaoDoVinculo,
 } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
@@ -694,6 +698,240 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_pessoas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          nome_artistico: string | null;
+          email: string | null;
+          telefone: string | null;
+          tipo: string;
+          user_id: string | null;
+          arquivada: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          nome_artistico?: string | null;
+          email?: string | null;
+          telefone?: string | null;
+          tipo?: string;
+          user_id?: string | null;
+          arquivada?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          nome_artistico?: string | null;
+          email?: string | null;
+          telefone?: string | null;
+          tipo?: string;
+          user_id?: string | null;
+          arquivada?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_pessoas_membro_fkey";
+            columns: ["organization_id", "user_id"];
+            isOneToOne: true;
+            referencedRelation: "organization_members";
+            referencedColumns: ["organization_id", "user_id"];
+          },
+          {
+            foreignKeyName: "producao_pessoas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_vinculos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          pessoa_id: string;
+          temporada_id: string | null;
+          espaco_id: string | null;
+          funcao: string;
+          grupo: string | null;
+          inicio: string | null;
+          fim: string | null;
+          situacao: SituacaoDoVinculo;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          pessoa_id: string;
+          temporada_id?: string | null;
+          espaco_id?: string | null;
+          funcao: string;
+          grupo?: string | null;
+          inicio?: string | null;
+          fim?: string | null;
+          situacao?: SituacaoDoVinculo;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          pessoa_id?: string;
+          temporada_id?: string | null;
+          espaco_id?: string | null;
+          funcao?: string;
+          grupo?: string | null;
+          inicio?: string | null;
+          fim?: string | null;
+          situacao?: SituacaoDoVinculo;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_vinculos_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_vinculos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_vinculos_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_vinculos_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_vinculos_valores: {
+        Row: {
+          vinculo_id: string;
+          organization_id: string;
+          cache: number | null;
+          diaria: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          vinculo_id: string;
+          organization_id: string;
+          cache?: number | null;
+          diaria?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          vinculo_id?: string;
+          organization_id?: string;
+          cache?: number | null;
+          diaria?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_vinculos_valores_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_vinculos_valores_vinculo_id_fkey";
+            columns: ["vinculo_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_vinculos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_escalas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          pessoa_id: string;
+          data_id: string;
+          funcao: string | null;
+          chamada: string | null;
+          saida: string | null;
+          confirmacao: ConfirmacaoDaEscala;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          pessoa_id: string;
+          data_id: string;
+          funcao?: string | null;
+          chamada?: string | null;
+          saida?: string | null;
+          confirmacao?: ConfirmacaoDaEscala;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          pessoa_id?: string;
+          data_id?: string;
+          funcao?: string | null;
+          chamada?: string | null;
+          saida?: string | null;
+          confirmacao?: ConfirmacaoDaEscala;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_escalas_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_escalas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_escalas_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       [_ in never]: never;
@@ -733,6 +971,10 @@ export type BancoDaProducao = {
       };
       auth_producao_ve_obra: {
         Args: { p_org: string; p_obra_id: string | null };
+        Returns: boolean;
+      };
+      auth_producao_ve_pessoa: {
+        Args: { p_org: string; p_pessoa_id: string };
         Returns: boolean;
       };
       auth_producao_ve_temporada: {
