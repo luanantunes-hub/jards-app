@@ -8,6 +8,7 @@ import {
   BarChart2,
   CalendarDays,
   CalendarRange,
+  LayoutTemplate,
   BriefcaseBusiness,
   ContactRound,
   FilePenLine,
@@ -61,7 +62,8 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
 // "Reuniões" depende do servidor do Vexa (docs/reunioes-deploy-vexa.md), que ainda não está
 // no ar; sem ele, toda reunião criada termina como "falhou". Tire a rota daqui quando ligar.
-const ROTAS_SO_SUPER_ADMIN = ["/reunioes"];
+// Os protótipos da produção (dados de exemplo) também: o servidor os fecha para os outros em producoes/prototipo/layout.tsx.
+const ROTAS_SO_SUPER_ADMIN = ["/reunioes", "/producoes/prototipo"];
 
 const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
   captacao: [
@@ -116,6 +118,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       items: [
         { label: "Agenda", href: "/producoes", icon: CalendarDays },
         { label: "Temporadas", href: "/producoes/temporadas", icon: CalendarRange },
+        { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
       ],
     },
   ],
