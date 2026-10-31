@@ -584,6 +584,8 @@ O teste concreto de "sem deixar ninguém de fora":
 | 6.1 Liberação comercial | 8 | 9 | Cobrança ligada |
 | **Total** | **≈ 348** | **≈ 400 dias** | ≈ 80 semanas de uma pessoa; ≈ 10 meses com duas |
 
+**Protótipos (31/10/2026, pedido do dono).** A página da data completa, a folha do dia, as tarefas, as pautas do espaço, os acordos e o orçamento existem como protótipo navegável em Produção → Protótipos (`/producoes/prototipo`, só o super admin), com dados de exemplo e sem banco. Não são entregas e não mudam este cronograma: cada tela de verdade substitui o protótipo dela, na ordem do plano.
+
 Com duas pessoas, as trilhas correm em paralelo: depois do M1, uma pessoa segue a trilha de quem circula (F2, depois F6) e a outra a de quem recebe (F3, depois F8); as duas se juntam na F4, na F5 e na F7. O **M1 sai em ≈ 12 semanas com duas pessoas** (≈ 20 com uma), e o mapa de palco (M2) cerca de um mês depois. As estimativas das fases 2 a 11 serão revistas no início de cada uma.
 
 ---
