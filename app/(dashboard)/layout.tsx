@@ -8,6 +8,7 @@ import {
   BarChart2,
   CalendarDays,
   CalendarRange,
+  UsersRound,
   LayoutTemplate,
   BriefcaseBusiness,
   ContactRound,
@@ -118,6 +119,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       items: [
         { label: "Agenda", href: "/producoes", icon: CalendarDays },
         { label: "Temporadas", href: "/producoes/temporadas", icon: CalendarRange },
+        { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
         { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
       ],
     },
