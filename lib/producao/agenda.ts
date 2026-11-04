@@ -36,6 +36,9 @@ export type DataDaAgenda = {
   temporada_id: string;
   temporada_titulo: string | null;
   obra_titulo: string | null;
+  /** O lugar da data (opcionais: a agenda os preenche; quem monta a lista sem eles não filtra por lugar). */
+  espaco_id?: string | null;
+  sala_id?: string | null;
   municipio: string | null;
   uf: string | null;
 };
@@ -175,12 +178,14 @@ export function somarMes(mes: string, quantos: number): string {
   return `${Math.floor(total / 12)}-${String((total % 12) + 1).padStart(2, "0")}`;
 }
 
-export type FiltrosDaAgenda = { temporada: string; situacao: "todas" | SituacaoDaData };
+export type FiltrosDaAgenda = { temporada: string; situacao: "todas" | SituacaoDaData; espaco?: string; sala?: string };
 
 export function filtrarDatas(datas: readonly DataDaAgenda[], filtros: FiltrosDaAgenda): DataDaAgenda[] {
   return datas.filter(item =>
     (filtros.temporada === "todas" || item.temporada_id === filtros.temporada)
-    && (filtros.situacao === "todas" || item.situacao === filtros.situacao));
+    && (filtros.situacao === "todas" || item.situacao === filtros.situacao)
+    && (!filtros.espaco || filtros.espaco === "todos" || item.espaco_id === filtros.espaco)
+    && (!filtros.sala || filtros.sala === "todas" || item.sala_id === filtros.sala));
 }
 
 export type PendenciaDaAgenda = { tipo: "opcao_vencida" | "opcao_vencendo"; data: DataDaAgenda };
