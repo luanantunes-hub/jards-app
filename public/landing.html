@@ -709,6 +709,7 @@
     .hero-layout { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); align-items:center; gap:40px; width:min(1480px,100%); min-height:100dvh; margin:auto; padding:112px 40px 72px; }
     .hero-copy { min-width:0; text-align:left; }
     .hero-copy h1 { max-width:100%; margin:0; font-size:clamp(52px,5.2vw,80px); font-weight:700; line-height:.98; letter-spacing:-.06em; color:#F7F2EC; text-wrap:balance; }
+    .hero-nota { margin-top:16px; font-size:13px; line-height:1.5; color:rgba(247,242,236,.5); }
     .hero-description { max-width:43ch; margin-top:24px; font-size:17px; line-height:1.65; color:rgba(247,242,236,.68); }
     .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
     .hero-actions a { white-space:nowrap; }
@@ -942,6 +943,25 @@
     .alt-proof-icon { display:block; flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); height:var(--alt-proof-mark); color:var(--alt-purple); }
     .alt-proof-mark { flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); }
     /* Faixa de prova como leitura de instrumento: rótulo em mono, valor grande, descrição */
+    .prova-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; }
+    .prova-item { display:flex; flex-direction:column-reverse; justify-content:flex-end; gap:10px; padding:28px 12px 28px 0; border-top:1px solid rgba(13,13,13,.1); }
+    .prova-item:nth-child(-n+2) { border-top:0; }
+    .prova-item:nth-child(even) { padding-left:16px; padding-right:0; border-left:1px solid rgba(13,13,13,.1); }
+    .prova-num { margin:0; font-size:clamp(26px,7vw,48px); line-height:1; white-space:nowrap; }
+    .prova-texto { max-width:26ch; font-size:13px; line-height:1.5; color:rgba(13,13,13,.58); text-wrap:balance; }
+    .prova-fonte { margin:0; padding:0 0 22px; font-family:var(--font-mono); font-size:11px; line-height:1.5; color:rgba(13,13,13,.42); }
+    @media (min-width:560px) {
+      .prova-item { padding:36px 24px 36px 0; }
+      .prova-item:nth-child(even) { padding-left:24px; }
+      .prova-texto { font-size:14px; }
+    }
+    @media (min-width:1024px) {
+      .prova-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+      .prova-num { font-size:clamp(40px,4.2vw,52px); }
+      .prova-item, .prova-item:nth-child(even) { padding:44px 28px 40px; border-top:0; border-left:1px solid rgba(13,13,13,.1); }
+      .prova-item:first-child { padding-left:0; border-left:0; }
+      .prova-item:last-child { padding-right:0; }
+    }
     .proof-rotulo { margin:0 0 18px; font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.08em; line-height:1.3; text-transform:uppercase; color:rgba(13,13,13,.55); }
     .proof-valor { display:flex; align-items:center; height:52px; margin:0 0 16px; font-size:52px; line-height:1; }
     .proof-valor .alt-proof-icon { flex:0 0 44px; width:44px; height:44px; }
@@ -1148,6 +1168,7 @@
       </a>
       <a href="#fluxo" class="alt-link">Ver como funciona <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
     </div>
+    <p class="hero-nota">Grátis, sem cartão e sem prazo para acabar.</p>
 
     </div>
     <div class="hero-visual">
@@ -1251,25 +1272,27 @@
 
 
 <!-- ════════════════════════ STATS ════════════════════════ -->
-<section class="landing-proof bg-[#FFFFFF] px-6">
+<section class="landing-proof bg-[#FFFFFF] px-6" aria-label="O Jards em números">
   <div class="max-w-6xl mx-auto">
-    <div class="grid grid-cols-1 sm:grid-cols-3">
-      <div class="py-10 sm:pr-8 sm:border-r border-black/10">
-        <p class="proof-rotulo">Leis de incentivo</p>
-        <p class="stat-num stat-accent proof-valor"><span aria-hidden="true">04</span><span class="sr-only">4</span></p>
-        <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Cultura, esporte, audiovisual e saúde.</p>
+    <dl class="prova-grid">
+      <div class="prova-item">
+        <dt class="prova-texto">captadores e produtores com conta no Jards</dt>
+        <dd class="stat-num stat-accent prova-num">140+</dd>
       </div>
-      <div class="py-10 sm:px-8 border-t sm:border-t-0 sm:border-r border-black/10">
-        <p class="proof-rotulo">Para começar</p>
-        <p class="stat-num stat-accent proof-valor">R$ 0</p>
-        <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Plano gratuito, sem cartão e sem prazo para acabar.</p>
+      <div class="prova-item">
+        <dt class="prova-texto">em patrocínios negociados pelo Jards</dt>
+        <dd class="stat-num stat-accent prova-num">R$ 40 mi+</dd>
       </div>
-      <div class="py-10 sm:pl-8 border-t sm:border-t-0 border-black/10">
-        <p class="proof-rotulo">Próximo passo visível</p>
-        <p class="proof-valor"><svg class="alt-proof-icon" viewBox="0 0 256 256" aria-hidden="true"><defs><linearGradient id="prova-gradiente" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7B35E8"/><stop offset=".38" stop-color="#B875FF"/><stop offset=".68" stop-color="#9145F5"/><stop offset="1" stop-color="#684DB0"/></linearGradient></defs><path fill="url(#prova-gradiente)" d="M232.49,112.49l-48,48a12,12,0,0,1-17-17L195,116H128a84.09,84.09,0,0,0-84,84,12,12,0,0,1-24,0A108.12,108.12,0,0,1,128,92h67L167.51,64.48a12,12,0,0,1,17-17l48,48A12,12,0,0,1,232.49,112.49Z"/></svg></p>
-        <p class="text-sm text-black/50 leading-relaxed max-w-[34ch]">Cada negociação tem responsável, prazo e aviso antes do atraso.</p>
+      <div class="prova-item">
+        <dt class="prova-texto">aportados por empresas nas leis de incentivo em 2025</dt>
+        <dd class="stat-num stat-accent prova-num">R$ 5,3 bi</dd>
       </div>
-    </div>
+      <div class="prova-item">
+        <dt class="prova-texto">contatos de quem decide o patrocínio</dt>
+        <dd class="stat-num stat-accent prova-num">3.800+</dd>
+      </div>
+    </dl>
+    <p class="prova-fonte">Contas e negociações no Jards em novembro de 2026. Aportes e contatos: dados públicos das leis de Cultura, Esporte, Audiovisual e Saúde.</p>
   </div>
 </section>
 
