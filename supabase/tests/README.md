@@ -42,6 +42,8 @@
 
 `producao_modelos_dia.test.sql` confere a PD1.7 (modelos de dia da organização): quem lê e quem grava (administrador, colaborador, leitor, outra organização, produção só para leitura e visitante), a forma (nome de 1 a 120 letras e único na organização; lista de 1 a 60 blocos; cada bloco com tipo, título e duração inteira de 1 a 1440 minutos), a organização que não muda, a chave (o modelo sai com a organização) e o histórico. Ids `0d230000-…`, esquema `md`. Rode com a migration `producao_modelos_dia` na frente, se ainda não estiver aplicada. Em 04/11/2026, 17 de 18 no banco real na primeira rodada (a 18ª era um nome errado no próprio teste, já corrigido; o erro de nome repetido foi confirmado à parte).
 
+`producao_pautas.test.sql` confere a PD1.5 (a pauta do espaço): quem lê e quem grava (administrador, colaborador, leitor, o recorte "só onde está vinculado" por espaço, outra organização, produção só para leitura e visitante), a forma (período de até 366 dias, situação da lista, fila e validade só na pré-reserva, título), a coerência (sala e data da mesma organização, organização fixa), que duas confirmadas na mesma sala não são recusadas (conflito é aviso na tela) e o histórico. Ids `0d240000-…`, esquema `pa`. Rode com a migration `producao_pautas` na frente, se ainda não estiver aplicada. Em 04/11/2026, 20 de 20 no banco real.
+
 O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`, e `tests/producao-captacao-isolada-sql.test.ts` e `tests/producao-tabelas-por-organizacao-sql.test.ts` fazem o mesmo para a captação isolada e para as tabelas por organização.
 
 ## Rodar

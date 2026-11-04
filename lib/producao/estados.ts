@@ -73,3 +73,9 @@ export const TIPOS_DE_CARTAO_DO_DIA: readonly TipoDeCartaoDoDia[] = ["viagem", "
 /** `producao_tarefas.situacao`: a tarefa feita guarda a hora da conclusão. */
 export type SituacaoDaTarefa = "aberta" | "feita";
 export const SITUACOES_DA_TAREFA: readonly SituacaoDaTarefa[] = ["aberta", "feita"];
+
+// As pautas do espaço (PD1.5): o banco confere a lista num CHECK (supabase/migrations/*_producao_pautas.sql).
+
+/** `producao_pautas.situacao`: consulta, pré-reserva (com fila e validade), confirmada ou cancelada. */
+export type SituacaoDaPauta = "consulta" | "pre_reserva" | "confirmada" | "cancelada";
+export const SITUACOES_DA_PAUTA: readonly SituacaoDaPauta[] = ["consulta", "pre_reserva", "confirmada", "cancelada"];
