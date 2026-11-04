@@ -431,6 +431,37 @@
     .pipeline-photo,.team-photo { position:relative; aspect-ratio:1; overflow:hidden; border-radius:4px; background:rgba(40,37,37,.035); box-shadow:0 20px 54px rgba(40,37,37,.10); }
     .pipeline-photo img,.team-photo img { display:block; width:100%; height:100%; object-fit:cover; }
     .pipeline-photo img { object-position:center 45%; }
+
+    /* Lista de recursos sincronizada com o quadro ao lado: o item ativo abre a
+       descrição e preenche sua régua; o quadro troca de cena junto. */
+    .fs-list { display:grid; gap:2px; margin-top:26px; }
+    .fs-trigger { display:flex; align-items:flex-start; gap:13px; width:100%; padding:13px 10px; border:0; background:none; text-align:left; cursor:pointer; border-radius:4px; transition:background-color .18s ease; -webkit-tap-highlight-color:transparent; }
+    .fs-trigger:hover { background:rgba(13,13,13,.025); }
+    .fs-trigger:focus-visible { outline:2px solid #7259B5; outline-offset:-2px; }
+    .fs-bar { position:relative; width:3px; align-self:stretch; min-height:23px; margin-top:2px; border-radius:4px; background:rgba(40,37,37,.10); overflow:hidden; flex-shrink:0; }
+    .fs-bar i { position:absolute; inset:auto 0 0 0; height:0%; background:#684DB0; border-radius:4px; }
+    .fs-item.is-active .fs-bar i { animation:fs-preenche var(--fs-dur,6.4s) linear forwards; }
+    .fs-item.is-paused .fs-bar i { animation-play-state:paused; }
+    @keyframes fs-preenche { from{height:0%} to{height:100%} }
+    .fs-head { min-width:0; flex:1; }
+    .fs-title { display:block; font-size:15px; font-weight:650; line-height:1.4; color:rgba(40,37,37,.42); transition:color .22s ease; }
+    .fs-item.is-active .fs-title { color:#282525; }
+    .fs-body { display:grid; grid-template-rows:0fr; opacity:0; transition:grid-template-rows .34s cubic-bezier(.4,0,.2,1), opacity .2s ease; }
+    .fs-body p { margin:6px 0 0; overflow:hidden; padding-right:8px; font-size:13.5px; line-height:1.6; color:rgba(40,37,37,.55); }
+    .fs-item.is-active .fs-body { grid-template-rows:1fr; opacity:1; }
+
+    /* O palco é a foto real (não telas fabricadas): a cada item ativo, um
+       leve reenquadramento (zoom/pan) acompanha a troca, sem trocar a imagem. */
+    .fs-stage img { transition:transform 1.1s cubic-bezier(.22,.61,.36,1); will-change:transform; }
+    .fs-stage[data-pose="0"] img { transform:scale(1.04) translate(0,0); }
+    .fs-stage[data-pose="1"] img { transform:scale(1.11) translate(-1.5%,-1%); }
+    .fs-stage[data-pose="2"] img { transform:scale(1.16) translate(1.5%,1.2%); }
+    .fs-stage[data-pose="3"] img { transform:scale(1.08) translate(-1%,1.6%); }
+    @media (prefers-reduced-motion: reduce) {
+      .fs-stage img { transition:none; transform:none !important; }
+      .fs-item.is-active .fs-bar i { animation:none; height:100%; }
+      .fs-body { transition:none; }
+    }
     .art-bar { height:42px; padding:0 14px; display:flex; align-items:center; gap:7px; background:white; border-bottom:1px solid rgba(40,37,37,.07); }
     .art-dot { width:6px; height:6px; border-radius:50%; background:rgba(40,37,37,.13); }
     .art-title { margin-left:5px; font-size:10px; font-weight:700; color:rgba(40,37,37,.48); }
@@ -982,22 +1013,8 @@
     @media (prefers-reduced-motion: reduce) { .alt-nav-login, .lei-card-btn, .bi-destaque { transition:none; } }
 
     /* Menu de ponta a ponta: transparente no topo e branco com desfoque ao rolar */
-    .site-nav { border-bottom:1px solid transparent; transition:background-color .24s ease, border-color .24s ease; }
-    .site-nav.is-rolado { background:rgba(255,255,255,.84); border-bottom-color:rgba(13,13,13,.06); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%); }
-    /* No topo (fundo escuro do hero atrás do menu transparente), logo branca; ao rolar, a versão escura, sobre o fundo claro do menu. */
-    .site-nav-brand__rolado { display:none; }
-    .site-nav.is-rolado .site-nav-brand__topo { display:none; }
-    .site-nav.is-rolado .site-nav-brand__rolado { display:block; }
-    /* O resto do menu também precisa clarear sobre o hero escuro, enquanto a barra está transparente. */
-    .site-nav:not(.is-rolado) .menu-site__gatilho,
-    .site-nav:not(.is-rolado) .menu-site__link,
-    .site-nav:not(.is-rolado) .alt-nav-login,
-    .site-nav:not(.is-rolado) .menu-site__botao-celular { color:rgba(247,242,236,.78); }
-    .site-nav:not(.is-rolado) .menu-site__gatilho:hover,
-    .site-nav:not(.is-rolado) .menu-site__link:hover,
-    .site-nav:not(.is-rolado) .menu-site__gatilho[aria-expanded="true"] { color:#fff; background:rgba(255,255,255,.08); }
-    .site-nav:not(.is-rolado) .alt-nav-login:hover { color:#fff; }
-    .site-nav:not(.is-rolado) .menu-site__botao-celular:hover { background:rgba(255,255,255,.08); }
+    /* O menu fica sempre claro, mesmo sobre o hero escuro (não espera rolar). */
+    .site-nav { background:rgba(255,255,255,.84); border-bottom:1px solid rgba(13,13,13,.06); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%); }
     @media (prefers-reduced-motion: reduce) { .site-nav { transition:none; } }
 
   </style>
@@ -1009,10 +1026,7 @@
 <!-- ════════════════════════ NAV ════════════════════════ -->
 <header id="siteNav" class="site-nav fixed inset-x-0 top-0 z-50">
   <div class="px-5 md:px-8 h-16 flex items-center justify-between">
-    <a href="#top" aria-label="Voltar ao início" class="site-nav-brand">
-      <img src="assets/jards-logo-branco.svg" alt="Jards" class="h-7 site-nav-brand__topo" />
-      <img src="assets/jards-logo-escuro.svg" alt="Jards" class="h-7 site-nav-brand__rolado" />
-    </a>
+    <a href="#top" aria-label="Voltar ao início"><img src="assets/jards-logo-escuro.svg" alt="Jards" class="h-7" /></a>
 
     <nav class="menu-site" aria-label="Principal">
       <div class="menu-site__grupo" data-menu-grupo>
@@ -1174,6 +1188,10 @@
     </div>
     </div>
 
+    <span class="hero-anteater-detail">
+      <img src="assets/tamandua-telefone-transparent.png" alt="Tamanduá ao telefone" />
+      <span class="hero-anteater-olho" aria-hidden="true"></span>
+    </span>
   </div>
 </section>
 
@@ -2475,15 +2493,47 @@
         <p class="text-black/55 text-[15px] leading-relaxed mt-6 max-w-md">
           A Jards cuida da organização para a equipe cuidar das conversas.
         </p>
-        <ul class="story-list">
-          <li><strong>Histórico para todos.</strong> Cada pessoa sabe o que já aconteceu e o que vem agora.</li>
-          <li><strong>Prazos com dono.</strong> Cada prazo tem um responsável, do primeiro contato à entrega.</li>
-          <li><strong>Relação que continua.</strong> O histórico não some quando o contrato é assinado.</li>
-          <li><strong>Contatos com papel.</strong> Você marca quem decide, quem influencia e a força de cada relação.</li>
+        <ul class="fs-list" id="fsList">
+          <li class="fs-item is-active" data-feature="0">
+            <button type="button" class="fs-trigger" aria-expanded="true" aria-controls="fsStage">
+              <span class="fs-bar" aria-hidden="true"><i></i></span>
+              <span class="fs-head">
+                <span class="fs-title">Histórico para todos.</span>
+                <span class="fs-body"><p>Cada pessoa sabe o que já aconteceu e o que vem agora.</p></span>
+              </span>
+            </button>
+          </li>
+          <li class="fs-item" data-feature="1">
+            <button type="button" class="fs-trigger" aria-expanded="false" aria-controls="fsStage">
+              <span class="fs-bar" aria-hidden="true"><i></i></span>
+              <span class="fs-head">
+                <span class="fs-title">Prazos com dono.</span>
+                <span class="fs-body"><p>Cada prazo tem um responsável, do primeiro contato à entrega.</p></span>
+              </span>
+            </button>
+          </li>
+          <li class="fs-item" data-feature="2">
+            <button type="button" class="fs-trigger" aria-expanded="false" aria-controls="fsStage">
+              <span class="fs-bar" aria-hidden="true"><i></i></span>
+              <span class="fs-head">
+                <span class="fs-title">Relação que continua.</span>
+                <span class="fs-body"><p>O histórico não some quando o contrato é assinado.</p></span>
+              </span>
+            </button>
+          </li>
+          <li class="fs-item" data-feature="3">
+            <button type="button" class="fs-trigger" aria-expanded="false" aria-controls="fsStage">
+              <span class="fs-bar" aria-hidden="true"><i></i></span>
+              <span class="fs-head">
+                <span class="fs-title">Contatos com papel.</span>
+                <span class="fs-body"><p>Você marca quem decide, quem influencia e a força de cada relação.</p></span>
+              </span>
+            </button>
+          </li>
         </ul>
       </div>
 
-      <figure class="pipeline-photo reveal">
+      <figure class="pipeline-photo fs-stage reveal" id="fsStage" data-pose="0">
         <img src="assets/jards-conexao-orelhoes-tratada.png" alt="Duas pessoas conversando em orelhões diante de um edifício rosa em São Paulo" />
       </figure>
     </div>
@@ -3657,6 +3707,67 @@
   function atualizar() { nav.classList.toggle("is-rolado", window.scrollY > 8); }
   window.addEventListener("scroll", atualizar, { passive: true });
   atualizar();
+})();
+</script>
+<script>
+// Lista de recursos sincronizada com o quadro ao lado (seção "Patrocínio se
+// fecha com pessoas"): o item ativo abre, preenche sua régua por --fs-dur e
+// passa para o próximo; o quadro troca de cena junto. Clicar num item pula
+// direto para ele e reinicia a régua. O ponteiro sobre a lista pausa o avanço.
+(function () {
+  var lista = document.getElementById("fsList");
+  if (!lista) return;
+  var itens = Array.prototype.slice.call(lista.querySelectorAll(".fs-item"));
+  var palco = document.getElementById("fsStage");
+  if (!itens.length || !palco) return;
+  var DURACAO = 6400;
+  var reduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var atual = 0, timer = null, pausado = false;
+
+  function mostrar(indice) {
+    atual = indice;
+    itens.forEach(function (item, i) {
+      var ativo = i === indice;
+      item.classList.toggle("is-active", ativo);
+      item.querySelector(".fs-trigger").setAttribute("aria-expanded", ativo ? "true" : "false");
+    });
+    palco.dataset.pose = String(indice);
+  }
+
+  function agendar() {
+    clearTimeout(timer);
+    if (reduzido || pausado) return;
+    // Reinicia a animação da régua do item ativo (removendo e recolocando a classe).
+    var ativo = itens[atual];
+    ativo.classList.remove("is-active");
+    void ativo.offsetWidth;
+    ativo.classList.add("is-active");
+    timer = setTimeout(function () { mostrar((atual + 1) % itens.length); agendar(); }, DURACAO);
+  }
+
+  itens.forEach(function (item, i) {
+    item.querySelector(".fs-trigger").addEventListener("click", function () {
+      if (i === atual) return;
+      mostrar(i);
+      agendar();
+    });
+  });
+
+  lista.addEventListener("mouseenter", function () { pausado = true; clearTimeout(timer); itens[atual].classList.add("is-paused"); });
+  lista.addEventListener("mouseleave", function () { pausado = false; itens[atual].classList.remove("is-paused"); agendar(); });
+  lista.addEventListener("focusin", function () { pausado = true; clearTimeout(timer); itens[atual].classList.add("is-paused"); });
+  lista.addEventListener("focusout", function () { pausado = false; itens[atual].classList.remove("is-paused"); agendar(); });
+
+  if (!reduzido && "IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (entrada) {
+        if (entrada.isIntersecting) { agendar(); } else { clearTimeout(timer); }
+      });
+    }, { threshold: .4 });
+    io.observe(lista);
+  } else {
+    agendar();
+  }
 })();
 </script>
 <a
