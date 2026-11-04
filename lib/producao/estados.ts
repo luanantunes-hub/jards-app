@@ -61,3 +61,9 @@ export const SITUACOES_DO_VINCULO: readonly SituacaoDoVinculo[] = ["prevista", "
 /** `producao_escalas.confirmacao`: a resposta da pessoa à escala da data. */
 export type ConfirmacaoDaEscala = "pendente" | "confirmada" | "recusada";
 export const CONFIRMACOES_DA_ESCALA: readonly ConfirmacaoDaEscala[] = ["pendente", "confirmada", "recusada"];
+
+// Viagem e hospedagem do dia (PD1.8): o banco confere a lista num CHECK (supabase/migrations/*_producao_cartoes_dia.sql).
+
+/** `producao_cartoes_dia.tipo`: um cartão de cada tipo por data. */
+export type TipoDeCartaoDoDia = "viagem" | "hospedagem";
+export const TIPOS_DE_CARTAO_DO_DIA: readonly TipoDeCartaoDoDia[] = ["viagem", "hospedagem"];
