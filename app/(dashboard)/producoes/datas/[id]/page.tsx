@@ -23,6 +23,8 @@ import { HistoricoDaData } from "@/components/producao/HistoricoDaData";
 import { ArquivosDaData } from "@/components/producao/ArquivosDaData";
 import { NotasDaData } from "@/components/producao/NotasDaData";
 import { CopiarDiaSheet } from "@/components/producao/CopiarDiaSheet";
+import { SalvarModeloDoDiaSheet } from "@/components/producao/SalvarModeloDoDiaSheet";
+import { blocosParaModelo, modeloDaOrganizacao, type ModeloGuardado } from "@/lib/producao/modelos-dia";
 
 type Data = {
   id: string; temporada_id: string; data: string; data_fim: string | null; tipo: TipoData; situacao: SituacaoDaData; uf: string | null; fuso: string;
@@ -42,6 +44,8 @@ export default function DataPage() {
   const [blocos, setBlocos] = useState<Bloco[]>([]);
   const [folha, setFolha] = useState(false);
   const [copiar, setCopiar] = useState(false);
+  const [salvarModelo, setSalvarModelo] = useState(false);
+  const [modelosDaOrganizacao, setModelosDaOrganizacao] = useState<ModeloGuardado[]>([]);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const [modeloId, setModeloId] = useState("");
@@ -54,11 +58,13 @@ export default function DataPage() {
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [dat, blo] = await Promise.all([
+      const [dat, blo, mod] = await Promise.all([
         producao.from("producao_datas").select("id, temporada_id, data, data_fim, tipo, situacao, uf, fuso, temporada:producao_temporadas!temporada_id(titulo, tipo, lado)").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
         producao.from("producao_blocos").select("id, dia, inicio, fim, exibicao, tipo, titulo, confirmado, ordem").eq("data_id", id),
+        producao.from("producao_modelos_dia").select("id, nome, blocos").eq("organization_id", organizationId).order("nome"),
       ]);
       if (!ativo) return;
+      setModelosDaOrganizacao((mod.data ?? []) as ModeloGuardado[]);
       setData(dat.error ? null : (dat.data as Data | null));
       setBlocos((blo.data ?? []) as Bloco[]);
     })();
@@ -67,7 +73,11 @@ export default function DataPage() {
 
   const fuso = data?.fuso ?? FUSO_PADRAO;
   const ordenados = useMemo(() => ordenarBlocos(blocos), [blocos]);
-  const modelos = useMemo(() => (data?.temporada ? modelosDeDia(data.temporada.tipo as TipoProducao) : []), [data]);
+  const modelos = useMemo(() => {
+    const doTipo = data?.temporada ? modelosDeDia(data.temporada.tipo as TipoProducao) : [];
+    return [...doTipo, ...modelosDaOrganizacao.map(modelo => modeloDaOrganizacao(modelo, data?.tipo ?? "outro"))];
+  }, [data, modelosDaOrganizacao]);
+  const blocosParaSalvar = useMemo(() => blocosParaModelo(blocos), [blocos]);
   const modeloEscolhido = modelos.find(item => item.id === modeloId) ?? modelos.find(item => item.tipoData === data?.tipo) ?? modelos[0];
   const recarregar = () => setVersao(atual => atual + 1);
 
@@ -144,6 +154,7 @@ export default function DataPage() {
             <h2 id="o-dia" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">O dia</h2>
             {podeEditar && blocos.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setSalvarModelo(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Salvar como modelo</button>
                 <button type="button" onClick={() => setCopiar(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Copiar para outras datas</button>
                 <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>
               </div>
@@ -205,6 +216,9 @@ export default function DataPage() {
         {organizationId && <HistoricoDaData dataId={data.id} />}
       </DetailPageContent>
 
+      {salvarModelo && organizationId && (
+        <SalvarModeloDoDiaSheet organizationId={organizationId} blocos={blocosParaSalvar} onClose={() => setSalvarModelo(false)} onSaved={recarregar} />
+      )}
       {copiar && organizationId && (
         <CopiarDiaSheet organizationId={organizationId} temporadaId={data.temporada_id} dataId={data.id} dia={data.data} fuso={fuso} onClose={() => setCopiar(false)} onCopied={recarregar} />
       )}
