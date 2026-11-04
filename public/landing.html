@@ -462,8 +462,8 @@
     .assignment-row strong { font-size:9px; color:#282525; }
     .assignment-badge { justify-self:start; border:1px solid rgba(104,77,176,.24); color:#684DB0; padding:3px 6px; border-radius:4px; font-weight:700; white-space:nowrap; }
 
-    .platform-forces { position:relative; isolation:isolate; min-height:clamp(700px,108dvh,880px); display:flex; align-items:center; overflow:hidden; background:#F7F7F5; }
-    .platform-forces::before { content:""; position:absolute; inset:0; z-index:-3; background:#F7F7F5; }
+    .platform-forces { position:relative; isolation:isolate; min-height:clamp(700px,108dvh,880px); display:flex; align-items:center; overflow:hidden; background:#1C0E33; }
+    .platform-forces::before { content:""; position:absolute; inset:0; z-index:-3; background:#1C0E33; }
     .platform-forces::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.20; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
     /* Prancheta: linhas de construção alinhadas à página e os módulos do
        símbolo feitos a compasso (desenhados pelo script "Prancheta"). */
@@ -483,10 +483,21 @@
     .closing-cta .pr-arco { stroke:rgba(199,182,238,.26); }
     .closing-cta .pr-marca { stroke:rgba(199,182,238,.55); }
     .closing-cta .pr-nota { fill:rgba(199,182,238,.55); }
+    .landing-hero .pr-linha, .platform-forces .pr-linha { stroke:rgba(199,182,238,.3); }
+    .landing-hero .pr-linha.is-guia, .platform-forces .pr-linha.is-guia { stroke:rgba(199,182,238,.22); }
+    .landing-hero .pr-linha.is-forte, .platform-forces .pr-linha.is-forte { stroke:rgba(199,182,238,.55); }
+    .landing-hero .pr-arco, .platform-forces .pr-arco { stroke:rgba(199,182,238,.26); }
+    .landing-hero .pr-marca, .platform-forces .pr-marca { stroke:rgba(199,182,238,.55); }
+    .landing-hero .pr-nota, .platform-forces .pr-nota { fill:rgba(199,182,238,.55); }
+    .landing-hero .alt-link { color:rgba(247,242,236,.75); }
+    .landing-hero .alt-link:hover { color:#fff; }
+    .landing-hero .alt-cta { background:#8E63F5; color:#1C0E33; }
+    .landing-hero .alt-cta:hover { background:#A58BE6; }
+    .landing-hero .alt-cta:focus-visible { outline-color:#C7B6EE; }
     .pr-host { position:relative; isolation:isolate; }
     /* A linha que chega ao botão principal escurece quando ele é apontado. */
     .pr-cta, .pr-aguada-cor, line[data-forca] { transition:stroke .2s ease, fill-opacity .2s ease; }
-    .landing-hero:has(.hero-actions .alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:rgba(40,37,37,.75); }
+    .landing-hero:has(.hero-actions .alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:rgba(199,182,238,.8); }
     .closing-cta:has(.alt-cta:is(:hover,:focus-visible)) .pr-cta { stroke:rgba(199,182,238,.8); }
     /* Passar o mouse numa das três forças acende o módulo dela na margem. */
     .platform-forces:has(.ledger-item:nth-child(1):hover) [data-forca="1"].pr-aguada-cor,
@@ -494,7 +505,7 @@
     .platform-forces:has(.ledger-item:nth-child(3):hover) [data-forca="3"].pr-aguada-cor { fill-opacity:.34; }
     .platform-forces:has(.ledger-item:nth-child(1):hover) line[data-forca="1"],
     .platform-forces:has(.ledger-item:nth-child(2):hover) line[data-forca="2"],
-    .platform-forces:has(.ledger-item:nth-child(3):hover) line[data-forca="3"] { stroke:rgba(40,37,37,.55); }
+    .platform-forces:has(.ledger-item:nth-child(3):hover) line[data-forca="3"] { stroke:rgba(199,182,238,.75); }
     @media print {
       .prancheta, .jards-flow-step::before { display:none !important; }
       html.js .reveal { opacity:1 !important; transform:none !important; }
@@ -502,14 +513,14 @@
     @media (forced-colors: active) { .prancheta, .jards-flow-step::before { display:none; } }
     .feature-ledger { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr); width:100%; overflow:hidden; border:1px solid rgba(40,37,37,.10); background:rgba(255,255,255,.88); box-shadow:0 24px 70px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.75); backdrop-filter:blur(18px) saturate(120%); -webkit-backdrop-filter:blur(18px) saturate(120%); }
     /* sem a linha do tempo (o fluxo já conta a jornada) e sem numerais: o texto fica centrado na altura das três forças */
-    .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(40,37,37,.10); }
+    .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(247,242,236,.14); }
     .ledger-side { display:grid; grid-template-rows:repeat(3,auto); }
-    .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(40,37,37,.10); transition:background-color .25s ease; }
-    .ledger-item:hover { background:rgba(13,13,13,.025); }
+    .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(247,242,236,.14); transition:background-color .25s ease; }
+    .ledger-item:hover { background:rgba(247,242,236,.04); }
     .ledger-item:last-child { border-bottom:0; }
-    .ledger-item .ledger-num { margin-bottom:10px; font-size:11px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:rgba(40,37,37,.48); }
-    .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.1; letter-spacing:-.015em; margin-bottom:8px; }
-    .ledger-item p { max-width:40ch; font-size:13px; line-height:1.6; color:rgba(40,37,37,.55); }
+    .ledger-item .ledger-num { margin-bottom:10px; font-size:11px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:#A58BE6; }
+    .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.1; letter-spacing:-.015em; margin-bottom:8px; color:#F7F2EC; }
+    .ledger-item p { max-width:40ch; font-size:13px; line-height:1.6; color:rgba(247,242,236,.62); }
 
     @media (max-width: 767px) {
       .kanban-art { grid-template-columns:repeat(4,150px); overflow-x:auto; }
@@ -526,8 +537,8 @@
     }
 
     .landing-nav-shell { margin-top:10px; border:1px solid rgba(40,37,37,.08); border-radius:4px; background:rgba(255,255,255,.76); backdrop-filter:blur(22px) saturate(150%); -webkit-backdrop-filter:blur(22px) saturate(150%); box-shadow:0 12px 44px rgba(104,77,176,.09),inset 0 1px 0 rgba(255,255,255,.8); }
-    .landing-hero { position:relative; isolation:isolate; overflow:hidden; min-height:100dvh; background:radial-gradient(120% 90% at 85% 15%,#C7B6EE 0%,#E4DCF5 38%,#F3EFF9 68%); }
-    .landing-hero::before { content:""; position:absolute; inset:0; z-index:-3; background:radial-gradient(120% 90% at 85% 15%,#C7B6EE 0%,#E4DCF5 38%,#F3EFF9 68%); }
+    .landing-hero { position:relative; isolation:isolate; overflow:hidden; min-height:100dvh; background:#1C0E33; }
+    .landing-hero::before { content:""; position:absolute; inset:0; z-index:-3; background:#1C0E33; }
     .landing-hero::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.22; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
     .pricing-pro-card { border:1px solid rgba(142,99,245,.32); background:linear-gradient(165deg,#1C0E33,#2E1747 60%,#3A1A4A); box-shadow:0 22px 60px rgba(52,42,78,.2),inset 0 1px 0 rgba(142,99,245,.5); }
     .closing-cta { position:relative; isolation:isolate; overflow:hidden; background:#1C0E33; }
@@ -613,8 +624,8 @@
     }
     .hero-layout { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); align-items:center; gap:40px; width:min(1480px,100%); min-height:100dvh; margin:auto; padding:112px 40px 72px; }
     .hero-copy { min-width:0; text-align:left; }
-    .hero-copy h1 { max-width:100%; margin:0; font-size:clamp(52px,5.2vw,80px); font-weight:700; line-height:.98; letter-spacing:-.06em; color:#282525; text-wrap:balance; }
-    .hero-description { max-width:43ch; margin-top:24px; font-size:17px; line-height:1.65; color:#625f68; }
+    .hero-copy h1 { max-width:100%; margin:0; font-size:clamp(52px,5.2vw,80px); font-weight:700; line-height:.98; letter-spacing:-.06em; color:#F7F2EC; text-wrap:balance; }
+    .hero-description { max-width:43ch; margin-top:24px; font-size:17px; line-height:1.65; color:rgba(247,242,236,.68); }
     .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
     .hero-actions a { white-space:nowrap; }
     .hero-visual { position:relative; justify-self:end; min-width:0; width:90%; aspect-ratio:1424 / 960; }
@@ -855,8 +866,10 @@
 
     /* Uma superfície neutra só */
     .alt-surface { background:var(--alt-surface); }
-    #leis-incentivo.alt-surface { background:linear-gradient(160deg,#FDF1F0,#F9D6D1 140%); }
-    #conector-ia.alt-surface { background:linear-gradient(170deg,#E4DCF5,#F3EFF9 70%); }
+    #leis-incentivo.alt-surface, #conector-ia.alt-surface { background:#FFFFFF; }
+    .leis-quadro { background:linear-gradient(160deg,#FDF1F0,#F9D6D1 140%); border-radius:4px; padding:28px; }
+    .mcp-quadro { background:linear-gradient(170deg,#E4DCF5,#F3EFF9 70%); border-radius:4px; padding:28px; }
+    @media (max-width:640px) { .leis-quadro, .mcp-quadro { padding:18px; } }
 
     /* Grade: texto do hero alinhado ao contêiner de 1152px (o mockup continua sangrando à direita) */
     @media (min-width:1024px) {
@@ -974,6 +987,20 @@
     /* Menu de ponta a ponta: transparente no topo e branco com desfoque ao rolar */
     .site-nav { border-bottom:1px solid transparent; transition:background-color .24s ease, border-color .24s ease; }
     .site-nav.is-rolado { background:rgba(255,255,255,.84); border-bottom-color:rgba(13,13,13,.06); backdrop-filter:blur(18px) saturate(150%); -webkit-backdrop-filter:blur(18px) saturate(150%); }
+    /* No topo (fundo escuro do hero atrás do menu transparente), logo branca; ao rolar, a versão escura, sobre o fundo claro do menu. */
+    .site-nav-brand__rolado { display:none; }
+    .site-nav.is-rolado .site-nav-brand__topo { display:none; }
+    .site-nav.is-rolado .site-nav-brand__rolado { display:block; }
+    /* O resto do menu também precisa clarear sobre o hero escuro, enquanto a barra está transparente. */
+    .site-nav:not(.is-rolado) .menu-site__gatilho,
+    .site-nav:not(.is-rolado) .menu-site__link,
+    .site-nav:not(.is-rolado) .alt-nav-login,
+    .site-nav:not(.is-rolado) .menu-site__botao-celular { color:rgba(247,242,236,.78); }
+    .site-nav:not(.is-rolado) .menu-site__gatilho:hover,
+    .site-nav:not(.is-rolado) .menu-site__link:hover,
+    .site-nav:not(.is-rolado) .menu-site__gatilho[aria-expanded="true"] { color:#fff; background:rgba(255,255,255,.08); }
+    .site-nav:not(.is-rolado) .alt-nav-login:hover { color:#fff; }
+    .site-nav:not(.is-rolado) .menu-site__botao-celular:hover { background:rgba(255,255,255,.08); }
     @media (prefers-reduced-motion: reduce) { .site-nav { transition:none; } }
 
   </style>
@@ -985,7 +1012,10 @@
 <!-- ════════════════════════ NAV ════════════════════════ -->
 <header id="siteNav" class="site-nav fixed inset-x-0 top-0 z-50">
   <div class="px-5 md:px-8 h-16 flex items-center justify-between">
-    <a href="#top" aria-label="Voltar ao início"><img src="assets/jards-logo.svg" alt="Jards" class="h-7" /></a>
+    <a href="#top" aria-label="Voltar ao início" class="site-nav-brand">
+      <img src="assets/jards-logo-branco.svg" alt="Jards" class="h-7 site-nav-brand__topo" />
+      <img src="assets/jards-logo-escuro.svg" alt="Jards" class="h-7 site-nav-brand__rolado" />
+    </a>
 
     <nav class="menu-site" aria-label="Principal">
       <div class="menu-site__grupo" data-menu-grupo>
@@ -1037,10 +1067,9 @@
 
 <!-- ════════════════════════ HERO ════════════════════════ -->
 <section id="top" class="landing-hero">
-  <div class="prancheta" data-prancheta="topo" aria-hidden="true"></div>
   <div class="hero-layout">
     <div class="hero-copy">
-    <p class="alt-kicker mb-6">Inteligência e operação para patrocínios</p>
+    <p class="alt-kicker alt-kicker--on-dark mb-6">Inteligência e operação para patrocínios</p>
     <h1 class="font-display">
       Projetos avançam quando tudo se conecta.
     </h1>
@@ -1148,10 +1177,6 @@
     </div>
     </div>
 
-    <span class="hero-anteater-detail">
-      <img src="assets/tamandua-telefone-transparent.png" alt="Tamanduá ao telefone" />
-      <span class="hero-anteater-olho" aria-hidden="true"></span>
-    </span>
   </div>
 </section>
 
@@ -1380,7 +1405,6 @@
 
 <!-- ════════════════════════ LEIS DE INCENTIVO ════════════════════════ -->
 <section id="leis-incentivo" class="section-space alt-surface pr-host px-6">
-  <div class="prancheta" data-prancheta="leis" aria-hidden="true"></div>
   <div class="max-w-6xl mx-auto">
     <div class="mb-10 reveal">
       <p class="alt-kicker">Cobertura de leis</p>
@@ -1389,7 +1413,7 @@
       </h2>
     </div>
 
-    <div class="grid md:grid-cols-[2fr_1fr] gap-6 items-stretch">
+    <div class="grid md:grid-cols-[2fr_1fr] gap-6 items-stretch leis-quadro">
       <!-- Lista de patrocinadores, no padrão real do app, com demo animada do perfil -->
       <div id="leis-painel" class="relative rounded border" style="border-color:rgba(13,13,13,.08);z-index:2">
         <div class="relative flex items-center justify-between px-5 py-3" style="background:#F9F9F8;border-bottom:1px solid rgba(13,13,13,.07);border-radius:3px 3px 0 0;z-index:2">
@@ -1893,15 +1917,14 @@
 
 <!-- ════════════════════════ PILARES DA PLATAFORMA ════════════════════════ -->
 <section id="plataforma-forcas" class="platform-forces section-space px-6">
-  <div class="prancheta" data-prancheta="forcas" aria-hidden="true"></div>
   <div class="max-w-6xl mx-auto feature-ledger reveal">
     <div class="ledger-main">
-      <p class="alt-kicker">A plataforma por inteiro</p>
-      <h2 class="alt-h2 alt-h2--section font-display mb-5">
+      <p class="alt-kicker alt-kicker--on-dark">A plataforma por inteiro</p>
+      <h2 class="alt-h2 alt-h2--section font-display mb-5" style="color:#F7F2EC">
         <span class="alt-h2-line">Uma plataforma.</span>
         <span class="alt-h2-line">Três forças trabalhando juntas.</span>
       </h2>
-      <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
+      <p class="text-white/65 text-[15px] leading-relaxed max-w-lg">
         A informação encontra a operação. A operação preserva a relação e cada parceria ganha continuidade.
       </p>
     </div>
@@ -2445,7 +2468,6 @@
 
 <!-- ════════════════════════ TECNOLOGIA E PROXIMIDADE ════════════════════════ -->
 <section id="operacao" class="bg-white pr-host px-6">
-  <div class="prancheta" data-prancheta="orelhoes" aria-hidden="true"></div>
   <div class="section-space max-w-6xl mx-auto product-story">
     <div class="alt-operacao-grid">
       <div class="reveal">
@@ -2474,9 +2496,8 @@
 
 <!-- ════════════════════════ CONECTOR MCP ════════════════════════ -->
 <section id="conector-ia" class="section-space alt-surface pr-host px-6">
-  <div class="prancheta" data-prancheta="conector" aria-hidden="true"></div>
   <div class="max-w-6xl mx-auto">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center mcp-quadro">
       <div class="reveal min-w-0">
         <p class="alt-kicker">Conector MCP</p>
         <h2 class="alt-h2 alt-h2--section font-display">
@@ -2768,7 +2789,6 @@
 
 <!-- ════════════════════════ CTA FINAL ════════════════════════ -->
 <section class="closing-cta section-space px-6" aria-labelledby="fechamento-titulo">
-  <div class="prancheta" data-prancheta="fechamento" aria-hidden="true"></div>
   <div class="max-w-3xl mx-auto text-center reveal">
     <p class="alt-kicker alt-kicker--on-dark">Toda a jornada conectada</p>
     <h2 id="fechamento-titulo" class="alt-h2 alt-h2--section font-display text-white mb-5">
