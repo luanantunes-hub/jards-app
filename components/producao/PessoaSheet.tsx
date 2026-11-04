@@ -5,6 +5,7 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
+import { AcessoDaFolha } from "@/components/producao/AcessoDaFolha";
 import { lerPessoa, ROTULO_DO_TIPO_DE_PESSOA, rotuloDoTipoDePessoa, TIPOS_DE_PESSOA } from "@/lib/producao/equipe";
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
@@ -87,6 +88,7 @@ export function PessoaSheet({ organizationId, pessoa, onClose, onSaved }: {
             <input id="pessoa-telefone" type="tel" className={CAMPO} value={telefone} onChange={event => setTelefone(event.target.value)} maxLength={40} disabled={salvando} />
           </div>
         </div>
+        {pessoa && !pessoa.arquivada && <AcessoDaFolha organizationId={organizationId} pessoaId={pessoa.id} email={pessoa.email} />}
         <p className="text-[0.6875rem] text-black/40">Documentos, banco e dados de saúde ainda não são cadastrados aqui.</p>
       </div>
     </TopSheet>

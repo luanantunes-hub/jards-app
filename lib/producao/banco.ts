@@ -627,6 +627,60 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_acessos_equipe: {
+        Row: {
+          id: string;
+          organization_id: string;
+          pessoa_id: string;
+          email: string;
+          user_id: string | null;
+          convidado_por: string | null;
+          aceito_em: string | null;
+          revogado_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          pessoa_id: string;
+          email: string;
+          user_id?: string | null;
+          convidado_por?: string | null;
+          aceito_em?: string | null;
+          revogado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          pessoa_id?: string;
+          email?: string;
+          user_id?: string | null;
+          convidado_por?: string | null;
+          aceito_em?: string | null;
+          revogado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_acessos_equipe_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acessos_equipe_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_arquivos: {
         Row: {
           id: string;
