@@ -943,24 +943,17 @@
     .alt-proof-icon { display:block; flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); height:var(--alt-proof-mark); color:var(--alt-purple); }
     .alt-proof-mark { flex:0 0 var(--alt-proof-mark); width:var(--alt-proof-mark); }
     /* Faixa de prova como leitura de instrumento: rótulo em mono, valor grande, descrição */
-    .prova-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); margin:0; }
-    .prova-item { display:flex; flex-direction:column-reverse; justify-content:flex-end; gap:10px; padding:28px 12px 28px 0; border-top:1px solid rgba(13,13,13,.1); }
-    .prova-item:nth-child(-n+2) { border-top:0; }
-    .prova-item:nth-child(even) { padding-left:16px; padding-right:0; border-left:1px solid rgba(13,13,13,.1); }
+    .prova-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:32px; margin:0; }
+    .prova-item { position:relative; display:flex; flex-direction:column-reverse; justify-content:flex-end; gap:10px; padding:26px 0; }
+    .prova-item:nth-child(even)::before { content:""; position:absolute; top:0; bottom:0; left:-16px; width:1px; background:rgba(13,13,13,.1); }
     .prova-num { margin:0; font-size:clamp(26px,7vw,48px); line-height:1; white-space:nowrap; }
-    .prova-texto { max-width:26ch; font-size:13px; line-height:1.5; color:rgba(13,13,13,.58); text-wrap:balance; }
-    .prova-fonte { margin:0; padding:0 0 22px; font-family:var(--font-mono); font-size:11px; line-height:1.5; color:rgba(13,13,13,.42); }
-    @media (min-width:560px) {
-      .prova-item { padding:36px 24px 36px 0; }
-      .prova-item:nth-child(even) { padding-left:24px; }
-      .prova-texto { font-size:14px; }
-    }
+    .prova-texto { max-width:22ch; font-size:14px; line-height:1.45; color:rgba(13,13,13,.58); text-wrap:balance; }
     @media (min-width:1024px) {
-      .prova-grid { grid-template-columns:repeat(4,minmax(0,1fr)); }
+      .prova-grid { grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:56px; }
+      .prova-item { padding:44px 0; }
+      .prova-item:not(:first-child)::before { content:""; position:absolute; top:0; bottom:0; left:-28px; width:1px; background:rgba(13,13,13,.1); }
       .prova-num { font-size:clamp(40px,4.2vw,52px); }
-      .prova-item, .prova-item:nth-child(even) { padding:44px 28px 40px; border-top:0; border-left:1px solid rgba(13,13,13,.1); }
-      .prova-item:first-child { padding-left:0; border-left:0; }
-      .prova-item:last-child { padding-right:0; }
+      .prova-texto { font-size:15px; }
     }
     .proof-rotulo { margin:0 0 18px; font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.08em; line-height:1.3; text-transform:uppercase; color:rgba(13,13,13,.55); }
     .proof-valor { display:flex; align-items:center; height:52px; margin:0 0 16px; font-size:52px; line-height:1; }
@@ -1276,23 +1269,22 @@
   <div class="max-w-6xl mx-auto">
     <dl class="prova-grid">
       <div class="prova-item">
-        <dt class="prova-texto">captadores e produtores com conta no Jards</dt>
+        <dt class="prova-texto">captadores e produtores já estão por aqui</dt>
         <dd class="stat-num stat-accent prova-num">140+</dd>
       </div>
       <div class="prova-item">
-        <dt class="prova-texto">em patrocínios negociados pelo Jards</dt>
+        <dt class="prova-texto">em patrocínios negociados no Jards</dt>
         <dd class="stat-num stat-accent prova-num">R$ 40 mi+</dd>
       </div>
       <div class="prova-item">
-        <dt class="prova-texto">aportados por empresas nas leis de incentivo em 2025</dt>
+        <dt class="prova-texto">investidos por empresas em 2025</dt>
         <dd class="stat-num stat-accent prova-num">R$ 5,3 bi</dd>
       </div>
       <div class="prova-item">
-        <dt class="prova-texto">contatos de quem decide o patrocínio</dt>
+        <dt class="prova-texto">pessoas que decidem patrocínios</dt>
         <dd class="stat-num stat-accent prova-num">3.800+</dd>
       </div>
     </dl>
-    <p class="prova-fonte">Contas e negociações no Jards em novembro de 2026. Aportes e contatos: dados públicos das leis de Cultura, Esporte, Audiovisual e Saúde.</p>
   </div>
 </section>
 
