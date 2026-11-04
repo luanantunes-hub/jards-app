@@ -450,18 +450,34 @@
     .fs-body p { margin:6px 0 0; overflow:hidden; padding-right:8px; font-size:13.5px; line-height:1.6; color:rgba(40,37,37,.55); }
     .fs-item.is-active .fs-body { grid-template-rows:1fr; opacity:1; }
 
-    /* O palco é a foto real (não telas fabricadas): a cada item ativo, um
-       leve reenquadramento (zoom/pan) acompanha a troca, sem trocar a imagem. */
+    /* A foto real continua o palco (não telas fabricadas): a cada item ativo, um
+       leve reenquadramento (zoom/pan) acompanha a troca. Por cima, na base da
+       foto, um cartão com o dado daquele item — como na referência do cal.com. */
     .fs-stage img { transition:transform 1.1s cubic-bezier(.22,.61,.36,1); will-change:transform; }
     .fs-stage[data-pose="0"] img { transform:scale(1.04) translate(0,0); }
     .fs-stage[data-pose="1"] img { transform:scale(1.11) translate(-1.5%,-1%); }
     .fs-stage[data-pose="2"] img { transform:scale(1.16) translate(1.5%,1.2%); }
     .fs-stage[data-pose="3"] img { transform:scale(1.08) translate(-1%,1.6%); }
+    .fs-card { position:absolute; left:0; right:0; bottom:0; z-index:2; }
+    .fs-card-inner { position:absolute; inset:0 0 auto 0; padding:18px 20px 20px; background:#fff; border-radius:4px 4px 0 0; box-shadow:0 -12px 30px -14px rgba(40,37,37,.28); opacity:0; transform:translateY(14px); transition:opacity .38s ease, transform .4s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    .fs-card-inner.is-active { position:relative; opacity:1; transform:none; pointer-events:auto; }
+    .fs-card-kicker { font-size:9.5px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:rgba(40,37,37,.38); margin:0 0 10px; }
+    .fs-card-row { display:flex; align-items:center; gap:11px; }
+    .fs-avatar { display:grid; place-items:center; width:30px; height:30px; border-radius:4px; background:linear-gradient(145deg,#fff 0%,rgba(104,77,176,.08) 42%,rgba(104,77,176,.2) 100%); color:#684DB0; font-size:10.5px; font-weight:700; flex-shrink:0; }
+    .fs-card-main { min-width:0; flex:1; display:flex; flex-direction:column; gap:1px; }
+    .fs-card-main strong { font-size:12.5px; font-weight:650; color:#282525; }
+    .fs-card-main span { font-size:11px; color:rgba(40,37,37,.48); }
+    .fs-chip { display:inline-flex; align-items:center; height:22px; padding:0 9px; border-radius:4px; font-size:10px; font-weight:650; white-space:nowrap; flex-shrink:0; }
+    .fs-chip--roxo { background:rgba(104,77,176,.1); color:#684DB0; }
+    .fs-chip--ok { background:rgba(46,137,50,.1); color:#2E8932; }
+    .fs-chip--ambar { background:rgba(176,122,20,.1); color:#B07A14; }
     @media (prefers-reduced-motion: reduce) {
       .fs-stage img { transition:none; transform:none !important; }
+      .fs-card-inner { transition:none; }
       .fs-item.is-active .fs-bar i { animation:none; height:100%; }
       .fs-body { transition:none; }
     }
+    @media (max-width:767px) { .fs-card-inner { padding:15px 16px 17px; } }
     .art-bar { height:42px; padding:0 14px; display:flex; align-items:center; gap:7px; background:white; border-bottom:1px solid rgba(40,37,37,.07); }
     .art-dot { width:6px; height:6px; border-radius:50%; background:rgba(40,37,37,.13); }
     .art-title { margin-left:5px; font-size:10px; font-weight:700; color:rgba(40,37,37,.48); }
@@ -2535,6 +2551,51 @@
 
       <figure class="pipeline-photo fs-stage reveal" id="fsStage" data-pose="0">
         <img src="assets/jards-conexao-orelhoes-tratada.png" alt="Duas pessoas conversando em orelhões diante de um edifício rosa em São Paulo" />
+        <div class="fs-card">
+          <div class="fs-card-inner is-active" data-card="0">
+            <p class="fs-card-kicker">Indústrias Reunidas Matarazzo</p>
+            <div class="fs-card-row">
+              <span class="fs-avatar">LA</span>
+              <div class="fs-card-main">
+                <strong>Contrato de patrocínio assinado</strong>
+                <span>Luan Antunes · hoje, 14h32</span>
+              </div>
+            </div>
+          </div>
+          <div class="fs-card-inner" data-card="1">
+            <p class="fs-card-kicker">Prazos em aberto</p>
+            <div class="fs-card-row">
+              <span class="fs-avatar">LA</span>
+              <div class="fs-card-main">
+                <strong>Enviar proposta à Ambev</strong>
+                <span>Luan Antunes</span>
+              </div>
+              <span class="fs-chip fs-chip--ambar">Sex, 14h</span>
+            </div>
+          </div>
+          <div class="fs-card-inner" data-card="2">
+            <p class="fs-card-kicker">Indústrias Reunidas Matarazzo</p>
+            <div class="fs-card-row">
+              <span class="fs-avatar">3×</span>
+              <div class="fs-card-main">
+                <strong>Terceiro ciclo seguido</strong>
+                <span>Patrocínio institucional, desde 2024</span>
+              </div>
+              <span class="fs-chip fs-chip--ok">Renovado</span>
+            </div>
+          </div>
+          <div class="fs-card-inner" data-card="3">
+            <p class="fs-card-kicker">Responsáveis na Ambev</p>
+            <div class="fs-card-row">
+              <span class="fs-avatar">MA</span>
+              <div class="fs-card-main">
+                <strong>Marina Alves</strong>
+                <span>Decide a parceria</span>
+              </div>
+              <span class="fs-chip fs-chip--roxo">Decide</span>
+            </div>
+          </div>
+        </div>
       </figure>
     </div>
   </div>
@@ -3719,6 +3780,7 @@
   if (!lista) return;
   var itens = Array.prototype.slice.call(lista.querySelectorAll(".fs-item"));
   var palco = document.getElementById("fsStage");
+  var cartoes = palco ? Array.prototype.slice.call(palco.querySelectorAll(".fs-card-inner")) : [];
   if (!itens.length || !palco) return;
   var DURACAO = 6400;
   var reduzido = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -3732,6 +3794,7 @@
       item.querySelector(".fs-trigger").setAttribute("aria-expanded", ativo ? "true" : "false");
     });
     palco.dataset.pose = String(indice);
+    cartoes.forEach(function (cartao, i) { cartao.classList.toggle("is-active", i === indice); });
   }
 
   function agendar() {
