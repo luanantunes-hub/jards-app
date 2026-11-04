@@ -171,6 +171,29 @@ As três que o dono achou "mais ou menos" completam detalhes:
 
 ---
 
+### 3.1 Como trabalhar sem gastar à toa (custo de implementação)
+
+Regras para as entregas daqui para a frente. Valem para quem implementa, pessoa ou agente.
+
+**Modelo certo para cada tarefa**
+
+| Tarefa | Modelo |
+|---|---|
+| Desenho do banco, regras de acesso (RLS), migrations, qualquer coisa que toca dado de cliente | O mais forte (Opus): um erro aqui custa caro |
+| Telas que seguem um padrão que já existe, testes, documentação, PR e CI | O intermediário (Sonnet): é a maior parte do volume |
+| Tarefa mecânica (renomear, conferir lint, resumir log de CI, montar prints) | O mais barato (Haiku) ou um subagente |
+
+**Regras**
+1. **Teste de banco: primeiro local, depois uma vez no banco real.** Rodar o pgTAP num Postgres local e só então mandar o bloco ao conector, uma vez, para confirmar. Colar o mesmo bloco grande a cada correção é o maior desperdício que já tivemos.
+2. **Verificação em dois degraus.** Durante o trabalho, só o teste do arquivo e o tipo. A suíte inteira e o lint rodam uma vez, antes de subir. O CI roda de qualquer jeito.
+3. **Imagens: roteiro fixo e poucas.** Um script de prints reutilizável (página temporária, dados simulados, escritas interceptadas) e olhar só duas ou três imagens por entrega, escolhidas pelo risco da tela.
+4. **Plano e contexto: atualizar uma vez por fase**, ou numa linha só quando a entrega fecha. Editar a tabela "Andamento" em cada PR gera conflito de merge e retrabalho.
+5. **Uma fatia, um PR.** Tabela nova e a tela dela entram juntas quando cabem. Cada separação custa um ciclo de CI e de merge.
+6. **Padrões prontos antes de telas novas.** Folha de cadastro, lista com busca e seção de página de detalhe viram componentes compartilhados; a terceira cópia de um padrão é o sinal para extraí-lo.
+7. **Protótipo só onde há dúvida de desenho.** Tela que será construída logo não precisa dele.
+8. **Poucas rodadas com o dono.** Perguntar os merges de vários PRs juntos, e desligar a correção automática de um PR depois de mesclado (cada aviso do bot acorda a sessão para nada).
+9. **Contexto curto.** O "onde estamos" do documento de contexto fica em umas 30 linhas; o resto vai para o plano.
+
 ## 4. Fase 0 — Fundação (≈ 35 dias)
 
 Objetivo: a produção vira um módulo que se libera por organização e por pessoa, com acesso conferido no banco, no bucket e no servidor; a captação deixa de ser legível por quem não tem o módulo dela; e existe o esqueleto obra → temporada → data → dia, com vocabulário por tipo, ancorado no projeto e na organização. O cliente final ainda não vê nada. A cobrança fica para a liberação comercial (seção 6.1), porque os pilotos entram por cortesia.
