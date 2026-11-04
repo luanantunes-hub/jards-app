@@ -462,8 +462,8 @@
     .assignment-row strong { font-size:9px; color:#282525; }
     .assignment-badge { justify-self:start; border:1px solid rgba(104,77,176,.24); color:#684DB0; padding:3px 6px; border-radius:4px; font-weight:700; white-space:nowrap; }
 
-    .platform-forces { position:relative; isolation:isolate; min-height:clamp(700px,108dvh,880px); display:flex; align-items:center; overflow:hidden; background:#1C0E33; }
-    .platform-forces::before { content:""; position:absolute; inset:0; z-index:-3; background:#1C0E33; }
+    .platform-forces { position:relative; isolation:isolate; min-height:clamp(700px,108dvh,880px); display:flex; align-items:center; overflow:hidden; background:#FFFFFF; }
+    .platform-forces::before { content:""; position:absolute; inset:0; z-index:-3; background:#FFFFFF; }
     .platform-forces::after { content:""; position:absolute; inset:0; z-index:-1; opacity:.20; pointer-events:none; background-image:repeating-linear-gradient(0deg,rgba(40,37,37,.025) 0,rgba(40,37,37,.025) .5px,transparent .5px,transparent 3px); mix-blend-mode:multiply; }
     /* Prancheta: linhas de construção alinhadas à página e os módulos do
        símbolo feitos a compasso (desenhados pelo script "Prancheta"). */
@@ -513,14 +513,14 @@
     @media (forced-colors: active) { .prancheta, .jards-flow-step::before { display:none; } }
     .feature-ledger { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr); width:100%; overflow:hidden; border:1px solid rgba(40,37,37,.10); background:rgba(255,255,255,.88); box-shadow:0 24px 70px rgba(52,42,78,.07),inset 0 1px 0 rgba(255,255,255,.75); backdrop-filter:blur(18px) saturate(120%); -webkit-backdrop-filter:blur(18px) saturate(120%); }
     /* sem a linha do tempo (o fluxo já conta a jornada) e sem numerais: o texto fica centrado na altura das três forças */
-    .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(247,242,236,.14); }
+    .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(40,37,37,.10); }
     .ledger-side { display:grid; grid-template-rows:repeat(3,auto); }
-    .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(247,242,236,.14); transition:background-color .25s ease; }
-    .ledger-item:hover { background:rgba(247,242,236,.04); }
+    .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(40,37,37,.10); transition:background-color .25s ease; }
+    .ledger-item:hover { background:rgba(13,13,13,.025); }
     .ledger-item:last-child { border-bottom:0; }
-    .ledger-item .ledger-num { margin-bottom:10px; font-size:11px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:#A58BE6; }
-    .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.1; letter-spacing:-.015em; margin-bottom:8px; color:#F7F2EC; }
-    .ledger-item p { max-width:40ch; font-size:13px; line-height:1.6; color:rgba(247,242,236,.62); }
+    .ledger-item .ledger-num { margin-bottom:10px; font-size:11px; font-weight:600; line-height:1.4; letter-spacing:.14em; text-transform:uppercase; color:rgba(40,37,37,.48); }
+    .ledger-item h3 { font-family:'Google Sans',system-ui,sans-serif; font-size:clamp(19px,1.55vw,23px); font-weight:700; line-height:1.1; letter-spacing:-.015em; margin-bottom:8px; }
+    .ledger-item p { max-width:40ch; font-size:13px; line-height:1.6; color:rgba(40,37,37,.55); }
 
     @media (max-width: 767px) {
       .kanban-art { grid-template-columns:repeat(4,150px); overflow-x:auto; }
@@ -867,9 +867,7 @@
     /* Uma superfície neutra só */
     .alt-surface { background:var(--alt-surface); }
     #leis-incentivo.alt-surface, #conector-ia.alt-surface { background:#FFFFFF; }
-    .leis-quadro { background:linear-gradient(160deg,#FDF1F0,#F9D6D1 140%); border-radius:4px; padding:28px; }
-    .mcp-quadro { background:linear-gradient(170deg,#E4DCF5,#F3EFF9 70%); border-radius:4px; padding:28px; }
-    @media (max-width:640px) { .leis-quadro, .mcp-quadro { padding:18px; } }
+
 
     /* Grade: texto do hero alinhado ao contêiner de 1152px (o mockup continua sangrando à direita) */
     @media (min-width:1024px) {
@@ -1413,7 +1411,7 @@
       </h2>
     </div>
 
-    <div class="grid md:grid-cols-[2fr_1fr] gap-6 items-stretch leis-quadro">
+    <div class="grid md:grid-cols-[2fr_1fr] gap-6 items-stretch">
       <!-- Lista de patrocinadores, no padrão real do app, com demo animada do perfil -->
       <div id="leis-painel" class="relative rounded border" style="border-color:rgba(13,13,13,.08);z-index:2">
         <div class="relative flex items-center justify-between px-5 py-3" style="background:#F9F9F8;border-bottom:1px solid rgba(13,13,13,.07);border-radius:3px 3px 0 0;z-index:2">
@@ -1919,12 +1917,12 @@
 <section id="plataforma-forcas" class="platform-forces section-space px-6">
   <div class="max-w-6xl mx-auto feature-ledger reveal">
     <div class="ledger-main">
-      <p class="alt-kicker alt-kicker--on-dark">A plataforma por inteiro</p>
-      <h2 class="alt-h2 alt-h2--section font-display mb-5" style="color:#F7F2EC">
+      <p class="alt-kicker">A plataforma por inteiro</p>
+      <h2 class="alt-h2 alt-h2--section font-display mb-5">
         <span class="alt-h2-line">Uma plataforma.</span>
         <span class="alt-h2-line">Três forças trabalhando juntas.</span>
       </h2>
-      <p class="text-white/65 text-[15px] leading-relaxed max-w-lg">
+      <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
         A informação encontra a operação. A operação preserva a relação e cada parceria ganha continuidade.
       </p>
     </div>
@@ -2497,7 +2495,7 @@
 <!-- ════════════════════════ CONECTOR MCP ════════════════════════ -->
 <section id="conector-ia" class="section-space alt-surface pr-host px-6">
   <div class="max-w-6xl mx-auto">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center mcp-quadro">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
       <div class="reveal min-w-0">
         <p class="alt-kicker">Conector MCP</p>
         <h2 class="alt-h2 alt-h2--section font-display">
