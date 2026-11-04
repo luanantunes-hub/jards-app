@@ -67,3 +67,9 @@ export const CONFIRMACOES_DA_ESCALA: readonly ConfirmacaoDaEscala[] = ["pendente
 /** `producao_cartoes_dia.tipo`: um cartão de cada tipo por data. */
 export type TipoDeCartaoDoDia = "viagem" | "hospedagem";
 export const TIPOS_DE_CARTAO_DO_DIA: readonly TipoDeCartaoDoDia[] = ["viagem", "hospedagem"];
+
+// As tarefas da produção (PD1.11): o banco confere a lista num CHECK (supabase/migrations/*_producao_tarefas.sql).
+
+/** `producao_tarefas.situacao`: a tarefa feita guarda a hora da conclusão. */
+export type SituacaoDaTarefa = "aberta" | "feita";
+export const SITUACOES_DA_TAREFA: readonly SituacaoDaTarefa[] = ["aberta", "feita"];
