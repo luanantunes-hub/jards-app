@@ -35,6 +35,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_pessoas: { fora: "email,telefone", rotulos: "nome" },
   producao_vinculos: { fora: "", rotulos: "funcao" },
   producao_escalas: { fora: "", rotulos: "funcao" },
+  // Viagem e hospedagem do dia (PD1.8): o localizador é um código de reserva e fica de fora.
+  producao_cartoes_dia: { fora: "localizador", rotulos: "titulo" },
 };
 
 /** Todas as tabelas com histórico hoje. */
@@ -239,7 +241,7 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
   // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
   // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_funcoes: definido_por", "producao_pessoas: email,telefone"]);
+    ["producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_funcoes: definido_por", "producao_pessoas: email,telefone"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {

@@ -56,6 +56,7 @@ import type {
   SituacaoDaData,
   SituacaoDaTemporada,
   SituacaoDoVinculo,
+  TipoDeCartaoDoDia,
 } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
@@ -694,6 +695,66 @@ export type BancoDaProducao = {
             columns: ["temporada_id"];
             isOneToOne: false;
             referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_cartoes_dia: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          tipo: TipoDeCartaoDoDia;
+          titulo: string | null;
+          inicio: string | null;
+          fim: string | null;
+          endereco: string | null;
+          localizador: string | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          tipo: TipoDeCartaoDoDia;
+          titulo?: string | null;
+          inicio?: string | null;
+          fim?: string | null;
+          endereco?: string | null;
+          localizador?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          tipo?: TipoDeCartaoDoDia;
+          titulo?: string | null;
+          inicio?: string | null;
+          fim?: string | null;
+          endereco?: string | null;
+          localizador?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_cartoes_dia_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_cartoes_dia_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];
