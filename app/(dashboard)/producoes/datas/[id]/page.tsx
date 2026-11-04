@@ -22,6 +22,7 @@ import { TarefasDaData } from "@/components/producao/TarefasDaData";
 import { HistoricoDaData } from "@/components/producao/HistoricoDaData";
 import { ArquivosDaData } from "@/components/producao/ArquivosDaData";
 import { NotasDaData } from "@/components/producao/NotasDaData";
+import { LugarDaData } from "@/components/producao/LugarDaData";
 import { CopiarDiaSheet } from "@/components/producao/CopiarDiaSheet";
 import { SalvarModeloDoDiaSheet } from "@/components/producao/SalvarModeloDoDiaSheet";
 import { blocosParaModelo, modeloDaOrganizacao, type ModeloGuardado } from "@/lib/producao/modelos-dia";
@@ -144,6 +145,7 @@ export default function DataPage() {
               </Select>
             ) : <span className="text-[0.75rem] text-black/55">{ROTULO_DA_SITUACAO_DA_DATA[data.situacao]}</span>}
           </div>
+          {organizationId && <LugarDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
         </div>
       </header>
 
