@@ -1,11 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, BedDouble, Bus, Check } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { diaDaSemana, diaEMes, ROTULO_DO_TIPO_DE_DATA } from "@/lib/producao/agenda";
 import { instanteParaHoraLocal, rotuloDaHora, ROTULO_DO_TIPO_DE_BLOCO } from "@/lib/producao/dia";
 import { ROTULO_DA_CONFIRMACAO, rotuloDoHorario } from "@/lib/producao/escala";
+import { apagarDoCelular, arquivosDaCasca, CACHE_DA_CASCA, CHAVE_DAS_DATAS, chaveDaData, falhaDeRede, lerDoCelular, salvarNoCelular } from "@/lib/producao/folha-cache";
 import { agoraEProximo, type FolhaDaEquipe, type MinhaData } from "@/lib/producao/folha";
 import type { TipoBloco } from "@/lib/producao/vocabulario";
 
@@ -34,18 +35,56 @@ export default function MinhaFolhaPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [respondendo, setRespondendo] = useState(false);
   const [agora, setAgora] = useState(() => Date.now());
+  // A hora da versão salva no celular, quando a página está mostrando o que foi salvo (sem internet).
+  const [salvaEm, setSalvaEm] = useState<number | null>(null);
+  const usuario = useRef("anonimo");
 
   useEffect(() => {
     let ativo = true;
     void (async () => {
+      // Quem é: a sessão guardada no aparelho. Se o login venceu e não há rede para renová-lo, vale o último usuário.
+      const doLogin = (await createClient().auth.getSession()).data.session?.user.id;
+      if (doLogin) window.localStorage.setItem("jards:folha:ultimo-usuario", doLogin);
+      usuario.current = doLogin ?? (navigator.onLine ? null : window.localStorage.getItem("jards:folha:ultimo-usuario")) ?? "anonimo";
       // Liga a conta aos convites do e-mail (só vale com o e-mail confirmado) e lê as datas.
       await chamar("fn_equipe_aceitar");
       const { data, error } = await chamar("fn_equipe_minhas_datas");
       if (!ativo) return;
-      setDatas((data ?? []) as MinhaData[]);
-      setErro(error ? "Não foi possível carregar suas datas. Recarregue a página." : null);
+      if (error) {
+        const salvo = falhaDeRede(error, navigator.onLine) ? lerDoCelular<MinhaData[]>(window.localStorage, usuario.current, CHAVE_DAS_DATAS) : null;
+        if (salvo) { setDatas(salvo.dados); setSalvaEm(salvo.salvoEm); return; }
+        setDatas([]);
+        setErro("Não foi possível carregar suas datas. Recarregue a página.");
+        return;
+      }
+      const lista = (data ?? []) as MinhaData[];
+      if (lista.length === 0) {
+        // O acesso acabou (ou nunca houve): o que estava salvo neste celular também vai embora.
+        for (const antiga of lerDoCelular<MinhaData[]>(window.localStorage, usuario.current, CHAVE_DAS_DATAS)?.dados ?? []) apagarDoCelular(window.localStorage, usuario.current, chaveDaData(antiga.data_id));
+        apagarDoCelular(window.localStorage, usuario.current, CHAVE_DAS_DATAS);
+      } else {
+        salvarNoCelular(window.localStorage, usuario.current, CHAVE_DAS_DATAS, lista, Date.now());
+      }
+      setSalvaEm(null);
+      setDatas(lista);
+      setErro(null);
     })();
     return () => { ativo = false; };
+  }, []);
+
+  // A casca da página fica no celular para ela abrir sem sinal (public/folha-sw.js, só neste escopo).
+  useEffect(() => {
+    if (!("serviceWorker" in navigator)) return;
+    void navigator.serviceWorker.register("/folha-sw.js", { scope: "/minha-folha" }).catch(() => undefined);
+    // Guarda tudo que a página usou (inclusive o que baixou antes de o service worker assumir), para abrir sem sinal.
+    const guardar = () => {
+      void (async () => {
+        const cache = await caches.open(CACHE_DA_CASCA);
+        const urls = arquivosDaCasca(performance.getEntriesByType("resource").map(entrada => entrada.name), window.location.origin);
+        await Promise.all(urls.map(async url => { if (!(await cache.match(url))) await cache.add(url); }));
+      })().catch(() => undefined);
+    };
+    if (document.readyState === "complete") guardar(); else window.addEventListener("load", guardar, { once: true });
   }, []);
 
   useEffect(() => {
@@ -57,7 +96,17 @@ export default function MinhaFolhaPage() {
     setAberta(dataId);
     setFolha(undefined);
     const { data, error } = await chamar("fn_equipe_folha", { p_data_id: dataId });
-    setFolha(error ? null : (data as FolhaDaEquipe | null));
+    if (error) {
+      const salvo = falhaDeRede(error, navigator.onLine) ? lerDoCelular<FolhaDaEquipe>(window.localStorage, usuario.current, chaveDaData(dataId)) : null;
+      setFolha(salvo ? salvo.dados : null);
+      if (salvo) setSalvaEm(salvo.salvoEm);
+      return;
+    }
+    const recebida = data as FolhaDaEquipe | null;
+    if (recebida) salvarNoCelular(window.localStorage, usuario.current, chaveDaData(dataId), recebida, Date.now());
+    else apagarDoCelular(window.localStorage, usuario.current, chaveDaData(dataId));
+    setSalvaEm(null);
+    setFolha(recebida);
   }, []);
 
   async function responder(resposta: "confirmada" | "recusada" | "pendente") {
@@ -81,6 +130,11 @@ export default function MinhaFolhaPage() {
 
   return (
     <main className="mx-auto min-h-screen w-full max-w-[28rem] bg-white px-5 pb-12 pt-6">
+      {salvaEm !== null && (
+        <p role="status" className="mb-4 rounded border bg-white px-3 py-2.5 text-[0.75rem] text-black/60" style={BORDA}>
+          Sem internet. Você está vendo o que foi salvo às {new Date(salvaEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}.
+        </p>
+      )}
       {erro && <p role="alert" className="mb-4 rounded border bg-white px-3 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
 
       {aberta === null ? (
