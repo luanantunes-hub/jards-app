@@ -90,6 +90,22 @@ test("filtros por temporada e situação", async () => {
   assert.deepEqual(filtrarDatas(lista, { temporada: "todas", situacao: "opcao" }).map(item => item.id), ["c"]);
 });
 
+test("filtros por espaço e sala; sem lugar na lista, nada é filtrado por lugar", async () => {
+  const { filtrarDatas } = await import("../lib/producao/agenda");
+  const lista = [
+    data("a", "2026-11-05", { espaco_id: "e1", sala_id: "s1" }),
+    data("b", "2026-11-06", { espaco_id: "e1", sala_id: "s2" }),
+    data("c", "2026-11-07", { espaco_id: "e2", sala_id: null }),
+    data("d", "2026-11-08"),
+  ];
+  const base = { temporada: "todas", situacao: "todas" as const };
+  assert.deepEqual(filtrarDatas(lista, { ...base, espaco: "e1", sala: "todas" }).map(item => item.id), ["a", "b"]);
+  assert.deepEqual(filtrarDatas(lista, { ...base, espaco: "e1", sala: "s2" }).map(item => item.id), ["b"]);
+  assert.deepEqual(filtrarDatas(lista, { ...base, espaco: "e2", sala: "todas" }).map(item => item.id), ["c"]);
+  assert.equal(filtrarDatas(lista, { ...base, espaco: "todos", sala: "todas" }).length, 4);
+  assert.equal(filtrarDatas(lista, base).length, 4);
+});
+
 test("Hoje: opção vencida ou vencendo, e as próximas datas", async () => {
   const { pendenciasDeHoje, proximasDatas } = await import("../lib/producao/agenda");
   const lista = [
