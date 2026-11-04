@@ -49,6 +49,7 @@ const ORIGENS: Record<string, { fora: string; rotulos: string }> = { ...ORIGENS_
  */
 const SEM_HISTORICO: Record<string, string> = {
   producao_historico: "é o próprio histórico: nunca grava o histórico do próprio histórico",
+  producao_acessos_equipe: "é só o convite de acesso: o e-mail é dado pessoal e quem convidou já fica na própria linha",
   producao_vinculos_valores: "é só cachê e diária: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
 };
 
