@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   ACOES_DO_HISTORICO, CONFIRMACOES_DA_ESCALA, EXIBICOES_DO_BLOCO, LADOS_DA_TEMPORADA, SITUACOES_DA_DATA, SITUACOES_DA_TEMPORADA,
-  SITUACOES_DA_TAREFA, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA,
+  SITUACOES_DA_PAUTA, SITUACOES_DA_TAREFA, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA,
 } from "../lib/producao/estados";
 import { PASTAS_DE_ARQUIVO } from "../supabase/functions/_shared/producao-caminho";
 import { lerBancoTs, unioesDeTextos, type BancoNoTipo, type ChaveDoTipo } from "./_helpers/producao-banco-ts";
@@ -29,6 +29,7 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_vinculos.situacao": { tipo: "SituacaoDoVinculo", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_VINCULO },
   "producao_cartoes_dia.tipo": { tipo: "TipoDeCartaoDoDia", modulo: "@/lib/producao/estados", estados: TIPOS_DE_CARTAO_DO_DIA },
   "producao_tarefas.situacao": { tipo: "SituacaoDaTarefa", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_TAREFA },
+  "producao_pautas.situacao": { tipo: "SituacaoDaPauta", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_PAUTA },
   "producao_escalas.confirmacao": { tipo: "ConfirmacaoDaEscala", modulo: "@/lib/producao/estados", estados: CONFIRMACOES_DA_ESCALA },
   // A pasta do arquivo mora na função de borda do caminho (sem imports), onde a lista é escrita uma vez só (PD0.14).
   "producao_arquivos.pasta": { tipo: "PastaDeArquivo", modulo: "@/supabase/functions/_shared/producao-caminho", estados: PASTAS_DE_ARQUIVO },
@@ -231,8 +232,8 @@ test("uma migration que muda a produção sem o tipo acompanhar reprova", async 
     ["duas colunas num alter table só", "alter table public.producao_obras add column a text, add column b numeric(5, 2) not null default 0;", "producao_obras.Row: falta a coluna b"],
     ["coluna nova com chave", "alter table public.producao_obras add column criado_por uuid; alter table public.producao_obras add constraint producao_obras_criado_por_fkey foreign key (criado_por) references public.profiles (id);",
       "producao_obras.Relationships: falta producao_obras_criado_por_fkey (criado_por) → profiles (id)"],
-    ["tabela nova", "create table if not exists public.producao_pautas (id uuid primary key default gen_random_uuid(), organization_id uuid not null references public.organizations (id) on delete cascade);",
-      "producao_pautas: a migration cria a tabela, e o tipo não a tem"],
+    ["tabela nova", "create table if not exists public.producao_exemplos (id uuid primary key default gen_random_uuid(), organization_id uuid not null references public.organizations (id) on delete cascade);",
+      "producao_exemplos: a migration cria a tabela, e o tipo não a tem"],
     ["lista fechada nova", "alter table public.producao_obras add constraint producao_obras_tipo_lista check (tipo in ('a', 'b'));", "producao_obras.tipo: lista fechada nova no banco"],
     ["valor novo numa lista", "alter table public.producao_blocos add constraint producao_blocos_exibicao_nova check (exibicao in ('exata', 'aproximada', 'a_definir', 'oculta', 'escondida'));",
       "producao_blocos.exibicao: ExibicaoDoBloco aceita"],

@@ -122,6 +122,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
         { label: "Temporadas", href: "/producoes/temporadas", icon: CalendarRange },
         { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
         { label: "Espaços", href: "/producoes/espacos", icon: Building2 },
+        { label: "Pauta", href: "/producoes/pauta", icon: CalendarRange },
         { label: "Tarefas", href: "/producoes/tarefas", icon: ListChecks },
         { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
       ],

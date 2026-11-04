@@ -55,6 +55,7 @@ import type {
   LadoDaTemporada,
   SituacaoDaData,
   SituacaoDaTemporada,
+  SituacaoDaPauta,
   SituacaoDaTarefa,
   SituacaoDoVinculo,
   TipoDeCartaoDoDia,
@@ -848,6 +849,76 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_pautas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sala_id: string;
+          titulo: string;
+          contratante: string | null;
+          inicio: string;
+          fim: string;
+          situacao: SituacaoDaPauta;
+          ordem_na_fila: number | null;
+          valida_ate: string | null;
+          data_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sala_id: string;
+          titulo: string;
+          contratante?: string | null;
+          inicio: string;
+          fim: string;
+          situacao?: SituacaoDaPauta;
+          ordem_na_fila?: number | null;
+          valida_ate?: string | null;
+          data_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sala_id?: string;
+          titulo?: string;
+          contratante?: string | null;
+          inicio?: string;
+          fim?: string;
+          situacao?: SituacaoDaPauta;
+          ordem_na_fila?: number | null;
+          valida_ate?: string | null;
+          data_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_pautas_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_pautas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_pautas_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_salas";
             referencedColumns: ["id"];
           },
         ];
