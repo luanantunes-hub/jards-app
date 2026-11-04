@@ -37,6 +37,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_escalas: { fora: "", rotulos: "funcao" },
   // Viagem e hospedagem do dia (PD1.8): o localizador é um código de reserva e fica de fora.
   producao_cartoes_dia: { fora: "localizador", rotulos: "titulo" },
+  // As tarefas (PD1.11): nada sensível; o título é o rótulo.
+  producao_tarefas: { fora: "", rotulos: "titulo" },
 };
 
 /** Todas as tabelas com histórico hoje. */

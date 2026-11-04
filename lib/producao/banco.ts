@@ -55,6 +55,7 @@ import type {
   LadoDaTemporada,
   SituacaoDaData,
   SituacaoDaTemporada,
+  SituacaoDaTarefa,
   SituacaoDoVinculo,
   TipoDeCartaoDoDia,
 } from "@/lib/producao/estados";
@@ -809,6 +810,76 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_tarefas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          titulo: string;
+          modelo: string | null;
+          prazo: string | null;
+          prazo_dias: number | null;
+          responsavel_pessoa_id: string | null;
+          funcao: string | null;
+          situacao: SituacaoDaTarefa;
+          concluida_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          titulo: string;
+          modelo?: string | null;
+          prazo?: string | null;
+          prazo_dias?: number | null;
+          responsavel_pessoa_id?: string | null;
+          funcao?: string | null;
+          situacao?: SituacaoDaTarefa;
+          concluida_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          titulo?: string;
+          modelo?: string | null;
+          prazo?: string | null;
+          prazo_dias?: number | null;
+          responsavel_pessoa_id?: string | null;
+          funcao?: string | null;
+          situacao?: SituacaoDaTarefa;
+          concluida_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_tarefas_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_tarefas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_tarefas_responsavel_pessoa_id_fkey";
+            columns: ["responsavel_pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
             referencedColumns: ["id"];
           },
         ];
