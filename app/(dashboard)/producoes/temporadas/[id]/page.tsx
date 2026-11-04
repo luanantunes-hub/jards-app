@@ -15,6 +15,7 @@ import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton }
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { Select } from "@/components/ui/Select";
 import { NovaDataSheet } from "@/components/producao/NovaDataSheet";
+import { EquipeDaTemporada } from "@/components/producao/EquipeDaTemporada";
 import { CopiarTemporadaSheet, type TemporadaParaCopiar } from "@/components/producao/CopiarTemporadaSheet";
 
 type Temporada = TemporadaParaCopiar;
@@ -125,6 +126,8 @@ export default function TemporadaPage() {
             </ul>
           </div>
         )}
+
+        {organizationId && <EquipeDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
       </DetailPageContent>
 
       {folha === "data" && organizationId && (
