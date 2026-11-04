@@ -87,6 +87,7 @@ export function tipoTsDe(tipoSql: string): string {
   const tipo = tipoSql.toLowerCase().replace(/\(.*?\)/, "");
   if (tipo.endsWith("[]")) return `${tipoTsDe(tipo.slice(0, -2))}[]`;
   if (["uuid", "text", "date", "timestamptz", "timestamp", "time", "varchar", "citext"].includes(tipo)) return "string";
+  if (["jsonb", "json"].includes(tipo)) return "Json";
   if (["boolean", "bool"].includes(tipo)) return "boolean";
   if (["integer", "int", "int2", "int4", "int8", "smallint", "bigint", "numeric", "decimal", "real", "float4", "float8"].includes(tipo)) return "number";
   throw new Error(`tipo SQL sem correspondente no teste: ${tipoSql} (acrescente-o em tipoTsDe)`);

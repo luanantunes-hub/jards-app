@@ -266,7 +266,7 @@ test("uma migration que o leitor não sabe ler reprova em voz alta, em vez de o 
   }
   // Coluna de um tipo SQL que o teste não conhece: reprova ao comparar, pedindo para ensinar o mapa.
   const { tipo, aliases } = await estadoAtual();
-  const esquisita = lerMigrations([...base, depois("alter table public.producao_obras add column ficha jsonb;")]);
+  const esquisita = lerMigrations([...base, depois("alter table public.producao_obras add column ficha tsvector;")]);
   assert.throws(() => diferencas(tipo, esquisita, aliases), /tipo SQL sem correspondente/);
 });
 

@@ -65,6 +65,9 @@ import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-camin
 /** `producao_funcoes.escopo`: a organização inteira, ou só as temporadas e os espaços em que a pessoa está vinculada. */
 export type EscopoDaProducao = "organizacao" | "vinculado";
 
+/** Uma coluna jsonb (os blocos de `producao_modelos_dia`). */
+export type Json = string | number | boolean | null | { [chave: string]: Json } | Json[];
+
 export type BancoDaProducao = {
   // A versão do PostgREST do projeto: o cliente liga os recursos dela (supabase gen types, 15/10/2026).
   __InternalSupabase: {
@@ -807,6 +810,41 @@ export type BancoDaProducao = {
           },
           {
             foreignKeyName: "producao_cartoes_dia_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_modelos_dia: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          blocos: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          blocos: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          blocos?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_modelos_dia_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
