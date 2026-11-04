@@ -39,6 +39,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_cartoes_dia: { fora: "localizador", rotulos: "titulo" },
   // As tarefas (PD1.11): nada sensível; o título é o rótulo.
   producao_tarefas: { fora: "", rotulos: "titulo" },
+  // As notas da data (PD1.6): texto livre interno; o texto é o rótulo (o histórico o corta em 500 letras).
+  producao_notas: { fora: "", rotulos: "texto" },
 };
 
 /** Todas as tabelas com histórico hoje. */
