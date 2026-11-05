@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
@@ -11,6 +11,7 @@ import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { Select } from "@/components/ui/Select";
 import { VincularPessoaSheet } from "@/components/producao/VincularPessoaSheet";
+import { EditarVinculoSheet } from "@/components/producao/EditarVinculoSheet";
 
 type Vinculo = {
   id: string; pessoa_id: string; funcao: string; grupo: string | null; situacao: SituacaoDoVinculo;
@@ -22,6 +23,7 @@ type Vinculo = {
 export function EquipeDaTemporada({ organizationId, temporadaId, podeEditar }: { organizationId: string; temporadaId: string; podeEditar: boolean }) {
   const { confirmDelete } = useDeleteConfirm();
   const [vinculos, setVinculos] = useState<Vinculo[] | null>(null);
+  const [editando, setEditando] = useState<Vinculo | null>(null);
   const [pessoas, setPessoas] = useState<{ id: string; nome: string }[]>([]);
   const [comDinheiro, setComDinheiro] = useState(false);
   const [folha, setFolha] = useState(false);
@@ -120,6 +122,9 @@ export function EquipeDaTemporada({ organizationId, temporadaId, podeEditar }: {
                       </Select>
                     ) : <span className="text-[0.75rem] text-black/55">{ROTULO_DA_SITUACAO_DO_VINCULO[vinculo.situacao]}</span>}
                     {podeEditar && (
+                      <button type="button" onClick={() => setEditando(vinculo)} aria-label={`Editar ${nome} como ${vinculo.funcao}`} title="Editar" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Pencil size={14} aria-hidden="true" /></button>
+                    )}
+                    {podeEditar && (
                       <button type="button" onClick={() => tirar(vinculo)} aria-label={`Tirar ${nome} da temporada`} title="Tirar da temporada" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Trash2 size={14} aria-hidden="true" /></button>
                     )}
                   </div>
@@ -129,6 +134,7 @@ export function EquipeDaTemporada({ organizationId, temporadaId, podeEditar }: {
           </ul>
         </div>
       )}
+      {editando && <EditarVinculoSheet organizationId={organizationId} vinculo={editando} nome={editando.pessoa?.nome ?? "pessoa"} comDinheiro={comDinheiro && podeEditar} onClose={() => setEditando(null)} onSaved={recarregar} />}
       {folha && <VincularPessoaSheet organizationId={organizationId} temporadaId={temporadaId} pessoas={pessoas} jaVinculadas={jaVinculadas} comDinheiro={comDinheiro && podeEditar} onClose={() => setFolha(false)} onCreated={recarregar} />}
     </section>
   );
