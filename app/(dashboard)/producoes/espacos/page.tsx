@@ -31,7 +31,7 @@ export default function EspacosPage() {
     void (async () => {
       const producao = clienteDaProducao(createClient());
       const [esp, sal] = await Promise.all([
-        producao.from("producao_espacos").select("id, nome, tipo, proprio, movel, endereco, uf, capacidade, arquivado").eq("organization_id", organizationId).order("nome"),
+        producao.from("producao_espacos").select("id, nome, tipo, proprio, movel, endereco, uf, capacidade, arquivado, municipio_ibge, latitude, longitude").eq("organization_id", organizationId).order("nome"),
         producao.from("producao_salas").select("id, espaco_id, nome, capacidade, arquivada").eq("organization_id", organizationId).order("nome"),
       ]);
       if (!ativo) return;
