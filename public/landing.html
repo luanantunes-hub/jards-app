@@ -709,7 +709,9 @@
     .hero-layout { position:relative; z-index:1; display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1.15fr); align-items:center; gap:40px; width:min(1480px,100%); min-height:100dvh; margin:auto; padding:112px 40px 72px; }
     .hero-copy { min-width:0; text-align:left; }
     .hero-copy h1 { max-width:100%; margin:0; font-size:clamp(52px,5.2vw,80px); font-weight:700; line-height:.98; letter-spacing:-.06em; color:#F7F2EC; text-wrap:balance; }
-    .hero-nota { margin-top:16px; font-size:13px; line-height:1.5; color:rgba(247,242,236,.5); }
+    .hero-lista { display:grid; gap:9px; max-width:58ch; margin:28px 0 0; padding:0; list-style:none; }
+    .hero-lista li { display:flex; align-items:flex-start; gap:10px; font-size:14.5px; line-height:1.45; color:rgba(247,242,236,.72); }
+    .hero-lista i { flex:0 0 auto; margin-top:2px; font-size:15px; color:#C7B6EE; }
     .hero-description { max-width:43ch; margin-top:24px; font-size:17px; line-height:1.65; color:rgba(247,242,236,.68); }
     .hero-actions { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-top:28px; }
     .hero-actions a { white-space:nowrap; }
@@ -1152,7 +1154,7 @@
       Projetos avançam quando tudo se conecta.
     </h1>
     <p class="hero-description">
-      Veja quais empresas investem em cada lei de incentivo, organize as negociações e preste contas do projeto.
+      No CRM do Jards, você acompanha cada negociação de patrocínio do primeiro contato à renovação, encontra as empresas que investem em cada lei e fala com quem decide, sem planilha.
     </p>
     <div class="hero-actions">
       <a href="/cadastro" data-app-path="/cadastro" class="alt-cta">
@@ -1161,7 +1163,13 @@
       </a>
       <a href="#fluxo" class="alt-link">Ver como funciona <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
     </div>
-    <p class="hero-nota">Grátis, sem cartão e sem prazo para acabar.</p>
+    <ul class="hero-lista">
+      <li><i class="ph ph-check" aria-hidden="true"></i>Grátis para começar, sem cartão e sem prazo para acabar</li>
+      <li><i class="ph ph-check" aria-hidden="true"></i>Funil de patrocínio por projeto, da prospecção à renovação do contrato</li>
+      <li><i class="ph ph-check" aria-hidden="true"></i>Atividades e follow-ups com aviso antes do prazo vencer</li>
+      <li><i class="ph ph-check" aria-hidden="true"></i>Empresas que investem em cada lei, com o contato de quem decide</li>
+      <li><i class="ph ph-check" aria-hidden="true"></i>Funciona com Claude e ChatGPT: pergunte sobre seu funil direto no chat</li>
+    </ul>
 
     </div>
     <div class="hero-visual">
