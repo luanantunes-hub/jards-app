@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
+import { carregarMunicipios, MunicipioCombobox, type MunicipioEscolhido } from "@/components/prestacao/objeto/MunicipioCombobox";
 import { lerEspaco, lerSala, TIPOS_DE_ESPACO_SUGERIDOS, UFS } from "@/lib/producao/espacos";
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
@@ -12,6 +13,7 @@ const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
 
 export type EspacoEditavel = {
   id: string; nome: string; tipo: string; proprio: boolean; movel: boolean; endereco: string | null; uf: string | null; capacidade: number | null; arquivado: boolean;
+  municipio_ibge: string | null; latitude: number | null; longitude: number | null;
 };
 export type SalaEditavel = { id: string; espaco_id: string; nome: string; capacidade: number | null; arquivada: boolean };
 
@@ -35,10 +37,23 @@ export function EspacoSheet({ organizationId, espaco, onClose, onSaved }: { orga
   const [endereco, setEndereco] = useState(espaco?.endereco ?? "");
   const [uf, setUf] = useState(espaco?.uf ?? "");
   const [capacidade, setCapacidade] = useState(espaco?.capacidade?.toString() ?? "");
+  const [municipio, setMunicipio] = useState<MunicipioEscolhido>({ nome: "", ibge: espaco?.municipio_ibge ?? null, latitude: espaco?.latitude ?? null, longitude: espaco?.longitude ?? null });
   const [proprio, setProprio] = useState(espaco?.proprio ?? false);
   const [movel, setMovel] = useState(espaco?.movel ?? false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+
+  // O espaço guarda o código do município; o nome vem da tabela do IBGE.
+  useEffect(() => {
+    const codigo = espaco?.municipio_ibge;
+    if (!codigo) return;
+    let ativo = true;
+    carregarMunicipios().then(tabela => {
+      const achado = tabela.municipios.find(item => item[0] === codigo);
+      if (ativo && achado) setMunicipio(atual => (atual.nome === "" ? { ...atual, nome: achado[1] } : atual));
+    }).catch(() => undefined);
+    return () => { ativo = false; };
+  }, [espaco?.municipio_ibge]);
 
   async function salvar(fechar: () => void, arquivado = espaco?.arquivado ?? false) {
     const leitura = lerEspaco({ nome, tipo, proprio, movel, endereco, uf, capacidade });
@@ -46,7 +61,13 @@ export function EspacoSheet({ organizationId, espaco, onClose, onSaved }: { orga
     setSalvando(true);
     setErro(null);
     const producao = clienteDaProducao(createClient());
-    const dados = { ...leitura.espaco, arquivado };
+    const comMunicipio = leitura.espaco.uf !== null && municipio.ibge !== null;
+    const dados = {
+      ...leitura.espaco, arquivado,
+      municipio_ibge: comMunicipio ? municipio.ibge : null,
+      latitude: comMunicipio ? municipio.latitude : null,
+      longitude: comMunicipio ? municipio.longitude : null,
+    };
     const { error } = espaco
       ? await producao.from("producao_espacos").update(dados).eq("id", espaco.id)
       : await producao.from("producao_espacos").insert({ organization_id: organizationId, ...dados });
@@ -86,9 +107,16 @@ export function EspacoSheet({ organizationId, espaco, onClose, onSaved }: { orga
           </div>
           <div>
             <span className={ROTULO}>Estado</span>
-            <Dropdown value={uf} onChange={setUf} options={[{ value: "", label: "—" }, ...UFS.map(sigla => ({ value: sigla, label: sigla }))]} />
+            <Dropdown value={uf} onChange={valor => { setUf(valor); setMunicipio({ nome: "", ibge: null, latitude: null, longitude: null }); }} options={[{ value: "", label: "—" }, ...UFS.map(sigla => ({ value: sigla, label: sigla }))]} />
           </div>
         </div>
+        {uf !== "" && (
+          <div>
+            <label className={ROTULO} htmlFor="espaco-municipio">Município</label>
+            <MunicipioCombobox id="espaco-municipio" uf={uf} valor={municipio} onChange={setMunicipio} />
+            <p className="mt-1.5 text-[0.6875rem] text-black/45">Com o município escolhido, o espaço aparece no mapa da turnê.</p>
+          </div>
+        )}
         <div className="flex flex-wrap gap-x-6 gap-y-2">
           <label className="flex items-center gap-2 text-[0.8125rem] text-[#282525]"><input type="checkbox" checked={proprio} onChange={event => setProprio(event.target.checked)} disabled={salvando} className="h-4 w-4 accent-[#7259B5]" /> É nosso (a organização administra)</label>
           <label className="flex items-center gap-2 text-[0.8125rem] text-[#282525]"><input type="checkbox" checked={movel} onChange={event => setMovel(event.target.checked)} disabled={salvando} className="h-4 w-4 accent-[#7259B5]" /> Móvel (lona, palco itinerante)</label>
