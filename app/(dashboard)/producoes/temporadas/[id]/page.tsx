@@ -16,6 +16,7 @@ import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { Select } from "@/components/ui/Select";
 import { NovaDataSheet } from "@/components/producao/NovaDataSheet";
 import { EquipeDaTemporada } from "@/components/producao/EquipeDaTemporada";
+import { CargaDaTemporada } from "@/components/producao/CargaDaTemporada";
 import { CopiarTemporadaSheet, type TemporadaParaCopiar } from "@/components/producao/CopiarTemporadaSheet";
 
 type Temporada = TemporadaParaCopiar;
@@ -128,6 +129,7 @@ export default function TemporadaPage() {
         )}
 
         {organizationId && <EquipeDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
+        {organizationId && <CargaDaTemporada organizationId={organizationId} temporadaId={temporada.id} />}
       </DetailPageContent>
 
       {folha === "data" && organizationId && (
