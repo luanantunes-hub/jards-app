@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import type { PotencialFechamento, StatusCaptacao, TipoAtividade } from "@/lib/supabase/types";
 import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer";
+import { SaudacaoPainel } from "@/components/dashboard/SaudacaoPainel";
 import { PrimeirosPassos } from "@/components/onboarding/PrimeirosPassos";
 import { useDashboardPreferences } from "@/components/dashboard/useDashboardPreferences";
 import type { DashboardModuleId } from "@/components/dashboard/dashboardModules";
@@ -665,7 +666,7 @@ export default function DashboardPage() {
       <div className="mb-7 flex items-start justify-between gap-4">
         <div>
           <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Gerenciamento</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525]">Visão geral</h1>
+          <SaudacaoPainel />
         </div>
         <DashboardCustomizer open={customizerOpen} onOpenChange={setCustomizerOpen} preferences={dashboardPreferences.preferences} onToggle={dashboardPreferences.toggle} onMove={dashboardPreferences.move} onReset={dashboardPreferences.reset} />
       </div>
