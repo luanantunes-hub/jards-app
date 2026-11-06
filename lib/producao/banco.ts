@@ -58,6 +58,7 @@ import type {
   CategoriaDoItem,
   DonoDoItem,
   SituacaoDaPauta,
+  TipoDePlanta,
   SituacaoDaTarefa,
   SituacaoDoVinculo,
   TipoDeCartaoDoDia,
@@ -1115,6 +1116,144 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_plantas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          tipo: TipoDePlanta;
+          largura_m: number;
+          profundidade_m: number;
+          espaco_id: string | null;
+          sala_id: string | null;
+          data_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          tipo?: TipoDePlanta;
+          largura_m: number;
+          profundidade_m: number;
+          espaco_id?: string | null;
+          sala_id?: string | null;
+          data_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          tipo?: TipoDePlanta;
+          largura_m?: number;
+          profundidade_m?: number;
+          espaco_id?: string | null;
+          sala_id?: string | null;
+          data_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_plantas_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_plantas_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_plantas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_plantas_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_salas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_planta_objetos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          planta_id: string;
+          item_id: string | null;
+          rotulo: string;
+          x_m: number;
+          y_m: number;
+          largura_m: number;
+          profundidade_m: number;
+          rotacao_graus: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          planta_id: string;
+          item_id?: string | null;
+          rotulo: string;
+          x_m?: number;
+          y_m?: number;
+          largura_m?: number;
+          profundidade_m?: number;
+          rotacao_graus?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          planta_id?: string;
+          item_id?: string | null;
+          rotulo?: string;
+          x_m?: number;
+          y_m?: number;
+          largura_m?: number;
+          profundidade_m?: number;
+          rotacao_graus?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_planta_objetos_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_itens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_planta_objetos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_planta_objetos_planta_id_fkey";
+            columns: ["planta_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_plantas";
             referencedColumns: ["id"];
           },
         ];
