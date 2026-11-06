@@ -499,12 +499,12 @@ table thead th > span > span {
 
 /* Saudação do painel (components/dashboard/SaudacaoPainel.tsx): aparece quando a frase fica pronta. */
 @keyframes saudacao-painel-entra {
-  from { opacity: 0; transform: translateY(.25rem); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(.375rem); filter: blur(.25rem); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 .saudacao-painel {
-  animation: saudacao-painel-entra 240ms ease-out;
+  animation: saudacao-painel-entra 700ms cubic-bezier(.22, 1, .36, 1);
 }
 
 @media (prefers-reduced-motion: reduce) {
