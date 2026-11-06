@@ -32,7 +32,6 @@ const FRASES: Record<Periodo, string[]> = {
   tarde: [
     "Como estão as negociações{, nome}?",
     "Ainda dá tempo de um follow-up{, nome}.",
-    "Metade do dia já foi{, nome}. Como está o pipeline?",
   ],
   noite: [
     "Fechando o dia{, nome}?",
