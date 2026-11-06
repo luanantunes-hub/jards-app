@@ -55,6 +55,8 @@ import type {
   LadoDaTemporada,
   SituacaoDaData,
   SituacaoDaTemporada,
+  CategoriaDoItem,
+  DonoDoItem,
   SituacaoDaPauta,
   SituacaoDaTarefa,
   SituacaoDoVinculo,
@@ -919,6 +921,200 @@ export type BancoDaProducao = {
             columns: ["sala_id"];
             isOneToOne: false;
             referencedRelation: "producao_salas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_itens: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          categoria: CategoriaDoItem;
+          dono: DonoDoItem;
+          obra_id: string | null;
+          espaco_id: string | null;
+          fornecedor: string | null;
+          locacao_inicio: string | null;
+          locacao_fim: string | null;
+          devolvido_em: string | null;
+          quantidade: number;
+          comprimento_cm: number | null;
+          largura_cm: number | null;
+          altura_cm: number | null;
+          peso_kg: number | null;
+          serie: string | null;
+          potencia_w: number | null;
+          canais: number | null;
+          notas: string | null;
+          arquivado: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          categoria?: CategoriaDoItem;
+          dono?: DonoDoItem;
+          obra_id?: string | null;
+          espaco_id?: string | null;
+          fornecedor?: string | null;
+          locacao_inicio?: string | null;
+          locacao_fim?: string | null;
+          devolvido_em?: string | null;
+          quantidade?: number;
+          comprimento_cm?: number | null;
+          largura_cm?: number | null;
+          altura_cm?: number | null;
+          peso_kg?: number | null;
+          serie?: string | null;
+          potencia_w?: number | null;
+          canais?: number | null;
+          notas?: string | null;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          categoria?: CategoriaDoItem;
+          dono?: DonoDoItem;
+          obra_id?: string | null;
+          espaco_id?: string | null;
+          fornecedor?: string | null;
+          locacao_inicio?: string | null;
+          locacao_fim?: string | null;
+          devolvido_em?: string | null;
+          quantidade?: number;
+          comprimento_cm?: number | null;
+          largura_cm?: number | null;
+          altura_cm?: number | null;
+          peso_kg?: number | null;
+          serie?: string | null;
+          potencia_w?: number | null;
+          canais?: number | null;
+          notas?: string | null;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_itens_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_itens_obra_id_fkey";
+            columns: ["obra_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_obras";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_itens_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_itens_valores: {
+        Row: {
+          item_id: string;
+          organization_id: string;
+          valor_unitario: number | null;
+          valor_locacao: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          item_id: string;
+          organization_id: string;
+          valor_unitario?: number | null;
+          valor_locacao?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          item_id?: string;
+          organization_id?: string;
+          valor_unitario?: number | null;
+          valor_locacao?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_itens_valores_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_itens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_itens_valores_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_item_datas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          item_id: string;
+          data_id: string;
+          quantidade: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          item_id: string;
+          data_id: string;
+          quantidade?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          item_id?: string;
+          data_id?: string;
+          quantidade?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_item_datas_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_item_datas_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_itens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_item_datas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];
