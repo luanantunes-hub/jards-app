@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import test, { afterEach } from "node:test";
 import { NextRequest } from "next/server";
 import { PATCH as alterarMembro } from "../app/api/members/[userId]/route";
@@ -232,14 +234,21 @@ type OpcoesDasVagas = {
   /** Pessoas e convites pendentes de um módulo com contrato (a captação tem 3 e 1). */
   membros?: number;
   convites?: number;
+  /**
+   * Vagas da captação que o banco conta (modulo_vagas_limite): 1 incluída mais as 2 compradas com o plano em
+   * vigor; sem a assinatura, só a incluída.
+   */
+  limiteCaptacao?: number;
 };
 
 /** O banco das vagas: administrador, plano de captação e contrato do módulo (prestação ou produção). */
-function bancoDasVagas({ contrato = null, membros = 2, convites = 1 }: OpcoesDasVagas = {}): Resolvedor {
+function bancoDasVagas({ contrato = null, membros = 2, convites = 1, limiteCaptacao = 3 }: OpcoesDasVagas = {}): Resolvedor {
   return (c) => {
     if (ehPedidoDoAdmin(c)) return { data: { papel: "admin" } };
     if (c.tabela === "organization_seats") return { data: { purchased_seats: 2, billing_user_id: ADMIN, stripe_subscription_item_id: "si_1" } };
-    if (c.acao === "rpc" && c.tabela === "modulo_vagas_limite") return { data: contrato ? 4 : 0 };
+    if (c.acao === "rpc" && c.tabela === "modulo_vagas_limite") {
+      return { data: (c.valores as Json).p_modulo === "captacao" ? limiteCaptacao : contrato ? 4 : 0 };
+    }
     if (c.acao === "rpc" && c.tabela === "modulo_vagas_em_uso") return { data: membros + convites };
     if (c.tabela === "organization_modulos") return { data: contrato };
     if (c.tabela === "organization_members") return { count: filtraPelaCaptacao(c) ? 3 : membros };
@@ -264,6 +273,19 @@ test("vagas sem ?modulo= vale a captação: plano, ocupadas e convites pendentes
     modulo: "captacao", included: 1, purchased: 2, total: 3, occupied: 3, pending: 1, available: 0,
     unit_price: 19.9, billing_user_id: ADMIN, stripe_subscription_item_id: "si_1",
   });
+});
+
+test("vagas da captação: o total é o do banco, e sem a assinatura em vigor as compradas não contam", async () => {
+  const { consultas } = preparar(bancoDasVagas({ limiteCaptacao: 1 }));
+  const { GET } = await rotaDeVagas();
+  const { status, corpo } = await ler(await GET(vagas()));
+  assert.equal(status, 200);
+  assert.deepEqual(
+    { purchased: corpo.purchased, total: corpo.total, occupied: corpo.occupied, available: corpo.available },
+    { purchased: 0, total: 1, occupied: 3, available: 0 },
+    "a organização guarda 2 vagas, mas o plano acabou: 3 pessoas para 1 vaga",
+  );
+  assert.deepEqual(consultasDe(consultas, "modulo_vagas_limite", "rpc")[0].valores, { p_org: ORG, p_modulo: "captacao" });
 });
 
 test("vagas da prestação vêm do contrato do módulo", async () => {
@@ -326,6 +348,97 @@ test("compra de vagas: sem o campo módulo e com captacao vale a captação; pre
   const prestacao = await ler(await POST(compra({ modulo: "prestacao" })));
   assert.equal(prestacao.status, 402);
   assert.equal(prestacao.corpo.error, "É necessário assinar a prestação de contas para comprar usuários extras");
+});
+
+// ─── Compra da captação, com um Stripe falso ────────────────────────────────
+
+type PedidoAoStripe = { metodo: string; caminho: string; corpo: URLSearchParams };
+
+/** Stripe falso (STRIPE_API_URL) com a assinatura sub_nova e os itens dados; guarda o que a rota pediu. */
+async function stripeFalso(itens: Array<{ id: string; price: string; quantity: number }>) {
+  const pedidos: PedidoAoStripe[] = [];
+  const servidor = createServer((req, res) => {
+    let texto = "";
+    req.on("data", parte => { texto += parte; });
+    req.on("end", () => {
+      const { pathname } = new URL(req.url ?? "/", "http://stripe.falso");
+      const corpo = new URLSearchParams(texto);
+      pedidos.push({ metodo: req.method ?? "", caminho: pathname, corpo });
+      res.setHeader("content-type", "application/json");
+      if (req.method === "GET" && pathname === "/v1/subscriptions/sub_nova") {
+        const data = itens.map(item => ({ id: item.id, object: "subscription_item", price: { id: item.price }, quantity: item.quantity }));
+        res.end(JSON.stringify({ id: "sub_nova", object: "subscription", items: { object: "list", data } }));
+      } else if (req.method === "POST" && pathname === "/v1/subscription_items") {
+        res.end(JSON.stringify({ id: "si_novo", object: "subscription_item", quantity: Number(corpo.get("quantity")) }));
+      } else if (req.method === "POST" && pathname.startsWith("/v1/subscription_items/")) {
+        res.end(JSON.stringify({ id: pathname.split("/").pop(), object: "subscription_item", quantity: Number(corpo.get("quantity")) }));
+      } else {
+        res.statusCode = 404;
+        res.end(JSON.stringify({ error: { message: `rota desconhecida: ${req.method} ${pathname}` } }));
+      }
+    });
+  });
+  await new Promise<void>(pronto => servidor.listen(0, "127.0.0.1", pronto));
+  process.env.STRIPE_API_URL = `http://127.0.0.1:${(servidor.address() as AddressInfo).port}`;
+  const fechar = () => new Promise<void>(fim => {
+    delete process.env.STRIPE_API_URL;
+    servidor.close(() => fim());
+  });
+  return { pedidos, fechar };
+}
+
+/** Quem compra tem o plano pago (sub_nova), e a organização ainda guarda 10 vagas de uma assinatura que acabou. */
+function bancoDaCompra(): Resolvedor {
+  const base = bancoDasVagas();
+  return (c) => {
+    if (c.tabela === "organization_seats" && c.acao === "select") {
+      return { data: { purchased_seats: 10, billing_user_id: ADMIN, stripe_subscription_item_id: "si_velho" } };
+    }
+    if (c.tabela === "profiles") return { data: { plano: "basico", stripe_subscription_id: "sub_nova" } };
+    if (c.tabela === "organization_seat_purchases" && c.acao === "select") return undefined;
+    return base(c);
+  };
+}
+
+test("compra numa assinatura sem o item de vaga começa do zero, mesmo com vagas velhas no banco", async () => {
+  const stripe = await stripeFalso([{ id: "si_plano", price: "price_plano", quantity: 1 }]);
+  try {
+    const { consultas } = preparar(bancoDaCompra());
+    const { POST } = await rotaDeVagas();
+    const { status, corpo } = await ler(await POST(compra({})));
+    assert.equal(status, 200, JSON.stringify(corpo));
+    const criado = stripe.pedidos.find(p => p.metodo === "POST" && p.caminho === "/v1/subscription_items");
+    assert.equal(criado?.corpo.get("price"), "price_vaga_teste");
+    assert.equal(criado?.corpo.get("quantity"), "2", "cobra só as 2 compradas agora, não 10 + 2");
+    const gravado = consultasDe(consultas, "organization_seats", "upsert")[0].valores as Json;
+    assert.deepEqual([gravado.purchased_seats, gravado.stripe_subscription_item_id], [2, "si_novo"]);
+    const concluida = consultasDe(consultas, "organization_seat_purchases", "update")[0].valores as Json;
+    assert.deepEqual([concluida.status, concluida.previous_quantity, concluida.resulting_quantity], ["completed", 0, 2]);
+  } finally {
+    await stripe.fechar();
+  }
+});
+
+test("compra com o item de vaga na assinatura soma ao que o Stripe cobra hoje", async () => {
+  const stripe = await stripeFalso([
+    { id: "si_plano", price: "price_plano", quantity: 1 },
+    { id: "si_vaga", price: "price_vaga_teste", quantity: 3 },
+  ]);
+  try {
+    const { consultas } = preparar(bancoDaCompra());
+    const { POST } = await rotaDeVagas();
+    const { status, corpo } = await ler(await POST(compra({})));
+    assert.equal(status, 200, JSON.stringify(corpo));
+    assert.equal(stripe.pedidos.filter(p => p.caminho === "/v1/subscription_items").length, 0, "não cria outro item");
+    const atualizado = stripe.pedidos.find(p => p.metodo === "POST" && p.caminho === "/v1/subscription_items/si_vaga");
+    assert.equal(atualizado?.corpo.get("quantity"), "5");
+    const gravado = consultasDe(consultas, "organization_seats", "upsert")[0].valores as Json;
+    assert.deepEqual([gravado.purchased_seats, gravado.stripe_subscription_item_id], [5, "si_vaga"]);
+    const concluida = consultasDe(consultas, "organization_seat_purchases", "update")[0].valores as Json;
+    assert.deepEqual([concluida.previous_quantity, concluida.resulting_quantity], [3, 5]);
+  } finally {
+    await stripe.fechar();
+  }
 });
 
 // ─── Produção ───────────────────────────────────────────────────────────────

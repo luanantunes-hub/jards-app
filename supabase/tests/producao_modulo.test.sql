@@ -9,7 +9,7 @@
 --
 -- Cenário, criado e desfeito dentro da transação (nada fica gravado). Os ids
 -- são f4000000-0000-4000-8000-0000000001XX, e pm_teste.id('XX') os escreve:
---   organização A (a0), só com a captação, que está cheia (2 de 2 vagas):
+--   organização A (a0), só com a captação, no plano pago, que está cheia (2 de 2 vagas):
 --     admin (a1), colaborador (a2), captador (a3), proponente (a4) e uma pessoa
 --     de fora (a5) que aceita o convite da produção. O contrato da produção
 --     (cortesia de 3 vagas) é gravado no meio do teste, para conferir o que ele
@@ -55,9 +55,14 @@ begin
     (pm_teste.id('a0'), 'PM organização A'), (pm_teste.id('b0'), 'PM organização B'),
     (pm_teste.id('c0'), 'PM organização C'), (pm_teste.id('d0'), 'PM organização D');
 
-  -- A: a captação tem 1 vaga incluída e 1 comprada, e as duas estão em uso.
+  -- A: a captação tem 1 vaga incluída e 1 comprada, e as duas estão em uso. A
+  -- comprada só conta com o plano pago em vigor (vagas_captacao_fim_assinatura).
   insert into public.organization_seats (organization_id, billing_user_id, purchased_seats)
   values (pm_teste.id('a0'), pm_teste.id('a1'), 1);
+  update public.profiles set plano = 'basico', stripe_subscription_status = 'active', periodo_fim = null
+  where id = pm_teste.id('a1');
+  insert into public.creditos (account_id, organization_id, plano, creditos_totais)
+  values (pm_teste.id('a1'), pm_teste.id('a0'), 'basico_30', 100);
   insert into public.organization_members (organization_id, user_id, papel, modulos_acesso) values
     (pm_teste.id('a0'), pm_teste.id('a1'), 'admin', '{captacao}'),
     (pm_teste.id('a0'), pm_teste.id('a2'), 'colaborador', '{captacao}'),

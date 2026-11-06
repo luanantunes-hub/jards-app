@@ -111,6 +111,7 @@ export default function ConfiguracoesPage() {
   const [isAdmin, setIsAdmin] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [showMembroModal, setShowMembroModal] = useState(false);
+  const [vagasCaptacao, setVagasCaptacao] = useState<{ total: number; occupied: number } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
   const [contribuicoesPendentes, setContribuicoesPendentes] = useState<any[]>([]);
@@ -195,6 +196,20 @@ const { data: perfilData } = await (supabase as any)
     }
     load();
   }, [organizationId, router, loadMembers]);
+
+  // Vagas da captação, para avisar o admin quando a equipe passou do plano
+  // (a assinatura acabou e ninguém foi tirado). Relê quando a equipe muda.
+  useEffect(() => {
+    if (!organizationId || !isAdmin) return;
+    let ativo = true;
+    fetch(`/api/members/seats?organization_id=${encodeURIComponent(organizationId)}`)
+      .then(resposta => (resposta.ok ? resposta.json() : null))
+      .then(corpo => {
+        if (ativo) setVagasCaptacao(typeof corpo?.total === "number" ? { total: corpo.total, occupied: corpo.occupied ?? 0 } : null);
+      })
+      .catch(() => { if (ativo) setVagasCaptacao(null); });
+    return () => { ativo = false; };
+  }, [organizationId, isAdmin, membros]);
 
   // Fetch contributions pending review
   useEffect(() => {
@@ -984,6 +999,16 @@ const { data: perfilData } = await (supabase as any)
             </button>
           )}
         </div>
+
+        {isAdmin && vagasCaptacao && vagasCaptacao.occupied > vagasCaptacao.total && (
+          <div role="status" className="mx-6 mt-4 rounded border border-[#B07A14]/25 bg-white px-4 py-3">
+            <p className="text-[0.75rem] font-semibold text-black/70">
+              {vagasCaptacao.occupied} pessoas na captação para {vagasCaptacao.total} {vagasCaptacao.total === 1 ? "vaga" : "vagas"} do plano
+            </p>
+            <p className="mt-1 text-[0.6875rem] leading-5 text-black/45">Escolha quem continua ou reative o plano para voltar a convidar.</p>
+            <Link href="/meu-plano" className="mt-2 inline-block text-[0.6875rem] font-semibold text-[#B07A14] hover:underline">Ver planos</Link>
+          </div>
+        )}
 
         {membros.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
