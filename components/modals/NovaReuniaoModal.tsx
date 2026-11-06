@@ -69,7 +69,7 @@ export function NovaReuniaoModal({ onClose, onCreated, organizationId }: NovaReu
         role="dialog"
         aria-modal="true"
         aria-labelledby="nova-reuniao-title"
-        className="relative w-full max-w-[480px] overflow-hidden rounded border border-black/10 bg-white shadow-[0_28px_80px_rgba(13,13,13,.18)]"
+        className="relative w-full max-w-[480px] overflow-hidden rounded bg-white border elevacao-3"
       >
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           <h2 id="nova-reuniao-title" className="text-[15px] font-bold text-[#0D0D0D]">Enviar assistente pra reunião</h2>

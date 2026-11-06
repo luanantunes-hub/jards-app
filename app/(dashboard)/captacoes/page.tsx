@@ -553,7 +553,7 @@ export default function CaptacoesPage() {
         <>
           <div className="fixed inset-0 z-40" onClick={() => setCicloMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded bg-white border elevacao-1"
             style={{ top: cicloMenuPos.top, left: cicloMenuPos.left, borderColor: "rgba(13,13,13,.12)" }}
           >
             {([

@@ -350,7 +350,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
     >
       <div role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} aria-label={embedded ? undefined : "Conteúdo preenchido"} className={embedded
         ? "bg-white w-full flex flex-col rounded border overflow-hidden"
-        : "bg-white w-full max-w-[42.5rem] flex flex-col h-full shadow-2xl overflow-hidden"
+        : "bg-white w-full max-w-[42.5rem] flex flex-col h-full overflow-hidden border-l elevacao-2-lado"
       } style={embedded ? { borderColor: "rgba(13,13,13,.08)" } : undefined}>
 
         {/* Header empresa */}
@@ -449,7 +449,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
             role="dialog"
             aria-modal="true"
             aria-label="Novo conteúdo"
-            className={`flex h-full w-full max-w-[32.5rem] flex-col rounded-l bg-white shadow-2xl transition-transform duration-200 ease-out ${buscaVisible ? "translate-x-0" : "translate-x-full"}`}
+            className={`flex h-full w-full max-w-[32.5rem] flex-col rounded-l bg-white transition-transform duration-200 ease-out ${buscaVisible ? "translate-x-0" : "translate-x-full"} border-l elevacao-2-lado`}
             onClick={event => event.stopPropagation()}
           >
             <header className="flex items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>

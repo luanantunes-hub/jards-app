@@ -470,7 +470,7 @@ export function NovaAtividadeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[96dvh] w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none"
+        className="flex max-h-[96dvh] w-full max-w-[47.5rem] flex-col overflow-hidden rounded-b bg-white transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none border-x border-b elevacao-2"
         style={{
           boxShadow: "0 8px 32px rgba(0,0,0,.12)",
           borderBottom: "1px solid rgba(13,13,13,.08)",

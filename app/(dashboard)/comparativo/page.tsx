@@ -620,7 +620,7 @@ function ComparativoCartoes({ selecionadas, valores, potenciais, crescimentos, m
               </button>
               {menuAberto === e.id && (
                 <div
-                  className="absolute right-0 top-8 z-20 w-[11.875rem] rounded border bg-white py-1 shadow-[0_12px_32px_rgba(13,13,13,.12)]"
+                  className="absolute right-0 top-8 z-20 w-[11.875rem] rounded bg-white py-1 border elevacao-1"
                   style={{ borderColor: "rgba(13,13,13,.08)" }}
                 >
                   <button

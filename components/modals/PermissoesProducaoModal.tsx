@@ -99,7 +99,7 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
       onMouseDown={evento => { clicouNoFundo.current = evento.target === evento.currentTarget; }}
       onClick={() => { if (clicouNoFundo.current) fechar(); }}
     >
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[26.25rem] flex-col overflow-hidden rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[90vh] w-full max-w-[26.25rem] flex-col overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between gap-3 border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded bg-black/[.05] text-[#282525]">

@@ -94,7 +94,7 @@ export function TiposPatrocinioSheet({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute inset-x-0 top-0 mx-auto flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white"
+        className="absolute inset-x-0 top-0 mx-auto flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         style={{
           width: "32.5rem",
           maxWidth: "92vw",

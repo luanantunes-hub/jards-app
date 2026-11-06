@@ -88,7 +88,7 @@ export function AcessoContatosModal({
         aria-modal="true"
         aria-labelledby="acesso-contatos-title"
         aria-describedby="acesso-contatos-description"
-        className="relative w-full max-w-[30rem] overflow-hidden rounded border border-black/10 bg-white shadow-[0_24px_70px_rgba(13,13,13,.16)]"
+        className="relative w-full max-w-[30rem] overflow-hidden rounded bg-white border elevacao-3"
       >
         <button
           type="button"

@@ -83,7 +83,7 @@ export function StatusDropdown({ options, current, position, onSelect, onClose, 
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
         ref={menuRef}
-        className="fixed z-50 overflow-x-hidden overflow-y-auto rounded border bg-white shadow-xl"
+        className="fixed z-50 overflow-x-hidden overflow-y-auto rounded bg-white border elevacao-1"
         style={{
           top: Math.max(12, Math.min(position.top, window.innerHeight - 532 * escalaUi())),
           left,

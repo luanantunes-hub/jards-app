@@ -138,7 +138,7 @@ export function IdentityEditor({
                 <ChevronDown size={13} className="ml-auto text-black/45" aria-hidden="true" />
               </button>
               {openPicker === "icon" && (
-                <div id={`${id}-icons`} role="group" aria-label="Símbolos" className={`absolute left-0 z-30 grid w-[12.25rem] grid-cols-4 gap-1.5 rounded-[7px] border border-black/[.13] bg-white p-2.5 shadow-[0_9px_24px_rgba(29,24,43,.11)] ${openAbove ? "bottom-[calc(100%+5px)]" : "top-[calc(100%+5px)]"}`}>
+                <div id={`${id}-icons`} role="group" aria-label="Símbolos" className={`absolute left-0 z-30 grid w-[12.25rem] grid-cols-4 gap-1.5 rounded-[7px] bg-white p-2.5 ${openAbove ? "bottom-[calc(100%+5px)]" : "top-[calc(100%+5px)]"} border elevacao-1`}>
                   {iconOptions.map(({ key, label, Icon }) => (
                     <button
                       type="button"
@@ -171,7 +171,7 @@ export function IdentityEditor({
                 <ChevronDown size={13} className="ml-auto text-black/45" aria-hidden="true" />
               </button>
               {openPicker === "color" && (
-                <div id={`${id}-colors`} role="group" aria-label="Cores" className={`absolute left-0 z-30 grid w-[9.625rem] grid-cols-4 justify-items-center gap-2.5 rounded-[7px] border border-black/[.13] bg-white p-2.5 shadow-[0_9px_24px_rgba(29,24,43,.11)] ${openAbove ? "bottom-[calc(100%+5px)]" : "top-[calc(100%+5px)]"}`}>
+                <div id={`${id}-colors`} role="group" aria-label="Cores" className={`absolute left-0 z-30 grid w-[9.625rem] grid-cols-4 justify-items-center gap-2.5 rounded-[7px] bg-white p-2.5 ${openAbove ? "bottom-[calc(100%+5px)]" : "top-[calc(100%+5px)]"} border elevacao-1`}>
                   {colors.map(({ key, label, cor }) => (
                     <button
                       type="button"

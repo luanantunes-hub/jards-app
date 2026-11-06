@@ -931,7 +931,7 @@ export default function PatrocinadorPage() {
         />
       )}
       {erroExportar && (
-        <div className="fixed bottom-5 right-5 z-50 flex max-w-[20rem] items-start gap-2 rounded border border-[#D94E4E]/20 bg-white px-4 py-3 text-[0.75rem] font-medium text-[#D94E4E] shadow-[0_12px_32px_rgba(13,13,13,.12)]">
+        <div className="fixed bottom-5 right-5 z-50 flex max-w-[20rem] items-start gap-2 rounded border border-[#D94E4E]/20 bg-white px-4 py-3 text-[0.75rem] font-medium text-[#D94E4E] elevacao-sombra-1">
           <span className="min-w-0 flex-1">{erroExportar}</span>
           <button type="button" onClick={() => setErroExportar(null)} aria-label="Fechar aviso" className="text-[#D94E4E]/60 hover:text-[#D94E4E]"><X size={13} /></button>
         </div>
@@ -966,7 +966,7 @@ export default function PatrocinadorPage() {
           />
         )}
         <div
-          className="fixed top-0 right-0 h-full w-80 z-50 flex flex-col bg-white shadow-2xl"
+          className="fixed top-0 right-0 h-full w-80 z-50 flex flex-col bg-white border-l elevacao-2-lado"
           style={{
             transform: showSugerirForm ? "translateX(0)" : "translateX(100%)",
             transition: "transform 0.22s cubic-bezier(0.4,0,0.2,1)",
@@ -1102,7 +1102,7 @@ export default function PatrocinadorPage() {
               </button>
               {menuAcoesAberto && (
                 <div
-                  className="absolute right-0 top-10 z-20 w-[11.875rem] rounded border bg-white py-1 shadow-[0_12px_32px_rgba(13,13,13,.12)]"
+                  className="absolute right-0 top-10 z-20 w-[11.875rem] rounded bg-white py-1 border elevacao-1"
                   style={{ borderColor: "rgba(13,13,13,.08)" }}
                 >
                   <button

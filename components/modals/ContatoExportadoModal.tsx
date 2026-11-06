@@ -19,7 +19,7 @@ export function ContatoExportadoModal({ contatoId, nome, empresaNome, onClose }:
         role="dialog"
         aria-modal="true"
         aria-labelledby="contato-exportado-title"
-        className="w-full max-w-[23.75rem] overflow-hidden rounded-b bg-white shadow-[0_22px_72px_rgba(13,13,13,.2)]"
+        className="w-full max-w-[23.75rem] overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         onClick={event => event.stopPropagation()}
       >
         <div className="flex flex-col items-center px-6 pb-6 pt-8 text-center">

@@ -110,7 +110,7 @@ export function PropostaUploadModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full max-w-md bg-white rounded border shadow-xl"
+        className="w-full max-w-md bg-white rounded border elevacao-3"
         style={{ borderColor: "rgba(13,13,13,.10)" }}
         onClick={e => e.stopPropagation()}
       >

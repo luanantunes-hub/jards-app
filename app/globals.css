@@ -1,6 +1,25 @@
 @import url("https://fonts.googleapis.com/css2?family=Valley+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400;1,500;1,600;1,700&display=swap");
 @import "tailwindcss";
 
+/* Elevação: janelas por cima da tela (menus, folhas, pop-ups).
+   Borda cinza bem clara + sombra em duas camadas, com o roxo noite da marca diluído.
+   1 = menus, listas suspensas e dicas · 2 = folhas e painéis laterais · 3 = pop-ups no centro.
+   A largura da borda fica na classe da peça (border, border-x border-b...), para deixar aberto o lado colado à tela. */
+:root {
+  --elevacao-borda: rgba(13, 13, 13, .075);
+  --elevacao-sombra-1: 0 1px 2px rgba(28, 14, 51, .06), 0 6px 16px rgba(28, 14, 51, .08);
+  --elevacao-sombra-2: 0 2px 6px rgba(28, 14, 51, .06), 0 16px 40px rgba(28, 14, 51, .10);
+  --elevacao-sombra-2-cima: 0 -2px 6px rgba(28, 14, 51, .05), 0 -16px 40px rgba(28, 14, 51, .09);
+  --elevacao-sombra-2-lado: -2px 0 6px rgba(28, 14, 51, .05), -16px 0 40px rgba(28, 14, 51, .09);
+  --elevacao-sombra-3: 0 2px 8px rgba(28, 14, 51, .06), 0 24px 64px rgba(28, 14, 51, .14);
+}
+@utility elevacao-1 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-1); }
+@utility elevacao-2 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2); }
+@utility elevacao-2-cima { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2-cima); }
+@utility elevacao-2-lado { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-2-lado); }
+@utility elevacao-3 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-3); }
+@utility elevacao-sombra-1 { box-shadow: var(--elevacao-sombra-1); }
+
 :root {
   --cream:          #FFFFFF;
   --ink:            #282525;

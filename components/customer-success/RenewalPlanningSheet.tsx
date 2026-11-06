@@ -216,7 +216,7 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-start justify-center bg-black/40 px-4" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-labelledby="renewal-sheet-title" className="max-h-[92dvh] w-full max-w-[42.5rem] overflow-y-auto rounded-b bg-white shadow-[0_20px_70px_rgba(13,13,13,.18)]">
+      <div role="dialog" aria-modal="true" aria-labelledby="renewal-sheet-title" className="max-h-[92dvh] w-full max-w-[42.5rem] overflow-y-auto rounded-b bg-white border-x border-b elevacao-2">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/[.07] bg-white px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><RefreshCw size={16} /></span>

@@ -38,7 +38,7 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <section className="relative grid max-h-[96dvh] w-full overflow-y-auto rounded-t bg-white shadow-[0_24px_80px_rgba(13,13,13,.18)] sm:max-w-3xl sm:grid-cols-[1.05fr_.95fr] sm:rounded">
+      <section className="relative grid max-h-[96dvh] w-full overflow-y-auto rounded-t bg-white sm:max-w-3xl sm:grid-cols-[1.05fr_.95fr] sm:rounded border elevacao-3">
         <button
           type="button"
           onClick={onClose}

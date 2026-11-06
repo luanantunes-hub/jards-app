@@ -204,7 +204,7 @@ export default function AdicionarCaptadorModal({ open, onClose, onSaved, editDat
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="bg-white rounded shadow-2xl w-full overflow-hidden flex flex-col"
+          className="bg-white rounded w-full overflow-hidden flex flex-col border elevacao-3"
           style={{ maxWidth: "35rem", maxHeight: "90vh" }}
           onClick={e => e.stopPropagation()}
         >

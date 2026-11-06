@@ -798,7 +798,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {orgSwitcherOpen && (
                   <>
                     <div className="fixed inset-0 z-40" onClick={() => setOrgSwitcherOpen(false)} />
-                    <div role="menu" aria-label="Organizações" className="absolute right-0 top-10 z-50 w-64 rounded border border-black/[.09] bg-white p-1.5 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
+                    <div role="menu" aria-label="Organizações" className="absolute right-0 top-10 z-50 w-64 rounded bg-white p-1.5 border elevacao-1">
                       <p className="px-2.5 pb-1.5 pt-1 text-[0.5625rem] font-bold uppercase tracking-widest text-black/30">Trocar organização</p>
                       {memberships.map(m => (
                         <button

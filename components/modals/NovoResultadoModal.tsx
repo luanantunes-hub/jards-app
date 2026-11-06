@@ -125,7 +125,7 @@ export function NovoResultadoModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded w-full flex flex-col border border-black/[.09] shadow-xl overflow-hidden"
+        className="bg-white rounded w-full flex flex-col overflow-hidden border elevacao-3"
         style={{ maxWidth: "26.25rem", maxHeight: "90vh" }}
         onClick={e => e.stopPropagation()}
       >

@@ -156,7 +156,7 @@ export function PropostaOperacionalModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded border border-black/[.09] bg-white shadow-xl" onClick={event => event.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
         <div className="flex shrink-0 items-center justify-between border-b border-black/[.07] px-6 py-4">
           <div className="flex items-center gap-3"><span className="flex h-9 w-9 items-center justify-center rounded bg-black/[.045] text-black/45"><FileCheck2 size={16} /></span><div><h2 id={titleId} className="text-[0.875rem] font-semibold text-black/80">{proposta ? "Proposta completa" : "Nova proposta"}</h2></div></div>
           <button type="button" onClick={onClose} aria-label="Fechar" className="rounded p-2 text-black/30 hover:bg-black/[.05]"><X size={14} /></button>

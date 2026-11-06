@@ -89,7 +89,7 @@ function InternalIconPicker({ value, color, onChange }: { value: string; color: 
     </button>
     {open && <>
       <button type="button" aria-label="Fechar seletor de ícone" className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)}/>
-      <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[13rem] rounded border border-black/[.09] bg-white p-2 shadow-[0_14px_36px_rgba(13,13,13,.13)]">
+      <div className="absolute left-0 top-[calc(100%+6px)] z-20 w-[13rem] rounded bg-white p-2 border elevacao-1">
         <div className="grid grid-cols-4 gap-1.5">
           {(Object.keys(ICONS) as Array<keyof typeof ICONS>).map(key => {
             const Icon = ICONS[key]; const active = key === selectedKey;
@@ -115,7 +115,7 @@ function InternalColorPicker({ value, onChange }: { value: string; onChange: (va
     </button>
     {open && <>
       <button type="button" aria-label="Fechar seletor de cor" className="fixed inset-0 z-10 cursor-default" onClick={() => setOpen(false)}/>
-      <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[11.5rem] rounded border border-black/[.09] bg-white p-3 shadow-[0_14px_36px_rgba(13,13,13,.13)]">
+      <div className="absolute right-0 top-[calc(100%+6px)] z-20 w-[11.5rem] rounded bg-white p-3 border elevacao-1">
         <div className="grid grid-cols-4 gap-2">
           {SCORECARD_COLORS.map(color => <button key={color} type="button" title={color} aria-label={`Usar cor ${color}`} aria-pressed={value.toUpperCase() === color} onClick={() => {onChange(color);setOpen(false);}} className={`flex h-8 items-center justify-center rounded border transition active:scale-[.96] ${value.toUpperCase() === color ? "border-black/25 ring-2 ring-black/10" : "border-black/[.05] hover:scale-105"}`} style={{background:color}}>{value.toUpperCase() === color && <Check size={11} className="text-white" strokeWidth={3}/>}</button>)}
         </div>
@@ -244,7 +244,7 @@ export function PartnershipHealthScorecards({ contaId, organizationId, onScoreCh
     {editingCard && (() => {
       const score = calculateScore(editingCard.criterios); const Icon = ICONS[editingCard.icone as keyof typeof ICONS] ?? Gauge;
       return <div className="fixed inset-0 z-[70] flex flex-col items-center bg-black/40" onMouseDown={() => { setEditingId(null); setCriterionFor(null); }}>
-        <section className="flex max-h-[88vh] w-full max-w-[38.75rem] flex-col overflow-hidden rounded-b bg-white shadow-[0_18px_60px_rgba(13,13,13,.18)]" onMouseDown={event => event.stopPropagation()}>
+        <section className="flex max-h-[88vh] w-full max-w-[38.75rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2" onMouseDown={event => event.stopPropagation()}>
           <header className="flex items-center gap-3 border-b border-black/[.07] px-5 py-4 sm:px-6"><span className="flex h-9 w-9 items-center justify-center" style={{color:editingCard.cor}}><Icon size={17}/></span><div className="min-w-0 flex-1"><p className="text-[0.625rem] font-medium text-black/30">Avaliar dimensão</p><h2 className="mt-0.5 truncate text-[0.9375rem] font-semibold text-black/80">{editingCard.nome}</h2></div><ScoreRing score={score} size={46}/><button type="button" onClick={() => { setEditingId(null); setCriterionFor(null); }} className="flex h-8 w-8 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60" aria-label="Fechar"><X size={15}/></button></header>
 
           <div className="flex-1 overflow-y-auto px-5 py-5 sm:px-6">

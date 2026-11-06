@@ -140,7 +140,7 @@ export function CustomDropdown({
           <div className="fixed inset-0" style={{ zIndex: portalZIndex - 1 }} onClick={() => setIsOpen(false)} />
           <div
             ref={menuRef}
-            className="fixed overflow-y-auto rounded border bg-white py-1 shadow-xl"
+            className="fixed overflow-y-auto rounded bg-white py-1 border elevacao-1"
             style={{
               left: menuPosition.left,
               top: menuPosition.top,

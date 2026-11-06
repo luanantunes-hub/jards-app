@@ -49,7 +49,7 @@ export function ModalIlustrado({ passos, acoesFinais, onClose }: {
         role="dialog"
         aria-modal="true"
         aria-labelledby={tituloId}
-        className="relative flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-hidden rounded-t bg-white shadow-2xl sm:rounded"
+        className="relative flex max-h-[96dvh] w-full max-w-[30rem] flex-col overflow-hidden rounded-t bg-white sm:rounded border elevacao-3"
         onClick={e => e.stopPropagation()}
         onKeyDown={e => {
           if (e.key === "ArrowRight") irPara(indice + 1);

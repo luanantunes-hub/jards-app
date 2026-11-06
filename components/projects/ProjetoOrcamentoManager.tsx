@@ -439,7 +439,7 @@ function Summary({ label, value, title, vazio = false }: { label: string; value:
 }
 
 function Modal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}><div className="max-h-[86vh] w-full max-w-lg overflow-y-auto rounded bg-white p-6 shadow-2xl" onClick={event => event.stopPropagation()}><div className="mb-5 flex items-center justify-between"><h3 className="text-[0.875rem] font-semibold text-black/80">{title}</h3><button onClick={onClose} className="rounded p-1 text-black/25 hover:bg-black/5 hover:text-black/60"><X size={15} /></button></div>{children}</div></div>;
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}><div className="max-h-[86vh] w-full max-w-lg overflow-y-auto rounded bg-white p-6 border elevacao-3" onClick={event => event.stopPropagation()}><div className="mb-5 flex items-center justify-between"><h3 className="text-[0.875rem] font-semibold text-black/80">{title}</h3><button onClick={onClose} className="rounded p-1 text-black/25 hover:bg-black/5 hover:text-black/60"><X size={15} /></button></div>{children}</div></div>;
 }
 
 function ItemModal({ editing, saving, onChange, onClose, onSave }: { editing: DraftItem; saving: boolean; onChange: (item: DraftItem) => void; onClose: () => void; onSave: () => void }) {

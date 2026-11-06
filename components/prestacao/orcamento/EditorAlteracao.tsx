@@ -150,7 +150,7 @@ export function EditorAlteracao({ alteracao, versaoId, nos, regime, contexto, on
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex h-[96dvh] w-full max-w-[72rem] flex-col overflow-hidden rounded bg-white shadow-2xl"
+        className="flex h-[96dvh] w-full max-w-[72rem] flex-col overflow-hidden rounded bg-white border elevacao-3"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>

@@ -60,7 +60,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded shadow-2xl w-full max-w-md p-6"
+        className="bg-white rounded w-full max-w-md p-6 border elevacao-3"
         style={{ borderColor: "rgba(13,13,13,.08)" }}
         onClick={(e) => e.stopPropagation()}
       >

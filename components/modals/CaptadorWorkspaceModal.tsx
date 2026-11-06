@@ -106,7 +106,7 @@ export function CaptadorWorkspaceModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden rounded-b border-x border-b border-black/[.07] bg-white shadow-[0_16px_45px_rgba(13,13,13,.15)]"
+        className="flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         onClick={event => event.stopPropagation()}
       >
         <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-5 py-4">

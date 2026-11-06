@@ -83,7 +83,7 @@ export function MinutaAlteracao({ minuta, onClose, planilha }: {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex max-h-[92dvh] w-full max-w-[44rem] flex-col overflow-hidden rounded bg-white shadow-2xl"
+        className="flex max-h-[92dvh] w-full max-w-[44rem] flex-col overflow-hidden rounded bg-white border elevacao-3"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b px-6 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
