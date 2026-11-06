@@ -10,6 +10,7 @@ import { rotuloDoTipoDePessoa } from "@/lib/producao/equipe";
 import { DetailPageContent } from "@/components/ui/DetailPagePrimitives";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { PessoaSheet, type PessoaEditavel } from "@/components/producao/PessoaSheet";
+import { ImportarPessoasSheet } from "@/components/producao/ImportarPessoasSheet";
 import { chaveDoNome } from "@/lib/dominio";
 
 /** A equipe da produção: as pessoas da organização, com ou sem conta no Jards. */
@@ -20,6 +21,7 @@ export default function EquipePage() {
   const [busca, setBusca] = useState("");
   const [arquivadas, setArquivadas] = useState(false);
   const [folha, setFolha] = useState<{ pessoa?: PessoaEditavel } | null>(null);
+  const [importando, setImportando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const podeEditar = papel !== null && papelNaProducao(papel) !== null && papelNaProducao(papel) !== "leitor";
@@ -53,7 +55,12 @@ export default function EquipePage() {
               <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Equipe</h1>
               <p className="mt-1 text-[0.75rem] text-black/45">As pessoas que trabalham nas suas produções, com ou sem conta no Jards.</p>
             </div>
-            {podeEditar && <PrimaryListAction onClick={() => setFolha({})}><Plus size={13} aria-hidden="true" /> Nova pessoa</PrimaryListAction>}
+            {podeEditar && (
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setImportando(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Importar planilha</button>
+                <PrimaryListAction onClick={() => setFolha({})}><Plus size={13} aria-hidden="true" /> Nova pessoa</PrimaryListAction>
+              </div>
+            )}
           </div>
           <div className="mt-5 flex flex-wrap items-center gap-3">
             <label className="relative block w-full max-w-xs">
@@ -99,6 +106,7 @@ export default function EquipePage() {
         )}
       </DetailPageContent>
 
+      {importando && organizationId && <ImportarPessoasSheet organizationId={organizationId} existentes={(pessoas ?? []).map(pessoa => ({ nome: pessoa.nome, email: pessoa.email }))} onClose={() => setImportando(false)} onImported={() => setVersao(atual => atual + 1)} />}
       {folha && organizationId && <PessoaSheet organizationId={organizationId} pessoa={folha.pessoa} onClose={() => setFolha(null)} onSaved={() => setVersao(atual => atual + 1)} />}
     </div>
   );
