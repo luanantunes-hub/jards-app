@@ -58,6 +58,8 @@ import type {
   CategoriaDoItem,
   DonoDoItem,
   SituacaoDaPauta,
+  FaseDeEnergia,
+  TipoDeObjetoDaPlanta,
   TipoDePlanta,
   SituacaoDaTarefa,
   SituacaoDoVinculo,
@@ -1203,6 +1205,12 @@ export type BancoDaProducao = {
           largura_m: number;
           profundidade_m: number;
           rotacao_graus: number;
+          tipo: TipoDeObjetoDaPlanta;
+          canais: number | null;
+          potencia_w: number | null;
+          circuito: string | null;
+          fase: FaseDeEnergia | null;
+          canal_inicial: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -1217,6 +1225,12 @@ export type BancoDaProducao = {
           largura_m?: number;
           profundidade_m?: number;
           rotacao_graus?: number;
+          tipo?: TipoDeObjetoDaPlanta;
+          canais?: number | null;
+          potencia_w?: number | null;
+          circuito?: string | null;
+          fase?: FaseDeEnergia | null;
+          canal_inicial?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1231,6 +1245,12 @@ export type BancoDaProducao = {
           largura_m?: number;
           profundidade_m?: number;
           rotacao_graus?: number;
+          tipo?: TipoDeObjetoDaPlanta;
+          canais?: number | null;
+          potencia_w?: number | null;
+          circuito?: string | null;
+          fase?: FaseDeEnergia | null;
+          canal_inicial?: number | null;
           created_at?: string;
           updated_at?: string;
         };

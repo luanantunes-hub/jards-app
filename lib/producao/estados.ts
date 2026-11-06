@@ -95,3 +95,11 @@ export const DONOS_DO_ITEM: readonly DonoDoItem[] = ["producao", "espaco", "loca
 /** `producao_plantas.tipo`. */
 export type TipoDePlanta = "palco" | "sala" | "hospedagem" | "exposicao" | "outro";
 export const TIPOS_DE_PLANTA: readonly TipoDePlanta[] = ["palco", "sala", "hospedagem", "exposicao", "outro"];
+
+/** `producao_planta_objetos.tipo`: o que o objeto é no mapa de palco (PD2.4). */
+export type TipoDeObjetoDaPlanta = "instrumento" | "praticavel" | "cenario" | "monitor" | "microfone" | "energia" | "outro";
+export const TIPOS_DE_OBJETO_DA_PLANTA: readonly TipoDeObjetoDaPlanta[] = ["instrumento", "praticavel", "cenario", "monitor", "microfone", "energia", "outro"];
+
+/** `producao_planta_objetos.fase`: a fase da energia. */
+export type FaseDeEnergia = "R" | "S" | "T";
+export const FASES_DE_ENERGIA: readonly FaseDeEnergia[] = ["R", "S", "T"];
