@@ -89,3 +89,9 @@ export const CATEGORIAS_DO_ITEM: readonly CategoriaDoItem[] = ["cenario", "figur
 /** `producao_itens.dono`: a produção, um espaço ou um fornecedor (locado). */
 export type DonoDoItem = "producao" | "espaco" | "locado";
 export const DONOS_DO_ITEM: readonly DonoDoItem[] = ["producao", "espaco", "locado"];
+
+// As plantas (PD2.2): o banco confere a lista num CHECK (supabase/migrations/*_producao_plantas.sql).
+
+/** `producao_plantas.tipo`. */
+export type TipoDePlanta = "palco" | "sala" | "hospedagem" | "exposicao" | "outro";
+export const TIPOS_DE_PLANTA: readonly TipoDePlanta[] = ["palco", "sala", "hospedagem", "exposicao", "outro"];

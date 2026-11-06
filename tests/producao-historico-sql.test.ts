@@ -47,6 +47,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_pautas: { fora: "", rotulos: "titulo" },
   // O inventário (PD2.1): nada sensível no item (o valor mora em outra tabela, sem histórico); o nome é o rótulo.
   producao_itens: { fora: "", rotulos: "nome" },
+  // As plantas (PD2.2): nada sensível; o nome é o rótulo.
+  producao_plantas: { fora: "", rotulos: "nome" },
 };
 
 /** Todas as tabelas com histórico hoje. */
@@ -62,6 +64,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_acessos_equipe: "é só o convite de acesso: o e-mail é dado pessoal e quem convidou já fica na própria linha",
   producao_vinculos_valores: "é só cachê e diária: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
   producao_itens_valores: "é só o valor do item e da locação: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
+  producao_planta_objetos: "é só a posição, o tamanho e a rotação de cada objeto na planta: muda a cada arrasto e o histórico da planta já conta o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };
 
