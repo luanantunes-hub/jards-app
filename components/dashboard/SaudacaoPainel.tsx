@@ -10,7 +10,7 @@ import { saudacaoDoPainel } from "@/lib/saudacao";
 const literata = Literata({ subsets: ["latin"], style: ["italic"], weight: ["500"] });
 const FONTE_FRASE = `${literata.className} text-[1.7rem] font-medium italic tracking-[-.01em]`;
 
-/** Título do painel: o símbolo do Jards e uma saudação que muda com a hora e o dia. */
+/** Título do painel: uma saudação que muda com a hora e o dia (o símbolo já está no menu). */
 export function SaudacaoPainel() {
   const organizacao = useOrganizationName();
   const [frase, setFrase] = useState<string | null>(null);
@@ -49,8 +49,7 @@ function semQuebraNoHifen(frase: string) {
 
 export function TituloSaudacao({ frase }: { frase: string | null }) {
   return (
-    <h1 className="mt-1 flex items-start gap-[0.625rem] leading-tight text-[#282525]">
-      <img src="/jards-icon.svg" alt="" aria-hidden="true" className="mt-[0.22rem] h-[1.75rem] w-[1.75rem] shrink-0" />
+    <h1 className="mt-1 leading-tight text-[#282525]">
       {frase
         ? <span className={`saudacao-painel text-balance ${FONTE_FRASE}`}>{semQuebraNoHifen(frase)}</span>
         : <span className={`invisible ${FONTE_FRASE}`} aria-hidden="true">Café pronto</span>}
