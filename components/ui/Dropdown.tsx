@@ -153,7 +153,7 @@ export function Dropdown({
           role="listbox"
           aria-label={ariaLabel}
           onKeyDown={handleListKeyDown}
-          className="fixed z-[999] max-h-52 overflow-y-auto rounded border bg-white py-1 shadow-lg"
+          className="fixed z-[999] max-h-52 overflow-y-auto rounded bg-white py-1 border elevacao-1"
           style={{ ...listStyle, borderColor: "rgba(13,13,13,.12)" }}
         >
           {options.map(opt => (

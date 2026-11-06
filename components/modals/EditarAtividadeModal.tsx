@@ -340,7 +340,7 @@ export function EditarAtividadeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white h-full w-[40rem] max-w-[92vw] overflow-hidden flex flex-col shadow-2xl"
+        className="bg-white h-full w-[40rem] max-w-[92vw] overflow-hidden flex flex-col border-l elevacao-2-lado"
         style={{ borderLeft: "1px solid rgba(13,13,13,.08)" }}
         onClick={e => e.stopPropagation()}
       >
@@ -679,7 +679,7 @@ function Dropdown({
         <ChevronDown size={14} className={`text-black/30 transition ${open ? "rotate-180" : ""}`} />
       </button>
       {open && (
-        <div className="fixed z-[999] flex flex-col overflow-hidden bg-white border rounded shadow-lg" style={{ ...menuStyle, borderColor: "rgba(13,13,13,.1)" }}>
+        <div className="fixed z-[999] flex flex-col overflow-hidden bg-white rounded border elevacao-1" style={{ ...menuStyle }}>
           <div className="max-h-48 min-h-0 overflow-y-auto overscroll-contain">
             {value && (
               <button onClick={() => { onChange(null); onClose(); }}

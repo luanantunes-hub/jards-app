@@ -185,7 +185,7 @@ export function RenewalDecisionSheet({ open, tree, value, onChange, onClose }: {
     </main>
 
     <footer className="pointer-events-none absolute inset-x-0 bottom-4 z-20 px-4 md:bottom-5">
-      <div className="pointer-events-auto mx-auto w-full max-w-[42.5rem] rounded border border-black/[.1] bg-white p-3 shadow-[0_18px_55px_rgba(13,13,13,.16)]">
+      <div className="pointer-events-auto mx-auto w-full max-w-[42.5rem] rounded bg-white p-3 border elevacao-2">
         {value.outcome ? <div className="flex flex-col items-stretch justify-between gap-3 sm:flex-row sm:items-center sm:gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-black/[.04] text-[#2E8932]"><Check size={14}/></span>

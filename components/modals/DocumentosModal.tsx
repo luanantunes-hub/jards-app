@@ -150,7 +150,7 @@ function DocForm({
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)" }}>
       <div role="dialog" aria-modal="true" aria-labelledby={titleId}
-        className="bg-white rounded border w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col shadow-2xl"
+        className="bg-white rounded w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col border elevacao-3"
         style={{ borderColor: "rgba(13,13,13,.12)" }}>
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>
@@ -338,7 +338,7 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
     <>
       <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,.45)" }}>
         <div role="dialog" aria-modal="true" aria-label="Documentos"
-          className="bg-white rounded border shadow-2xl w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col"
+          className="bg-white rounded w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col border elevacao-3"
           style={{ borderColor: "rgba(13,13,13,.10)" }}>
 
           {/* Header */}

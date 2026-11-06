@@ -306,7 +306,7 @@ function InlineSelect({
         <>
           <div className="fixed inset-0 z-40" onClick={() => setMenuPos(null)} />
           <div
-            className="fixed z-50 min-w-[10rem] overflow-hidden rounded border bg-white py-1 shadow-xl"
+            className="fixed z-50 min-w-[10rem] overflow-hidden rounded bg-white py-1 border elevacao-1"
             style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width, borderColor: "rgba(13,13,13,.12)" }}
             role="listbox"
           >

@@ -109,7 +109,7 @@ export function SugerirContribuicaoModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="bg-white rounded shadow-2xl w-full max-w-md p-8 text-center"
+          className="bg-white rounded w-full max-w-md p-8 text-center border elevacao-3"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="w-12 h-12 rounded-full bg-black/[.04] flex items-center justify-center mx-auto mb-4">
@@ -130,7 +130,7 @@ export function SugerirContribuicaoModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="bg-white rounded shadow-2xl w-full max-w-lg p-6"
+        className="bg-white rounded w-full max-w-lg p-6 border elevacao-3"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

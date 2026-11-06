@@ -672,7 +672,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                 <ProjectIdentity nome={projeto.nome} tipo={projeto.identidade_tipo} valor={projeto.identidade_valor} logoUrl={projeto.identidade_logo_url} cor={projeto.identidade_cor} size="md" />
                 <span className="absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded border border-black/10 bg-white text-black/45 shadow-sm opacity-0 transition group-hover:opacity-100 group-hover:text-[#7259B5]"><Pencil size={8}/></span>
               </button>
-              {identityOpen && <div className="absolute left-0 top-12 z-30 w-[17.875rem] rounded border border-black/[.09] bg-white p-3 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
+              {identityOpen && <div className="absolute left-0 top-12 z-30 w-[17.875rem] rounded bg-white p-3 border elevacao-1">
                 <div className="px-1 pb-3"><p className="text-[0.8125rem] font-semibold text-black/70">Identidade do projeto</p></div>
                 <div className="grid grid-cols-4 gap-1.5">
                   {PROJECT_ICON_OPTIONS.map(({ key, label, Icon }) => {
@@ -835,7 +835,7 @@ export default function ProjetoDetailPage({ params }: { params: Promise<{ id: st
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setFasePop(null)} />
                       <div
-                        className="fixed z-50 rounded border bg-white p-2 shadow-xl"
+                        className="fixed z-50 rounded bg-white p-2 border elevacao-1"
                         style={{ top: fasePop.top, left: fasePop.left, borderColor: "rgba(13,13,13,.09)", width: "17rem" }}
                       >
                         <div className="grid grid-cols-3 gap-1.5">

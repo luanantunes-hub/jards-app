@@ -205,7 +205,7 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
   }
 
   return <div className="fixed inset-0 z-50 flex flex-col items-center bg-black/45" onClick={onClose}>
-    <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden rounded-b border-x border-b border-black/[.07] bg-white shadow-[0_16px_45px_rgba(13,13,13,.15)]" onClick={event => event.stopPropagation()}>
+    <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2" onClick={event => event.stopPropagation()}>
       <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-5 py-4">
         <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><User size={16} className="text-black/50" /></div><div><h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Novo contato</h2><p className="mt-0.5 text-[0.625rem] text-black/35">Cadastre quem participa da relação comercial</p></div></div>
         <button type="button" onClick={onClose} aria-label="Fechar" className="flex h-8 w-8 items-center justify-center rounded transition hover:bg-black/[.06]"><X size={15} className="text-black/40" /></button>

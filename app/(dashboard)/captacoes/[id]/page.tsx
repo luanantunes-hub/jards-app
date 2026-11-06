@@ -1057,7 +1057,7 @@ export default function CaptacaoDetailPage({ params }: { params: Promise<{ id: s
         <>
           <div className="fixed inset-0 z-40" onClick={() => setPrioMenuPos(null)} />
           <div
-            className="fixed z-50 overflow-hidden rounded-lg border bg-white shadow-xl"
+            className="fixed z-50 overflow-hidden rounded bg-white border elevacao-1"
             style={{ top: prioMenuPos.top, left: prioMenuPos.left, borderColor: "rgba(13,13,13,.10)", minWidth: "11.25rem" }}
           >
             {(["sem", "alta", "media", "baixa"] as const).map(p => {

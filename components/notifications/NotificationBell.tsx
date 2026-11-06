@@ -294,7 +294,7 @@ export function NotificationBell({ userId }: { userId: string }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-10 z-50 w-[22.5rem] overflow-hidden rounded border border-black/[.10] bg-white shadow-[0_16px_40px_rgba(13,13,13,.12)]">
+        <div className="absolute right-0 top-10 z-50 w-[22.5rem] overflow-hidden rounded bg-white border elevacao-1">
           <div className="flex items-center justify-between border-b border-black/[.07] px-4 py-3">
             <div>
               <p className="text-[0.8125rem] font-bold text-[#282525]">Notificações</p>

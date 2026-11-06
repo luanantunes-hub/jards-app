@@ -324,7 +324,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          className="bg-white rounded shadow-2xl w-full flex flex-col"
+          className="bg-white rounded w-full flex flex-col border elevacao-3"
           style={{ maxWidth: "37.5rem", maxHeight: "calc(100vh - 48px)" }}
           onClick={e => e.stopPropagation()}
         >
@@ -440,7 +440,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
                   )}
                 </div>
                 {proponenteOpen && (
-                  <div className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded border bg-white shadow-lg" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+                  <div className="absolute left-0 right-0 z-50 mt-1 overflow-hidden rounded bg-white border elevacao-1">
                     {proponenteOptions.map(opt => (
                       <button key={opt.id} onMouseDown={e => { e.preventDefault(); selectProponente(opt); }}
                         className="w-full px-3 py-2.5 text-left text-[0.8125rem] transition hover:bg-black/[0.04]">

@@ -338,7 +338,7 @@ export default function PrestacaoDetalhe() {
 
             {avancarOpen && avancarMenuPos && createPortal(
               <div
-                className="fixed bg-white rounded border shadow-lg z-20"
+                className="fixed bg-white rounded z-20 border elevacao-1"
                 style={{ right: avancarMenuPos.right, top: avancarMenuPos.top, borderColor: "rgba(13,13,13,.10)", minWidth: "15rem" }}
               >
                 <div className="p-3 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>

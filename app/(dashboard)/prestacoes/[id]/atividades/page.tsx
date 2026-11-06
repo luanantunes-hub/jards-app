@@ -414,7 +414,7 @@ export default function AtividadesPage() {
       {/* Modal de criação/edição */}
       {form && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => { setForm(null); setErro(""); }}>
-          <div className="bg-white rounded shadow-2xl w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded w-full max-w-lg p-6 max-h-[90vh] overflow-y-auto border elevacao-3" onClick={e => e.stopPropagation()}>
             <h3 className="text-[0.875rem] font-semibold text-[#282525] mb-4">
               {form._new ? "Nova atividade" : "Editar atividade"}
             </h3>

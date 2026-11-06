@@ -21,7 +21,7 @@ export function DashboardCustomizer({ open, onOpenChange, preferences, onToggle,
       </button>
       {open && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/15" onMouseDown={() => onOpenChange(false)}>
-          <aside className="h-full w-full max-w-[24.375rem] overflow-y-auto border-l border-black/10 bg-white shadow-2xl" onMouseDown={(event) => event.stopPropagation()}>
+          <aside className="h-full w-full max-w-[24.375rem] overflow-y-auto bg-white border-l elevacao-2-lado" onMouseDown={(event) => event.stopPropagation()}>
             <header className="sticky top-0 z-10 flex items-start justify-between border-b border-black/[.07] bg-white px-5 py-5">
               <div><p className="text-[0.625rem] font-bold uppercase tracking-[.09em] text-[#7259B5]">Visão geral</p><h2 className="mt-1 text-[1.0625rem] font-semibold text-black/80">Personalizar módulos</h2></div>
               <button type="button" onClick={() => onOpenChange(false)} className="flex h-9 w-9 items-center justify-center rounded border border-black/10 text-black/35 hover:bg-black/[.04]"><X size={15} /></button>

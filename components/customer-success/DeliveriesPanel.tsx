@@ -186,7 +186,7 @@ function DeliveryForm({ accounts, contaId, contracts, projects, projetoId, membe
   const [evidenceRequired, setEvidenceRequired] = useState("true");
   const dropdownClass = "w-full [&>button]:h-10 [&>button]:w-full";
 
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}><form className="w-full max-w-xl overflow-hidden rounded border border-black/[.09] bg-white shadow-[0_24px_70px_rgba(13,13,13,.16)]" onClick={event => event.stopPropagation()} onSubmit={event => { event.preventDefault(); onSubmit(Object.fromEntries(new FormData(event.currentTarget))); }}>
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}><form className="w-full max-w-xl overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()} onSubmit={event => { event.preventDefault(); onSubmit(Object.fromEntries(new FormData(event.currentTarget))); }}>
     <header className="flex items-center justify-between border-b border-black/[.07] px-5 py-4"><div><p className="text-[0.625rem] text-black/30">Execução</p><h3 className="mt-0.5 text-[0.9375rem] font-semibold text-black/80">Nova entrega</h3></div><button type="button" onClick={onClose} className="rounded p-1.5 text-black/30 hover:bg-black/[.04] hover:text-black/55"><X size={15}/></button></header>
     <div className="grid gap-4 p-5 sm:grid-cols-2">
       <label className="sm:col-span-2"><Label>Título</Label><input name="titulo" required autoFocus placeholder="O que precisa ser entregue?" className={fieldClass}/></label>

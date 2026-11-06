@@ -42,7 +42,7 @@ export function AnchoredPopover({ pos, onClose, children }: {
     <>
       <div className="fixed inset-0 z-40" onClick={onClose} />
       <div
-        className="fixed z-50 rounded border bg-white p-4 shadow-xl"
+        className="fixed z-50 rounded bg-white p-4 border elevacao-1"
         style={{ top: pos.top, left: pos.left, width: pos.width, borderColor: "rgba(13,13,13,.1)" }}
         onClick={event => event.stopPropagation()}
       >

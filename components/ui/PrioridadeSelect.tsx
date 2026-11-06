@@ -69,7 +69,7 @@ export function PrioridadeSelect({ value, onChange }: {
       {open && position && createPortal(
         <>
           <div className="fixed inset-0" style={{ zIndex: 99 }} onMouseDown={() => setOpen(false)} />
-          <div className="fixed overflow-hidden rounded border bg-white shadow-lg" style={{ ...position, zIndex: 100, borderColor: "rgba(13,13,13,.1)" }}>
+          <div className="fixed overflow-hidden rounded bg-white border elevacao-1" style={{ ...position, zIndex: 100 }}>
           <button
             type="button"
             onClick={() => { onChange(null); setOpen(false); }}

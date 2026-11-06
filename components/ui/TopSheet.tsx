@@ -34,7 +34,7 @@ export function TopSheet({ titulo, onClose, children, footer }: {
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="absolute left-1/2 top-0 flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none"
+        className="absolute left-1/2 top-0 flex max-h-[96dvh] flex-col overflow-hidden rounded-b bg-white transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none border-x border-b elevacao-2"
         style={{
           width: "27.5rem",
           maxWidth: "92vw",

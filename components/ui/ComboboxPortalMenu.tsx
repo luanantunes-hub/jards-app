@@ -38,7 +38,7 @@ export function PortalMenu({ position, width, children }: { position: PortalPosi
   if (!position) return null;
   return createPortal(
     <div
-      className="fixed z-50 bg-white border rounded shadow-lg overflow-hidden"
+      className="fixed z-50 bg-white rounded overflow-hidden border elevacao-1"
       style={{
         left: position.left,
         width: width ?? position.width,

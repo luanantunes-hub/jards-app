@@ -51,7 +51,7 @@ export function IdentityPickerPopup({
         <span className={`absolute -bottom-1 -right-1 flex h-4 w-4 items-center justify-center rounded border border-black/10 bg-white text-black/45 opacity-0 shadow-sm transition group-hover:opacity-100 group-hover:text-[#7259B5] group-focus-visible:opacity-100 ${open ? "opacity-100" : ""}`}><Pencil size={8} /></span>
       </button>
       {open && (
-        <div className="absolute left-0 top-12 z-30 w-[17.875rem] rounded border border-black/[.09] bg-white p-3 shadow-[0_16px_45px_rgba(13,13,13,.12)]">
+        <div className="absolute left-0 top-12 z-30 w-[17.875rem] rounded bg-white p-3 border elevacao-1">
           <div className="px-1 pb-3"><p className="text-[0.8125rem] font-semibold text-black/70">{title}</p></div>
           <div className="grid grid-cols-4 gap-1.5">
             {iconOptions.map(({ key, label, Icon }) => {

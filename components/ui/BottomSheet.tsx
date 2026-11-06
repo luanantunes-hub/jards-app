@@ -70,7 +70,7 @@ export function BottomSheet({ titulo, subtitulo, onClose, children, footer }: {
         tabIndex={-1}
         onKeyDown={prenderFoco}
         onClick={event => event.stopPropagation()}
-        className={`absolute inset-x-0 bottom-0 mx-auto flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t bg-white shadow-[0_-8px_32px_rgba(0,0,0,.12)] outline-none transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none md:max-w-[35rem] ${visivel ? "translate-y-0" : "translate-y-full"}`}
+        className={`absolute inset-x-0 bottom-0 mx-auto flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t bg-white outline-none transition-transform duration-[260ms] ease-[cubic-bezier(.32,.72,0,1)] motion-reduce:transition-none md:max-w-[35rem] ${visivel ? "translate-y-0" : "translate-y-full"} border-t elevacao-2-cima`}
       >
         <div className="flex items-start justify-between gap-4 border-b px-5 py-4 md:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
           <div className="min-w-0">

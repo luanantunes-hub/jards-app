@@ -64,7 +64,7 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4" onClick={() => { if (!saving) onClose(); }}>
-      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded bg-white shadow-2xl" onClick={event => event.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
         <header className="flex items-start justify-between gap-4 border-b border-black/[.08] px-6 py-4">
           <div>
             <p id={titleId} className="text-[0.875rem] font-bold text-[#282525]">{followup.status === "pendente" ? "Gerenciar follow-up" : "Follow-up"}</p>
