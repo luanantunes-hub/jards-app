@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, Mail } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 
@@ -18,6 +18,8 @@ export function AcessoDaFolha({ organizationId, pessoaId, email }: { organizatio
   const [trabalhando, setTrabalhando] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [enviando, setEnviando] = useState(false);
+  const [enviadoPara, setEnviadoPara] = useState<string | null>(null);
 
   const [versao, setVersao] = useState(0);
 
@@ -50,6 +52,24 @@ export function AcessoDaFolha({ organizationId, pessoaId, email }: { organizatio
     try { await navigator.clipboard.writeText(`${window.location.origin}/minha-folha`); setCopiado(true); } catch { setErro("Não foi possível copiar. Selecione o link e copie à mão."); }
   }
 
+  async function enviarConvite() {
+    setEnviando(true);
+    setErro(null);
+    setEnviadoPara(null);
+    try {
+      const resposta = await fetch("/api/producao/convite-folha", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ pessoa_id: pessoaId }) });
+      const corpo = await resposta.json().catch(() => ({})) as { enviadoPara?: string };
+      if (resposta.ok && corpo.enviadoPara) setEnviadoPara(corpo.enviadoPara);
+      else if (resposta.status === 503) setErro("O envio de e-mail não está configurado. Copie o link e mande à mão.");
+      else if (resposta.status === 429) setErro("Muitos envios seguidos. Tente de novo daqui a pouco.");
+      else if (resposta.status === 403) setErro("Você não pode enviar este convite.");
+      else setErro("Não foi possível enviar o e-mail. Tente de novo ou copie o link.");
+    } catch {
+      setErro("Sem conexão. Tente de novo.");
+    }
+    setEnviando(false);
+  }
+
   const ativo = acesso && !acesso.revogado_em;
   return (
     <section aria-label="Acesso à folha" className="rounded border p-3.5" style={{ borderColor: "rgba(13,13,13,.10)" }}>
@@ -59,8 +79,10 @@ export function AcessoDaFolha({ organizationId, pessoaId, email }: { organizatio
       {acesso === undefined ? null : ativo ? (
         <div className="mt-3 space-y-2.5">
           <p className="text-[0.75rem] text-black/65">{acesso.user_id ? "Acesso ativo" : "Convidada"} · {acesso.email}{acesso.user_id ? "" : ". Ainda não entrou."}</p>
-          {!acesso.user_id && <p className="text-[0.6875rem] text-black/45">Mande o link abaixo. Ela entra ou cria a conta com este mesmo e-mail.</p>}
+          {!acesso.user_id && <p className="text-[0.6875rem] text-black/45">Envie o convite por e-mail ou mande o link. Ela entra ou cria a conta com este mesmo e-mail.</p>}
+          {enviadoPara && <p role="status" className="text-[0.6875rem] text-black/65">Convite enviado para {enviadoPara}.</p>}
           <div className="flex flex-wrap gap-2">
+            {!acesso.user_id && <button type="button" onClick={() => void enviarConvite()} disabled={enviando} className={BOTAO}><Mail size={13} aria-hidden="true" />{enviando ? "Enviando…" : enviadoPara ? "Enviar de novo" : "Enviar convite por e-mail"}</button>}
             <button type="button" onClick={() => void copiarLink()} className={BOTAO}>{copiado ? <Check size={13} aria-hidden="true" /> : <Copy size={13} aria-hidden="true" />}{copiado ? "Link copiado" : "Copiar link"}</button>
             <button type="button" onClick={() => void revogar()} disabled={trabalhando} className={BOTAO}>Retirar o acesso</button>
           </div>
