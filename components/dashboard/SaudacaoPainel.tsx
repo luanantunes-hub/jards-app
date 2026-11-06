@@ -14,10 +14,21 @@ const FONTE_FRASE = `${literata.className} text-[1.7rem] font-medium italic trac
 export function SaudacaoPainel() {
   const organizacao = useOrganizationName();
   const [frase, setFrase] = useState<string | null>(null);
+  const [esperouOrganizacao, setEsperouOrganizacao] = useState(false);
+
+  // O nome da organização chega depois da página. Montar a frase antes dele
+  // e refazê-la quando chega trocava o texto na cara da pessoa; então a
+  // frase só é montada quando a organização está pronta (ou após 2 s, para
+  // contas sem nome) e depois disso não muda mais.
+  useEffect(() => {
+    const t = setTimeout(() => setEsperouOrganizacao(true), 2000);
+    return () => clearTimeout(t);
+  }, []);
 
   // A hora é a do navegador, então a frase só é montada depois de carregar
   // (no servidor ela sairia com outro horário).
   useEffect(() => {
+    if (frase !== null || (!organizacao && !esperouOrganizacao)) return;
     let ativo = true;
     createClient().auth.getUser().then(({ data: { user } }) => {
       if (!ativo) return;
@@ -25,7 +36,7 @@ export function SaudacaoPainel() {
       setFrase(saudacaoDoPainel({ nome, organizacao, agora: new Date(), semente: user?.id }));
     });
     return () => { ativo = false; };
-  }, [organizacao]);
+  }, [organizacao, esperouOrganizacao, frase]);
 
   return <TituloSaudacao frase={frase} />;
 }
