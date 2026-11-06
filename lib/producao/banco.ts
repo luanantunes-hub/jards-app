@@ -59,6 +59,7 @@ import type {
   DonoDoItem,
   SituacaoDaPauta,
   FaseDeEnergia,
+  SecaoDoRider,
   TipoDeObjetoDaPlanta,
   TipoDePlanta,
   SituacaoDaTarefa,
@@ -1274,6 +1275,121 @@ export type BancoDaProducao = {
             columns: ["planta_id"];
             isOneToOne: false;
             referencedRelation: "producao_plantas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_riders: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          planta_id: string | null;
+          obra_id: string | null;
+          palco_largura_min_m: number | null;
+          palco_profundidade_min_m: number | null;
+          observacoes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          planta_id?: string | null;
+          obra_id?: string | null;
+          palco_largura_min_m?: number | null;
+          palco_profundidade_min_m?: number | null;
+          observacoes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          planta_id?: string | null;
+          obra_id?: string | null;
+          palco_largura_min_m?: number | null;
+          palco_profundidade_min_m?: number | null;
+          observacoes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_riders_obra_id_fkey";
+            columns: ["obra_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_obras";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_riders_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_riders_planta_id_fkey";
+            columns: ["planta_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_plantas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_rider_itens: {
+        Row: {
+          id: string;
+          organization_id: string;
+          rider_id: string;
+          secao: SecaoDoRider;
+          texto: string;
+          quantidade: number | null;
+          obrigatorio: boolean;
+          ordem: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          rider_id: string;
+          secao?: SecaoDoRider;
+          texto: string;
+          quantidade?: number | null;
+          obrigatorio?: boolean;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          rider_id?: string;
+          secao?: SecaoDoRider;
+          texto?: string;
+          quantidade?: number | null;
+          obrigatorio?: boolean;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_rider_itens_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_rider_itens_rider_id_fkey";
+            columns: ["rider_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_riders";
             referencedColumns: ["id"];
           },
         ];

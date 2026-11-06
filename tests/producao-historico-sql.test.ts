@@ -49,6 +49,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_itens: { fora: "", rotulos: "nome" },
   // As plantas (PD2.2): nada sensível; o nome é o rótulo.
   producao_plantas: { fora: "", rotulos: "nome" },
+  // Os riders (PD2.5): nada sensível; o nome é o rótulo.
+  producao_riders: { fora: "", rotulos: "nome" },
 };
 
 /** Todas as tabelas com histórico hoje. */
@@ -65,6 +67,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_vinculos_valores: "é só cachê e diária: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
   producao_itens_valores: "é só o valor do item e da locação: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
   producao_planta_objetos: "é só a posição, o tamanho e a rotação de cada objeto na planta: muda a cada arrasto e o histórico da planta já conta o que importa",
+  producao_rider_itens: "são só as linhas do rider (texto, quantidade e se é obrigatório): o histórico do rider já conta o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };
 
