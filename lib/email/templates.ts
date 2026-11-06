@@ -56,6 +56,32 @@ export function conviteDaPrestacaoEmail(input: {
   };
 }
 
+// Convite para a pessoa da equipe ver a própria folha do dia (PD1.12).
+export function conviteDaFolhaEmail(input: {
+  recipientName?: string | null;
+  organizacao: string;
+  convidadoPor?: string | null;
+  url: string;
+}) {
+  const primeiroNome = input.recipientName?.trim().split(" ")[0] ?? "";
+  const saudacao = primeiroNome ? `Olá, ${primeiroNome}.` : "Olá.";
+  const recipient = escapeHtml(saudacao);
+  const quem = input.convidadoPor?.trim() ? `${input.convidadoPor.trim()}, de ${input.organizacao},` : input.organizacao;
+  const url = escapeHtml(input.url);
+
+  return {
+    subject: `${input.organizacao} convidou você para ver a sua folha do dia`,
+    text: `${saudacao} ${quem} convidou você para ver a sua folha do dia: os horários, o local, a viagem e a hospedagem das datas em que você está escalada. Entre com este e-mail (ou crie a conta com ele): ${input.url}`,
+    html: emailShell(`
+      <p style="margin:0 0 12px;font-size:14px;color:#555">${recipient}</p>
+      <h1 style="margin:0 0 12px;font-size:23px;line-height:1.25;letter-spacing:-.5px">${escapeHtml(quem)} convidou você para ver a sua folha do dia.</h1>
+      <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#61615d">Nela estão os horários, o local, a viagem e a hospedagem das datas em que você está escalada, e você confirma se vai. Você vê só o que é seu. Entre com a conta deste e-mail; se ainda não tem, crie com ele.</p>
+      <a href="${url}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:#282525;color:#ffffff;text-decoration:none;font-size:13px;font-weight:700">Abrir a minha folha</a>
+      <p style="margin:24px 0 0;font-size:11px;line-height:1.5;color:#999">Se o botão não abrir, copie este endereço:<br>${url}</p>
+    `),
+  };
+}
+
 export function patrocinadorProntoEmail(input: {
   recipientName?: string | null;
   empresaName: string;
