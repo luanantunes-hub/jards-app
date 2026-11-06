@@ -22,6 +22,8 @@ import { TarefasDaData } from "@/components/producao/TarefasDaData";
 import { HistoricoDaData } from "@/components/producao/HistoricoDaData";
 import { ArquivosDaData } from "@/components/producao/ArquivosDaData";
 import { NotasDaData } from "@/components/producao/NotasDaData";
+import { textoDaFolha } from "@/lib/producao/folha-texto";
+import { rotuloDoLugar } from "@/lib/producao/espacos";
 import { LugarDaData } from "@/components/producao/LugarDaData";
 import { CopiarDiaSheet } from "@/components/producao/CopiarDiaSheet";
 import { SalvarModeloDoDiaSheet } from "@/components/producao/SalvarModeloDoDiaSheet";
@@ -45,6 +47,7 @@ export default function DataPage() {
   const [blocos, setBlocos] = useState<Bloco[]>([]);
   const [folha, setFolha] = useState(false);
   const [copiar, setCopiar] = useState(false);
+  const [copiado, setCopiado] = useState(false);
   const [salvarModelo, setSalvarModelo] = useState(false);
   const [modelosDaOrganizacao, setModelosDaOrganizacao] = useState<ModeloGuardado[]>([]);
   const [erro, setErro] = useState<string | null>(null);
@@ -102,6 +105,25 @@ export default function DataPage() {
     recarregar();
   }
 
+  async function copiarTexto() {
+    if (!data) return;
+    setErro(null);
+    const producao = clienteDaProducao(createClient());
+    const { data: lugar } = await producao.from("producao_datas").select("espaco:producao_espacos!espaco_id(nome), sala:producao_salas!sala_id(nome)").eq("id", data.id).maybeSingle();
+    const texto = textoDaFolha({
+      tipo: data.tipo, data: data.data, dataFim: data.data_fim, temporada: data.temporada?.titulo ?? null, fuso,
+      lugar: rotuloDoLugar((lugar as { espaco: { nome: string } | null } | null)?.espaco?.nome ?? null, (lugar as { sala: { nome: string } | null } | null)?.sala?.nome ?? null),
+      blocos,
+    });
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(true);
+      window.setTimeout(() => setCopiado(false), 2500);
+    } catch {
+      setErro("Não foi possível copiar. Tente de novo.");
+    }
+  }
+
   async function confirmar(bloco: Bloco) {
     setErro(null);
     setBlocos(atual => atual.map(item => (item.id === bloco.id ? { ...item, confirmado: !item.confirmado } : item)));
@@ -154,11 +176,14 @@ export default function DataPage() {
         <section aria-labelledby="o-dia">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <h2 id="o-dia" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">O dia</h2>
-            {podeEditar && blocos.length > 0 && (
+            {blocos.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => void copiarTexto()} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{copiado ? "Texto copiado" : "Copiar para o WhatsApp"}</button>
+                {podeEditar && (<>
                 <button type="button" onClick={() => setSalvarModelo(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Salvar como modelo</button>
                 <button type="button" onClick={() => setCopiar(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Copiar para outras datas</button>
                 <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>
+                </>)}
               </div>
             )}
           </div>
