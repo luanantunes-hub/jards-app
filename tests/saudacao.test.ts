@@ -40,19 +40,30 @@ test("organização só entra quando tem nome próprio e curto", () => {
   assert.equal(organizacaoCabe("", "Ana"), false);
 });
 
-test("quinta comum de manhã: cumprimento do período e nome", () => {
+test("quinta comum de manhã: frases da manhã com nome e organização", () => {
   const frases = frasesPossiveis({ nome: "Ana Souza", organizacao: "Platibanda", agora: em(2026, 11, 12, 9) });
   assert.ok(frases.length > 1);
-  assert.ok(frases.some((f) => f.includes("time Platibanda")));
-  for (const f of frases) assert.match(f, /Bom dia/);
-  assert.ok(frases.includes("Bom dia, Ana."));
+  assert.ok(frases.includes("Tudo em ordem no time Platibanda, Ana?"));
+  assert.ok(frases.includes("Vamos ver o que avançou, Ana?"));
+});
+
+test("nenhuma frase cumprimenta pelo período do dia", () => {
+  const dias = [em(2026, 11, 9, 0), em(2026, 11, 12, 0), em(2026, 11, 13, 0), em(2026, 11, 14, 0), em(2026, 11, 15, 0), em(2026, 12, 9, 0)];
+  for (const dia of dias) {
+    for (let hora = 0; hora < 24; hora++) {
+      const agora = new Date(dia.getFullYear(), dia.getMonth(), dia.getDate(), hora);
+      for (const f of frasesPossiveis({ nome: "Ana", organizacao: "Platibanda", agora })) {
+        assert.doesNotMatch(f, /bo[ma] (dia|tarde|noite|madrugada)/i, f);
+      }
+    }
+  }
 });
 
 test("sem nome, a frase não fica com vírgula sobrando", () => {
   for (const f of frasesPossiveis({ agora: em(2026, 11, 12, 15) })) {
     assert.doesNotMatch(f, /, \.|,\s*\?|\{|\}/);
   }
-  assert.ok(frasesPossiveis({ agora: em(2026, 11, 12, 15) }).includes("Boa tarde."));
+  assert.ok(frasesPossiveis({ agora: em(2026, 11, 12, 15) }).includes("Como estão as negociações?"));
 });
 
 test("datas especiais substituem as frases comuns", () => {
@@ -77,8 +88,8 @@ test("dezembro útil fala de fechar patrocínio; fim de semana não", () => {
 });
 
 test("segunda de manhã e sexta à tarde têm frases próprias", () => {
-  assert.ok(frasesPossiveis({ nome: "Ana", agora: em(2026, 11, 9, 9) }).includes("Boa semana, Ana. Por onde começamos?"));
-  assert.ok(frasesPossiveis({ nome: "Ana", agora: em(2026, 11, 13, 16) }).includes("Boa sexta, Ana."));
+  assert.ok(frasesPossiveis({ nome: "Ana", agora: em(2026, 11, 9, 9) }).includes("Semana nova, Ana. Por onde começamos?"));
+  assert.ok(frasesPossiveis({ nome: "Ana", agora: em(2026, 11, 13, 16) }).includes("Sexta-feira, Ana. Dá para deixar os follow-ups em dia antes do fim de semana."));
 });
 
 test("a frase fica a mesma no mesmo período do dia e varia entre pessoas", () => {

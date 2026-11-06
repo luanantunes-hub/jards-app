@@ -16,54 +16,46 @@ export interface EntradaSaudacao {
   semente?: string | null;
 }
 
-const SAUDACAO: Record<Periodo, string> = {
-  madrugada: "Boa madrugada",
-  manha: "Bom dia",
-  tarde: "Boa tarde",
-  noite: "Boa noite",
-};
-
-// "{, nome}" vira ", Ana" ou some quando não há nome; "{saudacao}" é o
-// cumprimento do período; "{org}" só aparece nas frases da organização.
+// Sem "bom dia"/"boa tarde": a hora aparece no assunto da frase. "{, nome}"
+// vira ", Ana" ou some quando não há nome; "{org}" só nas frases da organização.
 const FRASES: Record<Periodo, string[]> = {
   madrugada: [
-    "{saudacao}{, nome}.",
     "Madrugada de trabalho{, nome}? O Jards guarda tudo para amanhã.",
     "Ainda por aqui{, nome}? Lembre de descansar.",
   ],
   manha: [
-    "{saudacao}{, nome}.",
-    "{saudacao}{, nome}. Vamos ver o que avançou?",
-    "{saudacao}{, nome}. Café pronto, prioridades também.",
-    "{saudacao}{, nome}. Que tal começar por um follow-up?",
+    "Vamos ver o que avançou{, nome}?",
+    "Café pronto{, nome}? As prioridades também.",
+    "Que tal começar por um follow-up{, nome}?",
+    "Por onde começamos hoje{, nome}?",
   ],
   tarde: [
-    "{saudacao}{, nome}.",
-    "{saudacao}{, nome}. Como estão as negociações?",
-    "{saudacao}{, nome}. Ainda dá tempo de um follow-up.",
+    "Como estão as negociações{, nome}?",
+    "Ainda dá tempo de um follow-up{, nome}.",
+    "Metade do dia já foi{, nome}. Como está o pipeline?",
   ],
   noite: [
-    "{saudacao}{, nome}.",
-    "{saudacao}{, nome}. Fechando o dia?",
-    "{saudacao}{, nome}. O que ficou para amanhã fica guardado aqui.",
+    "Fechando o dia{, nome}?",
+    "O que ficou para amanhã fica guardado aqui{, nome}.",
+    "Fim de expediente{, nome}? O pipeline espera por você amanhã.",
   ],
 };
 
 const FRASES_ORGANIZACAO = [
-  "{saudacao}, time {org}.",
-  "{saudacao}{, nome}. Aqui está o resumo do time {org}.",
+  "Tudo em ordem no time {org}{, nome}?",
+  "Aqui está o resumo do time {org}{, nome}.",
 ];
 
 // 0 = domingo … 6 = sábado.
 function frasesDoDia(diaSemana: number, periodo: Periodo): string[] {
   if (diaSemana === 1 && periodo === "manha") {
-    return ["Boa semana{, nome}. Por onde começamos?", "Segunda-feira{, nome}. Que tal começar pelas prioridades?"];
+    return ["Semana nova{, nome}. Por onde começamos?", "Segunda-feira{, nome}. Que tal começar pelas prioridades?"];
   }
   if (diaSemana === 5 && (periodo === "tarde" || periodo === "noite")) {
-    return ["Boa sexta{, nome}.", "Sexta-feira{, nome}. Dá para deixar os follow-ups em dia antes do fim de semana."];
+    return ["Sexta-feira{, nome}. Dá para deixar os follow-ups em dia antes do fim de semana.", "Última reta da semana{, nome}. Algum follow-up pendente?"];
   }
-  if (diaSemana === 6 && periodo !== "madrugada") return ["Bom sábado{, nome}.", "Sábado de captação{, nome}?"];
-  if (diaSemana === 0 && periodo !== "madrugada") return ["Bom domingo{, nome}.", "Domingo{, nome}? Só uma espiada no pipeline."];
+  if (diaSemana === 6 && periodo !== "madrugada") return ["Sábado de captação{, nome}?", "Até no sábado{, nome}? O pipeline agradece."];
+  if (diaSemana === 0 && periodo !== "madrugada") return ["Domingo{, nome}? Só uma espiada no pipeline.", "Planejando a semana{, nome}?"];
   return [];
 }
 
@@ -121,7 +113,7 @@ export function frasesDaData(agora: Date): string[] {
   // Até o dia 23, dezembro é quando muitas empresas fecham o patrocínio
   // incentivado do ano (o abatimento vale para o ano do aporte).
   if (mes === 12 && dia <= 23 && agora.getDay() !== 0 && agora.getDay() !== 6) {
-    return ["Dezembro é mês de fechar patrocínio{, nome}.", "{saudacao}{, nome}. Muitas empresas fecham o patrocínio do ano agora."];
+    return ["Dezembro é mês de fechar patrocínio{, nome}.", "Muitas empresas fecham o patrocínio do ano agora{, nome}."];
   }
   return [];
 }
@@ -160,9 +152,8 @@ function hash(texto: string): number {
   return h >>> 0;
 }
 
-function preencher(modelo: string, periodo: Periodo, nome: string, org: string): string {
+function preencher(modelo: string, nome: string, org: string): string {
   return modelo
-    .replace("{saudacao}", SAUDACAO[periodo])
     .replace("{, nome}", nome ? `, ${nome}` : "")
     .replace("{org}", org);
 }
@@ -179,7 +170,7 @@ export function frasesPossiveis({ nome, organizacao, agora }: EntradaSaudacao): 
         ...frasesDoDia(agora.getDay(), periodo),
         ...(periodo !== "madrugada" && organizacaoCabe(organizacao, nome) ? FRASES_ORGANIZACAO : []),
       ];
-  return modelos.map((m) => preencher(m, periodo, primeiro, (organizacao ?? "").trim()));
+  return modelos.map((m) => preencher(m, primeiro, (organizacao ?? "").trim()));
 }
 
 export function saudacaoDoPainel(entrada: EntradaSaudacao): string {
