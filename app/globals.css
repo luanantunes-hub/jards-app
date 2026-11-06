@@ -478,6 +478,22 @@ table thead th > span > span {
   }
 }
 
+/* Saudação do painel (components/dashboard/SaudacaoPainel.tsx): aparece quando a frase fica pronta. */
+@keyframes saudacao-painel-entra {
+  from { opacity: 0; transform: translateY(.25rem); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.saudacao-painel {
+  animation: saudacao-painel-entra 240ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .saudacao-painel {
+    animation: none;
+  }
+}
+
 /* Tamanduá no divã: cena abaixo do leque, espelhada, mais à direita e levemente inclinada. */
 .auth-oblique-scene {
   display: block;
