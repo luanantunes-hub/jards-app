@@ -22,6 +22,7 @@ import { TarefasDaData } from "@/components/producao/TarefasDaData";
 import { HistoricoDaData } from "@/components/producao/HistoricoDaData";
 import { ArquivosDaData } from "@/components/producao/ArquivosDaData";
 import { NotasDaData } from "@/components/producao/NotasDaData";
+import { ItensDaData } from "@/components/producao/ItensDaData";
 import { textoDaFolha } from "@/lib/producao/folha-texto";
 import { rotuloDoLugar } from "@/lib/producao/espacos";
 import { LugarDaData } from "@/components/producao/LugarDaData";
@@ -238,6 +239,7 @@ export default function DataPage() {
         {organizationId && <EquipeDaData organizationId={organizationId} data={{ id: data.id, data: data.data, data_fim: data.data_fim, fuso }} podeEditar={podeEditar} />}
         {organizationId && <ViagemEHospedagem organizationId={organizationId} data={{ id: data.id, data: data.data, fuso }} podeEditar={podeEditar} />}
         {organizationId && <TarefasDaData organizationId={organizationId} dataId={data.id} tipoDeProducao={(data.temporada?.tipo as TipoProducao | undefined) ?? null} podeEditar={podeEditar} />}
+        {organizationId && <ItensDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
         {organizationId && <NotasDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
         {organizationId && <ArquivosDaData organizationId={organizationId} temporadaId={data.temporada_id} dataId={data.id} podeEditar={podeEditar} />}
         {organizationId && <HistoricoDaData dataId={data.id} />}

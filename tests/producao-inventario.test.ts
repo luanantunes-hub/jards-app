@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerItem, lerNumero, pesoTotalKg, totaisDoInventario, valorTotalDoItem, volumeM3, type CamposDoItem } from "../lib/producao/inventario";
+import { cargaDaTemporada, lerItem, lerNumero, pesoTotalKg, totaisDoInventario, valorTotalDoItem, volumeM3, type CamposDoItem } from "../lib/producao/inventario";
 
 const base: CamposDoItem = {
   nome: " Praticável 2x1 ", categoria: "praticavel", dono: "producao", espacoId: "", fornecedor: "", locacaoInicio: "", locacaoFim: "", quantidade: "4",
@@ -62,4 +62,20 @@ test("o valor do item: unidade × quantidade mais a locação; sem valores é ze
   assert.equal(valorTotalDoItem(4, { valor_unitario: 1200, valor_locacao: null }), 4800);
   assert.equal(valorTotalDoItem(1, { valor_unitario: 10, valor_locacao: 3500 }), 3510);
   assert.equal(valorTotalDoItem(3, null), 0);
+});
+
+test("a carga da temporada conta cada item uma vez, com a maior quantidade que uma data pede", () => {
+  const praticavel = { id: "p", quantidade: 10, comprimento_cm: 200, largura_cm: 100, altura_cm: 40, peso_kg: 18.5, dono: "producao" as const };
+  const caixa = { id: "c", quantidade: 5, comprimento_cm: 100, largura_cm: 100, altura_cm: 100, peso_kg: null, dono: "producao" as const };
+  const carga = cargaDaTemporada(
+    [{ item_id: "p", data_id: "d1", quantidade: 4 }, { item_id: "p", data_id: "d2", quantidade: 6 }, { item_id: "c", data_id: "d1", quantidade: 2 }, { item_id: "x", data_id: "d1", quantidade: 9 }],
+    [praticavel, caixa, { ...praticavel, id: "fora" }],
+  );
+  assert.equal(carga.itens, 2);
+  assert.equal(carga.unidades, 8);
+  assert.equal(carga.volumeM3, 6.8);
+  assert.equal(carga.pesoKg, 111);
+  assert.equal(carga.semMedidas, 1);
+  assert.deepEqual(carga.levados, [{ itemId: "p", quantidade: 6 }, { itemId: "c", quantidade: 2 }]);
+  assert.equal(cargaDaTemporada([], [praticavel]).itens, 0);
 });

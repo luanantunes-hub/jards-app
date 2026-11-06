@@ -108,3 +108,18 @@ export function valorTotalDoItem(quantidade: number, valores: { valor_unitario: 
   if (!valores) return 0;
   return (valores.valor_unitario ?? 0) * quantidade + (valores.valor_locacao ?? 0);
 }
+
+export type LigacaoItemData = { item_id: string; data_id: string; quantidade: number };
+export type ItemParaCarga = ItemParaTotal & { id: string };
+
+/**
+ * O que a temporada precisa levar: cada item entra uma vez, com a maior quantidade que uma data pede (o mesmo
+ * praticável usado em 10 datas é carregado uma vez, não dez). Volume e peso saem das dimensões; o item sem
+ * dimensões ou sem peso é contado em `semMedidas`.
+ */
+export function cargaDaTemporada(ligacoes: readonly LigacaoItemData[], itens: readonly ItemParaCarga[]): TotaisDoInventario & { levados: { itemId: string; quantidade: number }[] } {
+  const maior = new Map<string, number>();
+  for (const ligacao of ligacoes) maior.set(ligacao.item_id, Math.max(maior.get(ligacao.item_id) ?? 0, ligacao.quantidade));
+  const levados = itens.filter(item => maior.has(item.id)).map(item => ({ ...item, quantidade: maior.get(item.id) ?? 0 }));
+  return { ...totaisDoInventario(levados), levados: levados.map(item => ({ itemId: item.id, quantidade: item.quantidade })) };
+}
