@@ -50,6 +50,8 @@
 
 `producao_palco.test.sql` confere a PD2.4 e a PD2.5 (as colunas novas de `producao_planta_objetos`: tipo, canais, potência, circuito, fase e canal fixado): o objeto antigo ganha o padrão, as seis restrições existem e recusam o que está fora da lista ou dos limites (o canal fixado exige canais), e um instrumento completo entra. Só a forma dos dados: o acesso e o histórico não mudaram e seguem em `producao_plantas.test.sql`. Ids `0d270000-…`, esquema `pc`. Rode com as migrations `producao_plantas` e `producao_palco` na frente, se ainda não estiverem aplicadas. Em 06/11/2026, 5 de 5 no banco real.
 
+`producao_riders.test.sql` confere a PD2.5 (o rider estruturado: `producao_riders` e `producao_rider_itens`): quem lê e quem grava o rider e as linhas (administrador, colaborador, leitor, o recorte "só onde está vinculado", que não vê os riders da organização, outra organização, produção só para leitura e visitante), a forma (nome, medidas mínimas, observações, seção da lista, texto, quantidade e ordem), a coerência entre organizações (planta, obra e rider), as chaves (o rider leva as linhas; planta e obra só se soltam) e o histórico, que só o rider tem. Ids `0d280000-…`, esquema `rd`. Rode com a migration `producao_riders` na frente, se ainda não estiver aplicada. Em 06/11/2026, 24 de 24 no banco real.
+
 O `npm test` não fala com o banco, mas `tests/prestacao-rls.test.ts` falha se uma tabela nova da prestação ficar sem sonda ou se o número de verificações não bater com o `plan`, e `tests/producao-captacao-isolada-sql.test.ts` e `tests/producao-tabelas-por-organizacao-sql.test.ts` fazem o mesmo para a captação isolada e para as tabelas por organização.
 
 ## Rodar

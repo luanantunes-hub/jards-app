@@ -31,6 +31,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/mapa", "Mapa da turnê"],
   ["/producoes/inventario", "Inventário da produção"],
   ["/producoes/plantas", "Plantas da produção"],
+  ["/producoes/riders", "Riders da produção"],
   ["/producoes/tarefas", "Tarefas da produção"],
   ["/producoes", "Produção"],
   ["/configuracoes/mcp", "Claude e ChatGPT (MCP)"],

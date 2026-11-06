@@ -103,3 +103,9 @@ export const TIPOS_DE_OBJETO_DA_PLANTA: readonly TipoDeObjetoDaPlanta[] = ["inst
 /** `producao_planta_objetos.fase`: a fase da energia. */
 export type FaseDeEnergia = "R" | "S" | "T";
 export const FASES_DE_ENERGIA: readonly FaseDeEnergia[] = ["R", "S", "T"];
+
+// O rider estruturado (PD2.5): o banco confere a lista num CHECK (supabase/migrations/*_producao_riders.sql).
+
+/** `producao_rider_itens.secao`. */
+export type SecaoDoRider = "palco" | "som" | "luz" | "energia" | "camarim" | "catering" | "geral";
+export const SECOES_DO_RIDER: readonly SecaoDoRider[] = ["palco", "som", "luz", "energia", "camarim", "catering", "geral"];

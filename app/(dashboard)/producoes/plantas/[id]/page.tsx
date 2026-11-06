@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams } from "next/navigation";
-import { Download, RotateCcw, RotateCw, Search, Trash2, TriangleAlert } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { Download, FileText, RotateCcw, RotateCw, Search, Trash2, TriangleAlert } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
@@ -11,6 +11,8 @@ import { papelNaProducao } from "@/lib/producao/permissoes";
 import { FASES_DE_ENERGIA, TIPOS_DE_OBJETO_DA_PLANTA, type FaseDeEnergia, type TipoDeObjetoDaPlanta, type TipoDePlanta } from "@/lib/producao/estados";
 import { cargaDeEnergia, csvDaEnergia, csvDosCanais, listaDeCanais, ROTULO_DO_TIPO_DE_OBJETO } from "@/lib/producao/palco";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { montarPdf } from "@/lib/producao/pdf-texto";
+import { criarRiderDaPlanta } from "@/components/producao/criar-rider";
 import { encaixar, girar, manterDentro, objetoDoItem, pixelsParaMetros, ROTULO_DO_TIPO_DE_PLANTA } from "@/lib/producao/planta";
 import { lerNumero } from "@/lib/producao/inventario";
 import { chaveDoNome } from "@/lib/dominio";
@@ -29,6 +31,14 @@ const CAMPO = "h-9 w-full rounded border border-black/[.12] bg-white px-2.5 text
 const ROTULO = "mb-1 block text-[0.625rem] font-medium text-black/50";
 const metros = (n: number) => String(Math.round(n * 100) / 100).replace(".", ",");
 const tipoDoItem = (categoria: string): TipoDeObjetoDaPlanta => (categoria === "instrumento" || categoria === "praticavel" || categoria === "cenario" ? categoria : "outro");
+
+function baixarBytes(nome: string, bytes: Uint8Array) {
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+  link.download = nome;
+  link.click();
+  URL.revokeObjectURL(link.href);
+}
 
 function baixar(nome: string, conteudo: string) {
   const link = document.createElement("a");
@@ -94,6 +104,8 @@ export default function PlantaPage() {
   const organizationId = useOrganizationId();
   const papel = useOrganizationRole();
   const { confirmDelete } = useDeleteConfirm();
+  const router = useRouter();
+  const [gerandoRider, setGerandoRider] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const arrasto = useRef<{ id: string; deslocX: number; deslocY: number } | null>(null);
   const [planta, setPlanta] = useState<Planta | null | undefined>(undefined);
@@ -194,6 +206,40 @@ export default function PlantaPage() {
     if (error) setErro("Não foi possível guardar. Tente de novo.");
   }
 
+  async function gerarRider() {
+    if (!organizationId || !planta) return;
+    setGerandoRider(true);
+    setErro(null);
+    const resultado = await criarRiderDaPlanta(organizationId, planta.id);
+    setGerandoRider(false);
+    if ("erro" in resultado) { setErro(resultado.erro); return; }
+    router.push(`/producoes/riders/${resultado.id}`);
+  }
+
+  async function pdfDoPalco() {
+    if (!planta) return;
+    try {
+      const bytes = await montarPdf({
+        titulo: `Canais e energia · ${planta.nome}`,
+        subtitulo: `${ROTULO_DO_TIPO_DE_PLANTA[planta.tipo]} · ${metros(planta.largura_m)} × ${metros(planta.profundidade_m)} m`,
+        secoes: [
+          { titulo: `Lista de canais${canais.total > 0 ? ` (${canais.total})` : ""}`, linhas: canais.linhas.map(linha => `${String(linha.canal).padStart(2, "0")}  ${linha.fonte}`) },
+          {
+            titulo: `Energia${energia.totalW > 0 ? ` (${energia.totalW.toLocaleString("pt-BR")} W)` : ""}`,
+            linhas: [
+              ...energia.linhas.map(linha => `${linha.circuito}${linha.fase ? ` · fase ${linha.fase}` : ""}: ${linha.potenciaW.toLocaleString("pt-BR")} W, cerca de ${linha.correnteA.toLocaleString("pt-BR")} A a ${energia.tensaoV} V`),
+              ...(energia.totalW > 0 ? [`Por fase: R ${energia.porFase.R.toLocaleString("pt-BR")} W, S ${energia.porFase.S.toLocaleString("pt-BR")} W, T ${energia.porFase.T.toLocaleString("pt-BR")} W${energia.desequilibrioPct !== null ? `; desequilíbrio ${energia.desequilibrioPct}%` : ""}`] : []),
+            ],
+          },
+        ],
+        rodape: "Mapa de palco · Jards",
+      });
+      baixarBytes(`canais-e-energia-${planta.nome.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "planta"}.pdf`, bytes);
+    } catch {
+      setErro("Não foi possível gerar o PDF. Tente de novo.");
+    }
+  }
+
   function aplicar(valores: ValoresDoPainel) {
     const l = lerNumero(valores.largura), p = lerNumero(valores.profundidade);
     if (!valores.rotulo.trim() || l === null || l === "invalido" || p === null || p === "invalido" || l < 0.05 || p < 0.05 || l > 500 || p > 500) {
@@ -249,6 +295,7 @@ export default function PlantaPage() {
           <DetailBackLink href="/producoes/plantas" label="Plantas" />
           <h1 className="mt-5 text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">{planta.nome}</h1>
           <p className="mt-1 text-[0.75rem] text-black/45">{ROTULO_DO_TIPO_DE_PLANTA[planta.tipo]} · {metros(planta.largura_m)} × {metros(planta.profundidade_m)} m · cada quadrado é 1 m</p>
+          {podeEditar && <div className="mt-4"><button type="button" onClick={() => void gerarRider()} disabled={gerandoRider} className="inline-flex h-10 items-center gap-1.5 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"><FileText size={13} aria-hidden="true" /> {gerandoRider ? "Gerando…" : "Gerar rider desta planta"}</button></div>}
         </div>
       </header>
       <DetailPageContent>
@@ -337,6 +384,7 @@ export default function PlantaPage() {
           <div>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h2 id="canais-e-energia" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Lista de canais{canais.total > 0 ? ` · ${canais.total}` : ""}</h2>
+              {(canais.linhas.length > 0 || energia.linhas.length > 0) && <button type="button" onClick={() => void pdfDoPalco()} className="mr-2 inline-flex h-9 items-center gap-1.5 rounded border border-black/[.12] px-3 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Download size={13} aria-hidden="true" /> PDF dos dois</button>}
               {canais.linhas.length > 0 && <button type="button" onClick={() => baixar(`canais-${planta.nome}.csv`, csvDosCanais(canais))} className="inline-flex h-9 items-center gap-1.5 rounded border border-black/[.12] px-3 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Download size={13} aria-hidden="true" /> Planilha</button>}
             </div>
             {canais.conflitos.length > 0 && (
