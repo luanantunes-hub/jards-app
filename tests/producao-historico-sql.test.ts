@@ -45,6 +45,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_modelos_dia: { fora: "", rotulos: "nome" },
   // As pautas do espaço (PD1.5): nada sensível; o título é o rótulo.
   producao_pautas: { fora: "", rotulos: "titulo" },
+  // O inventário (PD2.1): nada sensível no item (o valor mora em outra tabela, sem histórico); o nome é o rótulo.
+  producao_itens: { fora: "", rotulos: "nome" },
 };
 
 /** Todas as tabelas com histórico hoje. */
@@ -59,6 +61,8 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_historico: "é o próprio histórico: nunca grava o histórico do próprio histórico",
   producao_acessos_equipe: "é só o convite de acesso: o e-mail é dado pessoal e quem convidou já fica na própria linha",
   producao_vinculos_valores: "é só cachê e diária: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
+  producao_itens_valores: "é só o valor do item e da locação: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
+  producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };
 
 /** Nome de coluna que parece dinheiro, documento, banco, saúde ou contato: precisa estar na lista de exclusão. */

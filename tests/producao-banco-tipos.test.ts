@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   ACOES_DO_HISTORICO, CONFIRMACOES_DA_ESCALA, EXIBICOES_DO_BLOCO, LADOS_DA_TEMPORADA, SITUACOES_DA_DATA, SITUACOES_DA_TEMPORADA,
-  SITUACOES_DA_PAUTA, SITUACOES_DA_TAREFA, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA,
+  CATEGORIAS_DO_ITEM, DONOS_DO_ITEM, SITUACOES_DA_PAUTA, SITUACOES_DA_TAREFA, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA,
 } from "../lib/producao/estados";
 import { PASTAS_DE_ARQUIVO } from "../supabase/functions/_shared/producao-caminho";
 import { lerBancoTs, unioesDeTextos, type BancoNoTipo, type ChaveDoTipo } from "./_helpers/producao-banco-ts";
@@ -30,6 +30,8 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_cartoes_dia.tipo": { tipo: "TipoDeCartaoDoDia", modulo: "@/lib/producao/estados", estados: TIPOS_DE_CARTAO_DO_DIA },
   "producao_tarefas.situacao": { tipo: "SituacaoDaTarefa", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_TAREFA },
   "producao_pautas.situacao": { tipo: "SituacaoDaPauta", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_PAUTA },
+  "producao_itens.categoria": { tipo: "CategoriaDoItem", modulo: "@/lib/producao/estados", estados: CATEGORIAS_DO_ITEM },
+  "producao_itens.dono": { tipo: "DonoDoItem", modulo: "@/lib/producao/estados", estados: DONOS_DO_ITEM },
   "producao_escalas.confirmacao": { tipo: "ConfirmacaoDaEscala", modulo: "@/lib/producao/estados", estados: CONFIRMACOES_DA_ESCALA },
   // A pasta do arquivo mora na função de borda do caminho (sem imports), onde a lista é escrita uma vez só (PD0.14).
   "producao_arquivos.pasta": { tipo: "PastaDeArquivo", modulo: "@/supabase/functions/_shared/producao-caminho", estados: PASTAS_DE_ARQUIVO },

@@ -79,3 +79,13 @@ export const SITUACOES_DA_TAREFA: readonly SituacaoDaTarefa[] = ["aberta", "feit
 /** `producao_pautas.situacao`: consulta, pré-reserva (com fila e validade), confirmada ou cancelada. */
 export type SituacaoDaPauta = "consulta" | "pre_reserva" | "confirmada" | "cancelada";
 export const SITUACOES_DA_PAUTA: readonly SituacaoDaPauta[] = ["consulta", "pre_reserva", "confirmada", "cancelada"];
+
+// O inventário da produção (PD2.1): o banco confere as listas num CHECK (supabase/migrations/*_producao_inventario.sql).
+
+/** `producao_itens.categoria`. */
+export type CategoriaDoItem = "cenario" | "figurino" | "instrumento" | "luz" | "som" | "video" | "praticavel" | "adereco" | "obra_de_arte" | "outro";
+export const CATEGORIAS_DO_ITEM: readonly CategoriaDoItem[] = ["cenario", "figurino", "instrumento", "luz", "som", "video", "praticavel", "adereco", "obra_de_arte", "outro"];
+
+/** `producao_itens.dono`: a produção, um espaço ou um fornecedor (locado). */
+export type DonoDoItem = "producao" | "espaco" | "locado";
+export const DONOS_DO_ITEM: readonly DonoDoItem[] = ["producao", "espaco", "locado"];
