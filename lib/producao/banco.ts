@@ -1394,6 +1394,144 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_espaco_fichas: {
+        Row: {
+          espaco_id: string;
+          organization_id: string;
+          funcionamento: string | null;
+          acessibilidade: string | null;
+          carga_descarga: string | null;
+          doca_altura_m: number | null;
+          veiculo_max_m: number | null;
+          contato_nome: string | null;
+          contato_telefone: string | null;
+          contato_email: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          espaco_id: string;
+          organization_id: string;
+          funcionamento?: string | null;
+          acessibilidade?: string | null;
+          carga_descarga?: string | null;
+          doca_altura_m?: number | null;
+          veiculo_max_m?: number | null;
+          contato_nome?: string | null;
+          contato_telefone?: string | null;
+          contato_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          espaco_id?: string;
+          organization_id?: string;
+          funcionamento?: string | null;
+          acessibilidade?: string | null;
+          carga_descarga?: string | null;
+          doca_altura_m?: number | null;
+          veiculo_max_m?: number | null;
+          contato_nome?: string | null;
+          contato_telefone?: string | null;
+          contato_email?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_espaco_fichas_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_espaco_fichas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_sala_fichas: {
+        Row: {
+          sala_id: string;
+          organization_id: string;
+          palco_boca_m: number | null;
+          palco_profundidade_m: number | null;
+          palco_altura_m: number | null;
+          palco_piso: string | null;
+          som_sistema: string | null;
+          som_canais_entrada: number | null;
+          luz_descricao: string | null;
+          luz_refletores: number | null;
+          energia_kva: number | null;
+          energia_tensao_v: number | null;
+          energia_fases: number | null;
+          camarins_quantidade: number | null;
+          camarins_capacidade: number | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          sala_id: string;
+          organization_id: string;
+          palco_boca_m?: number | null;
+          palco_profundidade_m?: number | null;
+          palco_altura_m?: number | null;
+          palco_piso?: string | null;
+          som_sistema?: string | null;
+          som_canais_entrada?: number | null;
+          luz_descricao?: string | null;
+          luz_refletores?: number | null;
+          energia_kva?: number | null;
+          energia_tensao_v?: number | null;
+          energia_fases?: number | null;
+          camarins_quantidade?: number | null;
+          camarins_capacidade?: number | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          sala_id?: string;
+          organization_id?: string;
+          palco_boca_m?: number | null;
+          palco_profundidade_m?: number | null;
+          palco_altura_m?: number | null;
+          palco_piso?: string | null;
+          som_sistema?: string | null;
+          som_canais_entrada?: number | null;
+          luz_descricao?: string | null;
+          luz_refletores?: number | null;
+          energia_kva?: number | null;
+          energia_tensao_v?: number | null;
+          energia_fases?: number | null;
+          camarins_quantidade?: number | null;
+          camarins_capacidade?: number | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_sala_fichas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_sala_fichas_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_salas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_notas: {
         Row: {
           id: string;

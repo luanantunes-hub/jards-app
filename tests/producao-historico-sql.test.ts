@@ -68,6 +68,8 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_itens_valores: "é só o valor do item e da locação: com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
   producao_planta_objetos: "é só a posição, o tamanho e a rotação de cada objeto na planta: muda a cada arrasto e o histórico da planta já conta o que importa",
   producao_rider_itens: "são só as linhas do rider (texto, quantidade e se é obrigatório): o histórico do rider já conta o que importa",
+  producao_espaco_fichas: "tem o contato de quem cuida do espaço (telefone e e-mail são dado pessoal) e o resto é texto e medida do lugar: o espaço já tem o histórico dele",
+  producao_sala_fichas: "é só a ficha técnica da sala (medidas e texto): muda pouco e o histórico da sala já conta o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };
 
