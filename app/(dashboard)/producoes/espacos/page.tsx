@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Plus } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
@@ -82,7 +83,7 @@ export default function EspacosPage() {
                 <li key={espaco.id} className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3">
                     <div className="min-w-0 flex-1 basis-56">
-                      <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{espaco.nome}</p>
+                      <Link href={`/producoes/espacos/${espaco.id}`} className="block truncate text-[0.8125rem] font-medium text-[#282525] hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]">{espaco.nome}</Link>
                       <p className="truncate text-[0.6875rem] text-black/45">
                         {[espaco.tipo, espaco.uf, espaco.capacidade ? `${espaco.capacidade} lugares` : null, espaco.proprio ? "nosso" : null, espaco.movel ? "móvel" : null].filter(Boolean).join(" · ")}
                       </p>
