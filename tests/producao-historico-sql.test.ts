@@ -51,6 +51,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_plantas: { fora: "", rotulos: "nome" },
   // Os riders (PD2.5): nada sensível; o nome é o rótulo.
   producao_riders: { fora: "", rotulos: "nome" },
+  // Os equipamentos da casa (PD3.2): nada sensível; o nome é o rótulo.
+  producao_equipamentos: { fora: "", rotulos: "nome" },
 };
 
 /** Todas as tabelas com histórico hoje. */
@@ -70,6 +72,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_rider_itens: "são só as linhas do rider (texto, quantidade e se é obrigatório): o histórico do rider já conta o que importa",
   producao_espaco_fichas: "tem o contato de quem cuida do espaço (telefone e e-mail são dado pessoal) e o resto é texto e medida do lugar: o espaço já tem o histórico dele",
   producao_sala_fichas: "é só a ficha técnica da sala (medidas e texto): muda pouco e o histórico da sala já conta o que importa",
+  producao_manutencoes: "são só as manutenções de um equipamento (descrição e datas): o histórico do equipamento e a própria data dizem o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };
 

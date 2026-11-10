@@ -32,3 +32,9 @@ test("sem ficha nenhuma o documento ainda sai, com seções vazias", async () =>
   assert.equal(new TextDecoder().decode(bytes.slice(0, 5)), "%PDF-");
   assert.equal((await PDFDocument.load(bytes)).getPageCount(), 1);
 });
+
+test("os equipamentos em uso entram no PDF, com a quantidade e a sala", () => {
+  const documento = documentoDaFicha(espaco, null, [], [{ nome: "Refletor LED", quantidade: 24, sala: "Sala Principal" }, { nome: "Mesa de som", quantidade: 1, sala: null }]);
+  assert.deepEqual(documento.secoes.at(-1), { titulo: "Equipamentos da casa (em uso)", linhas: ["24 × Refletor LED (Sala Principal)", "Mesa de som"] });
+  assert.equal(documentoDaFicha(espaco, null, []).secoes.length, 1, "sem equipamentos não há seção");
+});

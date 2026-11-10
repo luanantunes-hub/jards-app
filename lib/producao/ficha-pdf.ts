@@ -10,7 +10,7 @@ export type EspacoParaPdf = { nome: string; tipo: string; uf: string | null; end
 export type SalaParaPdf = { nome: string; capacidade: number | null; ficha: Partial<FichaDaSala> | null };
 
 /** O documento: o espaço (com o contato, se houver) e uma seção por sala, só com o que está preenchido. */
-export function documentoDaFicha(espaco: EspacoParaPdf, ficha: Partial<FichaDoEspaco> | null, salas: readonly SalaParaPdf[]): DocumentoDoPdf {
+export function documentoDaFicha(espaco: EspacoParaPdf, ficha: Partial<FichaDoEspaco> | null, salas: readonly SalaParaPdf[], equipamentos: readonly { nome: string; quantidade: number; sala: string | null }[] = []): DocumentoDoPdf {
   const secoes: SecaoDoPdf[] = [];
   const doEspaco = [
     ficha?.funcionamento ? `Funcionamento: ${ficha.funcionamento}` : null,
@@ -26,6 +26,10 @@ export function documentoDaFicha(espaco: EspacoParaPdf, ficha: Partial<FichaDoEs
     const linhas = resumoDaFichaDaSala(sala.ficha ?? {});
     if (sala.ficha?.notas) linhas.push(`Notas: ${sala.ficha.notas}`);
     secoes.push({ titulo: `${sala.nome}${sala.capacidade ? ` · ${sala.capacidade.toLocaleString("pt-BR")} lugares` : ""}`, linhas });
+  }
+
+  if (equipamentos.length > 0) {
+    secoes.push({ titulo: "Equipamentos da casa (em uso)", linhas: equipamentos.map(item => `${item.quantidade > 1 ? `${item.quantidade.toLocaleString("pt-BR")} × ` : ""}${item.nome}${item.sala ? ` (${item.sala})` : ""}`) });
   }
 
   return {
