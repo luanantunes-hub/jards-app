@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Pencil } from "lucide-react";
+import { Download, Pencil } from "lucide-react";
+import { documentoDaFicha } from "@/lib/producao/ficha-pdf";
+import { montarPdf } from "@/lib/producao/pdf-texto";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
@@ -58,6 +60,17 @@ export default function EspacoPage() {
     return () => { ativo = false; };
   }, [id, organizationId, versao]);
 
+  async function baixarPdf() {
+    if (!espaco) return;
+    const documento = documentoDaFicha(espaco, fichaDoEspaco, salas.map(sala => ({ nome: sala.nome, capacidade: sala.capacidade, ficha: fichasDasSalas.get(sala.id) ?? null })));
+    const bytes = await montarPdf(documento);
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
+    link.download = `ficha-tecnica-${espaco.nome.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "espaco"}.pdf`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+  }
+
   if (espaco === undefined) return <DetailPageSkeleton />;
   if (espaco === null) return <DetailNotFound title="Espaço não encontrado" description="Ele pode ter sido apagado ou você não tem acesso." backHref="/producoes/espacos" backLabel="Voltar aos espaços" />;
 
@@ -71,7 +84,10 @@ export default function EspacoPage() {
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <DetailBackLink href="/producoes/espacos" label="Espaços" />
-          <h1 className="mt-5 text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">{espaco.nome}</h1>
+          <div className="mt-5 flex flex-wrap items-start justify-between gap-3">
+            <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">{espaco.nome}</h1>
+            <button type="button" onClick={() => void baixarPdf()} className={BOTAO}><Download size={13} aria-hidden="true" /> Baixar ficha em PDF</button>
+          </div>
           <p className="mt-1 text-[0.75rem] text-black/45">{[espaco.tipo, espaco.uf, espaco.capacidade ? `${espaco.capacidade.toLocaleString("pt-BR")} lugares` : null, espaco.endereco].filter(Boolean).join(" · ")}</p>
         </div>
       </header>
