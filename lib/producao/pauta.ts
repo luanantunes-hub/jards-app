@@ -77,3 +77,59 @@ export function lerPauta(campos: { titulo: string; contratante: string; inicio: 
   }
   return { ok: true, pauta: { titulo, contratante: contratante === "" ? null : contratante, inicio: campos.inicio, fim, situacao: campos.situacao, ordem_na_fila: ordem, valida_ate: validade } };
 }
+
+const seCruzam = (a: { inicio: string; fim: string }, b: { inicio: string; fim: string }) => a.inicio <= b.fim && b.inicio <= a.fim;
+
+/**
+ * A próxima posição na fila de pré-reservas de uma sala: depois da última que se cruza com o período (a 1ª se não há
+ * nenhuma). Sobe no máximo a 99, que é o limite do banco.
+ */
+export function proximaOrdemNaFila(pautas: readonly PautaDaGrade[], salaId: string, inicio: string, fim: string, exceto?: string): number {
+  const ordens = pautas
+    .filter(pauta => pauta.id !== exceto && pauta.sala_id === salaId && pauta.situacao === "pre_reserva" && pauta.ordem_na_fila !== null && seCruzam(pauta, { inicio, fim }))
+    .map(pauta => pauta.ordem_na_fila as number);
+  return Math.min(99, (ordens.length > 0 ? Math.max(...ordens) : 0) + 1);
+}
+
+export type PreReservaNaFila = { pauta: PautaDaGrade; posicao: number; livre: boolean; vez: boolean };
+
+/**
+ * As pré-reservas com o lugar na fila: `livre` quando nenhuma confirmada ocupa o período, e `vez` quando é a 1ª e está
+ * livre (é quem deve ser avisado: o contratante pode confirmar). Ordem: sala, 1ª antes da 2ª, e a vez primeiro.
+ */
+export function filaDePreReservas(pautas: readonly PautaDaGrade[]): PreReservaNaFila[] {
+  const confirmadas = pautas.filter(pauta => pauta.situacao === "confirmada");
+  return pautas
+    .filter(pauta => pauta.situacao === "pre_reserva")
+    .map(pauta => {
+      const livre = !confirmadas.some(outra => outra.sala_id === pauta.sala_id && seCruzam(outra, pauta));
+      const posicao = pauta.ordem_na_fila ?? 99;
+      return { pauta, posicao, livre, vez: livre && posicao === 1 };
+    })
+    .sort((a, b) => a.pauta.sala_id.localeCompare(b.pauta.sala_id) || a.pauta.inicio.localeCompare(b.pauta.inicio) || a.posicao - b.posicao);
+}
+
+export type OcupacaoDoMes = { mes: number; confirmados: number; preReservas: number; consultas: number };
+
+/**
+ * A ocupação de uma sala mês a mês em um ano (a visão de 12 meses): quantos dias estão confirmados, quantos só têm
+ * pré-reserva e quantos só têm consulta. Cada dia conta uma vez, pela situação mais firme que o ocupa; cancelada não conta.
+ */
+export function ocupacaoDoAno(pautas: readonly PautaDaGrade[], salaId: string, ano: number): OcupacaoDoMes[] {
+  const meses: OcupacaoDoMes[] = Array.from({ length: 12 }, (_, i) => ({ mes: i + 1, confirmados: 0, preReservas: 0, consultas: 0 }));
+  const doAno = pautas.filter(pauta => pauta.sala_id === salaId && pauta.situacao !== "cancelada" && pauta.fim >= `${ano}-01-01` && pauta.inicio <= `${ano}-12-31`);
+  const peso: Record<string, number> = { consulta: 1, pre_reserva: 2, confirmada: 3 };
+  const dias = new Map<string, number>();
+  for (const pauta of doAno) {
+    const de = pauta.inicio < `${ano}-01-01` ? `${ano}-01-01` : pauta.inicio;
+    const ate = pauta.fim > `${ano}-12-31` ? `${ano}-12-31` : pauta.fim;
+    for (let dia = de; dia <= ate; dia = somarDias(dia, 1)) dias.set(dia, Math.max(dias.get(dia) ?? 0, peso[pauta.situacao] ?? 0));
+  }
+  for (const [dia, valor] of dias) {
+    const mes = meses[Number(dia.slice(5, 7)) - 1];
+    if (valor === 3) mes.confirmados++;
+    else if (valor === 2) mes.preReservas++;
+    else mes.consultas++;
+  }
+  return meses;
+}
