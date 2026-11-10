@@ -12,6 +12,8 @@ import { papelNaProducao } from "@/lib/producao/permissoes";
 import { resumoDaFichaDaSala, type FichaDaSala, type FichaDoEspaco } from "@/lib/producao/ficha";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { FichaDaSalaSheet, FichaDoEspacoSheet } from "@/components/producao/FichasSheets";
+import { EquipamentosDoEspaco, type EquipamentoDaCasa } from "@/components/producao/EquipamentosDoEspaco";
+import { equipamentosDaFicha } from "@/lib/producao/equipamentos";
 
 type Espaco = { id: string; nome: string; tipo: string; uf: string | null; endereco: string | null; capacidade: number | null };
 type Sala = { id: string; nome: string; capacidade: number | null; arquivada: boolean };
@@ -33,6 +35,7 @@ export default function EspacoPage() {
   const [fichaDoEspaco, setFichaDoEspaco] = useState<Partial<FichaDoEspaco> | null>(null);
   const [fichasDasSalas, setFichasDasSalas] = useState<Map<string, Partial<FichaDaSala>>>(new Map());
   const [editando, setEditando] = useState<{ tipo: "espaco" } | { tipo: "sala"; sala: Sala } | null>(null);
+  const [equipamentos, setEquipamentos] = useState<EquipamentoDaCasa[]>([]);
   const [versao, setVersao] = useState(0);
   const podeEditar = papel !== null && papelNaProducao(papel) !== null && papelNaProducao(papel) !== "leitor";
   const recarregar = () => setVersao(atual => atual + 1);
@@ -62,7 +65,8 @@ export default function EspacoPage() {
 
   async function baixarPdf() {
     if (!espaco) return;
-    const documento = documentoDaFicha(espaco, fichaDoEspaco, salas.map(sala => ({ nome: sala.nome, capacidade: sala.capacidade, ficha: fichasDasSalas.get(sala.id) ?? null })));
+    const documento = documentoDaFicha(espaco, fichaDoEspaco, salas.map(sala => ({ nome: sala.nome, capacidade: sala.capacidade, ficha: fichasDasSalas.get(sala.id) ?? null })),
+      equipamentosDaFicha(equipamentos).map(item => ({ nome: item.nome, quantidade: item.quantidade, sala: salas.find(sala => sala.id === item.sala_id)?.nome ?? null })));
     const bytes = await montarPdf(documento);
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
@@ -141,6 +145,7 @@ export default function EspacoPage() {
             </ul>
           )}
         </section>
+        {organizationId && <EquipamentosDoEspaco organizationId={organizationId} espacoId={espaco.id} salas={salas} podeEditar={podeEditar} onChange={setEquipamentos} />}
       </DetailPageContent>
 
       {editando?.tipo === "espaco" && organizationId && <FichaDoEspacoSheet organizationId={organizationId} espacoId={espaco.id} ficha={fichaDoEspaco} onClose={() => setEditando(null)} onSaved={recarregar} />}

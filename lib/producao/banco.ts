@@ -59,7 +59,9 @@ import type {
   DonoDoItem,
   SituacaoDaPauta,
   FaseDeEnergia,
+  EstadoDoEquipamento,
   SecaoDoRider,
+  TipoDeManutencao,
   TipoDeObjetoDaPlanta,
   TipoDePlanta,
   SituacaoDaTarefa,
@@ -1528,6 +1530,124 @@ export type BancoDaProducao = {
             columns: ["sala_id"];
             isOneToOne: true;
             referencedRelation: "producao_salas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_equipamentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          espaco_id: string;
+          sala_id: string | null;
+          nome: string;
+          categoria: CategoriaDoItem;
+          quantidade: number;
+          estado: EstadoDoEquipamento;
+          observacoes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          espaco_id: string;
+          sala_id?: string | null;
+          nome: string;
+          categoria?: CategoriaDoItem;
+          quantidade?: number;
+          estado?: EstadoDoEquipamento;
+          observacoes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          espaco_id?: string;
+          sala_id?: string | null;
+          nome?: string;
+          categoria?: CategoriaDoItem;
+          quantidade?: number;
+          estado?: EstadoDoEquipamento;
+          observacoes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_equipamentos_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_equipamentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_equipamentos_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_salas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_manutencoes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          equipamento_id: string;
+          tipo: TipoDeManutencao;
+          descricao: string;
+          prevista_para: string;
+          feita_em: string | null;
+          recorrencia_dias: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          equipamento_id: string;
+          tipo?: TipoDeManutencao;
+          descricao: string;
+          prevista_para: string;
+          feita_em?: string | null;
+          recorrencia_dias?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          equipamento_id?: string;
+          tipo?: TipoDeManutencao;
+          descricao?: string;
+          prevista_para?: string;
+          feita_em?: string | null;
+          recorrencia_dias?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_manutencoes_equipamento_id_fkey";
+            columns: ["equipamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_equipamentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_manutencoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];

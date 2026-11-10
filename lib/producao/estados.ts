@@ -109,3 +109,13 @@ export const FASES_DE_ENERGIA: readonly FaseDeEnergia[] = ["R", "S", "T"];
 /** `producao_rider_itens.secao`. */
 export type SecaoDoRider = "palco" | "som" | "luz" | "energia" | "camarim" | "catering" | "geral";
 export const SECOES_DO_RIDER: readonly SecaoDoRider[] = ["palco", "som", "luz", "energia", "camarim", "catering", "geral"];
+
+// Os equipamentos da casa (PD3.2): o banco confere as listas num CHECK (supabase/migrations/*_producao_equipamentos.sql).
+
+/** `producao_equipamentos.estado`. */
+export type EstadoDoEquipamento = "em_uso" | "manutencao" | "avariado" | "baixado";
+export const ESTADOS_DO_EQUIPAMENTO: readonly EstadoDoEquipamento[] = ["em_uso", "manutencao", "avariado", "baixado"];
+
+/** `producao_manutencoes.tipo`. */
+export type TipoDeManutencao = "preventiva" | "corretiva";
+export const TIPOS_DE_MANUTENCAO: readonly TipoDeManutencao[] = ["preventiva", "corretiva"];
