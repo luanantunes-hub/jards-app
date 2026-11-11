@@ -6,6 +6,7 @@ import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { PastDueBanner } from "@/components/PastDueBanner";
 import {
   BarChart2,
+  CalendarClock,
   CalendarDays,
   CalendarRange,
   UsersRound,
@@ -127,6 +128,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
         { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
         { label: "Espaços", href: "/producoes/espacos", icon: Building2 },
         { label: "Pauta", href: "/producoes/pauta", icon: CalendarRange },
+        { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
         { label: "Inventário", href: "/producoes/inventario", icon: Boxes },
         { label: "Plantas", href: "/producoes/plantas", icon: Ruler },
         { label: "Riders", href: "/producoes/riders", icon: FileText },

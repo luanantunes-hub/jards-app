@@ -1983,6 +1983,60 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_sessoes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          pauta_id: string;
+          dia: string;
+          inicio: string;
+          fim: string;
+          titulo: string | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          pauta_id: string;
+          dia: string;
+          inicio: string;
+          fim: string;
+          titulo?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          pauta_id?: string;
+          dia?: string;
+          inicio?: string;
+          fim?: string;
+          titulo?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_sessoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_sessoes_pauta_id_fkey";
+            columns: ["pauta_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pautas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_licencas: {
         Row: {
           id: string;
