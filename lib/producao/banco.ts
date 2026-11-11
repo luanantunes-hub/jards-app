@@ -71,6 +71,8 @@ import type {
   VisibilidadeDoAcerto,
   DestinoDoAcerto,
   SituacaoDoAcerto,
+  SituacaoDoSite,
+  SituacaoDoDominio,
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
@@ -2088,6 +2090,177 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_sites: {
+        Row: {
+          id: string;
+          organization_id: string;
+          espaco_id: string;
+          nome: string;
+          titulo: string | null;
+          cor: string;
+          situacao: SituacaoDoSite;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          espaco_id: string;
+          nome: string;
+          titulo?: string | null;
+          cor?: string;
+          situacao?: SituacaoDoSite;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          espaco_id?: string;
+          nome?: string;
+          titulo?: string | null;
+          cor?: string;
+          situacao?: SituacaoDoSite;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_sites_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_sites_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_site_paginas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          site_id: string;
+          slug: string;
+          titulo: string;
+          ordem: number;
+          blocos: Json;
+          blocos_publicados: Json | null;
+          publicada_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          site_id: string;
+          slug: string;
+          titulo: string;
+          ordem?: number;
+          blocos?: Json;
+          blocos_publicados?: Json | null;
+          publicada_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          site_id?: string;
+          slug?: string;
+          titulo?: string;
+          ordem?: number;
+          blocos?: Json;
+          blocos_publicados?: Json | null;
+          publicada_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_site_paginas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_site_paginas_site_id_fkey";
+            columns: ["site_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_sites";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_site_dominios: {
+        Row: {
+          id: string;
+          organization_id: string;
+          site_id: string;
+          dominio: string;
+          situacao: SituacaoDoDominio;
+          token_verificacao: string;
+          erro: string | null;
+          verificado_em: string | null;
+          conferido_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          site_id: string;
+          dominio: string;
+          situacao?: SituacaoDoDominio;
+          token_verificacao: string;
+          erro?: string | null;
+          verificado_em?: string | null;
+          conferido_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          site_id?: string;
+          dominio?: string;
+          situacao?: SituacaoDoDominio;
+          token_verificacao?: string;
+          erro?: string | null;
+          verificado_em?: string | null;
+          conferido_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_site_dominios_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_site_dominios_site_id_fkey";
+            columns: ["site_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_sites";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_licencas: {
         Row: {
           id: string;
@@ -2532,6 +2705,10 @@ export type BancoDaProducao = {
       };
       fn_producao_programacao_criar_link: {
         Args: { p_espaco: string; p_titulo: string };
+        Returns: string;
+      };
+      fn_producao_site_publicar_pagina: {
+        Args: { p_pagina: string };
         Returns: string;
       };
       fn_producao_caminho_partes: {

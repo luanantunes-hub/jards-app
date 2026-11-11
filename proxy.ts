@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { INICIO_DO_MODULO } from "@/lib/modulos";
 import { entradaDoAcesso, lerAcessoAosModulos } from "@/lib/modulos-acesso";
+import { ehHostDoApp, hostDoPedido } from "@/lib/producao/site";
 
 const WINDOW_MS = 60_000;
 
@@ -73,7 +74,27 @@ function getIp(request: NextRequest): string {
   );
 }
 
+/**
+ * O pedido chegou por um domínio que não é do Jards: é o site de uma pessoa (PD12.1b). Reescreve para a rota interna
+ * /dominio/[host]/... (que só mostra o que está publicado) e não deixa passar o app, a API nem o painel por esse endereço.
+ */
+function rotearSiteDaPessoa(request: NextRequest, host: string): NextResponse {
+  const { pathname } = request.nextUrl;
+  if (pathname.startsWith("/_next") || pathname === "/favicon.ico") return NextResponse.next();
+  if (pathname.startsWith("/api") || pathname.startsWith("/dominio")) return new NextResponse("Não encontrado", { status: 404 });
+  if (isRateLimited(`site:${getIp(request)}`, 300)) return new NextResponse("Muitas requisições. Aguarde um momento.", { status: 429 });
+  const url = request.nextUrl.clone();
+  url.pathname = `/dominio/${encodeURIComponent(host)}${pathname === "/" ? "" : pathname}`;
+  return NextResponse.rewrite(url);
+}
+
 export async function proxy(request: NextRequest) {
+  // Domínio de uma pessoa: o site dela, sem login e sem passar pelo app.
+  const host = hostDoPedido(request.headers.get("host"));
+  if (!ehHostDoApp(host, process.env.NEXT_PUBLIC_APP_URL)) return rotearSiteDaPessoa(request, host);
+  // Na casa do Jards, a rota interna dos sites não abre direto: só o domínio da pessoa chega nela.
+  if (request.nextUrl.pathname.startsWith("/dominio")) return new NextResponse("Não encontrado", { status: 404 });
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(

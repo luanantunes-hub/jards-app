@@ -4,7 +4,7 @@ const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sáb
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
 
 /** "2026-12-05" → "sábado, 5 de dezembro" (sem depender do fuso de quem lê). */
-function diaPorExtenso(dia: string): string {
+export function diaPorExtenso(dia: string): string {
   const [ano, mes, d] = dia.split("-").map(Number);
   const semana = new Date(Date.UTC(ano, mes - 1, d)).getUTCDay();
   return `${DIAS[semana]}, ${d} de ${MESES[mes - 1]}`;

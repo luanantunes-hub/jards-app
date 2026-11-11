@@ -157,6 +157,16 @@ export const SITUACOES_DO_ACERTO: readonly SituacaoDoAcerto[] = ["aguardando", "
 export type SituacaoDoItemDoAcerto = "pendente" | "respondido" | "aprovado" | "recusado";
 export const SITUACOES_DO_ITEM_DO_ACERTO: readonly SituacaoDoItemDoAcerto[] = ["pendente", "respondido", "aprovado", "recusado"];
 
+// O site público do espaço (PD12.1 e PD12.1b): o banco confere as listas num CHECK (supabase/migrations/*_producao_sites.sql).
+
+/** `producao_sites.situacao`. */
+export type SituacaoDoSite = "rascunho" | "publicado";
+export const SITUACOES_DO_SITE: readonly SituacaoDoSite[] = ["rascunho", "publicado"];
+
+/** `producao_site_dominios.situacao`: aguardando o DNS, conferindo, ativo ou com erro. */
+export type SituacaoDoDominio = "aguardando" | "verificando" | "ativo" | "erro";
+export const SITUACOES_DO_DOMINIO: readonly SituacaoDoDominio[] = ["aguardando", "verificando", "ativo", "erro"];
+
 /** `producao_manutencoes.tipo`. */
 export type TipoDeManutencao = "preventiva" | "corretiva";
 export const TIPOS_DE_MANUTENCAO: readonly TipoDeManutencao[] = ["preventiva", "corretiva"];
