@@ -1652,6 +1652,80 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_turnos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          espaco_id: string;
+          pessoa_id: string;
+          pauta_id: string | null;
+          dia: string;
+          inicio: string;
+          fim: string;
+          funcao: string | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          espaco_id: string;
+          pessoa_id: string;
+          pauta_id?: string | null;
+          dia: string;
+          inicio: string;
+          fim: string;
+          funcao?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          espaco_id?: string;
+          pessoa_id?: string;
+          pauta_id?: string | null;
+          dia?: string;
+          inicio?: string;
+          fim?: string;
+          funcao?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_turnos_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_turnos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_turnos_pauta_id_fkey";
+            columns: ["pauta_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pautas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_turnos_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_notas: {
         Row: {
           id: string;
