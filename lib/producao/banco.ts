@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -1786,6 +1786,89 @@ export type BancoDaProducao = {
           },
           {
             foreignKeyName: "producao_veiculo_documentos_veiculo_id_fkey";
+            columns: ["veiculo_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_veiculos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_deslocamentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          tipo: TipoDeDeslocamento;
+          origem: string | null;
+          destino: string | null;
+          saida: string | null;
+          chegada: string | null;
+          veiculo_id: string | null;
+          motorista_id: string | null;
+          companhia: string | null;
+          localizador: string | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          tipo?: TipoDeDeslocamento;
+          origem?: string | null;
+          destino?: string | null;
+          saida?: string | null;
+          chegada?: string | null;
+          veiculo_id?: string | null;
+          motorista_id?: string | null;
+          companhia?: string | null;
+          localizador?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          tipo?: TipoDeDeslocamento;
+          origem?: string | null;
+          destino?: string | null;
+          saida?: string | null;
+          chegada?: string | null;
+          veiculo_id?: string | null;
+          motorista_id?: string | null;
+          companhia?: string | null;
+          localizador?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_deslocamentos_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_deslocamentos_motorista_id_fkey";
+            columns: ["motorista_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_deslocamentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_deslocamentos_veiculo_id_fkey";
             columns: ["veiculo_id"];
             isOneToOne: false;
             referencedRelation: "producao_veiculos";
