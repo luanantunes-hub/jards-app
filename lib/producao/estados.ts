@@ -116,6 +116,16 @@ export const SECOES_DO_RIDER: readonly SecaoDoRider[] = ["palco", "som", "luz", 
 export type EstadoDoEquipamento = "em_uso" | "manutencao" | "avariado" | "baixado";
 export const ESTADOS_DO_EQUIPAMENTO: readonly EstadoDoEquipamento[] = ["em_uso", "manutencao", "avariado", "baixado"];
 
+// As licenças e liberações de uma data (PD4.9): o banco confere as listas num CHECK (supabase/migrations/*_producao_licencas.sql).
+
+/** `producao_licencas.tipo`. */
+export type TipoDeLicenca = "alvara" | "avcb" | "ecad" | "sbat" | "juizado_menores" | "via_publica" | "filmagem" | "outro";
+export const TIPOS_DE_LICENCA: readonly TipoDeLicenca[] = ["alvara", "avcb", "ecad", "sbat", "juizado_menores", "via_publica", "filmagem", "outro"];
+
+/** `producao_licencas.situacao`. */
+export type SituacaoDaLicenca = "a_pedir" | "pedida" | "concedida" | "negada" | "dispensada";
+export const SITUACOES_DA_LICENCA: readonly SituacaoDaLicenca[] = ["a_pedir", "pedida", "concedida", "negada", "dispensada"];
+
 /** `producao_manutencoes.tipo`. */
 export type TipoDeManutencao = "preventiva" | "corretiva";
 export const TIPOS_DE_MANUTENCAO: readonly TipoDeManutencao[] = ["preventiva", "corretiva"];
