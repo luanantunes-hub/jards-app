@@ -2037,6 +2037,57 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_programacao_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          espaco_id: string;
+          titulo: string | null;
+          token_hash: string;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          espaco_id: string;
+          titulo?: string | null;
+          token_hash: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          espaco_id?: string;
+          titulo?: string | null;
+          token_hash?: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_programacao_links_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_programacao_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_licencas: {
         Row: {
           id: string;
@@ -2477,6 +2528,10 @@ export type BancoDaProducao = {
       };
       fn_producao_acerto_revisar: {
         Args: { p_item: string; p_aprovar: boolean; p_motivo: string };
+        Returns: string;
+      };
+      fn_producao_programacao_criar_link: {
+        Args: { p_espaco: string; p_titulo: string };
         Returns: string;
       };
       fn_producao_caminho_partes: {

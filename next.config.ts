@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-const contentSecurityPolicy = [
+const construirContentSecurityPolicy = (frameAncestors: string) => [
   "default-src 'self'",
   `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""} https://js.stripe.com https://cdn.tailwindcss.com https://www.googletagmanager.com https://www.googleadservices.com https://googleads.g.doubleclick.net https://www.google.com`,
   "script-src-attr 'self' 'unsafe-inline'",
@@ -16,17 +16,20 @@ const contentSecurityPolicy = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "frame-ancestors 'none'",
+  `frame-ancestors ${frameAncestors}`,
   ...(isDevelopment ? [] : ["upgrade-insecure-requests"]),
 ].join("; ");
 
-const securityHeaders = [
+const contentSecurityPolicy = construirContentSecurityPolicy("'none'");
+// A programação para embutir (/embed/...) é a única página que outro site pode abrir num iframe: só mostra dados públicos.
+const contentSecurityPolicyParaEmbutir = construirContentSecurityPolicy("*");
+
+const cabecalhosComuns = [
   { key: "Content-Security-Policy", value: contentSecurityPolicy },
   // Só a origem, também entre páginas do próprio site: caminhos internos
   // (/p/<slug>, /login?next=…) não vazam como referrer para scripts de terceiros.
   { key: "Referrer-Policy", value: "strict-origin" },
   { key: "X-Content-Type-Options", value: "nosniff" },
-  { key: "X-Frame-Options", value: "DENY" },
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), clipboard-write=(self)" },
   ...(isDevelopment
     ? []
@@ -35,7 +38,11 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   async headers() {
-    return [{ source: "/(.*)", headers: securityHeaders }];
+    return [
+      // Tudo, menos /embed/: não pode ser aberto dentro de outro site.
+      { source: "/((?!embed/).*)", headers: [...cabecalhosComuns, { key: "X-Frame-Options", value: "DENY" }] },
+      { source: "/embed/:path*", headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicyParaEmbutir }, ...cabecalhosComuns.filter(cabecalho => cabecalho.key !== "Content-Security-Policy")] },
+    ];
   },
   // O blog virou "Publicações" (/publicacoes): as páginas antigas redirecionam
   // de vez. Arquivos em /blog/... (capas, imagens e fontes em public/blog)
