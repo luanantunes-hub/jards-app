@@ -15,7 +15,7 @@ type Admin = SupabaseClient<Database>;
 export type SitePublico = {
   titulo: string; cor: string; organizacao: string; espaco: string;
   menu: { slug: string; titulo: string }[];
-  pagina: { slug: string; titulo: string; blocos: Bloco[] };
+  pagina: { slug: string; titulo: string; blocos: Bloco[]; descricao: string | null; imagem: string | null };
   /** As sessões confirmadas do espaço, só carregadas quando a página tem o bloco de programação. */
   programacao: DiaPublico[] | null;
 };
@@ -30,7 +30,7 @@ export async function paginaPublicaDoDominio(admin: Admin, host: string, slug: s
   if (!registro || registro.situacao !== "ativo") return null;
   const { data: site } = await producao.from("producao_sites").select("id, organization_id, espaco_id, nome, titulo, cor, situacao").eq("id", registro.site_id).maybeSingle();
   if (!site || site.situacao !== "publicado") return null;
-  const { data: paginas } = await producao.from("producao_site_paginas").select("slug, titulo, ordem, blocos_publicados").eq("site_id", site.id).not("blocos_publicados", "is", null);
+  const { data: paginas } = await producao.from("producao_site_paginas").select("slug, titulo, ordem, blocos_publicados, descricao, imagem_url, publicada_em").eq("site_id", site.id).not("blocos_publicados", "is", null);
   const publicadas = ordemDasPaginas(paginas ?? []);
   const atual = publicadas.find(pagina => pagina.slug === slug);
   if (!atual) return null;
@@ -46,7 +46,22 @@ export async function paginaPublicaDoDominio(admin: Admin, host: string, slug: s
     organizacao: (organizacao.data as { nome?: string | null } | null)?.nome ?? "",
     espaco: espaco.data?.nome ?? "",
     menu: publicadas.map(pagina => ({ slug: pagina.slug, titulo: pagina.titulo })),
-    pagina: { slug: atual.slug, titulo: atual.titulo, blocos },
+    pagina: { slug: atual.slug, titulo: atual.titulo, blocos, descricao: atual.descricao, imagem: atual.imagem_url },
     programacao: programacao ? programacao.dias : null,
   };
 }
+
+/** As páginas publicadas do site que está no ar no domínio (para o sitemap), ou null se o domínio não tem site no ar. */
+export async function paginasPublicadasDoDominio(admin: Admin, host: string): Promise<{ slug: string; publicada_em: string | null }[] | null> {
+  const dominio = hostDoPedido(host);
+  if (dominio === "") return null;
+  const producao = clienteDaProducao(admin);
+  const { data: registro, error } = await producao.from("producao_site_dominios").select("site_id, situacao").eq("dominio", dominio).maybeSingle();
+  if (error) throw new Error("não foi possível conferir o domínio");
+  if (!registro || registro.situacao !== "ativo") return null;
+  const { data: site } = await producao.from("producao_sites").select("id, situacao").eq("id", registro.site_id).maybeSingle();
+  if (!site || site.situacao !== "publicado") return null;
+  const { data: paginas } = await producao.from("producao_site_paginas").select("slug, titulo, ordem, publicada_em").eq("site_id", site.id).not("blocos_publicados", "is", null);
+  return ordemDasPaginas(paginas ?? []).map(pagina => ({ slug: pagina.slug, publicada_em: pagina.publicada_em }));
+}
+

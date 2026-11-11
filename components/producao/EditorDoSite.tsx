@@ -8,9 +8,9 @@ import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
-import { blocosDoJson, lerBloco, ordemDasPaginas, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, TIPOS_DE_BLOCO, type Bloco, type TipoDeBloco } from "@/lib/producao/site";
+import { blocosDoJson, lerBloco, lerSeo, ordemDasPaginas, ROTULO_DO_TIPO_DE_BLOCO, slugDaPagina, TIPOS_DE_BLOCO, type Bloco, type TipoDeBloco } from "@/lib/producao/site";
 
-type Pagina = { id: string; slug: string; titulo: string; ordem: number; blocos: Bloco[]; blocos_publicados: Bloco[] | null; publicada_em: string | null };
+type Pagina = { id: string; slug: string; titulo: string; ordem: number; blocos: Bloco[]; blocos_publicados: Bloco[] | null; publicada_em: string | null; descricao: string | null; imagem_url: string | null };
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const AREA = "w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
@@ -135,6 +135,40 @@ function NovaPaginaSheet({ siteId, organizationId, existentes, onClose, onCreate
   );
 }
 
+/** A descrição e a imagem de compartilhamento de uma página: o que buscadores e redes sociais mostram. Salvam na hora, sem publicar de novo. */
+function SeoDaPagina({ pagina, podeEditar, onSalvo }: { pagina: Pagina; podeEditar: boolean; onSalvo: () => void }) {
+  const [descricao, setDescricao] = useState(pagina.descricao ?? "");
+  const [imagem, setImagem] = useState(pagina.imagem_url ?? "");
+  const [salvando, setSalvando] = useState(false);
+  const [aviso, setAviso] = useState<{ erro: boolean; texto: string } | null>(null);
+  const mudou = descricao.trim() !== (pagina.descricao ?? "") || imagem.trim() !== (pagina.imagem_url ?? "");
+
+  async function salvar() {
+    const leitura = lerSeo({ descricao, imagem });
+    if (!leitura.ok) { setAviso({ erro: true, texto: leitura.erro }); return; }
+    setSalvando(true);
+    setAviso(null);
+    const { error } = await clienteDaProducao(createClient()).from("producao_site_paginas").update({ descricao: leitura.descricao, imagem_url: leitura.imagem_url }).eq("id", pagina.id);
+    setSalvando(false);
+    if (error) { setAviso({ erro: true, texto: error.code === "42501" ? "Você não pode mudar este site." : "Não foi possível salvar. Tente de novo." }); return; }
+    setAviso({ erro: false, texto: "Salvo." });
+    onSalvo();
+  }
+
+  return (
+    <details className="mt-6 rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      <summary className="cursor-pointer px-4 py-3 text-[0.75rem] font-medium text-black/60 hover:text-black/80">Buscadores e redes sociais</summary>
+      <div className="space-y-3 border-t px-4 py-4" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+        <p className="text-[0.75rem] text-black/55">O que o Google e as redes sociais mostram quando alguém acha ou compartilha esta página.</p>
+        <div><label className={ROTULO} htmlFor="seo-descricao">Descrição (até 300 letras)</label><textarea id="seo-descricao" rows={3} className={AREA} value={descricao} onChange={event => setDescricao(event.target.value)} maxLength={300} disabled={!podeEditar || salvando} /></div>
+        <div><label className={ROTULO} htmlFor="seo-imagem">Imagem de compartilhamento (https://…)</label><input id="seo-imagem" className={CAMPO} value={imagem} onChange={event => setImagem(event.target.value)} maxLength={500} placeholder="https://…/capa.jpg" disabled={!podeEditar || salvando} /></div>
+        {aviso && <p role={aviso.erro ? "alert" : "status"} className={`text-[0.75rem] ${aviso.erro ? "text-[#B23B3B]" : "text-black/55"}`}>{aviso.texto}</p>}
+        {podeEditar && <button type="button" onClick={() => void salvar()} disabled={salvando || !mudou} className="inline-flex h-9 items-center rounded bg-[#2E8932] px-3.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-40">{salvando ? "Salvando…" : "Salvar"}</button>}
+      </div>
+    </details>
+  );
+}
+
 /** As páginas do site e os blocos de cada uma: o rascunho salva a cada mudança, e "Publicar esta página" põe no ar. */
 export function EditorDoSite({ siteId, organizationId, podeEditar }: { siteId: string; organizationId: string; podeEditar: boolean }) {
   const { confirmDelete } = useDeleteConfirm();
@@ -149,7 +183,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar }: { siteId: s
   useEffect(() => {
     let ativo = true;
     void (async () => {
-      const { data, error } = await clienteDaProducao(createClient()).from("producao_site_paginas").select("id, slug, titulo, ordem, blocos, blocos_publicados, publicada_em").eq("site_id", siteId);
+      const { data, error } = await clienteDaProducao(createClient()).from("producao_site_paginas").select("id, slug, titulo, ordem, blocos, blocos_publicados, publicada_em, descricao, imagem_url").eq("site_id", siteId);
       if (!ativo) return;
       setPaginas(ordemDasPaginas((data ?? []).map(item => ({ ...item, blocos: blocosDoJson(item.blocos), blocos_publicados: item.blocos_publicados === null ? null : blocosDoJson(item.blocos_publicados) }))));
       setErro(error ? "Não foi possível carregar as páginas. Recarregue a página." : null);
@@ -245,6 +279,7 @@ export function EditorDoSite({ siteId, organizationId, podeEditar }: { siteId: s
                   ))}
                 </ol>
               )}
+              <SeoDaPagina key={`${atual.id}-${atual.descricao ?? ""}-${atual.imagem_url ?? ""}`} pagina={atual} podeEditar={podeEditar} onSalvo={recarregar} />
               {podeEditar && atual.blocos.length < 60 && (
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <div className="w-64 max-w-full"><Dropdown ariaLabel="Tipo do novo bloco" value={novoTipo} onChange={setNovoTipo} options={TIPOS_DE_BLOCO.map(tipo => ({ value: tipo, label: ROTULO_DO_TIPO_DE_BLOCO[tipo] }))} /></div>
