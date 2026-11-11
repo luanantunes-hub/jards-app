@@ -6,6 +6,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SiteView } from "@/components/producao/SiteView";
 import { paginaPublicaDoDominio, type SitePublico } from "@/lib/producao/site-publico";
+import { enderecoDaPagina, hostDoPedido } from "@/lib/producao/site";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // O site muda a cada publicação: nunca vem pronto do cache da rota.
@@ -26,7 +27,18 @@ async function carregar({ params }: Parametros): Promise<SitePublico | null> {
 export async function generateMetadata(entrada: Parametros): Promise<Metadata> {
   const site = await carregar(entrada);
   if (!site) return { title: "Página não encontrada", robots: { index: false, follow: false } };
-  return { title: site.pagina.slug === "inicio" ? site.titulo : `${site.pagina.titulo} · ${site.titulo}` };
+  const { host } = await entrada.params;
+  const dominio = hostDoPedido(decodeURIComponent(host));
+  const titulo = site.pagina.slug === "inicio" ? site.titulo : `${site.pagina.titulo} · ${site.titulo}`;
+  const endereco = enderecoDaPagina(dominio, site.pagina.slug);
+  const imagens = site.pagina.imagem ? [{ url: site.pagina.imagem }] : undefined;
+  return {
+    title: titulo,
+    description: site.pagina.descricao ?? undefined,
+    alternates: { canonical: endereco },
+    openGraph: { type: "website", url: endereco, title: titulo, description: site.pagina.descricao ?? undefined, siteName: site.titulo, locale: "pt_BR", images: imagens },
+    twitter: { card: imagens ? "summary_large_image" : "summary", title: titulo, description: site.pagina.descricao ?? undefined, images: imagens?.map(imagem => imagem.url) },
+  };
 }
 
 export default async function SiteDaPessoa(entrada: Parametros) {

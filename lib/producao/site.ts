@@ -207,3 +207,35 @@ export function ehHostDoApp(host: string, urlDoApp?: string): boolean {
   }
   return false;
 }
+
+// ─── SEO ────────────────────────────────────────────────────────────────────
+
+export type LeituraDoSeo = { ok: true; descricao: string | null; imagem_url: string | null } | { ok: false; erro: string };
+
+/** A descrição (até 300 letras) e a imagem de compartilhamento (https) da página; vazio é "sem". */
+export function lerSeo(campos: { descricao: string; imagem: string }): LeituraDoSeo {
+  const descricao = campos.descricao.trim();
+  if (descricao.length > 300) return { ok: false, erro: "A descrição pode ter até 300 letras." };
+  const imagem = campos.imagem.trim();
+  if (imagem === "") return { ok: true, descricao: descricao === "" ? null : descricao, imagem_url: null };
+  const url = lerUrlHttps(imagem);
+  if (!url.ok) return { ok: false, erro: "O endereço da imagem tem de começar com https://." };
+  return { ok: true, descricao: descricao === "" ? null : descricao, imagem_url: url.url };
+}
+
+const escapaXml = (texto: string) => texto.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
+/** O endereço completo de uma página do site no domínio da pessoa (a de início é a raiz). */
+export const enderecoDaPagina = (host: string, slug: string) => (slug === "inicio" ? `https://${host}/` : `https://${host}/${slug}`);
+
+/** O sitemap.xml do domínio: as páginas publicadas, com a data da última publicação. */
+export function sitemapDoSite(host: string, paginas: readonly { slug: string; publicada_em: string | null }[]): string {
+  const itens = paginas.map(pagina => `  <url><loc>${escapaXml(enderecoDaPagina(host, pagina.slug))}</loc>${pagina.publicada_em ? `<lastmod>${escapaXml(pagina.publicada_em.slice(0, 10))}</lastmod>` : ""}</url>`).join("\n");
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${itens}\n</urlset>\n`;
+}
+
+/** O robots.txt do domínio: libera tudo e aponta o sitemap quando o site está no ar; fecha quando não. */
+export function robotsDoSite(host: string, noAr: boolean): string {
+  return noAr ? `User-agent: *\nAllow: /\nSitemap: https://${host}/sitemap.xml\n` : "User-agent: *\nDisallow: /\n";
+}
+

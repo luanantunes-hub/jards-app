@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  blocosDoJson, corDoTema, ehDominioRaiz, ehHostDoApp, hostDoPedido, lerBloco, lerBlocos, lerDominio, lerUrlHttps, ordemDasPaginas, provaConfere, registrosDeDns, slugDaPagina, textoSobreCor,
+  blocosDoJson, corDoTema, ehDominioRaiz, ehHostDoApp, enderecoDaPagina, lerSeo, robotsDoSite, sitemapDoSite, hostDoPedido, lerBloco, lerBlocos, lerDominio, lerUrlHttps, ordemDasPaginas, provaConfere, registrosDeDns, slugDaPagina, textoSobreCor,
 } from "../lib/producao/site";
 
 test("só endereço https vale: nada de javascript:, data:, http solto, login embutido ou texto vazio", () => {
@@ -106,4 +106,23 @@ test("o que é do Jards e o que é domínio de uma pessoa", () => {
   assert.equal(ehHostDoApp("outro-dominio-do-app.com.br", "https://outro-dominio-do-app.com.br"), true);
   assert.equal(ehHostDoApp("www.outro-dominio-do-app.com.br", "https://outro-dominio-do-app.com.br"), true);
   assert.equal(ehHostDoApp("casa.com.br", "não é url"), false);
+});
+
+test("a descrição e a imagem de compartilhamento: até 300 letras e só https; vazio é sem", () => {
+  assert.deepEqual(lerSeo({ descricao: " Teatro no centro ", imagem: "https://casa.com.br/capa.jpg" }), { ok: true, descricao: "Teatro no centro", imagem_url: "https://casa.com.br/capa.jpg" });
+  assert.deepEqual(lerSeo({ descricao: "", imagem: " " }), { ok: true, descricao: null, imagem_url: null });
+  assert.equal(lerSeo({ descricao: "x".repeat(301), imagem: "" }).ok, false);
+  assert.equal(lerSeo({ descricao: "", imagem: "http://casa.com.br/a.jpg" }).ok, false);
+  assert.equal(lerSeo({ descricao: "", imagem: "javascript:alert(1)" }).ok, false);
+});
+
+test("o endereço da página, o sitemap e o robots do domínio", () => {
+  assert.equal(enderecoDaPagina("casa.com.br", "inicio"), "https://casa.com.br/");
+  assert.equal(enderecoDaPagina("casa.com.br", "quem-somos"), "https://casa.com.br/quem-somos");
+  const mapa = sitemapDoSite("casa.com.br", [{ slug: "inicio", publicada_em: "2026-11-13T10:00:00+00:00" }, { slug: "agenda&mais", publicada_em: null }]);
+  assert.match(mapa, /<loc>https:\/\/casa\.com\.br\/<\/loc><lastmod>2026-11-13<\/lastmod>/);
+  assert.match(mapa, /<loc>https:\/\/casa\.com\.br\/agenda&amp;mais<\/loc><\/url>/, "o & é escapado e sem data não leva lastmod");
+  assert.match(mapa, /^<\?xml version="1.0" encoding="UTF-8"\?>/);
+  assert.equal(robotsDoSite("casa.com.br", true), "User-agent: *\nAllow: /\nSitemap: https://casa.com.br/sitemap.xml\n");
+  assert.equal(robotsDoSite("casa.com.br", false), "User-agent: *\nDisallow: /\n");
 });

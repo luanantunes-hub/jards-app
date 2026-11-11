@@ -15,7 +15,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(30);
+select plan(31);
 
 create schema st;
 grant usage on schema st to authenticated, anon;
@@ -182,6 +182,9 @@ select is(array[
             st.tenta(format('insert into public.producao_site_paginas (organization_id, site_id, slug, titulo, blocos) values (%L, %L, %L, %L, %L::jsonb)', st.id('a0'), st.id('71'), 'novo', 'x', '{"a":1}')),
             st.tenta(format('insert into public.producao_site_paginas (organization_id, site_id, slug, titulo, blocos) values (%L, %L, %L, %L, (select jsonb_agg(1) from generate_series(1, 61)))', st.id('a0'), st.id('71'), 'cheio', 'x')),
             st.tenta(format('insert into public.producao_site_paginas (organization_id, site_id, slug, titulo) values (%L, %L, %L, %L)', st.id('a0'), st.id('7c'), 'novo', 'x')),
+            st.tenta(format('insert into public.producao_site_paginas (organization_id, site_id, slug, titulo, descricao) values (%L, %L, %L, %L, %L)', st.id('a0'), st.id('71'), 'seo1', 'x', ' ')),
+            st.tenta(format('insert into public.producao_site_paginas (organization_id, site_id, slug, titulo, imagem_url) values (%L, %L, %L, %L, %L)', st.id('a0'), st.id('71'), 'seo2', 'x', 'http://casa.com.br/a.jpg')),
+            st.tenta(format('insert into public.producao_site_paginas (organization_id, site_id, slug, titulo, descricao) values (%L, %L, %L, %L, repeat(%L, 301))', st.id('a0'), st.id('71'), 'seo3', 'x', 'a')),
             st.tenta(format('insert into public.producao_site_dominios (organization_id, site_id, dominio, token_verificacao) values (%L, %L, %L, %L)', st.id('a0'), st.id('71'), 'MAIUSCULA.com.br', repeat('b', 32))),
             st.tenta(format('insert into public.producao_site_dominios (organization_id, site_id, dominio, token_verificacao) values (%L, %L, %L, %L)', st.id('a0'), st.id('71'), 'semponto', repeat('b', 32))),
             st.tenta(format('insert into public.producao_site_dominios (organization_id, site_id, dominio, token_verificacao) values (%L, %L, %L, %L)', st.id('a0'), st.id('71'), 'novo.exemplo.com.br', 'curto')),
@@ -189,10 +192,12 @@ select is(array[
             st.tenta(format('update public.producao_sites set organization_id = %L where id = %L', st.id('b0'), st.id('71'))),
             st.tenta(format('update public.producao_site_paginas set site_id = %L where id = %L', st.id('7c'), st.id('81')))],
           array['23514 producao_sites_nome_check', '23514 producao_sites_cor_check', '23514 producao_sites_situacao_check', '23514 espaco_de_outra_organizacao',
-                '23514 producao_site_paginas_slug_check', '23505 producao_site_paginas_slug_key', '23514 producao_site_paginas_blocos_check', '23514 producao_site_paginas_blocos_check', '23514 site_de_outra_organizacao',
+                '23514 producao_site_paginas_slug_check', '23505 producao_site_paginas_slug_key', '23514 producao_site_paginas_blocos_check', '23514 producao_site_paginas_blocos_check', '23514 site_de_outra_organizacao', '23514 producao_site_paginas_descricao_check', '23514 producao_site_paginas_imagem_url_check', '23514 producao_site_paginas_descricao_check',
                 '23514 producao_site_dominios_dominio_check', '23514 producao_site_dominios_dominio_check', '23514 producao_site_dominios_token_check', '23505 producao_site_dominios_dominio_key',
                 '23514 organizacao_nao_muda', '23514 site_nao_muda'],
           'nome, cor e situação do site; espaço da organização; slug (formato e único) e blocos em lista de até 60; site da organização; domínio (minúsculo, com ponto, único) e token; organização e site fixos');
+
+select is(st.tenta(format('insert into public.producao_site_paginas (organization_id, site_id, slug, titulo, descricao, imagem_url) values (%L, %L, %L, %L, %L, %L)', st.id('a0'), st.id('71'), 'seo4', 'x', 'Teatro no centro da cidade', 'https://casa.com.br/capa.jpg')), 'aceito', 'a descrição e a imagem de compartilhamento (https) entram');
 
 -- ─── Histórico ──────────────────────────────────────────────────────────────
 

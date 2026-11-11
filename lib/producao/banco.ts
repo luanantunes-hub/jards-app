@@ -2155,6 +2155,8 @@ export type BancoDaProducao = {
           blocos: Json;
           blocos_publicados: Json | null;
           publicada_em: string | null;
+          descricao: string | null;
+          imagem_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -2168,6 +2170,8 @@ export type BancoDaProducao = {
           blocos?: Json;
           blocos_publicados?: Json | null;
           publicada_em?: string | null;
+          descricao?: string | null;
+          imagem_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -2181,6 +2185,8 @@ export type BancoDaProducao = {
           blocos?: Json;
           blocos_publicados?: Json | null;
           publicada_em?: string | null;
+          descricao?: string | null;
+          imagem_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
