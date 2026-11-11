@@ -1202,6 +1202,7 @@ export type BancoDaProducao = {
           organization_id: string;
           planta_id: string;
           item_id: string | null;
+          sala_id: string | null;
           rotulo: string;
           x_m: number;
           y_m: number;
@@ -1222,6 +1223,7 @@ export type BancoDaProducao = {
           organization_id: string;
           planta_id: string;
           item_id?: string | null;
+          sala_id?: string | null;
           rotulo: string;
           x_m?: number;
           y_m?: number;
@@ -1242,6 +1244,7 @@ export type BancoDaProducao = {
           organization_id?: string;
           planta_id?: string;
           item_id?: string | null;
+          sala_id?: string | null;
           rotulo?: string;
           x_m?: number;
           y_m?: number;
@@ -1277,6 +1280,13 @@ export type BancoDaProducao = {
             columns: ["planta_id"];
             isOneToOne: false;
             referencedRelation: "producao_plantas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_planta_objetos_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_salas";
             referencedColumns: ["id"];
           },
         ];

@@ -9,13 +9,13 @@
 --   a1 admin, a2 colaborador, a3 leitor, a5 colaborador com o recorte "vinculado".
 --   B (b0), cortesia: espaço 3b, sala 7b, temporada 2b, data 4b, item 9b, planta 6b; b1 admin.
 --   C (c0), produção só para leitura: planta 6c; c1 colaborador.
--- Rodar: supabase/tests/README.md, com a migration producao_plantas na frente se não estiver aplicada.
+-- Rodar: supabase/tests/README.md, com a migration producao_plantas (e producao_planta_salas, da PD3.7) na frente se não estiverem aplicadas.
 
 begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(24);
+select plan(25);
 
 create schema pl;
 grant usage on schema pl to authenticated, anon;
@@ -43,7 +43,7 @@ begin
   insert into public.producao_espacos (id, organization_id, nome, tipo) values
     (pl.id('31'), pl.id('a0'), 'PL E1', 'Teatro'), (pl.id('32'), pl.id('a0'), 'PL E2', 'Teatro'), (pl.id('3b'), pl.id('b0'), 'PL EB', 'Teatro');
   insert into public.producao_salas (id, organization_id, espaco_id, nome) values
-    (pl.id('71'), pl.id('a0'), pl.id('31'), 'S1'), (pl.id('7b'), pl.id('b0'), pl.id('3b'), 'SB');
+    (pl.id('71'), pl.id('a0'), pl.id('31'), 'S1'), (pl.id('72'), pl.id('a0'), pl.id('31'), 'S1b'), (pl.id('7b'), pl.id('b0'), pl.id('3b'), 'SB');
   insert into public.producao_temporadas (id, organization_id, formato, lado, tipo, titulo) values
     (pl.id('21'), pl.id('a0'), 'circulacao', 'circula', 'teatro', 'PL T'), (pl.id('2b'), pl.id('b0'), 'circulacao', 'circula', 'teatro', 'PL TB');
   insert into public.producao_datas (id, organization_id, temporada_id, data) values
@@ -52,8 +52,11 @@ begin
   insert into public.producao_plantas (id, organization_id, nome, tipo, largura_m, profundidade_m) values
     (pl.id('61'), pl.id('a0'), 'Palco principal', 'palco', 12, 8), (pl.id('62'), pl.id('a0'), 'Camarim', 'sala', 4, 3),
     (pl.id('6b'), pl.id('b0'), 'Palco da B', 'palco', 10, 6), (pl.id('6c'), pl.id('c0'), 'Palco da C', 'palco', 10, 6);
+  insert into public.producao_plantas (id, organization_id, nome, tipo, largura_m, profundidade_m, espaco_id) values
+    (pl.id('63'), pl.id('a0'), 'Espaço 2', 'outro', 30, 20, pl.id('32')), (pl.id('64'), pl.id('a0'), 'Espaço 1', 'outro', 30, 20, pl.id('31'));
   insert into public.producao_planta_objetos (id, organization_id, planta_id, rotulo, x_m, y_m, largura_m, profundidade_m) values
     (pl.id('81'), pl.id('a0'), pl.id('61'), 'Praticável', 2, 1.5, 2, 1);
+  insert into public.producao_planta_objetos (id, organization_id, planta_id, rotulo, sala_id) values (pl.id('82'), pl.id('a0'), pl.id('64'), 'S1', pl.id('71'));
 end
 $dados$;
 
@@ -120,9 +123,9 @@ select is((select count(*)::int from pg_policies where schemaname = 'public' and
 select is((select count(*)::int from pg_class where oid in ('public.producao_plantas'::regclass, 'public.producao_planta_objetos'::regclass) and relrowsecurity), 2, 'segurança por linha ligada nas duas');
 select is((select string_agg(conrelid::regclass::text || '.' || conname::text || '=' || confdeltype::text, ', ' order by conrelid::regclass::text collate "C", conname::text collate "C") from pg_constraint
            where contype = 'f' and conrelid in ('public.producao_plantas'::regclass, 'public.producao_planta_objetos'::regclass)),
-          'producao_planta_objetos.producao_planta_objetos_item_id_fkey=n, producao_planta_objetos.producao_planta_objetos_organization_id_fkey=c, producao_planta_objetos.producao_planta_objetos_planta_id_fkey=c, '
+          'producao_planta_objetos.producao_planta_objetos_item_id_fkey=n, producao_planta_objetos.producao_planta_objetos_organization_id_fkey=c, producao_planta_objetos.producao_planta_objetos_planta_id_fkey=c, producao_planta_objetos.producao_planta_objetos_sala_id_fkey=n, '
           || 'producao_plantas.producao_plantas_data_id_fkey=n, producao_plantas.producao_plantas_espaco_id_fkey=n, producao_plantas.producao_plantas_organization_id_fkey=c, producao_plantas.producao_plantas_sala_id_fkey=n',
-          'a planta leva os objetos; apagar item, espaço, sala ou data só solta a ligação');
+          'a planta leva os objetos; apagar item, espaço, sala (da planta ou do objeto) ou data só solta a ligação');
 select ok(not has_function_privilege('authenticated', 'public.fn_producao_planta_coerencia()', 'execute')
           and not has_function_privilege('authenticated', 'public.fn_producao_planta_objeto_coerencia()', 'execute')
           and not has_table_privilege('anon', 'public.producao_plantas', 'select'), 'as coerências não são chamáveis e o visitante não toca nas tabelas');
@@ -134,11 +137,11 @@ select is((select string_agg(tgrelid::regclass::text || '.' || tgname::text, ' '
 -- ─── Quem vê ────────────────────────────────────────────────────────────────
 
 select pl.como('a1');
-select is(pl.ve('producao_plantas', 'a'), '2', 'administrador lê as plantas');
+select is(pl.ve('producao_plantas', 'a'), '4', 'administrador lê as plantas');
 select pl.como('a2');
-select is(pl.ve('producao_plantas', 'a'), '2', 'colaborador lê as plantas');
+select is(pl.ve('producao_plantas', 'a'), '4', 'colaborador lê as plantas');
 select pl.como('a3');
-select is(pl.ve('producao_plantas', 'a'), '2', 'leitor lê as plantas');
+select is(pl.ve('producao_plantas', 'a'), '4', 'leitor lê as plantas');
 select pl.como('a5');
 select is(pl.ve('producao_plantas', 'a'), '0', 'o recorte "vinculado" não vê as plantas da organização');
 select pl.como('b1');
@@ -148,7 +151,7 @@ select is(pl.ve('producao_plantas', 'c'), '1', 'produção só para leitura lê'
 select pl.como(null);
 select is(pl.efeito('select 1 from public.producao_plantas'), '', 'visitante não lê');
 select pl.como('a2');
-select is(pl.ve('producao_planta_objetos', 'a'), '1', 'colaborador lê os objetos');
+select is(pl.ve('producao_planta_objetos', 'a'), '2', 'colaborador lê os objetos');
 select pl.como('a5');
 select is(pl.ve('producao_planta_objetos', 'a'), '0', 'o recorte "vinculado" não vê os objetos (não vê a planta)');
 
@@ -185,12 +188,17 @@ select is(array[
             pl.tenta(format('insert into public.producao_planta_objetos (organization_id, planta_id, rotulo, x_m) values (%L, %L, %L, 2000)', pl.id('a0'), pl.id('61'), 'x')),
             pl.tenta(format('insert into public.producao_planta_objetos (organization_id, planta_id, rotulo) values (%L, %L, %L)', pl.id('a0'), pl.id('6b'), 'x')),
             pl.tenta(format('insert into public.producao_planta_objetos (organization_id, planta_id, rotulo, item_id) values (%L, %L, %L, %L)', pl.id('a0'), pl.id('61'), 'x', pl.id('9b'))),
-            pl.tenta(format('update public.producao_planta_objetos set planta_id = %L where id = %L', pl.id('62'), pl.id('81')))],
+            pl.tenta(format('update public.producao_planta_objetos set planta_id = %L where id = %L', pl.id('62'), pl.id('81'))),
+            pl.tenta(format('insert into public.producao_planta_objetos (organization_id, planta_id, rotulo, sala_id) values (%L, %L, %L, %L)', pl.id('a0'), pl.id('61'), 'x', pl.id('7b'))),
+            pl.tenta(format('insert into public.producao_planta_objetos (organization_id, planta_id, rotulo, sala_id) values (%L, %L, %L, %L)', pl.id('a0'), pl.id('63'), 'x', pl.id('71'))),
+            pl.tenta(format('insert into public.producao_planta_objetos (organization_id, planta_id, rotulo, sala_id) values (%L, %L, %L, %L)', pl.id('a0'), pl.id('64'), 'x', pl.id('71')))],
           array['23514 producao_plantas_nome_check', '23514 producao_plantas_tipo_check', '23514 producao_plantas_largura_check', '23514 producao_plantas_profundidade_check',
                 '23514 espaco_de_outra_organizacao', '23514 sala_de_outra_organizacao', '23514 sala_de_outro_espaco', '23514 data_de_outra_organizacao', '23514 organizacao_nao_muda',
                 '23514 producao_planta_objetos_rotulo_check', '23514 producao_planta_objetos_tamanho_check', '23514 producao_planta_objetos_rotacao_check', '23514 producao_planta_objetos_posicao_check',
-                '23514 planta_de_outra_organizacao', '23514 item_de_outra_organizacao', '23514 planta_nao_muda'],
-          'tipo e tamanho da planta, espaço, sala e data da organização, rótulo, tamanho, rotação e posição do objeto, planta e item da organização');
+                '23514 planta_de_outra_organizacao', '23514 item_de_outra_organizacao', '23514 planta_nao_muda',
+                '23514 sala_de_outra_organizacao', '23514 sala_de_outro_espaco', '23505 producao_planta_objetos_sala_key'],
+          'tipo e tamanho da planta, espaço, sala e data da organização, rótulo, tamanho, rotação e posição do objeto, planta e item da organização, a sala do objeto da organização e do espaço da planta, e uma sala só uma vez por planta');
+select is(pl.tenta(format('insert into public.producao_planta_objetos (organization_id, planta_id, rotulo, sala_id) values (%L, %L, %L, %L)', pl.id('a0'), pl.id('64'), 'S1b', pl.id('72'))), 'aceito', 'a outra sala do espaço entra na planta do espaço');
 
 -- ─── Histórico ──────────────────────────────────────────────────────────────
 

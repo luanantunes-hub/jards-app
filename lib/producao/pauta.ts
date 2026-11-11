@@ -109,6 +109,20 @@ export function filaDePreReservas(pautas: readonly PautaDaGrade[]): PreReservaNa
     .sort((a, b) => a.pauta.sala_id.localeCompare(b.pauta.sala_id) || a.pauta.inicio.localeCompare(b.pauta.inicio) || a.posicao - b.posicao);
 }
 
+export type SituacaoNoDia = "livre" | "consulta" | "pre_reserva" | "confirmada";
+
+const FIRMEZA: Record<SituacaoNoDia, number> = { livre: 0, consulta: 1, pre_reserva: 2, confirmada: 3 };
+
+/**
+ * A ocupação de uma sala num dia (a planta do espaço pinta isto por cima das salas): a situação mais firme entre as
+ * pautas que a ocupam (confirmada > pré-reserva > consulta; cancelada não conta) e essas pautas, da mais firme à menos.
+ */
+export function ocupacaoDaSalaNoDia(pautas: readonly PautaDaGrade[], salaId: string, dia: string): { situacao: SituacaoNoDia; pautas: PautaDaGrade[] } {
+  const doDia = pautasNoDia(pautas, salaId, dia)
+    .sort((a, b) => FIRMEZA[b.situacao as SituacaoNoDia] - FIRMEZA[a.situacao as SituacaoNoDia] || a.titulo.localeCompare(b.titulo, "pt-BR"));
+  return { situacao: doDia.length === 0 ? "livre" : (doDia[0].situacao as SituacaoNoDia), pautas: doDia };
+}
+
 export type OcupacaoDoMes = { mes: number; confirmados: number; preReservas: number; consultas: number };
 
 /**

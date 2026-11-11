@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { filaDePreReservas, ocupacaoDoAno, proximaOrdemNaFila, diasDaJanela, lerPauta, pautasEmConflito, pautasNoDia, preReservasVencendo, type PautaDaGrade } from "../lib/producao/pauta";
+import { filaDePreReservas, ocupacaoDaSalaNoDia, ocupacaoDoAno, proximaOrdemNaFila, diasDaJanela, lerPauta, pautasEmConflito, pautasNoDia, preReservasVencendo, type PautaDaGrade } from "../lib/producao/pauta";
 
 const base = { contratante: null, ordem_na_fila: null, valida_ate: null };
 const p = (id: string, sala: string, inicio: string, fim: string, situacao: PautaDaGrade["situacao"], extra: Partial<PautaDaGrade> = {}): PautaDaGrade =>
@@ -81,6 +81,19 @@ test("a fila: livre quando nenhuma confirmada ocupa o período; a vez é da 1ª 
     p("y", "s1", "2026-12-10", "2026-12-10", "consulta"),
   ]);
   assert.deepEqual(fila.map(item => [item.pauta.id, item.posicao, item.livre, item.vez]), [["a", 1, true, true], ["b", 2, true, false], ["c", 1, false, false]]);
+});
+
+test("a ocupação da sala no dia é a situação mais firme; livre sem pauta; cancelada e outra sala não contam", () => {
+  const pautas = [
+    p("a", "s1", "2026-12-05", "2026-12-07", "consulta"), p("b", "s1", "2026-12-06", "2026-12-06", "confirmada"),
+    p("c", "s1", "2026-12-06", "2026-12-06", "pre_reserva"), p("d", "s1", "2026-12-06", "2026-12-06", "cancelada"), p("e", "s2", "2026-12-06", "2026-12-06", "confirmada"),
+  ];
+  const dia6 = ocupacaoDaSalaNoDia(pautas, "s1", "2026-12-06");
+  assert.equal(dia6.situacao, "confirmada");
+  assert.deepEqual(dia6.pautas.map(x => x.id), ["b", "c", "a"]);
+  assert.equal(ocupacaoDaSalaNoDia(pautas, "s1", "2026-12-05").situacao, "consulta");
+  assert.deepEqual(ocupacaoDaSalaNoDia(pautas, "s1", "2026-12-08"), { situacao: "livre", pautas: [] });
+  assert.equal(ocupacaoDaSalaNoDia(pautas, "s3", "2026-12-06").situacao, "livre");
 });
 
 test("a visão de 12 meses conta cada dia uma vez pela situação mais firme, corta no ano e ignora a cancelada", () => {

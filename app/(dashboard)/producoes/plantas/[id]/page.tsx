@@ -18,12 +18,13 @@ import { lerNumero } from "@/lib/producao/inventario";
 import { chaveDoNome } from "@/lib/dominio";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 
-type Planta = { id: string; nome: string; tipo: TipoDePlanta; largura_m: number; profundidade_m: number };
+type Planta = { id: string; nome: string; tipo: TipoDePlanta; largura_m: number; profundidade_m: number; espaco_id: string | null; sala_id: string | null };
+type SalaDoEspaco = { id: string; nome: string };
 type Objeto = {
-  id: string; item_id: string | null; rotulo: string; x_m: number; y_m: number; largura_m: number; profundidade_m: number; rotacao_graus: number;
+  id: string; item_id: string | null; sala_id: string | null; rotulo: string; x_m: number; y_m: number; largura_m: number; profundidade_m: number; rotacao_graus: number;
   tipo: TipoDeObjetoDaPlanta; canais: number | null; potencia_w: number | null; circuito: string | null; fase: FaseDeEnergia | null; canal_inicial: number | null;
 };
-const COLUNAS_DO_OBJETO = "id, item_id, rotulo, x_m, y_m, largura_m, profundidade_m, rotacao_graus, tipo, canais, potencia_w, circuito, fase, canal_inicial";
+const COLUNAS_DO_OBJETO = "id, item_id, sala_id, rotulo, x_m, y_m, largura_m, profundidade_m, rotacao_graus, tipo, canais, potencia_w, circuito, fase, canal_inicial";
 type ValoresDoPainel = { rotulo: string; largura: string; profundidade: string; tipo: string; canais: string; canalInicial: string; potencia: string; circuito: string; fase: string };
 type ItemDoInventario = { id: string; nome: string; categoria: string; comprimento_cm: number | null; largura_cm: number | null; canais: number | null; potencia_w: number | null };
 
@@ -63,7 +64,7 @@ function PainelDoObjeto({ objeto, podeEditar, onGirar, onAplicar, onRemover }: {
   const [fase, setFase] = useState<string>(objeto.fase ?? "");
   return (
     <section className="rounded border bg-white p-4" style={{ borderColor: "rgba(13,13,13,.08)" }} aria-label="Objeto selecionado">
-      <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Objeto selecionado</p>
+      <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{objeto.sala_id ? "Sala selecionada" : "Objeto selecionado"}</p>
       <p className="mt-1 text-[0.6875rem] tabular-nums text-black/45">x {metros(objeto.x_m)} m · y {metros(objeto.y_m)} m · {metros(objeto.rotacao_graus)}°</p>
       <div className="mt-3 space-y-3">
         <div><label className={ROTULO} htmlFor="obj-rotulo">Rótulo</label><input id="obj-rotulo" className={CAMPO} value={rotulo} onChange={event => setRotulo(event.target.value)} maxLength={120} disabled={!podeEditar} /></div>
@@ -71,6 +72,7 @@ function PainelDoObjeto({ objeto, podeEditar, onGirar, onAplicar, onRemover }: {
           <div><label className={ROTULO} htmlFor="obj-largura">Largura (m)</label><input id="obj-largura" inputMode="decimal" className={CAMPO} value={largura} onChange={event => setLargura(event.target.value)} disabled={!podeEditar} /></div>
           <div><label className={ROTULO} htmlFor="obj-profundidade">Profundidade (m)</label><input id="obj-profundidade" inputMode="decimal" className={CAMPO} value={profundidade} onChange={event => setProfundidade(event.target.value)} disabled={!podeEditar} /></div>
         </div>
+        {!objeto.sala_id && <>
         <div>
           <span className={ROTULO}>Tipo</span>
           <Dropdown value={tipo} onChange={setTipo} options={TIPOS_DE_OBJETO_DA_PLANTA.map(valor => ({ value: valor, label: ROTULO_DO_TIPO_DE_OBJETO[valor] }))} />
@@ -84,6 +86,7 @@ function PainelDoObjeto({ objeto, podeEditar, onGirar, onAplicar, onRemover }: {
           <div><label className={ROTULO} htmlFor="obj-circuito">Circuito</label><input id="obj-circuito" className={CAMPO} value={circuito} onChange={event => setCircuito(event.target.value)} placeholder="C1" maxLength={20} disabled={!podeEditar} /></div>
           <div><span className={ROTULO}>Fase</span><Dropdown value={fase} onChange={setFase} options={[{ value: "", label: "—" }, ...FASES_DE_ENERGIA.map(valor => ({ value: valor, label: valor }))]} /></div>
         </div>
+        </>}
         {podeEditar && (
           <div className="flex flex-wrap items-center gap-2">
             <button type="button" onClick={() => onGirar(-15)} aria-label="Girar 15 graus para a esquerda" className="flex h-9 w-9 items-center justify-center rounded border border-black/[.12] text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5]"><RotateCcw size={14} aria-hidden="true" /></button>
@@ -111,6 +114,7 @@ export default function PlantaPage() {
   const [planta, setPlanta] = useState<Planta | null | undefined>(undefined);
   const [objetos, setObjetos] = useState<Objeto[]>([]);
   const [itens, setItens] = useState<ItemDoInventario[]>([]);
+  const [salasDoEspaco, setSalasDoEspaco] = useState<SalaDoEspaco[]>([]);
   const [selecionado, setSelecionado] = useState<string | null>(null);
   const [busca, setBusca] = useState("");
   const [livre, setLivre] = useState("");
@@ -123,11 +127,14 @@ export default function PlantaPage() {
     void (async () => {
       const producao = clienteDaProducao(createClient());
       const [pla, obj, ite] = await Promise.all([
-        producao.from("producao_plantas").select("id, nome, tipo, largura_m, profundidade_m").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
+        producao.from("producao_plantas").select("id, nome, tipo, largura_m, profundidade_m, espaco_id, sala_id").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
         producao.from("producao_planta_objetos").select(COLUNAS_DO_OBJETO).eq("planta_id", id).order("created_at"),
         producao.from("producao_itens").select("id, nome, categoria, comprimento_cm, largura_cm, canais, potencia_w").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
       ]);
+      const espacoId = pla.data?.espaco_id ?? null;
+      const sal = espacoId ? await producao.from("producao_salas").select("id, nome").eq("espaco_id", espacoId).eq("arquivada", false).order("nome") : { data: [] };
       if (!ativo) return;
+      setSalasDoEspaco((sal.data ?? []) as SalaDoEspaco[]);
       setPlanta(pla.error ? null : (pla.data as Planta | null));
       setObjetos((obj.data ?? []) as Objeto[]);
       setItens((ite.data ?? []) as ItemDoInventario[]);
@@ -151,6 +158,9 @@ export default function PlantaPage() {
     }
     return faixas;
   }, [canais]);
+
+  const ehDoEspaco = planta !== null && planta !== undefined && planta.tipo === "outro" && planta.espaco_id !== null && planta.sala_id === null;
+  const salasFora = useMemo(() => salasDoEspaco.filter(sala => !objetos.some(objeto => objeto.sala_id === sala.id)), [salasDoEspaco, objetos]);
 
   const viewBox = planta ? { x: -0.5, y: -0.5, largura: planta.largura_m + 1, altura: planta.profundidade_m + 1 } : null;
 
@@ -183,7 +193,7 @@ export default function PlantaPage() {
     if (error) setErro("Não foi possível guardar a posição. Tente de novo.");
   }
 
-  async function adicionar(dados: { item_id?: string; rotulo: string; largura_m: number; profundidade_m: number; x_m: number; y_m: number; tipo?: TipoDeObjetoDaPlanta; canais?: number | null; potencia_w?: number | null }) {
+  async function adicionar(dados: { item_id?: string; sala_id?: string; rotulo: string; largura_m: number; profundidade_m: number; x_m: number; y_m: number; tipo?: TipoDeObjetoDaPlanta; canais?: number | null; potencia_w?: number | null }) {
     if (!organizationId || !planta) return;
     setErro(null);
     const { data, error } = await clienteDaProducao(createClient()).from("producao_planta_objetos")
@@ -264,12 +274,20 @@ export default function PlantaPage() {
     });
   }
 
+  /** Põe uma sala do espaço na planta: um retângulo de 8 × 6 m na primeira vaga de uma grade de três por linha. */
+  function porSala(sala: SalaDoEspaco) {
+    if (!planta) return;
+    const posicao = objetos.filter(objeto => objeto.sala_id).length;
+    const base = { rotulo: sala.nome.slice(0, 120), largura_m: 8, profundidade_m: 6, rotacao_graus: 0, x_m: 1 + (posicao % 3) * 9.5, y_m: 1 + Math.floor(posicao / 3) * 7.5 };
+    void adicionar({ sala_id: sala.id, rotulo: base.rotulo, largura_m: base.largura_m, profundidade_m: base.profundidade_m, ...manterDentro(base, planta) });
+  }
+
   function remover() {
     if (!atual) return;
     const alvo = atual;
     confirmDelete({
       title: "Tirar da planta?",
-      description: `"${alvo.rotulo}" sai desta planta. O item continua no inventário.`,
+      description: alvo.sala_id ? `"${alvo.rotulo}" sai desta planta. A sala continua no espaço.` : `"${alvo.rotulo}" sai desta planta. O item continua no inventário.`,
       confirmLabel: "Tirar",
       pendingLabel: "Tirando…",
       illustration: false,
@@ -294,8 +312,8 @@ export default function PlantaPage() {
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <DetailBackLink href="/producoes/plantas" label="Plantas" />
           <h1 className="mt-5 text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">{planta.nome}</h1>
-          <p className="mt-1 text-[0.75rem] text-black/45">{ROTULO_DO_TIPO_DE_PLANTA[planta.tipo]} · {metros(planta.largura_m)} × {metros(planta.profundidade_m)} m · cada quadrado é 1 m</p>
-          {podeEditar && <div className="mt-4"><button type="button" onClick={() => void gerarRider()} disabled={gerandoRider} className="inline-flex h-10 items-center gap-1.5 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"><FileText size={13} aria-hidden="true" /> {gerandoRider ? "Gerando…" : "Gerar rider desta planta"}</button></div>}
+          <p className="mt-1 text-[0.75rem] text-black/45">{ehDoEspaco ? "Planta do espaço" : ROTULO_DO_TIPO_DE_PLANTA[planta.tipo]} · {metros(planta.largura_m)} × {metros(planta.profundidade_m)} m · cada quadrado é 1 m</p>
+          {podeEditar && !ehDoEspaco && <div className="mt-4"><button type="button" onClick={() => void gerarRider()} disabled={gerandoRider} className="inline-flex h-10 items-center gap-1.5 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"><FileText size={13} aria-hidden="true" /> {gerandoRider ? "Gerando…" : "Gerar rider desta planta"}</button></div>}
         </div>
       </header>
       <DetailPageContent>
@@ -317,8 +335,8 @@ export default function PlantaPage() {
               <rect x={0} y={0} width={planta.largura_m} height={planta.profundidade_m} fill="#fff" stroke="rgba(13,13,13,.35)" strokeWidth={0.05} />
               {linhasX.map(x => <line key={`x${x}`} x1={x} y1={0} x2={x} y2={planta.profundidade_m} stroke="rgba(13,13,13,.08)" strokeWidth={x % 5 === 0 ? 0.04 : 0.02} />)}
               {linhasY.map(y => <line key={`y${y}`} x1={0} y1={y} x2={planta.largura_m} y2={y} stroke="rgba(13,13,13,.08)" strokeWidth={y % 5 === 0 ? 0.04 : 0.02} />)}
-              <text x={planta.largura_m / 2} y={-0.12} textAnchor="middle" fontSize={0.3} fill="rgba(13,13,13,.4)">fundo do palco</text>
-              <text x={planta.largura_m / 2} y={planta.profundidade_m + 0.38} textAnchor="middle" fontSize={0.3} fill="rgba(13,13,13,.4)">plateia</text>
+              {!ehDoEspaco && <text x={planta.largura_m / 2} y={-0.12} textAnchor="middle" fontSize={0.3} fill="rgba(13,13,13,.4)">fundo do palco</text>}
+              {!ehDoEspaco && <text x={planta.largura_m / 2} y={planta.profundidade_m + 0.38} textAnchor="middle" fontSize={0.3} fill="rgba(13,13,13,.4)">plateia</text>}
               {objetos.map(objeto => {
                 const marcado = objeto.id === selecionado;
                 const tamanhoDaLetra = Math.max(0.16, Math.min(0.34, (objeto.largura_m / Math.max(objeto.rotulo.length, 1)) * 1.7));
@@ -330,7 +348,7 @@ export default function PlantaPage() {
                     style={{ cursor: podeEditar ? "grab" : "pointer" }}
                   >
                     <title>{objeto.rotulo}</title>
-                    <rect width={objeto.largura_m} height={objeto.profundidade_m} fill="rgba(114,89,181,.12)" stroke={marcado ? "#7259B5" : "rgba(13,13,13,.45)"} strokeWidth={marcado ? 0.08 : 0.04} />
+                    <rect width={objeto.largura_m} height={objeto.profundidade_m} fill={objeto.sala_id ? "rgba(13,13,13,.04)" : "rgba(114,89,181,.12)"} stroke={marcado ? "#7259B5" : "rgba(13,13,13,.45)"} strokeWidth={marcado ? 0.08 : 0.04} />
                     <text x={objeto.largura_m / 2} y={objeto.profundidade_m / 2 + tamanhoDaLetra * 0.35} textAnchor="middle" fontSize={tamanhoDaLetra} fill="#282525" style={{ pointerEvents: "none" }}>{objeto.rotulo}</text>
                     {faixaDoObjeto.has(objeto.id) && (
                       <text x={0.06} y={0.2} fontSize={0.18} fill="rgba(13,13,13,.55)" style={{ pointerEvents: "none" }}>
@@ -348,7 +366,29 @@ export default function PlantaPage() {
               <PainelDoObjeto key={`${atual.id}-${atual.largura_m}-${atual.profundidade_m}-${atual.rotulo}`} objeto={atual} podeEditar={podeEditar} onGirar={passo => void guardar({ rotacao_graus: girar(atual.rotacao_graus, passo) })} onAplicar={aplicar} onRemover={remover} />
             )}
 
-            {podeEditar && (
+            {podeEditar && ehDoEspaco && (
+              <section aria-label="Salas do espaço">
+                <p className="mb-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Salas do espaço</p>
+                {salasDoEspaco.length === 0 ? (
+                  <p className="text-[0.75rem] text-black/45">Este espaço ainda não tem salas. Cadastre-as na lista de Espaços.</p>
+                ) : salasFora.length === 0 ? (
+                  <p className="text-[0.75rem] text-black/45">Todas as salas já estão na planta. Arraste cada uma para o lugar dela.</p>
+                ) : (
+                  <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+                    {salasFora.map(sala => (
+                      <li key={sala.id}>
+                        <button type="button" onClick={() => porSala(sala)} className="flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-[0.75rem] text-[#282525] transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-[#7259B5]">
+                          <span className="truncate">{sala.nome}</span>
+                          <span className="shrink-0 text-[0.6875rem] text-black/40">+ pôr</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            )}
+
+            {podeEditar && !ehDoEspaco && (
               <section aria-label="Pôr na planta">
                 <p className="mb-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Pôr na planta</p>
                 <label className="relative mb-2 block">
@@ -380,7 +420,7 @@ export default function PlantaPage() {
           </aside>
         </div>
 
-        <section aria-labelledby="canais-e-energia" className="mt-10 grid gap-6 lg:grid-cols-2">
+        {!ehDoEspaco && <section aria-labelledby="canais-e-energia" className="mt-10 grid gap-6 lg:grid-cols-2">
           <div>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h2 id="canais-e-energia" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Lista de canais{canais.total > 0 ? ` · ${canais.total}` : ""}</h2>
@@ -437,7 +477,7 @@ export default function PlantaPage() {
               </>
             )}
           </div>
-        </section>
+        </section>}
       </DetailPageContent>
     </div>
   );
