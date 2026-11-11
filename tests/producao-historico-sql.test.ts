@@ -53,6 +53,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_riders: { fora: "", rotulos: "nome" },
   // Os equipamentos da casa (PD3.2): nada sensível; o nome é o rótulo.
   producao_equipamentos: { fora: "", rotulos: "nome" },
+  // Os veículos da produção (PD6.1): placa e modelo são do veículo, não de uma pessoa; o nome é o rótulo.
+  producao_veiculos: { fora: "", rotulos: "nome" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
@@ -88,6 +90,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_programacao_links: "é só o link público da programação (título e hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_site_dominios: "são os domínios da pessoa ligados ao site, escritos só pelo servidor depois de conferir o DNS: quem criou e quando já ficam na própria linha, e o token de verificação é segredo",
   producao_sala_fichas: "é só a ficha técnica da sala (medidas e texto): muda pouco e o histórico da sala já conta o que importa",
+  producao_veiculo_documentos: "são só os papéis de um veículo (tipo, número e validade): o histórico do veículo e a própria validade dizem o que importa",
   producao_manutencoes: "são só as manutenções de um equipamento (descrição e datas): o histórico do equipamento e a própria data dizem o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };

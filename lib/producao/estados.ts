@@ -170,3 +170,21 @@ export const SITUACOES_DO_DOMINIO: readonly SituacaoDoDominio[] = ["aguardando",
 /** `producao_manutencoes.tipo`. */
 export type TipoDeManutencao = "preventiva" | "corretiva";
 export const TIPOS_DE_MANUTENCAO: readonly TipoDeManutencao[] = ["preventiva", "corretiva"];
+
+// Os veículos da produção (PD6.1): o banco confere as listas num CHECK (supabase/migrations/*_producao_veiculos.sql).
+
+/** `producao_veiculos.categoria`. */
+export type CategoriaDoVeiculo = "leve" | "van" | "micro_onibus" | "onibus" | "caminhao";
+export const CATEGORIAS_DO_VEICULO: readonly CategoriaDoVeiculo[] = ["leve", "van", "micro_onibus", "onibus", "caminhao"];
+
+/** `producao_veiculos.combustivel`. */
+export type CombustivelDoVeiculo = "gasolina" | "etanol" | "flex" | "diesel_s10" | "diesel_s500";
+export const COMBUSTIVEIS_DO_VEICULO: readonly CombustivelDoVeiculo[] = ["gasolina", "etanol", "flex", "diesel_s10", "diesel_s500"];
+
+/** `producao_veiculos.contratacao`. */
+export type ContratacaoDoVeiculo = "proprio" | "locado" | "fretado_combustivel_incluso";
+export const CONTRATACOES_DO_VEICULO: readonly ContratacaoDoVeiculo[] = ["proprio", "locado", "fretado_combustivel_incluso"];
+
+/** `producao_veiculo_documentos.tipo`. */
+export type TipoDeDocumentoDoVeiculo = "documento_do_veiculo" | "seguro" | "antt" | "vistoria" | "outro";
+export const TIPOS_DE_DOCUMENTO_DO_VEICULO: readonly TipoDeDocumentoDoVeiculo[] = ["documento_do_veiculo", "seguro", "antt", "vistoria", "outro"];
