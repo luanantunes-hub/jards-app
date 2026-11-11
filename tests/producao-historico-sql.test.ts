@@ -55,6 +55,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_equipamentos: { fora: "", rotulos: "nome" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
+  // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
+  producao_licencas: { fora: "", rotulos: "tipo" },
 };
 
 /** Todas as tabelas com histórico hoje. */

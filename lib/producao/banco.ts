@@ -65,6 +65,8 @@ import type {
   TipoDeObjetoDaPlanta,
   TipoDePlanta,
   SituacaoDaTarefa,
+  SituacaoDaLicenca,
+  TipoDeLicenca,
   SituacaoDoVinculo,
   TipoDeCartaoDoDia,
 } from "@/lib/producao/estados";
@@ -1781,6 +1783,73 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_licencas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          tipo: TipoDeLicenca;
+          situacao: SituacaoDaLicenca;
+          responsavel_pessoa_id: string | null;
+          prazo_dias: number | null;
+          validade: string | null;
+          protocolo: string | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          tipo?: TipoDeLicenca;
+          situacao?: SituacaoDaLicenca;
+          responsavel_pessoa_id?: string | null;
+          prazo_dias?: number | null;
+          validade?: string | null;
+          protocolo?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          tipo?: TipoDeLicenca;
+          situacao?: SituacaoDaLicenca;
+          responsavel_pessoa_id?: string | null;
+          prazo_dias?: number | null;
+          validade?: string | null;
+          protocolo?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_licencas_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_licencas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_licencas_responsavel_pessoa_id_fkey";
+            columns: ["responsavel_pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_tarefas: {
         Row: {
           id: string;
@@ -1794,6 +1863,7 @@ export type BancoDaProducao = {
           funcao: string | null;
           situacao: SituacaoDaTarefa;
           concluida_em: string | null;
+          licenca_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1809,6 +1879,7 @@ export type BancoDaProducao = {
           funcao?: string | null;
           situacao?: SituacaoDaTarefa;
           concluida_em?: string | null;
+          licenca_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1824,6 +1895,7 @@ export type BancoDaProducao = {
           funcao?: string | null;
           situacao?: SituacaoDaTarefa;
           concluida_em?: string | null;
+          licenca_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1833,6 +1905,13 @@ export type BancoDaProducao = {
             columns: ["data_id"];
             isOneToOne: false;
             referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_tarefas_licenca_id_fkey";
+            columns: ["licenca_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_licencas";
             referencedColumns: ["id"];
           },
           {
