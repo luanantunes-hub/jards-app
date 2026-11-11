@@ -6,6 +6,9 @@ import { pendenciasDaCasa, type EquipamentoParaPendencia, type ManutencaoParaPen
 import { diaEMes } from "@/lib/producao/agenda";
 import type { TipoDeLicenca } from "@/lib/producao/estados";
 
+/** Quantos dias antes o Hoje avisa de uma manutenção que vai vencer. */
+export const DIAS_DE_ANTECEDENCIA_DA_MANUTENCAO = 7;
+
 export type AvisoDeHoje = { chave: string; rotulo: string; texto: string; href: string };
 
 type LicencaParaHoje = Pick<LicencaDaData, "id" | "situacao" | "prazo_dias" | "validade"> & { data_id: string; tipo: TipoDeLicenca };
@@ -31,14 +34,15 @@ export function avisosDeLicencasParaHoje(licencas: readonly LicencaParaHoje[], d
   return itens.sort((a, b) => a.data.localeCompare(b.data)).map(item => item.aviso);
 }
 
-/** Os avisos dos equipamentos: o avariado e a manutenção que venceu (a que só vence nos próximos dias fica para a página do espaço). */
+/** Os avisos dos equipamentos: o avariado, a manutenção que venceu e a que vence nos próximos 7 dias (as mais distantes ficam para a página do espaço). */
 export function avisosDeEquipamentosParaHoje(
   equipamentos: readonly (EquipamentoParaPendencia & { espaco_id: string })[], manutencoes: readonly ManutencaoParaPendencia[], hoje: string,
 ): AvisoDeHoje[] {
   const espacoDo = new Map(equipamentos.map(item => [item.id, item.espaco_id]));
-  const { avariados, vencidas } = pendenciasDaCasa(equipamentos, manutencoes, hoje, 0);
+  const { avariados, vencidas, proximas } = pendenciasDaCasa(equipamentos, manutencoes, hoje, DIAS_DE_ANTECEDENCIA_DA_MANUTENCAO);
   return [
     ...avariados.map(item => ({ chave: `avariado-${item.id}`, rotulo: "Equipamento", href: `/producoes/espacos/${espacoDo.get(item.id) ?? ""}`, texto: `${item.nome} está avariado.` })),
     ...vencidas.map(item => ({ chave: `manutencao-${item.id}`, rotulo: "Manutenção", href: `/producoes/espacos/${espacoDo.get(item.equipamento_id) ?? ""}`, texto: `${item.equipamento}, ${item.descricao}: venceu em ${diaEMes(item.prevista_para)}.` })),
+    ...proximas.map(item => ({ chave: `manutencao-proxima-${item.id}`, rotulo: "Manutenção", href: `/producoes/espacos/${espacoDo.get(item.equipamento_id) ?? ""}`, texto: `${item.equipamento}, ${item.descricao}: ${item.prevista_para === hoje ? "é hoje" : `vence em ${diaEMes(item.prevista_para)}`}.` })),
   ];
 }
