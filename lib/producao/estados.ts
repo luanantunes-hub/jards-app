@@ -188,3 +188,9 @@ export const CONTRATACOES_DO_VEICULO: readonly ContratacaoDoVeiculo[] = ["propri
 /** `producao_veiculo_documentos.tipo`. */
 export type TipoDeDocumentoDoVeiculo = "documento_do_veiculo" | "seguro" | "antt" | "vistoria" | "outro";
 export const TIPOS_DE_DOCUMENTO_DO_VEICULO: readonly TipoDeDocumentoDoVeiculo[] = ["documento_do_veiculo", "seguro", "antt", "vistoria", "outro"];
+
+// Os deslocamentos da data (PD6.2): o banco confere a lista num CHECK (supabase/migrations/*_producao_deslocamentos.sql).
+
+/** `producao_deslocamentos.tipo`. */
+export type TipoDeDeslocamento = "aviao" | "onibus" | "van" | "carro" | "caminhao" | "trem" | "balsa" | "outro";
+export const TIPOS_DE_DESLOCAMENTO: readonly TipoDeDeslocamento[] = ["aviao", "onibus", "van", "carro", "caminhao", "trem", "balsa", "outro"];
