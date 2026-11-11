@@ -57,6 +57,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
   producao_licencas: { fora: "", rotulos: "tipo" },
+  // As sessões da grade de programação (PD8.1): só dia, hora, título e notas; o dia é o rótulo.
+  producao_sessoes: { fora: "", rotulos: "dia" },
   // O acerto técnico (PD4.1 e PD4.2): o modelo deixa de fora o JSON dos campos (grande); o acerto deixa de fora o hash do
   // link e quem respondeu (nome e e-mail digitados são dado pessoal).
   producao_modelos_acerto: { fora: "campos", rotulos: "nome" },
