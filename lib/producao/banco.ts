@@ -76,8 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia,
-} from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -1668,6 +1667,128 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_veiculos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          placa: string | null;
+          modelo: string | null;
+          ano: number | null;
+          categoria: CategoriaDoVeiculo;
+          combustivel: CombustivelDoVeiculo;
+          contratacao: ContratacaoDoVeiculo;
+          fornecedor: string | null;
+          consumo_km_por_litro: number | null;
+          capacidade_carga_kg: number | null;
+          capacidade_volume_m3: number | null;
+          lugares: number | null;
+          notas: string | null;
+          arquivado: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          placa?: string | null;
+          modelo?: string | null;
+          ano?: number | null;
+          categoria?: CategoriaDoVeiculo;
+          combustivel?: CombustivelDoVeiculo;
+          contratacao?: ContratacaoDoVeiculo;
+          fornecedor?: string | null;
+          consumo_km_por_litro?: number | null;
+          capacidade_carga_kg?: number | null;
+          capacidade_volume_m3?: number | null;
+          lugares?: number | null;
+          notas?: string | null;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          placa?: string | null;
+          modelo?: string | null;
+          ano?: number | null;
+          categoria?: CategoriaDoVeiculo;
+          combustivel?: CombustivelDoVeiculo;
+          contratacao?: ContratacaoDoVeiculo;
+          fornecedor?: string | null;
+          consumo_km_por_litro?: number | null;
+          capacidade_carga_kg?: number | null;
+          capacidade_volume_m3?: number | null;
+          lugares?: number | null;
+          notas?: string | null;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_veiculos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_veiculo_documentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          veiculo_id: string;
+          tipo: TipoDeDocumentoDoVeiculo;
+          numero: string | null;
+          validade: string | null;
+          observacoes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          veiculo_id: string;
+          tipo?: TipoDeDocumentoDoVeiculo;
+          numero?: string | null;
+          validade?: string | null;
+          observacoes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          veiculo_id?: string;
+          tipo?: TipoDeDocumentoDoVeiculo;
+          numero?: string | null;
+          validade?: string | null;
+          observacoes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_veiculo_documentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_veiculo_documentos_veiculo_id_fkey";
+            columns: ["veiculo_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_veiculos";
             referencedColumns: ["id"];
           },
         ];
