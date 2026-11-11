@@ -140,7 +140,7 @@ function RevisaoDoItem({ item, podeEditar, onRevisado, onErro }: { item: Item; p
     <li className="px-4 py-3">
       <p className="text-[0.6875rem] text-black/45">{item.secao}</p>
       <p className="text-[0.8125rem] font-medium text-[#282525]">{item.rotulo}</p>
-      <p className="mt-0.5 text-[0.9375rem] text-[#282525]">{item.tipo === "sim_nao" ? (item.resposta === "sim" ? "Sim" : "Não") : item.resposta}</p>
+      <p className="mt-0.5 text-[0.9375rem] text-[#282525]">{item.tipo === "sim_nao" ? (item.resposta === "sim" ? "Sim" : "Não") : item.tipo === "numero" ? item.resposta?.replace(".", ",") : item.resposta}</p>
       <p className="mt-0.5 text-[0.6875rem] text-black/45">{item.destino === "livre" ? "Fica só no acerto." : `Se aprovar, vai para: ${DESTINO_DO_ACERTO[item.destino].rotulo}.`}</p>
       {podeEditar && !recusando && (
         <div className="mt-2 flex gap-2">
