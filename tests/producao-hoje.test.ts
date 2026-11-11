@@ -30,7 +30,7 @@ test("licenças em Hoje: prazo vencido, negada e validade curta; só das datas q
   assert.equal(new Set(avisos.map(aviso => aviso.chave)).size, avisos.length, "cada aviso tem chave própria");
 });
 
-test("equipamentos em Hoje: o avariado e a manutenção vencida; a que vence depois e o baixado não", () => {
+test("equipamentos em Hoje: o avariado, a manutenção vencida e a dos próximos 7 dias; a que vence depois e o baixado não", () => {
   const avisos = avisosDeEquipamentosParaHoje(
     [{ id: "e1", nome: "Mesa de som", estado: "avariado", espaco_id: "x1" }, { id: "e2", nome: "Refletor", estado: "em_uso", espaco_id: "x1" }, { id: "e3", nome: "Fumaça", estado: "baixado", espaco_id: "x2" }],
     [
@@ -38,9 +38,11 @@ test("equipamentos em Hoje: o avariado e a manutenção vencida; a que vence dep
       { id: "m2", equipamento_id: "e2", descricao: "Troca de lâmpada", prevista_para: "2026-11-20", feita_em: null },
       { id: "m3", equipamento_id: "e3", descricao: "Revisão", prevista_para: "2026-10-01", feita_em: null },
       { id: "m4", equipamento_id: "e2", descricao: "Já feita", prevista_para: "2026-10-01", feita_em: "2026-10-02" },
+      { id: "m5", equipamento_id: "e2", descricao: "Revisão elétrica", prevista_para: "2026-11-14", feita_em: null },
+      { id: "m6", equipamento_id: "e2", descricao: "Calibragem", prevista_para: "2026-11-10", feita_em: null },
     ],
     "2026-11-10",
   );
-  assert.deepEqual(avisos.map(aviso => aviso.texto), ["Mesa de som está avariado.", "Refletor, Limpeza: venceu em 05 nov."]);
+  assert.deepEqual(avisos.map(aviso => aviso.texto), ["Mesa de som está avariado.", "Refletor, Limpeza: venceu em 05 nov.", "Refletor, Calibragem: é hoje.", "Refletor, Revisão elétrica: vence em 14 nov."]);
   assert.equal(avisos[1].href, "/producoes/espacos/x1");
 });
