@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   ACOES_DO_HISTORICO, CONFIRMACOES_DA_ESCALA, EXIBICOES_DO_BLOCO, LADOS_DA_TEMPORADA, SITUACOES_DA_DATA, SITUACOES_DA_TEMPORADA,
-  CATEGORIAS_DO_ITEM, DONOS_DO_ITEM, ESTADOS_DO_EQUIPAMENTO, TIPOS_DE_MANUTENCAO, SECOES_DO_RIDER, FASES_DE_ENERGIA, TIPOS_DE_OBJETO_DA_PLANTA, SITUACOES_DA_PAUTA, TIPOS_DE_PLANTA, SITUACOES_DA_TAREFA, SITUACOES_DA_LICENCA, TIPOS_DE_LICENCA, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA,
+  CATEGORIAS_DO_ITEM, DONOS_DO_ITEM, ESTADOS_DO_EQUIPAMENTO, TIPOS_DE_MANUTENCAO, SECOES_DO_RIDER, FASES_DE_ENERGIA, TIPOS_DE_OBJETO_DA_PLANTA, SITUACOES_DA_PAUTA, TIPOS_DE_PLANTA, SITUACOES_DA_TAREFA, SITUACOES_DA_LICENCA, TIPOS_DE_LICENCA, LADOS_DO_ACERTO, TIPOS_DE_CAMPO_DO_ACERTO, VISIBILIDADES_DO_ACERTO, DESTINOS_DO_ACERTO, SITUACOES_DO_ACERTO, SITUACOES_DO_ITEM_DO_ACERTO, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA,
 } from "../lib/producao/estados";
 import { PASTAS_DE_ARQUIVO } from "../supabase/functions/_shared/producao-caminho";
 import { lerBancoTs, unioesDeTextos, type BancoNoTipo, type ChaveDoTipo } from "./_helpers/producao-banco-ts";
@@ -38,6 +38,13 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_rider_itens.secao": { tipo: "SecaoDoRider", modulo: "@/lib/producao/estados", estados: SECOES_DO_RIDER },
   "producao_equipamentos.categoria": { tipo: "CategoriaDoItem", modulo: "@/lib/producao/estados", estados: CATEGORIAS_DO_ITEM },
   "producao_equipamentos.estado": { tipo: "EstadoDoEquipamento", modulo: "@/lib/producao/estados", estados: ESTADOS_DO_EQUIPAMENTO },
+  "producao_modelos_acerto.lado": { tipo: "LadoDoAcerto", modulo: "@/lib/producao/estados", estados: LADOS_DO_ACERTO },
+  "producao_acertos.lado": { tipo: "LadoDoAcerto", modulo: "@/lib/producao/estados", estados: LADOS_DO_ACERTO },
+  "producao_acertos.situacao": { tipo: "SituacaoDoAcerto", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_ACERTO },
+  "producao_acerto_itens.tipo": { tipo: "TipoDeCampoDoAcerto", modulo: "@/lib/producao/estados", estados: TIPOS_DE_CAMPO_DO_ACERTO },
+  "producao_acerto_itens.destino": { tipo: "DestinoDoAcerto", modulo: "@/lib/producao/estados", estados: DESTINOS_DO_ACERTO },
+  "producao_acerto_itens.visibilidade": { tipo: "VisibilidadeDoAcerto", modulo: "@/lib/producao/estados", estados: VISIBILIDADES_DO_ACERTO },
+  "producao_acerto_itens.situacao": { tipo: "SituacaoDoItemDoAcerto", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_ITEM_DO_ACERTO },
   "producao_licencas.tipo": { tipo: "TipoDeLicenca", modulo: "@/lib/producao/estados", estados: TIPOS_DE_LICENCA },
   "producao_licencas.situacao": { tipo: "SituacaoDaLicenca", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_LICENCA },
   "producao_manutencoes.tipo": { tipo: "TipoDeManutencao", modulo: "@/lib/producao/estados", estados: TIPOS_DE_MANUTENCAO },

@@ -66,6 +66,12 @@ import type {
   TipoDePlanta,
   SituacaoDaTarefa,
   SituacaoDaLicenca,
+  LadoDoAcerto,
+  TipoDeCampoDoAcerto,
+  VisibilidadeDoAcerto,
+  DestinoDoAcerto,
+  SituacaoDoAcerto,
+  SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
   TipoDeCartaoDoDia,
@@ -1783,6 +1789,200 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_modelos_acerto: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          lado: LadoDoAcerto;
+          tipo_producao: string | null;
+          campos: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          lado?: LadoDoAcerto;
+          tipo_producao?: string | null;
+          campos?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          lado?: LadoDoAcerto;
+          tipo_producao?: string | null;
+          campos?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_modelos_acerto_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_acertos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          modelo_nome: string;
+          lado: LadoDoAcerto;
+          situacao: SituacaoDoAcerto;
+          token_hash: string | null;
+          link_expira_em: string | null;
+          link_revogado_em: string | null;
+          respondente_nome: string | null;
+          respondente_email: string | null;
+          respondido_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          modelo_nome: string;
+          lado?: LadoDoAcerto;
+          situacao?: SituacaoDoAcerto;
+          token_hash?: string | null;
+          link_expira_em?: string | null;
+          link_revogado_em?: string | null;
+          respondente_nome?: string | null;
+          respondente_email?: string | null;
+          respondido_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          modelo_nome?: string;
+          lado?: LadoDoAcerto;
+          situacao?: SituacaoDoAcerto;
+          token_hash?: string | null;
+          link_expira_em?: string | null;
+          link_revogado_em?: string | null;
+          respondente_nome?: string | null;
+          respondente_email?: string | null;
+          respondido_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_acertos_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acertos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_acerto_itens: {
+        Row: {
+          id: string;
+          organization_id: string;
+          acerto_id: string;
+          ordem: number;
+          chave: string;
+          secao: string;
+          rotulo: string;
+          tipo: TipoDeCampoDoAcerto;
+          opcoes: Json;
+          destino: DestinoDoAcerto;
+          visibilidade: VisibilidadeDoAcerto;
+          ajuda: string | null;
+          valor_atual: string | null;
+          resposta: string | null;
+          situacao: SituacaoDoItemDoAcerto;
+          motivo: string | null;
+          revisado_por: string | null;
+          revisado_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          acerto_id: string;
+          ordem?: number;
+          chave: string;
+          secao: string;
+          rotulo: string;
+          tipo?: TipoDeCampoDoAcerto;
+          opcoes?: Json;
+          destino?: DestinoDoAcerto;
+          visibilidade?: VisibilidadeDoAcerto;
+          ajuda?: string | null;
+          valor_atual?: string | null;
+          resposta?: string | null;
+          situacao?: SituacaoDoItemDoAcerto;
+          motivo?: string | null;
+          revisado_por?: string | null;
+          revisado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          acerto_id?: string;
+          ordem?: number;
+          chave?: string;
+          secao?: string;
+          rotulo?: string;
+          tipo?: TipoDeCampoDoAcerto;
+          opcoes?: Json;
+          destino?: DestinoDoAcerto;
+          visibilidade?: VisibilidadeDoAcerto;
+          ajuda?: string | null;
+          valor_atual?: string | null;
+          resposta?: string | null;
+          situacao?: SituacaoDoItemDoAcerto;
+          motivo?: string | null;
+          revisado_por?: string | null;
+          revisado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_acerto_itens_acerto_id_fkey";
+            columns: ["acerto_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_acertos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acerto_itens_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_licencas: {
         Row: {
           id: string;
@@ -2212,6 +2412,18 @@ export type BancoDaProducao = {
       auth_producao_ve_temporada: {
         Args: { p_org: string; p_temporada_id: string | null };
         Returns: boolean;
+      };
+      fn_producao_acerto_criar: {
+        Args: { p_data: string; p_modelo: string; p_valores: Json };
+        Returns: string;
+      };
+      fn_producao_acerto_novo_link: {
+        Args: { p_acerto: string; p_dias: number };
+        Returns: string;
+      };
+      fn_producao_acerto_revisar: {
+        Args: { p_item: string; p_aprovar: boolean; p_motivo: string };
+        Returns: string;
       };
       fn_producao_caminho_partes: {
         Args: { p_nome: string };
