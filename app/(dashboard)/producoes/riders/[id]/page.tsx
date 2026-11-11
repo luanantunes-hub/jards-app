@@ -14,10 +14,11 @@ import { lerNumero } from "@/lib/producao/inventario";
 import { montarPdf } from "@/lib/producao/pdf-texto";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { RiderContraSala } from "@/components/producao/RiderContraSala";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 
-type Rider = { id: string; nome: string; palco_largura_min_m: number | null; palco_profundidade_min_m: number | null; observacoes: string | null };
+type Rider = { id: string; nome: string; planta_id: string | null; palco_largura_min_m: number | null; palco_profundidade_min_m: number | null; observacoes: string | null };
 type Linha = { id: string; secao: SecaoDoRider; texto: string; quantidade: number | null; obrigatorio: boolean; ordem: number };
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
@@ -177,7 +178,7 @@ export default function RiderPage() {
     void (async () => {
       const producao = clienteDaProducao(createClient());
       const [rid, lin] = await Promise.all([
-        producao.from("producao_riders").select("id, nome, palco_largura_min_m, palco_profundidade_min_m, observacoes").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
+        producao.from("producao_riders").select("id, nome, planta_id, palco_largura_min_m, palco_profundidade_min_m, observacoes").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
         producao.from("producao_rider_itens").select("id, secao, texto, quantidade, obrigatorio, ordem").eq("rider_id", id).order("ordem").order("created_at"),
       ]);
       if (!ativo) return;
@@ -255,6 +256,7 @@ export default function RiderPage() {
       <DetailPageContent>
         {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         <div className="space-y-8">
+          <RiderContraSala plantaId={rider.planta_id} palcoLarguraMinM={rider.palco_largura_min_m} palcoProfundidadeMinM={rider.palco_profundidade_min_m} />
           {porSecao.map(grupo => (
             <section key={grupo.secao} aria-label={ROTULO_DA_SECAO[grupo.secao]}>
               <div className="mb-2 flex items-center justify-between gap-3">
