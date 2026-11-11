@@ -24,6 +24,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/enviar", 40],
   // Resposta do acerto técnico pela casa (sem login): por IP.
   ["/api/acerto", 30],
+  // Programação pública de um espaço (sem login, aberta a outros sites): por IP.
+  ["/api/programacao", 60],
   ["/api/auth/conta-sem-senha", 10],
   ["/api/", 60],
 ];
@@ -140,6 +142,8 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/r/") ||
         pathname.startsWith("/enviar/") ||
         pathname.startsWith("/acerto/") ||
+        pathname.startsWith("/programacao/") ||
+        pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
         pathname === "/" ||
@@ -196,6 +200,9 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/enviar/") ||
     // Acerto técnico pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/acerto/") ||
+    // Programação pública de um espaço e a versão para embutir (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/programacao/") ||
+    pathname.startsWith("/embed/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||
     pathname.startsWith("/.well-known") ||

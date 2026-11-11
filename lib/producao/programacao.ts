@@ -74,3 +74,32 @@ export function lerSessao(campos: { pautaId: string; dia: string; inicio: string
   if (notas.length > 500) return { ok: false, erro: "As notas podem ter até 500 letras." };
   return { ok: true, sessao: { pauta_id: pauta.id, dia: campos.dia, inicio: horarioCurto(campos.inicio.trim()), fim: horarioCurto(campos.fim.trim()), titulo: titulo === "" ? null : titulo, notas: notas === "" ? null : notas } };
 }
+
+export type SessaoPublica = { inicio: string; fim: string; titulo: string; sala: string };
+export type DiaPublico = { dia: string; sessoes: SessaoPublica[] };
+
+/**
+ * A programação que vai para o público: só as sessões de pautas CONFIRMADAS, de hoje em diante, por dia e da mais cedo à mais
+ * tarde. Cada sessão leva dia, hora, título (o da sessão, ou o da pauta) e o nome da sala: nunca contratante, notas,
+ * pré-reserva ou consulta.
+ */
+export function diasDaProgramacaoPublica(
+  sessoes: readonly SessaoDaGrade[],
+  pautas: readonly { id: string; sala_id: string; titulo: string; situacao: string }[],
+  salas: readonly { id: string; nome: string }[],
+  hoje: string,
+): DiaPublico[] {
+  const pautaPorId = new Map(pautas.filter(pauta => pauta.situacao === "confirmada").map(pauta => [pauta.id, pauta]));
+  const salaPorId = new Map(salas.map(sala => [sala.id, sala.nome]));
+  const porDia = new Map<string, SessaoPublica[]>();
+  for (const sessao of sessoes) {
+    const pauta = pautaPorId.get(sessao.pauta_id);
+    const sala = pauta ? salaPorId.get(pauta.sala_id) : undefined;
+    if (!pauta || sala === undefined || sessao.dia < hoje) continue;
+    porDia.set(sessao.dia, [...(porDia.get(sessao.dia) ?? []), { inicio: horarioCurto(sessao.inicio), fim: horarioCurto(sessao.fim), titulo: sessao.titulo ?? pauta.titulo, sala }]);
+  }
+  return [...porDia.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([dia, lista]) => ({ dia, sessoes: lista.sort((a, b) => minutosDoHorario(a.inicio) - minutosDoHorario(b.inicio) || a.sala.localeCompare(b.sala, "pt-BR")) }));
+}
+

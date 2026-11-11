@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { faixaDaSessao, lerSessao, pautasQueAceitamSessao, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoDaGrade } from "../lib/producao/programacao";
+import { diasDaProgramacaoPublica, faixaDaSessao, lerSessao, pautasQueAceitamSessao, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoDaGrade } from "../lib/producao/programacao";
 
 const pautas: PautaDaSessao[] = [
   { id: "p1", sala_id: "s1", titulo: "Festival", inicio: "2026-12-05", fim: "2026-12-07", situacao: "confirmada" },
@@ -56,4 +56,24 @@ test("o que o banco recusaria a tela recusa antes", () => {
   assert.equal(lerSessao({ ...campos, fim: "18:00" }, pautas).ok, false);
   assert.equal(lerSessao({ ...campos, titulo: "x".repeat(201) }, pautas).ok, false);
   assert.equal(lerSessao({ ...campos, notas: "x".repeat(501) }, pautas).ok, false);
+});
+
+test("a programação pública: só pauta confirmada, de hoje em diante, por dia e por hora, sem nada além de hora, título e sala", () => {
+  const todas: PautaDaSessao[] = [
+    ...pautas,
+    { id: "p4", sala_id: "s1", titulo: "Ainda em conversa", inicio: "2026-12-05", fim: "2026-12-07", situacao: "consulta" },
+  ];
+  const sessoes: SessaoDaGrade[] = [
+    sessao("a", "p1", "2026-12-06", "21:00:00", "22:00:00"), sessao("b", "p1", "2026-12-06", "18:00:00", "20:00:00", "Peça B"), sessao("c", "p1", "2026-12-05", "10:00", "11:00"),
+    sessao("d", "p4", "2026-12-06", "10:00", "11:00", "Não confirmada"), sessao("e", "p2", "2026-12-05", "09:00", "10:00"), sessao("f", "p1", "2026-11-01", "18:00", "20:00"),
+    { ...sessao("g", "p1", "2026-12-07", "18:00", "20:00"), notas: "segredo" },
+  ];
+  const dias = diasDaProgramacaoPublica(sessoes, todas, [{ id: "s1", nome: "Sala Grande" }, { id: "s2", nome: "Sala Pequena" }], "2026-12-01");
+  assert.deepEqual(dias.map(dia => dia.dia), ["2026-12-05", "2026-12-06", "2026-12-07"]);
+  assert.deepEqual(dias[0].sessoes, [{ inicio: "10:00", fim: "11:00", titulo: "Festival", sala: "Sala Grande" }]);
+  assert.deepEqual(dias[1].sessoes.map(item => [item.inicio, item.titulo]), [["18:00", "Peça B"], ["21:00", "Festival"]]);
+  assert.equal(JSON.stringify(dias).includes("segredo"), false, "as notas não saem");
+  assert.equal(JSON.stringify(dias).includes("Não confirmada"), false, "pauta que não é confirmada não sai");
+  assert.equal(JSON.stringify(dias).includes("Oficina"), false, "a pré-reserva de outra sala não sai");
+  assert.deepEqual(Object.keys(dias[0].sessoes[0]).sort(), ["fim", "inicio", "sala", "titulo"]);
 });
