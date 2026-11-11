@@ -13,6 +13,7 @@ import { resumoDaFichaDaSala, type FichaDaSala, type FichaDoEspaco } from "@/lib
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { FichaDaSalaSheet, FichaDoEspacoSheet } from "@/components/producao/FichasSheets";
 import { EquipamentosDoEspaco, type EquipamentoDaCasa } from "@/components/producao/EquipamentosDoEspaco";
+import { EquipeDaCasa } from "@/components/producao/EquipeDaCasa";
 import { equipamentosDaFicha } from "@/lib/producao/equipamentos";
 
 type Espaco = { id: string; nome: string; tipo: string; uf: string | null; endereco: string | null; capacidade: number | null };
@@ -146,6 +147,7 @@ export default function EspacoPage() {
           )}
         </section>
         {organizationId && <EquipamentosDoEspaco organizationId={organizationId} espacoId={espaco.id} salas={salas} podeEditar={podeEditar} onChange={setEquipamentos} />}
+        {organizationId && <EquipeDaCasa organizationId={organizationId} espacoId={espaco.id} podeEditar={podeEditar} />}
       </DetailPageContent>
 
       {editando?.tipo === "espaco" && organizationId && <FichaDoEspacoSheet organizationId={organizationId} espacoId={espaco.id} ficha={fichaDoEspaco} onClose={() => setEditando(null)} onSaved={recarregar} />}
