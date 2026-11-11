@@ -468,7 +468,7 @@ Nesse ponto, `MODULOS_EM_CONSTRUCAO` sai para as organizações piloto.
 
 ---
 
-## 6. Fases 2 a 11 — entregas previstas
+## 6. Fases 2 a 12 — entregas previstas
 
 Cada fase será detalhada quando começar. As estimativas estão entre parênteses, em dias de uma pessoa.
 
@@ -574,6 +574,18 @@ Cada fase será detalhada quando começar. As estimativas estão entre parêntes
 - **PD11.4 Borderô e acerto de contas compartilhados (4).** O espaço emite o borderô, a companhia confere, e o acerto é aprovado no mesmo registro.
 - **Marco M11:** companhia e espaço do Jards no mesmo acerto.
 
+**Fase 12 — Site e ingressos: CMS e ticketeria integrados (≈ 9 semanas; pedido do dono em 11/11/2026; depende das fases 3, 7 e 8).** A casa, o festival ou a companhia passam a ter um site simples feito dentro do Jards e a vender ingresso nele, e a venda alimenta o borderô sem digitar. É a única fase em que o Jards **recebe dinheiro de terceiros** (o público): por isso ela só começa depois das decisões 16 a 19 da seção 12 e de um piloto de bilheteria com valor baixo.
+- **PD12.1 Site público do espaço, do festival ou da companhia (6).** CMS mínimo e próprio: `producao_sites` (dono: espaço, temporada ou companhia; endereço `/s/[nome]`, depois domínio próprio; tema com logo e cores; situação rascunho ou publicado) e `producao_site_paginas` com blocos fixos (texto, imagem, galeria, programação, ingressos, equipe, mapa, contato, patrocinadores), versão publicada separada do rascunho e histórico. Sem editor de código e sem HTML livre (segurança e prazo).
+- **PD12.2 Conteúdo e mídia (4).** Notícias e releases, galeria com a mídia do bucket `documentos`, menu, SEO e imagem de compartilhamento (Open Graph), ficha técnica do espaço e fotos reaproveitadas da PD3.1. Acessibilidade: texto alternativo obrigatório nas imagens do site.
+- **PD12.3 Programação ligada ao site (3).** A programação pública da PD8.3 vira bloco do site: as sessões vêm da grade e da pauta (nada é digitado duas vezes), com a marca dos patrocinadores da PD9.1.
+- **PD12.4 Catálogo de ingressos (5).** `producao_ingresso_tipos` e `producao_ingresso_lotes`: por sessão, categoria (inteira, meia, social, cortesia), preço, quantidade, janela de venda, limite por comprador, lote que vira o seguinte quando esgota. A capacidade nasce da ficha da sala (PD3.1) e a venda se fecha sozinha ao lotar.
+- **PD12.5 Assento marcado (5; depende da PD7.7).** Mapa de assentos a partir da planta da sala (motor da PD2.2): setores, fileiras, preço por setor, reserva temporária do assento durante o pagamento. Evento sem lugar marcado usa só o catálogo da PD12.4.
+- **PD12.6 Compra e pagamento (7).** Carrinho público sem conta do comprador, dados mínimos (nome, e-mail, CPF só se a regra da meia ou o provedor exigir), reserva por tempo, Pix e cartão por provedor com divisão do valor (decisão 16), confirmação e ingresso por e-mail, página do pedido. `producao_pedidos`, `producao_pedido_itens` e `producao_pagamentos`. O comprador é dado pessoal: política e prazo de guarda na decisão 19.
+- **PD12.7 Ingresso com QR e portaria (4).** Cada ingresso com código único e QR assinado; leitura na porta pelo celular em `/porta` (já prevista na decisão 1) com marcação de entrada, recusa de ingresso repetido e conferência da meia-entrada; o mesmo leitor serve às credenciais da PD7.3 e da fase 9. Funciona com sinal ruim: lista local da sessão, sincronizada depois.
+- **PD12.8 Borderô automático e repasse (4).** A venda e a entrada alimentam o borderô da PD7.4 (categorias, receita, deduções, público presente) e o acerto de contas da PD7.9; repasse ao produtor conforme o provedor, taxa de conveniência, conciliação diária e **reembolso** (cancelamento da sessão, arrependimento em 7 dias, estorno).
+- **PD12.9 Regras de venda e fiscal (3).** Meia-entrada e as cotas legais, relatório de borderô para ECAD e prefeitura, e o documento fiscal da venda conforme a decisão 17 (quem emite).
+- **Marco M12:** um evento do espaço ou festival piloto vende ingresso pelo site, entra pela porta com QR, e o borderô fecha sem digitação.
+
 ### 6.1 Liberação comercial (≈ 1,5 semana; condição da liberação pública)
 
 Fora do caminho dos pilotos, que usam cortesia. Pode correr em paralelo a partir da fase 2.
@@ -583,7 +595,7 @@ Fora do caminho dos pilotos, que usam cortesia. Pode correr em paralelo a partir
 
 ### 6.2 Depois (expansão contínua)
 
-Pedágio no combustível · turnê internacional (moeda, visto, carnê ATA) · integração com ticketeiras para o borderô · todas as folhas num app instalável · MCP da produção.
+Pedágio no combustível · turnê internacional (moeda, visto, carnê ATA) · integração com ticketeiras de fora para o borderô (alternativa à venda própria da fase 12) · domínio próprio e tema avançado do site · todas as folhas num app instalável · MCP da produção.
 
 ### 6.3 Dependências e trilhas
 
@@ -598,6 +610,7 @@ F0 → F1 ─┬─ F2 (circula: inventário, mapa de palco) ─┐
 - A PD3.7 (planta do espaço) depende da PD2.2. A PD6.8 (quartos), a PD7.7 (plateia) e a PD8.5 (expografia) dependem do motor da planta (PD2.2).
 - A PD7.9 (acerto de contas) depende da PD4.5 e da fase 5.
 - A fase 9 depende da 7; a PD9.1 pode começar depois da PD1.6.
+- A fase 12 depende da 3 (ficha e capacidade da sala), da 8 (programação pública, PD8.3), da 7 (borderô PD7.4, credenciais e portaria) e do provedor da decisão 16. A PD12.1 e a PD12.2 (o site, sem venda) podem começar logo depois da PD8.3; a venda (PD12.4 a PD12.9) só depois das decisões 16 a 19.
 
 ### 6.4 Quem passa a ser atendido em cada fase
 
@@ -635,8 +648,10 @@ O teste concreto de "sem deixar ninguém de fora":
 | 9 Parceiros | 23 | 26 | **M9:** relatório de retorno em uso |
 | 10 Pontes | 12 | 14 | **M10:** despesas e público na prestação |
 | 11 Conexão | 15 | 17 | **M11:** companhia e espaço no mesmo acerto |
+| 12 Site e ingressos (pedido de 11/11/2026) | 41 | 47 | **M12:** evento piloto vende pelo site, entra com QR e fecha o borderô |
 | 6.1 Liberação comercial | 8 | 9 | Cobrança ligada |
 | **Total** | **≈ 348** | **≈ 400 dias** | ≈ 80 semanas de uma pessoa; ≈ 10 meses com duas |
+| **Total com a fase 12** | **≈ 389** | **≈ 447 dias** | ≈ 90 semanas de uma pessoa; ≈ 11 meses com duas |
 
 **Protótipos (31/10/2026, pedido do dono).** A página da data completa, a folha do dia, as tarefas, as pautas do espaço, os acordos e o orçamento existem como protótipo navegável em Produção → Protótipos (`/producoes/prototipo`, só o super admin), com dados de exemplo e sem banco. Não são entregas e não mudam este cronograma: cada tela de verdade substitui o protótipo dela, na ordem do plano.
 
@@ -690,6 +705,8 @@ Os dados de teste dos e2e usam o prefixo de `e2e/helpers/supabaseAdmin.ts` e sã
 | Conflito de agenda entre organizações não aparece, por causa do RLS | Dito na tela; a conexão da fase 11 resolve para quem tem conta |
 | Programação com milhares de sessões | Paginação no servidor a partir da fase 8 |
 | A cadeia de migrations não sobe do zero e o CI não roda pgTAP | pgTAP no editor SQL antes de cada merge, registrado no PR |
+| A venda de ingresso faz o Jards movimentar dinheiro de terceiros (fraude, chargeback, reembolso, fiscal, dado do comprador) | Provedor com divisão de valor, sem saldo guardado no Jards (decisão 16); responsabilidade fiscal e de estorno escrita antes (decisão 17); piloto de bilheteria com valor baixo e um produtor; política de dados do comprador (decisão 19) |
+| O CMS vira um construtor de sites sem fim | Blocos fixos, sem HTML livre nem editor de código (PD12.1); o que não cabe nos blocos fica para depois |
 | O escopo é grande e pode parecer parado para o negócio | Um marco com piloto real a cada 3 a 6 semanas; trilhas em paralelo; o mapa de palco sai logo depois do M1 |
 
 ---
@@ -729,5 +746,9 @@ Depois, no mesmo dia: **preço do módulo produção: R$ 92,80**, pago pela orga
 | 11 | Provedores pagos (tiles, rotas, assinatura, QR) e custo mensal aceito | Começar pelo SVG sem tiles; rotas com cache; assinatura com vários signatários | F2, F4, F6, F7 |
 | 12 | Política de dados pessoais da equipe | Pré-requisito 5 | PD1.9 |
 | 13 | Conexão companhia–espaço | Só o acerto, a planta e o borderô compartilhados, com aceite das duas organizações | F11 |
-| 14 | Ingressos | O Jards registra o borderô, não vende; ticketeiras depois | F7 |
+| 14 | Ingressos | **Revista em 11/11/2026 a pedido do dono:** o Jards passa a vender (fase 12). Até lá, na fase 7 ele só registra o borderô, e a integração com ticketeiras de fora fica como alternativa à fase 12 | F7, F12 |
+| 16 | Provedor de pagamento e repasse da bilheteria | Provedor com divisão de valor entre o Jards e o produtor (Stripe Connect, Mercado Pago ou Pagar.me, a escolher por taxa, Pix e prazo de repasse); o Jards **não** guarda saldo de terceiros | PD12.6, PD12.8 |
+| 17 | Taxa, nota fiscal e responsabilidade da venda | Taxa de conveniência definida pelo dono; quem emite o documento fiscal e quem responde por chargeback e reembolso (produtor ou Jards) | PD12.8, PD12.9 |
+| 18 | Endereço do site público | Começar em `/s/[nome]` no domínio do Jards; domínio próprio da casa como etapa seguinte | PD12.1 |
+| 19 | Dados do comprador de ingresso | Mínimo necessário, base legal e prazo de guarda escritos antes da PD12.6; extensão da política de dados pessoais da decisão 12 | PD12.6 |
 | 15 | Escopo internacional | Fora desta versão | — |
