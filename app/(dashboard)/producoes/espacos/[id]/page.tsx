@@ -14,6 +14,7 @@ import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton }
 import { FichaDaSalaSheet, FichaDoEspacoSheet } from "@/components/producao/FichasSheets";
 import { EquipamentosDoEspaco, type EquipamentoDaCasa } from "@/components/producao/EquipamentosDoEspaco";
 import { EquipeDaCasa } from "@/components/producao/EquipeDaCasa";
+import { PlantaDoEspaco } from "@/components/producao/PlantaDoEspaco";
 import { equipamentosDaFicha } from "@/lib/producao/equipamentos";
 
 type Espaco = { id: string; nome: string; tipo: string; uf: string | null; endereco: string | null; capacidade: number | null };
@@ -146,6 +147,7 @@ export default function EspacoPage() {
             </ul>
           )}
         </section>
+        {organizationId && <PlantaDoEspaco organizationId={organizationId} espacoId={espaco.id} nomeDoEspaco={espaco.nome} salaIds={salas.map(sala => sala.id)} podeEditar={podeEditar} />}
         {organizationId && <EquipamentosDoEspaco organizationId={organizationId} espacoId={espaco.id} salas={salas} podeEditar={podeEditar} onChange={setEquipamentos} />}
         {organizationId && <EquipeDaCasa organizationId={organizationId} espacoId={espaco.id} podeEditar={podeEditar} />}
       </DetailPageContent>
