@@ -82,6 +82,30 @@ export function conviteDaFolhaEmail(input: {
   };
 }
 
+/** Avisa quem criou o acerto técnico que a casa respondeu pelo link e que há itens para revisar. */
+export function acertoRespondidoEmail(input: {
+  recipientName?: string | null;
+  respondente: string;
+  titulo: string;
+  organizacao: string;
+  url: string;
+}) {
+  const primeiroNome = input.recipientName?.trim().split(" ")[0] ?? "";
+  const saudacao = primeiroNome ? `Olá, ${primeiroNome}.` : "Olá.";
+  const url = escapeHtml(input.url);
+  return {
+    subject: `${input.respondente} respondeu o acerto técnico "${input.titulo}"`,
+    text: `${saudacao} ${input.respondente} respondeu o acerto técnico "${input.titulo}" de ${input.organizacao}. Revise item a item: o que você aprovar vai para a ficha; nada chega lá sem a sua aprovação. ${input.url}`,
+    html: emailShell(`
+      <p style="margin:0 0 12px;font-size:14px;color:#555">${escapeHtml(saudacao)}</p>
+      <h1 style="margin:0 0 12px;font-size:23px;line-height:1.25;letter-spacing:-.5px">${escapeHtml(input.respondente)} respondeu o acerto técnico.</h1>
+      <p style="margin:0 0 20px;font-size:14px;line-height:1.65;color:#61615d">${escapeHtml(input.titulo)}, de ${escapeHtml(input.organizacao)}. Revise item a item: o que você aprovar vai para a ficha da sala ou do espaço, e o que recusar volta para a casa com o seu motivo. Nada chega à ficha sem a sua aprovação.</p>
+      <a href="${url}" style="display:inline-block;padding:12px 18px;border-radius:6px;background:#282525;color:#ffffff;text-decoration:none;font-size:13px;font-weight:700">Revisar a resposta</a>
+      <p style="margin:24px 0 0;font-size:11px;line-height:1.5;color:#999">Se o botão não abrir, copie este endereço:<br>${url}</p>
+    `),
+  };
+}
+
 export function patrocinadorProntoEmail(input: {
   recipientName?: string | null;
   empresaName: string;

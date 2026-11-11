@@ -57,6 +57,10 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
   producao_licencas: { fora: "", rotulos: "tipo" },
+  // O acerto técnico (PD4.1 e PD4.2): o modelo deixa de fora o JSON dos campos (grande); o acerto deixa de fora o hash do
+  // link e quem respondeu (nome e e-mail digitados são dado pessoal).
+  producao_modelos_acerto: { fora: "campos", rotulos: "nome" },
+  producao_acertos: { fora: "token_hash,respondente_nome,respondente_email", rotulos: "modelo_nome" },
 };
 
 /** Todas as tabelas com histórico hoje. */
@@ -75,6 +79,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_planta_objetos: "é só a posição, o tamanho e a rotação de cada objeto na planta: muda a cada arrasto e o histórico da planta já conta o que importa",
   producao_rider_itens: "são só as linhas do rider (texto, quantidade e se é obrigatório): o histórico do rider já conta o que importa",
   producao_espaco_fichas: "tem o contato de quem cuida do espaço (telefone e e-mail são dado pessoal) e o resto é texto e medida do lugar: o espaço já tem o histórico dele",
+  producao_acerto_itens: "são os campos do acerto (o que a produção escreveu, o que a casa respondeu e a revisão): quem revisou e quando já ficam na própria linha, e o histórico do acerto conta o resto",
   producao_sala_fichas: "é só a ficha técnica da sala (medidas e texto): muda pouco e o histórico da sala já conta o que importa",
   producao_manutencoes: "são só as manutenções de um equipamento (descrição e datas): o histórico do equipamento e a própria data dizem o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
@@ -269,7 +274,7 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
   // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
   // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_funcoes: definido_por", "producao_pessoas: email,telefone"]);
+    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_funcoes: definido_por", "producao_modelos_acerto: campos", "producao_pessoas: email,telefone"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {

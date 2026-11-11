@@ -22,6 +22,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/mcp", 60],
   // Página de envio de arquivos do assistente (sem login): preparar e concluir, por IP.
   ["/api/enviar", 40],
+  // Resposta do acerto técnico pela casa (sem login): por IP.
+  ["/api/acerto", 30],
   ["/api/auth/conta-sem-senha", 10],
   ["/api/", 60],
 ];
@@ -137,6 +139,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/p/") ||
         pathname.startsWith("/r/") ||
         pathname.startsWith("/enviar/") ||
+        pathname.startsWith("/acerto/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
         pathname === "/" ||
@@ -191,6 +194,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/r/") ||
     // Envio de arquivos pelo link que o assistente deu (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/enviar/") ||
+    // Acerto técnico pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/acerto/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||
     pathname.startsWith("/.well-known") ||

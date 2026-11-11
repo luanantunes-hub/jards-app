@@ -126,6 +126,37 @@ export const TIPOS_DE_LICENCA: readonly TipoDeLicenca[] = ["alvara", "avcb", "ec
 export type SituacaoDaLicenca = "a_pedir" | "pedida" | "concedida" | "negada" | "dispensada";
 export const SITUACOES_DA_LICENCA: readonly SituacaoDaLicenca[] = ["a_pedir", "pedida", "concedida", "negada", "dispensada"];
 
+// O acerto técnico (PD4.1 e PD4.2): o banco confere as listas num CHECK (supabase/migrations/*_producao_acertos.sql).
+
+/** `producao_modelos_acerto.lado` e `producao_acertos.lado`: quem preenche. */
+export type LadoDoAcerto = "casa" | "companhia";
+export const LADOS_DO_ACERTO: readonly LadoDoAcerto[] = ["casa", "companhia"];
+
+/** O tipo de um campo do modelo (dentro do JSON do modelo e em `producao_acerto_itens.tipo`). */
+export type TipoDeCampoDoAcerto = "texto" | "numero" | "escolha" | "sim_nao" | "data" | "hora";
+export const TIPOS_DE_CAMPO_DO_ACERTO: readonly TipoDeCampoDoAcerto[] = ["texto", "numero", "escolha", "sim_nao", "data", "hora"];
+
+/** O que a casa vê de um campo (`producao_acerto_itens.visibilidade`). */
+export type VisibilidadeDoAcerto = "oculto" | "leitura" | "opcional" | "obrigatorio";
+export const VISIBILIDADES_DO_ACERTO: readonly VisibilidadeDoAcerto[] = ["oculto", "leitura", "opcional", "obrigatorio"];
+
+/** Para onde a resposta aprovada vai (`producao_acerto_itens.destino`). */
+export type DestinoDoAcerto =
+  | "livre" | "sala_palco_boca_m" | "sala_palco_profundidade_m" | "sala_palco_altura_m" | "sala_som_canais_entrada" | "sala_luz_refletores"
+  | "sala_energia_kva" | "sala_energia_tensao_v" | "sala_camarins_quantidade" | "espaco_carga_descarga" | "espaco_doca_altura_m";
+export const DESTINOS_DO_ACERTO: readonly DestinoDoAcerto[] = [
+  "livre", "sala_palco_boca_m", "sala_palco_profundidade_m", "sala_palco_altura_m", "sala_som_canais_entrada", "sala_luz_refletores",
+  "sala_energia_kva", "sala_energia_tensao_v", "sala_camarins_quantidade", "espaco_carga_descarga", "espaco_doca_altura_m",
+];
+
+/** `producao_acertos.situacao`. */
+export type SituacaoDoAcerto = "aguardando" | "respondido" | "concluido" | "cancelado";
+export const SITUACOES_DO_ACERTO: readonly SituacaoDoAcerto[] = ["aguardando", "respondido", "concluido", "cancelado"];
+
+/** `producao_acerto_itens.situacao`. */
+export type SituacaoDoItemDoAcerto = "pendente" | "respondido" | "aprovado" | "recusado";
+export const SITUACOES_DO_ITEM_DO_ACERTO: readonly SituacaoDoItemDoAcerto[] = ["pendente", "respondido", "aprovado", "recusado"];
+
 /** `producao_manutencoes.tipo`. */
 export type TipoDeManutencao = "preventiva" | "corretiva";
 export const TIPOS_DE_MANUTENCAO: readonly TipoDeManutencao[] = ["preventiva", "corretiva"];
