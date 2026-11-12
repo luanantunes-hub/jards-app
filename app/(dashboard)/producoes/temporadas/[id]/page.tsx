@@ -17,6 +17,7 @@ import { Select } from "@/components/ui/Select";
 import { NovaDataSheet } from "@/components/producao/NovaDataSheet";
 import { EquipeDaTemporada } from "@/components/producao/EquipeDaTemporada";
 import { CargaDaTemporada } from "@/components/producao/CargaDaTemporada";
+import { CargaPorVeiculo } from "@/components/producao/CargaPorVeiculo";
 import { HospedagemDaTemporada } from "@/components/producao/HospedagemDaTemporada";
 import { ConvitesDaTemporada } from "@/components/producao/ConvitesDaTemporada";
 import { CopiarTemporadaSheet, type TemporadaParaCopiar } from "@/components/producao/CopiarTemporadaSheet";
@@ -134,6 +135,7 @@ export default function TemporadaPage() {
         {organizationId && <ConvitesDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
         {organizationId && <HospedagemDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
         {organizationId && <CargaDaTemporada organizationId={organizationId} temporadaId={temporada.id} />}
+        {organizationId && <CargaPorVeiculo organizationId={organizationId} temporadaId={temporada.id} />}
       </DetailPageContent>
 
       {folha === "data" && organizationId && (
