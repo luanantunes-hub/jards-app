@@ -226,3 +226,9 @@ export const GRAVIDADES_DA_OCORRENCIA: readonly GravidadeDaOcorrencia[] = ["baix
 /** `producao_voluntarios.situacao`. */
 export type SituacaoDoVoluntario = "inscrito" | "aprovado" | "recusado";
 export const SITUACOES_DO_VOLUNTARIO: readonly SituacaoDoVoluntario[] = ["inscrito", "aprovado", "recusado"];
+
+// Os convidados de uma sessão (PD7.2): o banco confere a lista num CHECK (supabase/migrations/*_producao_convidados.sql).
+
+/** `producao_convidados.situacao`. */
+export type SituacaoDoConvidado = "pedido" | "confirmado" | "recusado";
+export const SITUACOES_DO_CONVIDADO: readonly SituacaoDoConvidado[] = ["pedido", "confirmado", "recusado"];

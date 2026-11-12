@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -2494,6 +2494,105 @@ export type BancoDaProducao = {
             columns: ["temporada_id"];
             isOneToOne: false;
             referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_credencial_tipos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          cota_por_sessao: number | null;
+          arquivado: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          cota_por_sessao?: number | null;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          cota_por_sessao?: number | null;
+          arquivado?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_credencial_tipos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_convidados: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          tipo_id: string;
+          nome: string;
+          afiliacao: string | null;
+          quantidade: number;
+          situacao: SituacaoDoConvidado;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          tipo_id: string;
+          nome: string;
+          afiliacao?: string | null;
+          quantidade?: number;
+          situacao?: SituacaoDoConvidado;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          tipo_id?: string;
+          nome?: string;
+          afiliacao?: string | null;
+          quantidade?: number;
+          situacao?: SituacaoDoConvidado;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_convidados_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_convidados_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_sessoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_convidados_tipo_id_fkey";
+            columns: ["tipo_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_credencial_tipos";
             referencedColumns: ["id"];
           },
         ];
