@@ -10,6 +10,7 @@ import { horarioDaEscala } from "@/lib/producao/escala";
 import { instanteParaHoraLocal } from "@/lib/producao/dia";
 import { somarDias } from "@/lib/producao/agenda";
 import { TIPOS_DE_DESLOCAMENTO, type TipoDeDeslocamento } from "@/lib/producao/estados";
+import { lerOdometro, textoDaViagem } from "@/lib/producao/viagem-motorista";
 import { avisoDeLotacao, conflitosDeDeslocamentos, lerDeslocamento, ROTULO_DO_DESLOCAMENTO } from "@/lib/producao/deslocamentos";
 import { placaParaExibir } from "@/lib/producao/veiculos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -19,12 +20,13 @@ import type { ContratacaoDoVeiculo } from "@/lib/producao/estados";
 type Deslocamento = {
   id: string; data_id: string; tipo: TipoDeDeslocamento; origem: string | null; destino: string | null; saida: string | null; chegada: string | null;
   veiculo_id: string | null; motorista_id: string | null; companhia: string | null; localizador: string | null; notas: string | null;
+  odometro_saida_km: number | null; odometro_chegada_km: number | null;
 };
 type Opcao = { id: string; nome: string };
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
-const COLUNAS = "id, data_id, tipo, origem, destino, saida, chegada, veiculo_id, motorista_id, companhia, localizador, notas";
+const COLUNAS = "id, data_id, tipo, origem, destino, saida, chegada, veiculo_id, motorista_id, companhia, localizador, notas, odometro_saida_km, odometro_chegada_km";
 
 const horaDoCampo = (instante: string | null, fuso: string) => (instante ? instanteParaHoraLocal(instante, fuso).hora : "");
 
@@ -51,6 +53,8 @@ function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, ve
   const [companhia, setCompanhia] = useState(deslocamento?.companhia ?? "");
   const [localizador, setLocalizador] = useState(deslocamento?.localizador ?? "");
   const [notas, setNotas] = useState(deslocamento?.notas ?? "");
+  const [odometroSaida, setOdometroSaida] = useState(deslocamento?.odometro_saida_km?.toString() ?? "");
+  const [odometroChegada, setOdometroChegada] = useState(deslocamento?.odometro_chegada_km?.toString() ?? "");
   const [vao, setVao] = useState<string[]>(quemVai);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -61,7 +65,10 @@ function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, ve
     setSalvando(true);
     setErro(null);
     const horario = horarioDaEscala(dia, saida, chegada, fuso);
-    const valores = { ...leitura.deslocamento, saida: horario.chamada, chegada: horario.saida };
+    const km = { saida: lerOdometro(odometroSaida), chegada: lerOdometro(odometroChegada) };
+    if (km.saida === "invalido" || km.chegada === "invalido") { setSalvando(false); setErro("O odômetro é um número inteiro de quilômetros."); return; }
+    if (km.saida !== null && km.chegada !== null && km.chegada < km.saida) { setSalvando(false); setErro("O odômetro da chegada não pode ser menor que o da saída."); return; }
+    const valores = { ...leitura.deslocamento, saida: horario.chamada, chegada: horario.saida, odometro_saida_km: km.saida, odometro_chegada_km: km.chegada };
     const producao = clienteDaProducao(createClient());
     let id = deslocamento?.id ?? "";
     if (deslocamento) {
@@ -175,6 +182,18 @@ function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, ve
             </div>
           </fieldset>
         )}
+        {deslocamento && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className={ROTULO} htmlFor="desloc-odo-saida">Odômetro na saída (km)</label>
+              <input id="desloc-odo-saida" inputMode="numeric" className={CAMPO} value={odometroSaida} onChange={event => setOdometroSaida(event.target.value)} disabled={salvando} />
+            </div>
+            <div>
+              <label className={ROTULO} htmlFor="desloc-odo-chegada">Odômetro na chegada (km)</label>
+              <input id="desloc-odo-chegada" inputMode="numeric" className={CAMPO} value={odometroChegada} onChange={event => setOdometroChegada(event.target.value)} disabled={salvando} />
+            </div>
+          </div>
+        )}
         <div>
           <label className={ROTULO} htmlFor="desloc-notas">Notas (opcional)</label>
           <textarea id="desloc-notas" rows={3} className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50" value={notas} onChange={event => setNotas(event.target.value)} maxLength={2000} disabled={salvando} />
@@ -198,6 +217,7 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
   const [lugaresDoVeiculo, setLugaresDoVeiculo] = useState<Map<string, number | null>>(new Map());
   const [capacidadeDoVeiculo, setCapacidadeDoVeiculo] = useState<Map<string, { capacidade_carga_kg: number | null; capacidade_volume_m3: number | null; contratacao: ContratacaoDoVeiculo }>>(new Map());
   const [checklist, setChecklist] = useState<Deslocamento | null>(null);
+  const [litrosPorDeslocamento, setLitrosPorDeslocamento] = useState<Map<string, number>>(new Map());
   const [quemVaiPorDeslocamento, setQuemVaiPorDeslocamento] = useState<Map<string, string[]>>(new Map());
   const [pessoas, setPessoas] = useState<Opcao[]>([]);
   const [folha, setFolha] = useState<{ deslocamento: Deslocamento | null } | null>(null);
@@ -230,6 +250,14 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
       }
       if (!ativo) return;
       setQuemVaiPorDeslocamento(quemVai);
+      const proprias = (proprios.data ?? []).map(item => item.id);
+      const litros = new Map<string, number>();
+      if (proprias.length > 0) {
+        const { data: abastecimentos } = await producao.from("producao_abastecimentos").select("deslocamento_id, litros").in("deslocamento_id", proprias);
+        for (const linha of abastecimentos ?? []) litros.set(linha.deslocamento_id, (litros.get(linha.deslocamento_id) ?? 0) + Number(linha.litros));
+      }
+      if (!ativo) return;
+      setLitrosPorDeslocamento(litros);
       setPessoas(pes.data ?? []);
       setErro(proprios.error ? "Não foi possível carregar os deslocamentos. Recarregue a página." : null);
     })();
@@ -276,6 +304,9 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
                 <span className="min-w-0 flex-1">
                   <span className="block text-[0.8125rem] font-medium text-[#282525]">{ROTULO_DO_DESLOCAMENTO[item.tipo]}{trecho ? ` · ${trecho}` : ""}</span>
                   {(horario || detalhes) && <span className="mt-0.5 block text-[0.6875rem] text-black/45">{[horario, detalhes].filter(Boolean).join(" · ")}</span>}
+                  {textoDaViagem({ odometro_saida_km: item.odometro_saida_km, odometro_chegada_km: item.odometro_chegada_km, litros: litrosPorDeslocamento.get(item.id) ?? 0 }) && (
+                    <span className="mt-0.5 block text-[0.6875rem] text-black/45">{textoDaViagem({ odometro_saida_km: item.odometro_saida_km, odometro_chegada_km: item.odometro_chegada_km, litros: litrosPorDeslocamento.get(item.id) ?? 0 })}</span>
+                  )}
                   {nomesDeQuemVai.length > 0 && <span className="mt-0.5 block text-[0.6875rem] text-black/45">Vão: {nomesDeQuemVai.join(", ")}</span>}
                   {item.notas && <span className="mt-0.5 block text-[0.6875rem] text-black/45">{item.notas}</span>}
                   {conflitos.map(aviso => (

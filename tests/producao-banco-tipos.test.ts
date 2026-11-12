@@ -58,6 +58,7 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_checklist_itens.tipo": { tipo: "TipoDoItemDoChecklist", modulo: "@/lib/producao/estados", estados: TIPOS_DO_ITEM_DO_CHECKLIST },
   "producao_checklist_itens.saida": { tipo: "SituacaoDaConferencia", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_CONFERENCIA },
   "producao_checklist_itens.volta": { tipo: "SituacaoDaConferencia", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_CONFERENCIA },
+  "producao_abastecimentos.combustivel": { tipo: "CombustivelDoVeiculo", modulo: "@/lib/producao/estados", estados: COMBUSTIVEIS_DO_VEICULO },
   "producao_manutencoes.tipo": { tipo: "TipoDeManutencao", modulo: "@/lib/producao/estados", estados: TIPOS_DE_MANUTENCAO },
   "producao_escalas.confirmacao": { tipo: "ConfirmacaoDaEscala", modulo: "@/lib/producao/estados", estados: CONFIRMACOES_DA_ESCALA },
   // A pasta do arquivo mora na função de borda do caminho (sem imports), onde a lista é escrita uma vez só (PD0.14).

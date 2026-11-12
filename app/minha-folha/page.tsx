@@ -11,6 +11,8 @@ import { agoraEProximo, type FolhaDaEquipe, type MinhaData } from "@/lib/produca
 import { ROTULO_DO_DESLOCAMENTO } from "@/lib/producao/deslocamentos";
 import { periodoDaHospedagem } from "@/lib/producao/hospedagem";
 import { placaParaExibir } from "@/lib/producao/veiculos";
+import { TEXTO_DO_MOTIVO, type RegistroDaViagem } from "@/lib/producao/viagem-motorista";
+import { RegistroDaViagemDoMotorista } from "./RegistroDaViagem";
 import type { TipoBloco } from "@/lib/producao/vocabulario";
 
 type RespostaDaFuncao = PromiseLike<{ data: unknown; error: { message: string } | null }>;
@@ -121,6 +123,15 @@ export default function MinhaFolhaPage() {
     if (error) { setErro("Não foi possível guardar sua resposta. Tente de novo."); return; }
     setFolha({ ...folha, escala: { ...folha.escala, confirmacao: resposta } });
     setDatas(atual => atual?.map(item => (item.escala_id === folha.escala.id ? { ...item, confirmacao: resposta } : item)) ?? atual);
+  }
+
+  /** O registro do motorista (PD6.4): odômetro e abastecimento. Devolve "ok" ou o texto para a pessoa; no fim, relê a folha. */
+  async function registrarViagem(deslocamentoId: string, args: RegistroDaViagem): Promise<string> {
+    const { data, error } = await chamar("fn_equipe_registrar_viagem", { p_deslocamento: deslocamentoId, ...args });
+    if (error) return falhaDeRede(error, navigator.onLine) ? "Sem internet agora. Tente de novo quando tiver sinal." : "Não foi possível enviar. Tente de novo.";
+    if (data !== "ok") return TEXTO_DO_MOTIVO[typeof data === "string" ? data : ""] ?? "Não foi possível enviar agora.";
+    if (aberta) await abrir(aberta);
+    return "ok";
   }
 
   const proximas = useMemo(() => {
@@ -252,6 +263,7 @@ export default function MinhaFolhaPage() {
                       {(deslocamento.veiculo || deslocamento.companhia) && <p className="text-black/60">{[deslocamento.veiculo ? `${deslocamento.veiculo}${deslocamento.placa ? ` (${placaParaExibir(deslocamento.placa)})` : ""}` : null, deslocamento.companhia].filter(Boolean).join(" · ")}</p>}
                       {deslocamento.localizador && <p className="text-black/60">Reserva: {deslocamento.localizador}</p>}
                       {deslocamento.notas && <p className="whitespace-pre-line break-words text-black/60">{deslocamento.notas}</p>}
+                      {deslocamento.motorista && <RegistroDaViagemDoMotorista deslocamento={deslocamento} onEnviar={args => registrarViagem(deslocamento.id, args)} />}
                     </div>
                   </div>
                 );
