@@ -9,6 +9,7 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { diaEMes } from "@/lib/producao/agenda";
 import { DIAS_DO_LINK_DO_CONVITE, mensagemDoConvite, resumoDosConvites, ROTULO_DA_RESPOSTA_DO_CONVITE } from "@/lib/producao/convites";
 import type { RespostaDoConvite } from "@/lib/producao/estados";
+import { TransfersDaTemporada } from "@/components/producao/TransfersDaTemporada";
 
 type Convite = {
   id: string; pessoa_id: string; resposta: RespostaDoConvite; chegada_dia: string | null; chegada_hora: string | null; saida_dia: string | null; saida_hora: string | null;
@@ -175,6 +176,7 @@ export function ConvitesDaTemporada({ organizationId, temporadaId, temporadaTitu
               );
             })}
           </ul>
+          <TransfersDaTemporada organizationId={organizationId} temporadaId={temporadaId} convites={convites} nomes={nomes} podeEditar={podeEditar} />
         </>
       )}
       {folha && <ConvidarSheet temporadaId={temporadaId} temporadaTitulo={temporadaTitulo} pessoas={pessoas} convites={convites ?? []} onClose={() => setFolha(false)} onGerou={() => setVersao(atual => atual + 1)} />}
