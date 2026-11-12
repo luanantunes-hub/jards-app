@@ -2037,6 +2037,52 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_deslocamento_pessoas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          deslocamento_id: string;
+          pessoa_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          deslocamento_id: string;
+          pessoa_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          deslocamento_id?: string;
+          pessoa_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_deslocamento_pessoas_deslocamento_id_fkey";
+            columns: ["deslocamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_deslocamentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_deslocamento_pessoas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_deslocamento_pessoas_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_turnos: {
         Row: {
           id: string;

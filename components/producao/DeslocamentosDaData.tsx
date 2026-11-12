@@ -10,7 +10,7 @@ import { horarioDaEscala } from "@/lib/producao/escala";
 import { instanteParaHoraLocal } from "@/lib/producao/dia";
 import { somarDias } from "@/lib/producao/agenda";
 import { TIPOS_DE_DESLOCAMENTO, type TipoDeDeslocamento } from "@/lib/producao/estados";
-import { conflitosDeDeslocamentos, lerDeslocamento, ROTULO_DO_DESLOCAMENTO } from "@/lib/producao/deslocamentos";
+import { avisoDeLotacao, conflitosDeDeslocamentos, lerDeslocamento, ROTULO_DO_DESLOCAMENTO } from "@/lib/producao/deslocamentos";
 import { placaParaExibir } from "@/lib/producao/veiculos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 
@@ -35,8 +35,8 @@ function rotuloDoHorarioDoDeslocamento(saida: string | null, chegada: string | n
   return `saída ${inicio.hora} · chegada ${fim.hora}${fim.dia > inicio.dia ? " (+1)" : ""}`;
 }
 
-function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, veiculos, pessoas, onClose, onSaved }: {
-  organizationId: string; dataId: string; dia: string; fuso: string; deslocamento: Deslocamento | null; veiculos: Opcao[]; pessoas: Opcao[]; onClose: () => void; onSaved: () => void;
+function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, veiculos, pessoas, quemVai, onClose, onSaved }: {
+  organizationId: string; dataId: string; dia: string; fuso: string; deslocamento: Deslocamento | null; veiculos: Opcao[]; pessoas: Opcao[]; quemVai: string[]; onClose: () => void; onSaved: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
   const [tipo, setTipo] = useState<string>(deslocamento?.tipo ?? "van");
@@ -49,6 +49,7 @@ function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, ve
   const [companhia, setCompanhia] = useState(deslocamento?.companhia ?? "");
   const [localizador, setLocalizador] = useState(deslocamento?.localizador ?? "");
   const [notas, setNotas] = useState(deslocamento?.notas ?? "");
+  const [vao, setVao] = useState<string[]>(quemVai);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
 
@@ -60,11 +61,26 @@ function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, ve
     const horario = horarioDaEscala(dia, saida, chegada, fuso);
     const valores = { ...leitura.deslocamento, saida: horario.chamada, chegada: horario.saida };
     const producao = clienteDaProducao(createClient());
-    const { error } = deslocamento
-      ? await producao.from("producao_deslocamentos").update(valores).eq("id", deslocamento.id)
-      : await producao.from("producao_deslocamentos").insert({ ...valores, organization_id: organizationId, data_id: dataId });
+    let id = deslocamento?.id ?? "";
+    if (deslocamento) {
+      const { error } = await producao.from("producao_deslocamentos").update(valores).eq("id", deslocamento.id);
+      if (error) { setSalvando(false); setErro(error.code === "42501" ? "Você não pode salvar deslocamentos aqui." : "Não foi possível salvar. Tente de novo."); return; }
+    } else {
+      const { data, error } = await producao.from("producao_deslocamentos").insert({ ...valores, organization_id: organizationId, data_id: dataId }).select("id").single();
+      if (error || !data) { setSalvando(false); setErro(error?.code === "42501" ? "Você não pode salvar deslocamentos aqui." : "Não foi possível salvar. Tente de novo."); return; }
+      id = data.id;
+    }
+    const entram = vao.filter(pessoa => !quemVai.includes(pessoa));
+    const saem = quemVai.filter(pessoa => !vao.includes(pessoa));
+    if (entram.length > 0) {
+      const { error } = await producao.from("producao_deslocamento_pessoas").insert(entram.map(pessoa => ({ organization_id: organizationId, deslocamento_id: id, pessoa_id: pessoa })));
+      if (error) { setSalvando(false); setErro("O deslocamento foi salvo, mas não foi possível pôr as pessoas nele. Abra o deslocamento para tentar de novo."); onSaved(); return; }
+    }
+    if (saem.length > 0) {
+      const { error } = await producao.from("producao_deslocamento_pessoas").delete().eq("deslocamento_id", id).in("pessoa_id", saem);
+      if (error) { setSalvando(false); setErro("O deslocamento foi salvo, mas não foi possível tirar as pessoas dele. Abra o deslocamento para tentar de novo."); onSaved(); return; }
+    }
     setSalvando(false);
-    if (error) { setErro(error.code === "42501" ? "Você não pode salvar deslocamentos aqui." : "Não foi possível salvar. Tente de novo."); return; }
     onSaved();
     fechar();
   }
@@ -144,6 +160,19 @@ function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, ve
             <input id="desloc-localizador" className={CAMPO} value={localizador} onChange={event => setLocalizador(event.target.value)} maxLength={80} disabled={salvando} />
           </div>
         </div>
+        {pessoas.length > 0 && (
+          <fieldset>
+            <legend className={ROTULO}>Quem vai (opcional)</legend>
+            <div className="max-h-48 space-y-0.5 overflow-y-auto rounded border p-1" style={{ borderColor: "rgba(13,13,13,.12)" }}>
+              {pessoas.map(pessoa => (
+                <label key={pessoa.id} className="flex min-h-10 cursor-pointer items-center gap-2.5 rounded px-2.5 text-[0.8125rem] text-[#282525] hover:bg-black/[.04]">
+                  <input type="checkbox" checked={vao.includes(pessoa.id)} disabled={salvando} onChange={event => setVao(atual => (event.target.checked ? [...atual, pessoa.id] : atual.filter(id => id !== pessoa.id)))} className="h-4 w-4 accent-[#282525]" />
+                  {pessoa.nome}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+        )}
         <div>
           <label className={ROTULO} htmlFor="desloc-notas">Notas (opcional)</label>
           <textarea id="desloc-notas" rows={3} className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50" value={notas} onChange={event => setNotas(event.target.value)} maxLength={2000} disabled={salvando} />
@@ -164,6 +193,8 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
   const [vizinhos, setVizinhos] = useState<Deslocamento[]>([]);
   const [veiculos, setVeiculos] = useState<Opcao[]>([]);
   const [veiculosComPlaca, setVeiculosComPlaca] = useState<Map<string, string>>(new Map());
+  const [lugaresDoVeiculo, setLugaresDoVeiculo] = useState<Map<string, number | null>>(new Map());
+  const [quemVaiPorDeslocamento, setQuemVaiPorDeslocamento] = useState<Map<string, string[]>>(new Map());
   const [pessoas, setPessoas] = useState<Opcao[]>([]);
   const [folha, setFolha] = useState<{ deslocamento: Deslocamento | null } | null>(null);
   const [erro, setErro] = useState<string | null>(null);
@@ -177,7 +208,7 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
       const [proprios, proximos, vei, pes] = await Promise.all([
         producao.from("producao_deslocamentos").select(COLUNAS).eq("data_id", data.id).order("saida", { nullsFirst: false }),
         producao.from("producao_deslocamentos").select(COLUNAS).eq("organization_id", organizationId).gte("saida", de).lte("saida", ate),
-        producao.from("producao_veiculos").select("id, nome, placa").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
+        producao.from("producao_veiculos").select("id, nome, placa, lugares").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
         producao.from("producao_pessoas").select("id, nome").eq("organization_id", organizationId).eq("arquivada", false).order("nome"),
       ]);
       if (!ativo) return;
@@ -185,6 +216,15 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
       setVizinhos((proximos.data ?? []) as Deslocamento[]);
       setVeiculos((vei.data ?? []).map(item => ({ id: item.id, nome: item.nome })));
       setVeiculosComPlaca(new Map((vei.data ?? []).map(item => [item.id, item.placa ? `${item.nome} (${placaParaExibir(item.placa)})` : item.nome])));
+      setLugaresDoVeiculo(new Map((vei.data ?? []).map(item => [item.id, item.lugares])));
+      const ids = [...new Set([...(proprios.data ?? []), ...(proximos.data ?? [])].map(item => item.id))];
+      const quemVai = new Map<string, string[]>();
+      if (ids.length > 0) {
+        const { data: ligacoes } = await producao.from("producao_deslocamento_pessoas").select("deslocamento_id, pessoa_id").in("deslocamento_id", ids);
+        for (const ligacao of ligacoes ?? []) quemVai.set(ligacao.deslocamento_id, [...(quemVai.get(ligacao.deslocamento_id) ?? []), ligacao.pessoa_id]);
+      }
+      if (!ativo) return;
+      setQuemVaiPorDeslocamento(quemVai);
       setPessoas(pes.data ?? []);
       setErro(proprios.error ? "Não foi possível carregar os deslocamentos. Recarregue a página." : null);
     })();
@@ -195,8 +235,8 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
   const avisos = useMemo(() => {
     const todos = new Map<string, Deslocamento>();
     for (const item of [...vizinhos, ...(itens ?? [])]) todos.set(item.id, item);
-    return conflitosDeDeslocamentos([...todos.values()], nomes);
-  }, [itens, vizinhos, nomes]);
+    return conflitosDeDeslocamentos([...todos.values()].map(item => ({ ...item, pessoas_ids: quemVaiPorDeslocamento.get(item.id) ?? [] })), nomes);
+  }, [itens, vizinhos, nomes, quemVaiPorDeslocamento]);
 
   return (
     <section aria-labelledby="deslocamentos" className="mt-10">
@@ -222,12 +262,16 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
             const horario = rotuloDoHorarioDoDeslocamento(item.saida, item.chegada, data.fuso);
             const trecho = [item.origem, item.destino].filter(Boolean).join(" → ");
             const detalhes = [item.veiculo_id ? veiculosComPlaca.get(item.veiculo_id) : null, item.motorista_id ? `motorista ${nomes.pessoas.get(item.motorista_id) ?? ""}`.trim() : null, item.companhia, item.localizador ? `localizador ${item.localizador}` : null].filter(Boolean).join(" · ");
-            const conflitos = avisos.get(item.id) ?? [];
+            const vao = quemVaiPorDeslocamento.get(item.id) ?? [];
+            const nomesDeQuemVai = vao.map(pessoa => nomes.pessoas.get(pessoa) ?? "Pessoa").sort((a, b) => a.localeCompare(b, "pt-BR"));
+            const lotacao = item.veiculo_id ? avisoDeLotacao(lugaresDoVeiculo.get(item.veiculo_id) ?? null, vao.length) : null;
+            const conflitos = [...(avisos.get(item.id) ?? []), ...(lotacao ? [lotacao] : [])];
             return (
               <li key={item.id} className="flex items-start gap-3 px-4 py-3">
                 <span className="min-w-0 flex-1">
                   <span className="block text-[0.8125rem] font-medium text-[#282525]">{ROTULO_DO_DESLOCAMENTO[item.tipo]}{trecho ? ` · ${trecho}` : ""}</span>
                   {(horario || detalhes) && <span className="mt-0.5 block text-[0.6875rem] text-black/45">{[horario, detalhes].filter(Boolean).join(" · ")}</span>}
+                  {nomesDeQuemVai.length > 0 && <span className="mt-0.5 block text-[0.6875rem] text-black/45">Vão: {nomesDeQuemVai.join(", ")}</span>}
                   {item.notas && <span className="mt-0.5 block text-[0.6875rem] text-black/45">{item.notas}</span>}
                   {conflitos.map(aviso => (
                     <span key={aviso} className="mt-1 flex items-start gap-1.5 text-[0.6875rem]" style={{ color: "#B07A14" }}><TriangleAlert size={12} aria-hidden="true" className="mt-px shrink-0" />{aviso}</span>
@@ -242,7 +286,7 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
         </ul>
       )}
       {folha && (
-        <DeslocamentoSheet organizationId={organizationId} dataId={data.id} dia={data.data} fuso={data.fuso} deslocamento={folha.deslocamento} veiculos={veiculos} pessoas={pessoas}
+        <DeslocamentoSheet organizationId={organizationId} dataId={data.id} dia={data.data} fuso={data.fuso} deslocamento={folha.deslocamento} veiculos={veiculos} pessoas={pessoas} quemVai={folha.deslocamento ? quemVaiPorDeslocamento.get(folha.deslocamento.id) ?? [] : []}
           onClose={() => setFolha(null)} onSaved={() => setVersao(atual => atual + 1)} />
       )}
     </section>
