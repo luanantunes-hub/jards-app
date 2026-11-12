@@ -1808,6 +1808,8 @@ export type BancoDaProducao = {
           companhia: string | null;
           localizador: string | null;
           notas: string | null;
+          odometro_saida_km: number | null;
+          odometro_chegada_km: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -1825,6 +1827,8 @@ export type BancoDaProducao = {
           companhia?: string | null;
           localizador?: string | null;
           notas?: string | null;
+          odometro_saida_km?: number | null;
+          odometro_chegada_km?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1842,6 +1846,8 @@ export type BancoDaProducao = {
           companhia?: string | null;
           localizador?: string | null;
           notas?: string | null;
+          odometro_saida_km?: number | null;
+          odometro_chegada_km?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -2234,6 +2240,67 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_abastecimentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          deslocamento_id: string;
+          pessoa_id: string | null;
+          litros: number;
+          combustivel: CombustivelDoVeiculo;
+          posto: string | null;
+          quando: string;
+          notas: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          deslocamento_id: string;
+          pessoa_id?: string | null;
+          litros: number;
+          combustivel?: CombustivelDoVeiculo;
+          posto?: string | null;
+          quando?: string;
+          notas?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          deslocamento_id?: string;
+          pessoa_id?: string | null;
+          litros?: number;
+          combustivel?: CombustivelDoVeiculo;
+          posto?: string | null;
+          quando?: string;
+          notas?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_abastecimentos_deslocamento_id_fkey";
+            columns: ["deslocamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_deslocamentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_abastecimentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_abastecimentos_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
             referencedColumns: ["id"];
           },
         ];

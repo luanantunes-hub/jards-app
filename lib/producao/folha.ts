@@ -29,6 +29,9 @@ export type CartaoDaFolha = { tipo: TipoDeCartaoDoDia; titulo: string | null; in
 export type DeslocamentoDaFolha = {
   id: string; tipo: TipoDeDeslocamento; origem: string | null; destino: string | null; saida: string | null; chegada: string | null;
   veiculo: string | null; placa: string | null; companhia: string | null; localizador: string | null; notas: string | null; motorista: boolean;
+  /** PD6.4: só para o motorista; ausentes na folha guardada antes dessa entrega. */
+  odometro_saida_km?: number | null; odometro_chegada_km?: number | null;
+  abastecimentos?: { id: string; litros: number; combustivel: string; posto: string | null; quando: string }[];
 };
 /** O hotel em que a pessoa tem quarto na data (PD6.11): o nome do quarto, sem os colegas. */
 export type HospedagemDaFolha = { id: string; hotel: string; endereco: string | null; entrada: string | null; saida: string | null; localizador: string | null; quarto: string };
