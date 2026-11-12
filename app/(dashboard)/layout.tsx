@@ -6,6 +6,7 @@ import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { PastDueBanner } from "@/components/PastDueBanner";
 import {
   BarChart2,
+  CalendarCheck,
   CalendarClock,
   CalendarDays,
   Globe,
@@ -120,25 +121,43 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       ],
     },
   ],
-  // O primeiro item é a página inicial do módulo (trocarModulo abre ele).
+  // O primeiro item é a página inicial do módulo (trocarModulo abre ele). As seções seguem o jeito do CRM: poucos itens por seção,
+  // cada uma com um trabalho (o que está acontecendo, os lugares, a parte técnica, quem e como chega). Protótipos (só o super admin
+  // vê) fica na primeira seção para nenhuma seção ficar vazia.
   producao: [
     {
-      section: "Produção",
+      section: "Gerenciamento",
       items: [
         { label: "Agenda", href: "/producoes", icon: CalendarDays },
         { label: "Temporadas", href: "/producoes/temporadas", icon: CalendarRange },
-        { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
+        { label: "Tarefas", href: "/producoes/tarefas", icon: ListChecks },
+        { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
+        { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
+      ],
+    },
+    {
+      section: "Espaços",
+      items: [
         { label: "Espaços", href: "/producoes/espacos", icon: Building2 },
-        { label: "Pauta", href: "/producoes/pauta", icon: CalendarRange },
+        { label: "Pauta", href: "/producoes/pauta", icon: CalendarCheck },
         { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
         { label: "Sites", href: "/producoes/sites", icon: Globe },
+      ],
+    },
+    {
+      section: "Técnica",
+      items: [
         { label: "Inventário", href: "/producoes/inventario", icon: Boxes },
-        { label: "Veículos", href: "/producoes/veiculos", icon: Truck },
         { label: "Plantas", href: "/producoes/plantas", icon: Ruler },
         { label: "Riders", href: "/producoes/riders", icon: FileText },
-        { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
-        { label: "Tarefas", href: "/producoes/tarefas", icon: ListChecks },
-        { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
+        { label: "Acertos", href: "/producoes/acertos", icon: Handshake },
+      ],
+    },
+    {
+      section: "Equipe e logística",
+      items: [
+        { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
+        { label: "Veículos", href: "/producoes/veiculos", icon: Truck },
       ],
     },
   ],
