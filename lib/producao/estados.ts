@@ -220,3 +220,9 @@ export const TIPOS_DE_OCORRENCIA: readonly TipoDeOcorrencia[] = ["seguranca", "s
 /** `producao_ocorrencias.gravidade`. */
 export type GravidadeDaOcorrencia = "baixa" | "media" | "alta";
 export const GRAVIDADES_DA_OCORRENCIA: readonly GravidadeDaOcorrencia[] = ["baixa", "media", "alta"];
+
+// Os voluntários (PD7.11): o banco confere a lista num CHECK (supabase/migrations/*_producao_voluntarios.sql).
+
+/** `producao_voluntarios.situacao`. */
+export type SituacaoDoVoluntario = "inscrito" | "aprovado" | "recusado";
+export const SITUACOES_DO_VOLUNTARIO: readonly SituacaoDoVoluntario[] = ["inscrito", "aprovado", "recusado"];
