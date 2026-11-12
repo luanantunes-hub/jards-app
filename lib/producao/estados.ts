@@ -194,3 +194,9 @@ export const TIPOS_DE_DOCUMENTO_DO_VEICULO: readonly TipoDeDocumentoDoVeiculo[] 
 /** `producao_deslocamentos.tipo`. */
 export type TipoDeDeslocamento = "aviao" | "onibus" | "van" | "carro" | "caminhao" | "trem" | "balsa" | "outro";
 export const TIPOS_DE_DESLOCAMENTO: readonly TipoDeDeslocamento[] = ["aviao", "onibus", "van", "carro", "caminhao", "trem", "balsa", "outro"];
+
+// Os convites da temporada (PD6.9): o banco confere a lista num CHECK (supabase/migrations/*_producao_convites.sql).
+
+/** `producao_convites.resposta`. */
+export type RespostaDoConvite = "pendente" | "vou" | "nao_vou";
+export const RESPOSTAS_DO_CONVITE: readonly RespostaDoConvite[] = ["pendente", "vou", "nao_vou"];

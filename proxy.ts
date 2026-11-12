@@ -25,6 +25,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/enviar", 40],
   // Resposta do acerto técnico pela casa (sem login): por IP.
   ["/api/acerto", 30],
+  // Resposta ao convite da produção pelo link (sem login): por IP.
+  ["/api/presenca", 30],
   // Programação pública de um espaço (sem login, aberta a outros sites): por IP.
   ["/api/programacao", 60],
   ["/api/auth/conta-sem-senha", 10],
@@ -163,6 +165,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/r/") ||
         pathname.startsWith("/enviar/") ||
         pathname.startsWith("/acerto/") ||
+        pathname.startsWith("/presenca/") ||
         pathname.startsWith("/programacao/") ||
         pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
@@ -221,6 +224,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/enviar/") ||
     // Acerto técnico pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/acerto/") ||
+    // Convite da produção pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/presenca/") ||
     // Programação pública de um espaço e a versão para embutir (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/programacao/") ||
     pathname.startsWith("/embed/") ||
