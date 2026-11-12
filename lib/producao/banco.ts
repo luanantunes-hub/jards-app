@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -2307,6 +2307,69 @@ export type BancoDaProducao = {
             columns: ["pessoa_id"];
             isOneToOne: false;
             referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_ocorrencias: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          tipo: TipoDeOcorrencia;
+          gravidade: GravidadeDaOcorrencia;
+          descricao: string;
+          providencia: string | null;
+          ocorreu_em: string;
+          resolvida: boolean;
+          resolvida_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          tipo?: TipoDeOcorrencia;
+          gravidade?: GravidadeDaOcorrencia;
+          descricao: string;
+          providencia?: string | null;
+          ocorreu_em?: string;
+          resolvida?: boolean;
+          resolvida_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          tipo?: TipoDeOcorrencia;
+          gravidade?: GravidadeDaOcorrencia;
+          descricao?: string;
+          providencia?: string | null;
+          ocorreu_em?: string;
+          resolvida?: boolean;
+          resolvida_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_ocorrencias_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_ocorrencias_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];
