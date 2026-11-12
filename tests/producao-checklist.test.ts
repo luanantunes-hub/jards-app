@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  avisosDeCapacidade, documentosParaPreencher, documentosSugeridos, itensParaPreencher, lerLinhaDoChecklist, resumoDaConferencia, ROTULO_DA_CONFERENCIA, textoDoResumo, totaisDoChecklist,
+  cargaPorVeiculo, avisosDeCapacidade, documentosParaPreencher, documentosSugeridos, itensParaPreencher, lerLinhaDoChecklist, resumoDaConferencia, ROTULO_DA_CONFERENCIA, textoDoResumo, totaisDoChecklist,
 } from "../lib/producao/checklist";
 
 test("linha: nome e quantidade; vazio vira 1; recusa o que o banco recusaria", () => {
@@ -62,4 +62,27 @@ test("resumo da conferência: contagens, completa só sem pendência, e o texto"
   assert.equal(textoDoResumo(resumoDaConferencia([], "saida")), "nada a conferir");
   assert.equal(ROTULO_DA_CONFERENCIA.saida.conferido, "Foi");
   assert.equal(ROTULO_DA_CONFERENCIA.volta.conferido, "Voltou");
+});
+
+test("carga por veículo: itens por deslocamento contra a capacidade; sem veículo por último; documentos não contam", () => {
+  const medidas = new Map([["i1", { comprimento_cm: 100, largura_cm: 100, altura_cm: 100, peso_kg: 100 }]]); // 1 m³ e 100 kg cada
+  const veiculos = new Map([
+    ["v1", { id: "v1", nome: "Caminhão", capacidade_carga_kg: 500, capacidade_volume_m3: 10 }],
+    ["v2", { id: "v2", nome: "Van", capacidade_carga_kg: null, capacidade_volume_m3: null }],
+  ]);
+  const deslocamentos = [
+    { id: "d1", veiculo_id: "v1", rotulo: "Caminhão SP → Campinas", dia: "2026-11-23" }, { id: "d2", veiculo_id: "v2", rotulo: "Van", dia: "2026-11-24" },
+    { id: "d3", veiculo_id: null, rotulo: "Carro", dia: "2026-11-23" }, { id: "d4", veiculo_id: "v1", rotulo: "Só documentos", dia: "2026-11-25" },
+  ];
+  const linhas = [
+    { deslocamento_id: "d1", tipo: "item" as const, quantidade: 6, item_id: "i1" }, { deslocamento_id: "d1", tipo: "documento" as const, quantidade: 1, item_id: null },
+    { deslocamento_id: "d2", tipo: "item" as const, quantidade: 2, item_id: "i1" }, { deslocamento_id: "d3", tipo: "item" as const, quantidade: 1, item_id: null },
+    { deslocamento_id: "d4", tipo: "documento" as const, quantidade: 1, item_id: null },
+  ];
+  const carga = cargaPorVeiculo(deslocamentos, linhas, medidas, veiculos);
+  assert.deepEqual(carga.map(grupo => grupo.nome), ["Caminhão", "Van", "Sem veículo"]);
+  assert.deepEqual(carga[0].deslocamentos.map(d => [d.id, d.unidades, d.pesoKg, d.volumeM3]), [["d1", 6, 600, 6]], "o deslocamento só de documentos não aparece");
+  assert.deepEqual(carga[0].deslocamentos[0].avisos, ["A carga pesa 600 kg e o veículo leva 500 kg."]);
+  assert.deepEqual(carga[1].deslocamentos[0].avisos, [], "sem capacidade cadastrada, sem aviso");
+  assert.equal(carga[2].deslocamentos[0].semMedidas, 1);
 });

@@ -100,3 +100,36 @@ export function textoDoResumo(resumo: ResumoDaConferencia): string {
   if (resumo.avariados > 0) partes.push(resumo.avariados === 1 ? "1 avariado" : `${resumo.avariados} avariados`);
   return partes.join(" · ");
 }
+
+export type DeslocamentoParaCarga = { id: string; veiculo_id: string | null; rotulo: string; dia: string };
+export type LinhaParaCarga = { deslocamento_id: string; tipo: "item" | "documento"; quantidade: number; item_id: string | null };
+export type VeiculoParaCarga = { id: string; nome: string; capacidade_carga_kg: number | null; capacidade_volume_m3: number | null };
+export type CargaDoDeslocamento = { id: string; rotulo: string; dia: string; unidades: number; pesoKg: number; volumeM3: number; semMedidas: number; avisos: string[] };
+export type CargaDoVeiculo = { veiculoId: string | null; nome: string; deslocamentos: CargaDoDeslocamento[] };
+
+/**
+ * A carga de cada veículo (PD6.12): para cada deslocamento com itens no checklist, a quantidade, o peso e o volume contra a
+ * capacidade do veículo dele. Os deslocamentos sem veículo ficam num grupo "Sem veículo" (por último). Documentos não contam como
+ * carga. Os veículos saem por nome e os deslocamentos por dia.
+ */
+export function cargaPorVeiculo(
+  deslocamentos: readonly DeslocamentoParaCarga[], linhas: readonly LinhaParaCarga[], medidas: ReadonlyMap<string, Medidas>, veiculos: ReadonlyMap<string, VeiculoParaCarga>,
+): CargaDoVeiculo[] {
+  const grupos = new Map<string, CargaDoVeiculo>();
+  for (const deslocamento of deslocamentos) {
+    const doDeslocamento = linhas.filter(linha => linha.deslocamento_id === deslocamento.id && linha.tipo === "item");
+    if (doDeslocamento.length === 0) continue;
+    const veiculo = deslocamento.veiculo_id ? veiculos.get(deslocamento.veiculo_id) ?? null : null;
+    const totais = totaisDoChecklist(doDeslocamento.map(linha => ({ tipo: linha.tipo, quantidade: linha.quantidade, medidas: linha.item_id ? medidas.get(linha.item_id) ?? null : null })));
+    const chave = veiculo?.id ?? "sem-veiculo";
+    const grupo = grupos.get(chave) ?? { veiculoId: veiculo?.id ?? null, nome: veiculo?.nome ?? "Sem veículo", deslocamentos: [] };
+    grupo.deslocamentos.push({
+      id: deslocamento.id, rotulo: deslocamento.rotulo, dia: deslocamento.dia, unidades: doDeslocamento.reduce((soma, linha) => soma + linha.quantidade, 0),
+      pesoKg: totais.pesoKg, volumeM3: totais.volumeM3, semMedidas: totais.semMedidas, avisos: avisosDeCapacidade(totais, veiculo),
+    });
+    grupos.set(chave, grupo);
+  }
+  return [...grupos.values()]
+    .map(grupo => ({ ...grupo, deslocamentos: [...grupo.deslocamentos].sort((a, b) => a.dia.localeCompare(b.dia) || a.rotulo.localeCompare(b.rotulo, "pt-BR")) }))
+    .sort((a, b) => (a.veiculoId === null ? 1 : 0) - (b.veiculoId === null ? 1 : 0) || a.nome.localeCompare(b.nome, "pt-BR"));
+}
