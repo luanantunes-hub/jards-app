@@ -210,3 +210,13 @@ export const TIPOS_DO_ITEM_DO_CHECKLIST: readonly TipoDoItemDoChecklist[] = ["it
 /** `producao_checklist_itens.saida` e `.volta`: a conferência de cada momento. */
 export type SituacaoDaConferencia = "pendente" | "conferido" | "faltou" | "avariado";
 export const SITUACOES_DA_CONFERENCIA: readonly SituacaoDaConferencia[] = ["pendente", "conferido", "faltou", "avariado"];
+
+// As ocorrências do dia (PD7.8): o banco confere as listas num CHECK (supabase/migrations/*_producao_ocorrencias.sql).
+
+/** `producao_ocorrencias.tipo`. */
+export type TipoDeOcorrencia = "seguranca" | "saude" | "tecnica" | "publico" | "atraso" | "equipamento" | "outro";
+export const TIPOS_DE_OCORRENCIA: readonly TipoDeOcorrencia[] = ["seguranca", "saude", "tecnica", "publico", "atraso", "equipamento", "outro"];
+
+/** `producao_ocorrencias.gravidade`. */
+export type GravidadeDaOcorrencia = "baixa" | "media" | "alta";
+export const GRAVIDADES_DA_OCORRENCIA: readonly GravidadeDaOcorrencia[] = ["baixa", "media", "alta"];
