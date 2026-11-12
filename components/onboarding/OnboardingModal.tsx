@@ -74,6 +74,11 @@ export function OnboardingModal({ user, organizationId, onComplete }: Props) {
   const [source, setSource] = useState("");
   const [askSource, setAskSource] = useState(false);
 
+  // Só o id e o nome da conta entram nas dependências: o objeto `user` muda de identidade a cada aviso de login do navegador
+  // (voltar à aba, por exemplo) e refazia as duas consultas sem necessidade.
+  const userId = user.id;
+  const nomeDaConta = (user.user_metadata?.full_name || user.user_metadata?.name || "") as string;
+
   useEffect(() => {
     if (!organizationId) return;
     const supabase = createClient();
@@ -82,18 +87,18 @@ export function OnboardingModal({ user, organizationId, onComplete }: Props) {
     const db = supabase as any;
 
     Promise.all([
-      db.from("profiles").select("full_name, onde_conheceu, onboarding_completed").eq("id", user.id).single(),
+      db.from("profiles").select("full_name, onde_conheceu, onboarding_completed").eq("id", userId).single(),
       db.from("organizations").select("nome").eq("id", organizationId).single(),
     ]).then(([profileResult, organizationResult]) => {
       const profile = profileResult.data as { full_name: string | null; onde_conheceu: string | null; onboarding_completed: boolean } | null;
-      setName(profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || "");
+      setName(profile?.full_name || nomeDaConta);
       setSource(profile?.onde_conheceu || "");
       setAskSource(!profile?.onde_conheceu);
       setOrganization(organizationResult.data?.nome || "");
       setVisible(profile?.onboarding_completed === false);
       setLoading(false);
     });
-  }, [organizationId, user]);
+  }, [organizationId, userId, nomeDaConta]);
 
   if (loading || !visible) return null;
 
