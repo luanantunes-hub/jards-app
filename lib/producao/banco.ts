@@ -1876,6 +1876,167 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_hospedagens: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          hotel: string;
+          endereco: string | null;
+          entrada: string | null;
+          saida: string | null;
+          localizador: string | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          hotel: string;
+          endereco?: string | null;
+          entrada?: string | null;
+          saida?: string | null;
+          localizador?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          hotel?: string;
+          endereco?: string | null;
+          entrada?: string | null;
+          saida?: string | null;
+          localizador?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_hospedagens_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_hospedagens_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_quartos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          hospedagem_id: string;
+          nome: string;
+          capacidade: number;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          hospedagem_id: string;
+          nome: string;
+          capacidade?: number;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          hospedagem_id?: string;
+          nome?: string;
+          capacidade?: number;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_quartos_hospedagem_id_fkey";
+            columns: ["hospedagem_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_hospedagens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_quartos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_ocupantes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          hospedagem_id: string;
+          quarto_id: string;
+          pessoa_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          hospedagem_id: string;
+          quarto_id: string;
+          pessoa_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          hospedagem_id?: string;
+          quarto_id?: string;
+          pessoa_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_ocupantes_hospedagem_id_fkey";
+            columns: ["hospedagem_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_hospedagens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_ocupantes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_ocupantes_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_ocupantes_quarto_id_fkey";
+            columns: ["quarto_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_quartos";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_turnos: {
         Row: {
           id: string;
