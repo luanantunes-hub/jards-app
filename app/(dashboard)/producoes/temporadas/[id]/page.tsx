@@ -20,6 +20,7 @@ import { CargaDaTemporada } from "@/components/producao/CargaDaTemporada";
 import { CargaPorVeiculo } from "@/components/producao/CargaPorVeiculo";
 import { HospedagemDaTemporada } from "@/components/producao/HospedagemDaTemporada";
 import { ConvitesDaTemporada } from "@/components/producao/ConvitesDaTemporada";
+import { VoluntariosDaTemporada } from "@/components/producao/VoluntariosDaTemporada";
 import { CopiarTemporadaSheet, type TemporadaParaCopiar } from "@/components/producao/CopiarTemporadaSheet";
 
 type Temporada = TemporadaParaCopiar;
@@ -133,6 +134,7 @@ export default function TemporadaPage() {
 
         {organizationId && <EquipeDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
         {organizationId && <ConvitesDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+        {organizationId && <VoluntariosDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
         {organizationId && <HospedagemDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
         {organizationId && <CargaDaTemporada organizationId={organizationId} temporadaId={temporada.id} />}
         {organizationId && <CargaPorVeiculo organizationId={organizationId} temporadaId={temporada.id} />}

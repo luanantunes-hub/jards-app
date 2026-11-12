@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -2374,6 +2374,130 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_voluntarios_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          token_hash: string | null;
+          titulo: string | null;
+          vagas: number | null;
+          expira_em: string | null;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          token_hash?: string | null;
+          titulo?: string | null;
+          vagas?: number | null;
+          expira_em?: string | null;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          token_hash?: string | null;
+          titulo?: string | null;
+          vagas?: number | null;
+          expira_em?: string | null;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_voluntarios_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_voluntarios_links_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_voluntarios: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          nome: string;
+          email: string | null;
+          telefone: string | null;
+          disponibilidade: string | null;
+          consentiu_em: string;
+          situacao: SituacaoDoVoluntario;
+          pessoa_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          nome: string;
+          email?: string | null;
+          telefone?: string | null;
+          disponibilidade?: string | null;
+          consentiu_em?: string;
+          situacao?: SituacaoDoVoluntario;
+          pessoa_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          nome?: string;
+          email?: string | null;
+          telefone?: string | null;
+          disponibilidade?: string | null;
+          consentiu_em?: string;
+          situacao?: SituacaoDoVoluntario;
+          pessoa_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_voluntarios_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_voluntarios_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_voluntarios_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_turnos: {
         Row: {
           id: string;
@@ -3402,6 +3526,14 @@ export type BancoDaProducao = {
       fn_producao_convite_gerar: {
         Args: { p_temporada: string; p_pessoas: string[]; p_dias: number };
         Returns: Json;
+      };
+      fn_producao_voluntarios_gerar_link: {
+        Args: { p_temporada: string; p_dias: number; p_titulo: string; p_vagas: number };
+        Returns: string;
+      };
+      fn_producao_voluntario_aprovar: {
+        Args: { p_voluntario: string };
+        Returns: string;
       };
       fn_producao_acerto_criar: {
         Args: { p_data: string; p_modelo: string; p_valores: Json };

@@ -63,6 +63,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_convites: { fora: "token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", rotulos: "resposta" },
   // As ocorrências do dia (PD7.8): a descrição e a providência podem falar de saúde ou de pessoas e ficam de fora; o tipo é o rótulo.
   producao_ocorrencias: { fora: "descricao,providencia", rotulos: "tipo" },
+  // As inscrições de voluntários (PD7.11): o contato e a disponibilidade são dado pessoal e ficam de fora; o nome é o rótulo.
+  producao_voluntarios: { fora: "email,telefone,disponibilidade", rotulos: "nome" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
@@ -104,6 +106,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_deslocamento_pessoas: "é só a ligação de uma pessoa a um deslocamento: quem vai já se vê na lista, e o histórico do deslocamento conta o resto",
   producao_checklist_itens: "é a lista do deslocamento: a situação e a hora de cada conferência já ficam na própria linha, e o histórico do deslocamento conta o resto",
   producao_abastecimentos: "é só o registro de um abastecimento (litros, combustível, posto e hora): quem registrou e quando já ficam na própria linha, e o histórico do deslocamento conta o resto",
+  producao_voluntarios_links: "é só o link de inscrição (título, vagas e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_manutencoes: "são só as manutenções de um equipamento (descrição e datas): o histórico do equipamento e a própria data dizem o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };
@@ -297,7 +300,7 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
   // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
   // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_site_paginas: blocos,blocos_publicados"]);
+    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_site_paginas: blocos,blocos_publicados", "producao_voluntarios: email,telefone,disponibilidade"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {
