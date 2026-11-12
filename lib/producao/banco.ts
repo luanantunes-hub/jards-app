@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -2161,6 +2161,79 @@ export type BancoDaProducao = {
             columns: ["temporada_id"];
             isOneToOne: false;
             referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_checklist_itens: {
+        Row: {
+          id: string;
+          organization_id: string;
+          deslocamento_id: string;
+          tipo: TipoDoItemDoChecklist;
+          nome: string;
+          quantidade: number;
+          item_id: string | null;
+          saida: SituacaoDaConferencia;
+          saida_em: string | null;
+          volta: SituacaoDaConferencia;
+          volta_em: string | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          deslocamento_id: string;
+          tipo?: TipoDoItemDoChecklist;
+          nome: string;
+          quantidade?: number;
+          item_id?: string | null;
+          saida?: SituacaoDaConferencia;
+          saida_em?: string | null;
+          volta?: SituacaoDaConferencia;
+          volta_em?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          deslocamento_id?: string;
+          tipo?: TipoDoItemDoChecklist;
+          nome?: string;
+          quantidade?: number;
+          item_id?: string | null;
+          saida?: SituacaoDaConferencia;
+          saida_em?: string | null;
+          volta?: SituacaoDaConferencia;
+          volta_em?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_checklist_itens_deslocamento_id_fkey";
+            columns: ["deslocamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_deslocamentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_checklist_itens_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_itens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_checklist_itens_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];

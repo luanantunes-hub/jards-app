@@ -200,3 +200,13 @@ export const TIPOS_DE_DESLOCAMENTO: readonly TipoDeDeslocamento[] = ["aviao", "o
 /** `producao_convites.resposta`. */
 export type RespostaDoConvite = "pendente" | "vou" | "nao_vou";
 export const RESPOSTAS_DO_CONVITE: readonly RespostaDoConvite[] = ["pendente", "vou", "nao_vou"];
+
+// O checklist de transporte (PD6.3): o banco confere as listas num CHECK (supabase/migrations/*_producao_checklist_transporte.sql).
+
+/** `producao_checklist_itens.tipo`. */
+export type TipoDoItemDoChecklist = "item" | "documento";
+export const TIPOS_DO_ITEM_DO_CHECKLIST: readonly TipoDoItemDoChecklist[] = ["item", "documento"];
+
+/** `producao_checklist_itens.saida` e `.volta`: a conferência de cada momento. */
+export type SituacaoDaConferencia = "pendente" | "conferido" | "faltou" | "avariado";
+export const SITUACOES_DA_CONFERENCIA: readonly SituacaoDaConferencia[] = ["pendente", "conferido", "faltou", "avariado"];

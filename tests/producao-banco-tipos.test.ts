@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   ACOES_DO_HISTORICO, CONFIRMACOES_DA_ESCALA, EXIBICOES_DO_BLOCO, LADOS_DA_TEMPORADA, SITUACOES_DA_DATA, SITUACOES_DA_TEMPORADA,
-  CATEGORIAS_DO_ITEM, DONOS_DO_ITEM, ESTADOS_DO_EQUIPAMENTO, TIPOS_DE_MANUTENCAO, SECOES_DO_RIDER, FASES_DE_ENERGIA, TIPOS_DE_OBJETO_DA_PLANTA, SITUACOES_DA_PAUTA, TIPOS_DE_PLANTA, SITUACOES_DA_TAREFA, SITUACOES_DA_LICENCA, TIPOS_DE_LICENCA, SITUACOES_DO_SITE, SITUACOES_DO_DOMINIO, LADOS_DO_ACERTO, TIPOS_DE_CAMPO_DO_ACERTO, VISIBILIDADES_DO_ACERTO, DESTINOS_DO_ACERTO, SITUACOES_DO_ACERTO, SITUACOES_DO_ITEM_DO_ACERTO, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA, CATEGORIAS_DO_VEICULO, COMBUSTIVEIS_DO_VEICULO, CONTRATACOES_DO_VEICULO, TIPOS_DE_DOCUMENTO_DO_VEICULO, TIPOS_DE_DESLOCAMENTO, RESPOSTAS_DO_CONVITE,
+  CATEGORIAS_DO_ITEM, DONOS_DO_ITEM, ESTADOS_DO_EQUIPAMENTO, TIPOS_DE_MANUTENCAO, SECOES_DO_RIDER, FASES_DE_ENERGIA, TIPOS_DE_OBJETO_DA_PLANTA, SITUACOES_DA_PAUTA, TIPOS_DE_PLANTA, SITUACOES_DA_TAREFA, SITUACOES_DA_LICENCA, TIPOS_DE_LICENCA, SITUACOES_DO_SITE, SITUACOES_DO_DOMINIO, LADOS_DO_ACERTO, TIPOS_DE_CAMPO_DO_ACERTO, VISIBILIDADES_DO_ACERTO, DESTINOS_DO_ACERTO, SITUACOES_DO_ACERTO, SITUACOES_DO_ITEM_DO_ACERTO, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA, CATEGORIAS_DO_VEICULO, COMBUSTIVEIS_DO_VEICULO, CONTRATACOES_DO_VEICULO, TIPOS_DE_DOCUMENTO_DO_VEICULO, TIPOS_DE_DESLOCAMENTO, RESPOSTAS_DO_CONVITE, TIPOS_DO_ITEM_DO_CHECKLIST, SITUACOES_DA_CONFERENCIA,
 } from "../lib/producao/estados";
 import { PASTAS_DE_ARQUIVO } from "../supabase/functions/_shared/producao-caminho";
 import { lerBancoTs, unioesDeTextos, type BancoNoTipo, type ChaveDoTipo } from "./_helpers/producao-banco-ts";
@@ -55,6 +55,9 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_veiculo_documentos.tipo": { tipo: "TipoDeDocumentoDoVeiculo", modulo: "@/lib/producao/estados", estados: TIPOS_DE_DOCUMENTO_DO_VEICULO },
   "producao_deslocamentos.tipo": { tipo: "TipoDeDeslocamento", modulo: "@/lib/producao/estados", estados: TIPOS_DE_DESLOCAMENTO },
   "producao_convites.resposta": { tipo: "RespostaDoConvite", modulo: "@/lib/producao/estados", estados: RESPOSTAS_DO_CONVITE },
+  "producao_checklist_itens.tipo": { tipo: "TipoDoItemDoChecklist", modulo: "@/lib/producao/estados", estados: TIPOS_DO_ITEM_DO_CHECKLIST },
+  "producao_checklist_itens.saida": { tipo: "SituacaoDaConferencia", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_CONFERENCIA },
+  "producao_checklist_itens.volta": { tipo: "SituacaoDaConferencia", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_CONFERENCIA },
   "producao_manutencoes.tipo": { tipo: "TipoDeManutencao", modulo: "@/lib/producao/estados", estados: TIPOS_DE_MANUTENCAO },
   "producao_escalas.confirmacao": { tipo: "ConfirmacaoDaEscala", modulo: "@/lib/producao/estados", estados: CONFIRMACOES_DA_ESCALA },
   // A pasta do arquivo mora na função de borda do caminho (sem imports), onde a lista é escrita uma vez só (PD0.14).

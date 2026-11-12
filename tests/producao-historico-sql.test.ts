@@ -100,6 +100,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_quartos: "são só os quartos de uma hospedagem (nome e capacidade): o histórico da hospedagem e a própria lista de quartos dizem o que importa",
   producao_ocupantes: "é só a ligação de uma pessoa a um quarto: quem está em cada quarto já se vê na lista, e o histórico da hospedagem conta o resto",
   producao_deslocamento_pessoas: "é só a ligação de uma pessoa a um deslocamento: quem vai já se vê na lista, e o histórico do deslocamento conta o resto",
+  producao_checklist_itens: "é a lista do deslocamento: a situação e a hora de cada conferência já ficam na própria linha, e o histórico do deslocamento conta o resto",
   producao_manutencoes: "são só as manutenções de um equipamento (descrição e datas): o histórico do equipamento e a própria data dizem o que importa",
   producao_item_datas: "é só a ligação do item à data e a quantidade: o histórico do item e o da data já contam o que importa",
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, TriangleAlert } from "lucide-react";
+import { ClipboardCheck, Pencil, Plus, TriangleAlert } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { createClient } from "@/lib/supabase/client";
@@ -13,6 +13,8 @@ import { TIPOS_DE_DESLOCAMENTO, type TipoDeDeslocamento } from "@/lib/producao/e
 import { avisoDeLotacao, conflitosDeDeslocamentos, lerDeslocamento, ROTULO_DO_DESLOCAMENTO } from "@/lib/producao/deslocamentos";
 import { placaParaExibir } from "@/lib/producao/veiculos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
+import { ChecklistDoDeslocamento } from "@/components/producao/ChecklistDoDeslocamento";
+import type { ContratacaoDoVeiculo } from "@/lib/producao/estados";
 
 type Deslocamento = {
   id: string; data_id: string; tipo: TipoDeDeslocamento; origem: string | null; destino: string | null; saida: string | null; chegada: string | null;
@@ -194,6 +196,8 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
   const [veiculos, setVeiculos] = useState<Opcao[]>([]);
   const [veiculosComPlaca, setVeiculosComPlaca] = useState<Map<string, string>>(new Map());
   const [lugaresDoVeiculo, setLugaresDoVeiculo] = useState<Map<string, number | null>>(new Map());
+  const [capacidadeDoVeiculo, setCapacidadeDoVeiculo] = useState<Map<string, { capacidade_carga_kg: number | null; capacidade_volume_m3: number | null; contratacao: ContratacaoDoVeiculo }>>(new Map());
+  const [checklist, setChecklist] = useState<Deslocamento | null>(null);
   const [quemVaiPorDeslocamento, setQuemVaiPorDeslocamento] = useState<Map<string, string[]>>(new Map());
   const [pessoas, setPessoas] = useState<Opcao[]>([]);
   const [folha, setFolha] = useState<{ deslocamento: Deslocamento | null } | null>(null);
@@ -208,7 +212,7 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
       const [proprios, proximos, vei, pes] = await Promise.all([
         producao.from("producao_deslocamentos").select(COLUNAS).eq("data_id", data.id).order("saida", { nullsFirst: false }),
         producao.from("producao_deslocamentos").select(COLUNAS).eq("organization_id", organizationId).gte("saida", de).lte("saida", ate),
-        producao.from("producao_veiculos").select("id, nome, placa, lugares").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
+        producao.from("producao_veiculos").select("id, nome, placa, lugares, capacidade_carga_kg, capacidade_volume_m3, contratacao").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
         producao.from("producao_pessoas").select("id, nome").eq("organization_id", organizationId).eq("arquivada", false).order("nome"),
       ]);
       if (!ativo) return;
@@ -217,6 +221,7 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
       setVeiculos((vei.data ?? []).map(item => ({ id: item.id, nome: item.nome })));
       setVeiculosComPlaca(new Map((vei.data ?? []).map(item => [item.id, item.placa ? `${item.nome} (${placaParaExibir(item.placa)})` : item.nome])));
       setLugaresDoVeiculo(new Map((vei.data ?? []).map(item => [item.id, item.lugares])));
+      setCapacidadeDoVeiculo(new Map((vei.data ?? []).map(item => [item.id, { capacidade_carga_kg: item.capacidade_carga_kg, capacidade_volume_m3: item.capacidade_volume_m3, contratacao: item.contratacao }])));
       const ids = [...new Set([...(proprios.data ?? []), ...(proximos.data ?? [])].map(item => item.id))];
       const quemVai = new Map<string, string[]>();
       if (ids.length > 0) {
@@ -277,6 +282,7 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
                     <span key={aviso} className="mt-1 flex items-start gap-1.5 text-[0.6875rem]" style={{ color: "#B07A14" }}><TriangleAlert size={12} aria-hidden="true" className="mt-px shrink-0" />{aviso}</span>
                   ))}
                 </span>
+                <button type="button" onClick={() => setChecklist(item)} aria-label="Checklist do deslocamento" title="Checklist" className="flex h-10 w-10 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><ClipboardCheck size={14} aria-hidden="true" /></button>
                 {podeEditar && (
                   <button type="button" onClick={() => setFolha({ deslocamento: item })} aria-label="Editar deslocamento" title="Editar" className="flex h-10 w-10 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Pencil size={13} aria-hidden="true" /></button>
                 )}
@@ -284,6 +290,10 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
             );
           })}
         </ul>
+      )}
+      {checklist && (
+        <ChecklistDoDeslocamento organizationId={organizationId} deslocamento={{ id: checklist.id, data_id: data.id, tipo: checklist.tipo, rotulo: [ROTULO_DO_DESLOCAMENTO[checklist.tipo], [checklist.origem, checklist.destino].filter(Boolean).join(" → ")].filter(Boolean).join(" ") }}
+          veiculo={checklist.veiculo_id ? capacidadeDoVeiculo.get(checklist.veiculo_id) ?? null : null} podeEditar={podeEditar} onClose={() => setChecklist(null)} onMudou={() => undefined} />
       )}
       {folha && (
         <DeslocamentoSheet organizationId={organizationId} dataId={data.id} dia={data.data} fuso={data.fuso} deslocamento={folha.deslocamento} veiculos={veiculos} pessoas={pessoas} quemVai={folha.deslocamento ? quemVaiPorDeslocamento.get(folha.deslocamento.id) ?? [] : []}
