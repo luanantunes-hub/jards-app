@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -2083,6 +2083,88 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_convites: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          pessoa_id: string;
+          token_hash: string | null;
+          link_expira_em: string | null;
+          link_revogado_em: string | null;
+          resposta: RespostaDoConvite;
+          chegada_dia: string | null;
+          chegada_hora: string | null;
+          saida_dia: string | null;
+          saida_hora: string | null;
+          observacao: string | null;
+          respondido_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          pessoa_id: string;
+          token_hash?: string | null;
+          link_expira_em?: string | null;
+          link_revogado_em?: string | null;
+          resposta?: RespostaDoConvite;
+          chegada_dia?: string | null;
+          chegada_hora?: string | null;
+          saida_dia?: string | null;
+          saida_hora?: string | null;
+          observacao?: string | null;
+          respondido_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          pessoa_id?: string;
+          token_hash?: string | null;
+          link_expira_em?: string | null;
+          link_revogado_em?: string | null;
+          resposta?: RespostaDoConvite;
+          chegada_dia?: string | null;
+          chegada_hora?: string | null;
+          saida_dia?: string | null;
+          saida_hora?: string | null;
+          observacao?: string | null;
+          respondido_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_convites_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_convites_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_convites_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_turnos: {
         Row: {
           id: string;
@@ -3107,6 +3189,10 @@ export type BancoDaProducao = {
       auth_producao_ve_temporada: {
         Args: { p_org: string; p_temporada_id: string | null };
         Returns: boolean;
+      };
+      fn_producao_convite_gerar: {
+        Args: { p_temporada: string; p_pessoas: string[]; p_dias: number };
+        Returns: Json;
       };
       fn_producao_acerto_criar: {
         Args: { p_data: string; p_modelo: string; p_valores: Json };
