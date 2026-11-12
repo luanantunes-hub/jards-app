@@ -65,6 +65,9 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_ocorrencias: { fora: "descricao,providencia", rotulos: "tipo" },
   // As inscrições de voluntários (PD7.11): o contato e a disponibilidade são dado pessoal e ficam de fora; o nome é o rótulo.
   producao_voluntarios: { fora: "email,telefone,disponibilidade", rotulos: "nome" },
+  // Os tipos de credencial e os convidados das sessões (PD7.2): só nome e afiliação, sem documento nem contato; o nome é o rótulo.
+  producao_credencial_tipos: { fora: "", rotulos: "nome" },
+  producao_convidados: { fora: "", rotulos: "nome" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
