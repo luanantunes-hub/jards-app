@@ -41,6 +41,8 @@ export function lerDeslocamento(c: CamposDoDeslocamento): LeituraDoDeslocamento 
 
 export type DeslocamentoParaConflito = {
   id: string; saida: string | null; chegada: string | null; veiculo_id: string | null; motorista_id: string | null; origem: string | null; destino: string | null;
+  /** Quem vai (as pessoas do cadastro da equipe); sem a lista, só veículo e motorista contam. */
+  pessoas_ids?: readonly string[];
 };
 
 const MINUTO = 60_000;
@@ -57,7 +59,7 @@ function intervalo(item: DeslocamentoParaConflito): [number, number] | null {
 const trecho = (item: DeslocamentoParaConflito) => [item.origem, item.destino].filter(Boolean).join(" → ");
 
 /**
- * O que se cruza: o mesmo veículo ou o mesmo motorista em dois deslocamentos de horários que se sobrepõem (um que
+ * O que se cruza: o mesmo veículo, o mesmo motorista ou a mesma pessoa em dois deslocamentos de horários que se sobrepõem (um que
  * começa quando o outro termina não conflita). Devolve, por deslocamento, os avisos prontos; só avisa, não impede.
  */
 export function conflitosDeDeslocamentos(
@@ -81,7 +83,19 @@ export function conflitosDeDeslocamentos(
         incluir(a.id, `${nome} também dirige outro deslocamento nesse horário${trecho(b) ? ` (${trecho(b)})` : ""}.`);
         incluir(b.id, `${nome} também dirige outro deslocamento nesse horário${trecho(a) ? ` (${trecho(a)})` : ""}.`);
       }
+      const emComum = (a.pessoas_ids ?? []).filter(pessoa => (b.pessoas_ids ?? []).includes(pessoa));
+      for (const pessoa of emComum) {
+        const nome = nomes.pessoas.get(pessoa) ?? "Uma pessoa";
+        incluir(a.id, `${nome} também está em outro deslocamento nesse horário${trecho(b) ? ` (${trecho(b)})` : ""}.`);
+        incluir(b.id, `${nome} também está em outro deslocamento nesse horário${trecho(a) ? ` (${trecho(a)})` : ""}.`);
+      }
     }
   }
   return avisos;
+}
+
+/** O aviso de lotação: vão mais pessoas do que o veículo tem de lugares (sem o número de lugares, ou sem passar dele, não há aviso). */
+export function avisoDeLotacao(lugares: number | null, vao: number): string | null {
+  if (lugares === null || vao <= lugares) return null;
+  return `Vão ${vao} ${vao === 1 ? "pessoa" : "pessoas"} e o veículo tem ${lugares} ${lugares === 1 ? "lugar" : "lugares"}.`;
 }

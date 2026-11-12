@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { conflitosDeDeslocamentos, lerDeslocamento, type CamposDoDeslocamento, type DeslocamentoParaConflito } from "../lib/producao/deslocamentos";
+import { avisoDeLotacao, conflitosDeDeslocamentos, lerDeslocamento, type CamposDoDeslocamento, type DeslocamentoParaConflito } from "../lib/producao/deslocamentos";
 
 const base: CamposDoDeslocamento = { tipo: "van", origem: "", destino: "", saida: "", chegada: "", veiculoId: "", motoristaId: "", companhia: "", localizador: "", notas: "" };
 
@@ -71,4 +71,24 @@ test("conflito: um que começa quando o outro termina não conflita; sem chegada
     d("a", null, null, { veiculo_id: "v1" }),
     d("b", "2026-12-05T12:00:00Z", "2026-12-05T13:00:00Z", { veiculo_id: "v1" }),
   ], nomes).size, 0);
+});
+
+test("conflito: a mesma pessoa em dois deslocamentos que se cruzam avisa os dois", () => {
+  const avisos = conflitosDeDeslocamentos([
+    d("a", "2026-12-05T12:00:00Z", "2026-12-05T14:00:00Z", { pessoas_ids: ["p1", "p2"], origem: "SP", destino: "Campinas" }),
+    d("b", "2026-12-05T13:00:00Z", "2026-12-05T15:00:00Z", { pessoas_ids: ["p1"], origem: "Campinas", destino: "Sorocaba" }),
+  ], nomes);
+  assert.equal(avisos.get("a")?.[0], "Davi também está em outro deslocamento nesse horário (Campinas → Sorocaba).");
+  assert.equal(avisos.get("b")?.[0], "Davi também está em outro deslocamento nesse horário (SP → Campinas).");
+  assert.equal(conflitosDeDeslocamentos([
+    d("a", "2026-12-05T12:00:00Z", "2026-12-05T14:00:00Z", { pessoas_ids: ["p1"] }),
+    d("b", "2026-12-05T13:00:00Z", "2026-12-05T15:00:00Z", { pessoas_ids: ["p2"] }),
+  ], nomes).size, 0);
+});
+
+test("lotação: só avisa quando vão mais pessoas do que lugares", () => {
+  assert.equal(avisoDeLotacao(15, 15), null);
+  assert.equal(avisoDeLotacao(null, 30), null);
+  assert.equal(avisoDeLotacao(1, 2), "Vão 2 pessoas e o veículo tem 1 lugar.");
+  assert.equal(avisoDeLotacao(15, 16), "Vão 16 pessoas e o veículo tem 15 lugares.");
 });
