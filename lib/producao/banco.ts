@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -2597,6 +2597,125 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_credenciais: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          convidado_id: string;
+          token_hash: string;
+          entradas: number;
+          ultima_entrada_em: string | null;
+          revogada_em: string | null;
+          emitida_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          convidado_id: string;
+          token_hash: string;
+          entradas?: number;
+          ultima_entrada_em?: string | null;
+          revogada_em?: string | null;
+          emitida_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          convidado_id?: string;
+          token_hash?: string;
+          entradas?: number;
+          ultima_entrada_em?: string | null;
+          revogada_em?: string | null;
+          emitida_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_credenciais_convidado_id_fkey";
+            columns: ["convidado_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_convidados";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_credenciais_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_credenciais_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_porta_leituras: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          credencial_id: string | null;
+          resultado: ResultadoDaLeitura;
+          motivo: string | null;
+          lida_em: string;
+          lida_por: string | null;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          credencial_id?: string | null;
+          resultado: ResultadoDaLeitura;
+          motivo?: string | null;
+          lida_em?: string;
+          lida_por?: string | null;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          credencial_id?: string | null;
+          resultado?: ResultadoDaLeitura;
+          motivo?: string | null;
+          lida_em?: string;
+          lida_por?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_porta_leituras_credencial_id_fkey";
+            columns: ["credencial_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_credenciais";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_porta_leituras_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_porta_leituras_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_turnos: {
         Row: {
           id: string;
@@ -3629,6 +3748,22 @@ export type BancoDaProducao = {
       fn_producao_voluntarios_gerar_link: {
         Args: { p_temporada: string; p_dias: number; p_titulo: string; p_vagas: number };
         Returns: string;
+      };
+      fn_producao_credenciais_emitir: {
+        Args: { p_sessao: string };
+        Returns: Json;
+      };
+      fn_producao_credencial_achar: {
+        Args: { p_sessao: string; p_codigo: string };
+        Returns: string;
+      };
+      fn_producao_credencial_reemitir: {
+        Args: { p_convidado: string };
+        Returns: string;
+      };
+      fn_producao_porta_ler: {
+        Args: { p_sessao: string; p_codigo: string };
+        Returns: Json;
       };
       fn_producao_voluntario_aprovar: {
         Args: { p_voluntario: string };

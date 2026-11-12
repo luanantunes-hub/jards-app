@@ -232,3 +232,9 @@ export const SITUACOES_DO_VOLUNTARIO: readonly SituacaoDoVoluntario[] = ["inscri
 /** `producao_convidados.situacao`. */
 export type SituacaoDoConvidado = "pedido" | "confirmado" | "recusado";
 export const SITUACOES_DO_CONVIDADO: readonly SituacaoDoConvidado[] = ["pedido", "confirmado", "recusado"];
+
+// A leitura na porta (PD7.3): o banco confere a lista num CHECK (supabase/migrations/*_producao_credenciais.sql).
+
+/** `producao_porta_leituras.resultado`. */
+export type ResultadoDaLeitura = "permitido" | "ja_entrou" | "negado";
+export const RESULTADOS_DA_LEITURA: readonly ResultadoDaLeitura[] = ["permitido", "ja_entrou", "negado"];
