@@ -143,6 +143,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
         { label: "Pauta", href: "/producoes/pauta", icon: CalendarCheck },
         { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
         { label: "Convidados", href: "/producoes/convidados", icon: Ticket },
+        { label: "Porta", href: "/producoes/porta", icon: DoorOpen },
         { label: "Sites", href: "/producoes/sites", icon: Globe },
       ],
     },

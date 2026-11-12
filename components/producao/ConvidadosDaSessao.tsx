@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Settings2, TriangleAlert } from "lucide-react";
+import { Copy, Plus, Settings2, Ticket, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -12,6 +12,10 @@ import {
   lerConvidado, lerTipo, mensagemDoErroDeConvidado, resumoDosConvidados, ROTULO_DA_SITUACAO_DO_CONVIDADO, saldoDosTipos,
   type ConvidadoDaSessao, type SaldoDoTipo, type TipoDeCredencial,
 } from "@/lib/producao/convidados";
+import { formatarCodigo, mensagemDaCredencial, presencaDaSessao } from "@/lib/producao/credenciais";
+
+type Credencial = { convidado_id: string; entradas: number; revogada_em: string | null };
+type CodigoNovo = { nome: string; lugares: number; codigo: string };
 
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
@@ -179,10 +183,55 @@ function ConvidadoSheet({ organizationId, sessaoId, tipos, saldos, convidado, on
   );
 }
 
-/** Os convidados de uma sessão (PD7.2): o saldo de cada tipo contra a cota, quem foi convidado e a decisão da produção (confirmar ou recusar). */
-export function ConvidadosDaSessao({ organizationId, sessaoId, podeEditar }: { organizationId: string; sessaoId: string; podeEditar: boolean }) {
+/** Os códigos das credenciais, que aparecem só uma vez: copiar a mensagem de cada convidado ou todas de uma vez. */
+function CodigosSheet({ titulo, itens, sessaoRotulo, onClose }: { titulo: string; itens: CodigoNovo[]; sessaoRotulo: string; onClose: () => void }) {
+  const [copiado, setCopiado] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+  const mensagens = itens.map(item => ({ ...item, texto: mensagemDaCredencial({ nome: item.nome, sessao: sessaoRotulo, codigo: item.codigo, lugares: item.lugares }) }));
+
+  async function copiar(chave: string, texto: string) {
+    try {
+      await navigator.clipboard.writeText(texto);
+      setCopiado(chave);
+      setTimeout(() => setCopiado(atual => (atual === chave ? null : atual)), 2000);
+    } catch {
+      setErro("Não foi possível copiar. Selecione o texto e copie à mão.");
+    }
+  }
+
+  return (
+    <TopSheet titulo={titulo} onClose={onClose} footer={fechar => <button type="button" onClick={fechar} className={CANCELAR}>Fechar</button>}>
+      <div className="space-y-4">
+        {erro && <Erro texto={erro} />}
+        {itens.length === 0 ? (
+          <p className="text-[0.8125rem] text-black/55">Todos os convidados confirmados já têm credencial. Para mandar o código de novo a alguém, use “Trocar código” na linha dele.</p>
+        ) : (
+          <>
+            <p className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B07A14]" style={{ borderColor: "#B07A1447" }}>Os códigos aparecem só agora. Copie e mande por WhatsApp ou e-mail antes de fechar; depois, para ter o código de novo, use “Trocar código” (o anterior deixa de valer).</p>
+            {mensagens.length > 1 && <button type="button" onClick={() => void copiar("todas", mensagens.map(item => item.texto).join("\n\n"))} className={BOTAO}><Copy size={13} aria-hidden="true" /> {copiado === "todas" ? "Copiadas" : "Copiar todas as mensagens"}</button>}
+            <ul className="space-y-3">
+              {mensagens.map(item => (
+                <li key={item.codigo} className="rounded border p-3" style={{ borderColor: "rgba(13,13,13,.1)" }}>
+                  <p className="text-[0.8125rem] font-medium text-[#282525]">{item.nome}</p>
+                  <p className="mt-1 text-[1.125rem] font-semibold tabular-nums tracking-[.06em] text-[#282525]">{formatarCodigo(item.codigo)}</p>
+                  <p className="mt-1 break-words text-[0.75rem] text-black/60">{item.texto}</p>
+                  <button type="button" onClick={() => void copiar(item.codigo, item.texto)} className={`${BOTAO} mt-2`}><Copy size={13} aria-hidden="true" /> {copiado === item.codigo ? "Copiada" : "Copiar mensagem"}</button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    </TopSheet>
+  );
+}
+
+/** Os convidados de uma sessão (PD7.2): o saldo de cada tipo contra a cota, quem foi convidado e a decisão da produção (confirmar ou recusar). Com as credenciais da porta (PD7.3). */
+export function ConvidadosDaSessao({ organizationId, sessaoId, sessaoRotulo, podeEditar }: { organizationId: string; sessaoId: string; sessaoRotulo: string; podeEditar: boolean }) {
   const [tipos, setTipos] = useState<TipoDeCredencial[] | null>(null);
   const [convidados, setConvidados] = useState<ConvidadoDaSessao[] | null>(null);
+  const [credenciais, setCredenciais] = useState<Credencial[]>([]);
+  const [codigos, setCodigos] = useState<{ titulo: string; itens: CodigoNovo[] } | null>(null);
   const [folha, setFolha] = useState<{ convidado: ConvidadoDaSessao | null } | null>(null);
   const [tiposAbertos, setTiposAbertos] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -193,14 +242,16 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, podeEditar }: { o
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [tip, con] = await Promise.all([
+      const [tip, con, cre] = await Promise.all([
         producao.from("producao_credencial_tipos").select("id, nome, cota_por_sessao, arquivado").eq("organization_id", organizationId).order("nome"),
         producao.from("producao_convidados").select("id, tipo_id, nome, afiliacao, quantidade, situacao").eq("sessao_id", sessaoId).order("nome"),
+        producao.from("producao_credenciais").select("convidado_id, entradas, revogada_em").eq("sessao_id", sessaoId),
       ]);
       if (!ativo) return;
       setTipos(tip.data ?? []);
       setConvidados(con.data ?? []);
-      setErro(tip.error || con.error ? "Não foi possível carregar os convidados. Recarregue a página." : null);
+      setCredenciais(cre.data ?? []);
+      setErro(tip.error || con.error || cre.error ? "Não foi possível carregar os convidados. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
   }, [organizationId, sessaoId, versao]);
@@ -209,6 +260,29 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, podeEditar }: { o
   const resumo = useMemo(() => resumoDosConvidados(convidados ?? []), [convidados]);
   const nomesDosTipos = useMemo(() => new Map((tipos ?? []).map(tipo => [tipo.id, tipo.nome])), [tipos]);
   const recarregar = () => setVersao(atual => atual + 1);
+  const credencialPorConvidado = useMemo(() => new Map(credenciais.map(credencial => [credencial.convidado_id, credencial])), [credenciais]);
+  const presenca = useMemo(() => presencaDaSessao(convidados ?? [], credenciais), [convidados, credenciais]);
+
+  async function emitir() {
+    setTrabalhando("emitir");
+    setErro(null);
+    const { data, error } = await clienteDaProducao(createClient()).rpc("fn_producao_credenciais_emitir", { p_sessao: sessaoId });
+    setTrabalhando(null);
+    if (error) { setErro(error.code === "42501" ? "Você não pode emitir credenciais aqui." : "Não foi possível emitir as credenciais. Tente de novo."); return; }
+    const lista = (Array.isArray(data) ? data : []) as { nome: string; lugares: number; codigo: string }[];
+    setCodigos({ titulo: "Credenciais emitidas", itens: lista.map(item => ({ nome: item.nome, lugares: item.lugares, codigo: item.codigo })) });
+    recarregar();
+  }
+
+  async function trocarCodigo(convidado: ConvidadoDaSessao) {
+    setTrabalhando(convidado.id);
+    setErro(null);
+    const { data, error } = await clienteDaProducao(createClient()).rpc("fn_producao_credencial_reemitir", { p_convidado: convidado.id });
+    setTrabalhando(null);
+    if (error || typeof data !== "string") { setErro(error?.code === "42501" ? "Você não pode trocar o código aqui." : "Não foi possível trocar o código. Tente de novo."); return; }
+    setCodigos({ titulo: `Novo código de ${convidado.nome}`, itens: [{ nome: convidado.nome, lugares: convidado.quantidade, codigo: data }] });
+    recarregar();
+  }
 
   async function mudarSituacao(convidado: ConvidadoDaSessao, situacao: SituacaoDoConvidado) {
     setTrabalhando(convidado.id);
@@ -267,7 +341,12 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, podeEditar }: { o
           </div>
         ) : (
           <>
-            <p className="mb-2 text-[0.75rem] tabular-nums text-black/55">{resumo.confirmados} {resumo.confirmados === 1 ? "lugar confirmado" : "lugares confirmados"} · {resumo.pedidos} {resumo.pedidos === 1 ? "pedido" : "pedidos"} · {resumo.recusados} {resumo.recusados === 1 ? "recusado" : "recusados"}</p>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+              <p className="text-[0.75rem] tabular-nums text-black/55">{resumo.confirmados} {resumo.confirmados === 1 ? "lugar confirmado" : "lugares confirmados"} · {resumo.pedidos} {resumo.pedidos === 1 ? "pedido" : "pedidos"} · {resumo.recusados} {resumo.recusados === 1 ? "recusado" : "recusados"}{credenciais.length > 0 ? ` · ${presenca.entraram} de ${presenca.confirmados} entraram` : ""}</p>
+              {podeEditar && presenca.semCredencial > 0 && (
+                <button type="button" onClick={() => void emitir()} disabled={trabalhando === "emitir"} className={BOTAO}><Ticket size={13} aria-hidden="true" /> {trabalhando === "emitir" ? "Emitindo…" : `Emitir credenciais (${presenca.semCredencial})`}</button>
+              )}
+            </div>
             <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               {convidados.map(convidado => (
                 <li key={convidado.id} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5">
@@ -277,8 +356,16 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, podeEditar }: { o
                   </div>
                   <span className="w-16 text-[0.75rem] tabular-nums text-black/55">{convidado.quantidade} {convidado.quantidade === 1 ? "lugar" : "lugares"}</span>
                   <span className="w-24 text-[0.75rem] text-black/65">{ROTULO_DA_SITUACAO_DO_CONVIDADO[convidado.situacao]}</span>
+                  <span className="w-28 text-[0.6875rem] tabular-nums text-black/45">
+                    {(() => {
+                      const credencial = credencialPorConvidado.get(convidado.id);
+                      if (!credencial) return convidado.situacao === "confirmado" ? "sem credencial" : "";
+                      return credencial.revogada_em ? "credencial cancelada" : `${credencial.entradas} de ${convidado.quantidade} entraram`;
+                    })()}
+                  </span>
                   {podeEditar && (
                     <span className="flex gap-1.5">
+                      {credencialPorConvidado.has(convidado.id) && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando === convidado.id} onClick={() => void trocarCodigo(convidado)}>Trocar código</button>}
                       {convidado.situacao !== "confirmado" && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando === convidado.id} onClick={() => void mudarSituacao(convidado, "confirmado")}>Confirmar</button>}
                       {convidado.situacao !== "recusado" && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando === convidado.id} onClick={() => void mudarSituacao(convidado, "recusado")}>Recusar</button>}
                       <button type="button" className={BOTAO_PEQUENO} onClick={() => setFolha({ convidado })}>Editar</button>
@@ -291,6 +378,7 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, podeEditar }: { o
         )}
       </section>
 
+      {codigos && <CodigosSheet titulo={codigos.titulo} itens={codigos.itens} sessaoRotulo={sessaoRotulo} onClose={() => setCodigos(null)} />}
       {tiposAbertos && <TiposSheet organizationId={organizationId} tipos={tipos} onClose={() => setTiposAbertos(false)} onMudou={recarregar} />}
       {folha && <ConvidadoSheet organizationId={organizationId} sessaoId={sessaoId} tipos={tipos} saldos={saldos} convidado={folha.convidado} onClose={() => setFolha(null)} onSalvou={recarregar} />}
     </div>
