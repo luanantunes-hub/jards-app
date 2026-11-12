@@ -1,6 +1,20 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerHospedagem, lerQuarto, listaDeQuartos, periodoDaHospedagem, pessoasSemQuarto, vagasDoQuarto } from "../lib/producao/hospedagem";
+import { lerHospedagem, lerQuarto, listaDeQuartos, movimentoDeQuarto, periodoDaHospedagem, pessoasSemQuarto, vagasDoQuarto } from "../lib/producao/hospedagem";
+
+test("mover pessoa: vaga no destino; mesmo lugar não muda nada; tirar sempre vale", () => {
+  const q = [{ id: "q1", nome: "101", capacidade: 2 }, { id: "q2", nome: "102", capacidade: 1 }];
+  const o = [{ quarto_id: "q1", pessoa_id: "p1" }, { quarto_id: "q1", pessoa_id: "p2" }, { quarto_id: "q2", pessoa_id: "p3" }];
+  assert.deepEqual(movimentoDeQuarto(q, o, "p1", "q1"), { ok: true, acao: "nada" });
+  assert.deepEqual(movimentoDeQuarto(q, o, "p1", null), { ok: true, acao: "tirar" });
+  assert.deepEqual(movimentoDeQuarto(q, o, "p4", null), { ok: true, acao: "nada" }, "quem já está sem quarto e fica sem quarto não muda");
+  assert.deepEqual(movimentoDeQuarto(q, o, "p4", "q1"), { ok: false, motivo: "O quarto 101 está completo." });
+  assert.deepEqual(movimentoDeQuarto(q, o, "p1", "q2"), { ok: false, motivo: "O quarto 102 está completo." });
+  const folga = [{ quarto_id: "q1", pessoa_id: "p1" }];
+  assert.deepEqual(movimentoDeQuarto(q, folga, "p4", "q1"), { ok: true, acao: "pôr" });
+  assert.deepEqual(movimentoDeQuarto(q, folga, "p1", "q2"), { ok: true, acao: "trocar" });
+  assert.equal(movimentoDeQuarto(q, o, "p1", "q9").ok, false);
+});
 
 const base = { hotel: "Hotel Central", endereco: "", entrada: "", saida: "", localizador: "", notas: "" };
 
