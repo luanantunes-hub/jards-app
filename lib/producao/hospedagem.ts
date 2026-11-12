@@ -52,6 +52,24 @@ export function pessoasSemQuarto<T extends { id: string }>(pessoas: readonly T[]
   return pessoas.filter(pessoa => !comQuarto.has(pessoa.id));
 }
 
+export type MovimentoDeQuarto = { ok: true; acao: "tirar" | "pôr" | "trocar" | "nada" } | { ok: false; motivo: string };
+
+/**
+ * Se a pessoa pode ir para o quarto (ou sair de todos, com destino nulo): o quarto de destino precisa ter vaga; a mesma pessoa no
+ * mesmo quarto, ou sem quarto indo para "sem quarto", não muda nada. Devolve o que fazer ou o motivo.
+ */
+export function movimentoDeQuarto(
+  quartos: readonly QuartoParaLista[], ocupantes: readonly OcupanteParaLista[], pessoaId: string, destinoId: string | null,
+): MovimentoDeQuarto {
+  const atual = ocupantes.find(ocupante => ocupante.pessoa_id === pessoaId)?.quarto_id ?? null;
+  if (destinoId === atual) return { ok: true, acao: "nada" };
+  if (destinoId === null) return { ok: true, acao: "tirar" };
+  const quarto = quartos.find(item => item.id === destinoId);
+  if (!quarto) return { ok: false, motivo: "O quarto não existe mais. Recarregue a página." };
+  if (vagasDoQuarto(quarto, ocupantes) <= 0) return { ok: false, motivo: `O quarto ${quarto.nome} está completo.` };
+  return { ok: true, acao: atual === null ? "pôr" : "trocar" };
+}
+
 /** O período "04 dez a 06 dez", "a partir de 04 dez" ou "" sem datas. */
 export function periodoDaHospedagem(entrada: string | null, saida: string | null): string {
   if (!entrada) return "";
