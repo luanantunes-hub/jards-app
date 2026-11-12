@@ -11,6 +11,7 @@ import { instanteParaHoraLocal } from "@/lib/producao/dia";
 import { somarDias } from "@/lib/producao/agenda";
 import { TIPOS_DE_DESLOCAMENTO, type TipoDeDeslocamento } from "@/lib/producao/estados";
 import { lerOdometro, textoDaViagem } from "@/lib/producao/viagem-motorista";
+import { avisosDeJornada } from "@/lib/producao/jornada";
 import { avisoDeLotacao, conflitosDeDeslocamentos, lerDeslocamento, ROTULO_DO_DESLOCAMENTO } from "@/lib/producao/deslocamentos";
 import { placaParaExibir } from "@/lib/producao/veiculos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -268,7 +269,11 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
   const avisos = useMemo(() => {
     const todos = new Map<string, Deslocamento>();
     for (const item of [...vizinhos, ...(itens ?? [])]) todos.set(item.id, item);
-    return conflitosDeDeslocamentos([...todos.values()].map(item => ({ ...item, pessoas_ids: quemVaiPorDeslocamento.get(item.id) ?? [] })), nomes);
+    const lista = [...todos.values()];
+    const resultado = conflitosDeDeslocamentos(lista.map(item => ({ ...item, pessoas_ids: quemVaiPorDeslocamento.get(item.id) ?? [] })), nomes);
+    // A jornada do motorista (PD6.5): mais de 5h30 de direção sem pausa de 30 minutos, olhando também os deslocamentos dos dias vizinhos.
+    for (const [id, textos] of avisosDeJornada(lista, nomes.pessoas)) resultado.set(id, [...(resultado.get(id) ?? []), ...textos]);
+    return resultado;
   }, [itens, vizinhos, nomes, quemVaiPorDeslocamento]);
 
   return (
