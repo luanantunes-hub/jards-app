@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "next/navigation";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Play, Plus, Square, Trash2, Undo2 } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
@@ -10,7 +10,8 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
 import { SITUACOES_DA_DATA, type ExibicaoDoBloco, type SituacaoDaData } from "@/lib/producao/estados";
 import { diaDaSemana, diaEMes, mudancaDeSituacao, ROTULO_DA_SITUACAO_DA_DATA, ROTULO_DO_TIPO_DE_DATA } from "@/lib/producao/agenda";
-import { FUSO_PADRAO, montarDiaDoModelo, ordenarBlocos, rotuloDaHora, ROTULO_DO_TIPO_DE_BLOCO } from "@/lib/producao/dia";
+import { FUSO_PADRAO, instanteParaHoraLocal, montarDiaDoModelo, ordenarBlocos, rotuloDaHora, ROTULO_DO_TIPO_DE_BLOCO } from "@/lib/producao/dia";
+import { situacaoDoRoteiro, textoDoAtraso } from "@/lib/producao/ao-vivo";
 import { modelosDeDia, type TipoBloco, type TipoData, type TipoProducao } from "@/lib/producao/vocabulario";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
@@ -37,7 +38,7 @@ type Data = {
   id: string; temporada_id: string; data: string; data_fim: string | null; tipo: TipoData; situacao: SituacaoDaData; uf: string | null; fuso: string;
   temporada: { titulo: string; tipo: string; lado: string } | null;
 };
-type Bloco = { id: string; dia: string; inicio: string | null; fim: string | null; exibicao: ExibicaoDoBloco; tipo: string; titulo: string | null; confirmado: boolean; ordem: number };
+type Bloco = { id: string; dia: string; inicio: string | null; fim: string | null; exibicao: ExibicaoDoBloco; tipo: string; titulo: string | null; confirmado: boolean; ordem: number; iniciado_em: string | null; terminado_em: string | null };
 
 const CAMPO_HORA = "h-9 rounded border border-black/[.12] bg-white px-2.5 text-[0.75rem] text-[#282525] outline-none focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10";
 
@@ -68,7 +69,7 @@ export default function DataPage() {
       const producao = clienteDaProducao(createClient());
       const [dat, blo, mod] = await Promise.all([
         producao.from("producao_datas").select("id, temporada_id, data, data_fim, tipo, situacao, uf, fuso, temporada:producao_temporadas!temporada_id(titulo, tipo, lado)").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
-        producao.from("producao_blocos").select("id, dia, inicio, fim, exibicao, tipo, titulo, confirmado, ordem").eq("data_id", id),
+        producao.from("producao_blocos").select("id, dia, inicio, fim, exibicao, tipo, titulo, confirmado, ordem, iniciado_em, terminado_em").eq("data_id", id),
         producao.from("producao_modelos_dia").select("id, nome, blocos").eq("organization_id", organizationId).order("nome"),
       ]);
       if (!ativo) return;
@@ -81,6 +82,7 @@ export default function DataPage() {
 
   const fuso = data?.fuso ?? FUSO_PADRAO;
   const ordenados = useMemo(() => ordenarBlocos(blocos), [blocos]);
+  const aoVivo = useMemo(() => situacaoDoRoteiro(blocos), [blocos]);
   const modelos = useMemo(() => {
     const doTipo = data?.temporada ? modelosDeDia(data.temporada.tipo as TipoProducao) : [];
     return [...doTipo, ...modelosDaOrganizacao.map(modelo => modeloDaOrganizacao(modelo, data?.tipo ?? "outro"))];
@@ -133,6 +135,16 @@ export default function DataPage() {
     setBlocos(atual => atual.map(item => (item.id === bloco.id ? { ...item, confirmado: !item.confirmado } : item)));
     const { error } = await clienteDaProducao(createClient()).from("producao_blocos").update({ confirmado: !bloco.confirmado }).eq("id", bloco.id);
     if (error) { recarregar(); setErro("Não foi possível confirmar. Tente de novo."); }
+  }
+
+  /** O roteiro ao vivo (PD7.1): marca agora o começo ou o fim do bloco, ou desfaz a marca. */
+  async function marcar(bloco: Bloco, acao: "comecou" | "terminou" | "desfazer") {
+    setErro(null);
+    const agora = new Date().toISOString();
+    const valores = acao === "comecou" ? { iniciado_em: agora, terminado_em: null } : acao === "terminou" ? { terminado_em: agora } : { iniciado_em: null, terminado_em: null };
+    setBlocos(atual => atual.map(item => (item.id === bloco.id ? { ...item, ...valores } : item)));
+    const { error } = await clienteDaProducao(createClient()).from("producao_blocos").update(valores).eq("id", bloco.id);
+    if (error) { recarregar(); setErro("Não foi possível marcar o bloco. Tente de novo."); }
   }
 
   function remover(bloco: Bloco) {
@@ -225,9 +237,34 @@ export default function DataPage() {
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{bloco.titulo ?? ROTULO_DO_TIPO_DE_BLOCO[bloco.tipo as TipoBloco] ?? bloco.tipo}</p>
                       <p className="text-[0.6875rem] text-black/45">{ROTULO_DO_TIPO_DE_BLOCO[bloco.tipo as TipoBloco] ?? bloco.tipo}{bloco.confirmado ? "" : " · não confirmado"}</p>
+                      {(() => {
+                        const situacao = aoVivo.get(bloco.id);
+                        if (!situacao) return null;
+                        if (situacao.estado === "pendente") {
+                          return situacao.previstoPara ? <p className="text-[0.6875rem]" style={{ color: "#B07A14" }}>Previsto às {instanteParaHoraLocal(situacao.previstoPara, fuso).hora} ({textoDoAtraso(situacao.atrasoPropagadoMin)})</p> : null;
+                        }
+                        const comecou = bloco.iniciado_em ? instanteParaHoraLocal(bloco.iniciado_em, fuso).hora : "";
+                        const atraso = situacao.atrasoDoComecoMin;
+                        const corDoAtraso = atraso !== null && atraso > 0 ? "#B07A14" : undefined;
+                        return (
+                          <p className="text-[0.6875rem] text-black/55">
+                            {situacao.estado === "em_andamento" ? `Em andamento desde ${comecou}` : `Feito: ${comecou} às ${bloco.terminado_em ? instanteParaHoraLocal(bloco.terminado_em, fuso).hora : ""}`}
+                            {atraso !== null && <span style={{ color: corDoAtraso }}> · {textoDoAtraso(atraso)}</span>}
+                          </p>
+                        );
+                      })()}
                     </div>
                     {podeEditar && (
                       <div className="flex shrink-0 items-center gap-1">
+                        {aoVivo.get(bloco.id)?.estado === "pendente" && (
+                          <button type="button" onClick={() => void marcar(bloco, "comecou")} aria-label="Marcar que o bloco começou" title="Começou" className="flex h-9 items-center gap-1 rounded border border-black/[.14] px-2.5 text-[0.6875rem] font-medium text-[#282525] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Play size={11} aria-hidden="true" /> Começou</button>
+                        )}
+                        {aoVivo.get(bloco.id)?.estado === "em_andamento" && (
+                          <button type="button" onClick={() => void marcar(bloco, "terminou")} aria-label="Marcar que o bloco terminou" title="Terminou" className="flex h-9 items-center gap-1 rounded bg-[#282525] px-2.5 text-[0.6875rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Square size={11} aria-hidden="true" /> Terminou</button>
+                        )}
+                        {aoVivo.get(bloco.id)?.estado !== "pendente" && (
+                          <button type="button" onClick={() => void marcar(bloco, "desfazer")} aria-label="Desfazer a marcação do bloco" title="Desfazer" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Undo2 size={14} aria-hidden="true" /></button>
+                        )}
                         <button type="button" onClick={() => void confirmar(bloco)} aria-pressed={bloco.confirmado} aria-label={bloco.confirmado ? "Desmarcar confirmação" : "Confirmar bloco"} title={bloco.confirmado ? "Confirmado" : "Confirmar"} className={`flex h-9 w-9 items-center justify-center rounded transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${bloco.confirmado ? "text-[#2E8932]" : "text-black/30"}`}><Check size={15} aria-hidden="true" /></button>
                         <button type="button" onClick={() => remover(bloco)} aria-label="Remover bloco" title="Remover" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Trash2 size={14} aria-hidden="true" /></button>
                       </div>

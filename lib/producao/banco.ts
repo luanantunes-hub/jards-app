@@ -371,6 +371,8 @@ export type BancoDaProducao = {
           visivel_para: string[] | null;
           capacidade: number | null;
           ordem: number;
+          iniciado_em: string | null;
+          terminado_em: string | null;
           notas: string | null;
           created_at: string;
           updated_at: string;
@@ -390,6 +392,8 @@ export type BancoDaProducao = {
           visivel_para?: string[] | null;
           capacidade?: number | null;
           ordem?: number;
+          iniciado_em?: string | null;
+          terminado_em?: string | null;
           notas?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -409,6 +413,8 @@ export type BancoDaProducao = {
           visivel_para?: string[] | null;
           capacidade?: number | null;
           ordem?: number;
+          iniciado_em?: string | null;
+          terminado_em?: string | null;
           notas?: string | null;
           created_at?: string;
           updated_at?: string;
