@@ -652,6 +652,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <Link
                       key={href}
                       href={href}
+                      // Sem antecipar a página: cada item do menu antecipado era uma página inteira pedida ao servidor (com a checagem de login), e dezenas delas disputavam a banda com a página que a pessoa abriu.
+                      prefetch={false}
                       title={!isExpanded ? label : undefined}
                       aria-label={!isExpanded ? label : undefined}
                       aria-current={active ? "page" : undefined}
