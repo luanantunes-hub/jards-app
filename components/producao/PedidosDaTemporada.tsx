@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Download, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, BOTAO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
@@ -12,16 +13,16 @@ import type { CategoriaDoOrcamento } from "@/lib/producao/estados";
 import { emCentavos, formatarReais, lerValorEmReais } from "@/lib/producao/bordero";
 import { ROTULO_DA_CATEGORIA_DO_ORCAMENTO } from "@/lib/producao/orcamento";
 import {
-  lerPedido, mensagemDoErroDePedido, passosDoPedido, pedidoApagavel, pedidoEditavel, pendenciaEditavel, pendenciaVencida, planilhaDosPedidos, resumoDoPedido,
-  ROTULO_DA_SITUACAO_DO_PEDIDO, ROTULO_DO_PASSO_DO_PEDIDO, totaisDosPedidos, type PassoDoPedido, type PedidoDaTemporada,
+  lerPedido, mensagemDoErroDePedido, pedidoApagavel, pedidoEditavel, pendenciaEditavel, pendenciaVencida, planilhaDosPedidos,
+  ROTULO_DA_SITUACAO_DO_PEDIDO, totaisDosPedidos, type PedidoDaTemporada,
 } from "@/lib/producao/pedidos";
 
-type LinhaDisponivel = { id: string; rotulo: string };
+export type LinhaDisponivel = { id: string; rotulo: string };
 
 const paraCampo = (valor: number) => String(valor).replace(".", ",");
 const dia = (data: string) => data.split("-").reverse().join("/");
 
-function PedidoSheet({ organizationId, temporadaId, pedido, linhas, onClose, onSalvou }: {
+export function PedidoSheet({ organizationId, temporadaId, pedido, linhas, onClose, onSalvou }: {
   organizationId: string; temporadaId: string; pedido: PedidoDaTemporada | null; linhas: LinhaDisponivel[]; onClose: () => void; onSalvou: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
@@ -127,28 +128,21 @@ function PedidoSheet({ organizationId, temporadaId, pedido, linhas, onClose, onS
 /** Os pedidos de pagamento de uma temporada (PD5.4): quem pede, quem aprova dentro da alçada e o pagamento. Só aparece a quem tem a permissão de dinheiro. */
 export function PedidosDaTemporada({ organizationId, temporadaId, temporadaTitulo, podeEditar }: { organizationId: string; temporadaId: string; temporadaTitulo: string; podeEditar: boolean }) {
   const [comDinheiro, setComDinheiro] = useState<boolean | null>(null);
-  const [podeAprovar, setPodeAprovar] = useState(false);
   const [pedidos, setPedidos] = useState<PedidoDaTemporada[]>([]);
   const [linhas, setLinhas] = useState<LinhaDisponivel[]>([]);
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
-  const [trabalhando, setTrabalhando] = useState(false);
   const [folha, setFolha] = useState<{ pedido: PedidoDaTemporada | null } | null>(null);
-  const [recusando, setRecusando] = useState<{ id: string; motivo: string } | null>(null);
   const [hoje] = useState(() => new Date().toISOString().slice(0, 10));
 
   useEffect(() => {
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [dinheiro, aprovar] = await Promise.all([
-        producao.rpc("auth_producao_pode", { p_org: organizationId, p_acao: "dinheiro" }),
-        producao.rpc("auth_producao_pode", { p_org: organizationId, p_acao: "aprovar" }),
-      ]);
+      const { data } = await producao.rpc("auth_producao_pode", { p_org: organizationId, p_acao: "dinheiro" });
       if (!ativo) return;
-      setComDinheiro(dinheiro.data === true);
-      setPodeAprovar(aprovar.data === true);
+      setComDinheiro(data === true);
     })();
     return () => { ativo = false; };
   }, [organizationId]);
@@ -182,16 +176,6 @@ export function PedidosDaTemporada({ organizationId, temporadaId, temporadaTitul
   if (!comDinheiro || !carregado) return null;
 
   const mudou = () => setVersao(atual => atual + 1);
-
-  async function dar(pedidoId: string, passo: PassoDoPedido, motivo = "") {
-    setTrabalhando(true);
-    setErro(null);
-    const { error } = await clienteDaProducao(createClient()).rpc("fn_producao_pedido_mudar", { p_pedido: pedidoId, p_passo: passo, p_motivo: motivo });
-    setTrabalhando(false);
-    setRecusando(null);
-    if (error) { setErro(mensagemDoErroDePedido(error)); return; }
-    mudou();
-  }
 
   function baixar() {
     const arquivo = new Blob([planilhaDosPedidos({ temporada: temporadaTitulo, hoje, pedidos, rotuloDaLinha: id => rotuloDaLinha.get(id) ?? "Linha apagada" })], { type: "text/csv;charset=utf-8" });
@@ -234,35 +218,17 @@ export function PedidosDaTemporada({ organizationId, temporadaId, temporadaTitul
           {totais.pendenciasVencidas > 0 && <p className="flex items-start gap-1.5 rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B07A14]" style={{ borderColor: "#B07A1447" }}><TriangleAlert size={13} aria-hidden="true" className="mt-0.5 shrink-0" /> {totais.pendenciasVencidas} {totais.pendenciasVencidas === 1 ? "pedido com a pendência vencida" : "pedidos com a pendência vencida"}.</p>}
           <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {pedidos.map(pedido => {
-              const passos = passosDoPedido(pedido.situacao, { podeEditar, podeAprovar });
               const vencida = pendenciaVencida(pedido, hoje);
               return (
-                <li key={pedido.id} className="px-4 py-3">
-                  <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                <li key={pedido.id}>
+                  <Link href={`/producoes/pedidos/${pedido.id}`} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]">
                     <div className="min-w-0 flex-1 basis-64">
                       <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{pedido.descricao}</p>
-                      <p className="text-[0.6875rem] tabular-nums text-black/45">{resumoDoPedido(pedido)}{pedido.orcamento_linha_id ? ` · ${rotuloDaLinha.get(pedido.orcamento_linha_id) ?? "linha do orçamento"}` : ""}</p>
-                      {pedido.justificativa && <p className="mt-0.5 text-[0.75rem] text-black/55">{pedido.justificativa}</p>}
-                      {pedido.motivo_recusa && <p className="mt-0.5 text-[0.75rem] text-[#B23B3B]">Recusado: {pedido.motivo_recusa}</p>}
-                      {pedido.pendencia && <p className={`mt-0.5 text-[0.75rem] ${vencida ? "text-[#B23B3B]" : "text-[#B07A14]"}`}>Pendência: {pedido.pendencia}{pedido.pendencia_ate ? ` · até ${dia(pedido.pendencia_ate)}${vencida ? " (vencida)" : ""}` : ""}</p>}
+                      <p className="truncate text-[0.6875rem] tabular-nums text-black/45">{formatarReais(emCentavos(pedido.valor))}{pedido.favorecido ? ` para ${pedido.favorecido}` : ""}</p>
+                      {pedido.pendencia && <p className={`mt-0.5 truncate text-[0.6875rem] ${vencida ? "text-[#B23B3B]" : "text-[#B07A14]"}`}>Pendência: {pedido.pendencia}{pedido.pendencia_ate ? ` · até ${dia(pedido.pendencia_ate)}${vencida ? " (vencida)" : ""}` : ""}</p>}
                     </div>
                     <span className="rounded border px-2 py-1 text-[0.6875rem] font-medium text-[#282525]" style={{ borderColor: "rgba(13,13,13,.25)" }}>{ROTULO_DA_SITUACAO_DO_PEDIDO[pedido.situacao]}</span>
-                  </div>
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    {podeEditar && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => setFolha({ pedido })}>{pedidoEditavel(pedido.situacao) ? "Editar" : pendenciaEditavel(pedido.situacao) ? "Ver e anotar pendência" : "Ver"}</button>}
-                    {passos.filter(passo => passo !== "recusar").map(passo => (
-                      <button key={passo} type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void dar(pedido.id, passo)}>{ROTULO_DO_PASSO_DO_PEDIDO[passo]}</button>
-                    ))}
-                    {passos.includes("recusar") && recusando?.id !== pedido.id && <button type="button" className={`${BOTAO_PEQUENO} text-[#B23B3B]`} disabled={trabalhando} onClick={() => setRecusando({ id: pedido.id, motivo: "" })}>Recusar</button>}
-                    {recusando?.id === pedido.id && (
-                      <span className="flex flex-wrap items-center gap-1.5 rounded border bg-white px-2 py-1" style={{ borderColor: "#B23B3B47" }}>
-                        <label className="text-[0.6875rem] text-[#B23B3B]" htmlFor={`motivo-${pedido.id}`}>Motivo</label>
-                        <input id={`motivo-${pedido.id}`} className="h-8 w-56 rounded border border-black/[.12] bg-white px-2 text-[0.75rem]" value={recusando.motivo} maxLength={300} onChange={event => setRecusando({ id: pedido.id, motivo: event.target.value })} />
-                        <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando || recusando.motivo.trim() === ""} onClick={() => void dar(pedido.id, "recusar", recusando.motivo)}>Recusar pedido</button>
-                        <button type="button" className={BOTAO_PEQUENO} onClick={() => setRecusando(null)}>Voltar</button>
-                      </span>
-                    )}
-                  </div>
+                  </Link>
                 </li>
               );
             })}
