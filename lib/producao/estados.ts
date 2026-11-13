@@ -333,3 +333,9 @@ export const SENTIDOS_DO_ACORDO: readonly SentidoDoAcordo[] = ["a_pagar", "a_rec
 /** `producao_acordos.situacao`: anda um passo para a frente; assinado só vai para encerrado. */
 export type SituacaoDoAcordo = "rascunho" | "revisao" | "para_assinatura" | "assinado" | "encerrado";
 export const SITUACOES_DO_ACORDO: readonly SituacaoDoAcordo[] = ["rascunho", "revisao", "para_assinatura", "assinado", "encerrado"];
+
+// As faturas ao contratante (PD5.5): o banco confere a lista num CHECK (supabase/migrations/*_producao_faturas.sql).
+
+/** `producao_faturas.situacao`: anda um passo; em aberto só vai para quitada, e só com todas as parcelas recebidas. */
+export type SituacaoDaFatura = "rascunho" | "revisao" | "em_aberto" | "quitada";
+export const SITUACOES_DA_FATURA: readonly SituacaoDaFatura[] = ["rascunho", "revisao", "em_aberto", "quitada"];

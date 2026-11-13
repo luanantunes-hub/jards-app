@@ -131,6 +131,8 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_orcamentos: "é dinheiro (valor, comprometido e pago): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou e quando ficam no próprio orçamento",
   producao_orcamento_linhas: "é dinheiro (valor, comprometido e pago): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou e quando ficam no próprio orçamento",
   producao_orcamento_variaveis: "é só o número de uma conta do orçamento (pessoas, dias de estrada...): vive no orçamento em rascunho e só quem vê o dinheiro o lê",
+  producao_faturas: "é dinheiro (valor, retenções, nota): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
+  producao_fatura_parcelas: "é só como o valor líquido da fatura será recebido (valor, vencimento, dia do recebimento): dinheiro, sem histórico",
   producao_lancamentos: "é dinheiro (valor pago, favorecido, nota): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê",
   producao_lancamento_linhas: "é só a divisão do valor de um lançamento entre as linhas do orçamento: dinheiro, sem histórico",
   producao_acordos: "são condições de dinheiro (fixo, garantia, percentual, bônus): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; a situação e o dia da assinatura ficam no próprio acordo",

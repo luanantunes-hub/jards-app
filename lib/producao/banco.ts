@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -4011,6 +4011,133 @@ export type BancoDaProducao = {
           },
           {
             foreignKeyName: "producao_lancamento_linhas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_faturas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          acordo_id: string | null;
+          contratante: string;
+          descricao: string;
+          situacao: SituacaoDaFatura;
+          valor: number;
+          retencoes: number;
+          nota_numero: string | null;
+          emissao: string | null;
+          vencimento: string | null;
+          observacao: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          acordo_id?: string | null;
+          contratante: string;
+          descricao: string;
+          situacao?: SituacaoDaFatura;
+          valor: number;
+          retencoes?: number;
+          nota_numero?: string | null;
+          emissao?: string | null;
+          vencimento?: string | null;
+          observacao?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          acordo_id?: string | null;
+          contratante?: string;
+          descricao?: string;
+          situacao?: SituacaoDaFatura;
+          valor?: number;
+          retencoes?: number;
+          nota_numero?: string | null;
+          emissao?: string | null;
+          vencimento?: string | null;
+          observacao?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_faturas_acordo_id_fkey";
+            columns: ["acordo_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_acordos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_faturas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_faturas_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_fatura_parcelas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          fatura_id: string;
+          rotulo: string | null;
+          valor: number;
+          vencimento: string;
+          recebido_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          fatura_id: string;
+          rotulo?: string | null;
+          valor: number;
+          vencimento: string;
+          recebido_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          fatura_id?: string;
+          rotulo?: string | null;
+          valor?: number;
+          vencimento?: string;
+          recebido_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_fatura_parcelas_fatura_id_fkey";
+            columns: ["fatura_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_faturas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_fatura_parcelas_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
