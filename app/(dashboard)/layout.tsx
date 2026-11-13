@@ -28,6 +28,7 @@ import {
   FileText,
   LayoutTemplate,
   BriefcaseBusiness,
+  Ellipsis,
   ContactRound,
   FilePenLine,
   FileStack,
@@ -83,7 +84,8 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 // Os protótipos da produção (dados de exemplo) também: o servidor os fecha para os outros em producoes/prototipo/layout.tsx.
 const ROTAS_SO_SUPER_ADMIN = ["/reunioes", "/producoes/prototipo"];
 
-const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
+// `recolhida`: a seção fica atrás do botão "Mais" (abre sozinha quando a página aberta é uma das dela). Serve para o menu mostrar só o essencial.
+const NAV_POR_MODULO: Record<ModuloId, { section: string; recolhida?: boolean; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
   captacao: [
     {
       section: "Gerenciamento",
@@ -129,25 +131,32 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       ],
     },
   ],
-  // O primeiro item é a página inicial do módulo (trocarModulo abre ele). As seções seguem o jeito do CRM: poucos itens por seção,
-  // cada uma com um trabalho (o que está acontecendo, os lugares e a programação, o dia da sessão, a parte técnica, quem e como chega). Protótipos (só o super admin
-  // vê) fica na primeira seção para nenhuma seção ficar vazia.
+  // O primeiro item é a página inicial do módulo (trocarModulo abre ele). À vista ficam só os cinco do dia a dia; o resto fica atrás do botão "Mais",
+  // em seções por assunto. Protótipos (só o super admin vê) fica em "Acompanhar" para nenhuma seção ficar vazia.
   producao: [
     {
-      section: "Gerenciamento",
+      section: "Produção",
       items: [
         { label: "Agenda", href: "/producoes", icon: CalendarDays },
         { label: "Temporadas", href: "/producoes/temporadas", icon: CalendarRange },
+        { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
         { label: "Tarefas", href: "/producoes/tarefas", icon: ListChecks },
+        { label: "Espaços", href: "/producoes/espacos", icon: Building2 },
+      ],
+    },
+    {
+      section: "Acompanhar",
+      recolhida: true,
+      items: [
         { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
         { label: "Linha do tempo", href: "/producoes/linha-do-tempo", icon: History },
         { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
       ],
     },
     {
-      section: "Espaços e programação",
+      section: "Programação",
+      recolhida: true,
       items: [
-        { label: "Espaços", href: "/producoes/espacos", icon: Building2 },
         { label: "Pauta", href: "/producoes/pauta", icon: CalendarCheck },
         { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
         { label: "Sites", href: "/producoes/sites", icon: Globe },
@@ -155,6 +164,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
     },
     {
       section: "Dia da sessão",
+      recolhida: true,
       items: [
         { label: "Plateia", href: "/producoes/plateia", icon: Armchair },
         { label: "Convidados", href: "/producoes/convidados", icon: Ticket },
@@ -167,18 +177,13 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       ],
     },
     {
-      section: "Técnica",
+      section: "Técnica e logística",
+      recolhida: true,
       items: [
         { label: "Inventário", href: "/producoes/inventario", icon: Boxes },
         { label: "Plantas", href: "/producoes/plantas", icon: Ruler },
         { label: "Riders", href: "/producoes/riders", icon: FileText },
         { label: "Acertos", href: "/producoes/acertos", icon: Handshake },
-      ],
-    },
-    {
-      section: "Equipe e logística",
-      items: [
-        { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
         { label: "Veículos", href: "/producoes/veiculos", icon: Truck },
       ],
     },
@@ -258,6 +263,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const [user, setUser]                     = useState<User | null>(null);
   const [expanded, setExpanded]             = useState(false);
+  const [maisAberto, setMaisAberto]         = useState(false);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [moduloAtivo, setModuloAtivo]       = useState<ModuloId>(() => moduloDaRota(path));
   const [modulosOrg, setModulosOrg]         = useState<ModuloId[]>(["captacao"]);
@@ -477,6 +483,56 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isExpanded  = expanded || mobileOpen || seletorAberto;
   const menuPath    = itemAtivoDoMenu(path);
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
+  // O "Mais" abre sozinho quando a página aberta é uma das que ficam nele, para o item ativo nunca sumir.
+  const gruposFixos = navGroups.filter(grupo => !grupo.recolhida && grupo.items.length > 0);
+  const gruposDoMais = navGroups.filter(grupo => grupo.recolhida && grupo.items.length > 0);
+  const maisComAtivo = gruposDoMais.some(grupo => grupo.items.some(item => item.href === hrefAtivo));
+  const mostrarMais = maisAberto || maisComAtivo;
+  const desenharGrupo = ({ section, items }: (typeof navGroups)[number], gi: number) => (
+    <div key={section} className={gi > 0 ? "mt-4" : ""}>
+              <div
+                style={{
+                  height: isExpanded ? "auto" : 0,
+                  overflow: "hidden",
+                  opacity: isExpanded ? 1 : 0,
+                  transition: "opacity 150ms",
+                  marginBottom: isExpanded ? 6 : 0,
+                }}
+              >
+                <p className="px-2 text-[0.625rem] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap">
+                  {section}
+                </p>
+              </div>
+              <div className="space-y-0.5">
+                {items.map(({ label, href, icon: Icon }) => {
+                  const active = href === hrefAtivo;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      // Sem antecipar a página: cada item do menu antecipado era uma página inteira pedida ao servidor (com a checagem de login), e dezenas delas disputavam a banda com a página que a pessoa abriu.
+                      prefetch={false}
+                      title={!isExpanded ? label : undefined}
+                      aria-label={!isExpanded ? label : undefined}
+                      aria-current={active ? "page" : undefined}
+                      className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                        active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                      }`}
+                      style={{
+                        gap: isExpanded ? 10 : 0,
+                        padding: isExpanded ? "8px 10px" : "8px 0",
+                        justifyContent: isExpanded ? "flex-start" : "center",
+                      }}
+                    >
+                      <Icon size={16} className="flex-shrink-0" aria-hidden="true" />
+                      {isExpanded && <span>{label}</span>}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+  );
+
   // EXPERIMENTAL: dentro de uma organização onde o papel é "captador", o
   // menu lateral vira um menu próprio e mínimo — sem as áreas internas da
   // organização que convidou (essas continuam existindo, só não fazem
@@ -671,50 +727,30 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {isExpanded && <span>Meu workspace</span>}
               </Link>
             </div>
-          ) : navGroups.map(({ section, items }, gi) => (
-            <div key={section} className={gi > 0 ? "mt-4" : ""}>
-              <div
-                style={{
-                  height: isExpanded ? "auto" : 0,
-                  overflow: "hidden",
-                  opacity: isExpanded ? 1 : 0,
-                  transition: "opacity 150ms",
-                  marginBottom: isExpanded ? 6 : 0,
-                }}
-              >
-                <p className="px-2 text-[0.625rem] font-bold tracking-[.13em] uppercase text-black/30 whitespace-nowrap">
-                  {section}
-                </p>
-              </div>
-              <div className="space-y-0.5">
-                {items.map(({ label, href, icon: Icon }) => {
-                  const active = href === hrefAtivo;
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      // Sem antecipar a página: cada item do menu antecipado era uma página inteira pedida ao servidor (com a checagem de login), e dezenas delas disputavam a banda com a página que a pessoa abriu.
-                      prefetch={false}
-                      title={!isExpanded ? label : undefined}
-                      aria-label={!isExpanded ? label : undefined}
-                      aria-current={active ? "page" : undefined}
-                      className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                        active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
-                      }`}
-                      style={{
-                        gap: isExpanded ? 10 : 0,
-                        padding: isExpanded ? "8px 10px" : "8px 0",
-                        justifyContent: isExpanded ? "flex-start" : "center",
-                      }}
-                    >
-                      <Icon size={16} className="flex-shrink-0" aria-hidden="true" />
-                      {isExpanded && <span>{label}</span>}
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          ))}
+          ) : (
+            <>
+              {gruposFixos.map(desenharGrupo)}
+              {gruposDoMais.length > 0 && (
+                <div className="mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setMaisAberto(atual => !atual)}
+                    aria-expanded={mostrarMais}
+                    aria-controls="menu-mais"
+                    disabled={maisComAtivo}
+                    title={!isExpanded ? (mostrarMais ? "Menos opções" : "Mais opções") : undefined}
+                    aria-label={!isExpanded ? (mostrarMais ? "Menos opções" : "Mais opções") : undefined}
+                    className="flex w-full items-center rounded text-[0.8125rem] font-medium text-black/40 transition-colors whitespace-nowrap overflow-hidden hover:text-[#282525] hover:bg-black/[0.05] disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-black/40 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+                    style={{ gap: isExpanded ? 10 : 0, padding: isExpanded ? "8px 10px" : "8px 0", justifyContent: isExpanded ? "flex-start" : "center" }}
+                  >
+                    <Ellipsis size={16} className="flex-shrink-0" aria-hidden="true" />
+                    {isExpanded && <span>{mostrarMais ? "Menos" : "Mais"}</span>}
+                  </button>
+                  {mostrarMais && <div id="menu-mais" className="mt-3">{gruposDoMais.map(desenharGrupo)}</div>}
+                </div>
+              )}
+            </>
+          )}
           {usaCaptacao && <BotaoUpgrade expandido={isExpanded} />}
         </nav>
 
