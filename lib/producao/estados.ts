@@ -238,3 +238,13 @@ export const SITUACOES_DO_CONVIDADO: readonly SituacaoDoConvidado[] = ["pedido",
 /** `producao_porta_leituras.resultado`. */
 export type ResultadoDaLeitura = "permitido" | "ja_entrou" | "negado";
 export const RESULTADOS_DA_LEITURA: readonly ResultadoDaLeitura[] = ["permitido", "ja_entrou", "negado"];
+
+// A acessibilidade por sessão (PD7.6): o banco confere as listas num CHECK (supabase/migrations/*_producao_acessibilidade.sql).
+
+/** `producao_acessibilidade.tipo`. */
+export type TipoDeAcessibilidade = "libras" | "audiodescricao" | "legendagem" | "lugares_reservados" | "outro";
+export const TIPOS_DE_ACESSIBILIDADE: readonly TipoDeAcessibilidade[] = ["libras", "audiodescricao", "legendagem", "lugares_reservados", "outro"];
+
+/** `producao_acessibilidade.situacao`. */
+export type SituacaoDaAcessibilidade = "planejado" | "confirmado" | "cancelado";
+export const SITUACOES_DA_ACESSIBILIDADE: readonly SituacaoDaAcessibilidade[] = ["planejado", "confirmado", "cancelado"];

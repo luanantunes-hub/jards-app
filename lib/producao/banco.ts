@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -705,6 +705,67 @@ export type BancoDaProducao = {
             columns: ["pessoa_id"];
             isOneToOne: true;
             referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_acessibilidade: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          tipo: TipoDeAcessibilidade;
+          situacao: SituacaoDaAcessibilidade;
+          pessoa_id: string | null;
+          lugares: number | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          tipo: TipoDeAcessibilidade;
+          situacao?: SituacaoDaAcessibilidade;
+          pessoa_id?: string | null;
+          lugares?: number | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          tipo?: TipoDeAcessibilidade;
+          situacao?: SituacaoDaAcessibilidade;
+          pessoa_id?: string | null;
+          lugares?: number | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_acessibilidade_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acessibilidade_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acessibilidade_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_sessoes";
             referencedColumns: ["id"];
           },
         ];

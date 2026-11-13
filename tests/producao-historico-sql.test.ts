@@ -68,6 +68,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   // Os tipos de credencial e os convidados das sessões (PD7.2): só nome e afiliação, sem documento nem contato; o nome é o rótulo.
   producao_credencial_tipos: { fora: "", rotulos: "nome" },
   producao_convidados: { fora: "", rotulos: "nome" },
+  // A acessibilidade por sessão (PD7.6): a nota pode falar de uma pessoa do público e fica de fora; o tipo é o rótulo.
+  producao_acessibilidade: { fora: "notas", rotulos: "tipo" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
@@ -306,7 +308,7 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
   // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
   // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_site_paginas: blocos,blocos_publicados", "producao_voluntarios: email,telefone,disponibilidade"]);
+    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_site_paginas: blocos,blocos_publicados", "producao_voluntarios: email,telefone,disponibilidade"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {
