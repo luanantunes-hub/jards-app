@@ -3912,6 +3912,112 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_lancamentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          descricao: string;
+          favorecido: string | null;
+          documento: string | null;
+          data: string;
+          valor: number;
+          observacao: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          descricao: string;
+          favorecido?: string | null;
+          documento?: string | null;
+          data: string;
+          valor: number;
+          observacao?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          descricao?: string;
+          favorecido?: string | null;
+          documento?: string | null;
+          data?: string;
+          valor?: number;
+          observacao?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_lancamentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_lancamentos_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_lancamento_linhas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          lancamento_id: string;
+          orcamento_linha_id: string;
+          valor: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          lancamento_id: string;
+          orcamento_linha_id: string;
+          valor: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          lancamento_id?: string;
+          orcamento_linha_id?: string;
+          valor?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_lancamento_linhas_lancamento_id_fkey";
+            columns: ["lancamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_lancamentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_lancamento_linhas_orcamento_linha_id_fkey";
+            columns: ["orcamento_linha_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_orcamento_linhas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_lancamento_linhas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_turnos: {
         Row: {
           id: string;
