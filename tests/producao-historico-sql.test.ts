@@ -73,6 +73,10 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   // A visitação e os grupos (PD7.5): o contato do responsável e a observação ficam de fora; o dia e o grupo são os rótulos. O link é só o hash e a validade.
   producao_visitas_horarios: { fora: "", rotulos: "dia" },
   producao_visitas_agendamentos: { fora: "email,telefone,observacao,consentiu_em", rotulos: "grupo" },
+  // A formação (PD7.10): turma e aula sem nada sensível; a matrícula deixa o contato de fora. A presença é marca de alto volume (abaixo).
+  producao_turmas: { fora: "", rotulos: "nome" },
+  producao_turma_aulas: { fora: "", rotulos: "dia" },
+  producao_matriculas: { fora: "email,telefone", rotulos: "nome" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
@@ -117,6 +121,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_voluntarios_links: "é só o link de inscrição (título, vagas e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_convidados_links: "é só o link de pedidos (título, corte, limite e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_visitas_links: "é só o link de agendamento de visitas (título, validade e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
+  producao_presencas: "são só as marcas de presença de cada matriculado em cada aula (uma linha por par, de alto volume): a frequência e o certificado já contam o que importa na matrícula",
   producao_credenciais: "é só o código da credencial (hash, que é segredo) e a contagem de entradas, que muda a cada leitura na porta: quem emitiu e quando já ficam na própria linha, e cada leitura é registrada em producao_porta_leituras",
   producao_porta_leituras: "é o próprio registro da porta, só de acrescentar: ninguém altera nem apaga uma leitura",
   producao_manutencoes: "são só as manutenções de um equipamento (descrição e datas): o histórico do equipamento e a própria data dizem o que importa",
@@ -312,7 +317,7 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
   // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
   // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_site_paginas: blocos,blocos_publicados", "producao_visitas_agendamentos: email,telefone,observacao,consentiu_em", "producao_voluntarios: email,telefone,disponibilidade"]);
+    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_matriculas: email,telefone", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_site_paginas: blocos,blocos_publicados", "producao_visitas_agendamentos: email,telefone,observacao,consentiu_em", "producao_voluntarios: email,telefone,disponibilidade"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {
