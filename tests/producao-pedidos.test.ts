@@ -84,6 +84,7 @@ test("pedido: planilha e frase da lista", () => {
 
 test("pedido: mensagens do banco viram texto claro", () => {
   assert.match(mensagemDoErroDePedido({ message: "alcada_insuficiente" }), /passa da sua alçada/);
+  assert.match(mensagemDoErroDePedido({ message: "nao_aprova_o_proprio" }), /não aprova o próprio pedido/);
   assert.match(mensagemDoErroDePedido({ message: "pedido_sem_lancamento" }), /lançamentos ligados/);
   assert.match(mensagemDoErroDePedido({ message: "pedido_sem_motivo" }), /motivo da recusa/);
   assert.match(mensagemDoErroDePedido({ message: "pedido_pago" }), /pago: nada muda/);

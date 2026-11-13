@@ -105,6 +105,7 @@ export function planilhaDosPedidos(campos: { temporada: string; hoje: string; pe
 export function mensagemDoErroDePedido(erro: { code?: string; message?: string }): string {
   const mensagem = erro.message ?? "";
   if (mensagem.includes("alcada_insuficiente")) return "O valor passa da sua alçada. Peça a quem tem alçada maior, ou a um administrador.";
+  if (mensagem.includes("nao_aprova_o_proprio")) return "Quem pediu não aprova o próprio pedido. Peça a outra pessoa com alçada, ou a um administrador.";
   if (mensagem.includes("pedido_sem_lancamento")) return `Para marcar como pago, os lançamentos ligados ao pedido precisam somar pelo menos o valor dele.`;
   if (mensagem.includes("pedido_sem_motivo")) return "Escreva o motivo da recusa.";
   if (mensagem.includes("pedido_pago")) return "O pedido está pago: nada muda.";
