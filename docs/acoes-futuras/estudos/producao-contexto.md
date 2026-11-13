@@ -76,6 +76,10 @@ pgTAP (`supabase/tests/*.test.sql`) roda no editor SQL ou pelo conector, numa tr
 
 **Teste de gravação das telas** (o que a PD1.3 a PD1.7 mandam ao banco): monte as linhas com as próprias funções de `lib/producao/` (um script `tsx` que imprime o SQL), e rode um bloco `do` com organização, módulo e pessoas de mentira (colaborador, leitor e administrador, como em `supabase/tests/producao_rls.test.sql`), entrando como cada pessoa com `set_config('request.jwt.claims', …)` e `set_config('role', 'authenticated', true)`, cada gravação num sub-bloco com `exception`, e terminando em `raise exception` para desfazer tudo. **Sem `delete`**: o conector recusa. O conector aceita blocos de uns 35 KB. Confira depois que o banco ficou como estava.
 
+## O que depende do dono
+
+O que sobra do plano depende de decisão do dono (dinheiro, privacidade, escolhas de produto) ou do painel logado para conferir as telas. As perguntas, a recomendação de cada uma, um rascunho do texto de privacidade e o roteiro de conferência estão em `docs/acoes-futuras/estudos/producao-pendencias-do-dono.md`.
+
 ## Cuidados que não estão óbvios
 
 - O conector do Supabase **aceita** `DROP CONSTRAINT` (conferido na PD0.1), mas **recusa** blocos de ensaio com `delete` em tabela de produção, mesmo desfeitos: não contorne; apure por catálogo e diga o que ficou sem prova.
