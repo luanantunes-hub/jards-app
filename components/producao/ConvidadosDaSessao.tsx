@@ -187,7 +187,7 @@ function ConvidadoSheet({ organizationId, sessaoId, tipos, saldos, convidado, on
 function CodigosSheet({ titulo, itens, sessaoRotulo, onClose }: { titulo: string; itens: CodigoNovo[]; sessaoRotulo: string; onClose: () => void }) {
   const [copiado, setCopiado] = useState<string | null>(null);
   const [erro, setErro] = useState<string | null>(null);
-  const mensagens = itens.map(item => ({ ...item, texto: mensagemDaCredencial({ nome: item.nome, sessao: sessaoRotulo, codigo: item.codigo, lugares: item.lugares }) }));
+  const mensagens = itens.map(item => ({ ...item, texto: mensagemDaCredencial({ nome: item.nome, sessao: sessaoRotulo, codigo: item.codigo, lugares: item.lugares, url: `${window.location.origin}/credencial/${item.codigo}` }) }));
 
   async function copiar(chave: string, texto: string) {
     try {

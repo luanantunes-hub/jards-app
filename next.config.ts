@@ -39,8 +39,13 @@ const cabecalhosComuns = [
 const nextConfig: NextConfig = {
   async headers() {
     return [
-      // Tudo, menos /embed/: não pode ser aberto dentro de outro site.
-      { source: "/((?!embed/).*)", headers: [...cabecalhosComuns, { key: "X-Frame-Options", value: "DENY" }] },
+      // Tudo, menos /embed/ e a porta: não pode ser aberto dentro de outro site e não usa a câmera.
+      { source: "/((?!embed/|producoes/porta$).*)", headers: [...cabecalhosComuns, { key: "X-Frame-Options", value: "DENY" }] },
+      // A porta (PD7.3) é a única página que usa a câmera, para ler o QR das credenciais; continua sem iframe.
+      {
+        source: "/producoes/porta",
+        headers: [...cabecalhosComuns.map(cabecalho => cabecalho.key === "Permissions-Policy" ? { key: cabecalho.key, value: cabecalho.value.replace("camera=()", "camera=(self)") } : cabecalho), { key: "X-Frame-Options", value: "DENY" }],
+      },
       { source: "/embed/:path*", headers: [{ key: "Content-Security-Policy", value: contentSecurityPolicyParaEmbutir }, ...cabecalhosComuns.filter(cabecalho => cabecalho.key !== "Content-Security-Policy")] },
     ];
   },

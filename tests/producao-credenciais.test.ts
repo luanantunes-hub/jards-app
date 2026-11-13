@@ -52,4 +52,6 @@ test("mensagem da credencial: primeiro nome, código em grupos e quantas pessoas
   assert.equal(mensagemDaCredencial({ nome: "Rita Souza", sessao: "Peça de abertura, 05/12", codigo: "818FC8357146C13F", lugares: 2 }),
     "Oi, Rita! Sua credencial para Peça de abertura, 05/12: 818F-C835-7146-C13F (vale para 2 pessoas). Mostre este código na entrada.");
   assert.match(mensagemDaCredencial({ nome: "Tom", sessao: "X", codigo: "0000000000000001", lugares: 1 }), /vale para 1 pessoa\)/);
+  assert.equal(mensagemDaCredencial({ nome: "Rita Souza", sessao: "Peça, 05/12", codigo: "818FC8357146C13F", lugares: 2, url: "https://x.test/credencial/818FC8357146C13F" }),
+    "Oi, Rita! Sua credencial para Peça, 05/12 (vale para 2 pessoas): https://x.test/credencial/818FC8357146C13F\nMostre o QR da página na entrada. Se a câmera falhar, o código é 818F-C835-7146-C13F.");
 });
