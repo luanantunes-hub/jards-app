@@ -130,7 +130,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
     },
   ],
   // O primeiro item é a página inicial do módulo (trocarModulo abre ele). As seções seguem o jeito do CRM: poucos itens por seção,
-  // cada uma com um trabalho (o que está acontecendo, os lugares, a parte técnica, quem e como chega). Protótipos (só o super admin
+  // cada uma com um trabalho (o que está acontecendo, os lugares e a programação, o dia da sessão, a parte técnica, quem e como chega). Protótipos (só o super admin
   // vê) fica na primeira seção para nenhuma seção ficar vazia.
   producao: [
     {
@@ -145,20 +145,25 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; items: { label: string
       ],
     },
     {
-      section: "Espaços",
+      section: "Espaços e programação",
       items: [
         { label: "Espaços", href: "/producoes/espacos", icon: Building2 },
         { label: "Pauta", href: "/producoes/pauta", icon: CalendarCheck },
         { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
+        { label: "Sites", href: "/producoes/sites", icon: Globe },
+      ],
+    },
+    {
+      section: "Dia da sessão",
+      items: [
         { label: "Plateia", href: "/producoes/plateia", icon: Armchair },
-        { label: "Expografia", href: "/producoes/expografia", icon: Frame },
         { label: "Convidados", href: "/producoes/convidados", icon: Ticket },
         { label: "Porta", href: "/producoes/porta", icon: DoorOpen },
         { label: "Borderô", href: "/producoes/bordero", icon: Receipt },
         { label: "Acessibilidade", href: "/producoes/acessibilidade", icon: Accessibility },
         { label: "Visitação", href: "/producoes/visitacao", icon: School },
         { label: "Formação", href: "/producoes/formacao", icon: GraduationCap },
-        { label: "Sites", href: "/producoes/sites", icon: Globe },
+        { label: "Expografia", href: "/producoes/expografia", icon: Frame },
       ],
     },
     {
