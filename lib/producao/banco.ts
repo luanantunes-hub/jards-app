@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -2837,6 +2837,183 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_visitas_horarios: {
+        Row: {
+          id: string;
+          organization_id: string;
+          espaco_id: string;
+          dia: string;
+          inicio: string;
+          fim: string;
+          capacidade: number;
+          publico_avulso: number | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          espaco_id: string;
+          dia: string;
+          inicio: string;
+          fim: string;
+          capacidade: number;
+          publico_avulso?: number | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          espaco_id?: string;
+          dia?: string;
+          inicio?: string;
+          fim?: string;
+          capacidade?: number;
+          publico_avulso?: number | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_visitas_horarios_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_visitas_horarios_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_visitas_agendamentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          horario_id: string;
+          grupo: string;
+          responsavel: string;
+          email: string | null;
+          telefone: string | null;
+          pessoas: number;
+          situacao: SituacaoDoAgendamento;
+          presentes: number | null;
+          observacao: string | null;
+          consentiu_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          horario_id: string;
+          grupo: string;
+          responsavel: string;
+          email?: string | null;
+          telefone?: string | null;
+          pessoas: number;
+          situacao?: SituacaoDoAgendamento;
+          presentes?: number | null;
+          observacao?: string | null;
+          consentiu_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          horario_id?: string;
+          grupo?: string;
+          responsavel?: string;
+          email?: string | null;
+          telefone?: string | null;
+          pessoas?: number;
+          situacao?: SituacaoDoAgendamento;
+          presentes?: number | null;
+          observacao?: string | null;
+          consentiu_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_visitas_agendamentos_horario_id_fkey";
+            columns: ["horario_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_visitas_horarios";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_visitas_agendamentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_visitas_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          espaco_id: string;
+          token_hash: string;
+          titulo: string | null;
+          expira_em: string;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          espaco_id: string;
+          token_hash: string;
+          titulo?: string | null;
+          expira_em: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          espaco_id?: string;
+          token_hash?: string;
+          titulo?: string | null;
+          expira_em?: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_visitas_links_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_visitas_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_turnos: {
         Row: {
           id: string;
@@ -3888,6 +4065,10 @@ export type BancoDaProducao = {
       };
       fn_producao_convidados_gerar_link: {
         Args: { p_sessao: string; p_corte: string; p_titulo: string; p_limite: number };
+        Returns: string;
+      };
+      fn_producao_visitas_gerar_link: {
+        Args: { p_espaco: string; p_dias: number; p_titulo: string };
         Returns: string;
       };
       fn_producao_voluntario_aprovar: {

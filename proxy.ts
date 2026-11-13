@@ -31,6 +31,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/voluntario", 10],
   // Pedido de convidados pelo link (sem login): por IP.
   ["/api/convidar", 20],
+  // Agendamento de visitas pelo link (sem login): por IP.
+  ["/api/visita", 10],
   // Programação pública de um espaço (sem login, aberta a outros sites): por IP.
   ["/api/programacao", 60],
   ["/api/auth/conta-sem-senha", 10],
@@ -173,6 +175,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/voluntario/") ||
         pathname.startsWith("/credencial/") ||
         pathname.startsWith("/convidar/") ||
+        pathname.startsWith("/visita/") ||
         pathname.startsWith("/programacao/") ||
         pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
@@ -239,6 +242,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/credencial/") ||
     // Pedido de convidados pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/convidar/") ||
+    // Agendamento de visitas pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/visita/") ||
     // Programação pública de um espaço e a versão para embutir (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/programacao/") ||
     pathname.startsWith("/embed/") ||
