@@ -4,6 +4,7 @@
 // orçamento a que está ligado. O percentual da bilheteria e o bônus por público são variáveis: só se sabem depois da sessão (borderô), e ficam de fora do firme.
 
 import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 import { SITUACOES_DO_ACORDO, type SentidoDoAcordo, type SituacaoDoAcordo, type TipoDeAcordo } from "@/lib/producao/estados";
 
 export const ROTULO_DO_TIPO_DE_ACORDO: Record<TipoDeAcordo, string> = { cache: "Cachê", bilheteria: "Bilheteria", misto: "Cachê e bilheteria", cessao_de_espaco: "Cessão de espaço", outro: "Outro" };
@@ -102,6 +103,22 @@ export function lerAcordo(campos: CamposDoAcordo, lerValor: (texto: string) => n
       bonus_publico: bonusPublico, bonus_valor: bonusValor.valor, despesas_nossas: nossas.valor, despesas_da_contraparte: deles.valor, retencoes: retencoes.valor, observacao: observacao.valor,
     },
   };
+}
+
+/** A planilha dos acordos da temporada: um por linha, com as condições, o valor firme que compromete e as datas cobertas (já escritas, por `datasDoAcordo`). */
+export function planilhaDosAcordos(campos: { temporada: string; acordos: readonly AcordoDaTemporada[]; datasDoAcordo: (id: string) => string[] }): string {
+  const reais = (valor: number | null) => (valor === null ? "" : reaisNaPlanilha(emCentavos(valor)));
+  return montarPlanilha([
+    ["Temporada", campos.temporada],
+    [],
+    ["Contraparte", "Tipo", "Sentido", "Situação", "Assinado em", "Valor fixo (R$)", "Garantia (R$)", "% da bilheteria", "Bônus a partir de (pessoas)", "Valor do bônus (R$)", "Valor firme (R$)", "Datas cobertas", "Despesas nossas", "Despesas da contraparte", "Retenções"],
+    ...campos.acordos.map(acordo => [
+      acordo.contraparte, ROTULO_DO_TIPO_DE_ACORDO[acordo.tipo], ROTULO_DO_SENTIDO_DO_ACORDO[acordo.sentido], ROTULO_DA_SITUACAO_DO_ACORDO[acordo.situacao],
+      acordo.assinado_em ? acordo.assinado_em.split("-").reverse().join("/") : "", reais(acordo.valor_fixo), reais(acordo.garantia),
+      acordo.percentual_bilheteria === null ? "" : String(acordo.percentual_bilheteria).replace(".", ","), acordo.bonus_publico === null ? "" : String(acordo.bonus_publico), reais(acordo.bonus_valor),
+      reaisNaPlanilha(valorFirmeDoAcordoEmCentavos(acordo)), campos.datasDoAcordo(acordo.id).join(" | "), acordo.despesas_nossas ?? "", acordo.despesas_da_contraparte ?? "", acordo.retencoes ?? "",
+    ]),
+  ]);
 }
 
 /** O texto do acordo para colar num e-mail ou na minuta. */
