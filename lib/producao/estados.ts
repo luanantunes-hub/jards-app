@@ -319,3 +319,17 @@ export const CATEGORIAS_DO_ORCAMENTO: readonly CategoriaDoOrcamento[] = [
   "cache", "comissao", "hospedagem", "alimentacao", "passagem", "transporte", "combustivel", "frete", "som_e_luz",
   "cenografia", "figurino", "direitos", "imposto", "seguro", "divulgacao", "taxa_da_casa", "acessibilidade", "outros",
 ];
+
+// Os acordos da temporada (PD4.5): o banco confere as listas num CHECK (supabase/migrations/*_producao_acordos.sql).
+
+/** `producao_acordos.tipo`. */
+export type TipoDeAcordo = "cache" | "bilheteria" | "misto" | "cessao_de_espaco" | "outro";
+export const TIPOS_DE_ACORDO: readonly TipoDeAcordo[] = ["cache", "bilheteria", "misto", "cessao_de_espaco", "outro"];
+
+/** `producao_acordos.sentido`: quem paga a quem. */
+export type SentidoDoAcordo = "a_pagar" | "a_receber";
+export const SENTIDOS_DO_ACORDO: readonly SentidoDoAcordo[] = ["a_pagar", "a_receber"];
+
+/** `producao_acordos.situacao`: anda um passo para a frente; assinado só vai para encerrado. */
+export type SituacaoDoAcordo = "rascunho" | "revisao" | "para_assinatura" | "assinado" | "encerrado";
+export const SITUACOES_DO_ACORDO: readonly SituacaoDoAcordo[] = ["rascunho", "revisao", "para_assinatura", "assinado", "encerrado"];

@@ -19,6 +19,8 @@ export type LinhaDoOrcamento = {
   estimativa: number | null; aprovado: number | null; revisado: number | null; comprometido: number; pago: number; ordem: number;
   /** A conta da estimativa, com os nomes das variáveis do orçamento (PD5.2). */
   formula?: string | null;
+  /** O acordo pelo qual a linha se cumpre (PD4.5): se estiver assinado e a pagar, o comprometido vem dele. */
+  acordo_id?: string | null;
 };
 
 const emCentavosOuNulo = (reais: number | null) => (reais === null ? null : emCentavos(reais));
@@ -29,6 +31,8 @@ export type ContaDaLinha = {
   /** O custo final previsto: o revisado, senão o aprovado, senão a estimativa (zero se nenhum). */
   previstoCentavos: number;
   comprometidoCentavos: number; pagoCentavos: number;
+  /** O comprometido veio de um acordo assinado, não do que foi digitado na linha. */
+  viaAcordo: boolean;
   /** O previsto menos o aprovado; nulo quando a linha não tem valor aprovado. */
   variacaoCentavos: number | null;
   /** O que está comprometido e ainda não foi pago. */
@@ -51,10 +55,10 @@ export type ContasDoOrcamento = {
 };
 
 /**
- * As contas do orçamento. O custo final previsto de cada linha é o revisado, senão o aprovado, senão a estimativa. A variação é o previsto menos o aprovado.
+ * As contas do orçamento. `comprometidoDosAcordos` diz, por linha, o comprometido em centavos que vem de um acordo assinado (vale no lugar do digitado). O custo final previsto de cada linha é o revisado, senão o aprovado, senão a estimativa. A variação é o previsto menos o aprovado.
  * Avisa quando o pago passa do comprometido e quando o comprometido passa do previsto (o app avisa, não impede: a pessoa decide).
  */
-export function calcularOrcamento(linhas: readonly LinhaDoOrcamento[]): ContasDoOrcamento {
+export function calcularOrcamento(linhas: readonly LinhaDoOrcamento[], comprometidoDosAcordos: Readonly<Record<string, number>> = {}): ContasDoOrcamento {
   const contas: ContaDaLinha[] = [...linhas]
     .sort((a, b) => CATEGORIAS_DO_ORCAMENTO.indexOf(a.categoria) - CATEGORIAS_DO_ORCAMENTO.indexOf(b.categoria) || a.ordem - b.ordem || a.descricao.localeCompare(b.descricao, "pt-BR"))
     .map(linha => {
@@ -62,7 +66,8 @@ export function calcularOrcamento(linhas: readonly LinhaDoOrcamento[]): ContasDo
       const aprovado = emCentavosOuNulo(linha.aprovado);
       const revisado = emCentavosOuNulo(linha.revisado);
       const previsto = revisado ?? aprovado ?? estimativa ?? 0;
-      const comprometido = emCentavos(linha.comprometido);
+      const viaAcordo = Object.hasOwn(comprometidoDosAcordos, linha.id);
+      const comprometido = viaAcordo ? comprometidoDosAcordos[linha.id] : emCentavos(linha.comprometido);
       const pago = emCentavos(linha.pago);
       const avisos: string[] = [];
       if (pago > comprometido) avisos.push(`Pago (${formatarReais(pago)}) passa do comprometido (${formatarReais(comprometido)}).`);
@@ -70,7 +75,7 @@ export function calcularOrcamento(linhas: readonly LinhaDoOrcamento[]): ContasDo
       return {
         id: linha.id, categoria: linha.categoria, descricao: linha.descricao,
         estimativaCentavos: estimativa, aprovadoCentavos: aprovado, revisadoCentavos: revisado, previstoCentavos: previsto,
-        comprometidoCentavos: comprometido, pagoCentavos: pago,
+        comprometidoCentavos: comprometido, pagoCentavos: pago, viaAcordo,
         variacaoCentavos: aprovado === null ? null : previsto - aprovado,
         aPagarCentavos: Math.max(0, comprometido - pago), aComprometerCentavos: Math.max(0, previsto - comprometido), avisos,
       };
