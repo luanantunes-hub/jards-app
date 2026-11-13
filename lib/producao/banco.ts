@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -3390,6 +3390,159 @@ export type BancoDaProducao = {
             columns: ["item_id"];
             isOneToOne: false;
             referencedRelation: "producao_itens";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_borderos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          publico_casa: number | null;
+          situacao: SituacaoDoBordero;
+          observacao: string | null;
+          fechado_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          publico_casa?: number | null;
+          situacao?: SituacaoDoBordero;
+          observacao?: string | null;
+          fechado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          publico_casa?: number | null;
+          situacao?: SituacaoDoBordero;
+          observacao?: string | null;
+          fechado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_borderos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_borderos_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_bordero_receitas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          bordero_id: string;
+          categoria: string;
+          quantidade: number;
+          valor_unitario: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          bordero_id: string;
+          categoria: string;
+          quantidade?: number;
+          valor_unitario?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          bordero_id?: string;
+          categoria?: string;
+          quantidade?: number;
+          valor_unitario?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_bordero_receitas_bordero_id_fkey";
+            columns: ["bordero_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_borderos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_bordero_receitas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_bordero_deducoes: {
+        Row: {
+          id: string;
+          organization_id: string;
+          bordero_id: string;
+          nome: string;
+          forma: FormaDaDeducao;
+          valor: number;
+          beneficiario: string | null;
+          ordem: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          bordero_id: string;
+          nome: string;
+          forma?: FormaDaDeducao;
+          valor?: number;
+          beneficiario?: string | null;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          bordero_id?: string;
+          nome?: string;
+          forma?: FormaDaDeducao;
+          valor?: number;
+          beneficiario?: string | null;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_bordero_deducoes_bordero_id_fkey";
+            columns: ["bordero_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_borderos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_bordero_deducoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];

@@ -12,7 +12,7 @@ export const AREAS_DA_LINHA_DO_TEMPO: readonly AreaDaLinhaDoTempo[] = [
   { id: "espacos", nome: "Espaços e técnica", entidades: ["producao_espacos", "producao_salas", "producao_pautas", "producao_sessoes", "producao_itens", "producao_plantas", "producao_riders", "producao_equipamentos", "producao_licencas", "producao_setores", "producao_setor_cotas", "producao_expografia"] },
   { id: "equipe", nome: "Equipe", entidades: ["producao_pessoas", "producao_vinculos", "producao_escalas", "producao_turnos", "producao_funcoes", "producao_voluntarios"] },
   { id: "logistica", nome: "Logística", entidades: ["producao_veiculos", "producao_deslocamentos", "producao_hospedagens", "producao_convites"] },
-  { id: "publico", nome: "Convidados e público", entidades: ["producao_convidados", "producao_credencial_tipos", "producao_acessibilidade", "producao_visitas_horarios", "producao_visitas_agendamentos", "producao_turmas", "producao_turma_aulas", "producao_matriculas"] },
+  { id: "publico", nome: "Convidados e público", entidades: ["producao_convidados", "producao_credencial_tipos", "producao_acessibilidade", "producao_visitas_horarios", "producao_visitas_agendamentos", "producao_borderos", "producao_turmas", "producao_turma_aulas", "producao_matriculas"] },
   { id: "acertos", nome: "Acertos, sites e arquivos", entidades: ["producao_acertos", "producao_modelos_acerto", "producao_sites", "producao_site_paginas", "producao_arquivos", "producao_ocorrencias"] },
 ];
 
