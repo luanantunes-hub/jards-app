@@ -70,6 +70,9 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_convidados: { fora: "", rotulos: "nome" },
   // A acessibilidade por sessão (PD7.6): a nota pode falar de uma pessoa do público e fica de fora; o tipo é o rótulo.
   producao_acessibilidade: { fora: "notas", rotulos: "tipo" },
+  // A visitação e os grupos (PD7.5): o contato do responsável e a observação ficam de fora; o dia e o grupo são os rótulos. O link é só o hash e a validade.
+  producao_visitas_horarios: { fora: "", rotulos: "dia" },
+  producao_visitas_agendamentos: { fora: "email,telefone,observacao,consentiu_em", rotulos: "grupo" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
@@ -113,6 +116,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_abastecimentos: "é só o registro de um abastecimento (litros, combustível, posto e hora): quem registrou e quando já ficam na própria linha, e o histórico do deslocamento conta o resto",
   producao_voluntarios_links: "é só o link de inscrição (título, vagas e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_convidados_links: "é só o link de pedidos (título, corte, limite e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
+  producao_visitas_links: "é só o link de agendamento de visitas (título, validade e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_credenciais: "é só o código da credencial (hash, que é segredo) e a contagem de entradas, que muda a cada leitura na porta: quem emitiu e quando já ficam na própria linha, e cada leitura é registrada em producao_porta_leituras",
   producao_porta_leituras: "é o próprio registro da porta, só de acrescentar: ninguém altera nem apaga uma leitura",
   producao_manutencoes: "são só as manutenções de um equipamento (descrição e datas): o histórico do equipamento e a própria data dizem o que importa",
@@ -308,7 +312,7 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
   // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
   // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_site_paginas: blocos,blocos_publicados", "producao_voluntarios: email,telefone,disponibilidade"]);
+    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_site_paginas: blocos,blocos_publicados", "producao_visitas_agendamentos: email,telefone,observacao,consentiu_em", "producao_voluntarios: email,telefone,disponibilidade"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {

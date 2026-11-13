@@ -248,3 +248,9 @@ export const TIPOS_DE_ACESSIBILIDADE: readonly TipoDeAcessibilidade[] = ["libras
 /** `producao_acessibilidade.situacao`. */
 export type SituacaoDaAcessibilidade = "planejado" | "confirmado" | "cancelado";
 export const SITUACOES_DA_ACESSIBILIDADE: readonly SituacaoDaAcessibilidade[] = ["planejado", "confirmado", "cancelado"];
+
+// A visitação e os grupos (PD7.5): o banco confere a lista num CHECK (supabase/migrations/*_producao_visitacao.sql).
+
+/** `producao_visitas_agendamentos.situacao`. */
+export type SituacaoDoAgendamento = "pedido" | "confirmado" | "recusado" | "cancelado";
+export const SITUACOES_DO_AGENDAMENTO: readonly SituacaoDoAgendamento[] = ["pedido", "confirmado", "recusado", "cancelado"];
