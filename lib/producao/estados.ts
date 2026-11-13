@@ -339,3 +339,9 @@ export const SITUACOES_DO_ACORDO: readonly SituacaoDoAcordo[] = ["rascunho", "re
 /** `producao_faturas.situacao`: anda um passo; em aberto só vai para quitada, e só com todas as parcelas recebidas. */
 export type SituacaoDaFatura = "rascunho" | "revisao" | "em_aberto" | "quitada";
 export const SITUACOES_DA_FATURA: readonly SituacaoDaFatura[] = ["rascunho", "revisao", "em_aberto", "quitada"];
+
+// Os pedidos de pagamento da temporada (PD5.4): o banco confere a lista num CHECK (supabase/migrations/*_producao_pedidos.sql).
+
+/** `producao_pedidos.situacao`: só a função `fn_producao_pedido_mudar` a muda. */
+export type SituacaoDoPedido = "rascunho" | "pendente" | "aprovado" | "pagando" | "pago" | "recusado";
+export const SITUACOES_DO_PEDIDO: readonly SituacaoDoPedido[] = ["rascunho", "pendente", "aprovado", "pagando", "pago", "recusado"];
