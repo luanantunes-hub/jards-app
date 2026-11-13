@@ -14,8 +14,11 @@ import {
   calcularOrcamento, compararCenarios, lerLinhaDoOrcamento, mensagemDoErroDeOrcamento, planilhaDoOrcamento, ROTULO_DA_CATEGORIA_DO_ORCAMENTO, ROTULO_DA_SITUACAO_DO_ORCAMENTO, textoDoOrcamento,
   type LinhaDoOrcamento,
 } from "@/lib/producao/orcamento";
+import { EVENTO_ACORDOS_MUDARAM } from "@/components/producao/AcordosDaTemporada";
+import { comprometidoDoAcordoEmCentavos, ROTULO_DA_SITUACAO_DO_ACORDO, type AcordoDaTemporada } from "@/lib/producao/acordos";
 import { avaliarFormula, nomeDeVariavelValido, nomeSugeridoParaVariavel, recalcularEstimativas, valoresDasVariaveis, type VariavelDoOrcamento } from "@/lib/producao/formula";
 
+type AcordoDoOrcamento = Pick<AcordoDaTemporada, "id" | "contraparte" | "sentido" | "situacao" | "valor_fixo" | "garantia">;
 type Orcamento = { id: string; nome: string; situacao: SituacaoDoOrcamento; aprovado_em: string | null };
 
 const paraCampo = (valor: number | null) => (valor === null ? "" : String(valor).replace(".", ","));
@@ -156,12 +159,13 @@ function VariavelSheet({ organizationId, orcamentoId, variavel, existentes, linh
   );
 }
 
-function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, onClose, onSalvou }: { organizationId: string; orcamentoId: string; situacao: SituacaoDoOrcamento; linha: LinhaDoOrcamento | null; variaveis: VariavelDoOrcamento[]; onClose: () => void; onSalvou: () => void }) {
+function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, acordos, onClose, onSalvou }: { organizationId: string; orcamentoId: string; situacao: SituacaoDoOrcamento; linha: LinhaDoOrcamento | null; variaveis: VariavelDoOrcamento[]; acordos: AcordoDoOrcamento[]; onClose: () => void; onSalvou: () => void }) {
   const { confirmDelete } = useDeleteConfirm();
   const [categoria, setCategoria] = useState<CategoriaDoOrcamento>(linha?.categoria ?? "outros");
   const [descricao, setDescricao] = useState(linha?.descricao ?? "");
   const [estimativa, setEstimativa] = useState(paraCampo(linha?.estimativa ?? null));
   const [formula, setFormula] = useState(linha?.formula ?? "");
+  const [acordoId, setAcordoId] = useState(linha?.acordo_id ?? "");
   const [aprovado, setAprovado] = useState(paraCampo(linha?.aprovado ?? null));
   const [revisado, setRevisado] = useState(paraCampo(linha?.revisado ?? null));
   const [comprometido, setComprometido] = useState(linha && linha.comprometido !== 0 ? paraCampo(linha.comprometido) : "");
@@ -173,6 +177,9 @@ function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, o
   const naoApaga = aprovadoOrcamento && linha?.aprovado != null;
   const valoresDasVars = useMemo(() => valoresDasVariaveis(variaveis), [variaveis]);
   const previa = formula.trim() === "" ? null : avaliarFormula(formula, valoresDasVars);
+  const acordosDisponiveis = acordos.filter(item => item.sentido === "a_pagar");
+  const acordoEscolhido = acordos.find(item => item.id === acordoId) ?? null;
+  const comprometidoDoAcordo = acordoEscolhido ? comprometidoDoAcordoEmCentavos(acordoEscolhido) : null;
 
   async function salvar(fechar: () => void) {
     if (previa && !previa.ok) { setErro(previa.erro); return; }
@@ -184,8 +191,8 @@ function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, o
     setErro(null);
     const producao = clienteDaProducao(createClient());
     const { error } = linha
-      ? await producao.from("producao_orcamento_linhas").update(travada ? { descricao: leitura.valor.descricao, revisado: leitura.valor.revisado, comprometido: leitura.valor.comprometido, pago: leitura.valor.pago } : { ...leitura.valor, formula: formulaFinal }).eq("id", linha.id)
-      : await producao.from("producao_orcamento_linhas").insert({ organization_id: organizationId, orcamento_id: orcamentoId, ...leitura.valor, formula: formulaFinal, aprovado: aprovadoOrcamento ? null : leitura.valor.aprovado });
+      ? await producao.from("producao_orcamento_linhas").update(travada ? { descricao: leitura.valor.descricao, revisado: leitura.valor.revisado, comprometido: leitura.valor.comprometido, pago: leitura.valor.pago, acordo_id: acordoId || null } : { ...leitura.valor, formula: formulaFinal, acordo_id: acordoId || null }).eq("id", linha.id)
+      : await producao.from("producao_orcamento_linhas").insert({ organization_id: organizationId, orcamento_id: orcamentoId, ...leitura.valor, formula: formulaFinal, acordo_id: acordoId || null, aprovado: aprovadoOrcamento ? null : leitura.valor.aprovado });
     setSalvando(false);
     if (error) { setErro(mensagemDoErroDeOrcamento(error)); return; }
     onSalvou();
@@ -251,6 +258,16 @@ function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, o
           {campoValor("orc-aprovado", "Aprovado (R$)", aprovado, setAprovado, travada || aprovadoOrcamento, aprovadoOrcamento ? "Preenchido ao aprovar o orçamento." : "Deixe em branco: ao aprovar, vale a estimativa.")}
           {campoValor("orc-revisado", "Revisado (R$)", revisado, setRevisado, false, "Vale mais que os outros dois.")}
         </div>
+        {acordosDisponiveis.length > 0 && (
+          <div>
+            <span className={ROTULO}>Acordo (opcional)</span>
+            <Dropdown ariaLabel="Acordo desta linha" value={acordoId} onChange={setAcordoId} disabled={salvando}
+              options={[{ value: "", label: "Nenhum" }, ...acordosDisponiveis.map(item => ({ value: item.id, label: `${item.contraparte} (${ROTULO_DA_SITUACAO_DO_ACORDO[item.situacao].toLowerCase()})` }))]} />
+            {comprometidoDoAcordo !== null
+              ? <p className="mt-1 text-[0.6875rem] tabular-nums text-black/55">O comprometido desta linha vem do acordo assinado: {formatarReais(comprometidoDoAcordo)}. O valor digitado abaixo fica guardado, mas não conta.</p>
+              : acordoId !== "" && <p className="mt-1 text-[0.625rem] text-black/45">O comprometido passa a vir do acordo quando ele for assinado.</p>}
+          </div>
+        )}
         <div className="grid gap-3 sm:grid-cols-2">
           {campoValor("orc-comprometido", "Comprometido (R$)", comprometido, setComprometido, false, "O que já foi combinado ou contratado.")}
           {campoValor("orc-pago", "Pago (R$)", pago, setPago, false, "O que já saiu do caixa.")}
@@ -308,6 +325,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   const [escolhido, setEscolhido] = useState("");
   const [linhas, setLinhas] = useState<LinhaDoOrcamento[]>([]);
   const [variaveis, setVariaveis] = useState<VariavelDoOrcamento[]>([]);
+  const [acordos, setAcordos] = useState<AcordoDoOrcamento[]>([]);
   const [todasAsLinhas, setTodasAsLinhas] = useState<Record<string, LinhaDoOrcamento[]>>({});
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
@@ -337,9 +355,10 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
       const lista = (orc.data ?? []) as Orcamento[];
       const idAtual = lista.some(item => item.id === escolhido) ? escolhido : lista[0]?.id ?? "";
       const ids = lista.map(item => item.id);
-      const [lin, vars] = await Promise.all([
-        ids.length > 0 ? producao.from("producao_orcamento_linhas").select("id, orcamento_id, categoria, descricao, estimativa, aprovado, revisado, comprometido, pago, ordem, formula").in("orcamento_id", ids) : { data: [], error: null },
+      const [lin, vars, aco] = await Promise.all([
+        ids.length > 0 ? producao.from("producao_orcamento_linhas").select("id, orcamento_id, categoria, descricao, estimativa, aprovado, revisado, comprometido, pago, ordem, formula, acordo_id").in("orcamento_id", ids) : { data: [], error: null },
         idAtual ? producao.from("producao_orcamento_variaveis").select("id, nome, rotulo, valor").eq("orcamento_id", idAtual).order("nome") : { data: [], error: null },
+        producao.from("producao_acordos").select("id, contraparte, sentido, situacao, valor_fixo, garantia").eq("temporada_id", temporadaId).order("created_at"),
       ]);
       if (!ativo) return;
       const agrupadas: Record<string, LinhaDoOrcamento[]> = {};
@@ -349,16 +368,33 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
       setTodasAsLinhas(agrupadas);
       setLinhas(agrupadas[idAtual] ?? []);
       setVariaveis((vars.data ?? []) as VariavelDoOrcamento[]);
+      setAcordos((aco.data ?? []) as AcordoDoOrcamento[]);
       setCarregado(true);
-      setErro(orc.error || lin.error || vars.error ? "Não foi possível carregar o orçamento. Recarregue a página." : null);
+      setErro(orc.error || lin.error || vars.error || aco.error ? "Não foi possível carregar o orçamento. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
     // `escolhido` entra de propósito só pela troca no seletor, que também passa por `versao`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [comDinheiro, temporadaId, versao]);
 
+  useEffect(() => {
+    const aviso = () => setVersao(atual => atual + 1);
+    window.addEventListener(EVENTO_ACORDOS_MUDARAM, aviso);
+    return () => window.removeEventListener(EVENTO_ACORDOS_MUDARAM, aviso);
+  }, []);
+
   const orcamento = orcamentos.find(item => item.id === escolhido) ?? null;
-  const contas = useMemo(() => calcularOrcamento(linhas), [linhas]);
+  const dosAcordos = useMemo(() => {
+    const porId = new Map(acordos.map(item => [item.id, item]));
+    const mapa: Record<string, number> = {};
+    for (const linha of linhas) {
+      const acordo = linha.acordo_id ? porId.get(linha.acordo_id) : undefined;
+      const comprometido = acordo ? comprometidoDoAcordoEmCentavos(acordo) : null;
+      if (comprometido !== null) mapa[linha.id] = comprometido;
+    }
+    return mapa;
+  }, [acordos, linhas]);
+  const contas = useMemo(() => calcularOrcamento(linhas, dosAcordos), [linhas, dosAcordos]);
   const editavel = podeEditar && orcamento?.situacao !== "encerrado";
   const recarregar = () => setVersao(atual => atual + 1);
   const comAprovado = orcamento !== null && orcamento.situacao !== "rascunho";
@@ -544,7 +580,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
                       <tr key={conta.id} className="border-b border-black/[.06] align-top last:border-b-0">
                         <th scope="row" className="px-3 py-2 text-left">
                           <span className="block text-[0.8125rem] font-medium text-[#282525]">{conta.descricao}</span>
-                          <span className="block text-[0.6875rem] font-normal text-black/45">{ROTULO_DA_CATEGORIA_DO_ORCAMENTO[conta.categoria]}</span>
+                          <span className="block text-[0.6875rem] font-normal text-black/45">{ROTULO_DA_CATEGORIA_DO_ORCAMENTO[conta.categoria]}{conta.viaAcordo ? " · comprometido pelo acordo" : ""}</span>
                           {conta.avisos.map(aviso => <span key={aviso} className="mt-0.5 block text-[0.6875rem] font-normal text-[#B07A14]">{aviso}</span>)}
                         </th>
                         {[conta.estimativaCentavos, conta.aprovadoCentavos, conta.revisadoCentavos].map((valor, indice) => <td key={indice} className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${valor === null ? "text-black/30" : "text-black/65"}`}>{reaisOuTraco(valor)}</td>)}
@@ -568,7 +604,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
 
       {folhaNovo && <NovoOrcamentoSheet organizationId={organizationId} temporadaId={temporadaId} nomeSugerido={orcamentos.length === 0 ? "Orçamento" : `Cenário ${orcamentos.length + 1}`} onClose={() => setFolhaNovo(false)} onCriou={id => { setEscolhido(id); recarregar(); }} />}
       {folhaVariavel && orcamento && <VariavelSheet organizationId={organizationId} orcamentoId={orcamento.id} variavel={folhaVariavel.variavel} existentes={variaveis} linhas={linhas} onClose={() => setFolhaVariavel(null)} onSalvou={recarregar} />}
-      {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} variaveis={variaveis} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
+      {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} variaveis={variaveis} acordos={acordos} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
     </section>
   );
 }

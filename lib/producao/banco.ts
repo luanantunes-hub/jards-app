@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -3675,6 +3675,7 @@ export type BancoDaProducao = {
           pago: number;
           ordem: number;
           formula: string | null;
+          acordo_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -3691,6 +3692,7 @@ export type BancoDaProducao = {
           pago?: number;
           ordem?: number;
           formula?: string | null;
+          acordo_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3707,10 +3709,18 @@ export type BancoDaProducao = {
           pago?: number;
           ordem?: number;
           formula?: string | null;
+          acordo_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [
+          {
+            foreignKeyName: "producao_orcamento_linhas_acordo_id_fkey";
+            columns: ["acordo_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_acordos";
+            referencedColumns: ["id"];
+          },
           {
             foreignKeyName: "producao_orcamento_linhas_orcamento_id_fkey";
             columns: ["orcamento_id"];
@@ -3768,6 +3778,133 @@ export type BancoDaProducao = {
           },
           {
             foreignKeyName: "producao_orcamento_variaveis_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_acordos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          contraparte: string;
+          tipo: TipoDeAcordo;
+          sentido: SentidoDoAcordo;
+          situacao: SituacaoDoAcordo;
+          valor_fixo: number | null;
+          garantia: number | null;
+          percentual_bilheteria: number | null;
+          bonus_publico: number | null;
+          bonus_valor: number | null;
+          despesas_nossas: string | null;
+          despesas_da_contraparte: string | null;
+          retencoes: string | null;
+          observacao: string | null;
+          assinado_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          contraparte: string;
+          tipo?: TipoDeAcordo;
+          sentido?: SentidoDoAcordo;
+          situacao?: SituacaoDoAcordo;
+          valor_fixo?: number | null;
+          garantia?: number | null;
+          percentual_bilheteria?: number | null;
+          bonus_publico?: number | null;
+          bonus_valor?: number | null;
+          despesas_nossas?: string | null;
+          despesas_da_contraparte?: string | null;
+          retencoes?: string | null;
+          observacao?: string | null;
+          assinado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          contraparte?: string;
+          tipo?: TipoDeAcordo;
+          sentido?: SentidoDoAcordo;
+          situacao?: SituacaoDoAcordo;
+          valor_fixo?: number | null;
+          garantia?: number | null;
+          percentual_bilheteria?: number | null;
+          bonus_publico?: number | null;
+          bonus_valor?: number | null;
+          despesas_nossas?: string | null;
+          despesas_da_contraparte?: string | null;
+          retencoes?: string | null;
+          observacao?: string | null;
+          assinado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_acordos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acordos_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_acordo_datas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          acordo_id: string;
+          data_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          acordo_id: string;
+          data_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          acordo_id?: string;
+          data_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_acordo_datas_acordo_id_fkey";
+            columns: ["acordo_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_acordos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acordo_datas_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acordo_datas_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
