@@ -4,6 +4,7 @@
 // um percentual do líquido, um valor fixo, ou o resto (o que sobra depois das outras). Aprovar e anotar a data do pagamento é manual.
 
 import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { celula, reaisNaPlanilha } from "@/lib/producao/planilha";
 import type { FormaDoAcerto, PapelNoAcerto, SituacaoDoAcertoDoBordero } from "@/lib/producao/estados";
 
 export const ROTULO_DO_PAPEL_NO_ACERTO: Record<PapelNoAcerto, string> = { companhia: "Companhia", casa: "Casa", patrocinador: "Patrocinador", outra: "Outra parte" };
@@ -96,16 +97,10 @@ function formatarData(dia: string): string {
   return `${data}/${mes}/${ano}`;
 }
 
-/** Texto de uma célula da planilha: entre aspas quando tem ; " ou quebra de linha, e sem fórmula escondida (= + - @ no começo). */
-function celula(valor: string): string {
-  const seguro = /^[=+\-@\t\r]/.test(valor) ? `'${valor}` : valor;
-  return /[;"\n\r]/.test(seguro) ? `"${seguro.replace(/"/g, '""')}"` : seguro;
-}
-
 /** A planilha do acerto (CSV com ponto e vírgula e vírgula decimal, abre direto no Excel em português; o BOM vem no começo). */
 export function planilhaDoAcerto(campos: { sessao: string; liquidoCentavos: number; contas: ContasDoAcerto }): string {
   const { sessao, liquidoCentavos, contas } = campos;
-  const reais = (centavos: number) => (centavos / 100).toFixed(2).replace(".", ",");
+  const reais = reaisNaPlanilha;
   const linhas = [
     ["Sessão", sessao].map(celula).join(";"),
     ["Líquido do borderô (R$)", reais(liquidoCentavos)].map(celula).join(";"),
