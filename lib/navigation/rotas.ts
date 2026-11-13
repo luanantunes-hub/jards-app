@@ -30,6 +30,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/pauta", "Pauta dos espaços"],
   ["/producoes/programacao", "Programação dos espaços"],
   ["/producoes/plateia", "Plateia das sessões"],
+  ["/producoes/expografia", "Expografia das salas"],
   ["/producoes/convidados", "Convidados das sessões"],
   ["/producoes/porta", "Porta das sessões"],
   ["/producoes/acessibilidade", "Acessibilidade das sessões"],

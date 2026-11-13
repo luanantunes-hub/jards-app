@@ -80,6 +80,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   // O mapa da plateia (PD7.7): setor e cota sem dado pessoal nem dinheiro; o nome e a categoria são os rótulos.
   producao_setores: { fora: "", rotulos: "nome" },
   producao_setor_cotas: { fora: "", rotulos: "categoria" },
+  // A planta expográfica (PD8.5): posição, altura, ordem, luz e instalação de uma obra; nada sensível. A posição é o rótulo.
+  producao_expografia: { fora: "", rotulos: "posicao" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.

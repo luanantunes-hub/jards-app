@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -3320,6 +3320,76 @@ export type BancoDaProducao = {
             columns: ["setor_id"];
             isOneToOne: false;
             referencedRelation: "producao_setores";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_expografia: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sala_id: string;
+          item_id: string;
+          posicao: PosicaoNaExposicao;
+          altura_instalacao_cm: number | null;
+          ordem_montagem: number;
+          luz: LuzDaObra;
+          lux: number | null;
+          notas: string | null;
+          instalada_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sala_id: string;
+          item_id: string;
+          posicao?: PosicaoNaExposicao;
+          altura_instalacao_cm?: number | null;
+          ordem_montagem?: number;
+          luz?: LuzDaObra;
+          lux?: number | null;
+          notas?: string | null;
+          instalada_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sala_id?: string;
+          item_id?: string;
+          posicao?: PosicaoNaExposicao;
+          altura_instalacao_cm?: number | null;
+          ordem_montagem?: number;
+          luz?: LuzDaObra;
+          lux?: number | null;
+          notas?: string | null;
+          instalada_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_expografia_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_expografia_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_salas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_expografia_item_id_fkey";
+            columns: ["item_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_itens";
             referencedColumns: ["id"];
           },
         ];
