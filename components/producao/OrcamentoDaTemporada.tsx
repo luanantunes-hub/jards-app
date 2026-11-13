@@ -11,9 +11,10 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { CATEGORIAS_DO_ORCAMENTO, type CategoriaDoOrcamento, type SituacaoDoOrcamento } from "@/lib/producao/estados";
 import { formatarReais, lerValorEmReais } from "@/lib/producao/bordero";
 import {
-  calcularOrcamento, lerLinhaDoOrcamento, mensagemDoErroDeOrcamento, planilhaDoOrcamento, ROTULO_DA_CATEGORIA_DO_ORCAMENTO, ROTULO_DA_SITUACAO_DO_ORCAMENTO, textoDoOrcamento,
+  calcularOrcamento, compararCenarios, lerLinhaDoOrcamento, mensagemDoErroDeOrcamento, planilhaDoOrcamento, ROTULO_DA_CATEGORIA_DO_ORCAMENTO, ROTULO_DA_SITUACAO_DO_ORCAMENTO, textoDoOrcamento,
   type LinhaDoOrcamento,
 } from "@/lib/producao/orcamento";
+import { avaliarFormula, nomeDeVariavelValido, nomeSugeridoParaVariavel, recalcularEstimativas, valoresDasVariaveis, type VariavelDoOrcamento } from "@/lib/producao/formula";
 
 type Orcamento = { id: string; nome: string; situacao: SituacaoDoOrcamento; aprovado_em: string | null };
 
@@ -60,11 +61,107 @@ function NovoOrcamentoSheet({ organizationId, temporadaId, nomeSugerido, onClose
   );
 }
 
-function LinhaSheet({ organizationId, orcamentoId, situacao, linha, onClose, onSalvou }: { organizationId: string; orcamentoId: string; situacao: SituacaoDoOrcamento; linha: LinhaDoOrcamento | null; onClose: () => void; onSalvou: () => void }) {
+function VariavelSheet({ organizationId, orcamentoId, variavel, existentes, linhas, onClose, onSalvou }: { organizationId: string; orcamentoId: string; variavel: VariavelDoOrcamento | null; existentes: VariavelDoOrcamento[]; linhas: LinhaDoOrcamento[]; onClose: () => void; onSalvou: () => void }) {
+  const { confirmDelete } = useDeleteConfirm();
+  const [rotulo, setRotulo] = useState(variavel?.rotulo ?? "");
+  const [nome, setNome] = useState(variavel?.nome ?? "");
+  const [nomeMexido, setNomeMexido] = useState(variavel !== null);
+  const [valor, setValor] = useState(variavel ? paraCampo(variavel.valor) : "");
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  // Grava as estimativas das linhas com fórmula que mudam com o novo conjunto de variáveis.
+  async function recalcular(depois: VariavelDoOrcamento[]) {
+    const { mudancas } = recalcularEstimativas(linhas, valoresDasVariaveis(depois));
+    const producao = clienteDaProducao(createClient());
+    for (const mudanca of mudancas) {
+      const { error } = await producao.from("producao_orcamento_linhas").update({ estimativa: mudanca.estimativa }).eq("id", mudanca.id);
+      if (error) throw new Error(mensagemDoErroDeOrcamento(error));
+    }
+  }
+
+  async function salvar(fechar: () => void) {
+    const nomeFinal = nome.trim();
+    if (!nomeDeVariavelValido(nomeFinal)) { setErro("O nome usa letras minúsculas sem acento, números e sublinhado (por exemplo, dias_de_estrada), até 30 letras, e não pode ser min, max, round, ceil nem floor."); return; }
+    const numero = valor.trim() === "" ? 0 : lerValorEmReais(valor);
+    if (numero === null || numero > 1000000000) { setErro("Digite o valor como número, por exemplo 5 ou 2,5."); return; }
+    if (rotulo.trim().length > 60) { setErro("O nome por extenso pode ter até 60 letras."); return; }
+    setSalvando(true);
+    setErro(null);
+    try {
+      const producao = clienteDaProducao(createClient());
+      const dados = { nome: nomeFinal, rotulo: rotulo.trim() === "" ? null : rotulo.trim(), valor: numero };
+      const { error } = variavel
+        ? await producao.from("producao_orcamento_variaveis").update(dados).eq("id", variavel.id)
+        : await producao.from("producao_orcamento_variaveis").insert({ organization_id: organizationId, orcamento_id: orcamentoId, ...dados });
+      if (error) throw new Error(mensagemDoErroDeOrcamento(error));
+      const resto = existentes.filter(item => item.id !== variavel?.id);
+      await recalcular([...resto, { id: variavel?.id ?? "novo", ...dados }]);
+      onSalvou();
+      fechar();
+    } catch (falha) {
+      setErro(falha instanceof Error ? falha.message : "Não foi possível salvar. Tente de novo.");
+    } finally {
+      setSalvando(false);
+    }
+  }
+
+  function apagar(fechar: () => void) {
+    if (!variavel) return;
+    const usada = linhas.filter(linha => linha.formula && new RegExp(`\\b${variavel.nome}\\b`, "i").test(linha.formula));
+    confirmDelete({
+      title: "Apagar variável?",
+      description: usada.length > 0 ? `${variavel.nome} é usada em ${usada.length} ${usada.length === 1 ? "linha" : "linhas"} do orçamento: as fórmulas delas deixam de calcular até você ajustá-las.` : `${variavel.nome} sai do orçamento.`,
+      confirmLabel: "Apagar", pendingLabel: "Apagando…", illustration: false,
+      onConfirm: async () => {
+        const { error } = await clienteDaProducao(createClient()).from("producao_orcamento_variaveis").delete().eq("id", variavel.id);
+        if (error) throw new Error(mensagemDoErroDeOrcamento(error));
+        onSalvou();
+        fechar();
+      },
+    });
+  }
+
+  return (
+    <TopSheet
+      titulo={variavel ? "Editar variável" : "Nova variável"}
+      onClose={onClose}
+      footer={fechar => (
+        <>
+          {variavel && <button type="button" onClick={() => apagar(fechar)} disabled={salvando} className={APAGAR}>Apagar</button>}
+          <button type="button" onClick={fechar} disabled={salvando} className={CANCELAR}>Cancelar</button>
+          <button type="button" onClick={() => void salvar(fechar)} disabled={salvando} className={SALVAR}>{salvando ? "Salvando…" : variavel ? "Salvar" : "Adicionar"}</button>
+        </>
+      )}
+    >
+      <div className="space-y-4">
+        {erro && <Erro texto={erro} />}
+        <div>
+          <label className={ROTULO} htmlFor="var-rotulo">O que é</label>
+          <input id="var-rotulo" className={CAMPO} value={rotulo} maxLength={60} onChange={event => { setRotulo(event.target.value); if (!nomeMexido) setNome(nomeSugeridoParaVariavel(event.target.value)); }} disabled={salvando} placeholder="Pessoas viajando" />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className={ROTULO} htmlFor="var-nome">Nome na fórmula</label>
+            <input id="var-nome" className={CAMPO} value={nome} maxLength={30} onChange={event => { setNome(event.target.value); setNomeMexido(true); }} disabled={salvando} placeholder="pessoas" />
+          </div>
+          <div>
+            <label className={ROTULO} htmlFor="var-valor">Valor</label>
+            <input id="var-valor" inputMode="decimal" className={CAMPO} value={valor} onChange={event => setValor(event.target.value)} disabled={salvando} placeholder="5" />
+          </div>
+        </div>
+        <p className="text-[0.6875rem] text-black/45">Use o nome nas fórmulas das linhas, por exemplo <span className="font-medium">pessoas * dias_de_estrada * 180</span>. Ao salvar, as linhas com fórmula são recalculadas.</p>
+      </div>
+    </TopSheet>
+  );
+}
+
+function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, onClose, onSalvou }: { organizationId: string; orcamentoId: string; situacao: SituacaoDoOrcamento; linha: LinhaDoOrcamento | null; variaveis: VariavelDoOrcamento[]; onClose: () => void; onSalvou: () => void }) {
   const { confirmDelete } = useDeleteConfirm();
   const [categoria, setCategoria] = useState<CategoriaDoOrcamento>(linha?.categoria ?? "outros");
   const [descricao, setDescricao] = useState(linha?.descricao ?? "");
   const [estimativa, setEstimativa] = useState(paraCampo(linha?.estimativa ?? null));
+  const [formula, setFormula] = useState(linha?.formula ?? "");
   const [aprovado, setAprovado] = useState(paraCampo(linha?.aprovado ?? null));
   const [revisado, setRevisado] = useState(paraCampo(linha?.revisado ?? null));
   const [comprometido, setComprometido] = useState(linha && linha.comprometido !== 0 ? paraCampo(linha.comprometido) : "");
@@ -74,16 +171,21 @@ function LinhaSheet({ organizationId, orcamentoId, situacao, linha, onClose, onS
   const aprovadoOrcamento = situacao === "aprovado";
   const travada = aprovadoOrcamento && linha !== null; // aprovado: estimativa, aprovado e categoria da linha existente não mudam
   const naoApaga = aprovadoOrcamento && linha?.aprovado != null;
+  const valoresDasVars = useMemo(() => valoresDasVariaveis(variaveis), [variaveis]);
+  const previa = formula.trim() === "" ? null : avaliarFormula(formula, valoresDasVars);
 
   async function salvar(fechar: () => void) {
-    const leitura = lerLinhaDoOrcamento({ categoria, descricao, estimativa, aprovado, revisado, comprometido, pago, ordem: String(linha?.ordem ?? 0) }, lerValorEmReais);
+    if (previa && !previa.ok) { setErro(previa.erro); return; }
+    const estimativaFinal = previa?.ok ? paraCampo(previa.valor) : estimativa;
+    const leitura = lerLinhaDoOrcamento({ categoria, descricao, estimativa: estimativaFinal, aprovado, revisado, comprometido, pago, ordem: String(linha?.ordem ?? 0) }, lerValorEmReais);
     if (!leitura.ok) { setErro(leitura.erro); return; }
+    const formulaFinal = formula.trim() === "" ? null : formula.trim();
     setSalvando(true);
     setErro(null);
     const producao = clienteDaProducao(createClient());
     const { error } = linha
-      ? await producao.from("producao_orcamento_linhas").update(travada ? { descricao: leitura.valor.descricao, revisado: leitura.valor.revisado, comprometido: leitura.valor.comprometido, pago: leitura.valor.pago } : leitura.valor).eq("id", linha.id)
-      : await producao.from("producao_orcamento_linhas").insert({ organization_id: organizationId, orcamento_id: orcamentoId, ...leitura.valor, aprovado: aprovadoOrcamento ? null : leitura.valor.aprovado });
+      ? await producao.from("producao_orcamento_linhas").update(travada ? { descricao: leitura.valor.descricao, revisado: leitura.valor.revisado, comprometido: leitura.valor.comprometido, pago: leitura.valor.pago } : { ...leitura.valor, formula: formulaFinal }).eq("id", linha.id)
+      : await producao.from("producao_orcamento_linhas").insert({ organization_id: organizationId, orcamento_id: orcamentoId, ...leitura.valor, formula: formulaFinal, aprovado: aprovadoOrcamento ? null : leitura.valor.aprovado });
     setSalvando(false);
     if (error) { setErro(mensagemDoErroDeOrcamento(error)); return; }
     onSalvou();
@@ -137,8 +239,15 @@ function LinhaSheet({ organizationId, orcamentoId, situacao, linha, onClose, onS
             <input id="orc-descricao" className={CAMPO} value={descricao} maxLength={120} onChange={event => setDescricao(event.target.value)} disabled={salvando} placeholder="Cachê do elenco" />
           </div>
         </div>
+        <div>
+          <label className={ROTULO} htmlFor="orc-formula">Fórmula da estimativa (opcional)</label>
+          <input id="orc-formula" className={CAMPO} value={formula} maxLength={200} onChange={event => setFormula(event.target.value)} disabled={salvando || travada} placeholder="pessoas * dias_de_estrada * 180" spellCheck={false} />
+          {previa?.ok && <p className="mt-1 text-[0.6875rem] tabular-nums text-black/55">= {formatarReais(Math.round(previa.valor * 100))}</p>}
+          {previa && !previa.ok && <p role="alert" className="mt-1 text-[0.6875rem] text-[#B23B3B]">{previa.erro}</p>}
+          {!previa && variaveis.length > 0 && <p className="mt-1 text-[0.625rem] text-black/45">Variáveis: {variaveis.map(item => item.nome).join(", ")}. Com fórmula, a estimativa é calculada.</p>}
+        </div>
         <div className="grid gap-3 sm:grid-cols-3">
-          {campoValor("orc-estimativa", "Estimativa (R$)", estimativa, setEstimativa, travada)}
+          {campoValor("orc-estimativa", "Estimativa (R$)", previa?.ok ? paraCampo(previa.valor) : estimativa, setEstimativa, travada || previa?.ok === true)}
           {campoValor("orc-aprovado", "Aprovado (R$)", aprovado, setAprovado, travada || aprovadoOrcamento, aprovadoOrcamento ? "Preenchido ao aprovar o orçamento." : "Deixe em branco: ao aprovar, vale a estimativa.")}
           {campoValor("orc-revisado", "Revisado (R$)", revisado, setRevisado, false, "Vale mais que os outros dois.")}
         </div>
@@ -152,6 +261,45 @@ function LinhaSheet({ organizationId, orcamentoId, situacao, linha, onClose, onS
   );
 }
 
+/** Os orçamentos da temporada lado a lado (PD5.2): o custo final previsto de cada um por categoria, e a diferença de cada um para o primeiro. */
+function CenariosLadoALado({ orcamentos, linhasPorOrcamento }: { orcamentos: Orcamento[]; linhasPorOrcamento: Record<string, LinhaDoOrcamento[]> }) {
+  const { categorias, colunas } = useMemo(() => compararCenarios(orcamentos.map(item => ({ id: item.id, nome: item.nome, linhas: linhasPorOrcamento[item.id] ?? [] }))), [orcamentos, linhasPorOrcamento]);
+  return (
+    <div className="mt-6">
+      <h3 className="mb-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Cenários lado a lado</h3>
+      <div className="overflow-x-auto rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <table className="w-full border-collapse text-left" style={{ minWidth: `${14 + colunas.length * 9}rem` }}>
+          <thead>
+            <tr className="border-b border-black/[.06]">
+              <th scope="col" className="px-3 py-2.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Categoria</th>
+              {colunas.map(coluna => <th key={coluna.id} scope="col" className="px-3 py-2.5 text-right text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{coluna.nome}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {categorias.map(categoria => (
+              <tr key={categoria} className="border-b border-black/[.06]">
+                <th scope="row" className="px-3 py-2 text-left text-[0.8125rem] font-normal text-[#282525]">{ROTULO_DA_CATEGORIA_DO_ORCAMENTO[categoria]}</th>
+                {colunas.map(coluna => {
+                  const valor = coluna.porCategoria[categoria];
+                  return <td key={coluna.id} className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${valor === undefined ? "text-black/30" : "text-[#282525]"}`}>{valor === undefined ? "—" : formatarReais(valor)}</td>;
+                })}
+              </tr>
+            ))}
+            <tr className="border-b border-black/[.06]">
+              <th scope="row" className="px-3 py-2 text-left text-[0.8125rem] font-semibold text-[#282525]">Custo final previsto</th>
+              {colunas.map(coluna => <td key={coluna.id} className="px-3 py-2 text-right text-[0.8125rem] font-semibold tabular-nums text-[#282525]">{formatarReais(coluna.previstoCentavos)}</td>)}
+            </tr>
+            <tr>
+              <th scope="row" className="px-3 py-2 text-left text-[0.75rem] font-normal text-black/55">Diferença para {colunas[0]?.nome}</th>
+              {colunas.map(coluna => <td key={coluna.id} className="px-3 py-2 text-right text-[0.75rem] tabular-nums text-black/55">{coluna.diferencaCentavos === null ? "—" : `${coluna.diferencaCentavos > 0 ? "+" : coluna.diferencaCentavos < 0 ? "−" : ""}${formatarReais(Math.abs(coluna.diferencaCentavos))}`}</td>)}
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
 /** O orçamento vivo de uma temporada (PD5.1): linhas por categoria, estimativa, aprovado e revisado, comprometido e pago. Só aparece a quem tem a permissão de dinheiro. */
 export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTitulo, podeEditar }: { organizationId: string; temporadaId: string; temporadaTitulo: string; podeEditar: boolean }) {
   const { confirmDelete } = useDeleteConfirm();
@@ -159,6 +307,8 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
   const [escolhido, setEscolhido] = useState("");
   const [linhas, setLinhas] = useState<LinhaDoOrcamento[]>([]);
+  const [variaveis, setVariaveis] = useState<VariavelDoOrcamento[]>([]);
+  const [todasAsLinhas, setTodasAsLinhas] = useState<Record<string, LinhaDoOrcamento[]>>({});
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
@@ -167,6 +317,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   const [confirmando, setConfirmando] = useState<"aprovar" | "encerrar" | null>(null);
   const [folhaNovo, setFolhaNovo] = useState(false);
   const [folhaLinha, setFolhaLinha] = useState<{ linha: LinhaDoOrcamento | null } | null>(null);
+  const [folhaVariavel, setFolhaVariavel] = useState<{ variavel: VariavelDoOrcamento | null } | null>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -185,15 +336,21 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
       const orc = await producao.from("producao_orcamentos").select("id, nome, situacao, aprovado_em").eq("temporada_id", temporadaId).order("created_at");
       const lista = (orc.data ?? []) as Orcamento[];
       const idAtual = lista.some(item => item.id === escolhido) ? escolhido : lista[0]?.id ?? "";
-      const lin = idAtual
-        ? await producao.from("producao_orcamento_linhas").select("id, categoria, descricao, estimativa, aprovado, revisado, comprometido, pago, ordem").eq("orcamento_id", idAtual)
-        : { data: [], error: null };
+      const ids = lista.map(item => item.id);
+      const [lin, vars] = await Promise.all([
+        ids.length > 0 ? producao.from("producao_orcamento_linhas").select("id, orcamento_id, categoria, descricao, estimativa, aprovado, revisado, comprometido, pago, ordem, formula").in("orcamento_id", ids) : { data: [], error: null },
+        idAtual ? producao.from("producao_orcamento_variaveis").select("id, nome, rotulo, valor").eq("orcamento_id", idAtual).order("nome") : { data: [], error: null },
+      ]);
       if (!ativo) return;
+      const agrupadas: Record<string, LinhaDoOrcamento[]> = {};
+      for (const linha of (lin.data ?? []) as (LinhaDoOrcamento & { orcamento_id: string })[]) (agrupadas[linha.orcamento_id] ??= []).push(linha);
       setOrcamentos(lista);
       setEscolhido(idAtual);
-      setLinhas((lin.data ?? []) as LinhaDoOrcamento[]);
+      setTodasAsLinhas(agrupadas);
+      setLinhas(agrupadas[idAtual] ?? []);
+      setVariaveis((vars.data ?? []) as VariavelDoOrcamento[]);
       setCarregado(true);
-      setErro(orc.error || lin.error ? "Não foi possível carregar o orçamento. Recarregue a página." : null);
+      setErro(orc.error || lin.error || vars.error ? "Não foi possível carregar o orçamento. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
     // `escolhido` entra de propósito só pela troca no seletor, que também passa por `versao`.
@@ -217,6 +374,39 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
     setConfirmando(null);
     if (error) { setErro(mensagemDoErroDeOrcamento(error)); return; }
     recarregar();
+  }
+
+  async function copiarComoCenario() {
+    if (!orcamento) return;
+    setTrabalhando(true);
+    setErro(null);
+    const producao = clienteDaProducao(createClient());
+    let novoId: string | null = null;
+    try {
+      const { data: novo, error } = await producao.from("producao_orcamentos").insert({ organization_id: organizationId, temporada_id: temporadaId, nome: `Cenário ${orcamentos.length + 1}` }).select("id").single();
+      if (error || !novo) throw new Error(mensagemDoErroDeOrcamento(error ?? {}));
+      novoId = novo.id;
+      if (variaveis.length > 0) {
+        const { error: erroVars } = await producao.from("producao_orcamento_variaveis").insert(variaveis.map(item => ({ organization_id: organizationId, orcamento_id: novo.id, nome: item.nome, rotulo: item.rotulo, valor: item.valor })));
+        if (erroVars) throw new Error(mensagemDoErroDeOrcamento(erroVars));
+      }
+      const contasDaOrigem = new Map(contas.linhas.map(conta => [conta.id, conta]));
+      if (linhas.length > 0) {
+        const { error: erroLinhas } = await producao.from("producao_orcamento_linhas").insert(linhas.map(item => {
+          const conta = contasDaOrigem.get(item.id);
+          // A estimativa do cenário parte do custo final previsto da origem; a fórmula, se houver, segue junto e recalcula com as variáveis do cenário.
+          return { organization_id: organizationId, orcamento_id: novo.id, categoria: item.categoria, descricao: item.descricao, estimativa: item.formula ? item.estimativa : (conta ? conta.previstoCentavos / 100 : item.estimativa), formula: item.formula ?? null, ordem: item.ordem };
+        }));
+        if (erroLinhas) throw new Error(mensagemDoErroDeOrcamento(erroLinhas));
+      }
+      setEscolhido(novo.id);
+      recarregar();
+    } catch (falha) {
+      if (novoId) await producao.from("producao_orcamentos").delete().eq("id", novoId);
+      setErro(falha instanceof Error ? falha.message : "Não foi possível copiar o orçamento. Tente de novo.");
+    } finally {
+      setTrabalhando(false);
+    }
   }
 
   function apagarOrcamento() {
@@ -286,6 +476,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
             <span className="rounded border px-2 py-1 text-[0.6875rem] font-medium text-[#282525]" style={{ borderColor: "rgba(13,13,13,.25)" }}>{ROTULO_DA_SITUACAO_DO_ORCAMENTO[orcamento.situacao]}{orcamento.situacao !== "rascunho" && orcamento.aprovado_em ? ` em ${new Date(orcamento.aprovado_em).toLocaleDateString("pt-BR")}` : ""}</span>
             {podeEditar && orcamento.situacao === "rascunho" && confirmando !== "aprovar" && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => setConfirmando("aprovar")}>Aprovar orçamento</button>}
             {podeEditar && orcamento.situacao !== "encerrado" && confirmando !== "encerrar" && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => setConfirmando("encerrar")}>Encerrar</button>}
+            {podeEditar && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void copiarComoCenario()}>Copiar como cenário</button>}
             {podeEditar && <button type="button" className={`${BOTAO_PEQUENO} text-[#B23B3B]`} disabled={trabalhando} onClick={apagarOrcamento}>Apagar orçamento</button>}
             {confirmando && (
               <div className="flex flex-wrap items-center gap-2 rounded border bg-white px-3 py-2" style={{ borderColor: "#B07A1447" }}>
@@ -293,6 +484,28 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
                 <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void mudarSituacao(confirmando === "aprovar" ? "aprovado" : "encerrado")}>{confirmando === "aprovar" ? "Aprovar" : "Encerrar"}</button>
                 <button type="button" className={BOTAO_PEQUENO} onClick={() => setConfirmando(null)}>Voltar</button>
               </div>
+            )}
+          </div>
+
+          <div className="rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Variáveis</p>
+              {podeEditar && orcamento.situacao === "rascunho" && <button type="button" onClick={() => setFolhaVariavel({ variavel: null })} className={BOTAO_PEQUENO}><Plus size={12} aria-hidden="true" /> Variável</button>}
+            </div>
+            {variaveis.length === 0 ? (
+              <p className="mt-1.5 text-[0.75rem] text-black/45">Sem variáveis. Cadastre números como pessoas viajando, dias de estrada ou praças e use-os em fórmulas para trocar de cenário sem refazer as contas.</p>
+            ) : (
+              <ul className="mt-2 flex flex-wrap gap-2">
+                {variaveis.map(item => (
+                  <li key={item.id}>
+                    <button type="button" disabled={!(podeEditar && orcamento.situacao === "rascunho")} onClick={() => setFolhaVariavel({ variavel: item })} title={item.rotulo ?? item.nome} className="flex items-baseline gap-1.5 rounded border border-black/12 bg-white px-2.5 py-1.5 text-left text-[0.75rem] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:cursor-default disabled:hover:bg-white">
+                      <span className="font-medium text-[#282525]">{item.nome}</span>
+                      <span className="tabular-nums text-black/55">{item.valor.toLocaleString("pt-BR")}</span>
+                      {item.rotulo && <span className="text-[0.6875rem] text-black/40">{item.rotulo}</span>}
+                    </button>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
 
@@ -351,8 +564,11 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
         </div>
       )}
 
+      {orcamentos.length > 1 && <CenariosLadoALado orcamentos={orcamentos} linhasPorOrcamento={todasAsLinhas} />}
+
       {folhaNovo && <NovoOrcamentoSheet organizationId={organizationId} temporadaId={temporadaId} nomeSugerido={orcamentos.length === 0 ? "Orçamento" : `Cenário ${orcamentos.length + 1}`} onClose={() => setFolhaNovo(false)} onCriou={id => { setEscolhido(id); recarregar(); }} />}
-      {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
+      {folhaVariavel && orcamento && <VariavelSheet organizationId={organizationId} orcamentoId={orcamento.id} variavel={folhaVariavel.variavel} existentes={variaveis} linhas={linhas} onClose={() => setFolhaVariavel(null)} onSalvou={recarregar} />}
+      {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} variaveis={variaveis} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
     </section>
   );
 }

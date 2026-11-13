@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { lerValorEmReais } from "../lib/producao/bordero";
-import { calcularOrcamento, lerLinhaDoOrcamento, mensagemDoErroDeOrcamento, planilhaDoOrcamento, textoDoOrcamento, type LinhaDoOrcamento } from "../lib/producao/orcamento";
+import { calcularOrcamento, compararCenarios, lerLinhaDoOrcamento, mensagemDoErroDeOrcamento, planilhaDoOrcamento, textoDoOrcamento, type LinhaDoOrcamento } from "../lib/producao/orcamento";
 
 const linha = (extra: Partial<LinhaDoOrcamento> & Pick<LinhaDoOrcamento, "id" | "descricao">): LinhaDoOrcamento => ({
   categoria: "outros", estimativa: null, aprovado: null, revisado: null, comprometido: 0, pago: 0, ordem: 0, ...extra,
@@ -88,4 +88,15 @@ test("orçamento: mensagens do banco viram texto claro", () => {
   assert.match(mensagemDoErroDeOrcamento({ code: "23505", message: "producao_orcamento_linhas_descricao_idx" }), /categoria e descrição/);
   assert.match(mensagemDoErroDeOrcamento({ code: "23505", message: "producao_orcamentos_nome_idx" }), /mesmo nome|esse nome/);
   assert.match(mensagemDoErroDeOrcamento({}), /Não foi possível salvar/);
+});
+
+test("cenários: lado a lado por categoria, com a diferença para o primeiro", () => {
+  const base = [linha({ id: "a", descricao: "Hotel", categoria: "hospedagem", estimativa: 1000 }), linha({ id: "b", descricao: "Van", categoria: "transporte", estimativa: 400 })];
+  const enxuto = [linha({ id: "c", descricao: "Hotel", categoria: "hospedagem", estimativa: 600 }), linha({ id: "d", descricao: "Voo", categoria: "passagem", estimativa: 300 })];
+  const { categorias, colunas } = compararCenarios([{ id: "1", nome: "Base", linhas: base }, { id: "2", nome: "Enxuto", linhas: enxuto }]);
+  assert.deepEqual(categorias, ["hospedagem", "passagem", "transporte"], "na ordem do catálogo, só as usadas por algum cenário");
+  assert.deepEqual(colunas.map(c => [c.nome, c.previstoCentavos, c.diferencaCentavos]), [["Base", 140000, null], ["Enxuto", 90000, -50000]]);
+  assert.equal(colunas[1].porCategoria.passagem, 30000);
+  assert.equal(colunas[1].porCategoria.transporte, undefined);
+  assert.deepEqual(compararCenarios([]), { categorias: [], colunas: [] });
 });
