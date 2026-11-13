@@ -82,6 +82,8 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_setor_cotas: { fora: "", rotulos: "categoria" },
   // A planta expográfica (PD8.5): posição, altura, ordem, luz e instalação de uma obra; nada sensível. A posição é o rótulo.
   producao_expografia: { fora: "", rotulos: "posicao" },
+  // O borderô (PD7.4): só o público e a situação, sem dinheiro; a situação é o rótulo. A receita e as deduções são dinheiro e ficam sem histórico (abaixo).
+  producao_borderos: { fora: "", rotulos: "situacao" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
@@ -126,6 +128,8 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_voluntarios_links: "é só o link de inscrição (título, vagas e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_convidados_links: "é só o link de pedidos (título, corte, limite e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_visitas_links: "é só o link de agendamento de visitas (título, validade e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
+  producao_bordero_receitas: "é só a receita do borderô (quantidade e valor por categoria de ingresso): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; o borderô guarda a situação e o fechamento",
+  producao_bordero_deducoes: "são só as deduções do borderô (nome, valor e quem recebe): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; o borderô guarda a situação e o fechamento",
   producao_presencas: "são só as marcas de presença de cada matriculado em cada aula (uma linha por par, de alto volume): a frequência e o certificado já contam o que importa na matrícula",
   producao_credenciais: "é só o código da credencial (hash, que é segredo) e a contagem de entradas, que muda a cada leitura na porta: quem emitiu e quando já ficam na própria linha, e cada leitura é registrada em producao_porta_leituras",
   producao_porta_leituras: "é o próprio registro da porta, só de acrescentar: ninguém altera nem apaga uma leitura",

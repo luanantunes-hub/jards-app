@@ -280,3 +280,13 @@ export const POSICOES_NA_EXPOSICAO: readonly PosicaoNaExposicao[] = ["parede", "
 /** `producao_expografia.luz`. */
 export type LuzDaObra = "sem_luz" | "difusa" | "pontual" | "natural" | "baixa";
 export const LUZES_DA_OBRA: readonly LuzDaObra[] = ["sem_luz", "difusa", "pontual", "natural", "baixa"];
+
+// O borderô da sessão (PD7.4): o banco confere as listas num CHECK (supabase/migrations/*_producao_bordero.sql).
+
+/** `producao_borderos.situacao`. */
+export type SituacaoDoBordero = "rascunho" | "conferido" | "fechado";
+export const SITUACOES_DO_BORDERO: readonly SituacaoDoBordero[] = ["rascunho", "conferido", "fechado"];
+
+/** `producao_bordero_deducoes.forma`. */
+export type FormaDaDeducao = "percentual" | "fixo";
+export const FORMAS_DA_DEDUCAO: readonly FormaDaDeducao[] = ["percentual", "fixo"];
