@@ -254,3 +254,13 @@ export const SITUACOES_DA_ACESSIBILIDADE: readonly SituacaoDaAcessibilidade[] = 
 /** `producao_visitas_agendamentos.situacao`. */
 export type SituacaoDoAgendamento = "pedido" | "confirmado" | "recusado" | "cancelado";
 export const SITUACOES_DO_AGENDAMENTO: readonly SituacaoDoAgendamento[] = ["pedido", "confirmado", "recusado", "cancelado"];
+
+// A formação (PD7.10): o banco confere as listas num CHECK (supabase/migrations/*_producao_formacao.sql).
+
+/** `producao_turmas.situacao`. */
+export type SituacaoDaTurma = "aberta" | "em_andamento" | "concluida" | "cancelada";
+export const SITUACOES_DA_TURMA: readonly SituacaoDaTurma[] = ["aberta", "em_andamento", "concluida", "cancelada"];
+
+/** `producao_matriculas.situacao`. */
+export type SituacaoDaMatricula = "inscrito" | "confirmado" | "desistente";
+export const SITUACOES_DA_MATRICULA: readonly SituacaoDaMatricula[] = ["inscrito", "confirmado", "desistente"];

@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -3007,6 +3007,213 @@ export type BancoDaProducao = {
           },
           {
             foreignKeyName: "producao_visitas_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_turmas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          inicio: string | null;
+          fim: string | null;
+          vagas: number | null;
+          frequencia_minima: number;
+          situacao: SituacaoDaTurma;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          inicio?: string | null;
+          fim?: string | null;
+          vagas?: number | null;
+          frequencia_minima?: number;
+          situacao?: SituacaoDaTurma;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          inicio?: string | null;
+          fim?: string | null;
+          vagas?: number | null;
+          frequencia_minima?: number;
+          situacao?: SituacaoDaTurma;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_turmas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_turma_aulas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          turma_id: string;
+          dia: string;
+          inicio: string;
+          fim: string;
+          tema: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          turma_id: string;
+          dia: string;
+          inicio: string;
+          fim: string;
+          tema?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          turma_id?: string;
+          dia?: string;
+          inicio?: string;
+          fim?: string;
+          tema?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_turma_aulas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_turma_aulas_turma_id_fkey";
+            columns: ["turma_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_turmas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_matriculas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          turma_id: string;
+          nome: string;
+          email: string | null;
+          telefone: string | null;
+          situacao: SituacaoDaMatricula;
+          certificado_emitido_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          turma_id: string;
+          nome: string;
+          email?: string | null;
+          telefone?: string | null;
+          situacao?: SituacaoDaMatricula;
+          certificado_emitido_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          turma_id?: string;
+          nome?: string;
+          email?: string | null;
+          telefone?: string | null;
+          situacao?: SituacaoDaMatricula;
+          certificado_emitido_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_matriculas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_matriculas_turma_id_fkey";
+            columns: ["turma_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_turmas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_presencas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          aula_id: string;
+          matricula_id: string;
+          presente: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          aula_id: string;
+          matricula_id: string;
+          presente?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          aula_id?: string;
+          matricula_id?: string;
+          presente?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_presencas_aula_id_fkey";
+            columns: ["aula_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_turma_aulas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_presencas_matricula_id_fkey";
+            columns: ["matricula_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_matriculas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_presencas_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
