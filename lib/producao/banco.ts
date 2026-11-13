@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -3540,6 +3540,69 @@ export type BancoDaProducao = {
           },
           {
             foreignKeyName: "producao_bordero_deducoes_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_bordero_acertos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          bordero_id: string;
+          parte: string;
+          papel: PapelNoAcerto;
+          forma: FormaDoAcerto;
+          valor: number;
+          situacao: SituacaoDoAcertoDoBordero;
+          aprovado_por: string | null;
+          aprovado_em: string | null;
+          pago_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          bordero_id: string;
+          parte: string;
+          papel?: PapelNoAcerto;
+          forma?: FormaDoAcerto;
+          valor?: number;
+          situacao?: SituacaoDoAcertoDoBordero;
+          aprovado_por?: string | null;
+          aprovado_em?: string | null;
+          pago_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          bordero_id?: string;
+          parte?: string;
+          papel?: PapelNoAcerto;
+          forma?: FormaDoAcerto;
+          valor?: number;
+          situacao?: SituacaoDoAcertoDoBordero;
+          aprovado_por?: string | null;
+          aprovado_em?: string | null;
+          pago_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_bordero_acertos_bordero_id_fkey";
+            columns: ["bordero_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_borderos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_bordero_acertos_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";

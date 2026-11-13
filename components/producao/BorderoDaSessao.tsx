@@ -3,6 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Copy, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { AcertoDeContasDoBordero } from "@/components/producao/AcertoDeContasDoBordero";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
@@ -15,15 +17,6 @@ import {
 
 type Bordero = { id: string; publico_casa: number | null; situacao: SituacaoDoBordero; fechado_em: string | null };
 
-const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
-const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
-const BOTAO = "flex h-9 items-center gap-1.5 rounded border border-black/12 bg-white px-3.5 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
-const BOTAO_PEQUENO = "h-8 rounded border border-black/12 bg-white px-2.5 text-[0.6875rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
-const CANCELAR = "rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
-const SALVAR = "rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
-const APAGAR = "mr-auto rounded px-4 py-2.5 text-[0.75rem] font-medium text-[#B23B3B] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]";
-
-const Erro = ({ texto }: { texto: string }) => <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{texto}</p>;
 const CATEGORIAS_SUGERIDAS = ["Inteira", "Meia", "Social", "Cortesia"];
 
 function ReceitaSheet({ organizationId, borderoId, receita, existentes, onClose, onSalvou }: { organizationId: string; borderoId: string; receita: ReceitaDoBordero | null; existentes: string[]; onClose: () => void; onSalvou: () => void }) {
@@ -399,6 +392,8 @@ export function BorderoDaSessao({ organizationId, sessaoId, sessaoRotulo, podeEd
             </dl>
             {contas.ticketMedioCentavos !== null && <p className="mt-2 text-[0.6875rem] tabular-nums text-black/45">Ticket médio: {formatarReais(contas.ticketMedioCentavos)} por ingresso.</p>}
           </section>
+
+          <AcertoDeContasDoBordero organizationId={organizationId} borderoId={bordero.id} borderoFechado={fechado} sessaoRotulo={sessaoRotulo} liquidoCentavos={contas.liquidoCentavos} podeEditar={podeEditar} />
         </>
       ) : (
         <p className="rounded border bg-white px-5 py-5 text-[0.75rem] text-black/55" style={{ borderColor: "rgba(13,13,13,.08)" }}>A receita, as deduções e o líquido só aparecem para quem tem a permissão de dinheiro. Peça a um administrador, se precisar vê-los.</p>

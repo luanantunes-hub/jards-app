@@ -290,3 +290,17 @@ export const SITUACOES_DO_BORDERO: readonly SituacaoDoBordero[] = ["rascunho", "
 /** `producao_bordero_deducoes.forma`. */
 export type FormaDaDeducao = "percentual" | "fixo";
 export const FORMAS_DA_DEDUCAO: readonly FormaDaDeducao[] = ["percentual", "fixo"];
+
+// O acerto de contas do borderô (PD7.9): o banco confere as listas num CHECK (supabase/migrations/*_producao_bordero_acertos.sql).
+
+/** `producao_bordero_acertos.papel`. */
+export type PapelNoAcerto = "companhia" | "casa" | "patrocinador" | "outra";
+export const PAPEIS_NO_ACERTO: readonly PapelNoAcerto[] = ["companhia", "casa", "patrocinador", "outra"];
+
+/** `producao_bordero_acertos.forma`. */
+export type FormaDoAcerto = "percentual" | "fixo" | "resto";
+export const FORMAS_DO_ACERTO: readonly FormaDoAcerto[] = ["percentual", "fixo", "resto"];
+
+/** `producao_bordero_acertos.situacao`. */
+export type SituacaoDoAcertoDoBordero = "proposto" | "aprovado";
+export const SITUACOES_DO_ACERTO_DO_BORDERO: readonly SituacaoDoAcertoDoBordero[] = ["proposto", "aprovado"];

@@ -154,6 +154,7 @@ export function textoDoBordero(campos: { sessao: string; situacao: SituacaoDoBor
 export function mensagemDoErroDeBordero(erro: { code?: string; message?: string }): string {
   const mensagem = erro.message ?? "";
   if (mensagem.includes("bordero_fechado")) return "O borderô está fechado. Reabra para mudar.";
+  if (mensagem.includes("acerto_aprovado")) return "O acerto tem partes aprovadas. Desaprove-as antes de reabrir o borderô.";
   if (erro.code === "42501") return "Você não pode alterar este borderô (os valores pedem a permissão de dinheiro).";
   if (erro.code === "23505" && mensagem.includes("categoria")) return "Já existe uma receita com essa categoria neste borderô.";
   if (erro.code === "23505") return "Esta sessão já tem borderô.";
