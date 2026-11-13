@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -3603,6 +3603,120 @@ export type BancoDaProducao = {
           },
           {
             foreignKeyName: "producao_bordero_acertos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_orcamentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          nome: string;
+          situacao: SituacaoDoOrcamento;
+          aprovado_por: string | null;
+          aprovado_em: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          nome?: string;
+          situacao?: SituacaoDoOrcamento;
+          aprovado_por?: string | null;
+          aprovado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          nome?: string;
+          situacao?: SituacaoDoOrcamento;
+          aprovado_por?: string | null;
+          aprovado_em?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_orcamentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_orcamentos_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_orcamento_linhas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          orcamento_id: string;
+          categoria: CategoriaDoOrcamento;
+          descricao: string;
+          estimativa: number | null;
+          aprovado: number | null;
+          revisado: number | null;
+          comprometido: number;
+          pago: number;
+          ordem: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          orcamento_id: string;
+          categoria?: CategoriaDoOrcamento;
+          descricao: string;
+          estimativa?: number | null;
+          aprovado?: number | null;
+          revisado?: number | null;
+          comprometido?: number;
+          pago?: number;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          orcamento_id?: string;
+          categoria?: CategoriaDoOrcamento;
+          descricao?: string;
+          estimativa?: number | null;
+          aprovado?: number | null;
+          revisado?: number | null;
+          comprometido?: number;
+          pago?: number;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_orcamento_linhas_orcamento_id_fkey";
+            columns: ["orcamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_orcamentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_orcamento_linhas_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";

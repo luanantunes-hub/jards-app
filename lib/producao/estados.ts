@@ -304,3 +304,18 @@ export const FORMAS_DO_ACERTO: readonly FormaDoAcerto[] = ["percentual", "fixo",
 /** `producao_bordero_acertos.situacao`. */
 export type SituacaoDoAcertoDoBordero = "proposto" | "aprovado";
 export const SITUACOES_DO_ACERTO_DO_BORDERO: readonly SituacaoDoAcertoDoBordero[] = ["proposto", "aprovado"];
+
+// O orçamento vivo da temporada (PD5.1): o banco confere as listas num CHECK (supabase/migrations/*_producao_orcamento.sql).
+
+/** `producao_orcamentos.situacao`: só anda para a frente. */
+export type SituacaoDoOrcamento = "rascunho" | "aprovado" | "encerrado";
+export const SITUACOES_DO_ORCAMENTO: readonly SituacaoDoOrcamento[] = ["rascunho", "aprovado", "encerrado"];
+
+/** `producao_orcamento_linhas.categoria`. */
+export type CategoriaDoOrcamento =
+  | "cache" | "comissao" | "hospedagem" | "alimentacao" | "passagem" | "transporte" | "combustivel" | "frete" | "som_e_luz"
+  | "cenografia" | "figurino" | "direitos" | "imposto" | "seguro" | "divulgacao" | "taxa_da_casa" | "acessibilidade" | "outros";
+export const CATEGORIAS_DO_ORCAMENTO: readonly CategoriaDoOrcamento[] = [
+  "cache", "comissao", "hospedagem", "alimentacao", "passagem", "transporte", "combustivel", "frete", "som_e_luz",
+  "cenografia", "figurino", "direitos", "imposto", "seguro", "divulgacao", "taxa_da_casa", "acessibilidade", "outros",
+];
