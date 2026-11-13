@@ -345,3 +345,9 @@ export const SITUACOES_DA_FATURA: readonly SituacaoDaFatura[] = ["rascunho", "re
 /** `producao_pedidos.situacao`: só a função `fn_producao_pedido_mudar` a muda. */
 export type SituacaoDoPedido = "rascunho" | "pendente" | "aprovado" | "pagando" | "pago" | "recusado";
 export const SITUACOES_DO_PEDIDO: readonly SituacaoDoPedido[] = ["rascunho", "pendente", "aprovado", "pagando", "pago", "recusado"];
+
+// Os adiantamentos da temporada (PD5.6): o banco confere a lista num CHECK (supabase/migrations/*_producao_adiantamentos_diarias.sql).
+
+/** `producao_adiantamentos.situacao`: só se encerra com o saldo zerado. */
+export type SituacaoDoAdiantamento = "aberto" | "encerrado";
+export const SITUACOES_DO_ADIANTAMENTO: readonly SituacaoDoAdiantamento[] = ["aberto", "encerrado"];
