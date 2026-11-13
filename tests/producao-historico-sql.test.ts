@@ -130,6 +130,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_visitas_links: "é só o link de agendamento de visitas (título, validade e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_orcamentos: "é dinheiro (valor, comprometido e pago): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou e quando ficam no próprio orçamento",
   producao_orcamento_linhas: "é dinheiro (valor, comprometido e pago): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou e quando ficam no próprio orçamento",
+  producao_orcamento_variaveis: "é só o número de uma conta do orçamento (pessoas, dias de estrada...): vive no orçamento em rascunho e só quem vê o dinheiro o lê",
   producao_bordero_acertos: "é só o acerto de contas do borderô (parte, forma e valor): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou, quando e quando foi pago ficam na própria linha",
   producao_bordero_receitas: "é só a receita do borderô (quantidade e valor por categoria de ingresso): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; o borderô guarda a situação e o fechamento",
   producao_bordero_deducoes: "são só as deduções do borderô (nome, valor e quem recebe): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; o borderô guarda a situação e o fechamento",

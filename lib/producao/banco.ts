@@ -3674,6 +3674,7 @@ export type BancoDaProducao = {
           comprometido: number;
           pago: number;
           ordem: number;
+          formula: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -3689,6 +3690,7 @@ export type BancoDaProducao = {
           comprometido?: number;
           pago?: number;
           ordem?: number;
+          formula?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3704,6 +3706,7 @@ export type BancoDaProducao = {
           comprometido?: number;
           pago?: number;
           ordem?: number;
+          formula?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3717,6 +3720,54 @@ export type BancoDaProducao = {
           },
           {
             foreignKeyName: "producao_orcamento_linhas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_orcamento_variaveis: {
+        Row: {
+          id: string;
+          organization_id: string;
+          orcamento_id: string;
+          nome: string;
+          rotulo: string | null;
+          valor: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          orcamento_id: string;
+          nome: string;
+          rotulo?: string | null;
+          valor?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          orcamento_id?: string;
+          nome?: string;
+          rotulo?: string | null;
+          valor?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_orcamento_variaveis_orcamento_id_fkey";
+            columns: ["orcamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_orcamentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_orcamento_variaveis_organization_id_fkey";
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";

@@ -17,6 +17,8 @@ export const ROTULO_DA_SITUACAO_DO_ORCAMENTO: Record<SituacaoDoOrcamento, string
 export type LinhaDoOrcamento = {
   id: string; categoria: CategoriaDoOrcamento; descricao: string;
   estimativa: number | null; aprovado: number | null; revisado: number | null; comprometido: number; pago: number; ordem: number;
+  /** A conta da estimativa, com os nomes das variáveis do orçamento (PD5.2). */
+  formula?: string | null;
 };
 
 const emCentavosOuNulo = (reais: number | null) => (reais === null ? null : emCentavos(reais));
@@ -99,6 +101,25 @@ export function calcularOrcamento(linhas: readonly LinhaDoOrcamento[]): ContasDo
   };
 }
 
+export type ColunaDoCenario = { id: string; nome: string; porCategoria: Partial<Record<CategoriaDoOrcamento, number>>; previstoCentavos: number; diferencaCentavos: number | null };
+
+/**
+ * Os cenários (orçamentos da mesma temporada) lado a lado: o custo final previsto de cada um por categoria e no total, e a diferença de cada cenário
+ * para o primeiro (a base da comparação). Só entram as categorias que algum cenário usa.
+ */
+export function compararCenarios(cenarios: readonly { id: string; nome: string; linhas: readonly LinhaDoOrcamento[] }[]): { categorias: CategoriaDoOrcamento[]; colunas: ColunaDoCenario[] } {
+  const calculados = cenarios.map(cenario => ({ cenario, contas: calcularOrcamento(cenario.linhas) }));
+  const categorias = CATEGORIAS_DO_ORCAMENTO.filter(categoria => calculados.some(item => item.contas.porCategoria.some(parte => parte.categoria === categoria)));
+  const base = calculados[0]?.contas.previstoCentavos ?? 0;
+  const colunas = calculados.map(({ cenario, contas }, indice) => ({
+    id: cenario.id, nome: cenario.nome,
+    porCategoria: Object.fromEntries(contas.porCategoria.map(parte => [parte.categoria, parte.previstoCentavos])) as Partial<Record<CategoriaDoOrcamento, number>>,
+    previstoCentavos: contas.previstoCentavos,
+    diferencaCentavos: indice === 0 ? null : contas.previstoCentavos - base,
+  }));
+  return { categorias, colunas };
+}
+
 export type LeituraDaLinha =
   | { ok: true; valor: { categoria: CategoriaDoOrcamento; descricao: string; estimativa: number | null; aprovado: number | null; revisado: number | null; comprometido: number; pago: number; ordem: number } }
   | { ok: false; erro: string; campo: string };
@@ -177,6 +198,8 @@ export function mensagemDoErroDeOrcamento(erro: { code?: string; message?: strin
   if (mensagem.includes("orcamento_aprovado")) return "O orçamento está aprovado: a estimativa, o aprovado e a categoria não mudam, e uma linha com valor aprovado não se apaga. Use o revisado.";
   if (mensagem.includes("orcamento_nao_volta")) return "O orçamento aprovado não volta para rascunho.";
   if (erro.code === "42501") return "Você não pode alterar o orçamento (os valores pedem a permissão de dinheiro).";
+  if (erro.code === "23505" && mensagem.includes("variaveis")) return "Já existe uma variável com esse nome neste orçamento.";
+  if (mensagem.includes("orcamento_aprovado") === false && mensagem.includes("variaveis_nome_check")) return "O nome da variável usa letras minúsculas sem acento, números e sublinhado (por exemplo, dias_de_estrada), e não pode ser min, max, round, ceil nem floor.";
   if (erro.code === "23505" && mensagem.includes("descricao")) return "Já existe uma linha com essa categoria e descrição neste orçamento.";
   if (erro.code === "23505") return "Já existe um orçamento com esse nome nesta temporada.";
   return "Não foi possível salvar. Tente de novo.";
