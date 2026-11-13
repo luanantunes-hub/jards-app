@@ -13,6 +13,18 @@ const COISA: Record<string, string> = {
   producao_escalas: "uma escala",
   producao_cartoes_dia: "um cartão de viagem ou hospedagem",
   producao_tarefas: "uma tarefa",
+  // A linha do tempo da organização (PD8.4) mostra todas as tabelas com histórico.
+  producao_obras: "uma obra", producao_temporadas: "uma temporada", producao_notas: "uma nota", producao_modelos_dia: "um modelo de dia",
+  producao_espacos: "um espaço", producao_salas: "uma sala", producao_pautas: "uma pauta", producao_sessoes: "uma sessão da programação",
+  producao_itens: "um item do inventário", producao_plantas: "uma planta", producao_riders: "um rider", producao_equipamentos: "um equipamento",
+  producao_licencas: "uma licença", producao_setores: "um setor da plateia", producao_setor_cotas: "uma cota de plateia",
+  producao_pessoas: "uma pessoa da equipe", producao_vinculos: "um vínculo da equipe", producao_turnos: "um turno", producao_funcoes: "uma permissão",
+  producao_voluntarios: "um voluntário", producao_veiculos: "um veículo", producao_deslocamentos: "um deslocamento", producao_hospedagens: "uma hospedagem",
+  producao_convites: "um convite de presença", producao_convidados: "um convidado", producao_credencial_tipos: "um tipo de credencial",
+  producao_acessibilidade: "um recurso de acessibilidade", producao_visitas_horarios: "um horário de visita", producao_visitas_agendamentos: "um agendamento de visita",
+  producao_turmas: "uma turma", producao_turma_aulas: "uma aula", producao_matriculas: "uma matrícula",
+  producao_acertos: "um acerto técnico", producao_modelos_acerto: "um modelo de acerto", producao_sites: "um site", producao_site_paginas: "uma página de site",
+  producao_arquivos: "um arquivo", producao_ocorrencias: "uma ocorrência",
 };
 
 const CAMPO: Record<string, string> = {
@@ -20,6 +32,9 @@ const CAMPO: Record<string, string> = {
   inicio: "o início", fim: "o fim", exibicao: "a forma da hora", confirmado: "a confirmação", notas: "as notas", capacidade: "a capacidade",
   funcao: "a função", chamada: "a chamada", saida: "a saída", confirmacao: "a resposta", endereco: "o endereço", prazo: "o prazo",
   prazo_dias: "o prazo em dias", responsavel_pessoa_id: "quem faz", espaco_id: "o espaço", sala_id: "a sala", ordem: "a ordem",
+  nome: "o nome", lugares: "os lugares", quantidade: "a quantidade", pessoas: "as pessoas", resposta: "a resposta", categoria: "a categoria",
+  vagas: "as vagas", presentes: "quantos vieram", certificado_emitido_em: "o certificado", pessoa_id: "a pessoa", hotel: "o hotel", dia: "o dia",
+  grupo: "o grupo", capacidade_carga_kg: "a carga", arquivado: "o arquivamento", iniciado_em: "quando começou", terminado_em: "quando terminou",
 };
 
 export function rotuloDaEntidade(entidade: string): string {
