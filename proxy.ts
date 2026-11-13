@@ -169,6 +169,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/acerto/") ||
         pathname.startsWith("/presenca/") ||
         pathname.startsWith("/voluntario/") ||
+        pathname.startsWith("/credencial/") ||
         pathname.startsWith("/programacao/") ||
         pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
@@ -231,6 +232,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/presenca/") ||
     // Inscrição de voluntários pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/voluntario/") ||
+    // Credencial do convidado pelo link, com o QR (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/credencial/") ||
     // Programação pública de um espaço e a versão para embutir (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/programacao/") ||
     pathname.startsWith("/embed/") ||

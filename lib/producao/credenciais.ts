@@ -67,7 +67,9 @@ export function presencaDaSessao(convidados: readonly { id: string; quantidade: 
 }
 
 /** O texto que a produção manda a cada convidado com a credencial dele. */
-export function mensagemDaCredencial(campos: { nome: string; sessao: string; codigo: string; lugares: number }): string {
+export function mensagemDaCredencial(campos: { nome: string; sessao: string; codigo: string; lugares: number; url?: string }): string {
   const primeiro = campos.nome.trim().split(/\s+/)[0] ?? campos.nome;
-  return `Oi, ${primeiro}! Sua credencial para ${campos.sessao}: ${formatarCodigo(campos.codigo)} (vale para ${campos.lugares} ${campos.lugares === 1 ? "pessoa" : "pessoas"}). Mostre este código na entrada.`;
+  const vale = `(vale para ${campos.lugares} ${campos.lugares === 1 ? "pessoa" : "pessoas"})`;
+  if (campos.url) return `Oi, ${primeiro}! Sua credencial para ${campos.sessao} ${vale}: ${campos.url}\nMostre o QR da página na entrada. Se a câmera falhar, o código é ${formatarCodigo(campos.codigo)}.`;
+  return `Oi, ${primeiro}! Sua credencial para ${campos.sessao}: ${formatarCodigo(campos.codigo)} ${vale}. Mostre este código na entrada.`;
 }

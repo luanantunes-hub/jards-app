@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { lerCodigo, lerRespostaDaPorta, presencaDaSessao, textoDaPorta, type RespostaDaPorta, type Tom } from "@/lib/producao/credenciais";
+import { LeitorDeCamera } from "@/components/producao/LeitorDeCamera";
 
 const COR: Record<Tom, string> = { bom: "#2E8932", atencao: "#B07A14", ruim: "#B23B3B" };
 
@@ -39,8 +40,8 @@ export function PortaDaSessao({ sessaoId, podeLer }: { sessaoId: string; podeLer
 
   const presenca = useMemo(() => presencaDaSessao(convidados, credenciais), [convidados, credenciais]);
 
-  async function ler() {
-    const lido = lerCodigo(codigo);
+  async function ler(vindoDaCamera?: string) {
+    const lido = lerCodigo(vindoDaCamera ?? codigo);
     if (!lido) { setErro("O código tem 16 letras e números (de 0 a 9 e de A a F). Confira e digite de novo."); return; }
     setLendo(true);
     setErro(null);
@@ -59,10 +60,14 @@ export function PortaDaSessao({ sessaoId, podeLer }: { sessaoId: string; podeLer
   }
 
   const texto = ultima ? textoDaPorta(ultima.resposta) : null;
+  // A câmera lê o QR e entrega o código à mesma leitura do campo; segura a leitura em andamento para não ler duas vezes o mesmo QR.
+  const lerDaCamera = (lido: string) => { if (!lendo) void ler(lido); };
 
   return (
     <div className="mx-auto max-w-[36rem] space-y-5">
       <p className="text-[0.75rem] tabular-nums text-black/55">{presenca.entraram} de {presenca.confirmados} {presenca.confirmados === 1 ? "lugar confirmado entrou" : "lugares confirmados entraram"}{presenca.semCredencial > 0 ? ` · ${presenca.semCredencial} ${presenca.semCredencial === 1 ? "convidado sem credencial" : "convidados sem credencial"}` : ""}</p>
+
+      {podeLer && <LeitorDeCamera onCodigo={lerDaCamera} />}
 
       <form onSubmit={event => { event.preventDefault(); void ler(); }} className="space-y-3">
         <label htmlFor="porta-codigo" className="block text-[0.6875rem] font-medium text-black/55">Código da credencial</label>
