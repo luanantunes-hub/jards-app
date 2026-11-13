@@ -19,13 +19,14 @@ import {
 export const EVENTO_LANCAMENTOS_MUDARAM = "producao-lancamentos-mudaram";
 
 type LinhaDisponivel = { id: string; rotulo: string };
+type PedidoDisponivel = { id: string; rotulo: string };
 type LinhaDaDivisao = { chave: number; linhaId: string; valor: string };
 
 const paraCampo = (valor: number) => String(valor).replace(".", ",");
 const dia = (data: string) => data.split("-").reverse().join("/");
 
-function LancamentoSheet({ organizationId, temporadaId, lancamento, divisoesAtuais, linhas, onClose, onSalvou }: {
-  organizationId: string; temporadaId: string; lancamento: LancamentoDaTemporada | null; divisoesAtuais: DivisaoDoLancamento[]; linhas: LinhaDisponivel[]; onClose: () => void; onSalvou: () => void;
+function LancamentoSheet({ organizationId, temporadaId, lancamento, divisoesAtuais, linhas, pedidos, onClose, onSalvou }: {
+  organizationId: string; temporadaId: string; lancamento: LancamentoDaTemporada | null; divisoesAtuais: DivisaoDoLancamento[]; linhas: LinhaDisponivel[]; pedidos: PedidoDisponivel[]; onClose: () => void; onSalvou: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
   const [descricao, setDescricao] = useState(lancamento?.descricao ?? "");
@@ -34,6 +35,7 @@ function LancamentoSheet({ organizationId, temporadaId, lancamento, divisoesAtua
   const [data, setData] = useState(lancamento?.data ?? new Date().toISOString().slice(0, 10));
   const [valor, setValor] = useState(lancamento ? paraCampo(lancamento.valor) : "");
   const [observacao, setObservacao] = useState(lancamento?.observacao ?? "");
+  const [pedidoId, setPedidoId] = useState(lancamento?.pedido_id ?? "");
   const [partes, setPartes] = useState<LinhaDaDivisao[]>(divisoesAtuais.map((item, indice) => ({ chave: indice, linhaId: item.orcamento_linha_id, valor: paraCampo(item.valor) })));
   const [proximaChave, setProximaChave] = useState(divisoesAtuais.length);
   const [salvando, setSalvando] = useState(false);
@@ -76,14 +78,14 @@ function LancamentoSheet({ organizationId, temporadaId, lancamento, divisoesAtua
         // Tira a divisão antes de mudar o valor (o banco não deixa o total ficar abaixo do dividido) e a refaz em seguida.
         const { error: erroTira } = await producao.from("producao_lancamento_linhas").delete().eq("lancamento_id", lancamento.id);
         if (erroTira) throw new Error(mensagemDoErroDeLancamento(erroTira));
-        const { error } = await producao.from("producao_lancamentos").update(leitura.valor).eq("id", lancamento.id);
+        const { error } = await producao.from("producao_lancamentos").update({ ...leitura.valor, pedido_id: pedidoId || null }).eq("id", lancamento.id);
         if (error) {
           // Devolve a divisão que existia, para o pagamento não ficar sem ela.
           if (divisoesAtuais.length > 0) await producao.from("producao_lancamento_linhas").insert(divisoesAtuais.map(item => ({ organization_id: organizationId, lancamento_id: lancamento.id, orcamento_linha_id: item.orcamento_linha_id, valor: item.valor })));
           throw new Error(mensagemDoErroDeLancamento(error));
         }
       } else {
-        const { data: criado, error } = await producao.from("producao_lancamentos").insert({ organization_id: organizationId, temporada_id: temporadaId, ...leitura.valor }).select("id").single();
+        const { data: criado, error } = await producao.from("producao_lancamentos").insert({ organization_id: organizationId, temporada_id: temporadaId, ...leitura.valor, pedido_id: pedidoId || null }).select("id").single();
         if (error || !criado) throw new Error(mensagemDoErroDeLancamento(error ?? {}));
         lancamentoId = criado.id;
       }
@@ -186,6 +188,13 @@ function LancamentoSheet({ organizationId, temporadaId, lancamento, divisoesAtua
           )}
         </div>
 
+        {pedidos.length > 0 && (
+          <div>
+            <span className={ROTULO}>Pedido de pagamento (opcional)</span>
+            <Dropdown ariaLabel="Pedido que este pagamento cumpre" value={pedidoId} onChange={setPedidoId} disabled={salvando} options={[{ value: "", label: "Nenhum" }, ...pedidos.map(item => ({ value: item.id, label: item.rotulo }))]} />
+            <p className="mt-1 text-[0.625rem] text-black/45">Só pedidos aprovados. O pedido vira pago quando os lançamentos ligados a ele somam o valor pedido.</p>
+          </div>
+        )}
         <div>
           <label className={ROTULO} htmlFor="lan-observacao">Observação</label>
           <textarea id="lan-observacao" rows={2} className={`${CAMPO} h-auto min-h-[3.5rem] py-2`} value={observacao} maxLength={300} onChange={event => setObservacao(event.target.value)} disabled={salvando} />
@@ -202,6 +211,7 @@ export function LancamentosDaTemporada({ organizationId, temporadaId, temporadaT
   const [lancamentos, setLancamentos] = useState<LancamentoDaTemporada[]>([]);
   const [divisoes, setDivisoes] = useState<DivisaoDoLancamento[]>([]);
   const [linhas, setLinhas] = useState<LinhaDisponivel[]>([]);
+  const [pedidos, setPedidos] = useState<PedidoDisponivel[]>([]);
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
@@ -221,9 +231,10 @@ export function LancamentosDaTemporada({ organizationId, temporadaId, temporadaT
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [lan, orc] = await Promise.all([
-        producao.from("producao_lancamentos").select("id, descricao, favorecido, documento, data, valor, observacao").eq("temporada_id", temporadaId).order("data", { ascending: false }),
+      const [lan, orc, ped] = await Promise.all([
+        producao.from("producao_lancamentos").select("id, descricao, favorecido, documento, data, valor, observacao, pedido_id").eq("temporada_id", temporadaId).order("data", { ascending: false }),
         producao.from("producao_orcamentos").select("id, nome").eq("temporada_id", temporadaId).order("created_at"),
+        producao.from("producao_pedidos").select("id, descricao, valor, favorecido").eq("temporada_id", temporadaId).in("situacao", ["aprovado", "pagando", "pago"]).order("created_at", { ascending: false }),
       ]);
       const lista = (lan.data ?? []) as LancamentoDaTemporada[];
       const orcamentos = (orc.data ?? []) as { id: string; nome: string }[];
@@ -238,8 +249,9 @@ export function LancamentosDaTemporada({ organizationId, temporadaId, temporadaT
       setLinhas(((lin.data ?? []) as { id: string; orcamento_id: string; categoria: CategoriaDoOrcamento; descricao: string }[]).map(item => ({
         id: item.id, rotulo: `${orcamentos.length > 1 ? `${nomeDoOrcamento.get(item.orcamento_id) ?? ""} · ` : ""}${ROTULO_DA_CATEGORIA_DO_ORCAMENTO[item.categoria]} · ${item.descricao}`,
       })));
+      setPedidos(((ped.data ?? []) as { id: string; descricao: string; valor: number; favorecido: string | null }[]).map(item => ({ id: item.id, rotulo: `${item.descricao} · ${formatarReais(emCentavos(item.valor))}${item.favorecido ? ` · ${item.favorecido}` : ""}` })));
       setCarregado(true);
-      setErro(lan.error || orc.error || div.error || lin.error ? "Não foi possível carregar os lançamentos. Recarregue a página." : null);
+      setErro(lan.error || orc.error || ped.error || div.error || lin.error ? "Não foi possível carregar os lançamentos. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
   }, [comDinheiro, temporadaId, versao]);
@@ -297,7 +309,7 @@ export function LancamentosDaTemporada({ organizationId, temporadaId, temporadaT
           <p className="mt-2 text-[0.6875rem] tabular-nums text-black/45">Total lançado: {formatarReais(totalCentavos)}</p>
         </>
       )}
-      {folha && <LancamentoSheet organizationId={organizationId} temporadaId={temporadaId} lancamento={folha.lancamento} divisoesAtuais={folha.lancamento ? divisoes.filter(item => item.lancamento_id === folha.lancamento?.id) : []} linhas={linhas} onClose={() => setFolha(null)} onSalvou={mudou} />}
+      {folha && <LancamentoSheet organizationId={organizationId} temporadaId={temporadaId} lancamento={folha.lancamento} divisoesAtuais={folha.lancamento ? divisoes.filter(item => item.lancamento_id === folha.lancamento?.id) : []} linhas={linhas} pedidos={pedidos} onClose={() => setFolha(null)} onSalvou={mudou} />}
     </section>
   );
 }

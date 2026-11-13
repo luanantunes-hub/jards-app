@@ -9,6 +9,8 @@ import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 
 export type LancamentoDaTemporada = {
   id: string; descricao: string; favorecido: string | null; documento: string | null; data: string; valor: number; observacao: string | null;
+  /** O pedido aprovado que este pagamento cumpre (PD5.4). */
+  pedido_id?: string | null;
 };
 export type DivisaoDoLancamento = { id: string; lancamento_id: string; orcamento_linha_id: string; valor: number };
 
@@ -89,6 +91,8 @@ export function mensagemDoErroDeLancamento(erro: { code?: string; message?: stri
   const mensagem = erro.message ?? "";
   if (mensagem.includes("divisao_passa_do_valor")) return "A divisão passa do valor do lançamento. Ajuste os valores das linhas ou o valor total.";
   if (mensagem.includes("linha_de_outra_temporada")) return "Essa linha do orçamento não é desta temporada.";
+  if (mensagem.includes("pedido_nao_aprovado")) return "Só se liga um pagamento a um pedido aprovado.";
+  if (mensagem.includes("pedido_de_outra_temporada")) return "Esse pedido não é desta temporada.";
   if (erro.code === "42501") return "Você não pode alterar os lançamentos (eles pedem a permissão de dinheiro).";
   if (erro.code === "23505" && mensagem.includes("documento")) return "Já existe um lançamento com esse documento deste favorecido. Se é o mesmo pagamento, não lance de novo.";
   if (erro.code === "23505") return "Essa linha do orçamento já está na divisão deste lançamento.";

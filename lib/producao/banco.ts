@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -3923,6 +3923,7 @@ export type BancoDaProducao = {
           data: string;
           valor: number;
           observacao: string | null;
+          pedido_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -3936,6 +3937,7 @@ export type BancoDaProducao = {
           data: string;
           valor: number;
           observacao?: string | null;
+          pedido_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3949,6 +3951,7 @@ export type BancoDaProducao = {
           data?: string;
           valor?: number;
           observacao?: string | null;
+          pedido_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -3958,6 +3961,13 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_lancamentos_pedido_id_fkey";
+            columns: ["pedido_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pedidos";
             referencedColumns: ["id"];
           },
           {
@@ -4141,6 +4151,88 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_pedidos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          orcamento_linha_id: string | null;
+          solicitante_id: string | null;
+          descricao: string;
+          favorecido: string | null;
+          valor: number;
+          justificativa: string | null;
+          situacao: SituacaoDoPedido;
+          aprovado_por: string | null;
+          aprovado_em: string | null;
+          motivo_recusa: string | null;
+          pendencia: string | null;
+          pendencia_ate: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          orcamento_linha_id?: string | null;
+          solicitante_id?: string | null;
+          descricao: string;
+          favorecido?: string | null;
+          valor: number;
+          justificativa?: string | null;
+          situacao?: SituacaoDoPedido;
+          aprovado_por?: string | null;
+          aprovado_em?: string | null;
+          motivo_recusa?: string | null;
+          pendencia?: string | null;
+          pendencia_ate?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          orcamento_linha_id?: string | null;
+          solicitante_id?: string | null;
+          descricao?: string;
+          favorecido?: string | null;
+          valor?: number;
+          justificativa?: string | null;
+          situacao?: SituacaoDoPedido;
+          aprovado_por?: string | null;
+          aprovado_em?: string | null;
+          motivo_recusa?: string | null;
+          pendencia?: string | null;
+          pendencia_ate?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_pedidos_orcamento_linha_id_fkey";
+            columns: ["orcamento_linha_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_orcamento_linhas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_pedidos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_pedidos_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
             referencedColumns: ["id"];
           },
         ];
@@ -5169,6 +5261,10 @@ export type BancoDaProducao = {
       auth_producao_ve_temporada: {
         Args: { p_org: string; p_temporada_id: string | null };
         Returns: boolean;
+      };
+      fn_producao_pedido_mudar: {
+        Args: { p_pedido: string; p_passo: string; p_motivo: string };
+        Returns: undefined;
       };
       fn_producao_convite_gerar: {
         Args: { p_temporada: string; p_pessoas: string[]; p_dias: number };
