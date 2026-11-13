@@ -1916,6 +1916,8 @@ export interface CompromissoCliente {
   plano_ativacao_id: string | null; acao_ativacao_id: string | null; cota_id: string | null;
   proposta_id: string | null; edital_user_id: string | null; contrapartida_ordem: number | null;
   evidencia_obrigatoria: boolean; origem: 'manual' | 'cota' | 'contrato' | 'importacao' | 'proposta';
+  /** Data da produção em que a contrapartida se cumpre (PD9.1). Opcional: só se liga com Captação e Produção. */
+  producao_data_id?: string | null;
   created_at: string; updated_at: string;
 }
 
