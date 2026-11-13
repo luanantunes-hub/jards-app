@@ -15,6 +15,8 @@ import {
   type LinhaDoOrcamento,
 } from "@/lib/producao/orcamento";
 import { EVENTO_ACORDOS_MUDARAM } from "@/components/producao/AcordosDaTemporada";
+import { EVENTO_LANCAMENTOS_MUDARAM } from "@/components/producao/LancamentosDaTemporada";
+import { pagoPorLinha } from "@/lib/producao/lancamentos";
 import { comprometidoDoAcordoEmCentavos, ROTULO_DA_SITUACAO_DO_ACORDO, type AcordoDaTemporada } from "@/lib/producao/acordos";
 import { avaliarFormula, nomeDeVariavelValido, nomeSugeridoParaVariavel, recalcularEstimativas, valoresDasVariaveis, type VariavelDoOrcamento } from "@/lib/producao/formula";
 
@@ -159,7 +161,7 @@ function VariavelSheet({ organizationId, orcamentoId, variavel, existentes, linh
   );
 }
 
-function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, acordos, onClose, onSalvou }: { organizationId: string; orcamentoId: string; situacao: SituacaoDoOrcamento; linha: LinhaDoOrcamento | null; variaveis: VariavelDoOrcamento[]; acordos: AcordoDoOrcamento[]; onClose: () => void; onSalvou: () => void }) {
+function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, acordos, pagoDosLancamentos, onClose, onSalvou }: { organizationId: string; orcamentoId: string; situacao: SituacaoDoOrcamento; linha: LinhaDoOrcamento | null; variaveis: VariavelDoOrcamento[]; acordos: AcordoDoOrcamento[]; pagoDosLancamentos: number | null; onClose: () => void; onSalvou: () => void }) {
   const { confirmDelete } = useDeleteConfirm();
   const [categoria, setCategoria] = useState<CategoriaDoOrcamento>(linha?.categoria ?? "outros");
   const [descricao, setDescricao] = useState(linha?.descricao ?? "");
@@ -270,7 +272,7 @@ function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, a
         )}
         <div className="grid gap-3 sm:grid-cols-2">
           {campoValor("orc-comprometido", "Comprometido (R$)", comprometido, setComprometido, false, "O que já foi combinado ou contratado.")}
-          {campoValor("orc-pago", "Pago (R$)", pago, setPago, false, "O que já saiu do caixa.")}
+          {campoValor("orc-pago", "Pago (R$)", pagoDosLancamentos !== null ? paraCampo(pagoDosLancamentos / 100) : pago, setPago, pagoDosLancamentos !== null, pagoDosLancamentos !== null ? "Vem dos lançamentos desta linha." : "O que já saiu do caixa. Lance os pagamentos para somar aqui sozinho.")}
         </div>
         {travada && <p className="rounded border bg-white px-3 py-2 text-[0.6875rem] text-black/55" style={{ borderColor: "rgba(13,13,13,.1)" }}>O orçamento está aprovado: a categoria, a estimativa e o aprovado desta linha não mudam. Para corrigir o valor, use o revisado.</p>}
       </div>
@@ -326,6 +328,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   const [linhas, setLinhas] = useState<LinhaDoOrcamento[]>([]);
   const [variaveis, setVariaveis] = useState<VariavelDoOrcamento[]>([]);
   const [acordos, setAcordos] = useState<AcordoDoOrcamento[]>([]);
+  const [pagoDosLancamentos, setPagoDosLancamentos] = useState<Record<string, number>>({});
   const [todasAsLinhas, setTodasAsLinhas] = useState<Record<string, LinhaDoOrcamento[]>>({});
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
@@ -360,6 +363,8 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
         idAtual ? producao.from("producao_orcamento_variaveis").select("id, nome, rotulo, valor").eq("orcamento_id", idAtual).order("nome") : { data: [], error: null },
         producao.from("producao_acordos").select("id, contraparte, sentido, situacao, valor_fixo, garantia").eq("temporada_id", temporadaId).order("created_at"),
       ]);
+      const idsDasLinhas = ((lin.data ?? []) as (LinhaDoOrcamento & { orcamento_id: string })[]).filter(linha => linha.orcamento_id === idAtual).map(linha => linha.id);
+      const div = idsDasLinhas.length > 0 ? await producao.from("producao_lancamento_linhas").select("orcamento_linha_id, valor").in("orcamento_linha_id", idsDasLinhas) : { data: [], error: null };
       if (!ativo) return;
       const agrupadas: Record<string, LinhaDoOrcamento[]> = {};
       for (const linha of (lin.data ?? []) as (LinhaDoOrcamento & { orcamento_id: string })[]) (agrupadas[linha.orcamento_id] ??= []).push(linha);
@@ -369,8 +374,9 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
       setLinhas(agrupadas[idAtual] ?? []);
       setVariaveis((vars.data ?? []) as VariavelDoOrcamento[]);
       setAcordos((aco.data ?? []) as AcordoDoOrcamento[]);
+      setPagoDosLancamentos(pagoPorLinha((div.data ?? []) as { orcamento_linha_id: string; valor: number }[]));
       setCarregado(true);
-      setErro(orc.error || lin.error || vars.error || aco.error ? "Não foi possível carregar o orçamento. Recarregue a página." : null);
+      setErro(orc.error || lin.error || vars.error || aco.error || div.error ? "Não foi possível carregar o orçamento. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
     // `escolhido` entra de propósito só pela troca no seletor, que também passa por `versao`.
@@ -380,7 +386,8 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   useEffect(() => {
     const aviso = () => setVersao(atual => atual + 1);
     window.addEventListener(EVENTO_ACORDOS_MUDARAM, aviso);
-    return () => window.removeEventListener(EVENTO_ACORDOS_MUDARAM, aviso);
+    window.addEventListener(EVENTO_LANCAMENTOS_MUDARAM, aviso);
+    return () => { window.removeEventListener(EVENTO_ACORDOS_MUDARAM, aviso); window.removeEventListener(EVENTO_LANCAMENTOS_MUDARAM, aviso); };
   }, []);
 
   const orcamento = orcamentos.find(item => item.id === escolhido) ?? null;
@@ -394,7 +401,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
     }
     return mapa;
   }, [acordos, linhas]);
-  const contas = useMemo(() => calcularOrcamento(linhas, dosAcordos), [linhas, dosAcordos]);
+  const contas = useMemo(() => calcularOrcamento(linhas, dosAcordos, pagoDosLancamentos), [linhas, dosAcordos, pagoDosLancamentos]);
   const editavel = podeEditar && orcamento?.situacao !== "encerrado";
   const recarregar = () => setVersao(atual => atual + 1);
   const comAprovado = orcamento !== null && orcamento.situacao !== "rascunho";
@@ -580,7 +587,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
                       <tr key={conta.id} className="border-b border-black/[.06] align-top last:border-b-0">
                         <th scope="row" className="px-3 py-2 text-left">
                           <span className="block text-[0.8125rem] font-medium text-[#282525]">{conta.descricao}</span>
-                          <span className="block text-[0.6875rem] font-normal text-black/45">{ROTULO_DA_CATEGORIA_DO_ORCAMENTO[conta.categoria]}{conta.viaAcordo ? " · comprometido pelo acordo" : ""}</span>
+                          <span className="block text-[0.6875rem] font-normal text-black/45">{ROTULO_DA_CATEGORIA_DO_ORCAMENTO[conta.categoria]}{conta.viaAcordo ? " · comprometido pelo acordo" : ""}{conta.pagoViaLancamentos ? " · pago pelos lançamentos" : ""}</span>
                           {conta.avisos.map(aviso => <span key={aviso} className="mt-0.5 block text-[0.6875rem] font-normal text-[#B07A14]">{aviso}</span>)}
                         </th>
                         {[conta.estimativaCentavos, conta.aprovadoCentavos, conta.revisadoCentavos].map((valor, indice) => <td key={indice} className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${valor === null ? "text-black/30" : "text-black/65"}`}>{reaisOuTraco(valor)}</td>)}
@@ -604,7 +611,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
 
       {folhaNovo && <NovoOrcamentoSheet organizationId={organizationId} temporadaId={temporadaId} nomeSugerido={orcamentos.length === 0 ? "Orçamento" : `Cenário ${orcamentos.length + 1}`} onClose={() => setFolhaNovo(false)} onCriou={id => { setEscolhido(id); recarregar(); }} />}
       {folhaVariavel && orcamento && <VariavelSheet organizationId={organizationId} orcamentoId={orcamento.id} variavel={folhaVariavel.variavel} existentes={variaveis} linhas={linhas} onClose={() => setFolhaVariavel(null)} onSalvou={recarregar} />}
-      {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} variaveis={variaveis} acordos={acordos} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
+      {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} variaveis={variaveis} acordos={acordos} pagoDosLancamentos={folhaLinha.linha && Object.hasOwn(pagoDosLancamentos, folhaLinha.linha.id) ? pagoDosLancamentos[folhaLinha.linha.id] : null} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
     </section>
   );
 }
