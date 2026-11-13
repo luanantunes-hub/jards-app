@@ -76,7 +76,7 @@ import type {
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -3217,6 +3217,109 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_setores: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sala_id: string;
+          nome: string;
+          lugares: number;
+          ordem: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sala_id: string;
+          nome: string;
+          lugares: number;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sala_id?: string;
+          nome?: string;
+          lugares?: number;
+          ordem?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_setores_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_setores_sala_id_fkey";
+            columns: ["sala_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_salas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_setor_cotas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          setor_id: string;
+          categoria: CategoriaDaCota;
+          lugares: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          setor_id: string;
+          categoria: CategoriaDaCota;
+          lugares: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          setor_id?: string;
+          categoria?: CategoriaDaCota;
+          lugares?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_setor_cotas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_setor_cotas_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_sessoes";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_setor_cotas_setor_id_fkey";
+            columns: ["setor_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_setores";
             referencedColumns: ["id"];
           },
         ];

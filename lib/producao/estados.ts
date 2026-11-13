@@ -264,3 +264,9 @@ export const SITUACOES_DA_TURMA: readonly SituacaoDaTurma[] = ["aberta", "em_and
 /** `producao_matriculas.situacao`. */
 export type SituacaoDaMatricula = "inscrito" | "confirmado" | "desistente";
 export const SITUACOES_DA_MATRICULA: readonly SituacaoDaMatricula[] = ["inscrito", "confirmado", "desistente"];
+
+// O mapa da plateia (PD7.7): o banco confere a lista num CHECK (supabase/migrations/*_producao_plateia.sql).
+
+/** `producao_setor_cotas.categoria`. */
+export type CategoriaDaCota = "venda" | "patrocinador" | "gratuidade" | "acessibilidade" | "imprensa" | "bloqueio";
+export const CATEGORIAS_DA_COTA: readonly CategoriaDaCota[] = ["venda", "patrocinador", "gratuidade", "acessibilidade", "imprensa", "bloqueio"];

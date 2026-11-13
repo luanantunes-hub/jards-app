@@ -77,6 +77,9 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_turmas: { fora: "", rotulos: "nome" },
   producao_turma_aulas: { fora: "", rotulos: "dia" },
   producao_matriculas: { fora: "email,telefone", rotulos: "nome" },
+  // O mapa da plateia (PD7.7): setor e cota sem dado pessoal nem dinheiro; o nome e a categoria são os rótulos.
+  producao_setores: { fora: "", rotulos: "nome" },
+  producao_setor_cotas: { fora: "", rotulos: "categoria" },
   // Os turnos da equipe da casa (PD3.4): só dia, hora e função; o dia é o rótulo.
   producao_turnos: { fora: "", rotulos: "dia" },
   // As licenças da data (PD4.9): o tipo é o rótulo; o protocolo é um número público do pedido, não dado pessoal.
