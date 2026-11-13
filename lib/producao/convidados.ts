@@ -6,7 +6,7 @@ import type { SituacaoDoConvidado } from "@/lib/producao/estados";
 export const ROTULO_DA_SITUACAO_DO_CONVIDADO: Record<SituacaoDoConvidado, string> = { pedido: "Pedido", confirmado: "Confirmado", recusado: "Recusado" };
 
 export type TipoDeCredencial = { id: string; nome: string; cota_por_sessao: number | null; arquivado: boolean };
-export type ConvidadoDaSessao = { id: string; tipo_id: string; nome: string; afiliacao: string | null; quantidade: number; situacao: SituacaoDoConvidado };
+export type ConvidadoDaSessao = { id: string; tipo_id: string; nome: string; afiliacao: string | null; quantidade: number; situacao: SituacaoDoConvidado; solicitante?: string | null };
 
 /** Como está a cota de um tipo numa sessão: sem cota, com lugar livre, cheia ou estourada (a cota baixou depois de dar os lugares). */
 export type EstadoDaCota = "sem_cota" | "livre" | "cheia" | "estourada";
@@ -80,4 +80,48 @@ export function mensagemDoErroDeConvidado(erro: { code?: string; message?: strin
   if ((erro.message ?? "").includes("cota_excedida")) return "A cota desse tipo já está cheia nesta sessão. Aumente a cota ou escolha outro tipo.";
   if ((erro.message ?? "").includes("tipo_arquivado")) return "Esse tipo está arquivado. Escolha outro.";
   return "Não foi possível salvar. Tente de novo.";
+}
+
+// ─── Pedidos por link (PD7.2, segundo corte) ─────────────────────────────────
+
+/** O código do link de pedidos: 32 bytes em base64url, o formato que `fn_producao_convidados_gerar_link` gera. */
+export const CODIGO_DO_LINK_DE_PEDIDOS = /^[A-Za-z0-9_-]{43}$/;
+
+export type LeituraDoPedido =
+  | { ok: true; valor: { solicitante: string; nome: string; afiliacao: string | null; quantidade: number; tipo_id: string } }
+  | { ok: false; erro: string; campo: string }
+  | { ok: "armadilha" };
+
+/**
+ * O pedido como o servidor confere antes de gravar: quem pede (1 a 120), o convidado (nome 1 a 120, afiliação até 120), o tipo e de 1 a 20
+ * lugares. O campo escondido "site" (que gente de verdade não preenche) denuncia robô: devolve "armadilha", e o servidor responde que
+ * deu certo sem gravar nada.
+ */
+export function lerPedido(corpo: Record<string, unknown>): LeituraDoPedido {
+  const campo = (valor: unknown) => (typeof valor === "string" ? valor.trim() : "");
+  if (campo(corpo.site) !== "") return { ok: "armadilha" };
+  const solicitante = campo(corpo.solicitante);
+  if (solicitante === "") return { ok: false, erro: "Escreva o seu nome.", campo: "solicitante" };
+  if (solicitante.length > 120) return { ok: false, erro: "O seu nome pode ter até 120 letras.", campo: "solicitante" };
+  const leitura = lerConvidado({ nome: campo(corpo.nome), afiliacao: campo(corpo.afiliacao), quantidade: String(corpo.quantidade ?? ""), tipoId: campo(corpo.tipo_id) });
+  if (!leitura.ok) return leitura;
+  return { ok: true, valor: { solicitante, ...leitura.valor } };
+}
+
+/**
+ * O horário de corte que a produção digita (campo de data e hora, "2026-12-03T18:00", no horário da pessoa): tem de existir e ser
+ * futuro, a no máximo 365 dias. Devolve o instante em ISO (UTC) para o banco.
+ */
+export function lerCorte(texto: string, agora: number): { ok: true; iso: string } | { ok: false; erro: string } {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(texto)) return { ok: false, erro: "Escolha o dia e a hora do corte." };
+  const instante = new Date(texto).getTime();
+  if (Number.isNaN(instante)) return { ok: false, erro: "Escolha o dia e a hora do corte." };
+  if (instante <= agora) return { ok: false, erro: "O corte tem de ser no futuro." };
+  if (instante > agora + 365 * 24 * 3600 * 1000) return { ok: false, erro: "O corte pode ser daqui a no máximo um ano." };
+  return { ok: true, iso: new Date(instante).toISOString() };
+}
+
+/** O texto que a produção manda a quem vai pedir convidados. */
+export function mensagemDoLinkDePedidos(campos: { sessao: string; corte: string; url: string }): string {
+  return `Oi! Para pedir convidados para ${campos.sessao}, use este link até ${campos.corte}: ${campos.url}\nEscolha o tipo de credencial e escreva o nome de cada convidado; a produção confirma depois.`;
 }
