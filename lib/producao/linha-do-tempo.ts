@@ -9,7 +9,7 @@ export type AreaDaLinhaDoTempo = { id: string; nome: string; entidades: readonly
  */
 export const AREAS_DA_LINHA_DO_TEMPO: readonly AreaDaLinhaDoTempo[] = [
   { id: "agenda", nome: "Agenda e temporadas", entidades: ["producao_obras", "producao_temporadas", "producao_datas", "producao_blocos", "producao_tarefas", "producao_notas", "producao_modelos_dia", "producao_cartoes_dia"] },
-  { id: "espacos", nome: "Espaços e técnica", entidades: ["producao_espacos", "producao_salas", "producao_pautas", "producao_sessoes", "producao_itens", "producao_plantas", "producao_riders", "producao_equipamentos", "producao_licencas", "producao_setores", "producao_setor_cotas"] },
+  { id: "espacos", nome: "Espaços e técnica", entidades: ["producao_espacos", "producao_salas", "producao_pautas", "producao_sessoes", "producao_itens", "producao_plantas", "producao_riders", "producao_equipamentos", "producao_licencas", "producao_setores", "producao_setor_cotas", "producao_expografia"] },
   { id: "equipe", nome: "Equipe", entidades: ["producao_pessoas", "producao_vinculos", "producao_escalas", "producao_turnos", "producao_funcoes", "producao_voluntarios"] },
   { id: "logistica", nome: "Logística", entidades: ["producao_veiculos", "producao_deslocamentos", "producao_hospedagens", "producao_convites"] },
   { id: "publico", nome: "Convidados e público", entidades: ["producao_convidados", "producao_credencial_tipos", "producao_acessibilidade", "producao_visitas_horarios", "producao_visitas_agendamentos", "producao_turmas", "producao_turma_aulas", "producao_matriculas"] },

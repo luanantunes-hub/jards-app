@@ -270,3 +270,13 @@ export const SITUACOES_DA_MATRICULA: readonly SituacaoDaMatricula[] = ["inscrito
 /** `producao_setor_cotas.categoria`. */
 export type CategoriaDaCota = "venda" | "patrocinador" | "gratuidade" | "acessibilidade" | "imprensa" | "bloqueio";
 export const CATEGORIAS_DA_COTA: readonly CategoriaDaCota[] = ["venda", "patrocinador", "gratuidade", "acessibilidade", "imprensa", "bloqueio"];
+
+// A planta expográfica (PD8.5): o banco confere as listas num CHECK (supabase/migrations/*_producao_expografia.sql).
+
+/** `producao_expografia.posicao`. */
+export type PosicaoNaExposicao = "parede" | "piso" | "teto" | "vitrine" | "outro";
+export const POSICOES_NA_EXPOSICAO: readonly PosicaoNaExposicao[] = ["parede", "piso", "teto", "vitrine", "outro"];
+
+/** `producao_expografia.luz`. */
+export type LuzDaObra = "sem_luz" | "difusa" | "pontual" | "natural" | "baixa";
+export const LUZES_DA_OBRA: readonly LuzDaObra[] = ["sem_luz", "difusa", "pontual", "natural", "baixa"];
