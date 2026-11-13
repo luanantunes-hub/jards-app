@@ -25,6 +25,8 @@ import { RelatorioDaTemporada } from "@/components/producao/RelatorioDaTemporada
 import { OrcamentoDaTemporada } from "@/components/producao/OrcamentoDaTemporada";
 import { AcordosDaTemporada } from "@/components/producao/AcordosDaTemporada";
 import { LancamentosDaTemporada } from "@/components/producao/LancamentosDaTemporada";
+import { AdiantamentosDaTemporada } from "@/components/producao/AdiantamentosDaTemporada";
+import { DiariasDaTemporada } from "@/components/producao/DiariasDaTemporada";
 import { PedidosDaTemporada } from "@/components/producao/PedidosDaTemporada";
 import { FaturasDaTemporada } from "@/components/producao/FaturasDaTemporada";
 import { CopiarTemporadaSheet, type TemporadaParaCopiar } from "@/components/producao/CopiarTemporadaSheet";
@@ -148,6 +150,8 @@ export default function TemporadaPage() {
         {organizationId && <OrcamentoDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
         {organizationId && <FaturasDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
         {organizationId && <PedidosDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+        {organizationId && <DiariasDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
+        {organizationId && <AdiantamentosDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
         {organizationId && <LancamentosDaTemporada organizationId={organizationId} temporadaId={temporada.id} temporadaTitulo={temporada.titulo} podeEditar={podeEditar} />}
         {organizationId && <RelatorioDaTemporada organizationId={organizationId} temporadaId={temporada.id} titulo={temporada.titulo} />}
       </DetailPageContent>
