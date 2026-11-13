@@ -2546,6 +2546,7 @@ export type BancoDaProducao = {
           afiliacao: string | null;
           quantidade: number;
           situacao: SituacaoDoConvidado;
+          solicitante: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -2558,6 +2559,7 @@ export type BancoDaProducao = {
           afiliacao?: string | null;
           quantidade?: number;
           situacao?: SituacaoDoConvidado;
+          solicitante?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -2570,6 +2572,7 @@ export type BancoDaProducao = {
           afiliacao?: string | null;
           quantidade?: number;
           situacao?: SituacaoDoConvidado;
+          solicitante?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -2711,6 +2714,63 @@ export type BancoDaProducao = {
             foreignKeyName: "producao_porta_leituras_sessao_id_fkey";
             columns: ["sessao_id"];
             isOneToOne: false;
+            referencedRelation: "producao_sessoes";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_convidados_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          sessao_id: string;
+          token_hash: string;
+          titulo: string | null;
+          corte_em: string;
+          limite: number;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          sessao_id: string;
+          token_hash: string;
+          titulo?: string | null;
+          corte_em: string;
+          limite?: number;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          sessao_id?: string;
+          token_hash?: string;
+          titulo?: string | null;
+          corte_em?: string;
+          limite?: number;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_convidados_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_convidados_links_sessao_id_fkey";
+            columns: ["sessao_id"];
+            isOneToOne: true;
             referencedRelation: "producao_sessoes";
             referencedColumns: ["id"];
           },
@@ -3764,6 +3824,10 @@ export type BancoDaProducao = {
       fn_producao_porta_ler: {
         Args: { p_sessao: string; p_codigo: string };
         Returns: Json;
+      };
+      fn_producao_convidados_gerar_link: {
+        Args: { p_sessao: string; p_corte: string; p_titulo: string; p_limite: number };
+        Returns: string;
       };
       fn_producao_voluntario_aprovar: {
         Args: { p_voluntario: string };

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerConvidado, lerTipo, mensagemDoErroDeConvidado, resumoDosConvidados, saldoDosTipos, type ConvidadoDaSessao, type TipoDeCredencial } from "../lib/producao/convidados";
+import { CODIGO_DO_LINK_DE_PEDIDOS, lerConvidado, lerCorte, lerPedido, lerTipo, mensagemDoErroDeConvidado, mensagemDoLinkDePedidos, resumoDosConvidados, saldoDosTipos, type ConvidadoDaSessao, type TipoDeCredencial } from "../lib/producao/convidados";
 
 const tipos: TipoDeCredencial[] = [
   { id: "t1", nome: "Imprensa", cota_por_sessao: 3, arquivado: false },
@@ -47,6 +47,36 @@ test("convidado: nome, tipo e de 1 a 20 lugares; afiliação vazia vira nulo", (
   assert.equal(erro({ ...base, quantidade: "0" }), "quantidade");
   assert.equal(erro({ ...base, quantidade: "21" }), "quantidade");
   assert.equal(erro({ ...base, quantidade: "1,5" }), "quantidade");
+});
+
+test("pedido por link: quem pede, o convidado, o tipo e os lugares; o campo escondido é robô", () => {
+  const base = { solicitante: " Marta ", nome: " Rita ", afiliacao: " ", quantidade: 2, tipo_id: "t1", site: "" };
+  assert.deepEqual(lerPedido(base), { ok: true, valor: { solicitante: "Marta", nome: "Rita", afiliacao: null, quantidade: 2, tipo_id: "t1" } });
+  assert.deepEqual(lerPedido({ ...base, site: "http://spam.example" }), { ok: "armadilha" });
+  const campo = (extra: Record<string, unknown>) => { const l = lerPedido({ ...base, ...extra }); return l.ok === true ? null : l.ok === false ? l.campo : "armadilha"; };
+  assert.equal(campo({ solicitante: " " }), "solicitante");
+  assert.equal(campo({ solicitante: "x".repeat(121) }), "solicitante");
+  assert.equal(campo({ nome: "" }), "nome");
+  assert.equal(campo({ tipo_id: "" }), "tipo");
+  assert.equal(campo({ quantidade: 0 }), "quantidade");
+  assert.equal(campo({ quantidade: "abc" }), "quantidade");
+  assert.ok(CODIGO_DO_LINK_DE_PEDIDOS.test("A".repeat(43)) && !CODIGO_DO_LINK_DE_PEDIDOS.test("A".repeat(44)));
+});
+
+test("corte: formato, futuro e até um ano", () => {
+  const agora = new Date("2026-12-01T12:00:00").getTime();
+  assert.equal(lerCorte("", agora).ok, false);
+  assert.equal(lerCorte("2026-12-03", agora).ok, false);
+  assert.equal(lerCorte("2026-12-01T11:00", agora).ok, false);
+  assert.equal(lerCorte("2028-01-01T10:00", agora).ok, false);
+  const ok = lerCorte("2026-12-03T18:00", agora);
+  assert.equal(ok.ok, true);
+  assert.equal(ok.ok && ok.iso, new Date("2026-12-03T18:00").toISOString());
+});
+
+test("mensagem do link de pedidos", () => {
+  assert.equal(mensagemDoLinkDePedidos({ sessao: "Peça de abertura, 05/12", corte: "03/12 às 18:00", url: "https://x.test/convidar/abc" }),
+    "Oi! Para pedir convidados para Peça de abertura, 05/12, use este link até 03/12 às 18:00: https://x.test/convidar/abc\nEscolha o tipo de credencial e escreva o nome de cada convidado; a produção confirma depois.");
 });
 
 test("erros do banco viram frases claras", () => {

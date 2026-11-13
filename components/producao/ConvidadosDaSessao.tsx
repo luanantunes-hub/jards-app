@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Plus, Settings2, Ticket, TriangleAlert } from "lucide-react";
+import { Copy, Link2, Plus, Settings2, Ticket, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import type { SituacaoDoConvidado } from "@/lib/producao/estados";
 import {
-  lerConvidado, lerTipo, mensagemDoErroDeConvidado, resumoDosConvidados, ROTULO_DA_SITUACAO_DO_CONVIDADO, saldoDosTipos,
+  lerConvidado, lerCorte, lerTipo, mensagemDoErroDeConvidado, mensagemDoLinkDePedidos, resumoDosConvidados, ROTULO_DA_SITUACAO_DO_CONVIDADO, saldoDosTipos,
   type ConvidadoDaSessao, type SaldoDoTipo, type TipoDeCredencial,
 } from "@/lib/producao/convidados";
 import { formatarCodigo, mensagemDaCredencial, presencaDaSessao } from "@/lib/producao/credenciais";
@@ -183,6 +183,81 @@ function ConvidadoSheet({ organizationId, sessaoId, tipos, saldos, convidado, on
   );
 }
 
+type LinkDePedidos = { id: string; titulo: string | null; corte_em: string; limite: number; revogado_em: string | null };
+
+const doisDigitos = (n: number) => String(n).padStart(2, "0");
+/** O valor de um campo de data e hora ("2026-12-03T18:00") para um instante, no horário de quem está na tela. */
+const paraCampoDeDataEHora = (data: Date) => `${data.getFullYear()}-${doisDigitos(data.getMonth() + 1)}-${doisDigitos(data.getDate())}T${doisDigitos(data.getHours())}:${doisDigitos(data.getMinutes())}`;
+const textoDoCorte = (iso: string) => new Date(iso).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+
+/** Gera (ou renova) o link para a equipe, a companhia ou a assessoria pedirem convidados até um horário de corte. O link aparece só uma vez. */
+function LinkDePedidosSheet({ sessaoId, sessaoRotulo, ativo, onClose, onGerou }: { sessaoId: string; sessaoRotulo: string; ativo: LinkDePedidos | null; onClose: () => void; onGerou: () => void }) {
+  const [corte, setCorte] = useState(() => {
+    if (ativo && new Date(ativo.corte_em).getTime() > Date.now()) return paraCampoDeDataEHora(new Date(ativo.corte_em));
+    const padrao = new Date(Date.now() + 2 * 24 * 3600 * 1000);
+    padrao.setHours(18, 0, 0, 0);
+    return paraCampoDeDataEHora(padrao);
+  });
+  const [titulo, setTitulo] = useState(ativo?.titulo ?? "");
+  const [limite, setLimite] = useState(ativo ? String(ativo.limite) : "");
+  const [gerando, setGerando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [mensagem, setMensagem] = useState<string | null>(null);
+  const [copiado, setCopiado] = useState(false);
+
+  async function gerar() {
+    const leitura = lerCorte(corte, Date.now());
+    if (!leitura.ok) { setErro(leitura.erro); return; }
+    const semLimite = limite.trim() === "";
+    const quantos = semLimite ? 0 : Number(limite);
+    if (!semLimite && (!Number.isInteger(quantos) || quantos < 1 || quantos > 500)) { setErro("O limite é um número de 1 a 500, ou deixe vazio para aceitar até 100 pedidos."); return; }
+    setGerando(true);
+    setErro(null);
+    const { data, error } = await clienteDaProducao(createClient()).rpc("fn_producao_convidados_gerar_link", { p_sessao: sessaoId, p_corte: leitura.iso, p_titulo: titulo.trim(), p_limite: quantos });
+    setGerando(false);
+    if (error || typeof data !== "string") { setErro(error?.code === "42501" ? "Você não pode criar links aqui." : "Não foi possível gerar o link. Tente de novo."); return; }
+    setMensagem(mensagemDoLinkDePedidos({ sessao: sessaoRotulo, corte: textoDoCorte(leitura.iso), url: `${window.location.origin}/convidar/${data}` }));
+    onGerou();
+  }
+
+  async function copiar() {
+    if (!mensagem) return;
+    try { await navigator.clipboard.writeText(mensagem); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }
+    catch { setErro("Não foi possível copiar. Selecione o texto e copie à mão."); }
+  }
+
+  return (
+    <TopSheet
+      titulo={ativo ? "Novo link de pedidos" : "Link de pedidos"}
+      onClose={onClose}
+      footer={fechar => (
+        <>
+          <button type="button" onClick={fechar} disabled={gerando} className={CANCELAR}>{mensagem ? "Fechar" : "Cancelar"}</button>
+          {!mensagem && <button type="button" onClick={() => void gerar()} disabled={gerando} className={SALVAR}>{gerando ? "Gerando…" : "Gerar link"}</button>}
+        </>
+      )}
+    >
+      <div className="space-y-4">
+        {erro && <Erro texto={erro} />}
+        {!mensagem ? (
+          <>
+            <p className="text-[0.75rem] text-black/55">Um link para esta sessão: quem recebe escolhe o tipo de credencial e pede os convidados pelo nome, até o horário de corte. Cada pedido chega aqui como “pedido” para você confirmar ou recusar; a cota de cada tipo continua valendo.{ativo ? " Gerar um novo desativa o link anterior." : ""}</p>
+            <div><label className={ROTULO} htmlFor="ped-corte">Pedidos até</label><input id="ped-corte" type="datetime-local" className={CAMPO} value={corte} onChange={event => setCorte(event.target.value)} disabled={gerando} /></div>
+            <div><label className={ROTULO} htmlFor="ped-titulo">Título da chamada (opcional)</label><input id="ped-titulo" className={CAMPO} value={titulo} maxLength={120} onChange={event => setTitulo(event.target.value)} disabled={gerando} placeholder="Pedir convidados" /></div>
+            <div><label className={ROTULO} htmlFor="ped-limite">Máximo de pedidos (opcional)</label><input id="ped-limite" inputMode="numeric" className={CAMPO} value={limite} onChange={event => setLimite(event.target.value.replace(/\D/g, ""))} disabled={gerando} placeholder="Até 100" /></div>
+          </>
+        ) : (
+          <>
+            <p className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B07A14]" style={{ borderColor: "#B07A1447" }}>O link aparece só agora. Copie e mande antes de fechar; depois, para ter o endereço de novo, gere um link novo.</p>
+            <p className="whitespace-pre-line break-words rounded border bg-black/[.03] px-3 py-2.5 text-[0.75rem] text-[#282525]" style={{ borderColor: "rgba(13,13,13,.1)" }}>{mensagem}</p>
+            <button type="button" onClick={() => void copiar()} className={BOTAO}><Copy size={13} aria-hidden="true" /> {copiado ? "Copiada" : "Copiar mensagem"}</button>
+          </>
+        )}
+      </div>
+    </TopSheet>
+  );
+}
+
 /** Os códigos das credenciais, que aparecem só uma vez: copiar a mensagem de cada convidado ou todas de uma vez. */
 function CodigosSheet({ titulo, itens, sessaoRotulo, onClose }: { titulo: string; itens: CodigoNovo[]; sessaoRotulo: string; onClose: () => void }) {
   const [copiado, setCopiado] = useState<string | null>(null);
@@ -232,6 +307,9 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, sessaoRotulo, pod
   const [convidados, setConvidados] = useState<ConvidadoDaSessao[] | null>(null);
   const [credenciais, setCredenciais] = useState<Credencial[]>([]);
   const [codigos, setCodigos] = useState<{ titulo: string; itens: CodigoNovo[] } | null>(null);
+  const [linkDePedidos, setLinkDePedidos] = useState<LinkDePedidos | null>(null);
+  const [linkAberto, setLinkAberto] = useState(false);
+  const [agora] = useState(() => Date.now());
   const [folha, setFolha] = useState<{ convidado: ConvidadoDaSessao | null } | null>(null);
   const [tiposAbertos, setTiposAbertos] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
@@ -242,16 +320,18 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, sessaoRotulo, pod
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [tip, con, cre] = await Promise.all([
+      const [tip, con, cre, lnk] = await Promise.all([
         producao.from("producao_credencial_tipos").select("id, nome, cota_por_sessao, arquivado").eq("organization_id", organizationId).order("nome"),
-        producao.from("producao_convidados").select("id, tipo_id, nome, afiliacao, quantidade, situacao").eq("sessao_id", sessaoId).order("nome"),
+        producao.from("producao_convidados").select("id, tipo_id, nome, afiliacao, quantidade, situacao, solicitante").eq("sessao_id", sessaoId).order("nome"),
         producao.from("producao_credenciais").select("convidado_id, entradas, revogada_em").eq("sessao_id", sessaoId),
+        producao.from("producao_convidados_links").select("id, titulo, corte_em, limite, revogado_em").eq("sessao_id", sessaoId).maybeSingle(),
       ]);
       if (!ativo) return;
       setTipos(tip.data ?? []);
       setConvidados(con.data ?? []);
       setCredenciais(cre.data ?? []);
-      setErro(tip.error || con.error || cre.error ? "Não foi possível carregar os convidados. Recarregue a página." : null);
+      setLinkDePedidos(lnk.data ?? null);
+      setErro(tip.error || con.error || cre.error || lnk.error ? "Não foi possível carregar os convidados. Recarregue a página." : null);
     })();
     return () => { ativo = false; };
   }, [organizationId, sessaoId, versao]);
@@ -271,6 +351,16 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, sessaoRotulo, pod
     if (error) { setErro(error.code === "42501" ? "Você não pode emitir credenciais aqui." : "Não foi possível emitir as credenciais. Tente de novo."); return; }
     const lista = (Array.isArray(data) ? data : []) as { nome: string; lugares: number; codigo: string }[];
     setCodigos({ titulo: "Credenciais emitidas", itens: lista.map(item => ({ nome: item.nome, lugares: item.lugares, codigo: item.codigo })) });
+    recarregar();
+  }
+
+  async function encerrarPedidos() {
+    if (!linkDePedidos) return;
+    setTrabalhando("link");
+    setErro(null);
+    const { error } = await clienteDaProducao(createClient()).from("producao_convidados_links").update({ revogado_em: new Date().toISOString() }).eq("id", linkDePedidos.id);
+    setTrabalhando(null);
+    if (error) { setErro("Não foi possível encerrar os pedidos. Tente de novo."); return; }
     recarregar();
   }
 
@@ -332,8 +422,23 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, sessaoRotulo, pod
       <section aria-labelledby="lista-convidados">
         <div className="mb-2 flex items-center justify-between gap-3">
           <h2 id="lista-convidados" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Convidados</h2>
-          {podeEditar && <button type="button" onClick={() => setFolha({ convidado: null })} disabled={(tipos ?? []).every(tipo => tipo.arquivado)} className={BOTAO}><Plus size={13} aria-hidden="true" /> Convidar</button>}
+          {podeEditar && (
+            <span className="flex flex-wrap gap-2">
+              <button type="button" onClick={() => setLinkAberto(true)} className={BOTAO}><Link2 size={13} aria-hidden="true" /> {linkDePedidos ? "Novo link de pedidos" : "Link de pedidos"}</button>
+              <button type="button" onClick={() => setFolha({ convidado: null })} disabled={(tipos ?? []).every(tipo => tipo.arquivado)} className={BOTAO}><Plus size={13} aria-hidden="true" /> Convidar</button>
+            </span>
+          )}
         </div>
+        {linkDePedidos && (
+          <p className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem] text-black/55">
+            {!linkDePedidos.revogado_em && new Date(linkDePedidos.corte_em).getTime() > agora
+              ? <span>Pedidos abertos até {textoDoCorte(linkDePedidos.corte_em)} · até {linkDePedidos.limite} pedidos</span>
+              : <span>Pedidos encerrados</span>}
+            {podeEditar && !linkDePedidos.revogado_em && new Date(linkDePedidos.corte_em).getTime() > agora && (
+              <button type="button" onClick={() => void encerrarPedidos()} disabled={trabalhando === "link"} className="text-[0.6875rem] font-medium text-black/55 underline underline-offset-2 hover:text-[#282525] disabled:opacity-50">Encerrar pedidos</button>
+            )}
+          </p>
+        )}
         {convidados.length === 0 ? (
           <div className="rounded border bg-white px-5 py-6 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <p className="text-[0.8125rem] font-medium text-black/55">Ninguém convidado para esta sessão</p>
@@ -352,7 +457,7 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, sessaoRotulo, pod
                 <li key={convidado.id} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5">
                   <div className="min-w-0 flex-1 basis-56">
                     <p className={`truncate text-[0.8125rem] font-medium ${convidado.situacao === "recusado" ? "text-black/40 line-through" : "text-[#282525]"}`}>{convidado.nome}</p>
-                    <p className="truncate text-[0.6875rem] text-black/45">{[convidado.afiliacao, nomesDosTipos.get(convidado.tipo_id)].filter(Boolean).join(" · ")}</p>
+                    <p className="truncate text-[0.6875rem] text-black/45">{[convidado.afiliacao, nomesDosTipos.get(convidado.tipo_id), convidado.solicitante ? `pedido por ${convidado.solicitante}` : null].filter(Boolean).join(" · ")}</p>
                   </div>
                   <span className="w-16 text-[0.75rem] tabular-nums text-black/55">{convidado.quantidade} {convidado.quantidade === 1 ? "lugar" : "lugares"}</span>
                   <span className="w-24 text-[0.75rem] text-black/65">{ROTULO_DA_SITUACAO_DO_CONVIDADO[convidado.situacao]}</span>
@@ -378,6 +483,7 @@ export function ConvidadosDaSessao({ organizationId, sessaoId, sessaoRotulo, pod
         )}
       </section>
 
+      {linkAberto && <LinkDePedidosSheet sessaoId={sessaoId} sessaoRotulo={sessaoRotulo} ativo={linkDePedidos} onClose={() => setLinkAberto(false)} onGerou={recarregar} />}
       {codigos && <CodigosSheet titulo={codigos.titulo} itens={codigos.itens} sessaoRotulo={sessaoRotulo} onClose={() => setCodigos(null)} />}
       {tiposAbertos && <TiposSheet organizationId={organizationId} tipos={tipos} onClose={() => setTiposAbertos(false)} onMudou={recarregar} />}
       {folha && <ConvidadoSheet organizationId={organizationId} sessaoId={sessaoId} tipos={tipos} saldos={saldos} convidado={folha.convidado} onClose={() => setFolha(null)} onSalvou={recarregar} />}
