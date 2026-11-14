@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Copy, Pencil } from "lucide-react";
@@ -88,7 +88,6 @@ export default function AcordoPage() {
     return () => { ativo = false; };
   }, [id, organizationId, versao, router]);
 
-  const rotuloDaData = useMemo(() => new Map((detalhe?.datas ?? []).map(item => [item.id, diaEMes(item.data)])), [detalhe]);
 
   if (detalhe === undefined) return <DetailPageSkeleton sidebar={false} />;
   if (detalhe === null) return <DetailNotFound title="Acordo não encontrado" description="Ele não existe, foi apagado ou você não tem a permissão de dinheiro." backHref="/producoes/temporadas" backLabel="Voltar para Temporadas" />;
@@ -98,7 +97,8 @@ export default function AcordoPage() {
   const proxima = proximaSituacaoDoAcordo(acordo.situacao);
   const anterior = situacaoAnteriorDoAcordo(acordo.situacao);
   const travado = acordoTravado(acordo.situacao);
-  const nomesDasDatas = cobertas.map(dataId => rotuloDaData.get(dataId) ?? "").filter(Boolean);
+  // Na ordem do calendário (as datas já vêm ordenadas), não na ordem em que foram ligadas ao acordo.
+  const nomesDasDatas = datas.filter(item => cobertas.includes(item.id)).map(item => diaEMes(item.data));
   const firme = valorFirmeDoAcordoEmCentavos(acordo);
   const comprometido = comprometidoDoAcordoEmCentavos(acordo);
   const voltar = `/producoes/temporadas/${acordo.temporada_id}#dinheiro/acordos`;
@@ -164,7 +164,7 @@ export default function AcordoPage() {
             {podeEditar && proxima && assinando === null && (
               <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => (proxima === "assinado" ? setAssinando(new Date().toISOString().slice(0, 10)) : void mudarSituacao(proxima))}>{ROTULO_DO_PASSO[acordo.situacao]}</button>
             )}
-            {podeEditar && anterior && assinando === null && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => void mudarSituacao(anterior)}>Voltar para {ROTULO_DA_SITUACAO_DO_ACORDO[anterior].toLowerCase()}</button>}
+            {podeEditar && anterior && assinando === null && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => void mudarSituacao(anterior)}>Voltar para {ROTULO_DA_SITUACAO_DO_ACORDO[anterior].toLowerCase().replace("em revisão", "revisão")}</button>}
             {assinando !== null && (
               <span className="flex flex-wrap items-center gap-1.5 rounded border bg-white px-2 py-1" style={{ borderColor: "#B07A1447" }}>
                 <label className="text-[0.6875rem] text-[#B07A14]" htmlFor="acordo-assinado-em">Assinado em</label>
@@ -257,7 +257,7 @@ export default function AcordoPage() {
                   ["Tipo", ROTULO_DO_TIPO_DE_ACORDO[acordo.tipo]],
                   ["Sentido", ROTULO_DO_SENTIDO_DO_ACORDO[acordo.sentido]],
                   ["Valor firme", firme > 0 ? formatarReais(firme) : "—"],
-                  ["Comprometido no orçamento", comprometido === null ? "Ainda não" : formatarReais(comprometido)],
+                  ["Comprometido no orçamento", acordo.sentido === "a_receber" ? "Não se aplica (a receber)" : comprometido === null ? "Ainda não (só depois de assinado)" : formatarReais(comprometido)],
                   ["Observação", acordo.observacao ?? "—"],
                 ].map(([rotulo, valor]) => (
                   <div key={rotulo}>
