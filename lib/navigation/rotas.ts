@@ -47,6 +47,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/tarefas", "Tarefas da produção"],
   ["/producoes/acertos", "Acerto técnico"],
   ["/producoes/pedidos", "Pedido de pagamento"],
+  ["/producoes/faturas", "Fatura"],
   ["/producoes", "Produção"],
   ["/configuracoes/mcp", "Claude e ChatGPT (MCP)"],
   ["/configuracoes", "Configurações"],
@@ -64,6 +65,7 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/ativacoes": "/contas-patrocinio",
   // Páginas de detalhe da produção que nascem de uma temporada: o menu acende Temporadas, não a Agenda.
   "/producoes/pedidos": "/producoes/temporadas",
+  "/producoes/faturas": "/producoes/temporadas",
 };
 
 export function correspondeRota(path: string, prefixo: string): boolean {
