@@ -18,11 +18,12 @@ type Pessoa = { id: string; nome: string };
 const paraCampo = (valor: number) => String(valor).replace(".", ",");
 const dia = (data: string) => data.split("-").reverse().join("/");
 
-function DiariaSheet({ organizationId, temporadaId, diaria, pessoas, sugestoes, onClose, onSalvou }: {
-  organizationId: string; temporadaId: string; diaria: DiariaDaTemporada | null; pessoas: Pessoa[]; sugestoes: Record<string, number>; onClose: () => void; onSalvou: () => void;
+function DiariaSheet({ organizationId, temporadaId, diaria, pessoas, sugestoes, somenteLeitura, onClose, onSalvou }: {
+  organizationId: string; temporadaId: string; diaria: DiariaDaTemporada | null; pessoas: Pessoa[]; sugestoes: Record<string, number>; somenteLeitura: boolean; onClose: () => void; onSalvou: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
-  const paga = diaria?.pago_em != null;
+  // `paga` trava a folha; quem só lê vê a diária do mesmo jeito travado.
+  const paga = diaria?.pago_em != null || somenteLeitura;
   const [pessoaId, setPessoaId] = useState(diaria?.pessoa_id ?? "");
   const [de, setDe] = useState(diaria?.de ?? "");
   const [ate, setAte] = useState(diaria?.ate ?? "");
@@ -78,7 +79,7 @@ function DiariaSheet({ organizationId, temporadaId, diaria, pessoas, sugestoes, 
 
   return (
     <TopSheet
-      titulo={diaria ? "Editar diária" : "Nova diária"}
+      titulo={diaria ? (paga ? "Diária" : "Editar diária") : "Nova diária"}
       onClose={onClose}
       footer={fechar => (
         <>
@@ -90,7 +91,7 @@ function DiariaSheet({ organizationId, temporadaId, diaria, pessoas, sugestoes, 
     >
       <div className="space-y-4">
         {erro && <Erro texto={erro} />}
-        {paga && <p className="rounded border bg-white px-3 py-2 text-[0.6875rem] text-black/55" style={{ borderColor: "rgba(13,13,13,.1)" }}>A diária está paga (recibo {diaria?.recibo}, em {diaria?.pago_em ? dia(diaria.pago_em) : ""}): nada muda e ela não se apaga.</p>}
+        {diaria?.pago_em != null && <p className="rounded border bg-white px-3 py-2 text-[0.6875rem] text-black/55" style={{ borderColor: "rgba(13,13,13,.1)" }}>A diária está paga (recibo {diaria?.recibo}, em {diaria?.pago_em ? dia(diaria.pago_em) : ""}): nada muda e ela não se apaga.</p>}
         <div>
           <span className={ROTULO}>Quem recebe</span>
           <Dropdown ariaLabel="Pessoa que recebe a diária" value={pessoaId} onChange={escolherPessoa} disabled={salvando || diaria !== null} options={[{ value: "", label: "Escolha a pessoa" }, ...pessoas.map(item => ({ value: item.id, label: item.nome }))]} />
@@ -223,27 +224,28 @@ export function DiariasDaTemporada({ organizationId, temporadaId, temporadaTitul
       </div>
       {erro && <div className="mb-2"><Erro texto={erro} /></div>}
       {diarias.length === 0 ? (
-        <p className="rounded border bg-white px-5 py-6 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhuma diária. Lance o período de estrada de cada pessoa: o valor do dia vem sugerido pela função dela na temporada, e o recibo trava a diária paga.</p>
+        <p className="rounded border bg-white px-5 py-6 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhuma diária. Lance o período de estrada de cada pessoa: o valor do dia vem sugerido pela função dela na temporada, e o recibo trava a diária paga. Clique numa diária para ver ou editar.</p>
       ) : (
         <div className="space-y-3">
           <p className="text-[0.75rem] tabular-nums text-black/55">Total {formatarReais(totais.totalCentavos)} em {totais.dias} {totais.dias === 1 ? "dia" : "dias"} · pago {formatarReais(totais.pagoCentavos)} · <span className="font-medium text-[#282525]">a pagar {formatarReais(totais.aPagarCentavos)}</span></p>
           <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {diarias.map(item => (
-              <li key={item.id} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5">
-                <div className="min-w-0 flex-1 basis-56">
-                  <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{nome(item.pessoa_id)}</p>
-                  <p className="truncate text-[0.6875rem] tabular-nums text-black/45">{dia(item.de)} a {dia(item.ate)} · {item.dias} {item.dias === 1 ? "dia" : "dias"} × {formatarReais(emCentavos(item.valor_dia))}</p>
-                  <p className={`text-[0.6875rem] ${item.pago_em ? "text-black/45" : "text-[#B07A14]"}`}>{item.pago_em ? `Paga em ${dia(item.pago_em)} · recibo ${item.recibo}` : item.recibo ? `Recibo ${item.recibo}, falta o dia do pagamento` : "A pagar"}</p>
-                </div>
-                <span className="text-[0.8125rem] tabular-nums text-[#282525]">{formatarReais(totalDaDiariaEmCentavos(item))}</span>
-                {podeEditar && <button type="button" className={BOTAO_PEQUENO} onClick={() => setFolha({ diaria: item })}>{item.pago_em ? "Ver" : "Editar"}</button>}
-                <button type="button" className={BOTAO_PEQUENO} onClick={() => void copiarRecibo(item)}><Copy size={11} aria-hidden="true" className="mr-1 inline" />{copiado === item.id ? "Copiado" : "Recibo"}</button>
+              <li key={item.id} className="flex items-center">
+                <button type="button" onClick={() => setFolha({ diaria: item })} className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5 text-left transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]">
+                  <span className="min-w-0 flex-1 basis-56">
+                    <span className="block truncate text-[0.8125rem] font-medium text-[#282525]">{nome(item.pessoa_id)}</span>
+                    <span className="block truncate text-[0.6875rem] tabular-nums text-black/45">{dia(item.de)} a {dia(item.ate)} · {item.dias} {item.dias === 1 ? "dia" : "dias"} × {formatarReais(emCentavos(item.valor_dia))}</span>
+                    <span className={`block text-[0.6875rem] ${item.pago_em ? "text-black/45" : "text-[#B07A14]"}`}>{item.pago_em ? `Paga em ${dia(item.pago_em)} · recibo ${item.recibo}` : item.recibo ? `Recibo ${item.recibo}, falta o dia do pagamento` : "A pagar"}</span>
+                  </span>
+                  <span className="text-[0.8125rem] tabular-nums text-[#282525]">{formatarReais(totalDaDiariaEmCentavos(item))}</span>
+                </button>
+                <button type="button" className={`${BOTAO_PEQUENO} mr-3 shrink-0`} onClick={() => void copiarRecibo(item)}><Copy size={11} aria-hidden="true" className="mr-1 inline" />{copiado === item.id ? "Copiado" : "Recibo"}</button>
               </li>
             ))}
           </ul>
         </div>
       )}
-      {folha && <DiariaSheet organizationId={organizationId} temporadaId={temporadaId} diaria={folha.diaria} pessoas={pessoas} sugestoes={sugestoes} onClose={() => setFolha(null)} onSalvou={mudou} />}
+      {folha && <DiariaSheet organizationId={organizationId} temporadaId={temporadaId} diaria={folha.diaria} pessoas={pessoas} sugestoes={sugestoes} somenteLeitura={!podeEditar} onClose={() => setFolha(null)} onSalvou={mudou} />}
     </section>
   );
 }

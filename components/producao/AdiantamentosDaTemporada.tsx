@@ -1,26 +1,28 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Download, Plus, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { Download, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, BOTAO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { emCentavos, formatarReais, lerValorEmReais } from "@/lib/producao/bordero";
 import {
-  contaDoAdiantamento, lerAdiantamento, lerGasto, mensagemDoErroDeAdiantamento, planilhaDosAdiantamentos, ROTULO_DA_SITUACAO_DO_ADIANTAMENTO, textoDaPrestacao, totalEmAberto,
+  contaDoAdiantamento, lerAdiantamento, lerGasto, mensagemDoErroDeAdiantamento, planilhaDosAdiantamentos, ROTULO_DA_SITUACAO_DO_ADIANTAMENTO, totalEmAberto,
   type AdiantamentoDaTemporada, type GastoDoAdiantamento,
 } from "@/lib/producao/adiantamentos";
 
-type Pessoa = { id: string; nome: string };
+export type PessoaDoAdiantamento = { id: string; nome: string };
+type Pessoa = PessoaDoAdiantamento;
 
 const paraCampo = (valor: number) => String(valor).replace(".", ",");
 const dia = (data: string) => data.split("-").reverse().join("/");
 const hojeISO = () => new Date().toISOString().slice(0, 10);
 
-function AdiantamentoSheet({ organizationId, temporadaId, adiantamento, pessoas, saldoMinimo, onClose, onSalvou }: {
+export function AdiantamentoSheet({ organizationId, temporadaId, adiantamento, pessoas, saldoMinimo, onClose, onSalvou }: {
   organizationId: string; temporadaId: string; adiantamento: AdiantamentoDaTemporada | null; pessoas: Pessoa[]; saldoMinimo: number; onClose: () => void; onSalvou: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
@@ -113,7 +115,7 @@ function AdiantamentoSheet({ organizationId, temporadaId, adiantamento, pessoas,
   );
 }
 
-function GastoSheet({ organizationId, adiantamento, gasto, onClose, onSalvou }: { organizationId: string; adiantamento: AdiantamentoDaTemporada; gasto: GastoDoAdiantamento | null; onClose: () => void; onSalvou: () => void }) {
+export function GastoSheet({ organizationId, adiantamento, gasto, onClose, onSalvou }: { organizationId: string; adiantamento: AdiantamentoDaTemporada; gasto: GastoDoAdiantamento | null; onClose: () => void; onSalvou: () => void }) {
   const { confirmDelete } = useDeleteConfirm();
   const [descricao, setDescricao] = useState(gasto?.descricao ?? "");
   const [valor, setValor] = useState(gasto ? paraCampo(gasto.valor) : "");
@@ -199,10 +201,7 @@ export function AdiantamentosDaTemporada({ organizationId, temporadaId, temporad
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
-  const [trabalhando, setTrabalhando] = useState(false);
-  const [copiado, setCopiado] = useState("");
-  const [folha, setFolha] = useState<{ adiantamento: AdiantamentoDaTemporada | null } | null>(null);
-  const [folhaGasto, setFolhaGasto] = useState<{ adiantamento: AdiantamentoDaTemporada; gasto: GastoDoAdiantamento | null } | null>(null);
+  const [folha, setFolha] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -242,20 +241,6 @@ export function AdiantamentosDaTemporada({ organizationId, temporadaId, temporad
   const mudou = () => setVersao(atual => atual + 1);
   const nome = (id: string) => nomeDaPessoa.get(id) ?? "Pessoa arquivada";
 
-  async function encerrar(id: string) {
-    setTrabalhando(true);
-    setErro(null);
-    const { error } = await clienteDaProducao(createClient()).from("producao_adiantamentos").update({ situacao: "encerrado" }).eq("id", id);
-    setTrabalhando(false);
-    if (error) { setErro(mensagemDoErroDeAdiantamento(error)); return; }
-    mudou();
-  }
-
-  async function copiar(item: { adiantamento: AdiantamentoDaTemporada; gastos: GastoDoAdiantamento[] }) {
-    try { await navigator.clipboard.writeText(textoDaPrestacao({ pessoa: nome(item.adiantamento.pessoa_id), adiantamento: item.adiantamento, gastos: item.gastos })); setCopiado(item.adiantamento.id); setTimeout(() => setCopiado(""), 2000); }
-    catch { setErro("Não foi possível copiar. Selecione o texto e copie à mão."); }
-  }
-
   function baixar() {
     const arquivo = new Blob([planilhaDosAdiantamentos({ temporada: temporadaTitulo, itens: agrupados.map(item => ({ pessoa: nome(item.adiantamento.pessoa_id), ...item })) })], { type: "text/csv;charset=utf-8" });
     const endereco = URL.createObjectURL(arquivo);
@@ -272,12 +257,12 @@ export function AdiantamentosDaTemporada({ organizationId, temporadaId, temporad
         <h2 id="adiantamentos-da-temporada" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Adiantamentos</h2>
         <div className="flex flex-wrap items-center gap-2">
           {adiantamentos.length > 0 && <button type="button" onClick={baixar} className={BOTAO}><Download size={13} aria-hidden="true" /> Planilha</button>}
-          {podeEditar && <button type="button" onClick={() => setFolha({ adiantamento: null })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Adiantamento</button>}
+          {podeEditar && <button type="button" onClick={() => setFolha(true)} className={BOTAO}><Plus size={13} aria-hidden="true" /> Adiantamento</button>}
         </div>
       </div>
       {erro && <div className="mb-2"><Erro texto={erro} /></div>}
       {adiantamentos.length === 0 ? (
-        <p className="rounded border bg-white px-5 py-6 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhum adiantamento. Registre o dinheiro entregue a alguém da equipe e acompanhe a prestação de contas: o saldo é o que ainda falta prestar ou devolver.</p>
+        <p className="rounded border bg-white px-5 py-6 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhum adiantamento. Registre o dinheiro entregue a alguém da equipe e acompanhe a prestação de contas: o saldo é o que ainda falta prestar ou devolver. Clique num adiantamento para prestar os gastos e encerrar.</p>
       ) : (
         <div className="space-y-3">
           <p className="text-[0.75rem] tabular-nums text-black/55">Com as pessoas, em aberto: <span className="font-medium text-[#282525]">{formatarReais(totalEmAberto(agrupados))}</span></p>
@@ -285,43 +270,23 @@ export function AdiantamentosDaTemporada({ organizationId, temporadaId, temporad
             {agrupados.map(item => {
               const { adiantamento } = item;
               const conta = contaDoAdiantamento(adiantamento, item.gastos);
-              const aberto = adiantamento.situacao === "aberto";
               return (
-                <li key={adiantamento.id} className="px-4 py-3">
-                  <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                <li key={adiantamento.id}>
+                  <Link href={`/producoes/adiantamentos/${adiantamento.id}`} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-4 py-3 transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]">
                     <div className="min-w-0 flex-1 basis-64">
                       <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{nome(adiantamento.pessoa_id)} · {adiantamento.descricao}</p>
                       <p className="text-[0.6875rem] tabular-nums text-black/45">Entregue em {dia(adiantamento.data)}: {formatarReais(conta.valorCentavos)} · prestado {formatarReais(conta.prestadoCentavos)}{conta.devolvidoCentavos > 0 ? ` · devolvido ${formatarReais(conta.devolvidoCentavos)}` : ""} · <span className={conta.saldoCentavos === 0 ? "" : "font-medium text-[#282525]"}>saldo {formatarReais(conta.saldoCentavos)}</span></p>
                       {conta.avisos.map(aviso => <p key={aviso} className="mt-0.5 flex items-start gap-1 text-[0.6875rem] text-[#B07A14]"><TriangleAlert size={11} aria-hidden="true" className="mt-0.5 shrink-0" /> {aviso}</p>)}
                     </div>
                     <span className="rounded border px-2 py-1 text-[0.6875rem] font-medium text-[#282525]" style={{ borderColor: "rgba(13,13,13,.25)" }}>{ROTULO_DA_SITUACAO_DO_ADIANTAMENTO[adiantamento.situacao]}</span>
-                  </div>
-                  {item.gastos.length > 0 && (
-                    <ul className="mt-2 space-y-1">
-                      {item.gastos.map(gasto => (
-                        <li key={gasto.id} className="flex flex-wrap items-center gap-x-3 text-[0.75rem]">
-                          <span className="w-20 tabular-nums text-black/55">{dia(gasto.data)}</span>
-                          <span className="min-w-0 flex-1 basis-40 truncate text-black/75">{gasto.descricao}{gasto.documento ? ` (${gasto.documento})` : ""}</span>
-                          <span className="w-28 text-right tabular-nums text-[#282525]">{formatarReais(emCentavos(gasto.valor))}</span>
-                          {podeEditar && aberto && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => setFolhaGasto({ adiantamento, gasto })}>Editar</button>}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    {podeEditar && aberto && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => setFolhaGasto({ adiantamento, gasto: null })}><Plus size={11} aria-hidden="true" className="mr-1 inline" />Prestar gasto</button>}
-                    {podeEditar && aberto && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => setFolha({ adiantamento })}>Editar adiantamento</button>}
-                    {podeEditar && conta.encerravel && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void encerrar(adiantamento.id)}>Encerrar (saldo zerado)</button>}
-                    <button type="button" className={BOTAO_PEQUENO} onClick={() => void copiar(item)}><Copy size={11} aria-hidden="true" className="mr-1 inline" />{copiado === adiantamento.id ? "Copiado" : "Copiar prestação"}</button>
-                  </div>
+                  </Link>
                 </li>
               );
             })}
           </ul>
         </div>
       )}
-      {folha && <AdiantamentoSheet organizationId={organizationId} temporadaId={temporadaId} adiantamento={folha.adiantamento} pessoas={pessoas} saldoMinimo={folha.adiantamento ? contaDoAdiantamento(folha.adiantamento, gastos.filter(item => item.adiantamento_id === folha.adiantamento?.id)).prestadoCentavos : 0} onClose={() => setFolha(null)} onSalvou={mudou} />}
-      {folhaGasto && <GastoSheet organizationId={organizationId} adiantamento={folhaGasto.adiantamento} gasto={folhaGasto.gasto} onClose={() => setFolhaGasto(null)} onSalvou={mudou} />}
+      {folha && <AdiantamentoSheet organizationId={organizationId} temporadaId={temporadaId} adiantamento={null} pessoas={pessoas} saldoMinimo={0} onClose={() => setFolha(false)} onSalvou={mudou} />}
     </section>
   );
 }
