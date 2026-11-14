@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { ArrowUpRight, Pencil, TriangleAlert } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
@@ -40,6 +40,8 @@ function ondeEsta(pedido: PedidoDaTemporada, nome: (id: string | null) => string
 /** O pedido de pagamento: onde está, o que falta, quem pediu e decidiu, os pagamentos ligados e o que fazer agora. */
 export default function PedidoPage() {
   const { id } = useParams<{ id: string }>();
+  const router = useRouter();
+  const temporadaDoPedido = useRef<string | null>(null);
   const organizationId = useOrganizationId();
   const papel = useOrganizationRole();
   const [detalhe, setDetalhe] = useState<Detalhe | null | undefined>(undefined);
@@ -65,8 +67,11 @@ export default function PedidoPage() {
       ]);
       if (!ativo) return;
       setPodeAprovar(aprovar.data === true);
+      // O pedido que a pessoa acabou de apagar: volta para a temporada em vez de mostrar "não encontrado".
+      if (!ped.error && !ped.data && temporadaDoPedido.current) { router.replace(`/producoes/temporadas/${temporadaDoPedido.current}#dinheiro/pagar`); return; }
       if (ped.error || !ped.data) { setDetalhe(null); return; }
       const pedido = ped.data as Detalhe["pedido"];
+      temporadaDoPedido.current = pedido.temporada_id;
       const [tem, orc, lan] = await Promise.all([
         producao.from("producao_temporadas").select("titulo").eq("id", pedido.temporada_id).maybeSingle(),
         producao.from("producao_orcamentos").select("id, nome").eq("temporada_id", pedido.temporada_id).order("created_at"),
@@ -89,7 +94,7 @@ export default function PedidoPage() {
       });
     })();
     return () => { ativo = false; };
-  }, [id, organizationId, versao]);
+  }, [id, organizationId, versao, router]);
 
   const lancadoCentavos = useMemo(() => (detalhe?.lancamentos ?? []).reduce((soma, item) => soma + emCentavos(item.valor), 0), [detalhe]);
 
