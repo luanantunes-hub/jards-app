@@ -28,6 +28,7 @@ test("prefixo não casa com rota de nome parecido", () => {
 test("contratos, entregas e ativações destacam Clientes no menu", () => {
   assert.equal(itemAtivoDoMenu("/contratos/abc"), "/contas-patrocinio");
   assert.equal(itemAtivoDoMenu("/entregas/abc"), "/contas-patrocinio");
+  assert.equal(itemAtivoDoMenu("/producoes/pedidos/abc"), "/producoes/temporadas", "o pedido nasce de uma temporada: o menu acende Temporadas");
   assert.equal(itemAtivoDoMenu("/ativacoes/abc"), "/contas-patrocinio");
   assert.equal(itemAtivoDoMenu("/captacoes/abc"), "/captacoes/abc");
 });

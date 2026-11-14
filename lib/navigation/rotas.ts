@@ -62,6 +62,8 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/contratos": "/contas-patrocinio",
   "/entregas": "/contas-patrocinio",
   "/ativacoes": "/contas-patrocinio",
+  // Páginas de detalhe da produção que nascem de uma temporada: o menu acende Temporadas, não a Agenda.
+  "/producoes/pedidos": "/producoes/temporadas",
 };
 
 export function correspondeRota(path: string, prefixo: string): boolean {
