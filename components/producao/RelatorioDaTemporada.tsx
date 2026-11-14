@@ -18,15 +18,13 @@ function Numero({ rotulo, valor, detalhe }: { rotulo: string; valor: number; det
   );
 }
 
-/** O relatório de fim de temporada (PD9.6): os números do que a produção já registrou e o texto para colar numa proposta. Carrega só quando se abre. */
+/** O relatório de fim de temporada (PD9.6): os números do que a produção já registrou e o texto para colar numa proposta. Carrega quando a aba do relatório abre. */
 export function RelatorioDaTemporada({ organizationId, temporadaId, titulo }: { organizationId: string; temporadaId: string; titulo: string }) {
-  const [aberto, setAberto] = useState(false);
   const [relatorio, setRelatorio] = useState<Relatorio | null>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
 
   useEffect(() => {
-    if (!aberto) return;
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
@@ -48,7 +46,7 @@ export function RelatorioDaTemporada({ organizationId, temporadaId, titulo }: { 
       }));
     })();
     return () => { ativo = false; };
-  }, [aberto, organizationId, temporadaId]);
+  }, [organizationId, temporadaId]);
 
   async function copiar() {
     if (!relatorio) return;
@@ -60,11 +58,9 @@ export function RelatorioDaTemporada({ organizationId, temporadaId, titulo }: { 
     <section aria-labelledby="relatorio-da-temporada" className="mt-10">
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 id="relatorio-da-temporada" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Relatório da temporada</h2>
-        {aberto && relatorio && <button type="button" onClick={() => void copiar()} className={BOTAO}><Copy size={13} aria-hidden="true" /> {copiado ? "Copiado" : "Copiar texto"}</button>}
+        {relatorio && <button type="button" onClick={() => void copiar()} className={BOTAO}><Copy size={13} aria-hidden="true" /> {copiado ? "Copiado" : "Copiar texto"}</button>}
       </div>
-      {!aberto ? (
-        <button type="button" onClick={() => setAberto(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Ver os números da temporada</button>
-      ) : erro ? (
+      {erro ? (
         <p role="alert" className="rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>
       ) : relatorio === null ? (
         <div className="h-24 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />

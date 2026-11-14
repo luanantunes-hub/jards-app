@@ -110,13 +110,66 @@ function HospedagemSheet({ organizationId, temporadaId, hospedagem, onClose, onS
   );
 }
 
+/** O quarto novo: nome e lugares. Fica aberto para criar vários em seguida ("Criar e fazer outro"). */
+function QuartoSheet({ organizationId, hospedagemId, hotel, onClose, onSaved }: { organizationId: string; hospedagemId: string; hotel: string; onClose: () => void; onSaved: () => void }) {
+  const [nome, setNome] = useState("");
+  const [capacidade, setCapacidade] = useState("2");
+  const [salvando, setSalvando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [criados, setCriados] = useState<string[]>([]);
+
+  async function salvar(fechar: () => void, outro: boolean) {
+    const leitura = lerQuarto({ nome, capacidade });
+    if (!leitura.ok) { setErro(leitura.erro); return; }
+    setSalvando(true);
+    setErro(null);
+    const { error } = await clienteDaProducao(createClient()).from("producao_quartos").insert({ ...leitura.quarto, organization_id: organizationId, hospedagem_id: hospedagemId });
+    setSalvando(false);
+    if (error) { setErro(error.code === "42501" ? "Você não pode mudar a hospedagem." : "Não foi possível criar o quarto. Tente de novo."); return; }
+    onSaved();
+    if (!outro) { fechar(); return; }
+    setCriados(atual => [...atual, leitura.quarto.nome]);
+    setNome("");
+    document.getElementById("quarto-nome")?.focus();
+  }
+
+  return (
+    <TopSheet
+      titulo={`Novo quarto em ${hotel}`}
+      onClose={onClose}
+      footer={fechar => (
+        <>
+          <button type="button" onClick={fechar} disabled={salvando} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{criados.length > 0 ? "Fechar" : "Cancelar"}</button>
+          <button type="button" onClick={() => void salvar(fechar, true)} disabled={salvando} className={BOTAO}>Criar e fazer outro</button>
+          <button type="button" onClick={() => void salvar(fechar, false)} disabled={salvando} className="rounded bg-[#2E8932] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#26752A] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50">{salvando ? "Criando…" : "Criar quarto"}</button>
+        </>
+      )}
+    >
+      <div className="space-y-4">
+        {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        <div className="grid grid-cols-[1fr_7rem] gap-3">
+          <div>
+            <label className={ROTULO} htmlFor="quarto-nome">Número ou nome do quarto</label>
+            <input id="quarto-nome" autoFocus className={CAMPO} value={nome} onChange={event => setNome(event.target.value)} placeholder="101" maxLength={100} disabled={salvando} />
+          </div>
+          <div>
+            <label className={ROTULO} htmlFor="quarto-capacidade">Lugares</label>
+            <input id="quarto-capacidade" inputMode="numeric" className={CAMPO} value={capacidade} onChange={event => setCapacidade(event.target.value.replace(/\D/g, ""))} disabled={salvando} />
+          </div>
+        </div>
+        {criados.length > 0 && <p className="text-[0.75rem] text-black/55" role="status">{criados.length === 1 ? "Quarto criado" : "Quartos criados"}: {criados.join(", ")}.</p>}
+        <p className="text-[0.6875rem] text-black/40">Quem dorme em cada quarto você escolhe depois, na lista ou no mapa de quartos.</p>
+      </div>
+    </TopSheet>
+  );
+}
+
 function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pessoas, nomes, podeEditar, onEditar, onMudou }: {
   organizationId: string; hospedagem: Hospedagem; quartos: Quarto[]; ocupantes: Ocupante[]; pessoas: Pessoa[]; nomes: ReadonlyMap<string, string>;
   podeEditar: boolean; onEditar: () => void; onMudou: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
-  const [nomeNovo, setNomeNovo] = useState("");
-  const [capacidadeNova, setCapacidadeNova] = useState("2");
+  const [quartoNovo, setQuartoNovo] = useState(false);
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
@@ -132,13 +185,6 @@ function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pe
     if (error) { setErro(error.code === "42501" ? "Você não pode mudar a hospedagem." : mensagem); return false; }
     onMudou();
     return true;
-  }
-
-  async function novoQuarto() {
-    const leitura = lerQuarto({ nome: nomeNovo, capacidade: capacidadeNova });
-    if (!leitura.ok) { setErro(leitura.erro); return; }
-    const ok = await executar(() => clienteDaProducao(createClient()).from("producao_quartos").insert({ ...leitura.quarto, organization_id: organizationId, hospedagem_id: hospedagem.id }), "Não foi possível criar o quarto. Tente de novo.");
-    if (ok) setNomeNovo("");
   }
 
   function apagarQuarto(quarto: Quarto) {
@@ -188,7 +234,7 @@ function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pe
       </div>
       {erro && <p role="alert" className="mt-3 rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
       {quartos.length === 0 ? (
-        <p className="mt-3 text-[0.75rem] text-black/45">Nenhum quarto ainda. {podeEditar ? "Crie os quartos e ponha quem dorme em cada um." : ""}</p>
+        <p className="mt-3 text-[0.75rem] text-black/45">Nenhum quarto ainda. {podeEditar ? "Use “Novo quarto” para criar os quartos e depois ponha quem dorme em cada um." : ""}</p>
       ) : (
         <ul className="mt-3 divide-y divide-black/[.06] rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {quartos.map(quarto => {
@@ -221,19 +267,8 @@ function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pe
         </ul>
       )}
       {quartos.length > 0 && semQuarto.length > 0 && <p className="mt-2 text-[0.6875rem] text-black/45">Sem quarto: {semQuarto.map(pessoa => pessoa.nome).join(", ")}.</p>}
-      {podeEditar && (
-        <div className="mt-3 flex flex-wrap items-end gap-2">
-          <div className="w-40">
-            <label className={ROTULO} htmlFor={`quarto-nome-${hospedagem.id}`}>Novo quarto</label>
-            <input id={`quarto-nome-${hospedagem.id}`} className={CAMPO} value={nomeNovo} onChange={event => setNomeNovo(event.target.value)} placeholder="101" maxLength={100} disabled={ocupado} />
-          </div>
-          <div className="w-24">
-            <label className={ROTULO} htmlFor={`quarto-capacidade-${hospedagem.id}`}>Lugares</label>
-            <input id={`quarto-capacidade-${hospedagem.id}`} inputMode="numeric" className={CAMPO} value={capacidadeNova} onChange={event => setCapacidadeNova(event.target.value)} disabled={ocupado} />
-          </div>
-          <button type="button" onClick={() => void novoQuarto()} disabled={ocupado} className={BOTAO}><Plus size={13} aria-hidden="true" /> Adicionar quarto</button>
-        </div>
-      )}
+      {podeEditar && <button type="button" onClick={() => setQuartoNovo(true)} disabled={ocupado} className={`${BOTAO} mt-3`}><Plus size={13} aria-hidden="true" /> Novo quarto</button>}
+      {quartoNovo && <QuartoSheet organizationId={organizationId} hospedagemId={hospedagem.id} hotel={hospedagem.hotel} onClose={() => setQuartoNovo(false)} onSaved={onMudou} />}
       {mapaAberto && (
         <MapaDeQuartos organizationId={organizationId} hospedagemId={hospedagem.id} hotel={hospedagem.hotel} quartos={quartos} ocupantes={ocupantes} pessoas={pessoas}
           podeEditar={podeEditar} onClose={() => setMapaAberto(false)} onMudou={onMudou} />
