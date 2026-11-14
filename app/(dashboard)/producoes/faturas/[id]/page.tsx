@@ -152,7 +152,7 @@ export default function FaturaPage() {
           {podeEditar && (proxima || anterior) && (
             <div className="mt-3 flex flex-wrap items-center gap-2">
               {proxima && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => void mudarSituacao(proxima)}>{ROTULO_DO_PASSO[fatura.situacao]}</button>}
-              {anterior && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => void mudarSituacao(anterior)}>Voltar para {ROTULO_DA_SITUACAO_DA_FATURA[anterior].toLowerCase()}</button>}
+              {anterior && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => void mudarSituacao(anterior)}>Voltar para {ROTULO_DA_SITUACAO_DA_FATURA[anterior].toLowerCase().replace("em revisão", "revisão")}</button>}
             </div>
           )}
         </section>
