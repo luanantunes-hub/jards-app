@@ -1,31 +1,31 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Copy, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Plus } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, BOTAO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
-import { SENTIDOS_DO_ACORDO, TIPOS_DE_ACORDO, type SentidoDoAcordo, type SituacaoDoAcordo, type TipoDeAcordo } from "@/lib/producao/estados";
+import { SENTIDOS_DO_ACORDO, TIPOS_DE_ACORDO, type SentidoDoAcordo, type TipoDeAcordo } from "@/lib/producao/estados";
 import { diaEMes } from "@/lib/producao/agenda";
 import { lerValorEmReais } from "@/lib/producao/bordero";
 import {
-  acordoTravado, lerAcordo, mensagemDoErroDeAcordo, proximaSituacaoDoAcordo, resumoDasCondicoes, ROTULO_DA_SITUACAO_DO_ACORDO, ROTULO_DO_SENTIDO_DO_ACORDO, ROTULO_DO_TIPO_DE_ACORDO,
-  situacaoAnteriorDoAcordo, textoDoAcordo, type AcordoDaTemporada,
+  acordoTravado, lerAcordo, mensagemDoErroDeAcordo, resumoDasCondicoes, ROTULO_DA_SITUACAO_DO_ACORDO, ROTULO_DO_SENTIDO_DO_ACORDO, ROTULO_DO_TIPO_DE_ACORDO,
+  type AcordoDaTemporada,
 } from "@/lib/producao/acordos";
 
 /** Aviso entre os blocos da página da temporada: o orçamento escuta para recalcular o comprometido quando um acordo muda. */
 export const EVENTO_ACORDOS_MUDARAM = "producao-acordos-mudaram";
 
-type DataDaTemporada = { id: string; data: string };
+export type DataDaTemporada = { id: string; data: string };
 type Cobertura = { acordo_id: string; data_id: string };
 
 const paraCampo = (valor: number | null) => (valor === null ? "" : String(valor).replace(".", ","));
-const ROTULO_DO_PASSO: Record<SituacaoDoAcordo, string> = { rascunho: "Enviar para revisão", revisao: "Mandar para assinatura", para_assinatura: "Marcar como assinado", assinado: "Encerrar", encerrado: "" };
 
-function AcordoSheet({ organizationId, temporadaId, acordo, datas, cobertas, onClose, onSalvou }: {
+export function AcordoSheet({ organizationId, temporadaId, acordo, datas, cobertas, onClose, onSalvou }: {
   organizationId: string; temporadaId: string; acordo: AcordoDaTemporada | null; datas: DataDaTemporada[]; cobertas: string[]; onClose: () => void; onSalvou: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
@@ -186,10 +186,7 @@ export function AcordosDaTemporada({ organizationId, temporadaId, podeEditar }: 
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
-  const [trabalhando, setTrabalhando] = useState(false);
-  const [copiado, setCopiado] = useState("");
   const [folha, setFolha] = useState<{ acordo: AcordoDaTemporada | null } | null>(null);
-  const [assinando, setAssinando] = useState<{ id: string; dia: string } | null>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -221,28 +218,10 @@ export function AcordosDaTemporada({ organizationId, temporadaId, podeEditar }: 
     return () => { ativo = false; };
   }, [comDinheiro, temporadaId, versao]);
 
-  const rotuloDaData = useMemo(() => new Map(datas.map(item => [item.id, diaEMes(item.data)])), [datas]);
-
   if (!comDinheiro || !carregado) return null;
 
   const mudou = () => { setVersao(atual => atual + 1); window.dispatchEvent(new Event(EVENTO_ACORDOS_MUDARAM)); };
   const datasDoAcordo = (id: string) => coberturas.filter(item => item.acordo_id === id).map(item => item.data_id);
-
-  async function mudarSituacao(id: string, situacao: SituacaoDoAcordo, assinadoEm?: string) {
-    setTrabalhando(true);
-    setErro(null);
-    const { error } = await clienteDaProducao(createClient()).from("producao_acordos").update(situacao === "assinado" && assinadoEm ? { situacao, assinado_em: assinadoEm } : { situacao }).eq("id", id);
-    setTrabalhando(false);
-    setAssinando(null);
-    if (error) { setErro(mensagemDoErroDeAcordo(error)); return; }
-    mudou();
-  }
-
-  async function copiar(acordo: AcordoDaTemporada) {
-    const nomes = datasDoAcordo(acordo.id).map(id => rotuloDaData.get(id) ?? "").filter(Boolean);
-    try { await navigator.clipboard.writeText(textoDoAcordo(acordo, nomes)); setCopiado(acordo.id); setTimeout(() => setCopiado(""), 2000); }
-    catch { setErro("Não foi possível copiar. Selecione o texto e copie à mão."); }
-  }
 
   return (
     <section aria-labelledby="acordos-da-temporada" className="mt-8">
@@ -252,16 +231,14 @@ export function AcordosDaTemporada({ organizationId, temporadaId, podeEditar }: 
       </div>
       {erro && <div className="mb-2"><Erro texto={erro} /></div>}
       {acordos.length === 0 ? (
-        <p className="rounded border bg-white px-5 py-6 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhum acordo nesta temporada. Registre o que foi combinado com a casa, o contratante ou o elenco: valor, garantia, percentual da bilheteria, bônus e quem arca com cada despesa.</p>
+        <p className="rounded border bg-white px-5 py-6 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhum acordo nesta temporada. Registre o que foi combinado com a casa, o contratante ou o elenco: valor, garantia, percentual da bilheteria, bônus e quem arca com cada despesa. Clique num acordo para ver onde ele está e dar o próximo passo.</p>
       ) : (
         <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {acordos.map(acordo => {
-            const proxima = proximaSituacaoDoAcordo(acordo.situacao);
-            const anterior = situacaoAnteriorDoAcordo(acordo.situacao);
             const cobertas = datasDoAcordo(acordo.id);
             return (
-              <li key={acordo.id} className="px-4 py-3">
-                <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+              <li key={acordo.id}>
+                <Link href={`/producoes/acordos/${acordo.id}`} className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2 px-4 py-3 transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]">
                   <div className="min-w-0 flex-1 basis-64">
                     <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{acordo.contraparte}</p>
                     <p className="text-[0.6875rem] text-black/45">{ROTULO_DO_TIPO_DE_ACORDO[acordo.tipo]} · {ROTULO_DO_SENTIDO_DO_ACORDO[acordo.sentido]}{cobertas.length > 0 ? ` · ${cobertas.length} ${cobertas.length === 1 ? "data" : "datas"}` : ""}</p>
@@ -270,23 +247,7 @@ export function AcordosDaTemporada({ organizationId, temporadaId, podeEditar }: 
                   <span className="rounded border px-2 py-1 text-[0.6875rem] font-medium text-[#282525]" style={{ borderColor: "rgba(13,13,13,.25)" }}>
                     {ROTULO_DA_SITUACAO_DO_ACORDO[acordo.situacao]}{acordo.assinado_em ? ` em ${acordo.assinado_em.split("-").reverse().join("/")}` : ""}
                   </span>
-                </div>
-                <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                  {podeEditar && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => setFolha({ acordo })}>{acordoTravado(acordo.situacao) ? "Ver" : "Editar"}</button>}
-                  {podeEditar && anterior && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void mudarSituacao(acordo.id, anterior)}>Voltar para {ROTULO_DA_SITUACAO_DO_ACORDO[anterior].toLowerCase()}</button>}
-                  {podeEditar && proxima && assinando?.id !== acordo.id && (
-                    <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => (proxima === "assinado" ? setAssinando({ id: acordo.id, dia: new Date().toISOString().slice(0, 10) }) : void mudarSituacao(acordo.id, proxima))}>{ROTULO_DO_PASSO[acordo.situacao]}</button>
-                  )}
-                  {assinando?.id === acordo.id && (
-                    <span className="flex flex-wrap items-center gap-1.5 rounded border bg-white px-2 py-1" style={{ borderColor: "#B07A1447" }}>
-                      <label className="text-[0.6875rem] text-[#B07A14]" htmlFor={`assinado-${acordo.id}`}>Assinado em</label>
-                      <input id={`assinado-${acordo.id}`} type="date" className="h-8 rounded border border-black/[.12] bg-white px-2 text-[0.75rem]" value={assinando.dia} onChange={event => setAssinando({ id: acordo.id, dia: event.target.value })} />
-                      <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando || !/^\d{4}-\d{2}-\d{2}$/.test(assinando.dia)} onClick={() => void mudarSituacao(acordo.id, "assinado", assinando.dia)}>Confirmar</button>
-                      <button type="button" className={BOTAO_PEQUENO} onClick={() => setAssinando(null)}>Voltar</button>
-                    </span>
-                  )}
-                  <button type="button" className={BOTAO_PEQUENO} onClick={() => void copiar(acordo)}><Copy size={11} aria-hidden="true" className="mr-1 inline" />{copiado === acordo.id ? "Copiado" : "Copiar"}</button>
-                </div>
+                </Link>
               </li>
             );
           })}
