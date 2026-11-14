@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { Download, Plus } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
@@ -8,22 +9,20 @@ import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } f
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
-import type { SituacaoDaFatura } from "@/lib/producao/estados";
 import { emCentavos, formatarReais, lerValorEmReais } from "@/lib/producao/bordero";
 import {
-  calcularFatura, faturaEmitida, gerarParcelas, lerFatura, lerParcela, liquidoDaFaturaEmCentavos, mensagemDoErroDeFatura, planilhaDasFaturas, proximaSituacaoDaFatura,
-  ROTULO_DA_SITUACAO_DA_FATURA, situacaoAnteriorDaFatura, totaisDasFaturas, type FaturaDaTemporada, type ParcelaDaFatura,
+  calcularFatura, faturaEmitida, gerarParcelas, lerFatura, lerParcela, liquidoDaFaturaEmCentavos, mensagemDoErroDeFatura, planilhaDasFaturas,
+  ROTULO_DA_SITUACAO_DA_FATURA, totaisDasFaturas, type FaturaDaTemporada, type ParcelaDaFatura,
 } from "@/lib/producao/faturas";
 
-type AcordoAReceber = { id: string; contraparte: string };
+export type AcordoAReceber = { id: string; contraparte: string };
 type LinhaDeParcela = { chave: number; rotulo: string; valor: string; vencimento: string };
 
 const paraCampo = (valor: number) => String(valor).replace(".", ",");
 const dia = (data: string) => data.split("-").reverse().join("/");
 const hojeISO = () => new Date().toISOString().slice(0, 10);
-const ROTULO_DO_PASSO: Record<SituacaoDaFatura, string> = { rascunho: "Enviar para revisão", revisao: "Abrir a fatura", em_aberto: "Quitar", quitada: "" };
 
-function FaturaSheet({ organizationId, temporadaId, fatura, parcelasAtuais, acordos, onClose, onSalvou }: {
+export function FaturaSheet({ organizationId, temporadaId, fatura, parcelasAtuais, acordos, onClose, onSalvou }: {
   organizationId: string; temporadaId: string; fatura: FaturaDaTemporada | null; parcelasAtuais: ParcelaDaFatura[]; acordos: AcordoAReceber[]; onClose: () => void; onSalvou: () => void;
 }) {
   const { confirmDelete } = useDeleteConfirm();
@@ -236,9 +235,7 @@ export function FaturasDaTemporada({ organizationId, temporadaId, temporadaTitul
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
-  const [trabalhando, setTrabalhando] = useState(false);
   const [folha, setFolha] = useState<{ fatura: FaturaDaTemporada | null } | null>(null);
-  const [acaoDaParcela, setAcaoDaParcela] = useState<{ id: string; modo: "recebida" | "vencimento"; dia: string } | null>(null);
   const [hoje] = useState(hojeISO);
 
   useEffect(() => {
@@ -278,37 +275,6 @@ export function FaturasDaTemporada({ organizationId, temporadaId, temporadaTitul
 
   const mudou = () => setVersao(atual => atual + 1);
 
-  async function mudarSituacao(id: string, situacao: SituacaoDaFatura) {
-    setTrabalhando(true);
-    setErro(null);
-    const { error } = await clienteDaProducao(createClient()).from("producao_faturas").update({ situacao }).eq("id", id);
-    setTrabalhando(false);
-    if (error) { setErro(mensagemDoErroDeFatura(error)); return; }
-    mudou();
-  }
-
-  async function gravarParcela() {
-    if (!acaoDaParcela) return;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(acaoDaParcela.dia)) { setErro("Escolha a data."); return; }
-    setTrabalhando(true);
-    setErro(null);
-    const valores = acaoDaParcela.modo === "recebida" ? { recebido_em: acaoDaParcela.dia } : { vencimento: acaoDaParcela.dia };
-    const { error } = await clienteDaProducao(createClient()).from("producao_fatura_parcelas").update(valores).eq("id", acaoDaParcela.id);
-    setTrabalhando(false);
-    if (error) { setErro(mensagemDoErroDeFatura(error)); return; }
-    setAcaoDaParcela(null);
-    mudou();
-  }
-
-  async function desfazerRecebimento(id: string) {
-    setTrabalhando(true);
-    setErro(null);
-    const { error } = await clienteDaProducao(createClient()).from("producao_fatura_parcelas").update({ recebido_em: null }).eq("id", id);
-    setTrabalhando(false);
-    if (error) { setErro(mensagemDoErroDeFatura(error)); return; }
-    mudou();
-  }
-
   function baixar() {
     const arquivo = new Blob([planilhaDasFaturas({ temporada: temporadaTitulo, hoje, faturas: agrupadas })], { type: "text/csv;charset=utf-8" });
     const endereco = URL.createObjectURL(arquivo);
@@ -323,7 +289,7 @@ export function FaturasDaTemporada({ organizationId, temporadaId, temporadaTitul
     { rotulo: "A receber", valor: totais.aReceberCentavos, forte: true },
     { rotulo: "Já recebido", valor: totais.recebidoCentavos, forte: false },
     { rotulo: "Atrasado", valor: totais.atrasadoCentavos, forte: false },
-    { rotulo: "Retido pelos contratantes", valor: totais.retidoCentavos, forte: false },
+    { rotulo: "Retido", valor: totais.retidoCentavos, forte: false },
   ];
 
   return (
@@ -340,69 +306,36 @@ export function FaturasDaTemporada({ organizationId, temporadaId, temporadaTitul
         <p className="rounded border bg-white px-5 py-6 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhuma fatura nesta temporada. Registre o que a companhia cobra de cada contratante, com as retenções e as parcelas, e acompanhe o que falta receber.</p>
       ) : (
         <div className="space-y-3">
-          <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          <dl className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-x-4 gap-y-3 rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {resumo.map(item => (
-              <div key={item.rotulo} className="rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+              <div key={item.rotulo} className="min-w-0">
                 <dt className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{item.rotulo}</dt>
-                <dd className={`mt-1 text-[1.0625rem] tabular-nums ${item.forte ? "font-semibold" : "font-medium"} ${item.valor === 0 ? "text-black/30" : item.rotulo === "Atrasado" ? "text-[#B23B3B]" : "text-[#282525]"}`} title={formatarReais(item.valor)}>{formatarReais(item.valor)}</dd>
+                <dd className={`mt-1 whitespace-nowrap text-[1.0625rem] tabular-nums ${item.forte ? "font-semibold" : "font-medium"} ${item.valor === 0 ? "text-black/30" : item.rotulo === "Atrasado" ? "text-[#B23B3B]" : "text-[#282525]"}`} title={formatarReais(item.valor)}>{formatarReais(item.valor)}</dd>
               </div>
             ))}
           </dl>
           <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {agrupadas.map(({ fatura, parcelas: dela }) => {
               const conta = calcularFatura(fatura, dela, hoje);
-              const proxima = proximaSituacaoDaFatura(fatura.situacao);
-              const anterior = situacaoAnteriorDaFatura(fatura.situacao);
-              const emitida = faturaEmitida(fatura.situacao);
+              const proxima = dela.find(parcela => parcela.recebido_em === null);
+              const atrasada = proxima !== undefined && conta.parcelasAtrasadas.includes(proxima.id);
               return (
-                <li key={fatura.id} className="px-4 py-3">
-                  <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-2">
+                <li key={fatura.id}>
+                  <Link href={`/producoes/faturas/${fatura.id}`} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-4 py-3 transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]">
                     <div className="min-w-0 flex-1 basis-64">
                       <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{fatura.contratante} · {fatura.descricao}</p>
-                      <p className="text-[0.6875rem] tabular-nums text-black/45">
+                      <p className="truncate text-[0.6875rem] tabular-nums text-black/45">
                         {formatarReais(emCentavos(fatura.valor))}{fatura.retencoes > 0 ? ` − ${formatarReais(emCentavos(fatura.retencoes))} retidos = ${formatarReais(liquidoDaFaturaEmCentavos(fatura))}` : ""}{fatura.nota_numero ? ` · nota ${fatura.nota_numero}` : ""}
                       </p>
-                      {conta.avisos.map(aviso => <p key={aviso} className="text-[0.6875rem] text-[#B07A14]">{aviso}</p>)}
+                      {faturaEmitida(fatura.situacao) && dela.length > 0 && (
+                        <p className={`mt-0.5 truncate text-[0.6875rem] tabular-nums ${atrasada ? "text-[#B23B3B]" : "text-black/55"}`}>
+                          {proxima ? `${atrasada ? "Atrasada: " : "Próxima: "}${proxima.rotulo ?? "parcela"} de ${formatarReais(emCentavos(proxima.valor))} em ${dia(proxima.vencimento)}${conta.parcelasAtrasadas.length > 1 ? ` · ${conta.parcelasAtrasadas.length} parcelas atrasadas` : ""}` : "Todas as parcelas recebidas"}
+                        </p>
+                      )}
+                      {!faturaEmitida(fatura.situacao) && conta.avisos.map(aviso => <p key={aviso} className="mt-0.5 truncate text-[0.6875rem] text-[#B07A14]">{aviso}</p>)}
                     </div>
                     <span className="rounded border px-2 py-1 text-[0.6875rem] font-medium text-[#282525]" style={{ borderColor: "rgba(13,13,13,.25)" }}>{ROTULO_DA_SITUACAO_DA_FATURA[fatura.situacao]}</span>
-                  </div>
-                  {dela.length > 0 && (
-                    <ul className="mt-2 space-y-1">
-                      {dela.map(parcela => {
-                        const atrasada = conta.parcelasAtrasadas.includes(parcela.id);
-                        const editando = acaoDaParcela?.id === parcela.id ? acaoDaParcela : null;
-                        return (
-                          <li key={parcela.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.75rem]">
-                            <span className="w-24 text-black/65">{parcela.rotulo ?? "Parcela"}</span>
-                            <span className="w-28 tabular-nums text-[#282525]">{formatarReais(emCentavos(parcela.valor))}</span>
-                            <span className="w-24 tabular-nums text-black/55">{dia(parcela.vencimento)}</span>
-                            <span className={parcela.recebido_em ? "text-black/55" : atrasada ? "text-[#B23B3B]" : "text-black/45"}>{parcela.recebido_em ? `Recebida em ${dia(parcela.recebido_em)}` : atrasada ? "Atrasada" : emitida ? "A receber" : ""}</span>
-                            {podeEditar && fatura.situacao === "em_aberto" && !editando && (
-                              <span className="flex gap-1.5">
-                                {parcela.recebido_em
-                                  ? <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void desfazerRecebimento(parcela.id)}>Desfazer recebimento</button>
-                                  : <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => setAcaoDaParcela({ id: parcela.id, modo: "recebida", dia: hoje })}>Marcar recebida</button>}
-                                {!parcela.recebido_em && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => setAcaoDaParcela({ id: parcela.id, modo: "vencimento", dia: parcela.vencimento })}>Mudar vencimento</button>}
-                              </span>
-                            )}
-                            {editando && (
-                              <span className="flex flex-wrap items-center gap-1.5 rounded border bg-white px-2 py-1" style={{ borderColor: "#B07A1447" }}>
-                                <label className="text-[0.6875rem] text-[#B07A14]" htmlFor={`parcela-${parcela.id}`}>{editando.modo === "recebida" ? "Recebida em" : "Novo vencimento"}</label>
-                                <input id={`parcela-${parcela.id}`} type="date" className="h-8 rounded border border-black/[.12] bg-white px-2 text-[0.75rem]" value={editando.dia} onChange={event => setAcaoDaParcela({ ...editando, dia: event.target.value })} />
-                                <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void gravarParcela()}>Confirmar</button>
-                                <button type="button" className={BOTAO_PEQUENO} onClick={() => setAcaoDaParcela(null)}>Voltar</button>
-                              </span>
-                            )}
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    {podeEditar && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => setFolha({ fatura })}>{fatura.situacao === "quitada" ? "Ver" : "Editar"}</button>}
-                    {podeEditar && anterior && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void mudarSituacao(fatura.id, anterior)}>Voltar para {ROTULO_DA_SITUACAO_DA_FATURA[anterior].toLowerCase()}</button>}
-                    {podeEditar && proxima && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void mudarSituacao(fatura.id, proxima)}>{ROTULO_DO_PASSO[fatura.situacao]}</button>}
-                  </div>
+                  </Link>
                 </li>
               );
             })}
