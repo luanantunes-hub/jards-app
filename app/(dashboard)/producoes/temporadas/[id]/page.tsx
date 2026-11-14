@@ -103,6 +103,17 @@ export default function TemporadaPage() {
     return () => { ativo = false; };
   }, [organizationId]);
 
+  // Trocar só o #aba no endereço (colar um link, voltar no histórico) também troca a aba. `replaceState`, usado abaixo, não dispara esse evento.
+  useEffect(() => {
+    function aoMudarOEndereco() {
+      const pedida = abaDoEndereco();
+      setAba(pedida.aba);
+      setSubAba(pedida.subAba);
+    }
+    window.addEventListener("hashchange", aoMudarOEndereco);
+    return () => window.removeEventListener("hashchange", aoMudarOEndereco);
+  }, []);
+
   // A aba aberta fica no endereço (#dinheiro/pagar), para recarregar ou mandar o link e cair no mesmo lugar.
   function escolherAba(nova: Aba) {
     setAba(nova);
