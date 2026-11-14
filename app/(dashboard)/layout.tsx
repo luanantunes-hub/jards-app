@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, Suspense, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, Suspense, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { escalaUi } from "@/lib/escala-ui";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
@@ -266,8 +266,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [user, setUser]                     = useState<User | null>(null);
   const [expanded, setExpanded]             = useState(false);
   // O painel das demais telas do módulo: ancorado ao botão do menu, com a posição em pixels reais da janela.
-  const [painelMais, setPainelMais]         = useState<{ left: number; bottom: number; maxWidth: string } | null>(null);
+  const [painelMais, setPainelMais]         = useState<{ left: number; top: number; maxWidth: string } | null>(null);
   const botaoMais = useRef<HTMLButtonElement>(null);
+  const caixaDoPainel = useRef<HTMLDivElement>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [moduloAtivo, setModuloAtivo]       = useState<ModuloId>(() => moduloDaRota(path));
   const [modulosOrg, setModulosOrg]         = useState<ModuloId[]>(["captacao"]);
@@ -498,8 +499,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Sem espaço ao lado do menu (celular), o painel ocupa a largura da janela por cima dele.
     const sobra = window.innerWidth - (caixa.right + 8) - 8;
     const cabe = sobra >= 272 * escalaUi();
-    setPainelMais({ left: cabe ? caixa.right + 8 : 8, bottom: Math.max(8, window.innerHeight - caixa.bottom), maxWidth: cabe ? `${sobra}px` : "calc(100vw - 16px)" });
+    setPainelMais({ left: cabe ? caixa.right + 8 : 8, top: caixa.top, maxWidth: cabe ? `${sobra}px` : "calc(100vw - 16px)" });
   }
+  // O painel nasce alinhado ao topo do botão e, se não couber embaixo, sobe o bastante para caber inteiro na janela.
+  useLayoutEffect(() => {
+    const caixa = caixaDoPainel.current;
+    if (!painelMais || !caixa) return;
+    caixa.style.top = `${Math.max(8, Math.min(painelMais.top, window.innerHeight - caixa.offsetHeight - 8))}px`;
+  }, [painelMais]);
   function fecharMais(devolverFoco = true) {
     setPainelMais(null);
     if (devolverFoco) botaoMais.current?.focus();
@@ -774,10 +781,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           <>
             <div className="fixed inset-0 z-[60]" onClick={() => fecharMais(false)} />
             <div
+              ref={caixaDoPainel}
               role="dialog"
               aria-label="Mais telas"
               className="fixed z-[61] max-h-[calc(100vh-1rem)] w-[32rem] overflow-y-auto rounded border bg-white p-3 elevacao-1"
-              style={{ left: painelMais.left, bottom: painelMais.bottom, maxWidth: painelMais.maxWidth, borderColor: "rgba(13,13,13,.1)" }}
+              style={{ left: painelMais.left, top: painelMais.top, maxWidth: painelMais.maxWidth, borderColor: "rgba(13,13,13,.1)" }}
               onKeyDown={evento => { if (evento.key === "Escape") { evento.preventDefault(); fecharMais(); } }}
             >
               <div className="columns-1 gap-4 sm:columns-2">
