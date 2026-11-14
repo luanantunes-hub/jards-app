@@ -1,7 +1,9 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState, Suspense, useCallback } from "react";
+import { useEffect, useRef, useState, Suspense, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { escalaUi } from "@/lib/escala-ui";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { PastDueBanner } from "@/components/PastDueBanner";
 import {
@@ -28,7 +30,7 @@ import {
   FileText,
   LayoutTemplate,
   BriefcaseBusiness,
-  Ellipsis,
+  LayoutGrid,
   ContactRound,
   FilePenLine,
   FileStack,
@@ -263,7 +265,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const [user, setUser]                     = useState<User | null>(null);
   const [expanded, setExpanded]             = useState(false);
-  const [maisAberto, setMaisAberto]         = useState(false);
+  // O painel das demais telas do módulo: ancorado ao botão do menu, com a posição em pixels reais da janela.
+  const [painelMais, setPainelMais]         = useState<{ left: number; bottom: number; maxWidth: string } | null>(null);
+  const botaoMais = useRef<HTMLButtonElement>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [moduloAtivo, setModuloAtivo]       = useState<ModuloId>(() => moduloDaRota(path));
   const [modulosOrg, setModulosOrg]         = useState<ModuloId[]>(["captacao"]);
@@ -483,11 +487,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isExpanded  = expanded || mobileOpen || seletorAberto;
   const menuPath    = itemAtivoDoMenu(path);
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
-  // O "Mais" abre sozinho quando a página aberta é uma das que ficam nele, para o item ativo nunca sumir.
+  // As telas que não ficam à vista abrem num painel ancorado ao botão. Quando a página aberta é uma delas, o botão mostra o nome dela (aceso), para a pessoa saber onde está.
   const gruposFixos = navGroups.filter(grupo => !grupo.recolhida && grupo.items.length > 0);
   const gruposDoMais = navGroups.filter(grupo => grupo.recolhida && grupo.items.length > 0);
-  const maisComAtivo = gruposDoMais.some(grupo => grupo.items.some(item => item.href === hrefAtivo));
-  const mostrarMais = maisAberto || maisComAtivo;
+  const itemAtivoDoMais = gruposDoMais.flatMap(grupo => grupo.items).find(item => item.href === hrefAtivo) ?? null;
+  const IconeDoMais = itemAtivoDoMais?.icon ?? LayoutGrid;
+  function abrirMais() {
+    const caixa = botaoMais.current?.getBoundingClientRect();
+    if (!caixa) return;
+    // Sem espaço ao lado do menu (celular), o painel ocupa a largura da janela por cima dele.
+    const sobra = window.innerWidth - (caixa.right + 8) - 8;
+    const cabe = sobra >= 272 * escalaUi();
+    setPainelMais({ left: cabe ? caixa.right + 8 : 8, bottom: Math.max(8, window.innerHeight - caixa.bottom), maxWidth: cabe ? `${sobra}px` : "calc(100vw - 16px)" });
+  }
+  function fecharMais(devolverFoco = true) {
+    setPainelMais(null);
+    if (devolverFoco) botaoMais.current?.focus();
+  }
   const desenharGrupo = ({ section, items }: (typeof navGroups)[number], gi: number) => (
     <div key={section} className={gi > 0 ? "mt-4" : ""}>
               <div
@@ -733,26 +749,69 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               {gruposDoMais.length > 0 && (
                 <div className="mt-4">
                   <button
+                    ref={botaoMais}
                     type="button"
-                    onClick={() => setMaisAberto(atual => !atual)}
-                    aria-expanded={mostrarMais}
-                    aria-controls="menu-mais"
-                    disabled={maisComAtivo}
-                    title={!isExpanded ? (mostrarMais ? "Menos opções" : "Mais opções") : undefined}
-                    aria-label={!isExpanded ? (mostrarMais ? "Menos opções" : "Mais opções") : undefined}
-                    className="flex w-full items-center rounded text-[0.8125rem] font-medium text-black/40 transition-colors whitespace-nowrap overflow-hidden hover:text-[#282525] hover:bg-black/[0.05] disabled:cursor-default disabled:hover:bg-transparent disabled:hover:text-black/40 focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]"
+                    onClick={() => (painelMais ? fecharMais() : abrirMais())}
+                    aria-expanded={painelMais !== null}
+                    aria-haspopup="dialog"
+                    title={!isExpanded ? "Mais telas" : undefined}
+                    aria-label={!isExpanded ? (itemAtivoDoMais ? `Mais telas (aberta: ${itemAtivoDoMais.label})` : "Mais telas") : undefined}
+                    className={`flex w-full items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                      itemAtivoDoMais ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                    }`}
                     style={{ gap: isExpanded ? 10 : 0, padding: isExpanded ? "8px 10px" : "8px 0", justifyContent: isExpanded ? "flex-start" : "center" }}
                   >
-                    <Ellipsis size={16} className="flex-shrink-0" aria-hidden="true" />
-                    {isExpanded && <span>{mostrarMais ? "Menos" : "Mais"}</span>}
+                    <IconeDoMais size={16} className="flex-shrink-0" aria-hidden="true" />
+                    {isExpanded && <span>{itemAtivoDoMais ? itemAtivoDoMais.label : "Mais telas"}</span>}
                   </button>
-                  {mostrarMais && <div id="menu-mais" className="mt-3">{gruposDoMais.map(desenharGrupo)}</div>}
                 </div>
               )}
             </>
           )}
           {usaCaptacao && <BotaoUpgrade expandido={isExpanded} />}
         </nav>
+        {painelMais && typeof document !== "undefined" && createPortal(
+          <>
+            <div className="fixed inset-0 z-[60]" onClick={() => fecharMais(false)} />
+            <div
+              role="dialog"
+              aria-label="Mais telas"
+              className="fixed z-[61] max-h-[calc(100vh-1rem)] w-[32rem] overflow-y-auto rounded border bg-white p-3 elevacao-1"
+              style={{ left: painelMais.left, bottom: painelMais.bottom, maxWidth: painelMais.maxWidth, borderColor: "rgba(13,13,13,.1)" }}
+              onKeyDown={evento => { if (evento.key === "Escape") { evento.preventDefault(); fecharMais(); } }}
+            >
+              <div className="columns-1 gap-4 sm:columns-2">
+                {gruposDoMais.map(({ section, items }) => (
+                  <div key={section} className="mb-3 break-inside-avoid">
+                    <p className="px-2 pb-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{section}</p>
+                    <div className="space-y-0.5">
+                      {items.map(({ label, href, icon: Icone }, indice) => {
+                        const ativo = href === hrefAtivo;
+                        return (
+                          <Link
+                            key={href}
+                            href={href}
+                            prefetch={false}
+                            autoFocus={indice === 0 && section === gruposDoMais[0]?.section}
+                            aria-current={ativo ? "page" : undefined}
+                            onClick={() => fecharMais(false)}
+                            className={`flex items-center gap-2.5 rounded px-2.5 py-2 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                              ativo ? "bg-[#1a1a1a] text-white" : "text-[#282525] hover:bg-black/[.05]"
+                            }`}
+                          >
+                            <Icone size={15} className={`flex-shrink-0 ${ativo ? "" : "text-black/40"}`} aria-hidden="true" />
+                            <span>{label}</span>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>,
+          document.body,
+        )}
 
         {/* Bottom */}
         <div className="px-2 py-2.5 border-t space-y-0.5 flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.07)" }}>
