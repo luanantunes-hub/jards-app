@@ -49,6 +49,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/pedidos", "Pedido de pagamento"],
   ["/producoes/faturas", "Fatura"],
   ["/producoes/acordos", "Acordo"],
+  ["/producoes/adiantamentos", "Adiantamento"],
   ["/producoes", "Produção"],
   ["/configuracoes/mcp", "Claude e ChatGPT (MCP)"],
   ["/configuracoes", "Configurações"],
@@ -68,6 +69,7 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/producoes/pedidos": "/producoes/temporadas",
   "/producoes/faturas": "/producoes/temporadas",
   "/producoes/acordos": "/producoes/temporadas",
+  "/producoes/adiantamentos": "/producoes/temporadas",
 };
 
 export function correspondeRota(path: string, prefixo: string): boolean {
