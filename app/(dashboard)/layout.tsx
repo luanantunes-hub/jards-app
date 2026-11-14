@@ -26,7 +26,6 @@ import {
   History,
   Ruler,
   FileText,
-  LayoutTemplate,
   BriefcaseBusiness,
   Clapperboard,
   Wrench,
@@ -83,8 +82,7 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
 // "Reuniões" depende do servidor do Vexa (docs/reunioes-deploy-vexa.md), que ainda não está
 // no ar; sem ele, toda reunião criada termina como "falhou". Tire a rota daqui quando ligar.
-// Os protótipos da produção (dados de exemplo) também: o servidor os fecha para os outros em producoes/prototipo/layout.tsx.
-const ROTAS_SO_SUPER_ADMIN = ["/reunioes", "/producoes/prototipo"];
+const ROTAS_SO_SUPER_ADMIN = ["/reunioes"];
 
 // `icone`: o grupo aparece no menu como uma seção que abre e fecha para baixo (como no Apollo), com este ícone no título e as telas dele logo abaixo.
 const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
@@ -134,7 +132,6 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
     },
   ],
   // O primeiro item do primeiro grupo é a página inicial do módulo (trocarModulo abre ele). Cada grupo é uma seção do menu que abre e fecha para baixo.
-  // Protótipos (só o super admin vê) fica em "Acompanhar" para nenhum grupo ficar vazio.
   producao: [
     {
       section: "Produção",
@@ -187,7 +184,6 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       items: [
         { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
         { label: "Linha do tempo", href: "/producoes/linha-do-tempo", icon: History },
-        { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
       ],
     },
   ],
