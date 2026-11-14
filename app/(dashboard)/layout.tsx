@@ -786,43 +786,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
           {usaCaptacao && <BotaoUpgrade expandido={isExpanded} />}
         </nav>
-        {grupoDoPainel && painelAberto && typeof document !== "undefined" && createPortal(
-          <>
-            <div className="fixed inset-0 z-[60]" onClick={() => fecharPainel(false)} />
-            <div
-              ref={caixaDoPainel}
-              role="dialog"
-              aria-label={grupoDoPainel.section}
-              className="fixed z-[61] max-h-[calc(100vh-1rem)] w-[15rem] overflow-y-auto rounded border bg-white p-2 elevacao-1"
-              style={{ left: painelAberto.left, top: painelAberto.top, maxWidth: painelAberto.maxWidth, borderColor: "rgba(13,13,13,.1)" }}
-              onKeyDown={evento => { if (evento.key === "Escape") { evento.preventDefault(); fecharPainel(); } }}
-            >
-              <p className="px-2.5 pb-1 pt-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{grupoDoPainel.section}</p>
-              <div className="space-y-0.5">
-                {grupoDoPainel.items.map(({ label, href, icon: Icone }, indice) => {
-                  const ativo = href === hrefAtivo;
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      prefetch={false}
-                      autoFocus={indice === 0}
-                      aria-current={ativo ? "page" : undefined}
-                      onClick={() => fecharPainel(false)}
-                      className={`flex items-center gap-2.5 rounded px-2.5 py-2 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                        ativo ? "bg-[#1a1a1a] text-white" : "text-[#282525] hover:bg-black/[.05]"
-                      }`}
-                    >
-                      <Icone size={15} className={`flex-shrink-0 ${ativo ? "" : "text-black/40"}`} aria-hidden="true" />
-                      <span>{label}</span>
-                    </Link>
-                  );
-                })}
-              </div>
-            </div>
-          </>,
-          document.body,
-        )}
 
         {/* Bottom */}
         <div className="px-2 py-2.5 border-t space-y-0.5 flex-shrink-0" style={{ borderColor: "rgba(13,13,13,.07)" }}>
@@ -914,6 +877,44 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
         </div>
       </aside>
+      {/* O painel fica fora do <aside>: dentro dele, o mouse e o foco do painel contariam como se fossem do menu e o menu não recolheria. */}
+      {grupoDoPainel && painelAberto && typeof document !== "undefined" && createPortal(
+        <>
+          <div className="fixed inset-0 z-[60]" onClick={() => fecharPainel(false)} />
+          <div
+            ref={caixaDoPainel}
+            role="dialog"
+            aria-label={grupoDoPainel.section}
+            className="fixed z-[61] max-h-[calc(100vh-1rem)] w-[15rem] overflow-y-auto rounded border bg-white p-2 elevacao-1"
+            style={{ left: painelAberto.left, top: painelAberto.top, maxWidth: painelAberto.maxWidth, borderColor: "rgba(13,13,13,.1)" }}
+            onKeyDown={evento => { if (evento.key === "Escape") { evento.preventDefault(); fecharPainel(); } }}
+          >
+            <p className="px-2.5 pb-1 pt-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{grupoDoPainel.section}</p>
+            <div className="space-y-0.5">
+              {grupoDoPainel.items.map(({ label, href, icon: Icone }, indice) => {
+                const ativo = href === hrefAtivo;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    prefetch={false}
+                    autoFocus={indice === 0}
+                    aria-current={ativo ? "page" : undefined}
+                    onClick={() => fecharPainel(false)}
+                    className={`flex items-center gap-2.5 rounded px-2.5 py-2 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                      ativo ? "bg-[#1a1a1a] text-white" : "text-[#282525] hover:bg-black/[.05]"
+                    }`}
+                  >
+                    <Icone size={15} className={`flex-shrink-0 ${ativo ? "" : "text-black/40"}`} aria-hidden="true" />
+                    <span>{label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        </>,
+        document.body,
+      )}
 
       {/* Main */}
       <div className="flex flex-col h-full overflow-hidden md:pl-14">
