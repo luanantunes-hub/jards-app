@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
@@ -102,28 +102,35 @@ export function EquipeDaTemporada({ organizationId, temporadaId, podeEditar }: {
               const nome = vinculo.pessoa?.nome ?? "Pessoa sem acesso";
               return (
                 <li key={vinculo.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
-                  <div className="min-w-0 flex-1 basis-56">
-                    <p className="truncate text-[0.8125rem] font-medium text-[#282525]">
-                      {nome}{vinculo.pessoa?.nome_artistico && <span className="font-normal text-black/45"> · {vinculo.pessoa.nome_artistico}</span>}
-                    </p>
-                    <p className="text-[0.6875rem] text-black/45">{[vinculo.funcao, vinculo.grupo].filter(Boolean).join(" · ")}</p>
-                  </div>
-                  {comDinheiro && (
-                    <p className="text-[0.6875rem] tabular-nums text-black/55">
-                      {vinculo.valores?.cache ? <span title={formatarValorCompleto(vinculo.valores.cache)}>Cachê {formatarValorCurto(vinculo.valores.cache)}</span> : null}
-                      {vinculo.valores?.cache && vinculo.valores?.diaria ? " · " : null}
-                      {vinculo.valores?.diaria ? <span title={formatarValorCompleto(vinculo.valores.diaria)}>Diária {formatarValorCurto(vinculo.valores.diaria)}</span> : null}
-                    </p>
-                  )}
+                  {/* A pessoa, a função e os valores: para quem edita, é o botão que abre a folha dela. */}
+                  {(() => {
+                    const conteudo = (
+                      <>
+                        <span className="min-w-0 flex-1 basis-56">
+                          <span className="block truncate text-[0.8125rem] font-medium text-[#282525]">
+                            {nome}{vinculo.pessoa?.nome_artistico && <span className="font-normal text-black/45"> · {vinculo.pessoa.nome_artistico}</span>}
+                          </span>
+                          <span className="block text-[0.6875rem] text-black/45">{[vinculo.funcao, vinculo.grupo].filter(Boolean).join(" · ")}</span>
+                        </span>
+                        {comDinheiro && (
+                          <span className="text-[0.6875rem] tabular-nums text-black/55">
+                            {vinculo.valores?.cache ? <span title={formatarValorCompleto(vinculo.valores.cache)}>Cachê {formatarValorCurto(vinculo.valores.cache)}</span> : null}
+                            {vinculo.valores?.cache && vinculo.valores?.diaria ? " · " : null}
+                            {vinculo.valores?.diaria ? <span title={formatarValorCompleto(vinculo.valores.diaria)}>Diária {formatarValorCurto(vinculo.valores.diaria)}</span> : null}
+                          </span>
+                        )}
+                      </>
+                    );
+                    return podeEditar
+                      ? <button type="button" onClick={() => setEditando(vinculo)} title={`Editar ${nome} como ${vinculo.funcao}`} className="-mx-2 -my-1.5 flex min-w-0 flex-1 basis-56 flex-wrap items-center gap-x-4 gap-y-1 rounded px-2 py-1.5 text-left transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]">{conteudo}</button>
+                      : <div className="flex min-w-0 flex-1 basis-56 flex-wrap items-center gap-x-4 gap-y-1">{conteudo}</div>;
+                  })()}
                   <div className="flex shrink-0 items-center gap-1">
                     {podeEditar ? (
                       <Select block={false} aria-label={`Situação de ${nome} como ${vinculo.funcao}`} value={vinculo.situacao} onChange={event => void mudarSituacao(vinculo, event.target.value as SituacaoDoVinculo)} className="h-9 pl-3 text-black/60">
                         {SITUACOES_DO_VINCULO.map(situacao => <option key={situacao} value={situacao}>{ROTULO_DA_SITUACAO_DO_VINCULO[situacao]}</option>)}
                       </Select>
                     ) : <span className="text-[0.75rem] text-black/55">{ROTULO_DA_SITUACAO_DO_VINCULO[vinculo.situacao]}</span>}
-                    {podeEditar && (
-                      <button type="button" onClick={() => setEditando(vinculo)} aria-label={`Editar ${nome} como ${vinculo.funcao}`} title="Editar" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Pencil size={14} aria-hidden="true" /></button>
-                    )}
                     {podeEditar && (
                       <button type="button" onClick={() => tirar(vinculo)} aria-label={`Tirar ${nome} da temporada`} title="Tirar da temporada" className="flex h-9 w-9 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Trash2 size={14} aria-hidden="true" /></button>
                     )}
