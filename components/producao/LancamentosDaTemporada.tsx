@@ -291,17 +291,23 @@ export function LancamentosDaTemporada({ organizationId, temporadaId, temporadaT
             {lancamentos.map(item => {
               const partes = divisoes.filter(divisao => divisao.lancamento_id === item.id);
               const conta = contaDaDivisao(emCentavos(item.valor), partes.map(divisao => emCentavos(divisao.valor)));
-              return (
-                <li key={item.id} className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5">
-                  <div className="min-w-0 flex-1 basis-56">
-                    <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{item.descricao}</p>
-                    <p className="truncate text-[0.6875rem] text-black/45">{dia(item.data)}{item.favorecido ? ` · ${item.favorecido}` : ""}{item.documento ? ` · ${item.documento}` : ""}</p>
-                    <p className={`text-[0.6875rem] ${partes.length === 0 || !conta.completo ? "text-[#B07A14]" : "text-black/45"}`}>
+              const conteudo = (
+                <>
+                  <span className="min-w-0 flex-1 basis-56">
+                    <span className="block truncate text-[0.8125rem] font-medium text-[#282525]">{item.descricao}</span>
+                    <span className="block truncate text-[0.6875rem] text-black/45">{dia(item.data)}{item.favorecido ? ` · ${item.favorecido}` : ""}{item.documento ? ` · ${item.documento}` : ""}</span>
+                    <span className={`block text-[0.6875rem] ${partes.length === 0 || !conta.completo ? "text-[#B07A14]" : "text-black/45"}`}>
                       {partes.length === 0 ? "Sem divisão: não entra no pago do orçamento" : conta.completo ? `Dividido em ${partes.length} ${partes.length === 1 ? "linha" : "linhas"}` : `Faltam ${formatarReais(conta.faltaCentavos)} para dividir`}
-                    </p>
-                  </div>
+                    </span>
+                  </span>
                   <span className="text-[0.8125rem] tabular-nums text-[#282525]">{formatarReais(emCentavos(item.valor))}</span>
-                  {podeEditar && <button type="button" className={BOTAO_PEQUENO} onClick={() => setFolha({ lancamento: item })}>Editar</button>}
+                </>
+              );
+              return (
+                <li key={item.id}>
+                  {podeEditar
+                    ? <button type="button" onClick={() => setFolha({ lancamento: item })} title="Editar o pagamento" className="flex w-full flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5 text-left transition hover:bg-black/[.03] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5]">{conteudo}</button>
+                    : <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 px-4 py-2.5">{conteudo}</div>}
                 </li>
               );
             })}
