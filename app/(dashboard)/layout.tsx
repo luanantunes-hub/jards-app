@@ -487,7 +487,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }));
   const usaCaptacao = podeUsarModulo(acessoModulos, "captacao");
   // No celular o menu lateral vira gaveta: sempre com rótulos quando aberto.
-  const isExpanded  = expanded || mobileOpen || seletorAberto;
+  const isExpanded  = expanded || mobileOpen || seletorAberto || painelAberto !== null;
   const menuPath    = itemAtivoDoMenu(path);
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
   // Os grupos com `painel` viram um botão cada, que abre o painel das telas dele. O grupo da página aberta fica aceso, para a pessoa saber onde está.
@@ -497,16 +497,31 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   function abrirPainel(grupo: string, gatilho: HTMLButtonElement) {
     const caixa = gatilho.getBoundingClientRect();
     gatilhoDoPainel.current = gatilho;
+    // Com o painel aberto o menu fica expandido (14rem): o painel começa ali, e não onde o menu está no meio da animação.
+    const direitaDoMenu = parseFloat(getComputedStyle(document.documentElement).fontSize) * 14;
+    const sobra = window.innerWidth - (direitaDoMenu + 8) - 8;
     // Sem espaço ao lado do menu (celular), o painel ocupa a largura da janela por cima dele.
-    const sobra = window.innerWidth - (caixa.right + 8) - 8;
     const cabe = sobra >= 232 * escalaUi();
-    setPainelAberto({ section: grupo, left: cabe ? caixa.right + 8 : 8, top: caixa.top, maxWidth: cabe ? `${sobra}px` : "calc(100vw - 16px)" });
+    setPainelAberto({ section: grupo, left: cabe ? direitaDoMenu + 8 : 8, top: caixa.top, maxWidth: cabe ? `${sobra}px` : "calc(100vw - 16px)" });
   }
   // O painel nasce alinhado ao topo do botão e, se não couber embaixo, sobe o bastante para caber inteiro na janela.
   useLayoutEffect(() => {
     const caixa = caixaDoPainel.current;
     if (!painelAberto || !caixa) return;
     caixa.style.top = `${Math.max(8, Math.min(painelAberto.top, window.innerHeight - caixa.offsetHeight - 8))}px`;
+    caixa.querySelector<HTMLAnchorElement>("a")?.focus();
+  }, [painelAberto]);
+  // Escape fecha o painel de onde o foco estiver, e o foco volta ao botão do grupo.
+  useEffect(() => {
+    if (!painelAberto) return;
+    function aoTeclar(evento: KeyboardEvent) {
+      if (evento.key !== "Escape") return;
+      evento.preventDefault();
+      setPainelAberto(null);
+      gatilhoDoPainel.current?.focus();
+    }
+    document.addEventListener("keydown", aoTeclar);
+    return () => document.removeEventListener("keydown", aoTeclar);
   }, [painelAberto]);
   function fecharPainel(devolverFoco = true) {
     setPainelAberto(null);
@@ -887,18 +902,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             aria-label={grupoDoPainel.section}
             className="fixed z-[61] max-h-[calc(100vh-1rem)] w-[15rem] overflow-y-auto rounded border bg-white p-2 elevacao-1"
             style={{ left: painelAberto.left, top: painelAberto.top, maxWidth: painelAberto.maxWidth, borderColor: "rgba(13,13,13,.1)" }}
-            onKeyDown={evento => { if (evento.key === "Escape") { evento.preventDefault(); fecharPainel(); } }}
           >
             <p className="px-2.5 pb-1 pt-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{grupoDoPainel.section}</p>
             <div className="space-y-0.5">
-              {grupoDoPainel.items.map(({ label, href, icon: Icone }, indice) => {
+              {grupoDoPainel.items.map(({ label, href, icon: Icone }) => {
                 const ativo = href === hrefAtivo;
                 return (
                   <Link
                     key={href}
                     href={href}
                     prefetch={false}
-                    autoFocus={indice === 0}
                     aria-current={ativo ? "page" : undefined}
                     onClick={() => fecharPainel(false)}
                     className={`flex items-center gap-2.5 rounded px-2.5 py-2 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
