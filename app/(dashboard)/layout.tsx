@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, Suspense, useCallback } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, Suspense, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { escalaUi } from "@/lib/escala-ui";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
@@ -30,7 +30,8 @@ import {
   FileText,
   LayoutTemplate,
   BriefcaseBusiness,
-  LayoutGrid,
+  Clapperboard,
+  Wrench,
   ContactRound,
   FilePenLine,
   FileStack,
@@ -86,8 +87,8 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
 // Os protótipos da produção (dados de exemplo) também: o servidor os fecha para os outros em producoes/prototipo/layout.tsx.
 const ROTAS_SO_SUPER_ADMIN = ["/reunioes", "/producoes/prototipo"];
 
-// `recolhida`: a seção fica atrás do botão "Mais" (abre sozinha quando a página aberta é uma das dela). Serve para o menu mostrar só o essencial.
-const NAV_POR_MODULO: Record<ModuloId, { section: string; recolhida?: boolean; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
+// `painel`: o grupo aparece no menu como um só botão (com este ícone) que abre um painel ancorado com as telas dele. Serve para o menu mostrar só os assuntos.
+const NAV_POR_MODULO: Record<ModuloId, { section: string; painel?: React.ElementType; items: { label: string; href: string; icon: React.ElementType }[] }[]> = {
   captacao: [
     {
       section: "Gerenciamento",
@@ -133,11 +134,12 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; recolhida?: boolean; i
       ],
     },
   ],
-  // O primeiro item é a página inicial do módulo (trocarModulo abre ele). À vista ficam só os cinco do dia a dia; o resto fica atrás do botão "Mais",
-  // em seções por assunto. Protótipos (só o super admin vê) fica em "Acompanhar" para nenhuma seção ficar vazia.
+  // O primeiro item do primeiro grupo é a página inicial do módulo (trocarModulo abre ele). Cada grupo é um botão do menu que abre o painel com as telas dele.
+  // Protótipos (só o super admin vê) fica em "Acompanhar" para nenhum grupo ficar vazio.
   producao: [
     {
       section: "Produção",
+      painel: Clapperboard,
       items: [
         { label: "Agenda", href: "/producoes", icon: CalendarDays },
         { label: "Temporadas", href: "/producoes/temporadas", icon: CalendarRange },
@@ -147,17 +149,8 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; recolhida?: boolean; i
       ],
     },
     {
-      section: "Acompanhar",
-      recolhida: true,
-      items: [
-        { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
-        { label: "Linha do tempo", href: "/producoes/linha-do-tempo", icon: History },
-        { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
-      ],
-    },
-    {
       section: "Programação",
-      recolhida: true,
+      painel: CalendarClock,
       items: [
         { label: "Pauta", href: "/producoes/pauta", icon: CalendarCheck },
         { label: "Programação", href: "/producoes/programacao", icon: CalendarClock },
@@ -166,7 +159,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; recolhida?: boolean; i
     },
     {
       section: "Dia da sessão",
-      recolhida: true,
+      painel: Ticket,
       items: [
         { label: "Plateia", href: "/producoes/plateia", icon: Armchair },
         { label: "Convidados", href: "/producoes/convidados", icon: Ticket },
@@ -180,13 +173,22 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; recolhida?: boolean; i
     },
     {
       section: "Técnica e logística",
-      recolhida: true,
+      painel: Wrench,
       items: [
         { label: "Inventário", href: "/producoes/inventario", icon: Boxes },
         { label: "Plantas", href: "/producoes/plantas", icon: Ruler },
         { label: "Riders", href: "/producoes/riders", icon: FileText },
         { label: "Acertos", href: "/producoes/acertos", icon: Handshake },
         { label: "Veículos", href: "/producoes/veiculos", icon: Truck },
+      ],
+    },
+    {
+      section: "Acompanhar",
+      painel: MapPin,
+      items: [
+        { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
+        { label: "Linha do tempo", href: "/producoes/linha-do-tempo", icon: History },
+        { label: "Protótipos", href: "/producoes/prototipo", icon: LayoutTemplate },
       ],
     },
   ],
@@ -265,9 +267,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const [user, setUser]                     = useState<User | null>(null);
   const [expanded, setExpanded]             = useState(false);
-  // O painel das demais telas do módulo: ancorado ao botão do menu, com a posição em pixels reais da janela.
-  const [painelMais, setPainelMais]         = useState<{ left: number; bottom: number; maxWidth: string } | null>(null);
-  const botaoMais = useRef<HTMLButtonElement>(null);
+  // O painel de um grupo do menu: ancorado ao botão do grupo, com a posição em pixels reais da janela.
+  const [painelAberto, setPainelAberto]     = useState<{ section: string; left: number; top: number; maxWidth: string } | null>(null);
+  const gatilhoDoPainel = useRef<HTMLButtonElement | null>(null);
+  const caixaDoPainel = useRef<HTMLDivElement>(null);
   const [organizationId, setOrganizationId] = useState<string | null>(null);
   const [moduloAtivo, setModuloAtivo]       = useState<ModuloId>(() => moduloDaRota(path));
   const [modulosOrg, setModulosOrg]         = useState<ModuloId[]>(["captacao"]);
@@ -487,22 +490,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const isExpanded  = expanded || mobileOpen || seletorAberto;
   const menuPath    = itemAtivoDoMenu(path);
   const hrefAtivo   = hrefAtivoDoMenu(menuPath, navGroups.flatMap(grupo => grupo.items.map(item => item.href)));
-  // As telas que não ficam à vista abrem num painel ancorado ao botão. Quando a página aberta é uma delas, o botão mostra o nome dela (aceso), para a pessoa saber onde está.
-  const gruposFixos = navGroups.filter(grupo => !grupo.recolhida && grupo.items.length > 0);
-  const gruposDoMais = navGroups.filter(grupo => grupo.recolhida && grupo.items.length > 0);
-  const itemAtivoDoMais = gruposDoMais.flatMap(grupo => grupo.items).find(item => item.href === hrefAtivo) ?? null;
-  const IconeDoMais = itemAtivoDoMais?.icon ?? LayoutGrid;
-  function abrirMais() {
-    const caixa = botaoMais.current?.getBoundingClientRect();
-    if (!caixa) return;
+  // Os grupos com `painel` viram um botão cada, que abre o painel das telas dele. O grupo da página aberta fica aceso, para a pessoa saber onde está.
+  const gruposFixos = navGroups.filter(grupo => !grupo.painel && grupo.items.length > 0);
+  const gruposEmPainel = navGroups.filter(grupo => grupo.painel && grupo.items.length > 0);
+  const grupoDoPainel = gruposEmPainel.find(grupo => grupo.section === painelAberto?.section) ?? null;
+  function abrirPainel(grupo: string, gatilho: HTMLButtonElement) {
+    const caixa = gatilho.getBoundingClientRect();
+    gatilhoDoPainel.current = gatilho;
     // Sem espaço ao lado do menu (celular), o painel ocupa a largura da janela por cima dele.
     const sobra = window.innerWidth - (caixa.right + 8) - 8;
-    const cabe = sobra >= 272 * escalaUi();
-    setPainelMais({ left: cabe ? caixa.right + 8 : 8, bottom: Math.max(8, window.innerHeight - caixa.bottom), maxWidth: cabe ? `${sobra}px` : "calc(100vw - 16px)" });
+    const cabe = sobra >= 232 * escalaUi();
+    setPainelAberto({ section: grupo, left: cabe ? caixa.right + 8 : 8, top: caixa.top, maxWidth: cabe ? `${sobra}px` : "calc(100vw - 16px)" });
   }
-  function fecharMais(devolverFoco = true) {
-    setPainelMais(null);
-    if (devolverFoco) botaoMais.current?.focus();
+  // O painel nasce alinhado ao topo do botão e, se não couber embaixo, sobe o bastante para caber inteiro na janela.
+  useLayoutEffect(() => {
+    const caixa = caixaDoPainel.current;
+    if (!painelAberto || !caixa) return;
+    caixa.style.top = `${Math.max(8, Math.min(painelAberto.top, window.innerHeight - caixa.offsetHeight - 8))}px`;
+  }, [painelAberto]);
+  function fecharPainel(devolverFoco = true) {
+    setPainelAberto(null);
+    if (devolverFoco) gatilhoDoPainel.current?.focus();
   }
   const desenharGrupo = ({ section, items }: (typeof navGroups)[number], gi: number) => (
     <div key={section} className={gi > 0 ? "mt-4" : ""}>
@@ -746,67 +754,70 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ) : (
             <>
               {gruposFixos.map(desenharGrupo)}
-              {gruposDoMais.length > 0 && (
-                <div className="mt-4">
-                  <button
-                    ref={botaoMais}
-                    type="button"
-                    onClick={() => (painelMais ? fecharMais() : abrirMais())}
-                    aria-expanded={painelMais !== null}
-                    aria-haspopup="dialog"
-                    title={!isExpanded ? "Mais telas" : undefined}
-                    aria-label={!isExpanded ? (itemAtivoDoMais ? `Mais telas (aberta: ${itemAtivoDoMais.label})` : "Mais telas") : undefined}
-                    className={`flex w-full items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                      itemAtivoDoMais ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
-                    }`}
-                    style={{ gap: isExpanded ? 10 : 0, padding: isExpanded ? "8px 10px" : "8px 0", justifyContent: isExpanded ? "flex-start" : "center" }}
-                  >
-                    <IconeDoMais size={16} className="flex-shrink-0" aria-hidden="true" />
-                    {isExpanded && <span>{itemAtivoDoMais ? itemAtivoDoMais.label : "Mais telas"}</span>}
-                  </button>
+              {gruposEmPainel.length > 0 && (
+                <div className={`space-y-0.5 ${gruposFixos.length > 0 ? "mt-4" : ""}`}>
+                  {gruposEmPainel.map(grupo => {
+                    const Icone = grupo.painel as React.ElementType;
+                    const comAtivo = grupo.items.some(item => item.href === hrefAtivo);
+                    const aberto = painelAberto?.section === grupo.section;
+                    return (
+                      <button
+                        key={grupo.section}
+                        type="button"
+                        onClick={evento => (aberto ? fecharPainel() : abrirPainel(grupo.section, evento.currentTarget))}
+                        aria-expanded={aberto}
+                        aria-haspopup="dialog"
+                        aria-current={comAtivo ? "true" : undefined}
+                        title={!isExpanded ? grupo.section : undefined}
+                        aria-label={!isExpanded ? grupo.section : undefined}
+                        className={`flex w-full items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                          comAtivo ? "bg-[#1a1a1a] text-white" : aberto ? "bg-black/[0.05] text-[#282525]" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                        }`}
+                        style={{ gap: isExpanded ? 10 : 0, padding: isExpanded ? "8px 10px" : "8px 0", justifyContent: isExpanded ? "flex-start" : "center" }}
+                      >
+                        <Icone size={16} className="flex-shrink-0" aria-hidden="true" />
+                        {isExpanded && <span>{grupo.section}</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               )}
             </>
           )}
           {usaCaptacao && <BotaoUpgrade expandido={isExpanded} />}
         </nav>
-        {painelMais && typeof document !== "undefined" && createPortal(
+        {grupoDoPainel && painelAberto && typeof document !== "undefined" && createPortal(
           <>
-            <div className="fixed inset-0 z-[60]" onClick={() => fecharMais(false)} />
+            <div className="fixed inset-0 z-[60]" onClick={() => fecharPainel(false)} />
             <div
+              ref={caixaDoPainel}
               role="dialog"
-              aria-label="Mais telas"
-              className="fixed z-[61] max-h-[calc(100vh-1rem)] w-[32rem] overflow-y-auto rounded border bg-white p-3 elevacao-1"
-              style={{ left: painelMais.left, bottom: painelMais.bottom, maxWidth: painelMais.maxWidth, borderColor: "rgba(13,13,13,.1)" }}
-              onKeyDown={evento => { if (evento.key === "Escape") { evento.preventDefault(); fecharMais(); } }}
+              aria-label={grupoDoPainel.section}
+              className="fixed z-[61] max-h-[calc(100vh-1rem)] w-[15rem] overflow-y-auto rounded border bg-white p-2 elevacao-1"
+              style={{ left: painelAberto.left, top: painelAberto.top, maxWidth: painelAberto.maxWidth, borderColor: "rgba(13,13,13,.1)" }}
+              onKeyDown={evento => { if (evento.key === "Escape") { evento.preventDefault(); fecharPainel(); } }}
             >
-              <div className="columns-1 gap-4 sm:columns-2">
-                {gruposDoMais.map(({ section, items }) => (
-                  <div key={section} className="mb-3 break-inside-avoid">
-                    <p className="px-2 pb-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{section}</p>
-                    <div className="space-y-0.5">
-                      {items.map(({ label, href, icon: Icone }, indice) => {
-                        const ativo = href === hrefAtivo;
-                        return (
-                          <Link
-                            key={href}
-                            href={href}
-                            prefetch={false}
-                            autoFocus={indice === 0 && section === gruposDoMais[0]?.section}
-                            aria-current={ativo ? "page" : undefined}
-                            onClick={() => fecharMais(false)}
-                            className={`flex items-center gap-2.5 rounded px-2.5 py-2 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                              ativo ? "bg-[#1a1a1a] text-white" : "text-[#282525] hover:bg-black/[.05]"
-                            }`}
-                          >
-                            <Icone size={15} className={`flex-shrink-0 ${ativo ? "" : "text-black/40"}`} aria-hidden="true" />
-                            <span>{label}</span>
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+              <p className="px-2.5 pb-1 pt-1 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{grupoDoPainel.section}</p>
+              <div className="space-y-0.5">
+                {grupoDoPainel.items.map(({ label, href, icon: Icone }, indice) => {
+                  const ativo = href === hrefAtivo;
+                  return (
+                    <Link
+                      key={href}
+                      href={href}
+                      prefetch={false}
+                      autoFocus={indice === 0}
+                      aria-current={ativo ? "page" : undefined}
+                      onClick={() => fecharPainel(false)}
+                      className={`flex items-center gap-2.5 rounded px-2.5 py-2 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
+                        ativo ? "bg-[#1a1a1a] text-white" : "text-[#282525] hover:bg-black/[.05]"
+                      }`}
+                    >
+                      <Icone size={15} className={`flex-shrink-0 ${ativo ? "" : "text-black/40"}`} aria-hidden="true" />
+                      <span>{label}</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           </>,
