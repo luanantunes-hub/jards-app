@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Download, Plus, TriangleAlert } from "lucide-react";
+import { Copy, Download, Ellipsis, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
+import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
@@ -24,7 +25,11 @@ type AcordoDoOrcamento = Pick<AcordoDaTemporada, "id" | "contraparte" | "sentido
 type Orcamento = { id: string; nome: string; situacao: SituacaoDoOrcamento; aprovado_em: string | null };
 
 const paraCampo = (valor: number | null) => (valor === null ? "" : String(valor).replace(".", ","));
-const reaisOuTraco = (centavos: number | null) => (centavos === null ? "—" : formatarReais(centavos));
+const reaisOuTraco = (centavos: number | null) => (centavos === null ? "—" : semMoeda(formatarReais(centavos)));
+/** Dentro da tabela os valores vão sem o "R$": a legenda acima avisa que está tudo em reais, e as colunas cabem sem rolagem lateral. */
+const semMoeda = (texto: string) => texto.replace(/^R\$[\s\u00a0]*/, "");
+const ITEM_DO_MENU = "flex w-full items-center gap-2 rounded px-2.5 py-2 text-left text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] disabled:opacity-50";
+const BOTAO_PRINCIPAL = "flex h-9 items-center gap-1.5 whitespace-nowrap rounded bg-[#282525] px-3.5 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50";
 
 function NovoOrcamentoSheet({ organizationId, temporadaId, nomeSugerido, onClose, onCriou }: { organizationId: string; temporadaId: string; nomeSugerido: string; onClose: () => void; onCriou: (id: string) => void }) {
   const [nome, setNome] = useState(nomeSugerido);
@@ -336,6 +341,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   const [trabalhando, setTrabalhando] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const [confirmando, setConfirmando] = useState<"aprovar" | "encerrar" | null>(null);
+  const menuDeAcoes = useAnchoredPopover();
   const [folhaNovo, setFolhaNovo] = useState(false);
   const [folhaLinha, setFolhaLinha] = useState<{ linha: LinhaDoOrcamento | null } | null>(null);
   const [folhaVariavel, setFolhaVariavel] = useState<{ variavel: VariavelDoOrcamento | null } | null>(null);
@@ -504,23 +510,42 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
               <Dropdown ariaLabel="Orçamento da temporada" value={escolhido} onChange={novo => { setEscolhido(novo); recarregar(); }} options={orcamentos.map(item => ({ value: item.id, label: item.nome }))} />
             </div>
           )}
-          {orcamento && <button type="button" onClick={() => void copiar()} className={BOTAO}><Copy size={13} aria-hidden="true" /> {copiado ? "Copiado" : "Copiar"}</button>}
-          {orcamento && linhas.length > 0 && <button type="button" onClick={baixar} className={BOTAO}><Download size={13} aria-hidden="true" /> Planilha</button>}
-          {podeEditar && <button type="button" onClick={() => setFolhaNovo(true)} className={BOTAO}><Plus size={13} aria-hidden="true" /> Orçamento</button>}
+          {orcamento && podeEditar && orcamento.situacao === "rascunho" && confirmando !== "aprovar" && <button type="button" className={BOTAO_PRINCIPAL} disabled={trabalhando} onClick={() => setConfirmando("aprovar")}>Aprovar orçamento</button>}
+          {orcamento && podeEditar && orcamento.situacao === "aprovado" && confirmando !== "encerrar" && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => setConfirmando("encerrar")}>Encerrar</button>}
+          {!orcamento && podeEditar && <button type="button" onClick={() => setFolhaNovo(true)} className={BOTAO_PRINCIPAL}><Plus size={13} aria-hidden="true" /> Orçamento</button>}
+          {copiado && <span role="status" className="text-[0.6875rem] font-medium text-[#2E8932]">Copiado</span>}
+          {orcamento && (
+            <button type="button" onClick={menuDeAcoes.abrir} aria-label="Mais ações do orçamento" aria-haspopup="menu" title="Mais ações" className="flex h-9 w-9 items-center justify-center rounded border border-black/12 bg-white text-black/55 transition hover:bg-black/[.04] hover:text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">
+              <Ellipsis size={16} aria-hidden="true" />
+            </button>
+          )}
         </div>
       </div>
       {erro && <div className="mb-2"><Erro texto={erro} /></div>}
+
+      <AnchoredPopover pos={menuDeAcoes.pos} onClose={menuDeAcoes.fechar}>
+        <div role="menu" aria-label="Ações do orçamento" className="-m-2.5 flex flex-col gap-px">
+          <button type="button" role="menuitem" className={ITEM_DO_MENU} onClick={() => { menuDeAcoes.fechar(); void copiar(); }}><Copy size={13} aria-hidden="true" className="text-black/40" /> Copiar como texto</button>
+          {linhas.length > 0 && <button type="button" role="menuitem" className={ITEM_DO_MENU} onClick={() => { menuDeAcoes.fechar(); baixar(); }}><Download size={13} aria-hidden="true" className="text-black/40" /> Baixar planilha</button>}
+          {podeEditar && (
+            <>
+              <div className="my-1 h-px bg-black/[.08]" role="separator" />
+              <button type="button" role="menuitem" className={ITEM_DO_MENU} disabled={trabalhando} onClick={() => { menuDeAcoes.fechar(); setFolhaNovo(true); }}><Plus size={13} aria-hidden="true" className="text-black/40" /> Novo orçamento em branco</button>
+              <button type="button" role="menuitem" className={ITEM_DO_MENU} disabled={trabalhando} onClick={() => { menuDeAcoes.fechar(); void copiarComoCenario(); }}><Copy size={13} aria-hidden="true" className="text-black/40" /> Copiar como cenário</button>
+              {orcamento?.situacao === "rascunho" && <button type="button" role="menuitem" className={ITEM_DO_MENU} disabled={trabalhando} onClick={() => { menuDeAcoes.fechar(); setConfirmando("encerrar"); }}>Encerrar sem aprovar</button>}
+              <div className="my-1 h-px bg-black/[.08]" role="separator" />
+              <button type="button" role="menuitem" className={`${ITEM_DO_MENU} !text-[#B23B3B]`} disabled={trabalhando} onClick={() => { menuDeAcoes.fechar(); apagarOrcamento(); }}>Apagar orçamento</button>
+            </>
+          )}
+        </div>
+      </AnchoredPopover>
 
       {!orcamento ? (
         <p className="rounded border bg-white px-5 py-6 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Esta temporada ainda não tem orçamento. Crie um e lance os gastos por categoria: estimativa, aprovado, revisado, comprometido e pago.</p>
       ) : (
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="rounded border px-2 py-1 text-[0.6875rem] font-medium text-[#282525]" style={{ borderColor: "rgba(13,13,13,.25)" }}>{ROTULO_DA_SITUACAO_DO_ORCAMENTO[orcamento.situacao]}{orcamento.situacao !== "rascunho" && orcamento.aprovado_em ? ` em ${new Date(orcamento.aprovado_em).toLocaleDateString("pt-BR")}` : ""}</span>
-            {podeEditar && orcamento.situacao === "rascunho" && confirmando !== "aprovar" && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => setConfirmando("aprovar")}>Aprovar orçamento</button>}
-            {podeEditar && orcamento.situacao !== "encerrado" && confirmando !== "encerrar" && <button type="button" className={BOTAO} disabled={trabalhando} onClick={() => setConfirmando("encerrar")}>Encerrar</button>}
-            {podeEditar && <button type="button" className={BOTAO_PEQUENO} disabled={trabalhando} onClick={() => void copiarComoCenario()}>Copiar como cenário</button>}
-            {podeEditar && <button type="button" className={`${BOTAO_PEQUENO} text-[#B23B3B]`} disabled={trabalhando} onClick={apagarOrcamento}>Apagar orçamento</button>}
             {confirmando && (
               <div className="flex flex-wrap items-center gap-2 rounded border bg-white px-3 py-2" style={{ borderColor: "#B07A1447" }}>
                 <span className="text-[0.75rem] text-[#B07A14]">{confirmando === "aprovar" ? "Aprovar guarda a estimativa como o valor aprovado e trava a estimativa e a categoria das linhas. Depois, use o revisado. Não volta para rascunho." : "Encerrar trava tudo: nada mais muda."}</span>
@@ -533,7 +558,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
           <div className="rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Variáveis</p>
-              {podeEditar && orcamento.situacao === "rascunho" && <button type="button" onClick={() => setFolhaVariavel({ variavel: null })} className={BOTAO_PEQUENO}><Plus size={12} aria-hidden="true" /> Variável</button>}
+              {podeEditar && orcamento.situacao === "rascunho" && <button type="button" onClick={() => setFolhaVariavel({ variavel: null })} className={`${BOTAO_PEQUENO} flex shrink-0 items-center gap-1 whitespace-nowrap`}><Plus size={12} aria-hidden="true" /> Variável</button>}
             </div>
             {variaveis.length === 0 ? (
               <p className="mt-1.5 text-[0.75rem] text-black/45">Sem variáveis. Cadastre números como pessoas viajando, dias de estrada ou praças e use-os em fórmulas para trocar de cenário sem refazer as contas.</p>
@@ -552,51 +577,49 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
             )}
           </div>
 
-          <dl className={`grid gap-2 sm:grid-cols-3 ${comAprovado ? "lg:grid-cols-6" : "lg:grid-cols-4"}`}>
+          <dl className="grid grid-cols-[repeat(auto-fit,minmax(9rem,1fr))] gap-x-4 gap-y-3 rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
             {resumo.map(item => (
-              <div key={item.rotulo} className="rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-                <dt className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{item.rotulo}</dt>
-                <dd className={`mt-1 text-[1.0625rem] tabular-nums ${item.forte ? "font-semibold" : "font-medium"} ${item.zero ? "text-black/30" : "text-[#282525]"}`} title={item.valor}>{item.valor}</dd>
+              <div key={item.rotulo} className="min-w-0">
+                <dt className="whitespace-nowrap text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{item.rotulo}</dt>
+                <dd className={`mt-1 whitespace-nowrap text-[1.0625rem] tabular-nums ${item.forte ? "font-semibold" : "font-medium"} ${item.zero ? "text-black/30" : "text-[#282525]"}`} title={item.valor}>{item.valor}</dd>
               </div>
             ))}
           </dl>
           {contas.avisos.map(aviso => <p key={aviso} className="flex items-start gap-1.5 rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B07A14]" style={{ borderColor: "#B07A1447" }}><TriangleAlert size={13} aria-hidden="true" className="mt-0.5 shrink-0" /> {aviso}</p>)}
 
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[0.6875rem] text-black/45">O comprometido e o pago são digitados por enquanto; depois virão dos acordos e dos lançamentos.</p>
-            {editavel && <button type="button" onClick={() => setFolhaLinha({ linha: null })} className={BOTAO}><Plus size={13} aria-hidden="true" /> Linha</button>}
+            <p className="text-[0.6875rem] text-black/45">Valores em reais.{editavel ? " Clique numa linha para editar." : ""}</p>
+            {editavel && <button type="button" onClick={() => setFolhaLinha({ linha: null })} className={`${BOTAO} shrink-0 whitespace-nowrap`}><Plus size={13} aria-hidden="true" /> Linha</button>}
           </div>
 
           {contas.linhas.length === 0 ? (
             <p className="rounded border bg-white px-5 py-5 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nenhuma linha. Comece pelo cachê, a hospedagem e o transporte.</p>
           ) : (
             <div className="overflow-x-auto rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-              <table className="w-full min-w-[56rem] border-collapse text-left">
+              <table className="w-full min-w-[44rem] border-collapse text-left">
                 <thead>
                   <tr className="border-b border-black/[.06]">
                     {["Gasto", "Estimativa", "Aprovado", "Revisado", "Previsto", ...(comAprovado ? ["Variação"] : []), "Comprometido", "Pago", "A pagar"].map((titulo, indice) => (
                       <th key={titulo} scope="col" className={`px-3 py-2.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45 ${indice > 0 ? "text-right" : ""}`}>{titulo}</th>
                     ))}
-                    {editavel && <th scope="col" className="px-3 py-2.5"><span className="sr-only">Ações</span></th>}
                   </tr>
                 </thead>
                 <tbody>
                   {contas.linhas.map(conta => {
                     const original = linhas.find(item => item.id === conta.id) ?? null;
                     return (
-                      <tr key={conta.id} className="border-b border-black/[.06] align-top last:border-b-0">
+                      <tr key={conta.id} onClick={editavel ? () => setFolhaLinha({ linha: original }) : undefined} className={`border-b border-black/[.06] align-top last:border-b-0 ${editavel ? "cursor-pointer transition-colors hover:bg-black/[.03]" : ""}`}>
                         <th scope="row" className="px-3 py-2 text-left">
-                          <span className="block text-[0.8125rem] font-medium text-[#282525]">{conta.descricao}</span>
+                          {editavel ? <button type="button" onClick={evento => { evento.stopPropagation(); setFolhaLinha({ linha: original }); }} className="block rounded text-left text-[0.8125rem] font-medium text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{conta.descricao}</button> : <span className="block text-[0.8125rem] font-medium text-[#282525]">{conta.descricao}</span>}
                           <span className="block text-[0.6875rem] font-normal text-black/45">{ROTULO_DA_CATEGORIA_DO_ORCAMENTO[conta.categoria]}{conta.viaAcordo ? " · comprometido pelo acordo" : ""}{conta.pagoViaLancamentos ? " · pago pelos lançamentos" : ""}</span>
                           {conta.avisos.map(aviso => <span key={aviso} className="mt-0.5 block text-[0.6875rem] font-normal text-[#B07A14]">{aviso}</span>)}
                         </th>
                         {[conta.estimativaCentavos, conta.aprovadoCentavos, conta.revisadoCentavos].map((valor, indice) => <td key={indice} className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${valor === null ? "text-black/30" : "text-black/65"}`}>{reaisOuTraco(valor)}</td>)}
-                        <td className="px-3 py-2 text-right text-[0.8125rem] font-medium tabular-nums text-[#282525]">{formatarReais(conta.previstoCentavos)}</td>
-                        {comAprovado && <td className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${conta.variacaoCentavos === null || conta.variacaoCentavos === 0 ? "text-black/30" : "text-[#282525]"}`}>{conta.variacaoCentavos === null ? "—" : `${conta.variacaoCentavos > 0 ? "+" : conta.variacaoCentavos < 0 ? "−" : ""}${formatarReais(Math.abs(conta.variacaoCentavos))}`}</td>}
-                        <td className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${conta.comprometidoCentavos === 0 ? "text-black/30" : "text-[#282525]"}`}>{formatarReais(conta.comprometidoCentavos)}</td>
-                        <td className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${conta.pagoCentavos === 0 ? "text-black/30" : "text-[#282525]"}`}>{formatarReais(conta.pagoCentavos)}</td>
-                        <td className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${conta.aPagarCentavos === 0 ? "text-black/30" : "text-[#282525]"}`}>{formatarReais(conta.aPagarCentavos)}</td>
-                        {editavel && <td className="px-3 py-2 text-right"><button type="button" className={BOTAO_PEQUENO} onClick={() => setFolhaLinha({ linha: original })}>Editar</button></td>}
+                        <td className="px-3 py-2 text-right text-[0.8125rem] font-medium tabular-nums text-[#282525]">{semMoeda(formatarReais(conta.previstoCentavos))}</td>
+                        {comAprovado && <td className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${conta.variacaoCentavos === null || conta.variacaoCentavos === 0 ? "text-black/30" : "text-[#282525]"}`}>{conta.variacaoCentavos === null ? "—" : `${conta.variacaoCentavos > 0 ? "+" : conta.variacaoCentavos < 0 ? "−" : ""}${semMoeda(formatarReais(Math.abs(conta.variacaoCentavos)))}`}</td>}
+                        <td className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${conta.comprometidoCentavos === 0 ? "text-black/30" : "text-[#282525]"}`}>{semMoeda(formatarReais(conta.comprometidoCentavos))}</td>
+                        <td className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${conta.pagoCentavos === 0 ? "text-black/30" : "text-[#282525]"}`}>{semMoeda(formatarReais(conta.pagoCentavos))}</td>
+                        <td className={`px-3 py-2 text-right text-[0.8125rem] tabular-nums ${conta.aPagarCentavos === 0 ? "text-black/30" : "text-[#282525]"}`}>{semMoeda(formatarReais(conta.aPagarCentavos))}</td>
                       </tr>
                     );
                   })}
