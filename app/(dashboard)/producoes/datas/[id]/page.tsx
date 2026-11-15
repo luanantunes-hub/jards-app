@@ -20,6 +20,7 @@ import { NovoBlocoSheet } from "@/components/producao/NovoBlocoSheet";
 import { EquipeDaData } from "@/components/producao/EquipeDaData";
 import { ViagemEHospedagem } from "@/components/producao/ViagemEHospedagem";
 import { DeslocamentosDaData } from "@/components/producao/DeslocamentosDaData";
+import { QueLevarDaData } from "@/components/producao/QueLevarDaData";
 import { OcorrenciasDaData } from "@/components/producao/OcorrenciasDaData";
 import { TarefasDaData } from "@/components/producao/TarefasDaData";
 import { HistoricoDaData } from "@/components/producao/HistoricoDaData";
@@ -281,6 +282,7 @@ export default function DataPage() {
         {organizationId && <EquipeDaData organizationId={organizationId} data={{ id: data.id, data: data.data, data_fim: data.data_fim, fuso }} podeEditar={podeEditar} />}
         {organizationId && <ViagemEHospedagem organizationId={organizationId} data={{ id: data.id, data: data.data, fuso }} podeEditar={podeEditar} />}
         {organizationId && <DeslocamentosDaData organizationId={organizationId} data={{ id: data.id, data: data.data, fuso }} podeEditar={podeEditar} />}
+        {organizationId && <QueLevarDaData organizationId={organizationId} dataId={data.id} podeEditar={podeEditar} />}
         {organizationId && <OcorrenciasDaData organizationId={organizationId} data={{ id: data.id, fuso }} podeEditar={podeEditar} />}
         {organizationId && <TarefasDaData organizationId={organizationId} dataId={data.id} tipoDeProducao={(data.temporada?.tipo as TipoProducao | undefined) ?? null} podeEditar={podeEditar} />}
         {organizationId && <LicencasDaData organizationId={organizationId} dataId={data.id} dataDoEvento={data.data} podeEditar={podeEditar} />}

@@ -1,7 +1,7 @@
 // A lista do que levar (PD4.4): o que a casa atende, atende em parte ou não atende; a sugestão; o texto.
 import test from "node:test";
 import assert from "node:assert/strict";
-import { equipamentoDaSala, equipamentoSugerido, listaDoQueLevar, soOQueLevar, textoDoQueLevar, type EquipamentoDaCasa, type LinhaDoRider } from "../lib/producao/levar";
+import { equipamentoDaSala, equipamentoSugerido, linhasParaOChecklist, listaDoQueLevar, soOQueLevar, textoDoQueLevar, type EquipamentoDaCasa, type LinhaDoRider } from "../lib/producao/levar";
 
 const SALA = "s1", OUTRA = "s2", ESPACO = "e1";
 const linha = (id: string, texto: string, quantidade: number | null, obrigatorio = true): LinhaDoRider => ({ id, secao: "luz", texto, quantidade, obrigatorio });
@@ -64,4 +64,13 @@ test("o texto da lista", () => {
   const lista = listaDoQueLevar(linhas, [{ rider_item_id: "a", equipamento_id: "p" }, { rider_item_id: "c", equipamento_id: "m" }], equipamentos, SALA, ESPACO);
   assert.equal(textoDoQueLevar("Teatro · Sala 1", lista), "O que levar para Teatro · Sala 1:\n- 2× 6 refletores PAR (a casa tem 4)\n- 1× Fumaça [opcional]");
   assert.equal(textoDoQueLevar("Teatro · Sala 1", listaDoQueLevar([linha("c", "Mesa de som", 1)], [{ rider_item_id: "c", equipamento_id: "m" }], equipamentos, SALA, ESPACO)), "Nada a levar para Teatro · Sala 1: a casa atende todo o rider.");
+});
+
+test("as linhas para o checklist: o que levar, sem repetir o que já está nele", () => {
+  const linhas = [linha("a", "6 refletores PAR", 6), linha("b", "Fumaça", 1, false), linha("c", "Mesa de som", 1), linha("d", "  ", 1)];
+  const equipamentos = [equip("p", "Refletor PAR", 4), equip("m", "Mesa", 1)];
+  const lista = listaDoQueLevar(linhas, [{ rider_item_id: "a", equipamento_id: "p" }, { rider_item_id: "c", equipamento_id: "m" }], equipamentos, SALA, ESPACO);
+  assert.deepEqual(linhasParaOChecklist(lista, []), [{ nome: "6 refletores PAR", quantidade: 2 }, { nome: "Fumaça", quantidade: 1 }]);
+  assert.deepEqual(linhasParaOChecklist(lista, ["FUMAÇA"]), [{ nome: "6 refletores PAR", quantidade: 2 }], "o que já está no checklist (sem ligar maiúscula nem acento) não entra de novo");
+  assert.deepEqual(linhasParaOChecklist([], []), []);
 });

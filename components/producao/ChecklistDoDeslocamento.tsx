@@ -6,6 +6,8 @@ import { TopSheet } from "@/components/ui/TopSheet";
 import { Select } from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
+import { carregarQueLevarDaData } from "@/components/producao/carregarQueLevar";
+import { linhasParaOChecklist, type LinhaDoQueLevar } from "@/lib/producao/levar";
 import { SITUACOES_DA_CONFERENCIA, type ContratacaoDoVeiculo, type SituacaoDaConferencia, type TipoDeDeslocamento, type TipoDoItemDoChecklist } from "@/lib/producao/estados";
 import {
   avisosDeCapacidade, documentosParaPreencher, documentosSugeridos, itensParaPreencher, lerLinhaDoChecklist, resumoDaConferencia, ROTULO_DA_CONFERENCIA, textoDoResumo, totaisDoChecklist,
@@ -39,6 +41,17 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
+  // O que a sala da data não atende do rider (PD4.4): vira linhas do checklist com um clique.
+  const [aLevar, setALevar] = useState<LinhaDoQueLevar[]>([]);
+
+  useEffect(() => {
+    let ativo = true;
+    void (async () => {
+      const lido = await carregarQueLevarDaData(deslocamento.data_id);
+      if (ativo) setALevar(lido.riders.flatMap(rider => rider.lista));
+    })();
+    return () => { ativo = false; };
+  }, [deslocamento.data_id, versao]);
 
   useEffect(() => {
     let ativo = true;
@@ -84,6 +97,7 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
   }
 
   const faltamDaData = useMemo(() => itensParaPreencher(daData, new Set((linhas ?? []).map(linha => linha.item_id).filter((id): id is string => Boolean(id)))), [daData, linhas]);
+  const levarFaltam = useMemo(() => linhasParaOChecklist(aLevar, (linhas ?? []).map(linha => linha.nome)), [aLevar, linhas]);
   const sugestoes = useMemo(() => documentosParaPreencher(documentosSugeridos(deslocamento.tipo, veiculo?.contratacao ?? null), (linhas ?? []).filter(linha => linha.tipo === "documento").map(linha => linha.nome)), [deslocamento.tipo, veiculo, linhas]);
   const totais = useMemo(() => totaisDoChecklist((linhas ?? []).map(linha => ({ tipo: linha.tipo, quantidade: linha.quantidade, medidas: linha.item_id ? medidas.get(linha.item_id) ?? null : null }))), [linhas, medidas]);
   const avisos = useMemo(() => avisosDeCapacidade(totais, veiculo), [totais, veiculo]);
@@ -92,6 +106,12 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
     await executar(() => clienteDaProducao(createClient()).from("producao_checklist_itens").insert(faltamDaData.map(item => ({
       organization_id: organizationId, deslocamento_id: deslocamento.id, tipo: "item" as const, nome: item.nome, quantidade: item.quantidade, item_id: item.item_id,
     }))), "Não foi possível preencher com o que a data leva. Tente de novo.");
+  }
+
+  async function preencherComOQueLevar() {
+    await executar(() => clienteDaProducao(createClient()).from("producao_checklist_itens").insert(levarFaltam.map(linha => ({
+      organization_id: organizationId, deslocamento_id: deslocamento.id, tipo: "item" as const, nome: linha.nome, quantidade: linha.quantidade,
+    }))), "Não foi possível preencher com o que levar. Tente de novo.");
   }
 
   async function sugerirDocumentos() {
@@ -136,9 +156,10 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
               {avisos.map(aviso => <p key={aviso} className="flex items-start gap-1.5" style={{ color: "#B07A14" }}><TriangleAlert size={12} aria-hidden="true" className="mt-px shrink-0" />{aviso}</p>)}
             </div>
 
-            {podeEditar && (faltamDaData.length > 0 || sugestoes.length > 0) && (
+            {podeEditar && (faltamDaData.length > 0 || levarFaltam.length > 0 || sugestoes.length > 0) && (
               <div className="flex flex-wrap gap-2">
                 {faltamDaData.length > 0 && <button type="button" onClick={() => void preencherDaData()} disabled={ocupado} className={BOTAO}><Plus size={13} aria-hidden="true" /> Preencher com o que a data leva ({faltamDaData.length})</button>}
+                {levarFaltam.length > 0 && <button type="button" onClick={() => void preencherComOQueLevar()} disabled={ocupado} className={BOTAO}><Plus size={13} aria-hidden="true" /> Preencher com o que levar ({levarFaltam.length})</button>}
                 {sugestoes.length > 0 && <button type="button" onClick={() => void sugerirDocumentos()} disabled={ocupado} className={BOTAO}><Plus size={13} aria-hidden="true" /> Sugerir documentos ({sugestoes.length})</button>}
               </div>
             )}
