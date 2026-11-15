@@ -43,7 +43,7 @@ export type TabelaDaMigration = {
 
 export type FuncaoDaMigration = {
   nome: string;
-  argumentos: { nome: string; tipoSql: string }[];
+  argumentos: { nome: string; tipoSql: string; comPadrao?: boolean }[];
   retornoSql: string;
   /** A última palavra das migrations é `grant execute ... to authenticated`: o navegador a chama. */
   doNavegador: boolean;
@@ -200,9 +200,11 @@ export function lerMigrations(arquivos: readonly ArquivoSql[]): BancoNasMigratio
       const funcao = /^create (?:or replace )?function public\.((?:auth|fn)_producao_\w+)\(([^)]*)\) returns (.+?) language /.exec(comando);
       if (funcao) {
         const argumentos = itensDe(funcao[2]).map(a => {
-          const arg = /^(\w+) (.+)$/.exec(a);
-          if (!arg || /\bdefault\b/i.test(a)) throw new Error(`argumento que o teste não entende: ${funcao[1]}(${a})`);
-          return { nome: arg[1], tipoSql: arg[2] };
+          // `default` só é aceito em função que o navegador não executa (a limpeza de privacidade, por exemplo): lá o tipo não precisa dela.
+          const comPadrao = /\sdefault\s/i.test(a);
+          const arg = /^(\w+) (.+?)(?:\s+default\s+.+)?$/i.exec(a);
+          if (!arg) throw new Error(`argumento que o teste não entende: ${funcao[1]}(${a})`);
+          return { nome: arg[1], tipoSql: arg[2], comPadrao };
         });
         funcoes.set(funcao[1], { nome: funcao[1], argumentos, retornoSql: funcao[3], doNavegador: false });
         continue;
@@ -218,7 +220,9 @@ export function lerMigrations(arquivos: readonly ArquivoSql[]): BancoNasMigratio
 
   for (const [nome, funcao] of funcoes) funcao.doNavegador = executaveis.has(nome);
   for (const nome of executaveis) {
-    if (!funcoes.has(nome)) throw new Error(`grant execute de ${nome}, que nenhuma migration criou`);
+    const funcao = funcoes.get(nome);
+    if (!funcao) throw new Error(`grant execute de ${nome}, que nenhuma migration criou`);
+    if (funcao.argumentos.some(arg => arg.comPadrao)) throw new Error(`argumento que o teste não entende: ${nome} tem argumento com default e o navegador a executa (o tipo teria de marcá-lo como opcional)`);
   }
   // Uma chave é um-para-um quando as colunas dela são exatamente as de uma chave primária ou única da tabela.
   for (const [nome, tabela] of e.tabelas) {
