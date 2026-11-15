@@ -497,7 +497,7 @@ function MeuPlanoInner() {
       {/* Cabeçalho: onde a organização está e o que ganha assinando */}
       <section aria-labelledby="titulo-plano" aria-busy={carregando} className="grid items-center gap-x-10 gap-y-6 md:grid-cols-[1fr_minmax(13rem,19rem)]">
         <div className="min-w-0">
-          <h1 id="titulo-plano" className={ROTULO} style={{ fontFamily: "var(--font-geist), system-ui, sans-serif" }}>Meu plano</h1>
+          <h1 id="titulo-plano" className={ROTULO} style={{ fontFamily: "var(--font-google-sans), system-ui, sans-serif" }}>Meu plano</h1>
           {carregando ? (
             <div className="mt-3 space-y-3 animate-pulse motion-reduce:animate-none" aria-hidden>
               <div className="h-10 w-72 max-w-full rounded bg-black/[.06]" />
