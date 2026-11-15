@@ -52,7 +52,6 @@ function LigarSheet({ organizationId, dataId, onClose, onLigou }: { organization
     <TopSheet titulo="Ligar contrapartida a esta data" onClose={onClose} footer={fechar => <button type="button" onClick={fechar} className={CANCELAR}>Fechar</button>}>
         <div className="space-y-3">
           {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
-          <p className="text-[0.75rem] text-black/55">Compromissos dos patrocinadores que ainda não estão ligados a nenhuma data. Escolha o que se cumpre nesta data (o logo no palco, os convites, o relatório).</p>
           {lista === null ? (
             <div className="h-16 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
           ) : lista.length === 0 ? (

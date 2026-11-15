@@ -80,7 +80,6 @@ function BlocoSheet({ bloco, tipoInicial, onClose, onSalvar }: { bloco?: Bloco; 
         {tipo === "programacao" && (
           <>
             <div><label className={ROTULO} htmlFor="bl-prog">Título (opcional)</label><input id="bl-prog" autoFocus className={CAMPO} value={tituloProg} onChange={event => setTituloProg(event.target.value)} maxLength={120} disabled={salvando} /></div>
-            <p className="text-[0.75rem] text-black/55">Mostra as sessões das pautas confirmadas deste espaço, de hoje em diante. Pré-reserva, consulta e contratante nunca aparecem.</p>
           </>
         )}
         {tipo === "contato" && (
@@ -159,7 +158,6 @@ function SeoDaPagina({ pagina, podeEditar, onSalvo }: { pagina: Pagina; podeEdit
     <details className="mt-6 rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       <summary className="cursor-pointer px-4 py-3 text-[0.75rem] font-medium text-black/60 hover:text-black/80">Buscadores e redes sociais</summary>
       <div className="space-y-3 border-t px-4 py-4" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-        <p className="text-[0.75rem] text-black/55">O que o Google e as redes sociais mostram quando alguém acha ou compartilha esta página.</p>
         <div><label className={ROTULO} htmlFor="seo-descricao">Descrição (até 300 letras)</label><textarea id="seo-descricao" rows={3} className={AREA} value={descricao} onChange={event => setDescricao(event.target.value)} maxLength={300} disabled={!podeEditar || salvando} /></div>
         <div><label className={ROTULO} htmlFor="seo-imagem">Imagem de compartilhamento (https://…)</label><input id="seo-imagem" className={CAMPO} value={imagem} onChange={event => setImagem(event.target.value)} maxLength={500} placeholder="https://…/capa.jpg" disabled={!podeEditar || salvando} /></div>
         {aviso && <p role={aviso.erro ? "alert" : "status"} className={`text-[0.75rem] ${aviso.erro ? "text-[#B23B3B]" : "text-black/55"}`}>{aviso.texto}</p>}

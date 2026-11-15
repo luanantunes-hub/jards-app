@@ -114,7 +114,6 @@ export function EspacoSheet({ organizationId, espaco, onClose, onSaved }: { orga
           <div>
             <label className={ROTULO} htmlFor="espaco-municipio">Município</label>
             <MunicipioCombobox id="espaco-municipio" uf={uf} valor={municipio} onChange={setMunicipio} />
-            <p className="mt-1.5 text-[0.6875rem] text-black/45">Com o município escolhido, o espaço aparece no mapa da turnê.</p>
           </div>
         )}
         <div className="flex flex-wrap gap-x-6 gap-y-2">

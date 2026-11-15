@@ -85,7 +85,6 @@ function ReceitaSheet({ organizationId, borderoId, receita, existentes, onClose,
           <div><label className={ROTULO} htmlFor="rec-quantidade">Ingressos</label><input id="rec-quantidade" inputMode="numeric" className={CAMPO} value={quantidade} onChange={event => setQuantidade(event.target.value.replace(/\D/g, ""))} disabled={salvando} placeholder="0" /></div>
           <div><label className={ROTULO} htmlFor="rec-valor">Valor de cada (R$)</label><input id="rec-valor" inputMode="decimal" className={CAMPO} value={valor} onChange={event => setValor(event.target.value)} disabled={salvando} placeholder="50,00" /></div>
         </div>
-        <p className="text-[0.6875rem] text-black/45">Cortesia entra com valor 0: conta no público, não na receita.</p>
       </div>
     </TopSheet>
   );

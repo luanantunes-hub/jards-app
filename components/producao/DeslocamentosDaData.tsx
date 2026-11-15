@@ -199,7 +199,6 @@ function DeslocamentoSheet({ organizationId, dataId, dia, fuso, deslocamento, ve
           <label className={ROTULO} htmlFor="desloc-notas">Notas (opcional)</label>
           <textarea id="desloc-notas" rows={3} className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50" value={notas} onChange={event => setNotas(event.target.value)} maxLength={2000} disabled={salvando} />
         </div>
-        <p className="text-[0.6875rem] text-black/40">A saída e a chegada são na hora do lugar da data. Se a chegada for antes da saída, ela é do dia seguinte.</p>
       </div>
     </TopSheet>
   );

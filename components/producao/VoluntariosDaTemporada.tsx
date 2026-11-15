@@ -61,7 +61,6 @@ function LinkSheet({ temporadaId, organizationId, ativo, onClose, onGerou }: { t
         {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {!url ? (
           <>
-            <p className="text-[0.75rem] text-black/55">Um link só para a temporada inteira: quem recebe se inscreve pelo celular, sem conta, e você aprova depois. Vale {DIAS_DO_LINK_DE_VOLUNTARIOS} dias.{ativo ? " Gerar um novo desativa o link anterior." : ""}</p>
             <div>
               <label className={ROTULO} htmlFor="vol-titulo">Título da chamada (opcional)</label>
               <input id="vol-titulo" className={CAMPO} value={titulo} maxLength={120} onChange={event => setTitulo(event.target.value)} disabled={gerando} placeholder="Seja voluntário" />

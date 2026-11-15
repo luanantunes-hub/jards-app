@@ -73,7 +73,6 @@ function ConvidarSheet({ temporadaId, temporadaTitulo, pessoas, convites, onClos
         {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {!mensagens ? (
           <>
-            <p className="text-[0.75rem] text-black/55">Cada pessoa recebe um link só dela, que vale {DIAS_DO_LINK_DO_CONVITE} dias. Ela responde pelo celular, sem conta: se vai, quando chega e quando sai. Quem já foi convidada ganha um link novo (o anterior deixa de valer) e mantém a resposta.</p>
             {pessoas.length === 0 ? (
               <p className="text-[0.8125rem] text-black/55">Ainda não há ninguém na equipe. Cadastre as pessoas em Equipe e volte aqui.</p>
             ) : (

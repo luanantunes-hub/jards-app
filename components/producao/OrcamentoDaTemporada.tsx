@@ -67,7 +67,6 @@ function NovoOrcamentoSheet({ organizationId, temporadaId, nomeSugerido, onClose
           <label className={ROTULO} htmlFor="orc-nome">Nome</label>
           <input id="orc-nome" className={CAMPO} value={nome} maxLength={80} onChange={event => setNome(event.target.value)} disabled={salvando} />
         </div>
-        <p className="text-[0.6875rem] text-black/45">Uma temporada pode ter mais de um orçamento (por exemplo, um para cada cenário).</p>
       </div>
     </TopSheet>
   );
@@ -162,7 +161,6 @@ function VariavelSheet({ organizationId, orcamentoId, variavel, existentes, linh
             <input id="var-valor" inputMode="decimal" className={CAMPO} value={valor} onChange={event => setValor(event.target.value)} disabled={salvando} placeholder="5" />
           </div>
         </div>
-        <p className="text-[0.6875rem] text-black/45">Use o nome nas fórmulas das linhas, por exemplo <span className="font-medium">pessoas * dias_de_estrada * 180</span>. Ao salvar, as linhas com fórmula são recalculadas.</p>
       </div>
     </TopSheet>
   );
@@ -591,7 +589,6 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
           {contas.avisos.map(aviso => <p key={aviso} className="flex items-start gap-1.5 rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B07A14]" style={{ borderColor: "#B07A1447" }}><TriangleAlert size={13} aria-hidden="true" className="mt-0.5 shrink-0" /> {aviso}</p>)}
 
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[0.6875rem] text-black/45">Valores em reais. Clique numa linha para ver de onde vem cada número.</p>
             {editavel && <button type="button" onClick={() => setFolhaLinha({ linha: null })} className={`${BOTAO} shrink-0 whitespace-nowrap`}><Plus size={13} aria-hidden="true" /> Linha</button>}
           </div>
 

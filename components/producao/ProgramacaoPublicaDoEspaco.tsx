@@ -122,9 +122,7 @@ export function ProgramacaoPublicaDoEspaco({ espacoId, podeEditar }: { espacoId:
       {novo && <EnderecosDoLink codigo={novo} onFechar={() => setNovo(null)} />}
       {links === null ? (
         <div className="h-16 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
-      ) : links.length === 0 ? (
-        <p className="rounded border bg-white px-4 py-5 text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Publique as sessões já confirmadas do espaço: uma página para divulgar, um código para colar no site da casa e um JSON para o site montar do jeito dele. Só entram sessões de pautas confirmadas.</p>
-      ) : (
+      ) : links.length === 0 ? null : (
         <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {links.map(link => (
             <li key={link.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-2.5">

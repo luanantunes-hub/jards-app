@@ -17,7 +17,6 @@ export default function ModelosDeAcertoPage() {
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <DetailBackLink href="/producoes" label="Produção" />
           <h1 className="mt-5 text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Acerto técnico</h1>
-          <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">A lista de perguntas que a casa responde pelo link, sem entrar no Jards. Você revê cada resposta, e só o que aprovar vai para a ficha da sala ou do espaço.</p>
         </div>
       </header>
       <DetailPageContent>

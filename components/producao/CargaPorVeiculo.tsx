@@ -92,7 +92,6 @@ export function CargaPorVeiculo({ organizationId, temporadaId }: { organizationI
         <div className="mt-3 rounded border bg-white px-4 py-3" style={{ borderColor: "#B07A1447" }}>
           <p className="text-[0.8125rem] font-medium" style={{ color: "#B07A14" }}>Ainda sem veículo ({semTransporte.length})</p>
           <p className="mt-1 text-[0.75rem] text-black/55">{semTransporte.map(item => `${item.nome} × ${numero(item.quantidade)}`).join(", ")}</p>
-          <p className="mt-1 text-[0.6875rem] text-black/40">Itens que a temporada leva e que não estão no checklist de nenhum deslocamento. Abra o deslocamento e use &ldquo;Preencher com o que a data leva&rdquo;.</p>
         </div>
       )}
     </section>

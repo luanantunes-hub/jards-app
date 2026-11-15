@@ -102,7 +102,6 @@ function LicencaSheet({ organizationId, dataId, pessoas, licenca, onClose, onSav
           <div><label className={ROTULO} htmlFor="lic-validade">Vale até (opcional)</label><input id="lic-validade" type="date" className={CAMPO} value={validade} onChange={event => setValidade(event.target.value)} disabled={salvando} /></div>
         </div>
         <div><label className={ROTULO} htmlFor="lic-notas">Notas (opcional)</label><textarea id="lic-notas" rows={2} className="w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50" value={notas} onChange={event => setNotas(event.target.value)} maxLength={500} disabled={salvando} /></div>
-        <p className="text-[0.6875rem] text-black/45">Enquanto a licença estiver a pedir ou pedida, ela aparece nas tarefas da data. O arquivo da licença vai em Arquivos da data.</p>
       </div>
     </TopSheet>
   );

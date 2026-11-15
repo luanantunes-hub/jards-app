@@ -98,7 +98,6 @@ export function PacoteDoDinheiro({ organizationId, temporadaId, temporadaTitulo 
       {erro && <div className="mb-2"><Erro texto={erro} /></div>}
       <div className="flex flex-wrap items-center gap-3 rounded border bg-white px-4 py-3" style={{ borderColor: "rgba(13,13,13,.08)" }}>
         <button type="button" onClick={() => void baixar()} disabled={montando} className={BOTAO}><Package size={13} aria-hidden="true" /> {montando ? "Montando o pacote…" : "Baixar o pacote (.zip)"}</button>
-        <p className="min-w-0 flex-1 basis-64 text-[0.75rem] text-black/55">Um arquivo com as planilhas do orçamento, dos acordos, dos pedidos, dos lançamentos, das faturas, dos adiantamentos e das diárias, mais um resumo. Serve para o contador e para a prestação de contas. Os arquivos de notas e recibos entram aqui quando a produção passar a guardá-los.</p>
       </div>
     </section>
   );

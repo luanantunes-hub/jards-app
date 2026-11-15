@@ -266,7 +266,6 @@ export default function AcordoPage() {
                   </div>
                 ))}
               </dl>
-              <p className="mt-3 text-[0.6875rem] text-black/45">O valor firme é o maior entre o valor fixo e a garantia. O percentual da bilheteria e o bônus só se sabem depois da sessão.</p>
             </section>
           </aside>
         </div>

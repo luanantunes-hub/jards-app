@@ -58,7 +58,6 @@ export function SalvarModeloDoDiaSheet({ organizationId, blocos, onClose, onSave
               </li>
             ))}
           </ul>
-          <p className="mt-1.5 text-[0.6875rem] text-black/45">O modelo guarda a ordem e a duração, não a hora: ao usar, você escolhe a hora do primeiro bloco.</p>
         </div>
       </div>
     </TopSheet>

@@ -113,7 +113,6 @@ function NovoAcertoSheet({ dataId, modelos, onClose, onCreated }: { dataId: stri
             ))}
           </div>
         )}
-        <p className="text-[0.6875rem] text-black/45">A casa abre o link no celular, sem entrar no Jards, e vê só os campos do modelo. Nada vai para a ficha sem a sua aprovação. O link vale 30 dias.</p>
       </div>
     </TopSheet>
   );

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { diaEMes } from "@/lib/producao/agenda";
 import { horaLocalParaInstante } from "@/lib/producao/dia";
-import { agruparTransfers, camposDoTransfer, dataDoTransfer, hotelDoDia, JANELA_DO_TRANSFER_MIN, rotuloDoGrupo, transferJaCriado, type GrupoDeTransfer } from "@/lib/producao/transfers";
+import { agruparTransfers, camposDoTransfer, dataDoTransfer, hotelDoDia, rotuloDoGrupo, transferJaCriado, type GrupoDeTransfer } from "@/lib/producao/transfers";
 import type { RespostaDoConvite } from "@/lib/producao/estados";
 
 type ConviteParaTransfer = {
@@ -107,7 +107,6 @@ export function TransfersDaTemporada({ organizationId, temporadaId, convites, no
           );
         })}
       </ul>
-      <p className="mt-1.5 text-[0.6875rem] text-black/40">Cada grupo reúne quem chega (ou sai) com até {JANELA_DO_TRANSFER_MIN} minutos de diferença. O motorista e o veículo você escolhe depois, no deslocamento.</p>
     </div>
   );
 }

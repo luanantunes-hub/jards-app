@@ -104,7 +104,6 @@ function HospedagemSheet({ organizationId, temporadaId, hospedagem, onClose, onS
           <label className={ROTULO} htmlFor="hosp-notas">Notas (opcional)</label>
           <textarea id="hosp-notas" rows={3} className="w-full resize-none rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50" value={notas} onChange={event => setNotas(event.target.value)} maxLength={2000} disabled={salvando} />
         </div>
-        <p className="text-[0.6875rem] text-black/40">Os quartos e quem dorme em cada um você monta depois de criar a hospedagem.</p>
       </div>
     </TopSheet>
   );
@@ -158,7 +157,6 @@ function QuartoSheet({ organizationId, hospedagemId, hotel, onClose, onSaved }: 
           </div>
         </div>
         {criados.length > 0 && <p className="text-[0.75rem] text-black/55" role="status">{criados.length === 1 ? "Quarto criado" : "Quartos criados"}: {criados.join(", ")}.</p>}
-        <p className="text-[0.6875rem] text-black/40">Quem dorme em cada quarto você escolhe depois, na lista ou no mapa de quartos.</p>
       </div>
     </TopSheet>
   );

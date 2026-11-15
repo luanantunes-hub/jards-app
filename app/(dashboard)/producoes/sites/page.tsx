@@ -65,7 +65,6 @@ function NovoSiteSheet({ organizationId, espacos, onClose, onCreated }: { organi
         <div><span className={ROTULO}>Espaço do site</span><Dropdown ariaLabel="Espaço do site" value={espacoId} onChange={setEspacoId} disabled={salvando} options={espacos.map(espaco => ({ value: espaco.id, label: espaco.nome }))} /></div>
         <div><label className={ROTULO} htmlFor="site-nome">Nome do site</label><input id="site-nome" autoFocus className={CAMPO} value={nome} onChange={event => setNome(event.target.value)} placeholder="Teatro Central" maxLength={120} disabled={salvando} /></div>
         <div className="flex items-center gap-3"><label className={`${ROTULO} mb-0`} htmlFor="site-cor">Cor do cabeçalho</label><input id="site-cor" type="color" value={cor} onChange={event => setCor(event.target.value)} className="h-10 w-14 cursor-pointer rounded border border-black/[.12] bg-white p-1" disabled={salvando} /></div>
-        <p className="text-[0.75rem] text-black/55">O site começa como rascunho: só você vê, pela prévia. Quando estiver pronto, publique as páginas e ligue o domínio da casa.</p>
       </div>
     </TopSheet>
   );
@@ -108,7 +107,6 @@ export default function SitesPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Sites</h1>
-              <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">O site de cada espaço, com a programação que já está na pauta. Ele abre só no domínio da própria casa, festival ou companhia, nunca num endereço do Jards.</p>
             </div>
             {podeEditar && espacos.length > 0 && <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo site</PrimaryListAction>}
           </div>

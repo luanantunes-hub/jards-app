@@ -77,7 +77,6 @@ export function RelatorioDaTemporada({ organizationId, temporadaId, titulo }: { 
             <Numero rotulo="Ocorrências" valor={relatorio.ocorrencias.total} detalhe={`${relatorio.ocorrencias.altas} de gravidade alta · ${relatorio.ocorrencias.abertas} em aberto`} />
           </ul>
           <pre className="whitespace-pre-wrap break-words rounded border bg-black/[.03] px-4 py-3 font-[inherit] text-[0.75rem] text-[#282525]" style={{ borderColor: "rgba(13,13,13,.1)" }}>{textoDoRelatorio(titulo, relatorio)}</pre>
-          <p className="text-[0.6875rem] text-black/45">Só entra o que foi registrado na produção. O público e o custo por praça e por espectador entram quando o borderô existir.</p>
         </div>
       )}
     </section>

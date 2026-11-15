@@ -59,7 +59,6 @@ function NovoRiderSheet({ organizationId, plantas, onClose, onCreated }: { organ
         <div>
           <span className={ROTULO}>Montar a partir de</span>
           <Dropdown value={origem} onChange={setOrigem} options={[...plantas.map(planta => ({ value: planta.id, label: `Planta: ${planta.nome}` })), { value: "", label: "Rider em branco" }]} />
-          <p className="mt-1.5 text-[0.6875rem] text-black/45">{origem ? "As medidas do palco, os canais e a energia vêm do mapa de palco. Você ajusta depois." : "Você escreve as linhas à mão."}</p>
         </div>
         {!origem && (
           <div>
@@ -107,7 +106,6 @@ export default function RidersPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Riders</h1>
-              <p className="mt-1 text-[0.75rem] text-black/45">O que a casa precisa providenciar: palco, som, luz, energia, camarim e catering. Nasce da planta, sem redigitar.</p>
             </div>
             {podeEditar && <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo rider</PrimaryListAction>}
           </div>
