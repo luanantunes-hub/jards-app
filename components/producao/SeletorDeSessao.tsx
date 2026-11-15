@@ -12,22 +12,31 @@ import { Dropdown } from "@/components/ui/Dropdown";
 type Espaco = { id: string; nome: string };
 type Sala = { id: string; nome: string };
 
+/** Onde o navegador guarda o espaço e a sessão escolhidos, para as telas da sessão abrirem na mesma ao trocar de aba. Vale até fechar a aba do navegador. */
+const CHAVE_DA_ESCOLHA = "producao-sessao-escolhida";
+function escolhaGuardada(): { espacoId: string; sessaoId: string } {
+  try {
+    const lido = JSON.parse(window.sessionStorage.getItem(CHAVE_DA_ESCOLHA) ?? "{}") as { espacoId?: unknown; sessaoId?: unknown };
+    return { espacoId: typeof lido.espacoId === "string" ? lido.espacoId : "", sessaoId: typeof lido.sessaoId === "string" ? lido.sessaoId : "" };
+  } catch { return { espacoId: "", sessaoId: "" }; }
+}
+
 /** Quantas sessões (a partir de hoje) a lista oferece de uma vez. */
 const LIMITE_DE_SESSOES = 80;
 
 /**
  * Escolhe o espaço e a sessão (as de hoje em diante) e entrega a sessão escolhida a quem usa. Serve às páginas que trabalham por
- * sessão: convidados e porta.
+ * sessão (plateia, convidados, acessibilidade, porta e borderô), e lembra a escolha de uma para a outra.
  */
 export function SeletorDeSessao({ children }: { children: (sessao: { id: string; rotulo: string; organizationId: string }) => ReactNode }) {
   const organizationId = useOrganizationId();
   const [hoje] = useState(() => new Date().toISOString().slice(0, 10));
   const [espacos, setEspacos] = useState<Espaco[] | null>(null);
-  const [espacoId, setEspacoId] = useState("");
+  const [espacoId, setEspacoId] = useState(() => (typeof window === "undefined" ? "" : escolhaGuardada().espacoId));
   const [salas, setSalas] = useState<Sala[]>([]);
   const [pautas, setPautas] = useState<PautaDaSessao[]>([]);
   const [sessoesBrutas, setSessoesBrutas] = useState<SessaoDaGrade[] | null>(null);
-  const [sessaoId, setSessaoId] = useState("");
+  const [sessaoId, setSessaoId] = useState(() => (typeof window === "undefined" ? "" : escolhaGuardada().sessaoId));
   const [erro, setErro] = useState<string | null>(null);
 
   useEffect(() => {
@@ -37,7 +46,8 @@ export function SeletorDeSessao({ children }: { children: (sessao: { id: string;
       const { data, error } = await clienteDaProducao(createClient()).from("producao_espacos").select("id, nome").eq("organization_id", organizationId).eq("arquivado", false).order("nome");
       if (!ativo) return;
       setEspacos((data ?? []) as Espaco[]);
-      setEspacoId(atual => atual || data?.[0]?.id || "");
+      // O espaço lembrado só vale se ainda existir (pode ter sido arquivado ou ser de outra organização).
+      setEspacoId(atual => ((data ?? []).some(espaco => espaco.id === atual) ? atual : data?.[0]?.id || ""));
       if (error) setErro("Não foi possível carregar os espaços. Recarregue a página.");
     })();
     return () => { ativo = false; };
@@ -64,6 +74,11 @@ export function SeletorDeSessao({ children }: { children: (sessao: { id: string;
     })();
     return () => { ativo = false; };
   }, [espacoId, hoje]);
+
+  useEffect(() => {
+    if (!espacoId || !sessaoId) return;
+    try { window.sessionStorage.setItem(CHAVE_DA_ESCOLHA, JSON.stringify({ espacoId, sessaoId })); } catch { /* sem armazenamento (janela privada): só não lembra */ }
+  }, [espacoId, sessaoId]);
 
   const sessoes = useMemo(() => sessoesComSala(sessoesBrutas ?? [], pautas), [sessoesBrutas, pautas]);
   const nomesDasSalas = useMemo(() => new Map(salas.map(sala => [sala.id, sala.nome])), [salas]);

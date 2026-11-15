@@ -32,6 +32,7 @@ test("contratos, entregas e ativações destacam Clientes no menu", () => {
   assert.equal(itemAtivoDoMenu("/producoes/faturas/abc"), "/producoes/temporadas", "a fatura nasce de uma temporada: o menu acende Temporadas");
   assert.equal(itemAtivoDoMenu("/producoes/acordos/abc"), "/producoes/temporadas", "o acordo nasce de uma temporada: o menu acende Temporadas");
   assert.equal(itemAtivoDoMenu("/producoes/adiantamentos/abc"), "/producoes/temporadas", "o adiantamento nasce de uma temporada: o menu acende Temporadas");
+  for (const tela of ["convidados", "acessibilidade", "porta", "bordero"]) assert.equal(itemAtivoDoMenu(`/producoes/${tela}`), "/producoes/plateia", `${tela} é aba da sessão: o menu acende Sessão`);
   assert.equal(itemAtivoDoMenu("/ativacoes/abc"), "/contas-patrocinio");
   assert.equal(itemAtivoDoMenu("/captacoes/abc"), "/captacoes/abc");
 });

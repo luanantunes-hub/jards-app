@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useRef, useState, Suspense, useCallback } from "react";
+import { useEffect, useState, Suspense, useCallback } from "react";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { PastDueBanner } from "@/components/PastDueBanner";
 import {
@@ -17,11 +17,8 @@ import {
   Boxes,
   Truck,
   Ticket,
-  Accessibility,
   School,
   GraduationCap,
-  Armchair,
-  Receipt,
   Frame,
   History,
   Ruler,
@@ -157,11 +154,8 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       section: "Dia da sessão",
       icone: Ticket,
       items: [
-        { label: "Plateia", href: "/producoes/plateia", icon: Armchair },
-        { label: "Convidados", href: "/producoes/convidados", icon: Ticket },
-        { label: "Porta", href: "/producoes/porta", icon: DoorOpen },
-        { label: "Borderô", href: "/producoes/bordero", icon: Receipt },
-        { label: "Acessibilidade", href: "/producoes/acessibilidade", icon: Accessibility },
+        // Plateia, convidados, acessibilidade, porta e borderô são abas de uma tela só (AbasDaSessao); o menu abre a primeira.
+        { label: "Sessão", href: "/producoes/plateia", icon: Ticket },
         { label: "Visitação", href: "/producoes/visitacao", icon: School },
         { label: "Formação", href: "/producoes/formacao", icon: GraduationCap },
         { label: "Expografia", href: "/producoes/expografia", icon: Frame },

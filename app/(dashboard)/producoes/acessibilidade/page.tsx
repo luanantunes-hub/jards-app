@@ -3,6 +3,7 @@
 import { useOrganizationRole } from "@/contexts/OrganizationContext";
 import { papelNaProducao } from "@/lib/producao/permissoes";
 import { AcessibilidadeDaSessao } from "@/components/producao/AcessibilidadeDaSessao";
+import { AbasDaSessao } from "@/components/producao/AbasDaSessao";
 import { SeletorDeSessao } from "@/components/producao/SeletorDeSessao";
 
 /** Acessibilidade por sessão (PD7.6): Libras, audiodescrição, legendagem e lugares reservados, com a pessoa escalada e o que falta. */
@@ -15,6 +16,7 @@ export default function AcessibilidadePage() {
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Acessibilidade</h1>
           <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">O que a casa oferece em cada sessão: interpretação em Libras, audiodescrição, legendagem e lugares reservados, com a pessoa da equipe escalada. A cobertura mostra o que está confirmado, o que é só plano e o que ainda falta.</p>
+          <AbasDaSessao ativa="acessibilidade" />
         </div>
       </header>
       <SeletorDeSessao>

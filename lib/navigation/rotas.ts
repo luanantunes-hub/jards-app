@@ -69,6 +69,11 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/producoes/faturas": "/producoes/temporadas",
   "/producoes/acordos": "/producoes/temporadas",
   "/producoes/adiantamentos": "/producoes/temporadas",
+  // As telas da sessão são abas de uma só (AbasDaSessao): o menu acende "Sessão", que mora no endereço da plateia.
+  "/producoes/convidados": "/producoes/plateia",
+  "/producoes/acessibilidade": "/producoes/plateia",
+  "/producoes/porta": "/producoes/plateia",
+  "/producoes/bordero": "/producoes/plateia",
 };
 
 export function correspondeRota(path: string, prefixo: string): boolean {
