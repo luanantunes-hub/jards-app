@@ -79,7 +79,6 @@ function SetorSheet({ organizationId, salaId, setor, onClose, onSalvou }: { orga
           <div><label className={ROTULO} htmlFor="set-lugares">Lugares</label><input id="set-lugares" inputMode="numeric" className={CAMPO} value={lugares} onChange={event => setLugares(event.target.value.replace(/\D/g, ""))} disabled={salvando} /></div>
           <div><label className={ROTULO} htmlFor="set-ordem">Ordem (opcional)</label><input id="set-ordem" inputMode="numeric" className={CAMPO} value={ordem} onChange={event => setOrdem(event.target.value.replace(/\D/g, ""))} disabled={salvando} placeholder="0" /></div>
         </div>
-        <p className="text-[0.6875rem] text-black/45">O setor é da sala e vale para todas as sessões dela. O que cada sessão faz com os lugares (venda, patrocinador, gratuidade...) se pinta no mapa.</p>
       </div>
     </TopSheet>
   );
@@ -123,7 +122,6 @@ function PinturaSheet({ organizationId, sessaoId, setor, cotas, onClose, onSalvo
     >
       <div className="space-y-4">
         {erro && <Erro texto={erro} />}
-        <p className="text-[0.75rem] text-black/55">Quantos dos {setor.lugares} lugares deste setor vão para cada categoria nesta sessão. O que sobrar fica sem destino.</p>
         <div className="space-y-2.5">
           {CATEGORIAS_DA_COTA.map(categoria => (
             <div key={categoria} className="flex items-center gap-3">

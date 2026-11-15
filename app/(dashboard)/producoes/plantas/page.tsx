@@ -104,7 +104,6 @@ export default function PlantasPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Plantas</h1>
-              <p className="mt-1 text-[0.75rem] text-black/45">O desenho do palco ou da sala, em metros, com os itens do inventário no lugar.</p>
             </div>
             {podeEditar && <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Nova planta</PrimaryListAction>}
           </div>

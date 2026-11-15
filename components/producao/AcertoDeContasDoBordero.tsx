@@ -137,7 +137,6 @@ function PagamentoSheet({ parte, onClose, onSalvou }: { parte: AcertoDoBordero; 
           <label className={ROTULO} htmlFor="acerto-pago">Pago em</label>
           <input id="acerto-pago" type="date" className={CAMPO} value={dia} onChange={event => setDia(event.target.value)} disabled={salvando} />
         </div>
-        <p className="text-[0.6875rem] text-black/45">O Jards não faz o pagamento: aqui você só anota o dia em que pagou, fora do app.</p>
       </div>
     </TopSheet>
   );

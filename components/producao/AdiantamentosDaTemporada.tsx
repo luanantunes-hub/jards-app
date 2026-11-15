@@ -109,7 +109,6 @@ export function AdiantamentoSheet({ organizationId, temporadaId, adiantamento, p
           <label className={ROTULO} htmlFor="adi-observacao">Observação</label>
           <textarea id="adi-observacao" rows={2} className={`${CAMPO} h-auto min-h-[3.5rem] py-2`} value={observacao} maxLength={300} onChange={event => setObservacao(event.target.value)} disabled={salvando} />
         </div>
-        <p className="text-[0.6875rem] text-black/45">O saldo é o valor entregue menos o que a pessoa prestou e devolveu. O adiantamento só se encerra com o saldo zerado.</p>
       </div>
     </TopSheet>
   );
@@ -186,7 +185,6 @@ export function GastoSheet({ organizationId, adiantamento, gasto, onClose, onSal
             <input id="gas-documento" className={CAMPO} value={documento} maxLength={60} onChange={event => setDocumento(event.target.value)} disabled={salvando} placeholder="Número da nota" />
           </div>
         </div>
-        <p className="text-[0.6875rem] text-black/45">A prestação mais o devolvido não podem passar do valor entregue.</p>
       </div>
     </TopSheet>
   );

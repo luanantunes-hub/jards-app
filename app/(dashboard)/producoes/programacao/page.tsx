@@ -159,7 +159,6 @@ export default function ProgramacaoPage() {
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Programação</h1>
-          <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">As sessões de cada pauta, por sala e por dia, com a hora. A sessão nasce dentro do período de uma pauta e herda a sala dela. Horários que se cruzam na mesma sala viram aviso.</p>
         </div>
       </header>
       <DetailPageContent>
@@ -224,7 +223,6 @@ export default function ProgramacaoPage() {
                 </table>
               </div>
             )}
-            <p className="mt-3 text-[0.6875rem] text-black/45">O sinal + aparece nos dias em que a sala tem uma pauta (que não esteja cancelada).</p>
           </>
         )}
       </DetailPageContent>

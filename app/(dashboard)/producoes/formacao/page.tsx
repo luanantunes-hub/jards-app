@@ -42,7 +42,6 @@ export default function FormacaoPage() {
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Formação</h1>
-          <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">Oficinas, cursos e residências: turmas com aulas, matrícula, presença em cada aula, frequência e certificado. O certificado só sai para matrícula confirmada com a frequência mínima da turma, e o banco confere.</p>
         </div>
       </header>
       <DetailPageContent>

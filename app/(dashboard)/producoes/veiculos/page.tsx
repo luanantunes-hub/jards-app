@@ -60,7 +60,6 @@ export default function VeiculosPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Veículos</h1>
-              <p className="mt-1 text-[0.75rem] text-black/45">Os veículos que levam a equipe e a carga: próprios, locados ou fretados, com os documentos e a validade.</p>
             </div>
             {podeEditar && <PrimaryListAction onClick={() => setFolha({})}><Plus size={13} aria-hidden="true" /> Novo veículo</PrimaryListAction>}
           </div>

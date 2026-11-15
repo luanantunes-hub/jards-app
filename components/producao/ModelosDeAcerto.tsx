@@ -98,7 +98,6 @@ function ModeloSheet({ organizationId, modelo, onClose, onSaved }: { organizatio
           <div><label className={ROTULO} htmlFor="modelo-nome">Nome do modelo</label><input id="modelo-nome" autoFocus className={CAMPO} value={nome} onChange={event => setNome(event.target.value)} maxLength={120} disabled={salvando} /></div>
           <div><span className={ROTULO}>Quem preenche</span><Dropdown ariaLabel="Quem preenche" value={lado} onChange={setLado} disabled={salvando} options={LADOS_DO_ACERTO.map(valor => ({ value: valor, label: ROTULO_DO_LADO[valor] }))} /></div>
         </div>
-        <p className="text-[0.6875rem] text-black/45">Cada campo diz o que a casa vê (oculto, só lê, opcional ou obrigatório) e para onde a resposta aprovada vai: um campo da ficha da sala ou do espaço, ou só o acerto. Um acerto copia os campos quando nasce, então mudar o modelo depois não muda acerto já enviado.</p>
         <ul className="space-y-3">
           {campos.map((campo, indice) => (
             <li key={campo.chave + indice} className="rounded border bg-white p-3" style={{ borderColor: "rgba(13,13,13,.1)" }}>
@@ -172,9 +171,7 @@ export function ModelosDeAcerto({ organizationId, podeEditar }: { organizationId
       {erro && <p role="alert" className="mb-3 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
       {modelos === null ? (
         <div className="h-16 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
-      ) : modelos.length === 0 ? (
-        <p className="rounded border bg-white px-4 py-5 text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Um modelo é a lista de perguntas que a casa responde: boca de cena, canais da mesa, energia, carga e descarga, horários. Comece pelo modelo padrão e ajuste.</p>
-      ) : (
+      ) : modelos.length === 0 ? null : (
         <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           {modelos.map(modelo => (
             <li key={modelo.id}>

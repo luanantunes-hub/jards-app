@@ -100,7 +100,6 @@ export function PlantaDoEspaco({ organizationId, espacoId, nomeDoEspaco, salaIds
         <div className="h-24 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
       ) : planta === null ? (
         <div className="rounded border bg-white px-4 py-5" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-          <p className="text-[0.75rem] text-black/45">Desenhe o espaço com as salas no lugar delas e veja, dia a dia, quais estão livres, em consulta, em pré-reserva ou confirmadas.</p>
           {podeEditar && salaIds.length > 0 && <button type="button" onClick={() => void criar()} disabled={criando} className="mt-3 inline-flex h-10 items-center gap-1.5 rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50"><Plus size={13} aria-hidden="true" /> {criando ? "Criando…" : "Criar a planta do espaço"}</button>}
           {salaIds.length === 0 && <p className="mt-2 text-[0.75rem] text-black/45">Cadastre as salas do espaço primeiro.</p>}
         </div>

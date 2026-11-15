@@ -228,9 +228,7 @@ export function VeiculoSheet({ organizationId, veiculo, hoje, onClose, onSaved }
               <button type="button" onClick={() => void adicionarDocumento()} disabled={ocupadoComDocumento} className="h-10 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/65 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">Adicionar</button>
             </div>
           </section>
-        ) : (
-          <p className="text-[0.6875rem] text-black/45">Depois de criar o veículo, você cadastra os documentos dele (seguro, ANTT, vistoria) com a validade.</p>
-        )}
+        ) : null}
       </div>
     </TopSheet>
   );

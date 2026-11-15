@@ -210,7 +210,6 @@ export function EquipeDaCasa({ organizationId, espacoId, podeEditar }: { organiz
               <button type="button" onClick={() => setSegunda(segundaDaSemana(hoje))} className="inline-flex h-10 items-center rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium tabular-nums text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]" title="Voltar para a semana de hoje">{diaEMes(segunda)} – {diaEMes(domingo)}</button>
               <button type="button" onClick={() => setSegunda(atual => somarDias(atual, 7))} aria-label="Próxima semana" className="inline-flex h-10 w-10 items-center justify-center rounded border border-black/[.12] text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><ChevronRight size={15} aria-hidden="true" /></button>
             </div>
-            <p className="text-[0.6875rem] text-black/45">O limite da semana é de {LIMITE_EM_HORAS} horas por pessoa; acima disso a escala avisa.</p>
           </div>
 
           {(acima.length > 0 || cruzados.size > 0) && (

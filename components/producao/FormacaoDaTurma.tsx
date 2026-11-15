@@ -403,7 +403,6 @@ export function FormacaoDaTurma({ organizationId, turma, podeEditar, onTurmaMudo
             </table>
           </div>
         )}
-        <p className="mt-2 text-[0.6875rem] text-black/45">A presença se marca nas aulas já realizadas. A frequência é as presenças divididas pelas aulas realizadas; o certificado só sai de matrícula confirmada com a frequência mínima, e o banco confere.</p>
       </section>
 
       {turmaAberta && <TurmaSheet organizationId={organizationId} turma={turma} onClose={() => setTurmaAberta(false)} onSalvou={() => onTurmaMudou()} />}

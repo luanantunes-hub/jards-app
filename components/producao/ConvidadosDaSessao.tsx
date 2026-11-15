@@ -78,7 +78,6 @@ function TiposSheet({ organizationId, tipos, onClose, onMudou }: { organizationI
     <TopSheet titulo="Tipos de credencial" onClose={onClose} footer={fechar => <button type="button" onClick={fechar} className={CANCELAR}>Fechar</button>}>
       <div className="space-y-4">
         {erro && <Erro texto={erro} />}
-        <p className="text-[0.75rem] text-black/55">Cada tipo tem uma cota de lugares por sessão (Imprensa, Convidado do elenco, Parceiros...). Deixe a cota vazia para não limitar.</p>
         <div className="grid grid-cols-[1fr_7rem] gap-3">
           <div><label className={ROTULO} htmlFor="tipo-nome">{editando ? "Nome do tipo" : "Novo tipo"}</label><input id="tipo-nome" className={CAMPO} value={nome} maxLength={60} onChange={event => setNome(event.target.value)} disabled={salvando} placeholder="Imprensa" /></div>
           <div><label className={ROTULO} htmlFor="tipo-cota">Cota por sessão</label><input id="tipo-cota" inputMode="numeric" className={CAMPO} value={cota} onChange={event => setCota(event.target.value.replace(/\D/g, ""))} disabled={salvando} placeholder="Sem limite" /></div>
@@ -177,7 +176,7 @@ function ConvidadoSheet({ organizationId, sessaoId, tipos, saldos, convidado, on
         {saldoDoTipo && saldoDoTipo.cota !== null && (
           <p className="text-[0.75rem] tabular-nums text-black/55">{saldoDoTipo.usados} de {saldoDoTipo.cota} lugares usados nesta sessão{saldoDoTipo.saldo !== null && saldoDoTipo.saldo >= 0 ? ` · ${saldoDoTipo.saldo} livres` : ""}.</p>
         )}
-        <p className="text-[0.6875rem] text-black/45">Lugares incluem a pessoa e os acompanhantes. Não escreva documento, telefone ou dados de saúde aqui.</p>
+        <p className="text-[0.6875rem] text-black/45">Não escreva documento, telefone ou dados de saúde aqui.</p>
       </div>
     </TopSheet>
   );
@@ -241,7 +240,6 @@ function LinkDePedidosSheet({ sessaoId, sessaoRotulo, ativo, onClose, onGerou }:
         {erro && <Erro texto={erro} />}
         {!mensagem ? (
           <>
-            <p className="text-[0.75rem] text-black/55">Um link para esta sessão: quem recebe escolhe o tipo de credencial e pede os convidados pelo nome, até o horário de corte. Cada pedido chega aqui como “pedido” para você confirmar ou recusar; a cota de cada tipo continua valendo.{ativo ? " Gerar um novo desativa o link anterior." : ""}</p>
             <div><label className={ROTULO} htmlFor="ped-corte">Pedidos até</label><input id="ped-corte" type="datetime-local" className={CAMPO} value={corte} onChange={event => setCorte(event.target.value)} disabled={gerando} /></div>
             <div><label className={ROTULO} htmlFor="ped-titulo">Título da chamada (opcional)</label><input id="ped-titulo" className={CAMPO} value={titulo} maxLength={120} onChange={event => setTitulo(event.target.value)} disabled={gerando} placeholder="Pedir convidados" /></div>
             <div><label className={ROTULO} htmlFor="ped-limite">Máximo de pedidos (opcional)</label><input id="ped-limite" inputMode="numeric" className={CAMPO} value={limite} onChange={event => setLimite(event.target.value.replace(/\D/g, ""))} disabled={gerando} placeholder="Até 100" /></div>

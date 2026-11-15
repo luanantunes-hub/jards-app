@@ -225,7 +225,6 @@ export default function LinhaDoOrcamentoPage() {
                   </div>
                 ))}
               </dl>
-              {orcamento.situacao === "aprovado" && <p className="mt-3 text-[0.6875rem] text-black/45">Com o orçamento aprovado, a estimativa e o aprovado não mudam; o revisado sim.</p>}
             </section>
           </aside>
         </div>

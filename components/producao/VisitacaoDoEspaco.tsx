@@ -209,7 +209,6 @@ function LinkSheet({ espacoId, espacoNome, ativo, onClose, onGerou }: { espacoId
         {erro && <Erro texto={erro} />}
         {!mensagem ? (
           <>
-            <p className="text-[0.75rem] text-black/55">Um link para o espaço inteiro: escolas e grupos escolhem um horário aberto e pedem a visita pelo celular, sem conta. Cada pedido chega aqui para você confirmar ou recusar; a capacidade de cada horário vale. O link vale {DIAS_DO_LINK_DE_VISITAS} dias.{ativo ? " Gerar um novo desativa o link anterior." : ""}</p>
             <div><label className={ROTULO} htmlFor="vis-titulo">Título da chamada (opcional)</label><input id="vis-titulo" className={CAMPO} value={titulo} maxLength={120} onChange={event => setTitulo(event.target.value)} disabled={gerando} placeholder="Agendar visita" /></div>
           </>
         ) : (
@@ -389,7 +388,6 @@ export function VisitacaoDoEspaco({ organizationId, espacoId, espacoNome, podeEd
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-[0.6875rem] text-black/45">Vieram soma o que foi digitado em cada agendamento confirmado depois da visita; o total é vieram + avulso.</p>
         </section>
       )}
 

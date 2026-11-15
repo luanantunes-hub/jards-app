@@ -119,7 +119,6 @@ export function PedidoSheet({ organizationId, temporadaId, pedido, linhas, onClo
             <input id="ped-pendencia-ate" type="date" className={CAMPO} value={pendenciaAte} onChange={event => setPendenciaAte(event.target.value)} disabled={salvando || !podePendencia} />
           </div>
         </div>
-        <p className="text-[0.6875rem] text-black/45">A pendência é um lembrete à parte da situação: dá para mudá-la a qualquer hora, até o pedido ser pago.</p>
       </div>
     </TopSheet>
   );

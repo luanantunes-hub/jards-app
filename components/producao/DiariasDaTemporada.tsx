@@ -135,7 +135,6 @@ function DiariaSheet({ organizationId, temporadaId, diaria, pessoas, sugestoes, 
           <label className={ROTULO} htmlFor="dia-observacao">Observação</label>
           <textarea id="dia-observacao" rows={2} className={`${CAMPO} h-auto min-h-[3.5rem] py-2`} value={observacao} maxLength={300} onChange={event => setObservacao(event.target.value)} disabled={salvando || paga} />
         </div>
-        <p className="text-[0.6875rem] text-black/45">Os dias de estrada ficam em branco para valer o período inteiro; escreva menos quando houver folgas. Marcar como paga trava a diária.</p>
       </div>
     </TopSheet>
   );

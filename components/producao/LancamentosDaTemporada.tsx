@@ -199,7 +199,6 @@ function LancamentoSheet({ organizationId, temporadaId, lancamento, divisoesAtua
           <label className={ROTULO} htmlFor="lan-observacao">Observação</label>
           <textarea id="lan-observacao" rows={2} className={`${CAMPO} h-auto min-h-[3.5rem] py-2`} value={observacao} maxLength={300} onChange={event => setObservacao(event.target.value)} disabled={salvando} />
         </div>
-        <p className="text-[0.6875rem] text-black/45">O Jards só registra o que já foi pago, fora dele. O comprovante em arquivo e a leitura automática da nota vêm depois.</p>
       </div>
     </TopSheet>
   );

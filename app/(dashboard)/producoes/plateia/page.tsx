@@ -15,7 +15,6 @@ export default function PlateiaPage() {
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Plateia</h1>
-          <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">Os setores de cada sala e, em cada sessão, quantos lugares vão para venda, patrocinador, gratuidade, acessibilidade, imprensa ou bloqueio. O banco não deixa a soma passar dos lugares do setor. A receita e o borderô por cima vêm depois.</p>
           <AbasDaSessao ativa="plateia" />
         </div>
       </header>

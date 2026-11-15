@@ -53,7 +53,6 @@ export default function EspacosPage() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Espaços</h1>
-              <p className="mt-1 text-[0.75rem] text-black/45">Onde as datas acontecem: teatros, casas de show, praças, lonas, com as salas de cada um.</p>
             </div>
             {podeEditar && <PrimaryListAction onClick={() => setFolha({ tipo: "espaco" })}><Plus size={13} aria-hidden="true" /> Novo espaço</PrimaryListAction>}
           </div>

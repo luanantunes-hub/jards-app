@@ -59,7 +59,6 @@ export default function LinhaDoTempoPage() {
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Linha do tempo</h1>
-          <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">Tudo o que mudou na produção, do mais novo ao mais velho: o que foi criado, alterado ou apagado, por área. Você só vê o que as suas permissões deixam. Contatos e textos sensíveis nunca entram no histórico.</p>
         </div>
       </header>
       <DetailPageContent>

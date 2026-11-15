@@ -54,7 +54,6 @@ export default function ExpografiaPage() {
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Expografia</h1>
-          <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">As obras de arte de cada sala de exposição: onde ficam (parede, piso, teto, vitrine), a altura de instalação, a luz e a ordem de montagem, com o andamento da montagem. As obras vêm do Inventário. Termos de empréstimo e seguro vêm nos próximos cortes.</p>
         </div>
       </header>
       <DetailPageContent>

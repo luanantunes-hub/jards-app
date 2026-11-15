@@ -107,7 +107,6 @@ export function NotasDaData({ organizationId, dataId, podeEditar }: { organizati
       ) : notas.length === 0 ? (
         <div className="rounded border bg-white px-5 py-6 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <p className="text-[0.8125rem] font-medium text-black/55">Nenhuma nota nesta data</p>
-          <p className="mx-auto mt-1 max-w-sm text-[0.75rem] text-black/45">Anote o que foi combinado por telefone, lembretes e pedidos do contratante.</p>
           {podeEditar && <div className="mt-4 flex justify-center">{botao}</div>}
         </div>
       ) : (

@@ -220,7 +220,6 @@ export function FaturaSheet({ organizationId, temporadaId, fatura, parcelasAtuai
           <label className={ROTULO} htmlFor="fat-observacao">Observação</label>
           <textarea id="fat-observacao" rows={2} className={`${CAMPO} h-auto min-h-[3.5rem] py-2`} value={observacao} maxLength={300} onChange={event => setObservacao(event.target.value)} disabled={salvando || fatura?.situacao === "quitada"} />
         </div>
-        <p className="text-[0.6875rem] text-black/45">O Jards não cobra: aqui você registra a fatura e acompanha o que falta receber. A nota fiscal em si é emitida fora do app.</p>
       </div>
     </TopSheet>
   );

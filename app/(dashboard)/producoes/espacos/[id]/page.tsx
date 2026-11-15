@@ -104,9 +104,7 @@ export default function EspacoPage() {
             <h2 id="ficha-do-espaco" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Ficha do espaço</h2>
             {podeEditar && <button type="button" onClick={() => setEditando({ tipo: "espaco" })} className={BOTAO}><Pencil size={13} aria-hidden="true" /> {temFicha ? "Editar" : "Preencher"}</button>}
           </div>
-          {!temFicha ? (
-            <p className="rounded border bg-white px-4 py-5 text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Funcionamento, acessibilidade, carga e descarga e contato de quem cuida do espaço. Quem vai ocupar a sala encontra tudo aqui.</p>
-          ) : (
+          {!temFicha ? null : (
             <dl className="space-y-3 rounded border bg-white p-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <Linha rotulo="Funcionamento" valor={f?.funcionamento ?? null} />
               <Linha rotulo="Acessibilidade" valor={f?.acessibilidade ?? null} />

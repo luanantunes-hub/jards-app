@@ -31,7 +31,6 @@ export default function BorderoPage() {
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
         <div className="mx-auto max-w-pagina px-4 pb-6 pt-6 sm:px-6 lg:px-10 lg:pt-9">
           <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">Borderô</h1>
-          <p className="mt-1 max-w-2xl text-[0.75rem] text-black/45">O resumo de cada sessão: o público (o da casa e o da porta), a receita por categoria de ingresso, as deduções e o líquido. Receita e deduções só aparecem para quem tem a permissão de dinheiro. As deduções são uma lista aberta: o app não traz porcentagem pronta.</p>
           <AbasDaSessao ativa="bordero" />
         </div>
       </header>
