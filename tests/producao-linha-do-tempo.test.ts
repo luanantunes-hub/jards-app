@@ -28,7 +28,7 @@ test("toda tabela da produção com histórico está em exatamente uma área e t
 });
 
 test("frases das tabelas novas", () => {
-  assert.equal(fraseDoHistorico({ entidade: "producao_matriculas", acao: "alterou", campo: "certificado_emitido_em", antes: null, depois: "2026-11-20" }), "Mudou o certificado em uma matrícula de vazio para 2026-11-20");
+  assert.equal(fraseDoHistorico({ entidade: "producao_matriculas", acao: "alterou", campo: "certificado_emitido_em", antes: null, depois: "2026-11-20" }), "Mudou o certificado em uma matrícula de vazio para 20/11/2026");
   assert.equal(fraseDoHistorico({ entidade: "producao_convidados", acao: "criou", campo: null, antes: null, depois: "Rita" }), "Criou um convidado: Rita");
 });
 
