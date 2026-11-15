@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Check } from "lucide-react";
 import type { ConvitePublico } from "@/lib/producao/convite-publico";
+import { AvisoDePrivacidade } from "@/components/producao/AvisoDePrivacidade";
 
 const CAMPO = "h-11 w-full rounded border border-black/[.14] bg-white px-3 text-[0.875rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/50 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.75rem] font-medium text-black/60";
@@ -109,6 +110,7 @@ export function RespostaDePresenca({ codigo, convite }: { codigo: string; convit
             </button>
           </form>
         )}
+        <AvisoDePrivacidade />
       </div>
     </main>
   );

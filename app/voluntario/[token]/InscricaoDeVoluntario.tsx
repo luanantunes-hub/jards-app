@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Check } from "lucide-react";
 import type { InscricaoPublica } from "@/lib/producao/voluntario-publico";
 import { TEXTO_DA_CONCORDANCIA } from "@/lib/producao/voluntarios";
+import { AvisoDePrivacidade } from "@/components/producao/AvisoDePrivacidade";
 
 const CAMPO = "h-11 w-full rounded border border-black/[.14] bg-white px-3 text-[0.875rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/50 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.75rem] font-medium text-black/60";
@@ -92,6 +93,7 @@ export function InscricaoDeVoluntario({ codigo, inscricao }: { codigo: string; i
             </button>
           </form>
         )}
+        <AvisoDePrivacidade />
       </div>
     </main>
   );
