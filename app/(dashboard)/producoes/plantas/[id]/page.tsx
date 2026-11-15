@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Download, FileText, RotateCcw, RotateCw, Search, Trash2, TriangleAlert } from "lucide-react";
+import { Download, FileText, ImagePlus, RotateCcw, RotateCw, Search, Trash2, TriangleAlert } from "lucide-react";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
@@ -13,12 +13,13 @@ import { cargaDeEnergia, csvDaEnergia, csvDosCanais, listaDeCanais, ROTULO_DO_TI
 import { Dropdown } from "@/components/ui/Dropdown";
 import { montarPdf } from "@/lib/producao/pdf-texto";
 import { criarRiderDaPlanta } from "@/components/producao/criar-rider";
+import { FundoDaPlantaSheet } from "@/components/producao/FundoDaPlantaSheet";
 import { encaixar, girar, manterDentro, objetoDoItem, pixelsParaMetros, ROTULO_DO_TIPO_DE_PLANTA } from "@/lib/producao/planta";
 import { lerNumero } from "@/lib/producao/inventario";
 import { chaveDoNome } from "@/lib/dominio";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 
-type Planta = { id: string; nome: string; tipo: TipoDePlanta; largura_m: number; profundidade_m: number; espaco_id: string | null; sala_id: string | null };
+type Planta = { id: string; nome: string; tipo: TipoDePlanta; largura_m: number; profundidade_m: number; espaco_id: string | null; sala_id: string | null; fundo: string | null; fundo_opacidade: number };
 type SalaDoEspaco = { id: string; nome: string };
 type Objeto = {
   id: string; item_id: string | null; sala_id: string | null; rotulo: string; x_m: number; y_m: number; largura_m: number; profundidade_m: number; rotacao_graus: number;
@@ -109,6 +110,7 @@ export default function PlantaPage() {
   const { confirmDelete } = useDeleteConfirm();
   const router = useRouter();
   const [gerandoRider, setGerandoRider] = useState(false);
+  const [escolhendoFundo, setEscolhendoFundo] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null);
   const arrasto = useRef<{ id: string; deslocX: number; deslocY: number } | null>(null);
   const [planta, setPlanta] = useState<Planta | null | undefined>(undefined);
@@ -127,7 +129,7 @@ export default function PlantaPage() {
     void (async () => {
       const producao = clienteDaProducao(createClient());
       const [pla, obj, ite] = await Promise.all([
-        producao.from("producao_plantas").select("id, nome, tipo, largura_m, profundidade_m, espaco_id, sala_id").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
+        producao.from("producao_plantas").select("id, nome, tipo, largura_m, profundidade_m, espaco_id, sala_id, fundo, fundo_opacidade").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
         producao.from("producao_planta_objetos").select(COLUNAS_DO_OBJETO).eq("planta_id", id).order("created_at"),
         producao.from("producao_itens").select("id, nome, categoria, comprimento_cm, largura_cm, canais, potencia_w").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
       ]);
@@ -313,6 +315,7 @@ export default function PlantaPage() {
           <DetailBackLink href="/producoes/plantas" label="Plantas" />
           <h1 className="mt-5 text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">{planta.nome}</h1>
           <p className="mt-1 text-[0.75rem] text-black/45">{ehDoEspaco ? "Planta do espaço" : ROTULO_DO_TIPO_DE_PLANTA[planta.tipo]} · {metros(planta.largura_m)} × {metros(planta.profundidade_m)} m · cada quadrado é 1 m</p>
+          {podeEditar && <div className="mt-4"><button type="button" onClick={() => setEscolhendoFundo(true)} className="inline-flex h-10 items-center gap-1.5 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><ImagePlus size={13} aria-hidden="true" /> {planta.fundo ? "Trocar o fundo" : "Fundo de um PDF"}</button></div>}
           {podeEditar && !ehDoEspaco && <div className="mt-4"><button type="button" onClick={() => void gerarRider()} disabled={gerandoRider} className="inline-flex h-10 items-center gap-1.5 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"><FileText size={13} aria-hidden="true" /> {gerandoRider ? "Gerando…" : "Gerar rider desta planta"}</button></div>}
         </div>
       </header>
@@ -333,6 +336,7 @@ export default function PlantaPage() {
               onPointerDown={event => { if (event.target === event.currentTarget) setSelecionado(null); }}
             >
               <rect x={0} y={0} width={planta.largura_m} height={planta.profundidade_m} fill="#fff" stroke="rgba(13,13,13,.35)" strokeWidth={0.05} />
+              {planta.fundo && <image href={planta.fundo} x={0} y={0} width={planta.largura_m} height={planta.profundidade_m} preserveAspectRatio="xMidYMid meet" opacity={planta.fundo_opacidade / 100} aria-hidden="true" style={{ pointerEvents: "none" }} />}
               {linhasX.map(x => <line key={`x${x}`} x1={x} y1={0} x2={x} y2={planta.profundidade_m} stroke="rgba(13,13,13,.08)" strokeWidth={x % 5 === 0 ? 0.04 : 0.02} />)}
               {linhasY.map(y => <line key={`y${y}`} x1={0} y1={y} x2={planta.largura_m} y2={y} stroke="rgba(13,13,13,.08)" strokeWidth={y % 5 === 0 ? 0.04 : 0.02} />)}
               {!ehDoEspaco && <text x={planta.largura_m / 2} y={-0.12} textAnchor="middle" fontSize={0.3} fill="rgba(13,13,13,.4)">fundo do palco</text>}
@@ -479,6 +483,7 @@ export default function PlantaPage() {
           </div>
         </section>}
       </DetailPageContent>
+      {escolhendoFundo && <FundoDaPlantaSheet plantaId={planta.id} temFundo={planta.fundo !== null} opacidadeAtual={planta.fundo_opacidade} onClose={() => setEscolhendoFundo(false)} onSalvou={(fundo, opacidade) => setPlanta(atual => (atual ? { ...atual, fundo, fundo_opacidade: opacidade } : atual))} />}
     </div>
   );
 }

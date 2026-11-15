@@ -1214,6 +1214,8 @@ export type BancoDaProducao = {
           espaco_id: string | null;
           sala_id: string | null;
           data_id: string | null;
+          fundo: string | null;
+          fundo_opacidade: number;
           created_at: string;
           updated_at: string;
         };
@@ -1227,6 +1229,8 @@ export type BancoDaProducao = {
           espaco_id?: string | null;
           sala_id?: string | null;
           data_id?: string | null;
+          fundo?: string | null;
+          fundo_opacidade?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -1240,6 +1244,8 @@ export type BancoDaProducao = {
           espaco_id?: string | null;
           sala_id?: string | null;
           data_id?: string | null;
+          fundo?: string | null;
+          fundo_opacidade?: number;
           created_at?: string;
           updated_at?: string;
         };
