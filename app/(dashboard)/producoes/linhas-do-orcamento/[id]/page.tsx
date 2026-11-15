@@ -100,7 +100,8 @@ export default function LinhaDoOrcamentoPage() {
   const editavel = podeEditar && orcamento.situacao !== "encerrado";
   const comAprovado = orcamento.situacao !== "rascunho";
   const voltar = `/producoes/temporadas/${orcamento.temporada_id}#dinheiro/orcamento`;
-  const base = Math.max(contas.previstoCentavos, contas.comprometidoCentavos, 1);
+  // A barra mede contra o maior dos três: o pago pode passar do comprometido (pagamento lançado sem acordo nem comprometido digitado).
+  const base = Math.max(contas.previstoCentavos, contas.comprometidoCentavos, contas.pagoCentavos, 1);
   const largura = (centavos: number) => `${Math.min(100, (centavos / base) * 100)}%`;
 
   const numeros: { rotulo: string; valor: number | null; forte?: boolean; texto?: string }[] = [
@@ -134,12 +135,14 @@ export default function LinhaDoOrcamentoPage() {
             {contas.aPagarCentavos > 0 ? `, ${formatarReais(contas.aPagarCentavos)} a pagar` : ""}
           </h2>
           <p className="mt-1 max-w-2xl text-[0.8125rem] text-black/60">
-            Do previsto de {formatarReais(contas.previstoCentavos)}, {formatarReais(contas.comprometidoCentavos)} já estão comprometidos{contas.aComprometerCentavos > 0 ? ` e ${formatarReais(contas.aComprometerCentavos)} ainda não` : ""}.
+            {contas.comprometidoCentavos === 0
+              ? `Do previsto de ${formatarReais(contas.previstoCentavos)}, nada está comprometido ainda.`
+              : `Do previsto de ${formatarReais(contas.previstoCentavos)}, ${formatarReais(contas.comprometidoCentavos)} já estão comprometidos${contas.aComprometerCentavos > 0 ? ` e ${formatarReais(contas.aComprometerCentavos)} ainda não` : ""}.`}
           </p>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-black/[.06]" role="img" aria-label={`Pago ${formatarReais(contas.pagoCentavos)}, comprometido ${formatarReais(contas.comprometidoCentavos)}, previsto ${formatarReais(contas.previstoCentavos)}`}>
-            <div className="relative h-full" style={{ width: largura(contas.comprometidoCentavos) }}>
-              <div className="absolute inset-0 rounded-full bg-[#2E8932]/35" />
-              <div className="absolute inset-y-0 left-0 rounded-full bg-[#2E8932]" style={{ width: contas.comprometidoCentavos > 0 ? `${Math.min(100, (contas.pagoCentavos / contas.comprometidoCentavos) * 100)}%` : "0%" }} />
+            <div className="relative h-full">
+              <div className="absolute inset-y-0 left-0 rounded-full bg-[#2E8932]/35" style={{ width: largura(contas.comprometidoCentavos) }} />
+              <div className="absolute inset-y-0 left-0 rounded-full bg-[#2E8932]" style={{ width: largura(contas.pagoCentavos) }} />
             </div>
           </div>
           <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-[0.75rem] tabular-nums">
