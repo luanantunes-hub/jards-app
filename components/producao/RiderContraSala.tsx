@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Check, Minus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { ListaDoQueLevar } from "@/components/producao/ListaDoQueLevar";
+import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
+import { papelNaProducao } from "@/lib/producao/permissoes";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { cargaDeEnergia, listaDeCanais, type ObjetoDePalco } from "@/lib/producao/palco";
@@ -17,7 +20,10 @@ const ROTULO_DA_SITUACAO: Record<SituacaoDaComparacao, string> = { atende: "Aten
  * O rider contra a ficha de uma sala (PD4.3, primeiro corte): a medida do palco, os canais e a energia que o cenário pede,
  * lado a lado com o que a sala tem. Os canais e a energia saem da planta ligada ao rider.
  */
-export function RiderContraSala({ plantaId, palcoLarguraMinM, palcoProfundidadeMinM }: { plantaId: string | null; palcoLarguraMinM: number | null; palcoProfundidadeMinM: number | null }) {
+export function RiderContraSala({ riderId, plantaId, palcoLarguraMinM, palcoProfundidadeMinM }: { riderId: string; plantaId: string | null; palcoLarguraMinM: number | null; palcoProfundidadeMinM: number | null }) {
+  const organizationId = useOrganizationId();
+  const papel = useOrganizationRole();
+  const podeEditar = papel !== null && papelNaProducao(papel) !== null && papelNaProducao(papel) !== "leitor";
   const [opcoes, setOpcoes] = useState<Opcao[] | null>(null);
   const [salaId, setSalaId] = useState("");
   const [ficha, setFicha] = useState<Partial<OferecidoPelaSala> | null>(null);
@@ -92,6 +98,7 @@ export function RiderContraSala({ plantaId, palcoLarguraMinM, palcoProfundidadeM
                     ))}
                   </ul>
                 )}
+                {organizationId && <ListaDoQueLevar key={salaId} organizationId={organizationId} riderId={riderId} salaId={salaId} salaNome={opcoes.find(opcao => opcao.value === salaId)?.label ?? "a sala"} podeEditar={podeEditar} />}
                 {ficha === null && <p className="mt-2 text-[0.6875rem] text-black/45">Esta sala ainda não tem ficha técnica. Preencha em Espaços para a comparação fazer sentido.</p>}
               </div>
             )}

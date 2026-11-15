@@ -256,7 +256,7 @@ export default function RiderPage() {
       <DetailPageContent>
         {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         <div className="space-y-8">
-          <RiderContraSala plantaId={rider.planta_id} palcoLarguraMinM={rider.palco_largura_min_m} palcoProfundidadeMinM={rider.palco_profundidade_min_m} />
+          <RiderContraSala riderId={rider.id} plantaId={rider.planta_id} palcoLarguraMinM={rider.palco_largura_min_m} palcoProfundidadeMinM={rider.palco_profundidade_min_m} />
           {porSecao.map(grupo => (
             <section key={grupo.secao} aria-label={ROTULO_DA_SECAO[grupo.secao]}>
               <div className="mb-2 flex items-center justify-between gap-3">

@@ -3868,6 +3868,52 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_rider_item_equipamentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          rider_item_id: string;
+          equipamento_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          rider_item_id: string;
+          equipamento_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          rider_item_id?: string;
+          equipamento_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_rider_item_equipamentos_equipamento_id_fkey";
+            columns: ["equipamento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_equipamentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_rider_item_equipamentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_rider_item_equipamentos_rider_item_id_fkey";
+            columns: ["rider_item_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_rider_itens";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_acordo_documentos: {
         Row: {
           id: string;
