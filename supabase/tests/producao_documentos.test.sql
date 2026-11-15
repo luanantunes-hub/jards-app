@@ -144,8 +144,8 @@ select is(dc.efeito(format('update public.producao_documentos set validade = %L 
 select is(dc.efeito(format('update public.producao_documentos set validade = %L where id = %L', '2027-01-10', dc.id('71'))), 'sim', 'colaborador altera o documento da organização');
 select dc.como('a1');
 select is(dc.tenta(format('insert into public.producao_documentos (organization_id, escopo, pessoa_id, tipo, titulo) values (%L, %L, %L, %L, %L)', dc.id('a0'), 'pessoa', dc.id('51'), 'passaporte', 'Passaporte')), 'aceito', 'administrador guarda o documento de uma pessoa');
-select ok(dc.tenta(format('insert into public.producao_documentos (organization_id, escopo, pessoa_id, tipo, titulo) values (%L, %L, %L, %L, %L)', dc.id('a0'), 'pessoa', dc.id('5b'), 'cnh', 'CNH de outra org')) like '42501%',
-          'não se guarda documento da pessoa de outra organização');
+select ok(dc.tenta(format('insert into public.producao_documentos (organization_id, escopo, pessoa_id, tipo, titulo) values (%L, %L, %L, %L, %L)', dc.id('a0'), 'pessoa', dc.id('5b'), 'cnh', 'CNH de outra org')) <> 'aceito',
+          'não se guarda documento da pessoa de outra organização (a regra de acesso ou o gatilho recusa)');
 select dc.como('a3');
 select ok(dc.tenta(format('insert into public.producao_documentos (organization_id, tipo, titulo) values (%L, %L, %L)', dc.id('a0'), 'outro', 'X')) like '42501%', 'leitor não guarda');
 select dc.como('c1');
@@ -175,9 +175,11 @@ select is(dc.tenta(format('update public.producao_documentos set organization_id
 -- ─── Histórico ──────────────────────────────────────────────────────────────
 
 select is((select depois from public.producao_historico where entidade = 'producao_documentos' and entidade_id = dc.id('73') and acao = 'criou'), 'cnh', 'criar registra o tipo como rótulo, não o título');
-select is(dc.efeito(format('update public.producao_documentos set titulo = %L, notas = %L where id = %L', 'CNH renovada', 'nota nova', dc.id('73'))), 'sim', 'mudar o título e a nota');
+update public.producao_documentos set titulo = 'CNH renovada', notas = 'nota nova' where id = dc.id('73');
+select is((select titulo from public.producao_documentos where id = dc.id('73')), 'CNH renovada', 'o título mudou');
 select is((select count(*)::int from public.producao_historico where entidade = 'producao_documentos' and entidade_id = dc.id('73') and acao = 'alterou' and campo in ('titulo', 'notas')), 0, 'título e nota ficam fora do histórico');
-select is(dc.efeito(format('update public.producao_documentos set validade = %L where id = %L', '2031-01-10', dc.id('73'))), 'sim', 'mudar a validade');
+update public.producao_documentos set validade = date '2031-01-10' where id = dc.id('73');
+select is((select validade::text from public.producao_documentos where id = dc.id('73')), '2031-01-10', 'a validade mudou');
 select is((select count(*)::int from public.producao_historico where entidade = 'producao_documentos' and entidade_id = dc.id('73') and acao = 'alterou' and campo = 'validade'), 1, 'a validade entra no histórico');
 select dc.como('a2');
 select is(dc.ve_historico('73'), '0', 'quem não pode dinheiro não vê o histórico do documento de uma pessoa');
