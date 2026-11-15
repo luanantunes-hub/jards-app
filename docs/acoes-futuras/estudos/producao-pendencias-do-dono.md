@@ -2,6 +2,33 @@
 
 Atualizado em 15/11/2026. Tudo o que o plano permite fazer sem decisão do dono já está na main (Fases 0 a 8 em primeiros cortes, mais a PD9.1, a PD9.6, o borderô e o acerto de contas). Em 14 e 15/11 as telas do dinheiro e da sessão foram arrumadas com o dono: linha clicável e página própria (acordo, pedido, fatura, adiantamento, linha do orçamento), menu da produção em seções que abrem e fecham, telas da sessão em abas e protótipos removidos. O que sobra está aqui, com a recomendação de cada item para responder rápido. Quem decide é o Luan; nada abaixo foi aplicado.
 
+## Respostas do dono em 15/11/2026
+
+O Luan respondeu pelo painel de decisões. Valeram as recomendações, menos nos quatro itens marcados com **→ muda o plano**.
+
+| Decisão | Resposta |
+|---|---|
+| Prazo de guarda dos dados de quem se inscreve, agenda ou é convidado | **12 meses** depois da data do evento |
+| Controlador dos dados | A **organização cliente é a controladora** e o Jards é o operador |
+| Onde o texto fica | Na política do Jards (`/privacidade`). O texto já está na seção **2.4**, e o contato do §9 é o do encarregado |
+| E-mail do encarregado | `luan.antunes@jards.com.br` (o que o §9 da política já usa) |
+| CPF, documentos, banco, PIX, alergia e contato de emergência da equipe | Liberar **depois** do texto de privacidade aprovado |
+| #238 (privacidade de quem participa de eventos) | Mesclar quando o texto estiver aprovado. **O código já está na main**; falta a revisão do texto (ver o item 3 abaixo) |
+| Teste grátis da produção | **45 dias**, como a prestação |
+| Preço | R$ 92,80 **por mês** |
+| Pilotos | Os três do plano: companhia em turnê com veículo, espaço com programação e festival |
+| Onde ver a escrita pela tela | Na organização de teste "Exemplo: Teatro Central" |
+| Fornecedores | Cadastro **comum** à prestação e à produção |
+| Como se vende uma data | Proposta por link, dentro da produção (PD4.7) |
+| Pagamento online de ingressos | **→ muda o plano:** escolher o provedor **agora**, com a comparação de taxas, Pix e prazo de repasse. Não adiar |
+| Leitura de passagem por IA | Limite pequeno por organização por mês, com o uso à vista |
+| Rotas e combustível do mapa da turnê | **→ muda o plano:** contratar o serviço de rotas **agora**, sem esperar uma turnê real |
+| Mapa, assinatura e QR | **→ muda o plano:** contratar os serviços pagos **desde o início**, em vez de começar pelo SVG sem tiles |
+| PD1.1 (reaproveitar o calendário de Atividades) | Fazer, comparando a tela antes e depois, no computador e no celular |
+| Domínio próprio dos sites (PD12.1b) | **→ muda o plano:** configurar as três variáveis na Vercel **agora** |
+
+O que isso destrava: a comparação dos provedores de pagamento, de rotas, de mapa, de assinatura e de QR (para ele escolher e contratar), a PD1.1 e a revisão do texto de privacidade.
+
 ## 1. Dinheiro: borderô (PD7.4) e acerto de contas (PD7.9) — decidido e na main
 
 O Luan respondeu em 13/11/2026 e os dois primeiros cortes estão na main: o borderô da sessão (#203) e o acerto de contas do borderô (#204). Valeram as recomendações: deduções em **lista aberta por sessão**, sem alíquota pronta (quem confere é o contador); a **mesma permissão de dinheiro** (quem não a tem vê só o público); público **da casa e da porta juntos**, com aviso quando divergem; acerto **calculado do borderô**, sem pagar nada pelo app. O detalhe de cada um está na tabela "Andamento" do plano.
