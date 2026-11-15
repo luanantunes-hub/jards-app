@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Copy, Download, Ellipsis, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
@@ -21,7 +23,7 @@ import { pagoPorLinha } from "@/lib/producao/lancamentos";
 import { comprometidoDoAcordoEmCentavos, ROTULO_DA_SITUACAO_DO_ACORDO, type AcordoDaTemporada } from "@/lib/producao/acordos";
 import { avaliarFormula, nomeDeVariavelValido, nomeSugeridoParaVariavel, recalcularEstimativas, valoresDasVariaveis, type VariavelDoOrcamento } from "@/lib/producao/formula";
 
-type AcordoDoOrcamento = Pick<AcordoDaTemporada, "id" | "contraparte" | "sentido" | "situacao" | "valor_fixo" | "garantia">;
+export type AcordoDoOrcamento = Pick<AcordoDaTemporada, "id" | "contraparte" | "sentido" | "situacao" | "valor_fixo" | "garantia">;
 type Orcamento = { id: string; nome: string; situacao: SituacaoDoOrcamento; aprovado_em: string | null };
 
 const paraCampo = (valor: number | null) => (valor === null ? "" : String(valor).replace(".", ","));
@@ -166,7 +168,7 @@ function VariavelSheet({ organizationId, orcamentoId, variavel, existentes, linh
   );
 }
 
-function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, acordos, pagoDosLancamentos, onClose, onSalvou }: { organizationId: string; orcamentoId: string; situacao: SituacaoDoOrcamento; linha: LinhaDoOrcamento | null; variaveis: VariavelDoOrcamento[]; acordos: AcordoDoOrcamento[]; pagoDosLancamentos: number | null; onClose: () => void; onSalvou: () => void }) {
+export function LinhaSheet({ organizationId, orcamentoId, situacao, linha, variaveis, acordos, pagoDosLancamentos, onClose, onSalvou }: { organizationId: string; orcamentoId: string; situacao: SituacaoDoOrcamento; linha: LinhaDoOrcamento | null; variaveis: VariavelDoOrcamento[]; acordos: AcordoDoOrcamento[]; pagoDosLancamentos: number | null; onClose: () => void; onSalvou: () => void }) {
   const { confirmDelete } = useDeleteConfirm();
   const [categoria, setCategoria] = useState<CategoriaDoOrcamento>(linha?.categoria ?? "outros");
   const [descricao, setDescricao] = useState(linha?.descricao ?? "");
@@ -327,6 +329,7 @@ function CenariosLadoALado({ orcamentos, linhasPorOrcamento }: { orcamentos: Orc
 /** O orçamento vivo de uma temporada (PD5.1): linhas por categoria, estimativa, aprovado e revisado, comprometido e pago. Só aparece a quem tem a permissão de dinheiro. */
 export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTitulo, podeEditar }: { organizationId: string; temporadaId: string; temporadaTitulo: string; podeEditar: boolean }) {
   const { confirmDelete } = useDeleteConfirm();
+  const router = useRouter();
   const [comDinheiro, setComDinheiro] = useState<boolean | null>(null);
   const [orcamentos, setOrcamentos] = useState<Orcamento[]>([]);
   const [escolhido, setEscolhido] = useState("");
@@ -343,7 +346,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   const [confirmando, setConfirmando] = useState<"aprovar" | "encerrar" | null>(null);
   const menuDeAcoes = useAnchoredPopover();
   const [folhaNovo, setFolhaNovo] = useState(false);
-  const [folhaLinha, setFolhaLinha] = useState<{ linha: LinhaDoOrcamento | null } | null>(null);
+  const [folhaLinha, setFolhaLinha] = useState<{ linha: null } | null>(null);
   const [folhaVariavel, setFolhaVariavel] = useState<{ variavel: VariavelDoOrcamento | null } | null>(null);
 
   useEffect(() => {
@@ -588,7 +591,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
           {contas.avisos.map(aviso => <p key={aviso} className="flex items-start gap-1.5 rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B07A14]" style={{ borderColor: "#B07A1447" }}><TriangleAlert size={13} aria-hidden="true" className="mt-0.5 shrink-0" /> {aviso}</p>)}
 
           <div className="flex items-center justify-between gap-3">
-            <p className="text-[0.6875rem] text-black/45">Valores em reais.{editavel ? " Clique numa linha para editar." : ""}</p>
+            <p className="text-[0.6875rem] text-black/45">Valores em reais. Clique numa linha para ver de onde vem cada número.</p>
             {editavel && <button type="button" onClick={() => setFolhaLinha({ linha: null })} className={`${BOTAO} shrink-0 whitespace-nowrap`}><Plus size={13} aria-hidden="true" /> Linha</button>}
           </div>
 
@@ -606,11 +609,11 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
                 </thead>
                 <tbody>
                   {contas.linhas.map(conta => {
-                    const original = linhas.find(item => item.id === conta.id) ?? null;
+                    const pagina = `/producoes/linhas-do-orcamento/${conta.id}`;
                     return (
-                      <tr key={conta.id} onClick={editavel ? () => setFolhaLinha({ linha: original }) : undefined} className={`border-b border-black/[.06] align-top last:border-b-0 ${editavel ? "cursor-pointer transition-colors hover:bg-black/[.03]" : ""}`}>
+                      <tr key={conta.id} onClick={() => router.push(pagina)} className="cursor-pointer border-b border-black/[.06] align-top transition-colors last:border-b-0 hover:bg-black/[.03]">
                         <th scope="row" className="px-3 py-2 text-left">
-                          {editavel ? <button type="button" onClick={evento => { evento.stopPropagation(); setFolhaLinha({ linha: original }); }} className="block rounded text-left text-[0.8125rem] font-medium text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{conta.descricao}</button> : <span className="block text-[0.8125rem] font-medium text-[#282525]">{conta.descricao}</span>}
+                          <Link href={pagina} prefetch={false} onClick={evento => evento.stopPropagation()} className="block rounded text-left text-[0.8125rem] font-medium text-[#282525] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{conta.descricao}</Link>
                           <span className="block text-[0.6875rem] font-normal text-black/45">{ROTULO_DA_CATEGORIA_DO_ORCAMENTO[conta.categoria]}{conta.viaAcordo ? " · comprometido pelo acordo" : ""}{conta.pagoViaLancamentos ? " · pago pelos lançamentos" : ""}</span>
                           {conta.avisos.map(aviso => <span key={aviso} className="mt-0.5 block text-[0.6875rem] font-normal text-[#B07A14]">{aviso}</span>)}
                         </th>
@@ -634,7 +637,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
 
       {folhaNovo && <NovoOrcamentoSheet organizationId={organizationId} temporadaId={temporadaId} nomeSugerido={orcamentos.length === 0 ? "Orçamento" : `Cenário ${orcamentos.length + 1}`} onClose={() => setFolhaNovo(false)} onCriou={id => { setEscolhido(id); recarregar(); }} />}
       {folhaVariavel && orcamento && <VariavelSheet organizationId={organizationId} orcamentoId={orcamento.id} variavel={folhaVariavel.variavel} existentes={variaveis} linhas={linhas} onClose={() => setFolhaVariavel(null)} onSalvou={recarregar} />}
-      {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} variaveis={variaveis} acordos={acordos} pagoDosLancamentos={folhaLinha.linha && Object.hasOwn(pagoDosLancamentos, folhaLinha.linha.id) ? pagoDosLancamentos[folhaLinha.linha.id] : null} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
+      {folhaLinha && orcamento && <LinhaSheet organizationId={organizationId} orcamentoId={orcamento.id} situacao={orcamento.situacao} linha={folhaLinha.linha} variaveis={variaveis} acordos={acordos} pagoDosLancamentos={null} onClose={() => setFolhaLinha(null)} onSalvou={recarregar} />}
     </section>
   );
 }

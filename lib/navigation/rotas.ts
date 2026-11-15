@@ -49,6 +49,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/faturas", "Fatura"],
   ["/producoes/acordos", "Acordo"],
   ["/producoes/adiantamentos", "Adiantamento"],
+  ["/producoes/linhas-do-orcamento", "Linha do orçamento"],
   ["/producoes", "Produção"],
   ["/configuracoes/mcp", "Claude e ChatGPT (MCP)"],
   ["/configuracoes", "Configurações"],
@@ -69,6 +70,7 @@ const SECAO_DO_MENU: Record<string, string> = {
   "/producoes/faturas": "/producoes/temporadas",
   "/producoes/acordos": "/producoes/temporadas",
   "/producoes/adiantamentos": "/producoes/temporadas",
+  "/producoes/linhas-do-orcamento": "/producoes/temporadas",
   // As telas da sessão são abas de uma só (AbasDaSessao): o menu acende "Sessão", que mora no endereço da plateia.
   "/producoes/convidados": "/producoes/plateia",
   "/producoes/acessibilidade": "/producoes/plateia",
