@@ -3868,6 +3868,52 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_acordo_documentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          acordo_id: string;
+          documento_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          acordo_id: string;
+          documento_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          acordo_id?: string;
+          documento_id?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_acordo_documentos_acordo_id_fkey";
+            columns: ["acordo_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_acordos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acordo_documentos_documento_id_fkey";
+            columns: ["documento_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_documentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_acordo_documentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_acordo_datas: {
         Row: {
           id: string;

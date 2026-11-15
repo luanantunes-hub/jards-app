@@ -17,6 +17,7 @@ import {
 } from "@/lib/producao/acordos";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AcordoSheet, type DataDaTemporada } from "@/components/producao/AcordosDaTemporada";
+import { DocumentosDoAcordo } from "@/components/producao/DocumentosDoAcordo";
 import { BOTAO, BOTAO_PEQUENO, Erro } from "@/components/producao/estilosDoBordero";
 
 type FaturaLigada = { id: string; descricao: string; contratante: string; situacao: string };
@@ -209,6 +210,8 @@ export default function AcordoPage() {
                   : <ul className="flex flex-wrap gap-2">{nomesDasDatas.map(nome => <li key={nome} className="rounded border bg-white px-2.5 py-1 text-[0.75rem] tabular-nums text-[#282525]" style={{ borderColor: "rgba(13,13,13,.15)" }}>{nome}</li>)}</ul>}
               </div>
             </section>
+
+            {organizationId && <DocumentosDoAcordo organizationId={organizationId} acordoId={acordo.id} encerrado={acordo.situacao === "encerrado"} podeEditar={podeEditar} />}
 
             {(faturas.length > 0 || linhas.length > 0) && (
               <section aria-labelledby="acordo-ligacoes">
