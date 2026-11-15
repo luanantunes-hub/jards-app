@@ -1,14 +1,10 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import { Geist } from "next/font/google";
 
-const googleSans = localFont({
-  src: [
-    { path: "../../fonts/GoogleSans-Regular.ttf", weight: "400", style: "normal" },
-    { path: "../../fonts/GoogleSans-Medium.ttf", weight: "500", style: "normal" },
-    { path: "../../fonts/GoogleSans-SemiBold.ttf", weight: "600", style: "normal" },
-    { path: "../../fonts/GoogleSans-Bold.ttf", weight: "700", style: "normal" },
-  ],
-  variable: "--font-google-sans",
+const geist = Geist({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-geist",
   display: "swap",
 });
 
@@ -22,7 +18,7 @@ export default function PropostaLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className={`${googleSans.variable} min-h-screen bg-[#282525]`} style={{ fontFamily: "var(--font-google-sans), system-ui, sans-serif" }}>
+    <div className={`${geist.variable} min-h-screen bg-[#282525]`} style={{ fontFamily: "var(--font-geist), system-ui, sans-serif" }}>
       {children}
     </div>
   );
