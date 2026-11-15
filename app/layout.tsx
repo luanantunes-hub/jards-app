@@ -1,18 +1,15 @@
 import type { Metadata } from "next";
-import { Geist, Newsreader } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geist = Geist({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-geist",
-  display: "swap",
-});
-
-const newsreader = Newsreader({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-newsreader",
+const googleSans = localFont({
+  src: [
+    { path: "./fonts/GoogleSans-Regular.ttf", weight: "400", style: "normal" },
+    { path: "./fonts/GoogleSans-Medium.ttf", weight: "500", style: "normal" },
+    { path: "./fonts/GoogleSans-SemiBold.ttf", weight: "600", style: "normal" },
+    { path: "./fonts/GoogleSans-Bold.ttf", weight: "700", style: "normal" },
+  ],
+  variable: "--font-google-sans",
   display: "swap",
 });
 
@@ -27,8 +24,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR" className={`${geist.variable} ${newsreader.variable} h-full`}>
-      <body className="min-h-full" style={{ fontFamily: "var(--font-geist), system-ui, sans-serif" }}>
+    <html lang="pt-BR" className={`${googleSans.variable} h-full`}>
+      <body className="min-h-full" style={{ fontFamily: "var(--font-google-sans), system-ui, sans-serif" }}>
         {children}
       </body>
     </html>

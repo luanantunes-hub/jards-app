@@ -115,7 +115,7 @@ function Sidebar({ activeNavKey }: { activeNavKey: string | null }) {
       {/* logo */}
       <div style={{ height: 56, display: "flex", alignItems: "center", gap: 9, padding: "0 20px", borderBottom: "1px solid rgba(13,13,13,.07)", flexShrink: 0 }}>
         <svg width="20" height="20" viewBox="0 0 689 689"><path fill="#D94E4E" d="M0,168h194c-2,19-9,38-11,58C170,411,341,548,519,495v194H0V168Z"/><path fill="#7259B5" d="M675,338H355l-4-4V15C548-57,743,141,675,338Z"/></svg>
-        <span style={{ fontFamily: "var(--font-newsreader), Georgia, serif", fontSize: 16, fontWeight: 700, color: "#282525" }}>Jards</span>
+        <span style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 16, fontWeight: 700, color: "#282525" }}>Jards</span>
       </div>
       {/* user */}
       <div style={{ padding: 8, borderBottom: "1px solid rgba(13,13,13,.07)", flexShrink: 0 }}>
@@ -163,7 +163,7 @@ function PageHeader({ eyebrow, title, action }: { eyebrow?: string; title: strin
     <div style={{ flexShrink: 0, padding: "28px 32px 20px", borderBottom: "1px solid rgba(13,13,13,.08)" }}>
       {eyebrow && <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: ".14em", textTransform: "uppercase", color: "rgba(13,13,13,.30)", marginBottom: 4 }}>{eyebrow}</p>}
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 12 }}>
-        <h1 style={{ fontFamily: "var(--font-newsreader), Georgia, serif", fontSize: 26, fontWeight: 700, letterSpacing: "-.025em", color: "#282525" }}>{title}</h1>
+        <h1 style={{ fontFamily: "'Valley Sans', system-ui, sans-serif", fontSize: 26, fontWeight: 700, letterSpacing: "-.025em", color: "#282525" }}>{title}</h1>
         {action && <OutlineBtn>{action}</OutlineBtn>}
       </div>
     </div>
@@ -460,7 +460,7 @@ export default function ModulesShowcase() {
     <section className="max-w-[67.5rem] mx-auto w-full">
       {/* chamada */}
       <p className="text-center text-[0.625rem] font-bold uppercase tracking-[.12em] text-[#7259B5] mb-3.5">Plataforma</p>
-      <h2 className="text-center text-[clamp(26px,3.8vw,40px)] font-extrabold leading-[1.18] text-balance mb-3" style={{ fontFamily: "var(--font-newsreader), Georgia, serif" }}>
+      <h2 className="text-center text-[clamp(26px,3.8vw,40px)] font-extrabold leading-[1.18] text-balance mb-3" style={{ fontFamily: "'Valley Sans', system-ui, sans-serif" }}>
         Tudo que você precisa para captar<br className="hidden sm:block" /> com mais estratégia
       </h2>
       <p className="text-center text-[0.9375rem] leading-[1.7] text-black/45 max-w-[30rem] mx-auto mb-10">
