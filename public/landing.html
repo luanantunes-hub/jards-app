@@ -944,13 +944,13 @@
     .prova-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); column-gap:32px; margin:0; }
     .prova-item { position:relative; display:flex; flex-direction:column-reverse; justify-content:flex-end; gap:10px; padding:26px 0; }
     .prova-item:nth-child(even)::before { content:""; position:absolute; top:0; bottom:0; left:-16px; width:1px; background:rgba(13,13,13,.1); }
-    .prova-num { margin:0; font-size:clamp(26px,7vw,48px); line-height:1; white-space:nowrap; }
+    .prova-num { margin:0; font-size:clamp(22px,5.4vw,32px); line-height:1; white-space:nowrap; }
     .prova-texto { max-width:22ch; font-size:14px; line-height:1.45; color:rgba(13,13,13,.58); text-wrap:balance; }
     @media (min-width:1024px) {
       .prova-grid { grid-template-columns:repeat(4,minmax(0,1fr)); column-gap:56px; }
       .prova-item { padding:44px 0; }
       .prova-item:not(:first-child)::before { content:""; position:absolute; top:0; bottom:0; left:-28px; width:1px; background:rgba(13,13,13,.1); }
-      .prova-num { font-size:clamp(40px,4.2vw,52px); }
+      .prova-num { font-size:clamp(28px,2.8vw,36px); }
       .prova-texto { font-size:15px; }
     }
     .proof-rotulo { margin:0 0 18px; font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.08em; line-height:1.3; text-transform:uppercase; color:rgba(13,13,13,.55); }
