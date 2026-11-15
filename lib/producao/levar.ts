@@ -82,3 +82,18 @@ export function textoDoQueLevar(sala: string, lista: readonly LinhaDoQueLevar[])
     ...itens.map(item => `- ${item.levar}× ${item.linha.texto}${item.situacao === "parcial" ? ` (a casa tem ${item.oferece})` : ""}${item.linha.obrigatorio ? "" : " [opcional]"}`),
   ].join("\n");
 }
+
+/** As linhas para o checklist de transporte: o que a produção leva (a quantidade que a casa não cobre) e que ainda não está no checklist (pelo nome, sem ligar maiúscula nem acento). */
+export function linhasParaOChecklist(lista: readonly LinhaDoQueLevar[], nomesNoChecklist: readonly string[]): { nome: string; quantidade: number }[] {
+  const jaTem = new Set(nomesNoChecklist.map(semAcento).map(nome => nome.trim()));
+  const vistos = new Set<string>();
+  const saida: { nome: string; quantidade: number }[] = [];
+  for (const item of soOQueLevar(lista)) {
+    const nome = item.linha.texto.trim().slice(0, 120);
+    const chave = semAcento(nome).trim();
+    if (nome === "" || jaTem.has(chave) || vistos.has(chave)) continue;
+    vistos.add(chave);
+    saida.push({ nome, quantidade: Math.min(999, Math.max(1, item.levar)) });
+  }
+  return saida;
+}

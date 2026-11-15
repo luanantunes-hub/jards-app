@@ -18,7 +18,7 @@ const ROTULO_DO_ESTADO: Record<string, string> = { manutencao: "em manutenção"
  * O que levar para uma sala (PD4.4): cada linha do rider diz se a casa atende. Quem liga a linha ao equipamento da casa é a pessoa (o Jards só sugere o mais parecido);
  * a linha sem equipamento em uso na sala, ou com menos unidades do que pede, entra na lista. Trocar a sala muda a lista.
  */
-export function ListaDoQueLevar({ organizationId, riderId, salaId, salaNome, podeEditar }: { organizationId: string; riderId: string; salaId: string; salaNome: string; podeEditar: boolean }) {
+export function ListaDoQueLevar({ organizationId, riderId, salaId, salaNome, podeEditar, semTitulo = false }: { organizationId: string; riderId: string; salaId: string; salaNome: string; podeEditar: boolean; semTitulo?: boolean }) {
   const [espacoId, setEspacoId] = useState<string | null>(null);
   const [linhas, setLinhas] = useState<LinhaDoRider[] | null>(null);
   const [equipamentos, setEquipamentos] = useState<EquipamentoDaCasa[]>([]);
@@ -85,9 +85,9 @@ export function ListaDoQueLevar({ organizationId, riderId, salaId, salaNome, pod
   if (linhas.length === 0) return null;
 
   return (
-    <div className="mt-6">
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">O que levar</h3>
+    <div className={semTitulo ? "" : "mt-6"}>
+      <div className={`mb-2 flex flex-wrap items-center gap-3 ${semTitulo ? "justify-end" : "justify-between"}`}>
+        {!semTitulo && <h3 className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">O que levar</h3>}
         <button type="button" onClick={() => void copiar()} className="flex h-8 items-center gap-1.5 rounded border border-black/12 bg-white px-2.5 text-[0.6875rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Copy size={11} aria-hidden="true" /> {copiado ? "Copiado" : "Copiar a lista"}</button>
       </div>
       {erro && <div className="mb-2"><Erro texto={erro} /></div>}
