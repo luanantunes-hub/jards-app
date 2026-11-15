@@ -143,6 +143,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_lancamento_linhas: "é só a divisão do valor de um lançamento entre as linhas do orçamento: dinheiro, sem histórico",
   producao_acordos: "são condições de dinheiro (fixo, garantia, percentual, bônus): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; a situação e o dia da assinatura ficam no próprio acordo",
   producao_acordo_datas: "é só a lista das datas que o acordo cobre, e muda junto com o acordo (assinado, não muda)",
+  producao_rider_item_equipamentos: "é só a ligação entre a linha do rider e o equipamento da casa; o rider e o equipamento têm o histórico deles",
   producao_acordo_documentos: "é só a lista dos documentos da pasta que o acordo pede; o acordo não tem histórico (as condições são valores) e o documento tem o dele",
   producao_bordero_acertos: "é só o acerto de contas do borderô (parte, forma e valor): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; quem aprovou, quando e quando foi pago ficam na própria linha",
   producao_bordero_receitas: "é só a receita do borderô (quantidade e valor por categoria de ingresso): com o histórico, o valor iria para uma linha que quem não vê o dinheiro também lê; o borderô guarda a situação e o fechamento",
