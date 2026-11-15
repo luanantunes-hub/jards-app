@@ -54,7 +54,9 @@ export function soOQueLevar(lista: readonly LinhaDoQueLevar[]): LinhaDoQueLevar[
 }
 
 const semAcento = (texto: string) => texto.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
-const palavras = (texto: string) => new Set(semAcento(texto).split(/[^a-z0-9]+/).filter(palavra => palavra.length >= 3));
+/** O plural vira singular, para "refletores" casar com "Refletor" e "luzes" com "luz": tira o "es" depois de r ou z, e o "s" final das outras. */
+const singular = (palavra: string) => (/(?:r|z)es$/.test(palavra) && palavra.length > 4 ? palavra.slice(0, -2) : palavra.length > 3 && palavra.endsWith("s") ? palavra.slice(0, -1) : palavra);
+const palavras = (texto: string) => new Set(semAcento(texto).split(/[^a-z0-9]+/).filter(palavra => palavra.length >= 3).map(singular));
 
 /** O equipamento mais parecido com o texto da linha do rider (palavras em comum), ou nulo quando nenhum se parece o bastante. Só sugere: quem liga é a pessoa. */
 export function equipamentoSugerido(texto: string, equipamentos: readonly Pick<EquipamentoDaCasa, "id" | "nome" | "categoria">[]): string | null {

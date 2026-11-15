@@ -53,6 +53,8 @@ test("a sugestão: o equipamento mais parecido, e nenhuma quando não se parece"
   const equipamentos = [{ id: "1", nome: "Refletor PAR 64", categoria: "luz" }, { id: "2", nome: "Mesa de som digital", categoria: "som" }, { id: "3", nome: "Projetor", categoria: "vídeo" }];
   assert.equal(equipamentoSugerido("6 refletores PAR", equipamentos), "1");
   assert.equal(equipamentoSugerido("Mesa de som 16 canais", equipamentos), "2");
+  assert.equal(equipamentoSugerido("Seis refletores", [{ id: "9", nome: "Refletor", categoria: "luz" }]), "9", "o plural casa com o singular");
+  assert.equal(equipamentoSugerido("2 luzes de serviço", [{ id: "8", nome: "Luz de serviço", categoria: null }]), "8", "luzes casa com luz");
   assert.equal(equipamentoSugerido("Camarim com espelho", equipamentos), null);
   assert.equal(equipamentoSugerido("  ", equipamentos), null);
   assert.equal(equipamentoSugerido("Mesa", []), null);
