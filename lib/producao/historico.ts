@@ -41,15 +41,30 @@ export function rotuloDaEntidade(entidade: string): string {
   return COISA[entidade] ?? "um registro";
 }
 
+const FORMATO_DA_HORA = new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+
+/** O valor como a pessoa lê: dia "17/11/2026", momento "13/11/2026 19:30" (horário de Brasília), "true" e "false" como "sim" e "não". O resto fica como veio. */
+export function valorLegivel(texto: string): string {
+  if (texto === "true") return "sim";
+  if (texto === "false") return "não";
+  const dia = /^(\d{4})-(\d{2})-(\d{2})$/.exec(texto);
+  if (dia) return `${dia[3]}/${dia[2]}/${dia[1]}`;
+  if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(texto)) {
+    const momento = new Date(texto);
+    if (!Number.isNaN(momento.getTime())) return FORMATO_DA_HORA.format(momento).replace(",", "");
+  }
+  return texto;
+}
+
 function valor(texto: string | null): string {
-  return texto === null || texto === "" ? "vazio" : texto;
+  return texto === null || texto === "" ? "vazio" : valorLegivel(texto);
 }
 
 /** "Criou uma tarefa: Assinar o contrato", "Mudou a situação de aberta para feita", "Apagou um bloco do dia: Abertura". */
 export function fraseDoHistorico(linha: Pick<LinhaDoHistorico, "entidade" | "acao" | "campo" | "antes" | "depois">): string {
   const coisa = rotuloDaEntidade(linha.entidade);
-  if (linha.acao === "criou") return linha.depois ? `Criou ${coisa}: ${linha.depois}` : `Criou ${coisa}`;
-  if (linha.acao === "apagou") return linha.antes ? `Apagou ${coisa}: ${linha.antes}` : `Apagou ${coisa}`;
+  if (linha.acao === "criou") return linha.depois ? `Criou ${coisa}: ${valorLegivel(linha.depois)}` : `Criou ${coisa}`;
+  if (linha.acao === "apagou") return linha.antes ? `Apagou ${coisa}: ${valorLegivel(linha.antes)}` : `Apagou ${coisa}`;
   const campo = linha.campo ? (CAMPO[linha.campo] ?? `o campo ${linha.campo.replace(/_/g, " ")}`) : "algo";
   const onde = linha.entidade === "producao_datas" ? "" : ` em ${coisa}`;
   return `Mudou ${campo}${onde} de ${valor(linha.antes)} para ${valor(linha.depois)}`;
