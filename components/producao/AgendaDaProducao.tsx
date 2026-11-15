@@ -9,6 +9,7 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
 import type { EstadoDoEquipamento, SituacaoDaLicenca, TipoDeLicenca } from "@/lib/producao/estados";
 import { avisosDeEquipamentosParaHoje, avisosDeLicencasParaHoje, type AvisoDeHoje } from "@/lib/producao/hoje";
+import { avisosDeDocumentosParaHoje, type DocumentoDaPasta } from "@/lib/producao/documentos";
 import { agruparPorMes, diaDaSemana, diaEMes, filtrarDatas, opcaoVencida, pendenciasDeHoje, proximasDatas, type FiltrosDaAgenda, ROTULO_DA_SITUACAO_DA_DATA, ROTULO_DO_TIPO_DE_DATA, type DataDaAgenda } from "@/lib/producao/agenda";
 import { ListContent, ListEmptyState, ListPageHeader, ListSummary, ListTableSurface, ListToolbar, PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { EntityViewSwitcher, usePersistedViewMode } from "@/components/ui/EntityViewSwitcher";
@@ -52,6 +53,8 @@ export function AgendaDaProducao() {
   // O que as licenças e os equipamentos pedem (PD4.9 e PD3.2), lido à parte: se falhar, o resto da agenda segue.
   const [licencasDeHoje, setLicencasDeHoje] = useState<{ id: string; data_id: string; tipo: TipoDeLicenca; situacao: SituacaoDaLicenca; prazo_dias: number | null; validade: string | null }[]>([]);
   const [equipamentosDeHoje, setEquipamentosDeHoje] = useState<{ id: string; nome: string; estado: EstadoDoEquipamento; espaco_id: string }[]>([]);
+  const [documentosDeHoje, setDocumentosDeHoje] = useState<DocumentoDaPasta[]>([]);
+  const [nomesDasPessoas, setNomesDasPessoas] = useState<Record<string, string>>({});
   const [manutencoesDeHoje, setManutencoesDeHoje] = useState<{ id: string; equipamento_id: string; descricao: string; prevista_para: string; feita_em: string | null }[]>([]);
 
   useEffect(() => {
@@ -92,15 +95,20 @@ export function AgendaDaProducao() {
     let ativo = true;
     void (async () => {
       const producao = clienteDaProducao(createClient());
-      const [lic, equ, man] = await Promise.all([
+      const [lic, equ, man, doc, pes] = await Promise.all([
         producao.from("producao_licencas").select("id, data_id, tipo, situacao, prazo_dias, validade").eq("organization_id", organizationId).in("situacao", ["a_pedir", "pedida", "negada", "concedida"]),
         producao.from("producao_equipamentos").select("id, nome, estado, espaco_id").eq("organization_id", organizationId).neq("estado", "baixado"),
         producao.from("producao_manutencoes").select("id, equipamento_id, descricao, prevista_para, feita_em").eq("organization_id", organizationId).is("feita_em", null),
+        // Só os que têm validade; o banco entrega só o que a pessoa pode ver (o documento de uma pessoa pede a permissão de dinheiro).
+        producao.from("producao_documentos").select("id, escopo, pessoa_id, tipo, titulo, emitido_em, validade, notas").eq("organization_id", organizationId).not("validade", "is", null),
+        producao.from("producao_pessoas").select("id, nome").eq("organization_id", organizationId),
       ]);
       if (!ativo) return;
       setLicencasDeHoje(lic.data ?? []);
       setEquipamentosDeHoje(equ.data ?? []);
       setManutencoesDeHoje(man.data ?? []);
+      setDocumentosDeHoje((doc.data ?? []) as DocumentoDaPasta[]);
+      setNomesDasPessoas(Object.fromEntries((pes.data ?? []).map(pessoa => [pessoa.id, pessoa.nome])));
     })();
     return () => { ativo = false; };
   }, [organizationId, versao]);
@@ -108,7 +116,8 @@ export function AgendaDaProducao() {
   const avisos = useMemo<AvisoDeHoje[]>(() => [
     ...avisosDeLicencasParaHoje(licencasDeHoje, datas, hoje),
     ...avisosDeEquipamentosParaHoje(equipamentosDeHoje, manutencoesDeHoje, hoje),
-  ], [licencasDeHoje, equipamentosDeHoje, manutencoesDeHoje, datas, hoje]);
+    ...avisosDeDocumentosParaHoje(documentosDeHoje, id => nomesDasPessoas[id] ?? "uma pessoa", hoje),
+  ], [licencasDeHoje, equipamentosDeHoje, manutencoesDeHoje, documentosDeHoje, nomesDasPessoas, datas, hoje]);
   const filtradas = useMemo(() => filtrarDatas(datas, filtros), [datas, filtros]);
   const meses = useMemo(() => agruparPorMes(filtradas), [filtradas]);
   const pendencias = useMemo(() => pendenciasDeHoje(datas, hoje), [datas, hoje]);

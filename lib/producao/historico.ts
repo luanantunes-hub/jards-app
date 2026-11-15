@@ -24,7 +24,7 @@ const COISA: Record<string, string> = {
   producao_acessibilidade: "um recurso de acessibilidade", producao_visitas_horarios: "um horário de visita", producao_visitas_agendamentos: "um agendamento de visita",
   producao_turmas: "uma turma", producao_turma_aulas: "uma aula", producao_matriculas: "uma matrícula",
   producao_acertos: "um acerto técnico", producao_modelos_acerto: "um modelo de acerto", producao_sites: "um site", producao_site_paginas: "uma página de site",
-  producao_arquivos: "um arquivo", producao_ocorrencias: "uma ocorrência",
+  producao_arquivos: "um arquivo", producao_documentos: "um documento", producao_ocorrencias: "uma ocorrência",
 };
 
 const CAMPO: Record<string, string> = {
@@ -34,7 +34,7 @@ const CAMPO: Record<string, string> = {
   prazo_dias: "o prazo em dias", responsavel_pessoa_id: "quem faz", espaco_id: "o espaço", sala_id: "a sala", ordem: "a ordem",
   nome: "o nome", lugares: "os lugares", quantidade: "a quantidade", pessoas: "as pessoas", resposta: "a resposta", categoria: "a categoria",
   vagas: "as vagas", presentes: "quantos vieram", certificado_emitido_em: "o certificado", pessoa_id: "a pessoa", hotel: "o hotel", dia: "o dia",
-  grupo: "o grupo", capacidade_carga_kg: "a carga", arquivado: "o arquivamento", iniciado_em: "quando começou", terminado_em: "quando terminou",
+  grupo: "o grupo", capacidade_carga_kg: "a carga", arquivado: "o arquivamento", validade: "a validade", emitido_em: "a emissão", iniciado_em: "quando começou", terminado_em: "quando terminou",
 };
 
 export function rotuloDaEntidade(entidade: string): string {
