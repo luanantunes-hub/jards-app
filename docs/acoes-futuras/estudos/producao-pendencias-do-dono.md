@@ -1,24 +1,12 @@
 # Módulo de produção: o que depende do dono
 
-Atualizado em 13/11/2026. Tudo o que o plano permite fazer sem decisão do dono já está na main (Fases 0 a 8 em primeiros cortes, mais a PD9.1 e a PD9.6). O que sobra está aqui, com a recomendação de cada item para responder rápido. Quem decide é o Luan; nada abaixo foi aplicado.
+Atualizado em 15/11/2026. Tudo o que o plano permite fazer sem decisão do dono já está na main (Fases 0 a 8 em primeiros cortes, mais a PD9.1, a PD9.6, o borderô e o acerto de contas). Em 14 e 15/11 as telas do dinheiro e da sessão foram arrumadas com o dono: linha clicável e página própria (acordo, pedido, fatura, adiantamento, linha do orçamento), menu da produção em seções que abrem e fecham, telas da sessão em abas e protótipos removidos. O que sobra está aqui, com a recomendação de cada item para responder rápido. Quem decide é o Luan; nada abaixo foi aplicado.
 
-## 1. Dinheiro: borderô (PD7.4) e acerto de contas (PD7.9)
+## 1. Dinheiro: borderô (PD7.4) e acerto de contas (PD7.9) — decidido e na main
 
-Destrava: PD7.4, PD7.9, o custo por praça e por espectador do relatório da temporada (PD9.6), a receita sobre o mapa da plateia (PD7.7) e, depois, a PD12.8.
+O Luan respondeu em 13/11/2026 e os dois primeiros cortes estão na main: o borderô da sessão (#203) e o acerto de contas do borderô (#204). Valeram as recomendações: deduções em **lista aberta por sessão**, sem alíquota pronta (quem confere é o contador); a **mesma permissão de dinheiro** (quem não a tem vê só o público); público **da casa e da porta juntos**, com aviso quando divergem; acerto **calculado do borderô**, sem pagar nada pelo app. O detalhe de cada um está na tabela "Andamento" do plano.
 
-**Pergunta 1. Quais deduções entram no borderô?** O borderô é o resumo da sessão: categorias de ingresso, receita bruta, deduções e líquido.
-
-Recomendação: **lista aberta por sessão**, sem valor padrão. Cada dedução tem nome, forma (porcentagem da receita ou valor fixo) e quem recebe. Sugestão de modelos que a pessoa escolhe com um clique, sem preencher percentual por ela: bilheteria ou taxa da casa, ISS, direitos autorais (ECAD), taxa de cartão ou da plataforma, outra. O percentual de cada uma vem do contrato ou da lei do município, e **quem confere é o contador**: o app não deve trazer alíquota pronta, para não induzir erro.
-
-**Pergunta 2. Quem vê os valores?** Já existe a permissão `dinheiro` por pessoa (`producao_funcoes.dinheiro`): vale para orçamento, cachês e pagamentos.
-
-Recomendação: **a mesma permissão**. Quem não tem `dinheiro` vê a sessão com o público (quantas pessoas entraram) mas sem receita, deduções nem líquido. O banco já sabe esconder valor de quem não tem a permissão (o padrão das tabelas de valores da PD2.1 e da PD1.9).
-
-**Pergunta 3. De onde vem o público do borderô?** Opções: (a) digitado pela casa, como vem no borderô em papel; (b) somado das leituras da porta (PD7.3), que já existem; (c) os dois, com aviso quando divergem.
-
-Recomendação: **(c)**. A porta só conta quem tem credencial; a bilheteria da casa conta o resto.
-
-**Pergunta 4. O acerto de contas (PD7.9) vem do borderô?** Recomendação: sim, uma linha de acerto por parte (companhia, casa, patrocinador) calculada do borderô, aprovada por quem tem `dinheiro`, sem pagar nada pelo app (só registrar e exportar). Pagar fica para depois da decisão de pagamento.
+Sobra desta frente, e só depois de mais decisões: **pagar pelo app** (junto do item 2), modelos de acerto por contrato, PDF do acerto assinado, o acerto da temporada inteira, e o custo por praça e por espectador no relatório da temporada.
 
 ## 2. Pagamento online (decisões 16 a 19)
 
