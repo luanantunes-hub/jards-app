@@ -44,6 +44,7 @@ const TITULOS: [prefixo: string, titulo: string][] = [
   ["/producoes/plantas", "Plantas da produção"],
   ["/producoes/riders", "Riders da produção"],
   ["/producoes/tarefas", "Tarefas da produção"],
+  ["/producoes/documentos", "Documentos da produção"],
   ["/producoes/acertos", "Acerto técnico"],
   ["/producoes/pedidos", "Pedido de pagamento"],
   ["/producoes/faturas", "Fatura"],

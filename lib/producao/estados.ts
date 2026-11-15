@@ -126,6 +126,16 @@ export const TIPOS_DE_LICENCA: readonly TipoDeLicenca[] = ["alvara", "avcb", "ec
 export type SituacaoDaLicenca = "a_pedir" | "pedida" | "concedida" | "negada" | "dispensada";
 export const SITUACOES_DA_LICENCA: readonly SituacaoDaLicenca[] = ["a_pedir", "pedida", "concedida", "negada", "dispensada"];
 
+// A pasta de documentos com validade (PD4.8): o banco confere as listas num CHECK (supabase/migrations/*_producao_documentos.sql).
+
+/** `producao_documentos.escopo`: de quem é o documento. */
+export type EscopoDoDocumento = "organizacao" | "pessoa";
+export const ESCOPOS_DO_DOCUMENTO: readonly EscopoDoDocumento[] = ["organizacao", "pessoa"];
+
+/** `producao_documentos.tipo`. CNH, passaporte e identidade são só de pessoa; contrato social, certidão e carta, só da organização; "outro" vale nos dois. */
+export type TipoDeDocumento = "contrato_social" | "certidao_negativa" | "carta_exclusividade" | "cnh" | "passaporte" | "identidade" | "outro";
+export const TIPOS_DE_DOCUMENTO: readonly TipoDeDocumento[] = ["contrato_social", "certidao_negativa", "carta_exclusividade", "cnh", "passaporte", "identidade", "outro"];
+
 // O acerto técnico (PD4.1 e PD4.2): o banco confere as listas num CHECK (supabase/migrations/*_producao_acertos.sql).
 
 /** `producao_modelos_acerto.lado` e `producao_acertos.lado`: quem preenche. */

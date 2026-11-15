@@ -49,6 +49,7 @@ import {
   Drama,
   Video,
   ChevronDown,
+  FileCheck,
   type LucideIcon,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -139,6 +140,7 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
         { label: "Equipe", href: "/producoes/equipe", icon: UsersRound },
         { label: "Tarefas", href: "/producoes/tarefas", icon: ListChecks },
         { label: "Espaços", href: "/producoes/espacos", icon: Building2 },
+        { label: "Documentos", href: "/producoes/documentos", icon: FileCheck },
       ],
     },
     {

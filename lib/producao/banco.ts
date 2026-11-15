@@ -75,6 +75,8 @@ import type {
   SituacaoDoDominio,
   SituacaoDoItemDoAcerto,
   TipoDeLicenca,
+  EscopoDoDocumento,
+  TipoDeDocumento,
   SituacaoDoVinculo,
   TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
@@ -5016,6 +5018,63 @@ export type BancoDaProducao = {
             columns: ["site_id"];
             isOneToOne: false;
             referencedRelation: "producao_sites";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_documentos: {
+        Row: {
+          id: string;
+          organization_id: string;
+          escopo: EscopoDoDocumento;
+          pessoa_id: string | null;
+          tipo: TipoDeDocumento;
+          titulo: string;
+          emitido_em: string | null;
+          validade: string | null;
+          notas: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          escopo?: EscopoDoDocumento;
+          pessoa_id?: string | null;
+          tipo?: TipoDeDocumento;
+          titulo: string;
+          emitido_em?: string | null;
+          validade?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          escopo?: EscopoDoDocumento;
+          pessoa_id?: string | null;
+          tipo?: TipoDeDocumento;
+          titulo?: string;
+          emitido_em?: string | null;
+          validade?: string | null;
+          notas?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_documentos_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_documentos_pessoa_id_fkey";
+            columns: ["pessoa_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_pessoas";
             referencedColumns: ["id"];
           },
         ];
