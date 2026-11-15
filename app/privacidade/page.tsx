@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: "Como a Jards coleta, usa e protege seus dados.",
 };
 
-const UPDATED = "7 de outubro de 2026";
+const UPDATED = "15 de novembro de 2026";
 
 export default function PrivacidadePage() {
   return (
@@ -62,6 +62,11 @@ export default function PrivacidadePage() {
 
             <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">2.3 Dados técnicos</h3>
             <p>Registramos automaticamente endereço IP, logs de sessão e histórico de alterações de campos críticos para segurança e auditoria. Esses dados não são usados para publicidade. Nas páginas públicas do site, e só com o seu consentimento, também coletamos estatísticas de navegação e dados para os nossos anúncios pelo Google Analytics e pelo Google Ads (ver §10).</p>
+
+            <h3 className="mt-5 mb-2 text-xs font-semibold uppercase tracking-[.08em] text-black/40">2.4 Dados de quem participa de eventos de uma produção</h3>
+            <p>Quando você se inscreve como voluntário, agenda uma visita, pede ou recebe um convite, responde a um convite de presença ou é matriculado em uma formação, a organização que publicou o link recebe o seu nome e, quando você informar, e-mail ou telefone, disponibilidade, nome do grupo e número de pessoas, ou as datas de chegada e saída.</p>
+            <p>Usamos esses dados apenas para organizar aquele evento: falar com você, confirmar a sua participação, controlar vagas e emitir o certificado, quando houver. Não pedimos documento, dado de saúde nem foto, e pedimos que você não os escreva nos campos de texto. Não vendemos nem compartilhamos esses dados com terceiros.</p>
+            <p>Quem vê: as pessoas da equipe da organização que publicou o link e têm acesso à produção. Nesse caso a organização é a <strong>controladora</strong> dos dados e a Jards é a <strong>operadora</strong>: é a organização que decide o que coletar e para quê. Por quanto tempo: até 12 meses depois da data do evento, quando apagamos ou tornamos os dados anônimos (ver §8). Para ver, corrigir ou apagar seus dados, use o contato do §9.</p>
           </Section>
 
           <Section id="s3" num="3" title="Integrações externas — Google, Claude e ChatGPT">
@@ -160,7 +165,7 @@ export default function PrivacidadePage() {
           </Section>
 
           <Section id="s8" num="8" title="Retenção de dados">
-            <p>Dados de conta e CRM são mantidos enquanto a organização estiver ativa e excluídos em até 30 dias após solicitação. Tokens OAuth são excluídos imediatamente ao desconectar a integração. Logs de auditoria são mantidos por 24 meses. Dados de pagamento são mantidos por 5 anos por obrigação fiscal. Dados de navegação coletados pelo Google Analytics ficam retidos, no nível de evento, por no máximo 14 meses. As listas de público do Google Ads (remarketing) guardam a visita por até 540 dias, conforme a configuração das nossas campanhas.</p>
+            <p>Dados de conta e CRM são mantidos enquanto a organização estiver ativa e excluídos em até 30 dias após solicitação. Tokens OAuth são excluídos imediatamente ao desconectar a integração. Logs de auditoria são mantidos por 24 meses. Dados de quem se inscreveu, agendou ou foi convidado em um evento de uma produção (§2.4) são apagados ou tornados anônimos até 12 meses depois da data do evento. Dados de pagamento são mantidos por 5 anos por obrigação fiscal. Dados de navegação coletados pelo Google Analytics ficam retidos, no nível de evento, por no máximo 14 meses. As listas de público do Google Ads (remarketing) guardam a visita por até 540 dias, conforme a configuração das nossas campanhas.</p>
           </Section>
 
           <Section id="s9" num="9" title="Seus direitos (LGPD)">
