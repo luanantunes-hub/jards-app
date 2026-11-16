@@ -2265,6 +2265,8 @@ export type BancoDaProducao = {
           notas: string | null;
           created_at: string;
           updated_at: string;
+          saida_foto_id: string | null;
+          volta_foto_id: string | null;
         };
         Insert: {
           id?: string;
@@ -2281,6 +2283,8 @@ export type BancoDaProducao = {
           notas?: string | null;
           created_at?: string;
           updated_at?: string;
+          saida_foto_id?: string | null;
+          volta_foto_id?: string | null;
         };
         Update: {
           id?: string;
@@ -2297,6 +2301,8 @@ export type BancoDaProducao = {
           notas?: string | null;
           created_at?: string;
           updated_at?: string;
+          saida_foto_id?: string | null;
+          volta_foto_id?: string | null;
         };
         Relationships: [
           {
@@ -2318,6 +2324,20 @@ export type BancoDaProducao = {
             columns: ["organization_id"];
             isOneToOne: false;
             referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_checklist_itens_saida_foto_id_fkey";
+            columns: ["saida_foto_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_arquivos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_checklist_itens_volta_foto_id_fkey";
+            columns: ["volta_foto_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_arquivos";
             referencedColumns: ["id"];
           },
         ];

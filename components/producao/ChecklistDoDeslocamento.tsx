@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, TriangleAlert } from "lucide-react";
+import { Camera, Plus, Trash2, TriangleAlert } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Select } from "@/components/ui/Select";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
+import { BUCKET_DOS_ARQUIVOS, extensaoAceita, extensaoDoArquivo, montarCaminhoProducao } from "@/lib/producao/armazenamento";
 import { carregarQueLevarDaData } from "@/components/producao/carregarQueLevar";
 import { linhasParaOChecklist, type LinhaDoQueLevar } from "@/lib/producao/levar";
 import { SITUACOES_DA_CONFERENCIA, type ContratacaoDoVeiculo, type SituacaoDaConferencia, type TipoDeDeslocamento, type TipoDoItemDoChecklist } from "@/lib/producao/estados";
@@ -14,7 +15,15 @@ import {
   type FaseDaConferencia,
 } from "@/lib/producao/checklist";
 
-type Linha = { id: string; tipo: TipoDoItemDoChecklist; nome: string; quantidade: number; item_id: string | null; saida: SituacaoDaConferencia; volta: SituacaoDaConferencia };
+type Linha = { id: string; tipo: TipoDoItemDoChecklist; nome: string; quantidade: number; item_id: string | null; saida: SituacaoDaConferencia; volta: SituacaoDaConferencia; saida_foto_id: string | null; volta_foto_id: string | null };
+type Foto = { storage_path: string; nome: string };
+
+const LIMITE_DA_FOTO = 15 * 1024 * 1024;
+
+async function sha256(arquivo: File): Promise<string> {
+  const resumo = await crypto.subtle.digest("SHA-256", await arquivo.arrayBuffer());
+  return Array.from(new Uint8Array(resumo)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+}
 type Medidas = { comprimento_cm: number | null; largura_cm: number | null; altura_cm: number | null; peso_kg: number | null };
 type ItemDaData = { item_id: string; nome: string; quantidade: number };
 
@@ -41,6 +50,7 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
   const [ocupado, setOcupado] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
+  const [fotos, setFotos] = useState<Map<string, Foto>>(new Map());
   // O que a sala da data não atende do rider (PD4.4): vira linhas do checklist com um clique.
   const [aLevar, setALevar] = useState<LinhaDoQueLevar[]>([]);
 
@@ -58,7 +68,7 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
     void (async () => {
       const producao = clienteDaProducao(createClient());
       const [lin, lig] = await Promise.all([
-        producao.from("producao_checklist_itens").select("id, tipo, nome, quantidade, item_id, saida, volta").eq("deslocamento_id", deslocamento.id).order("tipo").order("nome"),
+        producao.from("producao_checklist_itens").select("id, tipo, nome, quantidade, item_id, saida, volta, saida_foto_id, volta_foto_id").eq("deslocamento_id", deslocamento.id).order("tipo").order("nome"),
         producao.from("producao_item_datas").select("item_id, quantidade").eq("data_id", deslocamento.data_id),
       ]);
       const ids = [...new Set([...(lin.data ?? []).map(linha => linha.item_id), ...(lig.data ?? []).map(ligacao => ligacao.item_id)].filter((id): id is string => Boolean(id)))];
@@ -67,6 +77,10 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
         : { data: [] as { id: string; nome: string; comprimento_cm: number | null; largura_cm: number | null; altura_cm: number | null; peso_kg: number | null }[] };
       if (!ativo) return;
       const porId = new Map((itens.data ?? []).map(item => [item.id, item]));
+      const idsDasFotos = (lin.data ?? []).flatMap(linha => [linha.saida_foto_id, linha.volta_foto_id]).filter((id): id is string => Boolean(id));
+      const arquivos = idsDasFotos.length > 0 ? await producao.from("producao_arquivos").select("id, storage_path, nome").in("id", idsDasFotos) : { data: [] as { id: string; storage_path: string; nome: string }[] };
+      if (!ativo) return;
+      setFotos(new Map((arquivos.data ?? []).map(arquivo => [arquivo.id, { storage_path: arquivo.storage_path, nome: arquivo.nome }])));
       setLinhas(lin.data ?? []);
       setMedidas(new Map((itens.data ?? []).map(item => [item.id, { comprimento_cm: item.comprimento_cm, largura_cm: item.largura_cm, altura_cm: item.altura_cm, peso_kg: item.peso_kg }])));
       setDaData((lig.data ?? []).map(ligacao => ({ item_id: ligacao.item_id, nome: porId.get(ligacao.item_id)?.nome ?? "Item", quantidade: ligacao.quantidade })));
@@ -120,6 +134,57 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
     }))), "Não foi possível sugerir os documentos. Tente de novo.");
   }
 
+  async function anexarFoto(linha: Linha, fase: FaseDaConferencia, arquivo: File) {
+    setErro(null);
+    if (!arquivo.type.startsWith("image/") || !extensaoAceita(extensaoDoArquivo(arquivo.name))) { setErro("A foto precisa ser uma imagem (JPG, PNG ou semelhante)."); return; }
+    if (arquivo.size > LIMITE_DA_FOTO) { setErro("A foto passa de 15 MB."); return; }
+    setOcupado(true);
+    const supabase = createClient();
+    const producao = clienteDaProducao(supabase);
+    const { data: dataDoDeslocamento } = await producao.from("producao_datas").select("temporada_id").eq("id", deslocamento.data_id).single();
+    if (!dataDoDeslocamento) { setOcupado(false); setErro("Não foi possível achar a temporada deste deslocamento."); return; }
+    const caminho = montarCaminhoProducao({ organizationId, temporadaId: dataDoDeslocamento.temporada_id, pasta: "deslocamentos", nomeOriginal: arquivo.name });
+    const subida = await supabase.storage.from(BUCKET_DOS_ARQUIVOS).upload(caminho, arquivo, { contentType: arquivo.type || undefined, upsert: false });
+    if (subida.error) { setOcupado(false); setErro("Não foi possível enviar a foto. Tente de novo."); return; }
+    const { data: criado, error } = await producao.from("producao_arquivos").insert({
+      organization_id: organizationId, temporada_id: dataDoDeslocamento.temporada_id, data_id: deslocamento.data_id, pasta: "deslocamentos", storage_path: caminho,
+      nome: arquivo.name, tipo: arquivo.type, tamanho: arquivo.size, sha256: await sha256(arquivo),
+    }).select("id").single();
+    if (error || !criado) {
+      await supabase.storage.from(BUCKET_DOS_ARQUIVOS).remove([caminho]);
+      setOcupado(false); setErro(error?.code === "23505" ? "Essa foto já foi enviada." : "Não foi possível guardar a foto. Tente de novo."); return;
+    }
+    const { error: ligar } = await producao.from("producao_checklist_itens").update(fase === "saida" ? { saida_foto_id: criado.id } : { volta_foto_id: criado.id }).eq("id", linha.id);
+    if (ligar) {
+      await producao.from("producao_arquivos").delete().eq("id", criado.id);
+      await supabase.storage.from(BUCKET_DOS_ARQUIVOS).remove([caminho]);
+      setOcupado(false); setErro("Não foi possível ligar a foto à linha. Tente de novo."); return;
+    }
+    setOcupado(false);
+    recarregar();
+  }
+
+  async function retirarFoto(linha: Linha, fase: FaseDaConferencia) {
+    const id = fase === "saida" ? linha.saida_foto_id : linha.volta_foto_id;
+    const foto = id ? fotos.get(id) : null;
+    if (!id) return;
+    setOcupado(true);
+    setErro(null);
+    const supabase = createClient();
+    const { error } = await clienteDaProducao(supabase).from("producao_arquivos").delete().eq("id", id);
+    if (error) { setOcupado(false); setErro("Não foi possível tirar a foto."); return; }
+    if (foto) await supabase.storage.from(BUCKET_DOS_ARQUIVOS).remove([foto.storage_path]);
+    setOcupado(false);
+    recarregar();
+  }
+
+  async function abrirFoto(foto: Foto) {
+    setErro(null);
+    const { data, error } = await createClient().storage.from(BUCKET_DOS_ARQUIVOS).createSignedUrl(foto.storage_path, 60);
+    if (error || !data) { setErro("Não foi possível abrir a foto."); return; }
+    window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+  }
+
   const resumoSaida = resumoDaConferencia(linhas ?? [], "saida");
   const resumoVolta = resumoDaConferencia(linhas ?? [], "volta");
 
@@ -135,6 +200,26 @@ export function ChecklistDoDeslocamento({ organizationId, deslocamento, veiculo,
       ) : (
         <span className="text-[0.8125rem]" style={{ color: COR_DA_SITUACAO[linha[fase]] ?? "#282525" }}>{ROTULO_DA_CONFERENCIA[fase][linha[fase]]}</span>
       )}
+      {(() => {
+        const id = fase === "saida" ? linha.saida_foto_id : linha.volta_foto_id;
+        const foto = id ? fotos.get(id) ?? null : null;
+        if (foto) {
+          return (
+            <span className="mt-1 flex items-center gap-2 text-[0.6875rem]">
+              <button type="button" onClick={() => void abrirFoto(foto)} className="flex items-center gap-1 text-black/60 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Camera size={12} aria-hidden="true" /> Ver foto</button>
+              {podeEditar && <button type="button" onClick={() => void retirarFoto(linha, fase)} disabled={ocupado} aria-label={`Tirar a foto da ${fase === "saida" ? "saída" : "volta"} de ${linha.nome}`} className="text-black/35 hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]">Tirar</button>}
+            </span>
+          );
+        }
+        if (!podeEditar) return null;
+        return (
+          <label className="mt-1 inline-flex cursor-pointer items-center gap-1 text-[0.6875rem] text-black/45 hover:text-black/70 focus-within:outline-2 focus-within:outline-[#7259B5]">
+            <Camera size={12} aria-hidden="true" /> Foto
+            <input type="file" accept="image/*" capture="environment" className="sr-only" disabled={ocupado} aria-label={`Foto da ${fase === "saida" ? "saída" : "volta"} de ${linha.nome}`}
+              onChange={event => { const escolhido = event.target.files?.[0]; event.target.value = ""; if (escolhido) void anexarFoto(linha, fase, escolhido); }} />
+          </label>
+        );
+      })()}
     </div>
   );
 

@@ -15,7 +15,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(22);
+select plan(24);
 
 create schema ck;
 grant usage on schema ck to authenticated, anon;
@@ -118,8 +118,8 @@ select is((select count(*)::int from pg_policies where schemaname = 'public' and
 select is((select count(*)::int from pg_class where oid = 'public.producao_checklist_itens'::regclass and relrowsecurity), 1, 'segurança por linha ligada');
 select is((select string_agg(conname::text || '=' || confdeltype::text, ', ' order by conname::text collate "C") from pg_constraint
            where contype = 'f' and conrelid = 'public.producao_checklist_itens'::regclass),
-          'producao_checklist_itens_deslocamento_id_fkey=c, producao_checklist_itens_item_id_fkey=n, producao_checklist_itens_organization_id_fkey=c',
-          'a linha sai com o deslocamento; apagar o item do inventário só solta a ligação');
+          'producao_checklist_itens_deslocamento_id_fkey=c, producao_checklist_itens_item_id_fkey=n, producao_checklist_itens_organization_id_fkey=c, producao_checklist_itens_saida_foto_id_fkey=n, producao_checklist_itens_volta_foto_id_fkey=n',
+          'a linha sai com o deslocamento; apagar o item do inventário ou a foto só solta a ligação');
 select ok(not has_function_privilege('authenticated', 'public.fn_producao_checklist_item_coerencia()', 'execute')
           and not has_table_privilege('anon', 'public.producao_checklist_itens', 'select'), 'a coerência não é chamável e o visitante não toca na tabela');
 select is((select string_agg(tgname::text, ' ' order by tgname::text collate "C") from pg_trigger
@@ -187,6 +187,21 @@ update public.producao_checklist_itens set saida = 'pendente', volta = 'avariado
 select ok((select saida_em is null and volta_em is not null from public.producao_checklist_itens where id = ck.id('91')), 'voltar a pendente limpa a hora da saída, e a volta ganha a dela');
 select is(ck.tenta(format('do $x$ begin delete from public.producao_itens where id = %L; if (select item_id from public.producao_checklist_itens where id = %L) is not null then raise exception %L; end if; if not exists (select 1 from public.producao_checklist_itens where id = %L) then raise exception %L; end if; end $x$',
                           ck.id('81'), ck.id('91'), 'nao_soltou', ck.id('91'), 'linha_sumiu')), 'aceito', 'apagar o item do inventário solta a ligação e a linha continua');
+
+-- ─── A foto da conferência (PD6.3, segundo corte) ───────────────────────────
+
+insert into public.producao_arquivos (id, organization_id, temporada_id, data_id, pasta, storage_path, nome, tipo, tamanho, sha256) values
+  (ck.id('f1'), ck.id('a0'), ck.id('21'), ck.id('41'), 'deslocamentos', format('%s/producoes/%s/deslocamentos/%s.jpg', ck.id('a0'), ck.id('21'), ck.id('f1')), 'lacre.jpg', 'image/jpeg', 1000, repeat('a', 64)),
+  (ck.id('f2'), ck.id('a0'), ck.id('21'), ck.id('41'), 'datas', format('%s/producoes/%s/datas/%s.jpg', ck.id('a0'), ck.id('21'), ck.id('f2')), 'outra.jpg', 'image/jpeg', 1000, repeat('b', 64)),
+  (ck.id('fb'), ck.id('b0'), ck.id('2b'), ck.id('4b'), 'deslocamentos', format('%s/producoes/%s/deslocamentos/%s.jpg', ck.id('b0'), ck.id('2b'), ck.id('fb')), 'dela.jpg', 'image/jpeg', 1000, repeat('c', 64));
+select is(array[
+            ck.tenta(format('update public.producao_checklist_itens set saida_foto_id = %L where id = %L', ck.id('f1'), ck.id('91'))),
+            ck.tenta(format('update public.producao_checklist_itens set volta_foto_id = %L where id = %L', ck.id('f2'), ck.id('91'))),
+            ck.tenta(format('update public.producao_checklist_itens set saida_foto_id = %L where id = %L', ck.id('fb'), ck.id('91')))],
+          array['aceito', '23514 foto_invalida', '23514 foto_invalida'],
+          'a foto é um arquivo da mesma organização e da pasta dos deslocamentos');
+select is(ck.tenta(format('do $x$ begin update public.producao_checklist_itens set volta_foto_id = %L where id = %L; delete from public.producao_arquivos where id = %L; if (select volta_foto_id from public.producao_checklist_itens where id = %L) is not null then raise exception %L; end if; if not exists (select 1 from public.producao_checklist_itens where id = %L) then raise exception %L; end if; end $x$',
+                          ck.id('f1'), ck.id('91'), ck.id('f1'), ck.id('91'), 'nao_soltou', ck.id('91'), 'linha_sumiu')), 'aceito', 'apagar o arquivo solta a foto e a linha continua');
 
 select * from finish();
 rollback;
