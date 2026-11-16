@@ -52,16 +52,33 @@ export function RiderContraSala({ riderId, plantaId, palcoLarguraMinM, palcoProf
     return () => { ativo = false; };
   }, []);
 
-  async function pedirACasa(item: ItemDaComparacao) {
+  /** Cria o item no acerto escolhido; devolve o que aconteceu (e já mostra na linha). A chave repetida do banco vira "ja_estava". */
+  async function pedir(item: ItemDaComparacao, ordem: number): Promise<"pedido" | "ja_estava" | "erro"> {
     const novo = itemDoAcertoDaDiferenca(item, ficha);
-    if (!novo || !acertoId || !organizationId) return;
+    if (!novo || !acertoId || !organizationId) return "erro";
+    const { error } = await clienteDaProducao(createClient()).from("producao_acerto_itens").insert({ organization_id: organizationId, acerto_id: acertoId, ordem, ...novo });
+    if (error?.code === "23505") { setPedidos(atual => ({ ...atual, [`${acertoId}|${item.chave}`]: "ja_estava" })); return "ja_estava"; }
+    if (error) { setErro(error.code === "42501" ? "Você não pode mudar este acerto." : "Não foi possível pedir à casa. Tente de novo."); return "erro"; }
+    setPedidos(atual => ({ ...atual, [`${acertoId}|${item.chave}`]: "pedido" }));
+    return "pedido";
+  }
+
+  async function pedirACasa(item: ItemDaComparacao) {
     setPedindo(item.chave);
     setErro(null);
-    const { error } = await clienteDaProducao(createClient()).from("producao_acerto_itens").insert({ organization_id: organizationId, acerto_id: acertoId, ordem: 900 + Object.keys(pedidos).length, ...novo });
+    await pedir(item, 900 + Object.keys(pedidos).length);
     setPedindo(null);
-    if (error?.code === "23505") { setPedidos(atual => ({ ...atual, [`${acertoId}|${item.chave}`]: "ja_estava" })); return; }
-    if (error) { setErro(error.code === "42501" ? "Você não pode mudar este acerto." : "Não foi possível pedir à casa. Tente de novo."); return; }
-    setPedidos(atual => ({ ...atual, [`${acertoId}|${item.chave}`]: "pedido" }));
+  }
+
+  /** Pede de uma vez todas as diferenças que ainda não estão no acerto escolhido; para na primeira falha. */
+  async function pedirTodas(pendentes: readonly ItemDaComparacao[]) {
+    setPedindo("todas");
+    setErro(null);
+    let ordem = 900 + Object.keys(pedidos).length;
+    for (const item of pendentes) {
+      if (await pedir(item, ordem++) === "erro") break;
+    }
+    setPedindo(null);
   }
 
   useEffect(() => {
@@ -101,6 +118,9 @@ export function RiderContraSala({ riderId, plantaId, palcoLarguraMinM, palcoProf
     return compararRiderComSala({ palcoLarguraMinM, palcoProfundidadeMinM, canais: canais > 0 ? canais : null, cargaW: carga > 0 ? carga : null }, ficha);
   }, [salaId, ficha, objetos, palcoLarguraMinM, palcoProfundidadeMinM]);
 
+  // As diferenças que ainda não viraram pergunta no acerto escolhido.
+  const pendentes = itens.filter(item => item.situacao !== "atende" && !pedidos[`${acertoId}|${item.chave}`]);
+
   return (
     <section aria-labelledby="rider-contra-sala">
       <h2 id="rider-contra-sala" className="mb-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Comparar com uma sala</h2>
@@ -119,7 +139,12 @@ export function RiderContraSala({ riderId, plantaId, palcoLarguraMinM, palcoProf
               <div className="mt-4">
                 <p className="mb-2 text-[0.75rem] text-black/55">{resumoDaComparacao(itens)}</p>
                 {podeEditar && itens.some(item => item.situacao !== "atende") && acertos.length > 0 && (
-                  <div className="mb-3 max-w-md"><Dropdown ariaLabel="Acerto técnico que recebe o pedido" value={acertoId} onChange={setAcertoId} options={[{ value: "", label: "Pedir à casa neste acerto…" }, ...acertos]} /></div>
+                  <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <div className="w-full max-w-md"><Dropdown ariaLabel="Acerto técnico que recebe o pedido" value={acertoId} onChange={setAcertoId} options={[{ value: "", label: "Pedir à casa neste acerto…" }, ...acertos]} /></div>
+                    {acertoId && pendentes.length > 1 && (
+                      <button type="button" onClick={() => void pedirTodas(pendentes)} disabled={pedindo !== null} className={BOTAO_PEQUENO}>{pedindo === "todas" ? "Pedindo…" : `Pedir todas à casa (${pendentes.length})`}</button>
+                    )}
+                  </div>
                 )}
                 {itens.length > 0 && (
                   <ul className="divide-y divide-black/[.06] overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
