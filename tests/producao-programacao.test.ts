@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { diasDaProgramacaoPublica, faixaDaSessao, lerSessao, pautasQueAceitamSessao, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoDaGrade } from "../lib/producao/programacao";
+import { comASessaoNoDia, diasDaProgramacaoPublica, faixaDaSessao, lerSessao, pautasQueAceitamSessao, podeMoverParaODia, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoDaGrade } from "../lib/producao/programacao";
 
 const pautas: PautaDaSessao[] = [
   { id: "p1", sala_id: "s1", titulo: "Festival", inicio: "2026-12-05", fim: "2026-12-07", situacao: "confirmada" },
@@ -92,4 +92,23 @@ test("a programação pública mostra a marca que apresenta a sessão, só com n
   const dias = diasDaProgramacaoPublica(sessoes, pautas, [{ id: "s1", nome: "Sala Grande" }], "2026-12-01", marcas);
   assert.deepEqual(dias[0].sessoes.map(item => item.marca), [{ nome: "Banco Central", site: "https://bc.example.com", logo: "https://bc.example.com/logo.png" }, null, null, null]);
   assert.deepEqual(Object.keys(dias[0].sessoes[0].marca ?? {}).sort(), ["logo", "nome", "site"]);
+});
+
+test("arrastar: a sessão só vai para outro dia dentro do período da pauta dela, nunca para o mesmo dia", () => {
+  const a = { pauta_id: "p1", dia: "2026-12-05" };
+  assert.equal(podeMoverParaODia(a, pautas, "2026-12-06"), true);
+  assert.equal(podeMoverParaODia(a, pautas, "2026-12-07"), true);
+  assert.equal(podeMoverParaODia(a, pautas, "2026-12-05"), false, "o mesmo dia não é mudança");
+  assert.equal(podeMoverParaODia(a, pautas, "2026-12-08"), false, "depois do fim da pauta");
+  assert.equal(podeMoverParaODia(a, pautas, "2026-12-04"), false, "antes do início da pauta");
+  assert.equal(podeMoverParaODia({ pauta_id: "sumiu", dia: "2026-12-05" }, pautas, "2026-12-06"), false, "pauta que não veio");
+});
+
+test("arrastar: só a sessão escolhida muda de dia (a hora fica), e dá para ver se o novo dia cria um cruzamento", () => {
+  const brutas = [sessao("a", "p1", "2026-12-05", "18:00", "20:00"), sessao("b", "p1", "2026-12-06", "19:00", "21:00"), sessao("c", "p1", "2026-12-07", "10:00", "11:00")];
+  const depois = comASessaoNoDia(brutas, "a", "2026-12-06");
+  assert.deepEqual(depois.map(item => [item.id, item.dia, item.inicio]), [["a", "2026-12-06", "18:00"], ["b", "2026-12-06", "19:00"], ["c", "2026-12-07", "10:00"]]);
+  assert.equal(brutas[0].dia, "2026-12-05", "a lista de antes não muda");
+  assert.deepEqual([...sessoesEmConflito(sessoesComSala(depois, pautas))].sort(), ["a", "b"], "a e b passam a se cruzar no dia 06");
+  assert.equal(sessoesEmConflito(sessoesComSala(comASessaoNoDia(brutas, "a", "2026-12-07"), pautas)).size, 0, "no dia 07 não cruza com ninguém");
 });

@@ -11,7 +11,7 @@ import { diaDaSemana, diaEMes } from "@/lib/producao/agenda";
 import { somarDias } from "@/lib/producao/tarefas";
 import { diasDaSemana, horarioCurto, segundaDaSemana } from "@/lib/producao/turnos";
 import {
-  faixaDaSessao, lerSessao, pautasQueAceitamSessao, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoComSala, type SessaoDaGrade,
+  comASessaoNoDia, faixaDaSessao, lerSessao, podeMoverParaODia, pautasQueAceitamSessao, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoComSala, type SessaoDaGrade,
 } from "@/lib/producao/programacao";
 import { DetailPageContent } from "@/components/ui/DetailPagePrimitives";
 import { TopSheet } from "@/components/ui/TopSheet";
@@ -120,6 +120,9 @@ export default function ProgramacaoPage() {
   const [folha, setFolha] = useState<Folha | null>(null);
   const [marcas, setMarcas] = useState<MarcaDaLista[]>([]);
   const [marcasAbertas, setMarcasAbertas] = useState(false);
+  const [arrastando, setArrastando] = useState<SessaoComSala | null>(null);
+  const [sobre, setSobre] = useState<string | null>(null);
+  const [aviso, setAviso] = useState<string | null>(null);
   const [versaoDasMarcas, setVersaoDasMarcas] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
@@ -172,6 +175,24 @@ export default function ProgramacaoPage() {
   const sessoes = useMemo(() => sessoesComSala(sessoesBrutas, pautas), [sessoesBrutas, pautas]);
   const conflitos = useMemo(() => sessoesEmConflito(sessoes), [sessoes]);
 
+  /** Solta a sessão em outro dia da mesma sala: mostra na hora, grava, e se der erro volta como estava. */
+  async function moverParaODia(item: SessaoComSala, novoDia: string) {
+    setArrastando(null);
+    setSobre(null);
+    setErro(null);
+    setAviso(null);
+    const antes = sessoesBrutas;
+    setSessoesBrutas(atuais => comASessaoNoDia(atuais, item.id, novoDia));
+    const { error } = await clienteDaProducao(createClient()).from("producao_sessoes").update({ dia: novoDia }).eq("id", item.id);
+    if (error) {
+      setSessoesBrutas(antes);
+      setErro(error.code === "42501" ? "Você não pode mudar a programação desta sala." : error.code === "23514" ? "O dia fica fora do período da pauta." : "Não foi possível mover a sessão. Tente de novo.");
+      return;
+    }
+    if (sessoesEmConflito(sessoesComSala(comASessaoNoDia(antes, item.id, novoDia), pautas)).has(item.id)) setAviso(`A sessão foi para ${diaEMes(novoDia)}, mas cruza com outra da mesma sala.`);
+    setVersao(atual => atual + 1);
+  }
+
   return (
     <div className="min-h-full">
       <header className="border-b" style={{ borderColor: "rgba(13,13,13,.06)" }}>
@@ -181,6 +202,7 @@ export default function ProgramacaoPage() {
       </header>
       <DetailPageContent>
         {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        {aviso && <p role="status" className="mb-4 flex items-center gap-2 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B07A14]" style={{ borderColor: "#B07A1447" }}><TriangleAlert size={13} aria-hidden="true" /> {aviso}</p>}
         {espacos === null ? (
           <div className="h-32 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
         ) : espacos.length === 0 ? (
@@ -222,11 +244,16 @@ export default function ProgramacaoPage() {
                           const doDia = sessoesDaSalaNoDia(sessoes, sala.id, dia);
                           const comPauta = pautasQueAceitamSessao(pautas, sala.id, dia).length > 0;
                           return (
-                            <td key={dia} className={`px-1.5 py-2 ${dia === hoje ? "bg-black/[.03]" : ""}`}>
+                            <td key={dia}
+                              onDragOver={event => { if (arrastando && arrastando.sala_id === sala.id && podeMoverParaODia(arrastando, pautas, dia)) { event.preventDefault(); setSobre(`${sala.id}|${dia}`); } }}
+                              onDragLeave={() => setSobre(atual => (atual === `${sala.id}|${dia}` ? null : atual))}
+                              onDrop={event => { event.preventDefault(); if (arrastando && arrastando.sala_id === sala.id && podeMoverParaODia(arrastando, pautas, dia)) void moverParaODia(arrastando, dia); }}
+                              className={`px-1.5 py-2 transition ${sobre === `${sala.id}|${dia}` ? "bg-black/[.06] ring-1 ring-inset ring-black/25" : dia === hoje ? "bg-black/[.03]" : ""}`}>
                               <div className="space-y-1">
                                 {doDia.map(item => (
                                   <button key={item.id} type="button" disabled={!podeEditar} onClick={() => setFolha({ sessao: item, salaId: sala.id, dia })} title={item.notas ?? undefined}
-                                    className={`block w-full rounded border px-1.5 py-1 text-left text-[0.6875rem] transition enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${conflitos.has(item.id) ? "text-[#B07A14]" : "text-[#282525]"}`}
+                                    draggable={podeEditar} onDragStart={event => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", item.id); setArrastando(item); setAviso(null); }} onDragEnd={() => { setArrastando(null); setSobre(null); }}
+                                    className={`block w-full rounded border px-1.5 py-1 text-left text-[0.6875rem] transition enabled:cursor-grab enabled:hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-[#7259B5] ${arrastando?.id === item.id ? "opacity-40" : ""} ${conflitos.has(item.id) ? "text-[#B07A14]" : "text-[#282525]"}`}
                                     style={{ borderColor: conflitos.has(item.id) ? "#B07A1447" : "rgba(13,13,13,.12)" }}>
                                     <span className="block tabular-nums">{faixaDaSessao(item)}</span>
                                     <span className="block truncate text-[0.625rem] text-black/55">{item.tituloFinal}</span>
