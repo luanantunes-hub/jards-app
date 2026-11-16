@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { comASessaoNoDia, diasDaProgramacaoPublica, faixaDaSessao, lerSessao, pautasQueAceitamSessao, podeMoverParaODia, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoDaGrade } from "../lib/producao/programacao";
+import { comASessaoNoDia, comASessaoNoLugar, destinoDaSessao, diasDaProgramacaoPublica, faixaDaSessao, lerSessao, pautasQueAceitamSessao, podeMoverParaODia, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoDaGrade } from "../lib/producao/programacao";
 
 const pautas: PautaDaSessao[] = [
   { id: "p1", sala_id: "s1", titulo: "Festival", inicio: "2026-12-05", fim: "2026-12-07", situacao: "confirmada" },
@@ -111,4 +111,29 @@ test("arrastar: só a sessão escolhida muda de dia (a hora fica), e dá para ve
   assert.equal(brutas[0].dia, "2026-12-05", "a lista de antes não muda");
   assert.deepEqual([...sessoesEmConflito(sessoesComSala(depois, pautas))].sort(), ["a", "b"], "a e b passam a se cruzar no dia 06");
   assert.equal(sessoesEmConflito(sessoesComSala(comASessaoNoDia(brutas, "a", "2026-12-07"), pautas)).size, 0, "no dia 07 não cruza com ninguém");
+});
+
+test("arrastar entre salas: a pauta da sala de destino que cobre o dia recebe a sessão", () => {
+  const a = { pauta_id: "p1", dia: "2026-12-05" };
+  assert.deepEqual(destinoDaSessao(a, pautas, "s2", "2026-12-05"), { pautaId: "p2" }, "outra sala, mesmo dia");
+  assert.deepEqual(destinoDaSessao(a, pautas, "s1", "2026-12-06"), { pautaId: "p1" }, "mesma sala, outro dia: a pauta fica (a cancelada p3 não recebe)");
+  assert.equal(destinoDaSessao(a, pautas, "s1", "2026-12-05"), null, "já está lá");
+  assert.equal(destinoDaSessao(a, pautas, "s2", "2026-12-06"), null, "a sala de destino não tem pauta nesse dia");
+  assert.equal(destinoDaSessao(a, pautas, "s3", "2026-12-05"), null, "sala sem pauta");
+  assert.deepEqual(destinoDaSessao({ pauta_id: "p3", dia: "2026-12-06" }, pautas, "s1", "2026-12-06"), { pautaId: "p1" }, "a sessão de uma pauta cancelada passa para a que cobre o dia");
+});
+
+test("arrastar entre salas: a pauta de hoje da sessão vale mais, e sem ela vale a mais antiga", () => {
+  const duas: PautaDaSessao[] = [
+    { id: "b", sala_id: "s1", titulo: "B", inicio: "2026-12-06", fim: "2026-12-08", situacao: "confirmada" },
+    { id: "a", sala_id: "s1", titulo: "A", inicio: "2026-12-05", fim: "2026-12-08", situacao: "confirmada" },
+  ];
+  assert.deepEqual(destinoDaSessao({ pauta_id: "b", dia: "2026-12-06" }, duas, "s1", "2026-12-07"), { pautaId: "b" });
+  assert.deepEqual(destinoDaSessao({ pauta_id: "x", dia: "2026-12-06" }, duas, "s1", "2026-12-07"), { pautaId: "a" });
+});
+
+test("arrastar entre salas: só a sessão escolhida muda de dia e de pauta (a hora fica)", () => {
+  const brutas = [sessao("a", "p1", "2026-12-05", "18:00", "20:00"), sessao("b", "p1", "2026-12-06", "19:00", "21:00")];
+  const depois = comASessaoNoLugar(brutas, "a", "2026-12-05", "p2");
+  assert.deepEqual(depois.map(item => [item.id, item.pauta_id, item.dia, item.inicio]), [["a", "p2", "2026-12-05", "18:00"], ["b", "p1", "2026-12-06", "19:00"]]);
 });

@@ -57,6 +57,23 @@ export function comASessaoNoDia<T extends { id: string; dia: string }>(sessoes: 
   return sessoes.map(sessao => (sessao.id === id ? { ...sessao, dia: novoDia } : sessao));
 }
 
+/** As sessões com uma delas em outro dia e/ou em outra pauta (portanto em outra sala); a hora fica. Mostra na grade antes de o banco responder. */
+export function comASessaoNoLugar<T extends { id: string; dia: string; pauta_id: string }>(sessoes: readonly T[], id: string, novoDia: string, novaPautaId: string): T[] {
+  return sessoes.map(sessao => (sessao.id === id ? { ...sessao, dia: novoDia, pauta_id: novaPautaId } : sessao));
+}
+
+/**
+ * Para onde vai a sessão solta numa sala e num dia (PD8.1, arrastar entre salas): a pauta da sala que cobre o dia. Se a pauta de hoje da sessão serve,
+ * ela fica; senão vale a primeira que serve (a mais antiga, depois pelo id). Pauta cancelada não recebe. Devolve nulo quando não há pauta que sirva
+ * ou quando a sessão já está lá (mesmo dia, mesma pauta): nada a fazer.
+ */
+export function destinoDaSessao(sessao: Pick<SessaoComSala, "pauta_id" | "dia">, pautas: readonly PautaDaSessao[], salaId: string, dia: string): { pautaId: string } | null {
+  const candidatas = pautasQueAceitamSessao(pautas, salaId, dia).sort((a, b) => a.inicio.localeCompare(b.inicio) || a.id.localeCompare(b.id));
+  if (candidatas.length === 0) return null;
+  const pauta = candidatas.find(item => item.id === sessao.pauta_id) ?? candidatas[0];
+  return pauta.id === sessao.pauta_id && dia === sessao.dia ? null : { pautaId: pauta.id };
+}
+
 export function faixaDaSessao(sessao: Pick<SessaoDaGrade, "inicio" | "fim">): string {
   return `${horarioCurto(sessao.inicio)}–${horarioCurto(sessao.fim)}`;
 }

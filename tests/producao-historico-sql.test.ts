@@ -95,7 +95,7 @@ const ORIGENS_POSTERIORES: Record<string, { fora: string; rotulos: string }> = {
   producao_sites: { fora: "", rotulos: "nome" },
   producao_site_paginas: { fora: "blocos,blocos_publicados", rotulos: "titulo" },
   // As sessões da grade de programação (PD8.1): só dia, hora, título e notas; o dia é o rótulo.
-  producao_sessoes: { fora: "", rotulos: "dia" },
+  producao_sessoes: { fora: "pauta_id", rotulos: "dia" },
   // O acerto técnico (PD4.1 e PD4.2): o modelo deixa de fora o JSON dos campos (grande); o acerto deixa de fora o hash do
   // link e quem respondeu (nome e e-mail digitados são dado pessoal).
   producao_modelos_acerto: { fora: "campos", rotulos: "nome" },
@@ -350,7 +350,7 @@ test("a lista de exclusão: toda coluna listada existe, e nenhuma coluna de apar
   // Hoje as colunas fora são as que repetem o autor, nos arquivos o nome (dado de pessoa na pasta pessoas), o caminho, a
   // impressão digital e quem enviou, e nas pessoas da equipe o contato (e-mail e telefone).
   assert.deepEqual([...gatilhos].filter(([, g]) => g.fora.length).map(([t, g]) => `${t}: ${g.fora.join(",")}`).sort(),
-    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_documentos: titulo,notas", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_matriculas: email,telefone", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_plantas: fundo", "producao_site_paginas: blocos,blocos_publicados", "producao_visitas_agendamentos: email,telefone,observacao,consentiu_em", "producao_voluntarios: email,telefone,disponibilidade"]);
+    ["producao_acertos: token_hash,respondente_nome,respondente_email", "producao_acessibilidade: notas", "producao_arquivos: enviado_por,nome,sha256,storage_path", "producao_cartoes_dia: localizador", "producao_convites: token_hash,chegada_dia,chegada_hora,saida_dia,saida_hora,observacao", "producao_deslocamentos: localizador", "producao_documentos: titulo,notas", "producao_funcoes: definido_por", "producao_hospedagens: localizador", "producao_matriculas: email,telefone", "producao_modelos_acerto: campos", "producao_ocorrencias: descricao,providencia", "producao_pessoas: email,telefone", "producao_plantas: fundo", "producao_sessoes: pauta_id", "producao_site_paginas: blocos,blocos_publicados", "producao_visitas_agendamentos: email,telefone,observacao,consentiu_em", "producao_voluntarios: email,telefone,disponibilidade"]);
 });
 
 test("o gatilho: uma linha por campo, nada de controle, nunca o histórico do histórico, o autor só se existe e o apagar da organização não trava", async () => {
