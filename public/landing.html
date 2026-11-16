@@ -641,6 +641,12 @@
     .feature-ledger--foto .ledger-item:last-child { border-bottom:1px solid rgba(40,37,37,.10); }
     .feature-ledger--foto .ledger-item:hover { background:#fff; border-color:rgba(40,37,37,.22); }
     @media (min-width: 640px) { .feature-ledger--foto .ledger-item h3 { min-height:2.2em; } }
+    .ledger-item--link { color:inherit; text-decoration:none; cursor:pointer; }
+    .ledger-item--link:focus-visible { outline:2px solid #684DB0; outline-offset:3px; }
+    .ledger-ir { display:inline-flex; align-items:center; gap:8px; margin-top:auto; padding-top:20px; font-size:13px; font-weight:500; color:var(--alt-ink,#282525); }
+    .ledger-ir .ph { font-size:14px; transition:transform .2s ease; }
+    .ledger-item--link:hover .ledger-ir .ph, .ledger-item--link:focus-visible .ledger-ir .ph { transform:translateX(3px); }
+    .feature-ledger--foto .ledger-item--link:hover { border-color:rgba(104,77,176,.45); }
     .ledger-ilustra { display:block; width:100%; height:168px; margin:0 0 24px; object-fit:contain; object-position:center; }
     @media (max-width: 639px) {
       .feature-ledger--foto .ledger-side { grid-template-columns:1fr; gap:16px; margin-top:24px; }
@@ -2073,18 +2079,20 @@
         </p>
       </div>
       <div class="ledger-side">
-        <article class="ledger-item">
+        <a class="ledger-item ledger-item--link" href="/incentivadores">
           <img class="ledger-ilustra" src="assets/brand/ilustracao-disco-voador.webp" width="760" height="659" loading="lazy" decoding="async" alt="" />
           <p class="ledger-num">INTELIGÊNCIA</p>
           <h3>Saiba onde buscar.</h3>
           <p>Quem patrocina cada lei, quanto investiu e os editais abertos.</p>
-        </article>
-        <article class="ledger-item">
+          <span class="ledger-ir">Conhecer a Inteligência <i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+        </a>
+        <a class="ledger-item ledger-item--link" href="/crm">
           <img class="ledger-ilustra" src="assets/brand/ilustracao-lampada.webp" width="660" height="772" loading="lazy" decoding="async" alt="" />
           <p class="ledger-num">CRM</p>
           <h3>Acompanhe cada negociação.</h3>
           <p>Empresas, contatos, propostas, atividades e prazos, até a renovação.</p>
-        </article>
+          <span class="ledger-ir">Conhecer o CRM <i class="ph ph-arrow-right" aria-hidden="true"></i></span>
+        </a>
       </div>
     </div>
   </div>
