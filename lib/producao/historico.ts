@@ -4,7 +4,7 @@
 import type { AcaoDoHistorico } from "@/lib/producao/estados";
 
 export type LinhaDoHistorico = {
-  id: number; entidade: string; acao: AcaoDoHistorico; campo: string | null; antes: string | null; depois: string | null; quando: string;
+  id: number; entidade: string; acao: AcaoDoHistorico; campo: string | null; antes: string | null; depois: string | null; quando: string; quem?: string | null;
 };
 
 const COISA: Record<string, string> = {

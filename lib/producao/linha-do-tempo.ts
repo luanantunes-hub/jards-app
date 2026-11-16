@@ -57,3 +57,19 @@ export function agruparPorDia<T extends { quando: string }>(linhas: readonly T[]
   }
   return grupos;
 }
+
+export type MembroDaLinhaDoTempo = { user_id: string; full_name: string | null };
+
+/** O nome de quem fez a mudança, pelos membros da organização; vazio se a linha não guarda quem (rotina do sistema) ou se a pessoa saiu da organização. */
+export function nomeDeQuemFez(quem: string | null | undefined, membros: readonly MembroDaLinhaDoTempo[]): string {
+  if (!quem) return "";
+  return membros.find(membro => membro.user_id === quem)?.full_name?.trim() ?? "";
+}
+
+/** As pessoas do filtro: só quem tem nome, em ordem alfabética. */
+export function pessoasDoFiltro(membros: readonly MembroDaLinhaDoTempo[]): { id: string; nome: string }[] {
+  return membros
+    .filter((membro): membro is { user_id: string; full_name: string } => Boolean(membro.full_name?.trim()))
+    .map(membro => ({ id: membro.user_id, nome: membro.full_name.trim() }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}

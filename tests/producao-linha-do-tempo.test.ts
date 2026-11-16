@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import { fraseDoHistorico, rotuloDaEntidade } from "../lib/producao/historico";
-import { agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, recortarPagina, TAMANHO_DA_PAGINA } from "../lib/producao/linha-do-tempo";
+import { nomeDeQuemFez, pessoasDoFiltro, agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, recortarPagina, TAMANHO_DA_PAGINA } from "../lib/producao/linha-do-tempo";
 
 /** As tabelas da produção com gatilho de histórico, lidas das migrations (uma tabela nova sem área nem frase reprova aqui). */
 async function tabelasComHistorico(): Promise<string[]> {
@@ -57,4 +57,18 @@ test("agrupar por dia mantém a ordem e junta o mesmo dia", () => {
   const grupos = agruparPorDia(linhas);
   assert.deepEqual(grupos.map(grupo => [grupo.dia, grupo.linhas.map(linha => linha.id)]), [["2026-11-20", [1, 2]], ["2026-11-19", [3]]]);
   assert.deepEqual(agruparPorDia([]), []);
+});
+
+test("quem fez: o nome vem dos membros da organização; sem quem, ou de quem saiu, fica vazio", () => {
+  const membros = [{ user_id: "u1", full_name: " Marina Alves " }, { user_id: "u2", full_name: null }];
+  assert.equal(nomeDeQuemFez("u1", membros), "Marina Alves");
+  assert.equal(nomeDeQuemFez("u2", membros), "");
+  assert.equal(nomeDeQuemFez("saiu", membros), "");
+  assert.equal(nomeDeQuemFez(null, membros), "");
+  assert.equal(nomeDeQuemFez(undefined, membros), "");
+});
+
+test("o filtro por pessoa lista só quem tem nome, em ordem alfabética", () => {
+  const membros = [{ user_id: "u3", full_name: "Zé Lima" }, { user_id: "u2", full_name: null }, { user_id: "u1", full_name: "Ana Souza" }, { user_id: "u4", full_name: "   " }];
+  assert.deepEqual(pessoasDoFiltro(membros), [{ id: "u1", nome: "Ana Souza" }, { id: "u3", nome: "Zé Lima" }]);
 });
