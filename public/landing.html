@@ -605,9 +605,19 @@
     /* sem moldura: a foto e o texto ficam direto no fundo branco da seção */
     .feature-ledger--foto { align-items:center; column-gap:64px; overflow:visible; border:0; background:transparent; box-shadow:none; backdrop-filter:none; -webkit-backdrop-filter:none; }
     .platform-forces:has(.feature-ledger--foto)::after { display:none; }
-    .ledger-foto { margin:0; padding:0; }
+    .ledger-foto { position:relative; margin:0; padding:0; }
     .ledger-foto img { display:block; width:100%; height:100%; min-height:360px; object-fit:cover; object-position:50% 42%; border-radius:4px; }
     .ledger-body { display:flex; flex-direction:column; justify-content:center; }
+    /* Os dois balões sobre a foto: um por vez, o do tamanduá (Relacionamento = CRM) e depois o da mulher (Dados = Inteligência).
+       A foto usa object-fit:cover, então cada balão é posicionado pelo ponto da foto original (960×1200, em --x e --y) e segue o recorte em qualquer tamanho. */
+    .ledger-balaos { position:absolute; inset:0; container-type:size; pointer-events:none; }
+    .ledger-balao { --s:max(calc(100cqw / 960), calc(100cqh / 1200)); position:absolute; left:calc((100cqw - 960 * var(--s)) * .5 + var(--x) * var(--s)); top:calc((100cqh - 1200 * var(--s)) * .42 + var(--y) * var(--s)); transform:translate(-50%,-50%); padding:.75em 1.2em; border:1px solid rgba(40,37,37,.12); border-radius:4px; background:rgba(255,255,255,.96); box-shadow:0 18px 44px rgba(52,42,78,.17),0 4px 14px rgba(40,37,37,.09); color:#282525; font-size:clamp(8px,3.3cqw,11px); font-weight:700; line-height:1; letter-spacing:.08em; text-transform:uppercase; white-space:nowrap; }
+    @keyframes ledger-balao-a { 0% { opacity:0; transform:translate(-50%,calc(-50% + 6px)); } 6%, 38% { opacity:1; transform:translate(-50%,-50%); } 46%, 100% { opacity:0; transform:translate(-50%,-50%); } }
+    @keyframes ledger-balao-b { 0%, 50% { opacity:0; transform:translate(-50%,calc(-50% + 6px)); } 56%, 88% { opacity:1; transform:translate(-50%,-50%); } 96%, 100% { opacity:0; transform:translate(-50%,-50%); } }
+    @media (prefers-reduced-motion: no-preference) {
+      .ledger-balao--a { animation:ledger-balao-a 10s cubic-bezier(.4,0,.2,1) infinite; }
+      .ledger-balao--b { animation:ledger-balao-b 10s cubic-bezier(.4,0,.2,1) infinite; }
+    }
     .feature-ledger--foto .ledger-main { padding:0 0 36px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
     .feature-ledger--foto .ledger-item { padding-left:0; padding-right:0; }
     .feature-ledger--foto .ledger-side { grid-template-rows:repeat(2,auto); }
@@ -2027,6 +2037,10 @@
     <figure class="ledger-foto">
       <img src="assets/brand/cafe-tamandua-conversa.jpg" width="960" height="1200" loading="lazy" decoding="async"
            alt="Mulher de cabelo grisalho em um café, pensativa, ouvindo o tamanduá do Jards de terno conversar na mesa ao lado" />
+      <div class="ledger-balaos" aria-hidden="true">
+        <span class="ledger-balao ledger-balao--a" style="--x:240;--y:640">Relacionamento</span>
+        <span class="ledger-balao ledger-balao--b" style="--x:640;--y:575">Dados</span>
+      </div>
     </figure>
     <div class="ledger-body">
       <div class="ledger-main">
