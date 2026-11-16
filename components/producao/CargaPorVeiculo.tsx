@@ -5,7 +5,7 @@ import { TriangleAlert } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { diaEMes } from "@/lib/producao/agenda";
-import { cargaPorVeiculo, itensParaPreencher, type CargaDoVeiculo } from "@/lib/producao/checklist";
+import { cargaPorVeiculo, itensParaPreencher, ondeEstaCadaItem, ROTULO_DA_SITUACAO_DO_ITEM, type CargaDoVeiculo, type LinhaParaOnde, type OndeEstaOItem } from "@/lib/producao/checklist";
 import { ROTULO_DO_DESLOCAMENTO } from "@/lib/producao/deslocamentos";
 import type { TipoDeDeslocamento } from "@/lib/producao/estados";
 
@@ -20,6 +20,7 @@ const numero = (n: number, casas = 0) => n.toLocaleString("pt-BR", { minimumFrac
 export function CargaPorVeiculo({ organizationId, temporadaId }: { organizationId: string; temporadaId: string }) {
   const [carga, setCarga] = useState<CargaDoVeiculo[] | null>(null);
   const [semTransporte, setSemTransporte] = useState<SemTransporte[]>([]);
+  const [onde, setOnde] = useState<OndeEstaOItem[]>([]);
 
   useEffect(() => {
     let ativo = true;
@@ -35,8 +36,8 @@ export function CargaPorVeiculo({ organizationId, temporadaId }: { organizationI
       ]);
       const idsDosDeslocamentos = (des.data ?? []).map(item => item.id);
       const linhas = idsDosDeslocamentos.length > 0
-        ? await producao.from("producao_checklist_itens").select("deslocamento_id, tipo, quantidade, item_id").in("deslocamento_id", idsDosDeslocamentos)
-        : { data: [] as { deslocamento_id: string; tipo: "item" | "documento"; quantidade: number; item_id: string | null }[] };
+        ? await producao.from("producao_checklist_itens").select("deslocamento_id, tipo, quantidade, item_id, nome, saida, volta").in("deslocamento_id", idsDosDeslocamentos)
+        : { data: [] as LinhaParaOnde[] };
       const idsDosVeiculos = [...new Set((des.data ?? []).map(item => item.veiculo_id).filter((id): id is string => Boolean(id)))];
       const idsDosItens = [...new Set([...(linhas.data ?? []).map(linha => linha.item_id), ...(lig.data ?? []).map(ligacao => ligacao.item_id)].filter((id): id is string => Boolean(id)))];
       const [vei, itens] = await Promise.all([
@@ -46,13 +47,12 @@ export function CargaPorVeiculo({ organizationId, temporadaId }: { organizationI
       if (!ativo) return;
       const medidas = new Map((itens.data ?? []).map(item => [item.id, { comprimento_cm: item.comprimento_cm, largura_cm: item.largura_cm, altura_cm: item.altura_cm, peso_kg: item.peso_kg }]));
       const veiculos = new Map((vei.data ?? []).map(item => [item.id, item]));
-      setCarga(cargaPorVeiculo(
-        (des.data ?? []).map(item => ({
-          id: item.id, veiculo_id: item.veiculo_id, dia: diaDaData.get(item.data_id) ?? "",
-          rotulo: [ROTULO_DO_DESLOCAMENTO[item.tipo as TipoDeDeslocamento], [item.origem, item.destino].filter(Boolean).join(" → ")].filter(Boolean).join(" "),
-        })),
-        linhas.data ?? [], medidas, veiculos,
-      ));
+      const doTrecho = (des.data ?? []).map(item => ({
+        id: item.id, veiculo_id: item.veiculo_id, dia: diaDaData.get(item.data_id) ?? "",
+        rotulo: [ROTULO_DO_DESLOCAMENTO[item.tipo as TipoDeDeslocamento], [item.origem, item.destino].filter(Boolean).join(" → ")].filter(Boolean).join(" "),
+      }));
+      setCarga(cargaPorVeiculo(doTrecho, linhas.data ?? [], medidas, veiculos));
+      setOnde(ondeEstaCadaItem(doTrecho, (linhas.data ?? []) as LinhaParaOnde[]));
       // O que a temporada leva (a maior quantidade que uma data pede) e ainda não está no checklist de nenhum deslocamento.
       const necessarios = new Map<string, number>();
       for (const ligacao of lig.data ?? []) necessarios.set(ligacao.item_id, Math.max(necessarios.get(ligacao.item_id) ?? 0, ligacao.quantidade));
@@ -65,6 +65,7 @@ export function CargaPorVeiculo({ organizationId, temporadaId }: { organizationI
 
   if (carga === null || (carga.length === 0 && semTransporte.length === 0)) return null;
   return (
+    <>
     <section aria-labelledby="carga-por-veiculo" className="mt-10">
       <h2 id="carga-por-veiculo" className="mb-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Carga por veículo</h2>
       {carga.length > 0 && (
@@ -95,5 +96,23 @@ export function CargaPorVeiculo({ organizationId, temporadaId }: { organizationI
         </div>
       )}
     </section>
+      {onde.length > 0 && (
+        <section aria-labelledby="onde-esta-cada-item" className="mt-10">
+          <h2 id="onde-esta-cada-item" className="mb-3 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Onde está cada item</h2>
+          <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+            {onde.map(item => {
+              const problema = item.situacao === "faltou" || item.situacao === "avariado";
+              return (
+                <li key={item.chave} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-4 py-2.5">
+                  <span className="min-w-0 flex-1 basis-56 text-[0.8125rem] text-[#282525]">{item.nome}{item.quantidade > 1 ? <span className="tabular-nums text-black/45"> × {numero(item.quantidade)}</span> : null}</span>
+                  <span className="text-[0.75rem] text-black/55">{item.texto}{item.dia ? ` · ${item.deslocamento}, ${diaEMes(item.dia)}` : ` · ${item.deslocamento}`}</span>
+                  <span className="rounded border bg-white px-2 py-1 text-[0.625rem] font-medium" style={problema ? { borderColor: "#B23B3B47", color: "#B23B3B" } : { borderColor: "rgba(13,13,13,.16)", color: "rgba(13,13,13,.6)" }}>{ROTULO_DA_SITUACAO_DO_ITEM[item.situacao]}</span>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
+    </>
   );
 }
