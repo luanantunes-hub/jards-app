@@ -11,7 +11,7 @@ import { diaDaSemana, diaEMes } from "@/lib/producao/agenda";
 import { somarDias } from "@/lib/producao/tarefas";
 import { diasDaSemana, horarioCurto, segundaDaSemana } from "@/lib/producao/turnos";
 import {
-  comASessaoNoDia, faixaDaSessao, lerSessao, podeMoverParaODia, pautasQueAceitamSessao, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoComSala, type SessaoDaGrade,
+  comASessaoNoLugar, destinoDaSessao, faixaDaSessao, lerSessao, pautasQueAceitamSessao, sessoesComSala, sessoesDaSalaNoDia, sessoesEmConflito, type PautaDaSessao, type SessaoComSala, type SessaoDaGrade,
 } from "@/lib/producao/programacao";
 import { DetailPageContent } from "@/components/ui/DetailPagePrimitives";
 import { TopSheet } from "@/components/ui/TopSheet";
@@ -175,21 +175,24 @@ export default function ProgramacaoPage() {
   const sessoes = useMemo(() => sessoesComSala(sessoesBrutas, pautas), [sessoesBrutas, pautas]);
   const conflitos = useMemo(() => sessoesEmConflito(sessoes), [sessoes]);
 
-  /** Solta a sessão em outro dia da mesma sala: mostra na hora, grava, e se der erro volta como estava. */
-  async function moverParaODia(item: SessaoComSala, novoDia: string) {
+  /** Solta a sessão num dia e numa sala (a mesma ou outra): mostra na hora, grava, e se der erro volta como estava. */
+  async function moverParaOLugar(item: SessaoComSala, salaId: string, novoDia: string) {
     setArrastando(null);
     setSobre(null);
     setErro(null);
     setAviso(null);
+    const destino = destinoDaSessao(item, pautas, salaId, novoDia);
+    if (!destino) return;
     const antes = sessoesBrutas;
-    setSessoesBrutas(atuais => comASessaoNoDia(atuais, item.id, novoDia));
-    const { error } = await clienteDaProducao(createClient()).from("producao_sessoes").update({ dia: novoDia }).eq("id", item.id);
+    const depois = comASessaoNoLugar(antes, item.id, novoDia, destino.pautaId);
+    setSessoesBrutas(depois);
+    const { error } = await clienteDaProducao(createClient()).from("producao_sessoes").update({ dia: novoDia, pauta_id: destino.pautaId }).eq("id", item.id);
     if (error) {
       setSessoesBrutas(antes);
-      setErro(error.code === "42501" ? "Você não pode mudar a programação desta sala." : error.code === "23514" ? "O dia fica fora do período da pauta." : "Não foi possível mover a sessão. Tente de novo.");
+      setErro(error.code === "42501" ? "Você não pode mudar a programação desta sala." : error.code === "23514" ? "O dia fica fora do período da pauta, ou a pauta está cancelada." : "Não foi possível mover a sessão. Tente de novo.");
       return;
     }
-    if (sessoesEmConflito(sessoesComSala(comASessaoNoDia(antes, item.id, novoDia), pautas)).has(item.id)) setAviso(`A sessão foi para ${diaEMes(novoDia)}, mas cruza com outra da mesma sala.`);
+    if (sessoesEmConflito(sessoesComSala(depois, pautas)).has(item.id)) setAviso(`A sessão foi para ${diaEMes(novoDia)}, mas cruza com outra da mesma sala.`);
     setVersao(atual => atual + 1);
   }
 
@@ -245,9 +248,9 @@ export default function ProgramacaoPage() {
                           const comPauta = pautasQueAceitamSessao(pautas, sala.id, dia).length > 0;
                           return (
                             <td key={dia}
-                              onDragOver={event => { if (arrastando && arrastando.sala_id === sala.id && podeMoverParaODia(arrastando, pautas, dia)) { event.preventDefault(); setSobre(`${sala.id}|${dia}`); } }}
+                              onDragOver={event => { if (arrastando && destinoDaSessao(arrastando, pautas, sala.id, dia)) { event.preventDefault(); setSobre(`${sala.id}|${dia}`); } }}
                               onDragLeave={() => setSobre(atual => (atual === `${sala.id}|${dia}` ? null : atual))}
-                              onDrop={event => { event.preventDefault(); if (arrastando && arrastando.sala_id === sala.id && podeMoverParaODia(arrastando, pautas, dia)) void moverParaODia(arrastando, dia); }}
+                              onDrop={event => { event.preventDefault(); if (arrastando && destinoDaSessao(arrastando, pautas, sala.id, dia)) void moverParaOLugar(arrastando, sala.id, dia); }}
                               className={`px-1.5 py-2 transition ${sobre === `${sala.id}|${dia}` ? "bg-black/[.06] ring-1 ring-inset ring-black/25" : dia === hoje ? "bg-black/[.03]" : ""}`}>
                               <div className="space-y-1">
                                 {doDia.map(item => (

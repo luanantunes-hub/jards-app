@@ -39,10 +39,12 @@ begin
   insert into public.producao_espacos (id, organization_id, nome, tipo) values
     (ss.id('31'), ss.id('a0'), 'SS E1', 'Teatro'), (ss.id('3b'), ss.id('b0'), 'SS EB', 'Teatro'), (ss.id('3c'), ss.id('c0'), 'SS EC', 'Teatro');
   insert into public.producao_salas (id, organization_id, espaco_id, nome) values
-    (ss.id('71'), ss.id('a0'), ss.id('31'), 'S1'), (ss.id('7b'), ss.id('b0'), ss.id('3b'), 'SB'), (ss.id('7c'), ss.id('c0'), ss.id('3c'), 'SC');
+    (ss.id('71'), ss.id('a0'), ss.id('31'), 'S1'), (ss.id('72'), ss.id('a0'), ss.id('31'), 'S2'), (ss.id('7b'), ss.id('b0'), ss.id('3b'), 'SB'), (ss.id('7c'), ss.id('c0'), ss.id('3c'), 'SC');
   insert into public.producao_pautas (id, organization_id, sala_id, titulo, inicio, fim, situacao) values
     (ss.id('81'), ss.id('a0'), ss.id('71'), 'Festival de teatro', date '2026-12-05', date '2026-12-07', 'confirmada'),
     (ss.id('82'), ss.id('a0'), ss.id('71'), 'Show avulso', date '2026-12-10', date '2026-12-10', 'consulta'),
+    (ss.id('83'), ss.id('a0'), ss.id('72'), 'Festival na S2', date '2026-12-05', date '2026-12-07', 'confirmada'),
+    (ss.id('84'), ss.id('a0'), ss.id('72'), 'Cancelada na S2', date '2026-12-05', date '2026-12-07', 'cancelada'),
     (ss.id('8b'), ss.id('b0'), ss.id('7b'), 'Pauta da B', date '2026-12-05', date '2026-12-07', 'consulta'),
     (ss.id('8c'), ss.id('c0'), ss.id('7c'), 'Pauta da C', date '2026-12-05', date '2026-12-07', 'consulta');
   insert into public.producao_sessoes (id, organization_id, pauta_id, dia, inicio, fim, titulo) values
@@ -110,12 +112,12 @@ select is((select count(*)::int from pg_policies where schemaname = 'public' and
 select ok((select relrowsecurity from pg_class where oid = 'public.producao_sessoes'::regclass), 'segurança por linha ligada');
 select is((select string_agg(conname::text || '=' || confdeltype::text, ', ' order by conname::text collate "C") from pg_constraint
            where contype = 'f' and conrelid = 'public.producao_sessoes'::regclass),
-          'producao_sessoes_organization_id_fkey=c, producao_sessoes_pauta_id_fkey=c', 'a sessão sai com a pauta e com a organização');
+          'producao_sessoes_marca_id_fkey=n, producao_sessoes_organization_id_fkey=c, producao_sessoes_pauta_id_fkey=c', 'a sessão sai com a pauta e com a organização; apagar a marca só solta a ligação');
 select ok(not has_function_privilege('authenticated', 'public.fn_producao_sessao_coerencia()', 'execute')
           and not has_table_privilege('anon', 'public.producao_sessoes', 'select'), 'a coerência não é chamável e o visitante não toca na tabela');
 select is((select string_agg(tgname::text, ' ' order by tgname::text collate "C") from pg_trigger
            where not tgisinternal and tgrelid = 'public.producao_sessoes'::regclass),
-          'producao_sessoes_coerencia producao_sessoes_historico producao_sessoes_updated_at', 'os três gatilhos');
+          'producao_sessoes_coerencia producao_sessoes_historico producao_sessoes_marca_coerencia producao_sessoes_updated_at', 'os quatro gatilhos');
 
 -- ─── Quem vê ────────────────────────────────────────────────────────────────
 
@@ -157,10 +159,13 @@ select is(array[
             ss.tenta(format('insert into public.producao_sessoes (organization_id, pauta_id, dia, inicio, fim) values (%L, %L, %L, %L, %L)', ss.id('a0'), ss.id('81'), '2026-12-08', '20:00', '22:00')),
             ss.tenta(format('insert into public.producao_sessoes (organization_id, pauta_id, dia, inicio, fim) values (%L, %L, %L, %L, %L)', ss.id('a0'), ss.id('8b'), '2026-12-06', '20:00', '22:00')),
             ss.tenta(format('update public.producao_sessoes set organization_id = %L where id = %L', ss.id('b0'), ss.id('91'))),
-            ss.tenta(format('update public.producao_sessoes set pauta_id = %L where id = %L', ss.id('82'), ss.id('91')))],
+            ss.tenta(format('update public.producao_sessoes set pauta_id = %L where id = %L', ss.id('82'), ss.id('91'))),
+            ss.tenta(format('update public.producao_sessoes set pauta_id = %L where id = %L', ss.id('8b'), ss.id('91'))),
+            ss.tenta(format('update public.producao_sessoes set pauta_id = %L where id = %L', ss.id('84'), ss.id('91'))),
+            ss.tenta(format('update public.producao_sessoes set pauta_id = %L where id = %L', ss.id('83'), ss.id('91')))],
           array['23514 producao_sessoes_horas_check', '23514 producao_sessoes_titulo_check', '23514 producao_sessoes_notas_check', '23514 dia_fora_da_pauta',
-                '23514 pauta_de_outra_organizacao', '23514 organizacao_nao_muda', '23514 pauta_nao_muda'],
-          'horas, título e notas; o dia dentro da pauta; pauta da organização; organização e pauta fixas');
+                '23514 pauta_de_outra_organizacao', '23514 organizacao_nao_muda', '23514 dia_fora_da_pauta', '23514 pauta_de_outra_organizacao', '23514 pauta_cancelada', 'aceito'],
+          'horas, título e notas; o dia dentro da pauta; pauta da organização; a organização é fixa; a sessão muda de sala para uma pauta da organização, que cubra o dia e não esteja cancelada');
 
 -- ─── Histórico ──────────────────────────────────────────────────────────────
 
