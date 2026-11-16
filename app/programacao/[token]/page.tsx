@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { ProgramacaoPublicaView } from "@/components/producao/ProgramacaoPublicaView";
 import { carregarProgramacaoPublica, type ResultadoDaProgramacao } from "@/lib/producao/programacao-publica";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { filtroDoEndereco } from "@/lib/producao/programacao-vistas";
 
 export const metadata: Metadata = {
   title: "Programação",
@@ -25,8 +26,9 @@ function Aviso({ titulo, texto }: { titulo: string; texto: string }) {
   );
 }
 
-export default async function ProgramacaoPeloLink({ params }: { params: Promise<{ token: string }> }) {
+export default async function ProgramacaoPeloLink({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ sala?: string | string[]; dia?: string | string[] }> }) {
   const { token } = await params;
+  const filtro = filtroDoEndereco(await searchParams);
   let resultado: ResultadoDaProgramacao | null = null;
   try {
     resultado = await carregarProgramacaoPublica(createAdminClient(), token);
@@ -36,5 +38,5 @@ export default async function ProgramacaoPeloLink({ params }: { params: Promise<
   if (resultado === null) return <Aviso titulo="Não foi possível abrir a programação" texto="Tente de novo em instantes." />;
   if (resultado.situacao === "revogado") return <Aviso titulo="Esta programação foi desativada" texto="Peça o endereço novo a quem enviou." />;
   if (resultado.situacao !== "valido") return <Aviso titulo="Programação não encontrada" texto="Confira o endereço que você recebeu." />;
-  return <ProgramacaoPublicaView programacao={resultado.programacao} embutida={false} />;
+  return <ProgramacaoPublicaView programacao={resultado.programacao} embutida={false} codigo={token} filtro={filtro} />;
 }
