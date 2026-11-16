@@ -5168,6 +5168,58 @@ export type BancoDaProducao = {
           },
         ];
       };
+
+      producao_palco_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          data_id: string;
+          token_hash: string;
+          expira_em: string;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          data_id: string;
+          token_hash: string;
+          expira_em: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          data_id?: string;
+          token_hash?: string;
+          expira_em?: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_palco_links_data_id_fkey";
+            columns: ["data_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_datas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_palco_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_programacao_links: {
         Row: {
           id: string;
@@ -5945,6 +5997,10 @@ export type BancoDaProducao = {
       };
       fn_producao_hospedagem_criar_link: {
         Args: { p_hospedagem: string; p_dias: number };
+        Returns: string;
+      };
+      fn_producao_palco_criar_link: {
+        Args: { p_data: string; p_dias: number };
         Returns: string;
       };
       fn_producao_programacao_criar_link: {

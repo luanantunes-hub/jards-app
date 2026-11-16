@@ -34,6 +34,7 @@ import { textoDaFolha } from "@/lib/producao/folha-texto";
 import { rotuloDoLugar } from "@/lib/producao/espacos";
 import { LugarDaData } from "@/components/producao/LugarDaData";
 import { CopiarDiaSheet } from "@/components/producao/CopiarDiaSheet";
+import { LinkDoPalcoSheet } from "@/components/producao/LinkDoPalcoSheet";
 import { SalvarModeloDoDiaSheet } from "@/components/producao/SalvarModeloDoDiaSheet";
 import { blocosParaModelo, modeloDaOrganizacao, type ModeloGuardado } from "@/lib/producao/modelos-dia";
 
@@ -55,6 +56,7 @@ export default function DataPage() {
   const [blocos, setBlocos] = useState<Bloco[]>([]);
   const [folha, setFolha] = useState(false);
   const [copiar, setCopiar] = useState(false);
+  const [palcoAberto, setPalcoAberto] = useState(false);
   const [copiado, setCopiado] = useState(false);
   const [salvarModelo, setSalvarModelo] = useState(false);
   const [modelosDaOrganizacao, setModelosDaOrganizacao] = useState<ModeloGuardado[]>([]);
@@ -197,6 +199,7 @@ export default function DataPage() {
             <h2 id="o-dia" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">O dia</h2>
             {blocos.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={() => setPalcoAberto(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Tela de palco</button>
                 <button type="button" onClick={() => void copiarTexto()} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">{copiado ? "Texto copiado" : "Copiar para o WhatsApp"}</button>
                 {podeEditar && (<>
                 <button type="button" onClick={() => setSalvarModelo(true)} className="rounded border border-black/[.12] px-3.5 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Salvar como modelo</button>
@@ -296,6 +299,9 @@ export default function DataPage() {
 
       {salvarModelo && organizationId && (
         <SalvarModeloDoDiaSheet organizationId={organizationId} blocos={blocosParaSalvar} onClose={() => setSalvarModelo(false)} onSaved={recarregar} />
+      )}
+      {palcoAberto && (
+        <LinkDoPalcoSheet dataId={data.id} rotulo={`${diaEMes(data.data)}`} podeEditar={podeEditar} onClose={() => setPalcoAberto(false)} />
       )}
       {copiar && organizationId && (
         <CopiarDiaSheet organizationId={organizationId} temporadaId={data.temporada_id} dataId={data.id} dia={data.data} fuso={fuso} onClose={() => setCopiar(false)} onCopied={recarregar} />
