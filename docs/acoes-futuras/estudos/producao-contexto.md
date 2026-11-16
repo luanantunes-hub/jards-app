@@ -11,6 +11,7 @@
 | [producao-pd0-4-inventario.md](./producao-pd0-4-inventario.md) | Como a captação está protegida no banco (feito na PD0.4) |
 | Produção → Protótipos (`/producoes/prototipo`) | As telas que ainda não existem (página da data completa, folha do dia, tarefas, pautas do espaço, acordos e orçamento), com dados de exemplo e nada salvo; só o super admin vê. Não são entregas: quando a tela de verdade fica pronta, apague o protótipo dela (a pasta em `app/(dashboard)/producoes/prototipo/` e a linha em `components/producao/prototipo/Prototipo.tsx`) |
 | [producao-molde-de-tabela.md](../../producao-molde-de-tabela.md) | O gerador do miolo de uma tabela nova (migration, tipos, linha do histórico e teste de banco) e o executor do teste de banco que desfaz tudo no fim |
+| [producao-fila-de-trabalho.md](./producao-fila-de-trabalho.md) | A fila de lotes prontos, as regras de cada lote e quando parar: para seguir sem pedir "pode seguir" a cada entrega |
 | Este arquivo | Onde estamos, o que vem agora e os cuidados que não estão óbvios no plano |
 
 ## A visão do dono, em uma frase

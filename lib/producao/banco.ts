@@ -5000,6 +5000,60 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_ficha_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          espaco_id: string;
+          token_hash: string;
+          expira_em: string;
+          incluir_contato: boolean;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          espaco_id: string;
+          token_hash: string;
+          expira_em: string;
+          incluir_contato?: boolean;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          espaco_id?: string;
+          token_hash?: string;
+          expira_em?: string;
+          incluir_contato?: boolean;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_ficha_links_espaco_id_fkey";
+            columns: ["espaco_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_espacos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_ficha_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_hospedagem_links: {
         Row: {
           id: string;
@@ -5820,6 +5874,10 @@ export type BancoDaProducao = {
       };
       fn_producao_temporada_criar_link: {
         Args: { p_temporada: string; p_tipo: string; p_filtro: string; p_dias: number };
+        Returns: string;
+      };
+      fn_producao_ficha_criar_link: {
+        Args: { p_espaco: string; p_dias: number; p_contato: boolean };
         Returns: string;
       };
       fn_producao_hospedagem_criar_link: {
