@@ -15,6 +15,9 @@ import {
   ROTULO_DA_SITUACAO_DA_FATURA, totaisDasFaturas, type FaturaDaTemporada, type ParcelaDaFatura,
 } from "@/lib/producao/faturas";
 
+/** Avisa o orçamento da temporada que uma fatura ou uma parcela mudou (o "a receber" do resumo se atualiza). */
+export const EVENTO_FATURAS_MUDARAM = "producao-faturas-mudaram";
+
 export type AcordoAReceber = { id: string; contraparte: string };
 type LinhaDeParcela = { chave: number; rotulo: string; valor: string; vencimento: string };
 
@@ -272,7 +275,7 @@ export function FaturasDaTemporada({ organizationId, temporadaId, temporadaTitul
 
   if (!comDinheiro || !carregado) return null;
 
-  const mudou = () => setVersao(atual => atual + 1);
+  const mudou = () => { setVersao(atual => atual + 1); window.dispatchEvent(new Event(EVENTO_FATURAS_MUDARAM)); };
 
   function baixar() {
     const arquivo = new Blob([planilhaDasFaturas({ temporada: temporadaTitulo, hoje, faturas: agrupadas })], { type: "text/csv;charset=utf-8" });

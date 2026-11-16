@@ -19,6 +19,8 @@ import {
 } from "@/lib/producao/orcamento";
 import { EVENTO_ACORDOS_MUDARAM } from "@/components/producao/AcordosDaTemporada";
 import { EVENTO_LANCAMENTOS_MUDARAM } from "@/components/producao/LancamentosDaTemporada";
+import { EVENTO_FATURAS_MUDARAM } from "@/components/producao/FaturasDaTemporada";
+import { totaisDasFaturas, type FaturaDaTemporada, type ParcelaDaFatura } from "@/lib/producao/faturas";
 import { pagoPorLinha } from "@/lib/producao/lancamentos";
 import { comprometidoDoAcordoEmCentavos, ROTULO_DA_SITUACAO_DO_ACORDO, type AcordoDaTemporada } from "@/lib/producao/acordos";
 import { avaliarFormula, nomeDeVariavelValido, nomeSugeridoParaVariavel, recalcularEstimativas, valoresDasVariaveis, type VariavelDoOrcamento } from "@/lib/producao/formula";
@@ -335,6 +337,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
   const [variaveis, setVariaveis] = useState<VariavelDoOrcamento[]>([]);
   const [acordos, setAcordos] = useState<AcordoDoOrcamento[]>([]);
   const [pagoDosLancamentos, setPagoDosLancamentos] = useState<Record<string, number>>({});
+  const [aReceber, setAReceber] = useState<{ aReceberCentavos: number; atrasadoCentavos: number } | null>(null);
   const [todasAsLinhas, setTodasAsLinhas] = useState<Record<string, LinhaDoOrcamento[]>>({});
   const [carregado, setCarregado] = useState(false);
   const [versao, setVersao] = useState(0);
@@ -370,6 +373,10 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
         idAtual ? producao.from("producao_orcamento_variaveis").select("id, nome, rotulo, valor").eq("orcamento_id", idAtual).order("nome") : { data: [], error: null },
         producao.from("producao_acordos").select("id, contraparte, sentido, situacao, valor_fixo, garantia").eq("temporada_id", temporadaId).order("created_at"),
       ]);
+      // O que a casa tem a receber das faturas em aberto da temporada, para ficar ao lado do que ela comprometeu.
+      const fat = await producao.from("producao_faturas").select("id, valor, retencoes, situacao").eq("temporada_id", temporadaId);
+      const idsDasFaturas = (fat.data ?? []).map(item => item.id);
+      const par = idsDasFaturas.length > 0 ? await producao.from("producao_fatura_parcelas").select("id, fatura_id, valor, vencimento, recebido_em").in("fatura_id", idsDasFaturas) : { data: [], error: null };
       const idsDasLinhas = ((lin.data ?? []) as (LinhaDoOrcamento & { orcamento_id: string })[]).filter(linha => linha.orcamento_id === idAtual).map(linha => linha.id);
       const div = idsDasLinhas.length > 0 ? await producao.from("producao_lancamento_linhas").select("orcamento_linha_id, valor").in("orcamento_linha_id", idsDasLinhas) : { data: [], error: null };
       if (!ativo) return;
@@ -382,6 +389,13 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
       setVariaveis((vars.data ?? []) as VariavelDoOrcamento[]);
       setAcordos((aco.data ?? []) as AcordoDoOrcamento[]);
       setPagoDosLancamentos(pagoPorLinha((div.data ?? []) as { orcamento_linha_id: string; valor: number }[]));
+      if (!fat.error && !par.error) {
+        const hoje = new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+        const parcelasPorFatura = new Map<string, ParcelaDaFatura[]>();
+        for (const parcela of (par.data ?? []) as ParcelaDaFatura[]) parcelasPorFatura.set(parcela.fatura_id, [...(parcelasPorFatura.get(parcela.fatura_id) ?? []), parcela]);
+        const totais = totaisDasFaturas((fat.data ?? []).map(fatura => ({ fatura: fatura as Pick<FaturaDaTemporada, "valor" | "retencoes" | "situacao">, parcelas: parcelasPorFatura.get(fatura.id) ?? [] })), hoje);
+        setAReceber({ aReceberCentavos: totais.aReceberCentavos, atrasadoCentavos: totais.atrasadoCentavos });
+      }
       setCarregado(true);
       setErro(orc.error || lin.error || vars.error || aco.error || div.error ? "Não foi possível carregar o orçamento. Recarregue a página." : null);
     })();
@@ -394,7 +408,8 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
     const aviso = () => setVersao(atual => atual + 1);
     window.addEventListener(EVENTO_ACORDOS_MUDARAM, aviso);
     window.addEventListener(EVENTO_LANCAMENTOS_MUDARAM, aviso);
-    return () => { window.removeEventListener(EVENTO_ACORDOS_MUDARAM, aviso); window.removeEventListener(EVENTO_LANCAMENTOS_MUDARAM, aviso); };
+    window.addEventListener(EVENTO_FATURAS_MUDARAM, aviso);
+    return () => { window.removeEventListener(EVENTO_ACORDOS_MUDARAM, aviso); window.removeEventListener(EVENTO_LANCAMENTOS_MUDARAM, aviso); window.removeEventListener(EVENTO_FATURAS_MUDARAM, aviso); };
   }, []);
 
   const orcamento = orcamentos.find(item => item.id === escolhido) ?? null;
@@ -499,6 +514,7 @@ export function OrcamentoDaTemporada({ organizationId, temporadaId, temporadaTit
     { rotulo: "Comprometido", valor: formatarReais(contas.comprometidoCentavos), zero: contas.comprometidoCentavos === 0, forte: false },
     { rotulo: "Pago", valor: formatarReais(contas.pagoCentavos), zero: contas.pagoCentavos === 0, forte: false },
     { rotulo: "A pagar", valor: formatarReais(contas.aPagarCentavos), zero: contas.aPagarCentavos === 0, forte: false },
+    ...(aReceber ? [{ rotulo: "A receber", valor: formatarReais(aReceber.aReceberCentavos), zero: aReceber.aReceberCentavos === 0, forte: false }] : []),
   ];
 
   return (
