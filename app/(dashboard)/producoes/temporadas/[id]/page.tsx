@@ -20,6 +20,7 @@ import { EquipeDaTemporada } from "@/components/producao/EquipeDaTemporada";
 import { CargaDaTemporada } from "@/components/producao/CargaDaTemporada";
 import { CargaPorVeiculo } from "@/components/producao/CargaPorVeiculo";
 import { HospedagemDaTemporada } from "@/components/producao/HospedagemDaTemporada";
+import { LinksDaTemporada } from "@/components/producao/LinksDaTemporada";
 import { ConvitesDaTemporada } from "@/components/producao/ConvitesDaTemporada";
 import { VoluntariosDaTemporada } from "@/components/producao/VoluntariosDaTemporada";
 import { RelatorioDaTemporada } from "@/components/producao/RelatorioDaTemporada";
@@ -226,6 +227,7 @@ export default function TemporadaPage() {
             {organizationId && <HospedagemDaTemporada organizationId={organizationId} temporadaId={temporada.id} podeEditar={podeEditar} />}
             {organizationId && <CargaDaTemporada organizationId={organizationId} temporadaId={temporada.id} />}
             {organizationId && <CargaPorVeiculo organizationId={organizationId} temporadaId={temporada.id} />}
+            <LinksDaTemporada temporadaId={temporada.id} podeEditar={podeEditar} />
           </>
         )}
 

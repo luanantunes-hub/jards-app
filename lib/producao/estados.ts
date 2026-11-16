@@ -205,6 +205,10 @@ export const TIPOS_DE_DOCUMENTO_DO_VEICULO: readonly TipoDeDocumentoDoVeiculo[] 
 export type TipoDeDeslocamento = "aviao" | "onibus" | "van" | "carro" | "caminhao" | "trem" | "balsa" | "outro";
 export const TIPOS_DE_DESLOCAMENTO: readonly TipoDeDeslocamento[] = ["aviao", "onibus", "van", "carro", "caminhao", "trem", "balsa", "outro"];
 
+/** As listas que um parceiro vê pelo link da temporada (PD8.6): os transfers (transportadora) e os itens locados (locadora). */
+export type TipoDeTabela = "transfers" | "locacao";
+export const TIPOS_DE_TABELA: readonly TipoDeTabela[] = ["transfers", "locacao"];
+
 // Os convites da temporada (PD6.9): o banco confere a lista num CHECK (supabase/migrations/*_producao_convites.sql).
 
 /** `producao_convites.resposta`. */

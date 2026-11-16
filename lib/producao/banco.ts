@@ -78,7 +78,7 @@ import type {
   EscopoDoDocumento,
   TipoDeDocumento,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeTabela, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -4892,6 +4892,63 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_temporada_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          temporada_id: string;
+          tipo: TipoDeTabela;
+          filtro: string | null;
+          token_hash: string;
+          expira_em: string;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          temporada_id: string;
+          tipo: TipoDeTabela;
+          filtro?: string | null;
+          token_hash: string;
+          expira_em: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          temporada_id?: string;
+          tipo?: TipoDeTabela;
+          filtro?: string | null;
+          token_hash?: string;
+          expira_em?: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_temporada_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_temporada_links_temporada_id_fkey";
+            columns: ["temporada_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_temporadas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_hospedagem_links: {
         Row: {
           id: string;
@@ -5708,6 +5765,10 @@ export type BancoDaProducao = {
       };
       fn_producao_acerto_revisar: {
         Args: { p_item: string; p_aprovar: boolean; p_motivo: string };
+        Returns: string;
+      };
+      fn_producao_temporada_criar_link: {
+        Args: { p_temporada: string; p_tipo: string; p_filtro: string; p_dias: number };
         Returns: string;
       };
       fn_producao_hospedagem_criar_link: {
