@@ -1,4 +1,5 @@
 import type { ProgramacaoPublica } from "@/lib/producao/programacao-publica";
+import { MarcaDaSessao } from "@/components/producao/MarcaDaSessao";
 
 const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
 const MESES = ["janeiro", "fevereiro", "março", "abril", "maio", "junho", "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"];
@@ -30,7 +31,7 @@ export function ProgramacaoPublicaView({ programacao, embutida }: { programacao:
                   {dia.sessoes.map((sessao, indice) => (
                     <li key={`${sessao.inicio}-${sessao.sala}-${indice}`} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-4 py-3">
                       <span className="w-28 shrink-0 text-[0.9375rem] font-medium tabular-nums text-[#282525]">{sessao.inicio} às {sessao.fim}</span>
-                      <span className="min-w-0 flex-1 basis-40 text-[0.9375rem] text-[#282525]">{sessao.titulo}</span>
+                      <span className="min-w-0 flex-1 basis-40 text-[0.9375rem] text-[#282525]">{sessao.titulo}{sessao.marca && <MarcaDaSessao marca={sessao.marca} />}</span>
                       <span className="text-[0.8125rem] text-black/50">{sessao.sala}</span>
                     </li>
                   ))}

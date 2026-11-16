@@ -16,6 +16,7 @@ import {
 import { DetailPageContent } from "@/components/ui/DetailPagePrimitives";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
+import { MarcasSheet, type MarcaDaLista } from "@/components/producao/MarcasSheet";
 
 type Espaco = { id: string; nome: string };
 type Sala = { id: string; nome: string };
@@ -24,7 +25,7 @@ type Folha = { sessao?: SessaoComSala; salaId: string; dia: string };
 const CAMPO = "h-10 w-full rounded border border-black/[.12] bg-white px-3 text-[0.8125rem] text-[#282525] outline-none transition placeholder:text-black/30 focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50";
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
 
-function SessaoSheet({ organizationId, folha, pautas, onClose, onSaved }: { organizationId: string; folha: Folha; pautas: PautaDaSessao[]; onClose: () => void; onSaved: () => void }) {
+function SessaoSheet({ organizationId, folha, pautas, marcas, onClose, onSaved }: { organizationId: string; folha: Folha; pautas: PautaDaSessao[]; marcas: MarcaDaLista[]; onClose: () => void; onSaved: () => void }) {
   const { confirmDelete } = useDeleteConfirm();
   const { sessao } = folha;
   const [dia, setDia] = useState(sessao?.dia ?? folha.dia);
@@ -33,6 +34,7 @@ function SessaoSheet({ organizationId, folha, pautas, onClose, onSaved }: { orga
   const [fim, setFim] = useState(sessao ? horarioCurto(sessao.fim) : "");
   const [titulo, setTitulo] = useState(sessao?.titulo ?? "");
   const [notas, setNotas] = useState(sessao?.notas ?? "");
+  const [marcaId, setMarcaId] = useState(sessao?.marca_id ?? "");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const daSala = useMemo(() => pautasQueAceitamSessao(pautas, folha.salaId, dia), [pautas, folha.salaId, dia]);
@@ -45,8 +47,8 @@ function SessaoSheet({ organizationId, folha, pautas, onClose, onSaved }: { orga
     setErro(null);
     const producao = clienteDaProducao(createClient());
     const { error } = sessao
-      ? await producao.from("producao_sessoes").update(leitura.sessao).eq("id", sessao.id)
-      : await producao.from("producao_sessoes").insert({ organization_id: organizationId, ...leitura.sessao });
+      ? await producao.from("producao_sessoes").update({ ...leitura.sessao, marca_id: marcaId || null }).eq("id", sessao.id)
+      : await producao.from("producao_sessoes").insert({ organization_id: organizationId, ...leitura.sessao, marca_id: marcaId || null });
     setSalvando(false);
     if (error) { setErro(error.code === "42501" ? "Você não pode mudar a programação desta sala." : error.code === "23514" ? "O dia fica fora do período da pauta." : "Não foi possível salvar. Tente de novo."); return; }
     onSaved();
@@ -95,6 +97,9 @@ function SessaoSheet({ organizationId, folha, pautas, onClose, onSaved }: { orga
           <p className="text-[0.75rem] text-black/55">Pauta: {daSala[0].titulo}</p>
         )}
         <div><label className={ROTULO} htmlFor="ses-titulo">Título da sessão (opcional)</label><input id="ses-titulo" className={CAMPO} value={titulo} onChange={event => setTitulo(event.target.value)} placeholder="Se vazio, vale o título da pauta" maxLength={200} disabled={salvando} /></div>
+        {(marcas.some(marca => !marca.arquivada) || marcaId !== "") && (
+          <div><span className={ROTULO}>Apresentada por (opcional)</span><Dropdown ariaLabel="Marca que apresenta a sessão" value={marcaId} onChange={setMarcaId} disabled={salvando} options={[{ value: "", label: "Nenhuma" }, ...marcas.filter(marca => !marca.arquivada || marca.id === marcaId).map(marca => ({ value: marca.id, label: marca.arquivada ? `${marca.nome} (arquivada)` : marca.nome }))]} /></div>
+        )}
         <div><label className={ROTULO} htmlFor="ses-notas">Notas (opcional)</label><textarea id="ses-notas" rows={2} className="w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text-[0.8125rem] text-[#282525] outline-none transition focus:border-[#7259B5]/40 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50" value={notas} onChange={event => setNotas(event.target.value)} maxLength={500} disabled={salvando} /></div>
       </div>
     </TopSheet>
@@ -113,6 +118,9 @@ export default function ProgramacaoPage() {
   const [pautas, setPautas] = useState<PautaDaSessao[]>([]);
   const [sessoesBrutas, setSessoesBrutas] = useState<SessaoDaGrade[]>([]);
   const [folha, setFolha] = useState<Folha | null>(null);
+  const [marcas, setMarcas] = useState<MarcaDaLista[]>([]);
+  const [marcasAbertas, setMarcasAbertas] = useState(false);
+  const [versaoDasMarcas, setVersaoDasMarcas] = useState(0);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const podeEditar = papel !== null && papelNaProducao(papel) !== null && papelNaProducao(papel) !== "leitor";
@@ -141,7 +149,7 @@ export default function ProgramacaoPage() {
       const ids = (sal.data ?? []).map(sala => sala.id);
       const pau = ids.length > 0 ? await producao.from("producao_pautas").select("id, sala_id, titulo, inicio, fim, situacao").in("sala_id", ids).lte("inicio", domingo).gte("fim", segunda) : { data: [], error: null };
       const pautaIds = (pau.data ?? []).map(pauta => pauta.id);
-      const ses = pautaIds.length > 0 ? await producao.from("producao_sessoes").select("id, pauta_id, dia, inicio, fim, titulo, notas").in("pauta_id", pautaIds).gte("dia", segunda).lte("dia", domingo) : { data: [], error: null };
+      const ses = pautaIds.length > 0 ? await producao.from("producao_sessoes").select("id, pauta_id, dia, inicio, fim, titulo, notas, marca_id").in("pauta_id", pautaIds).gte("dia", segunda).lte("dia", domingo) : { data: [], error: null };
       if (!ativo) return;
       setSalas((sal.data ?? []) as Sala[]);
       setPautas((pau.data ?? []) as PautaDaSessao[]);
@@ -150,6 +158,16 @@ export default function ProgramacaoPage() {
     })();
     return () => { ativo = false; };
   }, [espacoId, segunda, domingo, versao]);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    let ativo = true;
+    void (async () => {
+      const { data } = await clienteDaProducao(createClient()).from("producao_marcas").select("id, nome, site_url, logo_url, arquivada").eq("organization_id", organizationId).order("nome");
+      if (ativo) setMarcas((data ?? []) as MarcaDaLista[]);
+    })();
+    return () => { ativo = false; };
+  }, [organizationId, versaoDasMarcas]);
 
   const sessoes = useMemo(() => sessoesComSala(sessoesBrutas, pautas), [sessoesBrutas, pautas]);
   const conflitos = useMemo(() => sessoesEmConflito(sessoes), [sessoes]);
@@ -170,7 +188,10 @@ export default function ProgramacaoPage() {
         ) : (
           <>
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="w-64 max-w-full"><Dropdown ariaLabel="Espaço" value={espacoId} onChange={setEspacoId} options={espacos.map(espaco => ({ value: espaco.id, label: espaco.nome }))} /></div>
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="w-64 max-w-full"><Dropdown ariaLabel="Espaço" value={espacoId} onChange={setEspacoId} options={espacos.map(espaco => ({ value: espaco.id, label: espaco.nome }))} /></div>
+                <button type="button" onClick={() => setMarcasAbertas(true)} className="inline-flex h-10 items-center rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Marcas</button>
+              </div>
               <div className="flex items-center gap-1">
                 <button type="button" onClick={() => setSegunda(atual => somarDias(atual, -7))} aria-label="Semana anterior" className="inline-flex h-10 w-10 items-center justify-center rounded border border-black/[.12] text-black/55 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><ChevronLeft size={15} aria-hidden="true" /></button>
                 <button type="button" onClick={() => setSegunda(segundaDaSemana(hoje))} className="inline-flex h-10 items-center rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium tabular-nums text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]" title="Voltar para a semana de hoje">{diaEMes(segunda)} – {diaEMes(domingo)}</button>
@@ -226,7 +247,8 @@ export default function ProgramacaoPage() {
           </>
         )}
       </DetailPageContent>
-      {folha && organizationId && <SessaoSheet organizationId={organizationId} folha={folha} pautas={pautas} onClose={() => setFolha(null)} onSaved={() => setVersao(atual => atual + 1)} />}
+      {marcasAbertas && organizationId && <MarcasSheet organizationId={organizationId} podeEditar={podeEditar} onClose={() => setMarcasAbertas(false)} onMudou={() => setVersaoDasMarcas(atual => atual + 1)} />}
+      {folha && organizationId && <SessaoSheet organizationId={organizationId} folha={folha} pautas={pautas} marcas={marcas} onClose={() => setFolha(null)} onSaved={() => setVersao(atual => atual + 1)} />}
     </div>
   );
 }

@@ -70,10 +70,26 @@ test("a programação pública: só pauta confirmada, de hoje em diante, por dia
   ];
   const dias = diasDaProgramacaoPublica(sessoes, todas, [{ id: "s1", nome: "Sala Grande" }, { id: "s2", nome: "Sala Pequena" }], "2026-12-01");
   assert.deepEqual(dias.map(dia => dia.dia), ["2026-12-05", "2026-12-06", "2026-12-07"]);
-  assert.deepEqual(dias[0].sessoes, [{ inicio: "10:00", fim: "11:00", titulo: "Festival", sala: "Sala Grande" }]);
+  assert.deepEqual(dias[0].sessoes, [{ inicio: "10:00", fim: "11:00", titulo: "Festival", sala: "Sala Grande", marca: null }]);
   assert.deepEqual(dias[1].sessoes.map(item => [item.inicio, item.titulo]), [["18:00", "Peça B"], ["21:00", "Festival"]]);
   assert.equal(JSON.stringify(dias).includes("segredo"), false, "as notas não saem");
   assert.equal(JSON.stringify(dias).includes("Não confirmada"), false, "pauta que não é confirmada não sai");
   assert.equal(JSON.stringify(dias).includes("Oficina"), false, "a pré-reserva de outra sala não sai");
-  assert.deepEqual(Object.keys(dias[0].sessoes[0]).sort(), ["fim", "inicio", "sala", "titulo"]);
+  assert.deepEqual(Object.keys(dias[0].sessoes[0]).sort(), ["fim", "inicio", "marca", "sala", "titulo"]);
+});
+
+test("a programação pública mostra a marca que apresenta a sessão, só com nome, site e logo, e esconde a marca arquivada", () => {
+  const marcas = new Map([
+    ["m1", { nome: "Banco Central", site_url: "https://bc.example.com", logo_url: "https://bc.example.com/logo.png", arquivada: false }],
+    ["m2", { nome: "Marca antiga", site_url: null, logo_url: null, arquivada: true }],
+  ]);
+  const sessoes: SessaoDaGrade[] = [
+    { ...sessao("a", "p1", "2026-12-05", "10:00", "11:00"), marca_id: "m1" },
+    { ...sessao("b", "p1", "2026-12-05", "12:00", "13:00"), marca_id: "m2" },
+    { ...sessao("c", "p1", "2026-12-05", "14:00", "15:00"), marca_id: "some" },
+    sessao("d", "p1", "2026-12-05", "16:00", "17:00"),
+  ];
+  const dias = diasDaProgramacaoPublica(sessoes, pautas, [{ id: "s1", nome: "Sala Grande" }], "2026-12-01", marcas);
+  assert.deepEqual(dias[0].sessoes.map(item => item.marca), [{ nome: "Banco Central", site: "https://bc.example.com", logo: "https://bc.example.com/logo.png" }, null, null, null]);
+  assert.deepEqual(Object.keys(dias[0].sessoes[0].marca ?? {}).sort(), ["logo", "nome", "site"]);
 });

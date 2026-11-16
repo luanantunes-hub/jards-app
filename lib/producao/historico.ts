@@ -31,7 +31,7 @@ const CAMPO: Record<string, string> = {
   situacao: "a situação", data: "o dia", data_fim: "o último dia", uf: "o estado", fuso: "o fuso", titulo: "o título", tipo: "o tipo",
   inicio: "o início", fim: "o fim", exibicao: "a forma da hora", confirmado: "a confirmação", notas: "as notas", capacidade: "a capacidade",
   funcao: "a função", chamada: "a chamada", saida: "a saída", confirmacao: "a resposta", endereco: "o endereço", prazo: "o prazo",
-  prazo_dias: "o prazo em dias", responsavel_pessoa_id: "quem faz", espaco_id: "o espaço", sala_id: "a sala", ordem: "a ordem",
+  prazo_dias: "o prazo em dias", responsavel_pessoa_id: "quem faz", espaco_id: "o espaço", sala_id: "a sala", marca_id: "a marca que apresenta", ordem: "a ordem",
   nome: "o nome", lugares: "os lugares", quantidade: "a quantidade", pessoas: "as pessoas", resposta: "a resposta", categoria: "a categoria",
   vagas: "as vagas", presentes: "quantos vieram", certificado_emitido_em: "o certificado", pessoa_id: "a pessoa", hotel: "o hotel", dia: "o dia",
   grupo: "o grupo", capacidade_carga_kg: "a carga", arquivado: "o arquivamento", validade: "a validade", emitido_em: "a emissão", iniciado_em: "quando começou", terminado_em: "quando terminou",

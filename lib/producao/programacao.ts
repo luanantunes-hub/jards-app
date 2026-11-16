@@ -2,9 +2,10 @@
 // horários que se cruzam na mesma sala. Sem tela e sem banco.
 
 import { horarioCurto, minutosDoHorario } from "@/lib/producao/turnos";
+import { marcaPublicaDaSessao, type MarcaPublica } from "@/lib/producao/marcas";
 
 export type SessaoDaGrade = {
-  id: string; pauta_id: string; dia: string; inicio: string; fim: string; titulo: string | null; notas: string | null;
+  id: string; pauta_id: string; dia: string; inicio: string; fim: string; titulo: string | null; notas: string | null; marca_id?: string | null;
 };
 
 /** A pauta de onde a sessão tira a sala e o título de reserva. */
@@ -75,19 +76,20 @@ export function lerSessao(campos: { pautaId: string; dia: string; inicio: string
   return { ok: true, sessao: { pauta_id: pauta.id, dia: campos.dia, inicio: horarioCurto(campos.inicio.trim()), fim: horarioCurto(campos.fim.trim()), titulo: titulo === "" ? null : titulo, notas: notas === "" ? null : notas } };
 }
 
-export type SessaoPublica = { inicio: string; fim: string; titulo: string; sala: string };
+export type SessaoPublica = { inicio: string; fim: string; titulo: string; sala: string; marca: MarcaPublica | null };
 export type DiaPublico = { dia: string; sessoes: SessaoPublica[] };
 
 /**
  * A programação que vai para o público: só as sessões de pautas CONFIRMADAS, de hoje em diante, por dia e da mais cedo à mais
- * tarde. Cada sessão leva dia, hora, título (o da sessão, ou o da pauta) e o nome da sala: nunca contratante, notas,
- * pré-reserva ou consulta.
+ * tarde. Cada sessão leva dia, hora, título (o da sessão, ou o da pauta), o nome da sala e a marca que a apresenta (nome, site e
+ * logo, se a marca não está arquivada): nunca contratante, notas, pré-reserva ou consulta.
  */
 export function diasDaProgramacaoPublica(
   sessoes: readonly SessaoDaGrade[],
   pautas: readonly { id: string; sala_id: string; titulo: string; situacao: string }[],
   salas: readonly { id: string; nome: string }[],
   hoje: string,
+  marcas: ReadonlyMap<string, { nome: string; site_url: string | null; logo_url: string | null; arquivada: boolean }> = new Map(),
 ): DiaPublico[] {
   const pautaPorId = new Map(pautas.filter(pauta => pauta.situacao === "confirmada").map(pauta => [pauta.id, pauta]));
   const salaPorId = new Map(salas.map(sala => [sala.id, sala.nome]));
@@ -96,7 +98,7 @@ export function diasDaProgramacaoPublica(
     const pauta = pautaPorId.get(sessao.pauta_id);
     const sala = pauta ? salaPorId.get(pauta.sala_id) : undefined;
     if (!pauta || sala === undefined || sessao.dia < hoje) continue;
-    porDia.set(sessao.dia, [...(porDia.get(sessao.dia) ?? []), { inicio: horarioCurto(sessao.inicio), fim: horarioCurto(sessao.fim), titulo: sessao.titulo ?? pauta.titulo, sala }]);
+    porDia.set(sessao.dia, [...(porDia.get(sessao.dia) ?? []), { inicio: horarioCurto(sessao.inicio), fim: horarioCurto(sessao.fim), titulo: sessao.titulo ?? pauta.titulo, sala, marca: marcaPublicaDaSessao(sessao.marca_id, marcas) }]);
   }
   return [...porDia.entries()]
     .sort(([a], [b]) => a.localeCompare(b))

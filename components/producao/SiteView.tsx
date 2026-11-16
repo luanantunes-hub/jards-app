@@ -1,4 +1,5 @@
 import type { DiaPublico } from "@/lib/producao/programacao";
+import { MarcaDaSessao } from "@/components/producao/MarcaDaSessao";
 import { textoSobreCor, type Bloco } from "@/lib/producao/site";
 import { diaPorExtenso } from "@/components/producao/ProgramacaoPublicaView";
 
@@ -27,7 +28,7 @@ function Programacao({ titulo, dias }: { titulo: string; dias: DiaPublico[] | nu
                 {dia.sessoes.map((sessao, indice) => (
                   <li key={`${sessao.inicio}-${sessao.sala}-${indice}`} className="flex flex-wrap items-baseline gap-x-4 gap-y-0.5 px-4 py-3">
                     <span className="w-28 shrink-0 text-[0.9375rem] font-medium tabular-nums">{sessao.inicio} às {sessao.fim}</span>
-                    <span className="min-w-0 flex-1 basis-40 text-[0.9375rem]">{sessao.titulo}</span>
+                    <span className="min-w-0 flex-1 basis-40 text-[0.9375rem]">{sessao.titulo}{sessao.marca && <MarcaDaSessao marca={sessao.marca} />}</span>
                     <span className="text-[0.8125rem] opacity-60">{sessao.sala}</span>
                   </li>
                 ))}
