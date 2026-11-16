@@ -119,6 +119,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_rider_itens: "são só as linhas do rider (texto, quantidade e se é obrigatório): o histórico do rider já conta o que importa",
   producao_espaco_fichas: "tem o contato de quem cuida do espaço (telefone e e-mail são dado pessoal) e o resto é texto e medida do lugar: o espaço já tem o histórico dele",
   producao_acerto_itens: "são os campos do acerto (o que a produção escreveu, o que a casa respondeu e a revisão): quem revisou e quando já ficam na própria linha, e o histórico do acerto conta o resto",
+  producao_hospedagem_links: "é só o link público da lista de quartos (hash do código, que é segredo, e a validade): quem criou e quando já ficam na própria linha",
   producao_programacao_links: "é só o link público da programação (título e hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_site_dominios: "são os domínios da pessoa ligados ao site, escritos só pelo servidor depois de conferir o DNS: quem criou e quando já ficam na própria linha, e o token de verificação é segredo",
   producao_sala_fichas: "é só a ficha técnica da sala (medidas e texto): muda pouco e o histórico da sala já conta o que importa",

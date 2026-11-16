@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Copy, LayoutGrid, Pencil, Plus, Trash2, X } from "lucide-react";
+import { Copy, LayoutGrid, Link2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { MapaDeQuartos } from "@/components/producao/MapaDeQuartos";
+import { LinkDoHotelSheet } from "@/components/producao/LinkDoHotelSheet";
 import { lerHospedagem, lerQuarto, listaDeQuartos, periodoDaHospedagem, pessoasSemQuarto, vagasDoQuarto } from "@/lib/producao/hospedagem";
 
 type Hospedagem = { id: string; hotel: string; endereco: string | null; entrada: string | null; saida: string | null; localizador: string | null; notas: string | null };
@@ -172,6 +173,7 @@ function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pe
   const [erro, setErro] = useState<string | null>(null);
   const [copiado, setCopiado] = useState(false);
   const [mapaAberto, setMapaAberto] = useState(false);
+  const [linkAberto, setLinkAberto] = useState(false);
   const semQuarto = useMemo(() => pessoasSemQuarto(pessoas, ocupantes), [pessoas, ocupantes]);
   const periodo = periodoDaHospedagem(hospedagem.entrada, hospedagem.saida);
 
@@ -226,6 +228,7 @@ function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pe
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {quartos.length > 0 && <button type="button" onClick={() => setMapaAberto(true)} className={BOTAO}><LayoutGrid size={13} aria-hidden="true" /> Mapa de quartos</button>}
+          {quartos.length > 0 && <button type="button" onClick={() => setLinkAberto(true)} className={BOTAO}><Link2 size={13} aria-hidden="true" /> Link para o hotel</button>}
           {quartos.length > 0 && <button type="button" onClick={() => void copiarLista()} className={BOTAO}><Copy size={13} aria-hidden="true" /> {copiado ? "Copiada" : "Copiar lista"}</button>}
           {podeEditar && <button type="button" onClick={onEditar} aria-label={`Editar ${hospedagem.hotel}`} title="Editar" className="flex h-10 w-10 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Pencil size={13} aria-hidden="true" /></button>}
         </div>
@@ -271,6 +274,7 @@ function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pe
         <MapaDeQuartos organizationId={organizationId} hospedagemId={hospedagem.id} hotel={hospedagem.hotel} quartos={quartos} ocupantes={ocupantes} pessoas={pessoas}
           podeEditar={podeEditar} onClose={() => setMapaAberto(false)} onMudou={onMudou} />
       )}
+      {linkAberto && <LinkDoHotelSheet hospedagemId={hospedagem.id} hotel={hospedagem.hotel} podeEditar={podeEditar} onClose={() => setLinkAberto(false)} />}
     </div>
   );
 }
