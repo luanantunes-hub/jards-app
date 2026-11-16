@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ClipboardCheck, Pencil, Plus, TriangleAlert } from "lucide-react";
+import { ClipboardCheck, Fuel, Pencil, Plus, TriangleAlert } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { createClient } from "@/lib/supabase/client";
@@ -16,6 +16,7 @@ import { avisoDeLotacao, conflitosDeDeslocamentos, lerDeslocamento, ROTULO_DO_DE
 import { placaParaExibir } from "@/lib/producao/veiculos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { ChecklistDoDeslocamento } from "@/components/producao/ChecklistDoDeslocamento";
+import { AbastecimentosDoDeslocamento } from "@/components/producao/AbastecimentosDoDeslocamento";
 import type { ContratacaoDoVeiculo } from "@/lib/producao/estados";
 
 type Deslocamento = {
@@ -217,6 +218,7 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
   const [lugaresDoVeiculo, setLugaresDoVeiculo] = useState<Map<string, number | null>>(new Map());
   const [capacidadeDoVeiculo, setCapacidadeDoVeiculo] = useState<Map<string, { capacidade_carga_kg: number | null; capacidade_volume_m3: number | null; contratacao: ContratacaoDoVeiculo }>>(new Map());
   const [checklist, setChecklist] = useState<Deslocamento | null>(null);
+  const [abastecimentos, setAbastecimentos] = useState<Deslocamento | null>(null);
   const [litrosPorDeslocamento, setLitrosPorDeslocamento] = useState<Map<string, number>>(new Map());
   const [quemVaiPorDeslocamento, setQuemVaiPorDeslocamento] = useState<Map<string, string[]>>(new Map());
   const [pessoas, setPessoas] = useState<Opcao[]>([]);
@@ -317,6 +319,7 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
                     <span key={aviso} className="mt-1 flex items-start gap-1.5 text-[0.6875rem]" style={{ color: "#B07A14" }}><TriangleAlert size={12} aria-hidden="true" className="mt-px shrink-0" />{aviso}</span>
                   ))}
                 </span>
+                <button type="button" onClick={() => setAbastecimentos(item)} aria-label="Abastecimentos do deslocamento" title="Abastecimentos" className="flex h-10 w-10 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Fuel size={13} aria-hidden="true" /></button>
                 <button type="button" onClick={() => setChecklist(item)} aria-label="Checklist do deslocamento" title="Checklist" className="flex h-10 w-10 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><ClipboardCheck size={14} aria-hidden="true" /></button>
                 {podeEditar && (
                   <button type="button" onClick={() => setFolha({ deslocamento: item })} aria-label="Editar deslocamento" title="Editar" className="flex h-10 w-10 shrink-0 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Pencil size={13} aria-hidden="true" /></button>
@@ -329,6 +332,10 @@ export function DeslocamentosDaData({ organizationId, data, podeEditar }: {
       {checklist && (
         <ChecklistDoDeslocamento organizationId={organizationId} deslocamento={{ id: checklist.id, data_id: data.id, tipo: checklist.tipo, rotulo: [ROTULO_DO_DESLOCAMENTO[checklist.tipo], [checklist.origem, checklist.destino].filter(Boolean).join(" → ")].filter(Boolean).join(" ") }}
           veiculo={checklist.veiculo_id ? capacidadeDoVeiculo.get(checklist.veiculo_id) ?? null : null} podeEditar={podeEditar} onClose={() => setChecklist(null)} onMudou={() => undefined} />
+      )}
+      {abastecimentos && (
+        <AbastecimentosDoDeslocamento organizationId={organizationId} deslocamento={{ id: abastecimentos.id, rotulo: [ROTULO_DO_DESLOCAMENTO[abastecimentos.tipo], [abastecimentos.origem, abastecimentos.destino].filter(Boolean).join(" → ")].filter(Boolean).join(" ") }}
+          podeEditar={podeEditar} onClose={() => setAbastecimentos(null)} onMudou={() => setVersao(atual => atual + 1)} />
       )}
       {folha && (
         <DeslocamentoSheet organizationId={organizationId} dataId={data.id} dia={data.data} fuso={data.fuso} deslocamento={folha.deslocamento} veiculos={veiculos} pessoas={pessoas} quemVai={folha.deslocamento ? quemVaiPorDeslocamento.get(folha.deslocamento.id) ?? [] : []}
