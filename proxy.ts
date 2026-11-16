@@ -35,6 +35,8 @@ const API_LIMITS: [string, number][] = [
   ["/api/visita", 10],
   // Programação pública de um espaço (sem login, aberta a outros sites): por IP.
   ["/api/programacao", 60],
+  // Tela de palco pelo link (sem login): lê a cada 10 segundos, e vários aparelhos podem dividir o mesmo IP.
+  ["/api/palco", 240],
   ["/api/auth/conta-sem-senha", 10],
   ["/api/", 60],
 ];
@@ -178,6 +180,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/visita/") ||
         pathname.startsWith("/programacao/") ||
         pathname.startsWith("/hospedagem/") ||
+        pathname.startsWith("/palco/") ||
         pathname.startsWith("/ficha/") ||
         pathname.startsWith("/tabela/") ||
         pathname.startsWith("/embed/") ||
@@ -251,6 +254,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/programacao/") ||
     // Lista de quartos para o hotel, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/hospedagem/") ||
+    // Tela de palco pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/palco/") ||
     // Ficha técnica do espaço, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/ficha/") ||
     // Tabelas para a transportadora e a locadora, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
