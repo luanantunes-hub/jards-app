@@ -43,6 +43,20 @@ export function sessoesEmConflito(sessoes: readonly SessaoComSala[]): Set<string
 }
 
 /** "18:00–20:30". */
+/**
+ * Se a sessão pode ir para outro dia da mesma sala: o dia é diferente do de hoje e fica dentro do período da pauta dela (a pauta de uma sessão não muda;
+ * o banco também recusa o dia fora da pauta).
+ */
+export function podeMoverParaODia(sessao: Pick<SessaoComSala, "pauta_id" | "dia">, pautas: readonly PautaDaSessao[], novoDia: string): boolean {
+  const pauta = pautas.find(item => item.id === sessao.pauta_id);
+  return Boolean(pauta) && novoDia !== sessao.dia && novoDia >= pauta!.inicio && novoDia <= pauta!.fim;
+}
+
+/** As sessões com uma delas em outro dia (a hora fica). Serve a mostrar na grade, antes de o banco responder, e a ver se a mudança cria um cruzamento. */
+export function comASessaoNoDia<T extends { id: string; dia: string }>(sessoes: readonly T[], id: string, novoDia: string): T[] {
+  return sessoes.map(sessao => (sessao.id === id ? { ...sessao, dia: novoDia } : sessao));
+}
+
 export function faixaDaSessao(sessao: Pick<SessaoDaGrade, "inicio" | "fim">): string {
   return `${horarioCurto(sessao.inicio)}–${horarioCurto(sessao.fim)}`;
 }
