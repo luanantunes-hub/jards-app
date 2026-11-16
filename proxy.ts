@@ -178,6 +178,7 @@ export async function proxy(request: NextRequest) {
         pathname.startsWith("/visita/") ||
         pathname.startsWith("/programacao/") ||
         pathname.startsWith("/hospedagem/") ||
+        pathname.startsWith("/tabela/") ||
         pathname.startsWith("/embed/") ||
         pathname.startsWith("/convite/") ||
         pathname === "/login" ||
@@ -249,6 +250,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/programacao/") ||
     // Lista de quartos para o hotel, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
     pathname.startsWith("/hospedagem/") ||
+    // Tabelas para a transportadora e a locadora, pelo link (sem login): o código do link, conferido no servidor, é a autorização.
+    pathname.startsWith("/tabela/") ||
     pathname.startsWith("/embed/") ||
     // Convite de convidado da prestação (P5.3): o banco confere o link; o aceite pede login.
     pathname.startsWith("/convite/") ||
