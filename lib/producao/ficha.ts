@@ -101,3 +101,9 @@ export function resumoDaFichaDaSala(f: Partial<FichaDaSala>): string[] {
   }
   return linhas;
 }
+
+/** A ficha do espaço para o link: o contato (nome, telefone e e-mail de quem cuida do espaço) só fica se o link foi gerado com ele; sem isso, sai tudo. */
+export function fichaDoEspacoParaOLink<T extends { contato_nome?: string | null; contato_telefone?: string | null; contato_email?: string | null }>(ficha: T | null, incluirContato: boolean): T | null {
+  if (!ficha || incluirContato) return ficha;
+  return { ...ficha, contato_nome: null, contato_telefone: null, contato_email: null };
+}

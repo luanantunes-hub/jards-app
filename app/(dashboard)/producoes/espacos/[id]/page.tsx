@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { Download, Pencil } from "lucide-react";
+import { Download, Link2, Pencil } from "lucide-react";
 import { documentoDaFicha } from "@/lib/producao/ficha-pdf";
 import { montarPdf } from "@/lib/producao/pdf-texto";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
@@ -15,6 +15,7 @@ import { FichaDaSalaSheet, FichaDoEspacoSheet } from "@/components/producao/Fich
 import { EquipamentosDoEspaco, type EquipamentoDaCasa } from "@/components/producao/EquipamentosDoEspaco";
 import { EquipeDaCasa } from "@/components/producao/EquipeDaCasa";
 import { ProgramacaoPublicaDoEspaco } from "@/components/producao/ProgramacaoPublicaDoEspaco";
+import { LinkDaFichaSheet } from "@/components/producao/LinkDaFichaSheet";
 import { PlantaDoEspaco } from "@/components/producao/PlantaDoEspaco";
 import { equipamentosDaFicha } from "@/lib/producao/equipamentos";
 
@@ -39,6 +40,7 @@ export default function EspacoPage() {
   const [fichasDasSalas, setFichasDasSalas] = useState<Map<string, Partial<FichaDaSala>>>(new Map());
   const [editando, setEditando] = useState<{ tipo: "espaco" } | { tipo: "sala"; sala: Sala } | null>(null);
   const [equipamentos, setEquipamentos] = useState<EquipamentoDaCasa[]>([]);
+  const [linkDaFicha, setLinkDaFicha] = useState(false);
   const [versao, setVersao] = useState(0);
   const podeEditar = papel !== null && papelNaProducao(papel) !== null && papelNaProducao(papel) !== "leitor";
   const recarregar = () => setVersao(atual => atual + 1);
@@ -94,6 +96,7 @@ export default function EspacoPage() {
           <div className="mt-5 flex flex-wrap items-start justify-between gap-3">
             <h1 className="text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">{espaco.nome}</h1>
             <button type="button" onClick={() => void baixarPdf()} className={BOTAO}><Download size={13} aria-hidden="true" /> Baixar ficha em PDF</button>
+            <button type="button" onClick={() => setLinkDaFicha(true)} className={BOTAO}><Link2 size={13} aria-hidden="true" /> Link da ficha</button>
           </div>
           <p className="mt-1 text-[0.75rem] text-black/45">{[espaco.tipo, espaco.uf, espaco.capacidade ? `${espaco.capacidade.toLocaleString("pt-BR")} lugares` : null, espaco.endereco].filter(Boolean).join(" · ")}</p>
         </div>
@@ -152,6 +155,7 @@ export default function EspacoPage() {
         {organizationId && <EquipeDaCasa organizationId={organizationId} espacoId={espaco.id} podeEditar={podeEditar} />}
       </DetailPageContent>
 
+      {linkDaFicha && <LinkDaFichaSheet espacoId={espaco.id} espaco={espaco.nome} podeEditar={podeEditar} onClose={() => setLinkDaFicha(false)} />}
       {editando?.tipo === "espaco" && organizationId && <FichaDoEspacoSheet organizationId={organizationId} espacoId={espaco.id} ficha={fichaDoEspaco} onClose={() => setEditando(null)} onSaved={recarregar} />}
       {editando?.tipo === "sala" && organizationId && <FichaDaSalaSheet organizationId={organizationId} salaId={editando.sala.id} nomeDaSala={editando.sala.nome} ficha={fichasDasSalas.get(editando.sala.id) ?? null} onClose={() => setEditando(null)} onSaved={recarregar} />}
     </div>
