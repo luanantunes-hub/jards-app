@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Pencil } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ImagePlus, Pencil } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
 import { createClient } from "@/lib/supabase/client";
@@ -12,6 +12,10 @@ export type MarcaDaLista = { id: string; nome: string; site_url: string | null; 
 
 type Edicao = { id: string | null; nome: string; site: string; logo: string };
 
+const BUCKET_DE_IMAGENS = "projetos-identidade";
+const LIMITE_DO_LOGO = 2 * 1024 * 1024;
+const EXTENSAO_DO_LOGO: Record<string, string> = { "image/png": "png", "image/webp": "webp" };
+
 /** As marcas que apresentam as sessões da programação pública (PD12.3): cadastra-se uma vez e escolhe-se na sessão. Arquivar tira a marca da programação pública. */
 export function MarcasSheet({ organizationId, podeEditar, onClose, onMudou }: { organizationId: string; podeEditar: boolean; onClose: () => void; onMudou: () => void }) {
   const [marcas, setMarcas] = useState<MarcaDaLista[] | null>(null);
@@ -19,6 +23,8 @@ export function MarcasSheet({ organizationId, podeEditar, onClose, onMudou }: { 
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
+  const [enviando, setEnviando] = useState(false);
+  const entradaDoLogo = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -60,6 +66,22 @@ export function MarcasSheet({ organizationId, podeEditar, onClose, onMudou }: { 
     const { error } = await clienteDaProducao(createClient()).from("producao_marcas").update({ arquivada: !marca.arquivada }).eq("id", marca.id);
     if (error) { setErro("Não foi possível mudar a marca. Tente de novo."); return; }
     atualizado();
+  }
+
+  /** Envia a imagem para o armazenamento público de imagens e põe o endereço dela no campo do logo (o endereço continua podendo ser digitado). */
+  async function enviarLogo(arquivo: File) {
+    setErro(null);
+    const extensao = EXTENSAO_DO_LOGO[arquivo.type];
+    if (!extensao) { setErro("O logo precisa ser uma imagem PNG ou WebP."); return; }
+    if (arquivo.size > LIMITE_DO_LOGO) { setErro("O logo passa de 2 MB."); return; }
+    setEnviando(true);
+    const supabase = createClient();
+    const caminho = `${organizationId}/producao-marcas/${crypto.randomUUID()}.${extensao}`;
+    const { error } = await supabase.storage.from(BUCKET_DE_IMAGENS).upload(caminho, arquivo, { contentType: arquivo.type, upsert: false });
+    setEnviando(false);
+    if (error) { setErro("Não foi possível enviar o logo. Tente de novo."); return; }
+    const { data } = supabase.storage.from(BUCKET_DE_IMAGENS).getPublicUrl(caminho);
+    setEdicao(atual => (atual ? { ...atual, logo: data.publicUrl } : atual));
   }
 
   return (
@@ -108,7 +130,14 @@ export function MarcasSheet({ organizationId, podeEditar, onClose, onMudou }: { 
             <p className="text-[0.8125rem] font-medium text-[#282525]">{edicao.id ? "Editar marca" : "Nova marca"}</p>
             <div><label className={ROTULO} htmlFor="marca-nome">Nome</label><input id="marca-nome" autoFocus className={CAMPO} value={edicao.nome} onChange={event => setEdicao({ ...edicao, nome: event.target.value })} maxLength={120} placeholder="Banco Central" disabled={salvando} /></div>
             <div><label className={ROTULO} htmlFor="marca-site">Site (opcional)</label><input id="marca-site" className={CAMPO} value={edicao.site} onChange={event => setEdicao({ ...edicao, site: event.target.value })} placeholder="https://www.exemplo.com.br" disabled={salvando} /></div>
-            <div><label className={ROTULO} htmlFor="marca-logo">Endereço do logo (opcional)</label><input id="marca-logo" className={CAMPO} value={edicao.logo} onChange={event => setEdicao({ ...edicao, logo: event.target.value })} placeholder="https://www.exemplo.com.br/logo.png" disabled={salvando} /></div>
+            <div>
+              <label className={ROTULO} htmlFor="marca-logo">Logo (opcional)</label>
+              <div className="flex items-start gap-2">
+                <input id="marca-logo" className={`${CAMPO} min-w-0 flex-1`} value={edicao.logo} onChange={event => setEdicao({ ...edicao, logo: event.target.value })} placeholder="https://www.exemplo.com.br/logo.png" disabled={salvando || enviando} />
+                <input ref={entradaDoLogo} type="file" accept="image/png,image/webp" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={event => { const escolhido = event.target.files?.[0]; event.target.value = ""; if (escolhido) void enviarLogo(escolhido); }} />
+                <button type="button" onClick={() => entradaDoLogo.current?.click()} disabled={salvando || enviando} className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded border border-black/12 bg-white px-3 text-[0.75rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"><ImagePlus size={13} aria-hidden="true" /> {enviando ? "Enviando…" : "Enviar imagem"}</button>
+              </div>
+            </div>
             <button type="button" onClick={() => setEdicao(null)} disabled={salvando} className="rounded px-3 py-2 text-[0.75rem] font-medium text-black/50 hover:bg-black/[.05]">Cancelar</button>
           </div>
         )}
