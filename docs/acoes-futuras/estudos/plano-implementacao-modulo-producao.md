@@ -535,7 +535,7 @@ Cada fase será detalhada quando começar. As estimativas estão entre parêntes
 - **PD3.3 Pautas completas (4).** Restrição no banco (um só caminho, `btree_gist` ou gatilho, decidido no pré-requisito 1), fila de pré-reservas (1ª, 2ª, 3ª) que promove a seguinte quando a primeira cai e avisa o contratante da vez, visão anual de 12 meses.
 - **PD3.4 Equipe fixa da casa (2).** Vínculos com o espaço, escala por pauta e por data com turnos, carga semanal. *Feito em 11/11/2026 (ver a tabela de status): turnos por data, com o evento atendido opcional; a escala "por pauta em um clique" ficou para depois.*
 - **PD3.5 Ficha técnica por link e PDF (2).** Link `ficha` para quem vai ocupar a sala.
-- **PD3.6 Base pública de espaços (4).** Semente a partir de dados abertos (Mapas Culturais, SNIIC), copiada para a organização no uso; o espaço que usa o Jards publica a própria ficha e pode ser achado, no movimento da base pública de patrocinadores.
+- **PD3.6 Base pública de espaços (4).** Semente a partir de dados abertos (Mapas Culturais, SNIIC), copiada para a organização no uso; o espaço que usa o Jards publica a própria ficha e pode ser achado, no movimento da base pública de patrocinadores. **Decisão do dono em 17/11/2026: não será feito. Ele disse que a seção pública não é necessária e escolheu manter só o cadastro interno de espaços (que já existe).**
 - **PD3.7 Planta do espaço com a ocupação (2; depende da PD2.2).** As salas como objetos e a ocupação da semana por cima. *Feito em 11/11/2026 (ver a tabela de status): a ocupação é do dia escolhido, com a semana em abas.*
 - **Marco M3:** espaço piloto com ficha, equipamentos, pautas com fila e equipe fixa.
 
