@@ -1043,7 +1043,7 @@
     .lei-card-btn { position:relative; display:flex; flex:1; align-items:center; gap:14px; width:100%; padding:14px 16px 14px 14px; border:0; border-bottom:1px solid rgba(13,13,13,.12); border-radius:0; background:transparent; color:rgba(13,13,13,.6); text-align:left; cursor:pointer; transition:background-color .18s ease, color .18s ease; }
     .lei-card-btn:hover { background:rgba(255,255,255,.6); color:var(--alt-ink); }
     .lei-card-btn.is-active { background:#fff; color:var(--alt-ink); }
-    .lei-card-btn::before { content:''; position:absolute; top:50%; left:-24px; width:24px; height:1px; background:repeating-linear-gradient(90deg, var(--lei-cor) 0 3px, transparent 3px 7px); transform:scaleX(0); transform-origin:right center; transition:transform .3s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    .lei-card-btn::before { content:''; position:absolute; top:50%; left:-24px; width:24px; height:1px; background:repeating-linear-gradient(90deg, #9A9AA4 0 3px, transparent 3px 7px); transform:scaleX(0); transform-origin:right center; transition:transform .3s cubic-bezier(.4,0,.2,1); pointer-events:none; }
     .lei-card-btn::after { content:''; position:absolute; top:calc(50% - 4px); left:-28px; width:9px; height:9px; opacity:0; pointer-events:none; transition:opacity .2s ease .2s;
       background:linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 1px 100% no-repeat,
                  linear-gradient(rgba(40,37,37,.5),rgba(40,37,37,.5)) center / 100% 1px no-repeat; }
@@ -1051,10 +1051,10 @@
     .lei-card-btn.is-active::after { opacity:1; }
     .lei-card-btn:focus-visible { outline:2px solid var(--alt-purple-focus); outline-offset:-2px; }
     .lei-icone { display:flex; flex:0 0 auto; align-items:center; justify-content:center; width:36px; height:36px; border:1px solid rgba(13,13,13,.14); border-radius:4px; background:#fff; color:rgba(13,13,13,.58); font-size:19px; transition:background-color .18s ease, border-color .18s ease, color .18s ease; }
-    .lei-card-btn:hover .lei-icone { border-color:var(--lei-cor); color:var(--lei-cor); }
-    .lei-card-btn.is-active .lei-icone { border-color:var(--lei-cor); background:var(--lei-cor); color:#fff; }
+    .lei-card-btn:hover .lei-icone { border-color:rgba(13,13,13,.28); color:#282525; }
+    .lei-card-btn.is-active .lei-icone { border-color:rgba(13,13,13,.16); background:linear-gradient(145deg,#f8f8fb 0%,#d4d4dc 100%); color:#282525; box-shadow:inset 0 1px 0 rgba(255,255,255,.9),0 1px 2px rgba(0,0,0,.06); }
     .lei-nome { font-size:17px; font-weight:500; line-height:1.3; letter-spacing:-.01em; }
-    .lei-progresso { position:absolute; left:0; right:0; bottom:-1px; height:2px; background:var(--lei-cor); transform:scaleX(0); transform-origin:left center; transition:transform .6s cubic-bezier(.4,0,.2,1); pointer-events:none; }
+    .lei-progresso { position:absolute; left:0; right:0; bottom:-1px; height:2px; background:#9A9AA4; transform:scaleX(0); transform-origin:left center; transition:transform .6s cubic-bezier(.4,0,.2,1); pointer-events:none; }
     @media (prefers-reduced-motion: reduce) { .lei-icone, .lei-card-btn::before, .lei-card-btn::after, .lei-progresso { transition:none; } }
     @media (min-width:768px) { .leis-seletor.alt-scroll-x { overflow:visible; -webkit-mask-image:none; mask-image:none; } }
     @media (max-width:767px) {
@@ -1536,22 +1536,22 @@
       <!-- Leis cobertas: coluna ao lado da tabela no desktop, abas roláveis acima dela no celular -->
       <div class="leis-seletor alt-scroll-x reveal" role="group" aria-label="Lei de incentivo">
         <div class="leis-legenda-topo" aria-hidden="true"><span>Lei</span><span class="leis-contador"><span class="leis-contador-atual">01</span><span>/ 04</span></span></div>
-        <button type="button" class="lei-card-btn is-active" style="--lei-cor:#D94A4A" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
+        <button type="button" class="lei-card-btn is-active" data-lei="cultura" aria-pressed="true" onclick="selecionarLei('cultura',this)">
           <span class="lei-icone"><i class="ph ph-piano-keys" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Cultura</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#E5482B" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
+        <button type="button" class="lei-card-btn" data-lei="esporte" aria-pressed="false" onclick="selecionarLei('esporte',this)">
           <span class="lei-icone"><i class="ph ph-soccer-ball" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Esporte</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#D6336C" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
+        <button type="button" class="lei-card-btn" data-lei="audiovisual" aria-pressed="false" onclick="selecionarLei('audiovisual',this)">
           <span class="lei-icone"><i class="ph ph-film-slate" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Audiovisual</span>
           <span class="lei-progresso" aria-hidden="true"></span>
         </button>
-        <button type="button" class="lei-card-btn" style="--lei-cor:#B23A3A" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
+        <button type="button" class="lei-card-btn" data-lei="saude" aria-pressed="false" onclick="selecionarLei('saude',this)">
           <span class="lei-icone"><i class="ph ph-stethoscope" aria-hidden="true"></i></span>
           <span class="lei-nome font-display">Saúde</span>
           <span class="lei-progresso" aria-hidden="true"></span>
@@ -1918,7 +1918,7 @@
     sairCursor(alvo);
   }
 
-  // A cor da lei ativa vem de --lei-cor: quadrado do ícone e linha até a demo no desktop, sublinhado nas abas do celular
+  // A lei ativa se marca em prata: quadrado do ícone com degradê diagonal e linha até a demo no desktop, sublinhado nas abas do celular
   // A régua de 2px da lei ativa acompanha a demo: linhas → cursor → perfil
   function andamento(v){
     var r = document.querySelector('.lei-card-btn.is-active .lei-progresso');
