@@ -4848,6 +4848,7 @@ export type BancoDaProducao = {
           fim: string;
           titulo: string | null;
           notas: string | null;
+          marca_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -4860,6 +4861,7 @@ export type BancoDaProducao = {
           fim: string;
           titulo?: string | null;
           notas?: string | null;
+          marca_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -4872,6 +4874,7 @@ export type BancoDaProducao = {
           fim?: string;
           titulo?: string | null;
           notas?: string | null;
+          marca_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -4888,6 +4891,54 @@ export type BancoDaProducao = {
             columns: ["pauta_id"];
             isOneToOne: false;
             referencedRelation: "producao_pautas";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_sessoes_marca_id_fkey";
+            columns: ["marca_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_marcas";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      producao_marcas: {
+        Row: {
+          id: string;
+          organization_id: string;
+          nome: string;
+          site_url: string | null;
+          logo_url: string | null;
+          arquivada: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          nome: string;
+          site_url?: string | null;
+          logo_url?: string | null;
+          arquivada?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          nome?: string;
+          site_url?: string | null;
+          logo_url?: string | null;
+          arquivada?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_marcas_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
             referencedColumns: ["id"];
           },
         ];

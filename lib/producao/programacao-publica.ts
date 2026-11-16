@@ -42,12 +42,16 @@ export async function diasDaProgramacaoDoEspaco(admin: Admin, espacoId: string, 
     : { data: [], error: null };
   const pautaIds = (pautas.data ?? []).map(pauta => pauta.id);
   const sessoes = pautaIds.length > 0
-    ? await producao.from("producao_sessoes").select("id, pauta_id, dia, inicio, fim, titulo, notas").in("pauta_id", pautaIds).gte("dia", hoje).order("dia").order("inicio").limit(LIMITE_DE_SESSOES)
+    ? await producao.from("producao_sessoes").select("id, pauta_id, dia, inicio, fim, titulo, notas, marca_id").in("pauta_id", pautaIds).gte("dia", hoje).order("dia").order("inicio").limit(LIMITE_DE_SESSOES)
     : { data: [], error: null };
   if (espaco.error || salas.error || pautas.error || sessoes.error) throw new Error("não foi possível ler a programação");
+  // As marcas que apresentam as sessões (PD12.3): só o nome, o site e o logo, e só se não estão arquivadas.
+  const marcaIds = [...new Set((sessoes.data ?? []).map(sessao => sessao.marca_id).filter((id): id is string => Boolean(id)))];
+  const marcas = marcaIds.length > 0 ? await producao.from("producao_marcas").select("id, nome, site_url, logo_url, arquivada").in("id", marcaIds) : { data: [], error: null };
+  if (marcas.error) throw new Error("não foi possível ler as marcas");
   return {
     espaco: espaco.data?.nome ?? "Programação",
-    dias: diasDaProgramacaoPublica((sessoes.data ?? []) as SessaoDaGrade[], pautas.data ?? [], salas.data ?? [], hoje),
+    dias: diasDaProgramacaoPublica((sessoes.data ?? []) as SessaoDaGrade[], pautas.data ?? [], salas.data ?? [], hoje, new Map((marcas.data ?? []).map(marca => [marca.id, marca]))),
   };
 }
 
