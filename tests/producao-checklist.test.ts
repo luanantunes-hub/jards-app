@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  cargaPorVeiculo, avisosDeCapacidade, documentosParaPreencher, documentosSugeridos, itensParaPreencher, lerLinhaDoChecklist, resumoDaConferencia, ROTULO_DA_CONFERENCIA, textoDoResumo, totaisDoChecklist,
+  cargaPorVeiculo, ondeEstaCadaItem, avisosDeCapacidade, documentosParaPreencher, documentosSugeridos, itensParaPreencher, lerLinhaDoChecklist, resumoDaConferencia, ROTULO_DA_CONFERENCIA, textoDoResumo, totaisDoChecklist,
 } from "../lib/producao/checklist";
 
 test("linha: nome e quantidade; vazio vira 1; recusa o que o banco recusaria", () => {
@@ -85,4 +85,45 @@ test("carga por veículo: itens por deslocamento contra a capacidade; sem veícu
   assert.deepEqual(carga[0].deslocamentos[0].avisos, ["A carga pesa 600 kg e o veículo leva 500 kg."]);
   assert.deepEqual(carga[1].deslocamentos[0].avisos, [], "sem capacidade cadastrada, sem aviso");
   assert.equal(carga[2].deslocamentos[0].semMedidas, 1);
+});
+
+test("onde está cada item: a conferência mais recente decide e quem tem problema vem primeiro", () => {
+  const deslocamentos = [
+    { id: "ida", veiculo_id: null, rotulo: "Van SP → Campinas", dia: "2026-12-04" },
+    { id: "volta", veiculo_id: null, rotulo: "Van Campinas → SP", dia: "2026-12-07" },
+    { id: "outro", veiculo_id: null, rotulo: "Caminhão", dia: "2026-12-05" },
+  ];
+  const linha = (deslocamento_id: string, item_id: string | null, nome: string, saida: "pendente" | "conferido" | "faltou" | "avariado", volta: "pendente" | "conferido" | "faltou" | "avariado", quantidade = 1, tipo: "item" | "documento" = "item") =>
+    ({ deslocamento_id, tipo, item_id, nome, quantidade, saida, volta });
+  const lista = ondeEstaCadaItem(deslocamentos, [
+    linha("ida", "a", "Refletor", "conferido", "conferido", 4),
+    linha("volta", "a", "Refletor", "pendente", "pendente", 4),
+    linha("ida", "b", "Mesa", "conferido", "pendente", 1),
+    linha("ida", "c", "Cabo", "faltou", "pendente", 2),
+    linha("outro", "d", "Tela", "pendente", "pendente", 1),
+    linha("ida", "e", "Fresnel", "conferido", "avariado", 2),
+    linha("ida", null, "CNH", "pendente", "pendente", 1, "documento"),
+    linha("ida", null, "Extensão", "pendente", "pendente", 3),
+    linha("sumiu", "z", "Fantasma", "conferido", "conferido", 1),
+  ]);
+  assert.deepEqual(lista.map(item => [item.nome, item.situacao]), [
+    ["Cabo", "faltou"], ["Fresnel", "avariado"], ["Mesa", "em_viagem"], ["Extensão", "a_sair"], ["Tela", "a_sair"], ["Refletor", "de_volta"],
+  ], "documento e deslocamento desconhecido ficam de fora; faltou e avariado primeiro");
+  const refletor = lista.find(item => item.nome === "Refletor");
+  assert.equal(refletor?.deslocamento, "Van SP → Campinas", "a volta conferida da ida decide, mesmo com um trecho posterior ainda pendente");
+  assert.equal(lista.find(item => item.nome === "Mesa")?.texto, "Saiu; a volta ainda não foi conferida");
+  assert.equal(lista.find(item => item.nome === "Cabo")?.texto, "Faltou na saída");
+});
+
+test("onde está cada item: um trecho posterior já saído vale mais que a volta anterior", () => {
+  const deslocamentos = [
+    { id: "ida", veiculo_id: null, rotulo: "Ida", dia: "2026-12-04" },
+    { id: "praca2", veiculo_id: null, rotulo: "Outra praça", dia: "2026-12-10" },
+  ];
+  const lista = ondeEstaCadaItem(deslocamentos, [
+    { deslocamento_id: "ida", tipo: "item", item_id: "a", nome: "Refletor", quantidade: 4, saida: "conferido", volta: "conferido" },
+    { deslocamento_id: "praca2", tipo: "item", item_id: "a", nome: "Refletor", quantidade: 4, saida: "conferido", volta: "pendente" },
+  ]);
+  assert.equal(lista.length, 1);
+  assert.deepEqual([lista[0].situacao, lista[0].deslocamento], ["em_viagem", "Outra praça"]);
 });

@@ -133,3 +133,53 @@ export function cargaPorVeiculo(
     .map(grupo => ({ ...grupo, deslocamentos: [...grupo.deslocamentos].sort((a, b) => a.dia.localeCompare(b.dia) || a.rotulo.localeCompare(b.rotulo, "pt-BR")) }))
     .sort((a, b) => (a.veiculoId === null ? 1 : 0) - (b.veiculoId === null ? 1 : 0) || a.nome.localeCompare(b.nome, "pt-BR"));
 }
+
+export type SituacaoDoItemNaTemporada = "a_sair" | "em_viagem" | "de_volta" | "faltou" | "avariado";
+export type LinhaParaOnde = { deslocamento_id: string; tipo: "item" | "documento"; item_id: string | null; nome: string; quantidade: number; saida: SituacaoDaConferencia; volta: SituacaoDaConferencia };
+/** `deslocamento` é o trecho que decide a situação (o rótulo) e `dia` é o dia dele. */
+export type OndeEstaOItem = { chave: string; nome: string; quantidade: number; situacao: SituacaoDoItemNaTemporada; texto: string; deslocamento: string; dia: string };
+
+export const ROTULO_DA_SITUACAO_DO_ITEM: Record<SituacaoDoItemNaTemporada, string> = {
+  a_sair: "A sair", em_viagem: "Em viagem", de_volta: "De volta", faltou: "Faltou", avariado: "Avariado",
+};
+
+const ORDEM_DA_SITUACAO: Record<SituacaoDoItemNaTemporada, number> = { faltou: 0, avariado: 1, em_viagem: 2, a_sair: 3, de_volta: 4 };
+
+/**
+ * Onde cada item está e quando volta (PD6.12): para cada item que vai em algum deslocamento, a situação pela conferência mais recente. Olha os
+ * deslocamentos do mais tardio para o mais cedo: a volta conferida decide (voltou, faltou ou voltou avariado); sem volta, a saída conferida diz que
+ * está em viagem (ou que faltou ou saiu avariado); sem nenhuma conferência, "a sair" no primeiro deslocamento. Quem falta ou está avariado vem
+ * primeiro, depois quem está em viagem. Documentos ficam de fora; item sem ligação com o inventário é agrupado pelo nome.
+ */
+export function ondeEstaCadaItem(deslocamentos: readonly DeslocamentoParaCarga[], linhas: readonly LinhaParaOnde[]): OndeEstaOItem[] {
+  const porDeslocamento = new Map(deslocamentos.map(deslocamento => [deslocamento.id, deslocamento]));
+  const grupos = new Map<string, { nome: string; trechos: { deslocamento: DeslocamentoParaCarga; linha: LinhaParaOnde }[] }>();
+  for (const linha of linhas) {
+    const deslocamento = porDeslocamento.get(linha.deslocamento_id);
+    if (linha.tipo !== "item" || !deslocamento) continue;
+    const chave = linha.item_id ?? `nome:${linha.nome.trim().toLowerCase()}`;
+    const grupo = grupos.get(chave) ?? { nome: linha.nome, trechos: [] };
+    grupo.trechos.push({ deslocamento, linha });
+    grupos.set(chave, grupo);
+  }
+  const resultado: OndeEstaOItem[] = [];
+  for (const [chave, grupo] of grupos) {
+    const trechos = [...grupo.trechos].sort((a, b) => a.deslocamento.dia.localeCompare(b.deslocamento.dia) || a.deslocamento.rotulo.localeCompare(b.deslocamento.rotulo, "pt-BR"));
+    let decisao: { situacao: SituacaoDoItemNaTemporada; texto: string; trecho: (typeof trechos)[number] } | null = null;
+    for (let i = trechos.length - 1; i >= 0 && !decisao; i--) {
+      const trecho = trechos[i], { saida, volta } = trecho.linha;
+      if (volta === "conferido") decisao = { situacao: "de_volta", texto: "Voltou", trecho };
+      else if (volta === "faltou") decisao = { situacao: "faltou", texto: "Faltou na volta", trecho };
+      else if (volta === "avariado") decisao = { situacao: "avariado", texto: "Voltou avariado", trecho };
+      else if (saida === "faltou") decisao = { situacao: "faltou", texto: "Faltou na saída", trecho };
+      else if (saida === "avariado") decisao = { situacao: "avariado", texto: "Saiu avariado; a volta ainda não foi conferida", trecho };
+      else if (saida === "conferido") decisao = { situacao: "em_viagem", texto: "Saiu; a volta ainda não foi conferida", trecho };
+    }
+    const final = decisao ?? { situacao: "a_sair" as const, texto: "Ainda não saiu", trecho: trechos[0] };
+    resultado.push({
+      chave, nome: grupo.nome, quantidade: final.trecho.linha.quantidade, situacao: final.situacao, texto: final.texto,
+      deslocamento: final.trecho.deslocamento.rotulo, dia: final.trecho.deslocamento.dia,
+    });
+  }
+  return resultado.sort((a, b) => ORDEM_DA_SITUACAO[a.situacao] - ORDEM_DA_SITUACAO[b.situacao] || a.dia.localeCompare(b.dia) || a.nome.localeCompare(b.nome, "pt-BR"));
+}

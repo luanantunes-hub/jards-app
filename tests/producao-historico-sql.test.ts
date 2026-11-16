@@ -131,6 +131,7 @@ const SEM_HISTORICO: Record<string, string> = {
   producao_ocupantes: "é só a ligação de uma pessoa a um quarto: quem está em cada quarto já se vê na lista, e o histórico da hospedagem conta o resto",
   producao_deslocamento_pessoas: "é só a ligação de uma pessoa a um deslocamento: quem vai já se vê na lista, e o histórico do deslocamento conta o resto",
   producao_checklist_itens: "é a lista do deslocamento: a situação e a hora de cada conferência já ficam na própria linha, e o histórico do deslocamento conta o resto",
+  producao_abastecimento_valores: "é só o valor pago em um abastecimento: dinheiro, e com o histórico o valor iria para uma linha que quem não vê o dinheiro também lê",
   producao_abastecimentos: "é só o registro de um abastecimento (litros, combustível, posto e hora): quem registrou e quando já ficam na própria linha, e o histórico do deslocamento conta o resto",
   producao_voluntarios_links: "é só o link de inscrição (título, vagas e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",
   producao_convidados_links: "é só o link de pedidos (título, corte, limite e o hash do código, que é segredo): quem criou e quando já ficam na própria linha",

@@ -22,7 +22,7 @@ export function lerOdometro(texto: string): number | null | "invalido" {
 }
 
 /** Litros com vírgula ou ponto ("45,3"); nulo se vazio; "invalido" fora de 0,1 a 9.999 (duas casas no máximo). */
-function lerLitros(texto: string): number | null | "invalido" {
+export function lerLitros(texto: string): number | null | "invalido" {
   if (vazio(texto)) return null;
   const normal = texto.trim().replace(",", ".");
   if (!/^\d+(\.\d{1,2})?$/.test(normal)) return "invalido";
