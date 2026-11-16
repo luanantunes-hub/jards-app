@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { diaDaSemana, diaEMes } from "@/lib/producao/agenda";
 import { fraseDoHistorico, type LinhaDoHistorico } from "@/lib/producao/historico";
-import { agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, PERIODOS_DA_LINHA_DO_TEMPO, recortarPagina } from "@/lib/producao/linha-do-tempo";
+import { agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, nomeDeQuemFez, pessoasDoFiltro, PERIODOS_DA_LINHA_DO_TEMPO, recortarPagina, type MembroDaLinhaDoTempo } from "@/lib/producao/linha-do-tempo";
 import { DetailPageContent } from "@/components/ui/DetailPagePrimitives";
 import { Dropdown } from "@/components/ui/Dropdown";
 
@@ -17,6 +17,8 @@ export default function LinhaDoTempoPage() {
   const organizationId = useOrganizationId();
   const [area, setArea] = useState("");
   const [periodo, setPeriodo] = useState("30");
+  const [pessoa, setPessoa] = useState("");
+  const [membros, setMembros] = useState<MembroDaLinhaDoTempo[]>([]);
   const [pagina, setPagina] = useState(0);
   const [linhas, setLinhas] = useState<LinhaDoHistorico[]>([]);
   const [temMais, setTemMais] = useState(false);
@@ -32,9 +34,10 @@ export default function LinhaDoTempoPage() {
       const entidades = entidadesDaArea(area);
       const inicio = inicioDoPeriodo(periodo, agora);
       let consulta = clienteDaProducao(createClient()).from("producao_historico")
-        .select("id, entidade, acao, campo, antes, depois, quando").eq("organization_id", organizationId);
+        .select("id, entidade, acao, campo, antes, depois, quando, quem").eq("organization_id", organizationId);
       if (entidades) consulta = consulta.in("entidade", [...entidades]);
       if (inicio) consulta = consulta.gte("quando", inicio);
+      if (pessoa) consulta = consulta.eq("quem", pessoa);
       const { data, error } = await consulta.order("quando", { ascending: false }).order("id", { ascending: false }).range(de, ate);
       if (!ativo) return;
       const { mostrar, temMais: mais } = recortarPagina((data ?? []) as LinhaDoHistorico[]);
@@ -44,7 +47,20 @@ export default function LinhaDoTempoPage() {
       setErro(error ? "Não foi possível carregar a linha do tempo. Tente de novo." : null);
     })();
     return () => { ativo = false; };
-  }, [organizationId, area, periodo, pagina, agora]);
+  }, [organizationId, area, periodo, pessoa, pagina, agora]);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    let ativo = true;
+    void (async () => {
+      // Os nomes de quem fez cada mudança: os membros da organização (a pessoa que saiu fica sem nome na linha).
+      const { data } = await (createClient() as unknown as { rpc: (nome: string, args: { org_id: string }) => PromiseLike<{ data: unknown }> }).rpc("get_organization_members", { org_id: organizationId });
+      if (ativo) setMembros(Array.isArray(data) ? (data as MembroDaLinhaDoTempo[]) : []);
+    })();
+    return () => { ativo = false; };
+  }, [organizationId]);
+
+  const pessoas = useMemo(() => pessoasDoFiltro(membros), [membros]);
 
   const grupos = useMemo(() => agruparPorDia(linhas), [linhas]);
 
@@ -65,6 +81,7 @@ export default function LinhaDoTempoPage() {
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <div className="w-60 max-w-full"><Dropdown ariaLabel="Área" value={area} onChange={valor => mudarFiltro(() => setArea(valor))} options={[{ value: "", label: "Todas as áreas" }, ...AREAS_DA_LINHA_DO_TEMPO.map(item => ({ value: item.id, label: item.nome }))]} /></div>
           <div className="w-52 max-w-full"><Dropdown ariaLabel="Período" value={periodo} onChange={valor => mudarFiltro(() => setPeriodo(valor))} options={PERIODOS_DA_LINHA_DO_TEMPO.map(item => ({ value: item.id, label: item.nome }))} /></div>
+          {pessoas.length > 1 && <div className="w-56 max-w-full"><Dropdown ariaLabel="Pessoa" value={pessoa} onChange={valor => mudarFiltro(() => setPessoa(valor))} options={[{ value: "", label: "Todas as pessoas" }, ...pessoas.map(item => ({ value: item.id, label: item.nome }))]} /></div>}
         </div>
 
         {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
@@ -82,7 +99,7 @@ export default function LinhaDoTempoPage() {
                   {grupo.linhas.map(linha => (
                     <li key={linha.id} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 px-4 py-2.5">
                       <span className="min-w-0 flex-1 basis-72 break-words text-[0.8125rem] text-[#282525]">{fraseDoHistorico(linha)}</span>
-                      <span className="text-[0.6875rem] tabular-nums text-black/45">{hora(linha.quando)}</span>
+                      <span className="text-[0.6875rem] tabular-nums text-black/45">{[nomeDeQuemFez(linha.quem, membros), hora(linha.quando)].filter(Boolean).join(" · ")}</span>
                     </li>
                   ))}
                 </ul>
