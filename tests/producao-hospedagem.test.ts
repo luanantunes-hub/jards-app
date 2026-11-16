@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { lerHospedagem, lerQuarto, listaDeQuartos, movimentoDeQuarto, periodoDaHospedagem, pessoasSemQuarto, vagasDoQuarto } from "../lib/producao/hospedagem";
+import { lerHospedagem, lerQuarto, listaDeQuartos, movimentoDeQuarto, periodoDaHospedagem, pessoasSemQuarto, rotuloDaCama, vagasDoQuarto } from "../lib/producao/hospedagem";
 
 test("mover pessoa: vaga no destino; mesmo lugar não muda nada; tirar sempre vale", () => {
   const q = [{ id: "q1", nome: "101", capacidade: 2 }, { id: "q2", nome: "102", capacidade: 1 }];
@@ -34,7 +34,7 @@ test("hospedagem: o mínimo é o hotel; saída só com entrada e não antes dela
 test("quarto: nome e capacidade de 1 a 12 (vazio vira 2)", () => {
   const padrao = lerQuarto({ nome: " 101 ", capacidade: "" });
   assert.ok(padrao.ok);
-  assert.deepEqual(padrao.ok && padrao.quarto, { nome: "101", capacidade: 2 });
+  assert.deepEqual(padrao.ok && padrao.quarto, { nome: "101", capacidade: 2, cama: null });
   assert.ok(!lerQuarto({ nome: "", capacidade: "2" }).ok);
   assert.ok(!lerQuarto({ nome: "101", capacidade: "0" }).ok);
   assert.ok(!lerQuarto({ nome: "101", capacidade: "13" }).ok);
@@ -66,4 +66,25 @@ test("lista de quartos: ordem numérica, nomes em ordem alfabética, vago", () =
     "Quarto 101 (2 lugares): Ana, Bruno",
     "Quarto 102 (1 lugar): Carla",
   ].join("\n"));
+});
+
+test("cama do quarto: lista fechada, vazia vira nenhuma e o rótulo sai em português", () => {
+  const sem = lerQuarto({ nome: "101", capacidade: "2" });
+  assert.ok(sem.ok && sem.quarto.cama === null);
+  const casal = lerQuarto({ nome: "101", capacidade: "2", cama: "casal" });
+  assert.ok(casal.ok && casal.quarto.cama === "casal");
+  assert.ok(!lerQuarto({ nome: "101", capacidade: "2", cama: "king" }).ok);
+  assert.equal(rotuloDaCama("duas_solteiro"), "Duas camas de solteiro");
+  assert.equal(rotuloDaCama(null), "");
+  assert.equal(rotuloDaCama("king"), "");
+});
+
+test("a lista de quartos em texto diz a cama quando ela foi dita", () => {
+  const texto = listaDeQuartos(
+    { hotel: "Hotel Central", entrada: null, saida: null },
+    [{ id: "q1", nome: "101", capacidade: 2, cama: "casal" }, { id: "q2", nome: "102", capacidade: 1 }],
+    [], new Map(),
+  );
+  assert.match(texto, /Quarto 101 \(2 lugares, cama de casal\): vago/);
+  assert.match(texto, /Quarto 102 \(1 lugar\): vago/);
 });

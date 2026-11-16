@@ -9,10 +9,13 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { MapaDeQuartos } from "@/components/producao/MapaDeQuartos";
 import { LinkDoHotelSheet } from "@/components/producao/LinkDoHotelSheet";
-import { lerHospedagem, lerQuarto, listaDeQuartos, periodoDaHospedagem, pessoasSemQuarto, vagasDoQuarto } from "@/lib/producao/hospedagem";
+import { lerHospedagem, lerQuarto, listaDeQuartos, periodoDaHospedagem, pessoasSemQuarto, rotuloDaCama, vagasDoQuarto } from "@/lib/producao/hospedagem";
+import { CAMAS_DO_QUARTO, type CamaDoQuarto } from "@/lib/producao/estados";
 
 type Hospedagem = { id: string; hotel: string; endereco: string | null; entrada: string | null; saida: string | null; localizador: string | null; notas: string | null };
-type Quarto = { id: string; hospedagem_id: string; nome: string; capacidade: number };
+type Quarto = { id: string; hospedagem_id: string; nome: string; capacidade: number; cama: string | null };
+
+const OPCOES_DA_CAMA = [{ value: "", label: "Sem cama definida" }, ...CAMAS_DO_QUARTO.map(cama => ({ value: cama, label: rotuloDaCama(cama) }))];
 type Ocupante = { id: string; hospedagem_id: string; quarto_id: string; pessoa_id: string };
 type Pessoa = { id: string; nome: string };
 
@@ -114,12 +117,13 @@ function HospedagemSheet({ organizationId, temporadaId, hospedagem, onClose, onS
 function QuartoSheet({ organizationId, hospedagemId, hotel, onClose, onSaved }: { organizationId: string; hospedagemId: string; hotel: string; onClose: () => void; onSaved: () => void }) {
   const [nome, setNome] = useState("");
   const [capacidade, setCapacidade] = useState("2");
+  const [cama, setCama] = useState("");
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [criados, setCriados] = useState<string[]>([]);
 
   async function salvar(fechar: () => void, outro: boolean) {
-    const leitura = lerQuarto({ nome, capacidade });
+    const leitura = lerQuarto({ nome, capacidade, cama });
     if (!leitura.ok) { setErro(leitura.erro); return; }
     setSalvando(true);
     setErro(null);
@@ -156,6 +160,10 @@ function QuartoSheet({ organizationId, hospedagemId, hotel, onClose, onSaved }: 
             <label className={ROTULO} htmlFor="quarto-capacidade">Lugares</label>
             <input id="quarto-capacidade" inputMode="numeric" className={CAMPO} value={capacidade} onChange={event => setCapacidade(event.target.value.replace(/\D/g, ""))} disabled={salvando} />
           </div>
+        </div>
+        <div>
+          <span className={ROTULO}>Cama</span>
+          <Dropdown value={cama} onChange={setCama} options={OPCOES_DA_CAMA} />
         </div>
         {criados.length > 0 && <p className="text-[0.75rem] text-black/55" role="status">{criados.length === 1 ? "Quarto criado" : "Quartos criados"}: {criados.join(", ")}.</p>}
       </div>
@@ -244,7 +252,7 @@ function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pe
             return (
               <li key={quarto.id} className="px-3 py-2.5">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-[0.8125rem] font-medium text-[#282525]">Quarto {quarto.nome} <span className="font-normal text-black/45">· {quarto.capacidade} {quarto.capacidade === 1 ? "lugar" : "lugares"}{vagas > 0 ? `, ${vagas} ${vagas === 1 ? "vaga" : "vagas"}` : ", completo"}</span></p>
+                  <p className="text-[0.8125rem] font-medium text-[#282525]">Quarto {quarto.nome} <span className="font-normal text-black/45">· {quarto.capacidade} {quarto.capacidade === 1 ? "lugar" : "lugares"}{rotuloDaCama(quarto.cama) ? `, ${rotuloDaCama(quarto.cama).toLowerCase()}` : ""}{vagas > 0 ? `, ${vagas} ${vagas === 1 ? "vaga" : "vagas"}` : ", completo"}</span></p>
                   {podeEditar && <button type="button" onClick={() => apagarQuarto(quarto)} aria-label={`Apagar o quarto ${quarto.nome}`} title="Apagar quarto" className="flex h-10 w-10 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-[#B23B3B] focus-visible:outline-2 focus-visible:outline-[#7259B5]"><Trash2 size={13} aria-hidden="true" /></button>}
                 </div>
                 {doQuarto.length > 0 && (
@@ -256,6 +264,11 @@ function CartaoDaHospedagem({ organizationId, hospedagem, quartos, ocupantes, pe
                       </li>
                     ))}
                   </ul>
+                )}
+                {podeEditar && (
+                  <div className="mt-2 max-w-xs">
+                    <Dropdown value={quarto.cama ?? ""} onChange={valor => void executar(() => clienteDaProducao(createClient()).from("producao_quartos").update({ cama: valor === "" ? null : (valor as CamaDoQuarto) }).eq("id", quarto.id), "Não foi possível mudar a cama do quarto.")} options={OPCOES_DA_CAMA} />
+                  </div>
                 )}
                 {podeEditar && vagas > 0 && semQuarto.length > 0 && (
                   <div className="mt-2 max-w-xs">
@@ -300,7 +313,7 @@ export function HospedagemDaTemporada({ organizationId, temporadaId, podeEditar 
       const [qua, ocu, pes] = ids.length === 0
         ? [{ data: [] as Quarto[] }, { data: [] as Ocupante[] }, { data: [] as Pessoa[] }]
         : await Promise.all([
-          producao.from("producao_quartos").select("id, hospedagem_id, nome, capacidade").in("hospedagem_id", ids).order("nome"),
+          producao.from("producao_quartos").select("id, hospedagem_id, nome, capacidade, cama").in("hospedagem_id", ids).order("nome"),
           producao.from("producao_ocupantes").select("id, hospedagem_id, quarto_id, pessoa_id").in("hospedagem_id", ids),
           producao.from("producao_pessoas").select("id, nome").eq("organization_id", organizationId).eq("arquivada", false).order("nome"),
         ]);

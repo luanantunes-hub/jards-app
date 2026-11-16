@@ -2,6 +2,7 @@
 // quarto e a lista de quartos (rooming list) em texto. Sem tela e sem banco.
 
 import { diaEMes } from "@/lib/producao/agenda";
+import { CAMAS_DO_QUARTO, type CamaDoQuarto } from "@/lib/producao/estados";
 
 export type HospedagemLida = { hotel: string; endereco: string | null; entrada: string | null; saida: string | null; localizador: string | null; notas: string | null };
 export type LeituraDaHospedagem = { ok: true; hospedagem: HospedagemLida } | { ok: false; erro: string };
@@ -25,20 +26,31 @@ export function lerHospedagem(c: { hotel: string; endereco: string; entrada: str
   return { ok: true, hospedagem: { hotel, endereco, entrada, saida, localizador, notas } };
 }
 
-export type QuartoLido = { nome: string; capacidade: number };
+const ROTULOS_DA_CAMA: Record<CamaDoQuarto, string> = {
+  casal: "Cama de casal", solteiro: "Cama de solteiro", duas_solteiro: "Duas camas de solteiro", casal_e_solteiro: "Casal e solteiro", beliche: "Beliche",
+};
+
+/** O nome da cama como se lê na tela e na lista ("Cama de casal"); sem cama dita, vazio. */
+export function rotuloDaCama(cama: string | null | undefined): string {
+  return cama && cama in ROTULOS_DA_CAMA ? ROTULOS_DA_CAMA[cama as CamaDoQuarto] : "";
+}
+
+export type QuartoLido = { nome: string; capacidade: number; cama: CamaDoQuarto | null };
 export type LeituraDoQuarto = { ok: true; quarto: QuartoLido } | { ok: false; erro: string };
 
-/** O quarto como o banco aceita (nome até 100; capacidade inteira de 1 a 12). */
-export function lerQuarto(c: { nome: string; capacidade: string }): LeituraDoQuarto {
+/** O quarto como o banco aceita (nome até 100; capacidade inteira de 1 a 12; cama da lista fechada ou nenhuma). */
+export function lerQuarto(c: { nome: string; capacidade: string; cama?: string }): LeituraDoQuarto {
   const nome = c.nome.trim();
   if (nome === "") return { ok: false, erro: "Dê um nome ao quarto, como \"101\"." };
   if (nome.length > 100) return { ok: false, erro: "O nome do quarto pode ter até 100 letras." };
   const capacidade = Number(c.capacidade.trim() === "" ? "2" : c.capacidade.trim());
   if (!Number.isInteger(capacidade) || capacidade < 1 || capacidade > 12) return { ok: false, erro: "A capacidade é um número inteiro de 1 a 12." };
-  return { ok: true, quarto: { nome, capacidade } };
+  const cama = (c.cama ?? "").trim();
+  if (cama !== "" && !(CAMAS_DO_QUARTO as readonly string[]).includes(cama)) return { ok: false, erro: "Escolha uma das camas da lista." };
+  return { ok: true, quarto: { nome, capacidade, cama: cama === "" ? null : (cama as CamaDoQuarto) } };
 }
 
-type QuartoParaLista = { id: string; nome: string; capacidade: number };
+type QuartoParaLista = { id: string; nome: string; capacidade: number; cama?: string | null };
 type OcupanteParaLista = { quarto_id: string; pessoa_id: string };
 
 /** Quantas vagas faltam no quarto. */
@@ -89,7 +101,8 @@ export function listaDeQuartos(
   const ordenados = [...quartos].sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR", { numeric: true }));
   for (const quarto of ordenados) {
     const nomesDoQuarto = ocupantes.filter(ocupante => ocupante.quarto_id === quarto.id).map(ocupante => nomes.get(ocupante.pessoa_id) ?? "Pessoa").sort((a, b) => a.localeCompare(b, "pt-BR"));
-    linhas.push(`Quarto ${quarto.nome} (${quarto.capacidade} ${quarto.capacidade === 1 ? "lugar" : "lugares"}): ${nomesDoQuarto.length > 0 ? nomesDoQuarto.join(", ") : "vago"}`);
+    const cama = rotuloDaCama(quarto.cama).toLowerCase();
+    linhas.push(`Quarto ${quarto.nome} (${quarto.capacidade} ${quarto.capacidade === 1 ? "lugar" : "lugares"}${cama ? `, ${cama}` : ""}): ${nomesDoQuarto.length > 0 ? nomesDoQuarto.join(", ") : "vago"}`);
   }
   return linhas.join("\n");
 }

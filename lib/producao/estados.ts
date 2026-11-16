@@ -205,6 +205,12 @@ export const TIPOS_DE_DOCUMENTO_DO_VEICULO: readonly TipoDeDocumentoDoVeiculo[] 
 export type TipoDeDeslocamento = "aviao" | "onibus" | "van" | "carro" | "caminhao" | "trem" | "balsa" | "outro";
 export const TIPOS_DE_DESLOCAMENTO: readonly TipoDeDeslocamento[] = ["aviao", "onibus", "van", "carro", "caminhao", "trem", "balsa", "outro"];
 
+// A cama do quarto (PD6.8): o banco confere a lista num CHECK (supabase/migrations/*_producao_quartos_cama.sql).
+
+/** `producao_quartos.cama`. */
+export type CamaDoQuarto = "casal" | "solteiro" | "duas_solteiro" | "casal_e_solteiro" | "beliche";
+export const CAMAS_DO_QUARTO: readonly CamaDoQuarto[] = ["casal", "solteiro", "duas_solteiro", "casal_e_solteiro", "beliche"];
+
 /** As listas que um parceiro vê pelo link da temporada (PD8.6): os transfers (transportadora) e os itens locados (locadora). */
 export type TipoDeTabela = "transfers" | "locacao";
 export const TIPOS_DE_TABELA: readonly TipoDeTabela[] = ["transfers", "locacao"];

@@ -78,7 +78,7 @@ import type {
   EscopoDoDocumento,
   TipoDeDocumento,
   SituacaoDoVinculo,
-  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeTabela, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
+  TipoDeCartaoDoDia, CategoriaDoVeiculo, CombustivelDoVeiculo, ContratacaoDoVeiculo, TipoDeDocumentoDoVeiculo, TipoDeDeslocamento, TipoDeTabela, CamaDoQuarto, SituacaoDoVoluntario, SituacaoDoConvidado, SituacaoDoAdiantamento, SituacaoDoPedido, SituacaoDaFatura, TipoDeAcordo, SentidoDoAcordo, SituacaoDoAcordo, SituacaoDoOrcamento, CategoriaDoOrcamento, PapelNoAcerto, FormaDoAcerto, SituacaoDoAcertoDoBordero, SituacaoDoBordero, FormaDaDeducao, PosicaoNaExposicao, LuzDaObra, CategoriaDaCota, SituacaoDaTurma, SituacaoDaMatricula, SituacaoDoAgendamento, TipoDeAcessibilidade, SituacaoDaAcessibilidade, ResultadoDaLeitura, TipoDeOcorrencia, GravidadeDaOcorrencia, TipoDoItemDoChecklist, SituacaoDaConferencia, RespostaDoConvite } from "@/lib/producao/estados";
 import type { TipoData } from "@/lib/producao/vocabulario";
 import type { PastaDeArquivo } from "@/supabase/functions/_shared/producao-caminho";
 
@@ -2021,6 +2021,7 @@ export type BancoDaProducao = {
           hospedagem_id: string;
           nome: string;
           capacidade: number;
+          cama: CamaDoQuarto | null;
           notas: string | null;
           created_at: string;
           updated_at: string;
@@ -2031,6 +2032,7 @@ export type BancoDaProducao = {
           hospedagem_id: string;
           nome: string;
           capacidade?: number;
+          cama?: CamaDoQuarto | null;
           notas?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -2041,6 +2043,7 @@ export type BancoDaProducao = {
           hospedagem_id?: string;
           nome?: string;
           capacidade?: number;
+          cama?: CamaDoQuarto | null;
           notas?: string | null;
           created_at?: string;
           updated_at?: string;

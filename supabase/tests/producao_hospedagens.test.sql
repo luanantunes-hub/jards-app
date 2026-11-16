@@ -15,7 +15,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(25);
+select plan(27);
 
 create schema hp;
 grant usage on schema hp to authenticated, anon;
@@ -200,6 +200,16 @@ select is(array[
                 '23514 hospedagem_de_outra_organizacao', '23514 hospedagem_nao_muda', '23514 capacidade_menor_que_ocupantes', '23514 quarto_lotado',
                 '23514 pessoa_de_outra_organizacao', '23514 quarto_de_outra_organizacao', '23505 producao_ocupantes_pessoa_key', '23514 quarto_nao_muda', 'aceito'],
           'hospedagem, quarto e ocupante: forma, organização, o que não muda, quarto lotado, capacidade, uma pessoa por hospedagem; a hospedagem do ocupante vem do quarto');
+
+-- ─── A cama do quarto (PD6.8, segundo corte) ────────────────────────────────
+
+select is(array[
+            hp.tenta(format('insert into public.producao_quartos (organization_id, hospedagem_id, nome, cama) values (%L, %L, %L, %L)', hp.id('a0'), hp.id('61'), 'Quarto 201', 'casal')),
+            hp.tenta(format('insert into public.producao_quartos (organization_id, hospedagem_id, nome, cama) values (%L, %L, %L, %L)', hp.id('a0'), hp.id('61'), 'Quarto 202', 'king')),
+            hp.tenta(format('insert into public.producao_quartos (organization_id, hospedagem_id, nome) values (%L, %L, %L)', hp.id('a0'), hp.id('61'), 'Quarto 203'))],
+          array['aceito', '23514 producao_quartos_cama_check', 'aceito'],
+          'a cama é da lista fechada (casal, solteiro, duas de solteiro, casal e solteiro, beliche) ou nenhuma');
+select is(hp.efeito(format('update public.producao_quartos set cama = %L where id = %L', 'beliche', hp.id('71'))), 'sim', 'quem grava muda a cama de um quarto');
 
 -- ─── Histórico ──────────────────────────────────────────────────────────────
 

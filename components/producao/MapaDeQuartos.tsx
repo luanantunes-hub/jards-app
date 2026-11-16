@@ -5,9 +5,9 @@ import { GripVertical } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
-import { movimentoDeQuarto, pessoasSemQuarto, vagasDoQuarto } from "@/lib/producao/hospedagem";
+import { movimentoDeQuarto, pessoasSemQuarto, rotuloDaCama, vagasDoQuarto } from "@/lib/producao/hospedagem";
 
-type Quarto = { id: string; nome: string; capacidade: number };
+type Quarto = { id: string; nome: string; capacidade: number; cama?: string | null };
 type Ocupante = { id: string; quarto_id: string; pessoa_id: string };
 type Pessoa = { id: string; nome: string };
 
@@ -115,7 +115,7 @@ export function MapaDeQuartos({ organizationId, hospedagemId, hotel, quartos, oc
                 <section key={quarto.id} aria-label={`Quarto ${quarto.nome}`} {...alvo(quarto.id)}
                   className={`rounded border p-3 transition ${sobre === quarto.id ? "border-[#282525] bg-black/[.04]" : "bg-white"}`} style={sobre === quarto.id ? undefined : BORDA}>
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="text-[0.8125rem] font-medium text-[#282525]">Quarto {quarto.nome} <span className="font-normal tabular-nums text-black/45">· {doQuarto.length}/{quarto.capacidade}</span></h3>
+                    <h3 className="text-[0.8125rem] font-medium text-[#282525]">Quarto {quarto.nome} <span className="font-normal tabular-nums text-black/45">· {doQuarto.length}/{quarto.capacidade}{rotuloDaCama(quarto.cama) ? ` · ${rotuloDaCama(quarto.cama).toLowerCase()}` : ""}</span></h3>
                     {podeReceber && escolhida && !doQuarto.some(ocupante => ocupante.pessoa_id === escolhida) && (
                       <button type="button" onClick={() => void mover(escolhida, quarto.id)} disabled={ocupado} className="h-9 rounded bg-[#282525] px-3 text-[0.75rem] font-medium text-white hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Pôr {nomes.get(escolhida)?.split(" ")[0]} aqui</button>
                     )}
