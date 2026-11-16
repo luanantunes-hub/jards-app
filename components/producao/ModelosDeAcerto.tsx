@@ -9,7 +9,7 @@ import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import {
-  chaveParaCampo, DESTINO_DO_ACERTO, lerCampo, lerModelo, MODELO_PADRAO, ROTULO_DA_VISIBILIDADE, ROTULO_DO_TIPO_DE_CAMPO, type CampoDoModelo,
+  chaveParaCampo, DESTINO_DO_ACERTO, lerCampo, lerModelo, MODELOS_PRONTOS, ROTULO_DA_VISIBILIDADE, ROTULO_DO_TIPO_DE_CAMPO, type CampoDoModelo, type ModeloPronto,
 } from "@/lib/producao/acerto";
 import { DESTINOS_DO_ACERTO, LADOS_DO_ACERTO, TIPOS_DE_CAMPO_DO_ACERTO, VISIBILIDADES_DO_ACERTO, type LadoDoAcerto } from "@/lib/producao/estados";
 
@@ -132,10 +132,51 @@ function ModeloSheet({ organizationId, modelo, onClose, onSaved }: { organizatio
   );
 }
 
+/** Os modelos que vêm prontos, um por tipo de produção: a organização cria o que quiser e ajusta depois. */
+function ProntosSheet({ organizationId, jaTem, onClose, onCriou }: { organizationId: string; jaTem: ReadonlySet<string>; onClose: () => void; onCriou: () => void }) {
+  const [criando, setCriando] = useState<string | null>(null);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function criar(modelo: ModeloPronto) {
+    setCriando(modelo.id);
+    setErro(null);
+    const { error } = await clienteDaProducao(createClient()).from("producao_modelos_acerto").insert({ organization_id: organizationId, nome: modelo.nome, lado: modelo.lado, campos: modelo.campos });
+    setCriando(null);
+    if (error) { setErro(error.code === "23505" ? "Esse modelo já existe. Edite o que você já tem." : error.code === "42501" ? "Você não pode criar modelos." : "Não foi possível criar o modelo. Tente de novo."); return; }
+    onCriou();
+  }
+
+  return (
+    <TopSheet titulo="Modelos prontos" onClose={onClose} footer={fechar => <button type="button" onClick={fechar} className="rounded px-4 py-2.5 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Fechar</button>}>
+      <div className="space-y-4">
+        {erro && <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
+        <p className="text-[0.75rem] text-black/55">Escolha o tipo de produção. O modelo vira seu: você pode mudar campos, textos e o que a casa vê.</p>
+        <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+          {MODELOS_PRONTOS.map(modelo => {
+            const existe = jaTem.has(modelo.nome);
+            return (
+              <li key={modelo.id} className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+                <span className="min-w-0 flex-1 basis-56">
+                  <span className="block text-[0.8125rem] font-medium text-[#282525]">{modelo.nome}</span>
+                  <span className="block text-[0.6875rem] text-black/45">{modelo.descricao} · {modelo.campos.length} campos</span>
+                </span>
+                <button type="button" disabled={existe || criando !== null} onClick={() => void criar(modelo)} className="inline-flex h-10 items-center gap-1.5 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50">
+                  {existe ? "Já criado" : criando === modelo.id ? "Criando…" : "Criar este modelo"}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    </TopSheet>
+  );
+}
+
 /** Os modelos de acerto técnico da organização (PD4.1): campos com seção, tipo, destino e o que a casa vê. */
 export function ModelosDeAcerto({ organizationId, podeEditar }: { organizationId: string; podeEditar: boolean }) {
   const [modelos, setModelos] = useState<Modelo[] | null>(null);
   const [folha, setFolha] = useState<{ modelo?: Modelo } | null>(null);
+  const [prontosAberto, setProntosAberto] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
 
@@ -150,20 +191,13 @@ export function ModelosDeAcerto({ organizationId, podeEditar }: { organizationId
     return () => { ativo = false; };
   }, [organizationId, versao]);
 
-  async function criarPadrao() {
-    setErro(null);
-    const { error } = await clienteDaProducao(createClient()).from("producao_modelos_acerto").insert({ organization_id: organizationId, nome: MODELO_PADRAO.nome, lado: MODELO_PADRAO.lado, campos: MODELO_PADRAO.campos });
-    if (error) { setErro(error.code === "23505" ? "O modelo padrão já existe. Edite o que você já tem." : error.code === "42501" ? "Você não pode criar modelos." : "Não foi possível criar o modelo. Tente de novo."); return; }
-    setVersao(atual => atual + 1);
-  }
-
   return (
     <section aria-labelledby="modelos-de-acerto">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
         <h2 id="modelos-de-acerto" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Modelos de acerto técnico</h2>
         {podeEditar && (
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => void criarPadrao()} className="inline-flex h-10 items-center gap-1.5 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Criar o modelo padrão</button>
+            <button type="button" onClick={() => setProntosAberto(true)} className="inline-flex h-10 items-center gap-1.5 rounded border border-black/[.12] px-3.5 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Modelos prontos</button>
             <PrimaryListAction onClick={() => setFolha({})}><Plus size={13} aria-hidden="true" /> Novo modelo</PrimaryListAction>
           </div>
         )}
@@ -183,6 +217,7 @@ export function ModelosDeAcerto({ organizationId, podeEditar }: { organizationId
           ))}
         </ul>
       )}
+      {prontosAberto && <ProntosSheet organizationId={organizationId} jaTem={new Set((modelos ?? []).map(item => item.nome))} onClose={() => setProntosAberto(false)} onCriou={() => setVersao(atual => atual + 1)} />}
       {folha && <ModeloSheet organizationId={organizationId} modelo={folha.modelo} onClose={() => setFolha(null)} onSaved={() => setVersao(atual => atual + 1)} />}
     </section>
   );
