@@ -608,16 +608,18 @@
     .ledger-foto { position:relative; margin:0; padding:0; }
     .ledger-foto img { display:block; width:100%; height:100%; min-height:360px; object-fit:cover; object-position:50% 42%; border-radius:4px; }
     .ledger-body { display:flex; flex-direction:column; justify-content:center; }
-    /* Os dois balões sobre a foto: um por vez, o do tamanduá (Relacionamento = CRM) e depois o da mulher (Dados = Inteligência).
-       A foto usa object-fit:cover, então cada balão é posicionado pelo ponto da foto original (960×1200, em --x e --y) e segue o recorte em qualquer tamanho. */
+    /* Os dois balões sobre a foto: um por vez, o do tamanduá (Relacionamento = CRM, acima da cabeça) e depois o da mulher (Dados = Inteligência, abaixo do queixo).
+       A foto usa object-fit:cover, então cada balão é posicionado pelo ponto da foto original (960×1200, em --x e --y) onde fica a PONTA da setinha, e o corpo do balão
+       sai dali (--tx e --ty). O balão é uma forma só: retângulo e setinha com o mesmo branco sólido, a transparência vale para o conjunto e o contorno vem de um filtro. */
     .ledger-balaos { position:absolute; inset:0; container-type:size; pointer-events:none; }
-    .ledger-balao { --s:max(calc(100cqw / 960), calc(100cqh / 1200)); position:absolute; left:calc((100cqw - 960 * var(--s)) * .5 + var(--x) * var(--s)); top:calc((100cqh - 1200 * var(--s)) * .42 + var(--y) * var(--s)); transform:translate(-50%,-50%); padding:.7em 1.1em; border:1px solid rgba(40,37,37,.12); border-radius:4px; background:rgba(255,255,255,.9); box-shadow:0 18px 44px rgba(52,42,78,.17),0 4px 14px rgba(40,37,37,.09); color:#282525; font-size:clamp(9px,3.7cqw,12.5px); font-weight:600; line-height:1; letter-spacing:0; white-space:nowrap; }
-    /* A pontinha de balão de fala, apontando para o personagem (--cauda é onde ela fica, em % da largura do balão): um triângulo com contorno e outro por cima, só com o preenchimento. */
-    .ledger-balao::before, .ledger-balao::after { content:""; position:absolute; left:var(--cauda,50%); bottom:100%; clip-path:polygon(50% 0,0 100%,100% 100%); }
-    .ledger-balao::before { width:14px; height:8px; margin-left:-7px; background:rgba(40,37,37,.16); }
-    .ledger-balao::after { width:12px; height:7px; margin-left:-6px; margin-bottom:-1px; background:rgba(255,255,255,.9); }
-    @keyframes ledger-balao-a { 0% { opacity:0; transform:translate(-50%,calc(-50% + 6px)); } 6%, 38% { opacity:1; transform:translate(-50%,-50%); } 46%, 100% { opacity:0; transform:translate(-50%,-50%); } }
-    @keyframes ledger-balao-b { 0%, 50% { opacity:0; transform:translate(-50%,calc(-50% + 6px)); } 56%, 88% { opacity:1; transform:translate(-50%,-50%); } 96%, 100% { opacity:0; transform:translate(-50%,-50%); } }
+    .ledger-balao { --s:max(calc(100cqw / 960), calc(100cqh / 1200)); --cauda:50%; --tx:calc(var(--cauda) * -1); position:absolute; left:calc((100cqw - 960 * var(--s)) * .5 + var(--x) * var(--s)); top:calc((100cqh - 1200 * var(--s)) * .42 + var(--y) * var(--s)); transform:translate(var(--tx),var(--ty)); opacity:.92; padding:.7em 1.1em; border-radius:4px; background:#fff; filter:drop-shadow(0 0 .6px rgba(40,37,37,.5)) drop-shadow(0 12px 20px rgba(52,42,78,.16)); color:#282525; font-size:clamp(9px,3.7cqw,12.5px); font-weight:600; line-height:1; letter-spacing:0; white-space:nowrap; }
+    .ledger-balao::after { content:""; position:absolute; left:var(--cauda); width:12px; height:7px; margin-left:-6px; background:#fff; }
+    .ledger-balao--a { --ty:calc(-100% - 7px); }
+    .ledger-balao--a::after { top:calc(100% - .5px); clip-path:polygon(0 0,100% 0,50% 100%); }
+    .ledger-balao--b { --cauda:18%; --ty:7px; }
+    .ledger-balao--b::after { bottom:calc(100% - .5px); clip-path:polygon(50% 0,0 100%,100% 100%); }
+    @keyframes ledger-balao-a { 0% { opacity:0; transform:translate(var(--tx),calc(var(--ty) + 6px)); } 6%, 38% { opacity:.92; transform:translate(var(--tx),var(--ty)); } 46%, 100% { opacity:0; transform:translate(var(--tx),var(--ty)); } }
+    @keyframes ledger-balao-b { 0%, 50% { opacity:0; transform:translate(var(--tx),calc(var(--ty) + 6px)); } 56%, 88% { opacity:.92; transform:translate(var(--tx),var(--ty)); } 96%, 100% { opacity:0; transform:translate(var(--tx),var(--ty)); } }
     @media (prefers-reduced-motion: no-preference) {
       .ledger-balao--a { animation:ledger-balao-a 10s cubic-bezier(.4,0,.2,1) infinite; }
       .ledger-balao--b { animation:ledger-balao-b 10s cubic-bezier(.4,0,.2,1) infinite; }
@@ -2042,8 +2044,8 @@
       <img src="assets/brand/cafe-tamandua-conversa.jpg" width="960" height="1200" loading="lazy" decoding="async"
            alt="Mulher de cabelo grisalho em um café, pensativa, ouvindo o tamanduá do Jards de terno conversar na mesa ao lado" />
       <div class="ledger-balaos" aria-hidden="true">
-        <span class="ledger-balao ledger-balao--a" style="--x:240;--y:640;--cauda:64%">Relacionamento</span>
-        <span class="ledger-balao ledger-balao--b" style="--x:640;--y:575;--cauda:22%">Dados</span>
+        <span class="ledger-balao ledger-balao--a" style="--x:262;--y:354">Relacionamento</span>
+        <span class="ledger-balao ledger-balao--b" style="--x:562;--y:486">Dados</span>
       </div>
     </figure>
     <div class="ledger-body">
