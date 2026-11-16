@@ -73,3 +73,34 @@ export function resumoDaComparacao(itens: readonly ItemDaComparacao[]): string {
   const semDado = itens.filter(item => item.situacao === "sem_dado").length;
   return `${atendem} de ${itens.length} ${itens.length === 1 ? "item atendido" : "itens atendidos"}${naoAtendem > 0 ? `, ${naoAtendem} não ${naoAtendem === 1 ? "atende" : "atendem"}` : ""}${semDado > 0 ? `, ${semDado} sem dado na ficha` : ""}.`;
 }
+
+/** O item que vai para o acerto técnico (colunas de `producao_acerto_itens`, menos o acerto e a organização). */
+export type ItemParaOAcerto = {
+  chave: string; secao: string; rotulo: string; tipo: "numero"; opcoes: []; destino: "sala_palco_boca_m" | "sala_palco_profundidade_m" | "sala_som_canais_entrada" | "sala_energia_kva";
+  visibilidade: "obrigatorio"; ajuda: string; valor_atual: string | null;
+};
+
+const PEDIDO_AO_ACERTO: Record<ItemDaComparacao["chave"], { chave: string; rotulo: string; destino: ItemParaOAcerto["destino"]; campo: keyof OferecidoPelaSala }> = {
+  boca: { chave: "pedido_boca", rotulo: "Boca de cena da sala (m)", destino: "sala_palco_boca_m", campo: "palco_boca_m" },
+  profundidade: { chave: "pedido_profundidade", rotulo: "Profundidade do palco da sala (m)", destino: "sala_palco_profundidade_m", campo: "palco_profundidade_m" },
+  canais: { chave: "pedido_canais", rotulo: "Canais de entrada da mesa de som", destino: "sala_som_canais_entrada", campo: "som_canais_entrada" },
+  energia: { chave: "pedido_energia", rotulo: "Potência instalada da sala (kVA)", destino: "sala_energia_kva", campo: "energia_kva" },
+};
+
+/** A secção em que esses itens ficam no acerto, para a casa achar tudo o que o espetáculo pede num lugar só. */
+export const SECAO_DO_PEDIDO_AO_ACERTO = "O que o espetáculo pede";
+
+/**
+ * A diferença do rider vira um item do acerto: a casa confirma o número (campo obrigatório), com a frase da comparação como ajuda e o que a ficha tem hoje
+ * como valor atual; ao aprovar, o número vai para a ficha da sala. Só diferença (não atende ou sem dado) vira item: o que atende não precisa de pergunta.
+ */
+export function itemDoAcertoDaDiferenca(item: ItemDaComparacao, sala: Partial<OferecidoPelaSala> | null): ItemParaOAcerto | null {
+  if (item.situacao === "atende") return null;
+  const modelo = PEDIDO_AO_ACERTO[item.chave];
+  const atual = sala?.[modelo.campo];
+  return {
+    chave: modelo.chave, secao: SECAO_DO_PEDIDO_AO_ACERTO, rotulo: modelo.rotulo, tipo: "numero", opcoes: [], destino: modelo.destino, visibilidade: "obrigatorio",
+    ajuda: item.texto.length > 300 ? `${item.texto.slice(0, 297)}...` : item.texto,
+    valor_atual: atual === null || atual === undefined ? null : String(atual),
+  };
+}

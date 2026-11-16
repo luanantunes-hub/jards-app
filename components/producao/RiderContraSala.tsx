@@ -9,12 +9,14 @@ import { papelNaProducao } from "@/lib/producao/permissoes";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { cargaDeEnergia, listaDeCanais, type ObjetoDePalco } from "@/lib/producao/palco";
-import { compararRiderComSala, resumoDaComparacao, type OferecidoPelaSala, type SituacaoDaComparacao } from "@/lib/producao/rider-ficha";
+import { compararRiderComSala, itemDoAcertoDaDiferenca, resumoDaComparacao, type ItemDaComparacao, type OferecidoPelaSala, type SituacaoDaComparacao } from "@/lib/producao/rider-ficha";
+import { diaEMes } from "@/lib/producao/agenda";
 
 type SalaDaLista = { id: string; nome: string; espaco_id: string };
 type Opcao = { value: string; label: string };
 
 const ROTULO_DA_SITUACAO: Record<SituacaoDaComparacao, string> = { atende: "Atende", nao_atende: "Não atende", sem_dado: "Sem dado" };
+const BOTAO_PEQUENO = "h-8 rounded border border-black/12 bg-white px-2.5 text-[0.6875rem] font-medium text-[#282525] transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
 
 /**
  * O rider contra a ficha de uma sala (PD4.3, primeiro corte): a medida do palco, os canais e a energia que o cenário pede,
@@ -30,6 +32,37 @@ export function RiderContraSala({ riderId, plantaId, palcoLarguraMinM, palcoProf
   const [carregandoFicha, setCarregandoFicha] = useState(false);
   const [objetos, setObjetos] = useState<ObjetoDePalco[]>([]);
   const [erro, setErro] = useState<string | null>(null);
+  const [acertos, setAcertos] = useState<Opcao[]>([]);
+  const [acertoId, setAcertoId] = useState("");
+  const [pedidos, setPedidos] = useState<Record<string, "pedido" | "ja_estava">>({});
+  const [pedindo, setPedindo] = useState<string | null>(null);
+
+  useEffect(() => {
+    let ativo = true;
+    void (async () => {
+      // Os acertos técnicos que ainda esperam a casa responder: é neles que a diferença vira pergunta.
+      const producao = clienteDaProducao(createClient());
+      const { data: lista } = await producao.from("producao_acertos").select("id, data_id, modelo_nome").eq("situacao", "aguardando").eq("lado", "casa");
+      const ids = [...new Set((lista ?? []).map(item => item.data_id))];
+      const { data: datas } = ids.length > 0 ? await producao.from("producao_datas").select("id, data").in("id", ids) : { data: [] as { id: string; data: string }[] };
+      if (!ativo) return;
+      const dia = new Map((datas ?? []).map(item => [item.id, item.data]));
+      setAcertos((lista ?? []).map(item => ({ value: item.id, label: `${dia.get(item.data_id) ? diaEMes(dia.get(item.data_id) as string) : "Data"} · ${item.modelo_nome}` })).sort((a, b) => a.label.localeCompare(b.label, "pt-BR")));
+    })();
+    return () => { ativo = false; };
+  }, []);
+
+  async function pedirACasa(item: ItemDaComparacao) {
+    const novo = itemDoAcertoDaDiferenca(item, ficha);
+    if (!novo || !acertoId || !organizationId) return;
+    setPedindo(item.chave);
+    setErro(null);
+    const { error } = await clienteDaProducao(createClient()).from("producao_acerto_itens").insert({ organization_id: organizationId, acerto_id: acertoId, ordem: 900 + Object.keys(pedidos).length, ...novo });
+    setPedindo(null);
+    if (error?.code === "23505") { setPedidos(atual => ({ ...atual, [`${acertoId}|${item.chave}`]: "ja_estava" })); return; }
+    if (error) { setErro(error.code === "42501" ? "Você não pode mudar este acerto." : "Não foi possível pedir à casa. Tente de novo."); return; }
+    setPedidos(atual => ({ ...atual, [`${acertoId}|${item.chave}`]: "pedido" }));
+  }
 
   useEffect(() => {
     let ativo = true;
@@ -85,6 +118,9 @@ export function RiderContraSala({ riderId, plantaId, palcoLarguraMinM, palcoProf
             {salaId && !carregandoFicha && (
               <div className="mt-4">
                 <p className="mb-2 text-[0.75rem] text-black/55">{resumoDaComparacao(itens)}</p>
+                {podeEditar && itens.some(item => item.situacao !== "atende") && acertos.length > 0 && (
+                  <div className="mb-3 max-w-md"><Dropdown ariaLabel="Acerto técnico que recebe o pedido" value={acertoId} onChange={setAcertoId} options={[{ value: "", label: "Pedir à casa neste acerto…" }, ...acertos]} /></div>
+                )}
                 {itens.length > 0 && (
                   <ul className="divide-y divide-black/[.06] overflow-hidden rounded border" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                     {itens.map(item => (
@@ -94,6 +130,11 @@ export function RiderContraSala({ riderId, plantaId, palcoLarguraMinM, palcoProf
                           {ROTULO_DA_SITUACAO[item.situacao]}
                         </span>
                         <span className="min-w-0 flex-1 basis-60 text-[0.8125rem] text-[#282525]"><span className="font-medium">{item.rotulo}.</span> {item.texto}</span>
+                        {podeEditar && item.situacao !== "atende" && acertoId && (
+                          pedidos[`${acertoId}|${item.chave}`]
+                            ? <span className="text-[0.6875rem] text-black/45">{pedidos[`${acertoId}|${item.chave}`] === "pedido" ? "Pedido ao acerto" : "Já está no acerto"}</span>
+                            : <button type="button" onClick={() => void pedirACasa(item)} disabled={pedindo !== null} className={BOTAO_PEQUENO}>{pedindo === item.chave ? "Pedindo…" : "Pedir à casa"}</button>
+                        )}
                       </li>
                     ))}
                   </ul>
