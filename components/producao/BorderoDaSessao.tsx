@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Copy, Plus, TriangleAlert } from "lucide-react";
+import { Copy, Download, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
 import { AcertoDeContasDoBordero } from "@/components/producao/AcertoDeContasDoBordero";
@@ -12,7 +12,7 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { FORMAS_DA_DEDUCAO, type FormaDaDeducao, type SituacaoDoBordero } from "@/lib/producao/estados";
 import {
   calcularBordero, formatarReais, lerDeducao, lerReceita, mensagemDoErroDeBordero, MODELOS_DE_DEDUCAO, pendenciasParaFechar, publicoDoBordero, ROTULO_DA_FORMA_DA_DEDUCAO,
-  ROTULO_DA_SITUACAO_DO_BORDERO, textoDoBordero, type DeducaoDoBordero, type ReceitaDoBordero,
+  planilhaDoBordero, ROTULO_DA_SITUACAO_DO_BORDERO, textoDoBordero, type DeducaoDoBordero, type ReceitaDoBordero,
 } from "@/lib/producao/bordero";
 
 type Bordero = { id: string; publico_casa: number | null; situacao: SituacaoDoBordero; fechado_em: string | null };
@@ -250,6 +250,16 @@ export function BorderoDaSessao({ organizationId, sessaoId, sessaoRotulo, podeEd
     void atualizar({ publico_casa: numero });
   }
 
+  function baixarPlanilha() {
+    const arquivo = new Blob([planilhaDoBordero({ sessao: sessaoRotulo, situacao: bordero?.situacao ?? "rascunho", publico, contas, comDinheiro })], { type: "text/csv;charset=utf-8" });
+    const endereco = URL.createObjectURL(arquivo);
+    const ancora = document.createElement("a");
+    ancora.href = endereco;
+    ancora.download = "bordero.csv";
+    ancora.click();
+    URL.revokeObjectURL(endereco);
+  }
+
   async function copiar() {
     const texto = textoDoBordero({ sessao: sessaoRotulo, situacao: bordero?.situacao ?? "rascunho", publico, contas, comDinheiro });
     try { await navigator.clipboard.writeText(texto); setCopiado(true); setTimeout(() => setCopiado(false), 2000); }
@@ -374,7 +384,10 @@ export function BorderoDaSessao({ organizationId, sessaoId, sessaoRotulo, podeEd
           <section aria-labelledby="bordero-resultado">
             <div className="mb-2 flex items-center justify-between gap-3">
               <h2 id="bordero-resultado" className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">Resultado</h2>
-              <button type="button" onClick={() => void copiar()} className={BOTAO}><Copy size={13} aria-hidden="true" /> {copiado ? "Copiado" : "Copiar borderô"}</button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button type="button" onClick={baixarPlanilha} className={BOTAO}><Download size={13} aria-hidden="true" /> Baixar planilha</button>
+                <button type="button" onClick={() => void copiar()} className={BOTAO}><Copy size={13} aria-hidden="true" /> {copiado ? "Copiado" : "Copiar borderô"}</button>
+              </div>
             </div>
             <dl className="grid gap-2 sm:grid-cols-4">
               {[

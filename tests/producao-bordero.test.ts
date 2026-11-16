@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  calcularBordero, emCentavos, formatarReais, lerDeducao, lerReceita, lerValorEmReais, mensagemDoErroDeBordero, MODELOS_DE_DEDUCAO, pendenciasParaFechar, publicoDoBordero, textoDoBordero,
+  calcularBordero, emCentavos, formatarReais, lerDeducao, planilhaDoBordero, lerReceita, lerValorEmReais, mensagemDoErroDeBordero, MODELOS_DE_DEDUCAO, pendenciasParaFechar, publicoDoBordero, textoDoBordero,
   type DeducaoDoBordero, type ReceitaDoBordero,
 } from "../lib/producao/bordero";
 
@@ -121,4 +121,35 @@ test("erros do banco viram frases claras", () => {
   assert.match(mensagemDoErroDeBordero({ code: "23505", message: "producao_bordero_receitas_categoria_idx" }), /categoria/);
   assert.match(mensagemDoErroDeBordero({ code: "23505", message: "producao_borderos_sessao_key" }), /já tem borderô/);
   assert.match(mensagemDoErroDeBordero({}), /Tente de novo/);
+});
+
+test("a planilha do borderô: público, receitas, deduções e líquido, com vírgula decimal e as mesmas contas da tela", () => {
+  const contas = calcularBordero(receitas, deducoes);
+  const publico = publicoDoBordero(110, 120);
+  const csv = planilhaDoBordero({ sessao: "Sáb 05/12 · Sala Grande", situacao: "conferido", publico, contas, comDinheiro: true });
+  assert.ok(csv.startsWith("\ufeffBorderô;Sáb 05/12 · Sala Grande\r\n"), "começa com o BOM do Excel");
+  assert.match(csv, /Situação;Conferido\r\n/);
+  assert.match(csv, /Público da casa;110\r\nPúblico da porta;120\r\n/);
+  assert.match(csv, /Inteira;80;50,00;4000,00\r\n/);
+  assert.match(csv, /Meia;40;25,00;1000,00\r\n/);
+  assert.match(csv, /Receita bruta;120;;5000,00\r\n/);
+  assert.match(csv, /ISS;% da receita;5%;Prefeitura;250,00\r\n/);
+  assert.match(csv, /Taxa da casa;Valor fixo;300,00;Casa;300,00\r\n/);
+  assert.match(csv, /Total das deduções;;;;550,00\r\n/);
+  assert.match(csv, /Líquido \(R\$\);4450,00\r\n/);
+  assert.match(csv, /Ticket médio \(R\$\);41,67\r\n/);
+  assert.equal(contas.liquidoCentavos, 445000, "a planilha e a tela dizem o mesmo líquido");
+});
+
+test("a planilha do borderô sem a permissão de dinheiro leva só o público: nenhum valor sai", () => {
+  const contas = calcularBordero(receitas, deducoes);
+  const csv = planilhaDoBordero({ sessao: "Sessão", situacao: "fechado", publico: publicoDoBordero(null, 0), contas, comDinheiro: false });
+  assert.match(csv, /Público \(oficial\);não informado\r\n/);
+  for (const proibido of ["4000", "5000", "4450", "ISS", "Taxa da casa", "Líquido", "Inteira"]) assert.equal(csv.includes(proibido), false, proibido);
+});
+
+test("a planilha do borderô protege uma célula que começa como fórmula", () => {
+  const contas = calcularBordero([{ id: "r", categoria: "=SOMA(A1)", quantidade: 1, valor_unitario: 10 }], []);
+  const csv = planilhaDoBordero({ sessao: "x", situacao: "rascunho", publico: publicoDoBordero(1, 0), contas, comDinheiro: true });
+  assert.match(csv, /'=SOMA\(A1\);1;10,00;10,00/);
 });
