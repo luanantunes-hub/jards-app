@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  chaveParaCampo, itemEditavel, lerCampo, lerModelo, lerRespondente, lerRespostas, lerValorDoCampo, MODELO_PADRAO, resumoDaRevisao, type ItemDoAcerto,
+  chaveParaCampo, itemEditavel, lerCampo, lerModelo, lerRespondente, lerRespostas, lerValorDoCampo, MODELO_PADRAO, MODELOS_PRONTOS, resumoDaRevisao, type ItemDoAcerto,
 } from "../lib/producao/acerto";
 import { DESTINOS_DO_ACERTO } from "../lib/producao/estados";
 import { DESTINO_DO_ACERTO } from "../lib/producao/acerto";
@@ -97,4 +97,23 @@ test("a chave do campo sai do nome e não repete", () => {
 test("o resumo da revisão", () => {
   assert.equal(resumoDaRevisao([{ situacao: "respondido" }, { situacao: "aprovado" }, { situacao: "recusado" }]), "1 para revisar, 1 aprovados, 1 recusados.");
   assert.equal(resumoDaRevisao([{ situacao: "pendente" }]), "0 para revisar, 0 aprovados.");
+});
+
+test("modelos prontos: todos passam pela leitura do banco, com nomes e chaves que não se repetem, e o primeiro é o padrão", () => {
+  assert.equal(MODELOS_PRONTOS[0].nome, MODELO_PADRAO.nome);
+  assert.equal(new Set(MODELOS_PRONTOS.map(modelo => modelo.nome)).size, MODELOS_PRONTOS.length, "nomes únicos");
+  assert.equal(new Set(MODELOS_PRONTOS.map(modelo => modelo.id)).size, MODELOS_PRONTOS.length, "ids únicos");
+  for (const modelo of MODELOS_PRONTOS) {
+    const leitura = lerModelo(modelo.nome, modelo.campos);
+    assert.ok(leitura.ok, `${modelo.id}: ${leitura.ok ? "" : leitura.erro}`);
+    assert.ok(modelo.campos.some(campo => campo.visibilidade === "obrigatorio"), `${modelo.id}: a casa precisa ter o que preencher`);
+  }
+  assert.ok(MODELOS_PRONTOS.some(modelo => modelo.id === "teatro") && MODELOS_PRONTOS.some(modelo => modelo.id === "exposicao"));
+});
+
+test("modelos prontos: o que alimenta a ficha continua nos modelos de palco, e a exposição só usa a carga e descarga", () => {
+  const destinos = (id: string) => new Set(MODELOS_PRONTOS.find(modelo => modelo.id === id)?.campos.map(campo => campo.destino));
+  for (const id of ["casa-recebe", "teatro", "show", "danca"]) assert.ok(destinos(id).has("sala_palco_boca_m") && destinos(id).has("sala_energia_kva"), id);
+  const exposicao = destinos("exposicao");
+  assert.ok(exposicao.has("espaco_carga_descarga") && !exposicao.has("sala_palco_boca_m"));
 });

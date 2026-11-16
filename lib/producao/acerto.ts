@@ -105,6 +105,78 @@ export const MODELO_PADRAO: { nome: string; lado: "casa" | "companhia"; campos: 
   ],
 };
 
+/** O que a casa recebe em todos os modelos de palco: o que o espetáculo pede e o que a sala tem (o que alimenta a ficha). */
+const CAMPOS_DE_PALCO = MODELO_PADRAO.campos.filter(item => !["chegada", "abertura", "observacoes"].includes(item.chave));
+const CAMPOS_DE_HORARIO = MODELO_PADRAO.campos.filter(item => ["chegada", "abertura", "observacoes"].includes(item.chave));
+
+export type ModeloPronto = { id: string; nome: string; descricao: string; lado: "casa" | "companhia"; campos: CampoDoModelo[] };
+
+/**
+ * Os modelos que vêm prontos, um por tipo de produção (PD4.1, segundo corte). Todos repartem o que alimenta a ficha da sala (palco, som, luz, energia,
+ * camarins, carga e descarga) e acrescentam as perguntas próprias do tipo, que ficam como resposta livre (não mudam a ficha, e a produção lê). A organização
+ * cria o modelo que quiser a partir de um deles e ajusta; o nome é único, então criar de novo avisa.
+ */
+export const MODELOS_PRONTOS: readonly ModeloPronto[] = [
+  { id: "casa-recebe", nome: MODELO_PADRAO.nome, descricao: "O básico de qualquer espetáculo: palco, som, luz, energia, camarins, carga e horários.", lado: MODELO_PADRAO.lado, campos: MODELO_PADRAO.campos },
+  {
+    id: "teatro", nome: "Acerto técnico: teatro", descricao: "O básico mais urdimento, piso, mesa de luz e camarim.", lado: "casa",
+    campos: [
+      ...CAMPOS_DE_PALCO,
+      campo("Urdimento e piso", "teatro_varas", "Varas de cenário disponíveis", "numero", "livre", "opcional"),
+      campo("Urdimento e piso", "teatro_altura_grelha", "Altura útil até a grelha (m)", "numero", "livre", "opcional"),
+      campo("Urdimento e piso", "teatro_panos", "Tem pano de boca, pernas e rotunda?", "sim_nao", "livre", "opcional"),
+      campo("Urdimento e piso", "teatro_piso", "Tipo de piso do palco", "escolha", "livre", "opcional", { opcoes: ["Madeira", "Linóleo", "Tablado coberto", "Concreto", "Outro"] }),
+      campo("Luz", "teatro_mesa_luz", "Mesa de luz (marca e modelo)", "texto", "livre", "opcional"),
+      campo("Luz", "teatro_dimmers", "Canais de dimmer", "numero", "livre", "opcional"),
+      campo("Camarins", "teatro_camarim_banheiro", "O camarim tem banheiro e chuveiro?", "sim_nao", "livre", "opcional"),
+      ...CAMPOS_DE_HORARIO,
+    ],
+  },
+  {
+    id: "show", nome: "Acerto técnico: show", descricao: "O básico mais sistema de som, monitores, backline e acesso do palco.", lado: "casa",
+    campos: [
+      ...CAMPOS_DE_PALCO,
+      campo("Som", "show_pa", "Sistema de som do público (marca e modelo)", "texto", "livre", "opcional"),
+      campo("Som", "show_mesa_pa", "Mesa do público (modelo)", "texto", "livre", "opcional"),
+      campo("Som", "show_monitores", "Monitores de palco", "numero", "livre", "opcional"),
+      campo("Som", "show_backline", "Backline que a casa oferece", "texto", "livre", "opcional", { ajuda: "Bateria, amplificadores, teclados e o que mais houver." }),
+      campo("Palco", "show_altura_publico", "Altura do palco em relação ao público (m)", "numero", "livre", "opcional"),
+      campo("Palco", "show_rampa", "Tem rampa ou elevador de carga até o palco?", "sim_nao", "livre", "opcional"),
+      ...CAMPOS_DE_HORARIO,
+    ],
+  },
+  {
+    id: "danca", nome: "Acerto técnico: dança", descricao: "O básico mais piso de dança, pernas e espaço de aquecimento.", lado: "casa",
+    campos: [
+      ...CAMPOS_DE_PALCO,
+      campo("Piso e palco", "danca_piso", "Tipo de piso do palco", "escolha", "livre", "obrigatorio", { opcoes: ["Madeira", "Linóleo", "Tablado coberto", "Concreto", "Outro"] }),
+      campo("Piso e palco", "danca_piso_flutuante", "O piso é flutuante ou absorve impacto?", "sim_nao", "livre", "opcional"),
+      campo("Piso e palco", "danca_pernas", "Pernas e bambolinas pretas disponíveis?", "sim_nao", "livre", "opcional"),
+      campo("Apoio", "danca_aquecimento", "Há espaço para aquecimento perto do palco?", "sim_nao", "livre", "opcional"),
+      campo("Apoio", "danca_temperatura", "Dá para controlar a temperatura do palco?", "sim_nao", "livre", "opcional"),
+      ...CAMPOS_DE_HORARIO,
+    ],
+  },
+  {
+    id: "exposicao", nome: "Acerto técnico: exposição", descricao: "Pé-direito, paredes, trilhos de luz, climatização, vitrines e segurança.", lado: "casa",
+    campos: [
+      campo("O espaço", "expo_pe_direito", "Pé-direito (m)", "numero", "livre", "obrigatorio"),
+      campo("O espaço", "expo_parede", "Área de parede útil (m)", "numero", "livre", "obrigatorio"),
+      campo("O espaço", "expo_paredes_fixaveis", "Pode furar ou fixar nas paredes?", "sim_nao", "livre", "obrigatorio"),
+      campo("Luz", "expo_trilhos", "Trilhos de luz e refletores disponíveis", "texto", "livre", "opcional"),
+      campo("Luz", "expo_luz_natural", "Entra luz natural na sala?", "sim_nao", "livre", "opcional"),
+      campo("Conservação", "expo_clima", "Controle de temperatura e umidade", "texto", "livre", "opcional", { ajuda: "Ar-condicionado, desumidificador, medição." }),
+      campo("Conservação", "expo_vitrines", "Vitrines e bases disponíveis", "numero", "livre", "opcional"),
+      campo("Segurança", "expo_seguranca", "Vigilância e controle de acesso", "texto", "livre", "obrigatorio"),
+      campo("Segurança", "expo_seguro", "A casa tem seguro para o acervo?", "sim_nao", "livre", "opcional"),
+      campo("Carga e descarga", "carga_descarga", "Como é a carga e descarga", "texto", "espaco_carga_descarga", "obrigatorio", { ajuda: "Acesso, porta, doca, elevador, onde o caminhão para." }),
+      campo("Carga e descarga", "doca_altura", "Altura da doca (m)", "numero", "espaco_doca_altura_m", "opcional"),
+      campo("Horários", "chegada", "Hora de chegada da equipe para a montagem", "hora", "livre", "obrigatorio"),
+      campo("Horários", "observacoes", "Observações", "texto", "livre", "opcional"),
+    ],
+  },
+];
+
 // ─── Itens de um acerto ─────────────────────────────────────────────────────
 
 export type ItemDoAcerto = CampoDoModelo & {
