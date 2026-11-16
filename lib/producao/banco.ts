@@ -2383,6 +2383,46 @@ export type BancoDaProducao = {
           },
         ];
       };
+
+      producao_abastecimento_valores: {
+        Row: {
+          abastecimento_id: string;
+          organization_id: string;
+          valor: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          abastecimento_id: string;
+          organization_id: string;
+          valor: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          abastecimento_id?: string;
+          organization_id?: string;
+          valor?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_abastecimento_valores_abastecimento_id_fkey";
+            columns: ["abastecimento_id"];
+            isOneToOne: true;
+            referencedRelation: "producao_abastecimentos";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_abastecimento_valores_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_ocorrencias: {
         Row: {
           id: string;
