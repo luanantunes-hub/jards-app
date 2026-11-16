@@ -4892,6 +4892,57 @@ export type BancoDaProducao = {
           },
         ];
       };
+      producao_hospedagem_links: {
+        Row: {
+          id: string;
+          organization_id: string;
+          hospedagem_id: string;
+          token_hash: string;
+          expira_em: string;
+          revogado_em: string | null;
+          criado_por: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          hospedagem_id: string;
+          token_hash: string;
+          expira_em: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          organization_id?: string;
+          hospedagem_id?: string;
+          token_hash?: string;
+          expira_em?: string;
+          revogado_em?: string | null;
+          criado_por?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "producao_hospedagem_links_hospedagem_id_fkey";
+            columns: ["hospedagem_id"];
+            isOneToOne: false;
+            referencedRelation: "producao_hospedagens";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "producao_hospedagem_links_organization_id_fkey";
+            columns: ["organization_id"];
+            isOneToOne: false;
+            referencedRelation: "organizations";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       producao_programacao_links: {
         Row: {
           id: string;
@@ -5657,6 +5708,10 @@ export type BancoDaProducao = {
       };
       fn_producao_acerto_revisar: {
         Args: { p_item: string; p_aprovar: boolean; p_motivo: string };
+        Returns: string;
+      };
+      fn_producao_hospedagem_criar_link: {
+        Args: { p_hospedagem: string; p_dias: number };
         Returns: string;
       };
       fn_producao_programacao_criar_link: {
