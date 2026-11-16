@@ -30,7 +30,7 @@ export async function carregarListaDoHotel(admin: Admin, codigo: string, agora =
 
   const [hospedagem, quartos, ocupantes, organizacao] = await Promise.all([
     producao.from("producao_hospedagens").select("hotel, endereco, entrada, saida, localizador").eq("id", link.hospedagem_id).maybeSingle(),
-    producao.from("producao_quartos").select("id, nome, capacidade").eq("hospedagem_id", link.hospedagem_id),
+    producao.from("producao_quartos").select("id, nome, capacidade, cama").eq("hospedagem_id", link.hospedagem_id),
     producao.from("producao_ocupantes").select("quarto_id, pessoa_id").eq("hospedagem_id", link.hospedagem_id),
     admin.from("organizations").select("nome").eq("id", link.organization_id).maybeSingle(),
   ]);

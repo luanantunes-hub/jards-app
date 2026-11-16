@@ -64,7 +64,7 @@ export default async function ListaDoHotelPeloLink({ params }: { params: Promise
                 <span className="min-w-0 flex-1 basis-40 text-[0.9375rem] text-[#282525]">
                   {quarto.hospedes.length > 0 ? quarto.hospedes.join(", ") : <span className="text-black/40">vago</span>}
                 </span>
-                <span className="text-[0.8125rem] tabular-nums text-black/50">{quarto.capacidade} {quarto.capacidade === 1 ? "lugar" : "lugares"}</span>
+                <span className="text-[0.8125rem] tabular-nums text-black/50">{quarto.capacidade} {quarto.capacidade === 1 ? "lugar" : "lugares"}{quarto.cama ? ` · ${quarto.cama.toLowerCase()}` : ""}</span>
               </li>
             ))}
           </ul>

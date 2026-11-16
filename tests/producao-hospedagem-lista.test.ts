@@ -18,8 +18,8 @@ const ocupantes = [
 test("a lista do hotel põe os quartos em ordem natural, com os nomes em ordem alfabética e as vagas que sobram", () => {
   const lista = quartosParaOHotel(hospedagem, quartos, ocupantes, pessoas);
   assert.deepEqual(lista.quartos.map(quarto => quarto.nome), ["2", "3", "10"]);
-  assert.deepEqual(lista.quartos[0], { nome: "2", capacidade: 3, hospedes: ["Bruno Lima", "Marina Alves"], vagas: 1 });
-  assert.deepEqual(lista.quartos[1], { nome: "3", capacidade: 1, hospedes: [], vagas: 1 });
+  assert.deepEqual(lista.quartos[0], { nome: "2", capacidade: 3, cama: "", hospedes: ["Bruno Lima", "Marina Alves"], vagas: 1 });
+  assert.deepEqual(lista.quartos[1], { nome: "3", capacidade: 1, cama: "", hospedes: [], vagas: 1 });
   assert.equal(lista.hospedes, 3);
   assert.equal(lista.hotel, "Hotel Central");
   assert.equal(lista.localizador, "XK12");
@@ -48,4 +48,12 @@ test("sem quartos, a lista vem vazia e sem hóspedes", () => {
   assert.deepEqual(lista.quartos, []);
   assert.equal(lista.hospedes, 0);
   assert.equal(lista.periodo, "");
+});
+
+test("o hotel recebe a cama de cada quarto, em texto; sem cama dita, vazio", () => {
+  const lista = quartosParaOHotel(
+    { hotel: "Hotel Central", endereco: null, entrada: "2026-12-04", saida: "2026-12-06", localizador: null },
+    [{ id: "q1", nome: "1", capacidade: 2, cama: "casal" }, { id: "q2", nome: "2", capacidade: 2 }], [], [],
+  );
+  assert.deepEqual(lista.quartos.map(quarto => quarto.cama), ["Cama de casal", ""]);
 });
