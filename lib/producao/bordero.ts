@@ -5,6 +5,7 @@
 // e o contador confere); os valores só aparecem para quem tem a permissão de dinheiro; o público é o da casa junto com o da porta, com aviso quando divergem.
 
 import type { FormaDaDeducao, SituacaoDoBordero } from "@/lib/producao/estados";
+import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 
 export const ROTULO_DA_SITUACAO_DO_BORDERO: Record<SituacaoDoBordero, string> = { rascunho: "Rascunho", conferido: "Conferido", fechado: "Fechado" };
 export const ROTULO_DA_FORMA_DA_DEDUCAO: Record<FormaDaDeducao, string> = { percentual: "% da receita", fixo: "Valor fixo" };
@@ -148,6 +149,35 @@ export function textoDoBordero(campos: { sessao: string; situacao: SituacaoDoBor
   contas.deducoes.forEach(linha => linhas.push(`  (-) ${linha.nome}${linha.forma === "percentual" ? ` (${linha.valor.toLocaleString("pt-BR")}%)` : ""}${linha.beneficiario ? ` → ${linha.beneficiario}` : ""}: ${formatarReais(linha.descontoCentavos)}`));
   linhas.push(`Líquido: ${formatarReais(contas.liquidoCentavos)}`);
   return linhas.join("\n");
+}
+
+/**
+ * A planilha do borderô (CSV com ponto e vírgula e vírgula decimal, que o Excel em português abre): o público e, para quem tem a permissão de dinheiro,
+ * as receitas por categoria, a receita bruta, as deduções (com a forma, o valor e o desconto em reais) e o líquido. Sem a permissão, só o público:
+ * nenhum valor sai. As contas são as mesmas da tela, em centavos.
+ */
+export function planilhaDoBordero(campos: { sessao: string; situacao: SituacaoDoBordero; publico: PublicoDoBordero; contas: ContasDoBordero; comDinheiro: boolean }): string {
+  const { sessao, situacao, publico, contas, comDinheiro } = campos;
+  const linhas: string[][] = [
+    ["Borderô", sessao],
+    ["Situação", ROTULO_DA_SITUACAO_DO_BORDERO[situacao]],
+    [],
+    ["Público (oficial)", publico.oficial === null ? "não informado" : String(publico.oficial)],
+    ["Público da casa", publico.casa === null ? "não informado" : String(publico.casa)],
+    ["Público da porta", String(publico.porta)],
+  ];
+  if (comDinheiro) {
+    linhas.push([], ["Categoria", "Quantidade", "Valor unitário (R$)", "Subtotal (R$)"]);
+    for (const linha of contas.receitas) linhas.push([linha.categoria, String(linha.quantidade), reaisNaPlanilha(linha.valorUnitarioCentavos), reaisNaPlanilha(linha.subtotalCentavos)]);
+    linhas.push(["Receita bruta", String(contas.ingressos), "", reaisNaPlanilha(contas.brutoCentavos)]);
+    linhas.push([], ["Dedução", "Forma", "Valor", "Beneficiário", "Desconto (R$)"]);
+    for (const linha of contas.deducoes) {
+      linhas.push([linha.nome, ROTULO_DA_FORMA_DA_DEDUCAO[linha.forma], linha.forma === "percentual" ? `${String(linha.valor).replace(".", ",")}%` : reaisNaPlanilha(emCentavos(linha.valor)), linha.beneficiario ?? "", reaisNaPlanilha(linha.descontoCentavos)]);
+    }
+    linhas.push(["Total das deduções", "", "", "", reaisNaPlanilha(contas.totalDeducoesCentavos)]);
+    linhas.push([], ["Líquido (R$)", reaisNaPlanilha(contas.liquidoCentavos)], ["Ticket médio (R$)", contas.ticketMedioCentavos === null ? "" : reaisNaPlanilha(contas.ticketMedioCentavos)]);
+  }
+  return montarPlanilha(linhas);
 }
 
 /** O texto para o erro que o banco devolve ao gravar. */
