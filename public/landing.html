@@ -600,6 +600,13 @@
     /* sem a linha do tempo (o fluxo já conta a jornada) e sem numerais: o texto fica centrado na altura das três forças */
     .ledger-main { position:relative; display:flex; flex-direction:column; justify-content:center; padding:56px 52px; border-right:1px solid rgba(40,37,37,.10); }
     .ledger-side { display:grid; grid-template-rows:repeat(3,auto); }
+    /* versão com foto à esquerda: a foto é um quadro com o arredondamento padrão (4px) */
+    .feature-ledger--foto { grid-template-columns:minmax(0,.78fr) minmax(0,1.22fr); }
+    .ledger-foto { margin:0; padding:16px; }
+    .ledger-foto img { display:block; width:100%; height:100%; min-height:360px; object-fit:cover; object-position:50% 42%; border-radius:4px; }
+    .ledger-body { display:flex; flex-direction:column; justify-content:center; border-left:1px solid rgba(40,37,37,.10); }
+    .feature-ledger--foto .ledger-main { padding:48px 44px 40px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
+    .feature-ledger--foto .ledger-side { grid-template-rows:repeat(2,auto); }
     .ledger-item { padding:36px 40px; border-bottom:1px solid rgba(40,37,37,.10); transition:background-color .25s ease; }
     .ledger-item:hover { background:rgba(13,13,13,.025); }
     .ledger-item:last-child { border-bottom:0; }
@@ -614,6 +621,10 @@
       .assignment-row { grid-template-columns:1fr 1fr; }
       .platform-forces { min-height:auto; padding-top:56px; padding-bottom:56px; }
       .feature-ledger { grid-template-columns:1fr; }
+      .ledger-foto { padding:12px 12px 0; }
+      .ledger-foto img { height:auto; min-height:0; aspect-ratio:4/3; }
+      .ledger-body { border-left:0; border-top:1px solid rgba(40,37,37,.10); }
+      .feature-ledger--foto .ledger-main { padding:28px 24px 26px; }
       .ledger-main { padding:34px 24px 32px; border-right:0; border-bottom:1px solid rgba(40,37,37,.10); }
       .ledger-main>p { max-width:34ch; font-size:14px; }
       /* as três forças empilhadas, sem carrossel */
@@ -2009,33 +2020,34 @@
 
 <!-- ════════════════════════ PILARES DA PLATAFORMA ════════════════════════ -->
 <section id="plataforma-forcas" class="platform-forces section-space px-6">
-  <div class="max-w-6xl mx-auto feature-ledger reveal">
-    <div class="ledger-main">
-      <p class="alt-kicker">Módulos</p>
-      <h2 class="alt-h2 alt-h2--section font-display mb-5">
-        <span class="alt-h2-line">Uma plataforma.</span>
-        <span class="alt-h2-line">Três módulos.</span>
-      </h2>
-      <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
-        Cada módulo resolve uma parte do trabalho. Use só o que precisar.
-      </p>
-    </div>
-    <div class="ledger-side">
-      <article class="ledger-item">
-        <p class="ledger-num">INTELIGÊNCIA</p>
-        <h3>Saiba onde buscar.</h3>
-        <p>Quem patrocina cada lei, quanto investiu e os editais abertos.</p>
-      </article>
-      <article class="ledger-item">
-        <p class="ledger-num">CRM</p>
-        <h3>Acompanhe cada negociação.</h3>
-        <p>Empresas, contatos, propostas, atividades e prazos, até a renovação.</p>
-      </article>
-      <article class="ledger-item">
-        <p class="ledger-num">PRESTAÇÃO DE CONTAS</p>
-        <h3>Preste contas sem susto.</h3>
-        <p>Orçamento, extrato e comprovantes conferidos pelas regras da lei do projeto.</p>
-      </article>
+  <div class="max-w-6xl mx-auto feature-ledger feature-ledger--foto reveal">
+    <figure class="ledger-foto">
+      <img src="assets/brand/cafe-tamandua-conversa.jpg" width="960" height="1200" loading="lazy" decoding="async"
+           alt="Mulher de cabelo grisalho em um café, pensativa, ouvindo o tamanduá do Jards de terno conversar na mesa ao lado" />
+    </figure>
+    <div class="ledger-body">
+      <div class="ledger-main">
+        <p class="alt-kicker">Módulos</p>
+        <h2 class="alt-h2 alt-h2--section font-display mb-5">
+          <span class="alt-h2-line">Encontre quem patrocina.</span>
+          <span class="alt-h2-line">Conduza até a renovação.</span>
+        </h2>
+        <p class="text-black/55 text-[15px] leading-relaxed max-w-lg">
+          Dois módulos que se completam. Use só o que precisar.
+        </p>
+      </div>
+      <div class="ledger-side">
+        <article class="ledger-item">
+          <p class="ledger-num">INTELIGÊNCIA</p>
+          <h3>Saiba onde buscar.</h3>
+          <p>Quem patrocina cada lei, quanto investiu e os editais abertos.</p>
+        </article>
+        <article class="ledger-item">
+          <p class="ledger-num">CRM</p>
+          <h3>Acompanhe cada negociação.</h3>
+          <p>Empresas, contatos, propostas, atividades e prazos, até a renovação.</p>
+        </article>
+      </div>
     </div>
   </div>
 </section>
