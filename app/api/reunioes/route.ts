@@ -116,13 +116,8 @@ export async function POST(req: NextRequest) {
     .single();
   if (insertError) return NextResponse.json({ error: insertError.message }, { status: 500 });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   try {
-    const { vexaBotId } = await enviarBot({
-      meetingUrl: urlReuniao,
-      plataforma,
-      webhookUrl: `${appUrl}/api/reunioes/webhook`,
-    });
+    const { id: vexaBotId } = await enviarBot({ meetingUrl: urlReuniao });
     await admin.from("reunioes").update({ vexa_bot_id: vexaBotId }).eq("id", reuniao.id);
   } catch (error) {
     await admin.from("reunioes").update({
