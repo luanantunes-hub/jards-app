@@ -7,6 +7,7 @@ import { CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/est
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { lerMarca } from "@/lib/producao/marcas";
+import { RetornoDaMarcaSheet } from "@/components/producao/RetornoDaMarcaSheet";
 
 export type MarcaDaLista = { id: string; nome: string; site_url: string | null; logo_url: string | null; arquivada: boolean };
 
@@ -24,6 +25,7 @@ export function MarcasSheet({ organizationId, podeEditar, onClose, onMudou }: { 
   const [erro, setErro] = useState<string | null>(null);
   const [versao, setVersao] = useState(0);
   const [enviando, setEnviando] = useState(false);
+  const [retornoDe, setRetornoDe] = useState<MarcaDaLista | null>(null);
   const entradaDoLogo = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -85,6 +87,7 @@ export function MarcasSheet({ organizationId, podeEditar, onClose, onMudou }: { 
   }
 
   return (
+    <>
     <TopSheet
       titulo="Marcas que apresentam"
       onClose={onClose}
@@ -112,6 +115,7 @@ export function MarcasSheet({ organizationId, podeEditar, onClose, onMudou }: { 
                   <span className={`block truncate text-[0.8125rem] font-medium ${marca.arquivada ? "text-black/40" : "text-[#282525]"}`}>{marca.nome}</span>
                   <span className="block truncate text-[0.6875rem] text-black/45">{[marca.arquivada ? "arquivada, não aparece ao público" : null, marca.site_url, marca.logo_url ? "com logo" : null].filter(Boolean).join(" · ") || "sem site nem logo"}</span>
                 </span>
+                <button type="button" onClick={() => setRetornoDe(marca)} className="rounded px-3 py-2 text-[0.75rem] font-medium text-black/55 transition hover:bg-black/[.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]">Retorno</button>
                 {podeEditar && (
                   <span className="flex items-center gap-1">
                     <button type="button" onClick={() => { setErro(null); setEdicao({ id: marca.id, nome: marca.nome, site: marca.site_url ?? "", logo: marca.logo_url ?? "" }); }} aria-label={`Editar ${marca.nome}`} title="Editar" className="flex h-10 w-10 items-center justify-center rounded text-black/35 transition hover:bg-black/[.05] hover:text-black/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]"><Pencil size={14} aria-hidden="true" /></button>
@@ -143,5 +147,7 @@ export function MarcasSheet({ organizationId, podeEditar, onClose, onMudou }: { 
         )}
       </div>
     </TopSheet>
+      {retornoDe && <RetornoDaMarcaSheet marca={{ id: retornoDe.id, nome: retornoDe.nome }} onClose={() => setRetornoDe(null)} />}
+    </>
   );
 }
