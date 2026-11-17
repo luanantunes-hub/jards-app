@@ -306,12 +306,12 @@
     .edital-btn-export:active { transform: scale(0.97); }
     .ver-btn:active { transform: scale(0.90); }
 
-    /* ── Slot animado (BI) ── */
+    /* ── Slot animado (BI): o cartão do patrocinador vira e mostra o verso ── */
     .bi-slot {
       position: relative;
       border-radius: 4px;
-      overflow: hidden;
-      min-height: 204px;
+      min-height: 244px;
+      perspective: 1100px;
     }
     .bi-inner {
       position: absolute;
@@ -320,33 +320,67 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      transition: opacity 0.38s cubic-bezier(.4,0,.2,1), transform 0.38s cubic-bezier(.4,0,.2,1);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      transition: transform .85s cubic-bezier(.3,.8,.25,1), border-color .2s ease, box-shadow .2s ease;
     }
     .bi-sponsor {
       background: linear-gradient(145deg,#fff 0%,#F7F7F5 100%);
       border: 1px solid rgba(40,37,37,.08);
       box-shadow: 0 1px 2px rgba(40,37,37,.025);
-      transition: opacity .38s cubic-bezier(.4,0,.2,1), transform .38s cubic-bezier(.4,0,.2,1), border-color .2s ease, box-shadow .2s ease;
     }
     .bi-slot:hover .bi-sponsor { border-color: rgba(40,37,37,.12); box-shadow: 0 10px 28px rgba(40,37,37,.08); }
     .bi-feature {
-      background: var(--cream);
-      border: 1.5px solid rgba(40,37,37,0.10);
-      padding: 16px;
+      background: linear-gradient(145deg,#fff 0%,#F4F2FA 100%);
+      border: 1px solid rgba(40,37,37,.12);
+      box-shadow: 0 14px 32px -12px rgba(52,42,78,.22);
+      padding: 18px 18px 16px;
       justify-content: space-between;
-      opacity: 0;
-      transform: translateY(10px) scale(0.97);
+      transform: rotateY(180deg);
       pointer-events: none;
     }
-    .bi-feature.visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: auto;
+    .bi-feature.visible { transform: rotateY(0); pointer-events: auto; }
+    .bi-sponsor.hidden-card { transform: rotateY(-180deg); pointer-events: none; }
+    /* o cartão que vira também se embaralha: sobe, inclina e assenta */
+    .bi-slot.is-embaralha { animation: bi-embaralha .9s cubic-bezier(.3,.7,.25,1); }
+    @keyframes bi-embaralha {
+      0% { transform: translateY(0) rotate(0); }
+      28% { transform: translateY(-16px) rotate(-3.2deg) scale(1.025); }
+      62% { transform: translateY(-5px) rotate(1.8deg) scale(1.01); }
+      100% { transform: translateY(0) rotate(0) scale(1); }
     }
-    .bi-sponsor.hidden-card {
+    /* troca de conteúdo no mesmo cartão: vira de lado e volta com o texto novo */
+    .bi-feature.is-troca { animation: bi-troca .56s cubic-bezier(.4,0,.2,1); }
+    @keyframes bi-troca { 0% { transform: rotateY(0); } 50% { transform: rotateY(-90deg); } 100% { transform: rotateY(0); } }
+
+    /* texto do verso: mais corpo e mais destaque */
+    .bi-fk { font-size: 10px; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; color: rgba(40,37,37,.45); }
+    .bi-fstat { font-family: 'Google Sans',system-ui,sans-serif; font-weight: 700; letter-spacing: -.03em; font-size: 3.1rem; line-height: 1; }
+    .bi-ft { font-family: 'Google Sans',system-ui,sans-serif; font-size: 1.28rem; font-weight: 700; line-height: 1.12; letter-spacing: -.02em; color: #282525; }
+    .bi-fs { margin-top: 6px; font-size: 12.5px; line-height: 1.5; color: rgba(40,37,37,.62); }
+    .bi-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 12px; }
+    .bi-chips span { display: inline-flex; align-items: center; min-height: 22px; padding: 0 6px; border: 1px solid rgba(40,37,37,.14); border-radius: 4px; background: #fff; font-size: 10px; font-weight: 600; color: rgba(40,37,37,.72); }
+    .bi-ftopo { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .bi-fart { width: 64px; height: 64px; margin: -6px -4px 0 0; object-fit: contain; }
+
+    /* chegada: os quatro cartões entram empilhados e inclinados e se distribuem na grade */
+    html.js .bi-cards .grid > * {
       opacity: 0;
-      transform: translateY(-8px) scale(0.97);
-      pointer-events: none;
+      transform: translate(var(--bx, 0), var(--by, 0)) rotate(var(--br, 0deg)) scale(.9);
+      transition: transform 1s cubic-bezier(.2,.9,.2,1) var(--bd, 0s), opacity .5s ease var(--bd, 0s);
+    }
+    html.js .bi-cards.in .grid > * { opacity: 1; transform: none; }
+    .bi-cards .grid > :nth-child(1) { --bx: 52%; --by: 54%; --br: -7deg; --bd: 0s; z-index: 1; }
+    .bi-cards .grid > :nth-child(2) { --bx: -52%; --by: 54%; --br: 6deg; --bd: .09s; z-index: 2; }
+    .bi-cards .grid > :nth-child(3) { --bx: 52%; --by: -54%; --br: 5deg; --bd: .18s; z-index: 3; }
+    .bi-cards .grid > :nth-child(4) { --bx: -52%; --by: -54%; --br: -6deg; --bd: .27s; z-index: 4; }
+    @media (prefers-reduced-motion: reduce) {
+      html.js .bi-cards .grid > * { opacity: 1; transform: none; transition: none; }
+      .bi-inner { transition: opacity .2s ease; }
+      .bi-feature { transform: none; opacity: 0; }
+      .bi-feature.visible { opacity: 1; }
+      .bi-sponsor.hidden-card { transform: none; opacity: 0; }
+      .bi-slot.is-embaralha, .bi-feature.is-troca { animation: none; }
     }
 
     /* ── Accordion ── */
@@ -1040,6 +1074,7 @@
     .alt-scroll-x.is-fade-l.is-fade-r { -webkit-mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); mask-image:linear-gradient(90deg,transparent,#000 40px,#000 calc(100% - 40px),transparent); }
 
     /* BI: kicker e h2 no topo; acordeão à esquerda, cartões à direita */
+    .bi-cards .sponsor-card { min-height:244px; }
     .bi-head { max-width:760px; margin-bottom:56px; }
     .bi-head .alt-h2 { margin:0; }
     .bi-acc .acc-content { padding-left:56px; }
@@ -3132,10 +3167,10 @@
 
   // ── BI: feature card dinâmica com animação de slot ──
   const biConfig = [
-    { slot: 2, stat: '+1.900', title: 'Empresas incentivadoras', sub: 'Quanto cada uma investiu, em qual lei e em que ano.' },
-    { slot: 1, stat: null, title: 'Projeto pronto para enviar', sub: 'Orçamento, documentos, cotas e pitch em um cadastro só.' },
-    { slot: 4, stat: null, title: 'Funil do seu jeito', sub: 'Etapas, valores, responsáveis e próximo passo de cada negociação.' },
-    { slot: 1, stat: null, title: 'Parceria em dia', sub: 'Contratos, entregas e comprovantes no prazo, até a renovação.' },
+    { slot: 2, kicker: 'Encontrar', stat: '+1.900', title: 'Empresas incentivadoras', sub: 'Quanto cada uma investiu, em qual lei e em que ano.', chips: ['Rouanet', 'Esporte', 'Audiovisual', 'Saúde'] },
+    { slot: 1, kicker: 'Preparar', arte: 'passo-projeto', stat: null, title: 'Projeto pronto para enviar', sub: 'Orçamento, documentos, cotas e pitch em um cadastro só.', chips: ['Orçamento', 'Documentos', 'Cotas', 'Pitch'] },
+    { slot: 4, kicker: 'Negociar', arte: 'passo-negociacao', stat: null, title: 'Funil do seu jeito', sub: 'Etapas, valores, responsáveis e próximo passo de cada negociação.', chips: ['Prospecção', 'Contato', 'Proposta', 'Fechamento'] },
+    { slot: 1, kicker: 'Entregar', arte: 'passo-entrega', stat: null, title: 'Parceria em dia', sub: 'Contratos, entregas e comprovantes no prazo, até a renovação.', chips: ['Contrato', 'Entregas', 'Comprovantes', 'Renovação'] },
   ];
   let biActiveSlot = null;
 
@@ -3155,21 +3190,28 @@
   }
 
   function renderBiContent(el, cfg) {
-    if (cfg.stat) {
-      el.innerHTML =
-        '<div class="stat-accent" style="font-family:\'Google Sans\',system-ui,sans-serif;font-weight:700;letter-spacing:-.03em;font-size:2.8rem;line-height:1;">' + cfg.stat + '</div>' +
-        '<div>' +
-          '<div style="font-size:12px;font-weight:700;color:#282525;margin-bottom:4px;">' + cfg.title + '</div>' +
-          '<p style="font-size:9.5px;color:rgba(40,37,37,0.45);line-height:1.6;">' + cfg.sub + '</p>' +
-        '</div>';
-    } else {
-      el.innerHTML =
-        '<div></div>' +
-        '<div>' +
-          '<div style="font-size:13px;font-weight:700;color:#282525;margin-bottom:6px;">' + cfg.title + '</div>' +
-          '<p style="font-size:11px;color:rgba(40,37,37,0.55);line-height:1.55;">' + cfg.sub + '</p>' +
-        '</div>';
-    }
+    const chips = '<div class="bi-chips">' + cfg.chips.map(function(c) { return '<span>' + c + '</span>'; }).join('') + '</div>';
+    el.innerHTML =
+      '<div>' +
+        '<div class="bi-ftopo"><div class="bi-fk">' + cfg.kicker + '</div>' +
+          (cfg.arte ? '<img class="bi-fart" src="/illustrations/leis/' + cfg.arte + '.png?v=3" alt="" width="192" height="192">' : '') + '</div>' +
+        (cfg.stat ? '<div class="bi-fstat stat-accent" style="margin-top:8px;">' + cfg.stat + '</div>' : '') +
+      '</div>' +
+      '<div>' +
+        '<div class="bi-ft">' + cfg.title + '</div>' +
+        '<p class="bi-fs">' + cfg.sub + '</p>' +
+        chips +
+      '</div>';
+  }
+
+  // O cartão sobe, inclina e assenta enquanto vira
+  function embaralhaSlot(slot) {
+    const el = document.getElementById('bi-slot-' + slot);
+    if (!el) return;
+    el.classList.remove('is-embaralha');
+    void el.offsetWidth;
+    el.classList.add('is-embaralha');
+    el.addEventListener('animationend', function() { el.classList.remove('is-embaralha'); }, { once: true });
   }
 
   function updateBiFeature(idx) {
@@ -3184,6 +3226,7 @@
       const prevF = document.getElementById('bi-s' + biActiveSlot + '-f');
       if (prevF) prevF.classList.remove('visible');
       if (prevS) prevS.classList.remove('hidden-card');
+      embaralhaSlot(biActiveSlot);
     }
 
     const sponsor = document.getElementById('bi-s' + newSlot + '-s');
@@ -3191,15 +3234,15 @@
     if (!sponsor || !feature) return;
 
     if (biActiveSlot === newSlot) {
-      feature.style.opacity = '0.15';
-      feature.style.transform = 'scale(0.96)';
-      setTimeout(function() {
-        renderBiContent(feature, cfg);
-        feature.style.opacity = '';
-        feature.style.transform = '';
-      }, 200);
+      // mesmo cartão com outro assunto: vira de lado e volta com o texto novo
+      feature.classList.remove('is-troca');
+      void feature.offsetWidth;
+      feature.classList.add('is-troca');
+      feature.addEventListener('animationend', function() { feature.classList.remove('is-troca'); }, { once: true });
+      setTimeout(function() { renderBiContent(feature, cfg); }, 280);
     } else {
       renderBiContent(feature, cfg);
+      embaralhaSlot(newSlot);
       requestAnimationFrame(function() {
         sponsor.classList.add('hidden-card');
         feature.classList.add('visible');
@@ -3233,8 +3276,19 @@
     }
   }
 
-  // Inicializa: acc 1 ativo (idx 0)
-  updateBiFeature(0);
+  // Inicializa: os cartões se distribuem ao chegar na seção e, logo depois, o primeiro vira
+  // e mostra o +1.900 (sem a observação de tela, ou com movimento reduzido, já começa virado)
+  (function() {
+    const cartoes = document.querySelector('.bi-cards');
+    const reduzido = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!cartoes || reduzido || !('IntersectionObserver' in window)) { updateBiFeature(0); return; }
+    const olho = new IntersectionObserver(function(entradas) {
+      if (!entradas[0].isIntersecting) return;
+      olho.disconnect();
+      setTimeout(function() { updateBiFeature(0); }, 1300);
+    }, { threshold: 0.35 });
+    olho.observe(cartoes);
+  })();
 
   const heroVisual = document.querySelector('.hero-visual');
   if (heroVisual) {
