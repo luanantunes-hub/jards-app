@@ -1,15 +1,13 @@
-// Recebe o webhook do Vexa quando o status do bot muda (entrou, terminou, falhou).
+// Recebe os avisos do Vexa (meeting.started, meeting.completed, bot.failed). O endereço e o segredo são registrados uma vez na conta do Vexa (PUT /user/webhook, pelo
+// script scripts/reunioes-registrar-webhook.ts). Cada aviso vem assinado (X-Webhook-Signature, HMAC do horário mais o corpo); sem assinatura válida, 401.
 //
-// IMPORTANTE: o formato exato do payload do Vexa (nomes de campo, tipo de evento)
-// ainda precisa ser confirmado contra a instância self-hosted real — por isso este
-// handler trata o corpo do webhook apenas como um "avise algo mudou" e busca o
-// estado autoritativo direto na API do Vexa (status + transcrição), em vez de
-// confiar nos dados do corpo. Ajuste a extração de `vexaBotId` abaixo assim que o
-// payload real for confirmado.
+// A entrega é "pelo menos uma vez": o mesmo aviso pode chegar de novo. Por isso cada ação olha o estado atual da reunião e a transcrição só é gravada se a reunião ainda
+// não tem nenhuma. Aviso de reunião que não é do Jards (a conta do Vexa pode ter outras) responde 200 e é ignorado, para o Vexa não ficar reenviando.
 import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { timingSafeEqual } from "crypto";
-import { consultarStatusBot, buscarTranscricao } from "@/lib/reunioes/vexa";
+import { buscarTranscricao } from "@/lib/reunioes/vexa";
+import { assinaturaValida, decidirAcao, lerAviso, type SituacaoDaReuniao } from "@/lib/reunioes/vexa-webhook";
+import { registrarUsoDaReuniao } from "@/lib/reunioes/uso";
 
 function adminClient() {
   return createSupabaseClient(
@@ -19,90 +17,55 @@ function adminClient() {
   );
 }
 
-function segredoValido(recebido: string | null, esperado: string) {
-  if (!recebido) return false;
-  const a = Buffer.from(recebido);
-  const b = Buffer.from(esperado);
-  if (a.length !== b.length) return false;
-  return timingSafeEqual(a, b);
-}
-
-function extrairVexaBotId(payload: unknown): string | null {
-  if (!payload || typeof payload !== "object") return null;
-  const obj = payload as Record<string, unknown>;
-  const candidato = obj.bot_id ?? obj.id ?? (obj.data as Record<string, unknown> | undefined)?.bot_id;
-  return typeof candidato === "string" ? candidato : null;
-}
-
-const STATUS_EM_ANDAMENTO = new Set(["active", "recording", "joining", "in_call"]);
-const STATUS_FINALIZADO = new Set(["completed", "done", "ended", "call_ended"]);
-const STATUS_FALHOU = new Set(["failed", "error", "denied", "rejected"]);
-
 export async function POST(req: NextRequest) {
-  const webhookSecret = process.env.VEXA_WEBHOOK_SECRET;
-  if (!webhookSecret) return NextResponse.json({ error: "Webhook não configurado" }, { status: 503 });
+  const segredo = process.env.VEXA_WEBHOOK_SECRET;
+  if (!segredo) return NextResponse.json({ error: "Webhook não configurado" }, { status: 503 });
 
-  const recebido = req.headers.get("x-vexa-webhook-secret");
-  if (!segredoValido(recebido, webhookSecret)) {
-    return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 });
-  }
+  const corpo = await req.text();
+  const valida = assinaturaValida({ segredo, corpo, horario: req.headers.get("x-webhook-timestamp"), assinatura: req.headers.get("x-webhook-signature") });
+  if (!valida) return NextResponse.json({ error: "Assinatura inválida" }, { status: 401 });
 
-  const payload = await req.json().catch(() => null);
-  const vexaBotId = extrairVexaBotId(payload);
-  if (!vexaBotId) return NextResponse.json({ error: "Payload sem bot_id" }, { status: 400 });
+  let json: unknown = null;
+  try { json = JSON.parse(corpo); } catch { /* corpo que não é JSON cai no "aviso ilegível" abaixo */ }
+  const aviso = lerAviso(json);
+  if (!aviso) return NextResponse.json({ ok: true, ignorado: "aviso que o Jards não usa" });
 
   const admin = adminClient();
-  const { data: reuniao } = await admin
-    .from("reunioes")
-    .select("id,status")
-    .eq("vexa_bot_id", vexaBotId)
-    .maybeSingle();
-  if (!reuniao) return NextResponse.json({ error: "Reunião não encontrada para este bot" }, { status: 404 });
+  const { data: reuniao } = await admin.from("reunioes").select("id,status,iniciada_em").eq("vexa_bot_id", aviso.vexaId).maybeSingle();
+  if (!reuniao) return NextResponse.json({ ok: true, ignorado: "reunião que não é do Jards" });
 
-  let statusVexa: string;
+  const acao = decidirAcao(aviso, reuniao.status as SituacaoDaReuniao);
+  if (acao === "ignorar") return NextResponse.json({ ok: true });
+
+  if (acao === "iniciar") {
+    await admin.from("reunioes").update({ status: "gravando", iniciada_em: reuniao.iniciada_em ?? aviso.comecouEm ?? new Date().toISOString() }).eq("id", reuniao.id);
+    return NextResponse.json({ ok: true });
+  }
+
+  const iniciadaEm = reuniao.iniciada_em ?? aviso.comecouEm;
+  const fim = aviso.terminouEm ? new Date(aviso.terminouEm) : new Date();
+
+  if (acao === "falhar") {
+    await admin.from("reunioes").update({ status: "falhou", erro: aviso.motivo ? `O assistente não conseguiu participar: ${aviso.motivo}` : "O assistente não conseguiu participar da reunião", ...(iniciadaEm && !reuniao.iniciada_em ? { iniciada_em: iniciadaEm } : {}) }).eq("id", reuniao.id);
+    // se o robô chegou a entrar, o tempo dele conta no uso mesmo que a reunião tenha falhado depois
+    await registrarUsoDaReuniao(admin, reuniao.id, iniciadaEm, fim);
+    return NextResponse.json({ ok: true });
+  }
+
+  // concluir: busca a transcrição no Vexa e grava (uma vez só)
+  await admin.from("reunioes").update({ status: "processando", ...(iniciadaEm && !reuniao.iniciada_em ? { iniciada_em: iniciadaEm } : {}) }).eq("id", reuniao.id);
   try {
-    ({ status: statusVexa } = await consultarStatusBot(vexaBotId));
-  } catch (error) {
-    return NextResponse.json({ error: error instanceof Error ? error.message : "Falha ao consultar o Vexa" }, { status: 502 });
-  }
-
-  if (STATUS_FALHOU.has(statusVexa)) {
-    await admin.from("reunioes").update({ status: "falhou", erro: `Status do Vexa: ${statusVexa}` }).eq("id", reuniao.id);
-    return NextResponse.json({ ok: true });
-  }
-
-  if (STATUS_EM_ANDAMENTO.has(statusVexa)) {
-    await admin.from("reunioes").update({ status: "gravando", iniciada_em: new Date().toISOString() }).eq("id", reuniao.id);
-    return NextResponse.json({ ok: true });
-  }
-
-  if (STATUS_FINALIZADO.has(statusVexa)) {
-    await admin.from("reunioes").update({ status: "processando" }).eq("id", reuniao.id);
-    try {
-      const segmentos = await buscarTranscricao(vexaBotId);
-      if (segmentos.length > 0) {
-        await admin.from("reuniao_transcricoes").insert(
-          segmentos.map(s => ({
-            reuniao_id: reuniao.id,
-            falante: s.speaker,
-            texto: s.text,
-            inicio_ms: s.start_ms,
-            fim_ms: s.end_ms,
-            confianca: s.confidence,
-          })),
-        );
-      }
-      await admin.from("reunioes").update({ status: "concluida", finalizada_em: new Date().toISOString() }).eq("id", reuniao.id);
-    } catch (error) {
-      await admin.from("reunioes").update({
-        status: "falhou",
-        erro: error instanceof Error ? error.message : "Não foi possível buscar a transcrição",
-      }).eq("id", reuniao.id);
+    const trechos = await buscarTranscricao(aviso.vexaId);
+    const { count } = await admin.from("reuniao_transcricoes").select("id", { count: "exact", head: true }).eq("reuniao_id", reuniao.id);
+    if ((count ?? 0) === 0 && trechos.length > 0) {
+      await admin.from("reuniao_transcricoes").insert(trechos.map(t => ({ reuniao_id: reuniao.id, falante: t.falante, texto: t.texto, inicio_ms: t.inicio_ms, fim_ms: t.fim_ms, confianca: t.confianca })));
     }
+    await admin.from("reunioes").update({ status: "concluida", finalizada_em: fim.toISOString() }).eq("id", reuniao.id);
+    await registrarUsoDaReuniao(admin, reuniao.id, iniciadaEm, fim);
     return NextResponse.json({ ok: true });
+  } catch (error) {
+    // Falha ao buscar a transcrição: a reunião fica "processando" e a resposta é 502, para o Vexa reenviar o aviso (ele tenta de novo depois de 1, 5 e 30 minutos).
+    await admin.from("reunioes").update({ erro: error instanceof Error ? error.message : "Não foi possível buscar a transcrição" }).eq("id", reuniao.id);
+    return NextResponse.json({ error: "Não foi possível buscar a transcrição agora" }, { status: 502 });
   }
-
-  // Status desconhecido: não corrompe o estado atual, só registra pra investigação.
-  await admin.from("reunioes").update({ erro: `Status do Vexa não mapeado: ${statusVexa}` }).eq("id", reuniao.id);
-  return NextResponse.json({ ok: true });
 }

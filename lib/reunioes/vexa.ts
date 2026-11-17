@@ -1,79 +1,108 @@
-// Cliente para a API do Vexa self-hosted (github.com/Vexa-ai/vexa).
+// Cliente da API do Vexa (github.com/Vexa-ai/vexa; hospedado em api.cloud.vexa.ai ou na sua própria instalação: a API é a mesma).
 //
-// IMPORTANTE: os nomes de campo abaixo seguem a documentação pública do projeto
-// (README/api-reference) no momento em que este cliente foi escrito. Confirme o
-// payload exato contra a instância real (docs.vexa.ai da sua instalação) antes de
-// usar em produção — a API ainda está em evolução ativa.
+// Segue a documentação pública da versão 0.12 (docs.vexa.ai, "Meetings API" e "Webhooks"), lida em 17/11/2026. Ainda não foi exercitado contra uma reunião de verdade:
+// a primeira reunião de teste confirma os campos. Por isso as respostas são lidas de forma defensiva e o que não bate vira erro claro, não dado errado.
+//
+// Variáveis de ambiente: VEXA_API_KEY (obrigatória; chave do tipo "bot"), VEXA_API_URL (padrão: o serviço hospedado).
 
 export type VexaPlataforma = "google_meet" | "teams";
 
-type VexaBotResponse = {
-  id: string;
-  status: string;
-  platform: string;
-  meeting_url: string;
-};
+export const URL_PADRAO_DO_VEXA = "https://api.cloud.vexa.ai";
 
-type VexaTranscriptSegment = {
-  speaker: string | null;
-  text: string;
-  start_ms: number;
-  end_ms: number | null;
-  confidence: number | null;
-};
+/** A reunião como o Vexa a conhece: `id` é o número da reunião no Vexa, que o Jards guarda em `reunioes.vexa_bot_id`. */
+export type ReuniaoDoVexa = { id: string; plataforma: string | null; nativeMeetingId: string | null; status: string | null };
 
-type VexaTranscriptResponse = {
-  segments: VexaTranscriptSegment[];
-};
+/** Um trecho de fala já pronto para gravar em `reuniao_transcricoes`. */
+export type TrechoDeFala = { falante: string | null; texto: string; inicio_ms: number; fim_ms: number | null; confianca: number | null };
 
 function config() {
-  const baseUrl = process.env.VEXA_API_URL;
   const apiKey = process.env.VEXA_API_KEY;
-  if (!baseUrl || !apiKey) throw new Error("Vexa não configurado (VEXA_API_URL/VEXA_API_KEY ausentes)");
-  return { baseUrl: baseUrl.replace(/\/+$/, ""), apiKey };
+  if (!apiKey) throw new Error("Vexa não configurado (VEXA_API_KEY ausente)");
+  return { baseUrl: (process.env.VEXA_API_URL || URL_PADRAO_DO_VEXA).replace(/\/+$/, ""), apiKey };
 }
 
-async function vexaFetch<T>(path: string, init?: RequestInit): Promise<T> {
+async function vexaFetch(path: string, init?: RequestInit): Promise<unknown> {
   const { baseUrl, apiKey } = config();
-  const res = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      "X-API-Key": apiKey,
-      ...init?.headers,
-    },
-  });
+  const res = await fetch(`${baseUrl}${path}`, { ...init, headers: { "Content-Type": "application/json", "X-API-Key": apiKey, ...init?.headers }, cache: "no-store" });
   if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Vexa API ${res.status}: ${body || res.statusText}`);
+    const corpo = await res.text().catch(() => "");
+    throw new Error(`Vexa API ${res.status}: ${corpo.slice(0, 300) || res.statusText}`);
   }
-  return res.json() as Promise<T>;
+  return res.json();
 }
 
-export async function enviarBot(params: {
-  meetingUrl: string;
-  plataforma: VexaPlataforma;
-  webhookUrl: string;
-  nomeBot?: string;
-}): Promise<{ vexaBotId: string; status: string }> {
-  const data = await vexaFetch<VexaBotResponse>("/bots", {
+const texto = (valor: unknown): string | null => (typeof valor === "string" && valor.trim() !== "" ? valor : null);
+
+/** A reunião numa resposta do Vexa (`POST /bots`, `GET /meetings/{id}`): o id vem como número e vira texto. Sem id, não serve. */
+export function lerReuniaoDoVexa(corpo: unknown): ReuniaoDoVexa {
+  const objeto = (corpo && typeof corpo === "object" ? corpo : {}) as Record<string, unknown>;
+  const id = typeof objeto.id === "number" || typeof objeto.id === "string" ? String(objeto.id) : null;
+  if (!id) throw new Error("O Vexa não devolveu o número da reunião");
+  return { id, plataforma: texto(objeto.platform), nativeMeetingId: texto(objeto.native_meeting_id), status: texto(objeto.status) };
+}
+
+/**
+ * Os trechos de fala confirmados de uma transcrição (`GET /transcripts/by-id/{id}`): o tempo vem em segundos (vira milissegundos), rascunho (`completed: false`) fica
+ * de fora, texto vazio fica de fora, e fala sem nome fica com falante nulo (o Vexa publica vazio quando não sabe quem falou, em 4 a 7% dos trechos com muita fala cruzada).
+ */
+export function lerTrechos(corpo: unknown): TrechoDeFala[] {
+  const segmentos = (corpo && typeof corpo === "object" ? (corpo as Record<string, unknown>).segments : null);
+  if (!Array.isArray(segmentos)) return [];
+  const trechos: TrechoDeFala[] = [];
+  for (const bruto of segmentos) {
+    const s = (bruto ?? {}) as Record<string, unknown>;
+    const fala = texto(s.text)?.trim();
+    if (!fala || s.completed === false || typeof s.start !== "number") continue;
+    trechos.push({
+      falante: texto(s.speaker)?.trim() ?? null,
+      texto: fala,
+      inicio_ms: Math.max(0, Math.round(s.start * 1000)),
+      fim_ms: typeof s.end === "number" ? Math.max(0, Math.round(s.end * 1000)) : null,
+      confianca: typeof s.confidence === "number" ? s.confidence : null,
+    });
+  }
+  return trechos.sort((a, b) => a.inicio_ms - b.inicio_ms);
+}
+
+/**
+ * Manda o robô para a reunião pelo link (o Vexa extrai a plataforma e o número da reunião do link, inclusive o código de acesso do Teams). Fala em português, não guarda
+ * gravação de áudio (só o texto fica) e o robô sai sozinho depois de 5 minutos sozinho na sala.
+ */
+export async function enviarBot(params: { meetingUrl: string; nomeBot?: string; idioma?: string }): Promise<ReuniaoDoVexa> {
+  const corpo = await vexaFetch("/bots", {
     method: "POST",
     body: JSON.stringify({
       meeting_url: params.meetingUrl,
-      platform: params.plataforma,
-      bot_name: params.nomeBot ?? "Jards",
-      webhook_url: params.webhookUrl,
+      bot_name: params.nomeBot ?? "Jards (gravando a reunião)",
+      language: params.idioma ?? "pt",
+      recording_enabled: false,
+      automatic_leave: { max_time_left_alone: 300000 },
     }),
   });
-  return { vexaBotId: data.id, status: data.status };
+  return lerReuniaoDoVexa(corpo);
 }
 
-export async function consultarStatusBot(vexaBotId: string): Promise<{ status: string }> {
-  const data = await vexaFetch<VexaBotResponse>(`/bots/${vexaBotId}/status`);
-  return { status: data.status };
+export async function consultarReuniao(vexaId: string): Promise<ReuniaoDoVexa> {
+  return lerReuniaoDoVexa(await vexaFetch(`/meetings/${encodeURIComponent(vexaId)}`));
 }
 
-export async function buscarTranscricao(vexaBotId: string): Promise<VexaTranscriptSegment[]> {
-  const data = await vexaFetch<VexaTranscriptResponse>(`/bots/${vexaBotId}/transcript`);
-  return data.segments;
+export async function buscarTranscricao(vexaId: string): Promise<TrechoDeFala[]> {
+  return lerTrechos(await vexaFetch(`/transcripts/by-id/${encodeURIComponent(vexaId)}`));
+}
+
+/** Manda o robô sair da reunião (e fecha a conta dela no Vexa). */
+export async function pararBot(plataforma: string, nativeMeetingId: string): Promise<void> {
+  await vexaFetch(`/bots/${encodeURIComponent(plataforma)}/${encodeURIComponent(nativeMeetingId)}`, { method: "DELETE" });
+}
+
+/** Registra o endereço que recebe os avisos do Vexa (uma vez por conta; `PUT /user/webhook`). */
+export async function registrarWebhook(params: { url: string; segredo: string }): Promise<void> {
+  await vexaFetch("/user/webhook", {
+    method: "PUT",
+    body: JSON.stringify({
+      webhook_url: params.url,
+      webhook_secret: params.segredo,
+      webhook_events: { "meeting.started": true, "meeting.completed": true, "bot.failed": true, "meeting.status_change": false },
+    }),
+  });
 }

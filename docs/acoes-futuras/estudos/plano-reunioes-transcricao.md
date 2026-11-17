@@ -46,6 +46,7 @@ Três fatos que sustentam o plano (os dois primeiros eu li nos documentos do Vex
 3. Atualizar `docs/reunioes-deploy-vexa.md` com o que a fase 1 descobriu.
 4. Estado da reunião no app: bot entrando, gravando, processando, concluída ou falhou, com o motivo em texto simples e o botão de tentar de novo.
 5. Limite de horas por mês por organização e registro do uso (horas de bot por reunião), mesmo que ainda não se cobre.
+   - **Feito (18/11/2026):** ao acabar a reunião, o servidor grava `duracao_bot_s` e `custo_estimado_usd` (tempo de robô × taxas; é estimativa). Cada organização tem um limite de horas por mês (padrão 10 h, `REUNIOES_HORAS_MES_PADRAO`; outro valor na tabela `reunioes_limites`): a tela de Reuniões mostra "Este mês: 2,5 h de 10 h", avisa perto do limite e desliga o botão ao atingi-lo (a rota também recusa). Página **/admin/reunioes** (só administrador do Jards): reuniões, horas, custo estimado, custo por hora e falhas por organização, no mês e no total, contra a meta de US$ 0,04 por hora. Taxas por variável de ambiente (`REUNIOES_CUSTO_ROBO_HORA`, `REUNIOES_CUSTO_TRANSCRICAO_HORA`, `REUNIOES_MULTIPLICADOR`). O webhook passou a guardar o começo da reunião só na primeira vez. Contas em `lib/reunioes/custo.ts` (6 testes). **Ainda não visto com o Vexa de verdade.**
 
 **Pronto quando:** uma pessoa cola o link, o bot entra, e a transcrição aparece em `/reunioes/[id]` com quem falou. Teste feito com uma conta real (a do Luan na Platibanda).
 
