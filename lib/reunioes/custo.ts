@@ -6,8 +6,8 @@
 
 export type Taxas = { roboPorHoraUsd: number; transcricaoPorHoraUsd: number; multiplicadorDaTranscricao: number };
 
-/** Os padrões (estimativas: robô num servidor cobrado por uso; Groq whisper-large-v3-turbo a US$ 0,04 por hora de áudio). */
-export const TAXAS_PADRAO: Taxas = { roboPorHoraUsd: 0.05, transcricaoPorHoraUsd: 0.04, multiplicadorDaTranscricao: 1 };
+/** Os padrões: o Vexa hospedado cobra cerca de US$ 0,30 por hora de robô, com a transcrição incluída (por isso a transcrição fica em zero). Com robô e transcrição próprios, mude por variável de ambiente. */
+export const TAXAS_PADRAO: Taxas = { roboPorHoraUsd: 0.3, transcricaoPorHoraUsd: 0, multiplicadorDaTranscricao: 1 };
 /** Horas de robô por mês por organização quando ninguém definiu outro limite. */
 export const LIMITE_PADRAO_HORAS_MES = 10;
 

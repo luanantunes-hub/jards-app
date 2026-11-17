@@ -44,7 +44,7 @@ export default async function AdminReunioesPage() {
           ["Horas neste mês", horasEmTexto(geralDoMes.horas)],
           ["Custo estimado neste mês", dolar(geralDoMes.custoUsd)],
           ["Custo estimado por hora", geral.custoPorHoraUsd === null ? "—" : dolar(geral.custoPorHoraUsd)],
-          ["Meta por hora (US$ 4 a cada 100 h)", dolar(0.04)],
+          ["Referência: Vexa hospedado por hora", dolar(0.3)],
         ].map(([rotulo, valor]) => (
           <div key={rotulo}>
             <p className="text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">{rotulo}</p>

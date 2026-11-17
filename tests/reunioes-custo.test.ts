@@ -12,7 +12,7 @@ test("duração do robô: do começo ao fim; nulo se falta um lado ou o fim vem 
 });
 
 test("custo estimado: horas × (robô + transcrição × multiplicador)", () => {
-  assert.ok(Math.abs(custoEstimadoUsd(3600, TAXAS_PADRAO) - 0.09) < 1e-9, "1 h: 0,05 + 0,04");
+  assert.ok(Math.abs(custoEstimadoUsd(3600, TAXAS_PADRAO) - 0.3) < 1e-9, "1 h no Vexa hospedado: US$ 0,30");
   assert.ok(Math.abs(custoEstimadoUsd(1800, { roboPorHoraUsd: 0.1, transcricaoPorHoraUsd: 0.04, multiplicadorDaTranscricao: 2 }) - 0.09) < 1e-9, "meia hora: 0,5 × (0,10 + 0,08)");
   assert.equal(custoEstimadoUsd(0, TAXAS_PADRAO), 0);
 });
