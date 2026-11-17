@@ -15,6 +15,7 @@ Escrito em 17/11/2026. Parte do que já existe no Jards (MVP de Reuniões com o 
 - O Vexa documenta `POST /bots` com `platform` e `native_meeting_id` (o código de dentro do link), `bot_name`, `language`, `transcribe_enabled` e `recording_enabled`. O nosso cliente manda `meeting_url` e `webhook_url`.
 - A transcrição se lê em `GET /transcripts/{platform}/{native_meeting_id}`. O nosso cliente chama `/bots/{id}/transcript`.
 - O guia de deploy fala em Deepgram e `TRANSCRIBER_API_KEY`; o Vexa atual usa `TRANSCRIPTION_SERVICE_URL`, `TRANSCRIPTION_SERVICE_TOKEN` e `TRANSCRIPTION_MODEL`.
+- O guia de deploy manda usar o repositório `vexa-lite-deploy` (Fly.io), **que não recebe atualização desde 04/02/2026**. O Vexa Lite atual (0.12) sobe com `make lite`, usando Docker, um Postgres e um armazenamento ao lado, e é isso que o teste da fase 1 usa. Se a hospedagem final vai ser Fly.io ou um servidor comum com Docker é uma decisão da fase 2, depois de medir o consumo de cada bot.
 
 Ou seja: o cliente e o guia precisam ser conferidos contra uma instância real antes de qualquer coisa (fase 1).
 
@@ -32,7 +33,7 @@ Três fatos que sustentam o plano (os dois primeiros eu li nos documentos do Vex
 ## 3. Fases
 
 ### Fase 1: medir antes de construir (2 a 3 dias, sem mexer no produto)
-1. Subir um Vexa Lite de teste (Fly.io ou uma máquina qualquer) apontando para a Groq, com `DEFAULT_TRANSCRIPTION_LANGUAGE=pt`.
+1. Subir um Vexa Lite de teste (uma máquina com Docker) apontando para a Groq **por um proxy de medição** (`scripts/reunioes-spike/`, já pronto e testado com uma Groq de mentira), com `DEFAULT_TRANSCRIPTION_LANGUAGE=pt`. O passo a passo está em `scripts/reunioes-spike/LEIA-ME.md`.
 2. Duas reuniões de teste de 30 minutos (uma de Meet, uma de Teams), com 3 pessoas falando português.
 3. Anotar: (a) **segundos faturados pela Groq por hora de reunião**; (b) **processador e memória por bot** (para o custo do servidor); (c) **qualidade em português** (erros de nome de empresa, de lei de incentivo, de valores); (d) **se o Vexa atribui as falas a cada pessoa** e quantas ficam sem nome; (e) o **formato real da API e do webhook**; (f) se o bot recebe a reunião de Meet sem o anfitrião admitir (admissão manual é o caso comum).
 4. Resultado: uma tabela com o custo real por hora e uma decisão: seguir com a Groq, trocar de motor ou avaliar uma placa alugada.
