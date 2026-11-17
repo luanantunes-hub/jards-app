@@ -1,4 +1,4 @@
-export type EmailProvider = "google";
+export type EmailProvider = "google" | "microsoft";
 
 export function appUrl(): string {
   return (
@@ -33,3 +33,27 @@ export const GMAIL_SCOPES = [
   "email",
   "https://www.googleapis.com/auth/gmail.readonly",
 ];
+
+/** O app do Azure pode ser o mesmo da agenda (MICROSOFT_CLIENT_ID): basta somar a permissão Mail.Read e o endereço de retorno do e-mail. */
+export function microsoftEmailClientId(): string {
+  return process.env.MICROSOFT_EMAIL_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID || "";
+}
+
+export function microsoftEmailClientSecret(): string {
+  return process.env.MICROSOFT_EMAIL_CLIENT_SECRET || process.env.MICROSOFT_CLIENT_SECRET || "";
+}
+
+/** `common` aceita contas de trabalho ou escola e contas pessoais (Outlook.com, Hotmail). */
+export function microsoftEmailTenant(): string {
+  return process.env.MICROSOFT_TENANT_ID || "common";
+}
+
+export function microsoftEmailRedirectUri(): string {
+  return `${appUrl()}/api/email/microsoft/callback`;
+}
+
+export function microsoftEmailConfigured(): boolean {
+  return Boolean(microsoftEmailClientId() && microsoftEmailClientSecret() && tokenSecret());
+}
+
+export const MICROSOFT_EMAIL_SCOPES = ["openid", "email", "offline_access", "User.Read", "Mail.Read"];

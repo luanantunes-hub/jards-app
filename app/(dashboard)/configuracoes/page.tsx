@@ -17,6 +17,7 @@ import { useCreditos } from "@/contexts/CreditosContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import NovoMembroModal from "@/components/modals/NovoMembroModal";
 import { CalendarConnections } from "@/components/CalendarConnections";
+import { EmailConnections } from "@/components/EmailConnections";
 import { McpConnectionCard } from "@/components/McpConnectionCard";
 import { EtiquetasConfig } from "@/components/EtiquetasConfig";
 import { OpportunityLabelsConfig } from "@/components/captadores/OpportunityLabels";
@@ -594,6 +595,7 @@ const { data: perfilData } = await (supabase as any)
           <div className="space-y-6">
       {activeSection === "ferramentas" && (
         <>
+          <EmailConnections />
           <CalendarConnections />
           <McpConnectionCard />
         </>

@@ -4,6 +4,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, Suspense, useCallback } from "react";
 import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { PastDueBanner } from "@/components/PastDueBanner";
+import { EmailAutoSync } from "@/components/email/EmailAutoSync";
 import {
   BarChart2,
   CalendarCheck,
@@ -974,6 +975,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <ImpersonationBanner />
           </Suspense>
           <PastDueBanner />
+          <EmailAutoSync />
           {children}
         </main>
       </div>
