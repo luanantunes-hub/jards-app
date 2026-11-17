@@ -3,6 +3,7 @@ import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { enviarBot, type VexaPlataforma } from "@/lib/reunioes/vexa";
+import { usoDaOrganizacao } from "@/lib/reunioes/uso";
 
 function adminClient() {
   return createSupabaseClient(
@@ -52,7 +53,10 @@ export async function GET(req: NextRequest) {
     .order("created_at", { ascending: false });
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ reunioes: data ?? [] }, { headers: { "Cache-Control": "private, no-store" } });
+  // as horas do mês contra o limite: a tela mostra e desliga o botão quando passa (falha ao ler o uso não derruba a lista)
+  const uso = await usoDaOrganizacao(admin, organizationId).catch(() => null);
+
+  return NextResponse.json({ reunioes: data ?? [], uso }, { headers: { "Cache-Control": "private, no-store" } });
 }
 
 export async function POST(req: NextRequest) {
@@ -77,6 +81,12 @@ export async function POST(req: NextRequest) {
   const admin = adminClient();
   if (!await ehMembroDaOrg(admin, organizationId, user.id)) {
     return NextResponse.json({ error: "Sem permissão" }, { status: 403 });
+  }
+
+  // Limite de horas de robô por mês da organização: acima dele não manda mais robô (o custo é por hora de reunião).
+  const uso = await usoDaOrganizacao(admin, organizationId).catch(() => null);
+  if (uso?.atingido) {
+    return NextResponse.json({ error: "O limite de horas de reunião deste mês foi atingido. Fale com a equipe do Jards para ampliar.", codigo: "limite_atingido" }, { status: 403 });
   }
 
   // Se a reunião for vinculada a uma negociação/empresa do CRM, confirma que

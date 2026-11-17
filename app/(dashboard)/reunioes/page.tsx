@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { VideoCamera, Plus } from "@phosphor-icons/react";
 import { useOrganizationId } from "@/contexts/OrganizationContext";
 import { NovaReuniaoModal } from "@/components/modals/NovaReuniaoModal";
+import { horasEmTexto, type SituacaoDoLimite } from "@/lib/reunioes/custo";
 
 type Reuniao = {
   id: string;
@@ -34,6 +35,7 @@ export default function ReunioesPage() {
   const [reunioes, setReunioes] = useState<Reuniao[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalAberto, setModalAberto] = useState(false);
+  const [uso, setUso] = useState<SituacaoDoLimite | null>(null);
 
   const carregar = useCallback(async () => {
     if (!organizationId) return;
@@ -41,6 +43,7 @@ export default function ReunioesPage() {
     const res = await fetch(`/api/reunioes?organization_id=${organizationId}`);
     const data = await res.json().catch(() => ({ reunioes: [] }));
     setReunioes(data.reunioes ?? []);
+    setUso(data.uso ?? null);
     setLoading(false);
   }, [organizationId]);
 
@@ -56,13 +59,25 @@ export default function ReunioesPage() {
         <button
           type="button"
           onClick={() => setModalAberto(true)}
-          disabled={!organizationId}
+          disabled={!organizationId || uso?.atingido === true}
           className="flex items-center gap-2 rounded bg-[#0D0D0D] px-4 py-2.5 text-sm text-white transition hover:opacity-90 disabled:opacity-40"
         >
           <Plus size={14} weight="bold" />
           Enviar assistente
         </button>
       </div>
+
+      {uso && (
+        <p
+          className="mb-4 text-[12.5px] tabular-nums"
+          style={{ color: uso.atingido ? "#D94A4A" : uso.perto ? "#B07A14" : "rgba(40,37,37,.55)" }}
+          role="status"
+        >
+          {uso.atingido
+            ? `O limite deste mês foi atingido: ${horasEmTexto(uso.usadasH)} de ${horasEmTexto(uso.limiteH)}. Fale com a equipe do Jards para ampliar.`
+            : `Este mês: ${horasEmTexto(uso.usadasH)} de ${horasEmTexto(uso.limiteH)} de reunião${uso.perto ? " — perto do limite" : ""}.`}
+        </p>
+      )}
 
       <div className="bg-white overflow-hidden">
         <div className="overflow-x-auto">

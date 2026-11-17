@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { timingSafeEqual } from "crypto";
 import { consultarStatusBot, buscarTranscricao } from "@/lib/reunioes/vexa";
+import { registrarUsoDaReuniao } from "@/lib/reunioes/uso";
 
 function adminClient() {
   return createSupabaseClient(
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
   const admin = adminClient();
   const { data: reuniao } = await admin
     .from("reunioes")
-    .select("id,status")
+    .select("id,status,iniciada_em")
     .eq("vexa_bot_id", vexaBotId)
     .maybeSingle();
   if (!reuniao) return NextResponse.json({ error: "Reunião não encontrada para este bot" }, { status: 404 });
@@ -68,11 +69,14 @@ export async function POST(req: NextRequest) {
 
   if (STATUS_FALHOU.has(statusVexa)) {
     await admin.from("reunioes").update({ status: "falhou", erro: `Status do Vexa: ${statusVexa}` }).eq("id", reuniao.id);
+    // se o robô chegou a entrar, o tempo dele conta no uso mesmo que a reunião tenha falhado depois
+    await registrarUsoDaReuniao(admin, reuniao.id, reuniao.iniciada_em);
     return NextResponse.json({ ok: true });
   }
 
   if (STATUS_EM_ANDAMENTO.has(statusVexa)) {
-    await admin.from("reunioes").update({ status: "gravando", iniciada_em: new Date().toISOString() }).eq("id", reuniao.id);
+    // o começo só vale na primeira vez: o aviso de "em andamento" pode chegar várias vezes e não pode reiniciar a contagem
+    await admin.from("reunioes").update({ status: "gravando", ...(reuniao.iniciada_em ? {} : { iniciada_em: new Date().toISOString() }) }).eq("id", reuniao.id);
     return NextResponse.json({ ok: true });
   }
 
@@ -93,6 +97,7 @@ export async function POST(req: NextRequest) {
         );
       }
       await admin.from("reunioes").update({ status: "concluida", finalizada_em: new Date().toISOString() }).eq("id", reuniao.id);
+      await registrarUsoDaReuniao(admin, reuniao.id, reuniao.iniciada_em);
     } catch (error) {
       await admin.from("reunioes").update({
         status: "falhou",
