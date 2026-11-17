@@ -52,10 +52,18 @@ Três fatos que sustentam o plano (os dois primeiros eu li nos documentos do Vex
 ### Fase 3: o que dá valor ao Jards (3 a 5 dias)
 Reunião solta não vende; reunião ligada à negociação, sim.
 1. **Resumo e próximos passos** depois da reunião (modelo pequeno, uma chamada), gravados em `resumo_ia`. Sem tempo real.
-2. **Ligação com o CRM**: a reunião já pode apontar para negociação ou empresa; mostrar a reunião na página da negociação e criar **atividades de acompanhamento** a partir dos próximos passos, depois de a pessoa confirmar (nada é criado sozinho).
-3. **Busca** nas transcrições (a coluna de texto já existe).
-4. **Aviso aos participantes**: o nome do bot deixa claro que grava ("Jards, gravando a reunião") e a tela de criar a reunião lembra de avisar quem participa.
-5. **Retenção e exclusão**: a pessoa pode apagar a reunião (áudio e texto); prazo padrão para apagar o áudio depois de transcrito.
+2. **Entrar sozinho nas reuniões do calendário, só nas que têm convidado de fora da instituição** (para não gastar à toa). O Jards já tem a conexão com Google Calendar e com Microsoft (Outlook/Teams), com permissão de ler e escrever eventos; falta ler os eventos futuros. Desenho:
+   - **Quem liga:** cada pessoa, para o próprio calendário, numa tela de regras. Vem **desligado**; ao ligar, o padrão é a regra abaixo.
+   - **Uma tarefa a cada 5 minutos** olha os eventos que começam nos próximos 10 minutos, com link do Meet (o Google traz no evento) ou do Teams (a Microsoft traz no evento), e manda o robô. Cada ocorrência de reunião recorrente conta uma vez, e uma trava impede mandar o robô duas vezes para o mesmo evento.
+   - **A regra "convidado de fora":** a reunião só entra se ao menos um convidado tem e-mail **fora da instituição**. "Dentro" é o domínio da conta que conectou o calendário e os e-mails dos membros da organização no Jards. Se a conta é de e-mail público (gmail, outlook, hotmail, yahoo, icloud), o domínio não diz nada, então "dentro" passa a ser só a lista de membros da organização. Salas e recursos do calendário não contam como convidado.
+   - **Fica de fora:** eventos de dia inteiro, reuniões sem link de vídeo, eventos que a pessoa recusou, eventos só com gente de dentro e eventos sem convidados (lembretes e blocos pessoais).
+   - **Travas de gasto:** limite de horas de robô por mês por organização (acima dele, para de entrar sozinho e avisa); o robô sai sozinho se ficar só na sala ou passar de 3 horas; reunião que já foi mandada à mão não é mandada de novo.
+   - **Mostrar antes de entrar:** a lista das próximas reuniões que o robô vai cobrir, com o motivo ("tem convidado de fora: fulano@empresa.com"), e um botão de "não entrar nesta".
+   - **Já escrito e testado (18/11/2026):** a regra de quem é de fora e a decisão por evento estão em `lib/reunioes/regra-do-calendario.ts`, com 4 testes (conta de instituição e conta aberta, sala do calendário, recusa, dia inteiro, sem link). Falta só a leitura dos eventos do Google e da Microsoft, que precisa de conta conectada.
+3. **Ligação com o CRM**: a reunião já pode apontar para negociação ou empresa; mostrar a reunião na página da negociação e criar **atividades de acompanhamento** a partir dos próximos passos, depois de a pessoa confirmar (nada é criado sozinho).
+4. **Busca** nas transcrições (a coluna de texto já existe).
+5. **Aviso aos participantes**: o nome do bot deixa claro que grava ("Jards, gravando a reunião") e a tela de criar a reunião lembra de avisar quem participa.
+6. **Retenção e exclusão**: a pessoa pode apagar a reunião (áudio e texto); prazo padrão para apagar o áudio depois de transcrito.
 
 ### Fase 4: baixar o custo, se o volume pedir
 - Só depois de a fase 1 e dois meses de uso real mostrarem o custo.
@@ -75,7 +83,8 @@ Reunião solta não vende; reunião ligada à negociação, sim.
 | 1 | Os dados da reunião passam pela Groq (EUA). Atualizar o texto de privacidade (§3.3) e ler os termos e a política de retenção da Groq. | Antes da fase 2 |
 | 2 | Quem pode usar Reuniões e se tem teste gratuito (hoje o item aparece no menu para todos). Limite de horas por plano e preço. | Antes da fase 3 |
 | 3 | Por quanto tempo guardar o áudio depois de transcrito. | Fase 3 |
-| 4 | Gasto de teste da fase 1 (Groq, Fly.io, alguns dólares). | Antes da fase 1 |
+| 4 | Gasto de teste da fase 1 (Groq, centavos; o Docker Desktop no Mac é gratuito e nada é alugado). | Antes da fase 1 |
+| 5 | Entrada automática pelo calendário: confirmar a regra "só com convidado de fora", o limite de horas por mês por organização e se o padrão fica desligado até a pessoa ligar. | Antes da fase 3 |
 
 ## 5. Riscos
 
