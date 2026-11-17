@@ -3745,12 +3745,49 @@
     no = tela2d(Math.round(360 * k), Math.round(300 * k));
     var n = no.getContext('2d');
     n.setTransform(k, 0, 0, k, 0, 0); n.translate(-680, -30);
-    halo(n, 886, 186, 130, '246,176,156', .2);
-    halo(n, 880, 178, 80, '240,132,112', .72);
-    halo(n, 834, 186, 58, '124,102,214', .74);
-    halo(n, 840, 166, 40, '124,102,214', .6);
-    n.strokeStyle = 'rgba(246,190,180,.45)'; n.lineWidth = .8;
-    n.beginPath(); n.arc(BX + 4, BY - 1, 43, 0, 6.2832); n.stroke();
+    // Brilho suave por baixo (pouca luz) e, por cima, a aureola em giz de cera
+    // grafite: traços curtos e inclinados, roxo à esquerda e coral à direita,
+    // mais densos perto da bola, e um grão que "come" a tinta como o papel.
+    halo(n, 886, 186, 120, '246,176,156', .1);
+    halo(n, 880, 178, 74, '240,132,112', .26);
+    halo(n, 834, 186, 54, '124,102,214', .28);
+    var ag = sorteio(31);
+    function gauss(){ return (ag() + ag() + ag() + ag() - 2) * 1.7; }
+    function giz(cx, cy, sigma, qtd, cor, alfa){
+      n.lineCap = 'round';
+      for(var q = 0; q < qtd; q++){
+        var gx = cx + gauss() * sigma, gy = cy + gauss() * sigma * .92;
+        var ang = (ag() < .22 ? .62 : -.92) + (ag() - .5) * .8, comp = 7 + ag() * 14;
+        n.strokeStyle = 'rgba(' + cor + ',' + (alfa * (.45 + ag() * .55)).toFixed(3) + ')';
+        n.lineWidth = 1.5 + ag() * 2.2;
+        n.beginPath(); n.moveTo(gx - Math.cos(ang) * comp / 2, gy - Math.sin(ang) * comp / 2);
+        n.lineTo(gx + Math.cos(ang) * comp / 2, gy + Math.sin(ang) * comp / 2); n.stroke();
+      }
+    }
+    giz(886, 180, 30, 1700, '232,88,72', .5);
+    giz(832, 184, 26, 1500, '112,72,192', .55);
+    giz(842, 164, 16, 450, '112,72,192', .5);
+    giz(888, 186, 52, 700, '236,112,92', .28);
+    // anel desenhado à mão: dois traços levemente tortos
+    n.lineWidth = .9;
+    for(var an = 0; an < 2; an++){
+      n.strokeStyle = 'rgba(' + (an ? '112,72,192' : '232,88,72') + ',.5)';
+      n.beginPath();
+      for(var tt = 0; tt <= 6.4; tt += .16){
+        var rr = 43 + an * 1.6 + Math.sin(tt * 3 + an * 2) * 1.1 + (ag() - .5) * .7;
+        var px = BX + 4 + rr * Math.cos(tt + an * .5), py = BY - 1 + rr * Math.sin(tt + an * .5);
+        if(tt === 0) n.moveTo(px, py); else n.lineTo(px, py);
+      }
+      n.stroke();
+    }
+    // grão do papel: pontinhos que apagam um pouco da tinta
+    n.globalCompositeOperation = 'destination-out';
+    for(var gr = 0; gr < 7000; gr++){
+      n.fillStyle = 'rgba(0,0,0,' + (.25 + ag() * .45).toFixed(2) + ')';
+      var tam = .45 + ag() * .8;
+      n.fillRect(680 + ag() * 360, 30 + ag() * 300, tam, tam);
+    }
+    n.globalCompositeOperation = 'source-over';
 
     // Bola de luz: miolo branco cheio e brilho em volta. O miolo ocupa 42% do
     // raio do desenho; serve para a bola principal e para a semente.
