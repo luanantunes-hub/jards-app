@@ -3745,67 +3745,12 @@
     no = tela2d(Math.round(360 * k), Math.round(300 * k));
     var n = no.getContext('2d');
     n.setTransform(k, 0, 0, k, 0, 0); n.translate(-680, -30);
-    // Aureola em pastel e grafite, como as ilustrações do Jards: duas manchas
-    // cheias e irregulares (roxo à esquerda, coral à direita) com traços grossos
-    // de pastel por cima, contorno de grafite meio falhado e um grão de papel
-    // que come a tinta. Um brilho muito leve por baixo une tudo à bola de luz.
-    halo(n, 870, 180, 78, '240,150,130', .1);
-    var ag = sorteio(31);
-    function irregular(cx, cy, r, fase){
-      n.beginPath();
-      for(var tt = 0; tt <= 6.5; tt += .1){
-        var rr = r * (1 + .06 * Math.sin(tt * 3 + fase) + .035 * Math.sin(tt * 7 + fase * 2)) + (ag() - .5) * 1.8;
-        var px = cx + rr * Math.cos(tt), py = cy + rr * Math.sin(tt) * .97;
-        if(tt === 0) n.moveTo(px, py); else n.lineTo(px, py);
-      }
-      n.closePath();
-    }
-    function lado(esquerdo, cor, escura, clara){
-      n.save();
-      n.beginPath();                                   // divisa levemente inclinada
-      if(esquerdo){ n.moveTo(700, 100); n.lineTo(BX + 8, 100); n.lineTo(BX - 6, 260); n.lineTo(700, 260); }
-      else { n.moveTo(BX + 8, 100); n.lineTo(1020, 100); n.lineTo(1020, 260); n.lineTo(BX - 6, 260); }
-      n.closePath(); n.clip();
-      irregular(BX + 5, BY, 66, esquerdo ? 1 : 4); n.fillStyle = 'rgba(' + cor + ',.96)'; n.fill();
-      n.clip();
-      n.lineCap = 'round';
-      for(var q = 0; q < 520; q++){                    // traços de pastel
-        var tom = ag() < .55, ang = -.95 + (ag() - .5) * .45, comp = 10 + ag() * 22;
-        var gx = BX + 5 + (ag() - .5) * 150, gy = BY + (ag() - .5) * 150;
-        n.strokeStyle = 'rgba(' + (tom ? escura : clara) + ',' + (.22 + ag() * .3).toFixed(2) + ')';
-        n.lineWidth = 2.6 + ag() * 3.2;
-        n.beginPath(); n.moveTo(gx - Math.cos(ang) * comp / 2, gy - Math.sin(ang) * comp / 2);
-        n.lineTo(gx + Math.cos(ang) * comp / 2, gy + Math.sin(ang) * comp / 2); n.stroke();
-      }
-      n.restore();
-    }
-    lado(true, '104,77,176', '78,52,150', '150,124,214');
-    lado(false, '226,96,82', '190,66,56', '244,150,128');
-    // contorno de grafite, em dois passes tortos e com falhas
-    n.lineCap = 'round';
-    for(var pa = 0; pa < 2; pa++){
-      n.strokeStyle = 'rgba(40,37,37,' + (pa ? .4 : .62) + ')'; n.lineWidth = pa ? 1 : 1.6;
-      var tt0 = ag() * 6.28, aberto = false;
-      for(var tt = 0; tt <= 6.2; tt += .09){
-        var rr = 67 + pa * 1.4 + Math.sin(tt * 3 + pa) * 2.2 + (ag() - .5) * 1.2;
-        var px = BX + 5 + rr * Math.cos(tt + tt0), py = BY + rr * .97 * Math.sin(tt + tt0);
-        if(ag() < .06){ aberto = false; continue; }
-        if(!aberto){ n.beginPath(); n.moveTo(px, py); aberto = true; } else { n.lineTo(px, py); n.stroke(); n.beginPath(); n.moveTo(px, py); }
-      }
-    }
-    // grão do papel e riscos de pastel que deixam o branco aparecer
-    n.globalCompositeOperation = 'destination-out';
-    for(var gr = 0; gr < 5200; gr++){
-      n.fillStyle = 'rgba(0,0,0,' + (.45 + ag() * .5).toFixed(2) + ')';
-      var tam = .5 + ag() * 1;
-      n.fillRect(770 + ag() * 170, 100 + ag() * 160, tam, tam);
-    }
-    for(var rs = 0; rs < 420; rs++){
-      var an2 = -.95 + (ag() - .5) * .5, cm = 4 + ag() * 10, rx = 785 + ag() * 150, ry = 110 + ag() * 150;
-      n.strokeStyle = 'rgba(0,0,0,' + (.35 + ag() * .35).toFixed(2) + ')'; n.lineWidth = .5 + ag() * .7;
-      n.beginPath(); n.moveTo(rx, ry); n.lineTo(rx + Math.cos(an2) * cm, ry + Math.sin(an2) * cm); n.stroke();
-    }
-    n.globalCompositeOperation = 'source-over';
+    halo(n, 886, 186, 130, '246,176,156', .2);
+    halo(n, 880, 178, 80, '240,132,112', .72);
+    halo(n, 834, 186, 58, '124,102,214', .74);
+    halo(n, 840, 166, 40, '124,102,214', .6);
+    n.strokeStyle = 'rgba(246,190,180,.45)'; n.lineWidth = .8;
+    n.beginPath(); n.arc(BX + 4, BY - 1, 43, 0, 6.2832); n.stroke();
 
     // Bola de luz: miolo branco cheio e brilho em volta. O miolo ocupa 42% do
     // raio do desenho; serve para a bola principal e para a semente.
