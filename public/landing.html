@@ -3745,12 +3745,37 @@
     no = tela2d(Math.round(360 * k), Math.round(300 * k));
     var n = no.getContext('2d');
     n.setTransform(k, 0, 0, k, 0, 0); n.translate(-680, -30);
-    halo(n, 886, 186, 130, '246,176,156', .2);
-    halo(n, 880, 178, 80, '240,132,112', .72);
-    halo(n, 834, 186, 58, '124,102,214', .74);
-    halo(n, 840, 166, 40, '124,102,214', .6);
-    n.strokeStyle = 'rgba(246,190,180,.45)'; n.lineWidth = .8;
-    n.beginPath(); n.arc(BX + 4, BY - 1, 43, 0, 6.2832); n.stroke();
+    // Halo nas cores da marca (roxo #684DB0 e coral #D94A4A), com luz um pouco
+    // mais contida, grão de papel só por cima dele, e um anel de grafite torto
+    // com riscos curtos de brilho, como o contorno das ilustrações.
+    halo(n, 886, 186, 130, '236,150,138', .15);
+    halo(n, 880, 178, 80, '217,74,74', .68);
+    halo(n, 834, 186, 58, '104,77,176', .72);
+    halo(n, 840, 166, 40, '104,77,176', .56);
+    var ag = sorteio(31);
+    n.globalCompositeOperation = 'destination-out';
+    for(var gr = 0; gr < 9000; gr++){
+      n.fillStyle = 'rgba(0,0,0,' + (.18 + ag() * .3).toFixed(2) + ')';
+      var tam = .5 + ag() * .8;
+      n.fillRect(680 + ag() * 360, 30 + ag() * 300, tam, tam);
+    }
+    n.globalCompositeOperation = 'source-over';
+    n.lineCap = 'round'; n.lineJoin = 'round';
+    n.strokeStyle = 'rgba(40,37,37,.32)'; n.lineWidth = .9;
+    var aberto = false, ini = ag() * 6.28;
+    for(var tt = 0; tt <= 6.4; tt += .08){
+      var rr = 43 + Math.sin(tt * 3 + 1) * 1.6 + (ag() - .5) * .8;
+      var px = BX + 4 + rr * Math.cos(tt + ini), py = BY - 1 + rr * Math.sin(tt + ini);
+      if(tt > 5.9 || (tt > 2.2 && tt < 2.45)){ aberto = false; continue; }   // duas falhas no traço
+      if(!aberto){ n.beginPath(); n.moveTo(px, py); aberto = true; } else { n.lineTo(px, py); n.stroke(); n.beginPath(); n.moveTo(px, py); }
+    }
+    n.strokeStyle = 'rgba(40,37,37,.5)'; n.lineWidth = 1.1;
+    [[-1.12, 52, 63], [-.86, 50, 66], [-.6, 52, 62], [-.34, 51, 58]].forEach(function(r){
+      n.beginPath();
+      n.moveTo(BX + 4 + r[1] * Math.cos(r[0]), BY - 1 + r[1] * Math.sin(r[0]));
+      n.lineTo(BX + 4 + r[2] * Math.cos(r[0]), BY - 1 + r[2] * Math.sin(r[0]));
+      n.stroke();
+    });
 
     // Bola de luz: miolo branco cheio e brilho em volta. O miolo ocupa 42% do
     // raio do desenho; serve para a bola principal e para a semente.
