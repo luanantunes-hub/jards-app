@@ -17,6 +17,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { Select } from "@/components/ui/Select";
 import { SegmentedControl } from "@/components/ui/FilterControls";
+import { TituloComFrase } from "@/components/list/TituloComFrase";
 
 type NotificationItem = {
   id: string;
@@ -250,8 +251,7 @@ export default function NotificacoesPage() {
     <div className="mx-auto max-w-4xl px-4 py-6 md:px-8 md:py-8">
       <div className="flex flex-col items-start gap-4 sm:flex-row sm:justify-between sm:gap-6">
         <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Central</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525]">Notificações</h1>
+          <TituloComFrase secao="notificacoes" titulo="Notificações" />
           <p className="mt-1 text-[0.8125rem] text-black/40">
             {unread > 0 ? `${unread} não lida${unread === 1 ? "" : "s"}` : "Tudo em dia"}
           </p>

@@ -26,6 +26,7 @@ import { FiltroMesorregiao } from "@/components/patrocinadores/FiltroMesorregiao
 import { lerSelecaoDaUrl } from "@/lib/filtro-mesorregiao";
 import { BoasVindasPlanoModal } from "@/components/modals/BoasVindasPlanoModal";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { TituloComFrase } from "@/components/list/TituloComFrase";
 
 type Lei = "esporte" | "ancine" | "saude";
 
@@ -689,8 +690,7 @@ export default function PatrocinadoresPage() {
     <div className="min-h-full bg-white">
       <div className="flex flex-col gap-4 px-4 pb-5 pt-6 md:px-8 md:pt-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525] [text-wrap:balance]">Encontrar patrocinadores</h1>
+          <TituloComFrase secao="patrocinadores" titulo="Encontrar patrocinadores" />
         </div>
         <SegmentedControl
           value={aba}

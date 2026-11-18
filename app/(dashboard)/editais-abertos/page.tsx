@@ -7,6 +7,7 @@ import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
 import { CompanyLogo } from "@/components/CompanyLogo";
 import { NovaInscricaoModal } from "@/components/modals/NovaInscricaoModal";
 import { CustomDropdown } from "@/components/ui/CustomDropdown";
+import { TituloComFrase } from "@/components/list/TituloComFrase";
 
 const CARDS_PER_PAGE = 12;
 
@@ -410,8 +411,7 @@ export default function EditaisAbertosPage() {
       {/* Header */}
       <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Oportunidades</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525]">Editais</h1>
+          <TituloComFrase secao="editais" titulo="Editais" />
         </div>
         <PrimaryListAction onClick={() => setShowSugerirForm(v => !v)}><UserPlus size={13} aria-hidden="true" /> Sugerir edital</PrimaryListAction>
       </div>

@@ -276,7 +276,7 @@ export default function ProjetosPage() {
         />
       )}
 
-      <ListPageHeader eyebrow="Portfólio" title="Projetos" summary={!loading&&<><ListSummary strong={filteredProjetos.length}>projetos</ListSummary>{totalValor>0&&<ListSummary strong={<span title={formatarValorCompleto(totalValor)}>{formatarValorCurto(totalValor)}</span>}>em objetivos</ListSummary>}</>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo projeto</PrimaryListAction></>}/>
+      <ListPageHeader secao="projetos" eyebrow="Portfólio" title="Projetos" summary={!loading&&<><ListSummary strong={filteredProjetos.length}>projetos</ListSummary>{totalValor>0&&<ListSummary strong={<span title={formatarValorCompleto(totalValor)}>{formatarValorCurto(totalValor)}</span>}>em objetivos</ListSummary>}</>} actions={<><EntityViewSwitcher value={viewMode} onChange={setViewMode} options={VIEW_OPTIONS}/><PrimaryListAction onClick={()=>setShowModal(true)}><Plus size={13}/>Novo projeto</PrimaryListAction></>}/>
 
       {projetos.length > 0 && (
         <ListToolbar search={<ListSearch value={search} onChange={setSearch} placeholder="Buscar projeto ou proponente"/>}>
