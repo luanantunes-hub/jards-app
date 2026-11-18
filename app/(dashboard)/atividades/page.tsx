@@ -836,28 +836,26 @@ function dataDoIso(iso: string): Date {
   return new Date(y, m - 1, d);
 }
 
-// Meio círculo de barrinhas: verde = concluídas, coral = atrasadas, cinza = o que falta.
-const BARRAS_DO_ARCO = 31;
+// Meio círculo em 5 segmentos largos: verde = concluídas, coral = atrasadas, cinza = o que falta.
+const SEGMENTOS_DO_ARCO = 5;
 
 function ArcoDeConclusao({ taxa, concluidas, atrasadas, total }: { taxa: number; concluidas: number; atrasadas: number; total: number }) {
-  const verdes = total ? Math.round(concluidas / total * BARRAS_DO_ARCO) : 0;
-  const corais = total ? Math.min(BARRAS_DO_ARCO - verdes, Math.round(atrasadas / total * BARRAS_DO_ARCO)) : 0;
-  const cx = 80, cy = 78, dentro = 54, fora = 72;
+  const verdes = total ? Math.round(concluidas / total * SEGMENTOS_DO_ARCO) : 0;
+  const corais = total ? Math.min(SEGMENTOS_DO_ARCO - verdes, Math.round(atrasadas / total * SEGMENTOS_DO_ARCO)) : 0;
+  const cx = 80, cy = 76, raio = 62, espessura = 15, folga = 0.06; // folga em radianos entre os segmentos
+  const fatia = (Math.PI - folga * (SEGMENTOS_DO_ARCO - 1)) / SEGMENTOS_DO_ARCO;
+  const ponto = (angulo: number) => `${(cx + raio * Math.cos(angulo)).toFixed(2)} ${(cy - raio * Math.sin(angulo)).toFixed(2)}`;
   return (
     <div className="w-[8.5rem] flex-shrink-0 sm:w-[10rem]" role="img" aria-label={`${taxa}% concluído: ${concluidas} de ${total}${atrasadas ? `, ${atrasadas} atrasadas` : ""}`}>
       <div className="relative">
       <svg viewBox="0 0 160 84" className="block w-full">
-        {Array.from({ length: BARRAS_DO_ARCO }, (_, i) => {
-          const angulo = Math.PI - (i / (BARRAS_DO_ARCO - 1)) * Math.PI;
-          const cos = Math.cos(angulo), sen = Math.sin(angulo);
-          const cor = i < verdes ? VERDE : i < verdes + corais ? "#D94A4A" : "rgba(13,13,13,.10)";
+        {Array.from({ length: SEGMENTOS_DO_ARCO }, (_, i) => {
+          // da esquerda para a direita: o ângulo vai de π a 0
+          const de = Math.PI - i * (fatia + folga);
+          const ate = de - fatia;
+          const cor = i < verdes ? VERDE : i < verdes + corais ? "#D94A4A" : "rgba(13,13,13,.09)";
           return (
-            <line
-              key={i}
-              x1={cx + dentro * cos} y1={cy - dentro * sen}
-              x2={cx + fora * cos} y2={cy - fora * sen}
-              stroke={cor} strokeWidth="3.4" strokeLinecap="round"
-            />
+            <path key={i} d={`M ${ponto(de)} A ${raio} ${raio} 0 0 1 ${ponto(ate)}`} fill="none" stroke={cor} strokeWidth={espessura} strokeLinecap="butt" />
           );
         })}
       </svg>
