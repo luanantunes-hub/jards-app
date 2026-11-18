@@ -23,7 +23,7 @@
 /* Véu: o fundo atrás de folhas, painéis e pop-ups. Escurece e desfoca a tela de leve.
    Use `veu` no fundo; nas folhas que entram com animação, some junto: `veu ${visivel ? "" : "veu-oculto"}`. */
 :root {
-  --veu-cor: rgba(16, 10, 30, .58);
+  --veu-cor: rgba(0, 0, 0, .58);
   --veu-desfoque: 4px;
 }
 .veu {
