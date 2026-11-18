@@ -1,13 +1,13 @@
-// Módulos do Jards (captação, prestação de contas e produção) e quem pode usar cada um.
+// Módulos do Jards (captação, prestação de contas, produção e ticketeria) e quem pode usar cada um.
 //
 // Regra: a pessoa usa um módulo quando a organização o tem ativo
 // (organizations.modulos_ativos) e o vínculo dela com a organização dá acesso
 // a ele (organization_members.modulos_acesso). Super admin usa todos.
 // Sem valor nas colunas vale só a captação, como sempre foi.
 
-export type ModuloId = "captacao" | "prestacao" | "producao";
+export type ModuloId = "captacao" | "prestacao" | "producao" | "ticketeria";
 
-export const MODULOS: readonly ModuloId[] = ["captacao", "prestacao", "producao"];
+export const MODULOS: readonly ModuloId[] = ["captacao", "prestacao", "producao", "ticketeria"];
 
 /**
  * Módulos ainda em construção: só aparecem (no seletor, nos convites) para a
@@ -15,14 +15,21 @@ export const MODULOS: readonly ModuloId[] = ["captacao", "prestacao", "producao"
  * já aceita a produção (PD0.1, aplicada em 15/10/2026) e a página /producoes
  * existe (PD0.3), mas o módulo ainda não tem funcionalidade: a produção só sai
  * desta lista quando o plano do módulo de produção mandar.
+ *
+ * A ticketeria (venda de ingressos, T0 do plano em
+ * docs/acoes-futuras/estudos/plano-modulo-ticketeria.md) entra escondida: o
+ * módulo está registrado, o banco o aceita e a página /ingressos existe
+ * (jards.com.br/ticketeria é a página pública do produto, por isso a rota do
+ * app tem outro nome), mas só o super admin e quem já o tem o veem.
  */
-export const MODULOS_EM_CONSTRUCAO: readonly ModuloId[] = ["producao"];
+export const MODULOS_EM_CONSTRUCAO: readonly ModuloId[] = ["producao", "ticketeria"];
 
 /** Página inicial de cada módulo, para onde vai quem entra nele. */
 export const INICIO_DO_MODULO: Record<ModuloId, string> = {
   captacao: "/dashboard",
   prestacao: "/prestacoes",
   producao: "/producoes",
+  ticketeria: "/ingressos",
 };
 
 /**
@@ -63,13 +70,14 @@ const ROTAS_DO_MODULO: Record<ModuloId, readonly string[]> = {
   captacao: [],
   prestacao: ["/prestacoes"],
   producao: ["/producoes"],
+  ticketeria: ["/ingressos"],
 };
 
 function casaPrefixo(path: string, prefixo: string): boolean {
   return path === prefixo || path.startsWith(`${prefixo}/`);
 }
 
-/** Módulo dono da rota; o que não é da prestação nem da produção é da captação. */
+/** Módulo dono da rota; o que não é de outro módulo é da captação. */
 export function moduloDaRota(path: string): ModuloId {
   for (const modulo of MODULOS) {
     if (ROTAS_DO_MODULO[modulo].some(prefixo => casaPrefixo(path, prefixo))) return modulo;
