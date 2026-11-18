@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  blocosDoJson, corDoTema, ehDominioRaiz, ehHostDoApp, enderecoDaPagina, lerSeo, robotsDoSite, sitemapDoSite, hostDoPedido, lerBloco, lerBlocos, lerDominio, lerUrlHttps, ordemDasPaginas, provaConfere, registrosDeDns, slugDaPagina, textoSobreCor,
+  blocosDoJson, corDoTema, espacosDosBlocos, ehDominioRaiz, ehHostDoApp, enderecoDaPagina, lerSeo, robotsDoSite, sitemapDoSite, hostDoPedido, lerBloco, lerBlocos, lerDominio, lerUrlHttps, ordemDasPaginas, provaConfere, registrosDeDns, slugDaPagina, textoSobreCor,
 } from "../lib/ticketeria/site";
 
 test("só endereço https vale: nada de javascript:, data:, http solto, login embutido ou texto vazio", () => {
@@ -21,7 +21,9 @@ test("cada tipo de bloco: limites, https e texto alternativo na imagem", () => {
   assert.equal(lerBloco({ tipo: "imagem", url: "https://casa.com.br/a.jpg", alt: "Fachada do teatro" }).ok, true);
   assert.equal(lerBloco({ tipo: "botao", rotulo: "Comprar", url: "javascript:alert(1)" }).ok, false);
   assert.equal(lerBloco({ tipo: "botao", rotulo: "Comprar", url: "https://ingressos.com.br/x" }).ok, true);
-  assert.deepEqual(lerBloco({ tipo: "programacao" }), { ok: true, bloco: { tipo: "programacao", titulo: "" } });
+  assert.deepEqual(lerBloco({ tipo: "programacao" }), { ok: true, bloco: { tipo: "programacao", titulo: "", espaco_id: null } }, "sem espaço, o bloco não mostra nada");
+  assert.deepEqual(lerBloco({ tipo: "programacao", titulo: "Em cartaz", espaco_id: "AC75FC27-66AB-41A9-AB2D-21A25914CB2D" }), { ok: true, bloco: { tipo: "programacao", titulo: "Em cartaz", espaco_id: "ac75fc27-66ab-41a9-ab2d-21a25914cb2d" } });
+  assert.equal(lerBloco({ tipo: "programacao", espaco_id: "não-é-id" }).ok, false, "o espaço é um id");
   assert.equal(lerBloco({ tipo: "contato" }).ok, false, "contato vazio");
   assert.equal(lerBloco({ tipo: "contato", email: "sem-arroba" }).ok, false);
   assert.equal(lerBloco({ tipo: "contato", telefone: "(15) 99999-0000" }).ok, true);
@@ -125,4 +127,13 @@ test("o endereço da página, o sitemap e o robots do domínio", () => {
   assert.match(mapa, /^<\?xml version="1.0" encoding="UTF-8"\?>/);
   assert.equal(robotsDoSite("casa.com.br", true), "User-agent: *\nAllow: /\nSitemap: https://casa.com.br/sitemap.xml\n");
   assert.equal(robotsDoSite("casa.com.br", false), "User-agent: *\nDisallow: /\n");
+});
+
+test("os espaços que os blocos de programação mostram, sem repetir e sem o bloco sem espaço", () => {
+  const a = "ac75fc27-66ab-41a9-ab2d-21a25914cb2d", b = "0d9e0000-0000-4000-8000-000000000001";
+  assert.deepEqual(espacosDosBlocos([
+    { tipo: "programacao", titulo: "", espaco_id: a }, { tipo: "texto", texto: "oi" }, { tipo: "programacao", titulo: "x", espaco_id: a },
+    { tipo: "programacao", titulo: "", espaco_id: null }, { tipo: "programacao", titulo: "", espaco_id: b },
+  ]), [a, b]);
+  assert.deepEqual(espacosDosBlocos([]), []);
 });

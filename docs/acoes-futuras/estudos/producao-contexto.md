@@ -14,6 +14,15 @@
 | [producao-fila-de-trabalho.md](./producao-fila-de-trabalho.md) | A fila de lotes prontos, as regras de cada lote e quando parar: para seguir sem pedir "pode seguir" a cada entrega |
 | Este arquivo | Onde estamos, o que vem agora e os cuidados que não estão óbvios no plano |
 
+## O que saiu da Produção (18/11/2026)
+
+Decisão do dono, com a T1 da Ticketeria ([plano-modulo-ticketeria.md](./plano-modulo-ticketeria.md), seção 2): **a Produção não tem nenhuma forma de ticketeria**.
+
+- **O site público mudou-se para a Ticketeria** (é da loja do produtor, em `/ingressos/site`; código em `lib/ticketeria/` e `components/ticketeria/`). O bloco de programação do site continua mostrando as sessões confirmadas de um espaço da Produção.
+- **Saíram**: a plateia (setores e cotas), os convidados e cortesias das sessões (tipos de credencial, links de pedido, `/convidar/[código]`), a porta (credenciais, leituras, `/credencial/[código]`, leitor de câmera e a regra da câmera no `next.config.ts`) e o borderô (receitas, deduções e acerto de contas). Telas, rotas, componentes, bibliotecas, 14 tabelas e 20 funções; os testes delas também. Ficam no histórico do git como referência para as versões da Ticketeria.
+- **Ficam**: a programação pública e as marcas, a acessibilidade (agora com item próprio no menu, no grupo "Público"), a visitação, a formação, a expografia e todo o resto. O retorno da marca conta só as sessões (o público vinha do borderô e da porta). `emCentavos`, `formatarReais` e `lerValorEmReais` moram em `lib/producao/dinheiro.ts`, e os estilos de formulário em `components/producao/estilos.tsx` (eram de `bordero.ts` e `estilosDoBordero.tsx`).
+- No banco: `auth_producao_ve_historico` e `fn_producao_privacidade_limpar` foram reescritas sem as tabelas que saíram (a limpeza deixou de contar "convidados"), e as linhas do histórico dessas tabelas foram apagadas.
+
 ## A visão do dono, em uma frase
 
 Um módulo de produção **robusto**, para qualquer gênero e porte (espaço cultural que recebe, show e teatro que circulam, festival, exposição, audiovisual, formação), em que **produção é operação**: programação, pessoas, acordos com terceiros, logística, o dia, o dinheiro da produção, parceiros e mapas. A prestação de contas só recebe o que a produção registra; ela não é o centro. O dono rejeitou explicitamente uma versão "pobre", centrada em prestação.

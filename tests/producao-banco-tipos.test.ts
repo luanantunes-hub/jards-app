@@ -3,7 +3,7 @@ import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import {
   ACOES_DO_HISTORICO, CONFIRMACOES_DA_ESCALA, EXIBICOES_DO_BLOCO, LADOS_DA_TEMPORADA, SITUACOES_DA_DATA, SITUACOES_DA_TEMPORADA,
-  CATEGORIAS_DO_ITEM, DONOS_DO_ITEM, ESTADOS_DO_EQUIPAMENTO, TIPOS_DE_MANUTENCAO, SECOES_DO_RIDER, FASES_DE_ENERGIA, TIPOS_DE_OBJETO_DA_PLANTA, SITUACOES_DA_PAUTA, TIPOS_DE_PLANTA, SITUACOES_DA_TAREFA, SITUACOES_DA_LICENCA, TIPOS_DE_LICENCA, ESCOPOS_DO_DOCUMENTO, TIPOS_DE_DOCUMENTO, SITUACOES_DO_SITE, SITUACOES_DO_DOMINIO, LADOS_DO_ACERTO, TIPOS_DE_CAMPO_DO_ACERTO, VISIBILIDADES_DO_ACERTO, DESTINOS_DO_ACERTO, SITUACOES_DO_ACERTO, SITUACOES_DO_ITEM_DO_ACERTO, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA, CATEGORIAS_DO_VEICULO, COMBUSTIVEIS_DO_VEICULO, CONTRATACOES_DO_VEICULO, TIPOS_DE_DOCUMENTO_DO_VEICULO, TIPOS_DE_DESLOCAMENTO, TIPOS_DE_TABELA, CAMAS_DO_QUARTO, RESPOSTAS_DO_CONVITE, TIPOS_DO_ITEM_DO_CHECKLIST, SITUACOES_DA_CONFERENCIA, TIPOS_DE_OCORRENCIA, GRAVIDADES_DA_OCORRENCIA, SITUACOES_DO_VOLUNTARIO, SITUACOES_DO_CONVIDADO, SITUACOES_DO_ADIANTAMENTO, SITUACOES_DO_PEDIDO, SITUACOES_DA_FATURA, TIPOS_DE_ACORDO, SENTIDOS_DO_ACORDO, SITUACOES_DO_ACORDO, SITUACOES_DO_ORCAMENTO, CATEGORIAS_DO_ORCAMENTO, PAPEIS_NO_ACERTO, FORMAS_DO_ACERTO, SITUACOES_DO_ACERTO_DO_BORDERO, SITUACOES_DO_BORDERO, FORMAS_DA_DEDUCAO, POSICOES_NA_EXPOSICAO, LUZES_DA_OBRA, CATEGORIAS_DA_COTA, SITUACOES_DA_TURMA, SITUACOES_DA_MATRICULA, SITUACOES_DO_AGENDAMENTO, TIPOS_DE_ACESSIBILIDADE, SITUACOES_DA_ACESSIBILIDADE, RESULTADOS_DA_LEITURA,
+  CATEGORIAS_DO_ITEM, DONOS_DO_ITEM, ESTADOS_DO_EQUIPAMENTO, TIPOS_DE_MANUTENCAO, SECOES_DO_RIDER, FASES_DE_ENERGIA, TIPOS_DE_OBJETO_DA_PLANTA, SITUACOES_DA_PAUTA, TIPOS_DE_PLANTA, SITUACOES_DA_TAREFA, SITUACOES_DA_LICENCA, TIPOS_DE_LICENCA, ESCOPOS_DO_DOCUMENTO, TIPOS_DE_DOCUMENTO, LADOS_DO_ACERTO, TIPOS_DE_CAMPO_DO_ACERTO, VISIBILIDADES_DO_ACERTO, DESTINOS_DO_ACERTO, SITUACOES_DO_ACERTO, SITUACOES_DO_ITEM_DO_ACERTO, SITUACOES_DO_VINCULO, TIPOS_DE_CARTAO_DO_DIA, TIPOS_DE_DATA, CATEGORIAS_DO_VEICULO, COMBUSTIVEIS_DO_VEICULO, CONTRATACOES_DO_VEICULO, TIPOS_DE_DOCUMENTO_DO_VEICULO, TIPOS_DE_DESLOCAMENTO, TIPOS_DE_TABELA, CAMAS_DO_QUARTO, RESPOSTAS_DO_CONVITE, TIPOS_DO_ITEM_DO_CHECKLIST, SITUACOES_DA_CONFERENCIA, TIPOS_DE_OCORRENCIA, GRAVIDADES_DA_OCORRENCIA, SITUACOES_DO_VOLUNTARIO, SITUACOES_DO_ADIANTAMENTO, SITUACOES_DO_PEDIDO, SITUACOES_DA_FATURA, TIPOS_DE_ACORDO, SENTIDOS_DO_ACORDO, SITUACOES_DO_ACORDO, SITUACOES_DO_ORCAMENTO, CATEGORIAS_DO_ORCAMENTO, POSICOES_NA_EXPOSICAO, LUZES_DA_OBRA, SITUACOES_DA_TURMA, SITUACOES_DA_MATRICULA, SITUACOES_DO_AGENDAMENTO, TIPOS_DE_ACESSIBILIDADE, SITUACOES_DA_ACESSIBILIDADE,
 } from "../lib/producao/estados";
 import { PASTAS_DE_ARQUIVO } from "../supabase/functions/_shared/producao-caminho";
 import { lerBancoTs, unioesDeTextos, type BancoNoTipo, type ChaveDoTipo } from "./_helpers/producao-banco-ts";
@@ -45,8 +45,6 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_acerto_itens.destino": { tipo: "DestinoDoAcerto", modulo: "@/lib/producao/estados", estados: DESTINOS_DO_ACERTO },
   "producao_acerto_itens.visibilidade": { tipo: "VisibilidadeDoAcerto", modulo: "@/lib/producao/estados", estados: VISIBILIDADES_DO_ACERTO },
   "producao_acerto_itens.situacao": { tipo: "SituacaoDoItemDoAcerto", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_ITEM_DO_ACERTO },
-  "producao_sites.situacao": { tipo: "SituacaoDoSite", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_SITE },
-  "producao_site_dominios.situacao": { tipo: "SituacaoDoDominio", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_DOMINIO },
   "producao_documentos.escopo": { tipo: "EscopoDoDocumento", modulo: "@/lib/producao/estados", estados: ESCOPOS_DO_DOCUMENTO },
   "producao_documentos.tipo": { tipo: "TipoDeDocumento", modulo: "@/lib/producao/estados", estados: TIPOS_DE_DOCUMENTO },
   "producao_licencas.tipo": { tipo: "TipoDeLicenca", modulo: "@/lib/producao/estados", estados: TIPOS_DE_LICENCA },
@@ -66,20 +64,13 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_ocorrencias.tipo": { tipo: "TipoDeOcorrencia", modulo: "@/lib/producao/estados", estados: TIPOS_DE_OCORRENCIA },
   "producao_ocorrencias.gravidade": { tipo: "GravidadeDaOcorrencia", modulo: "@/lib/producao/estados", estados: GRAVIDADES_DA_OCORRENCIA },
   "producao_voluntarios.situacao": { tipo: "SituacaoDoVoluntario", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_VOLUNTARIO },
-  "producao_porta_leituras.resultado": { tipo: "ResultadoDaLeitura", modulo: "@/lib/producao/estados", estados: RESULTADOS_DA_LEITURA },
   "producao_acessibilidade.tipo": { tipo: "TipoDeAcessibilidade", modulo: "@/lib/producao/estados", estados: TIPOS_DE_ACESSIBILIDADE },
   "producao_acessibilidade.situacao": { tipo: "SituacaoDaAcessibilidade", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_ACESSIBILIDADE },
   "producao_visitas_agendamentos.situacao": { tipo: "SituacaoDoAgendamento", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_AGENDAMENTO },
   "producao_turmas.situacao": { tipo: "SituacaoDaTurma", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_TURMA },
   "producao_matriculas.situacao": { tipo: "SituacaoDaMatricula", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_MATRICULA },
-  "producao_setor_cotas.categoria": { tipo: "CategoriaDaCota", modulo: "@/lib/producao/estados", estados: CATEGORIAS_DA_COTA },
   "producao_expografia.posicao": { tipo: "PosicaoNaExposicao", modulo: "@/lib/producao/estados", estados: POSICOES_NA_EXPOSICAO },
   "producao_expografia.luz": { tipo: "LuzDaObra", modulo: "@/lib/producao/estados", estados: LUZES_DA_OBRA },
-  "producao_borderos.situacao": { tipo: "SituacaoDoBordero", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_BORDERO },
-  "producao_bordero_deducoes.forma": { tipo: "FormaDaDeducao", modulo: "@/lib/producao/estados", estados: FORMAS_DA_DEDUCAO },
-  "producao_bordero_acertos.papel": { tipo: "PapelNoAcerto", modulo: "@/lib/producao/estados", estados: PAPEIS_NO_ACERTO },
-  "producao_bordero_acertos.forma": { tipo: "FormaDoAcerto", modulo: "@/lib/producao/estados", estados: FORMAS_DO_ACERTO },
-  "producao_bordero_acertos.situacao": { tipo: "SituacaoDoAcertoDoBordero", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_ACERTO_DO_BORDERO },
   "producao_orcamentos.situacao": { tipo: "SituacaoDoOrcamento", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_ORCAMENTO },
   "producao_orcamento_linhas.categoria": { tipo: "CategoriaDoOrcamento", modulo: "@/lib/producao/estados", estados: CATEGORIAS_DO_ORCAMENTO },
   "producao_acordos.tipo": { tipo: "TipoDeAcordo", modulo: "@/lib/producao/estados", estados: TIPOS_DE_ACORDO },
@@ -88,7 +79,6 @@ const LISTAS: Record<string, { tipo: string; modulo: string; estados?: readonly 
   "producao_faturas.situacao": { tipo: "SituacaoDaFatura", modulo: "@/lib/producao/estados", estados: SITUACOES_DA_FATURA },
   "producao_pedidos.situacao": { tipo: "SituacaoDoPedido", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_PEDIDO },
   "producao_adiantamentos.situacao": { tipo: "SituacaoDoAdiantamento", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_ADIANTAMENTO },
-  "producao_convidados.situacao": { tipo: "SituacaoDoConvidado", modulo: "@/lib/producao/estados", estados: SITUACOES_DO_CONVIDADO },
   "producao_manutencoes.tipo": { tipo: "TipoDeManutencao", modulo: "@/lib/producao/estados", estados: TIPOS_DE_MANUTENCAO },
   "producao_escalas.confirmacao": { tipo: "ConfirmacaoDaEscala", modulo: "@/lib/producao/estados", estados: CONFIRMACOES_DA_ESCALA },
   // A pasta do arquivo mora na função de borda do caminho (sem imports), onde a lista é escrita uma vez só (PD0.14).
@@ -317,14 +307,18 @@ test("uma migration que o leitor não sabe ler reprova em voz alta, em vez de o 
     ["renomear a coluna", "alter table public.producao_obras rename column cor to cor_hex;", /não lê este tipo de alteração/],
     ["mudar o tipo da coluna", "alter table public.producao_obras alter column duracao_min type bigint;", /não lê este tipo de alteração/],
     ["tornar a coluna obrigatória", "alter table public.producao_obras alter column cor set not null;", /não lê este tipo de alteração/],
-    ["apagar a tabela", "drop table public.producao_salas;", /apaga um objeto da produção/],
-    ["apagar a função", "drop function if exists public.auth_producao_pode(uuid, text);", /apaga um objeto da produção/],
+    ["apagar a tabela que outra aponta", "drop table public.producao_salas;", /ainda aponta para ela/],
+    ["apagar a tabela em cascata", "drop table if exists public.producao_salas cascade;", /só lê o drop simples/],
     ["criar uma view", "create view public.producao_resumo as select 1;", /cria uma view ou um tipo/],
     ["criar um tipo", "create type public.producao_estado as enum ('a');", /cria uma view ou um tipo/],
   ];
   for (const [nome, sql, erro] of ilegiveis) {
     assert.throws(() => lerMigrations([...base, depois(sql)]), erro, nome);
   }
+  // O drop simples é lido (T1 da Ticketeria): a tabela sem filhas e a função saem do desenho.
+  const semNotas = lerMigrations([...base, depois("drop table if exists public.producao_notas;\ndrop function if exists public.auth_producao_pode(uuid, text);")]);
+  assert.equal(semNotas.tabelas.has("producao_notas"), false, "a tabela apagada sai");
+  assert.equal(semNotas.funcoes.has("auth_producao_pode"), false, "a função apagada sai");
   // Coluna de um tipo SQL que o teste não conhece: reprova ao comparar, pedindo para ensinar o mapa.
   const { tipo, aliases } = await estadoAtual();
   const esquisita = lerMigrations([...base, depois("alter table public.producao_obras add column ficha tsvector;")]);
