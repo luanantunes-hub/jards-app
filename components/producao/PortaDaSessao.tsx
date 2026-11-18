@@ -74,7 +74,7 @@ export function PortaDaSessao({ sessaoId, podeLer }: { sessaoId: string; podeLer
         <input ref={campo} id="porta-codigo" autoFocus autoComplete="off" autoCapitalize="characters" spellCheck={false} inputMode="text" maxLength={24}
           className="h-14 w-full rounded border border-black/[.14] bg-white px-4 text-center text-[1.25rem] font-semibold tabular-nums uppercase tracking-[.1em] text-[#282525] outline-none transition placeholder:text-black/25 focus:border-[#7259B5]/50 focus:ring-2 focus:ring-[#7259B5]/10 disabled:opacity-50"
           value={codigo} onChange={event => setCodigo(event.target.value)} disabled={lendo || !podeLer} placeholder="0000-0000-0000-0000" />
-        <button type="submit" disabled={lendo || !podeLer || codigo.trim() === ""} className="h-12 w-full rounded bg-[#282525] text-[0.9375rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.99] disabled:opacity-50">{lendo ? "Lendo…" : "Conferir"}</button>
+        <button type="submit" disabled={lendo || !podeLer || codigo.trim() === ""} className="h-12 w-full rounded bg-[#1C0E33] text-[0.9375rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.99] disabled:opacity-50">{lendo ? "Lendo…" : "Conferir"}</button>
         {!podeLer && <p className="text-[0.75rem] text-black/55">Só quem edita a produção lê credenciais na porta.</p>}
       </form>
 

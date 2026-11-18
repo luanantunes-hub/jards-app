@@ -27,7 +27,7 @@ export function AbasDaSessao({ ativa }: { ativa: TelaDaSessao }) {
             prefetch={false}
             aria-current={marcada ? "page" : undefined}
             className={`flex h-9 shrink-0 items-center rounded border px-3.5 text-[0.75rem] font-medium transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] ${
-              marcada ? "border-[#282525] bg-[#282525] text-white" : "border-black/12 bg-white text-black/60 hover:bg-black/[.04]"
+              marcada ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/12 bg-white text-black/60 hover:bg-black/[.04]"
             }`}
           >
             {tela.rotulo}

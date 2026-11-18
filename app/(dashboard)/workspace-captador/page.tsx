@@ -125,7 +125,7 @@ function NovaOportunidadeSheet({ workspaceId, escopos, organizationId, onClose, 
   }
 
   return <TopSheet titulo="Nova oportunidade" onClose={onClose} footer={close => resultado ? (
-    <button type="button" onClick={close} className="rounded bg-[#171717] px-4 py-2 text-[0.75rem] font-semibold text-white">Fechar</button>
+    <button type="button" onClick={close} className="rounded bg-[#1C0E33] px-4 py-2 text-[0.75rem] font-semibold text-white">Fechar</button>
   ) : <>
     <button type="button" onClick={close} className="text-[0.75rem] text-black/50">Cancelar</button>
     <button type="button" onClick={() => void enviar(close)} disabled={enviando || titulo.trim().length < 2 || nome.trim().length < 2 || !etiqueta || !escopo || !!site.trim() && !siteNormalizado}

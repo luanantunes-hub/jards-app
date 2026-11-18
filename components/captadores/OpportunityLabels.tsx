@@ -85,7 +85,7 @@ export function OpportunityLabelsConfig() {
           <button type="button" onClick={() => remove(label)} aria-label={`Excluir ${label.nome}`} className="rounded p-1.5 text-black/35 transition hover:text-[#B64545] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#5F4AA8]"><Trash2 size={14} /></button>
         </div>
         {editing === label.id && <div className="mt-2 flex flex-wrap items-center gap-2">
-          {(["negociacoes", "inscricoes"] as const).map(flow => <button key={flow} type="button" onClick={() => setDraftFlow(flow)} aria-pressed={draftFlow === flow} className={`rounded border px-2.5 py-1 text-[0.6875rem] ${draftFlow === flow ? "border-[#282525] bg-[#282525] text-white" : "border-black/[.14] text-black/55"}`}>{flow === "inscricoes" ? "Edital" : "Negociação"}</button>)}
+          {(["negociacoes", "inscricoes"] as const).map(flow => <button key={flow} type="button" onClick={() => setDraftFlow(flow)} aria-pressed={draftFlow === flow} className={`rounded border px-2.5 py-1 text-[0.6875rem] ${draftFlow === flow ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.14] text-black/55"}`}>{flow === "inscricoes" ? "Edital" : "Negociação"}</button>)}
           <button type="button" onClick={() => void saveName(label)} disabled={saving} className="ml-auto text-[0.6875rem] font-semibold text-[#5F4AA8] disabled:opacity-40">Salvar</button>
           <button type="button" onClick={() => setEditing(null)} className="text-[0.6875rem] text-black/45">Cancelar</button>
         </div>}
@@ -95,7 +95,7 @@ export function OpportunityLabelsConfig() {
     <div className="mt-3 flex flex-wrap gap-2">
       <label htmlFor="novo-tipo-oportunidade" className="sr-only">Novo tipo de oportunidade</label>
       <input id="novo-tipo-oportunidade" value={newName} maxLength={80} onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === "Enter") void create(); }} placeholder="Novo tipo de oportunidade" className="h-9 min-w-44 flex-1 rounded border border-black/[.14] px-3 text-[0.75rem] outline-none focus:border-[#5F4AA8]" />
-      {(["negociacoes", "inscricoes"] as const).map(flow => <button key={flow} type="button" onClick={() => setNewFlow(flow)} aria-pressed={newFlow === flow} className={`rounded border px-2.5 py-1 text-[0.6875rem] ${newFlow === flow ? "border-[#282525] bg-[#282525] text-white" : "border-black/[.14] text-black/55"}`}>{flow === "inscricoes" ? "Edital" : "Negociação"}</button>)}
+      {(["negociacoes", "inscricoes"] as const).map(flow => <button key={flow} type="button" onClick={() => setNewFlow(flow)} aria-pressed={newFlow === flow} className={`rounded border px-2.5 py-1 text-[0.6875rem] ${newFlow === flow ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.14] text-black/55"}`}>{flow === "inscricoes" ? "Edital" : "Negociação"}</button>)}
       <button type="button" onClick={() => void create()} disabled={saving || newName.trim().length < 2} className="inline-flex items-center gap-1 rounded border border-black/[.14] px-3 text-[0.75rem] font-semibold text-black/70 transition hover:border-[#5F4AA8] hover:text-[#5F4AA8] disabled:opacity-40"><Plus size={13} />Adicionar</button>
     </div>
     {(error || actionError) && <p role="alert" className="mt-2 text-[0.6875rem] text-[#B64545]">{actionError || error}</p>}

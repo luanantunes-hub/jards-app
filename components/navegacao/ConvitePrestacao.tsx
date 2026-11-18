@@ -128,7 +128,7 @@ export function ConvitePrestacao({ organizationId, podeAtivar, onClose, onAtivad
           Começar o teste grátis
         </button>
       ) : (
-        <button type="button" data-principal onClick={onClose} className="rounded bg-[#282525] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
+        <button type="button" data-principal onClick={onClose} className="rounded bg-[#1C0E33] px-5 py-2.5 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] active:scale-[.98]">
           Entendi
         </button>
       )}

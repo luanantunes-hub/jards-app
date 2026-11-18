@@ -235,7 +235,7 @@ export function WorkspaceCoordination({ atribuicaoId, isGestor, onChange, abrirP
           <p className="mb-1.5 text-[0.6875rem] font-medium text-black/55">Responsável</p>
           <div className="inline-flex overflow-hidden rounded border border-black/[.15]">
             {(["captador", "gestor"] as const).map(opcao => <button key={opcao} type="button" onClick={() => setAguardandoProximo(opcao)} aria-pressed={aguardandoProximo === opcao}
-              className={`px-3 py-2 text-[0.75rem] transition ${aguardandoProximo === opcao ? "bg-[#171717] text-white" : "bg-white text-black/60 hover:bg-black/[.04]"}`}>{opcao === "captador" ? "Captador" : organizationName}</button>)}
+              className={`px-3 py-2 text-[0.75rem] transition ${aguardandoProximo === opcao ? "bg-[#1C0E33] text-white" : "bg-white text-black/60 hover:bg-black/[.04]"}`}>{opcao === "captador" ? "Captador" : organizationName}</button>)}
           </div>
         </div>
         <div>

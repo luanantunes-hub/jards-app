@@ -146,7 +146,7 @@ export default function CaptadorOportunidadePage({ params }: { params: Promise<{
         {atribuicao?.status === "ativa" && (pedido?.tipo === "negociacoes" || pedido?.tipo === "inscricoes") && <section className="rounded border border-black/[.08] bg-white px-5 py-4">
           <h2 className="mb-3 text-[0.75rem] font-semibold text-black/60">Andamento <span className="font-normal text-black/35">— sugestão para {organizationName}</span></h2>
           <div className="flex flex-wrap gap-2">{(pedido.tipo === "negociacoes" ? etiquetas : etiquetasInscricao).map(etapa => <button key={etapa.key} type="button" disabled={movendoEtapa} onClick={() => void moverEtapa(etapa.key)} aria-pressed={atribuicao.workspaceEtapa === etapa.key}
-            className={`rounded border px-3 py-2 text-[0.75rem] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#171717] bg-[#171717] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-[#282525]"}`}>{etapa.label}</button>)}</div>
+            className={`rounded border px-3 py-2 text-[0.75rem] font-medium transition disabled:opacity-50 ${atribuicao.workspaceEtapa === etapa.key ? "border-[#1C0E33] bg-[#1C0E33] text-white" : "border-black/[.12] text-black/55 hover:border-black/30 hover:text-[#282525]"}`}>{etapa.label}</button>)}</div>
           {erroEtapa && <p role="alert" className="mt-2 text-[0.75rem] text-[#B64545]">{erroEtapa}</p>}
         </section>}
         <section className="grid grid-cols-2 gap-px overflow-hidden rounded border border-black/[.08] bg-black/[.08] lg:grid-cols-4">

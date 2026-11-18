@@ -923,7 +923,7 @@ function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit,
         <CalendarDays size={24} className="mx-auto mb-3 text-black/20" aria-hidden="true" />
         <p className="text-[0.8125rem] font-medium text-[#282525]">Nenhuma atividade em {nomeMes}</p>
         <p className="mt-1 text-[0.75rem] text-black/45">A linha do tempo do mês aparece aqui conforme a agenda se enche.</p>
-        <button type="button" onClick={() => onNew(hoje.startsWith(prefixo) ? hoje : `${prefixo}01`)} className="mt-4 inline-flex items-center gap-1.5 rounded bg-[#282525] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30">
+        <button type="button" onClick={() => onNew(hoje.startsWith(prefixo) ? hoje : `${prefixo}01`)} className="mt-4 inline-flex items-center gap-1.5 rounded bg-[#1C0E33] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30">
           <Plus size={13} aria-hidden="true" /> Nova atividade
         </button>
       </div>
@@ -1162,7 +1162,7 @@ function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit,
                     <span className={`text-[0.5rem] uppercase ${escuro ? "text-white/50" : "text-black/30"}`}>{INICIAIS_DO_DIA[dataDoIso(d).getDay()]}</span>
                     {Number(d.slice(8))}
                     {info && (
-                      <span className={`absolute -right-0.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[0.5625rem] font-semibold no-underline ${info.atrasadas ? "bg-[#D94A4A] text-white" : escuro ? "bg-white text-[#282525]" : "bg-[#282525] text-white"}`}>
+                      <span className={`absolute -right-0.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[0.5625rem] font-semibold no-underline ${info.atrasadas ? "bg-[#D94A4A] text-white" : escuro ? "bg-white text-[#282525]" : "bg-[#1C0E33] text-white"}`}>
                         {info.total}
                       </span>
                     )}

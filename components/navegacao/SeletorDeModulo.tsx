@@ -81,7 +81,7 @@ export function SeletorDeModulo({ opcoes, ativo, expandido, aberto, onAbrir, onT
           justifyContent: expandido ? "flex-start" : "center",
         }}
       >
-        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-[#282525] text-white">
+        <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-[#1C0E33] text-white">
           <Icone size={15} aria-hidden="true" />
         </span>
         {expandido && (
@@ -122,7 +122,7 @@ export function SeletorDeModulo({ opcoes, ativo, expandido, aberto, onAbrir, onT
                 >
                   <span
                     className={`mt-px flex h-6 w-6 flex-shrink-0 items-center justify-center rounded ${
-                      atualDaLista ? "bg-[#282525] text-white" : "border border-black/[.12] bg-white text-black/45"
+                      atualDaLista ? "bg-[#1C0E33] text-white" : "border border-black/[.12] bg-white text-black/45"
                     }`}
                   >
                     <IconeDaOpcao size={13} aria-hidden="true" />

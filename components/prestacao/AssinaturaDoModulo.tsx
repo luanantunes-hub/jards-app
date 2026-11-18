@@ -195,7 +195,7 @@ export function AssinaturaDoModulo({ destacar, retorno }: { destacar: boolean; r
                   <p className="text-[0.9375rem] font-medium tabular-nums text-black/85">{reais(precos.modulo + extras * precos.vaga)} por mês</p>
                 </div>
                 <button type="button" onClick={assinar} disabled={!!ocupado || !assinatura.cobrancaConfigurada}
-                  className="rounded bg-[#282525] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition hover:bg-[#3A3535] active:scale-[.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50 motion-reduce:transition-none">
+                  className="rounded bg-[#1C0E33] px-4 py-2.5 text-[0.8125rem] font-medium text-white transition hover:bg-[#2D1A53] active:scale-[.98] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50 motion-reduce:transition-none">
                   {ocupado === "assinar" ? "Abrindo o pagamento…" : assinatura.cobrancaConfigurada ? "Assinar a prestação de contas" : "Pagamento ainda não configurado"}
                 </button>
               </div>

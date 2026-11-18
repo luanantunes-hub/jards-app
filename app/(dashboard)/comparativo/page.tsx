@@ -458,7 +458,7 @@ function ComparativoContent() {
                 </button>
                 <div
                   role="tooltip"
-                  className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[13.75rem] rounded bg-[#282525] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/crescbtn:opacity-100"
+                  className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[13.75rem] rounded bg-[#1C0E33] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/crescbtn:opacity-100"
                 >
                   Tendência anual de investimento de cada empresa, estimada a partir do histórico.
                 </div>
@@ -481,7 +481,7 @@ function ComparativoContent() {
                 </button>
                 <div
                   role="tooltip"
-                  className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[13.75rem] rounded bg-[#282525] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/potbtn:opacity-100"
+                  className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 w-max max-w-[13.75rem] rounded bg-[#1C0E33] px-2.5 py-1.5 text-[0.625rem] leading-snug text-white opacity-0 shadow-lg transition group-hover/potbtn:opacity-100"
                 >
                   Quanto ainda cabe no teto legal de dedução de cada empresa.
                 </div>

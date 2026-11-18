@@ -907,7 +907,7 @@ export function NovaCaptacaoModal({ onClose, onSaved, empresaPreId, nomePreEmpre
                           }}
                             className="border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
                             style={captacaoTipo === tipo
-                              ? { background: "#282525", color: "white", borderColor: "#282525" }
+                              ? { background: "#1C0E33", color: "white", borderColor: "#1C0E33" }
                               : { background: "white", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}>
                             {tipo === "interna" ? "Equipe interna" : "Captador externo"}
                           </button>

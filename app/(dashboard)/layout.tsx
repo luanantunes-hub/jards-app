@@ -531,7 +531,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       aria-label={!isExpanded ? label : undefined}
                       aria-current={active ? "page" : undefined}
                       className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                        active ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                        active ? "bg-[#1C0E33] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                       }`}
                       style={{
                         gap: isExpanded ? 10 : 0,
@@ -730,7 +730,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 title={!isExpanded ? "Meu workspace" : undefined}
                 aria-current={correspondeRota(path, "/workspace-captador") ? "page" : undefined}
                 className={`flex items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                  correspondeRota(path, "/workspace-captador") ? "bg-[#1a1a1a] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                  correspondeRota(path, "/workspace-captador") ? "bg-[#1C0E33] text-white" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                 }`}
                 style={{
                   gap: isExpanded ? 10 : 0,
@@ -763,7 +763,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           title={!isExpanded ? grupo.section : undefined}
                           aria-label={!isExpanded ? grupo.section : undefined}
                           className={`flex w-full items-center rounded text-[0.8125rem] font-medium transition-colors whitespace-nowrap overflow-hidden focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                            comAtivo && !isExpanded ? "bg-[#1a1a1a] text-white" : comAtivo ? "text-[#282525] hover:bg-black/[0.05]" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
+                            comAtivo && !isExpanded ? "bg-[#1C0E33] text-white" : comAtivo ? "text-[#282525] hover:bg-black/[0.05]" : "text-black/40 hover:text-[#282525] hover:bg-black/[0.05]"
                           }`}
                           style={{ gap: isExpanded ? 10 : 0, padding: isExpanded ? "8px 10px" : "8px 0", justifyContent: isExpanded ? "flex-start" : "center" }}
                         >
@@ -784,7 +784,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                                       prefetch={false}
                                       aria-current={ativo ? "page" : undefined}
                                       className={`block truncate rounded py-2 pl-[2.25rem] pr-2.5 text-[0.8125rem] font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#7259B5] ${
-                                        ativo ? "bg-[#1a1a1a] text-white" : "text-black/55 hover:text-[#282525] hover:bg-black/[0.05]"
+                                        ativo ? "bg-[#1C0E33] text-white" : "text-black/55 hover:text-[#282525] hover:bg-black/[0.05]"
                                       }`}
                                     >
                                       {label}
