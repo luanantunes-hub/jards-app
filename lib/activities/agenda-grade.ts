@@ -93,6 +93,24 @@ export function novoIntervalo(modo: ModoArrasto, original: { inicio: number; fim
   return { inicio: original.inicio, fim: Math.min(MINUTOS_NO_DIA, Math.max(original.inicio + PASSO_MIN, encaixar(minutoDoPonteiro))) };
 }
 
+/** Faixa de horas que a grade mostra: das 7h às 22h, aumentando em horas cheias para caber todo compromisso. */
+export function faixaDeHoras(intervalos: { inicio: number; fim: number }[], padrao = { inicio: 7 * 60, fim: 22 * 60 }): { inicio: number; fim: number } {
+  const inicio = Math.min(padrao.inicio, ...intervalos.map(i => Math.floor(i.inicio / 60) * 60));
+  const fim = Math.max(padrao.fim, ...intervalos.map(i => Math.ceil(i.fim / 60) * 60));
+  return { inicio: Math.max(0, inicio), fim: Math.min(MINUTOS_NO_DIA, fim) };
+}
+
+/** Prende o trecho arrastado dentro da faixa visível (mover mantém a duração; as bordas param no limite). */
+export function prenderNaFaixa(modo: ModoArrasto, trecho: { inicio: number; fim: number }, faixa: { inicio: number; fim: number }): { inicio: number; fim: number } {
+  if (modo === "mover") {
+    const duracao = trecho.fim - trecho.inicio;
+    const inicio = Math.max(faixa.inicio, Math.min(faixa.fim - duracao, trecho.inicio));
+    return { inicio, fim: inicio + duracao };
+  }
+  if (modo === "inicio") return { inicio: Math.max(faixa.inicio, trecho.inicio), fim: trecho.fim };
+  return { inicio: trecho.inicio, fim: Math.min(faixa.fim, trecho.fim) };
+}
+
 /** Soma dias a uma data "YYYY-MM-DD" (na hora local). */
 export function somarDiasIso(iso: string, dias: number): string {
   const [y, m, d] = iso.split("-").map(Number);
