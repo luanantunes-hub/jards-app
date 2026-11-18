@@ -22,3 +22,16 @@ export const FRASES_DAS_SECOES = {
 } as const satisfies Record<string, readonly string[]>;
 
 export type SecaoComFrase = keyof typeof FRASES_DAS_SECOES;
+
+const TOTAL_DE_ILUSTRACOES = 24; // public/ilustracoes/tamandua/01.png … 24.png
+const ORDEM_DAS_SECOES: (SecaoComFrase | "painel")[] = ["painel", ...(Object.keys(FRASES_DAS_SECOES) as SecaoComFrase[])];
+
+/**
+ * Qual das 24 ilustrações do tamanduá a seção mostra hoje (1 a 24). Muda todo dia e, no mesmo dia, nenhuma
+ * seção repete a de outra: o passo 5 não tem divisor comum com 24, então as posições não colidem.
+ */
+export function ilustracaoDoDia(secao: SecaoComFrase | "painel", agora: Date): number {
+  const dia = Math.floor(Date.UTC(agora.getFullYear(), agora.getMonth(), agora.getDate()) / 86_400_000);
+  const posicao = Math.max(0, ORDEM_DAS_SECOES.indexOf(secao));
+  return ((dia * 7 + posicao * 5) % TOTAL_DE_ILUSTRACOES) + 1;
+}

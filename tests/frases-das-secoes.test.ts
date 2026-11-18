@@ -27,3 +27,13 @@ test("frases das seções: frase com {org} só quando a organização tem nome p
   assert.equal(escolherFrase(modelos, { agora, organizacao: "Platibanda", nome: "Luan" }), "Deixe o Jards do jeito do time Platibanda.");
   assert.equal(escolherFrase(modelos, { agora, organizacao: "Minha organização" }), null);
 });
+
+test("ilustração do dia: de 1 a 24, sem repetir entre seções no mesmo dia, e muda no dia seguinte", async () => {
+  const { ilustracaoDoDia } = await import("../lib/frases-das-secoes");
+  const secoes = ["painel", ...Object.keys(FRASES_DAS_SECOES)] as Parameters<typeof ilustracaoDoDia>[0][];
+  const hoje = secoes.map(s => ilustracaoDoDia(s, agora));
+  assert.equal(new Set(hoje).size, secoes.length, "nenhuma repetida no mesmo dia");
+  assert.ok(hoje.every(n => n >= 1 && n <= 24));
+  assert.equal(ilustracaoDoDia("atividades", new Date(2026, 10, 18, 23, 0)), ilustracaoDoDia("atividades", agora), "mesmo dia, mesma ilustração");
+  assert.notEqual(ilustracaoDoDia("atividades", new Date(2026, 10, 19, 10, 0)), ilustracaoDoDia("atividades", agora));
+});
