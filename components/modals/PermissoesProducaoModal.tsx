@@ -94,8 +94,7 @@ export default function PermissoesProducaoModal({ organizationId, membro, atual,
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,.45)" }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 veu"
       onMouseDown={evento => { clicouNoFundo.current = evento.target === evento.currentTarget; }}
       onClick={() => { if (clicouNoFundo.current) fechar(); }}
     >

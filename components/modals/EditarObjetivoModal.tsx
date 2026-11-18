@@ -53,7 +53,7 @@ export function EditarObjetivoModal({ projetoId, valorAtual, onClose, onSaved }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 veu" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full overflow-hidden rounded bg-white border elevacao-3" style={{ maxWidth: "26.25rem" }} onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between border-b px-5 py-4" style={{ borderColor: "rgba(13,13,13,.08)" }}>
           <div className="flex items-center gap-3">

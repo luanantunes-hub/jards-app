@@ -960,8 +960,7 @@ export default function PatrocinadorPage() {
       <>
         {showSugerirForm && (
           <div
-            className="fixed inset-0 z-40"
-            style={{ background: "rgba(13,13,13,.18)" }}
+            className="fixed inset-0 z-40 veu"
             onClick={() => setShowSugerirForm(false)}
           />
         )}

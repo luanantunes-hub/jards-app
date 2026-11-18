@@ -20,6 +20,26 @@
 @utility elevacao-3 { border-color: var(--elevacao-borda); box-shadow: var(--elevacao-sombra-3); }
 @utility elevacao-sombra-1 { box-shadow: var(--elevacao-sombra-1); }
 
+/* Véu: o fundo atrás de folhas, painéis e pop-ups. Escurece e desfoca a tela de leve.
+   Use `veu` no fundo; nas folhas que entram com animação, some junto: `veu ${visivel ? "" : "veu-oculto"}`. */
+:root {
+  --veu-cor: rgba(0, 0, 0, .58);
+  --veu-desfoque: 4px;
+}
+.veu {
+  background-color: var(--veu-cor);
+  -webkit-backdrop-filter: blur(var(--veu-desfoque));
+  backdrop-filter: blur(var(--veu-desfoque));
+  transition: background-color 260ms ease, -webkit-backdrop-filter 260ms ease, backdrop-filter 260ms ease;
+}
+.veu.veu-oculto {
+  --veu-cor: transparent;
+  --veu-desfoque: 0px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .veu { transition: none; }
+}
+
 :root {
   --cream:          #FFFFFF;
   --ink:            #282525;

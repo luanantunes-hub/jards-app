@@ -422,7 +422,7 @@ export default function EditaisAbertosPage() {
           className="fixed inset-0 z-50 flex"
           onClick={() => setShowSugerirForm(false)}
         >
-          <div className="flex-1" style={{ background: "rgba(0,0,0,.18)" }} />
+          <div className="flex-1 veu" />
           <div
             className="bg-white h-full overflow-y-auto flex flex-col"
             style={{ width: "22.5rem", borderLeft: "1px solid rgba(13,13,13,.08)", boxShadow: "-8px 0 32px rgba(0,0,0,.10)" }}

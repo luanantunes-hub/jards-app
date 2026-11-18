@@ -603,7 +603,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Sidebar */}
       {mobileOpen && (
-        <div className="fixed inset-0 z-20 bg-black/30 md:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />
+        <div className="fixed inset-0 z-20 veu md:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />
       )}
       <aside
         id="menu-principal"

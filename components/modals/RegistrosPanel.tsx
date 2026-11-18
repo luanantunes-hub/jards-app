@@ -344,8 +344,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
 
   return (
     <div
-      className={embedded ? "w-full" : "fixed inset-0 z-50 flex items-stretch justify-end"}
-      style={embedded ? undefined : { background: "rgba(0,0,0,.4)" }}
+      className={embedded ? "w-full" : "fixed inset-0 z-50 flex items-stretch justify-end veu"}
       onClick={e => { if (!embedded && e.target === e.currentTarget) onClose?.(); }}
     >
       <div role={embedded ? undefined : "dialog"} aria-modal={embedded ? undefined : true} aria-label={embedded ? undefined : "Conteúdo preenchido"} className={embedded
@@ -441,8 +440,7 @@ export function RegistrosPanel({ inscricao, onClose, onOpenDocumentos, embedded 
 
       {showBusca && (
         <div
-          className="fixed inset-0 z-[70] flex items-stretch justify-end transition-colors duration-200"
-          style={{ background: buscaVisible ? "rgba(0,0,0,.34)" : "rgba(0,0,0,0)" }}
+          className={`fixed inset-0 z-[70] flex items-stretch justify-end transition-colors duration-200 veu ${buscaVisible ? "" : "veu-oculto"}`}
           onClick={closeBusca}
         >
           <section

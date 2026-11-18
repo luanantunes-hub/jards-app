@@ -461,8 +461,7 @@ export function NovaAtividadeModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col items-center transition-colors duration-[260ms] motion-reduce:transition-none"
-      style={{ background: visible ? "rgba(0,0,0,.45)" : "rgba(0,0,0,0)" }}
+      className={`fixed inset-0 z-50 flex flex-col items-center transition-colors duration-[260ms] motion-reduce:transition-none veu ${visible ? "" : "veu-oculto"}`}
       onClick={onClose}
     >
       {/* Panel — grudado no topo */}

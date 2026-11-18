@@ -333,7 +333,7 @@ export function EditarAtividadeModal({
       onClick={onClose}
     >
       {/* Backdrop */}
-      <div className="flex-1" style={{ background: "rgba(0,0,0,.18)" }} />
+      <div className="flex-1 veu" />
 
       {/* Drawer */}
       <div

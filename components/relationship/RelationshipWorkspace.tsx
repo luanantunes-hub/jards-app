@@ -284,7 +284,7 @@ const fieldStyle = { borderColor: "rgba(13,13,13,.15)" } as const;
 function WorkflowContactPicker({ def, contacts, saving, onCancel, onConfirm }: { def: WorkflowDef; contacts: Contact[]; saving: boolean; onCancel: () => void; onConfirm: (contactId: string | null) => void }) {
   const [contactId, setContactId] = useState("");
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center" style={{ background: "rgba(0,0,0,.45)" }} onClick={onCancel}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onCancel}>
       <div
         className="flex w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}
@@ -331,7 +331,7 @@ function EntryForm(props: { kind: FormKind; editing: boolean; title:string; deta
   const titleText = props.editing ? "Editar follow-up" : props.kind === "followup" ? "Novo follow-up" : props.kind === "interacao" ? "Registrar interação" : "Nova dúvida ou objeção";
   const Icon = props.kind === "followup" ? CalendarClock : props.kind === "interacao" ? RefreshCw : MessageCircleQuestion;
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center" style={{ background: "rgba(0,0,0,.45)" }} onClick={props.onCancel}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={props.onCancel}>
       <div
         className="flex w-full max-w-[30rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
         style={{ boxShadow: "0 8px 32px rgba(0,0,0,.12)", borderBottom: "1px solid rgba(13,13,13,.08)", borderLeft: "1px solid rgba(13,13,13,.06)", borderRight: "1px solid rgba(13,13,13,.06)" }}

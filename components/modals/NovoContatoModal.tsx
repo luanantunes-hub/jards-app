@@ -204,7 +204,7 @@ export function NovoContatoModal({ onClose, onSaved, empresaPreId, captadorPreId
     onSaved(data?.id as string | undefined); onClose();
   }
 
-  return <div className="fixed inset-0 z-50 flex flex-col items-center bg-black/45" onClick={onClose}>
+  return <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onClose}>
     <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="flex max-h-[calc(100dvh-20px)] w-full max-w-[35rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2" onClick={event => event.stopPropagation()}>
       <header className="flex shrink-0 items-center justify-between border-b border-black/[.08] px-5 py-4">
         <div className="flex items-center gap-3"><div className="flex h-9 w-9 items-center justify-center rounded bg-black/[.05]"><User size={16} className="text-black/50" /></div><div><h2 id={titleId} className="text-[0.9375rem] font-bold text-[#282525]">Novo contato</h2><p className="mt-0.5 text-[0.625rem] text-black/35">Cadastre quem participa da relação comercial</p></div></div>

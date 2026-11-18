@@ -148,7 +148,7 @@ function DocForm({
   const corStyle = COR_MAP[cor] ?? COR_MAP.azul;
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center" style={{ background: "rgba(0,0,0,.5)" }}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center veu">
       <div role="dialog" aria-modal="true" aria-labelledby={titleId}
         className="bg-white rounded w-[30rem] max-w-[92vw] max-h-[90vh] flex flex-col border elevacao-3"
         style={{ borderColor: "rgba(13,13,13,.12)" }}>
@@ -336,7 +336,7 @@ export function DocumentosModal({ inscricaoId, projetoId, onClose }: Props) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ background: "rgba(0,0,0,.45)" }}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center veu">
         <div role="dialog" aria-modal="true" aria-label="Documentos"
           className="bg-white rounded w-[33.75rem] max-w-[92vw] max-h-[85vh] flex flex-col border elevacao-3"
           style={{ borderColor: "rgba(13,13,13,.10)" }}>

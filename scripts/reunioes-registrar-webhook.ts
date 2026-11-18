@@ -13,5 +13,6 @@ if (!process.env.VEXA_API_KEY || !segredo) {
   console.error("Defina VEXA_API_KEY e VEXA_WEBHOOK_SECRET no ambiente.");
   process.exit(1);
 }
-await registrarWebhook({ url: `${base}/api/reunioes/webhook`, segredo });
-console.log(`Webhook registrado: ${base}/api/reunioes/webhook (meeting.started, meeting.completed, bot.failed)`);
+registrarWebhook({ url: `${base}/api/reunioes/webhook`, segredo })
+  .then(() => console.log(`Webhook registrado: ${base}/api/reunioes/webhook (meeting.started, meeting.completed, bot.failed)`))
+  .catch(erro => { console.error(erro instanceof Error ? erro.message : erro); process.exit(1); });

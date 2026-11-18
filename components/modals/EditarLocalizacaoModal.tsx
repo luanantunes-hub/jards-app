@@ -71,7 +71,7 @@ export function EditarLocalizacaoModal({ empresa, onClose, onSaved }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center" style={{ background: "rgba(0,0,0,.45)" }} onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"

@@ -63,7 +63,7 @@ export function GerenciarFollowupModal({ followup, onClose, onChanged }: {
   }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4" onClick={() => { if (!saving) onClose(); }}>
+    <div className="fixed inset-0 z-[70] flex items-center justify-center veu p-4" onClick={() => { if (!saving) onClose(); }}>
       <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-md rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
         <header className="flex items-start justify-between gap-4 border-b border-black/[.08] px-6 py-4">
           <div>
