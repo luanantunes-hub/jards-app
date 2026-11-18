@@ -14,7 +14,7 @@ Para seguir o plano sem pedir "pode seguir" a cada entrega. **Quem trabalha pega
 
 ## Parar e perguntar só quando
 
-- Decisão que é do dono: preço, pagamento e venda de ingressos (decisões 16 a 19), texto de privacidade da coleta de dados de terceiros, provedor de assinatura eletrônica ou de rotas, regras de jornada do motorista, política de dados pessoais (alergia e restrições), funil de venda das datas, pilotos.
+- Decisão que é do dono: preço, texto de privacidade da coleta de dados de terceiros, provedor de assinatura eletrônica ou de rotas, regras de jornada do motorista, política de dados pessoais (alergia e restrições), funil de venda das datas, pilotos.
 - Teste que falha ou regressão de verdade (a mesma falha do teste automático duas vezes; falha de download do GitHub não conta, é só rodar de novo).
 - O que muda o que cliente real vê ou paga fora do piloto, página que cliente usa (`/atividades`), e-mail para fora, Stripe.
 - `DELETE` que o conector recuse (entregar o `.sql`) ou apagar dado de produção.
@@ -33,4 +33,4 @@ Para seguir o plano sem pedir "pode seguir" a cada entrega. **Quem trabalha pega
 
 ## Bloqueados pelo dono (não começar)
 
-PD4.6 assinatura eletrônica; PD6.5 jornada do motorista; PD6.7 e PD6.8 alergia e restrição; PD7.5, PD7.10, PD7.11 e PD8.2 (texto de privacidade); PD12.4 a PD12.9 venda de ingressos; PDL.1 a PDL.3 cobrança. PD3.6 foi descartado pelo dono em 17/11/2026.
+PD4.6 assinatura eletrônica; PD6.5 jornada do motorista; PD6.7 e PD6.8 alergia e restrição; PD7.5, PD7.10, PD7.11 e PD8.2 (texto de privacidade); PDL.1 a PDL.3 cobrança. **A venda de ingresso (PD12.4 a PD12.9) saiu da Produção em 18/11/2026: é da Ticketeria, e a Produção não vende nem lê ingresso.** PD3.6 foi descartado pelo dono em 17/11/2026.
