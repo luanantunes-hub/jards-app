@@ -243,7 +243,7 @@ export function PartnershipHealthScorecards({ contaId, organizationId, onScoreCh
 
     {editingCard && (() => {
       const score = calculateScore(editingCard.criterios); const Icon = ICONS[editingCard.icone as keyof typeof ICONS] ?? Gauge;
-      return <div className="fixed inset-0 z-[70] flex flex-col items-center bg-black/40" onMouseDown={() => { setEditingId(null); setCriterionFor(null); }}>
+      return <div className="fixed inset-0 z-[70] flex flex-col items-center veu" onMouseDown={() => { setEditingId(null); setCriterionFor(null); }}>
         <section className="flex max-h-[88vh] w-full max-w-[38.75rem] flex-col overflow-hidden rounded-b bg-white border-x border-b elevacao-2" onMouseDown={event => event.stopPropagation()}>
           <header className="flex items-center gap-3 border-b border-black/[.07] px-5 py-4 sm:px-6"><span className="flex h-9 w-9 items-center justify-center" style={{color:editingCard.cor}}><Icon size={17}/></span><div className="min-w-0 flex-1"><p className="text-[0.625rem] font-medium text-black/30">Avaliar dimensão</p><h2 className="mt-0.5 truncate text-[0.9375rem] font-semibold text-black/80">{editingCard.nome}</h2></div><ScoreRing score={score} size={46}/><button type="button" onClick={() => { setEditingId(null); setCriterionFor(null); }} className="flex h-8 w-8 items-center justify-center rounded text-black/30 transition hover:bg-black/[.05] hover:text-black/60" aria-label="Fechar"><X size={15}/></button></header>
 

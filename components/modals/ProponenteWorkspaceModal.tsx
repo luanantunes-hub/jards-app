@@ -49,7 +49,7 @@ export function ProponenteWorkspaceModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center bg-black/45" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex flex-col items-center veu" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"

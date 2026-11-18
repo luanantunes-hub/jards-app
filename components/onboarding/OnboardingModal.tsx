@@ -143,7 +143,7 @@ export function OnboardingModal({ user, organizationId, onComplete }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/25 p-0 backdrop-blur-[2px] sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+    <div className="fixed inset-0 z-50 flex items-end justify-center veu p-0 sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
       <section className="max-h-[96dvh] w-full overflow-y-auto rounded-t bg-white sm:max-w-xl sm:rounded border elevacao-3">
         <header className="border-b border-black/8 px-6 pb-5 pt-6 sm:px-8 sm:pt-8">
           <p className="mb-2 text-[0.6875rem] font-medium uppercase tracking-[.14em] text-[#7259B5]">Só mais um passo</p>

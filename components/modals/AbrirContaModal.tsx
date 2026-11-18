@@ -55,7 +55,7 @@ export function AbrirContaModal({ empresaCrmId, empresaNome, onClose, onSaved }:
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu" onClick={onClose}>
       <div
         role="dialog"
         aria-modal="true"

@@ -30,7 +30,7 @@ export function BoasVindasEquipeModal({ quantity, onInvite, onClose }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center bg-black/30 p-0 backdrop-blur-[2px] sm:items-center sm:p-6"
+      className="fixed inset-0 z-[80] flex items-end justify-center veu p-0 sm:items-center sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="welcome-team-title"

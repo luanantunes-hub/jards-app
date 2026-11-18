@@ -26,8 +26,7 @@ export function TopSheet({ titulo, onClose, children, footer }: {
 
   return (
     <div
-      className="fixed inset-0 z-50 transition-colors duration-[260ms] motion-reduce:transition-none"
-      style={{ background: sheetVisible ? "rgba(0,0,0,.38)" : "rgba(0,0,0,0)" }}
+      className={`fixed inset-0 z-50 transition-colors duration-[260ms] motion-reduce:transition-none veu ${sheetVisible ? "" : "veu-oculto"}`}
       onClick={close}
     >
       <div

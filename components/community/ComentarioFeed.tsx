@@ -236,7 +236,7 @@ function NovoComentarioModal({
 
   if (saved) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center veu" onClick={onClose}>
         <div className="bg-white rounded w-full max-w-md p-8 text-center border elevacao-3" onClick={e => e.stopPropagation()}>
           <div className="w-10 h-10 rounded flex items-center justify-center mx-auto mb-4" style={{ background: "rgba(13,13,13,.04)" }}>
             <MessageCircle size={18} className="text-[#2E8932]" />
@@ -252,7 +252,7 @@ function NovoComentarioModal({
   const ActiveIcon = TOPICO_ICON[topico];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center veu" onClick={onClose}>
       <div className="bg-white rounded w-full max-w-lg border elevacao-3" onClick={e => e.stopPropagation()}>
         {/* Modal header */}
         <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: "rgba(13,13,13,.08)" }}>

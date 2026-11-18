@@ -218,7 +218,7 @@ export function ProjetoDocumentosManager({ projetoId, captacoes, inscricoes }: {
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 p-4" onClick={closeModal}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={closeModal}>
           <div className="w-full max-w-lg overflow-hidden rounded bg-white border elevacao-3" onClick={event => event.stopPropagation()}>
             <div className="flex items-center justify-between border-b border-black/[.07] px-5 py-4"><h3 className="text-[0.875rem] font-semibold text-black/80">Adicionar documento</h3><button onClick={closeModal} className="rounded p-1.5 text-black/30 hover:bg-black/[.05]"><X size={14} /></button></div>
             <div className="space-y-4 p-5">

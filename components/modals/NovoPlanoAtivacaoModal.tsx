@@ -132,7 +132,7 @@ export function NovoPlanoAtivacaoModal({ organizationId, initialContaId = "", in
     onSaved(data as string);
   }
 
-  return <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/25 p-0 sm:items-center sm:p-6">
+  return <div className="fixed inset-0 z-50 flex items-end justify-center veu p-0 sm:items-center sm:p-6">
     <div role="dialog" aria-modal="true" aria-labelledby="activation-modal-title" className="max-h-[94vh] w-full overflow-y-auto rounded-t bg-white sm:max-w-[45rem] sm:rounded border elevacao-3">
       <header className="sticky top-0 z-10 border-b bg-white px-5 py-4 sm:px-6" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="flex items-start justify-between gap-4"><div><p className="text-[0.625rem] font-medium uppercase tracking-[.12em] text-black/30">Patrocínio</p><h2 id="activation-modal-title" className="mt-1 text-[1.1875rem] font-semibold tracking-[-.02em] text-[#282525]">Novo plano de ativação</h2></div><button type="button" onClick={onClose} className="text-black/30 hover:text-black/55" aria-label="Fechar"><X size={17}/></button></div>

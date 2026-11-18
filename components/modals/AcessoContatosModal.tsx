@@ -78,7 +78,7 @@ export function AcessoContatosModal({
 
   return (
     <div
-      className="fixed inset-0 z-[110] flex items-center justify-center bg-black/25 px-4 py-6 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[110] flex items-center justify-center veu px-4 py-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}

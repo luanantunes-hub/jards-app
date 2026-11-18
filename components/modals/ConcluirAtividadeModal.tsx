@@ -53,7 +53,7 @@ export function ConcluirAtividadeModal({ atividade, onClose, onCompleted }: {
     onCompleted({ feita: true, data_realizada: data?.data_realizada ?? new Date().toISOString() });
   }
 
-  return <div className="fixed inset-0 z-[70] flex items-center justify-center p-4" style={{background:"rgba(0,0,0,.45)"}} onClick={onClose}>
+  return <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 veu" onClick={onClose}>
     <div role="dialog" aria-modal="true" aria-labelledby={titleId} className="w-full max-w-lg rounded bg-white border elevacao-3" onClick={e=>e.stopPropagation()}>
       <header className="flex items-center justify-between border-b px-6 py-4" style={{borderColor:"rgba(13,13,13,.08)"}}><div><p id={titleId} className="text-[0.875rem] font-bold text-[#282525]">Concluir atividade</p><p className="mt-0.5 text-[0.6875rem] text-black/40">{atividade.nome}</p></div><button type="button" onClick={onClose} aria-label="Fechar" className="text-black/30 hover:text-black/55"><X size={15}/></button></header>
       <div className="space-y-5 p-6">
