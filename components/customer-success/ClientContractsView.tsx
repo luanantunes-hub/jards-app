@@ -122,7 +122,7 @@ export function ClientContractsView({ contaId, organizationId, accountId, contra
         </Link>;
       })}</div>}
 
-    {showForm && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={closeForm}><form onSubmit={save} onClick={event => event.stopPropagation()} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded bg-white border elevacao-3">
+    {showForm && <div className="fixed inset-0 z-50 flex items-center justify-center veu p-4" onClick={closeForm}><form onSubmit={save} onClick={event => event.stopPropagation()} className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded bg-white border elevacao-3">
       <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/[.07] bg-white px-5 py-4"><div><p className="text-[0.625rem] text-black/30">Novo contrato</p><h3 className="mt-0.5 text-[0.9375rem] font-semibold text-black/80">Anexar contrato</h3></div><button type="button" onClick={closeForm} className="rounded p-1.5 text-black/30 hover:bg-black/[.04]"><X size={15}/></button></header>
       <div className="space-y-4 p-5">
         <label><Label>Arquivo</Label><button type="button" onClick={() => fileRef.current?.click()} className="flex min-h-24 w-full items-center justify-center gap-2 rounded border border-dashed border-black/[.14] bg-black/[.012] px-5 text-[0.75rem] font-medium text-black/40 transition hover:bg-black/[.03]"><Upload size={16}/>{file ? file.name : "Selecionar contrato"}</button><input ref={fileRef} type="file" className="hidden" onChange={event => { const selected = event.target.files?.[0]; if (selected) chooseFile(selected); }}/><p className="mt-1.5 text-[0.625rem] text-black/25">PDF, DOCX ou outro formato, até 50 MB</p></label>

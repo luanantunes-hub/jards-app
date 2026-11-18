@@ -215,7 +215,7 @@ export function RenewalPlanningSheet({ open, contaId, organizationId, contracts,
   const agencyOptions = [{ value: "", label: "Sem agência vinculada" }, ...agencies.map(agency => ({ value: agency.id, label: agency.nome }))];
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-start justify-center bg-black/40 px-4" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
+    <div className="fixed inset-0 z-[1000] flex items-start justify-center veu px-4" onMouseDown={event => { if (event.target === event.currentTarget) onClose(); }}>
       <div role="dialog" aria-modal="true" aria-labelledby="renewal-sheet-title" className="max-h-[92dvh] w-full max-w-[42.5rem] overflow-y-auto rounded-b bg-white border-x border-b elevacao-2">
         <header className="sticky top-0 z-10 flex items-center justify-between border-b border-black/[.07] bg-white px-5 py-4 sm:px-6">
           <div className="flex items-center gap-3">

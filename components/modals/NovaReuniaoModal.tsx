@@ -60,7 +60,7 @@ export function NovaReuniaoModal({ onClose, onCreated, organizationId }: NovaReu
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/30 px-4 py-6 backdrop-blur-[2px]"
+      className="fixed inset-0 z-[100] flex items-center justify-center veu px-4 py-6"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget && !loading) onClose();
       }}

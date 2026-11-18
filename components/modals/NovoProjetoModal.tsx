@@ -315,8 +315,7 @@ export function NovoProjetoModal({ onClose, onSaved, editData, proponentePreId }
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-6 sm:pt-10"
-        style={{ background: "rgba(0,0,0,.45)" }}
+        className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-6 sm:pt-10 veu"
         onClick={showNovoProponente ? undefined : onClose}
         aria-hidden={showNovoProponente || undefined}
       >

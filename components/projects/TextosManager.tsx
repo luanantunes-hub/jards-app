@@ -267,7 +267,7 @@ export function TextosManager({ projetoId }: { projetoId: string }) {
       </div>
 
       {sheetOpen && (
-        <div className="fixed inset-0 z-50" style={{ background: sheetVisible ? "rgba(0,0,0,.38)" : "rgba(0,0,0,0)", transition: "background 260ms ease" }} onClick={closeSheet}>
+        <div className={`fixed inset-0 z-50 veu ${sheetVisible ? "" : "veu-oculto"}`} onClick={closeSheet}>
           <div
             className="absolute left-1/2 top-0 overflow-hidden rounded-b bg-white border-x border-b elevacao-2"
             style={{ width: "70%", transform: sheetVisible ? "translateX(-50%) translateY(0)" : "translateX(-50%) translateY(-100%)", transition: "transform 260ms cubic-bezier(.32,.72,0,1)", maxHeight: "67vh" }}

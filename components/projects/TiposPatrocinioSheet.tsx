@@ -83,11 +83,7 @@ export function TiposPatrocinioSheet({
 
   return (
     <div
-      className="fixed inset-0 z-50"
-      style={{
-        background: sheetVisible ? "rgba(0,0,0,.38)" : "rgba(0,0,0,0)",
-        transition: "background 260ms ease",
-      }}
+      className={`fixed inset-0 z-50 veu ${sheetVisible ? "" : "veu-oculto"}`}
       onClick={close}
     >
       <div
