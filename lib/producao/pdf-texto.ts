@@ -4,7 +4,9 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
 
 export type SecaoDoPdf = { titulo: string; linhas: string[] };
-export type DocumentoDoPdf = { titulo: string; subtitulo?: string; secoes: SecaoDoPdf[]; rodape: string };
+/** A imagem do topo (o logo de quem manda a ficha): os bytes e o formato, que o PDF só desenha em PNG ou JPEG. */
+export type LogoDoPdf = { bytes: Uint8Array; tipo: "png" | "jpg" };
+export type DocumentoDoPdf = { titulo: string; subtitulo?: string; secoes: SecaoDoPdf[]; rodape: string; logoUrl?: string };
 
 const A4 = { largura: 595.28, altura: 841.89 };
 const MARGEM = 56;
@@ -29,8 +31,11 @@ export function quebrar(texto: string, fonte: PDFFont, tamanho: number, largura:
   return linhas.length > 0 ? linhas : [""];
 }
 
-/** Monta o PDF (A4, margens de 56 pt, quebra de página e rodapé com a página). */
-export async function montarPdf(documento: DocumentoDoPdf): Promise<Uint8Array> {
+/** A altura máxima do logo no topo, em pontos (a largura segue a proporção da imagem). */
+const ALTURA_DO_LOGO = 40;
+
+/** Monta o PDF (A4, margens de 56 pt, quebra de página e rodapé com a página). O logo, quando vem, abre a primeira página. */
+export async function montarPdf(documento: DocumentoDoPdf, logo?: LogoDoPdf): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   const normal = await pdf.embedFont(StandardFonts.Helvetica);
   const negrito = await pdf.embedFont(StandardFonts.HelveticaBold);
@@ -53,6 +58,17 @@ export async function montarPdf(documento: DocumentoDoPdf): Promise<Uint8Array> 
     }
     y -= opcoes.espaco ?? 0;
   };
+
+  if (logo) {
+    // Imagem quebrada não derruba o PDF: sem o logo, o documento sai igual.
+    try {
+      const imagem = logo.tipo === "png" ? await pdf.embedPng(logo.bytes) : await pdf.embedJpg(logo.bytes);
+      const { width, height } = imagem.scaleToFit(larguraUtil, ALTURA_DO_LOGO);
+      y -= height;
+      pagina.drawImage(imagem, { x: MARGEM, y, width, height });
+      y -= 14;
+    } catch { /* segue sem o logo */ }
+  }
 
   escrever(documento.titulo, negrito, 18, { espaco: 4 });
   if (documento.subtitulo) escrever(documento.subtitulo, normal, 10, { cor: [0.4, 0.4, 0.4], espaco: 10 });

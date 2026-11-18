@@ -4,6 +4,8 @@
 import { lerNumero } from "@/lib/producao/inventario";
 
 const EMAIL = /^[^@\s]+@[^@\s]+$/;
+/** O logo é uma imagem pública PNG ou JPEG: é o que o PDF sabe desenhar. */
+export const LOGO_DA_FICHA = /^https:\/\/\S+\.(?:png|jpg|jpeg)$/i;
 const texto = (valor: string) => (valor.trim() === "" ? null : valor.trim());
 
 type Numero = number | null | "erro";
@@ -18,12 +20,12 @@ function numero(valor: string, minimo: number, maximo: number, inteiro = false):
 
 export type FichaDoEspaco = {
   funcionamento: string | null; acessibilidade: string | null; carga_descarga: string | null; doca_altura_m: number | null; veiculo_max_m: number | null;
-  contato_nome: string | null; contato_telefone: string | null; contato_email: string | null;
+  contato_nome: string | null; contato_telefone: string | null; contato_email: string | null; logo_url: string | null;
 };
-export type CamposDoEspaco = { funcionamento: string; acessibilidade: string; cargaDescarga: string; docaAltura: string; veiculoMax: string; contatoNome: string; contatoTelefone: string; contatoEmail: string };
+export type CamposDoEspaco = { funcionamento: string; acessibilidade: string; cargaDescarga: string; docaAltura: string; veiculoMax: string; contatoNome: string; contatoTelefone: string; contatoEmail: string; logo: string };
 export type LeituraDaFichaDoEspaco = { ok: true; ficha: FichaDoEspaco } | { ok: false; erro: string };
 
-/** A ficha do espaço como o banco aceita: textos até 2.000 letras, doca até 20 m, veículo até 40 m, e-mail com arroba. */
+/** A ficha do espaço como o banco aceita: textos até 2.000 letras, doca até 20 m, veículo até 40 m, e-mail com arroba, logo em https (PNG ou JPEG). */
 export function lerFichaDoEspaco(c: CamposDoEspaco): LeituraDaFichaDoEspaco {
   for (const [rotulo, valor] of [["Funcionamento", c.funcionamento], ["Acessibilidade", c.acessibilidade], ["Carga e descarga", c.cargaDescarga]] as const) {
     if (valor.length > 2000) return { ok: false, erro: `${rotulo}: até 2.000 letras.` };
@@ -35,11 +37,13 @@ export function lerFichaDoEspaco(c: CamposDoEspaco): LeituraDaFichaDoEspaco {
   if (nome && nome.length > 200) return { ok: false, erro: "O nome do contato pode ter até 200 letras." };
   if (telefone && telefone.length > 40) return { ok: false, erro: "O telefone pode ter até 40 caracteres." };
   if (email && (email.length > 254 || !EMAIL.test(email))) return { ok: false, erro: "Esse e-mail não parece certo." };
+  const logo = texto(c.logo);
+  if (logo && (logo.length > 500 || !LOGO_DA_FICHA.test(logo))) return { ok: false, erro: "O logo é o endereço de uma imagem PNG ou JPEG que começa com https://." };
   return {
     ok: true,
     ficha: {
       funcionamento: texto(c.funcionamento), acessibilidade: texto(c.acessibilidade), carga_descarga: texto(c.cargaDescarga),
-      doca_altura_m: doca, veiculo_max_m: veiculo, contato_nome: nome, contato_telefone: telefone, contato_email: email,
+      doca_altura_m: doca, veiculo_max_m: veiculo, contato_nome: nome, contato_telefone: telefone, contato_email: email, logo_url: logo,
     },
   };
 }

@@ -22,7 +22,7 @@ Para seguir o plano sem pedir "pode seguir" a cada entrega. **Quem trabalha pega
 
 ## Prontos, em ordem
 
-1. **Fichas e links** (feito em 17/11: PD3.5 ficha técnica do espaço por link). Falta no PD3.5: logo do espaço e planta da sala no PDF.
+1. **Fichas e links** (feito em 17/11: PD3.5 ficha técnica do espaço por link; em 19/11: logo do espaço na ficha e no PDF). Falta no PD3.5: planta da sala no PDF.
 2. **Acerto técnico II** (PD4.1 e PD4.2): **feitos em 18/11: modelos por tipo de produção (#275) e "Pedir todas à casa" (#268)**. Faltam: anexos e fotos na resposta (upload público: desenhar a proteção antes); mais de uma pessoa respondendo (grava nome e e-mail de terceiros: depende do texto de privacidade); lembrete antes de o link vencer (**e-mail para fora e função nova: parar e perguntar**); camarins, luz e catering no rider (hoje texto livre: sem campo numérico para comparar, precisa de decisão de modelagem).
 3. **Dinheiro I** (PD5.1, PD5.5, PD5.7): comprometido somado dos acordos e pago somado dos lançamentos no orçamento; "a receber" ao lado do comprometido; arquivos das notas dentro do pacote de exportação.
 4. **Operação do dia I** (PD7.1, PD7.4, PD7.3): **feitos: planilha do borderô (#267) e tela de palco por link com cronômetro (#274, polling de 10 s em vez de Broadcast)**. Falta a leitura da porta sem internet: **desenhar antes**, porque guardar a lista no aparelho expõe os códigos das credenciais (hoje só o hash fica no banco); decidir entre lista de hashes no aparelho ou fila de leituras para conferir depois.
