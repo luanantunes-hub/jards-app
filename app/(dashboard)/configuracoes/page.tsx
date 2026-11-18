@@ -17,6 +17,7 @@ import { useCreditos } from "@/contexts/CreditosContext";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import NovoMembroModal from "@/components/modals/NovoMembroModal";
 import { CalendarConnections } from "@/components/CalendarConnections";
+import { ReunioesPeloCalendario } from "@/components/ReunioesPeloCalendario";
 import { McpConnectionCard } from "@/components/McpConnectionCard";
 import { EtiquetasConfig } from "@/components/EtiquetasConfig";
 import { OpportunityLabelsConfig } from "@/components/captadores/OpportunityLabels";
@@ -595,6 +596,7 @@ const { data: perfilData } = await (supabase as any)
       {activeSection === "ferramentas" && (
         <>
           <CalendarConnections />
+          <ReunioesPeloCalendario />
           <McpConnectionCard />
         </>
       )}
