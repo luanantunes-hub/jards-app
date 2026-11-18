@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/calendar/require-user";
-import { getValidEmailAccessToken } from "@/lib/email/connections";
-import { fetchGmailMessages } from "@/lib/email/google";
+import type { EmailProvider } from "@/lib/email/config";
+import { getValidEmailAccessToken, listEmailConnections } from "@/lib/email/connections";
+import { buscarMensagensDeContatos } from "@/lib/email/google";
+import { enderecosParaBusca, filtroDesde } from "@/lib/email/historico";
+import { buscarMensagensDeContatosMicrosoft } from "@/lib/email/microsoft";
 import { createAdminClient } from "@/lib/supabase/admin";
+
+// A primeira sincronização traz o histórico de cada contato e pode levar alguns segundos.
+export const maxDuration = 60;
+
+const PRIMEIRA_SINCRONIZACAO_DIAS = 180;
+const INTERVALO_MINIMO_MS = 15 * 60_000;
 
 function normalizeEmail(value: string | null | undefined): string {
   return (value ?? "").trim().toLowerCase();
@@ -19,54 +28,54 @@ function interactionSummary(body: string | null, snippet: string | null): string
   return compact ? compact.slice(0, 1200) : null;
 }
 
-export async function POST(req: NextRequest) {
-  const { user, response } = await requireUser();
-  if (!user) return response!;
+type Resultado = { synced?: number; scanned?: number; ignored?: number; skipped?: boolean; error?: string };
+
+/** Sincroniza uma conexão (Gmail ou Microsoft). Devolve o status HTTP e o corpo da resposta. */
+async function sincronizarUma(userId: string, provider: EmailProvider, force: boolean): Promise<{ status: number; corpo: Resultado }> {
+  const supabase = createAdminClient();
+  const marcarSincronizada = () =>
+    (supabase as any)
+      .from("email_connections")
+      .update({ last_sync_at: new Date().toISOString(), last_error: null })
+      .eq("user_id", userId)
+      .eq("provider", provider);
 
   try {
-    const accessToken = await getValidEmailAccessToken(user.id);
-
-    const supabase = createAdminClient();
     const { data: conn } = await (supabase as any)
       .from("email_connections")
       .select("provider_account_email, organization_id, sync_enabled, last_sync_at")
-      .eq("user_id", user.id)
-      .eq("provider", "google")
+      .eq("user_id", userId)
+      .eq("provider", provider)
       .maybeSingle();
 
-    if (!conn) return NextResponse.json({ error: "Conta não conectada" }, { status: 400 });
-    if (!conn.sync_enabled) return NextResponse.json({ synced: 0, skipped: true });
+    if (!conn) return { status: 400, corpo: { error: "Conta não conectada" } };
+    if (!conn.sync_enabled) return { status: 200, corpo: { synced: 0, skipped: true } };
 
-    const body = await req.json().catch(() => ({})) as { force?: boolean };
     const lastSyncAt = conn.last_sync_at ? new Date(conn.last_sync_at) : null;
-    if (!body.force && lastSyncAt && Date.now() - lastSyncAt.getTime() < 15 * 60_000) {
-      return NextResponse.json({ synced: 0, skipped: true });
+    if (!force && lastSyncAt && Date.now() - lastSyncAt.getTime() < INTERVALO_MINIMO_MS) {
+      return { status: 200, corpo: { synced: 0, skipped: true } };
     }
 
     const userEmail = conn.provider_account_email ?? "";
     const organizationId = conn.organization_id;
     if (!organizationId) {
-      return NextResponse.json({ error: "Conexão sem organização válida" }, { status: 400 });
+      return { status: 400, corpo: { error: "Conexão sem organização válida" } };
     }
 
     const { data: membership } = await (supabase as any)
       .from("organization_members")
       .select("organization_id")
       .eq("organization_id", organizationId)
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .maybeSingle();
     if (!membership) {
-      return NextResponse.json({ error: "Acesso à organização revogado" }, { status: 403 });
+      return { status: 403, corpo: { error: "Acesso à organização revogado" } };
     }
 
-    // Uma pequena sobreposição evita perder mensagens na fronteira temporal;
-    // o upsert e o Message-ID mantêm a operação idempotente.
-    const after = lastSyncAt ? new Date(lastSyncAt.getTime() - 6 * 60 * 60_000) : null;
-    const messages = await fetchGmailMessages(accessToken, userEmail, 100, after);
-    if (messages.length === 0) return NextResponse.json({ synced: 0 });
+    const accessToken = await getValidEmailAccessToken(userId, provider);
 
-    // Contatos são a fronteira de privacidade: apenas mensagens com uma
-    // correspondência exata entram na memória compartilhada do CRM.
+    // Contatos são a fronteira de privacidade: o provedor só é consultado pelos endereços dos contatos
+    // e apenas mensagens com uma correspondência exata entram na memória compartilhada do CRM.
     const { data: contatos } = await (supabase as any)
       .from("contatos")
       .select("id, email, empresa_crm_id")
@@ -78,6 +87,21 @@ export async function POST(req: NextRequest) {
       const email = normalizeEmail(c.email);
       if (email) emailToContato.set(email, { id: c.id, empresa_crm_id: c.empresa_crm_id });
     });
+
+    // Primeira sincronização: o histórico dos últimos 180 dias. Depois, desde a última, com uma pequena
+    // sobreposição para não perder mensagens na fronteira; o upsert e o Message-ID mantêm tudo idempotente.
+    const desde = lastSyncAt
+      ? new Date(lastSyncAt.getTime() - 6 * 60 * 60_000)
+      : new Date(Date.now() - PRIMEIRA_SINCRONIZACAO_DIAS * 24 * 60 * 60_000);
+    const enderecos = enderecosParaBusca([...emailToContato.keys()]);
+    const busca = provider === "microsoft"
+      ? await buscarMensagensDeContatosMicrosoft(accessToken, userEmail, enderecos, desde)
+      : await buscarMensagensDeContatos(accessToken, userEmail, enderecos, filtroDesde(desde));
+    const messages = busca.mensagens;
+    if (messages.length === 0) {
+      await marcarSincronizada();
+      return { status: 200, corpo: { synced: 0 } };
+    }
 
     const matchedCandidates = messages.flatMap((message) => {
       const participantEmails = message.direction === "outbound"
@@ -91,12 +115,8 @@ export async function POST(req: NextRequest) {
     });
 
     if (matchedCandidates.length === 0) {
-      await (supabase as any)
-        .from("email_connections")
-        .update({ last_sync_at: new Date().toISOString(), last_error: null })
-        .eq("user_id", user.id)
-        .eq("provider", "google");
-      return NextResponse.json({ synced: 0, scanned: messages.length, ignored: messages.length });
+      await marcarSincronizada();
+      return { status: 200, corpo: { synced: 0, scanned: messages.length, ignored: messages.length } };
     }
 
     // O mesmo e-mail pode existir em duas caixas da equipe. O Message-ID RFC
@@ -122,16 +142,12 @@ export async function POST(req: NextRequest) {
     const matched = matchedCandidates.filter(({ message }) => {
       if (!message.internetMessageId) return true;
       const existing = existingByInternetId.get(message.internetMessageId) ?? [];
-      return existing.length === 0 || existing.some((email) => email.user_id === user.id && email.message_id === message.id);
+      return existing.length === 0 || existing.some((email) => email.user_id === userId && email.message_id === message.id);
     });
 
     if (matched.length === 0) {
-      await (supabase as any)
-        .from("email_connections")
-        .update({ last_sync_at: new Date().toISOString(), last_error: null })
-        .eq("user_id", user.id)
-        .eq("provider", "google");
-      return NextResponse.json({ synced: 0, scanned: messages.length, ignored: messages.length });
+      await marcarSincronizada();
+      return { status: 200, corpo: { synced: 0, scanned: messages.length, ignored: messages.length } };
     }
 
     const companyIds = [...new Set(matched.map(({ contact }) => contact.empresa_crm_id).filter(Boolean))];
@@ -160,7 +176,7 @@ export async function POST(req: NextRequest) {
 
       return {
         organization_id: organizationId,
-        user_id: user.id,
+        user_id: userId,
         message_id: m.id,
         thread_id: m.threadId,
         internet_message_id: m.internetMessageId,
@@ -189,7 +205,7 @@ export async function POST(req: NextRequest) {
 
     const interactions = (savedEmails ?? []).map((email: any) => ({
       organization_id: organizationId,
-      account_id: user.id,
+      account_id: userId,
       empresa_crm_id: email.empresa_crm_id,
       contato_id: email.contato_id,
       captacao_id: email.captacao_id,
@@ -201,7 +217,7 @@ export async function POST(req: NextRequest) {
       assunto: email.subject?.trim() || "E-mail sem assunto",
       resumo: interactionSummary(email.body_text, email.snippet),
       ocorreu_em: email.sent_at ?? new Date().toISOString(),
-      created_by: user.id,
+      created_by: userId,
     }));
 
     const { error: interactionError } = await (supabase as any)
@@ -209,19 +225,63 @@ export async function POST(req: NextRequest) {
       .upsert(interactions, { onConflict: "email_id" });
     if (interactionError) throw new Error(interactionError.message);
 
-    await (supabase as any)
-      .from("email_connections")
-      .update({ last_sync_at: new Date().toISOString(), last_error: null })
-      .eq("user_id", user.id)
-      .eq("provider", "google");
+    await marcarSincronizada();
 
-    return NextResponse.json({
-      synced: savedEmails?.length ?? 0,
-      scanned: messages.length,
-      ignored: messages.length - matched.length,
-    });
+    return {
+      status: 200,
+      corpo: {
+        synced: savedEmails?.length ?? 0,
+        scanned: messages.length,
+        ignored: messages.length - matched.length,
+      },
+    };
   } catch (err) {
     const message = err instanceof Error ? err.message : "Erro ao sincronizar emails";
+    // O erro aparece no cartão de e-mail em Configurações, para a pessoa saber que precisa reconectar.
+    await (supabase as any)
+      .from("email_connections")
+      .update({ last_error: message.slice(0, 500) })
+      .eq("user_id", userId)
+      .eq("provider", provider);
+    return { status: 500, corpo: { error: message } };
+  }
+}
+
+/**
+ * Sincroniza as conexões de e-mail da pessoa. Sem `provider`, todas (Gmail e Microsoft); com ele, só aquela.
+ * O intervalo mínimo de 15 minutos vale por conexão, a menos que venha `force`.
+ */
+export async function POST(req: NextRequest) {
+  const { user, response } = await requireUser();
+  if (!user) return response!;
+
+  const body = (await req.json().catch(() => ({}))) as { force?: boolean; provider?: EmailProvider };
+  const provider = body.provider === "google" || body.provider === "microsoft" ? body.provider : null;
+
+  let alvos: EmailProvider[];
+  try {
+    alvos = provider ? [provider] : (await listEmailConnections(user.id)).map((conexao) => conexao.provider);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Erro ao buscar conexões";
     return NextResponse.json({ error: message }, { status: 500 });
   }
+  if (alvos.length === 0) return NextResponse.json({ synced: 0, skipped: true });
+
+  const total: Resultado = { synced: 0, scanned: 0, ignored: 0 };
+  let status = 200;
+  const erros: string[] = [];
+  let todasPuladas = true;
+  for (const alvo of alvos) {
+    const { status: statusDaConexao, corpo } = await sincronizarUma(user.id, alvo, body.force === true);
+    if (statusDaConexao >= 400) {
+      status = statusDaConexao;
+      if (corpo.error) erros.push(corpo.error);
+    }
+    if (!corpo.skipped) todasPuladas = false;
+    total.synced = (total.synced ?? 0) + (corpo.synced ?? 0);
+    total.scanned = (total.scanned ?? 0) + (corpo.scanned ?? 0);
+    total.ignored = (total.ignored ?? 0) + (corpo.ignored ?? 0);
+  }
+  if (erros.length > 0) return NextResponse.json({ ...total, error: erros.join(" · ") }, { status });
+  return NextResponse.json(todasPuladas ? { synced: 0, skipped: true } : total);
 }

@@ -6,6 +6,9 @@ import {
   googleEmailRedirectUri,
 } from "./config";
 import { generateNonce, generatePkce, saveEmailOAuthSession } from "./oauth";
+import { consultasDeContatos } from "./historico";
+import { emLotes } from "./lotes";
+import { enderecosDoCabecalho, type BuscaDeEmails, type MensagemDeEmail } from "./mensagem";
 
 export function googleEmailAuthUrl(challenge: string, nonce: string): string {
   const params = new URLSearchParams({
@@ -130,20 +133,7 @@ export async function refreshGoogleEmailToken(refreshToken: string): Promise<{
   };
 }
 
-export type GmailMessage = {
-  id: string;
-  threadId: string;
-  internetMessageId: string | null;
-  from: string | null;
-  fromName: string | null;
-  to: string[];
-  cc: string[];
-  subject: string | null;
-  snippet: string | null;
-  bodyText: string | null;
-  sentAt: Date | null;
-  direction: "inbound" | "outbound";
-};
+export type GmailMessage = MensagemDeEmail;
 
 function parseEmailAddress(raw: string | null): {
   name: string | null;
@@ -193,101 +183,103 @@ function extractBodyText(payload: unknown): string | null {
   return null;
 }
 
-export async function fetchGmailMessages(
+const GMAIL_API = "https://gmail.googleapis.com/gmail/v1/users/me";
+
+type PaginaDeIds = {
+  messages?: Array<{ id: string; threadId: string }>;
+  nextPageToken?: string;
+  error?: { message?: string };
+};
+
+/** Ids que o Gmail acha para a consulta, da mais nova para a mais antiga, até o limite. */
+async function listarIds(accessToken: string, consulta: string, limite: number): Promise<string[]> {
+  const ids: string[] = [];
+  let pageToken: string | undefined;
+  while (ids.length < limite) {
+    const params = new URLSearchParams({ q: consulta, maxResults: String(Math.min(100, limite - ids.length)) });
+    if (pageToken) params.set("pageToken", pageToken);
+    const res = await fetch(`${GMAIL_API}/messages?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    const json = (await res.json()) as PaginaDeIds;
+    if (!res.ok) throw new Error(json.error?.message || "Falha ao listar mensagens Gmail");
+    for (const mensagem of json.messages ?? []) ids.push(mensagem.id);
+    pageToken = json.nextPageToken;
+    if (!pageToken) break;
+  }
+  return ids;
+}
+
+async function lerMensagem(accessToken: string, id: string, userEmail: string): Promise<GmailMessage | null> {
+  const res = await fetch(`${GMAIL_API}/messages/${id}?format=full`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) return null;
+  const msg = (await res.json()) as {
+    id: string;
+    threadId: string;
+    snippet?: string;
+    payload?: {
+      headers?: Array<{ name: string; value: string }>;
+      mimeType?: string;
+      body?: { data?: string };
+      parts?: unknown[];
+    };
+  };
+
+  const headers = msg.payload?.headers ?? [];
+  const dateRaw = getHeader(headers, "Date");
+  const { name: fromName, email: fromEmail } = parseEmailAddress(getHeader(headers, "From"));
+  const bodyText = extractBodyText(msg.payload);
+  const sentAt = dateRaw ? new Date(dateRaw) : null;
+
+  return {
+    id: msg.id,
+    threadId: msg.threadId,
+    internetMessageId: getHeader(headers, "Message-ID"),
+    from: fromEmail,
+    fromName,
+    to: enderecosDoCabecalho(getHeader(headers, "To")),
+    cc: enderecosDoCabecalho(getHeader(headers, "Cc")),
+    subject: getHeader(headers, "Subject"),
+    snippet: msg.snippet ?? null,
+    bodyText: bodyText ? bodyText.slice(0, 2000) : null,
+    sentAt: sentAt && !Number.isNaN(sentAt.getTime()) ? sentAt : null,
+    direction: fromEmail?.toLowerCase() === userEmail.toLowerCase() ? "outbound" : "inbound",
+  };
+}
+
+export type BuscaGmail = BuscaDeEmails;
+
+/**
+ * Mensagens trocadas com os endereços dados (De, Para ou Cc) no período, da mais nova para a mais antiga.
+ * O Jards não varre a caixa: o Gmail só devolve o que casa com um contato, e só essas mensagens são lidas.
+ */
+export async function buscarMensagensDeContatos(
   accessToken: string,
   userEmail: string,
-  maxResults = 50,
-  after?: Date | null,
-): Promise<GmailMessage[]> {
-  const params = new URLSearchParams({ maxResults: String(maxResults) });
-  if (after) params.set("q", `after:${Math.floor(after.getTime() / 1000)}`);
+  enderecos: readonly string[],
+  periodo: string,
+  opcoes: { limite?: number; maximoDeConsultas?: number } = {},
+): Promise<BuscaGmail> {
+  const limite = opcoes.limite ?? 250;
+  const todas = consultasDeContatos(enderecos, periodo);
+  const consultas = todas.slice(0, opcoes.maximoDeConsultas ?? 40);
+  let truncada = todas.length > consultas.length;
 
-  const listRes = await fetch(
-    `https://gmail.googleapis.com/gmail/v1/users/me/messages?${params.toString()}`,
-    { headers: { Authorization: `Bearer ${accessToken}` } },
-  );
-  const listJson = (await listRes.json()) as {
-    messages?: Array<{ id: string; threadId: string }>;
-    error?: { message?: string };
-  };
-  if (!listRes.ok)
-    throw new Error(
-      listJson.error?.message || "Falha ao listar mensagens Gmail",
-    );
+  const ids = new Set<string>();
+  for (const consulta of consultas) {
+    if (ids.size >= limite) {
+      truncada = true;
+      break;
+    }
+    for (const id of await listarIds(accessToken, consulta, limite - ids.size + 1)) ids.add(id);
+  }
+  if (ids.size > limite) truncada = true;
 
-  const ids = (listJson.messages ?? []).map((m) => m.id);
-  const messages: GmailMessage[] = [];
-
-  await Promise.all(
-    ids.map(async (id) => {
-      const msgRes = await fetch(
-        `https://gmail.googleapis.com/gmail/v1/users/me/messages/${id}?format=full`,
-        { headers: { Authorization: `Bearer ${accessToken}` } },
-      );
-      if (!msgRes.ok) return;
-      const msg = (await msgRes.json()) as {
-        id: string;
-        threadId: string;
-        snippet?: string;
-        payload?: {
-          headers?: Array<{ name: string; value: string }>;
-          mimeType?: string;
-          body?: { data?: string };
-          parts?: unknown[];
-        };
-      };
-
-      const headers = msg.payload?.headers ?? [];
-      const fromRaw = getHeader(headers, "From");
-      const toRaw = getHeader(headers, "To") ?? "";
-      const ccRaw = getHeader(headers, "Cc") ?? "";
-      const dateRaw = getHeader(headers, "Date");
-      const subject = getHeader(headers, "Subject");
-      const internetMessageId = getHeader(headers, "Message-ID");
-
-      const { name: fromName, email: fromEmail } =
-        parseEmailAddress(fromRaw);
-      const toEmails = toRaw
-        .split(",")
-        .map((t) => {
-          const { email } = parseEmailAddress(t.trim());
-          return email ?? t.trim();
-        })
-        .filter(Boolean);
-      const ccEmails = ccRaw
-        .split(",")
-        .map((recipient) => {
-          const { email } = parseEmailAddress(recipient.trim());
-          return email ?? recipient.trim();
-        })
-        .filter(Boolean);
-
-      const sentAt = dateRaw ? new Date(dateRaw) : null;
-      const direction: "inbound" | "outbound" =
-        fromEmail?.toLowerCase() === userEmail.toLowerCase()
-          ? "outbound"
-          : "inbound";
-
-      const bodyText = extractBodyText(msg.payload);
-
-      messages.push({
-        id: msg.id,
-        threadId: msg.threadId,
-        internetMessageId,
-        from: fromEmail,
-        fromName,
-        to: toEmails,
-        cc: ccEmails,
-        subject,
-        snippet: msg.snippet ?? null,
-        bodyText: bodyText ? bodyText.slice(0, 2000) : null,
-        sentAt,
-        direction,
-      });
-    }),
-  );
-
-  return messages.sort(
-    (a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0),
-  );
+  const lidas = await emLotes([...ids].slice(0, limite), 8, (id) => lerMensagem(accessToken, id, userEmail));
+  const mensagens = lidas
+    .filter((mensagem): mensagem is GmailMessage => mensagem !== null)
+    .sort((a, b) => (b.sentAt?.getTime() ?? 0) - (a.sentAt?.getTime() ?? 0));
+  return { mensagens, encontradas: ids.size, truncada };
 }

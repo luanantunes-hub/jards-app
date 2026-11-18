@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const session = await readEmailOAuthSession();
   await clearEmailOAuthSession();
 
-  if (!code || !state || !session || session.nonce !== state) {
+  if (!code || !state || !session || session.nonce !== state || (session.provider ?? "google") !== "google") {
     return NextResponse.redirect(
       emailSettingsRedirect({ email_error: "oauth_invalido" }),
     );
@@ -29,6 +29,13 @@ export async function GET(req: NextRequest) {
 
   try {
     const tokens = await exchangeGoogleEmailCode(code, session.verifier);
+
+    // O Google deixa desmarcar permissões na tela de autorização: sem a leitura do Gmail não há o que sincronizar.
+    if (!tokens.scopes.some((escopo) => escopo.endsWith("/gmail.readonly"))) {
+      return NextResponse.redirect(
+        emailSettingsRedirect({ email_error: "Faltou a permissão de leitura do Gmail. Conecte de novo e marque o acesso ao e-mail." }),
+      );
+    }
 
     await upsertEmailConnection({
       userId: session.userId,
