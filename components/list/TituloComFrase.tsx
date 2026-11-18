@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Fraunces } from "next/font/google";
+import localFont from "next/font/local";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
 import { escolherFrase } from "@/lib/saudacao";
@@ -12,9 +13,13 @@ import { FRASES_DAS_SECOES, ilustracaoDoDia, type SecaoComFrase } from "@/lib/fr
 // usa a fonte instalada no computador de quem abre. Sem ela instalada, vale a Fraunces em negrito.
 // O painel (SaudacaoPainel) usa as mesmas três constantes: uma voz só para todas as frases.
 export const fonteDaFrase = Fraunces({ subsets: ["latin"], weight: ["700"], variable: "--font-frase-secao" });
-export const FAMILIA_DA_FRASE = '"GT Super Ds Trial", "GT Super Display", var(--font-frase-secao), Georgia, serif';
+// TESTE TEMPORÁRIO (pedido do Luan, 18/11/2026): o arquivo de avaliação da GT Super vai junto com o site para
+// todos verem. Desenha as letras acentuadas sem acento. Tirar este bloco e app/fonts/GT-Super-Display-Bold-Trial.otf
+// ao fim do teste (ou trocar pelo arquivo licenciado).
+const gtSuperTeste = localFont({ src: "../../app/fonts/GT-Super-Display-Bold-Trial.otf", weight: "700", variable: "--font-gt-super-teste" });
+export const VARIAVEIS_DA_FRASE = `${fonteDaFrase.variable} ${gtSuperTeste.variable}`;
+export const FAMILIA_DA_FRASE = 'var(--font-gt-super-teste), "GT Super Ds Trial", "GT Super Display", var(--font-frase-secao), Georgia, serif';
 export const CLASSE_DA_FRASE = "text-[1.625rem] font-bold leading-[1.08] tracking-[-.02em] sm:text-[1.875rem]";
-const fraunces = fonteDaFrase;
 const FAMILIA = FAMILIA_DA_FRASE;
 const FONTE_FRASE = CLASSE_DA_FRASE;
 
@@ -46,7 +51,7 @@ export function TituloComFrase({ secao, titulo }: { secao: SecaoComFrase; titulo
   }, [organizacao, esperouOrganizacao, frase, secao]);
 
   return (
-    <div className={`flex items-center gap-4 ${fraunces.variable}`}>
+    <div className={`flex items-center gap-4 ${VARIAVEIS_DA_FRASE}`}>
       <IlustracaoDaSecao arquivo={secao} />
       <div className="min-w-0">
         <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">{titulo}</p>
