@@ -931,13 +931,6 @@ function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit,
 
   const variacao = metricas.total - anterior.total;
   const taxa = metricas.total ? Math.round(metricas.concluidas / metricas.total * 100) : 0;
-  const mesPassou = `${prefixo}31` < hoje;
-  const pendentes = metricas.total - metricas.concluidas;
-  const situacao = metricas.atrasadas > 0
-    ? { palavras: ["Com", "atrasos"], destaque: "#D94A4A", frase: `${metricas.atrasadas} ${metricas.atrasadas === 1 ? "atividade vencida pede" : "atividades vencidas pedem"} atenção. ${pendentes} ainda a fazer no mês.` }
-    : metricas.total > 0 && metricas.concluidas === metricas.total ? { palavras: ["Tudo", "concluído"], destaque: VERDE, frase: "Cada atividade do mês já foi feita." }
-    : mesPassou ? { palavras: ["Mês", "encerrado"], destaque: "#282525", frase: `${metricas.concluidas} de ${metricas.total} atividades concluídas.` }
-    : { palavras: ["Em", "dia"], destaque: VERDE, frase: `Nada vencido. ${pendentes} ${pendentes === 1 ? "atividade" : "atividades"} pela frente.` };
   const reunioes = visiveis.filter(a => a.tipo === "reuniao" && dataDe(a)?.startsWith(prefixo)).length;
 
   const semanas = metricas.porSemana.map((s, indice) => {
@@ -963,15 +956,8 @@ function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit,
       {/* Topo do mês: situação, anel de conclusão, números, pulso dos dias e tipos */}
       <div className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
         <div className="grid gap-6 px-5 pb-5 pt-6 sm:px-6 xl:grid-cols-[auto_minmax(0,1fr)] xl:items-center xl:gap-10">
-          <div className="flex items-center gap-5">
+          <div className="flex justify-center xl:justify-start">
             <ArcoDeConclusao taxa={taxa} concluidas={metricas.concluidas} atrasadas={metricas.atrasadas} total={metricas.total} />
-            <div className="min-w-0">
-              <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-[rgba(40,37,37,.35)]">Situação de {nomeMes}</p>
-              <p className="mt-1 text-[2.5rem] font-normal italic leading-[1] tracking-[-.03em] text-[#282525] [text-wrap:balance]" style={{ fontFamily: "var(--font-fraunces), Georgia, serif" }}>
-                {situacao.palavras[0]} <span style={{ color: situacao.destaque }}>{situacao.palavras[1]}</span>
-              </p>
-              <p className="mt-1.5 max-w-[19rem] text-[0.75rem] leading-snug text-black/50">{situacao.frase}</p>
-            </div>
           </div>
 
           <dl className="grid grid-cols-2 gap-px overflow-hidden rounded border bg-black/[.06] sm:grid-cols-4" style={{ borderColor: "rgba(13,13,13,.06)" }}>
