@@ -185,7 +185,7 @@ export function ImportarOrcamento({ prestacaoId, organizationId, versaoId, garan
               type="button"
               onClick={verPrevia}
               disabled={mapa.nome === "" || mapa.valor === ""}
-              className="rounded bg-[#282525] px-4 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded bg-[#1C0E33] px-4 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525] disabled:cursor-not-allowed disabled:opacity-40"
             >
               Ver prévia
             </button>

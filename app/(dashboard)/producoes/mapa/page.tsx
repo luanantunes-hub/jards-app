@@ -134,7 +134,7 @@ export default function MapaDaTurnePage() {
                 <ol className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
                   {paradas.map((parada, indice) => (
                     <li key={`${parada.chave}-${indice}`} className="flex items-start gap-3 border-b px-4 py-3 last:border-b-0" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#282525] text-[0.625rem] font-semibold tabular-nums text-white">{indice + 1}</span>
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#1C0E33] text-[0.625rem] font-semibold tabular-nums text-white">{indice + 1}</span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-[0.8125rem] font-medium text-[#282525]">{parada.nome}</p>
                         <p className="text-[0.6875rem] text-black/45">{periodo(parada.datas)}{parada.kmDaAnterior !== null ? ` · ${parada.kmDaAnterior.toLocaleString("pt-BR")} km da anterior` : ""}</p>

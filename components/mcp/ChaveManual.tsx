@@ -124,7 +124,7 @@ export function ChaveManual({ aoCriar, modulosDisponiveis }: { aoCriar: () => Pr
         type="button"
         onClick={criarChave}
         disabled={criando}
-        className="mt-4 rounded bg-[#282525] px-4 py-2.5 text-sm text-white transition hover:bg-[#3A3535] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50"
+        className="mt-4 rounded bg-[#1C0E33] px-4 py-2.5 text-sm text-white transition hover:bg-[#2D1A53] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98] disabled:opacity-50"
       >
         {criando ? "Gerando…" : "Gerar chave"}
       </button>

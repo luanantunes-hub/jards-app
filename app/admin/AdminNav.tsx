@@ -25,7 +25,7 @@ export default function AdminNav() {
   return (
     <nav
       className="flex items-center gap-1 px-6 h-12 sticky top-0 z-30 overflow-x-auto"
-      style={{ background: "#282525", borderBottom: "1px solid rgba(255,255,255,.08)" }}
+      style={{ background: "#1C0E33", borderBottom: "1px solid rgba(255,255,255,.08)" }}
     >
       <Link
         href="/dashboard"

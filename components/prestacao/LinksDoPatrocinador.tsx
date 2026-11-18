@@ -84,7 +84,7 @@ function NovoLinkModal({ prestacaoId, empresas, onClose, onCriado }: {
   const rodape = endereco ? (
     <>
       <span />
-      <button type="button" onClick={onClose} className="rounded bg-[#282525] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]">Concluir</button>
+      <button type="button" onClick={onClose} className="rounded bg-[#1C0E33] px-5 py-2 text-[0.8125rem] font-semibold text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#282525]">Concluir</button>
     </>
   ) : (
     <>
