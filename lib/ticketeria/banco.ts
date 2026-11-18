@@ -4,8 +4,8 @@
 // dela em lib/producao/banco.ts. Este arquivo faz o mesmo para a Ticketeria, no formato que o @supabase/supabase-js espera
 // de um `Database`: o cliente de cliente.ts faz o compilador acusar tabela, coluna e valor de lista fechada que não existem.
 //
-// De onde vêm os dados: supabase/migrations/*_ticketeria_lojas_site.sql, conferida contra o gerador do conector depois de
-// aplicada. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
+// De onde vêm os dados: supabase/migrations/20261118233242_ticketeria_lojas_site.sql, conferida contra o gerador do conector
+// (supabase gen types) em 18/11/2026, depois de aplicada: as mesmas colunas e anulabilidade. tests/ticketeria-banco-tipos.test.ts compara este arquivo com a migration.
 // Relationships não lista as chaves para auth.users (`criado_por`): o PostgREST só expõe o schema public.
 
 import type { SituacaoDoDominio, SituacaoDoSite } from "@/lib/ticketeria/estados";
