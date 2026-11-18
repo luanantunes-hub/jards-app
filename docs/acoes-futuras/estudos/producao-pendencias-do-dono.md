@@ -37,6 +37,8 @@ Sobra desta frente, e só depois de mais decisões: **pagar pelo app** (junto do
 
 ## 2. Pagamento online (decisões 16 a 19)
 
+> **18/11/2026: saiu da Produção.** A venda de ingresso e o pagamento online são do módulo Ticketeria; a Produção não vende nem lê ingresso. As perguntas ao provedor de pagamento seguem valendo, agora para o plano da Ticketeria. O texto abaixo fica como registro.
+
 Só trava a venda de ingresso online (PD12.6, PD12.8, PD12.9). Não trava nada do que já foi feito. As perguntas estão em `~/Downloads/perguntas-provedores-pagamento.md`. Recomendação: **não começar a PD12.4 em diante** antes de escolher o provedor, porque o repasse (split) muda o desenho.
 
 ## 3. Texto de privacidade
