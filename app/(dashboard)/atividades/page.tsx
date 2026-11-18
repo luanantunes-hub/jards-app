@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Plus, Mail, Phone, Users, Calendar, MoreHorizontal, CheckSquare,
@@ -22,6 +22,7 @@ import { FiltroResponsavel } from "@/components/list/FiltroResponsavel";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { followupSourceLink } from "@/lib/activities/followupSourceLink";
 import { escalaUi } from "@/lib/escala-ui";
+import { MINUTOS_NO_DIA, horaDe, intervaloDoItem, isoLocal, metricasDoMes, posicionarNoDia, type ItemDoMes, type Posicionado } from "@/lib/activities/agenda-grade";
 
 const ATIVIDADES_COLUMNS = [
   { id: "concluida", label: "Concluída", width: "6.5625rem" }, { id: "atividade", label: "Atividade", width: "17.5rem", grow: true, hideable: false }, { id: "negociacao", label: "Negociação", width: "11.875rem" }, { id: "empresa", label: "Empresa / contato", width: "13.75rem" }, { id: "prazo", label: "Prazo", width: "7.5rem" }, { id: "duracao", label: "Duração", width: "6.5625rem" }, { id: "prioridade", label: "Prioridade", width: "7.1875rem" }, { id: "responsavel", label: "Responsável", width: "10.625rem" }, { id: "resultado", label: "Resultado", width: "9.375rem" }, { id: "projeto", label: "Projeto", width: "11.25rem" }, { id: "observacao", label: "Observação", width: "14.375rem" },
@@ -262,303 +263,773 @@ function mondayOf(date: Date): Date {
 
 /* ─── Calendar View ─────────────────────────────────────────────────────── */
 
-function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades: AtividadeRow[]; tipoFilter: TipoFilter; onEdit: (id: string) => void; onNew: (dateStr: string) => void }) {
-  const [scale, setScale] = useState<CalendarScale>("mes");
+// Semana e dia mostram a grade de horários; o mês vira um painel com os números do período.
+const HORA_REM = 3; // altura de uma hora na grade
+const DIAS_DA_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
+const ESCALA_KEY = "jards-atividades-escala";
+
+// Follow-ups e pedidos do captador têm só o dia: ficam na faixa "Sem horário".
+function intervaloNaGrade(a: AtividadeRow) {
+  if (a.source_kind === "followup" || a.source_kind === "workspace") return null;
+  return intervaloDoItem(a.hora_inicio, a.hora_fim);
+}
+
+function corComAlfa(cor: string, alfa: string): string {
+  return /^#[0-9a-f]{6}$/i.test(cor) ? cor + alfa : "rgba(13,13,13,.18)";
+}
+
+function formatarDuracao(minutos: number): string {
+  const h = Math.floor(minutos / 60), m = Math.round(minutos % 60);
+  if (!h) return `${m}min`;
+  return m ? `${h}h${String(m).padStart(2, "0")}` : `${h}h`;
+}
+
+function useAgora(): Date {
+  const [agora, setAgora] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setAgora(new Date()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  return agora;
+}
+
+function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades: AtividadeRow[]; tipoFilter: TipoFilter; onEdit: (id: string) => void; onNew: (dateStr: string, hora?: string) => void }) {
+  const [scale, setScale] = useState<CalendarScale>("semana");
   const [cursor, setCursor] = useState(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
   });
-  const [hasNavigated, setHasNavigated] = useState(false);
-  const [hoveredDate, setHoveredDate] = useState<string | null>(null);
+  const agora = useAgora();
+  const hoje = isoLocal(agora);
 
   useEffect(() => {
-    if (hasNavigated || atividades.length === 0) return;
-    const date = nearestScheduledDate(atividades);
-    if (date) setCursor(date);
-  }, [atividades, hasNavigated]);
+    const salva = localStorage.getItem(ESCALA_KEY);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (salva === "dia" || salva === "semana" || salva === "mes") setScale(salva);
+  }, []);
+  const mudarEscala = (escala: CalendarScale) => {
+    setScale(escala);
+    try { localStorage.setItem(ESCALA_KEY, escala); } catch { /* preferência só deste navegador */ }
+  };
 
-  const year        = cursor.getFullYear();
-  const monthIdx    = cursor.getMonth();
-  const firstDay    = new Date(year, monthIdx, 1).getDay();
-  const daysInMonth = new Date(year, monthIdx + 1, 0).getDate();
-  const startPad    = (firstDay + 6) % 7;
-  const totalCells  = Math.ceil((startPad + daysInMonth) / 7) * 7;
-  const todayStr    = new Date().toISOString().split("T")[0];
+  const filtered = useMemo(() => tipoFilter === "todos" ? atividades : atividades.filter(a => a.tipo === tipoFilter), [atividades, tipoFilter]);
+  const byDate = useMemo(() => {
+    const mapa = new Map<string, AtividadeRow[]>();
+    filtered.forEach(a => {
+      const date = scheduledDate(a);
+      if (!date) return;
+      const key = normDate(date);
+      if (!mapa.has(key)) mapa.set(key, []);
+      mapa.get(key)!.push(a);
+    });
+    return mapa;
+  }, [filtered]);
 
-  const filtered = tipoFilter === "todos" ? atividades : atividades.filter(a => a.tipo === tipoFilter);
-
-  const byDate = new Map<string, AtividadeRow[]>();
-  filtered.forEach(a => {
-    const date = scheduledDate(a);
-    if (!date) return;
-    const key = normDate(date);
-    if (!byDate.has(key)) byDate.set(key, []);
-    byDate.get(key)!.push(a);
-  });
-
+  const year = cursor.getFullYear();
+  const monthIdx = cursor.getMonth();
   const weekStart = mondayOf(cursor);
   const weekDays = Array.from({ length: 7 }, (_, index) => {
     const date = new Date(weekStart);
     date.setDate(weekStart.getDate() + index);
     return date;
   });
-  const cursorStr = cursor.toISOString().split("T")[0];
 
   const move = (direction: -1 | 1) => {
-    setHasNavigated(true);
     setCursor(current => {
       const next = new Date(current);
       if (scale === "dia") next.setDate(next.getDate() + direction);
       if (scale === "semana") next.setDate(next.getDate() + 7 * direction);
-      if (scale === "mes") next.setMonth(next.getMonth() + direction);
+      if (scale === "mes") { next.setDate(1); next.setMonth(next.getMonth() + direction); }
       return next;
     });
   };
-  const goToday = () => {
-    setHasNavigated(true);
-    const today = new Date(); today.setHours(0, 0, 0, 0); setCursor(today);
-  };
+  const goToday = () => { const today = new Date(); today.setHours(0, 0, 0, 0); setCursor(today); };
+  const abrirDia = (date: Date) => { setCursor(date); mudarEscala("dia"); };
+  const abrirSemana = (date: Date) => { setCursor(date); mudarEscala("semana"); };
+
+  const mesmoMes = weekDays[0].getMonth() === weekDays[6].getMonth();
   const navLabel = scale === "dia"
     ? cursor.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
     : scale === "semana"
-      ? `${weekDays[0].toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} — ${weekDays[6].toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" })}`
+      ? `${weekDays[0].getDate()}${mesmoMes ? "" : ` de ${weekDays[0].toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}`} – ${weekDays[6].toLocaleDateString("pt-BR", { day: "numeric", month: "short", year: "numeric" }).replace(".", "")}`
       : `${MONTH_NAMES[monthIdx]} ${year}`;
+  const noPeriodoAtual = scale === "dia" ? isoLocal(cursor) === hoje
+    : scale === "semana" ? weekDays.some(d => isoLocal(d) === hoje)
+    : year === agora.getFullYear() && monthIdx === agora.getMonth();
 
-  const ActivityCard = ({ atividade, compact = false }: { atividade: AtividadeRow; compact?: boolean }) => {
-    const pill = typePillFor(atividade);
-    const config = typeConfigFor(atividade);
-    const Icon = config.Icon;
-    const entity = entityLabel(atividade);
+  const toolbar = (
+    <div className={`flex flex-col gap-3 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 ${scale === "mes" ? "rounded border bg-white" : "border-b"}`} style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      <div className="flex items-center gap-2">
+        <button type="button" onClick={() => move(-1)} aria-label="Período anterior" className="flex h-9 w-9 items-center justify-center rounded text-black/40 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25">
+          <ChevronLeft size={15} />
+        </button>
+        <button type="button" onClick={() => move(1)} aria-label="Próximo período" className="flex h-9 w-9 items-center justify-center rounded text-black/40 transition hover:bg-black/[.04] hover:text-black/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25">
+          <ChevronRight size={15} />
+        </button>
+        <h2 className="min-w-0 flex-1 truncate text-[0.9375rem] font-semibold tracking-[-.01em] text-[#282525] first-letter:uppercase sm:flex-none">{navLabel}</h2>
+        <button type="button" onClick={goToday} disabled={noPeriodoAtual} className="ml-1 h-8 flex-shrink-0 rounded border border-black/[.09] bg-white px-3 text-[0.6875rem] font-medium text-black/60 transition hover:bg-black/[.04] disabled:cursor-default disabled:text-black/30 disabled:hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25">
+          Hoje
+        </button>
+      </div>
+      <SegmentedControl
+        value={scale}
+        onChange={mudarEscala}
+        ariaLabel="Escala do calendário"
+        options={[
+          { value: "dia", label: "Dia" },
+          { value: "semana", label: "Semana" },
+          { value: "mes", label: "Mês" },
+        ]}
+      />
+    </div>
+  );
+
+  if (scale === "mes") {
     return (
-      <button
-        type="button"
-        onClick={() => onEdit(atividade.id)}
-        className={`w-full rounded-[2px] border text-left transition hover:brightness-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25 ${compact ? "p-2" : "p-3"}`}
-        style={{
-          borderColor: atividade.feita ? "rgba(13,13,13,.08)" : pill.bar,
-          background: atividade.feita ? "rgba(13,13,13,.04)" : pill.bg,
-          color: atividade.feita ? "rgba(13,13,13,.25)" : "#FFFFFF",
-        }}
-      >
-        <div className="flex items-start gap-2.5">
-          <span
-            className={`${compact ? "w-6 h-6" : "w-8 h-8"} rounded flex items-center justify-center flex-shrink-0`}
-            style={{
-              background: atividade.feita ? "rgba(13,13,13,.05)" : "rgba(255,255,255,.16)",
-              color: atividade.feita ? "rgba(13,13,13,.25)" : "#FFFFFF",
-            }}
-          >
-            <Icon size={compact ? 12 : 14} />
-          </span>
-          <span className="min-w-0 flex-1">
-            <span
-              className={`block font-semibold leading-snug ${compact ? "text-[0.625rem]" : "text-[0.75rem]"} ${atividade.feita ? "line-through" : ""}`}
-              style={{ color: atividade.feita ? "rgba(13,13,13,.25)" : "#FFFFFF" }}
-            >
-              {atividade.nome}
-            </span>
-            {!compact && entity !== "—" && (
-              <span
-                className="block mt-1 text-[0.625rem] truncate"
-                style={{ color: atividade.feita ? "rgba(13,13,13,.25)" : "rgba(255,255,255,.72)" }}
-              >
-                {entity}
-              </span>
-            )}
-          </span>
-        </div>
-      </button>
+      <div className="space-y-4">
+        {toolbar}
+        <PainelDoMes itens={filtered} ano={year} mes={monthIdx} hoje={hoje} onAbrirDia={abrirDia} onAbrirSemana={abrirSemana} onEdit={onEdit} onNew={date => onNew(date)} />
+      </div>
     );
-  };
+  }
 
   return (
-    <div className="bg-white rounded border overflow-hidden" style={{ borderColor: "rgba(13,13,13,.08)" }}>
-      {/* Botões de controle da escala do calendário */}
-      <div className="flex flex-col gap-3 px-4 py-3.5 border-b sm:flex-row sm:items-center sm:justify-between sm:px-5" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-        <div className="flex items-center gap-2">
-          <button type="button" onClick={() => move(-1)} aria-label="Período anterior" className="w-8 h-8 flex items-center justify-center rounded border border-transparent hover:bg-black/[.04] transition text-black/40 hover:text-black/70">
-            <ChevronLeft size={14} />
-          </button>
-          <h2 className="text-[0.8125rem] font-semibold text-black/75 min-w-0 flex-1 text-center capitalize sm:min-w-[13.75rem] sm:flex-none">
-            {navLabel}
-          </h2>
-          <button type="button" onClick={() => move(1)} aria-label="Próximo período" className="w-8 h-8 flex items-center justify-center rounded border border-transparent hover:bg-black/[.04] transition text-black/40 hover:text-black/70">
-            <ChevronRight size={14} />
-          </button>
-        </div>
-        <div className="flex items-center gap-2 overflow-x-auto">
-          <div className="inline-flex h-9 flex-shrink-0 rounded border bg-white p-0.5" style={{ borderColor: "rgba(13,13,13,.09)" }}>
-            {(["dia", "semana", "mes"] as CalendarScale[]).map(option => (
+    <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      {toolbar}
+      <GradeDeHorarios
+        dias={scale === "dia" ? [cursor] : weekDays}
+        byDate={byDate}
+        hoje={hoje}
+        agora={agora}
+        detalhado={scale === "dia"}
+        onEdit={onEdit}
+        onNew={onNew}
+        onAbrirDia={abrirDia}
+      />
+    </div>
+  );
+}
+
+function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, onAbrirDia }: {
+  dias: Date[];
+  byDate: Map<string, AtividadeRow[]>;
+  hoje: string;
+  agora: Date;
+  detalhado: boolean;
+  onEdit: (id: string) => void;
+  onNew: (dateStr: string, hora?: string) => void;
+  onAbrirDia: (date: Date) => void;
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const corpoRef = useRef<HTMLDivElement>(null);
+  const colunas = `3.5rem repeat(${dias.length}, minmax(0, 1fr))`;
+  const agoraMin = agora.getHours() * 60 + agora.getMinutes();
+
+  const porDia = dias.map(date => {
+    const dateStr = isoLocal(date);
+    const itens = byDate.get(dateStr) ?? [];
+    const comHora: { item: AtividadeRow; inicio: number; fim: number }[] = [];
+    const semHora: AtividadeRow[] = [];
+    for (const item of itens) {
+      const intervalo = intervaloNaGrade(item);
+      if (intervalo) comHora.push({ item, ...intervalo }); else semHora.push(item);
+    }
+    return { date, dateStr, posicionados: posicionarNoDia(comHora), semHora };
+  });
+  const temSemHorario = porDia.some(d => d.semHora.length > 0);
+  const chaveDosDias = porDia.map(d => d.dateStr).join(",");
+  const primeiroInicio = Math.min(...porDia.flatMap(d => d.posicionados.map(p => p.inicio)));
+
+  // Ao abrir ou trocar de período, rola até o primeiro compromisso (ou o começo do expediente).
+  useEffect(() => {
+    const scroll = scrollRef.current, corpo = corpoRef.current;
+    if (!scroll || !corpo) return;
+    const alvo = Number.isFinite(primeiroInicio) ? primeiroInicio - 30 : chaveDosDias.includes(hoje) ? agoraMin - 120 : 7 * 60;
+    scroll.scrollTop = Math.max(0, alvo) / MINUTOS_NO_DIA * corpo.offsetHeight;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chaveDosDias]);
+
+  const limiteSemHora = detalhado ? 20 : 3;
+
+  return (
+    <div ref={scrollRef} className="relative max-h-[max(28rem,calc(100dvh-17rem))] overflow-auto overscroll-contain">
+      <div style={{ minWidth: dias.length > 1 ? "52rem" : undefined }}>
+        {/* Cabeçalho dos dias e faixa das atividades sem horário */}
+        <div className="sticky top-0 z-30 grid border-b bg-white" style={{ gridTemplateColumns: colunas, borderColor: "rgba(13,13,13,.08)" }}>
+          <div />
+          {porDia.map(({ date, dateStr }, index) => {
+            const isToday = dateStr === hoje;
+            const rotulo = DIAS_DA_SEMANA[(date.getDay() + 6) % 7];
+            return (
               <button
-                key={option}
+                key={dateStr}
                 type="button"
-                onClick={() => setScale(option)}
-                className={`h-8 px-3 rounded border text-[0.6875rem] font-medium capitalize transition ${scale === option ? "border-[#7259B5]/35 text-[#7259B5] bg-white" : "border-transparent text-black/35 hover:bg-black/[.04] hover:text-black/55"}`}
+                disabled={detalhado}
+                onClick={() => onAbrirDia(date)}
+                aria-label={`Abrir ${date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}`}
+                className={`flex items-center justify-center gap-2 px-2 py-2.5 transition enabled:hover:bg-black/[.03] disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/25 ${index > 0 ? "border-l" : ""}`}
+                style={{ borderColor: "rgba(13,13,13,.06)" }}
               >
-                {option === "mes" ? "Mês" : option === "dia" ? "Dia" : "Semana"}
+                <span className={`text-[0.625rem] font-medium uppercase tracking-[.08em] ${isToday ? "text-[#282525]" : "text-black/40"}`}>{rotulo}</span>
+                <span className={`flex h-7 min-w-7 items-center justify-center rounded px-1.5 text-[0.8125rem] font-semibold tabular-nums ${isToday ? "bg-[#282525] text-white" : "text-black/70"}`}>{date.getDate()}</span>
               </button>
+            );
+          })}
+          {temSemHorario && <>
+            <div className="flex items-start justify-end border-t px-2 pt-2 text-right text-[0.5625rem] font-medium uppercase leading-tight tracking-[.06em] text-black/35" style={{ borderColor: "rgba(13,13,13,.06)" }}>Sem<br />horário</div>
+            {porDia.map(({ date, dateStr, semHora }) => (
+              <div key={dateStr} className="flex min-w-0 flex-col gap-1 border-l border-t p-1.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+                {semHora.slice(0, limiteSemHora).map(item => <ChipSemHorario key={item.id} atividade={item} onEdit={onEdit} />)}
+                {semHora.length > limiteSemHora && (
+                  <button type="button" onClick={() => onAbrirDia(date)} className="rounded px-1.5 py-0.5 text-left text-[0.625rem] font-medium text-black/45 hover:bg-black/[.04] hover:text-black/70">
+                    +{semHora.length - limiteSemHora} mais
+                  </button>
+                )}
+              </div>
+            ))}
+          </>}
+        </div>
+
+        {/* Grade de horários */}
+        <div ref={corpoRef} className="relative grid" style={{ gridTemplateColumns: colunas, height: `${24 * HORA_REM}rem` }}>
+          <div className="relative">
+            {Array.from({ length: 23 }, (_, i) => i + 1).map(h => (
+              <span key={h} className="absolute right-2 -translate-y-1/2 text-[0.625rem] tabular-nums text-black/35" style={{ top: `${h * HORA_REM}rem` }}>
+                {String(h).padStart(2, "0")}:00
+              </span>
             ))}
           </div>
+          {porDia.map(({ dateStr, posicionados }) => (
+            <div
+              key={dateStr}
+              className="relative border-l"
+              style={{
+                borderColor: "rgba(13,13,13,.06)",
+                backgroundImage: "linear-gradient(to bottom, rgba(13,13,13,.06) 1px, transparent 1px)",
+                backgroundSize: `100% ${HORA_REM}rem`,
+                backgroundColor: dateStr === hoje && !detalhado ? "rgba(13,13,13,.015)" : undefined,
+              }}
+            >
+              {/* Meia hora livre: clique cria a atividade já com o dia e a hora */}
+              {Array.from({ length: 48 }, (_, i) => (
+                <div
+                  key={i}
+                  aria-hidden="true"
+                  onClick={() => onNew(dateStr, horaDe(i * 30))}
+                  className="group absolute inset-x-0 cursor-pointer hover:bg-black/[.03]"
+                  style={{ top: `${i * HORA_REM / 2}rem`, height: `${HORA_REM / 2}rem` }}
+                >
+                  <span className="pointer-events-none hidden items-center gap-1 px-1.5 pt-0.5 text-[0.625rem] font-medium tabular-nums text-black/40 group-hover:flex">
+                    <Plus size={10} /> {horaDe(i * 30)}
+                  </span>
+                </div>
+              ))}
+
+              {posicionados.map(p => (
+                <BlocoNaGrade key={p.item.id} posicionado={p} detalhado={detalhado} onEdit={onEdit} />
+              ))}
+
+              {dateStr === hoje && (
+                <div className="pointer-events-none absolute inset-x-0 z-20 border-t-2 border-[#D94A4A]" style={{ top: `${agoraMin / 60 * HORA_REM}rem` }}>
+                  <span className="absolute -left-[3px] -top-[4px] h-1.5 w-1.5 rounded-full bg-[#D94A4A]" />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
+    </div>
+  );
+}
 
-      {scale === "dia" && (
-        <div className="min-h-[22.5rem] p-4 sm:p-5">
-          <div className="mb-4 flex items-end justify-between border-b pb-3" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-            <div>
-              <p className="text-[0.625rem] font-medium uppercase tracking-[.12em] text-black/30">Agenda do dia</p>
-              <p className="mt-1 text-[1.375rem] font-semibold tabular-nums text-black/80">{cursor.getDate()}</p>
-            </div>
-            <span className="text-[0.6875rem] text-black/30">{(byDate.get(cursorStr) ?? []).length} atividades</span>
-          </div>
-          {(byDate.get(cursorStr) ?? []).length > 0 ? (
-            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {(byDate.get(cursorStr) ?? []).map(atividade => <ActivityCard key={atividade.id} atividade={atividade} />)}
-            </div>
-          ) : (
-            <div className="flex min-h-[11.25rem] flex-col items-center justify-center text-center">
-              <CalendarDays size={24} className="mb-2 text-black/15" />
-              <p className="text-xs font-medium text-black/30">Nenhuma atividade neste dia</p>
-            </div>
-          )}
-          <button
-            type="button"
-            onClick={() => onNew(cursorStr)}
-            className="mt-3 flex items-center gap-1.5 text-[0.6875rem] font-medium text-black/30 hover:text-[#7259B5] transition"
-          >
-            <Plus size={12} /> Nova atividade
-          </button>
-        </div>
+function BlocoNaGrade({ posicionado, detalhado, onEdit }: { posicionado: Posicionado<AtividadeRow>; detalhado: boolean; onEdit: (id: string) => void }) {
+  const { item: atividade, inicio, fim, coluna, colunas } = posicionado;
+  const config = typeConfigFor(atividade);
+  const Icon = config.Icon;
+  const duracao = fim - inicio;
+  const curto = duracao < 45;
+  const entity = entityLabel(atividade);
+  const horario = `${horaDe(inicio)}–${horaDe(fim)}`;
+  return (
+    <button
+      type="button"
+      onClick={(event) => { event.stopPropagation(); onEdit(atividade.id); }}
+      title={`${atividade.nome} · ${horario}${entity !== "—" ? ` · ${entity}` : ""}`}
+      className={`absolute z-10 flex overflow-hidden rounded border text-left transition hover:z-20 hover:shadow-[0_2px_8px_rgba(13,13,13,.10)] focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 ${curto ? "items-center gap-1.5 px-1.5" : "flex-col gap-0.5 px-2 py-1.5"} ${atividade.feita ? "bg-[#F6F5F5]" : "bg-white"}`}
+      style={{
+        top: `calc(${inicio / 60 * HORA_REM}rem + 1px)`,
+        height: `calc(${Math.max(duracao, 30) / 60 * HORA_REM}rem - 2px)`,
+        left: `calc(${coluna / colunas * 100}% + 2px)`,
+        width: `calc(${100 / colunas}% - 4px)`,
+        borderColor: atividade.feita ? "rgba(13,13,13,.08)" : corComAlfa(config.color, "66"),
+      }}
+    >
+      {curto ? <>
+        <Icon size={11} aria-hidden="true" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }} className="flex-shrink-0" />
+        <span className="flex-shrink-0 text-[0.625rem] tabular-nums text-black/45">{horaDe(inicio)}</span>
+      </> : (
+        <span className="flex min-w-0 items-start gap-1.5">
+          <Icon size={11} aria-hidden="true" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }} className="mt-[3px] flex-shrink-0" />
+          <span className={`min-w-0 text-[0.6875rem] font-medium leading-snug ${duracao >= 90 ? "line-clamp-2" : "truncate"} ${atividade.feita ? "text-black/35 line-through" : "text-[#282525]"}`}>{atividade.nome}</span>
+        </span>
       )}
+      {curto ? (
+        <span className={`min-w-0 truncate text-[0.6875rem] font-medium ${atividade.feita ? "text-black/35 line-through" : "text-[#282525]"}`}>{atividade.nome}</span>
+      ) : (
+        <span className="truncate text-[0.625rem] tabular-nums text-black/45">{horario}</span>
+      )}
+      {!curto && duracao >= (detalhado ? 60 : 90) && entity !== "—" && (
+        <span className="truncate text-[0.625rem] text-black/45">{entity}</span>
+      )}
+      {detalhado && !curto && duracao >= 90 && atividade.responsavel?.full_name && (
+        <span className="truncate text-[0.625rem] text-black/40">{atividade.responsavel.full_name}</span>
+      )}
+    </button>
+  );
+}
 
-      {scale === "semana" && (
-        <div className="overflow-x-auto">
-          <div className="grid min-w-[52.5rem] grid-cols-7">
-            {weekDays.map((date, index) => {
-              const dateStr = date.toISOString().split("T")[0];
-              const items = byDate.get(dateStr) ?? [];
-              const isToday = dateStr === todayStr;
+function ChipSemHorario({ atividade, onEdit }: { atividade: AtividadeRow; onEdit: (id: string) => void }) {
+  const config = typeConfigFor(atividade);
+  const Icon = config.Icon;
+  return (
+    <button
+      type="button"
+      onClick={() => onEdit(atividade.id)}
+      title={atividade.nome}
+      className="flex min-w-0 items-center gap-1.5 rounded border bg-white px-1.5 py-1 text-left transition hover:bg-black/[.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25"
+      style={{ borderColor: atividade.feita ? "rgba(13,13,13,.08)" : corComAlfa(config.color, "47") }}
+    >
+      <Icon size={10} aria-hidden="true" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }} className="flex-shrink-0" />
+      <span className={`truncate text-[0.625rem] font-medium ${atividade.feita ? "text-black/35 line-through" : "text-[#282525]"}`}>{atividade.nome}</span>
+    </button>
+  );
+}
+
+/* ─── Painel do mês ─────────────────────────────────────────────────────── */
+
+// O mês como linha do tempo: números no topo, uma estação por semana (tipos, ritmo dos dias e destaques)
+// e, embaixo, a régua com os dias do mês. Clicar num dia abre a grade de horários dele.
+const VERDE = "#2E8932";
+const INICIAIS_DO_DIA = ["D", "S", "T", "Q", "Q", "S", "S"];
+const MESES_CURTOS = ["jan", "fev", "mar", "abr", "mai", "jun", "jul", "ago", "set", "out", "nov", "dez"];
+// Detalhes da landing page: Geist Mono nos rótulos técnicos, cartões em papel e conexões tracejadas em roxo.
+const MONO: React.CSSProperties = { fontFamily: "var(--font-mono), ui-monospace, SFMono-Regular, Menlo, monospace" };
+const CARTAO_LANDING: React.CSSProperties = { background: "linear-gradient(145deg, #FFFFFF 0%, #F7F7F5 100%)" };
+const LIGACAO_ROXA = "repeating-linear-gradient(90deg, #684DB0 0 3px, transparent 3px 7px)";
+const LIGACAO_ROXA_V = "repeating-linear-gradient(180deg, #684DB0 0 3px, transparent 3px 7px)";
+const LIGACAO_FEITA = "rgba(40,37,37,.22)";
+const LIGACAO_FEITA_V = "rgba(40,37,37,.16)";
+
+function diasEntre(inicio: string, fim: string): string[] {
+  const [y, m, d] = inicio.split("-").map(Number);
+  const data = new Date(y, m - 1, d);
+  const dias: string[] = [];
+  while (isoLocal(data) <= fim) { dias.push(isoLocal(data)); data.setDate(data.getDate() + 1); }
+  return dias;
+}
+
+function dataDoIso(iso: string): Date {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+// Meio círculo de barrinhas: verde = concluídas, coral = atrasadas, cinza = o que falta.
+const BARRAS_DO_ARCO = 31;
+
+function ArcoDeConclusao({ taxa, concluidas, atrasadas, total }: { taxa: number; concluidas: number; atrasadas: number; total: number }) {
+  const verdes = total ? Math.round(concluidas / total * BARRAS_DO_ARCO) : 0;
+  const corais = total ? Math.min(BARRAS_DO_ARCO - verdes, Math.round(atrasadas / total * BARRAS_DO_ARCO)) : 0;
+  const cx = 80, cy = 78, dentro = 54, fora = 72;
+  return (
+    <div className="w-[8.5rem] flex-shrink-0 sm:w-[10rem]" role="img" aria-label={`${taxa}% concluído: ${concluidas} de ${total}${atrasadas ? `, ${atrasadas} atrasadas` : ""}`}>
+      <div className="relative">
+      <svg viewBox="0 0 160 84" className="block w-full">
+        {Array.from({ length: BARRAS_DO_ARCO }, (_, i) => {
+          const angulo = Math.PI - (i / (BARRAS_DO_ARCO - 1)) * Math.PI;
+          const cos = Math.cos(angulo), sen = Math.sin(angulo);
+          const cor = i < verdes ? VERDE : i < verdes + corais ? "#D94A4A" : "rgba(13,13,13,.10)";
+          return (
+            <line
+              key={i}
+              x1={cx + dentro * cos} y1={cy - dentro * sen}
+              x2={cx + fora * cos} y2={cy - fora * sen}
+              stroke={cor} strokeWidth="3.4" strokeLinecap="round"
+            />
+          );
+        })}
+      </svg>
+      <span className={`absolute inset-x-0 bottom-0 text-center text-[1.375rem] font-semibold leading-none tracking-[-.02em] tabular-nums sm:text-[1.625rem] ${taxa ? "text-[#282525]" : "text-black/30"}`}>{taxa}<span className="text-[0.75rem] text-black/45 sm:text-[0.875rem]">%</span></span>
+      </div>
+      {/* legenda abaixo do arco: quebra em duas linhas quando falta largura */}
+      <p className="mt-1.5 flex flex-wrap items-center justify-center gap-x-1 text-center text-[0.5625rem] font-medium uppercase leading-tight tracking-[.08em] text-black/45">
+        <span className="whitespace-nowrap">concluído</span>
+        <span aria-hidden="true" className="text-black/25">·</span>
+        <span className="whitespace-nowrap tabular-nums">{concluidas} de {total}</span>
+      </p>
+    </div>
+  );
+}
+
+function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit, onNew }: {
+  itens: AtividadeRow[]; ano: number; mes: number; hoje: string;
+  onAbrirDia: (date: Date) => void; onAbrirSemana: (date: Date) => void; onEdit: (id: string) => void; onNew: (dateStr: string) => void;
+}) {
+  const [tipoAtivo, setTipoAtivo] = useState<string | null>(null);
+  const trilhaRef = useRef<HTMLDivElement>(null);
+  const prefixo = `${ano}-${String(mes + 1).padStart(2, "0")}-`;
+  const dataDe = (a: AtividadeRow) => { const d = scheduledDate(a); return d ? normDate(d) : null; };
+
+  const tiposDoMes = useMemo(() => {
+    const mapa = new Map<string, { config: ReturnType<typeof typeConfigFor>; total: number }>();
+    for (const a of itens) {
+      if (!dataDe(a)?.startsWith(prefixo)) continue;
+      const config = typeConfigFor(a);
+      const atual = mapa.get(config.label) ?? { config, total: 0 };
+      atual.total++;
+      mapa.set(config.label, atual);
+    }
+    return [...mapa.values()].sort((a, b) => b.total - a.total);
+  }, [itens, prefixo]);
+
+  const { visiveis, metricas, anterior } = useMemo(() => {
+    const lista = tipoAtivo ? itens.filter(a => typeConfigFor(a).label === tipoAtivo) : itens;
+    const paraMetricas: ItemDoMes[] = lista.map(a => {
+      const intervalo = intervaloNaGrade(a);
+      return { data: dataDe(a), feita: a.feita, tipo: typeConfigFor(a).label, responsavel: a.responsavel_id, minutos: intervalo ? intervalo.fim - intervalo.inicio : null };
+    });
+    const mesAnterior = new Date(ano, mes - 1, 1);
+    return {
+      visiveis: lista,
+      metricas: metricasDoMes(paraMetricas, ano, mes, hoje),
+      anterior: metricasDoMes(paraMetricas, mesAnterior.getFullYear(), mesAnterior.getMonth(), hoje),
+    };
+  }, [itens, tipoAtivo, ano, mes, hoje]);
+
+  // Abre a linha do tempo na semana de hoje.
+  useEffect(() => {
+    const trilha = trilhaRef.current;
+    const atual = trilha?.querySelector<HTMLElement>("[data-semana-atual]");
+    if (trilha && atual) trilha.scrollLeft = Math.max(0, atual.offsetLeft - 24);
+  }, [ano, mes]);
+
+  const nomeMes = MONTH_NAMES[mes].toLowerCase();
+  const nomeAnterior = MONTH_NAMES[(mes + 11) % 12].toLowerCase();
+
+  if (tiposDoMes.length === 0) {
+    return (
+      <div className="rounded border bg-white px-6 py-16 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+        <CalendarDays size={24} className="mx-auto mb-3 text-black/20" aria-hidden="true" />
+        <p className="text-[0.8125rem] font-medium text-[#282525]">Nenhuma atividade em {nomeMes}</p>
+        <p className="mt-1 text-[0.75rem] text-black/45">A linha do tempo do mês aparece aqui conforme a agenda se enche.</p>
+        <button type="button" onClick={() => onNew(hoje.startsWith(prefixo) ? hoje : `${prefixo}01`)} className="mt-4 inline-flex items-center gap-1.5 rounded bg-[#282525] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30">
+          <Plus size={13} aria-hidden="true" /> Nova atividade
+        </button>
+      </div>
+    );
+  }
+
+  const variacao = metricas.total - anterior.total;
+  const taxa = metricas.total ? Math.round(metricas.concluidas / metricas.total * 100) : 0;
+  const mesPassou = `${prefixo}31` < hoje;
+  const pendentes = metricas.total - metricas.concluidas;
+  const situacao = metricas.atrasadas > 0
+    ? { palavras: ["Com", "atrasos"], destaque: "#D94A4A", frase: `${metricas.atrasadas} ${metricas.atrasadas === 1 ? "atividade vencida pede" : "atividades vencidas pedem"} atenção. ${pendentes} ainda a fazer no mês.` }
+    : metricas.total > 0 && metricas.concluidas === metricas.total ? { palavras: ["Tudo", "concluído"], destaque: VERDE, frase: "Cada atividade do mês já foi feita." }
+    : mesPassou ? { palavras: ["Mês", "encerrado"], destaque: "#282525", frase: `${metricas.concluidas} de ${metricas.total} atividades concluídas.` }
+    : { palavras: ["Em", "dia"], destaque: VERDE, frase: `Nada vencido. ${pendentes} ${pendentes === 1 ? "atividade" : "atividades"} pela frente.` };
+  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+  const maxDoMes = Math.max(...[...metricas.porDia.values()].map(d => d.total), 1);
+  const reunioes = visiveis.filter(a => a.tipo === "reuniao" && dataDe(a)?.startsWith(prefixo)).length;
+
+  const semanas = metricas.porSemana.map((s, indice) => {
+    const daSemana = visiveis
+      .filter(a => { const d = dataDe(a); return d !== null && d >= s.inicio && d <= s.fim; })
+      .sort((a, b) => `${dataDe(a)} ${a.hora_inicio ?? "99"}`.localeCompare(`${dataDe(b)} ${b.hora_inicio ?? "99"}`));
+    const tipos = new Map<string, { config: ReturnType<typeof typeConfigFor>; total: number }>();
+    for (const a of daSemana) {
+      const config = typeConfigFor(a);
+      const atual = tipos.get(config.label) ?? { config, total: 0 };
+      atual.total++;
+      tipos.set(config.label, atual);
+    }
+    const atrasada = (a: AtividadeRow) => !a.feita && (dataDe(a) ?? "") < hoje;
+    const destaques = [...daSemana.filter(atrasada), ...daSemana.filter(a => !a.feita && !atrasada(a)), ...daSemana.filter(a => a.feita)];
+    const estado = s.fim < hoje ? "passada" : s.inicio <= hoje ? "atual" : "futura";
+    return { ...s, indice, itens: daSemana, tipos: [...tipos.values()].sort((a, b) => b.total - a.total), destaques, estado, anterior: indice > 0 ? metricas.porSemana[indice - 1].total : null };
+  });
+  const intervaloCurto = (inicio: string, fim: string) => inicio === fim ? `${Number(inicio.slice(8))} ${MESES_CURTOS[mes]}` : `${Number(inicio.slice(8))}–${Number(fim.slice(8))} ${MESES_CURTOS[mes]}`;
+
+  return (
+    <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+      {/* Topo do mês: situação, anel de conclusão, números, pulso dos dias e tipos */}
+      <div className="border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
+        <div className="grid gap-6 px-5 pb-5 pt-6 sm:px-6 xl:grid-cols-[auto_minmax(0,1fr)] xl:items-center xl:gap-10">
+          <div className="flex items-center gap-5">
+            <ArcoDeConclusao taxa={taxa} concluidas={metricas.concluidas} atrasadas={metricas.atrasadas} total={metricas.total} />
+            <div className="min-w-0">
+              <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-[rgba(40,37,37,.35)]">Situação de {nomeMes}</p>
+              <p className="mt-1 text-[2.5rem] font-normal italic leading-[1] tracking-[-.03em] text-[#282525] [text-wrap:balance]" style={{ fontFamily: "var(--font-fraunces), Georgia, serif" }}>
+                {situacao.palavras[0]} <span style={{ color: situacao.destaque }}>{situacao.palavras[1]}</span>
+              </p>
+              <p className="mt-1.5 max-w-[19rem] text-[0.75rem] leading-snug text-black/50">{situacao.frase}</p>
+            </div>
+          </div>
+
+          <dl className="grid grid-cols-2 gap-px overflow-hidden rounded border bg-black/[.06] sm:grid-cols-4" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+            {[
+              { rotulo: "Atividades", valor: String(metricas.total), zero: !metricas.total, extra: variacao ? `${variacao > 0 ? "+" : "−"}${Math.abs(variacao)} vs ${nomeAnterior.slice(0, 3)}` : `igual a ${nomeAnterior.slice(0, 3)}`, Icone: CalendarDays },
+              { rotulo: "Atrasadas", valor: String(metricas.atrasadas), zero: !metricas.atrasadas, extra: metricas.atrasadas ? "vencidas" : "nada vencido", Icone: AlertCircle, alerta: metricas.atrasadas > 0 },
+              { rotulo: "Reuniões", valor: String(reunioes), zero: !reunioes, extra: reunioes ? `${Math.round(reunioes / Math.max(metricas.total, 1) * 100)}% da agenda` : "nenhuma no mês", Icone: Users },
+              { rotulo: "Horas agendadas", valor: metricas.minutosAgendados ? formatarDuracao(metricas.minutosAgendados) : "0h", zero: !metricas.minutosAgendados, extra: `${metricas.comHorario} com horário`, Icone: Clock },
+            ].map(n => (
+              <div key={n.rotulo} className="min-w-0 px-4 py-3.5" style={CARTAO_LANDING}>
+                <dt className="flex items-center gap-1.5 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45">
+                  <n.Icone size={12} aria-hidden="true" className={n.alerta ? "text-[#D94A4A]" : "text-black/40"} />{n.rotulo}
+                </dt>
+                <dd className={`mt-2 text-[1.5rem] font-semibold leading-none tracking-[-.02em] tabular-nums ${n.zero ? "text-black/30" : "text-[#282525]"}`}>{n.valor}</dd>
+                <dd className="mt-1.5 truncate text-[0.625rem] tabular-nums text-black/45" style={MONO}>{n.extra}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
+
+        {/* Pulso do mês: uma barra por dia; clique abre o dia */}
+        <div className="px-5 sm:px-6">
+          <div className="flex h-12 items-end gap-[3px]">
+            {Array.from({ length: diasNoMes }, (_, i) => {
+              const iso = `${prefixo}${String(i + 1).padStart(2, "0")}`;
+              const info = metricas.porDia.get(iso);
+              const total = info?.total ?? 0;
+              const aFazer = total - (info?.concluidas ?? 0) - (info?.atrasadas ?? 0);
+              const ehHoje = iso === hoje;
               return (
-                <section key={dateStr}
-                  className="min-h-[24.375rem] border-l first:border-l-0 flex flex-col"
-                  style={{ borderColor: "rgba(13,13,13,.06)", background: isToday ? "rgba(13,13,13,.03)" : "white" }}
-                  onMouseEnter={() => setHoveredDate(dateStr)}
-                  onMouseLeave={() => setHoveredDate(null)}
+                <button
+                  key={iso}
+                  type="button"
+                  onClick={() => onAbrirDia(dataDoIso(iso))}
+                  title={`${i + 1}/${String(mes + 1).padStart(2, "0")}: ${total ? `${total} ${total === 1 ? "atividade" : "atividades"}, ${info!.concluidas} concluídas${info!.atrasadas ? `, ${info!.atrasadas} atrasadas` : ""}` : "livre"}`}
+                  className={`group flex h-full min-w-0 flex-1 flex-col justify-end rounded-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 ${ehHoje ? "bg-black/[.04]" : "hover:bg-black/[.03]"}`}
                 >
-                  <header className="border-b px-3 py-3 text-center" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-                    <p className={`text-[0.5625rem] font-medium uppercase tracking-[.12em] ${isToday ? "text-[#7259B5]" : "text-black/30"}`}>{["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"][index]}</p>
-                    <p className={`mx-auto mt-1 flex h-7 w-7 items-center justify-center rounded text-[0.75rem] font-semibold tabular-nums ${isToday ? "bg-[#7259B5] text-white" : "text-black/60"}`}>{date.getDate()}</p>
-                  </header>
-                  <div className="space-y-2 p-2 flex-1">
-                    {items.map(atividade => <ActivityCard key={atividade.id} atividade={atividade} compact />)}
-                    {items.length === 0 && <p className="pt-5 text-center text-[0.625rem] text-black/20">Livre</p>}
-                  </div>
-                  <div className="px-2 pb-2">
-                    <button
-                      type="button"
-                      onClick={() => onNew(dateStr)}
-                      className="w-full flex items-center justify-center gap-1 py-1 rounded text-[0.59375rem] font-medium text-black/20 hover:text-[#7259B5] hover:bg-black/[.04] transition"
-                      style={{ opacity: hoveredDate === dateStr ? 1 : 0, pointerEvents: hoveredDate === dateStr ? "auto" : "none" }}
-                    >
-                      <Plus size={10} /> Nova
-                    </button>
-                  </div>
-                </section>
+                  {total ? (
+                    <span className="flex w-full flex-col-reverse gap-[2px] group-hover:opacity-80" style={{ height: `${Math.max(total / maxDoMes * 100, 14)}%` }}>
+                      {info!.concluidas > 0 && <span className="rounded-[2px]" style={{ flexGrow: info!.concluidas, background: VERDE }} />}
+                      {info!.atrasadas > 0 && <span className="rounded-[2px] bg-[#D94A4A]" style={{ flexGrow: info!.atrasadas }} />}
+                      {aFazer > 0 && <span className="rounded-[2px] bg-black/[.16]" style={{ flexGrow: aFazer }} />}
+                    </span>
+                  ) : <span className="h-[2px] w-full rounded-[2px] bg-black/[.07]" />}
+                </button>
               );
             })}
           </div>
+          <div className="mt-1.5 flex gap-[3px]" style={MONO}>
+            {Array.from({ length: diasNoMes }, (_, i) => {
+              const iso = `${prefixo}${String(i + 1).padStart(2, "0")}`;
+              // os números de referência somem perto de "hoje" para não encostar nele
+              const pertoDeHoje = hoje.startsWith(prefixo) && Math.abs(Number(hoje.slice(8)) - (i + 1)) <= 2;
+              const mostra = iso === hoje || (!pertoDeHoje && (i === 0 || (i + 1) % 5 === 0));
+              return <span key={iso} className={`min-w-0 flex-1 text-center text-[0.5625rem] tabular-nums ${iso === hoje ? "font-semibold text-[#282525]" : "text-black/35"}`}>{mostra ? (iso === hoje ? "hoje" : i + 1) : ""}</span>;
+            })}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-black/45">
+            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-[2px]" style={{ background: VERDE }} />Concluídas</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-[2px] bg-[#D94A4A]" />Atrasadas</span>
+            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-[2px] bg-black/[.16]" />A fazer</span>
+          </div>
         </div>
-      )}
 
-      {scale === "mes" && <>
-        <div className="grid grid-cols-7 border-b" style={{ borderColor: "rgba(13,13,13,.07)" }}>
-          {["Seg","Ter","Qua","Qui","Sex","Sáb","Dom"].map(d => (
-            <div key={d} className="py-2 text-center text-[0.625rem] font-medium tracking-wider text-black/30" style={{ borderLeft: "1px solid rgba(13,13,13,.05)" }}>{d}</div>
-          ))}
+        {/* Tipos do mês: filtram o painel */}
+        <div className="flex gap-1.5 overflow-x-auto px-5 pb-5 pt-4 sm:px-6" role="group" aria-label="Filtrar o mês por tipo">
+          {[{ label: null as string | null, total: tiposDoMes.reduce((s, x) => s + x.total, 0), Icon: null as React.ElementType | null, cor: "" }, ...tiposDoMes.map(t => ({ label: t.config.label as string | null, total: t.total, Icon: t.config.Icon as React.ElementType | null, cor: t.config.color }))].map(t => {
+            const ativo = tipoAtivo === t.label;
+            const Icon = t.Icon;
+            return (
+              <button
+                key={t.label ?? "todos"}
+                type="button"
+                aria-pressed={ativo}
+                onClick={() => setTipoAtivo(t.label)}
+                className={`inline-flex h-9 flex-shrink-0 items-center gap-1.5 rounded border bg-white px-3 text-[0.6875rem] transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25 ${ativo ? "border-[#7259B5]/35 text-[#7259B5]" : "border-black/[.09] text-black/55 hover:bg-black/[.04] hover:text-black/75"}`}
+              >
+                {Icon && <span className="flex" style={{ color: t.cor }}><Icon size={12} aria-hidden="true" /></span>}
+                {t.label ?? "Todos"}
+                <span className="tabular-nums text-black/35">{t.total}</span>
+              </button>
+            );
+          })}
         </div>
-        <div className="grid grid-cols-7">
-        {Array.from({ length: totalCells }).map((_, i) => {
-          const dayNum = i - startPad + 1;
-          const isCurrentMonth = dayNum >= 1 && dayNum <= daysInMonth;
-          const dateStr = isCurrentMonth
-            ? `${year}-${String(monthIdx + 1).padStart(2,"0")}-${String(dayNum).padStart(2,"0")}`
-            : null;
-          const isToday   = dateStr === todayStr;
-          const isWeekend = (i % 7) >= 5;
-          const dayItems  = dateStr ? (byDate.get(dateStr) ?? []) : [];
-          const shown     = dayItems.slice(0, 3);
-          const overflow  = dayItems.length - 3;
+      </div>
 
-          return (
-            <div key={i}
-              className="min-h-[5.75rem] p-1.5 sm:min-h-[6.5rem] flex flex-col"
-              style={{
-                borderTop: "1px solid rgba(13,13,13,.06)",
-                borderLeft: i % 7 !== 0 ? "1px solid rgba(13,13,13,.05)" : "none",
-                background: isToday
-                  ? "rgba(13,13,13,.035)"
-                  : !isCurrentMonth ? "rgba(13,13,13,.012)"
-                  : isWeekend ? "rgba(13,13,13,.008)"
-                  : "transparent",
-              }}
-              onMouseEnter={() => isCurrentMonth && dateStr && setHoveredDate(dateStr)}
-              onMouseLeave={() => setHoveredDate(null)}
-            >
-              <div className="mb-1">
-                <span className={`text-[0.6875rem] font-bold inline-flex items-center justify-center w-5 h-5 rounded-full ${
-                  isToday ? "bg-[#7259B5] text-white" : !isCurrentMonth ? "text-black/20" : "text-black/40"
-                }`}>
-                  {isCurrentMonth ? dayNum : ""}
-                </span>
-              </div>
-              <div className="flex-1">
-                        {shown.map(a => {
-                          const pill = typePillFor(a);
-                          return (
-                    <button type="button" key={a.id}
-                      onClick={() => onEdit(a.id)}
-                      className="mb-[2px] block w-full cursor-pointer truncate rounded-[2px] px-1.5 py-[3px] text-left text-[0.59375rem] font-medium leading-tight transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25"
-                              style={{
-                                background: a.feita ? "rgba(0,0,0,.04)" : pill.bg,
-                                color: a.feita ? "rgba(13,13,13,.25)" : "#FFFFFF",
-                                textDecoration: a.feita ? "line-through" : "none",
-                              }}
-                      title={a.nome}
-                    >
-                      {a.nome}
+      {/* Linha do tempo: uma estação por semana (prancheta da landing: papel com linhas finas e conexões tracejadas em roxo) */}
+      <div
+        ref={trilhaRef}
+        className="relative overflow-x-auto border-y bg-[#F7F7F5]"
+        style={{ borderColor: "rgba(40,37,37,.07)", backgroundImage: "repeating-linear-gradient(0deg, rgba(40,37,37,.035) 0, rgba(40,37,37,.035) 1px, transparent 1px, transparent 4px)" }}
+      >
+        <div className="flex min-w-max px-5 pb-7 pt-6">
+          {semanas.map(s => {
+            const atual = s.estado === "atual";
+            const delta = s.anterior === null ? null : s.total - s.anterior;
+            const dias = diasEntre(s.inicio, s.fim);
+            const maxSemana = Math.max(...dias.map(d => metricas.porDia.get(d)?.total ?? 0), 1);
+            // conexões: o que já passou é traço contínuo; o que vem pela frente, tracejado roxo
+            const ligacao = s.estado === "passada" ? LIGACAO_FEITA : LIGACAO_ROXA;
+            const ligacaoVertical = s.estado === "passada" ? LIGACAO_FEITA_V : LIGACAO_ROXA_V;
+            return (
+              <section key={s.inicio} data-semana-atual={atual ? "" : undefined} className="relative w-[19.5rem] flex-shrink-0 pr-6" aria-label={`Semana de ${intervaloCurto(s.inicio, s.fim)}`}>
+                {/* trilho e estação */}
+                <div className="relative flex h-10 items-center">
+                  <span className="absolute left-10 right-0 top-1/2 h-px" style={{ background: ligacao }} />
+                  <button
+                    type="button"
+                    onClick={() => onAbrirSemana(dataDoIso(s.inicio))}
+                    aria-label={`Abrir a semana de ${intervaloCurto(s.inicio, s.fim)} com horários`}
+                    className={`relative z-10 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border transition duration-200 hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/35 motion-reduce:transition-none ${atual ? "border-[#684DB0] bg-[#684DB0] text-white shadow-[0_8px_20px_-6px_rgba(104,77,176,.55)]" : "border-[rgba(40,37,37,.12)] bg-white text-black/55 shadow-[0_1px_2px_rgba(40,37,37,.04)] hover:border-[rgba(40,37,37,.22)]"}`}
+                  >
+                    <CalendarDays size={15} aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="relative ml-5 pl-5 pt-3">
+                  <span className="absolute bottom-0 left-0 top-0 w-px" style={{ background: ligacaoVertical }} />
+                  <div className="relative mb-3.5">
+                    <span className="absolute -left-5 top-3 h-px w-4" style={{ background: ligacao }} />
+                    <p className="text-[0.625rem] font-medium uppercase tracking-[.06em] text-black/40" style={MONO}>{atual ? "Esta semana" : `Semana ${String(s.indice + 1).padStart(2, "0")}`}</p>
+                    <p className="font-display mt-0.5 text-[1.25rem] font-bold leading-tight tracking-[-.04em] text-[#282525]">{intervaloCurto(s.inicio, s.fim)}</p>
+                  </div>
+
+                  {s.itens.length === 0 ? (
+                    <button type="button" onClick={() => onNew(s.inicio < hoje && s.fim >= hoje ? hoje : s.inicio)} className="flex items-center gap-1.5 rounded border border-dashed border-[#684DB0]/35 bg-white/70 px-3 py-2 text-[0.6875rem] text-[#684DB0] transition hover:bg-white">
+                      <Plus size={12} aria-hidden="true" /> Semana livre
                     </button>
-                  );
-                })}
-                {overflow > 0 && (
-                  <div className="text-[0.5625rem] font-bold text-black/25 mt-0.5">+{overflow} mais</div>
-                )}
-              </div>
-              {isCurrentMonth && dateStr && (
-                <button
-                  type="button"
-                  onClick={() => onNew(dateStr)}
-                  className="w-full flex items-center justify-center gap-0.5 py-0.5 rounded text-[0.5625rem] font-medium text-black/20 hover:text-[#7259B5] hover:bg-black/[.04] transition"
-                  style={{ opacity: hoveredDate === dateStr ? 1 : 0, pointerEvents: hoveredDate === dateStr ? "auto" : "none" }}
-                >
-                  <Plus size={9} /> Nova
-                </button>
-              )}
-            </div>
-          );
-        })}
-        </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {/* tipos da semana */}
+                      <div className="relative flex flex-wrap gap-1.5">
+                        <span className="absolute -left-5 top-4 h-px w-4" style={{ background: ligacao }} />
+                        {s.tipos.slice(0, 4).map(t => {
+                          const Icon = t.config.Icon;
+                          return (
+                            <span key={t.config.label} className="inline-flex h-8 items-center gap-1.5 rounded border pl-1 pr-2.5 text-[0.6875rem] text-black/70 shadow-[0_1px_2px_rgba(40,37,37,.025)]" style={{ ...CARTAO_LANDING, borderColor: "rgba(40,37,37,.08)" }}>
+                              <span className="flex h-6 w-6 items-center justify-center rounded bg-white shadow-[0_0_0_1px_rgba(40,37,37,.06)]" style={{ color: t.config.color }}><Icon size={12} aria-hidden="true" /></span>
+                              {t.config.label}<span className="tabular-nums text-black/40" style={MONO}>×{t.total}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
 
-        {filtered.filter(a => {
-        const scheduled = scheduledDate(a);
-        if (!scheduled) return false;
-        const d = new Date(`${normDate(scheduled)}T00:00:00`);
-        return d.getFullYear() === year && d.getMonth() === monthIdx;
-      }).length === 0 && (
-        <div className="py-14 text-center border-t" style={{ borderColor: "rgba(13,13,13,.06)" }}>
-          <CalendarDays size={24} className="text-black/15 mx-auto mb-2" />
-          <p className="text-xs font-semibold text-black/25">Nenhuma atividade em {MONTH_NAMES[monthIdx]}</p>
+                      {/* ritmo dos dias: na semana de hoje, o cartão de destaque da landing (roxo profundo) */}
+                      <div
+                        className={`relative rounded border p-3.5 transition duration-200 hover:-translate-y-0.5 motion-reduce:transition-none ${atual ? "text-white" : "hover:shadow-[0_10px_28px_rgba(40,37,37,.08)]"}`}
+                        style={atual
+                          ? { background: "#1C0E33", borderColor: "rgba(199,182,238,.22)", boxShadow: "0 16px 34px -12px rgba(28,14,51,.55)" }
+                          : { ...CARTAO_LANDING, borderColor: "rgba(40,37,37,.08)", boxShadow: "0 1px 2px rgba(40,37,37,.025)" }}
+                      >
+                        <span className="absolute -left-5 top-6 h-px w-5" style={{ background: ligacao }} />
+                        <div className="flex items-start justify-between">
+                          <p className={`text-[0.75rem] font-semibold ${atual ? "text-white" : "text-[#282525]"}`}>Ritmo da semana</p>
+                          <span className={`text-[0.625rem] uppercase tracking-[.06em] tabular-nums ${atual ? "text-[#C7B6EE]" : "text-black/40"}`} style={MONO}>{s.total} ativ.</span>
+                        </div>
+                        <div className="mt-3 flex h-14 items-end gap-1.5">
+                          {dias.map(d => {
+                            const info = metricas.porDia.get(d);
+                            const total = info?.total ?? 0;
+                            const feitas = total ? (info!.concluidas / total) * 100 : 0;
+                            return (
+                              <button key={d} type="button" onClick={() => onAbrirDia(dataDoIso(d))} title={`${Number(d.slice(8))}/${d.slice(5, 7)}: ${total} ${total === 1 ? "atividade" : "atividades"}`} className="group flex h-full min-w-0 flex-1 flex-col justify-end rounded-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/40">
+                                {total > 0 ? (
+                                  <span className="flex w-full flex-col-reverse overflow-hidden rounded-t-[3px] transition-opacity group-hover:opacity-80" style={{ height: `${Math.max(total / maxSemana * 100, 12)}%` }}>
+                                    <span style={{ height: `${feitas}%`, background: atual ? "#4CB860" : VERDE }} />
+                                    <span className={`flex-1 ${atual ? "bg-[#C7B6EE]/35" : "bg-black/[.16]"}`} style={{ marginBottom: info!.concluidas && info!.concluidas < total ? 2 : 0 }} />
+                                  </span>
+                                ) : <span className={`h-[2px] w-full rounded-[1px] ${atual ? "bg-white/15" : "bg-black/[.07]"}`} />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-1 flex gap-1.5" style={MONO}>
+                          {dias.map(d => (
+                            <span key={d} className={`min-w-0 flex-1 text-center text-[0.5625rem] tabular-nums ${d === hoje ? (atual ? "font-semibold text-white" : "font-semibold text-[#282525]") : atual ? "text-white/40" : "text-black/35"}`}>{INICIAIS_DO_DIA[dataDoIso(d).getDay()]}</span>
+                          ))}
+                        </div>
+                        <div className="mt-3 flex items-baseline justify-between border-t pt-2.5" style={{ borderColor: atual ? "rgba(199,182,238,.18)" : "rgba(40,37,37,.07)" }}>
+                          <span className={`text-[0.6875rem] ${atual ? "text-white/55" : "text-black/45"}`}>Concluídas <span className={`font-semibold tabular-nums ${atual ? "text-white" : "text-[#282525]"}`}>{s.concluidas}</span><span className="tabular-nums"> / {s.total}</span></span>
+                          {delta !== null && (
+                            <span className={`text-[0.625rem] tabular-nums ${atual ? "text-white/55" : "text-black/45"}`} style={MONO} title="Em relação à semana anterior">
+                              <span className={`font-medium ${atual ? "text-white" : "text-[#282525]"}`}>{delta > 0 ? "+" : delta < 0 ? "−" : "±"}{Math.abs(delta)}</span> vs anterior
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* em destaque */}
+                      <div className="relative rounded border p-1.5 transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_10px_28px_rgba(40,37,37,.08)] motion-reduce:transition-none" style={{ ...CARTAO_LANDING, borderColor: "rgba(40,37,37,.08)", boxShadow: "0 1px 2px rgba(40,37,37,.025)" }}>
+                        <span className="absolute -left-5 top-6 h-px w-5" style={{ background: ligacao }} />
+                        <p className="px-2 pb-1 pt-2 text-[0.625rem] font-bold uppercase tracking-[.14em] text-[rgba(40,37,37,.35)]">Em destaque</p>
+                        <ul>
+                          {s.destaques.slice(0, 3).map(a => {
+                            const config = typeConfigFor(a);
+                            const atrasada = !a.feita && (dataDe(a) ?? "") < hoje;
+                            const Icon = atrasada ? AlertCircle : config.Icon;
+                            const d = dataDe(a)!;
+                            return (
+                              <li key={a.id}>
+                                <button type="button" onClick={() => onEdit(a.id)} className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/30">
+                                  <span className="flex flex-shrink-0" style={{ color: atrasada ? "#D94A4A" : a.feita ? "rgba(13,13,13,.30)" : config.color }}><Icon size={12} aria-hidden="true" /></span>
+                                  <span className={`min-w-0 flex-1 truncate text-[0.6875rem] ${a.feita ? "text-black/35 line-through" : "text-[#282525]"}`}>{a.nome}</span>
+                                  <span className="flex-shrink-0 text-[0.5625rem] uppercase tabular-nums text-black/40" style={MONO}>{DIAS_DA_SEMANA[(dataDoIso(d).getDay() + 6) % 7]}{a.hora_inicio && intervaloNaGrade(a) ? ` ${a.hora_inicio.slice(0, 5)}` : ""}</span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        {s.destaques.length > 3 && (
+                          <button type="button" onClick={() => onAbrirSemana(dataDoIso(s.inicio))} className="w-full rounded px-2 py-1.5 text-left text-[0.6875rem] text-[#684DB0] transition hover:bg-white">
+                            +{s.destaques.length - 3} na semana →
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </section>
+            );
+          })}
         </div>
-        )}
-      </>}
+      </div>
+
+      {/* Régua do mês: cada dia com a quantidade; a semana de hoje fica destacada */}
+      <div className="flex items-center gap-1.5 overflow-x-auto p-2">
+        <span className="flex h-11 flex-shrink-0 items-center gap-2 rounded border border-black/[.08] bg-white pl-3 pr-3.5 text-[#282525]">
+          <CalendarDays size={14} aria-hidden="true" />
+          <span className="text-[0.625rem] leading-tight text-black/55">{MESES_CURTOS[mes]}<br />{ano}</span>
+        </span>
+        {semanas.map((s, i) => (
+          <div key={s.inicio} className="flex flex-shrink-0 items-center gap-1.5">
+            {i > 0 && <span className="h-1 w-1 rounded-full bg-black/15" aria-hidden="true" />}
+            <div className={`flex items-center gap-0.5 rounded px-1 py-1 ${s.estado === "atual" ? "bg-black/[.05]" : ""}`}>
+              {diasEntre(s.inicio, s.fim).map(d => {
+                const info = metricas.porDia.get(d);
+                const escuro = false;
+                return (
+                  <button
+                    key={d}
+                    type="button"
+                    onClick={() => onAbrirDia(dataDoIso(d))}
+                    title={info ? `${Number(d.slice(8))}/${d.slice(5, 7)}: ${info.total} ${info.total === 1 ? "atividade" : "atividades"}${info.atrasadas ? `, ${info.atrasadas} atrasadas` : ""}` : `${Number(d.slice(8))}/${d.slice(5, 7)}: livre`}
+                    className={`relative flex h-9 w-8 flex-col items-center justify-center rounded text-[0.6875rem] tabular-nums transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 ${escuro ? "text-white hover:bg-white/10" : "text-black/60 hover:bg-black/[.05]"} ${d === hoje ? "font-semibold underline decoration-2 underline-offset-4" : ""}`}
+                  >
+                    <span className={`text-[0.5rem] uppercase ${escuro ? "text-white/50" : "text-black/30"}`}>{INICIAIS_DO_DIA[dataDoIso(d).getDay()]}</span>
+                    {Number(d.slice(8))}
+                    {info && (
+                      <span className={`absolute -right-0.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[0.5625rem] font-semibold no-underline ${info.atrasadas ? "bg-[#D94A4A] text-white" : escuro ? "bg-white text-[#282525]" : "bg-[#282525] text-white"}`}>
+                        {info.total}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -1205,7 +1676,7 @@ export default function AtividadesPage() {
   // A preferência local é restaurada depois da hidratação.
   const [viewMode, setViewMode] = useState<ViewMode>("lista");
   const [showNovaAtividade, setShowNovaAtividade] = useState(false);
-  const [novaPrefillDate,   setNovaPrefillDate]   = useState<string | undefined>(undefined);
+  const [novaPrefill,       setNovaPrefill]       = useState<{ date: string; hora?: string } | undefined>(undefined);
   const [editingId,         setEditingId]         = useState<string | null>(null);
   const [savingActivityId, setSavingActivityId] = useState<string | null>(null);
   const [toggleError, setToggleError] = useState<string | null>(null);
@@ -1423,9 +1894,9 @@ export default function AtividadesPage() {
     <div className="px-4 py-6 md:px-8 md:py-8">
       {showNovaAtividade && (
         <NovaAtividadeModal
-          onClose={() => { setShowNovaAtividade(false); setNovaPrefillDate(undefined); }}
+          onClose={() => { setShowNovaAtividade(false); setNovaPrefill(undefined); }}
           onSaved={() => { fetchData(); if (viewMode !== "lista") fetchAll(); }}
-          prefill={novaPrefillDate ? { date: novaPrefillDate } : undefined}
+          prefill={novaPrefill}
         />
       )}
       {editingId && (
@@ -1559,7 +2030,7 @@ export default function AtividadesPage() {
           ? <div className="bg-white rounded border py-20 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-xs text-black/30">Carregando…</p>
             </div>
-          : <CalendarioView atividades={todasDoResponsavel} tipoFilter={tipoFilter} onEdit={openAgendaItem} onNew={(d) => { setNovaPrefillDate(d); setShowNovaAtividade(true); }} />
+          : <CalendarioView atividades={todasDoResponsavel} tipoFilter={tipoFilter} onEdit={openAgendaItem} onNew={(date, hora) => { setNovaPrefill({ date, hora }); setShowNovaAtividade(true); }} />
       )}
 
       {viewMode === "gantt" && (

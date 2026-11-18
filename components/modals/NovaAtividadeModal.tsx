@@ -151,6 +151,8 @@ export function NovaAtividadeModal({
     compromisso_id?: string;
     conta_patrocinio_id?: string;
     date?: string;
+    /** "HH:MM": quem clica num horário do calendário já cria a atividade com início e fim (uma hora). */
+    hora?: string;
   };
 }) {
   const supabase = createClient();
@@ -193,8 +195,13 @@ export function NovaAtividadeModal({
   const [dataPrevista, setDataPrevista] = useState(prefill?.date ?? todayInputValue());
   const [inicioEditado, setInicioEditado] = useState(false);
   const [nota, setNota] = useState("");
-  const [horaInicio, setHoraInicio] = useState("");
-  const [horaFim, setHoraFim] = useState("");
+  const [horaInicio, setHoraInicio] = useState(prefill?.hora ?? "");
+  const [horaFim, setHoraFim] = useState(() => {
+    const m = /^(\d{2}):(\d{2})/.exec(prefill?.hora ?? "");
+    if (!m) return "";
+    const fim = Math.min(Number(m[1]) * 60 + Number(m[2]) + 60, 23 * 60 + 59);
+    return `${String(Math.floor(fim / 60)).padStart(2, "0")}:${String(fim % 60).padStart(2, "0")}`;
+  });
   const [resultado, setResultado] = useState("");
   const [prioridade, setPrioridade] = useState<Prioridade | null>(null);
   // A reunião (tipo inicial) nasce sincronizada; a escolha de quem mexer na caixa vale mais que o tipo.
@@ -202,7 +209,7 @@ export function NovaAtividadeModal({
   const sincronizacaoEditada = useRef(false);
   const responsavelEditado = useRef(false);
   // "Mais detalhes" já abre quando há algo preenchido lá dentro.
-  const [maisDetalhes, setMaisDetalhes] = useState(() => Boolean(prefill?.responsavel_id));
+  const [maisDetalhes, setMaisDetalhes] = useState(() => Boolean(prefill?.responsavel_id || prefill?.hora));
 
   // Dropdowns data
   const [captacoes, setCaptacoes] = useState<Opcao[]>([]);
