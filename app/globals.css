@@ -46,13 +46,23 @@
    enquanto o botão estiver na tela. As luzes nascem e terminam apagadas (opacity 0), então o
    botão em repouso é só o roxo. Só `transform` e `opacity`, presas ao botão (overflow). Quem
    pede menos movimento recebe o botão liso, sem animação.
-   Sem contorno em volta: hover e foco do teclado clareiam o fundo, e o foco ainda abre um
-   brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema. */
+   Volume discreto: degradê de cima para baixo em torno do roxo noite, uma linha de luz de 1px no
+   topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da
+   página. No hover ele sobe 1px, clareia para o violeta e a sombra cresce; ao pressionar, afunda.
+   Sem contorno em volta: o foco do teclado clareia igual ao hover e abre um brilho embaixo do
+   botão; o contorno só aparece no modo de alto contraste do sistema. */
 .acao-principal {
   position: relative;
   isolation: isolate;
   overflow: hidden;
   background-color: #1C0E33;
+  background-image: linear-gradient(180deg, #28164B 0%, #1C0E33 55%, #160A2A 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .14),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    0 1px 2px rgba(28, 14, 51, .28),
+    0 4px 12px -4px rgba(28, 14, 51, .45);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, .3);
 }
 .acao-principal::before,
 .acao-principal::after {
@@ -85,20 +95,41 @@
   65% { opacity: 1; transform: translate(-28%, 10%) scale(1.1); }
   100% { opacity: 0; transform: translate(-6%, 6%) scale(1); }
 }
-.acao-principal:hover { background-color: #2D1A53; }
+.acao-principal:hover {
+  translate: 0 -1px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .18),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    inset 0 0 0 999px rgba(142, 99, 245, .12),
+    0 2px 4px rgba(28, 14, 51, .26),
+    0 8px 18px -6px rgba(28, 14, 51, .5);
+}
+.acao-principal:active {
+  translate: 0 0;
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, .4),
+    inset 0 0 0 999px rgba(142, 99, 245, .06),
+    0 1px 1px rgba(28, 14, 51, .25);
+}
 .acao-principal:focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
-  background-color: #2D1A53;
-  box-shadow: 0 6px 20px -4px rgba(142, 99, 245, .65);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .18),
+    inset 0 -1px 0 rgba(0, 0, 0, .3),
+    inset 0 0 0 999px rgba(142, 99, 245, .12),
+    0 6px 20px -4px rgba(142, 99, 245, .65);
 }
-.acao-principal:disabled { background-color: #1C0E33; box-shadow: none; }
+.acao-principal:disabled { translate: none; box-shadow: none; text-shadow: none; }
 @media (forced-colors: active) {
   .acao-principal:focus-visible { outline-color: Highlight; }
 }
 @media (prefers-reduced-motion: reduce) {
   .acao-principal::before,
   .acao-principal::after { animation: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .acao-principal:hover { translate: none; }
 }
 
 :root {

@@ -72,8 +72,10 @@ Princípios:
 
 Criar ou iniciar o objeto principal da página ("Novo projeto", "Nova data") usa `PrimaryListAction`, de `components/list/ListPagePrimitives.tsx`: roxo noite `#1C0E33`, o mesmo do hero da landing, com texto branco e `h-9`.
 
-- em repouso o botão é liso, só o roxo noite. Ao aparecer, faz uma única animação: duas luzes violeta passam por dentro (5s e 6,5s, uma um pouco depois da outra, em caminhos diferentes) e somem, deixando o botão no roxo noite. Não repete enquanto o botão estiver na tela. É só `transform` e `opacity`, fica presa ao botão e não existe com `prefers-reduced-motion`. Está na classe `.acao-principal`, em `app/globals.css`; o botão não leva cor nem animação própria;
-- sem contorno em volta. Hover e foco do teclado clareiam o fundo (`#2D1A53`); o foco ainda abre um brilho embaixo do botão, e o contorno só aparece no modo de alto contraste do sistema;
+- volume discreto: degradê de cima para baixo em torno do roxo noite (`#28164B` → `#1C0E33` → `#160A2A`), uma linha de luz de 1px no topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da página. Sem borda;
+- ao aparecer, faz uma única animação: duas luzes violeta passam por dentro (5s e 6,5s, uma um pouco depois da outra, em caminhos diferentes) e somem, deixando o botão no roxo noite. Não repete enquanto o botão estiver na tela. É só `transform` e `opacity`, fica presa ao botão e não existe com `prefers-reduced-motion`. Está na classe `.acao-principal`, em `app/globals.css`; o botão não leva cor nem animação própria;
+- no hover o botão sobe 1px, clareia para o violeta e a sombra cresce; ao pressionar, afunda (sombra por dentro). Com `prefers-reduced-motion` ele não sobe;
+- sem contorno em volta. O foco do teclado clareia como o hover e abre um brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema;
 - uma ação principal por contexto. Quando há duas lado a lado, a principal é roxo noite e a outra é `SecondaryListAction`: botão branco com borda leve e hover cinza;
 - nas demais telas (autenticação, links públicos, assistentes), a ação principal segue em tinta:
 

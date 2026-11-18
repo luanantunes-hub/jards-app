@@ -49,23 +49,24 @@ export function ListContent({ children, className }: { children: ReactNode; clas
 export function ListTableSurface({ children, className }: { children: ReactNode; className?: string }) { return <div className={`overflow-x-auto rounded border bg-white ${className ?? ""}`} style={{borderColor:"rgba(13,13,13,.08)"}}>{children}</div>; }
 
 /** Medidas, tipografia e pressionar comuns às ações do cabeçalho e das seções. */
-const ACAO_DE_LISTA = "flex h-9 items-center gap-1.5 rounded border px-3.5 text-[0.75rem] font-medium transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
+const ACAO_DE_LISTA = "flex h-9 items-center gap-1.5 rounded border text-[0.75rem] font-medium transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100";
 
 type AcaoDeLista = { children: ReactNode; onClick: () => void; disabled?: boolean };
 
 /**
  * Ação principal da página ou da seção: criar ou iniciar o objeto principal. Roxo noite do hero da
- * landing (#1C0E33), liso, com texto branco e sem contorno em volta. Ao aparecer faz uma única
- * animação de brilho que passa por dentro e some. O visual inteiro está em `.acao-principal`
+ * landing (#1C0E33) com volume discreto (degradê, luz de 1px no topo, sombra curta), texto branco e
+ * sem contorno em volta. Ao aparecer faz uma única animação de brilho que passa por dentro e some;
+ * no hover sobe 1px, ao pressionar afunda. O visual inteiro está em `.acao-principal`
  * (app/globals.css). Uma por contexto: quando há duas lado a lado, a outra é `SecondaryListAction`.
  */
 export function PrimaryListAction({ children, onClick, disabled = false }: AcaoDeLista) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={`${ACAO_DE_LISTA} acao-principal border-transparent text-white`}>{children}</button>;
+  return <button type="button" onClick={onClick} disabled={disabled} className={`${ACAO_DE_LISTA} acao-principal border-transparent px-4 text-white duration-200`}>{children}</button>;
 }
 
 /** Ação de apoio ao lado da principal (copiar, exportar…): branca, com borda leve e hover cinza. */
 export function SecondaryListAction({ children, onClick, disabled = false }: AcaoDeLista) {
-  return <button type="button" onClick={onClick} disabled={disabled} className={`${ACAO_DE_LISTA} border-black/12 bg-white text-[#282525] hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]`}>{children}</button>;
+  return <button type="button" onClick={onClick} disabled={disabled} className={`${ACAO_DE_LISTA} border-black/12 bg-white px-3.5 text-[#282525] hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5]`}>{children}</button>;
 }
 
 /**
