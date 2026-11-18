@@ -7,7 +7,7 @@ export const FRASES_DAS_SECOES = {
   negociacoes: ["Quem está perto de fechar{, nome}?", "Cada etapa, um passo mais perto do patrocínio.", "Que negociação merece atenção hoje?"],
   empresas: ["Quem você ainda não procurou{, nome}?", "As empresas que podem apoiar seus projetos."],
   contatos: ["As pessoas por trás de cada empresa{, nome}.", "Com quem foi a última boa conversa?"],
-  patrocinadores: ["Quem já apostou num projeto e pode apostar no seu{, nome}.", "O que cada patrocinador costuma apoiar, antes do primeiro contato."],
+  patrocinadores: ["Quem já investe no que você faz{, nome}?", "Cada empresa aqui já disse sim a alguém.", "O que cada patrocinador costuma apoiar, antes do primeiro contato."],
   clientes: ["Patrocínio fechado é relação que começa.", "Como estão seus parceiros{, nome}?"],
   projetos: ["Qual projeto está mais perto de fechar{, nome}?", "O que cada projeto ainda precisa para encontrar quem o apoie."],
   editais: ["Edital fecha às 23h59 de um dia que sempre chega antes{, nome}.", "O que abriu desde a última vez que você passou por aqui."],
