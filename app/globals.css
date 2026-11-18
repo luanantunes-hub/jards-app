@@ -40,6 +40,67 @@
   .veu { transition: none; }
 }
 
+/* Ação principal (botões de criar): o roxo noite do hero da landing (#1C0E33), liso. Ao aparecer,
+   faz uma única animação: duas luzes violeta passam por dentro, uma um pouco depois da outra e
+   em caminhos diferentes (5s e 6,5s), e somem, deixando o botão no roxo noite. Não repete
+   enquanto o botão estiver na tela. As luzes nascem e terminam apagadas (opacity 0), então o
+   botão em repouso é só o roxo. Só `transform` e `opacity`, presas ao botão (overflow). Quem
+   pede menos movimento recebe o botão liso, sem animação.
+   Sem contorno em volta: hover e foco do teclado clareiam o fundo, e o foco ainda abre um
+   brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema. */
+.acao-principal {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: #1C0E33;
+}
+.acao-principal::before,
+.acao-principal::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+.acao-principal::before {
+  inset: -120% -30%;
+  background: radial-gradient(closest-side, rgba(142, 99, 245, .42), rgba(142, 99, 245, 0));
+  animation: acao-brilho-a 5s ease-in-out both;
+}
+.acao-principal::after {
+  inset: -140% -10%;
+  background: radial-gradient(closest-side, rgba(104, 77, 176, .5), rgba(104, 77, 176, 0));
+  animation: acao-brilho-b 6.5s ease-in-out .3s both;
+}
+@keyframes acao-brilho-a {
+  0% { opacity: 0; transform: translate(-34%, 8%) scale(1); }
+  25% { opacity: 1; }
+  60% { opacity: 1; transform: translate(30%, -6%) scale(1.12); }
+  100% { opacity: 0; transform: translate(8%, 12%) scale(.92); }
+}
+@keyframes acao-brilho-b {
+  0% { opacity: 0; transform: translate(30%, -8%) scale(.95); }
+  30% { opacity: 1; }
+  65% { opacity: 1; transform: translate(-28%, 10%) scale(1.1); }
+  100% { opacity: 0; transform: translate(-6%, 6%) scale(1); }
+}
+.acao-principal:hover { background-color: #2D1A53; }
+.acao-principal:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  background-color: #2D1A53;
+  box-shadow: 0 6px 20px -4px rgba(142, 99, 245, .65);
+}
+.acao-principal:disabled { background-color: #1C0E33; box-shadow: none; }
+@media (forced-colors: active) {
+  .acao-principal:focus-visible { outline-color: Highlight; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .acao-principal::before,
+  .acao-principal::after { animation: none; }
+}
+
 :root {
   --cream:          #FFFFFF;
   --ink:            #282525;

@@ -19,6 +19,7 @@ Princípios:
 |---|---|---|
 | Tinta (grafite quente) | `#282525` | texto e ações principais |
 | Roxo Jards | `#684DB0` / `#7259B5` | navegação, seleção e identidade |
+| Roxo noite | `#1C0E33` | hero da landing e ação principal de página (botões de criar) |
 | Coral Jards | `#D94A4A` | marca, atenção e prioridade alta |
 | Verde | `#2E8932` | salvar, confirmar e sucesso |
 | Azul | `#2D72B0` | informação e estados auxiliares |
@@ -69,7 +70,12 @@ Princípios:
 
 ### Ação principal de página
 
-Use preto para criar ou iniciar o objeto principal da página:
+Criar ou iniciar o objeto principal da página ("Novo projeto", "Nova data") usa `PrimaryListAction`, de `components/list/ListPagePrimitives.tsx`: roxo noite `#1C0E33`, o mesmo do hero da landing, com texto branco e `h-9`.
+
+- em repouso o botão é liso, só o roxo noite. Ao aparecer, faz uma única animação: duas luzes violeta passam por dentro (5s e 6,5s, uma um pouco depois da outra, em caminhos diferentes) e somem, deixando o botão no roxo noite. Não repete enquanto o botão estiver na tela. É só `transform` e `opacity`, fica presa ao botão e não existe com `prefers-reduced-motion`. Está na classe `.acao-principal`, em `app/globals.css`; o botão não leva cor nem animação própria;
+- sem contorno em volta. Hover e foco do teclado clareiam o fundo (`#2D1A53`); o foco ainda abre um brilho embaixo do botão, e o contorno só aparece no modo de alto contraste do sistema;
+- uma ação principal por contexto. Quando há duas lado a lado, a principal é roxo noite e a outra é `SecondaryListAction`: botão branco com borda leve e hover cinza;
+- nas demais telas (autenticação, links públicos, assistentes), a ação principal segue em tinta:
 
 ```tsx
 className="rounded bg-[#282525] px-4 py-2.5 text-white hover:bg-[#3A3535]"
@@ -196,6 +202,7 @@ Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 - transições comuns: 160–240ms;
 - animar `transform` e `opacity`, evitando propriedades de layout;
 - respeitar `prefers-reduced-motion`;
+- exceção deliberada: o botão de ação principal faz uma única animação ao aparecer (um brilho que passa e some), para a ação principal ser vista de relance; depois fica parado e liso, e a animação não existe com `prefers-reduced-motion`;
 - movimento deve indicar conexão, continuidade ou mudança de estado;
 - foco por teclado é obrigatório;
 - ícones sem label visível precisam de `aria-label` ou `title`;
