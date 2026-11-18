@@ -1502,6 +1502,7 @@ export type BancoDaProducao = {
           contato_nome: string | null;
           contato_telefone: string | null;
           contato_email: string | null;
+          logo_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -1516,6 +1517,7 @@ export type BancoDaProducao = {
           contato_nome?: string | null;
           contato_telefone?: string | null;
           contato_email?: string | null;
+          logo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -1530,6 +1532,7 @@ export type BancoDaProducao = {
           contato_nome?: string | null;
           contato_telefone?: string | null;
           contato_email?: string | null;
+          logo_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };

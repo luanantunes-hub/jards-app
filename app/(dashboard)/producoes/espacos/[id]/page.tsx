@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Download, Link2, Pencil } from "lucide-react";
-import { documentoDaFicha } from "@/lib/producao/ficha-pdf";
+import { documentoDaFicha, logoParaOPdf } from "@/lib/producao/ficha-pdf";
 import { montarPdf } from "@/lib/producao/pdf-texto";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
@@ -53,7 +53,7 @@ export default function EspacoPage() {
       const [esp, sal, fe] = await Promise.all([
         producao.from("producao_espacos").select("id, nome, tipo, uf, endereco, capacidade").eq("id", id).eq("organization_id", organizationId).maybeSingle(),
         producao.from("producao_salas").select("id, nome, capacidade, arquivada").eq("espaco_id", id).eq("arquivada", false).order("nome"),
-        producao.from("producao_espaco_fichas").select("funcionamento, acessibilidade, carga_descarga, doca_altura_m, veiculo_max_m, contato_nome, contato_telefone, contato_email").eq("espaco_id", id).maybeSingle(),
+        producao.from("producao_espaco_fichas").select("funcionamento, acessibilidade, carga_descarga, doca_altura_m, veiculo_max_m, contato_nome, contato_telefone, contato_email, logo_url").eq("espaco_id", id).maybeSingle(),
       ]);
       const ids = (sal.data ?? []).map(sala => sala.id);
       const fs = ids.length > 0
@@ -72,7 +72,7 @@ export default function EspacoPage() {
     if (!espaco) return;
     const documento = documentoDaFicha(espaco, fichaDoEspaco, salas.map(sala => ({ nome: sala.nome, capacidade: sala.capacidade, ficha: fichasDasSalas.get(sala.id) ?? null })),
       equipamentosDaFicha(equipamentos).map(item => ({ nome: item.nome, quantidade: item.quantidade, sala: salas.find(sala => sala.id === item.sala_id)?.nome ?? null })));
-    const bytes = await montarPdf(documento);
+    const bytes = await montarPdf(documento, await logoParaOPdf(documento.logoUrl));
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([bytes as BlobPart], { type: "application/pdf" }));
     link.download = `ficha-tecnica-${espaco.nome.replace(/[^\p{L}\p{N}]+/gu, "-").replace(/^-|-$/g, "") || "espaco"}.pdf`;

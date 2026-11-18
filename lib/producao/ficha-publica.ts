@@ -33,7 +33,7 @@ export async function carregarFichaPublica(admin: Admin, codigo: string, agora =
 
   const [espaco, ficha, salas, equipamentos, organizacao] = await Promise.all([
     producao.from("producao_espacos").select("nome, tipo, uf, endereco, capacidade").eq("id", link.espaco_id).eq("arquivado", false).maybeSingle(),
-    producao.from("producao_espaco_fichas").select("funcionamento, acessibilidade, carga_descarga, doca_altura_m, veiculo_max_m, contato_nome, contato_telefone, contato_email").eq("espaco_id", link.espaco_id).maybeSingle(),
+    producao.from("producao_espaco_fichas").select("funcionamento, acessibilidade, carga_descarga, doca_altura_m, veiculo_max_m, contato_nome, contato_telefone, contato_email, logo_url").eq("espaco_id", link.espaco_id).maybeSingle(),
     producao.from("producao_salas").select("id, nome, capacidade").eq("espaco_id", link.espaco_id).eq("arquivada", false).order("nome"),
     producao.from("producao_equipamentos").select("nome, quantidade, estado, sala_id").eq("espaco_id", link.espaco_id),
     admin.from("organizations").select("nome").eq("id", link.organization_id).maybeSingle(),

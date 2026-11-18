@@ -6,7 +6,7 @@ const sala: CamposDaSala = {
   palcoBoca: "10,5", palcoProfundidade: "8", palcoAltura: "", palcoPiso: " Madeira ", somSistema: "Line array 2 x 8", somCanais: "32", luzDescricao: "", luzRefletores: "40",
   energiaKva: "30", energiaTensao: "220", energiaFases: "3", camarinsQuantidade: "2", camarinsCapacidade: "12", notas: "",
 };
-const espaco: CamposDoEspaco = { funcionamento: "Terça a domingo", acessibilidade: "", cargaDescarga: "Doca nos fundos", docaAltura: "1,2", veiculoMax: "12", contatoNome: " Ana ", contatoTelefone: "", contatoEmail: "ana@teatro.com" };
+const espaco: CamposDoEspaco = { funcionamento: "Terça a domingo", acessibilidade: "", cargaDescarga: "Doca nos fundos", docaAltura: "1,2", veiculoMax: "12", contatoNome: " Ana ", contatoTelefone: "", contatoEmail: "ana@teatro.com", logo: "" };
 
 test("a ficha da sala lida tem o formato do banco (vazio vira nulo)", () => {
   const leitura = lerFichaDaSala(sala);
@@ -29,9 +29,14 @@ test("o que o banco recusaria na ficha da sala a tela recusa antes", () => {
 test("a ficha do espaço lida e o que ela recusa", () => {
   const leitura = lerFichaDoEspaco(espaco);
   assert.ok(leitura.ok);
-  assert.deepEqual(leitura.ficha, { funcionamento: "Terça a domingo", acessibilidade: null, carga_descarga: "Doca nos fundos", doca_altura_m: 1.2, veiculo_max_m: 12, contato_nome: "Ana", contato_telefone: null, contato_email: "ana@teatro.com" });
-  for (const mudanca of [{ docaAltura: "21" }, { veiculoMax: "41" }, { contatoEmail: "sem-arroba" }, { contatoTelefone: "1".repeat(41) }, { funcionamento: "a".repeat(2001) }, { contatoNome: "a".repeat(201) }]) {
+  assert.deepEqual(leitura.ficha, { funcionamento: "Terça a domingo", acessibilidade: null, carga_descarga: "Doca nos fundos", doca_altura_m: 1.2, veiculo_max_m: 12, contato_nome: "Ana", contato_telefone: null, contato_email: "ana@teatro.com", logo_url: null });
+  for (const mudanca of [{ docaAltura: "21" }, { veiculoMax: "41" }, { contatoEmail: "sem-arroba" }, { contatoTelefone: "1".repeat(41) }, { funcionamento: "a".repeat(2001) }, { contatoNome: "a".repeat(201) }, { logo: "http://casa.com.br/logo.png" }, { logo: "https://casa.com.br/logo.webp" }, { logo: `https://casa.com.br/${"a".repeat(500)}.png` }]) {
     assert.equal(lerFichaDoEspaco({ ...espaco, ...mudanca }).ok, false, JSON.stringify(mudanca));
+  }
+  for (const logo of ["https://casa.com.br/logo.png", "https://casa.com.br/logo.JPEG", "https://casa.com.br/a/b/logo.jpg"]) {
+    const comLogo = lerFichaDoEspaco({ ...espaco, logo: ` ${logo} ` });
+    assert.ok(comLogo.ok, logo);
+    assert.equal(comLogo.ficha.logo_url, logo);
   }
 });
 

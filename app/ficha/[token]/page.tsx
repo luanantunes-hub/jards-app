@@ -56,6 +56,8 @@ export default async function FichaPeloLink({ params }: { params: Promise<{ toke
   return (
     <main className="min-h-screen bg-[#FAFAF9] px-4 py-8 sm:py-12 print:bg-white print:py-0">
       <div className="mx-auto w-full max-w-[44rem]">
+        {/* eslint-disable-next-line @next/next/no-img-element -- o logo é um endereço https que a casa cadastrou, de qualquer site: o otimizador do Next não serve */}
+        {documento.logoUrl && <img src={documento.logoUrl} alt="" className="mb-4 h-12 w-auto max-w-[14rem] object-contain" />}
         {organizacao && <p className="text-[0.6875rem] font-medium uppercase tracking-[.08em] text-black/45">{organizacao}</p>}
         <h1 className="mt-1 text-[1.5rem] font-semibold tracking-[-.02em] text-[#282525]">{documento.titulo}</h1>
         {documento.subtitulo && <p className="mt-0.5 text-[0.8125rem] text-black/55">{documento.subtitulo}</p>}
