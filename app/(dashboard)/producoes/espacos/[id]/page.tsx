@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { Download, Link2, Pencil } from "lucide-react";
 import { documentoDaFicha, logoParaOPdf } from "@/lib/producao/ficha-pdf";
+import { plantasDasSalas } from "@/lib/producao/planta-da-ficha";
 import { montarPdf } from "@/lib/producao/pdf-texto";
 import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationContext";
 import { createClient } from "@/lib/supabase/client";
@@ -70,7 +71,8 @@ export default function EspacoPage() {
 
   async function baixarPdf() {
     if (!espaco) return;
-    const documento = documentoDaFicha(espaco, fichaDoEspaco, salas.map(sala => ({ nome: sala.nome, capacidade: sala.capacidade, ficha: fichasDasSalas.get(sala.id) ?? null })),
+    const plantas = await plantasDasSalas(clienteDaProducao(createClient()), salas.map(sala => sala.id));
+    const documento = documentoDaFicha(espaco, fichaDoEspaco, salas.map(sala => ({ nome: sala.nome, capacidade: sala.capacidade, ficha: fichasDasSalas.get(sala.id) ?? null, planta: plantas.get(sala.id) ?? null })),
       equipamentosDaFicha(equipamentos).map(item => ({ nome: item.nome, quantidade: item.quantidade, sala: salas.find(sala => sala.id === item.sala_id)?.nome ?? null })));
     const bytes = await montarPdf(documento, await logoParaOPdf(documento.logoUrl));
     const link = document.createElement("a");

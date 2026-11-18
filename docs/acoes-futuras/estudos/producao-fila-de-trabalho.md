@@ -26,7 +26,7 @@ Ordem fixa. **Pega-se o primeiro lote aberto, faz-se, mescla-se com o teste verd
 
 | # | Lote | O que entra | Pronto quando |
 |---|---|---|---|
-| **L1** | Planta da sala no PDF da ficha | O desenho da planta (PD2.2) sai no PDF da ficha técnica, depois da seção da sala, a partir das medidas gravadas — sem depender do navegador. Fecha o PD3.5 | O PDF da ficha e a página `/ficha/[código]` mostram a planta de cada sala que tem uma |
+| ~~**L1**~~ | ~~Planta da sala no PDF da ficha~~ | **FEITO em 19/11/2026**: o PDF da ficha e a página `/ficha/[código]` mostram a planta mais recente de cada sala, com os objetos no lugar e girados. Fechou o PD3.5 | — |
 | **L2** | Linha do tempo por espaço e por temporada | Hoje o histórico não guarda o pai de cada registro. Coluna nova (`espaco_id`/`temporada_id` anuláveis) preenchida pelo gatilho, com os registros antigos atualizados uma vez, e filtro na página (PD8.4) | A linha do tempo filtra por espaço e por temporada |
 | **L3** | Desenho das obras na planta (PD8.5) | A expografia posiciona a obra na planta da sala (x, y), reaproveitando o editor da PD2.2, com a ordem de montagem | A planta mostra onde cada obra fica e a montagem é conferida pelo desenho |
 | **L4** | Relatório de retorno ao patrocinador (PD9.3) e comunicação por data (PD9.5) | Dentro do app, sem link para fora: números da sessão patrocinada, contrapartidas cumpridas, kit de imprensa e artes por data | A produção abre o retorno de um patrocinador e copia o texto |
@@ -40,7 +40,7 @@ Fora da fila, só com decisão do dono: PD6.6 (leitura de passagem por IA — pr
 
 ### Lotes fechados
 
-- **Fichas e links** (PD3.5): ficha por link em 17/11; logo do espaço na ficha, no PDF e na página pública em 19/11 (#321). Resta a planta, que é o L1.
+- **Fichas e links** (PD3.5): ficha por link em 17/11; logo do espaço em 19/11 (#321); planta da sala no PDF e na página pública em 19/11. **Fechado.**
 - **Acerto técnico II** (PD4.1, PD4.2): modelos por tipo de produção (#275) e "Pedir todas à casa" (#268), em 18/11. Resta o que depende do dono: anexos na resposta, mais de uma pessoa respondendo, lembrete por e-mail, campo numérico de camarim, luz e catering.
 - **Dinheiro I** (PD5.1, PD5.5): comprometido dos acordos e pago dos lançamentos no orçamento. Resta o que está no L8.
 - **Operação do dia I** (PD7.1, PD7.4): planilha do borderô (#267) e tela de palco por link (#274). Resta a porta sem internet, que é o L9.

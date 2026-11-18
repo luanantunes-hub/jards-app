@@ -3,13 +3,14 @@
 
 import type { DocumentoDoPdf, LogoDoPdf, SecaoDoPdf } from "@/lib/producao/pdf-texto";
 import { resumoDaFichaDaSala, type FichaDaSala, type FichaDoEspaco } from "@/lib/producao/ficha";
+import type { PlantaParaPdf } from "@/lib/producao/planta-desenho";
 
 const metros = (n: number | null | undefined) => (n == null ? null : `${n.toLocaleString("pt-BR")} m`);
 
 export type EspacoParaPdf = { nome: string; tipo: string; uf: string | null; endereco: string | null; capacidade: number | null };
-export type SalaParaPdf = { nome: string; capacidade: number | null; ficha: Partial<FichaDaSala> | null };
+export type SalaParaPdf = { nome: string; capacidade: number | null; ficha: Partial<FichaDaSala> | null; planta?: PlantaParaPdf | null };
 
-/** O documento: o espaço (com o contato, se houver) e uma seção por sala, só com o que está preenchido. */
+/** O documento: o espaço (com o contato, se houver) e uma seção por sala, só com o que está preenchido, com a planta da sala quando ela tem uma. */
 export function documentoDaFicha(espaco: EspacoParaPdf, ficha: Partial<FichaDoEspaco> | null, salas: readonly SalaParaPdf[], equipamentos: readonly { nome: string; quantidade: number; sala: string | null }[] = []): DocumentoDoPdf {
   const secoes: SecaoDoPdf[] = [];
   const doEspaco = [
@@ -25,7 +26,7 @@ export function documentoDaFicha(espaco: EspacoParaPdf, ficha: Partial<FichaDoEs
   for (const sala of salas) {
     const linhas = resumoDaFichaDaSala(sala.ficha ?? {});
     if (sala.ficha?.notas) linhas.push(`Notas: ${sala.ficha.notas}`);
-    secoes.push({ titulo: `${sala.nome}${sala.capacidade ? ` · ${sala.capacidade.toLocaleString("pt-BR")} lugares` : ""}`, linhas });
+    secoes.push({ titulo: `${sala.nome}${sala.capacidade ? ` · ${sala.capacidade.toLocaleString("pt-BR")} lugares` : ""}`, linhas, ...(sala.planta ? { planta: sala.planta } : {}) });
   }
 
   if (equipamentos.length > 0) {

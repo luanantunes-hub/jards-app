@@ -5,6 +5,7 @@ import { clienteDaProducao } from "@/lib/producao/cliente";
 import { equipamentosDaFicha } from "@/lib/producao/equipamentos";
 import { documentoDaFicha } from "@/lib/producao/ficha-pdf";
 import { fichaDoEspacoParaOLink } from "@/lib/producao/ficha";
+import { plantasDasSalas } from "@/lib/producao/planta-da-ficha";
 import type { DocumentoDoPdf } from "@/lib/producao/pdf-texto";
 import type { Database } from "@/lib/supabase/types";
 
@@ -49,8 +50,9 @@ export async function carregarFichaPublica(admin: Admin, codigo: string, agora =
   // O contato do espaço só sai se o link foi gerado com ele.
   const fichaDoEspaco = fichaDoEspacoParaOLink(ficha.data, link.incluir_contato);
   const nomeDaSala = new Map((salas.data ?? []).map(sala => [sala.id, sala.nome]));
+  const plantas = await plantasDasSalas(producao, salaIds);
   const documento = documentoDaFicha(
-    espaco.data, fichaDoEspaco, (salas.data ?? []).map(sala => ({ nome: sala.nome, capacidade: sala.capacidade, ficha: porSala.get(sala.id) ?? null })),
+    espaco.data, fichaDoEspaco, (salas.data ?? []).map(sala => ({ nome: sala.nome, capacidade: sala.capacidade, ficha: porSala.get(sala.id) ?? null, planta: plantas.get(sala.id) ?? null })),
     equipamentosDaFicha(equipamentos.data ?? []).map(item => ({ nome: item.nome, quantidade: item.quantidade, sala: item.sala_id ? nomeDaSala.get(item.sala_id) ?? null : null })),
   );
   return { situacao: "valido", documento, organizacao: (organizacao.data as { nome?: string | null } | null)?.nome ?? "", validoAte: link.expira_em };

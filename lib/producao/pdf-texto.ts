@@ -1,9 +1,11 @@
-// Um PDF simples só de texto (título, seções com linhas, rodapé), feito no navegador com pdf-lib e as fontes padrão
-// do PDF. Serve ao rider, à lista de canais e à energia. Sem rede e sem banco.
+// Um PDF simples de texto (título, seções com linhas, rodapé) e, quando a seção tem uma, o desenho da planta,
+// feito no navegador com pdf-lib e as fontes padrão do PDF. Serve ao rider, à lista de canais, à energia e à
+// ficha técnica do espaço. Sem rede e sem banco.
 
-import { PDFDocument, StandardFonts, rgb, type PDFFont } from "pdf-lib";
+import { PDFDocument, StandardFonts, degrees, rgb, type PDFFont } from "pdf-lib";
+import { desenhoDaPlanta, medidaDaPlanta, type PlantaParaPdf } from "@/lib/producao/planta-desenho";
 
-export type SecaoDoPdf = { titulo: string; linhas: string[] };
+export type SecaoDoPdf = { titulo: string; linhas: string[]; planta?: PlantaParaPdf };
 /** A imagem do topo (o logo de quem manda a ficha): os bytes e o formato, que o PDF só desenha em PNG ou JPEG. */
 export type LogoDoPdf = { bytes: Uint8Array; tipo: "png" | "jpg" };
 export type DocumentoDoPdf = { titulo: string; subtitulo?: string; secoes: SecaoDoPdf[]; rodape: string; logoUrl?: string };
@@ -30,6 +32,9 @@ export function quebrar(texto: string, fonte: PDFFont, tamanho: number, largura:
   if (atual) linhas.push(atual);
   return linhas.length > 0 ? linhas : [""];
 }
+
+/** A altura máxima da planta desenhada, em pontos (meia página útil). */
+const ALTURA_DA_PLANTA = 330;
 
 /** A altura máxima do logo no topo, em pontos (a largura segue a proporção da imagem). */
 const ALTURA_DO_LOGO = 40;
@@ -70,6 +75,31 @@ export async function montarPdf(documento: DocumentoDoPdf, logo?: LogoDoPdf): Pr
     } catch { /* segue sem o logo */ }
   }
 
+  /** O desenho da planta: a caixa da sala, cada objeto (girado, se for o caso) e o rótulo que couber dentro dele. */
+  const desenharPlanta = (planta: PlantaParaPdf) => {
+    const desenho = desenhoDaPlanta(planta, larguraUtil, ALTURA_DA_PLANTA);
+    garantir(desenho.altura + 26);
+    y -= 8 + desenho.altura;
+    const base = { x: MARGEM, y };
+    pagina.drawRectangle({ ...base, width: desenho.largura, height: desenho.altura, borderWidth: 1, borderColor: rgb(0.72, 0.72, 0.72), color: rgb(0.985, 0.985, 0.985) });
+    for (const forma of desenho.formas) {
+      pagina.drawRectangle({
+        x: base.x + forma.x, y: base.y + forma.y, width: forma.largura, height: forma.altura, rotate: degrees(forma.rotacao),
+        borderWidth: 0.75, borderColor: rgb(0.45, 0.42, 0.52), color: rgb(0.89, 0.87, 0.93), opacity: 0.85, borderOpacity: 1,
+      });
+    }
+    for (const forma of desenho.formas) {
+      const rotulo = textoSeguro(forma.rotulo, normal);
+      const tamanho = 6.5;
+      const largura = normal.widthOfTextAtSize(rotulo, tamanho);
+      // Rótulo que não cabe no objeto fica de fora: o desenho não vira uma mancha de letras.
+      if (largura > Math.max(forma.largura, forma.altura) - 2) continue;
+      pagina.drawText(rotulo, { x: base.x + forma.centroX - largura / 2, y: base.y + forma.centroY - tamanho / 3, size: tamanho, font: normal, color: rgb(0.2, 0.18, 0.24) });
+    }
+    y -= 2;
+    escrever(`${planta.nome} · ${medidaDaPlanta(planta)}`, normal, 8.5, { cor: [0.55, 0.55, 0.55], espaco: 2 });
+  };
+
   escrever(documento.titulo, negrito, 18, { espaco: 4 });
   if (documento.subtitulo) escrever(documento.subtitulo, normal, 10, { cor: [0.4, 0.4, 0.4], espaco: 10 });
   for (const secao of documento.secoes) {
@@ -78,8 +108,9 @@ export async function montarPdf(documento: DocumentoDoPdf, logo?: LogoDoPdf): Pr
     escrever(secao.titulo.toUpperCase(), negrito, 9.5, { cor: [0.35, 0.35, 0.35], espaco: 3 });
     pagina.drawLine({ start: { x: MARGEM, y: y + 2 }, end: { x: A4.largura - MARGEM, y: y + 2 }, thickness: 0.5, color: rgb(0.85, 0.85, 0.85) });
     y -= 4;
-    if (secao.linhas.length === 0) escrever("—", normal, 10.5, { cor: [0.55, 0.55, 0.55] });
+    if (secao.linhas.length === 0 && !secao.planta) escrever("—", normal, 10.5, { cor: [0.55, 0.55, 0.55] });
     for (const linha of secao.linhas) escrever(linha, normal, 10.5, { espaco: 1.5 });
+    if (secao.planta) desenharPlanta(secao.planta);
   }
 
   const paginas = pdf.getPages();
