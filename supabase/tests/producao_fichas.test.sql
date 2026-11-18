@@ -14,7 +14,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 
-select plan(23);
+select plan(25);
 
 create schema fi;
 grant usage on schema fi to authenticated, anon;
@@ -197,6 +197,13 @@ select is(array[
                 '23514 producao_sala_fichas_som_canais_check', '23514 producao_sala_fichas_luz_refletores_check', '23514 producao_sala_fichas_camarins_capacidade_check',
                 '23514 producao_sala_fichas_notas_check', '23514 producao_sala_fichas_energia_kva_check', '23514 sala_de_outra_organizacao', '23514 sala_nao_muda', '23514 organizacao_nao_muda'],
           'medidas, contato, canais, tensão, fases, espaço e sala da organização, e o que não muda');
+
+-- O logo da ficha (PD3.5): endereço https de PNG ou JPEG, até 500 letras.
+select is(fi.tenta(format('update public.producao_espaco_fichas set logo_url = %L where espaco_id = %L', 'https://casa.com.br/logo.png', fi.id('31'))), 'aceito', 'o logo aceita https de PNG');
+select is(array(select fi.tenta(format('update public.producao_espaco_fichas set logo_url = %L where espaco_id = %L', u, fi.id('31')))
+                from unnest(array['http://casa.com.br/logo.png', 'https://casa.com.br/logo.webp', 'https://casa.com.br/logo com espaco.png', 'https://casa.com.br/' || repeat('a', 500) || '.png']) as u),
+          array['23514 producao_espaco_fichas_logo_check', '23514 producao_espaco_fichas_logo_check', '23514 producao_espaco_fichas_logo_check', '23514 producao_espaco_fichas_logo_check'],
+          'o logo recusa http, outro formato, espaço no meio e endereço longo');
 
 select * from finish();
 rollback;

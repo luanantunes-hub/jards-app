@@ -20,7 +20,7 @@ Referência de produto: lista de Negociações.
 - `ListSearch`: busca com altura e foco padronizados.
 - `ListContent`: área rolável com espaçamento responsivo.
 - `ListTableSurface`: superfície comum das tabelas.
-- `PrimaryListAction`: ação de criação em roxo noite (`#1C0E33`), lisa e sem contorno; ao aparecer, um brilho passa uma vez por dentro e some (ver `DESIGN.md`). Uma por contexto.
+- `PrimaryListAction`: ação de criação em roxo noite (`#1C0E33`) com volume discreto (degradê, luz de 1px no topo, sombra curta), parada e sem contorno; quando abre uma folha que desce do topo, uma luz passa uma vez pela borda de cima da folha e some (ver `DESIGN.md`). Uma por contexto.
 - `SecondaryListAction`: ação de apoio ao lado da principal (copiar, exportar): branca, com borda e hover cinza.
 
 ## Variações permitidas

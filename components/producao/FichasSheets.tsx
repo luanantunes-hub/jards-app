@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { ImagePlus } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
@@ -11,6 +12,11 @@ const AREA = "w-full rounded border border-black/[.12] bg-white px-3 py-2.5 text
 const ROTULO = "mb-1.5 block text-[0.6875rem] font-medium text-black/55";
 const MINI = "mb-2 text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/45";
 const emTexto = (n: number | null | undefined) => (n === null || n === undefined ? "" : String(n).replace(".", ","));
+const BOTAO_LOGO = "inline-flex h-9 items-center gap-1.5 rounded border border-black/[.12] bg-white px-3 text-[0.75rem] font-medium text-black/65 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50";
+const BUCKET_DE_IMAGENS = "projetos-identidade";
+const LIMITE_DO_LOGO = 2 * 1024 * 1024;
+// Só PNG e JPEG: são os formatos que o PDF da ficha sabe desenhar.
+const EXTENSAO_DO_LOGO: Record<string, string> = { "image/png": "png", "image/jpeg": "jpg" };
 
 function Rodape({ fechar, salvando, onSalvar }: { fechar: () => void; salvando: boolean; onSalvar: () => void }) {
   return (
@@ -25,7 +31,7 @@ function Erro({ texto }: { texto: string | null }) {
   return texto ? <p role="alert" className="rounded border bg-white px-3 py-2 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{texto}</p> : null;
 }
 
-/** A ficha do espaço: funcionamento, acessibilidade, carga e descarga e o contato de quem cuida. */
+/** A ficha do espaço: logo, funcionamento, acessibilidade, carga e descarga e o contato de quem cuida. */
 export function FichaDoEspacoSheet({ organizationId, espacoId, ficha, onClose, onSaved }: { organizationId: string; espacoId: string; ficha: Partial<FichaDoEspaco> | null; onClose: () => void; onSaved: () => void }) {
   const [funcionamento, setFuncionamento] = useState(ficha?.funcionamento ?? "");
   const [acessibilidade, setAcessibilidade] = useState(ficha?.acessibilidade ?? "");
@@ -35,11 +41,29 @@ export function FichaDoEspacoSheet({ organizationId, espacoId, ficha, onClose, o
   const [contatoNome, setContatoNome] = useState(ficha?.contato_nome ?? "");
   const [contatoTelefone, setContatoTelefone] = useState(ficha?.contato_telefone ?? "");
   const [contatoEmail, setContatoEmail] = useState(ficha?.contato_email ?? "");
+  const [logo, setLogo] = useState(ficha?.logo_url ?? "");
+  const [enviando, setEnviando] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const entradaDoLogo = useRef<HTMLInputElement>(null);
+
+  /** Envia a imagem para o armazenamento público de imagens e põe o endereço dela no campo (o endereço continua podendo ser digitado). */
+  async function enviarLogo(arquivo: File) {
+    setErro(null);
+    const extensao = EXTENSAO_DO_LOGO[arquivo.type];
+    if (!extensao) { setErro("O logo precisa ser uma imagem PNG ou JPEG."); return; }
+    if (arquivo.size > LIMITE_DO_LOGO) { setErro("O logo passa de 2 MB."); return; }
+    setEnviando(true);
+    const supabase = createClient();
+    const caminho = `${organizationId}/producao-espacos/${crypto.randomUUID()}.${extensao}`;
+    const { error } = await supabase.storage.from(BUCKET_DE_IMAGENS).upload(caminho, arquivo, { contentType: arquivo.type, upsert: false });
+    setEnviando(false);
+    if (error) { setErro("Não foi possível enviar o logo. Tente de novo."); return; }
+    setLogo(supabase.storage.from(BUCKET_DE_IMAGENS).getPublicUrl(caminho).data.publicUrl);
+  }
 
   async function salvar(fechar: () => void) {
-    const leitura = lerFichaDoEspaco({ funcionamento, acessibilidade, cargaDescarga, docaAltura, veiculoMax, contatoNome, contatoTelefone, contatoEmail });
+    const leitura = lerFichaDoEspaco({ funcionamento, acessibilidade, cargaDescarga, docaAltura, veiculoMax, contatoNome, contatoTelefone, contatoEmail, logo });
     if (!leitura.ok) { setErro(leitura.erro); return; }
     setSalvando(true);
     setErro(null);
@@ -60,6 +84,17 @@ export function FichaDoEspacoSheet({ organizationId, espacoId, ficha, onClose, o
         <div className="grid grid-cols-2 gap-3">
           <div><label className={ROTULO} htmlFor="esp-doca">Altura da doca (m)</label><input id="esp-doca" inputMode="decimal" className={CAMPO} value={docaAltura} onChange={event => setDocaAltura(event.target.value)} disabled={salvando} /></div>
           <div><label className={ROTULO} htmlFor="esp-veiculo">Veículo máximo (m de comprimento)</label><input id="esp-veiculo" inputMode="decimal" className={CAMPO} value={veiculoMax} onChange={event => setVeiculoMax(event.target.value)} disabled={salvando} /></div>
+        </div>
+        <div>
+          <p className={MINI}>Logo do espaço</p>
+          <div className="flex flex-wrap items-end gap-3">
+            {/* eslint-disable-next-line @next/next/no-img-element -- o logo é um endereço https que a produção cadastrou, de qualquer site: o otimizador do Next não serve */}
+            {logo && <img src={logo} alt="" className="h-10 w-auto max-w-[9rem] rounded border border-black/[.08] bg-white object-contain p-1" />}
+            <div className="min-w-0 flex-1 basis-56"><label className={ROTULO} htmlFor="esp-logo">Endereço da imagem (PNG ou JPEG)</label><input id="esp-logo" inputMode="url" className={CAMPO} value={logo} onChange={event => setLogo(event.target.value)} maxLength={500} disabled={salvando || enviando} placeholder="https://…" /></div>
+            <button type="button" onClick={() => entradaDoLogo.current?.click()} disabled={salvando || enviando} className={BOTAO_LOGO}><ImagePlus size={13} aria-hidden="true" /> {enviando ? "Enviando…" : "Enviar imagem"}</button>
+            {logo && <button type="button" onClick={() => setLogo("")} disabled={salvando || enviando} className={BOTAO_LOGO}>Tirar</button>}
+            <input ref={entradaDoLogo} type="file" accept="image/png,image/jpeg" className="sr-only" tabIndex={-1} aria-hidden="true" onChange={event => { const escolhido = event.target.files?.[0]; event.target.value = ""; if (escolhido) void enviarLogo(escolhido); }} />
+          </div>
         </div>
         <div>
           <p className={MINI}>Contato de quem cuida do espaço</p>

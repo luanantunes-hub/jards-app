@@ -72,8 +72,10 @@ Princípios:
 
 Criar ou iniciar o objeto principal da página ("Novo projeto", "Nova data") usa `PrimaryListAction`, de `components/list/ListPagePrimitives.tsx`: roxo noite `#1C0E33`, o mesmo do hero da landing, com texto branco e `h-9`.
 
-- em repouso o botão é liso, só o roxo noite. Ao aparecer, faz uma única animação: duas luzes violeta passam por dentro (5s e 6,5s, uma um pouco depois da outra, em caminhos diferentes) e somem, deixando o botão no roxo noite. Não repete enquanto o botão estiver na tela. É só `transform` e `opacity`, fica presa ao botão e não existe com `prefers-reduced-motion`. Está na classe `.acao-principal`, em `app/globals.css`; o botão não leva cor nem animação própria;
-- sem contorno em volta. Hover e foco do teclado clareiam o fundo (`#2D1A53`); o foco ainda abre um brilho embaixo do botão, e o contorno só aparece no modo de alto contraste do sistema;
+- volume discreto: degradê de cima para baixo em torno do roxo noite (`#28164B` → `#1C0E33` → `#160A2A`), uma linha de luz de 1px no topo, uma de sombra na base e uma sombra curta tingida de roxo noite, que descola o botão da página. Sem borda;
+- o brilho violeta não fica no botão. Quando o clique abre uma folha que desce do topo, uma luz passa uma vez pela borda de cima dela, da esquerda para a direita, e some: começa aos 160ms, junto com o fim da descida, e usa a mesma curva da folha. É uma faixa fixa no topo da tela, na largura da folha, montada pelo `PrimaryListAction` (`.brilho-da-folha` em `app/globals.css`, escolha da folha em `lib/brilho-da-folha.ts`). Folha que sobe de baixo, modal no meio da tela ou clique que não abre folha: sem brilho. Não aparece com `prefers-reduced-motion`;
+- o botão fica parado: sem animação ao carregar a página e sem movimento no hover, que só clareia um tom, na hora. Ao pressionar, afunda (sombra por dentro);
+- sem contorno em volta. O foco do teclado clareia como o hover e abre um brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema;
 - uma ação principal por contexto. Quando há duas lado a lado, a principal é roxo noite e a outra é `SecondaryListAction`: botão branco com borda leve e hover cinza;
 - nas demais telas (autenticação, links públicos, assistentes), a ação principal segue em tinta:
 
@@ -202,7 +204,7 @@ Use os primitivos de `components/ui/DetailPagePrimitives.tsx` para manter:
 - transições comuns: 160–240ms;
 - animar `transform` e `opacity`, evitando propriedades de layout;
 - respeitar `prefers-reduced-motion`;
-- exceção deliberada: o botão de ação principal faz uma única animação ao aparecer (um brilho que passa e some), para a ação principal ser vista de relance; depois fica parado e liso, e a animação não existe com `prefers-reduced-motion`;
+- exceção deliberada: a folha aberta pelo botão de criar ganha uma luz que passa uma vez pela borda de cima e some, para ligar o clique à folha; não aparece com `prefers-reduced-motion`;
 - movimento deve indicar conexão, continuidade ou mudança de estado;
 - foco por teclado é obrigatório;
 - ícones sem label visível precisam de `aria-label` ou `title`;
