@@ -267,7 +267,6 @@ function mondayOf(date: Date): Date {
 // Semana e dia mostram a grade de horários; o mês vira um painel com os números do período.
 const HORA_REM = 3; // altura de uma hora na grade
 const DIAS_DA_SEMANA = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-const ESCALA_KEY = "jards-atividades-escala";
 
 // Follow-ups e pedidos do captador têm só o dia: ficam na faixa "Sem horário".
 function intervaloNaGrade(a: AtividadeRow) {
@@ -302,15 +301,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew, onReagendar }: 
   const agora = useAgora();
   const hoje = isoLocal(agora);
 
-  useEffect(() => {
-    const salva = localStorage.getItem(ESCALA_KEY);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (salva === "dia" || salva === "semana" || salva === "mes") setScale(salva);
-  }, []);
-  const mudarEscala = (escala: CalendarScale) => {
-    setScale(escala);
-    try { localStorage.setItem(ESCALA_KEY, escala); } catch { /* preferência só deste navegador */ }
-  };
+  const mudarEscala = (escala: CalendarScale) => setScale(escala);
 
   const filtered = useMemo(() => tipoFilter === "todos" ? atividades : atividades.filter(a => a.tipo === tipoFilter), [atividades, tipoFilter]);
   const byDate = useMemo(() => {
@@ -1858,9 +1849,8 @@ export default function AtividadesPage() {
   const [loadingAll,    setLoadingAll]       = useState(false);
   const [tab,           setTab]              = useState<Tab>("pendentes");
   const [tipoFilter,    setTipoFilter]       = useState<TipoFilter>("todos");
-  // A primeira renderização precisa ser idêntica no servidor e no navegador.
-  // A preferência local é restaurada depois da hidratação.
-  const [viewMode, setViewMode] = useState<ViewMode>("lista");
+  // A página sempre abre no calendário, na semana; trocar de visualização vale só enquanto ela está aberta.
+  const [viewMode, setViewMode] = useState<ViewMode>("calendario");
   const [showNovaAtividade, setShowNovaAtividade] = useState(false);
   const [novaPrefill,       setNovaPrefill]       = useState<{ date: string; hora?: string } | undefined>(undefined);
   const [editingId,         setEditingId]         = useState<string | null>(null);
@@ -1917,12 +1907,6 @@ export default function AtividadesPage() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
   useEffect(() => { if (viewMode !== "lista") fetchAll(); }, [viewMode, fetchAll]);
-  useEffect(() => {
-    const savedView = localStorage.getItem("jards-atividades-view");
-    if (savedView === "calendario" || savedView === "gantt" || savedView === "carga" || savedView === "lista") {
-      setViewMode(savedView);
-    }
-  }, []);
 
   async function toggleFeita(id: string, current: boolean) {
     if (savingActivityId) return;
@@ -2079,7 +2063,6 @@ export default function AtividadesPage() {
 
   function changeView(v: ViewMode) {
     setViewMode(v);
-    localStorage.setItem("jards-atividades-view", v);
   }
 
   // O filtro por responsável vale para a lista, o calendário, o Gantt e a carga da equipe.
