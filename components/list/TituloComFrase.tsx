@@ -2,24 +2,18 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Fraunces } from "next/font/google";
-import localFont from "next/font/local";
+import { Gloock } from "next/font/google";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
 import { escolherFrase } from "@/lib/saudacao";
 import { FRASES_DAS_SECOES, ilustracaoDoDia, type SecaoComFrase } from "@/lib/frases-das-secoes";
 
-// Teste da GT Super Display: o site não carrega o arquivo da fonte (a versão é de avaliação);
-// usa a fonte instalada no computador de quem abre. Sem ela instalada, vale a Fraunces em negrito.
-// O painel (SaudacaoPainel) usa as mesmas três constantes: uma voz só para todas as frases.
-export const fonteDaFrase = Fraunces({ subsets: ["latin"], weight: ["700"], variable: "--font-frase-secao" });
-// TESTE TEMPORÁRIO (pedido do Luan, 18/11/2026): o arquivo de avaliação da GT Super vai junto com o site para
-// todos verem. Desenha as letras acentuadas sem acento. Tirar este bloco e app/fonts/GT-Super-Display-Bold-Trial.otf
-// ao fim do teste (ou trocar pelo arquivo licenciado).
-const gtSuperTeste = localFont({ src: "../../app/fonts/GT-Super-Display-Bold-Trial.otf", weight: "700", variable: "--font-gt-super-teste" });
-export const VARIAVEIS_DA_FRASE = `${fonteDaFrase.variable} ${gtSuperTeste.variable}`;
-export const FAMILIA_DA_FRASE = 'var(--font-gt-super-teste), "GT Super Ds Trial", "GT Super Display", var(--font-frase-secao), Georgia, serif';
-export const CLASSE_DA_FRASE = "text-[1.625rem] font-bold leading-[1.08] tracking-[-.02em] sm:text-[1.875rem]";
+// A voz das frases (painel e seções): Gloock, serifa de alto contraste com peso de manchete.
+// Tem um único peso (400), já pesado: a classe usa font-normal para o navegador não engrossar de mentira.
+const gloock = Gloock({ subsets: ["latin", "latin-ext"], weight: "400", variable: "--font-frase" });
+export const VARIAVEIS_DA_FRASE = gloock.variable;
+export const FAMILIA_DA_FRASE = "var(--font-frase), Georgia, serif";
+export const CLASSE_DA_FRASE = "text-[1.625rem] font-normal leading-[1.08] tracking-[-.01em] sm:text-[1.875rem]";
 const FAMILIA = FAMILIA_DA_FRASE;
 const FONTE_FRASE = CLASSE_DA_FRASE;
 
