@@ -27,7 +27,7 @@ Ordem fixa. **Pega-se o primeiro lote aberto, faz-se, mescla-se com o teste verd
 | # | Lote | O que entra | Pronto quando |
 |---|---|---|---|
 | ~~**L1**~~ | ~~Planta da sala no PDF da ficha~~ | **FEITO em 19/11/2026**: o PDF da ficha e a página `/ficha/[código]` mostram a planta mais recente de cada sala, com os objetos no lugar e girados. Fechou o PD3.5 | — |
-| **L2** | Linha do tempo por espaço e por temporada | Hoje o histórico não guarda o pai de cada registro. Coluna nova (`espaco_id`/`temporada_id` anuláveis) preenchida pelo gatilho, com os registros antigos atualizados uma vez, e filtro na página (PD8.4) | A linha do tempo filtra por espaço e por temporada |
+| ~~**L2**~~ | ~~Linha do tempo por espaço e por temporada~~ | **FEITO em 19/11/2026**: `espaco_id` e `temporada_id` no histórico, achados por `fn_producao_pai` (sobe a árvore sem configuração por tabela), linhas antigas preenchidas e os dois filtros na página | — |
 | **L3** | Desenho das obras na planta (PD8.5) | A expografia posiciona a obra na planta da sala (x, y), reaproveitando o editor da PD2.2, com a ordem de montagem | A planta mostra onde cada obra fica e a montagem é conferida pelo desenho |
 | **L4** | Relatório de retorno ao patrocinador (PD9.3) e comunicação por data (PD9.5) | Dentro do app, sem link para fora: números da sessão patrocinada, contrapartidas cumpridas, kit de imprensa e artes por data | A produção abre o retorno de um patrocinador e copia o texto |
 | **L5** | Portais do patrocinador (PD9.2) e do artista (PD9.4) | Link sem conta, como os outros links públicos. **Antes de construir, escrever o desenho em um parágrafo no PR** (expõe dado a terceiro) | O parceiro abre o portal e vê só o que é dele |
@@ -45,7 +45,7 @@ Fora da fila, só com decisão do dono: PD6.6 (leitura de passagem por IA — pr
 - **Dinheiro I** (PD5.1, PD5.5): comprometido dos acordos e pago dos lançamentos no orçamento. Resta o que está no L8.
 - **Operação do dia I** (PD7.1, PD7.4): planilha do borderô (#267) e tela de palco por link (#274). Resta a porta sem internet, que é o L9.
 - **Logística II** (PD6.3, PD6.4, PD6.8, PD6.12): tipo de cama, valor do abastecimento, onde cada item está e foto na conferência (#270, #271, #272). Resta a fila offline, que é o L9.
-- **Programação III** (PD8.1, PD12.3): arrastar entre salas (#273) e logo da marca por envio. Resta o que está no L2 e no L3; as marcas dos patrocinadores do CRM dependem de a organização ter os dois módulos.
+- **Programação III** (PD8.1, PD8.4, PD12.3): arrastar entre salas (#273), logo da marca por envio e a linha do tempo por espaço e por temporada (19/11). Resta o que está no L3; as marcas dos patrocinadores do CRM dependem de a organização ter os dois módulos.
 - **Site público** (PD12.1 a PD12.3): o que está na main fica como está. **O site vai para a Ticketeria** (fase T1 do plano dela, decisão de 18/11): quem for mexer no site trabalha lá, não aqui.
 
 ## Bloqueados pelo dono (não começar)

@@ -577,6 +577,8 @@ export type BancoDaProducao = {
           depois: string | null;
           quem: string | null;
           quando: string;
+          espaco_id: string | null;
+          temporada_id: string | null;
         };
         // O id é gerado pelo banco (identity always): nunca se manda. Quem grava é o gatilho.
         Insert: {
@@ -590,6 +592,8 @@ export type BancoDaProducao = {
           depois?: string | null;
           quem?: string | null;
           quando?: string;
+          espaco_id?: string | null;
+          temporada_id?: string | null;
         };
         Update: {
           id?: never;
@@ -602,6 +606,8 @@ export type BancoDaProducao = {
           depois?: string | null;
           quem?: string | null;
           quando?: string;
+          espaco_id?: string | null;
+          temporada_id?: string | null;
         };
         Relationships: [
           {
