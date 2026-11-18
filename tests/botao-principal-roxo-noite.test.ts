@@ -36,7 +36,7 @@ test("a ação principal é o roxo noite do hero (#1C0E33), com texto branco, de
   const botao = acao("PrimaryListAction");
   assert.ok(botao.includes("acao-principal"), "PrimaryListAction usa a classe .acao-principal");
   assert.ok(botao.includes("text-white"));
-  assert.ok(!/bg-white|border-black/.test(botao), "o botão principal não é mais o branco com borda");
+  assert.ok(!/bg-white|border-black/.test(botao), "o botão principal não é o branco com borda");
 });
 
 test("em repouso tem volume discreto: degradê em torno do roxo noite, luz de 1px no topo e sombra curta tingida de roxo noite", () => {
@@ -49,40 +49,23 @@ test("em repouso tem volume discreto: degradê em torno do roxo noite, luz de 1p
   assert.doesNotMatch(base, /border(-color)?:/, "sem borda");
 });
 
-test("o brilho é uma animação só: roda uma vez, nasce e termina apagado, e o botão volta ao roxo noite", () => {
-  assert.match(regra(".acao-principal::before,\n.acao-principal::after"), /opacity:\s*0;/, "em repouso as luzes estão apagadas");
-  const luzA = regra(".acao-principal::before");
-  const luzB = regra(".acao-principal::after");
-  assert.match(luzA, /animation:\s*acao-brilho-a\s+5s\s+ease-in-out\s+both;/);
-  assert.match(luzB, /animation:\s*acao-brilho-b\s+6\.5s\s+ease-in-out\s+\.3s\s+both;/);
-  assert.doesNotMatch(luzA + luzB, /infinite/, "não repete");
-  for (const nome of ["acao-brilho-a", "acao-brilho-b"]) {
-    const corpo = quadros(nome);
-    assert.match(corpo, /(^|\n)\s*0%\s*\{[^}]*opacity:\s*0;/, `${nome} começa apagada`);
-    assert.match(corpo, /(^|\n)\s*100%\s*\{[^}]*opacity:\s*0;/, `${nome} termina apagada`);
-    assert.match(corpo, /transform:/, `${nome} anda com transform`);
-    assert.doesNotMatch(corpo, /\b(top|left|right|bottom|width|height|margin|padding)\s*:/, `${nome} não anima propriedade de layout`);
-  }
-});
-
-test("quem pede menos movimento recebe o botão sem animação e sem subir no hover", () => {
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.acao-principal::before,\s*\.acao-principal::after\s*\{\s*animation:\s*none;?\s*\}\s*\}/);
-  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.acao-principal:hover\s*\{\s*translate:\s*none;?\s*\}\s*\}/);
-});
-
-test("hover sobe 1px e clareia para o violeta; pressionar afunda; desativado fica chapado", () => {
+test("o botão fica parado: sem brilho próprio, sem animação e sem subir no hover; só clareia um tom, na hora", () => {
+  assert.doesNotMatch(css, /\.acao-principal::(before|after)/, "o brilho não fica mais no botão");
+  assert.doesNotMatch(css, /@keyframes acao-brilho/);
   const hover = regra(".acao-principal:hover");
-  assert.match(hover, /translate:\s*0 -1px/);
-  assert.match(hover, /inset 0 0 0 999px rgba\(142, 99, 245, \.12\)/, "clareia para o violeta");
-  const pressionado = regra(".acao-principal:active");
-  assert.match(pressionado, /translate:\s*0 0/);
-  assert.match(pressionado, /inset 0 1px 3px rgba\(0, 0, 0, \.4\)/, "sombra por dentro");
-  const desativado = regra(".acao-principal:disabled");
-  assert.match(desativado, /translate:\s*none/);
-  assert.match(desativado, /box-shadow:\s*none/);
+  assert.doesNotMatch(hover, /translate|transform/, "não sobe");
+  assert.match(hover, /inset 0 0 0 999px rgba\(142, 99, 245, \.1\)/, "clareia um tom");
+  const botao = acao("PrimaryListAction");
+  assert.match(botao, /transition-transform/, "só o pressionar tem transição");
+  assert.doesNotMatch(botao.replace(/transition-transform/g, ""), /\btransition\b/, "o hover não anima");
 });
 
-test("sem contorno em volta: o foco clareia como o hover, abre um brilho embaixo e o contorno só aparece no alto contraste", () => {
+test("pressionar afunda; desativado fica chapado", () => {
+  assert.match(regra(".acao-principal:active"), /inset 0 1px 3px rgba\(0, 0, 0, \.4\)/, "sombra por dentro");
+  assert.match(regra(".acao-principal:disabled"), /box-shadow:\s*none/);
+});
+
+test("sem contorno em volta: o foco clareia, abre um brilho embaixo e o contorno só aparece no alto contraste", () => {
   const foco = regra(".acao-principal:focus-visible");
   assert.match(foco, /outline:\s*2px solid transparent/);
   assert.match(foco, /inset 0 0 0 999px rgba\(142, 99, 245, \.12\)/);
@@ -91,7 +74,30 @@ test("sem contorno em volta: o foco clareia como o hover, abre um brilho embaixo
   assert.ok(!/focus-visible:outline/.test(acao("PrimaryListAction")), "o botão principal não leva anel de foco por classe");
 });
 
-test("a ação de apoio continua branca, com borda leve", () => {
+test("o brilho vai para a folha: faixa fixa no topo, por cima dela, sem pegar clique, uma passada só", () => {
+  const faixa = regra(".brilho-da-folha");
+  assert.match(faixa, /position:\s*fixed/);
+  assert.match(faixa, /top:\s*0/);
+  assert.match(faixa, /z-index:\s*60/, "acima das folhas (z-50)");
+  assert.match(faixa, /pointer-events:\s*none/);
+  assert.match(regra(".brilho-da-folha::after"), /animation:\s*brilho-da-folha-passa 900ms cubic-bezier\(\.32, \.72, 0, 1\) 160ms both/, "mesma curva da folha, depois da descida");
+  const corpo = quadros("brilho-da-folha-passa");
+  assert.match(corpo, /(^|\n)\s*0%\s*\{[^}]*opacity:\s*0;/, "começa apagada");
+  assert.match(corpo, /(^|\n)\s*100%\s*\{[^}]*opacity:\s*0;/, "termina apagada");
+  assert.match(corpo, /translateX/, "passa de um lado ao outro");
+  assert.doesNotMatch(corpo, /\b(top|left|right|bottom|width|height|margin|padding)\s*:/, "não anima propriedade de layout");
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.brilho-da-folha\s*\{\s*display:\s*none;?\s*\}\s*\}/);
+});
+
+test("o clique do botão principal acha a folha que abriu e acende a faixa na largura dela", () => {
+  const botao = acao("PrimaryListAction");
+  for (const trecho of ["createPortal", "brilho-da-folha", "folhaQueDesceuDoTopo", '[role="dialog"]', "getBoundingClientRect", "DURACAO_DO_BRILHO_MS"]) {
+    assert.ok(botao.includes(trecho), `PrimaryListAction precisa de ${trecho}`);
+  }
+});
+
+test("a ação de apoio continua branca, com borda leve e hover animado", () => {
   const apoio = acao("SecondaryListAction");
   assert.ok(apoio.includes("bg-white") && apoio.includes("border-black/12"));
+  assert.match(apoio, /\btransition\b/);
 });
