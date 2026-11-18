@@ -17,16 +17,16 @@ Princípios:
 
 | Token | Cor | Uso |
 |---|---|---|
-| Tinta (grafite quente) | `#282525` | texto e ações principais |
+| Tinta (grafite quente) | `#282525` | texto; preenchimento escuro só fora do app (landing, páginas públicas, autenticação) |
 | Roxo Jards | `#684DB0` / `#7259B5` | navegação, seleção e identidade |
-| Roxo noite | `#1C0E33` | hero da landing e ação principal de página (botões de criar) |
+| Roxo noite | `#1C0E33` | hero da landing e todo preenchimento escuro dentro do app: botões, item ativo, dicas, selos (hover `#2D1A53`) |
 | Coral Jards | `#D94A4A` | marca, atenção e prioridade alta |
 | Verde | `#2E8932` | salvar, confirmar e sucesso |
 | Azul | `#2D72B0` | informação e estados auxiliares |
 | Âmbar | `#B07A14` | atenção moderada e prioridade média |
 | Teal | `#1A8B7A` | relacionamento e sinais positivos |
 
-- o preto do Jards é o grafite quente `#282525`, na landing, nas páginas públicas e no app; não usar `#000` nem `#0D0D0D` sólidos. Cinzas e bordas continuam em preto com baixa opacidade;
+- o texto do Jards é o grafite quente `#282525`. Dentro do app (a parte logada, incluindo o admin), todo preenchimento escuro é o roxo noite `#1C0E33`, com hover `#2D1A53`: botões, item ativo do menu, abas e chips selecionados, interruptor ligado, dicas, selos de contagem e avatares. Na landing, nas páginas públicas, na autenticação e na tela de palco, o preenchimento escuro segue em grafite. Gráficos ficam em grafite (roxo não é cor de dado). Não usar `#000`, `#0D0D0D`, `#171717` nem `#1a1a1a` sólidos. Cinzas e bordas continuam em preto com baixa opacidade;
 - fundos são brancos ou neutros levemente tingidos;
 - **nunca tom sobre tom**: texto ou ícone colorido não fica sobre fundo claro da mesma cor (roxo sobre lilás, verde sobre verde-claro). A cor fica no texto, no ícone ou numa borda fina, sobre branco ou cinza neutro (`bg-black/[.04]`); quando precisa de peso, usa preenchimento sólido com texto branco;
 - passar o mouse, item selecionado, dia de hoje e linha arrastada usam cinza neutro, nunca a cor da marca diluída;
@@ -77,11 +77,13 @@ Criar ou iniciar o objeto principal da página ("Novo projeto", "Nova data") usa
 - o botão fica parado: sem animação ao carregar a página e sem movimento no hover, que só clareia um tom, na hora. Ao pressionar, afunda (sombra por dentro);
 - sem contorno em volta. O foco do teclado clareia como o hover e abre um brilho embaixo do botão; o contorno só aparece no modo de alto contraste do sistema;
 - uma ação principal por contexto. Quando há duas lado a lado, a principal é roxo noite e a outra é `SecondaryListAction`: botão branco com borda leve e hover cinza;
-- nas demais telas (autenticação, links públicos, assistentes), a ação principal segue em tinta:
+- os outros botões escuros do app (modais, assistentes, páginas de detalhe) são roxo noite liso:
 
 ```tsx
-className="rounded bg-[#282525] px-4 py-2.5 text-white hover:bg-[#3A3535]"
+className="rounded bg-[#1C0E33] px-4 py-2.5 text-white hover:bg-[#2D1A53]"
 ```
+
+- na autenticação e nos links públicos, a ação principal segue em tinta: `bg-[#282525]` com hover `bg-[#3A3535]`.
 
 ### Salvar ou confirmar
 

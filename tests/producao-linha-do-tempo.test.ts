@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readdir, readFile } from "node:fs/promises";
 import test from "node:test";
 import { fraseDoHistorico, rotuloDaEntidade } from "../lib/producao/historico";
-import { nomeDeQuemFez, pessoasDoFiltro, agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, recortarPagina, TAMANHO_DA_PAGINA } from "../lib/producao/linha-do-tempo";
+import { paisDoFiltro, nomeDeQuemFez, pessoasDoFiltro, agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, recortarPagina, TAMANHO_DA_PAGINA } from "../lib/producao/linha-do-tempo";
 
 /** As tabelas da produção com gatilho de histórico, lidas das migrations (uma tabela nova sem área nem frase reprova aqui). */
 async function tabelasComHistorico(): Promise<string[]> {
@@ -74,4 +74,12 @@ test("quem fez: o nome vem dos membros da organização; sem quem, ou de quem sa
 test("o filtro por pessoa lista só quem tem nome, em ordem alfabética", () => {
   const membros = [{ user_id: "u3", full_name: "Zé Lima" }, { user_id: "u2", full_name: null }, { user_id: "u1", full_name: "Ana Souza" }, { user_id: "u4", full_name: "   " }];
   assert.deepEqual(pessoasDoFiltro(membros), [{ id: "u1", nome: "Ana Souza" }, { id: "u3", nome: "Zé Lima" }]);
+});
+
+test("os pais do filtro: só quem tem nome, em ordem alfabética", () => {
+  assert.deepEqual(
+    paisDoFiltro([{ id: "b", nome: " Teatro Zabumba " }, { id: "a", nome: null }, { id: "c", nome: "  " }, { id: "d", nome: "Arena" }]),
+    [{ id: "d", nome: "Arena" }, { id: "b", nome: "Teatro Zabumba" }],
+  );
+  assert.deepEqual(paisDoFiltro([]), []);
 });

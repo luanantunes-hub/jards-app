@@ -178,7 +178,7 @@ export default function SiteDaLojaPage() {
           <button type="button" disabled={salvando} onClick={() => void atualizar({ situacao: site.situacao === "publicado" ? "rascunho" : "publicado" })}
             className={site.situacao === "publicado"
               ? "inline-flex h-10 items-center rounded border border-black/[.12] px-4 text-[0.75rem] font-medium text-black/60 transition hover:bg-black/[.04] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"
-              : "inline-flex h-10 items-center rounded bg-[#282525] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"}>
+              : "inline-flex h-10 items-center rounded bg-[#1C0E33] px-4 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] disabled:opacity-50"}>
             {site.situacao === "publicado" ? "Tirar do ar" : "Pôr o site no ar"}
           </button>
         ) : undefined}

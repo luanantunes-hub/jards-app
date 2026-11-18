@@ -612,7 +612,7 @@ export function NovaInscricaoModal({ onClose, onSaved, nomePreEmpresa, empresaPr
                             onClick={() => trocarResponsavelTipo(tipo)}
                             className="flex items-center gap-1.5 border-r px-3 py-1.5 text-[0.625rem] font-semibold last:border-r-0"
                             style={responsavelTipo === tipo
-                              ? { background: "#282525", color: "#fff", borderColor: "#282525" }
+                              ? { background: "#1C0E33", color: "#fff", borderColor: "#1C0E33" }
                               : { background: "#fff", color: "rgba(13,13,13,.45)", borderColor: "rgba(13,13,13,.12)" }}
                           >
                             {tipo === "agencia" ? <Building2 size={12} /> : <Users size={12} />}

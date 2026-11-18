@@ -73,3 +73,13 @@ export function pessoasDoFiltro(membros: readonly MembroDaLinhaDoTempo[]): { id:
     .map(membro => ({ id: membro.user_id, nome: membro.full_name.trim() }))
     .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
 }
+
+export type PaiDaLinhaDoTempo = { id: string; nome: string };
+
+/** Os espaços ou as temporadas do filtro: só os que têm nome, em ordem alfabética. */
+export function paisDoFiltro(registros: readonly { id: string; nome: string | null }[]): PaiDaLinhaDoTempo[] {
+  return registros
+    .filter((registro): registro is PaiDaLinhaDoTempo => Boolean(registro.nome?.trim()))
+    .map(registro => ({ id: registro.id, nome: registro.nome.trim() }))
+    .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+}

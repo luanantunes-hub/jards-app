@@ -576,7 +576,7 @@ const { data: perfilData } = await (supabase as any)
                   aria-current={active ? "page" : undefined}
                   className={`group flex min-w-[11.125rem] md:min-w-0 w-full items-center gap-3 rounded px-3 py-3 text-left transition-colors active:scale-[0.98] ${
                     active
-                      ? "bg-[#282525] text-white"
+                      ? "bg-[#1C0E33] text-white"
                       : "text-black/50 hover:bg-black/[0.04] hover:text-[#282525]"
                   }`}
                 >

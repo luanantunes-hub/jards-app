@@ -164,7 +164,7 @@ export function PrimeirosPassosCard({ passos, onOcultar, ocultando = false, erro
               <p className="mt-1 text-[1.125rem] font-semibold tracking-[-.015em] text-[#282525] [text-wrap:balance]">{proximo.titulo}</p>
               <Link
                 href={proximo.href}
-                className="mt-4 inline-flex min-h-10 items-center gap-2 self-start rounded bg-[#282525] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#3A3535] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]"
+                className="mt-4 inline-flex min-h-10 items-center gap-2 self-start rounded bg-[#1C0E33] px-4 py-2.5 text-[0.75rem] font-medium text-white transition hover:bg-[#2D1A53] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#7259B5] active:scale-[.98]"
               >
                 {proximo.acao} <ArrowRight size={13} aria-hidden="true" />
               </Link>
