@@ -7,14 +7,18 @@
 -- precedente é aplicar à mão, no editor SQL do projeto, como
 -- supabase/migrations/20261005130100_convites_papeis.sql.
 --
--- Como conferir depois de aplicar (as quatro listam 'ticketeria'):
+-- Aplicada pelo conector do Supabase (apply_migration) em 18/11/2026, na versão
+-- 20261118222052, depois de conferir que ninguém tinha a ticketeria.
+--
+-- Como conferir depois de aplicar (feito em 18/11/2026: as quatro listam
+-- 'ticketeria' e continuam listando 'producao'):
 --        select conrelid::regclass as tabela, conname, pg_get_constraintdef(oid)
 --        from pg_constraint
 --        where conname in ('organization_invitations_modulos_acesso_check',
 --                          'organization_members_modulos_acesso_check',
 --                          'organization_modulos_modulo_check',
 --                          'organization_seat_purchases_modulo_check');
--- Só depois aplique 20261118600100_ticketeria_modulo_funcoes.sql (sem DROP).
+-- Só depois aplique 20261118222139_ticketeria_modulo_funcoes.sql (sem DROP).
 --
 -- Nomes e listas atuais conferidos em pg_constraint no banco de produção em
 -- 18/11/2026 (todas com captacao, prestacao e producao). As listas novas são as

@@ -8,7 +8,7 @@
 
 | Fase | Situação | Onde |
 |---|---|---|
-| **T0** | Módulo `ticketeria` registrado e escondido: `lib/modulos.ts` (em `MODULOS_EM_CONSTRUCAO`), seletor e menu no layout, página `/ingressos` com `exigirModulo("ticketeria")` e estado vazio (a rota não é `/ticketeria` porque jards.com.br/ticketeria é a página pública do produto, decisão de 18/11), as quatro regras de módulo e as funções de vagas, convites e cortesia aceitando a ticketeria, compra de vaga indisponível (409), sem Stripe. Testes: `supabase/tests/ticketeria_modulo.test.sql` e `tests/ticketeria-modulo-sql.test.ts` | PR `feat/ticketeria-modulo-t0`, migrations `ticketeria_modulo_regras` e `ticketeria_modulo_funcoes` |
+| **T0** | Módulo `ticketeria` registrado e escondido: `lib/modulos.ts` (em `MODULOS_EM_CONSTRUCAO`), seletor e menu no layout, página `/ingressos` com `exigirModulo("ticketeria")` e estado vazio (a rota não é `/ticketeria` porque jards.com.br/ticketeria é a página pública do produto, decisão de 18/11), as quatro regras de módulo e as funções de vagas, convites e cortesia aceitando a ticketeria, compra de vaga indisponível (409), sem Stripe. Testes: `supabase/tests/ticketeria_modulo.test.sql` e `tests/ticketeria-modulo-sql.test.ts` | PR #313, migrations `20261118222052_ticketeria_modulo_regras` e `20261118222139_ticketeria_modulo_funcoes` (aplicadas em 18/11/2026) |
 | T1 | Não começou | |
 | T2 | Não começou | |
 | T3 | Não começou | |

@@ -2,7 +2,9 @@
 --
 -- Sem DROP: só create or replace, com a mesma assinatura (nenhuma função
 -- publicada ganha parâmetro novo: uma sobrecarga quebraria o PostgREST com
--- PGRST203). Aplique depois de 20261118600000_ticketeria_modulo_regras.sql.
+-- PGRST203). Aplique depois de 20261118222052_ticketeria_modulo_regras.sql.
+-- Aplicada pelo conector em 18/11/2026, na versão 20261118222139; conferido em
+-- pg_proc: uma versão de cada função, com os mesmos acessos de antes.
 -- As listas são as de MODULOS em lib/modulos.ts, na mesma ordem
 -- (tests/ticketeria-modulo-sql.test.ts confere).
 --
