@@ -14,7 +14,7 @@ import { FUSO_PADRAO, instanteParaHoraLocal, montarDiaDoModelo, ordenarBlocos, r
 import { situacaoDoRoteiro, textoDoAtraso } from "@/lib/producao/ao-vivo";
 import { modelosDeDia, type TipoBloco, type TipoData, type TipoProducao } from "@/lib/producao/vocabulario";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
-import { PrimaryListAction } from "@/components/list/ListPagePrimitives";
+import { PrimaryListAction, SecondaryListAction } from "@/components/list/ListPagePrimitives";
 import { Select } from "@/components/ui/Select";
 import { NovoBlocoSheet } from "@/components/producao/NovoBlocoSheet";
 import { EquipeDaData } from "@/components/producao/EquipeDaData";
@@ -230,7 +230,10 @@ export default function DataPage() {
                       <PrimaryListAction onClick={() => void aplicarModelo()} disabled={aplicando || !horaDoPrimeiro}>{aplicando ? "Montando…" : "Montar o dia"}</PrimaryListAction>
                     </>
                   )}
-                  <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>
+                  {/* Com modelo à mão, "Montar o dia" é o caminho principal e montar à mão é o de apoio. */}
+                  {modelos.length > 0
+                    ? <SecondaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</SecondaryListAction>
+                    : <PrimaryListAction onClick={() => setFolha(true)}><Plus size={13} aria-hidden="true" /> Novo bloco</PrimaryListAction>}
                 </div>
               ) : null}
             </div>
