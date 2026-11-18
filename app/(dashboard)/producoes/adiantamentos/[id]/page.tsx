@@ -7,14 +7,14 @@ import { useOrganizationId, useOrganizationRole } from "@/contexts/OrganizationC
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { papelNaProducao } from "@/lib/producao/permissoes";
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import {
   contaDoAdiantamento, mensagemDoErroDeAdiantamento, ROTULO_DA_SITUACAO_DO_ADIANTAMENTO, textoDaPrestacao,
   type AdiantamentoDaTemporada, type ContaDoAdiantamento, type GastoDoAdiantamento,
 } from "@/lib/producao/adiantamentos";
 import { DetailBackLink, DetailNotFound, DetailPageContent, DetailPageSkeleton } from "@/components/ui/DetailPagePrimitives";
 import { AdiantamentoSheet, GastoSheet, type PessoaDoAdiantamento } from "@/components/producao/AdiantamentosDaTemporada";
-import { BOTAO, BOTAO_PEQUENO, Erro } from "@/components/producao/estilosDoBordero";
+import { BOTAO, BOTAO_PEQUENO, Erro } from "@/components/producao/estilos";
 
 type Detalhe = { adiantamento: AdiantamentoDaTemporada & { temporada_id: string }; gastos: GastoDoAdiantamento[]; pessoa: PessoaDoAdiantamento; temporada: string };
 

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { PDFDocumentLoadingTask, PDFDocumentProxy } from "pdfjs-dist";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { APAGAR, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { LIMITE_DO_PDF_BYTES, OPACIDADE_MAXIMA, OPACIDADE_MINIMA, OPACIDADE_PADRAO, paginaEscolhida, primeiroQueCabe } from "@/lib/producao/fundo-da-planta";

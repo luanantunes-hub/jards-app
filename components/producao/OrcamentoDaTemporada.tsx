@@ -7,12 +7,12 @@ import { Copy, Download, Ellipsis, Plus, TriangleAlert } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
-import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { CATEGORIAS_DO_ORCAMENTO, type CategoriaDoOrcamento, type SituacaoDoOrcamento } from "@/lib/producao/estados";
-import { formatarReais, lerValorEmReais } from "@/lib/producao/bordero";
+import { formatarReais, lerValorEmReais } from "@/lib/producao/dinheiro";
 import {
   calcularOrcamento, compararCenarios, lerLinhaDoOrcamento, mensagemDoErroDeOrcamento, planilhaDoOrcamento, ROTULO_DA_CATEGORIA_DO_ORCAMENTO, ROTULO_DA_SITUACAO_DO_ORCAMENTO, textoDoOrcamento,
   type LinhaDoOrcamento,

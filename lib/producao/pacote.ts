@@ -4,7 +4,7 @@
 
 import { planilhaDasDiarias, planilhaDosAdiantamentos, totaisDasDiarias, totalEmAberto, type AdiantamentoDaTemporada, type DiariaDaTemporada, type GastoDoAdiantamento } from "@/lib/producao/adiantamentos";
 import { comprometidoDoAcordoEmCentavos, planilhaDosAcordos, type AcordoDaTemporada } from "@/lib/producao/acordos";
-import { formatarReais } from "@/lib/producao/bordero";
+import { formatarReais } from "@/lib/producao/dinheiro";
 import { planilhaDasFaturas, totaisDasFaturas, type FaturaDaTemporada, type ParcelaDaFatura } from "@/lib/producao/faturas";
 import { pagoPorLinha, planilhaDosLancamentos, type DivisaoDoLancamento, type LancamentoDaTemporada } from "@/lib/producao/lancamentos";
 import { calcularOrcamento, planilhaDoOrcamento, ROTULO_DA_CATEGORIA_DO_ORCAMENTO, type LinhaDoOrcamento } from "@/lib/producao/orcamento";

@@ -4,11 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { Download, Plus } from "lucide-react";
 import { Dropdown } from "@/components/ui/Dropdown";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { APAGAR, BOTAO, BOTAO_PEQUENO, CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { useDeleteConfirm } from "@/contexts/DeleteConfirmContext";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
-import { emCentavos, formatarReais, lerValorEmReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais, lerValorEmReais } from "@/lib/producao/dinheiro";
 import { ROTULO_DA_CATEGORIA_DO_ORCAMENTO } from "@/lib/producao/orcamento";
 import type { CategoriaDoOrcamento } from "@/lib/producao/estados";
 import {

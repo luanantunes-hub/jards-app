@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ImagePlus, Pencil } from "lucide-react";
 import { TopSheet } from "@/components/ui/TopSheet";
-import { CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilosDoBordero";
+import { CAMPO, CANCELAR, Erro, ROTULO, SALVAR } from "@/components/producao/estilos";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { lerMarca } from "@/lib/producao/marcas";

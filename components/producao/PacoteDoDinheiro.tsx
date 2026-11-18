@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Package } from "lucide-react";
-import { BOTAO, Erro } from "@/components/producao/estilosDoBordero";
+import { BOTAO, Erro } from "@/components/producao/estilos";
 import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { diaEMes } from "@/lib/producao/agenda";

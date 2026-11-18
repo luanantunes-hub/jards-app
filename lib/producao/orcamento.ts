@@ -3,7 +3,7 @@
 //
 // Primeiro corte: o comprometido e o pago são digitados na linha. Com os acordos (PD4.5) e os lançamentos (PD5.3) passam a ser somados de lá.
 
-import { emCentavos, formatarReais } from "@/lib/producao/bordero";
+import { emCentavos, formatarReais } from "@/lib/producao/dinheiro";
 import { montarPlanilha, reaisNaPlanilha } from "@/lib/producao/planilha";
 import { CATEGORIAS_DO_ORCAMENTO, type CategoriaDoOrcamento, type SituacaoDoOrcamento } from "@/lib/producao/estados";
 
