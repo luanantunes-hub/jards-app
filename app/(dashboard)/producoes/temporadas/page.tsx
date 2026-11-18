@@ -50,7 +50,7 @@ export default function TemporadasPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="producao"
         eyebrow="Produção"
         title="Temporadas"
         summary={!carregando && linhas.length > 0 && <ListSummary strong={linhas.length}>{linhas.length === 1 ? "temporada" : "temporadas"}</ListSummary>}

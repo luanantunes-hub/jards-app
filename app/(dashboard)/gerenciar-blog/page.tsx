@@ -76,7 +76,7 @@ export default function BlogAdminPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="publicacoes"
         eyebrow="Conteúdo"
         title="Publicações"
         summary={isAdmin && !loading && <><ListSummary strong={publicados}>{publicados === 1 ? "publicado" : "publicados"}</ListSummary><ListSummary strong={posts.length - publicados}>{posts.length - publicados === 1 ? "rascunho" : "rascunhos"}</ListSummary></>}

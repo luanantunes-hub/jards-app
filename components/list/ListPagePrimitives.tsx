@@ -2,12 +2,15 @@
 
 import type { ReactNode } from "react";
 import { AlertCircle, Search, type LucideIcon } from "lucide-react";
+import { TituloComFrase } from "@/components/list/TituloComFrase";
+import type { SecaoComFrase } from "@/lib/frases-das-secoes";
 
 /** Cabeçalho de coluna de tabela conforme DESIGN.md: 10px, peso 500, caixa alta, tracking .08em. */
 export const LIST_HEADER_CELL = "text-[0.625rem] font-medium uppercase tracking-[.08em] text-black/35";
 
-export function ListPageHeader({ eyebrow, title, description, summary, actions }: { eyebrow: string; title: string; description?: ReactNode; summary?: ReactNode; actions?: ReactNode }) {
-  return <header className="shrink-0 border-b px-4 pb-5 pt-6 md:px-8 md:pt-8" style={{borderColor:"rgba(13,13,13,.08)"}}><div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"><div><p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">{eyebrow}</p><h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525] [text-wrap:balance]">{title}</h1>{description && <p className="mt-1.5 max-w-xl text-[0.8125rem] text-black/45">{description}</p>}</div><div className="flex flex-wrap items-center gap-3 lg:justify-end">{summary}{actions}</div></div></header>;
+/** Com `secao`, o topo segue o painel: o título vira a etiqueta pequena e a frase do dia da seção ocupa o lugar dele. */
+export function ListPageHeader({ eyebrow, title, description, summary, actions, secao }: { eyebrow: string; title: string; description?: ReactNode; summary?: ReactNode; actions?: ReactNode; secao?: SecaoComFrase }) {
+  return <header className="shrink-0 border-b px-4 pb-5 pt-6 md:px-8 md:pt-8" style={{borderColor:"rgba(13,13,13,.08)"}}><div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between"><div>{secao ? <TituloComFrase secao={secao} titulo={title} /> : <><p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">{eyebrow}</p><h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525] [text-wrap:balance]">{title}</h1></>}{description && <p className="mt-1.5 max-w-xl text-[0.8125rem] text-black/45">{description}</p>}</div><div className="flex flex-wrap items-center gap-3 lg:justify-end">{summary}{actions}</div></div></header>;
 }
 
 const COR_ALERTA = { ambar: "#B07A14", vermelho: "#D94A4A" } as const;

@@ -600,7 +600,7 @@ export default function CaptacoesPage() {
           onSaved={refetch}
         />
       )}
-      <ListPageHeader
+      <ListPageHeader secao="negociacoes"
         eyebrow="Pipeline comercial"
         title="Negociações"
         summary={!loading && <>

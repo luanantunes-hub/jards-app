@@ -23,6 +23,7 @@ import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManag
 import { followupSourceLink } from "@/lib/activities/followupSourceLink";
 import { escalaUi } from "@/lib/escala-ui";
 import { diasEntreIso, faixaDeHoras, horaDe, intervaloDoItem, isoLocal, metricasDoMes, novoIntervalo, posicionarNoDia, prenderNaFaixa, somarDiasIso, type ItemDoMes, type ModoArrasto, type Posicionado } from "@/lib/activities/agenda-grade";
+import { TituloComFrase } from "@/components/list/TituloComFrase";
 
 const ATIVIDADES_COLUMNS = [
   { id: "concluida", label: "Concluída", width: "6.5625rem" }, { id: "atividade", label: "Atividade", width: "17.5rem", grow: true, hideable: false }, { id: "negociacao", label: "Negociação", width: "11.875rem" }, { id: "empresa", label: "Empresa / contato", width: "13.75rem" }, { id: "prazo", label: "Prazo", width: "7.5rem" }, { id: "duracao", label: "Duração", width: "6.5625rem" }, { id: "prioridade", label: "Prioridade", width: "7.1875rem" }, { id: "responsavel", label: "Responsável", width: "10.625rem" }, { id: "resultado", label: "Resultado", width: "9.375rem" }, { id: "projeto", label: "Projeto", width: "11.25rem" }, { id: "observacao", label: "Observação", width: "14.375rem" },
@@ -2111,8 +2112,7 @@ export default function AtividadesPage() {
       {/* Header — mesma tipografia do ListPageHeader; a página rola inteira */}
       <div className="mb-6 flex flex-col items-start gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Rotina comercial</p>
-          <h1 className="mt-1 text-[1.75rem] font-bold tracking-[-.025em] text-[#282525]">Atividades</h1>
+          <TituloComFrase secao="atividades" titulo="Atividades" />
         </div>
         <PrimaryListAction onClick={() => setShowNovaAtividade(true)}><Plus size={13} aria-hidden="true" /> Nova atividade</PrimaryListAction>
       </div>

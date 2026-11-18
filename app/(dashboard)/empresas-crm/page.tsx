@@ -344,7 +344,7 @@ export default function EmpresasCrmPage() {
 
   return (
     <div className="flex h-full flex-col">
-      <ListPageHeader
+      <ListPageHeader secao="empresas"
         eyebrow="Inteligência de contas"
         title="Empresas"
         summary={!loading && <ListSummary strong={filtered.length}>{filtered.length === 1 ? "empresa" : "empresas"}</ListSummary>}
