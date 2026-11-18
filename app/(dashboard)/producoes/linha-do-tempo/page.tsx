@@ -6,18 +6,22 @@ import { createClient } from "@/lib/supabase/client";
 import { clienteDaProducao } from "@/lib/producao/cliente";
 import { diaDaSemana, diaEMes } from "@/lib/producao/agenda";
 import { fraseDoHistorico, type LinhaDoHistorico } from "@/lib/producao/historico";
-import { agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, nomeDeQuemFez, pessoasDoFiltro, PERIODOS_DA_LINHA_DO_TEMPO, recortarPagina, type MembroDaLinhaDoTempo } from "@/lib/producao/linha-do-tempo";
+import { agruparPorDia, AREAS_DA_LINHA_DO_TEMPO, entidadesDaArea, inicioDoPeriodo, intervaloDaPagina, nomeDeQuemFez, paisDoFiltro, pessoasDoFiltro, PERIODOS_DA_LINHA_DO_TEMPO, recortarPagina, type MembroDaLinhaDoTempo, type PaiDaLinhaDoTempo } from "@/lib/producao/linha-do-tempo";
 import { DetailPageContent } from "@/components/ui/DetailPagePrimitives";
 import { Dropdown } from "@/components/ui/Dropdown";
 
 const hora = (instante: string) => new Date(instante).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-/** A linha do tempo da produção (PD8.4): tudo o que mudou, do mais novo ao mais velho, por área e período, de página em página. Cada pessoa só vê o que o banco deixa ela ver. */
+/** A linha do tempo da produção (PD8.4): tudo o que mudou, do mais novo ao mais velho, por área, período, espaço, temporada e pessoa, de página em página. Cada pessoa só vê o que o banco deixa ela ver. */
 export default function LinhaDoTempoPage() {
   const organizationId = useOrganizationId();
   const [area, setArea] = useState("");
   const [periodo, setPeriodo] = useState("30");
   const [pessoa, setPessoa] = useState("");
+  const [espaco, setEspaco] = useState("");
+  const [temporada, setTemporada] = useState("");
+  const [espacos, setEspacos] = useState<PaiDaLinhaDoTempo[]>([]);
+  const [temporadas, setTemporadas] = useState<PaiDaLinhaDoTempo[]>([]);
   const [membros, setMembros] = useState<MembroDaLinhaDoTempo[]>([]);
   const [pagina, setPagina] = useState(0);
   const [linhas, setLinhas] = useState<LinhaDoHistorico[]>([]);
@@ -38,6 +42,8 @@ export default function LinhaDoTempoPage() {
       if (entidades) consulta = consulta.in("entidade", [...entidades]);
       if (inicio) consulta = consulta.gte("quando", inicio);
       if (pessoa) consulta = consulta.eq("quem", pessoa);
+      if (espaco) consulta = consulta.eq("espaco_id", espaco);
+      if (temporada) consulta = consulta.eq("temporada_id", temporada);
       const { data, error } = await consulta.order("quando", { ascending: false }).order("id", { ascending: false }).range(de, ate);
       if (!ativo) return;
       const { mostrar, temMais: mais } = recortarPagina((data ?? []) as LinhaDoHistorico[]);
@@ -47,7 +53,24 @@ export default function LinhaDoTempoPage() {
       setErro(error ? "Não foi possível carregar a linha do tempo. Tente de novo." : null);
     })();
     return () => { ativo = false; };
-  }, [organizationId, area, periodo, pessoa, pagina, agora]);
+  }, [organizationId, area, periodo, pessoa, espaco, temporada, pagina, agora]);
+
+  useEffect(() => {
+    if (!organizationId) return;
+    let ativo = true;
+    void (async () => {
+      // Os espaços e as temporadas do filtro: cada linha do histórico guarda de quem ela é (PD8.4).
+      const producao = clienteDaProducao(createClient());
+      const [esp, tem] = await Promise.all([
+        producao.from("producao_espacos").select("id, nome").eq("organization_id", organizationId).eq("arquivado", false).order("nome"),
+        producao.from("producao_temporadas").select("id, titulo").eq("organization_id", organizationId).order("titulo"),
+      ]);
+      if (!ativo) return;
+      setEspacos(paisDoFiltro(esp.data ?? []));
+      setTemporadas(paisDoFiltro((tem.data ?? []).map(item => ({ id: item.id, nome: item.titulo }))));
+    })();
+    return () => { ativo = false; };
+  }, [organizationId]);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -81,6 +104,8 @@ export default function LinhaDoTempoPage() {
         <div className="mb-5 flex flex-wrap items-center gap-3">
           <div className="w-60 max-w-full"><Dropdown ariaLabel="Área" value={area} onChange={valor => mudarFiltro(() => setArea(valor))} options={[{ value: "", label: "Todas as áreas" }, ...AREAS_DA_LINHA_DO_TEMPO.map(item => ({ value: item.id, label: item.nome }))]} /></div>
           <div className="w-52 max-w-full"><Dropdown ariaLabel="Período" value={periodo} onChange={valor => mudarFiltro(() => setPeriodo(valor))} options={PERIODOS_DA_LINHA_DO_TEMPO.map(item => ({ value: item.id, label: item.nome }))} /></div>
+          {espacos.length > 0 && <div className="w-56 max-w-full"><Dropdown ariaLabel="Espaço" value={espaco} onChange={valor => mudarFiltro(() => setEspaco(valor))} options={[{ value: "", label: "Todos os espaços" }, ...espacos.map(item => ({ value: item.id, label: item.nome }))]} /></div>}
+          {temporadas.length > 0 && <div className="w-56 max-w-full"><Dropdown ariaLabel="Temporada" value={temporada} onChange={valor => mudarFiltro(() => setTemporada(valor))} options={[{ value: "", label: "Todas as temporadas" }, ...temporadas.map(item => ({ value: item.id, label: item.nome }))]} /></div>}
           {pessoas.length > 1 && <div className="w-56 max-w-full"><Dropdown ariaLabel="Pessoa" value={pessoa} onChange={valor => mudarFiltro(() => setPessoa(valor))} options={[{ value: "", label: "Todas as pessoas" }, ...pessoas.map(item => ({ value: item.id, label: item.nome }))]} /></div>}
         </div>
 
@@ -89,7 +114,7 @@ export default function LinhaDoTempoPage() {
         {carregando && linhas.length === 0 ? (
           <div className="h-32 rounded border bg-black/[.02] motion-safe:animate-pulse" style={{ borderColor: "rgba(13,13,13,.06)" }} />
         ) : grupos.length === 0 ? (
-          <p className="rounded border bg-white px-5 py-8 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nada mudou neste período e nesta área.</p>
+          <p className="rounded border bg-white px-5 py-8 text-center text-[0.75rem] text-black/45" style={{ borderColor: "rgba(13,13,13,.08)" }}>Nada mudou com esses filtros.</p>
         ) : (
           <div className="space-y-5">
             {grupos.map(grupo => (
