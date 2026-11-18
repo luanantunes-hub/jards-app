@@ -1,6 +1,6 @@
 # Fila de trabalho da produção
 
-Para seguir o plano sem pedir "pode seguir" a cada entrega. **Quem trabalha pega o primeiro lote da lista "Prontos" e vai em frente**; ao terminar um lote, já começa o próximo, sem perguntar qual. O plano completo é [plano-implementacao-modulo-producao.md](./plano-implementacao-modulo-producao.md) (a coluna "O que falta" da tabela "Andamento" diz o que resta de cada item); o contexto é [producao-contexto.md](./producao-contexto.md).
+Para seguir o plano sem pedir "pode seguir" a cada entrega. **Quem trabalha pega o primeiro lote aberto da "Fila de execução" e vai em frente**; ao terminar um lote, já começa o próximo, sem perguntar qual. O plano completo é [plano-implementacao-modulo-producao.md](./plano-implementacao-modulo-producao.md) (a coluna "O que falta" da tabela "Andamento" diz o que resta de cada item); o contexto é [producao-contexto.md](./producao-contexto.md).
 
 ## Como cada lote anda
 
@@ -20,16 +20,33 @@ Para seguir o plano sem pedir "pode seguir" a cada entrega. **Quem trabalha pega
 - `DELETE` que o conector recuse (entregar o `.sql`) ou apagar dado de produção.
 - Limite de uso do Claude: retomar quando voltar.
 
-## Prontos, em ordem
+## Fila de execução (19/11/2026)
 
-1. **Fichas e links** (feito em 17/11: PD3.5 ficha técnica do espaço por link; em 19/11: logo do espaço na ficha e no PDF). Falta no PD3.5: planta da sala no PDF.
-2. **Acerto técnico II** (PD4.1 e PD4.2): **feitos em 18/11: modelos por tipo de produção (#275) e "Pedir todas à casa" (#268)**. Faltam: anexos e fotos na resposta (upload público: desenhar a proteção antes); mais de uma pessoa respondendo (grava nome e e-mail de terceiros: depende do texto de privacidade); lembrete antes de o link vencer (**e-mail para fora e função nova: parar e perguntar**); camarins, luz e catering no rider (hoje texto livre: sem campo numérico para comparar, precisa de decisão de modelagem).
-3. **Dinheiro I** (PD5.1, PD5.5, PD5.7): comprometido somado dos acordos e pago somado dos lançamentos no orçamento; "a receber" ao lado do comprometido; arquivos das notas dentro do pacote de exportação.
-4. **Operação do dia I** (PD7.1, PD7.4, PD7.3): **feitos: planilha do borderô (#267) e tela de palco por link com cronômetro (#274, polling de 10 s em vez de Broadcast)**. Falta a leitura da porta sem internet: **desenhar antes**, porque guardar a lista no aparelho expõe os códigos das credenciais (hoje só o hash fica no banco); decidir entre lista de hashes no aparelho ou fila de leituras para conferir depois.
-5. **Logística II** (PD6.3, PD6.4, PD6.8, PD6.12): **feitos em 18/11 (#270, #271, #272): tipo de cama, valor do abastecimento (só com a permissão de dinheiro), onde cada item está e foto na conferência.** Falta a fila offline da folha do motorista (PD6.3): mesma decisão da leitura da porta (o que fica no aparelho).
-6. **Programação III** (PD8.1, PD8.4, PD8.5, PD12.3): **feito: arrastar entre salas (#273).** Faltam: linha do tempo por espaço e por temporada (o histórico não guarda o pai de cada registro: precisa de coluna nova e preenchimento, ou de ler as tabelas filhas); desenho das obras na planta (PD8.5); logo da marca por envio (precisa de armazenamento público) e marcas dos patrocinadores do CRM (só com os dois módulos).
-7. **Parceiros** (PD9.2 a PD9.5): portal do patrocinador, relatório de retorno, portal do artista, comunicação por data. **Antes de construir, mostrar o desenho em um parágrafo e seguir se não houver objeção**, porque expõe dado ao parceiro.
-8. **Pontes com a prestação** (PD10.x) e **conexão companhia–espaço** (PD11.x): ler o plano da fase e propor o primeiro corte; PD11 mexe em duas organizações, então começar pelo desenho.
+Ordem fixa. **Pega-se o primeiro lote aberto, faz-se, mescla-se com o teste verde e começa-se o seguinte, sem perguntar.** Um lote = um PR (no máximo uma migration). Quando um lote fecha, marca-se "feito" aqui, no mesmo PR do código.
+
+| # | Lote | O que entra | Pronto quando |
+|---|---|---|---|
+| ~~**L1**~~ | ~~Planta da sala no PDF da ficha~~ | **FEITO em 19/11/2026**: o PDF da ficha e a página `/ficha/[código]` mostram a planta mais recente de cada sala, com os objetos no lugar e girados. Fechou o PD3.5 | — |
+| **L2** | Linha do tempo por espaço e por temporada | Hoje o histórico não guarda o pai de cada registro. Coluna nova (`espaco_id`/`temporada_id` anuláveis) preenchida pelo gatilho, com os registros antigos atualizados uma vez, e filtro na página (PD8.4) | A linha do tempo filtra por espaço e por temporada |
+| **L3** | Desenho das obras na planta (PD8.5) | A expografia posiciona a obra na planta da sala (x, y), reaproveitando o editor da PD2.2, com a ordem de montagem | A planta mostra onde cada obra fica e a montagem é conferida pelo desenho |
+| **L4** | Relatório de retorno ao patrocinador (PD9.3) e comunicação por data (PD9.5) | Dentro do app, sem link para fora: números da sessão patrocinada, contrapartidas cumpridas, kit de imprensa e artes por data | A produção abre o retorno de um patrocinador e copia o texto |
+| **L5** | Portais do patrocinador (PD9.2) e do artista (PD9.4) | Link sem conta, como os outros links públicos. **Antes de construir, escrever o desenho em um parágrafo no PR** (expõe dado a terceiro) | O parceiro abre o portal e vê só o que é dele |
+| **L6** | Pontes com a prestação (PD10.2 e PD10.4) | A despesa da produção vira comprovante da prestação (cópia do arquivo, nunca referência) e os orçamentos aparecem lado a lado, dizendo de onde vem cada número. A PD10.1 é a migration da ponte | Uma despesa da produção chega à prestação e os três orçamentos se comparam |
+| **L7** | Conexão companhia–espaço (PD11.1) | Só o desenho e o vínculo: `producao_conexoes` com aceite dos dois lados. As partes compartilhadas (PD11.2 a PD11.4) vêm depois, uma por lote | As duas organizações aceitam o vínculo e cada lado vê só o seu |
+| **L8** | Restos do dinheiro | "A receber" ao lado do comprometido no orçamento; arquivos das notas dentro do pacote de exportação (PD5.7) | O orçamento mostra o a receber e o pacote sai com os documentos |
+| **L9** | Sem internet (PD7.3 e PD6.3) | A leitura da porta e a folha do motorista funcionam com sinal ruim. **Primeiro o desenho no PR**: guardar a lista no aparelho expõe os códigos das credenciais (hoje só o hash fica no banco); a escolha é entre hashes no aparelho ou fila de leituras para conferir depois | A porta lê sem internet e a folha do motorista grava offline |
+
+Fora da fila, só com decisão do dono: PD6.6 (leitura de passagem por IA — precisa publicar função no Supabase), PD6.13 (rotas e combustível — precisa contratar o serviço de mapas) e tudo que está em "Bloqueados" abaixo.
+
+### Lotes fechados
+
+- **Fichas e links** (PD3.5): ficha por link em 17/11; logo do espaço em 19/11 (#321); planta da sala no PDF e na página pública em 19/11. **Fechado.**
+- **Acerto técnico II** (PD4.1, PD4.2): modelos por tipo de produção (#275) e "Pedir todas à casa" (#268), em 18/11. Resta o que depende do dono: anexos na resposta, mais de uma pessoa respondendo, lembrete por e-mail, campo numérico de camarim, luz e catering.
+- **Dinheiro I** (PD5.1, PD5.5): comprometido dos acordos e pago dos lançamentos no orçamento. Resta o que está no L8.
+- **Operação do dia I** (PD7.1, PD7.4): planilha do borderô (#267) e tela de palco por link (#274). Resta a porta sem internet, que é o L9.
+- **Logística II** (PD6.3, PD6.4, PD6.8, PD6.12): tipo de cama, valor do abastecimento, onde cada item está e foto na conferência (#270, #271, #272). Resta a fila offline, que é o L9.
+- **Programação III** (PD8.1, PD12.3): arrastar entre salas (#273) e logo da marca por envio. Resta o que está no L2 e no L3; as marcas dos patrocinadores do CRM dependem de a organização ter os dois módulos.
+- **Site público** (PD12.1 a PD12.3): o que está na main fica como está. **O site vai para a Ticketeria** (fase T1 do plano dela, decisão de 18/11): quem for mexer no site trabalha lá, não aqui.
 
 ## Bloqueados pelo dono (não começar)
 

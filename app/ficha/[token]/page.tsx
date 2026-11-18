@@ -4,6 +4,7 @@
 import type { Metadata } from "next";
 import { BotaoImprimir } from "@/components/producao/BotaoImprimir";
 import { carregarFichaPublica, type ResultadoDaFichaPublica } from "@/lib/producao/ficha-publica";
+import { medidaDaPlanta, svgDaPlanta, type PlantaParaPdf } from "@/lib/producao/planta-desenho";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const metadata: Metadata = {
@@ -39,6 +40,25 @@ function Linha({ texto }: { texto: string }) {
   );
 }
 
+/** A planta da sala desenhada nas próprias medidas: cada objeto é um retângulo, girado se for o caso. */
+function Planta({ planta }: { planta: PlantaParaPdf }) {
+  const desenho = svgDaPlanta(planta);
+  return (
+    <figure className="mt-2 overflow-hidden rounded border bg-white p-3 print:break-inside-avoid" style={{ borderColor: "rgba(13,13,13,.1)" }}>
+      <svg viewBox={desenho.viewBox} role="img" aria-label={`Planta ${planta.nome}`} className="h-auto w-full" style={{ maxHeight: "22rem" }} preserveAspectRatio="xMidYMid meet">
+        <rect x="0" y="0" width={planta.largura_m} height={planta.profundidade_m} fill="#FAFAF9" stroke="rgba(13,13,13,.28)" strokeWidth={desenho.letra / 6} />
+        {desenho.objetos.map((objeto, indice) => (
+          <g key={indice} transform={objeto.giro}>
+            <rect x={objeto.x} y={objeto.y} width={objeto.largura} height={objeto.altura} fill="#EBE7F0" stroke="#7259B5" strokeWidth={desenho.letra / 8} />
+            {objeto.rotulo && <text x={objeto.centroX} y={objeto.centroY} fontSize={desenho.letra} textAnchor="middle" dominantBaseline="middle" fill="#282525">{objeto.rotulo}</text>}
+          </g>
+        ))}
+      </svg>
+      <figcaption className="mt-2 text-[0.6875rem] text-black/45">{planta.nome} · {medidaDaPlanta(planta)}</figcaption>
+    </figure>
+  );
+}
+
 export default async function FichaPeloLink({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   let resultado: ResultadoDaFichaPublica | null = null;
@@ -66,12 +86,15 @@ export default async function FichaPeloLink({ params }: { params: Promise<{ toke
         </div>
 
         <div className="mt-6 space-y-5">
-          {documento.secoes.filter(secao => secao.linhas.length > 0).map(secao => (
+          {documento.secoes.filter(secao => secao.linhas.length > 0 || secao.planta).map(secao => (
             <section key={secao.titulo} aria-label={secao.titulo} className="print:break-inside-avoid">
               <h2 className="mb-2 text-[0.75rem] font-medium uppercase tracking-[.08em] text-black/50">{secao.titulo}</h2>
-              <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.1)" }}>
-                {secao.linhas.map((linha, indice) => <Linha key={`${secao.titulo}-${indice}`} texto={linha} />)}
-              </ul>
+              {secao.linhas.length > 0 && (
+                <ul className="divide-y divide-black/[.06] overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.1)" }}>
+                  {secao.linhas.map((linha, indice) => <Linha key={`${secao.titulo}-${indice}`} texto={linha} />)}
+                </ul>
+              )}
+              {secao.planta && <Planta planta={secao.planta} />}
             </section>
           ))}
         </div>
