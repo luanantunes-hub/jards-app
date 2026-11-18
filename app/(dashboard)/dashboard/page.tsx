@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase/client";
 import type { PotencialFechamento, StatusCaptacao, TipoAtividade } from "@/lib/supabase/types";
 import { DashboardCustomizer } from "@/components/dashboard/DashboardCustomizer";
 import { SaudacaoPainel } from "@/components/dashboard/SaudacaoPainel";
+import { QuemMeDeveResposta } from "@/components/dashboard/QuemMeDeveResposta";
 import { PrimeirosPassos } from "@/components/onboarding/PrimeirosPassos";
 import { useDashboardPreferences } from "@/components/dashboard/useDashboardPreferences";
 import type { DashboardModuleId } from "@/components/dashboard/dashboardModules";
@@ -732,6 +733,9 @@ export default function DashboardPage() {
           </div>
         </section>
       ))}
+
+      {/* Quem me deve resposta: só aparece para quem tem e-mails sincronizados */}
+      {dashboardPreferences.isEnabled("awaitingReplies") && <QuemMeDeveResposta ordem={modulePosition("awaitingReplies")} />}
 
       {/* Funil + Estagnadas */}
       {(dashboardPreferences.isEnabled("funnel") || dashboardPreferences.isEnabled("risks")) && <div className={`grid gap-4 ${dashboardPreferences.isEnabled("funnel") && dashboardPreferences.isEnabled("risks") ? "xl:grid-cols-[1fr_18.75rem]" : "grid-cols-1"}`} style={{ order: Math.min(modulePosition("funnel"), modulePosition("risks")) }}>

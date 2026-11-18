@@ -243,7 +243,7 @@ export function EmailConnections() {
           );
         })}
 
-        <p className="text-[0.6875rem] text-black/40">Só entram e-mails de pessoas que estão nos seus contatos.</p>
+        <p className="text-[0.6875rem] text-black/40">Só entram e-mails de pessoas que estão nos seus contatos. A equipe vê essas conversas, a menos que você marque “Só eu vejo”.</p>
       </div>
     </div>
   );
