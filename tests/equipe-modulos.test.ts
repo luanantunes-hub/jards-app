@@ -227,6 +227,7 @@ test("os códigos de falta de vaga são os que a tela já conhecia", () => {
   assert.equal(CODIGO_SEM_VAGA.captacao, "NO_SEATS");
   assert.equal(CODIGO_SEM_VAGA.prestacao, "NO_SEATS_PRESTACAO");
   assert.equal(CODIGO_SEM_VAGA.producao, "NO_SEATS_PRODUCAO");
+  assert.equal(CODIGO_SEM_VAGA.ticketeria, "NO_SEATS_TICKETERIA");
 });
 
 test("a rota de vagas lê o módulo pedido: sem o campo vale a captação, qualquer outra coisa que não seja módulo é recusada", () => {
@@ -241,9 +242,12 @@ test("vagas: a captação vem do plano e os outros módulos, do contrato de cada
   assert.equal(ORIGEM_DAS_VAGAS.captacao, "plano");
   assert.equal(ORIGEM_DAS_VAGAS.prestacao, "contrato");
   assert.equal(ORIGEM_DAS_VAGAS.producao, "contrato");
-  assert.deepEqual([...MODULOS_COM_CONTRATO], ["prestacao", "producao"]);
+  assert.equal(ORIGEM_DAS_VAGAS.ticketeria, "contrato");
+  assert.deepEqual([...MODULOS_COM_CONTRATO], ["prestacao", "producao", "ticketeria"]);
   assert.equal(mensagemCompraIndisponivel("producao"),
     "A compra de usuários extras da produção ainda não está disponível. Fale com o suporte do Jards.");
+  assert.equal(mensagemCompraIndisponivel("ticketeria"),
+    "A compra de usuários extras da ticketeria ainda não está disponível. Fale com o suporte do Jards.");
 });
 
 test("equipe: a tela oferece a captação, os módulos ativos da organização e os que a pessoa já tem", () => {

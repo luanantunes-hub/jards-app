@@ -76,6 +76,7 @@ const MODULOS: { id: ModuloId; label: string; descricao: string; icone: LucideIc
   { id: "captacao",  label: "Captação",  descricao: "Patrocinadores, editais e negociações",       icone: HandCoins      },
   { id: "prestacao", label: "Prestação", descricao: "Prestação de contas e relatórios do projeto", icone: ClipboardCheck },
   { id: "producao",  label: "Produção",  descricao: "Agenda, equipe, logística e o dia",            icone: Drama          },
+  { id: "ticketeria", label: "Ticketeria", descricao: "Ingressos, vendas e a porta do evento",    icone: Ticket         },
 ];
 
 // Telas que ainda não estão prontas para os clientes: só o super admin vê no menu.
@@ -181,6 +182,16 @@ const NAV_POR_MODULO: Record<ModuloId, { section: string; icone?: React.ElementT
       items: [
         { label: "Mapa da turnê", href: "/producoes/mapa", icon: MapPin },
         { label: "Linha do tempo", href: "/producoes/linha-do-tempo", icon: History },
+      ],
+    },
+  ],
+  // Escondida dos clientes (MODULOS_EM_CONSTRUCAO em lib/modulos.ts): só o super admin e quem já tem o módulo a veem.
+  // A rota é /ingressos: jards.com.br/ticketeria é a página pública do produto.
+  ticketeria: [
+    {
+      section: "Ticketeria",
+      items: [
+        { label: "Ingressos", href: "/ingressos", icon: Ticket },
       ],
     },
   ],
