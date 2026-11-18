@@ -83,3 +83,13 @@ test("datas: somar e contar dias atravessa o mês", async () => {
   assert.equal(diasEntreIso("2026-11-18", "2026-11-21"), 3);
   assert.equal(diasEntreIso("2026-11-18", "2026-11-16"), -2);
 });
+
+test("faixa da grade: 7h às 22h, cresce em horas cheias para caber os compromissos", async () => {
+  const { faixaDeHoras, prenderNaFaixa } = await import("../lib/activities/agenda-grade");
+  assert.deepEqual(faixaDeHoras([]), { inicio: 420, fim: 1320 });
+  assert.deepEqual(faixaDeHoras([{ inicio: 390, fim: 450 }, { inicio: 1350, fim: 1410 }]), { inicio: 360, fim: 1440 });
+  const faixa = { inicio: 420, fim: 1320 };
+  assert.deepEqual(prenderNaFaixa("mover", { inicio: 380, fim: 440 }, faixa), { inicio: 420, fim: 480 });
+  assert.deepEqual(prenderNaFaixa("mover", { inicio: 1300, fim: 1360 }, faixa), { inicio: 1260, fim: 1320 });
+  assert.deepEqual(prenderNaFaixa("fim", { inicio: 1200, fim: 1380 }, faixa), { inicio: 1200, fim: 1320 });
+});

@@ -22,7 +22,7 @@ import { FiltroResponsavel } from "@/components/list/FiltroResponsavel";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { followupSourceLink } from "@/lib/activities/followupSourceLink";
 import { escalaUi } from "@/lib/escala-ui";
-import { MINUTOS_NO_DIA, diasEntreIso, horaDe, intervaloDoItem, isoLocal, metricasDoMes, novoIntervalo, posicionarNoDia, somarDiasIso, type ItemDoMes, type ModoArrasto, type Posicionado } from "@/lib/activities/agenda-grade";
+import { diasEntreIso, faixaDeHoras, horaDe, intervaloDoItem, isoLocal, metricasDoMes, novoIntervalo, posicionarNoDia, prenderNaFaixa, somarDiasIso, type ItemDoMes, type ModoArrasto, type Posicionado } from "@/lib/activities/agenda-grade";
 
 const ATIVIDADES_COLUMNS = [
   { id: "concluida", label: "Concluída", width: "6.5625rem" }, { id: "atividade", label: "Atividade", width: "17.5rem", grow: true, hideable: false }, { id: "negociacao", label: "Negociação", width: "11.875rem" }, { id: "empresa", label: "Empresa / contato", width: "13.75rem" }, { id: "prazo", label: "Prazo", width: "7.5rem" }, { id: "duracao", label: "Duração", width: "6.5625rem" }, { id: "prioridade", label: "Prioridade", width: "7.1875rem" }, { id: "responsavel", label: "Responsável", width: "10.625rem" }, { id: "resultado", label: "Resultado", width: "9.375rem" }, { id: "projeto", label: "Projeto", width: "11.25rem" }, { id: "observacao", label: "Observação", width: "14.375rem" },
@@ -385,7 +385,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew, onReagendar }: 
   }
 
   return (
-    <div className="isolate overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+    <div className="isolate rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       {toolbar}
       <GradeDeHorarios
         dias={scale === "dia" ? [cursor] : weekDays}
@@ -468,20 +468,18 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
   const temSemHorario = porDia.some(d => d.semHora.length > 0);
   const chaveDosDias = porDia.map(d => d.dateStr).join(",");
   const hojeVisivel = chaveDosDias.includes(hoje);
-  const primeiroInicio = Math.min(...porDia.flatMap(d => d.posicionados.map(p => p.inicio)));
-
-  // Ao abrir ou trocar de período, rola até o primeiro compromisso (ou o começo do expediente).
-  useEffect(() => {
-    const scroll = scrollRef.current, corpo = corpoRef.current;
-    if (!scroll || !corpo) return;
-    const alvo = Number.isFinite(primeiroInicio) ? primeiroInicio - 30 : hojeVisivel ? agoraMin - 120 : 7 * 60;
-    scroll.scrollTop = Math.max(0, alvo) / MINUTOS_NO_DIA * corpo.offsetHeight;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chaveDosDias]);
+  // A grade mostra só a faixa útil do dia (7h–22h, crescendo para caber os compromissos) e rola com a página.
+  const faixa = faixaDeHoras(dias.flatMap(date => (byDate.get(isoLocal(date)) ?? []).map(intervaloNaGrade).filter((i): i is { inicio: number; fim: number } => i !== null)));
+  const faixaRef = useRef(faixa);
+  useEffect(() => { faixaRef.current = faixa; });
+  const horasNaFaixa = (faixa.fim - faixa.inicio) / 60;
+  const topo = (minuto: number) => `${(minuto - faixa.inicio) / 60 * HORA_REM}rem`;
+  const agoraNaFaixa = hojeVisivel && agoraMin >= faixa.inicio && agoraMin <= faixa.fim;
 
   const minutoNoPonto = (clientY: number) => {
     const r = corpoRef.current!.getBoundingClientRect();
-    return (clientY - r.top) / r.height * MINUTOS_NO_DIA;
+    const { inicio, fim } = faixaRef.current;
+    return inicio + (clientY - r.top) / r.height * (fim - inicio);
   };
   const diaNoPonto = (clientX: number): string | null => {
     const colunasDosDias = [...(corpoRef.current?.querySelectorAll<HTMLElement>("[data-dia]") ?? [])];
@@ -526,18 +524,18 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
       if (!atual.ativo && Math.hypot(e.clientX - atual.x, e.clientY - atual.y) < 5) return;
       e.preventDefault();
       // perto da beirada visível da grade, a agenda rola devagar (mais rápido quanto mais perto)
-      const scroll = scrollRef.current;
-      if (scroll) {
-        const r = scroll.getBoundingClientRect();
-        const topoVisivel = r.top + (cabecalhoRef.current?.offsetHeight ?? 0);
+      const rolagem = scrollRef.current?.closest("main") ?? document.scrollingElement;
+      const fundoDoCabecalho = cabecalhoRef.current?.getBoundingClientRect().bottom ?? 0;
+      if (rolagem) {
         const zona = 24 * escalaUi();
-        if (e.clientY < topoVisivel + zona) scroll.scrollTop -= Math.ceil((topoVisivel + zona - e.clientY) / zona * 6);
-        else if (e.clientY > r.bottom - zona) scroll.scrollTop += Math.ceil((e.clientY - (r.bottom - zona)) / zona * 6);
+        const fundo = Math.min(rolagem.getBoundingClientRect().bottom, window.innerHeight);
+        if (e.clientY < fundoDoCabecalho + zona) rolagem.scrollTop -= Math.ceil((fundoDoCabecalho + zona - e.clientY) / zona * 6);
+        else if (e.clientY > fundo - zona) rolagem.scrollTop += Math.ceil((e.clientY - (fundo - zona)) / zona * 6);
       }
       const data = atual.modo === "mover" ? diaNoPonto(e.clientX) ?? atual.previa.data : atual.diaOrigem;
       // item sem hora: em cima da grade ganha horário; na faixa de cima continua sem hora
-      const naGrade = !atual.semHoraOrigem || e.clientY >= (scroll?.getBoundingClientRect().top ?? 0) + (cabecalhoRef.current?.offsetHeight ?? 0);
-      const novoTrecho = naGrade ? novoIntervalo(atual.modo, atual.original, minutoNoPonto(e.clientY), atual.pegada) : { inicio: null, fim: null };
+      const naGrade = !atual.semHoraOrigem || e.clientY >= Math.max(fundoDoCabecalho, corpoRef.current?.getBoundingClientRect().top ?? 0);
+      const novoTrecho = naGrade ? prenderNaFaixa(atual.modo, novoIntervalo(atual.modo, atual.original, minutoNoPonto(e.clientY), atual.pegada), faixaRef.current) : { inicio: null, fim: null };
       const proximo = { ...atual, ativo: true, previa: { data, ...novoTrecho } };
       arrastoRef.current = proximo;
       setArrasto(proximo);
@@ -582,9 +580,9 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
   return (
     <div
       ref={scrollRef}
-      className={`relative max-h-[max(28rem,calc(100dvh-17rem))] overflow-auto overscroll-contain ${emArrasto ? (emArrasto.modo === "mover" ? "cursor-grabbing select-none" : "cursor-ns-resize select-none") : ""}`}
+      className={`relative overflow-x-auto md:overflow-visible ${emArrasto ? (emArrasto.modo === "mover" ? "cursor-grabbing select-none" : "cursor-ns-resize select-none") : ""}`}
     >
-      <div style={{ minWidth: dias.length > 1 ? "52rem" : undefined }}>
+      <div className={dias.length > 1 ? "min-w-[52rem] md:min-w-0" : undefined}>
         {/* Cabeçalho dos dias e faixa das atividades sem horário */}
         <div ref={cabecalhoRef} className="sticky top-0 z-40 grid border-b bg-white/95 backdrop-blur-sm" style={{ gridTemplateColumns: colunas, borderColor: "rgba(40,37,37,.08)" }}>
           <div className="flex items-end justify-end px-2 pb-2 text-[0.5625rem] uppercase tracking-[.06em] text-black/30" style={MONO}>gmt-3</div>
@@ -630,15 +628,15 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
         </div>
 
         {/* Grade de horários: papel com linhas de hora e meia hora */}
-        <div ref={corpoRef} className="relative grid" style={{ gridTemplateColumns: colunas, height: `${24 * HORA_REM}rem` }}>
+        <div ref={corpoRef} className="relative grid" style={{ gridTemplateColumns: colunas, height: `${horasNaFaixa * HORA_REM}rem` }}>
           <div className="relative">
-            {Array.from({ length: 23 }, (_, i) => i + 1).map(h => (
-              <span key={h} className="absolute right-2 -translate-y-1/2 text-[0.5625rem] tabular-nums text-black/35" style={{ ...MONO, top: `${h * HORA_REM}rem` }}>
+            {Array.from({ length: horasNaFaixa - 1 }, (_, i) => faixa.inicio / 60 + i + 1).map(h => (
+              <span key={h} className="absolute right-2 -translate-y-1/2 text-[0.5625rem] tabular-nums text-black/35" style={{ ...MONO, top: topo(h * 60) }}>
                 {String(h).padStart(2, "0")}:00
               </span>
             ))}
-            {hojeVisivel && (
-              <span className="absolute right-1 z-30 -translate-y-1/2 rounded-[3px] bg-[#684DB0] px-1 py-px text-[0.5625rem] font-medium tabular-nums text-white shadow-[0_4px_10px_-4px_rgba(104,77,176,.6)]" style={{ ...MONO, top: `${agoraMin / 60 * HORA_REM}rem` }}>
+            {agoraNaFaixa && (
+              <span className="absolute right-1 z-30 -translate-y-1/2 rounded-[3px] bg-[#684DB0] px-1 py-px text-[0.5625rem] font-medium tabular-nums text-white shadow-[0_4px_10px_-4px_rgba(104,77,176,.6)]" style={{ ...MONO, top: topo(agoraMin) }}>
                 {horaDe(agoraMin)}
               </span>
             )}
@@ -658,13 +656,13 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
                 }}
               >
                 {/* Meia hora livre: clique cria a atividade já com o dia e a hora */}
-                {Array.from({ length: 48 }, (_, i) => (
+                {Array.from({ length: horasNaFaixa * 2 }, (_, j) => faixa.inicio / 30 + j).map(i => (
                   <div
                     key={i}
                     aria-hidden="true"
                     onClick={() => { if (!acabouDeArrastar.current) onNew(dateStr, horaDe(i * 30)); }}
                     className={`group absolute inset-x-0 cursor-pointer ${emArrasto ? "" : "hover:bg-[rgba(104,77,176,.045)]"}`}
-                    style={{ top: `${i * HORA_REM / 2}rem`, height: `${HORA_REM / 2}rem` }}
+                    style={{ top: topo(i * 30), height: `${HORA_REM / 2}rem` }}
                   >
                     {!emArrasto && (
                       <span className="pointer-events-none hidden items-center gap-1 px-1.5 pt-0.5 text-[0.5625rem] font-medium tabular-nums text-[#684DB0] group-hover:flex" style={MONO}>
@@ -679,7 +677,7 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
                   <div
                     aria-hidden="true"
                     className="pointer-events-none absolute inset-x-[2px] z-[5] rounded border border-dashed border-[#684DB0]/45"
-                    style={{ top: `${emArrasto.original.inicio / 60 * HORA_REM}rem`, height: `${Math.max(emArrasto.original.fim - emArrasto.original.inicio, 30) / 60 * HORA_REM}rem` }}
+                    style={{ top: topo(emArrasto.original.inicio), height: `${Math.max(emArrasto.original.fim - emArrasto.original.inicio, 30) / 60 * HORA_REM}rem` }}
                   />
                 )}
 
@@ -687,6 +685,7 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
                   <BlocoNaGrade
                     key={p.item.id}
                     posicionado={p}
+                    inicioDaFaixa={faixa.inicio}
                     detalhado={detalhado}
                     arrastando={emArrasto?.id === p.item.id}
                     onAbrir={abrir}
@@ -694,8 +693,8 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
                   />
                 ))}
 
-                {dateStr === hoje && (
-                  <div className="pointer-events-none absolute inset-x-0 z-20 h-px" style={{ top: `${agoraMin / 60 * HORA_REM}rem`, background: LIGACAO_ROXA }}>
+                {dateStr === hoje && agoraNaFaixa && (
+                  <div className="pointer-events-none absolute inset-x-0 z-20 h-px" style={{ top: topo(agoraMin), background: LIGACAO_ROXA }}>
                     <span className="absolute -left-[4px] -top-[3.5px] h-2 w-2 rounded-full border-2 border-white bg-[#684DB0] shadow-[0_0_0_1px_rgba(104,77,176,.35)]" />
                   </div>
                 )}
@@ -708,8 +707,9 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
   );
 }
 
-function BlocoNaGrade({ posicionado, detalhado, arrastando, onAbrir, onPegar }: {
+function BlocoNaGrade({ posicionado, inicioDaFaixa, detalhado, arrastando, onAbrir, onPegar }: {
   posicionado: Posicionado<AtividadeRow>;
+  inicioDaFaixa: number;
   detalhado: boolean;
   arrastando: boolean;
   onAbrir: (id: string) => void;
@@ -737,7 +737,7 @@ function BlocoNaGrade({ posicionado, detalhado, arrastando, onAbrir, onPegar }: 
       title={`${atividade.nome} · ${horario}${entity !== "—" ? ` · ${entity}` : ""}${deFora ? ` · do ${origem}: arrastar muda lá também` : " · arraste para mudar o dia ou o horário"}`}
       className={`group absolute flex overflow-hidden rounded border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/40 ${curto ? "items-center gap-1.5 px-1.5" : "flex-col gap-1 px-2 py-1.5"} ${arrastando ? "z-30 cursor-grabbing" : `z-10 transition-[box-shadow,transform] duration-200 hover:z-20 hover:-translate-y-px hover:shadow-[0_10px_28px_rgba(40,37,37,.10)] motion-reduce:transition-none cursor-grab`} ${atividade.feita ? "opacity-70" : ""}`}
       style={{
-        top: `calc(${inicio / 60 * HORA_REM}rem + 1px)`,
+        top: `calc(${(inicio - inicioDaFaixa) / 60 * HORA_REM}rem + 1px)`,
         height: `calc(${Math.max(duracao, 30) / 60 * HORA_REM}rem - 2px)`,
         left: `calc(${coluna / colunas * 100}% + 2px)`,
         width: `calc(${100 / colunas}% - 4px)`,
