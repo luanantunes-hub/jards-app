@@ -938,8 +938,6 @@ function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit,
     : metricas.total > 0 && metricas.concluidas === metricas.total ? { palavras: ["Tudo", "concluído"], destaque: VERDE, frase: "Cada atividade do mês já foi feita." }
     : mesPassou ? { palavras: ["Mês", "encerrado"], destaque: "#282525", frase: `${metricas.concluidas} de ${metricas.total} atividades concluídas.` }
     : { palavras: ["Em", "dia"], destaque: VERDE, frase: `Nada vencido. ${pendentes} ${pendentes === 1 ? "atividade" : "atividades"} pela frente.` };
-  const diasNoMes = new Date(ano, mes + 1, 0).getDate();
-  const maxDoMes = Math.max(...[...metricas.porDia.values()].map(d => d.total), 1);
   const reunioes = visiveis.filter(a => a.tipo === "reuniao" && dataDe(a)?.startsWith(prefixo)).length;
 
   const semanas = metricas.porSemana.map((s, indice) => {
@@ -992,50 +990,6 @@ function PainelDoMes({ itens, ano, mes, hoje, onAbrirDia, onAbrirSemana, onEdit,
               </div>
             ))}
           </dl>
-        </div>
-
-        {/* Pulso do mês: uma barra por dia; clique abre o dia */}
-        <div className="px-5 sm:px-6">
-          <div className="flex h-12 items-end gap-[3px]">
-            {Array.from({ length: diasNoMes }, (_, i) => {
-              const iso = `${prefixo}${String(i + 1).padStart(2, "0")}`;
-              const info = metricas.porDia.get(iso);
-              const total = info?.total ?? 0;
-              const aFazer = total - (info?.concluidas ?? 0) - (info?.atrasadas ?? 0);
-              const ehHoje = iso === hoje;
-              return (
-                <button
-                  key={iso}
-                  type="button"
-                  onClick={() => onAbrirDia(dataDoIso(iso))}
-                  title={`${i + 1}/${String(mes + 1).padStart(2, "0")}: ${total ? `${total} ${total === 1 ? "atividade" : "atividades"}, ${info!.concluidas} concluídas${info!.atrasadas ? `, ${info!.atrasadas} atrasadas` : ""}` : "livre"}`}
-                  className={`group flex h-full min-w-0 flex-1 flex-col justify-end rounded-[2px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 ${ehHoje ? "bg-black/[.04]" : "hover:bg-black/[.03]"}`}
-                >
-                  {total ? (
-                    <span className="flex w-full flex-col-reverse gap-[2px] group-hover:opacity-80" style={{ height: `${Math.max(total / maxDoMes * 100, 14)}%` }}>
-                      {info!.concluidas > 0 && <span className="rounded-[2px]" style={{ flexGrow: info!.concluidas, background: VERDE }} />}
-                      {info!.atrasadas > 0 && <span className="rounded-[2px] bg-[#D94A4A]" style={{ flexGrow: info!.atrasadas }} />}
-                      {aFazer > 0 && <span className="rounded-[2px] bg-black/[.16]" style={{ flexGrow: aFazer }} />}
-                    </span>
-                  ) : <span className="h-[2px] w-full rounded-[2px] bg-black/[.07]" />}
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-1.5 flex gap-[3px]" style={MONO}>
-            {Array.from({ length: diasNoMes }, (_, i) => {
-              const iso = `${prefixo}${String(i + 1).padStart(2, "0")}`;
-              // os números de referência somem perto de "hoje" para não encostar nele
-              const pertoDeHoje = hoje.startsWith(prefixo) && Math.abs(Number(hoje.slice(8)) - (i + 1)) <= 2;
-              const mostra = iso === hoje || (!pertoDeHoje && (i === 0 || (i + 1) % 5 === 0));
-              return <span key={iso} className={`min-w-0 flex-1 text-center text-[0.5625rem] tabular-nums ${iso === hoje ? "font-semibold text-[#282525]" : "text-black/35"}`}>{mostra ? (iso === hoje ? "hoje" : i + 1) : ""}</span>;
-            })}
-          </div>
-          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-[0.625rem] text-black/45">
-            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-[2px]" style={{ background: VERDE }} />Concluídas</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-[2px] bg-[#D94A4A]" />Atrasadas</span>
-            <span className="flex items-center gap-1.5"><span className="h-2 w-3 rounded-[2px] bg-black/[.16]" />A fazer</span>
-          </div>
         </div>
 
         {/* Tipos do mês: filtram o painel */}
