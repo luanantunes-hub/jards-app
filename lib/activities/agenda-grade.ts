@@ -67,6 +67,45 @@ export function posicionarNoDia<T>(itens: { item: T; inicio: number; fim: number
   return saida;
 }
 
+/* ─── Arrastar e redimensionar ──────────────────────────────────────────── */
+
+export const PASSO_MIN = 15;
+export type ModoArrasto = "mover" | "inicio" | "fim";
+
+export function encaixar(minutos: number, passo = PASSO_MIN): number {
+  return Math.round(minutos / passo) * passo;
+}
+
+/**
+ * Novo intervalo enquanto a pessoa arrasta. "mover" mantém a duração e usa a distância entre o ponteiro e o
+ * início do bloco no momento em que ele foi pego (pegada); "inicio" e "fim" puxam só uma borda.
+ * Tudo encaixa de 15 em 15 minutos, dura pelo menos 15 minutos e não sai do dia.
+ */
+export function novoIntervalo(modo: ModoArrasto, original: { inicio: number; fim: number }, minutoDoPonteiro: number, pegada = 0): { inicio: number; fim: number } {
+  if (modo === "mover") {
+    const duracao = original.fim - original.inicio;
+    const inicio = Math.max(0, Math.min(MINUTOS_NO_DIA - duracao, encaixar(minutoDoPonteiro - pegada)));
+    return { inicio, fim: inicio + duracao };
+  }
+  if (modo === "inicio") {
+    return { inicio: Math.max(0, Math.min(original.fim - PASSO_MIN, encaixar(minutoDoPonteiro))), fim: original.fim };
+  }
+  return { inicio: original.inicio, fim: Math.min(MINUTOS_NO_DIA, Math.max(original.inicio + PASSO_MIN, encaixar(minutoDoPonteiro))) };
+}
+
+/** Soma dias a uma data "YYYY-MM-DD" (na hora local). */
+export function somarDiasIso(iso: string, dias: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return isoLocal(new Date(y, m - 1, d + dias));
+}
+
+/** Dias de "de" até "ate" (negativo quando "ate" vem antes). */
+export function diasEntreIso(de: string, ate: string): number {
+  const [y1, m1, d1] = de.split("-").map(Number);
+  const [y2, m2, d2] = ate.split("-").map(Number);
+  return Math.round((Date.UTC(y2, m2 - 1, d2) - Date.UTC(y1, m1 - 1, d1)) / 86_400_000);
+}
+
 /* ─── Painel do mês ─────────────────────────────────────────────────────── */
 
 export type ItemDoMes = {
