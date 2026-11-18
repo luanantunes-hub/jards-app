@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Literata } from "next/font/google";
+import { Fraunces } from "next/font/google";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
 import { saudacaoDoPainel } from "@/lib/saudacao";
 
-// Itálico de livro para a saudação: a voz do Jards, diferente dos títulos do app.
-const literata = Literata({ subsets: ["latin"], style: ["italic"], weight: ["500"] });
-const FONTE_FRASE = `${literata.className} text-[1.7rem] font-medium italic tracking-[-.01em]`;
+// Fraunces itálico para a saudação: a voz do Jards, diferente dos títulos do app.
+const fraunces = Fraunces({ subsets: ["latin"], style: ["italic"], weight: ["400"] });
+const FONTE_FRASE = `${fraunces.className} text-[1.875rem] font-normal italic leading-[1.05] tracking-[-.03em]`;
 
 /** Título do painel: uma saudação que muda com a hora e o dia (o símbolo já está no menu). */
 export function SaudacaoPainel() {
