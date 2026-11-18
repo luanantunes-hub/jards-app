@@ -9,9 +9,13 @@ import { FRASES_DAS_SECOES, type SecaoComFrase } from "@/lib/frases-das-secoes";
 
 // Teste da GT Super Display: o site não carrega o arquivo da fonte (a versão é de avaliação);
 // usa a fonte instalada no computador de quem abre. Sem ela instalada, vale a Fraunces em negrito.
-const fraunces = Fraunces({ subsets: ["latin"], weight: ["700"], variable: "--font-frase-secao" });
-const FAMILIA = '"GT Super Ds Trial", "GT Super Display", var(--font-frase-secao), Georgia, serif';
-const FONTE_FRASE = "text-[1.625rem] font-bold leading-[1.08] tracking-[-.02em] sm:text-[1.875rem]";
+// O painel (SaudacaoPainel) usa as mesmas três constantes: uma voz só para todas as frases.
+export const fonteDaFrase = Fraunces({ subsets: ["latin"], weight: ["700"], variable: "--font-frase-secao" });
+export const FAMILIA_DA_FRASE = '"GT Super Ds Trial", "GT Super Display", var(--font-frase-secao), Georgia, serif';
+export const CLASSE_DA_FRASE = "text-[1.625rem] font-bold leading-[1.08] tracking-[-.02em] sm:text-[1.875rem]";
+const fraunces = fonteDaFrase;
+const FAMILIA = FAMILIA_DA_FRASE;
+const FONTE_FRASE = CLASSE_DA_FRASE;
 
 /**
  * Topo da seção no estilo do painel: o nome da seção vira a etiqueta pequena e a frase do dia

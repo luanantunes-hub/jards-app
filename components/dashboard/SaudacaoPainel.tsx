@@ -1,14 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Literata } from "next/font/google";
 import { createClient } from "@/lib/supabase/client";
 import { useOrganizationName } from "@/contexts/OrganizationContext";
 import { saudacaoDoPainel } from "@/lib/saudacao";
+import { CLASSE_DA_FRASE, FAMILIA_DA_FRASE, fonteDaFrase } from "@/components/list/TituloComFrase";
 
-// Itálico de livro para a saudação: a voz do Jards, diferente dos títulos do app.
-const literata = Literata({ subsets: ["latin"], style: ["italic"], weight: ["500"] });
-const FONTE_FRASE = `${literata.className} text-[1.7rem] font-medium italic tracking-[-.01em]`;
+// A saudação usa a mesma voz das frases das seções (TituloComFrase): mesma fonte, tamanho e peso.
+const FONTE_FRASE = `block ${CLASSE_DA_FRASE}`;
 
 /** Título do painel: uma saudação que muda com a hora e o dia (o símbolo já está no menu). */
 export function SaudacaoPainel() {
@@ -49,10 +48,10 @@ function semQuebraNoHifen(frase: string) {
 
 export function TituloSaudacao({ frase }: { frase: string | null }) {
   return (
-    <h1 className="mt-1 leading-tight text-[#282525]">
+    <h1 className={`mt-1.5 max-w-[42rem] text-[#282525] ${fonteDaFrase.variable}`}>
       {frase
-        ? <span className={`saudacao-painel text-balance ${FONTE_FRASE}`}>{semQuebraNoHifen(frase)}</span>
-        : <span className={`invisible ${FONTE_FRASE}`} aria-hidden="true">Café pronto</span>}
+        ? <span className={`saudacao-painel text-balance ${FONTE_FRASE}`} style={{ fontFamily: FAMILIA_DA_FRASE }}>{semQuebraNoHifen(frase)}</span>
+        : <span className={`invisible ${FONTE_FRASE}`} style={{ fontFamily: FAMILIA_DA_FRASE }} aria-hidden="true">Café pronto</span>}
       {!frase && <span className="sr-only">Visão geral</span>}
     </h1>
   );

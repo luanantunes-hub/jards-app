@@ -665,7 +665,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="mb-7 flex items-start justify-between gap-4">
         <div>
-          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Gerenciamento</p>
+          <p className="text-[0.625rem] font-bold uppercase tracking-[.14em] text-black/30">Visão geral</p>
           <SaudacaoPainel />
         </div>
         <DashboardCustomizer open={customizerOpen} onOpenChange={setCustomizerOpen} preferences={dashboardPreferences.preferences} onToggle={dashboardPreferences.toggle} onMove={dashboardPreferences.move} onReset={dashboardPreferences.reset} />
