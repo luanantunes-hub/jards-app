@@ -293,7 +293,7 @@ function useAgora(): Date {
   return agora;
 }
 
-function CalendarioView({ atividades, tipoFilter, onEdit, onNew, onReagendar }: { atividades: AtividadeRow[]; tipoFilter: TipoFilter; onEdit: (id: string) => void; onNew: (dateStr: string, hora?: string) => void; onReagendar: (id: string, mudanca: { data: string; inicio: number; fim: number }) => void }) {
+function CalendarioView({ atividades, tipoFilter, onEdit, onNew, onReagendar }: { atividades: AtividadeRow[]; tipoFilter: TipoFilter; onEdit: (id: string) => void; onNew: (dateStr: string, hora?: string) => void; onReagendar: (id: string, mudanca: Reagendamento) => void }) {
   const [scale, setScale] = useState<CalendarScale>("semana");
   const [cursor, setCursor] = useState(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
@@ -377,7 +377,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew, onReagendar }: 
 
   if (scale === "mes") {
     return (
-      <div className="space-y-4">
+      <div className="isolate space-y-4">
         {toolbar}
         <PainelDoMes itens={filtered} ano={year} mes={monthIdx} hoje={hoje} onAbrirDia={abrirDia} onAbrirSemana={abrirSemana} onEdit={onEdit} onNew={date => onNew(date)} />
       </div>
@@ -385,7 +385,7 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew, onReagendar }: 
   }
 
   return (
-    <div className="overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
+    <div className="isolate overflow-hidden rounded border bg-white" style={{ borderColor: "rgba(13,13,13,.08)" }}>
       {toolbar}
       <GradeDeHorarios
         dias={scale === "dia" ? [cursor] : weekDays}
@@ -402,7 +402,8 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew, onReagendar }: 
   );
 }
 
-type Reagendamento = { data: string; inicio: number; fim: number };
+// inicio/fim nulos: a atividade fica sem hora (só o dia muda)
+type Reagendamento = { data: string; inicio: number | null; fim: number | null };
 type Arrasto = {
   id: string;
   modo: ModoArrasto;
@@ -412,12 +413,18 @@ type Arrasto = {
   x: number;
   y: number;
   ativo: boolean;
+  semHoraOrigem: boolean;
   previa: Reagendamento;
 };
 
-// Atividade que veio do Google Agenda ou do Outlook muda lá: a próxima importação desfaria a mudança feita aqui.
+// Atividade que veio do Google Agenda ou do Outlook: mudar o horário dela muda o evento lá também.
 function veioDeFora(a: AtividadeRow): boolean {
   return a.sync_origin === "google" || a.sync_origin === "microsoft";
+}
+
+// Follow-ups e pedidos do captador têm fluxo próprio: não arrastam.
+function arrastavel(a: AtividadeRow): boolean {
+  return !a.source_kind || a.source_kind === "atividade";
 }
 
 function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, onAbrirDia, onReagendar }: {
@@ -453,7 +460,8 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
     // o compromisso arrastado aparece onde vai cair
     if (emArrasto && emArrasto.previa.data === dateStr) {
       const item = [...byDate.values()].flat().find(a => a.id === emArrasto.id);
-      if (item) comHora.push({ item, inicio: emArrasto.previa.inicio, fim: emArrasto.previa.fim });
+      if (item && emArrasto.previa.inicio !== null && emArrasto.previa.fim !== null) comHora.push({ item, inicio: emArrasto.previa.inicio, fim: emArrasto.previa.fim });
+      else if (item) semHora.push(item);
     }
     return { date, dateStr, posicionados: posicionarNoDia(comHora), semHora };
   });
@@ -491,19 +499,23 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
   const soltarOuvintes = useRef<(() => void) | null>(null);
   useEffect(() => () => soltarOuvintes.current?.(), []);
 
-  const pegar = (evento: React.PointerEvent, item: AtividadeRow, modo: ModoArrasto, intervalo: { inicio: number; fim: number }, dia: string) => {
-    if (evento.button !== 0 || veioDeFora(item)) return;
+  const pegar = (evento: React.PointerEvent, item: AtividadeRow, modo: ModoArrasto, intervalo: { inicio: number; fim: number } | null, dia: string) => {
+    if (evento.button !== 0 || !arrastavel(item)) return;
+    const semHora = intervalo === null;
+    // sem hora: ao entrar na grade vira um compromisso de uma hora, com o topo um pouco acima do ponteiro
+    const base = intervalo ?? { inicio: 0, fim: 60 };
     // no toque, arrastar o bloco rolaria a agenda: lá só as bordas mudam o horário
     if (modo === "mover" && evento.pointerType === "touch") return;
     evento.stopPropagation();
     if (modo !== "mover") evento.preventDefault();
     soltarOuvintes.current?.();
     const novo: Arrasto = {
-      id: item.id, modo, original: intervalo, diaOrigem: dia,
-      pegada: minutoNoPonto(evento.clientY) - intervalo.inicio,
+      id: item.id, modo, original: base, diaOrigem: dia,
+      pegada: semHora ? 15 : minutoNoPonto(evento.clientY) - base.inicio,
       x: evento.clientX, y: evento.clientY,
       ativo: modo !== "mover",
-      previa: { data: dia, ...intervalo },
+      semHoraOrigem: semHora,
+      previa: semHora ? { data: dia, inicio: null, fim: null } : { data: dia, ...base },
     };
     arrastoRef.current = novo;
     setArrasto(novo);
@@ -522,8 +534,10 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
         if (e.clientY < topoVisivel + zona) scroll.scrollTop -= Math.ceil((topoVisivel + zona - e.clientY) / zona * 6);
         else if (e.clientY > r.bottom - zona) scroll.scrollTop += Math.ceil((e.clientY - (r.bottom - zona)) / zona * 6);
       }
-      const novoTrecho = novoIntervalo(atual.modo, atual.original, minutoNoPonto(e.clientY), atual.pegada);
       const data = atual.modo === "mover" ? diaNoPonto(e.clientX) ?? atual.previa.data : atual.diaOrigem;
+      // item sem hora: em cima da grade ganha horário; na faixa de cima continua sem hora
+      const naGrade = !atual.semHoraOrigem || e.clientY >= (scroll?.getBoundingClientRect().top ?? 0) + (cabecalhoRef.current?.offsetHeight ?? 0);
+      const novoTrecho = naGrade ? novoIntervalo(atual.modo, atual.original, minutoNoPonto(e.clientY), atual.pegada) : { inicio: null, fim: null };
       const proximo = { ...atual, ativo: true, previa: { data, ...novoTrecho } };
       arrastoRef.current = proximo;
       setArrasto(proximo);
@@ -537,7 +551,10 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
       acabouDeArrastar.current = true;
       setTimeout(() => { acabouDeArrastar.current = false; }, 0);
       const { data, inicio, fim } = atual.previa;
-      if (data !== atual.diaOrigem || inicio !== atual.original.inicio || fim !== atual.original.fim) reagendarRef.current(atual.id, atual.previa);
+      const mudou = atual.semHoraOrigem
+        ? data !== atual.diaOrigem || inicio !== null
+        : data !== atual.diaOrigem || inicio !== atual.original.inicio || fim !== atual.original.fim;
+      if (mudou) reagendarRef.current(atual.id, atual.previa);
     };
     const cancelar = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
@@ -593,7 +610,15 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
             <div className="flex items-start justify-end border-t px-2 pt-2 text-right text-[0.5rem] font-medium uppercase leading-tight tracking-[.08em] text-black/35" style={{ ...MONO, borderColor: "rgba(40,37,37,.06)" }}>sem<br />hora</div>
             {porDia.map(({ date, dateStr, semHora }) => (
               <div key={dateStr} className="flex min-w-0 flex-col gap-1 border-l border-t p-1.5" style={{ borderColor: "rgba(40,37,37,.06)" }}>
-                {semHora.slice(0, limiteSemHora).map(item => <ChipSemHorario key={item.id} atividade={item} onEdit={onEdit} />)}
+                {semHora.slice(0, limiteSemHora).map(item => (
+                  <ChipSemHorario
+                    key={item.id}
+                    atividade={item}
+                    arrastando={emArrasto?.id === item.id}
+                    onAbrir={abrir}
+                    onPegar={evento => pegar(evento, item, "mover", null, dateStr)}
+                  />
+                ))}
                 {semHora.length > limiteSemHora && (
                   <button type="button" onClick={() => onAbrirDia(date)} className="rounded px-1.5 py-0.5 text-left text-[0.625rem] text-[#684DB0] hover:bg-black/[.03]">
                     +{semHora.length - limiteSemHora} mais
@@ -709,8 +734,8 @@ function BlocoNaGrade({ posicionado, detalhado, arrastando, onAbrir, onPegar }: 
       type="button"
       onClick={(event) => { event.stopPropagation(); onAbrir(atividade.id); }}
       onPointerDown={(event) => onPegar(event, "mover")}
-      title={`${atividade.nome} · ${horario}${entity !== "—" ? ` · ${entity}` : ""}${deFora ? ` · vem do ${origem}: mude o horário por lá` : " · arraste para mudar o dia ou o horário"}`}
-      className={`group absolute flex overflow-hidden rounded border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/40 ${curto ? "items-center gap-1.5 px-1.5" : "flex-col gap-1 px-2 py-1.5"} ${arrastando ? "z-30 cursor-grabbing" : `z-10 transition-[box-shadow,transform] duration-200 hover:z-20 hover:-translate-y-px hover:shadow-[0_10px_28px_rgba(40,37,37,.10)] motion-reduce:transition-none ${deFora ? "cursor-pointer" : "cursor-grab"}`} ${atividade.feita ? "opacity-70" : ""}`}
+      title={`${atividade.nome} · ${horario}${entity !== "—" ? ` · ${entity}` : ""}${deFora ? ` · do ${origem}: arrastar muda lá também` : " · arraste para mudar o dia ou o horário"}`}
+      className={`group absolute flex overflow-hidden rounded border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/40 ${curto ? "items-center gap-1.5 px-1.5" : "flex-col gap-1 px-2 py-1.5"} ${arrastando ? "z-30 cursor-grabbing" : `z-10 transition-[box-shadow,transform] duration-200 hover:z-20 hover:-translate-y-px hover:shadow-[0_10px_28px_rgba(40,37,37,.10)] motion-reduce:transition-none cursor-grab`} ${atividade.feita ? "opacity-70" : ""}`}
       style={{
         top: `calc(${inicio / 60 * HORA_REM}rem + 1px)`,
         height: `calc(${Math.max(duracao, 30) / 60 * HORA_REM}rem - 2px)`,
@@ -742,7 +767,7 @@ function BlocoNaGrade({ posicionado, detalhado, arrastando, onAbrir, onPegar }: 
       {arrastando && curto && <span className="ml-auto flex-shrink-0 text-[0.5625rem] font-medium tabular-nums text-[#684DB0]" style={MONO}>{horario}</span>}
 
       {/* bordas: puxar muda o início ou o fim */}
-      {!deFora && <>
+      <>
         <span
           aria-hidden="true"
           onPointerDown={(event) => onPegar(event, "inicio")}
@@ -757,21 +782,23 @@ function BlocoNaGrade({ posicionado, detalhado, arrastando, onAbrir, onPegar }: 
         >
           <span className="mb-[2px] h-[3px] w-6 rounded-full bg-[#684DB0]/0 transition group-hover:bg-[#684DB0]/45" />
         </span>
-      </>}
+      </>
     </button>
   );
 }
 
-function ChipSemHorario({ atividade, onEdit }: { atividade: AtividadeRow; onEdit: (id: string) => void }) {
+function ChipSemHorario({ atividade, arrastando, onAbrir, onPegar }: { atividade: AtividadeRow; arrastando: boolean; onAbrir: (id: string) => void; onPegar: (evento: React.PointerEvent) => void }) {
   const config = typeConfigFor(atividade);
   const Icon = config.Icon;
+  const podeArrastar = arrastavel(atividade);
   return (
     <button
       type="button"
-      onClick={() => onEdit(atividade.id)}
-      title={atividade.nome}
-      className="flex min-w-0 items-center gap-1.5 rounded border px-1 py-1 text-left transition duration-200 hover:-translate-y-px hover:shadow-[0_6px_16px_rgba(40,37,37,.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/30 motion-reduce:transition-none"
-      style={{ ...CARTAO_LANDING, borderColor: "rgba(40,37,37,.09)" }}
+      onClick={() => onAbrir(atividade.id)}
+      onPointerDown={podeArrastar ? onPegar : undefined}
+      title={`${atividade.nome}${podeArrastar ? " · arraste para um horário ou outro dia" : ""}`}
+      className={`flex min-w-0 items-center gap-1.5 rounded border px-1 py-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/30 ${arrastando ? "cursor-grabbing" : `transition duration-200 hover:-translate-y-px hover:shadow-[0_6px_16px_rgba(40,37,37,.08)] motion-reduce:transition-none ${podeArrastar ? "cursor-grab" : ""}`}`}
+      style={{ ...CARTAO_LANDING, borderColor: arrastando ? "#684DB0" : "rgba(40,37,37,.09)", boxShadow: arrastando ? "0 10px 24px -10px rgba(28,14,51,.45), 0 0 0 1px #684DB0" : undefined }}
     >
       <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-[3px] bg-white shadow-[0_0_0_1px_rgba(40,37,37,.08)]" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }}>
         <Icon size={10} aria-hidden="true" />
@@ -1994,7 +2021,8 @@ export default function AtividadesPage() {
   }
 
   // Arrastar ou puxar as bordas no calendário: muda o dia (o início anda junto) e o horário.
-  async function reagendarAtividade(id: string, { data, inicio, fim }: { data: string; inicio: number; fim: number }) {
+  // Sem hora (inicio nulo): só o dia muda. Atividade vinda do Google Agenda/Outlook muda o evento lá também.
+  async function reagendarAtividade(id: string, { data, inicio, fim }: { data: string; inicio: number | null; fim: number | null }) {
     setToggleError(null);
     const item = allAtividades.find(atividade => atividade.id === id);
     if (!item || (item.source_kind && item.source_kind !== "atividade")) return;
@@ -2003,15 +2031,26 @@ export default function AtividadesPage() {
     const mudanca = {
       data_prevista: data,
       data_inicio: item.data_inicio ? somarDiasIso(normDate(item.data_inicio), deslocamento) : null,
-      hora_inicio: horaDe(inicio),
-      hora_fim: horaDe(fim),
+      hora_inicio: inicio === null ? null : horaDe(inicio),
+      hora_fim: fim === null ? null : horaDe(fim),
     };
     const anteriores = allAtividades;
     setAllAtividades(atuais => atuais.map(atividade => atividade.id === id ? { ...atividade, ...mudanca } : atividade));
-    const { error } = await (supabase as any).from("atividades").update(mudanca).eq("id", id);
-    if (error) {
+    let falha: string | null = null;
+    if (item.sync_origin === "google" || item.sync_origin === "microsoft") {
+      const resposta = await fetch("/api/calendar/mover-evento", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ atividadeId: id, ...mudanca }),
+      }).catch(() => null);
+      if (!resposta?.ok) falha = (await resposta?.json().catch(() => null) as { error?: string } | null)?.error ?? "Não foi possível falar com a agenda agora.";
+    } else {
+      const { error } = await (supabase as any).from("atividades").update(mudanca).eq("id", id);
+      if (error) falha = error.message;
+    }
+    if (falha) {
       setAllAtividades(anteriores);
-      setToggleError(`A atividade não foi reagendada. ${error.message}`);
+      setToggleError(`A atividade não foi reagendada. ${falha}`);
       return;
     }
     setAtividades(atuais => atuais.map(atividade => atividade.id === id ? { ...atividade, ...mudanca } : atividade));
