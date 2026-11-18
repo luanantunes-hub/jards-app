@@ -58,3 +58,28 @@ test("painel do mês: totais, atrasadas, semanas começando na segunda e agrupam
   assert.deepEqual(m.porTipo.map(t => [t.chave, t.total]), [["reuniao", 2], ["email", 1]]);
   assert.deepEqual(m.porResponsavel.map(t => [t.chave, t.total]), [["ana", 2], [null, 1]]);
 });
+
+test("arrastar: mover mantém a duração, encaixa em 15 min e não sai do dia", async () => {
+  const { novoIntervalo } = await import("../lib/activities/agenda-grade");
+  const reuniao = { inicio: 540, fim: 600 }; // 09:00–10:00
+  assert.deepEqual(novoIntervalo("mover", reuniao, 620, 10), { inicio: 615, fim: 675 }, "pegou 10 min abaixo do topo");
+  assert.deepEqual(novoIntervalo("mover", reuniao, 1435, 0), { inicio: 1380, fim: 1440 }, "não passa da meia-noite");
+  assert.deepEqual(novoIntervalo("mover", reuniao, -50, 0), { inicio: 0, fim: 60 });
+});
+
+test("redimensionar: cada borda anda sozinha e o compromisso dura pelo menos 15 min", async () => {
+  const { novoIntervalo } = await import("../lib/activities/agenda-grade");
+  const reuniao = { inicio: 540, fim: 600 };
+  assert.deepEqual(novoIntervalo("fim", reuniao, 668), { inicio: 540, fim: 675 });
+  assert.deepEqual(novoIntervalo("fim", reuniao, 500), { inicio: 540, fim: 555 });
+  assert.deepEqual(novoIntervalo("inicio", reuniao, 508), { inicio: 510, fim: 600 });
+  assert.deepEqual(novoIntervalo("inicio", reuniao, 640), { inicio: 585, fim: 600 });
+});
+
+test("datas: somar e contar dias atravessa o mês", async () => {
+  const { somarDiasIso, diasEntreIso } = await import("../lib/activities/agenda-grade");
+  assert.equal(somarDiasIso("2026-11-30", 1), "2026-12-01");
+  assert.equal(somarDiasIso("2026-11-01", -1), "2026-10-31");
+  assert.equal(diasEntreIso("2026-11-18", "2026-11-21"), 3);
+  assert.equal(diasEntreIso("2026-11-18", "2026-11-16"), -2);
+});

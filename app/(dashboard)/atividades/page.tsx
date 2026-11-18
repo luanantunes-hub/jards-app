@@ -22,7 +22,7 @@ import { FiltroResponsavel } from "@/components/list/FiltroResponsavel";
 import { ManagedTable, type ColumnDefinition } from "@/components/ui/ColumnManager";
 import { followupSourceLink } from "@/lib/activities/followupSourceLink";
 import { escalaUi } from "@/lib/escala-ui";
-import { MINUTOS_NO_DIA, horaDe, intervaloDoItem, isoLocal, metricasDoMes, posicionarNoDia, type ItemDoMes, type Posicionado } from "@/lib/activities/agenda-grade";
+import { MINUTOS_NO_DIA, diasEntreIso, horaDe, intervaloDoItem, isoLocal, metricasDoMes, novoIntervalo, posicionarNoDia, somarDiasIso, type ItemDoMes, type ModoArrasto, type Posicionado } from "@/lib/activities/agenda-grade";
 
 const ATIVIDADES_COLUMNS = [
   { id: "concluida", label: "Concluída", width: "6.5625rem" }, { id: "atividade", label: "Atividade", width: "17.5rem", grow: true, hideable: false }, { id: "negociacao", label: "Negociação", width: "11.875rem" }, { id: "empresa", label: "Empresa / contato", width: "13.75rem" }, { id: "prazo", label: "Prazo", width: "7.5rem" }, { id: "duracao", label: "Duração", width: "6.5625rem" }, { id: "prioridade", label: "Prioridade", width: "7.1875rem" }, { id: "responsavel", label: "Responsável", width: "10.625rem" }, { id: "resultado", label: "Resultado", width: "9.375rem" }, { id: "projeto", label: "Projeto", width: "11.25rem" }, { id: "observacao", label: "Observação", width: "14.375rem" },
@@ -61,6 +61,7 @@ type AtividadeRow = {
   contato: { nome: string | null; email: string | null; telefone: string | null } | null;
   responsavel_id: string | null;
   responsavel: { id: string; full_name: string | null; avatar_url: string | null } | null;
+  sync_origin?: string | null;
   source_kind?: "atividade" | "followup" | "workspace";
   source_id?: string;
   source_link?: string;
@@ -293,7 +294,7 @@ function useAgora(): Date {
   return agora;
 }
 
-function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades: AtividadeRow[]; tipoFilter: TipoFilter; onEdit: (id: string) => void; onNew: (dateStr: string, hora?: string) => void }) {
+function CalendarioView({ atividades, tipoFilter, onEdit, onNew, onReagendar }: { atividades: AtividadeRow[]; tipoFilter: TipoFilter; onEdit: (id: string) => void; onNew: (dateStr: string, hora?: string) => void; onReagendar: (id: string, mudanca: { data: string; inicio: number; fim: number }) => void }) {
   const [scale, setScale] = useState<CalendarScale>("semana");
   const [cursor, setCursor] = useState(() => {
     const d = new Date(); d.setHours(0, 0, 0, 0); return d;
@@ -404,12 +405,31 @@ function CalendarioView({ atividades, tipoFilter, onEdit, onNew }: { atividades:
         onEdit={onEdit}
         onNew={onNew}
         onAbrirDia={abrirDia}
+        onReagendar={onReagendar}
       />
     </div>
   );
 }
 
-function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, onAbrirDia }: {
+type Reagendamento = { data: string; inicio: number; fim: number };
+type Arrasto = {
+  id: string;
+  modo: ModoArrasto;
+  original: { inicio: number; fim: number };
+  diaOrigem: string;
+  pegada: number;
+  x: number;
+  y: number;
+  ativo: boolean;
+  previa: Reagendamento;
+};
+
+// Atividade que veio do Google Agenda ou do Outlook muda lá: a próxima importação desfaria a mudança feita aqui.
+function veioDeFora(a: AtividadeRow): boolean {
+  return a.sync_origin === "google" || a.sync_origin === "microsoft";
+}
+
+function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, onAbrirDia, onReagendar }: {
   dias: Date[];
   byDate: Map<string, AtividadeRow[]>;
   hoje: string;
@@ -418,44 +438,148 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
   onEdit: (id: string) => void;
   onNew: (dateStr: string, hora?: string) => void;
   onAbrirDia: (date: Date) => void;
+  onReagendar: (id: string, mudanca: Reagendamento) => void;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const corpoRef = useRef<HTMLDivElement>(null);
-  const colunas = `3.5rem repeat(${dias.length}, minmax(0, 1fr))`;
+  const cabecalhoRef = useRef<HTMLDivElement>(null);
+  const [arrasto, setArrasto] = useState<Arrasto | null>(null);
+  const arrastoRef = useRef<Arrasto | null>(null);
+  const acabouDeArrastar = useRef(false);
+  const colunas = `3.75rem repeat(${dias.length}, minmax(0, 1fr))`;
   const agoraMin = agora.getHours() * 60 + agora.getMinutes();
 
+  const emArrasto = arrasto?.ativo ? arrasto : null;
   const porDia = dias.map(date => {
     const dateStr = isoLocal(date);
-    const itens = byDate.get(dateStr) ?? [];
+    const itens = (byDate.get(dateStr) ?? []).filter(item => item.id !== emArrasto?.id);
     const comHora: { item: AtividadeRow; inicio: number; fim: number }[] = [];
     const semHora: AtividadeRow[] = [];
     for (const item of itens) {
       const intervalo = intervaloNaGrade(item);
       if (intervalo) comHora.push({ item, ...intervalo }); else semHora.push(item);
     }
+    // o compromisso arrastado aparece onde vai cair
+    if (emArrasto && emArrasto.previa.data === dateStr) {
+      const item = [...byDate.values()].flat().find(a => a.id === emArrasto.id);
+      if (item) comHora.push({ item, inicio: emArrasto.previa.inicio, fim: emArrasto.previa.fim });
+    }
     return { date, dateStr, posicionados: posicionarNoDia(comHora), semHora };
   });
   const temSemHorario = porDia.some(d => d.semHora.length > 0);
   const chaveDosDias = porDia.map(d => d.dateStr).join(",");
+  const hojeVisivel = chaveDosDias.includes(hoje);
   const primeiroInicio = Math.min(...porDia.flatMap(d => d.posicionados.map(p => p.inicio)));
 
   // Ao abrir ou trocar de período, rola até o primeiro compromisso (ou o começo do expediente).
   useEffect(() => {
     const scroll = scrollRef.current, corpo = corpoRef.current;
     if (!scroll || !corpo) return;
-    const alvo = Number.isFinite(primeiroInicio) ? primeiroInicio - 30 : chaveDosDias.includes(hoje) ? agoraMin - 120 : 7 * 60;
+    const alvo = Number.isFinite(primeiroInicio) ? primeiroInicio - 30 : hojeVisivel ? agoraMin - 120 : 7 * 60;
     scroll.scrollTop = Math.max(0, alvo) / MINUTOS_NO_DIA * corpo.offsetHeight;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chaveDosDias]);
 
+  const minutoNoPonto = (clientY: number) => {
+    const r = corpoRef.current!.getBoundingClientRect();
+    return (clientY - r.top) / r.height * MINUTOS_NO_DIA;
+  };
+  const diaNoPonto = (clientX: number): string | null => {
+    const colunasDosDias = [...(corpoRef.current?.querySelectorAll<HTMLElement>("[data-dia]") ?? [])];
+    if (!colunasDosDias.length) return null;
+    for (const coluna of colunasDosDias) {
+      const r = coluna.getBoundingClientRect();
+      if (clientX >= r.left && clientX < r.right) return coluna.dataset.dia ?? null;
+    }
+    return clientX < colunasDosDias[0].getBoundingClientRect().left ? colunasDosDias[0].dataset.dia ?? null : colunasDosDias.at(-1)!.dataset.dia ?? null;
+  };
+
+  // Os ouvintes entram no mesmo instante em que o compromisso é pego: movimentos rápidos não se perdem.
+  const reagendarRef = useRef(onReagendar);
+  useEffect(() => { reagendarRef.current = onReagendar; }, [onReagendar]);
+  const soltarOuvintes = useRef<(() => void) | null>(null);
+  useEffect(() => () => soltarOuvintes.current?.(), []);
+
+  const pegar = (evento: React.PointerEvent, item: AtividadeRow, modo: ModoArrasto, intervalo: { inicio: number; fim: number }, dia: string) => {
+    if (evento.button !== 0 || veioDeFora(item)) return;
+    // no toque, arrastar o bloco rolaria a agenda: lá só as bordas mudam o horário
+    if (modo === "mover" && evento.pointerType === "touch") return;
+    evento.stopPropagation();
+    if (modo !== "mover") evento.preventDefault();
+    soltarOuvintes.current?.();
+    const novo: Arrasto = {
+      id: item.id, modo, original: intervalo, diaOrigem: dia,
+      pegada: minutoNoPonto(evento.clientY) - intervalo.inicio,
+      x: evento.clientX, y: evento.clientY,
+      ativo: modo !== "mover",
+      previa: { data: dia, ...intervalo },
+    };
+    arrastoRef.current = novo;
+    setArrasto(novo);
+
+    const mover = (e: PointerEvent) => {
+      const atual = arrastoRef.current;
+      if (!atual) return;
+      if (!atual.ativo && Math.hypot(e.clientX - atual.x, e.clientY - atual.y) < 5) return;
+      e.preventDefault();
+      // perto da beirada visível da grade, a agenda rola devagar (mais rápido quanto mais perto)
+      const scroll = scrollRef.current;
+      if (scroll) {
+        const r = scroll.getBoundingClientRect();
+        const topoVisivel = r.top + (cabecalhoRef.current?.offsetHeight ?? 0);
+        const zona = 24 * escalaUi();
+        if (e.clientY < topoVisivel + zona) scroll.scrollTop -= Math.ceil((topoVisivel + zona - e.clientY) / zona * 6);
+        else if (e.clientY > r.bottom - zona) scroll.scrollTop += Math.ceil((e.clientY - (r.bottom - zona)) / zona * 6);
+      }
+      const novoTrecho = novoIntervalo(atual.modo, atual.original, minutoNoPonto(e.clientY), atual.pegada);
+      const data = atual.modo === "mover" ? diaNoPonto(e.clientX) ?? atual.previa.data : atual.diaOrigem;
+      const proximo = { ...atual, ativo: true, previa: { data, ...novoTrecho } };
+      arrastoRef.current = proximo;
+      setArrasto(proximo);
+    };
+    const soltar = () => {
+      limpar();
+      const atual = arrastoRef.current;
+      arrastoRef.current = null;
+      setArrasto(null);
+      if (!atual?.ativo) return; // foi um clique: o botão abre a atividade
+      acabouDeArrastar.current = true;
+      setTimeout(() => { acabouDeArrastar.current = false; }, 0);
+      const { data, inicio, fim } = atual.previa;
+      if (data !== atual.diaOrigem || inicio !== atual.original.inicio || fim !== atual.original.fim) reagendarRef.current(atual.id, atual.previa);
+    };
+    const cancelar = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      limpar();
+      arrastoRef.current = null;
+      setArrasto(null);
+    };
+    const limpar = () => {
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", soltar);
+      window.removeEventListener("pointercancel", soltar);
+      window.removeEventListener("keydown", cancelar);
+      soltarOuvintes.current = null;
+    };
+    window.addEventListener("pointermove", mover, { passive: false });
+    window.addEventListener("pointerup", soltar);
+    window.addEventListener("pointercancel", soltar);
+    window.addEventListener("keydown", cancelar);
+    soltarOuvintes.current = limpar;
+  };
+
+  const abrir = (id: string) => { if (!acabouDeArrastar.current) onEdit(id); };
   const limiteSemHora = detalhado ? 20 : 3;
 
   return (
-    <div ref={scrollRef} className="relative max-h-[max(28rem,calc(100dvh-17rem))] overflow-auto overscroll-contain">
+    <div
+      ref={scrollRef}
+      className={`relative max-h-[max(28rem,calc(100dvh-17rem))] overflow-auto overscroll-contain ${emArrasto ? (emArrasto.modo === "mover" ? "cursor-grabbing select-none" : "cursor-ns-resize select-none") : ""}`}
+    >
       <div style={{ minWidth: dias.length > 1 ? "52rem" : undefined }}>
         {/* Cabeçalho dos dias e faixa das atividades sem horário */}
-        <div className="sticky top-0 z-30 grid border-b bg-white" style={{ gridTemplateColumns: colunas, borderColor: "rgba(13,13,13,.08)" }}>
-          <div />
+        <div ref={cabecalhoRef} className="sticky top-0 z-40 grid border-b bg-white/95 backdrop-blur-sm" style={{ gridTemplateColumns: colunas, borderColor: "rgba(40,37,37,.08)" }}>
+          <div className="flex items-end justify-end px-2 pb-2 text-[0.5625rem] uppercase tracking-[.06em] text-black/30" style={MONO}>gmt-3</div>
           {porDia.map(({ date, dateStr }, index) => {
             const isToday = dateStr === hoje;
             const rotulo = DIAS_DA_SEMANA[(date.getDay() + 6) % 7];
@@ -466,21 +590,21 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
                 disabled={detalhado}
                 onClick={() => onAbrirDia(date)}
                 aria-label={`Abrir ${date.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" })}`}
-                className={`flex items-center justify-center gap-2 px-2 py-2.5 transition enabled:hover:bg-black/[.03] disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7259B5]/25 ${index > 0 ? "border-l" : ""}`}
-                style={{ borderColor: "rgba(13,13,13,.06)" }}
+                className={`group flex flex-col items-center gap-1 px-2 pb-2.5 pt-3 transition enabled:hover:bg-[rgba(40,37,37,.025)] disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#684DB0]/30 ${index > 0 ? "border-l" : ""}`}
+                style={{ borderColor: "rgba(40,37,37,.06)" }}
               >
-                <span className={`text-[0.625rem] font-medium uppercase tracking-[.08em] ${isToday ? "text-[#282525]" : "text-black/40"}`}>{rotulo}</span>
-                <span className={`flex h-7 min-w-7 items-center justify-center rounded px-1.5 text-[0.8125rem] font-semibold tabular-nums ${isToday ? "bg-[#282525] text-white" : "text-black/70"}`}>{date.getDate()}</span>
+                <span className={`text-[0.5625rem] font-medium uppercase tracking-[.1em] ${isToday ? "text-[#684DB0]" : "text-black/40"}`} style={MONO}>{rotulo}</span>
+                <span className={`font-display flex h-9 min-w-9 items-center justify-center rounded-full px-1.5 text-[1.125rem] font-bold leading-none tracking-[-.04em] tabular-nums transition ${isToday ? "bg-[#684DB0] text-white shadow-[0_8px_20px_-6px_rgba(104,77,176,.55)]" : "text-[#282525] group-enabled:group-hover:bg-white group-enabled:group-hover:shadow-[0_0_0_1px_rgba(40,37,37,.08)]"}`}>{date.getDate()}</span>
               </button>
             );
           })}
           {temSemHorario && <>
-            <div className="flex items-start justify-end border-t px-2 pt-2 text-right text-[0.5625rem] font-medium uppercase leading-tight tracking-[.06em] text-black/35" style={{ borderColor: "rgba(13,13,13,.06)" }}>Sem<br />horário</div>
+            <div className="flex items-start justify-end border-t px-2 pt-2 text-right text-[0.5rem] font-medium uppercase leading-tight tracking-[.08em] text-black/35" style={{ ...MONO, borderColor: "rgba(40,37,37,.06)" }}>sem<br />hora</div>
             {porDia.map(({ date, dateStr, semHora }) => (
-              <div key={dateStr} className="flex min-w-0 flex-col gap-1 border-l border-t p-1.5" style={{ borderColor: "rgba(13,13,13,.06)" }}>
+              <div key={dateStr} className="flex min-w-0 flex-col gap-1 border-l border-t p-1.5" style={{ borderColor: "rgba(40,37,37,.06)" }}>
                 {semHora.slice(0, limiteSemHora).map(item => <ChipSemHorario key={item.id} atividade={item} onEdit={onEdit} />)}
                 {semHora.length > limiteSemHora && (
-                  <button type="button" onClick={() => onAbrirDia(date)} className="rounded px-1.5 py-0.5 text-left text-[0.625rem] font-medium text-black/45 hover:bg-black/[.04] hover:text-black/70">
+                  <button type="button" onClick={() => onAbrirDia(date)} className="rounded px-1.5 py-0.5 text-left text-[0.625rem] text-[#684DB0] hover:bg-black/[.03]">
                     +{semHora.length - limiteSemHora} mais
                   </button>
                 )}
@@ -489,59 +613,92 @@ function GradeDeHorarios({ dias, byDate, hoje, agora, detalhado, onEdit, onNew, 
           </>}
         </div>
 
-        {/* Grade de horários */}
+        {/* Grade de horários: papel com linhas de hora e meia hora */}
         <div ref={corpoRef} className="relative grid" style={{ gridTemplateColumns: colunas, height: `${24 * HORA_REM}rem` }}>
           <div className="relative">
             {Array.from({ length: 23 }, (_, i) => i + 1).map(h => (
-              <span key={h} className="absolute right-2 -translate-y-1/2 text-[0.625rem] tabular-nums text-black/35" style={{ top: `${h * HORA_REM}rem` }}>
+              <span key={h} className="absolute right-2 -translate-y-1/2 text-[0.5625rem] tabular-nums text-black/35" style={{ ...MONO, top: `${h * HORA_REM}rem` }}>
                 {String(h).padStart(2, "0")}:00
               </span>
             ))}
+            {hojeVisivel && (
+              <span className="absolute right-1 z-30 -translate-y-1/2 rounded-[3px] bg-[#684DB0] px-1 py-px text-[0.5625rem] font-medium tabular-nums text-white shadow-[0_4px_10px_-4px_rgba(104,77,176,.6)]" style={{ ...MONO, top: `${agoraMin / 60 * HORA_REM}rem` }}>
+                {horaDe(agoraMin)}
+              </span>
+            )}
           </div>
-          {porDia.map(({ dateStr, posicionados }) => (
-            <div
-              key={dateStr}
-              className="relative border-l"
-              style={{
-                borderColor: "rgba(13,13,13,.06)",
-                backgroundImage: "linear-gradient(to bottom, rgba(13,13,13,.06) 1px, transparent 1px)",
-                backgroundSize: `100% ${HORA_REM}rem`,
-                backgroundColor: dateStr === hoje && !detalhado ? "rgba(13,13,13,.015)" : undefined,
-              }}
-            >
-              {/* Meia hora livre: clique cria a atividade já com o dia e a hora */}
-              {Array.from({ length: 48 }, (_, i) => (
-                <div
-                  key={i}
-                  aria-hidden="true"
-                  onClick={() => onNew(dateStr, horaDe(i * 30))}
-                  className="group absolute inset-x-0 cursor-pointer hover:bg-black/[.03]"
-                  style={{ top: `${i * HORA_REM / 2}rem`, height: `${HORA_REM / 2}rem` }}
-                >
-                  <span className="pointer-events-none hidden items-center gap-1 px-1.5 pt-0.5 text-[0.625rem] font-medium tabular-nums text-black/40 group-hover:flex">
-                    <Plus size={10} /> {horaDe(i * 30)}
-                  </span>
-                </div>
-              ))}
+          {porDia.map(({ date, dateStr, posicionados }) => {
+            const fimDeSemana = date.getDay() === 0 || date.getDay() === 6;
+            return (
+              <div
+                key={dateStr}
+                data-dia={dateStr}
+                className="relative border-l"
+                style={{
+                  borderColor: "rgba(40,37,37,.06)",
+                  backgroundColor: dateStr === hoje && !detalhado ? "rgba(40,37,37,.022)" : fimDeSemana ? "rgba(40,37,37,.012)" : undefined,
+                  backgroundImage: "linear-gradient(to bottom, rgba(40,37,37,.075) 1px, transparent 1px), linear-gradient(to bottom, transparent calc(50% - .5px), rgba(40,37,37,.03) calc(50% - .5px), rgba(40,37,37,.03) calc(50% + .5px), transparent calc(50% + .5px))",
+                  backgroundSize: `100% ${HORA_REM}rem, 100% ${HORA_REM}rem`,
+                }}
+              >
+                {/* Meia hora livre: clique cria a atividade já com o dia e a hora */}
+                {Array.from({ length: 48 }, (_, i) => (
+                  <div
+                    key={i}
+                    aria-hidden="true"
+                    onClick={() => { if (!acabouDeArrastar.current) onNew(dateStr, horaDe(i * 30)); }}
+                    className={`group absolute inset-x-0 cursor-pointer ${emArrasto ? "" : "hover:bg-[rgba(104,77,176,.045)]"}`}
+                    style={{ top: `${i * HORA_REM / 2}rem`, height: `${HORA_REM / 2}rem` }}
+                  >
+                    {!emArrasto && (
+                      <span className="pointer-events-none hidden items-center gap-1 px-1.5 pt-0.5 text-[0.5625rem] font-medium tabular-nums text-[#684DB0] group-hover:flex" style={MONO}>
+                        <Plus size={10} /> {horaDe(i * 30)}
+                      </span>
+                    )}
+                  </div>
+                ))}
 
-              {posicionados.map(p => (
-                <BlocoNaGrade key={p.item.id} posicionado={p} detalhado={detalhado} onEdit={onEdit} />
-              ))}
+                {/* onde o compromisso estava, enquanto ele é arrastado */}
+                {emArrasto && emArrasto.diaOrigem === dateStr && (
+                  <div
+                    aria-hidden="true"
+                    className="pointer-events-none absolute inset-x-[2px] z-[5] rounded border border-dashed border-[#684DB0]/45"
+                    style={{ top: `${emArrasto.original.inicio / 60 * HORA_REM}rem`, height: `${Math.max(emArrasto.original.fim - emArrasto.original.inicio, 30) / 60 * HORA_REM}rem` }}
+                  />
+                )}
 
-              {dateStr === hoje && (
-                <div className="pointer-events-none absolute inset-x-0 z-20 border-t-2 border-[#D94A4A]" style={{ top: `${agoraMin / 60 * HORA_REM}rem` }}>
-                  <span className="absolute -left-[3px] -top-[4px] h-1.5 w-1.5 rounded-full bg-[#D94A4A]" />
-                </div>
-              )}
-            </div>
-          ))}
+                {posicionados.map(p => (
+                  <BlocoNaGrade
+                    key={p.item.id}
+                    posicionado={p}
+                    detalhado={detalhado}
+                    arrastando={emArrasto?.id === p.item.id}
+                    onAbrir={abrir}
+                    onPegar={(evento, modo) => pegar(evento, p.item, modo, emArrasto?.id === p.item.id ? emArrasto.original : { inicio: p.inicio, fim: p.fim }, dateStr)}
+                  />
+                ))}
+
+                {dateStr === hoje && (
+                  <div className="pointer-events-none absolute inset-x-0 z-20 h-px" style={{ top: `${agoraMin / 60 * HORA_REM}rem`, background: LIGACAO_ROXA }}>
+                    <span className="absolute -left-[4px] -top-[3.5px] h-2 w-2 rounded-full border-2 border-white bg-[#684DB0] shadow-[0_0_0_1px_rgba(104,77,176,.35)]" />
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
   );
 }
 
-function BlocoNaGrade({ posicionado, detalhado, onEdit }: { posicionado: Posicionado<AtividadeRow>; detalhado: boolean; onEdit: (id: string) => void }) {
+function BlocoNaGrade({ posicionado, detalhado, arrastando, onAbrir, onPegar }: {
+  posicionado: Posicionado<AtividadeRow>;
+  detalhado: boolean;
+  arrastando: boolean;
+  onAbrir: (id: string) => void;
+  onPegar: (evento: React.PointerEvent, modo: ModoArrasto) => void;
+}) {
   const { item: atividade, inicio, fim, coluna, colunas } = posicionado;
   const config = typeConfigFor(atividade);
   const Icon = config.Icon;
@@ -549,40 +706,67 @@ function BlocoNaGrade({ posicionado, detalhado, onEdit }: { posicionado: Posicio
   const curto = duracao < 45;
   const entity = entityLabel(atividade);
   const horario = `${horaDe(inicio)}–${horaDe(fim)}`;
+  const deFora = veioDeFora(atividade);
+  const origem = atividade.sync_origin === "google" ? "Google Agenda" : "Outlook";
+  const iconeDoTipo = (
+    <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-[3px] bg-white shadow-[0_0_0_1px_rgba(40,37,37,.08)]" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }}>
+      <Icon size={11} aria-hidden="true" />
+    </span>
+  );
   return (
     <button
       type="button"
-      onClick={(event) => { event.stopPropagation(); onEdit(atividade.id); }}
-      title={`${atividade.nome} · ${horario}${entity !== "—" ? ` · ${entity}` : ""}`}
-      className={`absolute z-10 flex overflow-hidden rounded border text-left transition hover:z-20 hover:shadow-[0_2px_8px_rgba(13,13,13,.10)] focus-visible:z-20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/30 ${curto ? "items-center gap-1.5 px-1.5" : "flex-col gap-0.5 px-2 py-1.5"} ${atividade.feita ? "bg-[#F6F5F5]" : "bg-white"}`}
+      onClick={(event) => { event.stopPropagation(); onAbrir(atividade.id); }}
+      onPointerDown={(event) => onPegar(event, "mover")}
+      title={`${atividade.nome} · ${horario}${entity !== "—" ? ` · ${entity}` : ""}${deFora ? ` · vem do ${origem}: mude o horário por lá` : " · arraste para mudar o dia ou o horário"}`}
+      className={`group absolute flex overflow-hidden rounded border text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/40 ${curto ? "items-center gap-1.5 px-1.5" : "flex-col gap-1 px-2 py-1.5"} ${arrastando ? "z-30 cursor-grabbing" : `z-10 transition-[box-shadow,transform] duration-200 hover:z-20 hover:-translate-y-px hover:shadow-[0_10px_28px_rgba(40,37,37,.10)] motion-reduce:transition-none ${deFora ? "cursor-pointer" : "cursor-grab"}`} ${atividade.feita ? "opacity-70" : ""}`}
       style={{
         top: `calc(${inicio / 60 * HORA_REM}rem + 1px)`,
         height: `calc(${Math.max(duracao, 30) / 60 * HORA_REM}rem - 2px)`,
         left: `calc(${coluna / colunas * 100}% + 2px)`,
         width: `calc(${100 / colunas}% - 4px)`,
-        borderColor: atividade.feita ? "rgba(13,13,13,.08)" : corComAlfa(config.color, "66"),
+        ...CARTAO_LANDING,
+        borderColor: arrastando ? "#684DB0" : "rgba(40,37,37,.10)",
+        boxShadow: arrastando ? "0 16px 34px -12px rgba(28,14,51,.45), 0 0 0 1px #684DB0" : "0 1px 2px rgba(40,37,37,.04)",
+        touchAction: "manipulation",
       }}
     >
       {curto ? <>
-        <Icon size={11} aria-hidden="true" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }} className="flex-shrink-0" />
-        <span className="flex-shrink-0 text-[0.625rem] tabular-nums text-black/45">{horaDe(inicio)}</span>
-      </> : (
+        {iconeDoTipo}
+        <span className="flex-shrink-0 text-[0.5625rem] tabular-nums text-black/45" style={MONO}>{horaDe(inicio)}</span>
+        <span className={`min-w-0 truncate text-[0.6875rem] font-medium ${atividade.feita ? "text-black/40 line-through" : "text-[#282525]"}`}>{atividade.nome}</span>
+      </> : <>
         <span className="flex min-w-0 items-start gap-1.5">
-          <Icon size={11} aria-hidden="true" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }} className="mt-[3px] flex-shrink-0" />
-          <span className={`min-w-0 text-[0.6875rem] font-medium leading-snug ${duracao >= 90 ? "line-clamp-2" : "truncate"} ${atividade.feita ? "text-black/35 line-through" : "text-[#282525]"}`}>{atividade.nome}</span>
+          {iconeDoTipo}
+          <span className={`min-w-0 text-[0.6875rem] font-medium leading-snug ${duracao >= 90 ? "line-clamp-2" : "truncate"} ${atividade.feita ? "text-black/40 line-through" : "text-[#282525]"}`}>{atividade.nome}</span>
         </span>
-      )}
-      {curto ? (
-        <span className={`min-w-0 truncate text-[0.6875rem] font-medium ${atividade.feita ? "text-black/35 line-through" : "text-[#282525]"}`}>{atividade.nome}</span>
-      ) : (
-        <span className="truncate text-[0.625rem] tabular-nums text-black/45">{horario}</span>
-      )}
-      {!curto && duracao >= (detalhado ? 60 : 90) && entity !== "—" && (
-        <span className="truncate text-[0.625rem] text-black/45">{entity}</span>
-      )}
-      {detalhado && !curto && duracao >= 90 && atividade.responsavel?.full_name && (
-        <span className="truncate text-[0.625rem] text-black/40">{atividade.responsavel.full_name}</span>
-      )}
+        <span className={`truncate text-[0.5625rem] tabular-nums ${arrastando ? "font-medium text-[#684DB0]" : "text-black/45"}`} style={MONO}>{horario}</span>
+        {duracao >= (detalhado ? 60 : 90) && entity !== "—" && (
+          <span className="truncate text-[0.625rem] text-black/45">{entity}</span>
+        )}
+        {detalhado && duracao >= 90 && atividade.responsavel?.full_name && (
+          <span className="truncate text-[0.625rem] text-black/40">{atividade.responsavel.full_name}</span>
+        )}
+      </>}
+      {arrastando && curto && <span className="ml-auto flex-shrink-0 text-[0.5625rem] font-medium tabular-nums text-[#684DB0]" style={MONO}>{horario}</span>}
+
+      {/* bordas: puxar muda o início ou o fim */}
+      {!deFora && <>
+        <span
+          aria-hidden="true"
+          onPointerDown={(event) => onPegar(event, "inicio")}
+          className="absolute inset-x-0 top-0 flex h-2 cursor-ns-resize touch-none justify-center"
+        >
+          <span className="mt-[2px] h-[3px] w-6 rounded-full bg-[#684DB0]/0 transition group-hover:bg-[#684DB0]/45" />
+        </span>
+        <span
+          aria-hidden="true"
+          onPointerDown={(event) => onPegar(event, "fim")}
+          className="absolute inset-x-0 bottom-0 flex h-2 cursor-ns-resize touch-none items-end justify-center"
+        >
+          <span className="mb-[2px] h-[3px] w-6 rounded-full bg-[#684DB0]/0 transition group-hover:bg-[#684DB0]/45" />
+        </span>
+      </>}
     </button>
   );
 }
@@ -595,10 +779,12 @@ function ChipSemHorario({ atividade, onEdit }: { atividade: AtividadeRow; onEdit
       type="button"
       onClick={() => onEdit(atividade.id)}
       title={atividade.nome}
-      className="flex min-w-0 items-center gap-1.5 rounded border bg-white px-1.5 py-1 text-left transition hover:bg-black/[.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7259B5]/25"
-      style={{ borderColor: atividade.feita ? "rgba(13,13,13,.08)" : corComAlfa(config.color, "47") }}
+      className="flex min-w-0 items-center gap-1.5 rounded border px-1 py-1 text-left transition duration-200 hover:-translate-y-px hover:shadow-[0_6px_16px_rgba(40,37,37,.08)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#684DB0]/30 motion-reduce:transition-none"
+      style={{ ...CARTAO_LANDING, borderColor: "rgba(40,37,37,.09)" }}
     >
-      <Icon size={10} aria-hidden="true" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }} className="flex-shrink-0" />
+      <span className="flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-[3px] bg-white shadow-[0_0_0_1px_rgba(40,37,37,.08)]" style={{ color: atividade.feita ? "rgba(13,13,13,.30)" : config.color }}>
+        <Icon size={10} aria-hidden="true" />
+      </span>
       <span className={`truncate text-[0.625rem] font-medium ${atividade.feita ? "text-black/35 line-through" : "text-[#282525]"}`}>{atividade.nome}</span>
     </button>
   );
@@ -1634,7 +1820,7 @@ function GanttView({ atividades, tipoFilter, onEdit, onDatesChange }: {
 /* ─── Page ──────────────────────────────────────────────────────────────── */
 
 const SELECT_FIELDS = `
-  id, nome, tipo, prioridade, data_inicio, data_prevista, data_realizada, hora_inicio, hora_fim, resultado, feita, nota, responsavel_id, captacao_id, conta_patrocinio_id,
+  id, nome, tipo, prioridade, data_inicio, data_prevista, data_realizada, hora_inicio, hora_fim, resultado, feita, nota, responsavel_id, captacao_id, conta_patrocinio_id, sync_origin,
   responsavel:profiles!responsavel_id(id, full_name, avatar_url),
   tipo_custom:atividade_tipos!tipo_custom_id(nome, icone, cor),
   empresa_crm:empresas_crm!empresa_crm_id(nome), empresa_crm_id,
@@ -1821,6 +2007,30 @@ export default function AtividadesPage() {
       ? { ...atividade, data_inicio: data.data_inicio, data_prevista: data.data_prevista }
       : atividade));
     return true;
+  }
+
+  // Arrastar ou puxar as bordas no calendário: muda o dia (o início anda junto) e o horário.
+  async function reagendarAtividade(id: string, { data, inicio, fim }: { data: string; inicio: number; fim: number }) {
+    setToggleError(null);
+    const item = allAtividades.find(atividade => atividade.id === id);
+    if (!item || (item.source_kind && item.source_kind !== "atividade")) return;
+    const diaAnterior = scheduledDate(item) ? normDate(scheduledDate(item)!) : data;
+    const deslocamento = diasEntreIso(diaAnterior, data);
+    const mudanca = {
+      data_prevista: data,
+      data_inicio: item.data_inicio ? somarDiasIso(normDate(item.data_inicio), deslocamento) : null,
+      hora_inicio: horaDe(inicio),
+      hora_fim: horaDe(fim),
+    };
+    const anteriores = allAtividades;
+    setAllAtividades(atuais => atuais.map(atividade => atividade.id === id ? { ...atividade, ...mudanca } : atividade));
+    const { error } = await (supabase as any).from("atividades").update(mudanca).eq("id", id);
+    if (error) {
+      setAllAtividades(anteriores);
+      setToggleError(`A atividade não foi reagendada. ${error.message}`);
+      return;
+    }
+    setAtividades(atuais => atuais.map(atividade => atividade.id === id ? { ...atividade, ...mudanca } : atividade));
   }
 
   async function updateActivityResponsible(id: string, responsavelId: string | null, responsavelName: string | null, avatarUrl: string | null): Promise<boolean> {
@@ -2030,7 +2240,7 @@ export default function AtividadesPage() {
           ? <div className="bg-white rounded border py-20 text-center" style={{ borderColor: "rgba(13,13,13,.08)" }}>
               <p className="text-xs text-black/30">Carregando…</p>
             </div>
-          : <CalendarioView atividades={todasDoResponsavel} tipoFilter={tipoFilter} onEdit={openAgendaItem} onNew={(date, hora) => { setNovaPrefill({ date, hora }); setShowNovaAtividade(true); }} />
+          : <CalendarioView atividades={todasDoResponsavel} tipoFilter={tipoFilter} onEdit={openAgendaItem} onNew={(date, hora) => { setNovaPrefill({ date, hora }); setShowNovaAtividade(true); }} onReagendar={reagendarAtividade} />
       )}
 
       {viewMode === "gantt" && (
