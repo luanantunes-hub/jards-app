@@ -4,7 +4,7 @@
 // O repasse segue a mesma conta do banco (`fn_ticketeria_saldo_liberavel`): a parte do produtor (o preço menos a taxa do Jards) menos o custo REAL do
 // Pix, quando o Asaas já o informou, ou a estimativa da tabela. Retido = repasse − o que já sacou − o que já pode sacar.
 
-import type { CompraDaLista, DetalheDaCompra, ResumoDasVendas, SessaoDeVendas, SituacaoDaCompra, SituacaoDaSessao } from "@/components/ticketeria/VendasView";
+import type { CompraDaLista, DetalheDaCompra, ReembolsoDaLista, ResumoDasVendas, SessaoDeVendas, SituacaoDaCompra, SituacaoDaSessao, SituacaoDoReembolso } from "@/components/ticketeria/VendasView";
 import { diaEHoraDoEvento } from "@/lib/ticketeria/pagamento/ingressos";
 
 export type LinhaDePedido = {
@@ -14,6 +14,8 @@ export type LinhaDePedido = {
 };
 export type LinhaDeSessao = { id: string; evento_id: string; local_id: string; inicio: string; cancelada_em: string | null };
 export type LinhaDeIngressoEmitido = { codigo: string; nome: string; pedido_id: string; usado_em: string | null; cancelado_em: string | null };
+
+export type LinhaDeReembolso = { id: string; pedido_id: string | null; remetente: string; recebido_em: string; situacao: string; valor_centavos: number | null };
 
 export type EntradaDasVendas = {
   pedidos: LinhaDePedido[];
@@ -26,13 +28,15 @@ export type EntradaDasVendas = {
   lugaresDoLocal: Record<string, number>;
   emitidos: LinhaDeIngressoEmitido[];
   /** O que o produtor já pode sacar agora (`fn_ticketeria_saldo_liberavel`: já descontado o que sacou). */
+  /** Os pedidos de reembolso por e-mail dos pedidos da loja (a fila: o que foi devolvido e o que não). */
+  reembolsos?: LinhaDeReembolso[];
   liberadoCentavos: number;
   /** O que o produtor já sacou (as transferências aprovadas pela validação de saque). */
   sacadoCentavos: number;
   agora?: number;
 };
 
-export type VendasDaLoja = { resumo: ResumoDasVendas; sessoes: SessaoDeVendas[]; compras: (CompraDaLista & { detalhe: Omit<DetalheDaCompra, "endereco_do_pedido"> })[] };
+export type VendasDaLoja = { resumo: ResumoDasVendas; sessoes: SessaoDeVendas[]; reembolsos: ReembolsoDaLista[]; compras: (CompraDaLista & { detalhe: Omit<DetalheDaCompra, "endereco_do_pedido"> })[] };
 
 const FUSO_PADRAO = "America/Sao_Paulo";
 const partes = (iso: string, fuso: string, opcoes: Intl.DateTimeFormatOptions) => { try { return new Intl.DateTimeFormat("pt-BR", { timeZone: fuso, ...opcoes }).format(new Date(iso)); } catch { return iso; } };
@@ -99,5 +103,11 @@ export function montarVendas(e: EntradaDasVendas): VendasDaLoja {
       },
     };
   });
-  return { resumo, sessoes, compras };
+  const codigoDoPedido = new Map(e.pedidos.map(p => [p.id, p.codigo]));
+  const SITUACOES: Record<string, SituacaoDoReembolso> = { recebido: "estornando", estornando: "estornando", estornado: "estornado", falhou: "falhou", fora_do_prazo: "fora_do_prazo", remetente_diferente: "remetente_diferente", nao_elegivel: "nao_elegivel", ja_reembolsado: "ja_reembolsado" };
+  const reembolsos: ReembolsoDaLista[] = [...(e.reembolsos ?? [])]
+    .filter(r => r.pedido_id !== null && codigoDoPedido.has(r.pedido_id) && r.situacao in SITUACOES)
+    .sort((a, b) => Date.parse(b.recebido_em) - Date.parse(a.recebido_em))
+    .map(r => ({ id: r.id, codigo: codigoDoPedido.get(r.pedido_id as string) ?? "", remetente: r.remetente, recebido: diaCurtoEHora(r.recebido_em), situacao: SITUACOES[r.situacao], motivo: null, valor_centavos: r.valor_centavos }));
+  return { resumo, sessoes, reembolsos, compras };
 }

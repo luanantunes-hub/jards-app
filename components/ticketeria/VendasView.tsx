@@ -200,12 +200,54 @@ export function DetalheDaCompraSheet({ compra, onClose }: { compra: DetalheDaCom
   );
 }
 
+export type SituacaoDoReembolso = "estornado" | "estornando" | "falhou" | "fora_do_prazo" | "remetente_diferente" | "nao_elegivel" | "ja_reembolsado";
+export type ReembolsoDaLista = { id: string; codigo: string; remetente: string; recebido: string; situacao: SituacaoDoReembolso; motivo: string | null; valor_centavos: number | null };
+
+const ETIQUETA_DO_REEMBOLSO: Record<SituacaoDoReembolso, { texto: string; cor: string }> = {
+  estornado: { texto: "REEMBOLSADO", cor: "#2E8932" }, estornando: { texto: "ESTORNANDO", cor: "#B07A14" }, falhou: { texto: "FALHOU", cor: "#D94A4A" },
+  fora_do_prazo: { texto: "FORA DO PRAZO", cor: "#6b6767" }, remetente_diferente: { texto: "E-MAIL DIFERENTE", cor: "#6b6767" }, nao_elegivel: { texto: "EM ANÁLISE", cor: "#B07A14" }, ja_reembolsado: { texto: "JÁ REEMBOLSADO", cor: "#6b6767" },
+};
+const FRASE_DO_REEMBOLSO: Record<SituacaoDoReembolso, string> = {
+  estornado: "O Pix foi devolvido ao comprador.", estornando: "O estorno começou e ainda não terminou. Se passar de alguns minutos, fale com o suporte do Jards.", falhou: "O Asaas não conseguiu estornar. Você pode tentar de novo.",
+  fora_do_prazo: "Passaram mais de 7 dias da compra. O comprador recebeu a resposta de que não há devolução por desistência.", remetente_diferente: "O e-mail não veio do endereço da compra. O comprador recebeu o pedido de escrever do e-mail certo.",
+  nao_elegivel: "Precisa de uma análise do Jards (por exemplo, um ingresso já usado na entrada).", ja_reembolsado: "O pedido já tinha sido reembolsado.",
+};
+
+/** Os pedidos de reembolso por e-mail dos pedidos desta loja: o que foi devolvido e o que não foi, com o motivo. O que falhou pode ser tentado de novo (dentro do prazo de 7 dias da compra). */
+export function ReembolsosDeVendas({ reembolsos, onTentarDeNovo, tentando }: { reembolsos: ReembolsoDaLista[]; onTentarDeNovo?: (id: string) => void; tentando?: string | null }) {
+  return (
+    <section aria-label="Reembolsos">
+      <h2 className={`mb-2 ${ROTULO}`}>Reembolsos</h2>
+      <ListTableSurface>
+        <table className="w-full min-w-[40rem] border-collapse">
+          <thead><tr className="border-b" style={{ borderColor: BORDA }}><th className={CABECALHO}>Pedido</th><th className={CABECALHO}>Pedido de reembolso</th><th className={`${CABECALHO} text-right`}>Valor</th><th className={CABECALHO}><span className="sr-only">Situação</span></th></tr></thead>
+          <tbody className="divide-y divide-black/[.08]">
+            {reembolsos.map(r => (
+              <tr key={r.id}>
+                <td className={CELULA}><p className="font-medium tabular-nums tracking-[.04em]">{r.codigo}</p><p className="text-[0.6875rem] text-black/45">{r.recebido}</p></td>
+                <td className={CELULA}>
+                  <p className="text-[0.8125rem]">{r.remetente}</p>
+                  <p className="mt-0.5 max-w-md text-[0.6875rem] leading-snug text-black/50">{FRASE_DO_REEMBOLSO[r.situacao]}</p>
+                  {r.situacao === "falhou" && onTentarDeNovo && <button type="button" onClick={() => onTentarDeNovo(r.id)} disabled={tentando === r.id} className={`mt-1.5 ${LINK}`}>{tentando === r.id ? "Tentando…" : "Tentar de novo"}</button>}
+                </td>
+                <td className={`${CELULA} text-right tabular-nums ${r.valor_centavos == null ? "text-black/30" : ""}`}>{r.valor_centavos == null ? "—" : formatarMoeda(r.valor_centavos)}</td>
+                <td className={`${CELULA} text-right`}><Etiqueta {...ETIQUETA_DO_REEMBOLSO[r.situacao]} /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </ListTableSurface>
+    </section>
+  );
+}
+
 /** A página inteira, sem o cabeçalho (que é da página): resumo, sessões e compras. Sem venda nenhuma, o convite. */
-export function VendasView({ resumo, sessoes, compras, filtro, onFiltrar, onAbrir }: { resumo: ResumoDasVendas; sessoes: SessaoDeVendas[]; compras: CompraDaLista[]; filtro: FiltroDasCompras; onFiltrar?: (f: FiltroDasCompras) => void; onAbrir?: (id: string) => void }) {
+export function VendasView({ resumo, sessoes, compras, filtro, onFiltrar, onAbrir, reembolsos = [], onTentarDeNovo, tentando }: { resumo: ResumoDasVendas; sessoes: SessaoDeVendas[]; compras: CompraDaLista[]; filtro: FiltroDasCompras; onFiltrar?: (f: FiltroDasCompras) => void; onAbrir?: (id: string) => void; reembolsos?: ReembolsoDaLista[]; onTentarDeNovo?: (id: string) => void; tentando?: string | null }) {
   return (
     <div className="space-y-6">
       <ResumoDeVendas resumo={resumo} />
       {sessoes.length > 0 && <SessoesDeVendas sessoes={sessoes} />}
+      {reembolsos.length > 0 && <ReembolsosDeVendas reembolsos={reembolsos} onTentarDeNovo={onTentarDeNovo} tentando={tentando} />}
       <ComprasDeVendas compras={compras} filtro={filtro} onFiltrar={onFiltrar} onAbrir={onAbrir} />
     </div>
   );

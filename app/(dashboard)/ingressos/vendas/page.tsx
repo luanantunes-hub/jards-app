@@ -17,6 +17,8 @@ export default function VendasPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [filtro, setFiltro] = useState<FiltroDasCompras>("todas");
   const [aberta, setAberta] = useState<string | null>(null);
+  const [versao, setVersao] = useState(0);
+  const [tentando, setTentando] = useState<string | null>(null);
 
   useEffect(() => {
     if (!organizationId) return;
@@ -36,7 +38,22 @@ export default function VendasPage() {
       }
     })();
     return () => { ativo = false; };
-  }, [organizationId]);
+  }, [organizationId, versao]);
+
+  async function tentarDeNovo(id: string) {
+    if (!estado?.lojaId) return;
+    setTentando(id);
+    setErro(null);
+    try {
+      const resposta = await fetch(`/api/ticketeria/lojas/${estado.lojaId}/reembolsos/${id}/tentar-de-novo`, { method: "POST" });
+      if (!resposta.ok) setErro(resposta.status === 409 ? "Este reembolso não pode mais ser tentado de novo." : resposta.status === 503 ? "O estorno ainda não está disponível. Fale com o suporte do Jards." : "Não foi possível tentar de novo. Tente mais tarde.");
+    } catch {
+      setErro("Sem conexão. Tente de novo.");
+    } finally {
+      setTentando(null);
+      setVersao(atual => atual + 1);
+    }
+  }
 
   const compras = useMemo(() => (estado?.vendas?.compras ?? []).filter(c => filtro === "todas" || (filtro === "pagas" ? c.situacao === "pago" : c.situacao === "aguardando_pagamento")), [estado, filtro]);
   const compra = aberta ? estado?.vendas?.compras.find(c => c.id === aberta) : undefined;
@@ -48,7 +65,7 @@ export default function VendasPage() {
       <ListContent>
         {erro && <p role="alert" className="mb-4 rounded border bg-white px-4 py-2.5 text-[0.75rem] text-[#B23B3B]" style={{ borderColor: "#B23B3B47" }}>{erro}</p>}
         {estado.vendas ? (
-          <VendasView resumo={estado.vendas.resumo} sessoes={estado.vendas.sessoes} compras={compras} filtro={filtro} onFiltrar={setFiltro} onAbrir={setAberta} />
+          <VendasView resumo={estado.vendas.resumo} sessoes={estado.vendas.sessoes} compras={compras} filtro={filtro} onFiltrar={setFiltro} onAbrir={setAberta} reembolsos={estado.vendas.reembolsos} onTentarDeNovo={id => void tentarDeNovo(id)} tentando={tentando} />
         ) : !erro && (
           <ListTableSurface>
             <ListEmptyState icon={Receipt} title="Nenhuma venda ainda" description="Crie um evento e cadastre a conta de recebimento. As vendas aparecem aqui." />

@@ -1349,6 +1349,10 @@ export type BancoDaTicketeria = {
         Args: { p_loja: string; p_sessao: string };
         Returns: Json;
       };
+      fn_ticketeria_reembolso_reabrir: {
+        Args: { p_reembolso: string; p_loja: string };
+        Returns: Json;
+      };
       fn_ticketeria_emitir_ingressos: {
         Args: { p_pedido: string };
         Returns: number;

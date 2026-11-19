@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/supabase/types";
 import { clienteDaTicketeria } from "@/lib/ticketeria/cliente";
-import { montarVendas, type LinhaDeIngressoEmitido, type LinhaDePedido, type LinhaDeSessao, type VendasDaLoja } from "@/lib/ticketeria/vendas";
+import { montarVendas, type LinhaDeIngressoEmitido, type LinhaDePedido, type LinhaDeReembolso, type LinhaDeSessao, type VendasDaLoja } from "@/lib/ticketeria/vendas";
 
 type Admin = SupabaseClient<Database>;
 /** As compras mais recentes que a tela mostra; as contas do resumo valem para todas. */
@@ -25,16 +25,19 @@ export async function vendasDaLoja(admin: Admin, lojaId: string, agora: number =
   ]);
   const idsDosPedidos = (pedidos ?? []).map(p => p.id);
   const emitidos: LinhaDeIngressoEmitido[] = [];
+  const reembolsos: LinhaDeReembolso[] = [];
   const quantidadePorPedido: Record<string, number> = {};
   // Em lotes: a lista de ids vai na URL da consulta.
   for (let i = 0; i < idsDosPedidos.length; i += 150) {
     const lote = idsDosPedidos.slice(i, i + 150);
-    const [{ data: itens }, { data: ing }] = await Promise.all([
+    const [{ data: itens }, { data: ing }, { data: reemb }] = await Promise.all([
       t.from("ticketeria_pedido_itens").select("pedido_id, quantidade").in("pedido_id", lote),
       t.from("ticketeria_ingressos_emitidos").select("codigo, nome, pedido_id, usado_em, cancelado_em").in("pedido_id", lote),
+      t.from("ticketeria_reembolsos").select("id, pedido_id, remetente, recebido_em, situacao, valor_centavos").in("pedido_id", lote),
     ]);
     for (const it of itens ?? []) quantidadePorPedido[it.pedido_id] = (quantidadePorPedido[it.pedido_id] ?? 0) + it.quantidade;
     emitidos.push(...(ing ?? []));
+    reembolsos.push(...(reemb ?? []));
   }
   let liberado = 0;
   let sacado = 0;
@@ -51,7 +54,7 @@ export async function vendasDaLoja(admin: Admin, lojaId: string, agora: number =
   const vendas = montarVendas({
     pedidos: (pedidos ?? []) as LinhaDePedido[], quantidadePorPedido, sessoes: (sessoes ?? []) as LinhaDeSessao[],
     tituloDoEvento: Object.fromEntries((eventos ?? []).map(e => [e.id, e.titulo])), fusoDoLocal: Object.fromEntries((locais ?? []).map(l => [l.id, l.fuso])),
-    lugaresDoLocal, emitidos, liberadoCentavos: liberado, sacadoCentavos: sacado, agora,
+    lugaresDoLocal, emitidos, reembolsos, liberadoCentavos: liberado, sacadoCentavos: sacado, agora,
   });
   return { ...vendas, compras: vendas.compras.slice(0, MAX_COMPRAS_NA_LISTA) };
 }

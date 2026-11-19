@@ -3,7 +3,7 @@ import test from "node:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { diaCurtoEHora, montarVendas, repasseDoPedido, situacaoDaSessao, type EntradaDasVendas, type LinhaDePedido } from "../lib/ticketeria/vendas";
-import { ComprasDeVendas, DetalheDaCompraSheet, ResumoDeVendas, SessoesDeVendas, VendasView } from "../components/ticketeria/VendasView";
+import { ComprasDeVendas, DetalheDaCompraSheet, ReembolsosDeVendas, ResumoDeVendas, SessoesDeVendas, VendasView } from "../components/ticketeria/VendasView";
 
 const AGORA = Date.parse("2026-11-19T15:00:00.000Z");
 const pedido = (id: string, sessao: string, situacao: string, total: number, taxa: number, custo: number, real: number | null, criado: string, pago: string | null = null): LinhaDePedido => ({
@@ -117,4 +117,39 @@ test("as telas: resumo com os quatro valores, sessões, compras com filtro e a f
   const folha = html(createElement(DetalheDaCompraSheet, { compra: { ...v.compras[1].detalhe, endereco_do_pedido: "https://jards.com.br/pedido/x" }, onClose: () => {} }));
   for (const t of ["Compra COD1XXXX", "Hamlet", "Ingressos", "AAAAAAAAA2", "USADO", "Pago pelo comprador", "R$ 150,00", "− R$ 3,75", "− R$ 0,99", "Seu repasse", "R$ 145,26", "Ver a página do pedido", "Fechar"]) assert.ok(folha.includes(t), `folha sem: ${t}`);
   assert.match(html(createElement(VendasView, { resumo: v.resumo, sessoes: [], compras: [], filtro: "todas" })), /Nenhuma compra aqui/);
+});
+
+test("os reembolsos: só os de pedidos da loja, os mais recentes primeiro, com a situação que a tela entende", () => {
+  const { reembolsos } = montarVendas({
+    ...entrada,
+    reembolsos: [
+      { id: "r1", pedido_id: "1", remetente: "rita@exemplo.com", recebido_em: "2026-11-19T19:20:00.000Z", situacao: "falhou", valor_centavos: null },
+      { id: "r2", pedido_id: "2", remetente: "carlos@exemplo.com", recebido_em: "2026-11-19T18:02:00.000Z", situacao: "estornado", valor_centavos: 6000 },
+      { id: "r3", pedido_id: "1", remetente: "x@exemplo.com", recebido_em: "2026-11-19T20:00:00.000Z", situacao: "recebido", valor_centavos: null },
+      { id: "r4", pedido_id: null, remetente: "sem-pedido@exemplo.com", recebido_em: "2026-11-19T21:00:00.000Z", situacao: "nao_encontrado", valor_centavos: null },
+      { id: "r5", pedido_id: "999", remetente: "de-outra-loja@exemplo.com", recebido_em: "2026-11-19T21:30:00.000Z", situacao: "falhou", valor_centavos: null },
+      { id: "r6", pedido_id: "1", remetente: "y@exemplo.com", recebido_em: "2026-11-19T17:00:00.000Z", situacao: "situacao_nova_desconhecida", valor_centavos: null },
+    ],
+  });
+  assert.deepEqual(reembolsos.map(r => r.id), ["r3", "r1", "r2"], "sem pedido, de outra loja e situação desconhecida ficam de fora; os mais novos primeiro");
+  assert.deepEqual(reembolsos.map(r => r.situacao), ["estornando", "falhou", "estornado"], "recebido (em andamento) aparece como estornando");
+  assert.deepEqual([reembolsos[1].codigo, reembolsos[1].recebido, reembolsos[2].valor_centavos], ["COD1XXXX", "19/11 às 16:20", 6000]);
+  assert.deepEqual(montarVendas(entrada).reembolsos, [], "sem reembolsos, lista vazia");
+});
+
+test("a seção Reembolsos: situação e frase de cada um; só o que falhou ganha Tentar de novo; só aparece quando há reembolsos", () => {
+  const html = (el: Parameters<typeof renderToStaticMarkup>[0]) => renderToStaticMarkup(el).replace(/\u00a0/g, " ");
+  const lista = [
+    { id: "r1", codigo: "ABCD2345", remetente: "rita@exemplo.com", recebido: "19/11 às 16:20", situacao: "falhou" as const, motivo: null, valor_centavos: null },
+    { id: "r2", codigo: "KP7M2QX9", remetente: "carlos@exemplo.com", recebido: "19/11 às 15:02", situacao: "estornado" as const, motivo: null, valor_centavos: 12000 },
+    { id: "r3", codigo: "H2D5FJ6G", remetente: "ana@exemplo.com", recebido: "19/11 às 11:40", situacao: "fora_do_prazo" as const, motivo: null, valor_centavos: null },
+  ];
+  const h = html(createElement(ReembolsosDeVendas, { reembolsos: lista, onTentarDeNovo: () => {} }));
+  for (const t of ["Reembolsos", "ABCD2345", "FALHOU", "O Asaas não conseguiu estornar", "REEMBOLSADO", "R$ 120,00", "O Pix foi devolvido ao comprador.", "FORA DO PRAZO", "mais de 7 dias"]) assert.ok(h.includes(t), `falta: ${t}`);
+  assert.equal((h.match(/Tentar de novo/g) ?? []).length, 1, "só o que falhou");
+  assert.match(html(createElement(ReembolsosDeVendas, { reembolsos: lista, onTentarDeNovo: () => {}, tentando: "r1" })), /Tentando…/);
+  assert.doesNotMatch(html(createElement(ReembolsosDeVendas, { reembolsos: lista })), /Tentar de novo/, "sem ação, sem botão");
+  const v = montarVendas(entrada);
+  assert.doesNotMatch(html(createElement(VendasView, { resumo: v.resumo, sessoes: v.sessoes, compras: v.compras, filtro: "todas" })), /Reembolsos/, "sem reembolsos, a seção não aparece");
+  assert.match(html(createElement(VendasView, { resumo: v.resumo, sessoes: v.sessoes, compras: v.compras, filtro: "todas", reembolsos: lista })), /Reembolsos/);
 });
