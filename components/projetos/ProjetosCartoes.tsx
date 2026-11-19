@@ -1,10 +1,11 @@
 "use client";
-import { useState, type CSSProperties } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { Calendar, TrendingUp, Zap, FileText, Check, MoreHorizontal, ExternalLink, Trash2, UserX } from "lucide-react";
 import { ProjectIdentity, corDaIdentidade, type IdentityType } from "@/components/ui/ProjectIdentity";
 import { AnchoredPopover, useAnchoredPopover } from "@/components/ui/AnchoredPopover";
 import { BarraCaptacao } from "@/components/ui/IndicadoresFinanceiros";
 import { formatarValorCompleto, formatarValorCurto } from "@/lib/valor";
+import { posicaoNaPasta } from "@/lib/projetos/capa";
 
 export type FaseProjeto = "planejamento" | "captacao" | "execucao" | "prestacao" | "concluido";
 
@@ -62,6 +63,26 @@ function tonsDaPasta(cor: string | null): CSSProperties {
 }
 
 const ALTURA_ABA = "0.875rem";
+
+function CapaNaPasta({ url, posicaoY }: { url: string; posicaoY: number }) {
+  const imagem = useRef<HTMLImageElement>(null);
+  const [posicao, setPosicao] = useState(posicaoY);
+  const ajustar = () => {
+    const img = imagem.current;
+    const caixa = img?.getBoundingClientRect();
+    if (!img || !img.naturalWidth || !img.naturalHeight || !caixa?.width || !caixa.height) return;
+    setPosicao(posicaoNaPasta(posicaoY, img.naturalWidth / img.naturalHeight, caixa.width / caixa.height));
+  };
+  // a imagem pode já ter carregado antes do React ligar o onLoad (vem embutida)
+  useEffect(() => {
+    if (imagem.current?.complete) ajustar();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [url, posicaoY]);
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- a capa é guardada como imagem embutida (data URL)
+    <img ref={imagem} src={url} alt="" onLoad={ajustar} className="h-full w-full object-cover" style={{ objectPosition: `center ${posicao}%` }} />
+  );
+}
 const LARGURA_ABA = "44%";
 
 function Pasta({ projeto, faseLabel, onOpen, onMenu }: {
@@ -88,9 +109,8 @@ function Pasta({ projeto, faseLabel, onOpen, onMenu }: {
       <div className="relative flex flex-1 flex-col rounded rounded-tl-none bg-[var(--pasta-verso)] pt-[0.375rem]">
         {/* capa: foto guardada dentro da pasta, aparecendo por cima da folha da frente; sobe um pouco ao passar o mouse */}
         {projeto.capa_url && (
-          <div aria-hidden className="relative mx-1.5 h-[6.75rem] overflow-hidden rounded-t transition-transform duration-200 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
-            {/* eslint-disable-next-line @next/next/no-img-element -- a capa é guardada como imagem embutida (data URL) */}
-            <img src={projeto.capa_url} alt="" className="h-full w-full object-cover" style={{ objectPosition: `center ${projeto.capa_position_y ?? 50}%` }} />
+          <div aria-hidden className="relative mx-1.5 h-[5.5rem] overflow-hidden rounded-t transition-transform duration-200 ease-out group-hover:-translate-y-1 motion-reduce:transition-none motion-reduce:group-hover:translate-y-0">
+            <CapaNaPasta url={projeto.capa_url} posicaoY={projeto.capa_position_y ?? 50} />
           </div>
         )}
         {/* folha da frente: sobe um pouco ao passar o mouse, como papel saindo da pasta */}
